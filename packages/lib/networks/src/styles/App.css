@@ -1,0 +1,80 @@
+html, body {
+    padding: 0;
+    margin: 0;
+}
+
+pre {
+    margin: 0;
+}
+
+.App {
+    background-color: #f3f3f3;
+    color: #333;
+    position:absolute;
+  content:"";
+  left:0;
+  right:0;
+}
+
+.network {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  width: 650px;
+  background: white;
+  margin: 50px auto;
+  padding: 20px;
+  padding-top: 5px;
+}
+
+.network h2 {
+    font-size: 18px;
+}
+
+h4 {
+    font-size: 14px;
+    margin: 10px 0 5px 0;
+}
+
+.monospace {
+    font-family: Consolas, Courier New, monospace;
+    letter-spacing: 0.5px;
+}
+
+.controls {
+    
+}
+
+.controls h1 {
+    font-size: 24px;
+}
+
+.network pre {
+    padding: 10px 5px;
+    white-space: pre-wrap;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    color: #555;
+}
+
+
+
+table { 
+    border-collapse: collapse;
+    width: 100%;
+}
+
+tr:nth-of-type(even) { 
+	background: rgb(250, 252, 255); 
+}
+
+th { 
+	background: #3498db; 
+	color: white; 
+	font-weight: bold; 
+}
+
+td, th { 
+	padding: 6px; 
+	border: 1px solid #ccc; 
+    text-align: left; 
+    font-size: 13px;
+}

@@ -51,7 +51,7 @@ const json: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) 
     return <pre><code>
         {"{\n"}
         {networkData.addresses.map((addresses: OrderedMap<string, string>, category: string) => {
-            const lastCategory = networkData.addresses.keySeq().findIndex(k => k === category) === addresses.size - 1;
+            const lastCategory = networkData.addresses.keySeq().findIndex(k => k === category) === networkData.addresses.size - 1;
             return <>
                 {`    "${lowerCase(category)}": {\n`}
                 {addresses.map((address: string, contract: string) => {

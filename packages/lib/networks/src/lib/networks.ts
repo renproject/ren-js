@@ -73,7 +73,7 @@ const testnet: NetworkData = {
         }),
         [Category.RenEx]: OrderedMap({
             RenExBalances: "0xc5b98949AB0dfa0A7d4c07Bb29B002D6d6DA3e25",
-            RenExSettlement: "0xc4f1420de7efbd76e973fe8c99294fe482819f9a",
+            RenExSettlement: "0xfa0938e3c9a5e33b5084dfbffaca9241aef39be8",
             RenExTokens: "0x683fbabff57f1fa71f1b9e2a7eb2a2e11bd7723a",
             RenExAtomicInfo: "0x58a63bb3f707d3b8966b8436e75f29bd2e195ade",
             RenExAtomicSwapper: "0x027b780a3210702178db0719e42c66808840b0c7",

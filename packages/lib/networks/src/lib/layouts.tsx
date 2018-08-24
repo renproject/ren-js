@@ -70,10 +70,10 @@ const json: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) 
 
 const swapper: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) => {
     return <pre><code>{`{
+    "network": "${networkData.name}",
     "ethereum": {
-        "chain": "kovan",
+        "network": "kovan",
         "url": "https://kovan.infura.io",
-        "network": "${networkData.name}",
         "renExAtomicSwapper": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicSwapper")}",
         "renExAtomicInfo": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo")}",
         "renExSettlement": "${networkData.addresses.get(Category.RenEx).get("RenExSettlement")}",

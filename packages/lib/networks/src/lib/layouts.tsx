@@ -74,10 +74,10 @@ const swapper: FormatFN = (networkData: NetworkData, nameFormatter: TextTransfor
         "chain": "kovan",
         "url": "https://kovan.infura.io",
         "network": "${networkData.name}",
-        "atom_address": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicSwapper")}",
-        "info_address": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo")}",
-        "wallet_address": "${networkData.addresses.get(Category.RenEx).get("RenExSettlement")}",
-        "ob_address": "${networkData.addresses.get(Category.RenEx).get("RenExBalances")}"
+        "renExAtomicSwapper": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicSwapper")}",
+        "renExAtomicInfo": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo")}",
+        "renExSettlement": "${networkData.addresses.get(Category.RenEx).get("RenExSettlement")}",
+        "orderbook": "${networkData.addresses.get(Category.RenEx).get("RenExBalances")}"
     }
 }`}
     </code></pre>;

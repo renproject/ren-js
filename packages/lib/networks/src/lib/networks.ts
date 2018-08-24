@@ -25,8 +25,8 @@ const nightly: NetworkData = {
             RenExBalances: "0xc2c126e1eb32e6ad50c611fb92d009b4b4518b00",
             RenExSettlement: "0x65712325c41fb39b9205e08483b43142d919cc42",
             RenExTokens: "0x3672b60236b76d30b64455515efa38e06f64e3df",
-            RenExAtomicInfo: "0x6aa8c4d3035dbf83c24c604b530da8be396e8968",
-            RenExAtomicSwapper: "0x027b780a3210702178db0719e42c66808840b0c7",
+            RenExAtomicInfo: "0x8c0c87c751f15501fadc20b01733dbd3bb93d257",
+            RenExAtomicSwapper: "0x88cf2af4f75f8c7447ff686ce00ec534d6b410f4",
         }),
         [Category.Tokens]: OrderedMap({
             DGX: "0x092ece29781777604afac04887af30042c3bc5df",
@@ -50,8 +50,8 @@ const falcon: NetworkData = {
             RenExBalances: "0x3083e5ba36c6b42ca93c22c803013a4539eedc7f",
             RenExSettlement: "0x8617dcd709bb8660602ef70ade78626b7408a210",
             RenExTokens: "0xb8bf2497639c95e203195cc9f333510a0d99c716",
-            RenExAtomicInfo: "0x460ec601e1126917a54f65455d4ac51f68716adf",
-            RenExAtomicSwapper: "0x027b780a3210702178db0719e42c66808840b0c7",
+            RenExAtomicInfo: "0xafe5539b40b17404e3cb6cf5013fc7dab3c54163",
+            RenExAtomicSwapper: "0x937a1c31edc9472beab850897eebf24eee857c0d",
         }),
         [Category.Tokens]: OrderedMap({
             DGX: "0xf4faf1b22cee0a024ad6b12bb29ec0e13f5827c2",
@@ -75,8 +75,8 @@ const testnet: NetworkData = {
             RenExBalances: "0xc5b98949AB0dfa0A7d4c07Bb29B002D6d6DA3e25",
             RenExSettlement: "0xfa0938e3c9a5e33b5084dfbffaca9241aef39be8",
             RenExTokens: "0x683fbabff57f1fa71f1b9e2a7eb2a2e11bd7723a",
-            RenExAtomicInfo: "0x58a63bb3f707d3b8966b8436e75f29bd2e195ade",
-            RenExAtomicSwapper: "0x027b780a3210702178db0719e42c66808840b0c7",
+            RenExAtomicInfo: "0xCf85e1Ee45df67Bc9a65B9707a24b64Ac3174259",
+            RenExAtomicSwapper: "0x266ec5a7Ab363aF718b9ae473A070615E590198D",
         }),
         [Category.Tokens]: OrderedMap({
             DGX: "0x0798297a11cefef7479e40e67839fee3c025691e",

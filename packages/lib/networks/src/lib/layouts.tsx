@@ -99,7 +99,7 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
             "orderbook": "${networkData.addresses.get(Category.Republic).get("Orderbook")}",
             "renExBalances": "${networkData.addresses.get(Category.RenEx).get("RenExBalances")}",
             "renExSettlement": "${networkData.addresses.get(Category.RenEx).get("RenExSettlement")}",
-            "atomicInfo": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo")}"
+            "renExAtomicInfo": "${networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo")}"
         }
     ],
     "tokens": {

@@ -42,14 +42,14 @@ const falcon: NetworkData = {
     chain: "kovan",
     addresses: OrderedMap({
         [Category.Republic]: OrderedMap({
-            DarknodeRegistry: "0xfafd5c83d1e21763b79418c4ecb5d62b4970df8e",
-            Orderbook: "0x044b08eec761c39ac32aee1d6ef0583812f21699",
-            RewardVault: "0x0e6bbbb35835cc3624a000e1698b7b68e9eec7df",
+            DarknodeRegistry: "0xdaa8c30af85070506f641e456afdb84d4ba972bd",
+            Orderbook: "0x592d16f8c5fa8f1e074ab3c2cd1acd087adcdc0b",
+            RewardVault: "0x401e7d7ce6f51ea1a8d4f582413e2fabda68daa8",
         }),
         [Category.RenEx]: OrderedMap({
-            RenExBalances: "0x3083e5ba36c6b42ca93c22c803013a4539eedc7f",
-            RenExSettlement: "0x8617dcd709bb8660602ef70ade78626b7408a210",
-            RenExTokens: "0xb8bf2497639c95e203195cc9f333510a0d99c716",
+            RenExBalances: "0xb3e632943fa995fc75692e46b62383be49cddbc4",
+            RenExSettlement: "0xbe936cb23dd9a84e4d9358810f7f275e93ccd770",
+            RenExTokens: "0x9a898c8148131ef189b1c8575692376403780325",
             RenExAtomicInfo: "0xafe5539b40b17404e3cb6cf5013fc7dab3c54163",
             RenExAtomicSwapper: "0x937a1c31edc9472beab850897eebf24eee857c0d",
         }),

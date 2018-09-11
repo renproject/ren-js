@@ -96,9 +96,9 @@ const testnet: NetworkData = {
         [Category.Tokens]: OrderedMap({
             DGX: { address: "0x842f0db4943174ec458b790868e330444c18c9f2", version: "0.1.0" },
             REN: { address: "0x99806d107eda625516d954621df175a002d223e6", version: "0.1.0" },
-            ABC: { address: "0x289f785d9137ecf38a46a678cf4e9e98d32a06d4", version: "0.1.0" },
-            PQR: { address: "0x099ea44e49e34250e247a150c66c89b314216e34", version: "0.1.0" },
-            XYZ: { address: "0x0f48986df7b79fbb085753dc2fefe10dde7dd232", version: "0.1.0" },
+            ABC: { address: "0x48ec1d153f97a94140d2ecf0bc836bc6ed2f39d7", version: "0.1.0" },
+            PQR: { address: "0x724c964a614Eb0748b48dF79eD5D93C108E361c4", version: "0.1.0" },
+            XYZ: { address: "0x9978a1e2cd70904ea15eb2e0d62d1f96e3f135e2", version: "0.1.0" },
         }),
     }),
 };

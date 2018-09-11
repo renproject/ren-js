@@ -82,11 +82,11 @@ const testnet: NetworkData = {
             DarknodeRegistry: { address: "0xd1c3b5f2fe4eec6c262a5e1b161e5e099fd8325e", version: "0.1.0" },
             SettlementRegistry: { address: "0xc07780d6e1f24434b1766068f0e44b10a5ff5755", version: "0.1.0"},
             Orderbook: { address: "0x9a016649d97d44a055c26cbcadbc45a1ac563c89", version: "0.1.0" },
-            DarknodeRewardVault: { address: "0x870a7d5d1eb513fc422ebfcc76b598f860c7c2cf", version: "0.1.0" },
+            DarknodeRewardVault: { address: "0xceac6b255ccdd901fefcdb874db092e6f682fee0", version: "0.1.0" },
             DarknodeSlasher: { address: "0x6c52b2fd5b6c3e6baf47e05af880fc95b9c8079c", version: "0.1.0" },
         }),
         [Category.RenEx]: OrderedMap({
-            RenExBalances: { address: "0x2d08a401f347624095dbd9b9ec111634d129f595", version: "0.1.0" },
+            RenExBalances: { address: "0x99df4a01731b876a6b43a9a6873d080c29992d63", version: "0.1.0" },
             RenExBrokerVerifier: { address: "0x5bf19a6ea8631bb722ade58e0d2c5813740c88fd", version: "0.1.0" },
             RenExSettlement: { address: "0x68fe2088a321a42de11aba93d32c81c9f20b1abe", version: "0.1.0" },
             RenExTokens: { address: "0x92702879dc258860111782cc983e4edfe11450cc", version: "0.1.0" },

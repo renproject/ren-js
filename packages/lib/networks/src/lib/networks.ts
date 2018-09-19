@@ -40,7 +40,7 @@ const nightly: NetworkData = {
             REN: { address: "0x15f692d6b9ba8cec643c7d16909e8acdec431bf6", version: "" },
             TUSD: { address: "0x49fa7a3b9705fa8deb135b7ba64c2ab00ab915a1", version: "" },
             OMG: { address: "0x6662449d05312afe0ca147db6eb155641077883f", version: "" },
-            ZRX: { address: "", version: "" },
+            ZRX: { address: "0x0000000000000000000000000000000000000000", version: "" },
         }),
     }),
 };
@@ -70,7 +70,7 @@ const falcon: NetworkData = {
             REN: { address: "0x87e83f957a2f3a2e5fe16d5c6b22e38fd28bdc06", version: "" },
             TUSD: { address: "0xc96884276d70a1176b2fe102469348d224b0a1fa", version: "" },
             OMG: { address: "0x8a4a68db5ad08c215c6078111be8793843a53302", version: "" },
-            ZRX: { address: "", version: "" },
+            ZRX: { address: "0x0000000000000000000000000000000000000000", version: "" },
         }),
     }),
 };

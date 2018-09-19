@@ -86,7 +86,7 @@ const testnet: NetworkData = {
             DarknodeRegistry: { address: "0xf7daa0baf257547a6ad3ce7fff71d55cb7426f76", version: "0.1.1" },
             SettlementRegistry: { address: "0x762d83c9e39882b86cfdbd113a3b95804c1d6a31", version: "0.1.1" },
             Orderbook: { address: "0xa53da4093c682a4259de38302341bfef7e9f7a4f", version: "0.1.1" },
-            DarknodeRewardVault: { address: "0xf612940d44db254ce3774de973524075bc47f14e", version: "0.1.1" },
+            DarknodeRewardVault: { address: "0x4b2aab85898945cfca5e6ed1ffef40d0831422af", version: "0.1.1" },
             DarknodeSlasher: { address: "0x9c65050f9bc35de0b25f99643797667ee300aeda", version: "0.1.1" },
         }),
         [Category.RenEx]: OrderedMap({

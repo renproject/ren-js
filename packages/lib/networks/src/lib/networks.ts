@@ -91,7 +91,7 @@ const testnet: NetworkData = {
         }),
         [Category.RenEx]: OrderedMap({
             RenExTokens: { address: "0xedff6e7c072fa0018720734f6d5a4f4dc30f9869", version: "0.1.1" },
-            RenExBalances: { address: "0x003d49e656814afbe525adb03f297842ddc76e89", version: "0.1.0" },
+            RenExBalances: { address: "0x97073d0d654ebb71dd9efd1dfa777c73f56d4021", version: "0.1.0" },
             RenExBrokerVerifier: { address: "0x5bf19a6ea8631bb722ade58e0d2c5813740c88fd", version: "0.1.0" },
             RenExSettlement: { address: "0x68fe2088a321a42de11aba93d32c81c9f20b1abe", version: "0.1.0" },
             RenExAtomicInfo: { address: "0xd5757db061b1add0dcbf6b9dd3849e98eaef408a", version: "0.1.0" },

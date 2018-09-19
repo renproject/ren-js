@@ -2,7 +2,7 @@ import * as React from "react";
 
 import Web3 from "web3";
 
-import { camelCase, lowerCase, snakeCase } from "change-case";
+import { camelCase, lowerCase, snakeCase, title } from "change-case";
 import { OrderedMap } from "immutable";
 import { Link } from "react-router-dom";
 import { Category, CategoryAddresses, NetworkData } from "./networks";
@@ -100,7 +100,7 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
     "infura": "https://${networkData.chain}.infura.io",
     "etherscan": "https://${networkData.chain}.etherscan.io",
     "ethNetwork": "${networkData.chain}",
-    "ethNetworkLabel": "${networkData.chain}",
+    "ethNetworkLabel": "${title(networkData.chain)}",
     "ledgerNetworkId": 42,
     "contracts": [
         {
@@ -113,10 +113,11 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
         }
     ],
     "tokens": {
-        "ABC": "${formatAddress(networkData.addresses.get(Category.Tokens).get("ABC").address)}",
+        "TUSD": "${formatAddress(networkData.addresses.get(Category.Tokens).get("TUSD").address)}",
         "DGX": "${formatAddress(networkData.addresses.get(Category.Tokens).get("DGX").address)}",
         "REN": "${formatAddress(networkData.addresses.get(Category.Tokens).get("REN").address)}",
-        "XYZ": "${formatAddress(networkData.addresses.get(Category.Tokens).get("XYZ").address)}"
+        "OMG": "${formatAddress(networkData.addresses.get(Category.Tokens).get("OMG").address)}"
+        "ZRX": "${formatAddress(networkData.addresses.get(Category.Tokens).get("ZRX").address)}"
     }
 }`}
     </code></pre>;

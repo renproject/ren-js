@@ -34,6 +34,7 @@ const nightly: NetworkData = {
             RenExSettlement: { address: "0x5f25233ca99104d31612d4fb937b090d5a2ebb75", version: "0.1.0" },
             RenExAtomicInfo: { address: "0xe1a660657a32053fe83b19b1177f6b56c6f37b1f", version: "0.1.0" },
             RenExAtomicSwapper: { address: "0x888d1e20e2e94d4d66aa6e80580012c65fc69a78", version: "0.1.0" },
+            Wyre: { address: "0xB14fA2276D8bD26713A6D98871b2d63Da9eefE6f", version: "" },
         }),
         [Category.Tokens]: OrderedMap({
             DGX: { address: "0x092ece29781777604afac04887af30042c3bc5df", version: "" },
@@ -64,6 +65,7 @@ const falcon: NetworkData = {
             RenExSettlement: { address: "0xbe936cb23dd9a84e4d9358810f7f275e93ccd770", version: "" },
             RenExAtomicInfo: { address: "0xafe5539b40b17404e3cb6cf5013fc7dab3c54163", version: "" },
             RenExAtomicSwapper: { address: "0x937a1c31edc9472beab850897eebf24eee857c0d", version: "" },
+            Wyre: { address: "0xB14fA2276D8bD26713A6D98871b2d63Da9eefE6f", version: "" },
         }),
         [Category.Tokens]: OrderedMap({
             DGX: { address: "0xf4faf1b22cee0a024ad6b12bb29ec0e13f5827c2", version: "" },
@@ -94,6 +96,7 @@ const testnet: NetworkData = {
             RenExSettlement: { address: "0x68fe2088a321a42de11aba93d32c81c9f20b1abe", version: "0.1.0" },
             RenExAtomicInfo: { address: "0xd5757db061b1add0dcbf6b9dd3849e98eaef408a", version: "0.1.0" },
             RenExAtomicSwapper: { address: "0xa80c64cc2c3e29b44cab2475f6ead0d523715a4e", version: "0.1.0" },
+            Wyre: { address: "0xB14fA2276D8bD26713A6D98871b2d63Da9eefE6f", version: "" },
         }),
         [Category.Tokens]: OrderedMap({
             DGX: { address: "0x7583d3019b078037b8607487cc4c161e19c50869", version: "" },

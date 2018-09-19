@@ -86,7 +86,8 @@ const swapper: FormatFN = (networkData: NetworkData, nameFormatter: TextTransfor
         "renExAtomicSwapper": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExAtomicSwapper").address)}",
         "renExAtomicInfo": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo").address)}",
         "renExSettlement": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExSettlement").address)}",
-        "orderbook": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExBalances").address)}"
+        "orderbook": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExBalances").address)}",
+        "wyre": "${formatAddress(networkData.addresses.get(Category.RenEx).get("Wyre").address)}"
     }
 }`}
     </code></pre>;
@@ -109,7 +110,8 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
             "renExTokens": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExTokens").address)}",
             "renExBalances": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExBalances").address)}",
             "renExSettlement": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExSettlement").address)}",
-            "renExAtomicInfo": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo").address)}"
+            "renExAtomicInfo": "${formatAddress(networkData.addresses.get(Category.RenEx).get("RenExAtomicInfo").address)}",
+            "wyre": "${formatAddress(networkData.addresses.get(Category.RenEx).get("Wyre").address)}"
         }
     ],
     "tokens": {

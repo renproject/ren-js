@@ -47,7 +47,7 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                                 <Link to={`/source?address=${networkData.addresses[category][contractName].address}`}>ABI</Link>
                             </td>
                             <td>
-                                <a href={`https://kovan.etherscan.io/address/${networkData.addresses[category][contractName].address}#code`}>Code</a>
+                                <a href={`https://${networkData.chain}.etherscan.io/address/${networkData.addresses[category][contractName].address}#code`}>Code</a>
                             </td>
                             <td>
                                 {networkData.addresses[category][contractName].version}

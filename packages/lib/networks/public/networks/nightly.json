@@ -1,0 +1,82 @@
+{
+    "name": "nightly",
+    "chain": "kovan",
+    "addresses": {
+        "republic": {
+            "darknodeRegistryStore": {
+                "address": "0x6a1439576bb1b5ba2615e290618cb292f4d92014",
+                "version": "0.1.0"
+            },
+            "darknodeRegistry": {
+                "address": "0x8a31d477267a5af1bc5142904ef0afa31d326e03",
+                "version": "0.1.0"
+            },
+            "settlementRegistry": {
+                "address": "0x399a70ed71897836468fd74ea19138df90a78d79",
+                "version": "0.1.0"
+            },
+            "orderbook": {
+                "address": "0x376127adc18260fc238ebfb6626b2f4b59ec9b66",
+                "version": "0.1.0"
+            },
+            "darknodeRewardVault": {
+                "address": "0xda43560f5fe6c6b5e062c06fee0f6fbc71bbf18a",
+                "version": "0.1.0"
+            },
+            "darknodeSlasher": {
+                "address": "0x38458ef4a185455cba57a7594b0143c53ad057c1",
+                "version": "0.1.0"
+            }
+        },
+        "renEx": {
+            "renExTokens": {
+                "address": "0x160eca47935be4139ec5b94d99b678d6f7e18f95",
+                "version": "0.1.0"
+            },
+            "renExBrokerVerifier": {
+                "address": "0xcf2f6b4b698cd6a6b3eb1d874a939742d15f8e7e",
+                "version": "0.1.0"
+            },
+            "renExBalances": {
+                "address": "0xa95de870ddfb6188519d5cc63ced5e0fbac1aa8e",
+                "version": "0.1.0"
+            },
+            "renExSettlement": {
+                "address": "0x5f25233ca99104d31612d4fb937b090d5a2ebb75",
+                "version": "0.1.0"
+            },
+            "renExAtomicSwapper": {
+                "address": "0x888d1e20e2e94d4d66aa6e80580012c65fc69a78",
+                "version": "0.1.0"
+            }
+        },
+        "tokens": {
+            "DGX": {
+                "address": "0x092ece29781777604afac04887af30042c3bc5df",
+                "version": ""
+            },
+            "REN": {
+                "address": "0x15f692d6b9ba8cec643c7d16909e8acdec431bf6",
+                "version": ""
+            },
+            "TUSD": {
+                "address": "0x49fa7a3b9705fa8deb135b7ba64c2ab00ab915a1",
+                "version": ""
+            },
+            "OMG": {
+                "address": "0x6662449d05312afe0ca147db6eb155641077883f",
+                "version": ""
+            },
+            "ZRX": {
+                "address": "0x0000000000000000000000000000000000000000",
+                "version": ""
+            }
+        },
+        "other": {
+            "wyre": {
+                "address": "0xB14fA2276D8bD26713A6D98871b2d63Da9eefE6f",
+                "version": ""
+            }
+        }
+    }
+}

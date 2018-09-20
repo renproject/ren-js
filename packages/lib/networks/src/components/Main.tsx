@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { Case, caseFn, Format, formatFn } from "../lib/layouts";
-import { NetworkData, networks } from "../lib/networks";
+import { NetworkData } from "../lib/networks";
 import Network from "./Network";
 
 interface MainState {
@@ -10,6 +10,7 @@ interface MainState {
 }
 
 interface MainProps {
+    networks: NetworkData[];
 }
 
 class Main extends React.Component<MainProps, MainState> {
@@ -17,11 +18,13 @@ class Main extends React.Component<MainProps, MainState> {
         super(props);
         this.state = {
             format: Format.TABLE,
-            nameCase: Case.DEFAULT_CASE,
+            nameCase: Case.TITLE_CASE,
         };
     }
     public render() {
         const { format, nameCase } = this.state;
+        const { networks } = this.props;
+        console.log(networks);
 
         return (
             <div className="Main">
@@ -43,7 +46,7 @@ class Main extends React.Component<MainProps, MainState> {
                             ).toArray()}
                         </tr>
                     </table>
-                    {format === Format.JSON ?
+                    {/* {format === Format.JSON ?
                         <table>
                             Case
                                 < tr >
@@ -60,12 +63,12 @@ class Main extends React.Component<MainProps, MainState> {
                                     )
                                 }
                             </tr></table> : null
-                    }
+                    } */}
                 </div>
                 {networks.map((network: NetworkData) =>
                     <Network
                         key={network.name}
-                        nameCase={format === Format.JSON ? caseFn.get(nameCase) : caseFn.get(Case.DEFAULT_CASE)}
+                        nameCase={caseFn.get(nameCase)}
                         format={formatFn.get(format)}
                         networkData={network}
                     />)

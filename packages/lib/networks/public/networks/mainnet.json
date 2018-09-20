@@ -1,0 +1,86 @@
+{
+    "name": "mainnet",
+    "chain": "mainnet",
+    "addresses": {
+        "republic": {
+            "republicToken": {
+                "address": "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
+                "version": ""
+            },
+            "darknodeRegistryStore": {
+                "address": "0xac23817f7e9ec7eb6b7889bdd2b50e04a44470c5",
+                "version": "1.0.0"
+            },
+            "darknodeRegistry": {
+                "address": "0x3799006a87fde3ccfc7666b3e6553b03ed341c2f",
+                "version": "1.0.0"
+            },
+            "settlementRegistry": {
+                "address": "0x119da7a8500ade0766f758d934808179dc551036",
+                "version": "1.0.0"
+            },
+            "orderbook": {
+                "address": "0x6b8bb175c092de7d81860b18db360b734a2598e0",
+                "version": "1.0.0"
+            },
+            "darknodeRewardVault": {
+                "address": "0x880407c9cd119bef48b1821cdfc434e3ca3cd588",
+                "version": "1.0.0"
+            },
+            "darknodeSlasher": {
+                "address": "0x04ed8f5730dd4d2b2064cdb6a5bffc26a72962f2",
+                "version": "1.0.0"
+            }
+        },
+        "renEx": {
+            "renExTokens": {
+                "address": "0x7cade4fbc8761817bb62a080733d1b6cad744ec4",
+                "version": "1.0.0"
+            },
+            "renExBrokerVerifier": {
+                "address": "0x31a0d1a199631d244761eeba67e8501296d2e383",
+                "version": "1.0.0"
+            },
+            "renExBalances": {
+                "address": "0x9636f9ac371ca0965b7c2b4ad13c4cc64d0ff2dc",
+                "version": "1.0.0"
+            },
+            "renExSettlement": {
+                "address": "0x908262de0366e42d029b0518d5276762c92b21e1",
+                "version": "1.0.0"
+            },
+            "renExAtomicSwapper": {
+                "address": "0xc3fed6eb39178a541d274e6fc748d48f0ca01cc3",
+                "version": "1.0.0"
+            }
+        },
+        "tokens": {
+            "DGX": {
+                "address": "0x4f3AfEC4E5a3F2A6a1A411DEF7D7dFe50eE057bF",
+                "version": ""
+            },
+            "TUSD": {
+                "address": "0x8dd5fbCe2F6a956C3022bA3663759011Dd51e73E",
+                "version": ""
+            },
+            "REN": {
+                "address": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "version": ""
+            },
+            "ZRX": {
+                "address": "0xE41d2489571d322189246DaFA5ebDe1F4699F498",
+                "version": ""
+            },
+            "OMG": {
+                "address": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07",
+                "version": ""
+            }
+        },
+        "other": {
+            "wyre": {
+                "address": "0xB14fA2276D8bD26713A6D98871b2d63Da9eefE6f",
+                "version": ""
+            }
+        }
+    }
+}

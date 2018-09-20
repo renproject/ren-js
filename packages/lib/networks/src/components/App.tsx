@@ -4,10 +4,14 @@ import axios from "axios";
 
 import { HashRouter, Route } from "react-router-dom";
 
+import Loading from "./Loading";
 import Main from "./Main";
+import Source from "./Source";
+
+import { NetworkData } from "../lib/networks";
 
 import "../styles/App.css";
-import Source from "./Source";
+
 
 const commitHash = require("../commitHash.json");
 
@@ -17,6 +21,7 @@ interface AppProps {
 
 interface AppState {
     outOfDate: boolean;
+    networks: NetworkData[] | null;
 }
 
 class App extends React.Component<AppProps, AppState> {
@@ -24,10 +29,17 @@ class App extends React.Component<AppProps, AppState> {
         super(props);
         this.state = {
             outOfDate: false,
+            networks: null,
         };
     }
 
     public async componentDidMount() {
+
+        const mainnet = (await axios.get(`./networks/mainnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
+        const testnet = (await axios.get(`./networks/testnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
+        const nightly = (await axios.get(`./networks/nightly.json?v=${Math.random().toString(36).substring(7)}`)).data;
+        this.setState({ networks: [mainnet, testnet, nightly] });
+
         let using;
         let latest;
         try {
@@ -43,15 +55,16 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     public render() {
-        const { outOfDate } = this.state;
+        const { outOfDate, networks } = this.state;
         return (
             <HashRouter>
                 <>
-                    <Route path="/source" component={Source} />
-                    <div className="App">
+                    <Route path="/source" component={Source} networks={networks} />
+                    {networks && networks.length > 0 ? <div className="App">
                         {outOfDate ? <OutOfDate /> : null}
-                        <Route path="/" exact component={Main} />
-                    </div>
+                        {/* tslint:disable-next-line:jsx-no-lambda */}
+                        <Route path="/" exact render={() => <Main networks={networks} />} />
+                    </div> : <Loading />}
                 </>
             </HashRouter>
         );

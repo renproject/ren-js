@@ -9,6 +9,7 @@ pre {
 }
 
 .App {
+    min-height: 100vh;
     background-color: #f3f3f3;
     color: #333;
     position: absolute;
@@ -86,3 +87,41 @@ th {
     text-align: left;
     font-size: 13px;
 }
+
+td.borderless {
+    border: 0;
+    background: white;
+}
+
+
+
+
+/* Loading.tsx */
+
+.lds-dual-ring:after {
+    content: ' ';
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0 auto;
+    border-radius: 50%;
+    border: 2px solid;
+    border-color: black transparent black transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+}
+
+.loading.alt.lds-dual-ring:after {
+    border-color: white transparent white transparent;
+}
+
+@keyframes lds-dual-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* *********** */

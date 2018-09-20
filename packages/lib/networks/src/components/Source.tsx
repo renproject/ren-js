@@ -31,7 +31,7 @@ class Source extends React.Component<SourceProps, SourceState> {
     public async componentDidMount() {
         const address = qs.parse(this.props.location.search).address;
 
-        const URL = `https://api-mainnet.etherscan.io/api?module=contract&action=getsourcecode&address=${address}`;
+        const URL = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}`;
 
         const result = (await axios.get(URL)).data.result[0];
 

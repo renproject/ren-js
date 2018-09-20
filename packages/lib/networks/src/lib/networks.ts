@@ -41,6 +41,8 @@ export interface NetworkAddresses {
 export interface NetworkData {
     name: string;
     chain: string;
+    infura: string;
+    etherscan: string;
     addresses: NetworkAddresses;
 }
 

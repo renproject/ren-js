@@ -1,6 +1,8 @@
 {
     "name": "mainnet",
     "chain": "mainnet",
+    "infura": "https://mainnet.infura.io",
+    "etherscan": "https://etherscan.io",
     "addresses": {
         "republic": {
             "republicToken": {

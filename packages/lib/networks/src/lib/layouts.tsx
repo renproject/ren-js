@@ -47,7 +47,7 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                                 <Link to={`/source?address=${networkData.addresses[category][contractName].address}`}>ABI</Link>
                             </td>
                             <td>
-                                <a href={`https://${networkData.chain}.etherscan.io/address/${networkData.addresses[category][contractName].address}#code`}>Code</a>
+                                <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}#code`}>Code</a>
                             </td>
                             <td>
                                 {networkData.addresses[category][contractName].version}
@@ -74,7 +74,7 @@ const swapper: FormatFN = (networkData: NetworkData, nameFormatter: TextTransfor
     "network": "${networkData.name}",
     "ethereum": {
         "network": "kovan",
-        "url": "https://kovan.infura.io",
+        "url": "${networkData.infura}",
         "renExAtomicSwapper": "${formatAddress(networkData.addresses[Category.RenEx].renExAtomicSwapper.address)}",
         "renExSettlement": "${formatAddress(networkData.addresses[Category.RenEx].renExSettlement.address)}",
         "orderbook": "${formatAddress(networkData.addresses[Category.RenEx].renExBalances.address)}",
@@ -89,8 +89,8 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
     return <pre><code>{`{
     "network": "${networkData.name}",
     "ingress": "https://renex-ingress-${networkData.name}.herokuapp.com",
-    "infura": "https://${networkData.chain}.infura.io",
-    "etherscan": "https://${networkData.chain}.etherscan.io",
+    "infura": "${networkData.infura}",
+    "etherscan": "${networkData.etherscan}",
     "ethNetwork": "${networkData.chain}",
     "ethNetworkLabel": "${titleCase(networkData.chain)}",
     "ledgerNetworkId": 42,

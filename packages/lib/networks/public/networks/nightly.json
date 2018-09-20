@@ -1,6 +1,8 @@
 {
     "name": "nightly",
     "chain": "kovan",
+    "infura": "https://kovan.infura.io",
+    "etherscan": "https://kovan.etherscan.io",
     "addresses": {
         "republic": {
             "darknodeRegistryStore": {

@@ -108,7 +108,7 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
         "TUSD": "${formatAddress(networkData.addresses[Category.Tokens].TUSD.address)}",
         "DGX": "${formatAddress(networkData.addresses[Category.Tokens].DGX.address)}",
         "REN": "${formatAddress(networkData.addresses[Category.Tokens].REN.address)}",
-        "OMG": "${formatAddress(networkData.addresses[Category.Tokens].OMG.address)}"
+        "OMG": "${formatAddress(networkData.addresses[Category.Tokens].OMG.address)}",
         "ZRX": "${formatAddress(networkData.addresses[Category.Tokens].ZRX.address)}"
     }
 }`}

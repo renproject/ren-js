@@ -8,9 +8,11 @@ An index of Republic/RenEx contract addresses.
 
 Make the required modifications.
 
-Update `./public/commitHash.json`.
+Update `./public/commitHash.json` with the hash of the previous commit.
 
 Commit and push the changes to `origin/master`.
+
+Run `npm install`.
 
 Run `npm run deploy`.
 

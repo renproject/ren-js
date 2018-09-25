@@ -44,8 +44,8 @@
                 "version": "1.0.0"
             },
             "renExBalances": {
-                "address": "0x9636f9ac371ca0965b7c2b4ad13c4cc64d0ff2dc",
-                "version": "1.0.0"
+                "address": "0x5ec18b477b20af940807b5478db5a64cd4a77efd",
+                "version": "1.0.1"
             },
             "renExSettlement": {
                 "address": "0x908262de0366e42d029b0518d5276762c92b21e1",

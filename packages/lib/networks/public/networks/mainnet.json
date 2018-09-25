@@ -1,6 +1,6 @@
 {
     "name": "mainnet",
-    "chain": "mainnet",
+    "chain": "main",
     "infura": "https://mainnet.infura.io",
     "etherscan": "https://etherscan.io",
     "addresses": {

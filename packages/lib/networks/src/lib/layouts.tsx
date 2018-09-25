@@ -94,16 +94,14 @@ export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) 
     "ethNetwork": "${networkData.chain}",
     "ethNetworkLabel": "${titleCase(networkData.chain)}",
     "ledgerNetworkId": 42,
-    "contracts": [
-        {
+    "contracts": [{
             "darknodeRegistry": "${formatAddress(networkData.addresses[Category.Republic].darknodeRegistry.address)}",
             "orderbook": "${formatAddress(networkData.addresses[Category.Republic].orderbook.address)}",
             "renExTokens": "${formatAddress(networkData.addresses[Category.RenEx].renExTokens.address)}",
             "renExBalances": "${formatAddress(networkData.addresses[Category.RenEx].renExBalances.address)}",
             "renExSettlement": "${formatAddress(networkData.addresses[Category.RenEx].renExSettlement.address)}",
             "wyre": "${formatAddress(networkData.addresses[Category.Other].wyre.address)}"
-        }
-    ],
+    }],
     "tokens": {
         "TUSD": "${formatAddress(networkData.addresses[Category.Tokens].TUSD.address)}",
         "DGX": "${formatAddress(networkData.addresses[Category.Tokens].DGX.address)}",

@@ -44,7 +44,7 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                                 {formatAddress(networkData.addresses[category][contractName].address)}
                             </td>
                             <td>
-                                <Link to={`/source?address=${networkData.addresses[category][contractName].address}`}>ABI</Link>
+                                <Link to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>ABI</Link>
                             </td>
                             <td>
                                 <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}#code`}>Code</a>

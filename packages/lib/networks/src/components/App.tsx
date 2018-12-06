@@ -37,8 +37,7 @@ class App extends React.Component<AppProps, AppState> {
 
         const mainnet = (await axios.get(`./networks/mainnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
         const testnet = (await axios.get(`./networks/testnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        const nightly = (await axios.get(`./networks/nightly.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        this.setState({ networks: [mainnet, testnet, nightly] });
+        this.setState({ networks: [mainnet, testnet] });
 
         let using;
         let latest;

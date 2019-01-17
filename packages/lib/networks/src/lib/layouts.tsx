@@ -38,10 +38,10 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                     {Object.keys(networkData.addresses[category]).map((contractName: string) =>
                         <tr key={contractName}>
                             <td>
-                                {nameFormatter(contractName)}
+                                {category === "tokens" ? nameFormatter(contractName).toUpperCase() : nameFormatter(contractName)}
                             </td>
                             <td className="monospace">
-                                {formatAddress(networkData.addresses[category][contractName].address)}
+                                {formatAddress(networkData.addresses[category][contractName].address)} {networkData.addresses[category][contractName].new === true ? <span style={{ color: "#191" }} title="Updated recently">●</span> : <></>}
                             </td>
                             <td>
                                 <Link to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>ABI</Link>

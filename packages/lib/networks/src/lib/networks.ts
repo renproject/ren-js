@@ -8,6 +8,7 @@ export enum Category {
 export interface ContractDetails {
     address: string;
     version: string;
+    new?: true;
 }
 
 export interface NetworkAddresses {

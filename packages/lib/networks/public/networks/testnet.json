@@ -7,11 +7,13 @@
         "republic": {
             "darknodeRegistryStore": {
                 "address": "0x06dF0657ba5E8F5339e742212669F6E7EE3c5057",
-                "version": "1.0.3"
+                "version": "1.0.3",
+                "new": true
             },
             "darknodeRegistry": {
                 "address": "0x34bd421C7948Bc16f826Fd99f9B785929b121633",
-                "version": "1.0.3"
+                "version": "1.0.3",
+                "new": true
             },
             "settlementRegistry": {
                 "address": "0x6fd909d27fade71f475fff50d0274939a5e4fa97",
@@ -45,7 +47,8 @@
             },
             "renExSettlement": {
                 "address": "0xC7C9EC3299Df21c22A076Fd896F2df5a8fc79cB3",
-                "version": "1.0.3"
+                "version": "1.0.3",
+                "new": true
             },
             "renExAtomicSwapper": {
                 "address": "0xe813e4f1ace934270c7b1f4d1e5f39701282a080",

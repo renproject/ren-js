@@ -20,12 +20,13 @@
     "websocket": "^1.0.28"
   },
   "scripts": {
-    "start": "react-scripts-ts start",
-    "build": "react-scripts-ts build",
-    "test": "react-scripts-ts test --env=jsdom",
-    "eject": "react-scripts-ts eject",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
+    "start": "npm run hash && react-scripts-ts start",
+    "build": "npm run hash && react-scripts-ts build",
+    "test": "npm run hash && react-scripts-ts test --env=jsdom",
+    "eject": "npm run hash && react-scripts-ts eject",
+    "predeploy": "npm run hash && npm run build",
+    "deploy": "npm run hash && gh-pages -d build"
   },
   "devDependencies": {
     "@types/jest": "^23.3.1",

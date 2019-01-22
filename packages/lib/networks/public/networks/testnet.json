@@ -55,8 +55,9 @@
         },
         "tokens": {
             "DGX": {
-                "address": "0x932f4580b261e9781a6c3c102133c8fdd4503dfc",
-                "version": ""
+                "address": "0x7d6D31326b12B6CBd7f054231D47CbcD16082b71",
+                "version": "",
+		"new": true
             },
             "REN": {
                 "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",

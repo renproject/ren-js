@@ -6,14 +6,12 @@
     "addresses": {
         "republic": {
             "darknodeRegistryStore": {
-                "address": "0x06dF0657ba5E8F5339e742212669F6E7EE3c5057",
-                "version": "1.0.3",
-                "new": true
+                "address": "0x7ff567d85416f2cf75ff3116c43a4272d0ddead0",
+                "version": "1.0.2"
             },
             "darknodeRegistry": {
-                "address": "0x34bd421C7948Bc16f826Fd99f9B785929b121633",
-                "version": "1.0.3",
-                "new": true
+                "address": "0x0x75fa8349fc9c7c640a4e9f1a1496fbb95d2dc3d5",
+                "version": "1.0.2"
             },
             "settlementRegistry": {
                 "address": "0x6fd909d27fade71f475fff50d0274939a5e4fa97",

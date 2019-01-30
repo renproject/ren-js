@@ -50,8 +50,9 @@
                 "version": "1.0.1"
             },
             "renExSettlement": {
-                "address": "0x908262de0366e42d029b0518d5276762c92b21e1",
-                "version": "1.0.0"
+                "address": "0x70bfE40F98C06A0ad60759bE8C4B1ECf0c354BAF",
+                "version": "1.0.2",
+		"new": true
             },
             "renExAtomicSwapper": {
                 "address": "0xd5fAEF6b5eE44391FFaa42d732c88b86C73ed287",

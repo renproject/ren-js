@@ -4,13 +4,13 @@
     "infura": "https://kovan.infura.io",
     "etherscan": "https://kovan.etherscan.io",
     "addresses": {
-        "republic": {
+        "ren": {
             "darknodeRegistryStore": {
-                "address": "0x7ff567d85416f2cf75ff3116c43a4272d0ddead0",
+                "address": "0x88e4477e4fdd677aee2dc9376471d45c198669fa",
                 "version": "1.0.2"
             },
             "darknodeRegistry": {
-                "address": "0x75fa8349fc9c7c640a4e9f1a1496fbb95d2dc3d5",
+                "address": "0x1C6309618338D0EDf9a7Ea8eA18E060fD323020D",
                 "version": "1.0.2"
             },
             "settlementRegistry": {
@@ -26,38 +26,36 @@
                 "version": "1.0.2"
             },
             "darknodeSlasher": {
-                "address": "0x1a3abb4ffda92894a5f1637913c031a4621af9c0",
-                "version": "1.0.2"
-            }
-        },
-        "renEx": {
-            "renExTokens": {
-                "address": "0x481b39e2000a117cba417473dc1e7cdaf4ead98f",
+                "address": "0x0000000000000000000000000000000000000000",
                 "version": "1.0.2"
             },
-            "renExBalances": {
-                "address": "0xb0e21b869d6f741a8a8f5075ba59e496593b881a",
+            "darknodePayment": {
+                "address": "0x05c2F7a859A957BF23438DEBC7C5D4fAC8583995",
                 "version": "1.0.2"
             },
-            "renExBrokerVerifier": {
-                "address": "0x60fd65ab8db0edec2fc4df254888232e30416f7f",
-                "version": "1.0.2"
-            },
-            "renExSettlement": {
-                "address": "0xC7C9EC3299Df21c22A076Fd896F2df5a8fc79cB3",
-                "version": "1.0.3",
-                "new": true
-            },
-            "renExAtomicSwapper": {
-                "address": "0xe813e4f1ace934270c7b1f4d1e5f39701282a080",
+            "darknodePaymentStore": {
+                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
                 "version": "1.0.2"
             }
         },
         "tokens": {
+            "DAI": {
+                "address": "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
+                "version": ""
+            },
+            "SBTC": {
+                "address": "0x2a8368d2a983a0aeae8da0ebc5b7c03a0ea66b37",
+                "version": ""
+            },
+            "SZEC": {
+                "address": "0xd67256552f93b39ac30083b4b679718a061feae6",
+                "version": ""
+            }
+        },
+        "oldTokens": {
             "DGX": {
                 "address": "0x7d6D31326b12B6CBd7f054231D47CbcD16082b71",
-                "version": "",
-		"new": true
+                "version": ""
             },
             "REN": {
                 "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
@@ -73,12 +71,6 @@
             },
             "OMG": {
                 "address": "0x66497ba75dd127b46316d806c077b06395918064",
-                "version": ""
-            }
-        },
-        "other": {
-            "wyre": {
-                "address": "0xB14fA2276D8bD26713A6D98871b2d63Da9eefE6f",
                 "version": ""
             }
         }

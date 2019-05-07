@@ -2,10 +2,10 @@ import * as React from "react";
 
 import Web3 from "web3";
 
-import { camelCase, pascalCase, snakeCase, titleCase } from "change-case";
+import { camelCase, pascalCase, snakeCase } from "change-case";
 import { OrderedMap } from "immutable";
 import { Link } from "react-router-dom";
-import { Category, NetworkData } from "./networks";
+import { NetworkData } from "./networks";
 
 export type TextTransform = (name: string) => string;
 
@@ -38,7 +38,7 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                     {Object.keys(networkData.addresses[category]).map((contractName: string) =>
                         <tr key={contractName}>
                             <td>
-                                {category === "tokens" ? nameFormatter(contractName).toUpperCase() : nameFormatter(contractName)}
+                                {category.match("[Tt]okens") ? nameFormatter(contractName).toUpperCase() : nameFormatter(contractName)}
                             </td>
                             <td className="monospace">
                                 {formatAddress(networkData.addresses[category][contractName].address)} {networkData.addresses[category][contractName].new === true ? <span style={{ color: "#191" }} title="Updated recently">●</span> : <></>}
@@ -69,60 +69,12 @@ const json: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) 
     </>;
 };
 
-const swapper: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) => {
-    return <pre><code>{`{
-    "network": "${networkData.name}",
-    "ethereum": {
-        "network": "kovan",
-        "url": "${networkData.infura}",
-        "renExAtomicSwapper": "${formatAddress(networkData.addresses[Category.RenEx].renExAtomicSwapper.address)}",
-        "renExSettlement": "${formatAddress(networkData.addresses[Category.RenEx].renExSettlement.address)}",
-        "orderbook": "${formatAddress(networkData.addresses[Category.RenEx].renExBalances.address)}",
-        "wyre": "${formatAddress(networkData.addresses[Category.Other].wyre.address)}"
-    }
-}`}
-    </code></pre>;
-};
-
-
-export function renexGo(networkData: NetworkData, nameFormatter: TextTransform) {
-    return <pre><code>{`{
-    "network": "${networkData.name}",
-    "ingress": "https://renex-ingress-${networkData.name}.herokuapp.com",
-    "infura": "${networkData.infura}",
-    "etherscan": "${networkData.etherscan}",
-    "ethNetwork": "${networkData.chain}",
-    "ethNetworkLabel": "${titleCase(networkData.chain)}",
-    "ledgerNetworkId": 42,
-    "contracts": [{
-            "darknodeRegistry": "${formatAddress(networkData.addresses[Category.Republic].darknodeRegistry.address)}",
-            "orderbook": "${formatAddress(networkData.addresses[Category.Republic].orderbook.address)}",
-            "renExTokens": "${formatAddress(networkData.addresses[Category.RenEx].renExTokens.address)}",
-            "renExBalances": "${formatAddress(networkData.addresses[Category.RenEx].renExBalances.address)}",
-            "renExSettlement": "${formatAddress(networkData.addresses[Category.RenEx].renExSettlement.address)}",
-            "wyre": "${formatAddress(networkData.addresses[Category.Other].wyre.address)}"
-    }],
-    "tokens": {
-        "TUSD": "${formatAddress(networkData.addresses[Category.Tokens].TUSD.address)}",
-        "DGX": "${formatAddress(networkData.addresses[Category.Tokens].DGX.address)}",
-        "REN": "${formatAddress(networkData.addresses[Category.Tokens].REN.address)}",
-        "OMG": "${formatAddress(networkData.addresses[Category.Tokens].OMG.address)}",
-        "ZRX": "${formatAddress(networkData.addresses[Category.Tokens].ZRX.address)}"
-    }
-}`}
-    </code></pre>;
-}
-
 export enum Format {
     TABLE = "Table",
     JSON = "JSON",
-    SWAPPER = "Swapper",
-    RENEX_GO = "renex-go",
 }
 
 export const formatFn = OrderedMap<string, FormatFN>({
     [Format.TABLE]: table,
     [Format.JSON]: json,
-    [Format.SWAPPER]: swapper,
-    [Format.RENEX_GO]: renexGo,
 });

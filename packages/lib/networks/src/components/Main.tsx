@@ -30,7 +30,7 @@ class Main extends React.Component<MainProps, MainState> {
             <div className="Main">
                 <div className="network controls">
                     <h1>Contract Index</h1>
-                    Version 0.1.1 (a)
+                    Version 0.2.0
                     <table>
                         Format
                         <tr>

@@ -11,40 +11,12 @@ export interface ContractDetails {
     new?: true;
 }
 
-export interface NetworkAddresses {
-    [Category.Republic]: {
-        darknodeRegistryStore: ContractDetails;
-        darknodeRegistry: ContractDetails;
-        settlementRegistry: ContractDetails;
-        orderbook: ContractDetails;
-        darknodeRewardVault: ContractDetails;
-        darknodeSlasher: ContractDetails;
-    };
-    [Category.RenEx]: {
-        renExTokens: ContractDetails;
-        renExBrokerVerifier: ContractDetails;
-        renExBalances: ContractDetails;
-        renExSettlement: ContractDetails;
-        renExAtomicSwapper: ContractDetails;
-    };
-    [Category.Tokens]: {
-        DGX: ContractDetails;
-        REN: ContractDetails;
-        TUSD: ContractDetails;
-        OMG: ContractDetails;
-        ZRX: ContractDetails;
-    };
-    [Category.Other]: {
-        wyre: ContractDetails;
-    };
-}
-
 export interface NetworkData {
     name: string;
     chain: string;
     infura: string;
     etherscan: string;
-    addresses: NetworkAddresses;
+    addresses: any;
 }
 
 // const falcon: NetworkData = {

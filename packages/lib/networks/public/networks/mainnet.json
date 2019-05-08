@@ -30,33 +30,25 @@
                 "version": "1.0.0"
             },
             "darknodeSlasher": {
-                "address": "0x04ed8f5730dd4d2b2064cdb6a5bffc26a72962f2",
-                "version": "1.0.0"
-            }
-        },
-        "renEx": {
-            "renExTokens": {
-                "address": "0x7cade4fbc8761817bb62a080733d1b6cad744ec4",
-                "version": "1.0.0"
+                "address": "0x0000000000000000000000000000000000000000",
+                "version": "0"
             },
-            "renExBrokerVerifier": {
-                "address": "0x31a0d1a199631d244761eeba67e8501296d2e383",
-                "version": "1.0.0"
-            },
-            "renExBalances": {
-                "address": "0x5ec18b477b20af940807b5478db5a64cd4a77efd",
-                "version": "1.0.1"
-            },
-            "renExSettlement": {
-                "address": "0x70bfE40F98C06A0ad60759bE8C4B1ECf0c354BAF",
+            "darknodePayment": {
+                "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e",
                 "version": "1.0.2"
             },
-            "renExAtomicSwapper": {
-                "address": "0xd5fAEF6b5eE44391FFaa42d732c88b86C73ed287",
-                "version": "1.0.1"
+            "darknodePaymentStore": {
+                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
+                "version": "1.0.2"
             }
         },
         "tokens": {
+            "DAI": {
+                "address": "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359",
+                "version": ""
+            }
+        },
+        "oldTokens": {
             "DGX": {
                 "address": "0x4f3AfEC4E5a3F2A6a1A411DEF7D7dFe50eE057bF",
                 "version": ""
@@ -75,12 +67,6 @@
             },
             "OMG": {
                 "address": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07",
-                "version": ""
-            }
-        },
-        "other": {
-            "wyre": {
-                "address": "0x9f2a7b5e6280727cd6c8486f5f96e5f76164f2df",
                 "version": ""
             }
         }

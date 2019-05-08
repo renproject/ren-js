@@ -31,11 +31,13 @@
             },
             "darknodePayment": {
                 "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e",
-                "version": "1.0.2"
+                "version": "1.0.2",
+                "new": true
             },
             "darknodePaymentStore": {
                 "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
-                "version": "1.0.2"
+                "version": "1.0.2",
+                "new": true
             }
         },
         "tokens": {

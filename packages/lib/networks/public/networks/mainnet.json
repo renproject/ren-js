@@ -34,12 +34,14 @@
                 "version": "0"
             },
             "darknodePayment": {
-                "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e",
-                "version": "1.0.2"
+                "address": "0x5a7802E66b067cB1770ee5b1165AA201690A8B6a",
+                "version": "1.0.2",
+                "new": true
             },
             "darknodePaymentStore": {
-                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
-                "version": "1.0.2"
+                "address": "0x731Ea4Ba77fF184d89dBeB160A0078274Acbe9D2",
+                "version": "1.0.2",
+                "new": true
             }
         },
         "tokens": {

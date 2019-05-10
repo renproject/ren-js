@@ -56,6 +56,14 @@
             "ZEC": {
                 "address": "0x18344Da571edfa6c3E37C2c4ec93B93F70692B14",
                 "version": ""
+            },
+            "REN": {
+                "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
+                "version": ""
+            },
+            "ETH": {
+                "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                "version": ""
             }
         },
         "oldTokens": {

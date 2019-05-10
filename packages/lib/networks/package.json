@@ -1,9 +1,22 @@
 {
   "name": "contract-index",
   "version": "0.1.0",
-  "private": true,
   "homepage": "https://republicprotocol.github.io/contract-index",
-  "dependencies": {
+  "main": "./lib.js",
+  "files": [
+    "public/networks"
+  ],
+  "dependencies": {},
+  "scripts": {
+    "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
+    "start": "npm run hash && react-scripts-ts start",
+    "build": "npm run hash && react-scripts-ts build",
+    "test": "npm run hash && react-scripts-ts test --env=jsdom",
+    "eject": "npm run hash && react-scripts-ts eject",
+    "predeploy": "npm run hash && npm run build",
+    "deploy": "npm run hash && gh-pages -d build"
+  },
+  "devDependencies": {
     "@types/query-string": "^6.1.0",
     "@types/react-router-dom": "^4.3.0",
     "@types/underscore": "^1.8.9",
@@ -17,18 +30,7 @@
     "react-router-dom": "^4.3.1",
     "react-scripts-ts": "2.17.0",
     "web3": "^1.0.0-beta.35",
-    "websocket": "^1.0.28"
-  },
-  "scripts": {
-    "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
-    "start": "npm run hash && react-scripts-ts start",
-    "build": "npm run hash && react-scripts-ts build",
-    "test": "npm run hash && react-scripts-ts test --env=jsdom",
-    "eject": "npm run hash && react-scripts-ts eject",
-    "predeploy": "npm run hash && npm run build",
-    "deploy": "npm run hash && gh-pages -d build"
-  },
-  "devDependencies": {
+    "websocket": "^1.0.28",
     "@types/jest": "^23.3.1",
     "@types/node": "^10.7.1",
     "@types/react": "^16.4.11",

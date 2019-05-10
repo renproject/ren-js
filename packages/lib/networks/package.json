@@ -5,7 +5,7 @@
   "main": "./lib.js",
   "files": [
     "public/networks",
-    "./lib.js"
+    "lib.js"
   ],
   "dependencies": {},
   "scripts": {

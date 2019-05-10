@@ -1,6 +1,6 @@
 {
   "name": "@renex/contracts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://republicprotocol.github.io/contract-index",
   "main": "./lib.js",
   "files": [

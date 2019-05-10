@@ -4,7 +4,8 @@
   "homepage": "https://republicprotocol.github.io/contract-index",
   "main": "./lib.js",
   "files": [
-    "public/networks"
+    "public/networks",
+    "./lib.js"
   ],
   "dependencies": {},
   "scripts": {

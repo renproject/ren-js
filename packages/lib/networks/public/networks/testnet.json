@@ -47,23 +47,28 @@
         "tokens": {
             "DAI": {
                 "address": "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
-                "version": ""
+                "version": "",
+                "decimals": 18
             },
             "BTC": {
                 "address": "0xFd44199b94EA4398aEa3dD5E1014e550D4cC5b9B",
-                "version": ""
+                "version": "",
+                "decimals": 8
             },
             "ZEC": {
                 "address": "0x18344Da571edfa6c3E37C2c4ec93B93F70692B14",
-                "version": ""
+                "version": "",
+                "decimals": 8
             },
             "REN": {
                 "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
-                "version": ""
+                "version": "",
+                "decimals": 18
             },
             "ETH": {
                 "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                "version": ""
+                "version": "",
+                "decimals": 18
             }
         },
         "oldTokens": {

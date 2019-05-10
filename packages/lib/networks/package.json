@@ -5,7 +5,8 @@
   "main": "./lib.js",
   "files": [
     "public/networks",
-    "lib.js"
+    "lib.js",
+    "lib.d.ts"
   ],
   "dependencies": {},
   "scripts": {
@@ -15,7 +16,8 @@
     "test": "npm run hash && react-scripts-ts test --env=jsdom",
     "eject": "npm run hash && react-scripts-ts eject",
     "predeploy": "npm run hash && npm run build",
-    "deploy": "npm run hash && gh-pages -d build"
+    "deploy": "npm run hash && gh-pages -d build",
+    "prepublish": "tsc -d --resolveJsonModule lib.ts"
   },
   "devDependencies": {
     "@types/query-string": "^6.1.0",
@@ -36,6 +38,6 @@
     "@types/node": "^10.7.1",
     "@types/react": "^16.4.11",
     "@types/react-dom": "^16.0.7",
-    "typescript": "^3.0.1"
+    "typescript": "^3.1.4"
   }
 }

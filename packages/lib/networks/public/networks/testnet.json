@@ -38,57 +38,57 @@
                 "version": "1.0.2"
             },
             "renShift": {
-                "address": "0x2f9eeB0d1bD2734083d241a3314451Fc5118fb3F",
+                "address": "0x981A342073215904C5069CD64204898501689E0f",
                 "version": ""
             },
             "renEx": {
-                "address": "0x1fE0d05D897Da97D7511964A653c78aa89ce31A8",
+                "address": "0x2C32492A7542EAb706092c49d35F53228b4b78A5",
                 "version": ""
             },
             "renShiftAdapter": {
-                "address": "0xe97b1BB1ec5CC5C25431e3b59Ace79cbF6AF95c0",
+                "address": "0x296A2c9f8E68Cf2c45A116198E009Dfb7A11931d",
                 "version": ""
             }
         },
         "reserves": {
             "BTC/ZEC": {
-                "address": "0xA0d84AefbF54bBE857Eb0AF3f657f08f36EB2130",
+                "address": "0x5C1eA9E24229b715cC53aBC6d89839C62B6cc5C6",
                 "version": ""
             },
             "BTC/DAI": {
-                "address": "0x577DA959119665fFe44516cACdcAAF68B54850C9",
+                "address": "0x90Fe4F1c8Ad9152a14cFC1866224C3d474F19AE9",
                 "version": ""
             },
             "BTC/ETH": {
-                "address": "0xcEf16Dd11F0b2C0CF2A77846645C38F70FF0c044",
+                "address": "0x3d2d8f5C8417d43DF28baF4E97d6Cff2F352E20f",
                 "version": ""
             },
             "BTC/REN": {
-                "address": "0x9Cc95f78808E9C5AbfcE92F6779174ecbCcc36D7",
+                "address": "0x748BB7Ddf7022Bbfe38d963acf946cF9d9E512b8",
                 "version": ""
             },
             "ZEC/DAI": {
-                "address": "0x77bf3520a7D9AAcB18bcCE21EFEc9bbE052e6057",
+                "address": "0x78cFFca0C65B521A95B953A9Db07EA5eE1DdEd11",
                 "version": ""
             },
             "ZEC/ETH": {
-                "address": "0xD912A266EBE69eC27bDD03568F02C611C80489c1",
+                "address": "0xcb6b65Ee06feE8Ef56a22683D6898483a43E0C36",
                 "version": ""
             },
             "ZEC/REN": {
-                "address": "0xD2D7299C23307037648CD79633C4CCb56900967F",
+                "address": "0xa7c9487a1714f88A5A77043a2F9e21Fd482e2b48",
                 "version": ""
             },
             "DAI/ETH": {
-                "address": "0x731b572D9d6d5167F0a81B0E93F7dAA916a03B11",
+                "address": "0xd35D905b76F5280ce88A6d75d20aaC6725d80be1",
                 "version": ""
             },
             "DAI/REN": {
-                "address": "0x83e4343261635a607e9A7Ac4FF670C4eA6760747",
+                "address": "0x024631D79203925d3108bE75eb8a0C277A1D9104",
                 "version": ""
             },
             "ETH/REN": {
-                "address": "0x3c4822e300c69e3C40258E9A203f89D55824fa65",
+                "address": "0x4F0f9A5E6f2436022fD53ADBc9Af19B2a02Bdff2",
                 "version": ""
             }
         },
@@ -99,12 +99,12 @@
                 "decimals": 18
             },
             "BTC": {
-                "address": "0xE8879151DcFF6F4Ef4446aD3984B08cb23E42471",
+                "address": "0xF228173631461642c737855d0a4Be25ce89Dd486",
                 "version": "",
                 "decimals": 8
             },
             "ZEC": {
-                "address": "0x458E70892Fba2966cA61578635432a06e24953F3",
+                "address": "0x44831d9CDD36FB829eb2D9aA904b1078C496DB56",
                 "version": "",
                 "decimals": 8
             },

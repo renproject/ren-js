@@ -31,16 +31,64 @@
             },
             "darknodePayment": {
                 "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e",
-                "version": "1.0.2",
-                "new": true
+                "version": "1.0.2"
             },
             "darknodePaymentStore": {
                 "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
-                "version": "1.0.2",
-                "new": true
+                "version": "1.0.2"
             },
-            "renShiftEx": {
-                "address": "0x0dF3510a4128c0cA11518465f670dB970E9302B7",
+            "renEx": {
+                "address": "0x4851E2602E56EFB9B05328cc867B335cC6AF61D7",
+                "version": ""
+            },
+            "renShift": {
+                "address": "0x7F0432785c31e6477035d9238A379B6B93227a7c",
+                "version": ""
+            },
+            "renShiftAdapter": {
+                "address": "0xF933C830454A2f831D74c729b5584cCb085cc6cB",
+                "version": ""
+            }
+        },
+        "reserves": {
+            "BTC/ZEC": {
+                "address": "0x30997Df4bc0C381194F0d48A344d33C8019EfD0d",
+                "version": ""
+            },
+            "BTC/DAI": {
+                "address": "0xD9430BBa1b8798f48C31B779650dbD0E37955178",
+                "version": ""
+            },
+            "BTC/ETH": {
+                "address": "0x11b67A98da019775Aaf263d5105bF86A86FE04D0",
+                "version": ""
+            },
+            "BTC/REN": {
+                "address": "0x3EBeeE3F15B01F932F917920802BD925704E53BF",
+                "version": ""
+            },
+            "ZEC/DAI": {
+                "address": "0xAB2A8868Df7D07a1f231C5FA8836B2693B1888ff",
+                "version": ""
+            },
+            "ZEC/ETH": {
+                "address": "0x210A8c2BE137c1B5BAE59D3df3d86696d0f134a2",
+                "version": ""
+            },
+            "ZEC/REN": {
+                "address": "0xF1E34fB56FC2bCdc315d0d6714CfE8fABDEcE29c",
+                "version": ""
+            },
+            "DAI/ETH": {
+                "address": "0x70ca15bB0464059F63db90Aa194C6Ea3f309027C",
+                "version": ""
+            },
+            "DAI/REN": {
+                "address": "0xaa12E7362Dc2cFFaE6A4A2556968bCD065EcF124",
+                "version": ""
+            },
+            "ETH/REN": {
+                "address": "0xc28666A53156B1d8CE36BdE0Da9d39896293Ad8d",
                 "version": ""
             }
         },
@@ -51,12 +99,12 @@
                 "decimals": 18
             },
             "BTC": {
-                "address": "0xFd44199b94EA4398aEa3dD5E1014e550D4cC5b9B",
+                "address": "0x5Ca1E38c02FB3897B9ED04C9668789d6afC394b1",
                 "version": "",
                 "decimals": 8
             },
             "ZEC": {
-                "address": "0x18344Da571edfa6c3E37C2c4ec93B93F70692B14",
+                "address": "0x79c1fb251F8E9c494B0d530EdA02328E33fE6E3e",
                 "version": "",
                 "decimals": 8
             },

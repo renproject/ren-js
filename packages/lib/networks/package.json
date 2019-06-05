@@ -20,7 +20,7 @@
     "eject": "$npm_execpath run hash && react-scripts eject",
     "predeploy": "$npm_execpath run hash && $npm_execpath run build",
     "deploy": "$npm_execpath run hash && gh-pages -d build",
-    "prepublish": "tsc -d --resolveJsonModule lib.ts"
+    "prepublish": "rm lib.js; rm lib.d.ts; tsc -d --resolveJsonModule lib.ts"
   },
   "devDependencies": {
     "@types/jest": "^24.0.13",

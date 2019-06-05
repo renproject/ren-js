@@ -1,6 +1,6 @@
 # Contract Index
 
-[https://republicprotocol.github.io/contract-index/](https://republicprotocol.github.io/contract-index/)
+[https://republicprotocol.github.io/contracts-ts/](https://republicprotocol.github.io/contracts-ts/)
 
 An index of Republic/RenEx contract addresses.
 

@@ -127,7 +127,8 @@ h4 {
 }
 
 .config-table .config-checked {
-    background: #006FE8;
+    background: linear-gradient(270deg, #00A8F5 -125.02%, #006FE8 98.68%);
+    border: 1px solid transparent;
     color: white;
 }
 

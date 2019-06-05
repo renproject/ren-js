@@ -60,7 +60,7 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
 
 const json: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) => {
     return <>
-        <p><a href={`/networks/${networkData.name}.json`}>Raw JSON</a></p>
+        <p><a href={`${process.env.PUBLIC_URL}/networks/${networkData.name}.json`}>Raw JSON</a></p>
         <pre><code>
             {JSON.stringify(networkData, null, 4)}
         </code></pre>

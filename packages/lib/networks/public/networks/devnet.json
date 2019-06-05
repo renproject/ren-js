@@ -1,5 +1,5 @@
 {
-    "name": "testnet",
+    "name": "devnet",
     "chain": "kovan",
     "infura": "https://kovan.infura.io",
     "etherscan": "https://kovan.etherscan.io",
@@ -37,8 +37,58 @@
                 "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
                 "version": "1.0.2"
             },
-            "renShiftEx": {
-                "address": "0x0dF3510a4128c0cA11518465f670dB970E9302B7",
+            "renShift": {
+                "address": "0x981A342073215904C5069CD64204898501689E0f",
+                "version": ""
+            },
+            "renEx": {
+                "address": "0x2C32492A7542EAb706092c49d35F53228b4b78A5",
+                "version": ""
+            },
+            "renShiftAdapter": {
+                "address": "0x296A2c9f8E68Cf2c45A116198E009Dfb7A11931d",
+                "version": ""
+            }
+        },
+        "reserves": {
+            "BTC/ZEC": {
+                "address": "0x5C1eA9E24229b715cC53aBC6d89839C62B6cc5C6",
+                "version": ""
+            },
+            "BTC/DAI": {
+                "address": "0x90Fe4F1c8Ad9152a14cFC1866224C3d474F19AE9",
+                "version": ""
+            },
+            "BTC/ETH": {
+                "address": "0x3d2d8f5C8417d43DF28baF4E97d6Cff2F352E20f",
+                "version": ""
+            },
+            "BTC/REN": {
+                "address": "0x748BB7Ddf7022Bbfe38d963acf946cF9d9E512b8",
+                "version": ""
+            },
+            "ZEC/DAI": {
+                "address": "0x78cFFca0C65B521A95B953A9Db07EA5eE1DdEd11",
+                "version": ""
+            },
+            "ZEC/ETH": {
+                "address": "0xcb6b65Ee06feE8Ef56a22683D6898483a43E0C36",
+                "version": ""
+            },
+            "ZEC/REN": {
+                "address": "0xa7c9487a1714f88A5A77043a2F9e21Fd482e2b48",
+                "version": ""
+            },
+            "DAI/ETH": {
+                "address": "0xd35D905b76F5280ce88A6d75d20aaC6725d80be1",
+                "version": ""
+            },
+            "DAI/REN": {
+                "address": "0x024631D79203925d3108bE75eb8a0C277A1D9104",
+                "version": ""
+            },
+            "ETH/REN": {
+                "address": "0x4F0f9A5E6f2436022fD53ADBc9Af19B2a02Bdff2",
                 "version": ""
             }
         },
@@ -49,12 +99,12 @@
                 "decimals": 18
             },
             "BTC": {
-                "address": "0xFd44199b94EA4398aEa3dD5E1014e550D4cC5b9B",
+                "address": "0xF228173631461642c737855d0a4Be25ce89Dd486",
                 "version": "",
                 "decimals": 8
             },
             "ZEC": {
-                "address": "0x18344Da571edfa6c3E37C2c4ec93B93F70692B14",
+                "address": "0x44831d9CDD36FB829eb2D9aA904b1078C496DB56",
                 "version": "",
                 "decimals": 8
             },

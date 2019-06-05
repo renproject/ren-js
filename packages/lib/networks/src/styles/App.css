@@ -8,9 +8,13 @@ pre {
     margin: 0;
 }
 
+a {
+    color: #006FE8;
+}
+
 .App {
     min-height: 100vh;
-    background-color: #f3f3f3;
+    /* background-color: #f3f3f3; */
     color: #333;
     position: absolute;
     content: "";
@@ -29,12 +33,14 @@ pre {
 }
 
 .network {
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+    /* box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23); */
+    border: 1px solid #ddd;
+    border-radius: 15px;
     width: 650px;
     background: white;
-    margin: 50px auto;
-    padding: 20px;
-    padding-top: 5px;
+    margin: 30px auto;
+    padding: 30px;
+    padding-top: 10px;
 }
 
 .network h2 {
@@ -65,36 +71,66 @@ h4 {
     color: #555;
 }
 
-table {
+.layout {
     border-collapse: collapse;
     width: 100%;
 }
 
-tr:nth-of-type(even) {
+.layout tr:nth-of-type(even) {
     background: rgb(250, 252, 255);
 }
 
-th {
+.layout th {
     background: #3498db;
     color: white;
     font-weight: bold;
 }
 
-td,
-th {
-    padding: 6px;
+.layout td,
+.layout th {
+    padding: 10px;
     border: 1px solid #ccc;
     text-align: left;
     font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
 }
 
-td.borderless {
+.layout td.borderless {
     border: 0;
     background: white;
 }
 
+.config-table {
+    width: 100%;
+}
 
+.config-table td {
+    border: 0;
+    transition: all 300ms;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid #006FE8;
+}
 
+.config-table .config-checked {
+    background: #006FE8;
+    color: white;
+}
+
+label {
+    width: 100%;
+    height: 100%;
+    display: block;
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+label input {
+    display: none;
+}
 
 /* Loading.tsx */
 

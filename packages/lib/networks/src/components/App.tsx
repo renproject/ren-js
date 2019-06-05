@@ -1,17 +1,14 @@
 import * as React from "react";
 
 import axios from "axios";
-
 import { HashRouter, Route } from "react-router-dom";
+import { OrderedMap } from "immutable";
 
+import { NetworkData } from "../lib/networks";
+import "../styles/App.css";
 import Loading from "./Loading";
 import Main from "./Main";
 import Source from "./Source";
-
-import { NetworkData } from "../lib/networks";
-
-import "../styles/App.css";
-
 
 const commitHash = require("../commitHash.json");
 
@@ -21,7 +18,7 @@ interface AppProps {
 
 interface AppState {
     outOfDate: boolean;
-    networks: NetworkData[] | null;
+    networks: OrderedMap<string, NetworkData> | null;
 }
 
 class App extends React.Component<AppProps, AppState> {
@@ -37,7 +34,10 @@ class App extends React.Component<AppProps, AppState> {
 
         const mainnet = (await axios.get(`./networks/mainnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
         const testnet = (await axios.get(`./networks/testnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        this.setState({ networks: [mainnet, testnet] });
+        const devnet = (await axios.get(`./networks/devnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
+        this.setState({
+            networks: OrderedMap({ mainnet, testnet, devnet })
+        });
 
         let using;
         let latest;
@@ -58,8 +58,8 @@ class App extends React.Component<AppProps, AppState> {
         return (
             <HashRouter>
                 <>
-                    <Route path="/source" component={Source} networks={networks} />
-                    {networks && networks.length > 0 ? <div className="App">
+                    <Route path="/source" component={Source} />
+                    {networks && networks.size > 0 ? <div className="App">
                         {outOfDate ? <OutOfDate /> : null}
                         {/* tslint:disable-next-line:jsx-no-lambda */}
                         <Route path="/" exact render={() => <Main networks={networks} />} />

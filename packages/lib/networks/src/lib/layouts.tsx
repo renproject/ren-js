@@ -1,10 +1,10 @@
 import * as React from "react";
 
-import Web3 from "web3";
-
 import { camelCase, pascalCase, snakeCase } from "change-case";
 import { OrderedMap } from "immutable";
 import { Link } from "react-router-dom";
+import { toChecksumAddress } from "web3-utils";
+
 import { NetworkData } from "./networks";
 
 export type TextTransform = (name: string) => string;
@@ -23,14 +23,12 @@ export const caseFn = OrderedMap<string, TextTransform>({
     [Case.CAMEL]: camelCase,
 });
 
-const web3 = new Web3();
-
-const formatAddress = (address: string) => address ? web3.utils.toChecksumAddress(address) : address;
+const formatAddress = (address: string) => address ? toChecksumAddress(address) : address;
 
 export type FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) => JSX.Element;
 
 const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform) => {
-    return <table>
+    return <table className="layout">
         <tbody>
             {Object.keys(networkData.addresses).map((category: string) =>
                 <>
@@ -38,16 +36,19 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                     {Object.keys(networkData.addresses[category]).map((contractName: string) =>
                         <tr key={contractName}>
                             <td>
-                                {category.match("[Tt]okens") ? nameFormatter(contractName).toUpperCase() : nameFormatter(contractName)}
+                                <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}`}>
+                                    {category.match("[Tt]okens") ? nameFormatter(contractName).toUpperCase() : nameFormatter(contractName)}
+                                </a>
+                                {networkData.addresses[category][contractName].new === true ?
+                                    <span style={{ color: "#191" }} title="Updated recently">{" "}●</span> :
+                                    <></>
+                                }
                             </td>
                             <td className="monospace">
-                                {formatAddress(networkData.addresses[category][contractName].address)} {networkData.addresses[category][contractName].new === true ? <span style={{ color: "#191" }} title="Updated recently">●</span> : <></>}
+                                {formatAddress(networkData.addresses[category][contractName].address)}
                             </td>
                             <td>
                                 <Link to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>ABI</Link>
-                            </td>
-                            <td>
-                                <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}#code`}>Code</a>
                             </td>
                             <td>
                                 {networkData.addresses[category][contractName].version}

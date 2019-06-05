@@ -3,7 +3,6 @@ import * as React from "react";
 
 import { History, Location } from "history";
 import { match, withRouter } from "react-router-dom";
-
 import axios from "axios";
 
 interface SourceState {
@@ -16,7 +15,7 @@ interface SourceProps {
     // withRouter props
     history: History;
     location: Location;
-    match: match<SourceProps>;
+    match: match<{ abi: string | undefined }>;
     staticContext: undefined;
 }
 
@@ -37,9 +36,14 @@ class Source extends React.Component<SourceProps, SourceState> {
 
         const URL = `${apiURL}/api?module=contract&action=getsourcecode&address=${address}`;
 
-        const result = (await axios.get(URL)).data.result[0];
+        let result;
+        try {
+            result = (await axios.get(URL)).data.result[0];
+        } catch (error) {
+            this.setState({ raw: `${error}` })
+            return;
+        }
 
-        console.log(result);
         // tslint:disable-next-line:prefer-const
         let raw = result.ABI ? result.ABI : result.ABI;
 
@@ -47,6 +51,7 @@ class Source extends React.Component<SourceProps, SourceState> {
             raw = JSON.stringify(JSON.parse(raw), null, 4);
         } catch (err) {
             // No ABI available - ignore error
+            raw = "No ABI available";
         }
 
         this.setState({ raw });

@@ -1,78 +1,77 @@
 import * as React from "react";
 
-import { Case, caseFn, Format, formatFn } from "../lib/layouts";
+import { OrderedMap } from "immutable";
+import { Case, caseFn, Format, formatFn } from "lib/layouts";
+import { titleCase } from "change-case";
+
 import { NetworkData } from "../lib/networks";
 import Network from "./Network";
 
-interface MainState {
-    format: Format;
-    nameCase: Case;
-}
+const defaultState = {
+    format: Format.TABLE,
+    nameCase: Case.TITLE_CASE,
+    network: "mainnet",
+};
+
 
 interface MainProps {
-    networks: NetworkData[];
+    networks: OrderedMap<string, NetworkData>;
 }
 
-class Main extends React.Component<MainProps, MainState> {
+class Main extends React.Component<MainProps, typeof defaultState> {
     constructor(props: MainProps) {
         super(props);
-        this.state = {
-            format: Format.TABLE,
-            nameCase: Case.TITLE_CASE,
-        };
+        this.state = defaultState
     }
     public render() {
-        const { format, nameCase } = this.state;
         const { networks } = this.props;
+        const { format, nameCase, network } = this.state;
         console.log(networks);
 
         return (
             <div className="Main">
                 <div className="network controls">
                     <h1>Contract Index</h1>
-                    Version 0.2.0
-                    <table>
-                        Format
+                    <table className="config-table">
                         <tr>
-                            {formatFn.map((_, formatOpt: Format) =>
-                                <td key={formatOpt}><input type="radio"
-                                    name="format"
-                                    value={formatOpt}
-                                    checked={format === formatOpt}
-                                    onChange={this.handleInput}
-                                />
-                                    {formatOpt}
+                            {networks.map((_: NetworkData | undefined, networkName: string | undefined) =>
+                                <td key={networkName} className={network === networkName ? `config-checked` : ""}>
+                                    <label><input type="radio"
+                                        name="network"
+                                        value={networkName}
+                                        checked={network === networkName}
+                                        onChange={this.handleInput}
+                                    />
+                                        {titleCase(networkName || "")}
+                                    </label></td>
+                            ).valueSeq().toArray()
+                            }
+                        </tr></table>
+                    <br />
+                    <table className="config-table">
+                        <tr>
+                            {formatFn.map((_, formatOpt: string | undefined) =>
+                                <td key={formatOpt} className={format === formatOpt ? `config-checked` : ""}>
+                                    <label>
+                                        <input type="radio"
+                                            name="format"
+                                            value={formatOpt}
+                                            checked={format === formatOpt}
+                                            onChange={this.handleInput}
+                                        />
+                                        {formatOpt}
+                                    </label>
                                 </td>
                             ).toArray()}
                         </tr>
                     </table>
-                    {/* {format === Format.JSON ?
-                        <table>
-                            Case
-                                < tr >
-                                {
-                                    caseFn.keySeq().toJS().map((nameCaseOpt: Case) =>
-                                        <td key={nameCaseOpt}><input type="radio"
-                                            name="nameCase"
-                                            value={nameCaseOpt}
-                                            checked={nameCase === nameCaseOpt}
-                                            onChange={this.handleInput}
-                                        />
-                                            {nameCaseOpt}
-                                        </td>
-                                    )
-                                }
-                            </tr></table> : null
-                    } */}
                 </div>
-                {networks.map((network: NetworkData) =>
-                    <Network
-                        key={network.name}
-                        nameCase={caseFn.get(nameCase)}
-                        format={formatFn.get(format)}
-                        networkData={network}
-                    />)
-                }
+                <Network
+                    key={network}
+                    nameCase={caseFn.get(nameCase)}
+                    format={formatFn.get(format)}
+                    networkData={networks.get(network)}
+                />)
             </div >
         );
     }

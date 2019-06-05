@@ -6,89 +6,70 @@
     "addresses": {
         "ren": {
             "darknodeRegistryStore": {
-                "address": "0x88e4477e4fdd677aee2dc9376471d45c198669fa",
-                "version": "1.0.2"
+                "address": "0x88e4477e4fdd677aee2dc9376471d45c198669fa"
             },
             "darknodeRegistry": {
-                "address": "0x1C6309618338D0EDf9a7Ea8eA18E060fD323020D",
-                "version": "1.0.2"
+                "address": "0x1C6309618338D0EDf9a7Ea8eA18E060fD323020D"
             },
             "settlementRegistry": {
-                "address": "0x6fd909d27fade71f475fff50d0274939a5e4fa97",
-                "version": "1.0.2"
+                "address": "0x6fd909d27fade71f475fff50d0274939a5e4fa97"
             },
             "orderbook": {
-                "address": "0xa9b453fc64b4766aab8a867801d0a4ea7b1474e0",
-                "version": "1.0.2"
+                "address": "0xa9b453fc64b4766aab8a867801d0a4ea7b1474e0"
             },
             "darknodeRewardVault": {
-                "address": "0xc08dfa565edb7216c3b23bbf0848b43fe9a49f0e",
-                "version": "1.0.2"
+                "address": "0xc08dfa565edb7216c3b23bbf0848b43fe9a49f0e"
             },
             "darknodeSlasher": {
-                "address": "0x0000000000000000000000000000000000000000",
-                "version": "1.0.2"
+                "address": "0x0000000000000000000000000000000000000000"
             },
             "darknodePayment": {
-                "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e",
-                "version": "1.0.2"
+                "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e"
             },
             "darknodePaymentStore": {
-                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
-                "version": "1.0.2"
+                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9"
             },
             "renShiftEx": {
-                "address": "0x0dF3510a4128c0cA11518465f670dB970E9302B7",
-                "version": ""
+                "address": "0x0dF3510a4128c0cA11518465f670dB970E9302B7"
             }
         },
         "tokens": {
             "DAI": {
                 "address": "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
-                "version": "",
                 "decimals": 18
             },
             "BTC": {
                 "address": "0xFd44199b94EA4398aEa3dD5E1014e550D4cC5b9B",
-                "version": "",
                 "decimals": 8
             },
             "ZEC": {
                 "address": "0x18344Da571edfa6c3E37C2c4ec93B93F70692B14",
-                "version": "",
                 "decimals": 8
             },
             "REN": {
                 "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
-                "version": "",
                 "decimals": 18
             },
             "ETH": {
                 "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                "version": "",
                 "decimals": 18
             }
         },
         "oldTokens": {
             "DGX": {
-                "address": "0x7d6D31326b12B6CBd7f054231D47CbcD16082b71",
-                "version": ""
+                "address": "0x7d6D31326b12B6CBd7f054231D47CbcD16082b71"
             },
             "REN": {
-                "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
-                "version": ""
+                "address": "0x2cd647668494c1b15743ab283a0f980d90a87394"
             },
             "TUSD": {
-                "address": "0x525389752ffe6487d33ef53fbcd4e5d3ad7937a0",
-                "version": ""
+                "address": "0x525389752ffe6487d33ef53fbcd4e5d3ad7937a0"
             },
             "ZRX": {
-                "address": "0x6eb628dcefa95802899ad3a9ee0c7650ac63d543",
-                "version": ""
+                "address": "0x6eb628dcefa95802899ad3a9ee0c7650ac63d543"
             },
             "OMG": {
-                "address": "0x66497ba75dd127b46316d806c077b06395918064",
-                "version": ""
+                "address": "0x66497ba75dd127b46316d806c077b06395918064"
             }
         }
     }

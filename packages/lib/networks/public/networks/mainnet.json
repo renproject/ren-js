@@ -6,68 +6,53 @@
     "addresses": {
         "republic": {
             "alternativeREN": {
-                "address": "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
-                "version": ""
+                "address": "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD"
             },
             "darknodeRegistryStore": {
-                "address": "0x06dF0657ba5E8F5339e742212669F6E7EE3c5057",
-                "version": "1.0.1"
+                "address": "0x06dF0657ba5E8F5339e742212669F6E7EE3c5057"
             },
             "darknodeRegistry": {
-                "address": "0x34bd421C7948Bc16f826Fd99f9B785929b121633",
-                "version": "1.0.1"
+                "address": "0x34bd421C7948Bc16f826Fd99f9B785929b121633"
             },
             "settlementRegistry": {
-                "address": "0x119da7a8500ade0766f758d934808179dc551036",
-                "version": "1.0.0"
+                "address": "0x119da7a8500ade0766f758d934808179dc551036"
             },
             "orderbook": {
-                "address": "0x6b8bb175c092de7d81860b18db360b734a2598e0",
-                "version": "1.0.0"
+                "address": "0x6b8bb175c092de7d81860b18db360b734a2598e0"
             },
             "darknodeRewardVault": {
-                "address": "0x880407c9cd119bef48b1821cdfc434e3ca3cd588",
-                "version": "1.0.0"
+                "address": "0x880407c9cd119bef48b1821cdfc434e3ca3cd588"
             },
             "darknodeSlasher": {
-                "address": "0x0000000000000000000000000000000000000000",
-                "version": "0"
+                "address": "0x0000000000000000000000000000000000000000"
             },
             "darknodePayment": {
-                "address": "0x5a7802E66b067cB1770ee5b1165AA201690A8B6a",
-                "version": "1.0.2"
+                "address": "0x5a7802E66b067cB1770ee5b1165AA201690A8B6a"
             },
             "darknodePaymentStore": {
-                "address": "0x731Ea4Ba77fF184d89dBeB160A0078274Acbe9D2",
-                "version": "1.0.2"
+                "address": "0x731Ea4Ba77fF184d89dBeB160A0078274Acbe9D2"
             }
         },
         "tokens": {
             "DAI": {
-                "address": "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359",
-                "version": ""
+                "address": "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359"
             }
         },
         "oldTokens": {
             "DGX": {
-                "address": "0x4f3AfEC4E5a3F2A6a1A411DEF7D7dFe50eE057bF",
-                "version": ""
+                "address": "0x4f3AfEC4E5a3F2A6a1A411DEF7D7dFe50eE057bF"
             },
             "TUSD": {
-                "address": "0x8dd5fbCe2F6a956C3022bA3663759011Dd51e73E",
-                "version": ""
+                "address": "0x8dd5fbCe2F6a956C3022bA3663759011Dd51e73E"
             },
             "REN": {
-                "address": "0x408e41876cCCDC0F92210600ef50372656052a38",
-                "version": ""
+                "address": "0x408e41876cCCDC0F92210600ef50372656052a38"
             },
             "ZRX": {
-                "address": "0xE41d2489571d322189246DaFA5ebDe1F4699F498",
-                "version": ""
+                "address": "0xE41d2489571d322189246DaFA5ebDe1F4699F498"
             },
             "OMG": {
-                "address": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07",
-                "version": ""
+                "address": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07"
             }
         }
     }

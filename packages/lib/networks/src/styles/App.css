@@ -10,6 +10,7 @@ pre {
 
 a {
     color: #006FE8;
+    text-decoration: none;
 }
 
 .App {
@@ -95,12 +96,18 @@ h4 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 250px;
+    max-width: 300px;
 }
 
 .layout td.borderless {
     border: 0;
     background: white;
+}
+
+.contract-name a {
+    text-decoration: none;
+    font-style: italic;
+    letter-spacing: 0.5px;
 }
 
 .config-table {

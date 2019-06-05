@@ -6,139 +6,108 @@
     "addresses": {
         "ren": {
             "darknodeRegistryStore": {
-                "address": "0x88e4477e4fdd677aee2dc9376471d45c198669fa",
-                "version": "1.0.2"
+                "address": "0x88e4477e4fdd677aee2dc9376471d45c198669fa"
             },
             "darknodeRegistry": {
-                "address": "0x1C6309618338D0EDf9a7Ea8eA18E060fD323020D",
-                "version": "1.0.2"
+                "address": "0x1C6309618338D0EDf9a7Ea8eA18E060fD323020D"
             },
             "settlementRegistry": {
-                "address": "0x6fd909d27fade71f475fff50d0274939a5e4fa97",
-                "version": "1.0.2"
+                "address": "0x6fd909d27fade71f475fff50d0274939a5e4fa97"
             },
             "orderbook": {
-                "address": "0xa9b453fc64b4766aab8a867801d0a4ea7b1474e0",
-                "version": "1.0.2"
+                "address": "0xa9b453fc64b4766aab8a867801d0a4ea7b1474e0"
             },
             "darknodeRewardVault": {
-                "address": "0xc08dfa565edb7216c3b23bbf0848b43fe9a49f0e",
-                "version": "1.0.2"
+                "address": "0xc08dfa565edb7216c3b23bbf0848b43fe9a49f0e"
             },
             "darknodeSlasher": {
-                "address": "0x0000000000000000000000000000000000000000",
-                "version": "1.0.2"
+                "address": "0x0000000000000000000000000000000000000000"
             },
             "darknodePayment": {
-                "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e",
-                "version": "1.0.2"
+                "address": "0x8E11B87547f4072CC8A094F2888201CAF4EA0B9e"
             },
             "darknodePaymentStore": {
-                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9",
-                "version": "1.0.2"
+                "address": "0xA9411C3AD1fBE168fd119A3B32fB481a0b9877A9"
             },
             "renShift": {
-                "address": "0x981A342073215904C5069CD64204898501689E0f",
-                "version": ""
+                "address": "0x981A342073215904C5069CD64204898501689E0f"
             },
             "renEx": {
-                "address": "0x2C32492A7542EAb706092c49d35F53228b4b78A5",
-                "version": ""
+                "address": "0x2C32492A7542EAb706092c49d35F53228b4b78A5"
             },
             "renShiftAdapter": {
-                "address": "0x296A2c9f8E68Cf2c45A116198E009Dfb7A11931d",
-                "version": ""
+                "address": "0x296A2c9f8E68Cf2c45A116198E009Dfb7A11931d"
             }
         },
         "reserves": {
             "BTC/ZEC": {
-                "address": "0x5C1eA9E24229b715cC53aBC6d89839C62B6cc5C6",
-                "version": ""
+                "address": "0x5C1eA9E24229b715cC53aBC6d89839C62B6cc5C6"
             },
             "BTC/DAI": {
-                "address": "0x90Fe4F1c8Ad9152a14cFC1866224C3d474F19AE9",
-                "version": ""
+                "address": "0x90Fe4F1c8Ad9152a14cFC1866224C3d474F19AE9"
             },
             "BTC/ETH": {
-                "address": "0x3d2d8f5C8417d43DF28baF4E97d6Cff2F352E20f",
-                "version": ""
+                "address": "0x3d2d8f5C8417d43DF28baF4E97d6Cff2F352E20f"
             },
             "BTC/REN": {
-                "address": "0x748BB7Ddf7022Bbfe38d963acf946cF9d9E512b8",
-                "version": ""
+                "address": "0x748BB7Ddf7022Bbfe38d963acf946cF9d9E512b8"
             },
             "ZEC/DAI": {
-                "address": "0x78cFFca0C65B521A95B953A9Db07EA5eE1DdEd11",
-                "version": ""
+                "address": "0x78cFFca0C65B521A95B953A9Db07EA5eE1DdEd11"
             },
             "ZEC/ETH": {
-                "address": "0xcb6b65Ee06feE8Ef56a22683D6898483a43E0C36",
-                "version": ""
+                "address": "0xcb6b65Ee06feE8Ef56a22683D6898483a43E0C36"
             },
             "ZEC/REN": {
-                "address": "0xa7c9487a1714f88A5A77043a2F9e21Fd482e2b48",
-                "version": ""
+                "address": "0xa7c9487a1714f88A5A77043a2F9e21Fd482e2b48"
             },
             "DAI/ETH": {
-                "address": "0xd35D905b76F5280ce88A6d75d20aaC6725d80be1",
-                "version": ""
+                "address": "0xd35D905b76F5280ce88A6d75d20aaC6725d80be1"
             },
             "DAI/REN": {
-                "address": "0x024631D79203925d3108bE75eb8a0C277A1D9104",
-                "version": ""
+                "address": "0x024631D79203925d3108bE75eb8a0C277A1D9104"
             },
             "ETH/REN": {
-                "address": "0x4F0f9A5E6f2436022fD53ADBc9Af19B2a02Bdff2",
-                "version": ""
+                "address": "0x4F0f9A5E6f2436022fD53ADBc9Af19B2a02Bdff2"
             }
         },
         "tokens": {
             "DAI": {
                 "address": "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
-                "version": "",
                 "decimals": 18
             },
             "BTC": {
                 "address": "0xF228173631461642c737855d0a4Be25ce89Dd486",
-                "version": "",
                 "decimals": 8
             },
             "ZEC": {
                 "address": "0x44831d9CDD36FB829eb2D9aA904b1078C496DB56",
-                "version": "",
                 "decimals": 8
             },
             "REN": {
                 "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
-                "version": "",
                 "decimals": 18
             },
             "ETH": {
                 "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                "version": "",
                 "decimals": 18
             }
         },
         "oldTokens": {
             "DGX": {
-                "address": "0x7d6D31326b12B6CBd7f054231D47CbcD16082b71",
-                "version": ""
+                "address": "0x7d6D31326b12B6CBd7f054231D47CbcD16082b71"
             },
             "REN": {
-                "address": "0x2cd647668494c1b15743ab283a0f980d90a87394",
-                "version": ""
+                "address": "0x2cd647668494c1b15743ab283a0f980d90a87394"
             },
             "TUSD": {
-                "address": "0x525389752ffe6487d33ef53fbcd4e5d3ad7937a0",
-                "version": ""
+                "address": "0x525389752ffe6487d33ef53fbcd4e5d3ad7937a0"
             },
             "ZRX": {
-                "address": "0x6eb628dcefa95802899ad3a9ee0c7650ac63d543",
-                "version": ""
+                "address": "0x6eb628dcefa95802899ad3a9ee0c7650ac63d543"
             },
             "OMG": {
-                "address": "0x66497ba75dd127b46316d806c077b06395918064",
-                "version": ""
+                "address": "0x66497ba75dd127b46316d806c077b06395918064"
             }
         }
     }

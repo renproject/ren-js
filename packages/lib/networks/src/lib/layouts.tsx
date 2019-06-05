@@ -35,7 +35,7 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                     <tr><td className="borderless"><h4 key={category}>{pascalCase(category)}</h4></td></tr>
                     {Object.keys(networkData.addresses[category]).map((contractName: string) =>
                         <tr key={contractName}>
-                            <td>
+                            <td className="contract-name">
                                 <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}`}>
                                     {category.match("[Tt]okens") ? nameFormatter(contractName).toUpperCase() : nameFormatter(contractName)}
                                 </a>
@@ -49,9 +49,6 @@ const table: FormatFN = (networkData: NetworkData, nameFormatter: TextTransform)
                             </td>
                             <td>
                                 <Link to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>ABI</Link>
-                            </td>
-                            <td>
-                                {networkData.addresses[category][contractName].version}
                             </td>
                         </tr>
                     )}

@@ -1,20 +1,22 @@
 # Contract Index
 
-[https://republicprotocol.github.io/contracts-ts/](https://republicprotocol.github.io/contracts-ts/)
+[republicprotocol.github.io/contracts-ts/](https://republicprotocol.github.io/contracts-ts/)
 
-An index of Republic/RenEx contract addresses.
+An index of smart contract addresses used by Ren, available as website and an npm package.
 
-## Updating
+## `npm` usage
 
-Make the required modifications.
+```js
+import { mainnet, testnet, devnet } from "@renex/contracts";
 
-Update `./public/commitHash.json` with the hash of the previous commit.
+console.log(mainnet.addresses.tokens["REN"].address);
+```
 
-Commit and push the changes to `origin/master`.
+## Deploying
 
-Run `npm install`.
+To deploy the front-end: `npm run deploy`.
 
-Run `npm run deploy`.
+To deploy to npm: `npm version patch` and `npm publish`.
 
 ## Preview
 

@@ -23,6 +23,10 @@ a {
     right: 0;
 }
 
+.loading {
+    margin-top: 100px;
+}
+
 .outOfDate {
     color: white;
     background: rgb(253, 33, 81);

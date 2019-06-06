@@ -5,6 +5,7 @@ import { Case, caseFn, Format, formatFn } from "lib/layouts";
 import { titleCase } from "change-case";
 
 import { NetworkData } from "../lib/networks";
+import { ReactComponent as Home } from "../styles/home.svg";
 import Network from "./Network";
 
 const defaultState = {
@@ -30,6 +31,9 @@ class Main extends React.Component<MainProps, typeof defaultState> {
 
         return (
             <div className="Main">
+                <a style={{ position: "absolute", top: "20px", left: "20px" }} className="home-link" href="https://republicprotocol.github.io/tool-index/">
+                    <Home style={{ height: "30px", width: "30px" }} />
+                </a>
                 <div className="network controls">
                     <h1>Contract Index</h1>
                     <table className="config-table">

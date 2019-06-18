@@ -1,0 +1,8 @@
+src/
+node_modules/
+ts*.json
+typedoc.js
+webpack.config.js
+test/
+dist/browser*
+dist/*.map

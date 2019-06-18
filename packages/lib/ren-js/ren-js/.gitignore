@@ -1,0 +1,24 @@
+node_modules
+/.project
+/.settings/
+
+# Logs
+*.log
+
+# Coverage
+/.nyc_output
+/coverage
+
+# IDE specific
+/.vscode
+
+/.DS_Store
+src/.DS_Store
+
+typedoc/
+/types
+
+.env
+
+*.map
+dist

@@ -1,0 +1,16 @@
+{
+    "env": {
+        "development": {
+            "plugins": [
+                "transform-es2015-modules-simple-commonjs",
+                "@babel/plugin-proposal-object-rest-spread"
+            ]
+        },
+        "production": {
+            "plugins": [
+                "transform-es2015-modules-simple-commonjs",
+                "@babel/plugin-proposal-object-rest-spread"
+            ]
+        }
+    }
+}

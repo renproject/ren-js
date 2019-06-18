@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "baseUrl": "src",
+        "rootDir": "src",
+        "lib": [
+            "es2015",
+            "es2017"
+        ],
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "target": "esnext",
+        "module": "commonjs",
+        "declaration": true,
+        "declarationDir": "./dist",
+        "sourceMap": true,
+        "outDir": "dist",
+        "moduleResolution": "node",
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictPropertyInitialization": true,
+        "noUnusedLocals": true,
+        "strict": true,
+        "alwaysStrict": true,
+        "strictFunctionTypes": true
+    },
+    "include": [
+        "src/**/*",
+        "src/global.d.ts",
+        "node_modules/@types"
+    ],
+    "exclude": []
+}

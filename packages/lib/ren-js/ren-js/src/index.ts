@@ -1,14 +1,11 @@
 import Web3 from "web3";
-import { AbiItem, soliditySha3 } from "web3-utils";
 
-import { actionToDetails, Asset, Chain, ShiftAction } from "./assets";
-import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
-import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
+import { payloadToABI } from "./abi";
+import { ShiftAction } from "./assets";
 import {
     lightnodes, ShiftedInResponse, ShiftedOutResponse, ShifterGroup,
 } from "./darknode/darknodeGroup";
-
-export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
+import { generateAddress, hashPayload, Payload, retrieveDeposits, SECONDS, sleep } from "./utils";
 
 export * from "./darknode/darknodeGroup";
 export * from "./blockchain/btc";
@@ -16,82 +13,13 @@ export * from "./blockchain/zec";
 export * from "./blockchain/common";
 export * from "./assets";
 
-export interface Param {
-    type: string;
-    // tslint:disable-next-line: no-any
-    value: any;
-}
-
-const shiftInABITemplate: AbiItem = {
-    "constant": false,
-    "inputs": [
-        {
-            "name": "_amount",
-            "type": "uint256"
-        },
-        {
-            "name": "_nHash",
-            "type": "bytes32"
-        },
-        {
-            "name": "_sig",
-            "type": "bytes"
-        },
-    ],
-    "name": "shiftIn",
-    "outputs": [],
-    "payable": true,
-    "stateMutability": "payable",
-    "type": "function"
-};
-
-export type Payload = Param[];
-
-// tslint:disable-next-line: no-any
-const hashPayload = (...zip: Param[] | [Param[]]): string => {
-    // You can annotate values passed in to soliditySha3.
-    // Example: { type: "address", value: srcToken }
-    // const zip = values.map((value, i) => ({ type: types[i], value }));
-
-    // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const params = Array.isArray(zip) ? zip[0] as any as Param[] : zip; // tslint:disable-line: no-any
-    return soliditySha3(...params);
-};
-
-// Generates the gateway address
-const generateAddress = (_to: string, _shiftAction: ShiftAction, _payload: Payload): string => {
-    const chain = actionToDetails(_shiftAction).from;
-    switch (chain) {
-        case Chain.Bitcoin:
-            return createBTCTestnetAddress(_to, hashPayload(_payload));
-        case Chain.ZCash:
-            return createZECTestnetAddress(_to, hashPayload(_payload));
-        default:
-            throw new Error(`Unable to generate deposit address for chain ${chain}`);
-    }
-};
-
-// Retrieves unspent deposits at the provided address
-const retrieveDeposits = async (_shiftAction: ShiftAction, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
-    const chain = actionToDetails(_shiftAction).from;
-    switch (chain) {
-        case Chain.Bitcoin:
-            return (await getBTCTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
-        case Chain.ZCash:
-            return (await getZECTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.ZCash, utxo }));
-        default:
-            throw new Error(`Unable to retrieve deposits for chain ${chain}`);
-    }
-};
-
-const SECONDS = 1000;
-// tslint:disable-next-line: no-string-based-set-timeout
-const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
+export { UTXO } from "./utils";
 
 export default class RenSDK {
 
     // Expose functions
     public hashPayload = hashPayload;
+    public generateAddress = generateAddress;
 
     // Internal state
     // tslint:disable-next-line: no-any
@@ -111,7 +39,6 @@ export default class RenSDK {
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    // TODO: Flatten into multiple functions
     public shift = async (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload) => {
         const gatewayAddress = generateAddress(this.adapter.address, shiftAction, payload);
         return {
@@ -201,10 +128,7 @@ export default class RenSDK {
                 signatureBytes, // _sig: string
             ];
 
-            // tslint:disable-next-line: no-non-null-assertion
-            const ABI = [{ ...shiftInABITemplate, name: methodName, inputs: [...shiftInABITemplate.inputs!, ...payload.map(value => ({ type: value.type, name: `${value.value}` }))] }];
-
-            const contract = new web3.eth.Contract(ABI, to);
+            const contract = new web3.eth.Contract(payloadToABI(methodName, payload), to);
 
             const addresses = await web3.eth.getAccounts();
 

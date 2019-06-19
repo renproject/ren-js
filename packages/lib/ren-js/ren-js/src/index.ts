@@ -1,5 +1,5 @@
 import Web3 from "web3";
-import { soliditySha3 } from "web3-utils";
+import { AbiItem, soliditySha3 } from "web3-utils";
 
 import { actionToDetails, Asset, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
@@ -21,6 +21,29 @@ export interface Param {
     // tslint:disable-next-line: no-any
     value: any;
 }
+
+const shiftInABITemplate: AbiItem = {
+    "constant": false,
+    "inputs": [
+        {
+            "name": "_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "_nHash",
+            "type": "bytes32"
+        },
+        {
+            "name": "_sig",
+            "type": "bytes"
+        },
+    ],
+    "name": "shiftIn",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+};
 
 export type Payload = Param[];
 
@@ -71,14 +94,12 @@ export default class RenSDK {
     public hashPayload = hashPayload;
 
     // Internal state
-    private readonly web3: Web3;
     // tslint:disable-next-line: no-any
     private readonly adapter: any;
     private readonly darknodeGroup: ShifterGroup;
 
     // Takes the address of the adapter smart contract
-    constructor(web3: Web3) {
-        this.web3 = web3;
+    constructor() {
         this.darknodeGroup = new ShifterGroup(lightnodes);
     }
 
@@ -139,7 +160,9 @@ export default class RenSDK {
                     await sleep(10 * SECONDS);
                 }
 
-                return this._signAndSubmitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, response);
+                return {
+                    signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, response),
+                };
             });
 
             // TODO: Use github.com/primus/eventemitter3
@@ -160,7 +183,7 @@ export default class RenSDK {
         }
 
     private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, response: ShiftedInResponse | ShiftedOutResponse) =>
-        (methodName: string) => {
+        async (web3: Web3, methodName: string) => {
             const signature: ShiftedInResponse = response as ShiftedInResponse;
             // TODO: Check that amount and signature.amount are the same
             amount = `0x${signature.amount}`; // _amount: BigNumber
@@ -178,9 +201,15 @@ export default class RenSDK {
                 signatureBytes, // _sig: string
             ];
 
-            // TODO: Fixme!
-            // return .methods.trade(
-            //     ...params,
-            // ).send({ from: address, gas: 350000 });
+            // tslint:disable-next-line: no-non-null-assertion
+            const ABI = [{ ...shiftInABITemplate, name: methodName, inputs: [...shiftInABITemplate.inputs!, ...payload.map(value => ({ type: value.type, name: `${value.value}` }))] }];
+
+            const contract = new web3.eth.Contract(ABI, to);
+
+            const addresses = await web3.eth.getAccounts();
+
+            return contract.methods.trade(
+                ...params,
+            ).send({ from: addresses[0] });
         }
 }

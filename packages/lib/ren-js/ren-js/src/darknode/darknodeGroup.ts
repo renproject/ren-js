@@ -1,9 +1,9 @@
-import { List, Map } from "immutable";
 import { actionToDetails } from "assets";
+import { List, Map } from "immutable";
 
 import { evenHex, strip0x } from "../blockchain/common";
 // tslint:disable: no-unused-variable
-import { Chain, ShiftAction } from "../index";
+import { ShiftAction } from "../index";
 import { Lightnode } from "./darknode";
 import {
     HealthResponse, JSONRPCResponse, Payload, ReceiveMessageRequest, ReceiveMessageResponse,

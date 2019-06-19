@@ -15,6 +15,17 @@ export * from "./assets";
 
 export { UTXO } from "./utils";
 
+// Types of RenSDK's methods ///////////////////////////////////////////////////
+export type SignAndSubmit = Promise<void>;
+export interface Submit extends Promise<{ signAndSubmit: (web3: Web3, methodName: string) => SignAndSubmit }> {
+    onMessageID: () => Promise<string>;
+}
+export interface Wait { submit: () => Submit; }
+export interface Shift {
+    addr: () => string;
+    wait: (confirmations: number) => Promise<Wait>;
+}
+
 export default class RenSDK {
 
     // Expose functions
@@ -39,7 +50,7 @@ export default class RenSDK {
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public shift = async (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload) => {
+    public shift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload): Shift => {
         const gatewayAddress = generateAddress(this.adapter.address, shiftAction, payload);
         return {
             addr: () => gatewayAddress,
@@ -48,7 +59,7 @@ export default class RenSDK {
     }
 
     private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string) =>
-        async (confirmations: number) => {
+        async (confirmations: number): Promise<Wait> => {
             let deposits;
             // TODO: Check value of deposits
             while (!deposits) {
@@ -62,8 +73,9 @@ export default class RenSDK {
             };
         }
 
+    // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any) =>
-        () => {
+        (): Submit => {
             // Hash the payload
             const pHash = this.hashPayload(payload);
 
@@ -101,16 +113,20 @@ export default class RenSDK {
                 return messageIDEvent;
             };
 
-            return {
+            // tslint:disable-next-line: no-object-literal-type-assertion
+            const ret = {
                 then: submitPromise.then,
                 catch: submitPromise.catch,
                 finally: submitPromise.finally,
                 onMessageID,
-            };
+            } as Submit;
+
+            return ret;
         }
 
+    // tslint:disable-next-line: no-any (FIXME)
     private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, response: ShiftedInResponse | ShiftedOutResponse) =>
-        async (web3: Web3, methodName: string) => {
+        async (web3: Web3, methodName: string): SignAndSubmit => {
             const signature: ShiftedInResponse = response as ShiftedInResponse;
             // TODO: Check that amount and signature.amount are the same
             amount = `0x${signature.amount}`; // _amount: BigNumber

@@ -1,6 +1,7 @@
 import Web3 from "web3";
 import { soliditySha3 } from "web3-utils";
 
+import { actionToDetails, Asset, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
 import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
 import {
@@ -13,12 +14,7 @@ export * from "./darknode/darknodeGroup";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";
-
-export enum Chain {
-    Bitcoin = "btc",
-    Ethereum = "eth",
-    ZCash = "zec",
-}
+export * from "./assets";
 
 export interface Param {
     type: string;
@@ -26,81 +22,165 @@ export interface Param {
     value: any;
 }
 
+export type Payload = Param[];
+
+// tslint:disable-next-line: no-any
+const hashPayload = (...zip: Param[] | [Param[]]): string => {
+    // You can annotate values passed in to soliditySha3.
+    // Example: { type: "address", value: srcToken }
+    // const zip = values.map((value, i) => ({ type: types[i], value }));
+
+    // Check if they called as hashPayload([...]) instead of hashPayload(...)
+    const params = Array.isArray(zip) ? zip[0] as any as Param[] : zip; // tslint:disable-line: no-any
+    return soliditySha3(...params);
+};
+
+// Generates the gateway address
+const generateAddress = (_to: string, _shiftAction: ShiftAction, _payload: Payload): string => {
+    const chain = actionToDetails(_shiftAction).from;
+    switch (chain) {
+        case Chain.Bitcoin:
+            return createBTCTestnetAddress(_to, hashPayload(_payload));
+        case Chain.ZCash:
+            return createZECTestnetAddress(_to, hashPayload(_payload));
+        default:
+            throw new Error(`Unable to generate deposit address for chain ${chain}`);
+    }
+};
+
+// Retrieves unspent deposits at the provided address
+const retrieveDeposits = async (_shiftAction: ShiftAction, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
+    const chain = actionToDetails(_shiftAction).from;
+    switch (chain) {
+        case Chain.Bitcoin:
+            return (await getBTCTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
+        case Chain.ZCash:
+            return (await getZECTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.ZCash, utxo }));
+        default:
+            throw new Error(`Unable to retrieve deposits for chain ${chain}`);
+    }
+};
+
+const SECONDS = 1000;
+// tslint:disable-next-line: no-string-based-set-timeout
+const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
+
 export default class RenSDK {
-    // private readonly web3: Web3;
+
+    // Expose functions
+    public hashPayload = hashPayload;
+
+    // Internal state
+    private readonly web3: Web3;
     // tslint:disable-next-line: no-any
     private readonly adapter: any;
     private readonly darknodeGroup: ShifterGroup;
 
     // Takes the address of the adapter smart contract
-    constructor(web3: Web3, adapterAddress: string) {
-        // this.web3 = web3;
-        this.adapter = new web3.eth.Contract([], adapterAddress);
+    constructor(web3: Web3) {
+        this.web3 = web3;
         this.darknodeGroup = new ShifterGroup(lightnodes);
     }
 
-    // Takes a commitment as bytes or an array of primitive types and returns
-    // the deposit address
-    public generateAddress = (chain: Chain, commitmentHash: string): string => {
-        switch (chain) {
-            case Chain.Bitcoin:
-                return createBTCTestnetAddress(this.adapter.address, commitmentHash);
-            case Chain.ZCash:
-                return createZECTestnetAddress(this.adapter.address, commitmentHash);
-            default:
-                throw new Error(`Unable to generate deposit address for chain ${chain}`);
-        }
-    }
-
-    // Retrieves unspent deposits at the provided address
-    public retrieveDeposits = async (chain: Chain, depositAddress: string, limit = 10, confirmations = 0): Promise<UTXO[]> => {
-        switch (chain) {
-            case Chain.Bitcoin:
-                return (await getBTCTestnetUTXOs(depositAddress, limit, confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
-            case Chain.ZCash:
-                return (await getZECTestnetUTXOs(depositAddress, limit, confirmations)).map(utxo => ({ chain: Chain.ZCash, utxo }));
-            default:
-                throw new Error(`Unable to retrieve deposits for chain ${chain}`);
-        }
+    // Submits the commitment and transaction to the darknodes, and then submits
+    // the signature to the adapter address
+    public burn = async (shiftAction: ShiftAction, to: string, valueHex: string): Promise<string> => {
+        return /* await */ this.darknodeGroup.submitWithdrawal(shiftAction, to, valueHex);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public shift = async (chain: Chain, transaction: UTXO, commitmentHash: string): Promise<string> => {
-        const responses = await this.darknodeGroup.submitDeposits(chain, this.adapter.address, commitmentHash);
-        const first = responses.first(undefined);
-        if (first === undefined) {
-            throw new Error(`Error submitting to darknodes`);
+    // TODO: Flatten into multiple functions
+    public shift = async (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload) => {
+        const gatewayAddress = generateAddress(this.adapter.address, shiftAction, payload);
+        return {
+            addr: () => gatewayAddress,
+            wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress),
+        };
+    }
+
+    private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string) =>
+        async (confirmations: number) => {
+            let deposits;
+            // TODO: Check value of deposits
+            while (!deposits) {
+                deposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
+                if (deposits) { break; }
+                await sleep(10 * SECONDS);
+            }
+
+            return {
+                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits),
+            };
         }
-        return first.messageID;
-    }
 
-    // Submits the commitment and transaction to the darknodes, and then submits
-    // the signature to the adapter address
-    public burn = async (chain: Chain, to: string, valueHex: string): Promise<string> => {
-        const responses = await this.darknodeGroup.submitWithdrawal(chain, to, valueHex);
-        const first = responses.first(undefined);
-        if (first === undefined) {
-            throw new Error(`Error submitting to darknodes`);
+    private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any) =>
+        () => {
+            // Hash the payload
+            const pHash = this.hashPayload(payload);
+
+            let messageIDEvent: string;
+
+            // Submit the deposit to the darknodes
+            const submitPromise = this.darknodeGroup.submitDeposits(shiftAction, to, pHash).then(async (messageID: string) => {
+                messageIDEvent = messageID;
+
+                let response: ShiftedInResponse | ShiftedOutResponse | undefined;
+                while (!response) {
+                    try {
+                        response = await this.darknodeGroup.checkForResponse(messageID);
+                    } catch (error) {
+                        // TODO: Ignore "result not available",
+                        // throw otherwise
+                    }
+
+                    // Break before sleeping if responses is not undefined
+                    if (response) { break; }
+                    await sleep(10 * SECONDS);
+                }
+
+                return this._signAndSubmitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, response);
+            });
+
+            // TODO: Use github.com/primus/eventemitter3
+            const onMessageID = async () => {
+                while (!messageIDEvent) {
+                    await sleep(1 * SECONDS);
+                }
+
+                return messageIDEvent;
+            };
+
+            return {
+                then: submitPromise.then,
+                catch: submitPromise.catch,
+                finally: submitPromise.finally,
+                onMessageID,
+            };
         }
-        return first.messageID;
-    }
 
-    // Retrieves the current progress of the shift
-    public shiftStatus = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
-        return /*await*/ this.darknodeGroup.checkForResponse(messageID);
-    }
+    private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, response: ShiftedInResponse | ShiftedOutResponse) =>
+        (methodName: string) => {
+            const signature: ShiftedInResponse = response as ShiftedInResponse;
+            // TODO: Check that amount and signature.amount are the same
+            amount = `0x${signature.amount}`; // _amount: BigNumber
+            const txHash = `0x${signature.txHash}`; // _hash: string
+            if (signature.v === "") {
+                signature.v = "0";
+            }
+            const v = ((parseInt(signature.v, 10) + 27) || 27).toString(16);
+            const signatureBytes = `0x${signature.r}${signature.s}${v}`;
 
-    // tslint:disable-next-line: no-any
-    public hashCommitment = (...zip: Param[] | [Param[]]): string => {
+            const params = [
+                ...payload.map(value => value.value),
+                amount, // _amount: BigNumber
+                txHash, // _hash: string
+                signatureBytes, // _sig: string
+            ];
 
-        // You can annotate values passed in to soliditySha3.
-        // Example: { type: "address", value: srcToken }
-        // const zip = values.map((value, i) => ({ type: types[i], value }));
-
-        // Check if they called as hashCommitment([...]) instead of
-        // hashCommitment(...)
-        const params = Array.isArray(zip) ? zip[0] as any as Param[] : zip; // tslint:disable-line: no-any
-        return soliditySha3(...params);
-    }
+            // TODO: Fixme!
+            // return .methods.trade(
+            //     ...params,
+            // ).send({ from: address, gas: 350000 });
+        }
 }

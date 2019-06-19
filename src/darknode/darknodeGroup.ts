@@ -1,11 +1,12 @@
 import { List, Map } from "immutable";
+import { actionToDetails } from "assets";
 
 import { evenHex, strip0x } from "../blockchain/common";
 // tslint:disable: no-unused-variable
-import { Chain } from "../index";
+import { Chain, ShiftAction } from "../index";
 import { Lightnode } from "./darknode";
 import {
-    HealthResponse, JSONRPCResponse, ReceiveMessageRequest, ReceiveMessageResponse,
+    HealthResponse, JSONRPCResponse, Payload, ReceiveMessageRequest, ReceiveMessageResponse,
     SendMessageRequest, SendMessageResponse,
 } from "./types";
 
@@ -169,66 +170,51 @@ export class ShifterGroup extends DarknodeGroup {
         // this.getHealth();
     }
 
-    public submitDeposits = async (chain: Chain, address: string, commitmentHash: string): Promise<List<{ messageID: string, lightnode: string }>> => {
-        // TODO: If one fails, still return the other.
-
-        const method = chain === Chain.Bitcoin ? "MintZBTC"
-            : chain === Chain.ZCash ? "MintZZEC" : undefined;
-
-        if (!method) {
-            throw new Error(`Minting ${chain} not supported`);
-        }
-
-        const results = await this.sendMessage({
+    public submitMessage = async (payload: Payload): Promise<string> => {
+        const responses = await this.sendMessage({
             nonce: randomNonce(),
             to: "Shifter",
             signature: "",
-            payload: {
-                method: `ShiftIn${chain.toUpperCase()}`,
-                args: [
-                    // Adapter address
-                    { name: "uid", type: "public", value: strip0x(address) },
-                    { name: "commitment", type: "public", value: strip0x(commitmentHash) },
-                ],
-            },
+            payload,
         });
 
-        if (results.filter(x => x !== null).size < 1) {
+        if (responses.filter(x => x !== null).size < 1) {
             throw new Error("Unable to send message to lightnodes.");
         }
 
-        return results.filter(x => x !== null && x.result.result !== undefined).map((result) => ({
+        // TODO: Remove unnecessary `.map`
+        const returnValues = responses.filter(x => x !== null && x.result.result !== undefined).map((response) => ({
             // tslint:disable: no-non-null-assertion no-unnecessary-type-assertion
-            lightnode: result!.lightnode,
-            messageID: result!.result.result!.messageID,
+            lightnode: response!.lightnode,
+            messageID: response!.result.result!.messageID,
             // tslint:enable: no-non-null-assertion no-unnecessary-type-assertion
         })).toList();
+
+        const first = returnValues.first(undefined);
+        if (first === undefined) {
+            throw new Error(`Error submitting to darknodes`);
+        }
+        return first.messageID;
     }
 
-    public submitWithdrawal = async (chain: Chain, to: string, valueHex: string): Promise<List<{ messageID: string, lightnode: string }>> => {
-        const results = await this.sendMessage({
-            nonce: randomNonce(),
-            to: "Shifter",
-            signature: "",
-            payload: {
-                method: `ShiftOut${chain.toUpperCase()}`,
-                args: [
-                    { name: "to", type: "public", value: strip0x(to) },
-                    { name: "value", type: "public", value: evenHex(strip0x(valueHex)) }, // Hex should be: "2711"
-                ],
-            },
+    public submitDeposits = async (action: ShiftAction, adapterAddress: string, commitmentHash: string): Promise<string> => {
+        return this.submitMessage({
+            method: `ShiftIn${actionToDetails(action).from.toUpperCase()}`,
+            args: [
+                { name: "uid", type: "public", value: strip0x(adapterAddress) },
+                { name: "commitment", type: "public", value: strip0x(commitmentHash) },
+            ],
         });
+    }
 
-        if (results.filter(x => x !== null).size < 1) {
-            throw new Error("Unable to send message to lightnodes.");
-        }
-
-        return results.filter(x => x !== null && x.result.result !== undefined).map((result) => ({
-            // tslint:disable: no-non-null-assertion no-unnecessary-type-assertion
-            lightnode: result!.lightnode,
-            messageID: result!.result.result!.messageID,
-            // tslint:enable: no-non-null-assertion no-unnecessary-type-assertion
-        })).toList();
+    public submitWithdrawal = async (action: ShiftAction, to: string, valueHex: string): Promise<string> => {
+        return this.submitMessage({
+            method: `ShiftOut${actionToDetails(action).to.toUpperCase()}`,
+            args: [
+                { name: "to", type: "public", value: strip0x(to) },
+                { name: "value", type: "public", value: evenHex(strip0x(valueHex)) }, // Hex should be: "2711"
+            ],
+        });
     }
 
     public checkForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {

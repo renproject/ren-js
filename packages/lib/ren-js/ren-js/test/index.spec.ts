@@ -12,6 +12,34 @@ chai.should();
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.ETHEREUM_NODE;
 
+/*
+
+*MINTING*
+
+`const shift = RenSDK.shift("BTC0Btc2Eth", renExAddress, 0.5 BTC, randomNonce, payload);`
+`const gatewayAddress = await shift.addr();`
+_user deposits BTC to gateway address_
+
+`const deposit = await shift.wait(6 confirmations);`
+_SDK waits for a BTC deposit_
+
+`const signature = deposit.submit();`
+_SDK calls sendMessage(gatewayAddress)_
+_Darknodes see deposit and sign a mint request_
+
+`signature.signAndSubmit(adapter, functionName)`
+_SDK calls Web3.eth.Contract(adapter).functionName(mint request and signature)_
+_e.g. on RenEx, this will mint BTC and swap it for DAI_
+
+*BURNING*
+
+_First, the user calls Web3.eth.Contract(adapter).burn() => LogShiftOut "1234"_
+
+`RenSDK.burnStatus("1234", btcAddress)`
+_Submit to darknodes => transaction hash_
+
+ */
+
 describe("SDK methods", () => {
     // tslint:disable-next-line:no-any
     let sdk: RenSDK;

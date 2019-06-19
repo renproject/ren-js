@@ -12,7 +12,7 @@ export interface PublicParam {
 
 export type Param = PrivateParam | PublicParam;
 
-interface Payload {
+export interface Payload {
     method: string;
     // tslint:disable-next-line: no-any
     args: any; // Param[];

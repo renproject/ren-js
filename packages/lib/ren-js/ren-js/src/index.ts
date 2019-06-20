@@ -28,10 +28,6 @@ export interface Shift {
 
 export default class RenSDK {
 
-    // Expose functions
-    public hashPayload = hashPayload;
-    public generateAddress = generateAddress;
-
     // Internal state
     // tslint:disable-next-line: no-any
     private readonly adapter: any;
@@ -77,7 +73,7 @@ export default class RenSDK {
     private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any) =>
         (): Submit => {
             // Hash the payload
-            const pHash = this.hashPayload(payload);
+            const pHash = hashPayload(payload);
 
             let messageIDEvent: string;
 

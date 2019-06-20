@@ -71,7 +71,7 @@ export default class RenSDK {
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any) =>
         async (): Promise<Submit> => {
-            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, hashPayload(payload));
+            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, amount, nonce, hashPayload(payload), nonce); // TODO: Pass hash instead of nonce
 
             let response: ShiftedInResponse | ShiftedOutResponse | undefined;
             while (!response) {

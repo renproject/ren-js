@@ -1,22 +1,11 @@
 
-export interface PrivateParam {
-    private: true;
-    index: number;
-    value: string;
+export interface Arg {
+    name: string;
+    type: string;
+    value: string | number;
 }
 
-export interface PublicParam {
-    private: false;
-    value: string;
-}
-
-export type Param = PrivateParam | PublicParam;
-
-export interface Payload {
-    method: string;
-    // tslint:disable-next-line: no-any
-    args: any; // Param[];
-}
+export type Args = Arg[];
 
 /// Requests ///////////////////////////////////////////////////////////////////
 
@@ -25,10 +14,8 @@ export interface AddressesRequest {
 }
 
 export interface SendMessageRequest {
-    nonce: number;
     to: string;
-    signature: string;
-    payload: Payload;
+    args: Args;
 }
 
 export interface ReceiveMessageRequest {
@@ -89,7 +76,7 @@ export type SendMessageResponse = JSONRPCResponse<{
 }>;
 
 export type ReceiveMessageResponse = JSONRPCResponse<{
-    result: Param[];
+    result: Args;
 }>;
 
 // type RenVMReceiveMessageResponse = JSONRPCResponse<{

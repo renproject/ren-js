@@ -29,8 +29,6 @@ export interface Shift {
 export default class RenSDK {
 
     // Internal state
-    // tslint:disable-next-line: no-any
-    private readonly adapter: any;
     private readonly darknodeGroup: ShifterGroup;
 
     // Takes the address of the adapter smart contract
@@ -47,7 +45,7 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload): Shift => {
-        const gatewayAddress = generateAddress(this.adapter.address, shiftAction, payload);
+        const gatewayAddress = generateAddress(to, shiftAction, payload);
         return {
             addr: () => gatewayAddress,
             wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress),

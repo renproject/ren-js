@@ -2,6 +2,7 @@ html,
 body {
     padding: 0;
     margin: 0;
+    background-color: #f8f9fa;
 }
 
 pre {
@@ -38,9 +39,10 @@ a {
 }
 
 .network {
+    box-shadow: 0 .5rem 1.2rem rgba(189, 197, 209, .2);
     /* box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23); */
-    border: 1px solid #ddd;
-    border-radius: 15px;
+    border: 1px solid #e7eaf3;
+    border-radius: .25rem;
     width: 650px;
     background: white;
     margin: 30px auto;

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { OrderedMap } from "immutable";
-import { Case, caseFn, Format, formatFn } from "lib/layouts";
+import { Format, formatFn } from "lib/layouts";
 import { titleCase } from "change-case";
 
 import { NetworkData } from "../lib/networks";
@@ -10,7 +10,6 @@ import Network from "./Network";
 
 const defaultState = {
     format: Format.TABLE,
-    nameCase: Case.TITLE_CASE,
     network: "mainnet",
 };
 
@@ -26,7 +25,7 @@ class Main extends React.Component<MainProps, typeof defaultState> {
     }
     public render() {
         const { networks } = this.props;
-        const { format, nameCase, network } = this.state;
+        const { format, network } = this.state;
         console.log(networks);
 
         return (
@@ -72,7 +71,6 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                 </div>
                 <Network
                     key={network}
-                    nameCase={caseFn.get(nameCase)}
                     format={formatFn.get(format)}
                     networkData={networks.get(network)}
                 />)

@@ -1,22 +1,15 @@
 import * as qs from "query-string";
 import * as React from "react";
 
-import { History, Location } from "history";
-import { match, withRouter } from "react-router-dom";
+import { RouteComponentProps, withRouter } from "react-router-dom";
 import axios from "axios";
 
 interface SourceState {
     raw: string | null;
 }
 
-interface SourceProps {
+interface SourceProps extends RouteComponentProps {
     abi: false;
-
-    // withRouter props
-    history: History;
-    location: Location;
-    match: match<{ abi: string | undefined }>;
-    staticContext: undefined;
 }
 
 class Source extends React.Component<SourceProps, SourceState> {

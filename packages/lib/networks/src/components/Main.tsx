@@ -1,8 +1,10 @@
+import * as qs from "query-string";
 import * as React from "react";
 
 import { OrderedMap } from "immutable";
 import { Format, formatFn } from "lib/layouts";
 import { titleCase } from "change-case";
+import { RouteComponentProps, withRouter } from "react-router";
 
 import { NetworkData } from "../lib/networks";
 import { ReactComponent as Home } from "../styles/home.svg";
@@ -14,7 +16,7 @@ const defaultState = {
 };
 
 
-interface MainProps {
+interface MainProps extends RouteComponentProps {
     networks: OrderedMap<string, NetworkData>;
 }
 
@@ -22,6 +24,12 @@ class Main extends React.Component<MainProps, typeof defaultState> {
     constructor(props: MainProps) {
         super(props);
         this.state = defaultState
+    }
+    public async componentDidMount() {
+        const network = qs.parse(this.props.location.search).network;
+        if (network && typeof network === "string" && this.props.networks.has(network)) {
+            this.setState({ network });
+        }
     }
     public render() {
         const { networks } = this.props;
@@ -85,4 +93,4 @@ class Main extends React.Component<MainProps, typeof defaultState> {
 
 }
 
-export default Main;
+export default withRouter(Main);

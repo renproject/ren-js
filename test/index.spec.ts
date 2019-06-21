@@ -1,5 +1,5 @@
 import axios from "axios";
-import bitcore, { Transaction } from "bitcore-lib";
+import bitcore, { Networks, Transaction } from "bitcore-lib";
 import bs58 from "bs58";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
@@ -71,11 +71,11 @@ describe("SDK methods", () => {
         const amount = 22500;
         const payload: Payload = [arg];
         const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, "797522Fb74d42bB9fbF6b76dEa24D01A538d5D66", amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
-        const gatewayAddress = await shift.addr();
+        const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.
-        const privateKey = new bitcore.PrivateKey(BITCOIN_KEY);
-        const fromAddress = bs58.encode(privateKey.toAddress().hashBuffer);
+        const privateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
+        const fromAddress = privateKey.toAddress().toString();
         const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
         for (const utxo of utxos) {

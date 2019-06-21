@@ -5,7 +5,9 @@ import { ShiftAction } from "./assets";
 import {
     lightnodes, ShiftedInResponse, ShiftedOutResponse, ShifterGroup,
 } from "./darknode/darknodeGroup";
-import { generateAddress, hashPayload, Payload, retrieveDeposits, SECONDS, sleep } from "./utils";
+import {
+    generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep,
+} from "./utils";
 
 export * from "./darknode/darknodeGroup";
 export * from "./blockchain/btc";
@@ -46,14 +48,15 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload): Shift => {
-        const gatewayAddress = generateAddress(to, shiftAction, amount, payload);
+        const hash = generateHash(to, shiftAction, amount, payload);
+        const gatewayAddress = generateAddress(shiftAction, hash);
         return {
             addr: () => gatewayAddress,
-            wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress),
+            wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, hash),
         };
     }
 
-    private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string) =>
+    private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, hash: string) =>
         async (confirmations: number): Promise<Wait> => {
             let deposits;
             // TODO: Check value of deposits
@@ -64,14 +67,14 @@ export default class RenSDK {
             }
 
             return {
-                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits),
+                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, hash),
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any) =>
+    private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, hash: string) =>
         async (): Promise<Submit> => {
-            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, amount, nonce, hashPayload(payload), nonce); // TODO: Pass hash instead of nonce
+            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
 
             let response: ShiftedInResponse | ShiftedOutResponse | undefined;
             while (!response) {

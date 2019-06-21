@@ -6,23 +6,24 @@ import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockc
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 
-export interface Param {
+export interface Arg {
+    name: string;
     type: string;
     // tslint:disable-next-line: no-any
     value: any;
 }
 
-export type Payload = Param[];
+export type Payload = Arg[];
 
 // tslint:disable-next-line: no-any
-export const hashPayload = (...zip: Param[] | [Param[]]): string => {
+export const hashPayload = (...zip: Arg[] | [Arg[]]): string => {
     // You can annotate values passed in to soliditySha3.
     // Example: { type: "address", value: srcToken }
     // const zip = values.map((value, i) => ({ type: types[i], value }));
 
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const params = Array.isArray(zip) ? zip[0] as any as Param[] : zip; // tslint:disable-line: no-any
-    return soliditySha3(...params);
+    const args = Array.isArray(zip) ? zip[0] as any as Arg[] : zip; // tslint:disable-line: no-any
+    return soliditySha3(...args);
 };
 
 // Generates the gateway address

@@ -16,7 +16,7 @@ chai.should();
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
-const MERCURY_URL = `https://ren-mercury.herokuapp.com/btc-testnet/tx`;
+const MERCURY_URL = `https://ren-mercury.herokuapp.com/btc-testnet3`;
 const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 /*
@@ -89,8 +89,7 @@ describe("SDK methods", () => {
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
-        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.serialize() });
-        console.log(result);
+        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const deposit = await shift.wait(0);

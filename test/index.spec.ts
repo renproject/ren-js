@@ -1,14 +1,24 @@
+import axios from "axios";
+import bitcore, { Transaction } from "bitcore-lib";
+import bs58 from "bs58";
 import chai from "chai";
+import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
-import FakeProvider from "web3-fake-provider";
 
 import { ShiftActions } from "../src/assets";
-import RenSDK from "../src/index";
-import { Param, Payload } from "../src/utils";
+import { strip0x } from "../src/blockchain/common";
+import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
+import { Arg, Payload } from "../src/utils";
 
 require("dotenv").config();
 
 chai.should();
+
+const MNEMONIC = process.env.MNEMONIC;
+// tslint:disable-next-line:mocha-no-side-effect-code
+const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
+const MERCURY_URL = `https://ren-mercury.herokuapp.com/btc-testnet/tx`;
+const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 /*
 
@@ -40,35 +50,51 @@ _Submit to darknodes => transaction hash_
 
 describe("SDK methods", () => {
     // tslint:disable-next-line:no-any
+    let provider: any;
+    let web3: Web3;
     let sdk: RenSDK;
-    let web3;
-    // let accounts;
-    // let mainAccount;
+    let accounts: string[];
 
     before(async () => {
-        web3 = new Web3(new FakeProvider());
-
-        // // Set up the SDK to use the main account
-        // accounts = await web3.eth.getAccounts();
-        // mainAccount = accounts[0];
-        // sdk.setAddress(mainAccount);
-
+        provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
+        web3 = new Web3(provider);
         sdk = new RenSDK();
+        accounts = await web3.eth.getAccounts();
     });
 
     it("should be able to mint btc", async () => {
-        const param: Param = {
+        const arg: Arg = {
+            name: "to",
             type: "bytes20",
-            value: "1234567890123456789012345678901234567890",
+            value: strip0x(accounts[0]),
         };
-        const payload: Payload = [param];
-
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, "797522Fb74d42bB9fbF6b76dEa24D01A538d5D66", 22500, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
-
+        const amount = 22500;
+        const payload: Payload = [arg];
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, "797522Fb74d42bB9fbF6b76dEa24D01A538d5D66", amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
         const gatewayAddress = await shift.addr();
-        // TODO: Deposit BTC to gateway address
 
-        const deposit = await shift.wait(6);
+        // Deposit BTC to gateway address.
+        const privateKey = new bitcore.PrivateKey(BITCOIN_KEY);
+        const fromAddress = bs58.encode(privateKey.toAddress().hashBuffer);
+        const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
+        const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
+        for (const utxo of utxos) {
+            const bitcoreUTXO = new Transaction.UnspentOutput({
+                txId: utxo.txHash,
+                outputIndex: utxo.vout,
+                address: "", // TODO:
+                script: utxo.scriptPubKey,
+                satoshis: utxo.amount,
+            });
+            bitcoreUTXOs.push(bitcoreUTXO);
+        }
+
+        const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
+        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.serialize() });
+        console.log(result);
+
+        // Wait for deposit to be received and submit to Darknodes + Ethereum.
+        const deposit = await shift.wait(0);
         const signature = await deposit.submit();
         await signature.signAndSubmit(web3, "");
     });

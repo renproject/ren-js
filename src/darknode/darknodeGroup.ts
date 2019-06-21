@@ -1,4 +1,3 @@
-import { actionToDetails } from "assets";
 import { List, Map } from "immutable";
 
 import { evenHex, strip0x } from "../blockchain/common";
@@ -6,8 +5,8 @@ import { evenHex, strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
 import { Lightnode } from "./darknode";
 import {
-    Args, HealthResponse, JSONRPCResponse, ReceiveMessageRequest,
-    ReceiveMessageResponse, SendMessageRequest, SendMessageResponse,
+    Args, HealthResponse, JSONRPCResponse, ReceiveMessageRequest, ReceiveMessageResponse,
+    SendMessageRequest, SendMessageResponse,
 } from "./types";
 
 // tslint:enable: no-unused-variable

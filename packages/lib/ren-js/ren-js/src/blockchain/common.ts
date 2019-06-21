@@ -12,7 +12,7 @@ export const createAddress =
         ({ mainnet, masterPKH }: { mainnet: boolean, masterPKH: Buffer }) =>
             (gHash: string) =>
                 new script()
-                    .add(gHash)
+                    .add(Buffer.from(strip0x(gHash)))
                     // .add(mintToAddress) // Is this meant to be here?
                     .add(opcode.OP_DROP)
                     .add(opcode.OP_DUP)
@@ -21,3 +21,4 @@ export const createAddress =
                     .add(opcode.OP_EQUALVERIFY)
                     .add(opcode.OP_CHECKSIG)
                     .toScriptHashOut().toAddress(mainnet ? networks.livenet : networks.testnet).toString();
+                    // TODO: Check: Is livenet = mainnet?

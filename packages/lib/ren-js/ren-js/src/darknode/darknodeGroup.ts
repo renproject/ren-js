@@ -1,4 +1,6 @@
 import { List, Map } from "immutable";
+import { ZBTC_ADDRESS } from "utils";
+import { Base64 } from "js-base64";
 
 import { evenHex, strip0x } from "../blockchain/common";
 // tslint:disable: no-unused-variable
@@ -180,7 +182,10 @@ export class ShifterGroup extends DarknodeGroup {
         }
 
         // TODO: Remove unnecessary `.map`
-        const returnValues = responses.filter(x => x !== null && x.result.result !== undefined).map((response) => ({
+        const returnValues = responses.map(x => {
+            console.log(x);
+            return x;
+        }).filter(x => x !== null && x.result.result !== undefined).map((response) => ({
             // tslint:disable: no-non-null-assertion no-unnecessary-type-assertion
             lightnode: response!.lightnode,
             messageID: response!.result.result!.messageID,
@@ -196,11 +201,12 @@ export class ShifterGroup extends DarknodeGroup {
 
     public submitDeposits = async (action: ShiftAction, to: string, amount: number | string, nonce: string, pHash: string, hash: string): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "to", type: "b20", value: strip0x(to) },
+            { name: "token", type: "b20", value: Base64.encode(ZBTC_ADDRESS) },
+            { name: "to", type: "b20", value: Base64.encode(strip0x(to)) },
             { name: "amount", type: "u64", value: amount },
-            { name: "phash", type: "b32", value: strip0x(pHash) },
-            { name: "nonce", type: "b32", value: strip0x(nonce) },
-            { name: "hash", type: "b32", value: strip0x(hash) },
+            { name: "phash", type: "b32", value: Base64.encode(strip0x(pHash)) },
+            { name: "nonce", type: "b32", value: Base64.encode(strip0x(nonce)) },
+            { name: "hash", type: "b32", value: Base64.encode(strip0x(hash)) },
         ]);
     }
 
@@ -216,6 +222,7 @@ export class ShifterGroup extends DarknodeGroup {
         for (const node of this.darknodes.valueSeq().toArray()) {
             if (node) {
                 try {
+                    console.log(messageID);
                     const response = await node.receiveMessage({ messageID }) as ShifterResponse;
                     // Error:
                     // { "jsonrpc": "2.0", "version": "0.1", "error": { "code": -32603, "message": "result not available", "data": null }, "id": null }

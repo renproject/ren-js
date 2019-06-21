@@ -82,7 +82,7 @@ describe("SDK methods", () => {
             const bitcoreUTXO = new Transaction.UnspentOutput({
                 txId: utxo.txHash,
                 outputIndex: utxo.vout,
-                address: "", // TODO:
+                address: fromAddress,
                 script: utxo.scriptPubKey,
                 satoshis: utxo.amount,
             });
@@ -93,7 +93,7 @@ describe("SDK methods", () => {
         const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.serialize() });
         console.log(result);
 
-        // Wait for deposit to be received and submit to Darknodes + Ethereum.
+        // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const deposit = await shift.wait(0);
         const signature = await deposit.submit();
         await signature.signAndSubmit(web3, "");

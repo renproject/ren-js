@@ -47,8 +47,8 @@ export const ZBTC_ADDRESS = "0x2341D423440892081516b49e42Fa93aF5280c5f5";
 
 export const generateHash = (_to: string, _shiftAction: ShiftAction, amount: number | string, _payload: Payload): string => {
     // TODO: Nonce should be passed in
-    // const nonce = crypto.Random.getRandomBuffer(32);
-    const nonce = Buffer.from("74e5de9c04818622e2d1a73bf80a4cbdc65a4d08978aed53121c65b9629e1c73", "hex");
+    const nonce = crypto.Random.getRandomBuffer(32);
+    // const nonce = Buffer.from("74e5de9c04818622e2d1a73bf80a4cbdc65a4d08978aed53121c65b9629e1c73", "hex");
 
     const token = ZBTC_ADDRESS; // actionToDetails(_shiftAction).asset;
     const pHash = generatePHash(_payload);

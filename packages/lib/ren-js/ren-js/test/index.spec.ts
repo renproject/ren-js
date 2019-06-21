@@ -1,9 +1,8 @@
 import axios from "axios";
-import bitcore, { Networks, Transaction } from "bitcore-lib";
-import bs58 from "bs58";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
+import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
 
 import { ShiftActions } from "../src/assets";
 import { strip0x } from "../src/blockchain/common";
@@ -17,7 +16,7 @@ chai.should();
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
-const MERCURY_URL = `https://ren-mercury.herokuapp.com/btc-testnet/tx`;
+const MERCURY_URL = `https://ren-mercury.herokuapp.com/btc-testnet3`;
 const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 /*
@@ -82,16 +81,15 @@ describe("SDK methods", () => {
             const bitcoreUTXO = new Transaction.UnspentOutput({
                 txId: utxo.txHash,
                 outputIndex: utxo.vout,
-                address: fromAddress,
-                script: utxo.scriptPubKey,
+                address: new Address(fromAddress),
+                script: new Script(utxo.scriptPubKey),
                 satoshis: utxo.amount,
             });
             bitcoreUTXOs.push(bitcoreUTXO);
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
-        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.serialize() });
-        console.log(result);
+        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const deposit = await shift.wait(0);

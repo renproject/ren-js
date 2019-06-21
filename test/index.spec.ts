@@ -16,7 +16,7 @@ const INFURA_URL = process.env.ETHEREUM_NODE;
 
 *MINTING*
 
-`const shift = RenSDK.shift("BTC0Btc2Eth", renExAddress, 0.5 BTC, randomNonce, payload);`
+`const shift = RenSDK.shift("BTC0Btc2Eth", renExAddress, 0.5 BTC (in sats), randomNonce, payload);`
 `const gatewayAddress = await shift.addr();`
 _user deposits BTC to gateway address_
 
@@ -33,7 +33,7 @@ _e.g. on RenEx, this will mint BTC and swap it for DAI_
 
 *BURNING*
 
-_First, the user calls Web3.eth.Contract(adapter).burn() => LogShiftOut "1234"_
+_First, the front-end/user calls Web3.eth.Contract(adapter).burn() => LogShiftOut "1234"_
 
 `RenSDK.burnStatus("1234", btcAddress)`
 _Submit to darknodes => transaction hash_

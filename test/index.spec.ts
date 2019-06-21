@@ -1,6 +1,5 @@
 import axios from "axios";
-import bitcore, { Transaction } from "bitcore-lib";
-import bs58 from "bs58";
+import bitcore, { Transaction, Address, Script } from "bitcore-lib";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
@@ -75,15 +74,15 @@ describe("SDK methods", () => {
 
         // Deposit BTC to gateway address.
         const privateKey = new bitcore.PrivateKey(BITCOIN_KEY);
-        const fromAddress = bs58.encode(privateKey.toAddress().hashBuffer);
+        const fromAddress = privateKey.toAddress().toString();
         const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
         for (const utxo of utxos) {
             const bitcoreUTXO = new Transaction.UnspentOutput({
                 txId: utxo.txHash,
                 outputIndex: utxo.vout,
-                address: fromAddress,
-                script: utxo.scriptPubKey,
+                address: new Address(fromAddress),
+                script: new Script(utxo.scriptPubKey),
                 satoshis: utxo.amount,
             });
             bitcoreUTXOs.push(bitcoreUTXO);

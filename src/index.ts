@@ -17,10 +17,11 @@ export { UTXO } from "./utils";
 
 // Types of RenSDK's methods ///////////////////////////////////////////////////
 export type SignAndSubmit = Promise<void>;
-export interface Submit extends Promise<{ signAndSubmit: (web3: Web3, methodName: string) => SignAndSubmit }> {
+export interface Submit {
+    signAndSubmit: (web3: Web3, methodName: string) => SignAndSubmit;
     onMessageID: () => Promise<string>;
 }
-export interface Wait { submit: () => Submit; }
+export interface Wait { submit: () => Promise<Submit>; }
 export interface Shift {
     addr: () => string;
     wait: (confirmations: number) => Promise<Wait>;
@@ -28,13 +29,7 @@ export interface Shift {
 
 export default class RenSDK {
 
-    // Expose functions
-    public hashPayload = hashPayload;
-    public generateAddress = generateAddress;
-
     // Internal state
-    // tslint:disable-next-line: no-any
-    private readonly adapter: any;
     private readonly darknodeGroup: ShifterGroup;
 
     // Takes the address of the adapter smart contract
@@ -51,7 +46,7 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload): Shift => {
-        const gatewayAddress = generateAddress(this.adapter.address, shiftAction, payload);
+        const gatewayAddress = generateAddress(to, shiftAction, payload);
         return {
             addr: () => gatewayAddress,
             wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress),
@@ -75,53 +70,36 @@ export default class RenSDK {
 
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any) =>
-        (): Submit => {
-            // Hash the payload
-            const pHash = this.hashPayload(payload);
+        async (): Promise<Submit> => {
+            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, amount, nonce, hashPayload(payload), nonce); // TODO: Pass hash instead of nonce
 
-            let messageIDEvent: string;
-
-            // Submit the deposit to the darknodes
-            const submitPromise = this.darknodeGroup.submitDeposits(shiftAction, to, pHash).then(async (messageID: string) => {
-                messageIDEvent = messageID;
-
-                let response: ShiftedInResponse | ShiftedOutResponse | undefined;
-                while (!response) {
-                    try {
-                        response = await this.darknodeGroup.checkForResponse(messageID);
-                    } catch (error) {
-                        // TODO: Ignore "result not available",
-                        // throw otherwise
-                    }
-
-                    // Break before sleeping if responses is not undefined
-                    if (response) { break; }
-                    await sleep(10 * SECONDS);
+            let response: ShiftedInResponse | ShiftedOutResponse | undefined;
+            while (!response) {
+                try {
+                    response = await this.darknodeGroup.checkForResponse(messageID);
+                } catch (error) {
+                    // TODO: Ignore "result not available",
+                    // throw otherwise
                 }
 
-                return {
-                    signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, response),
-                };
-            });
+                // Break before sleeping if responses is not undefined
+                if (response) { break; }
+                await sleep(10 * SECONDS);
+            }
 
             // TODO: Use github.com/primus/eventemitter3
             const onMessageID = async () => {
-                while (!messageIDEvent) {
+                while (!messageID) {
                     await sleep(1 * SECONDS);
                 }
 
-                return messageIDEvent;
+                return messageID;
             };
 
-            // tslint:disable-next-line: no-object-literal-type-assertion
-            const ret = {
-                then: submitPromise.then,
-                catch: submitPromise.catch,
-                finally: submitPromise.finally,
+            return {
+                signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, response),
                 onMessageID,
-            } as Submit;
-
-            return ret;
+            };
         }
 
     // tslint:disable-next-line: no-any (FIXME)

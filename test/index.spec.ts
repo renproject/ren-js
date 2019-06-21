@@ -1,16 +1,14 @@
 import chai from "chai";
-import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
-import NonceSubprovider from "web3-provider-engine/subproviders/nonce-tracker";
+import FakeProvider from "web3-fake-provider";
 
+import { ShiftActions } from "../src/assets";
 import RenSDK from "../src/index";
+import { Param, Payload } from "../src/utils";
 
-require("dotenv").load();
+require("dotenv").config();
 
 chai.should();
-
-const MNEMONIC = process.env.MNEMONIC;
-const INFURA_URL = process.env.ETHEREUM_NODE;
 
 /*
 
@@ -43,32 +41,35 @@ _Submit to darknodes => transaction hash_
 describe("SDK methods", () => {
     // tslint:disable-next-line:no-any
     let sdk: RenSDK;
-    let provider;
     let web3;
-    let accounts;
-    let mainAccount;
+    // let accounts;
+    // let mainAccount;
 
     before(async () => {
-        if (!MNEMONIC) {
-            throw new Error("MNEMONIC environment variable has not been set");
-        }
-
-        // Initialize the provider and set our own nonce tracker
-        // provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
-        // const nonceTracker = new NonceSubprovider();
-        // provider.engine._providers.unshift(nonceTracker);
-        // nonceTracker.setEngine(provider.engine);
-        // web3 = new Web3(provider);
+        web3 = new Web3(new FakeProvider());
 
         // // Set up the SDK to use the main account
         // accounts = await web3.eth.getAccounts();
         // mainAccount = accounts[0];
         // sdk.setAddress(mainAccount);
 
-        // sdk = new RenSDK()
+        sdk = new RenSDK();
     });
 
-    it("should return the correct SDK address", () => {
-        (1).should.equal(1);
+    it("should be able to mint btc", async () => {
+        const param: Param = {
+            type: "bytes20",
+            value: "1234567890123456789012345678901234567890",
+        };
+        const payload: Payload = [param];
+
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, "797522Fb74d42bB9fbF6b76dEa24D01A538d5D66", 22500, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
+
+        const gatewayAddress = await shift.addr();
+        // TODO: Deposit BTC to gateway address
+
+        const deposit = await shift.wait(6);
+        const signature = await deposit.submit();
+        await signature.signAndSubmit(web3, "");
     });
 });

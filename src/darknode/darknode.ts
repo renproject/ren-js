@@ -163,7 +163,6 @@ export class Lightnode {
             jsonrpc: "2.0",
             method,
             params,
-            version: "0.0",
         };
     }
 

@@ -1,4 +1,3 @@
-import { actionToDetails } from "assets";
 import { List, Map } from "immutable";
 
 import { evenHex, strip0x } from "../blockchain/common";
@@ -6,7 +5,7 @@ import { evenHex, strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
 import { Lightnode } from "./darknode";
 import {
-    HealthResponse, JSONRPCResponse, Payload, ReceiveMessageRequest, ReceiveMessageResponse,
+    Args, HealthResponse, JSONRPCResponse, ReceiveMessageRequest, ReceiveMessageResponse,
     SendMessageRequest, SendMessageResponse,
 } from "./types";
 
@@ -170,12 +169,10 @@ export class ShifterGroup extends DarknodeGroup {
         // this.getHealth();
     }
 
-    public submitMessage = async (payload: Payload): Promise<string> => {
+    public submitMessage = async (action: ShiftAction, args: Args): Promise<string> => {
         const responses = await this.sendMessage({
-            nonce: randomNonce(),
-            to: "Shifter",
-            signature: "",
-            payload,
+            to: action,
+            args,
         });
 
         if (responses.filter(x => x !== null).size < 1) {
@@ -197,24 +194,22 @@ export class ShifterGroup extends DarknodeGroup {
         return first.messageID;
     }
 
-    public submitDeposits = async (action: ShiftAction, adapterAddress: string, commitmentHash: string): Promise<string> => {
-        return this.submitMessage({
-            method: `ShiftIn${actionToDetails(action).from.toUpperCase()}`,
-            args: [
-                { name: "uid", type: "public", value: strip0x(adapterAddress) },
-                { name: "commitment", type: "public", value: strip0x(commitmentHash) },
-            ],
-        });
+    public submitDeposits = async (action: ShiftAction, to: string, amount: number | string, nonce: string, pHash: string, hash: string): Promise<string> => {
+        return this.submitMessage(action, [
+            { name: "to", type: "b20", value: strip0x(to) },
+            { name: "amount", type: "u64", value: amount },
+            { name: "phash", type: "b32", value: strip0x(pHash) },
+            { name: "nonce", type: "b32", value: strip0x(nonce) },
+            { name: "hash", type: "b32", value: strip0x(hash) },
+        ]);
     }
 
     public submitWithdrawal = async (action: ShiftAction, to: string, valueHex: string): Promise<string> => {
-        return this.submitMessage({
-            method: `ShiftOut${actionToDetails(action).to.toUpperCase()}`,
-            args: [
-                { name: "to", type: "public", value: strip0x(to) },
-                { name: "value", type: "public", value: evenHex(strip0x(valueHex)) }, // Hex should be: "2711"
-            ],
-        });
+        // TODO: These params need to be fixed
+        return this.submitMessage(action, [
+            { name: "to", type: "b20", value: strip0x(to) },
+            { name: "value", type: "public", value: evenHex(strip0x(valueHex)) }, // Hex should be: "2711"
+        ]);
     }
 
     public checkForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {

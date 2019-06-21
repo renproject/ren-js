@@ -1,4 +1,6 @@
-import { soliditySha3 } from "web3-utils";
+import { crypto } from "bitcore-lib";
+import { rawEncode } from "ethereumjs-abi";
+import { keccak256 } from "web3-utils";
 
 import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
@@ -15,25 +17,43 @@ export interface Arg {
 
 export type Payload = Arg[];
 
+const unzip = (zip: Arg[]) => [zip.map(param => param.type), zip.map(param => param.value)];
+
 // tslint:disable-next-line: no-any
 export const hashPayload = (...zip: Arg[] | [Arg[]]): string => {
+
     // You can annotate values passed in to soliditySha3.
     // Example: { type: "address", value: srcToken }
-    // const zip = values.map((value, i) => ({ type: types[i], value }));
 
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
     const args = Array.isArray(zip) ? zip[0] as any as Arg[] : zip; // tslint:disable-line: no-any
-    return soliditySha3(...args);
+
+    const [types, values] = unzip(args);
+
+    // tslint:disable-next-line: no-any
+    return keccak256(rawEncode(types, values) as any as string); // sha3 can accept a Buffer
+    // return soliditySha3(...args);
 };
 
 // Generates the gateway address
-export const generateAddress = (_to: string, _shiftAction: ShiftAction, _payload: Payload): string => {
+export const generateAddress = (_to: string, _shiftAction: ShiftAction, amount: number | string, _payload: Payload): string => {
+    const nonce = crypto.Random.getRandomBuffer(32).toString("hex");
+
+    // TODO: Remove hard-coded address!
+    const token = "0x2341D423440892081516b49e42Fa93aF5280c5f5"; // actionToDetails(_shiftAction).asset;
+    const pHash = hashPayload(_payload);
+
+    const hash = rawEncode(
+        ["address", "address", "uint256", "bytes32", "bytes32"],
+        [token, _to, amount, nonce, pHash],
+    );
+
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return createBTCTestnetAddress(_to, hashPayload(_payload));
+            return createBTCTestnetAddress(hash.toString("hex"));
         case Chain.ZCash:
-            return createZECTestnetAddress(_to, hashPayload(_payload));
+            return createZECTestnetAddress(hash.toString("hex"));
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
     }

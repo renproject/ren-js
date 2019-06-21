@@ -46,7 +46,7 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload): Shift => {
-        const gatewayAddress = generateAddress(to, shiftAction, payload);
+        const gatewayAddress = generateAddress(to, shiftAction, amount, payload);
         return {
             addr: () => gatewayAddress,
             wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress),

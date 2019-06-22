@@ -1,6 +1,6 @@
 {
   "name": "@renex/contracts",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "homepage": "https://republicprotocol.github.io/contracts-ts",
   "main": "./lib.js",
   "types": "./lib.d.ts",

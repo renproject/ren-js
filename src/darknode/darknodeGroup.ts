@@ -1,6 +1,5 @@
 import { List, Map } from "immutable";
 import { ZBTC_ADDRESS } from "utils";
-import { Base64 } from "js-base64";
 
 import { evenHex, strip0x } from "../blockchain/common";
 // tslint:disable: no-unused-variable
@@ -49,7 +48,7 @@ const _devnetLightnode = [
     "https://lightnode-devnet.herokuapp.com",
 ];
 
-export const lightnodes = _testnetLightnode;
+export const lightnodes = _devnetLightnode;
 
 // export const multiAddressToID = (multiAddress: MultiAddress): DarknodeID => {
 //     const split = multiAddress.multiAddress.split("/");
@@ -70,29 +69,29 @@ export interface ShiftedOutResponse {
 }
 
 type ShifterResponse = JSONRPCResponse<{
-    values: [
+    out: [
         {
-            "type": "public",
+            "type": "u64",
             "name": "amount",
             "value": string, // "8d8126"
         },
         {
-            "type": "public",
+            "type": "b20",
             "name": "txHash",
             "value": string, // "18343428f9b057102c4a6da8d8011514a5ea8be2f44af636bcd26a8ae4e2b719"
         },
         {
-            "type": "public",
+            "type": "b20",
             "name": "r",
             "value": string, // "c762164060c7bbffbd0a76335d02ca8e69f792b13d8eb865a09690cc30aaf55e"
         },
         {
-            "type": "public",
+            "type": "b20",
             "name": "s",
             "value": string, // "b3785c63afb91bb58e98a89552fdf3cb6034e5f349ab1f37f67d9e314fd4f506"
         },
         {
-            "type": "public",
+            "type": "b20",
             "name": "v",
             "value": string, // "01"
         }
@@ -201,12 +200,12 @@ export class ShifterGroup extends DarknodeGroup {
 
     public submitDeposits = async (action: ShiftAction, to: string, amount: number | string, nonce: string, pHash: string, hash: string): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "token", type: "b20", value: Base64.encode(ZBTC_ADDRESS) },
-            { name: "to", type: "b20", value: Base64.encode(strip0x(to)) },
+            { name: "token", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
+            { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
-            { name: "phash", type: "b32", value: Base64.encode(strip0x(pHash)) },
-            { name: "nonce", type: "b32", value: Base64.encode(strip0x(nonce)) },
-            { name: "hash", type: "b32", value: Base64.encode(strip0x(hash)) },
+            { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
+            { name: "nonce", type: "b32", value: Buffer.from(strip0x(nonce), "hex").toString("base64") },
+            { name: "hash", type: "b32", value: Buffer.from(strip0x(hash), "hex").toString("base64") },
         ]);
     }
 
@@ -222,24 +221,23 @@ export class ShifterGroup extends DarknodeGroup {
         for (const node of this.darknodes.valueSeq().toArray()) {
             if (node) {
                 try {
-                    console.log(messageID);
                     const response = await node.receiveMessage({ messageID }) as ShifterResponse;
                     // Error:
                     // { "jsonrpc": "2.0", "version": "0.1", "error": { "code": -32603, "message": "result not available", "data": null }, "id": null }
                     // Success:
                     // (TODO)
-                    if (response.result && response.result.values) {
+                    if (response.result && response.result.out) {
                         // tslint:disable-next-line: no-any
                         let ret = {};
-                        for (const value of response.result.values) {
-                            ret = { ...ret, [value.name]: value.value };
+                        for (const value of response.result.out) {
+                            ret = { ...ret, [value.name]: value.type === "u64" ? value.value : Buffer.from(value.value, "base64").toString("hex") };
                         }
                         return ret as ShiftedInResponse | ShiftedOutResponse;
                     } else if (response.error) {
                         throw response.error;
                     }
                 } catch (error) {
-                    console.error(error);
+                    console.error(error.toString());
                 }
             }
         }

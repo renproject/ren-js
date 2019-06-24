@@ -1,6 +1,6 @@
-import { crypto } from "bitcore-lib";
 import { rawEncode } from "ethereumjs-abi";
-import { keccak256 } from "web3-utils";
+import { keccak256 } from "ethereumjs-util";
+import { Ox } from "index";
 
 import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
@@ -38,28 +38,24 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     const [types, values] = unzip(args);
 
     // tslint:disable-next-line: no-any
-    return keccak256(rawEncode(types, values) as any as string); // sha3 can accept a Buffer
+    return Ox(keccak256(rawEncode(types, values)).toString("hex")); // sha3 can accept a Buffer
 };
 
 // TODO: Remove hard-coded address!
 // TODO: Strip 0x
-export const ZBTC_ADDRESS = "0x2341D423440892081516b49e42Fa93aF5280c5f5";
+export const ZBTC_ADDRESS = "0xef44c39102Ab3479F271e2fb3F27dB56D13b7a42";
 
-export const generateHash = (_to: string, _shiftAction: ShiftAction, amount: number | string, _payload: Payload): string => {
-    // TODO: Nonce should be passed in
-    const nonce = crypto.Random.getRandomBuffer(32);
-    // const nonce = Buffer.from("74e5de9c04818622e2d1a73bf80a4cbdc65a4d08978aed53121c65b9629e1c73", "hex");
-
+export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: ShiftAction, nonce: string): string => {
     const token = ZBTC_ADDRESS; // actionToDetails(_shiftAction).asset;
     const pHash = generatePHash(_payload);
 
     const hash = rawEncode(
-        ["address", "address", "uint256", "bytes32", "bytes32"],
-        [token, _to, amount, nonce, pHash],
+        ["bytes32", "uint256", "address", "address", "bytes32"],
+        [Ox(pHash), amount, Ox(token), Ox(_to), Ox(nonce)],
     );
 
     // tslint:disable-next-line: no-any
-    return keccak256(hash as any as string);
+    return Ox(keccak256(hash).toString("hex"));
 };
 
 // Generates the gateway address

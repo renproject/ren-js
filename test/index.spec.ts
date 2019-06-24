@@ -1,11 +1,11 @@
 import axios from "axios";
-import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
+import bitcore, { Address, crypto, Networks, Script, Transaction } from "bitcore-lib";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 
 import { ShiftActions } from "../src/assets";
-import { strip0x } from "../src/blockchain/common";
+import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
 import { Arg, Payload } from "../src/utils";
 
@@ -71,7 +71,8 @@ describe("SDK methods", function () {
         };
         const amount = 11000;
         const payload: Payload = [arg];
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
+        const nonce = Ox(crypto.Random.getRandomBuffer(32).toString("hex"));
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, nonce, payload);
         const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.

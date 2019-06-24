@@ -1,8 +1,8 @@
 import axios from "axios";
+import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
-import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
 
 import { ShiftActions } from "../src/assets";
 import { strip0x } from "../src/blockchain/common";
@@ -61,7 +61,8 @@ describe("SDK methods", () => {
         accounts = await web3.eth.getAccounts();
     });
 
-    it("should be able to mint btc", async () => {
+    it("should be able to mint and burn btc", async () => {
+        const contractAddress = "0dF3510a4128c0cA11518465f670dB970E9302B7";
         const arg: Arg = {
             name: "to",
             type: "bytes20",
@@ -69,7 +70,7 @@ describe("SDK methods", () => {
         };
         const amount = 22500;
         const payload: Payload = [arg];
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, "797522Fb74d42bB9fbF6b76dEa24D01A538d5D66", amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
         const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.
@@ -89,11 +90,15 @@ describe("SDK methods", () => {
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
-        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+        await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const deposit = await shift.wait(0);
         const signature = await deposit.submit();
-        await signature.signAndSubmit(web3, "");
+        await signature.signAndSubmit(web3, "shiftIn");
+
+        // TODO: Ensure accounts[0] has received zBTC.
+
+        // TODO: Burn zBTC and ensure we receive BTC.
     });
 });

@@ -1,122 +1,26 @@
 import axios, { AxiosResponse } from "axios";
 
 import {
-    AddressesRequest, AddressesResponse, EpochResponse, HealthResponse, NumPeersResponse,
-    PeersResponse, ReceiveMessageRequest, ReceiveMessageResponse, SendMessageRequest,
-    SendMessageResponse,
+    ReceiveMessageRequest, ReceiveMessageResponse,
+    SendMessageRequest, SendMessageResponse,
 } from "./types";
 
 export class Lightnode {
     public readonly lightnodeURL: string;
 
-    constructor(lightnode: string) {
-        if (lightnode.charAt(0) === "/") {
+    constructor(lightnodeURL: string) {
+        if (lightnodeURL.charAt(0) === "/") {
             try {
-                const [_, _ip4, ip, _tcp, port, _ren, _id] = lightnode.split("/");
+                const [_, _ip4, ip, _tcp, port, _ren, _id] = lightnodeURL.split("/");
                 const fixedPort = port === "18514" ? "18514" : port;
                 // tslint:disable-next-line: no-http-string
                 this.lightnodeURL = `http://${ip}:${fixedPort}`;
             } catch (error) {
-                throw new Error(`Malformatted address: ${lightnode}`);
+                throw new Error(`Malformatted address: ${lightnodeURL}`);
             }
         } else {
-            this.lightnodeURL = lightnode;
+            this.lightnodeURL = lightnodeURL;
         }
-    }
-
-    public async getHealth(): Promise<HealthResponse> {
-        let resp;
-        try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_healthCheck"));
-            if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
-            }
-        } catch (error) {
-            if (error.response) {
-                throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
-                );
-            } else {
-                throw error;
-            }
-        }
-        return resp.data as HealthResponse;
-    }
-
-    public async getPeers(): Promise<PeersResponse> {
-        let resp;
-        try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_queryPeers"));
-            if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
-            }
-        } catch (error) {
-            if (error.response) {
-                throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
-                );
-            } else {
-                throw error;
-            }
-        }
-        return resp.data as PeersResponse;
-    }
-
-    public async getNumberOfPeers(): Promise<NumPeersResponse> {
-        let resp;
-        try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_queryNumPeers"));
-            if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
-            }
-        } catch (error) {
-            if (error.response) {
-                throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
-                );
-            } else {
-                throw error;
-            }
-        }
-        return resp.data as NumPeersResponse;
-    }
-
-    public async getEpoch(): Promise<EpochResponse> {
-        let resp;
-        try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_queryEpoch"));
-            if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
-            }
-        } catch (error) {
-            if (error.response) {
-                throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
-                );
-            } else {
-                throw error;
-            }
-        }
-        return resp.data as EpochResponse;
-    }
-
-    public async getAddresses(request: AddressesRequest): Promise<AddressesResponse> {
-        let resp;
-        try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_queryAddresses", request));
-            if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
-            }
-        } catch (error) {
-            if (error.response) {
-                throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
-                );
-            } else {
-                throw error;
-            }
-        }
-        return resp.data as AddressesResponse;
     }
 
     public async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
@@ -124,12 +28,12 @@ export class Lightnode {
         try {
             resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_sendMessage", request));
             if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
+                throw this.responseError("Unexpected status code returned by Lightnode", resp);
             }
         } catch (error) {
             if (error.response) {
                 throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
+                    `Lightnode returned status ${error.response.status} with reason: ${error.response.data}`,
                 );
             } else {
                 throw error;
@@ -143,12 +47,12 @@ export class Lightnode {
         try {
             resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_receiveMessage", request));
             if (resp.status !== 200) {
-                throw this.responseError("Unexpected status code returned by Darknode", resp);
+                throw this.responseError("Unexpected status code returned by Lightnode", resp);
             }
         } catch (error) {
             if (error.response) {
                 throw new Error(
-                    `Darknode returned status ${error.response.status} with reason: ${error.response.data}`,
+                    `Lightnode returned status ${error.response.status} with reason: ${error.response.data}`,
                 );
             } else {
                 throw error;

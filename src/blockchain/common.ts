@@ -4,9 +4,6 @@ import { Networks as ZNetworks, Opcode as ZOpcode, Script as zScript } from "bit
 export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
 export const evenHex = (hex: string) => hex.length % 2 ? `0${hex}` : hex;
 
-// const hashPayload = (mintToAddress: string, commitmentHash: string) =>
-//     Buffer.from(strip0x(keccak256(`0x${strip0x(mintToAddress)}${strip0x(commitmentHash)}`)), "hex");
-
 export const createAddress =
     (networks: typeof BNetworks | typeof ZNetworks, opcode: typeof BOpcode | typeof ZOpcode, script: typeof bScript | typeof zScript) =>
         ({ mainnet, masterPKH }: { mainnet: boolean, masterPKH: Buffer }) =>

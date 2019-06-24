@@ -39,10 +39,10 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
 
     // tslint:disable-next-line: no-any
     return keccak256(rawEncode(types, values) as any as string); // sha3 can accept a Buffer
-    // return soliditySha3(...args);
 };
 
 // TODO: Remove hard-coded address!
+// TODO: Strip 0x
 export const ZBTC_ADDRESS = "0x2341D423440892081516b49e42Fa93aF5280c5f5";
 
 export const generateHash = (_to: string, _shiftAction: ShiftAction, amount: number | string, _payload: Payload): string => {

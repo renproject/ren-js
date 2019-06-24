@@ -129,7 +129,7 @@ export default class RenSDK {
 
             const addresses = await web3.eth.getAccounts();
 
-            return contract.methods.trade(
+            return contract.methods[methodName](
                 ...params,
             ).send({ from: addresses[0] });
         }

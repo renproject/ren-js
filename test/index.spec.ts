@@ -63,15 +63,15 @@ describe("SDK methods", function () {
         accounts = await web3.eth.getAccounts();
     });
 
-    it("should be able to mint btc", async (done) => {
+    it("should be able to mint and burn btc", async () => {
+        const contractAddress = "0dF3510a4128c0cA11518465f670dB970E9302B7";
         const arg: Arg = {
-            name: "to",
             type: "bytes20",
             value: strip0x(accounts[0]),
         };
-        const amount = 22500;
+        const amount = 10500;
         const payload: Payload = [arg];
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, "797522Fb74d42bB9fbF6b76dEa24D01A538d5D66", amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
         const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.
@@ -100,8 +100,6 @@ describe("SDK methods", function () {
             throw error;
         }
 
-        // console.log(`Gateway address: ${gatewayAddress} - waiting for deposit...`);
-
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         console.log(`Waiting for ${0} confirmations...`);
         const deposit = await shift.wait(0);
@@ -110,6 +108,6 @@ describe("SDK methods", function () {
         const signature = await deposit.submit();
         console.log(`Submitting signature!`);
         console.log(signature);
-        await signature.signAndSubmit(web3, "");
+        await signature.signAndSubmit(web3, "shiftIn");
     });
 });

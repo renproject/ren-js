@@ -1,8 +1,14 @@
 import { Networks as BNetworks, Opcode as BOpcode, Script as bScript } from "bitcore-lib";
 import { Networks as ZNetworks, Opcode as ZOpcode, Script as zScript } from "bitcore-lib-zcash";
 
+// Remove 0x prefix from a hex string
 export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
-export const evenHex = (hex: string) => hex.length % 2 ? `0${hex}` : hex;
+
+// Add a 0x prefix from a hex string
+export const Ox = (hex: string) => hex.substring(0, 2) === "0x" ? hex : `0x${hex}`;
+
+// Pad a hex string if necessary so that its length is even
+export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : hex;
 
 export const createAddress =
     (networks: typeof BNetworks | typeof ZNetworks, opcode: typeof BOpcode | typeof ZOpcode, script: typeof bScript | typeof zScript) =>

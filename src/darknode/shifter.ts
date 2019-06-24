@@ -1,6 +1,6 @@
 import { ZBTC_ADDRESS } from "utils";
 
-import { strip0x } from "../blockchain/common";
+import { Ox, strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
@@ -105,7 +105,7 @@ export class Shifter {
             if (response.result && response.result.out) {
                 let ret = {};
                 for (const value of response.result.out) {
-                    ret = { ...ret, [value.name]: value.type === "u64" ? value.value : `0x${Buffer.from(value.value, "base64").toString("hex")}` };
+                    ret = { ...ret, [value.name]: value.type === "u64" ? value.value : Ox(Buffer.from(value.value, "base64").toString("hex")) };
                 }
                 return ret as ShiftedInResponse | ShiftedOutResponse;
             } else if (response.error) {

@@ -64,11 +64,10 @@ describe("SDK methods", () => {
     it("should be able to mint and burn btc", async () => {
         const contractAddress = "0dF3510a4128c0cA11518465f670dB970E9302B7";
         const arg: Arg = {
-            name: "to",
             type: "bytes20",
             value: strip0x(accounts[0]),
         };
-        const amount = 22500;
+        const amount = 10500;
         const payload: Payload = [arg];
         const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
         const gatewayAddress = shift.addr();

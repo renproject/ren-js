@@ -94,7 +94,7 @@ export class Shifter {
 
     public submitWithdrawal = async (action: ShiftAction, to: string, amount: number): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "to", type: "b20", value: strip0x(to) },
+            { name: "to", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
         ]);
     }

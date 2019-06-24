@@ -2,11 +2,9 @@ import Web3 from "web3";
 
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
+import { lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
 import {
-    lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter,
-} from "./darknode/shifter";
-import {
-    generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep,
+    generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep, UTXO,
 } from "./utils";
 
 export * from "./darknode/shifter";
@@ -58,11 +56,16 @@ export default class RenSDK {
 
     private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, hash: string) =>
         async (confirmations: number): Promise<Wait> => {
-            let deposits;
+            let deposits: UTXO[] = [];
             // TODO: Check value of deposits
-            while (!deposits) {
-                deposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
-                if (deposits) { break; }
+            while (deposits.length === 0) {
+                try {
+                    deposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
+                } catch (error) {
+                    console.error(error);
+                    continue;
+                }
+                if (deposits.length > 0) { break; }
                 await sleep(10 * SECONDS);
             }
 

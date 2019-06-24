@@ -1,8 +1,8 @@
 import axios from "axios";
+import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
-import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
 
 import { ShiftActions } from "../src/assets";
 import { strip0x } from "../src/blockchain/common";
@@ -47,7 +47,9 @@ _Submit to darknodes => transaction hash_
 
  */
 
-describe("SDK methods", () => {
+describe("SDK methods", function () {
+    this.timeout(0);
+
     // tslint:disable-next-line:no-any
     let provider: any;
     let web3: Web3;
@@ -61,7 +63,7 @@ describe("SDK methods", () => {
         accounts = await web3.eth.getAccounts();
     });
 
-    it("should be able to mint btc", async () => {
+    it("should be able to mint btc", async (done) => {
         const arg: Arg = {
             name: "to",
             type: "bytes20",
@@ -89,11 +91,25 @@ describe("SDK methods", () => {
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
-        const result = await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+
+        console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${fromAddress})`);
+        try {
+            await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+        } catch (error) {
+            console.log(`Please check ${fromAddress}'s balance`);
+            throw error;
+        }
+
+        // console.log(`Gateway address: ${gatewayAddress} - waiting for deposit...`);
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
+        console.log(`Waiting for ${0} confirmations...`);
         const deposit = await shift.wait(0);
+        console.log(`Submitting deposit!`);
+        console.log(deposit);
         const signature = await deposit.submit();
+        console.log(`Submitting signature!`);
+        console.log(signature);
         await signature.signAndSubmit(web3, "");
     });
 });

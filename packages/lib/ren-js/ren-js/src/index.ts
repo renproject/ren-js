@@ -121,7 +121,7 @@ export default class RenSDK {
                 signature.v = "0";
             }
             const v = ((parseInt(signature.v, 10) + 27) || 27).toString(16);
-            const signatureBytes = Ox(`{strip0x(signature.r)}${strip0x(signature.s)}${v}`);
+            const signatureBytes = Ox(`${strip0x(signature.r)}${strip0x(signature.s)}${v}`);
 
             const params = [
                 amount, // _amount: BigNumber

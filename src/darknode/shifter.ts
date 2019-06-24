@@ -12,11 +12,15 @@ const _devnetLightnode = "https://lightnode-devnet.herokuapp.com";
 export const lightnode = _devnetLightnode; // TODO: Change this back
 
 export interface ShiftedInResponse {
-    amount: string;
-    txHash: string;
     r: string;
     s: string;
     v: string;
+    token: string;
+    to: string;
+    amount: number;
+    phash: string;
+    nonce: string;
+    hash: string;
 }
 
 export interface ShiftedOutResponse {
@@ -101,7 +105,7 @@ export class Shifter {
             if (response.result && response.result.out) {
                 let ret = {};
                 for (const value of response.result.out) {
-                    ret = { ...ret, [value.name]: value.type === "u64" ? value.value : Buffer.from(value.value, "base64").toString("hex") };
+                    ret = { ...ret, [value.name]: value.type === "u64" ? value.value : `0x${Buffer.from(value.value, "base64").toString("hex")}` };
                 }
                 return ret as ShiftedInResponse | ShiftedOutResponse;
             } else if (response.error) {

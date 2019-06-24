@@ -69,8 +69,12 @@ export class Shifter {
 
         console.log(response);
 
+        if (!response.result) {
+            throw new Error("Invalid message");
+        }
+
         // tslint:disable-next-line:no-non-null-assertion
-        return response!.result!.messageID;
+        return response.result.messageID;
     }
 
     public submitDeposits = async (action: ShiftAction, to: string, amount: number | string, nonce: string, pHash: string, hash: string): Promise<string> => {
@@ -104,7 +108,7 @@ export class Shifter {
                 throw response.error;
             }
         } catch (error) {
-            console.error(error.toString());
+            console.error(error);
         }
         throw new Error(`Signature not available`);
     }

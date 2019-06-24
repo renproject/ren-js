@@ -77,7 +77,11 @@ describe("SDK methods", () => {
         const fromAddress = privateKey.toAddress().toString();
         const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
+        let utxoAmount = 0;
         for (const utxo of utxos) {
+            if (utxoAmount >= amount) {
+                break;
+            }
             const bitcoreUTXO = new Transaction.UnspentOutput({
                 txId: utxo.txHash,
                 outputIndex: utxo.vout,
@@ -86,6 +90,7 @@ describe("SDK methods", () => {
                 satoshis: utxo.amount,
             });
             bitcoreUTXOs.push(bitcoreUTXO);
+            utxoAmount += amount;
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);

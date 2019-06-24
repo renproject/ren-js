@@ -83,12 +83,11 @@ export class Shifter {
 
     public submitDeposits = async (action: ShiftAction, to: string, amount: number, nonce: string, pHash: string, hash: string): Promise<string> => {
         return this.submitMessage(action, [
+            { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
+            { name: "amount", type: "u64", value: amount },
             { name: "token", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
             { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },
-            { name: "amount", type: "u64", value: amount },
-            { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
-            { name: "nonce", type: "b32", value: Buffer.from(strip0x(nonce), "hex").toString("base64") },
-            { name: "hash", type: "b32", value: Buffer.from(strip0x(hash), "hex").toString("base64") },
+            { name: "n", type: "b32", value: Buffer.from(strip0x(nonce), "hex").toString("base64") },
         ]);
     }
 

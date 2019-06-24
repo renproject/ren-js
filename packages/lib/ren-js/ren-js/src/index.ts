@@ -47,7 +47,7 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload): Shift => {
-        const hash = generateHash(to, shiftAction, amount, payload);
+        const hash = generateHash(payload, amount, to, shiftAction, nonce);
         const gatewayAddress = generateAddress(shiftAction, hash);
         return {
             addr: () => gatewayAddress,
@@ -142,6 +142,6 @@ export default class RenSDK {
 
             return contract.methods[methodName](
                 ...params,
-            ).send({ from: addresses[0] });
+            ).send({ from: addresses[0], gas: 1000000 });
         }
 }

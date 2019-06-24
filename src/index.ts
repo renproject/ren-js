@@ -31,17 +31,17 @@ export interface Shift {
 export default class RenSDK {
 
     // Internal state
-    private readonly darknodeGroup: Shifter;
+    private readonly shifter: Shifter;
 
     // Takes the address of the adapter smart contract
     constructor() {
-        this.darknodeGroup = new Shifter(lightnode);
+        this.shifter = new Shifter(lightnode);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public burn = async (shiftAction: ShiftAction, to: string, amount: number): Promise<string> => {
-        return this.darknodeGroup.submitWithdrawal(shiftAction, to, amount);
+        return this.shifter.submitWithdrawal(shiftAction, to, amount);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
@@ -78,12 +78,12 @@ export default class RenSDK {
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, hash: string) =>
         async (): Promise<Submit> => {
-            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
+            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
 
             let response: ShiftedInResponse | ShiftedOutResponse | undefined;
             while (!response) {
                 try {
-                    response = await this.darknodeGroup.checkForResponse(messageID);
+                    response = await this.shifter.checkForResponse(messageID);
                     console.log(response);
                 } catch (error) {
                     // TODO: Ignore "result not available",

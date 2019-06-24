@@ -2,7 +2,7 @@ import { ZBTC_ADDRESS } from "utils";
 
 import { strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
-import { Lightnode } from "./darknode";
+import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
 
 const _testnetLightnode = "https://lightnode-testnet.herokuapp.com";

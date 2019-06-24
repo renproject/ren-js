@@ -27,6 +27,8 @@ export class Lightnode {
         let resp;
         try {
             resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_sendMessage", request));
+            console.log("-------------HERE--------------");
+            console.log(resp);
             if (resp.status !== 200) {
                 throw this.responseError("Unexpected status code returned by Lightnode", resp);
             }

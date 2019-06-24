@@ -69,7 +69,7 @@ describe("SDK methods", function () {
             type: "bytes20",
             value: strip0x(accounts[0]),
         };
-        const amount = 10500;
+        const amount = 11000;
         const payload: Payload = [arg];
         const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, "ded38c324d6e9b5148dd859b17e91061910a1baa75516447f2c133e9aa9e3a48", payload);
         const gatewayAddress = shift.addr();
@@ -101,8 +101,13 @@ describe("SDK methods", function () {
         try {
             await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
         } catch (error) {
-            console.log(`Please check ${fromAddress}'s balance`);
-            throw error;
+            console.log("Unable to submit to Mercury. Trying chain.so...");
+            try {
+                await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
+            } catch (error) {
+                console.log(`Please check ${fromAddress}'s balance`);
+                throw error;
+            }
         }
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.

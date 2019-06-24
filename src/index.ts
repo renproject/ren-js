@@ -2,6 +2,7 @@ import Web3 from "web3";
 
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
+import { strip0x } from "./blockchain/common";
 import { lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
 import {
     generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep, UTXO,
@@ -83,6 +84,7 @@ export default class RenSDK {
             while (!response) {
                 try {
                     response = await this.darknodeGroup.checkForResponse(messageID);
+                    console.log(response);
                 } catch (error) {
                     // TODO: Ignore "result not available",
                     // throw otherwise
@@ -114,19 +116,21 @@ export default class RenSDK {
             const signature: ShiftedInResponse = response as ShiftedInResponse;
             // TODO: Check that amount and signature.amount are the same
             amount = `0x${signature.amount.toString(16)}`; // _amount: BigNumber
-            const txHash = `0x${signature.txHash}`; // _hash: string
+            const txHash = `0x${strip0x(signature.hash)}`; // _hash: string
             if (signature.v === "") {
                 signature.v = "0";
             }
             const v = ((parseInt(signature.v, 10) + 27) || 27).toString(16);
-            const signatureBytes = `0x${signature.r}${signature.s}${v}`;
+            const signatureBytes = `0x${strip0x(signature.r)}${strip0x(signature.s)}${v}`;
 
             const params = [
-                ...payload.map(value => value.value),
                 amount, // _amount: BigNumber
                 txHash, // _hash: string
                 signatureBytes, // _sig: string
+                ...payload.map(value => value.value),
             ];
+
+            console.log(params);
 
             const contract = new web3.eth.Contract(payloadToABI(methodName, payload), to);
 

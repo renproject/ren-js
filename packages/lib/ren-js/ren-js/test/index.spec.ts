@@ -92,7 +92,7 @@ describe("SDK methods", function () {
                 satoshis: utxo.amount,
             });
             bitcoreUTXOs.push(bitcoreUTXO);
-            utxoAmount += amount;
+            utxoAmount += utxo.amount;
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);

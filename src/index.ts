@@ -17,7 +17,8 @@ export * from "./assets";
 export { UTXO } from "./utils";
 
 // Types of RenSDK's methods ///////////////////////////////////////////////////
-export type SignAndSubmit = Promise<void>;
+// tslint:disable-next-line:no-any (FIXME:)
+export type SignAndSubmit = Promise<any>;
 export interface Submit {
     signAndSubmit: (web3: Web3, methodName: string) => SignAndSubmit;
     onMessageID: () => Promise<string>;
@@ -47,11 +48,11 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload): Shift => {
-        const hash = generateHash(payload, amount, to, shiftAction, nonce);
+        const hash = generateHash(payload, amount, strip0x(to), shiftAction, nonce);
         const gatewayAddress = generateAddress(shiftAction, hash);
         return {
             addr: () => gatewayAddress,
-            wait: this._waitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, hash),
+            wait: this._waitAfterShift(shiftAction, strip0x(to), amount, nonce, payload, gatewayAddress, hash),
         };
     }
 

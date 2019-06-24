@@ -64,7 +64,7 @@ describe("SDK methods", function () {
     });
 
     it("should be able to mint and burn btc", async () => {
-        const adapterContract = "692a70d2e424a56d2c6c27aa97d1a86395877b3a";
+        const adapterContract = "0x2234e0fb8ada505794ecba2d2009ad4787499c1a";
         const arg: Arg = {
             type: "bytes20",
             value: accounts[0],
@@ -120,6 +120,7 @@ describe("SDK methods", function () {
         const signature = await deposit.submit();
         console.log(`Submitting signature!`);
         console.log(signature);
-        await signature.signAndSubmit(web3, "shiftIn");
+        const result = await signature.signAndSubmit(web3, "shiftIn");
+        console.log(result);
     });
 });

@@ -47,7 +47,9 @@ _Submit to darknodes => transaction hash_
 
  */
 
-describe("SDK methods", () => {
+describe("SDK methods", function () {
+    this.timeout(0);
+
     // tslint:disable-next-line:no-any
     let provider: any;
     let web3: Web3;
@@ -94,15 +96,23 @@ describe("SDK methods", () => {
         }
 
         const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
-        await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+
+        console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${fromAddress})`);
+        try {
+            await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+        } catch (error) {
+            console.log(`Please check ${fromAddress}'s balance`);
+            throw error;
+        }
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
+        console.log(`Waiting for ${0} confirmations...`);
         const deposit = await shift.wait(0);
+        console.log(`Submitting deposit!`);
+        console.log(deposit);
         const signature = await deposit.submit();
+        console.log(`Submitting signature!`);
+        console.log(signature);
         await signature.signAndSubmit(web3, "shiftIn");
-
-        // TODO: Ensure accounts[0] has received zBTC.
-
-        // TODO: Burn zBTC and ensure we receive BTC.
     });
 });

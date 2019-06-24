@@ -58,8 +58,10 @@ export default class RenSDK {
     private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload, gatewayAddress: string, hash: string) =>
         async (confirmations: number): Promise<Wait> => {
             let deposits: UTXO[] = [];
-            // TODO: Check value of deposits
-            while (deposits.length === 0) {
+            const depositedAmount = (): number => {
+                return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next);
+            };
+            while (deposits.length === 0 || depositedAmount() < amount) {
                 try {
                     deposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
                 } catch (error) {

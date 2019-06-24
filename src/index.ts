@@ -2,7 +2,7 @@ import Web3 from "web3";
 
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
-import { strip0x } from "./blockchain/common";
+import { Ox, strip0x } from "./blockchain/common";
 import { lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
 import {
     generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep, UTXO,
@@ -115,13 +115,13 @@ export default class RenSDK {
         async (web3: Web3, methodName: string): SignAndSubmit => {
             const signature: ShiftedInResponse = response as ShiftedInResponse;
             // TODO: Check that amount and signature.amount are the same
-            amount = `0x${signature.amount.toString(16)}`; // _amount: BigNumber
-            const txHash = `0x${strip0x(signature.hash)}`; // _hash: string
+            amount = Ox(signature.amount.toString(16)); // _amount: BigNumber
+            const txHash = Ox(strip0x(signature.hash)); // _hash: string
             if (signature.v === "") {
                 signature.v = "0";
             }
             const v = ((parseInt(signature.v, 10) + 27) || 27).toString(16);
-            const signatureBytes = `0x${strip0x(signature.r)}${strip0x(signature.s)}${v}`;
+            const signatureBytes = Ox(`{strip0x(signature.r)}${strip0x(signature.s)}${v}`);
 
             const params = [
                 amount, // _amount: BigNumber

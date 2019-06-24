@@ -16,21 +16,8 @@ export interface ZcashUTXO {
     vout: number;
 }
 
-// tslint:disable-next-line: no-object-literal-type-assertion
-// export class ZcashUTXO extends Record({
-//     txHash: "", // hex string without 0x prefix
-//     amount: 0, // satoshis
-//     scriptPubKey: "", // hex string without 0x prefix
-//     vout: 0,
-// } as RawUTXO) { }
-
 export const getZECTestnetUTXOs = getUTXOs<ZcashUTXO>(testnetMercury);
-
-// export const getZECTestnetUTXOs = async (address: string, limit: number, confirmations: number) => {
-//     return (await getUTXOs<RawUTXO>(testnetMercury)(address, limit, confirmations)).map(raw => new ZcashUTXO(raw));
-// };
 
 export const createZECTestnetAddress = createZECAddress({ mainnet: false, masterPKH });
 
 export const zecAddressToHex = (address: string) => `0x${decode58(address).toString("hex")}`;
-// `0x${(new Address(address)).toBuffer().toString("hex")}`;

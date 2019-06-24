@@ -3,13 +3,13 @@ import Web3 from "web3";
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
 import {
-    lightnodes, ShiftedInResponse, ShiftedOutResponse, ShifterGroup,
-} from "./darknode/darknodeGroup";
+    lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter,
+} from "./darknode/shifter";
 import {
     generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep,
 } from "./utils";
 
-export * from "./darknode/darknodeGroup";
+export * from "./darknode/shifter";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";
@@ -32,17 +32,17 @@ export interface Shift {
 export default class RenSDK {
 
     // Internal state
-    private readonly darknodeGroup: ShifterGroup;
+    private readonly darknodeGroup: Shifter;
 
     // Takes the address of the adapter smart contract
     constructor() {
-        this.darknodeGroup = new ShifterGroup(lightnodes);
+        this.darknodeGroup = new Shifter(lightnode);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public burn = async (shiftAction: ShiftAction, to: string, valueHex: string): Promise<string> => {
-        return /* await */ this.darknodeGroup.submitWithdrawal(shiftAction, to, valueHex);
+    public burn = async (shiftAction: ShiftAction, to: string, amount: number): Promise<string> => {
+        return this.darknodeGroup.submitWithdrawal(shiftAction, to, amount);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits

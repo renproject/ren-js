@@ -12,7 +12,7 @@ const _devnetLightnode = "https://lightnode-devnet.herokuapp.com";
 export const lightnode = _devnetLightnode; // TODO: Change this back
 
 export interface ShiftedInResponse {
-    amount: string;
+    amount: number;
     txHash: string;
     r: string;
     s: string;

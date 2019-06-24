@@ -113,7 +113,7 @@ export default class RenSDK {
         async (web3: Web3, methodName: string): SignAndSubmit => {
             const signature: ShiftedInResponse = response as ShiftedInResponse;
             // TODO: Check that amount and signature.amount are the same
-            amount = `0x${signature.amount}`; // _amount: BigNumber
+            amount = `0x${signature.amount.toString(16)}`; // _amount: BigNumber
             const txHash = `0x${signature.txHash}`; // _hash: string
             if (signature.v === "") {
                 signature.v = "0";

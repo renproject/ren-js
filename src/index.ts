@@ -84,15 +84,17 @@ export default class RenSDK {
             while (!response) {
                 try {
                     response = await this.shifter.checkForResponse(messageID);
-                    console.log(response);
+                    if (response) {
+                        console.log("Response from Lightnode:");
+                        console.log(response);
+                        break;
+                    }
                 } catch (error) {
+                    console.log("Retrying in 10 seconds");
+                    await sleep(10 * SECONDS);
                     // TODO: Ignore "result not available",
                     // throw otherwise
                 }
-
-                // Break before sleeping if responses is not undefined
-                if (response) { break; }
-                await sleep(10 * SECONDS);
             }
 
             // TODO: Use github.com/primus/eventemitter3

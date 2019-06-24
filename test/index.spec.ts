@@ -67,7 +67,7 @@ describe("SDK methods", function () {
         const contractAddress = "0dF3510a4128c0cA11518465f670dB970E9302B7";
         const arg: Arg = {
             type: "bytes20",
-            value: strip0x(accounts[0]),
+            value: accounts[0],
         };
         const amount = 11000;
         const payload: Payload = [arg];

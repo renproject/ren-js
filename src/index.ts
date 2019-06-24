@@ -31,22 +31,22 @@ export interface Shift {
 export default class RenSDK {
 
     // Internal state
-    private readonly darknodeGroup: Shifter;
+    private readonly shifter: Shifter;
 
     // Takes the address of the adapter smart contract
     constructor() {
-        this.darknodeGroup = new Shifter(lightnode);
+        this.shifter = new Shifter(lightnode);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public burn = async (shiftAction: ShiftAction, to: string, amount: number): Promise<string> => {
-        return this.darknodeGroup.submitWithdrawal(shiftAction, to, amount);
+        return this.shifter.submitWithdrawal(shiftAction, to, amount);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public shift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload): Shift => {
+    public shift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload): Shift => {
         const hash = generateHash(to, shiftAction, amount, payload);
         const gatewayAddress = generateAddress(shiftAction, hash);
         return {
@@ -55,11 +55,13 @@ export default class RenSDK {
         };
     }
 
-    private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, hash: string) =>
+    private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload, gatewayAddress: string, hash: string) =>
         async (confirmations: number): Promise<Wait> => {
             let deposits: UTXO[] = [];
-            // TODO: Check value of deposits
-            while (deposits.length === 0) {
+            const depositedAmount = (): number => {
+                return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next);
+            };
+            while (deposits.length === 0 || depositedAmount() < amount) {
                 try {
                     deposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
                 } catch (error) {
@@ -71,28 +73,30 @@ export default class RenSDK {
             }
 
             return {
-                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, hash),
+                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, payload, hash),
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, hash: string) =>
+    private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload, hash: string) =>
         async (): Promise<Submit> => {
-            const messageID = await this.darknodeGroup.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
+            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
 
             let response: ShiftedInResponse | ShiftedOutResponse | undefined;
             while (!response) {
                 try {
-                    response = await this.darknodeGroup.checkForResponse(messageID);
-                    console.log(response);
+                    response = await this.shifter.checkForResponse(messageID);
+                    if (response) {
+                        console.log("Response from Lightnode:");
+                        console.log(response);
+                        break;
+                    }
                 } catch (error) {
+                    console.log("Retrying in 10 seconds");
+                    await sleep(10 * SECONDS);
                     // TODO: Ignore "result not available",
                     // throw otherwise
                 }
-
-                // Break before sleeping if responses is not undefined
-                if (response) { break; }
-                await sleep(10 * SECONDS);
             }
 
             // TODO: Use github.com/primus/eventemitter3
@@ -105,17 +109,17 @@ export default class RenSDK {
             };
 
             return {
-                signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, amount, nonce, payload, gatewayAddress, deposits, response),
+                signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, payload, response),
                 onMessageID,
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, amount: number | string, nonce: string, payload: Payload, gatewayAddress: string, deposits: any, response: ShiftedInResponse | ShiftedOutResponse) =>
+    private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, payload: Payload, response: ShiftedInResponse | ShiftedOutResponse) =>
         async (web3: Web3, methodName: string): SignAndSubmit => {
             const signature: ShiftedInResponse = response as ShiftedInResponse;
             // TODO: Check that amount and signature.amount are the same
-            amount = Ox(signature.amount.toString(16)); // _amount: BigNumber
+            const amount = Ox(signature.amount.toString(16)); // _amount: BigNumber
             const txHash = Ox(strip0x(signature.hash)); // _hash: string
             if (signature.v === "") {
                 signature.v = "0";

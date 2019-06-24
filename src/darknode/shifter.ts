@@ -81,7 +81,7 @@ export class Shifter {
         return response.result.messageID;
     }
 
-    public submitDeposits = async (action: ShiftAction, to: string, amount: number | string, nonce: string, pHash: string, hash: string): Promise<string> => {
+    public submitDeposits = async (action: ShiftAction, to: string, amount: number, nonce: string, pHash: string, hash: string): Promise<string> => {
         return this.submitMessage(action, [
             { name: "token", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
             { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },

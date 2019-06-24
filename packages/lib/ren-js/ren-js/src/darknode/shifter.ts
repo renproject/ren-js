@@ -2,7 +2,7 @@ import { ZBTC_ADDRESS } from "utils";
 
 import { Ox, strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
-import { Lightnode } from "./darknode";
+import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
 
 const _testnetLightnode = "https://lightnode-testnet.herokuapp.com";
@@ -81,7 +81,7 @@ export class Shifter {
         return response.result.messageID;
     }
 
-    public submitDeposits = async (action: ShiftAction, to: string, amount: number | string, nonce: string, pHash: string, hash: string): Promise<string> => {
+    public submitDeposits = async (action: ShiftAction, to: string, amount: number, nonce: string, pHash: string, hash: string): Promise<string> => {
         return this.submitMessage(action, [
             { name: "token", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
             { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },
@@ -94,7 +94,7 @@ export class Shifter {
 
     public submitWithdrawal = async (action: ShiftAction, to: string, amount: number): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "to", type: "b20", value: strip0x(to) },
+            { name: "to", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
         ]);
     }

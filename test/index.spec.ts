@@ -104,8 +104,9 @@ describe("SDK methods", function () {
             console.log("Unable to submit to Mercury. Trying chain.so...");
             try {
                 await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
-            } catch (error) {
+            } catch (chainError) {
                 console.log(`Please check ${fromAddress}'s balance`);
+                console.error(`chain.so returned error ${chainError.message}`);
                 throw error;
             }
         }

@@ -64,7 +64,7 @@ describe("SDK methods", function () {
     });
 
     it("should be able to mint and burn btc", async () => {
-        const contractAddress = "0dF3510a4128c0cA11518465f670dB970E9302B7";
+        const adapterContract = "692a70d2e424a56d2c6c27aa97d1a86395877b3a";
         const arg: Arg = {
             type: "bytes20",
             value: accounts[0],
@@ -72,7 +72,7 @@ describe("SDK methods", function () {
         const amount = 11000;
         const payload: Payload = [arg];
         const nonce = Ox(crypto.Random.getRandomBuffer(32).toString("hex"));
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, nonce, payload);
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);
         const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.

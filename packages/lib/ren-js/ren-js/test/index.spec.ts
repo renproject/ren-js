@@ -98,7 +98,7 @@ describe("SDK methods", function () {
             type: "address",
             value: accounts[0],
         };
-        const amount = 11000;
+        const amount = 21000;
         const payload: Payload = [arg];
         const nonce = Ox(crypto.Random.getRandomBuffer(32));
         const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);

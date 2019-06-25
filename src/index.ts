@@ -1,13 +1,12 @@
-import BN from "bn.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
-import { lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
+import { lightnode, ShiftedInResponse, Shifter } from "./darknode/shifter";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
-    sleep, UTXO,
+    signatureToString, sleep, UTXO,
 } from "./utils";
 
 export * from "./darknode/shifter";
@@ -111,10 +110,8 @@ export default class RenSDK {
                 return messageID;
             };
 
-            const signature = fixSignature(response);
-
             return {
-                signAndSubmit: this._signAndSubmitAfterShift(to, payload, signature, response.amount, response.nhash),
+                signAndSubmit: this._signAndSubmitAfterShift(to, payload, signatureToString(fixSignature(response)), response.amount, response.nhash),
                 onMessageID,
             };
         }
@@ -125,7 +122,7 @@ export default class RenSDK {
             const params = [
                 Ox(amount.toString(16)), // _amount: BigNumber
                 Ox(nhash), // _nHash: string
-                signature, // _sig: string
+                Ox(signature), // _sig: string
                 ...payload.map(value => value.value),
             ];
 

@@ -20,4 +20,4 @@ export const getBTCTestnetUTXOs = getUTXOs<BitcoinUTXO>(testnetMercury);
 
 export const createBTCTestnetAddress = createBTCAddress({ mainnet: false, masterPKH });
 
-export const btcAddressToHex = (address: string) => Ox(decode58(address).toString("hex"));
+export const btcAddressToHex = (address: string) => Ox(decode58(address));

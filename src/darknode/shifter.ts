@@ -104,7 +104,7 @@ export class Shifter {
             if (response.result && response.result.out) {
                 let ret = {};
                 for (const value of response.result.out) {
-                    ret = { ...ret, [value.name]: value.type === "u64" ? value.value : Ox(Buffer.from(value.value, "base64").toString("hex")) };
+                    ret = { ...ret, [value.name]: value.type === "u64" ? value.value : Ox(Buffer.from(value.value, "base64")) };
                 }
                 return ret as ShiftedInResponse | ShiftedOutResponse;
             } else if (response.error) {

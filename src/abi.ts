@@ -10,7 +10,7 @@ const shiftInABITemplate: AbiItem = {
             type: "uint256"
         },
         {
-            name: "_nHash",
+            name: "_nonce",
             type: "bytes32"
         },
         {
@@ -33,7 +33,7 @@ export const payloadToABI = (methodName: string, payload: Payload): AbiItem[] =>
             inputs: [
                 // tslint:disable-next-line: no-non-null-assertion
                 ...shiftInABITemplate.inputs!,
-                ...payload.map(value => ({ type: value.type, name: `${value.value}` }))
+                ...payload.map(value => ({ type: value.type, name: "_address" })),
             ]
         }
     ];

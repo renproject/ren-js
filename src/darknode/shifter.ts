@@ -15,12 +15,13 @@ export interface ShiftedInResponse {
     r: string;
     s: string;
     v: string;
+    phash: string;
+    amount: number;
     token: string;
     to: string;
-    amount: number;
-    phash: string;
-    nonce: string;
+    nhash: string;
     hash: string;
+    ghash: string;
 }
 
 export interface ShiftedOutResponse {

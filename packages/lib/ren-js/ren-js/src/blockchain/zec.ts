@@ -20,4 +20,4 @@ export const getZECTestnetUTXOs = getUTXOs<ZcashUTXO>(testnetMercury);
 
 export const createZECTestnetAddress = createZECAddress({ mainnet: false, masterPKH });
 
-export const zecAddressToHex = (address: string) => Ox(decode58(address).toString("hex"));
+export const zecAddressToHex = (address: string) => Ox(decode58(address));

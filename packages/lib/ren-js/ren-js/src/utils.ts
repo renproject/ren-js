@@ -1,10 +1,11 @@
+import BN from "bn.js";
 import { rawEncode } from "ethereumjs-abi";
 import { keccak256 } from "ethereumjs-util";
-import { Ox } from "index";
 
 import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
 import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
+import { Ox, ShiftedInResponse, strip0x } from "./index";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 
@@ -38,7 +39,7 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     const [types, values] = unzip(args);
 
     // tslint:disable-next-line: no-any
-    return Ox(keccak256(rawEncode(types, values)).toString("hex")); // sha3 can accept a Buffer
+    return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
 // TODO: Remove hard-coded address!
@@ -55,7 +56,7 @@ export const generateHash = (_payload: Payload, amount: number | string, _to: st
     );
 
     // tslint:disable-next-line: no-any
-    return Ox(keccak256(hash).toString("hex"));
+    return Ox(keccak256(hash));
 };
 
 // Generates the gateway address
@@ -88,3 +89,25 @@ export const retrieveDeposits = async (_shiftAction: ShiftAction, _depositAddres
 export const SECONDS = 1000;
 // tslint:disable-next-line: no-string-based-set-timeout
 export const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
+
+const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
+export const fixSignature = (response: ShiftedInResponse): string => {
+    const r = response.r;
+    let s = new BN(strip0x(response.s), "hex");
+    let v = ((parseInt(response.v || "0", 10) + 27) || 27);
+
+    console.log(`Original signature: ${Ox(`${strip0x(r)}${strip0x(response.s)}${v.toString(16)}`)}`);
+
+    if (s.gt(secp256k1n.div(new BN(2)))) {
+        // Take s = -s % secp256k1n
+        s = secp256k1n.sub(new BN(s));
+        // Switch v
+        v = v === 27 ? 28 : 27;
+    }
+
+    const sString = strip0x(s.toArrayLike(Buffer, "be", 32).toString("hex"));
+
+    const signatureBytes = Ox(`${strip0x(r)}${sString}${v.toString(16)}`);
+    console.log(`Fixed signature: ${signatureBytes}`);
+    return signatureBytes;
+};

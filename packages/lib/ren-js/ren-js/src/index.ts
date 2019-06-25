@@ -1,3 +1,4 @@
+import BN from "bn.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./abi";
@@ -5,7 +6,8 @@ import { ShiftAction } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
 import { lightnode, ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
 import {
-    generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS, sleep, UTXO,
+    fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
+    sleep, UTXO,
 } from "./utils";
 
 export * from "./darknode/shifter";
@@ -82,18 +84,18 @@ export default class RenSDK {
         async (): Promise<Submit> => {
             const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
 
-            let response: ShiftedInResponse | ShiftedOutResponse | undefined;
+            let response: ShiftedInResponse | undefined;
             while (!response) {
                 try {
-                    response = await this.shifter.checkForResponse(messageID);
+                    response = await this.shifter.checkForResponse(messageID) as ShiftedInResponse;
                     if (response) {
                         console.log("Response from Lightnode:");
                         console.log(response);
                         break;
                     }
                 } catch (error) {
-                    console.log("Retrying in 10 seconds");
-                    await sleep(10 * SECONDS);
+                    console.log("Retrying in 5 seconds");
+                    await sleep(5 * SECONDS);
                     // TODO: Ignore "result not available",
                     // throw otherwise
                 }
@@ -108,35 +110,26 @@ export default class RenSDK {
                 return messageID;
             };
 
+            const signature = fixSignature(response);
+
             return {
-                signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, payload, response),
+                signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, payload, signature, response.amount, response.hash),
                 onMessageID,
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, payload: Payload, response: ShiftedInResponse | ShiftedOutResponse) =>
+    private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, payload: Payload, signature: string, amount: number | string, hash: string) =>
         async (web3: Web3, methodName: string): SignAndSubmit => {
-            const signature: ShiftedInResponse = response as ShiftedInResponse;
-            // TODO: Check that amount and signature.amount are the same
-            const amount = Ox(signature.amount.toString(16)); // _amount: BigNumber
-            const txHash = Ox(strip0x(signature.hash)); // _hash: string
-            if (signature.v === "") {
-                signature.v = "0";
-            }
-            const v = ((parseInt(signature.v, 10) + 27) || 27).toString(16);
-            const signatureBytes = Ox(`${strip0x(signature.r)}${strip0x(signature.s)}${v}`);
-
             const params = [
-                amount, // _amount: BigNumber
-                txHash, // _hash: string
-                signatureBytes, // _sig: string
+                Ox(amount.toString(16)), // _amount: BigNumber
+                Ox(strip0x(hash)), // _hash: string
+                signature, // _sig: string
                 ...payload.map(value => value.value),
             ];
 
-            console.log(params);
-
-            const contract = new web3.eth.Contract(payloadToABI(methodName, payload), to);
+            const ABI = payloadToABI(methodName, payload);
+            const contract = new web3.eth.Contract(ABI, to);
 
             const addresses = await web3.eth.getAccounts();
 

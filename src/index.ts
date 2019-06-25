@@ -1,4 +1,5 @@
 import Web3 from "web3";
+import PromiEvent from "web3/promiEvent";
 
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
@@ -20,9 +21,9 @@ export { UTXO } from "./utils";
 
 // Types of RenSDK's methods ///////////////////////////////////////////////////
 // tslint:disable-next-line:no-any (FIXME:)
-export type SignAndSubmit = Promise<any>;
+export type SignAndSubmit = PromiEvent<any>;
 export interface Submit {
-    signAndSubmit: (web3: Web3, methodName: string) => SignAndSubmit;
+    signAndSubmit: (web3: Web3, methodName: string, from: string) => SignAndSubmit;
     onMessageID: () => Promise<string>;
 }
 export interface Wait { submit: () => Promise<Submit>; }
@@ -119,7 +120,7 @@ export default class RenSDK {
 
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _signAndSubmitAfterShift = (to: string, payload: Payload, signature: string, amount: number | string, nhash: string) =>
-        async (web3: Web3, methodName: string): SignAndSubmit => {
+        (web3: Web3, methodName: string, from: string): SignAndSubmit => {
             const params = [
                 ...payload.map(value => value.value),
                 Ox(amount.toString(16)), // _amount: BigNumber
@@ -129,10 +130,9 @@ export default class RenSDK {
 
             const ABI = payloadToABI(methodName, payload);
             const contract = new web3.eth.Contract(ABI, to);
-            const accounts = await web3.eth.getAccounts();
 
             return contract.methods[methodName](
                 ...params,
-            ).send({ from: accounts[0], gas: 1000000 });
+            ).send({ from, gas: 1000000 });
         }
 }

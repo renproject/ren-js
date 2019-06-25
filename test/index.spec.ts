@@ -169,7 +169,8 @@ describe("SDK methods", function () {
         console.log(`Submitting deposit!`);
         const signature = await deposit.submit();
         console.log(`Submitting signature!`);
-        const result = await signature.signAndSubmit(web3, "shiftIn");
+        const accounts = await web3.eth.getAccounts();
+        const result = await signature.signAndSubmit(web3, "shiftIn", accounts[0]);
         console.log(result);
     };
 

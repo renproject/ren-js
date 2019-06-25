@@ -14,7 +14,7 @@ export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.
 export const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 export interface Arg {
-    name?: string;
+    name: string;
     type: string;
     // tslint:disable-next-line: no-any
     value: any;

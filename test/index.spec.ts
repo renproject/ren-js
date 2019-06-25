@@ -93,7 +93,7 @@ describe("SDK methods", function () {
     });
 
     it("should be able to mint and burn btc", async () => {
-        const adapterContract = "f72Bb079564C1b7b6EC4033cF3f6A44cE88E1c0c";
+        const adapterContract = "0xAfec5fCAc09810afbe33a45A3797C29b33DA0112";
         const arg: Arg = {
             name: "_address",
             type: "address",

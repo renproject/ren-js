@@ -14,11 +14,11 @@
             "darknodeRegistryStore": {
                 "address": "0xC126a308dd07Adfa4a445686dcF7CbC423185593"
             },
-            "darknodePaymentStore": {
-                "address": "0x6341DF1012E862f766Fcd72e0fCAAc5a3839CFef"
-            },
             "darknodePayment": {
                 "address": "0x1f1b1d015Fc31d425C616cC35E39e31686DA69A8"
+            },
+            "darknodePaymentStore": {
+                "address": "0x6341DF1012E862f766Fcd72e0fCAAc5a3839CFef"
             }
         },
         "shifter": {

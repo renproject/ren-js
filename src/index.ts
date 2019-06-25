@@ -114,17 +114,17 @@ export default class RenSDK {
             const signature = fixSignature(response);
 
             return {
-                signAndSubmit: this._signAndSubmitAfterShift(shiftAction, to, payload, signature, response.amount, response.hash),
+                signAndSubmit: this._signAndSubmitAfterShift(to, payload, signature, response.amount, response.nhash),
                 onMessageID,
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _signAndSubmitAfterShift = (shiftAction: ShiftAction, to: string, payload: Payload, signature: string, amount: number | string, hash: string) =>
+    private readonly _signAndSubmitAfterShift = (to: string, payload: Payload, signature: string, amount: number | string, nhash: string) =>
         async (web3: Web3, methodName: string): SignAndSubmit => {
             const params = [
                 Ox(amount.toString(16)), // _amount: BigNumber
-                Ox(strip0x(hash)), // _hash: string
+                Ox(nhash), // _nHash: string
                 signature, // _sig: string
                 ...payload.map(value => value.value),
             ];

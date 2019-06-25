@@ -1,15 +1,8 @@
-import { ZBTC_ADDRESS } from "utils";
-
 import { Ox, strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
+import { ZBTC_ADDRESS } from "../utils";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
-
-const _testnetLightnode = "https://lightnode-testnet.herokuapp.com";
-
-const _devnetLightnode = "https://lightnode-devnet.herokuapp.com";
-
-export const lightnode = _devnetLightnode; // TODO: Change this back
 
 export interface ShiftedInResponse {
     r: string;

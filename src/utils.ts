@@ -1,5 +1,4 @@
 import BN from "bn.js";
-import { masterEthPKH } from "darknode/masterKey";
 import { rawEncode } from "ethereumjs-abi";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 
@@ -7,6 +6,7 @@ import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
 import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
 import { Ox, ShiftedInResponse, strip0x } from "./index";
+import { masterKeys, NETWORK } from "./networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 
@@ -130,9 +130,10 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
         )),
     };
 
-    if (recovered[v].equals(masterEthPKH)) {
+    const expected = Buffer.from(masterKeys[NETWORK].eth, "hex");
+    if (recovered[v].equals(expected)) {
         // Do nothing
-    } else if (recovered[switchV(v)].equals(masterEthPKH)) {
+    } else if (recovered[switchV(v)].equals(expected)) {
         console.warn("Switching v value");
         v = switchV(v);
     } else {

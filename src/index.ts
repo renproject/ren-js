@@ -3,7 +3,8 @@ import Web3 from "web3";
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
-import { lightnode, ShiftedInResponse, Shifter } from "./darknode/shifter";
+import { ShiftedInResponse, Shifter } from "./darknode/shifter";
+import { lightnodeURLs, NETWORK } from "./networks";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
@@ -37,7 +38,7 @@ export default class RenSDK {
 
     // Takes the address of the adapter smart contract
     constructor() {
-        this.shifter = new Shifter(lightnode);
+        this.shifter = new Shifter(lightnodeURLs[NETWORK]);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits

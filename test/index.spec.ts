@@ -64,8 +64,7 @@ describe("SDK methods", function () {
     });
 
     it("should be able to mint and burn btc", async () => {
-        // const contractAddress = "0dF3510a4128c0cA11518465f670dB970E9302B7";
-        const contractAddress = "f72Bb079564C1b7b6EC4033cF3f6A44cE88E1c0c";
+        const adapterContract = "0x2234e0fb8ada505794ecba2d2009ad4787499c1a";
         const arg: Arg = {
             type: "address",
             value: accounts[0],
@@ -73,7 +72,7 @@ describe("SDK methods", function () {
         const amount = 11000;
         const payload: Payload = [arg];
         const nonce = Ox(crypto.Random.getRandomBuffer(32));
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, contractAddress, amount, nonce, payload);
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);
         const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.
@@ -121,6 +120,7 @@ describe("SDK methods", function () {
         const signature = await deposit.submit();
         console.log(`Submitting signature!`);
         console.log(signature);
-        console.log(await signature.signAndSubmit(web3, "shiftIn"));
+        const result = await signature.signAndSubmit(web3, "shiftIn");
+        console.log(result);
     });
 });

@@ -119,7 +119,7 @@ describe("SDK methods", function () {
         const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
         let utxoAmount = 0;
-        for (const utxo of utxos.reverse()) {
+        for (const utxo of utxos) {
             if (utxoAmount >= amount) {
                 break;
             }

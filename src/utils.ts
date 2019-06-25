@@ -117,14 +117,14 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
     const recovered = {
         [v]: pubToAddress(ecrecover(
             Buffer.from(strip0x(response.hash), "hex"),
-            27,
+            v,
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),
 
         [switchV(v)]: pubToAddress(ecrecover(
             Buffer.from(strip0x(response.hash), "hex"),
-            28,
+            switchV(v),
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),

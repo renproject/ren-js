@@ -6,6 +6,7 @@ import chaiBigNumber from "chai-bignumber";
 import { BN } from "ethereumjs-util";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
+import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 import { ShiftActions } from "../src/assets";
@@ -92,35 +93,43 @@ describe("SDK methods", function () {
         accounts = await web3.eth.getAccounts();
     });
 
-    it("should be able to mint and burn btc", async () => {
-        const adapterContract = "0xAfec5fCAc09810afbe33a45A3797C29b33DA0112";
-        const arg: Arg = {
-            name: "_address",
-            type: "address",
-            value: accounts[0],
-        };
-        const amount = 21000;
-        const payload: Payload = [arg];
-        const nonce = Ox(crypto.Random.getRandomBuffer(32));
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);
-        const gatewayAddress = shift.addr();
+    // tslint:disable-next-line:no-any
+    const checkzBTCBalance = async (contract: Contract, address: string): Promise<any> => {
+        let balance: BN;
 
-        // Check initial zBTC balance.
-        const contract = new web3.eth.Contract(minABI, strip0x(ZBTC_ADDRESS));
-        let initialBalance: BN;
         try {
-            initialBalance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
+            balance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
         } catch (error) {
             console.error("Cannot check balance");
             throw error;
         }
 
+        return balance;
+    };
+
+    // tslint:disable-next-line:no-any
+    const checkBTCBalance = async (contract: Contract, address: string): Promise<any> => {
+        // TODO:
+        return new BN(0);
+    };
+
+    const mintTest = async (amount: number, ethAddress: string, btcAddress: string, btcPrivateKey: bitcore.PrivateKey): Promise<void> => {
+        const adapterContract = "0xAfec5fCAc09810afbe33a45A3797C29b33DA0112";
+        const arg: Arg = {
+            name: "_address",
+            type: "address",
+            value: ethAddress,
+        };
+        const payload: Payload = [arg];
+        const nonce = Ox(crypto.Random.getRandomBuffer(32));
+        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);
+        const gatewayAddress = shift.addr();
+
         // Deposit BTC to gateway address.
-        const privateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
-        const fromAddress = privateKey.toAddress().toString();
-        const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
+        const utxos = await getBTCTestnetUTXOs(btcAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
         let utxoAmount = 0;
+        // for (const utxo of utxos.reverse()) {
         for (const utxo of utxos) {
             if (utxoAmount >= amount) {
                 break;
@@ -128,7 +137,7 @@ describe("SDK methods", function () {
             const bitcoreUTXO = new Transaction.UnspentOutput({
                 txId: utxo.txHash,
                 outputIndex: utxo.vout,
-                address: new Address(fromAddress),
+                address: new Address(btcAddress),
                 script: new Script(utxo.scriptPubKey),
                 satoshis: utxo.amount,
             });
@@ -136,19 +145,19 @@ describe("SDK methods", function () {
             utxoAmount += utxo.amount;
         }
 
-        const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(privateKey);
+        const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(btcPrivateKey);
 
-        console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${fromAddress})`);
+        console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
         try {
             await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
         } catch (error) {
-            console.log("Unable to submit to Mercury. Trying chain.so...");
+            console.log(`Unable to submit to Mercury (${error}). Trying chain.so...`);
             try {
                 console.log(transaction.toString());
                 await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
             } catch (chainError) {
                 console.error(`chain.so returned error ${chainError.message}`);
-                console.log(`\n\n\nPlease check ${fromAddress}'s balance!\n`);
+                console.log(`\n\n\nPlease check ${btcAddress}'s balance!\n`);
                 throw error;
             }
         }
@@ -158,22 +167,40 @@ describe("SDK methods", function () {
         console.log(`Waiting for ${confirmations} confirmations...`);
         const deposit = await shift.wait(confirmations);
         console.log(`Submitting deposit!`);
-        console.log(deposit);
         const signature = await deposit.submit();
         console.log(`Submitting signature!`);
-        console.log(signature);
         const result = await signature.signAndSubmit(web3, "shiftIn");
         console.log(result);
+    };
 
-        // Check final zBTC balance.
-        let finalBalance;
-        try {
-            finalBalance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
-        } catch (error) {
-            console.error("Cannot check balance");
-            throw error;
-        }
+    const burnTest = async (amount: number, btcAddress: string) => {
+        await sdk.burn(ShiftActions.BTC.Eth2Btc, btcAddress, amount);
+    };
 
-        finalBalance.sub(initialBalance).should.bignumber.equal(amount); // TODO: Subtract fees
+    const removeFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
+
+    it("should be able to mint and burn btc", async () => {
+        const amount = 21000;
+        const vmFee = 10000;
+        const ethAddress = accounts[0];
+        const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
+        const btcAddress = btcPrivateKey.toAddress().toString();
+        const contract = new web3.eth.Contract(minABI, strip0x(ZBTC_ADDRESS));
+
+        // Test minting.
+        const initialzBTCBalance = await checkzBTCBalance(contract, accounts[0]);
+        await mintTest(amount, ethAddress, btcAddress, btcPrivateKey);
+        const finalzBTCBalance = await checkzBTCBalance(contract, accounts[0]);
+
+        // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
+        finalzBTCBalance.sub(initialzBTCBalance).should.bignumber.least(removeFee(new BN(amount).sub(new BN(vmFee)), 10));
+        finalzBTCBalance.sub(initialzBTCBalance).should.bignumber.most(new BN(amount).sub(new BN(vmFee)));
+
+        // Test burning.
+        /* const initialBTCBalance = await checkBTCBalance(contract, accounts[0]);
+        await burnTest(removeFee(amount, 10), btcAddress);
+        const finalBTCBalance = await checkBTCBalance(contract, accounts[0]);
+
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.equal(removeFee(amount, 10)); */
     });
 });

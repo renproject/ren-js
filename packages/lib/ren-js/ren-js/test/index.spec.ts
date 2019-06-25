@@ -2,6 +2,8 @@ import axios from "axios";
 import BigNumber from "bignumber.js";
 import bitcore, { Address, crypto, Networks, Script, Transaction } from "bitcore-lib";
 import chai from "chai";
+import chaiBigNumber from "chai-bignumber";
+import { BN } from "ethereumjs-util";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { AbiItem } from "web3-utils";
@@ -13,6 +15,7 @@ import { Arg, Payload, ZBTC_ADDRESS } from "../src/utils";
 
 require("dotenv").config();
 
+chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
 // tslint:disable:no-unused-expression
@@ -103,11 +106,9 @@ describe("SDK methods", function () {
 
         // Check initial zBTC balance.
         const contract = new web3.eth.Contract(minABI, strip0x(ZBTC_ADDRESS));
-        let initialBalance: BigNumber;
+        let initialBalance: BN;
         try {
-            await contract.methods.balanceOf(accounts[0]).call({}, (error, balance) => {
-                initialBalance = balance;
-            });
+            initialBalance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
         } catch (error) {
             console.error("Cannot check balance");
             throw error;
@@ -142,10 +143,11 @@ describe("SDK methods", function () {
         } catch (error) {
             console.log("Unable to submit to Mercury. Trying chain.so...");
             try {
+                console.log(transaction.toString());
                 await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
             } catch (chainError) {
-                console.log(`Please check ${fromAddress}'s balance`);
                 console.error(`chain.so returned error ${chainError.message}`);
+                console.log(`\n\n\nPlease check ${fromAddress}'s balance!\n`);
                 throw error;
             }
         }
@@ -163,16 +165,14 @@ describe("SDK methods", function () {
         console.log(result);
 
         // Check final zBTC balance.
-        let finalBalance: BigNumber;
+        let finalBalance;
         try {
-            await contract.methods.balanceOf(accounts[0]).call({}, (error, balance) => {
-                finalBalance = balance;
-            });
+            finalBalance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
         } catch (error) {
             console.error("Cannot check balance");
             throw error;
         }
 
-        chai.expect(finalBalance.minus(initialBalance)).to.equal(new BigNumber(amount)); // TODO: Subtract fees
+        finalBalance.sub(initialBalance).should.bignumber.equal(amount); // TODO: Subtract fees
     });
 });

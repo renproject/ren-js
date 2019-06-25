@@ -1,7 +1,7 @@
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { decode as decode58 } from "bs58";
 
-import { masterPKH } from "../darknode/masterKey";
+import { masterBtcPKH } from "../darknode/masterKey";
 import { createAddress, Ox } from "./common";
 import { getUTXOs } from "./mercury";
 
@@ -18,6 +18,6 @@ export interface BitcoinUTXO {
 
 export const getBTCTestnetUTXOs = getUTXOs<BitcoinUTXO>(testnetMercury);
 
-export const createBTCTestnetAddress = createBTCAddress({ mainnet: false, masterPKH });
+export const createBTCTestnetAddress = createBTCAddress({ mainnet: false, masterPKH: masterBtcPKH });
 
 export const btcAddressToHex = (address: string) => Ox(decode58(address));

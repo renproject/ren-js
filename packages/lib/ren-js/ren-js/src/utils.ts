@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { masterPKH } from "darknode/masterKey";
+import { masterEthPKH } from "darknode/masterKey";
 import { rawEncode } from "ethereumjs-abi";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 
@@ -103,8 +103,6 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
     let s = new BN(strip0x(response.s), "hex");
     let v = ((parseInt(response.v || "0", 10) + 27) || 27);
 
-    console.log(`Original signature: ${signatureToString({ ...response, v })}`);
-
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
     if (s.gt(secp256k1n.div(new BN(2)))) {
@@ -117,7 +115,7 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
     // Currently, the wrong `v` value may be returned from the darknodes.
     // We recover the address to see if we need to switch `v`.
     const recovered = {
-        v: pubToAddress(ecrecover(
+        [v]: pubToAddress(ecrecover(
             Buffer.from(strip0x(response.hash), "hex"),
             27,
             Buffer.from(strip0x(r), "hex"),
@@ -132,9 +130,9 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
         )),
     };
 
-    if (recovered[v].equals(masterPKH)) {
+    if (recovered[v].equals(masterEthPKH)) {
         // Do nothing
-    } else if (recovered[switchV(v)].equals(masterPKH)) {
+    } else if (recovered[switchV(v)].equals(masterEthPKH)) {
         console.warn("Switching v value");
         v = switchV(v);
     } else {
@@ -146,8 +144,6 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
         s: strip0x(s.toArrayLike(Buffer, "be", 32).toString("hex")),
         v,
     };
-
-    console.log(`Fixed signature: ${signatureToString(signature)}`);
 
     return signature;
 };

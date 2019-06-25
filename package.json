@@ -47,7 +47,6 @@
         "@types/node-persist": "0.0.33",
         "@types/node-rsa": "1.0.0",
         "@types/underscore": "^1.8.20",
-        "@types/web3": "^1.0.18",
         "babel-loader": "8.0.6",
         "babel-plugin-transform-es2015-modules-simple-commonjs": "^0.3.0",
         "babel-polyfill": "6.26.0",
@@ -93,6 +92,7 @@
         "ethereumjs-util": "^6.1.0",
         "immutable": "^4.0.0-rc.12",
         "wallet-address-validator": "^0.2.4",
-        "web3": "^1.0.0-beta.55"
+        "web3": "^1.0.0-beta.55",
+        "web3-core": "^1.0.0-beta.55"
     }
 }

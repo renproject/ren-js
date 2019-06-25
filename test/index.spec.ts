@@ -12,7 +12,8 @@ import { AbiItem } from "web3-utils";
 import { ShiftActions } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
-import { Arg, Payload, ZBTC_ADDRESS } from "../src/utils";
+import { NETWORK, zBTC } from "../src/networks";
+import { Arg, Payload } from "../src/utils";
 
 require("dotenv").config();
 
@@ -186,7 +187,7 @@ describe("SDK methods", function () {
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const contract = new web3.eth.Contract(minABI, strip0x(ZBTC_ADDRESS));
+        const contract = new web3.eth.Contract(minABI, strip0x(zBTC[NETWORK]));
 
         // Test minting.
         const initialzBTCBalance = await checkzBTCBalance(contract, accounts[0]);

@@ -120,10 +120,10 @@ export default class RenSDK {
     private readonly _signAndSubmitAfterShift = (to: string, payload: Payload, signature: string, amount: number | string, nhash: string) =>
         async (web3: Web3, methodName: string): SignAndSubmit => {
             const params = [
+                ...payload.map(value => value.value),
                 Ox(amount.toString(16)), // _amount: BigNumber
                 Ox(nhash), // _nHash: string
                 Ox(signature), // _sig: string
-                ...payload.map(value => value.value),
             ];
 
             const ABI = payloadToABI(methodName, payload);

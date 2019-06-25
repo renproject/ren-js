@@ -31,9 +31,9 @@ export const payloadToABI = (methodName: string, payload: Payload): AbiItem[] =>
             ...shiftInABITemplate,
             name: methodName,
             inputs: [
+                ...payload.map(value => ({ type: value.type, name: value.name })),
                 // tslint:disable-next-line: no-non-null-assertion
                 ...shiftInABITemplate.inputs!,
-                ...payload.map(value => ({ type: value.type, name: "_address" })),
             ]
         }
     ];

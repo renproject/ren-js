@@ -1,8 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 
 import {
-    ReceiveMessageRequest, ReceiveMessageResponse,
-    SendMessageRequest, SendMessageResponse,
+    ReceiveMessageRequest, ReceiveMessageResponse, SendMessageRequest, SendMessageResponse,
 } from "./types";
 
 export class Lightnode {
@@ -11,7 +10,8 @@ export class Lightnode {
     constructor(lightnodeURL: string) {
         if (lightnodeURL.charAt(0) === "/") {
             try {
-                const [_, _ip4, ip, _tcp, port, _ren, _id] = lightnodeURL.split("/");
+                // tslint:disable-next-line: whitespace
+                const [, , ip, , port, ,] = lightnodeURL.split("/");
                 const fixedPort = port === "18514" ? "18514" : port;
                 // tslint:disable-next-line: no-http-string
                 this.lightnodeURL = `http://${ip}:${fixedPort}`;

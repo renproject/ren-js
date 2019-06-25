@@ -1,7 +1,7 @@
 import { Networks, Opcode, Script } from "bitcore-lib-zcash";
 import { decode as decode58 } from "bs58";
 
-import { masterBtcPKH } from "../darknode/masterKey";
+import { masterKeys, NETWORK } from "../networks";
 import { createAddress, Ox } from "./common";
 import { getUTXOs } from "./mercury";
 
@@ -18,6 +18,6 @@ export interface ZcashUTXO {
 
 export const getZECTestnetUTXOs = getUTXOs<ZcashUTXO>(testnetMercury);
 
-export const createZECTestnetAddress = createZECAddress({ mainnet: false, masterPKH: masterBtcPKH });
+export const createZECTestnetAddress = createZECAddress({ mainnet: false, masterPKH: Buffer.from(masterKeys[NETWORK].mpkh, "hex") });
 
 export const zecAddressToHex = (address: string) => Ox(decode58(address));

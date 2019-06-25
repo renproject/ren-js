@@ -1,6 +1,6 @@
 import { Ox, strip0x } from "../blockchain/common";
 import { ShiftAction } from "../index";
-import { ZBTC_ADDRESS } from "../utils";
+import { NETWORK, zBTC } from "../networks";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
 
@@ -79,7 +79,7 @@ export class Shifter {
         return this.submitMessage(action, [
             { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
-            { name: "token", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
+            { name: "token", type: "b20", value: Buffer.from(strip0x(zBTC[NETWORK]), "hex").toString("base64") },
             { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },
             { name: "n", type: "b32", value: Buffer.from(strip0x(nonce), "hex").toString("base64") },
         ]);
@@ -87,7 +87,7 @@ export class Shifter {
 
     public submitWithdrawal = async (action: ShiftAction, to: string, amount: number): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "to", type: "b20", value: Buffer.from(strip0x(ZBTC_ADDRESS), "hex").toString("base64") },
+            { name: "to", type: "b20", value: Buffer.from(strip0x(zBTC[NETWORK]), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
         ]);
     }

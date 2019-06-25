@@ -6,7 +6,7 @@ import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
 import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
 import { Ox, ShiftedInResponse, strip0x } from "./index";
-import { masterKeys, NETWORK } from "./networks";
+import { masterKeys, NETWORK, zBTC } from "./networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 
@@ -43,13 +43,12 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-// TODO: Remove hard-coded address!
-// TODO: Strip 0x
-export const ZBTC_ADDRESS = "0xef44c39102Ab3479F271e2fb3F27dB56D13b7a42";
-
 export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: ShiftAction, nonce: string): string => {
-    const token = ZBTC_ADDRESS; // actionToDetails(_shiftAction).asset;
+    const token = zBTC[NETWORK]; // actionToDetails(_shiftAction).asset;
+    console.log(`Payload and hash:`);
+    console.log(_payload);
     const pHash = generatePHash(_payload);
+    console.log(`pHash: ${pHash}`);
 
     const hash = rawEncode(
         ["bytes32", "uint256", "address", "address", "bytes32"],

@@ -21,3 +21,8 @@ export const masterKeys = {
         eth: "723eb4380e03df6a6f98cc1338b00cfbe5e45218",
     }
 };
+
+export const zBTC = {
+    [RenNetwork.Testnet]: "0x7cf9A2de7D5e81e6d4372D9b20D27AB8267295d5",
+    [RenNetwork.Devnet]: "0xef44c39102Ab3479F271e2fb3F27dB56D13b7a42",
+};

@@ -51,6 +51,7 @@ export default class RenSDK {
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
     public shift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload): Shift => {
+        // TODO: Validate inputs
         const hash = generateHash(payload, amount, strip0x(to), shiftAction, nonce);
         const gatewayAddress = generateAddress(shiftAction, hash);
         return {
@@ -84,11 +85,16 @@ export default class RenSDK {
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload, hash: string) =>
         async (): Promise<Submit> => {
+            console.log(`Submitting deposits!`);
+            console.log(shiftAction, to, amount, nonce, payload, hash);
+            console.log(generatePHash(payload));
             const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
+            console.log(`Submitted deposit! ${messageID}`);
 
             let response: ShiftedInResponse | undefined;
             while (!response) {
                 try {
+                    console.log(`Checking for response...`);
                     response = await this.shifter.checkForResponse(messageID) as ShiftedInResponse;
                     if (response) {
                         console.log("Response from Lightnode:");
@@ -105,10 +111,6 @@ export default class RenSDK {
 
             // TODO: Use github.com/primus/eventemitter3
             const onMessageID = async () => {
-                while (!messageID) {
-                    await sleep(1 * SECONDS);
-                }
-
                 return messageID;
             };
 

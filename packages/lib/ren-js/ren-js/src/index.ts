@@ -128,11 +128,10 @@ export default class RenSDK {
 
             const ABI = payloadToABI(methodName, payload);
             const contract = new web3.eth.Contract(ABI, to);
-
-            const addresses = await web3.eth.getAccounts();
+            const accounts = await web3.eth.getAccounts();
 
             return contract.methods[methodName](
                 ...params,
-            ).send({ from: addresses[0], gas: 1000000 });
+            ).send({ from: accounts[0], gas: 1000000 });
         }
 }

@@ -1,5 +1,5 @@
 import Web3 from "web3";
-import PromiEvent from "web3/promiEvent";
+import { PromiEvent } from "web3-core";
 
 import { payloadToABI } from "./abi";
 import { ShiftAction } from "./assets";

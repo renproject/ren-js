@@ -1,6 +1,7 @@
 import BN from "bn.js";
+import { masterPKH } from "darknode/masterKey";
 import { rawEncode } from "ethereumjs-abi";
-import { keccak256 } from "ethereumjs-util";
+import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 
 import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
@@ -90,24 +91,63 @@ export const SECONDS = 1000;
 // tslint:disable-next-line: no-string-based-set-timeout
 export const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
 
+export interface Signature { r: string; s: string; v: number; }
+
+export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
+
+const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
+
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: ShiftedInResponse): string => {
+export const fixSignature = (response: ShiftedInResponse): Signature => {
     const r = response.r;
     let s = new BN(strip0x(response.s), "hex");
     let v = ((parseInt(response.v || "0", 10) + 27) || 27);
 
-    console.log(`Original signature: ${Ox(`${strip0x(r)}${strip0x(response.s)}${v.toString(16)}`)}`);
+    console.log(`Original signature: ${signatureToString({ ...response, v })}`);
 
+    // For a given key, there are two valid signatures for each signed message.
+    // We always take the one with the lower `s`.
     if (s.gt(secp256k1n.div(new BN(2)))) {
         // Take s = -s % secp256k1n
         s = secp256k1n.sub(new BN(s));
         // Switch v
-        v = v === 27 ? 28 : 27;
+        v = switchV(v);
     }
 
-    const sString = strip0x(s.toArrayLike(Buffer, "be", 32).toString("hex"));
+    // Currently, the wrong `v` value may be returned from the darknodes.
+    // We recover the address to see if we need to switch `v`.
+    const recovered = {
+        v: pubToAddress(ecrecover(
+            Buffer.from(strip0x(response.hash), "hex"),
+            27,
+            Buffer.from(strip0x(r), "hex"),
+            s.toArrayLike(Buffer, "be", 32),
+        )),
 
-    const signatureBytes = Ox(`${strip0x(r)}${sString}${v.toString(16)}`);
-    console.log(`Fixed signature: ${signatureBytes}`);
-    return signatureBytes;
+        [switchV(v)]: pubToAddress(ecrecover(
+            Buffer.from(strip0x(response.hash), "hex"),
+            28,
+            Buffer.from(strip0x(r), "hex"),
+            s.toArrayLike(Buffer, "be", 32),
+        )),
+    };
+
+    if (recovered[v].equals(masterPKH)) {
+        // Do nothing
+    } else if (recovered[switchV(v)].equals(masterPKH)) {
+        console.warn("Switching v value");
+        v = switchV(v);
+    } else {
+        throw new Error("Invalid signature. Unable to recover darknode master public key.");
+    }
+
+    const signature: Signature = {
+        r,
+        s: strip0x(s.toArrayLike(Buffer, "be", 32).toString("hex")),
+        v,
+    };
+
+    console.log(`Fixed signature: ${signatureToString(signature)}`);
+
+    return signature;
 };

@@ -1,17 +1,21 @@
 import axios from "axios";
+import BigNumber from "bignumber.js";
 import bitcore, { Address, crypto, Networks, Script, Transaction } from "bitcore-lib";
 import chai from "chai";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
+import { AbiItem } from "web3-utils";
 
 import { ShiftActions } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
-import { Arg, Payload } from "../src/utils";
+import { Arg, Payload, ZBTC_ADDRESS } from "../src/utils";
 
 require("dotenv").config();
 
 chai.should();
+
+// tslint:disable:no-unused-expression
 
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
@@ -47,11 +51,33 @@ _Submit to darknodes => transaction hash_
 
  */
 
+// The minimum ABI to get ERC20 Token balance.
+const minABI: AbiItem[] = [
+    {
+        constant: true,
+        inputs: [
+            {
+                name: "account",
+                type: "address"
+            }
+        ],
+        name: "balanceOf",
+        outputs: [
+            {
+                name: "",
+                type: "uint256"
+            }
+        ],
+        payable: false,
+        stateMutability: "view",
+        type: "function"
+    }
+];
+
 describe("SDK methods", function () {
     this.timeout(0);
 
-    // tslint:disable-next-line:no-any
-    let provider: any;
+    let provider: HDWalletProvider;
     let web3: Web3;
     let sdk: RenSDK;
     let accounts: string[];
@@ -75,13 +101,25 @@ describe("SDK methods", function () {
         const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);
         const gatewayAddress = shift.addr();
 
+        // Check initial zBTC balance.
+        const contract = new web3.eth.Contract(minABI, strip0x(ZBTC_ADDRESS));
+        let initialBalance: BigNumber;
+        try {
+            await contract.methods.balanceOf(accounts[0]).call({}, (error, balance) => {
+                initialBalance = balance;
+            });
+        } catch (error) {
+            console.error("Cannot check balance");
+            throw error;
+        }
+
         // Deposit BTC to gateway address.
         const privateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const fromAddress = privateKey.toAddress().toString();
         const utxos = await getBTCTestnetUTXOs(fromAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
         let utxoAmount = 0;
-        for (const utxo of utxos) {
+        for (const utxo of utxos.reverse()) {
             if (utxoAmount >= amount) {
                 break;
             }
@@ -113,8 +151,9 @@ describe("SDK methods", function () {
         }
 
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
-        console.log(`Waiting for ${0} confirmations...`);
-        const deposit = await shift.wait(0);
+        const confirmations = 0;
+        console.log(`Waiting for ${confirmations} confirmations...`);
+        const deposit = await shift.wait(confirmations);
         console.log(`Submitting deposit!`);
         console.log(deposit);
         const signature = await deposit.submit();
@@ -122,5 +161,18 @@ describe("SDK methods", function () {
         console.log(signature);
         const result = await signature.signAndSubmit(web3, "shiftIn");
         console.log(result);
+
+        // Check final zBTC balance.
+        let finalBalance: BigNumber;
+        try {
+            await contract.methods.balanceOf(accounts[0]).call({}, (error, balance) => {
+                finalBalance = balance;
+            });
+        } catch (error) {
+            console.error("Cannot check balance");
+            throw error;
+        }
+
+        chai.expect(finalBalance.minus(initialBalance)).to.equal(new BigNumber(amount)); // TODO: Subtract fees
     });
 });

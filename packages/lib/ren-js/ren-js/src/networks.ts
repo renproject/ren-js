@@ -1,10 +1,8 @@
 
-enum RenNetwork {
+export enum RenNetwork {
     Testnet = "testnet",
     Devnet = "devnet",
 }
-
-export const NETWORK = RenNetwork.Testnet;
 
 export const lightnodeURLs = {
     [RenNetwork.Testnet]: "https://lightnode-testnet.herokuapp.com",

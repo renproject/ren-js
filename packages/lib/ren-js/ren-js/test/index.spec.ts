@@ -14,7 +14,7 @@ import { payloadToABI } from "../src/abi";
 import { Tokens } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
-import { NETWORK, zBTC } from "../src/networks";
+import { RenNetwork, zBTC } from "../src/networks";
 import { Arg, Payload } from "../src/utils";
 
 require("dotenv").config();
@@ -107,13 +107,15 @@ describe("SDK methods", function () {
 
     let provider: HDWalletProvider;
     let web3: Web3;
+    let network: string;
     let sdk: RenSDK;
     let accounts: string[];
 
     before(async () => {
         provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
         web3 = new Web3(provider);
-        sdk = new RenSDK();
+        network = RenNetwork.Testnet;
+        sdk = new RenSDK(network);
         accounts = await web3.eth.getAccounts();
     });
 
@@ -305,7 +307,7 @@ describe("SDK methods", function () {
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const zBTCContract = new web3.eth.Contract(minABI, strip0x(zBTC[NETWORK]));
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(zBTC[network]));
 
         // Test minting.
         console.log("Starting mint test:");

@@ -264,37 +264,6 @@ describe("SDK methods", function () {
             ...params,
         ).send({ from: ethAddress, gas: 1000000 });
         console.log(result);
-
-        // tslint:disable-next-line:no-suspicious-comment
-        /* let ref;
-        for (const [_, event] of Object.entries(result.events)) {
-            // tslint:disable-next-line:no-any
-            const raw = (event as any).raw;
-            if (raw.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
-                ref = web3.eth.abi.decodeParameters(["bytes", "uint256", "uint256", "bytes"], raw.data);
-                break;
-            }
-        }
-
-        // Check the status from the Darknodes. TODO: Check on an interval
-        console.log("Sending to Darknodes.");
-        let timeElapsed = 0;
-        while (ref) {
-            // Stop checking after 5 minutes.
-            if (timeElapsed >= 300) {
-                break;
-            }
-
-            const response = await sdk.burnStatus({
-                sendToken: Tokens.BTC.Eth2Btc,
-                ref,
-            });
-            console.log(response);
-
-            // Sleep for 5 seconds.
-            await new Promise(resolve => setTimeout(resolve, 5 * 1000));
-            timeElapsed += 5;
-        } */
     };
 
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));

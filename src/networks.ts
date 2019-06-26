@@ -23,6 +23,6 @@ export const masterKeys = {
 };
 
 export const zBTC = {
-    [RenNetwork.Testnet]: "0x7cf9A2de7D5e81e6d4372D9b20D27AB8267295d5",
-    [RenNetwork.Devnet]: "0xef44c39102Ab3479F271e2fb3F27dB56D13b7a42",
+    [RenNetwork.Testnet]: "0x1aFf7F90Bab456637a17d666D647Ea441A189F2d",
+    [RenNetwork.Devnet]: "0x4eB1403f565c3e3145Afc3634F16e2F092545C2a",
 };

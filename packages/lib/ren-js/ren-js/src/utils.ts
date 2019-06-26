@@ -1,6 +1,6 @@
 import BN from "bn.js";
-import { rawEncode } from "ethereumjs-abi";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
+import { AbiCoder } from "web3-eth-abi";
 
 import { actionToDetails, Chain, ShiftAction } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
@@ -24,6 +24,8 @@ export type Payload = Arg[];
 
 const unzip = (zip: Arg[]) => [zip.map(param => param.type), zip.map(param => param.value)];
 
+const rawEncode = (types: (string | {})[], paramaters: any[]) => (new AbiCoder()).encodeParameters(types, paramaters);
+
 // tslint:disable-next-line: no-any
 export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     // You can annotate values passed in to soliditySha3.
@@ -45,10 +47,7 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
 
 export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: ShiftAction, nonce: string): string => {
     const token = zBTC[NETWORK]; // actionToDetails(_shiftAction).asset;
-    console.log(`Payload and hash:`);
-    console.log(_payload);
     const pHash = generatePHash(_payload);
-    console.log(`pHash: ${pHash}`);
 
     const hash = rawEncode(
         ["bytes32", "uint256", "address", "address", "bytes32"],

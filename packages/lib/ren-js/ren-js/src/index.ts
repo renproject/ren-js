@@ -127,7 +127,7 @@ export default class RenSDK {
             console.log(`Submitting deposits!`);
             console.log(shiftAction, to, amount, nonce, contractParams, hash);
             console.log(generatePHash(contractParams));
-            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash);
+            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash, this.network);
             console.log(`Submitted deposit! ${messageID}`);
 
             let response: ShiftedInResponse | undefined;

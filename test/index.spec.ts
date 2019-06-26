@@ -313,6 +313,7 @@ describe("SDK methods", function () {
             finalBTCBalance = await checkBTCBalance(btcAddress);
         }
 
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.equal(balance);
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeGasFee(removeVMFee(new BN(balance)), 10));
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(balance)));
     });
 });

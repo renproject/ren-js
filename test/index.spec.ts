@@ -299,7 +299,7 @@ describe("SDK methods", function () {
 
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-        const btcShifter = "0x11172e0c457019Bec60f342c2171CF762D64Be18";
+        const btcShifter = "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f";
         const amount = 21000;
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);

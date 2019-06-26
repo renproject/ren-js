@@ -70,7 +70,7 @@ export default class RenSDK {
         const receipt = await web3.eth.getTransactionReceipt(txHash);
 
         if (!receipt.events) {
-            throw Error("");
+            throw Error("No events found in transaction");
         }
 
         let ref;
@@ -86,7 +86,7 @@ export default class RenSDK {
         }
 
         if (!ref) {
-            throw Error("");
+            throw Error("No reference ID found in logs");
         }
 
         const messageID = await this.shifter.submitWithdrawal(sendToken, ref);

@@ -25,7 +25,7 @@ export const createAddress =
                 .add(opcode.OP_DROP)
                 .add(opcode.OP_DUP)
                 .add(opcode.OP_HASH160)
-                .add(network.masterKey.mpkh)
+                .add(Buffer.from(network.masterKey.mpkh, "hex"))
                 .add(opcode.OP_EQUALVERIFY)
                 .add(opcode.OP_CHECKSIG)
                 .toScriptHashOut().toAddress(network.name === NetworkMainnet.name ? networks.livenet : networks.testnet).toString();

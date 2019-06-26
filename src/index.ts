@@ -6,7 +6,7 @@ import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
 import { ShiftedInResponse, Shifter } from "./darknode/shifter";
-import { lightnodeURLs, NETWORK } from "./networks";
+import { lightnodeURLs } from "./networks";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
@@ -51,11 +51,13 @@ interface BurnParams {
 export default class RenSDK {
 
     // Internal state
+    private network: string;
     private readonly shifter: Shifter;
 
     // Takes the address of the adapter smart contract
-    constructor() {
-        this.shifter = new Shifter(lightnodeURLs[NETWORK]);
+    constructor(network: string) {
+        this.network = network;
+        this.shifter = new Shifter(lightnodeURLs[network]);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
@@ -76,7 +78,7 @@ export default class RenSDK {
         }
 
         // TODO: Validate inputs
-        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce);
+        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, this.network, nonce);
         const gatewayAddress = generateAddress(sendToken, hash);
         const waitAfterShift = this._waitAfterShift(sendToken, strip0x(sendTo), sendAmount, nonce, contractFn, contractParams, gatewayAddress, hash);
         const result: Shift = {
@@ -151,7 +153,7 @@ export default class RenSDK {
             };
 
             return {
-                signAndSubmit: this._signAndSubmitAfterShift(to, contractFn, contractParams, signatureToString(fixSignature(response)), response.amount, response.nhash),
+                signAndSubmit: this._signAndSubmitAfterShift(to, contractFn, contractParams, signatureToString(fixSignature(response, this.network)), response.amount, response.nhash),
                 onMessageID,
             };
         }

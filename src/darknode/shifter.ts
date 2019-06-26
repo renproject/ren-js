@@ -1,6 +1,6 @@
 import { Ox, strip0x } from "../blockchain/common";
 import { Token } from "../index";
-import { NETWORK, zBTC } from "../networks";
+import { Network } from "../networks";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
 
@@ -75,11 +75,11 @@ export class Shifter {
         return response.result.messageID;
     }
 
-    public submitDeposits = async (action: Token, to: string, amount: number, nonce: string, pHash: string, hash: string): Promise<string> => {
+    public submitDeposits = async (action: Token, to: string, amount: number, nonce: string, pHash: string, hash: string, network: Network): Promise<string> => {
         return this.submitMessage(action, [
             { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
-            { name: "token", type: "b20", value: Buffer.from(strip0x(zBTC[NETWORK]), "hex").toString("base64") },
+            { name: "token", type: "b20", value: Buffer.from(strip0x(network.zBTC), "hex").toString("base64") },
             { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },
             { name: "n", type: "b32", value: Buffer.from(strip0x(nonce), "hex").toString("base64") },
         ]);

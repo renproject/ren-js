@@ -1,5 +1,5 @@
 import { Ox, strip0x } from "../blockchain/common";
-import { ShiftAction } from "../index";
+import { Token } from "../index";
 import { NETWORK, zBTC } from "../networks";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
@@ -59,7 +59,7 @@ export class Shifter {
         this.lightnode = new Lightnode(lightnodeURL);
     }
 
-    public submitMessage = async (action: ShiftAction, args: Args): Promise<string> => {
+    public submitMessage = async (action: Token, args: Args): Promise<string> => {
         const response = await this.lightnode.sendMessage({
             to: action,
             args,
@@ -75,7 +75,7 @@ export class Shifter {
         return response.result.messageID;
     }
 
-    public submitDeposits = async (action: ShiftAction, to: string, amount: number, nonce: string, pHash: string, hash: string): Promise<string> => {
+    public submitDeposits = async (action: Token, to: string, amount: number, nonce: string, pHash: string, hash: string): Promise<string> => {
         return this.submitMessage(action, [
             { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },
@@ -85,10 +85,9 @@ export class Shifter {
         ]);
     }
 
-    public submitWithdrawal = async (action: ShiftAction, to: string, amount: number): Promise<string> => {
+    public submitWithdrawal = async (action: Token, ref: string): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "to", type: "b20", value: Buffer.from(strip0x(zBTC[NETWORK]), "hex").toString("base64") },
-            { name: "amount", type: "u64", value: amount },
+            { name: "ref", type: "bytes", value: ref }, // FIXME:
         ]);
     }
 

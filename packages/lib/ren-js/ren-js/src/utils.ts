@@ -2,7 +2,7 @@ import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import { AbiCoder } from "web3-eth-abi";
 
-import { actionToDetails, Chain, ShiftAction } from "./assets";
+import { actionToDetails, Chain, Token } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
 import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
 import { Ox, ShiftedInResponse, strip0x } from "./index";
@@ -45,7 +45,7 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: ShiftAction, nonce: string): string => {
+export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string): string => {
     const token = zBTC[NETWORK]; // actionToDetails(_shiftAction).asset;
     const pHash = generatePHash(_payload);
 
@@ -59,7 +59,7 @@ export const generateHash = (_payload: Payload, amount: number | string, _to: st
 };
 
 // Generates the gateway address
-export const generateAddress = (_shiftAction: ShiftAction, hash: string): string => {
+export const generateAddress = (_shiftAction: Token, hash: string): string => {
 
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
@@ -73,7 +73,7 @@ export const generateAddress = (_shiftAction: ShiftAction, hash: string): string
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_shiftAction: ShiftAction, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
+export const retrieveDeposits = async (_shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
@@ -110,8 +110,9 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
         v = switchV(v);
     }
 
-    // Currently, the wrong `v` value may be returned from the darknodes.
-    // We recover the address to see if we need to switch `v`.
+    // Currently, the wrong `v` value may be returned from the Darknodes. We
+    // recover the address to see if we need to switch `v`. This can be removed
+    // once the Darknodes have been updated.
     const recovered = {
         [v]: pubToAddress(ecrecover(
             Buffer.from(strip0x(response.hash), "hex"),

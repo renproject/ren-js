@@ -1,8 +1,9 @@
+import { crypto } from "bitcore-lib";
 import Web3 from "web3";
 import { PromiEvent } from "web3-core";
 
-import { payloadToABI } from "./abi";
-import { ShiftAction } from "./assets";
+import { payloadToShiftInABI } from "./abi";
+import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
 import { ShiftedInResponse, Shifter } from "./darknode/shifter";
 import { lightnodeURLs, NETWORK } from "./networks";
@@ -23,13 +24,28 @@ export { UTXO } from "./utils";
 // tslint:disable-next-line:no-any (FIXME:)
 export type SignAndSubmit = PromiEvent<any>;
 export interface Submit {
-    signAndSubmit: (web3: Web3, methodName: string, from: string) => SignAndSubmit;
+    signAndSubmit: (web3: Web3, from: string) => SignAndSubmit;
     onMessageID: () => Promise<string>;
 }
 export interface Wait { submit: () => Promise<Submit>; }
 export interface Shift {
     addr: () => string;
     wait: (confirmations: number) => Promise<Wait>;
+    waitSignSubmit?: (web3: Web3, from: string, confirmations: number) => Promise<SignAndSubmit>;
+}
+
+interface ShiftParams {
+    sendToken: Token;
+    sendTo: string;
+    sendAmount: number;
+    contractFn: string;
+    contractParams: Payload;
+    nonce?: string;
+}
+
+interface BurnParams {
+    sendToken: Token;
+    ref: string;
 }
 
 export default class RenSDK {
@@ -44,23 +60,43 @@ export default class RenSDK {
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public burn = async (shiftAction: ShiftAction, to: string, amount: number): Promise<string> => {
-        return this.shifter.submitWithdrawal(shiftAction, to, amount);
+    public burnStatus = async (params: BurnParams): Promise<string> => {
+        const { sendToken, ref } = params;
+        return this.shifter.submitWithdrawal(sendToken, ref);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public shift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload): Shift => {
+    public shift = (params: ShiftParams): Shift => {
+        const { sendToken, contractFn, contractParams, sendAmount, sendTo } = params;
+        let { nonce } = params;
+
+        if (!nonce) {
+            nonce = Ox(crypto.Random.getRandomBuffer(32));
+        }
+
         // TODO: Validate inputs
-        const hash = generateHash(payload, amount, strip0x(to), shiftAction, nonce);
-        const gatewayAddress = generateAddress(shiftAction, hash);
-        return {
+        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce);
+        const gatewayAddress = generateAddress(sendToken, hash);
+        const waitAfterShift = this._waitAfterShift(sendToken, strip0x(sendTo), sendAmount, nonce, contractFn, contractParams, gatewayAddress, hash);
+        const result: Shift = {
             addr: () => gatewayAddress,
-            wait: this._waitAfterShift(shiftAction, strip0x(to), amount, nonce, payload, gatewayAddress, hash),
+            wait: waitAfterShift,
+        };
+        return {
+            ...result,
+            waitSignSubmit: this._waitSignSubmit(result),
         };
     }
 
-    private readonly _waitAfterShift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload, gatewayAddress: string, hash: string) =>
+    private readonly _waitSignSubmit = (shift: Shift) =>
+        async (web3: Web3, from: string, confirmations: number): Promise<SignAndSubmit> => {
+            const deposit = await shift.wait(confirmations);
+            const signature = await deposit.submit();
+            return signature.signAndSubmit(web3, from);
+        }
+
+    private readonly _waitAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, gatewayAddress: string, hash: string) =>
         async (confirmations: number): Promise<Wait> => {
             let deposits: UTXO[] = [];
             const depositedAmount = (): number => {
@@ -78,17 +114,17 @@ export default class RenSDK {
             }
 
             return {
-                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, payload, hash),
+                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, contractFn, contractParams, hash),
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _submitDepositAfterShift = (shiftAction: ShiftAction, to: string, amount: number, nonce: string, payload: Payload, hash: string) =>
+    private readonly _submitDepositAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, hash: string) =>
         async (): Promise<Submit> => {
             console.log(`Submitting deposits!`);
-            console.log(shiftAction, to, amount, nonce, payload, hash);
-            console.log(generatePHash(payload));
-            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(payload), hash);
+            console.log(shiftAction, to, amount, nonce, contractParams, hash);
+            console.log(generatePHash(contractParams));
+            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash);
             console.log(`Submitted deposit! ${messageID}`);
 
             let response: ShiftedInResponse | undefined;
@@ -115,25 +151,25 @@ export default class RenSDK {
             };
 
             return {
-                signAndSubmit: this._signAndSubmitAfterShift(to, payload, signatureToString(fixSignature(response)), response.amount, response.nhash),
+                signAndSubmit: this._signAndSubmitAfterShift(to, contractFn, contractParams, signatureToString(fixSignature(response)), response.amount, response.nhash),
                 onMessageID,
             };
         }
 
     // tslint:disable-next-line: no-any (FIXME)
-    private readonly _signAndSubmitAfterShift = (to: string, payload: Payload, signature: string, amount: number | string, nhash: string) =>
-        (web3: Web3, methodName: string, from: string): SignAndSubmit => {
+    private readonly _signAndSubmitAfterShift = (to: string, contractFn: string, contractParams: Payload, signature: string, amount: number | string, nhash: string) =>
+        (web3: Web3, from: string): SignAndSubmit => {
             const params = [
-                ...payload.map(value => value.value),
+                ...contractParams.map(value => value.value),
                 Ox(amount.toString(16)), // _amount: BigNumber
                 Ox(nhash), // _nHash: string
                 Ox(signature), // _sig: string
             ];
 
-            const ABI = payloadToABI(methodName, payload);
+            const ABI = payloadToShiftInABI(contractFn, contractParams);
             const contract = new web3.eth.Contract(ABI, to);
 
-            return contract.methods[methodName](
+            return contract.methods[contractFn](
                 ...params,
             ).send({ from, gas: 1000000 });
         }

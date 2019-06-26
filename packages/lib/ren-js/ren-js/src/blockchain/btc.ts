@@ -1,7 +1,6 @@
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { decode as decode58 } from "bs58";
 
-import { NetworkTestnet } from "../networks";
 import { createAddress, Ox } from "./common";
 import { getUTXOs } from "./mercury";
 

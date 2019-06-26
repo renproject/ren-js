@@ -1,6 +1,7 @@
 import axios from "axios";
 import BigNumber from "bignumber.js";
-import bitcore, { Address, crypto, Networks, Script, Transaction } from "bitcore-lib";
+import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
+import bs58 from "bs58";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import { BN } from "ethereumjs-util";
@@ -9,7 +10,8 @@ import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
-import { ShiftActions } from "../src/assets";
+import { payloadToABI } from "../src/abi";
+import { Tokens } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
 import { NETWORK, zBTC } from "../src/networks";
@@ -56,7 +58,7 @@ _Submit to darknodes => transaction hash_
 
  */
 
-// The minimum ABI to get ERC20 Token balance.
+// The minimum ABI to approve and get ERC20 Token balance.
 const minABI: AbiItem[] = [
     {
         constant: true,
@@ -76,10 +78,31 @@ const minABI: AbiItem[] = [
         payable: false,
         stateMutability: "view",
         type: "function"
+    },
+    {
+        constant: false,
+        inputs: [
+            {
+                name: "spender",
+                type: "address"
+            }, {
+                name: "value",
+                type: "uint256"
+            }
+        ],
+        name: "approve",
+        outputs: [{
+            name: "",
+            type: "bool"
+        }],
+        payable: false,
+        stateMutability: "nonpayable",
+        type: "function"
     }
 ];
 
 describe("SDK methods", function () {
+    // Disable test timeout.
     this.timeout(0);
 
     let provider: HDWalletProvider;
@@ -109,28 +132,41 @@ describe("SDK methods", function () {
     };
 
     // tslint:disable-next-line:no-any
-    const checkBTCBalance = async (contract: Contract, address: string): Promise<any> => {
-        // TODO:
-        return new BN(0);
+    const checkBTCBalance = async (address: string): Promise<any> => {
+        const utxos = await getBTCTestnetUTXOs(address, 10, 0);
+        let utxoAmount = new BN(0);
+        for (const utxo of utxos) {
+            utxoAmount = utxoAmount.add(new BN(utxo.amount));
+        }
+        return utxoAmount;
     };
 
-    const mintTest = async (amount: number, ethAddress: string, btcAddress: string, btcPrivateKey: bitcore.PrivateKey): Promise<void> => {
-        const adapterContract = "0xAfec5fCAc09810afbe33a45A3797C29b33DA0112";
-        const arg: Arg = {
-            name: "_address",
-            type: "address",
-            value: ethAddress,
-        };
-        const payload: Payload = [arg];
-        const nonce = Ox(crypto.Random.getRandomBuffer(32));
-        const shift = sdk.shift(ShiftActions.BTC.Btc2Eth, adapterContract, amount, nonce, payload);
+    const mintTest = async (btcShifter: string, adapterContract: string, amount: number, ethAddress: string, btcAddress: string, btcPrivateKey: bitcore.PrivateKey): Promise<void> => {
+        const params: Arg[] = [
+            {
+                name: "_shifter",
+                type: "address",
+                value: btcShifter,
+            },
+            {
+                name: "_address",
+                type: "address",
+                value: ethAddress,
+            }
+        ];
+        const shift = sdk.shift({
+            sendToken: Tokens.BTC.Btc2Eth,
+            sendTo: adapterContract,
+            sendAmount: amount,
+            contractFn: "shiftIn",
+            contractParams: params,
+        });
         const gatewayAddress = shift.addr();
 
         // Deposit BTC to gateway address.
         const utxos = await getBTCTestnetUTXOs(btcAddress, 10, 0);
         const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
         let utxoAmount = 0;
-        // for (const utxo of utxos.reverse()) {
         for (const utxo of utxos) {
             if (utxoAmount >= amount) {
                 break;
@@ -170,39 +206,142 @@ describe("SDK methods", function () {
         console.log(`Submitting deposit!`);
         const signature = await deposit.submit();
         console.log(`Submitting signature!`);
-        const accounts = await web3.eth.getAccounts();
-        const result = await signature.signAndSubmit(web3, "shiftIn", accounts[0]);
+        const result = await signature.signAndSubmit(web3, ethAddress);
         console.log(result);
     };
 
-    const burnTest = async (amount: number, btcAddress: string) => {
-        await sdk.burn(ShiftActions.BTC.Eth2Btc, btcAddress, amount);
+    const burnTest = async (zBTCContract: Contract, btcShifter: string, adapterContract: string, amount: number, ethAddress: string, btcAddress: string) => {
+        // Approve contract to spend zBTC.
+        const approvePayload: Arg[] = [
+            {
+                name: "spender",
+                type: "address",
+                value: adapterContract,
+            },
+            {
+                name: "value",
+                type: "uint256",
+                value: Ox(amount.toString(16)),
+            },
+        ];
+        const approveParams = [
+            ...approvePayload.map(value => value.value),
+        ];
+
+        console.log("Approving contract.");
+        await zBTCContract.methods.approve(
+            ...approveParams,
+        ).send({ from: ethAddress, gas: 1000000 });
+
+        // Send burn request to adapter contract.
+        const payload: Arg[] = [
+            {
+                name: "_shifter",
+                type: "address",
+                value: btcShifter,
+            },
+            {
+                name: "_to",
+                type: "bytes",
+                value: Ox(bs58.decode(btcAddress).toString("hex")),
+            },
+            {
+                name: "_amount",
+                type: "uint256",
+                value: Ox(amount.toString(16)),
+            },
+        ];
+        const ABI = payloadToABI("shiftOut", payload);
+        const contract = new web3.eth.Contract(ABI, adapterContract);
+        const params = [
+            ...payload.map(value => value.value),
+        ];
+        console.log("Burning tokens.");
+
+        const result = await contract.methods.shiftOut(
+            ...params,
+        ).send({ from: ethAddress, gas: 1000000 });
+        console.log(result);
+
+        // tslint:disable-next-line:no-suspicious-comment
+        /* let ref;
+        for (const [_, event] of Object.entries(result.events)) {
+            // tslint:disable-next-line:no-any
+            const raw = (event as any).raw;
+            if (raw.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
+                ref = web3.eth.abi.decodeParameters(["bytes", "uint256", "uint256", "bytes"], raw.data);
+                break;
+            }
+        }
+
+        // Check the status from the Darknodes. TODO: Check on an interval
+        console.log("Sending to Darknodes.");
+        let timeElapsed = 0;
+        while (ref) {
+            // Stop checking after 5 minutes.
+            if (timeElapsed >= 300) {
+                break;
+            }
+
+            const response = await sdk.burnStatus({
+                sendToken: Tokens.BTC.Eth2Btc,
+                ref,
+            });
+            console.log(response);
+
+            // Sleep for 5 seconds.
+            await new Promise(resolve => setTimeout(resolve, 5 * 1000));
+            timeElapsed += 5;
+        } */
     };
 
-    const removeFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
+    const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
+    const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
     it("should be able to mint and burn btc", async () => {
+        const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
+        const btcShifter = "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f";
         const amount = 21000;
-        const vmFee = 10000;
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const contract = new web3.eth.Contract(minABI, strip0x(zBTC[NETWORK]));
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(zBTC[NETWORK]));
 
         // Test minting.
-        const initialzBTCBalance = await checkzBTCBalance(contract, accounts[0]);
-        await mintTest(amount, ethAddress, btcAddress, btcPrivateKey);
-        const finalzBTCBalance = await checkzBTCBalance(contract, accounts[0]);
+        console.log("Starting mint test:");
+        const initialzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+        await mintTest(btcShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey);
+        const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
-        finalzBTCBalance.sub(initialzBTCBalance).should.bignumber.least(removeFee(new BN(amount).sub(new BN(vmFee)), 10));
-        finalzBTCBalance.sub(initialzBTCBalance).should.bignumber.most(new BN(amount).sub(new BN(vmFee)));
+        const balance = finalzBTCBalance.sub(initialzBTCBalance);
+        balance.should.bignumber.least(removeGasFee(removeVMFee(new BN(amount)), 10));
+        balance.should.bignumber.most(removeVMFee(new BN(amount)));
 
         // Test burning.
-        /* const initialBTCBalance = await checkBTCBalance(contract, accounts[0]);
-        await burnTest(removeFee(amount, 10), btcAddress);
-        const finalBTCBalance = await checkBTCBalance(contract, accounts[0]);
+        console.log("Starting burn test:");
+        const initialBTCBalance = await checkBTCBalance(btcAddress);
+        await burnTest(zBTCContract, btcShifter, adapterContract, balance, ethAddress, btcAddress);
+        let finalBTCBalance = await checkBTCBalance(btcAddress);
 
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.equal(removeFee(amount, 10)); */
+        // Validate balance.
+        let timeElapsed = 0;
+        while (finalBTCBalance.cmp(initialBTCBalance) === 0) {
+            console.log("Balance has not updated, retrying in 10 seconds.");
+
+            // Stop checking after 5 minutes.
+            if (timeElapsed >= 300) {
+                console.log("Timed out.");
+                break;
+            }
+
+            // Sleep for 10 seconds.
+            await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+            timeElapsed += 10;
+
+            finalBTCBalance = await checkBTCBalance(btcAddress);
+        }
+
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.equal(balance);
     });
 });

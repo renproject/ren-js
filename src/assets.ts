@@ -11,15 +11,15 @@ export enum Asset {
     ETH = "ETH"
 }
 
-export enum ShiftAction {
+export enum Token {
     Btc2Eth = "BTC0Btc2Eth",
     Eth2Btc = "BTC0Eth2Btc",
 }
 
-export const ShiftActions = {
+export const Tokens = {
     BTC: {
-        Btc2Eth: ShiftAction.Btc2Eth,
-        Eth2Btc: ShiftAction.Eth2Btc,
+        Btc2Eth: Token.Btc2Eth,
+        Eth2Btc: Token.Eth2Btc,
     }
 };
 
@@ -34,7 +34,7 @@ const defaultMatch = [undefined, undefined, undefined, undefined];
 
 // actionToDetails splits an action (e.g. `BTC0Eth2Btc`) into the asset
 // (`BTC`), the from chain (`Eth`)
-export const actionToDetails = (shiftAction: ShiftAction): ActionDetails => {
+export const actionToDetails = (shiftAction: Token): ActionDetails => {
     // re.exec("BTC0Eth2Btc") => ['BTC0Eth2Btc', 'BTC', 'Eth', 'Btc']
     const [, asset, from, to] = shiftActionRegex.exec(shiftAction) || defaultMatch;
     if (!asset || !from || !to) {

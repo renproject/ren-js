@@ -28,6 +28,19 @@ const shiftInABITemplate: AbiItem = {
 export const payloadToABI = (methodName: string, payload: Payload): AbiItem[] => {
     return [
         {
+            name: methodName,
+            type: "function",
+            inputs: [
+                ...payload.map(value => ({ type: value.type, name: value.name })),
+            ],
+            outputs: [],
+        }
+    ];
+};
+
+export const payloadToShiftInABI = (methodName: string, payload: Payload): AbiItem[] => {
+    return [
+        {
             ...shiftInABITemplate,
             name: methodName,
             inputs: [

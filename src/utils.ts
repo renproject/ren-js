@@ -6,7 +6,7 @@ import { actionToDetails, Chain, Token } from "./assets";
 import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
 import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
 import { Ox, ShiftedInResponse, strip0x } from "./index";
-import { masterKeys, NETWORK, zBTC } from "./networks";
+import { masterKeys, zBTC } from "./networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 
@@ -43,8 +43,8 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string): string => {
-    const token = zBTC[NETWORK]; // actionToDetails(_shiftAction).asset;
+export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, network: string, nonce: string): string => {
+    const token = zBTC[network]; // actionToDetails(_shiftAction).asset;
     console.log(`Payload and hash:`);
     console.log(_payload);
     const pHash = generatePHash(_payload);
@@ -97,7 +97,7 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: ShiftedInResponse): Signature => {
+export const fixSignature = (response: ShiftedInResponse, network: string): Signature => {
     const r = response.r;
     let s = new BN(strip0x(response.s), "hex");
     let v = ((parseInt(response.v || "0", 10) + 27) || 27);
@@ -130,7 +130,7 @@ export const fixSignature = (response: ShiftedInResponse): Signature => {
         )),
     };
 
-    const expected = Buffer.from(masterKeys[NETWORK].eth, "hex");
+    const expected = Buffer.from(masterKeys[network].eth, "hex");
     if (recovered[v].equals(expected)) {
         // Do nothing
     } else if (recovered[switchV(v)].equals(expected)) {

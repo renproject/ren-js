@@ -18,8 +18,9 @@ export interface ShiftedInResponse {
 }
 
 export interface ShiftedOutResponse {
-    amount: string;
+    amount: number;
     to: string;
+    ref: number;
 }
 
 type ShifterResponse = JSONRPCResponse<{
@@ -87,7 +88,7 @@ export class Shifter {
 
     public submitWithdrawal = async (action: Token, ref: string): Promise<string> => {
         return this.submitMessage(action, [
-            { name: "ref", type: "bytes", value: ref }, // FIXME:
+            { name: "ref", type: "u64", value: parseInt(ref, 16) },
         ]);
     }
 

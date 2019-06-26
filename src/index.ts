@@ -69,18 +69,16 @@ export default class RenSDK {
 
         const receipt = await web3.eth.getTransactionReceipt(txHash);
 
-        if (!receipt.events) {
+        if (!receipt.logs) {
             throw Error("No events found in transaction");
         }
 
         let ref;
-        for (const [_, event] of Object.entries(receipt.events)) {
-            if (!event.raw) {
-                continue;
-            }
-            if (event.raw.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
-                const log = web3.eth.abi.decodeParameters(["bytes", "uint256", "uint256", "bytes"], event.raw.data);
-                ref = log.ref;
+        for (const [, event] of Object.entries(receipt.logs)) {
+            if (event.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
+                ref = event.topics[1] as string;
+                // const log = web3.eth.abi.decodeParameters(["bytes", "uint256", "uint256", "bytes32"], event.data);
+                // ref = log.ref;
                 break;
             }
         }
@@ -90,7 +88,6 @@ export default class RenSDK {
         }
 
         const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
-        console.log(`Submitted withdrawal! ${messageID}`);
 
         const response = await this._checkForResponse(messageID) as ShiftedOutResponse;
 
@@ -153,11 +150,7 @@ export default class RenSDK {
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, hash: string) =>
         async (): Promise<Submit> => {
-            console.log(`Submitting deposits!`);
-            console.log(shiftAction, to, amount, nonce, contractParams, hash);
-            console.log(generatePHash(contractParams));
             const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash, this.network);
-            console.log(`Submitted deposit! ${messageID}`);
 
             const response = await this._checkForResponse(messageID) as ShiftedInResponse;
 
@@ -190,7 +183,7 @@ export default class RenSDK {
             ).send({ from, gas: 1000000 });
         }
 
-    private _checkForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
+    private readonly _checkForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
         let response: ShiftedInResponse | ShiftedOutResponse | undefined;
         while (!response) {
             try {

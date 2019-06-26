@@ -17,6 +17,7 @@ export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";
 export * from "./assets";
+export * from "./networks";
 
 export { UTXO } from "./utils";
 

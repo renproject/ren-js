@@ -1,11 +1,11 @@
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { decode as decode58 } from "bs58";
 
-import { masterKeys, NETWORK } from "../networks";
+import { NetworkTestnet } from "../networks";
 import { createAddress, Ox } from "./common";
 import { getUTXOs } from "./mercury";
 
-const createBTCAddress = createAddress(Networks, Opcode, Script);
+export const createBTCAddress = createAddress(Networks, Opcode, Script);
 
 const testnetMercury = "https://ren-mercury.herokuapp.com/btc-testnet3";
 
@@ -17,7 +17,5 @@ export interface BitcoinUTXO {
 }
 
 export const getBTCTestnetUTXOs = getUTXOs<BitcoinUTXO>(testnetMercury);
-
-export const createBTCTestnetAddress = createBTCAddress({ mainnet: false, masterPKH: Buffer.from(masterKeys[NETWORK].mpkh, "hex") });
 
 export const btcAddressToHex = (address: string) => Ox(decode58(address));

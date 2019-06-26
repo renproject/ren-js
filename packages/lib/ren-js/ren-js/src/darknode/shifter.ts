@@ -19,7 +19,7 @@ export interface ShiftedInResponse {
 
 export interface ShiftedOutResponse {
     amount: string;
-    txHash: string;
+    to: string;
 }
 
 type ShifterResponse = JSONRPCResponse<{

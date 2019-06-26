@@ -5,7 +5,7 @@ import { PromiEvent } from "web3-core";
 import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
-import { ShiftedInResponse, Shifter } from "./darknode/shifter";
+import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
 import { Network } from "./networks";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
@@ -45,8 +45,9 @@ interface ShiftParams {
 }
 
 interface BurnParams {
+    web3: Web3;
     sendToken: Token;
-    ref: string;
+    txHash: string;
 }
 
 export default class RenSDK {
@@ -63,9 +64,37 @@ export default class RenSDK {
 
     // Submits the commitment and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public burnStatus = async (params: BurnParams): Promise<string> => {
-        const { sendToken, ref } = params;
-        return this.shifter.submitWithdrawal(sendToken, ref);
+    public burnDetails = async (params: BurnParams): Promise<ShiftedOutResponse> => {
+        const { web3, sendToken, txHash } = params;
+
+        const receipt = await web3.eth.getTransactionReceipt(txHash);
+
+        if (!receipt.events) {
+            throw Error("");
+        }
+
+        let ref;
+        for (const [_, event] of Object.entries(receipt.events)) {
+            if (!event.raw) {
+                continue;
+            }
+            if (event.raw.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
+                const log = web3.eth.abi.decodeParameters(["bytes", "uint256", "uint256", "bytes"], event.raw.data);
+                ref = log.ref;
+                break;
+            }
+        }
+
+        if (!ref) {
+            throw Error("");
+        }
+
+        const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
+        console.log(`Submitted withdrawal! ${messageID}`);
+
+        const response = await this._checkForResponse(messageID) as ShiftedOutResponse;
+
+        return response;
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
@@ -130,23 +159,7 @@ export default class RenSDK {
             const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash, this.network);
             console.log(`Submitted deposit! ${messageID}`);
 
-            let response: ShiftedInResponse | undefined;
-            while (!response) {
-                try {
-                    console.log(`Checking for response...`);
-                    response = await this.shifter.checkForResponse(messageID) as ShiftedInResponse;
-                    if (response) {
-                        console.log("Response from Lightnode:");
-                        console.log(response);
-                        break;
-                    }
-                } catch (error) {
-                    console.log("Retrying in 5 seconds");
-                    await sleep(5 * SECONDS);
-                    // TODO: Ignore "result not available",
-                    // throw otherwise
-                }
-            }
+            const response = await this._checkForResponse(messageID) as ShiftedInResponse;
 
             // TODO: Use github.com/primus/eventemitter3
             const onMessageID = async () => {
@@ -176,4 +189,25 @@ export default class RenSDK {
                 ...params,
             ).send({ from, gas: 1000000 });
         }
+
+    private _checkForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
+        let response: ShiftedInResponse | ShiftedOutResponse | undefined;
+        while (!response) {
+            try {
+                console.log(`Checking for response...`);
+                response = await this.shifter.checkForResponse(messageID) as ShiftedInResponse;
+                if (response) {
+                    console.log("Response from Lightnode:");
+                    console.log(response);
+                    break;
+                }
+            } catch (error) {
+                console.log("Retrying in 5 seconds");
+                await sleep(5 * SECONDS);
+                // TODO: Ignore "result not available",
+                // throw otherwise
+            }
+        }
+        return response;
+    }
 }

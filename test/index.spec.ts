@@ -1,6 +1,7 @@
 import axios from "axios";
 import BigNumber from "bignumber.js";
-import bitcore, { Address, crypto, Networks, Script, Transaction } from "bitcore-lib";
+import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
+import bs58 from "bs58";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import { BN } from "ethereumjs-util";
@@ -242,7 +243,7 @@ describe("SDK methods", function () {
             {
                 name: "_to",
                 type: "bytes",
-                value: Ox(Buffer.from(btcAddress, "base64").toString("hex")),
+                value: Ox(bs58.decode(btcAddress).toString("hex")),
             },
             {
                 name: "_amount",
@@ -326,15 +327,17 @@ describe("SDK methods", function () {
         // Validate balance.
         let timeElapsed = 0;
         while (finalBTCBalance.cmp(initialBTCBalance) === 0) {
+            console.log("Balance has not updated, retrying in 10 seconds.");
+
             // Stop checking after 5 minutes.
             if (timeElapsed >= 300) {
                 console.log("Timed out.");
                 break;
             }
 
-            // Sleep for 5 seconds.
-            await new Promise(resolve => setTimeout(resolve, 5 * 1000));
-            timeElapsed += 5;
+            // Sleep for 10 seconds.
+            await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+            timeElapsed += 10;
 
             finalBTCBalance = await checkBTCBalance(btcAddress);
         }

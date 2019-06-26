@@ -6,7 +6,7 @@ import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
 import { ShiftedInResponse, Shifter } from "./darknode/shifter";
-import { lightnodeURLs } from "./networks";
+import { Network } from "./networks";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
@@ -51,13 +51,13 @@ interface BurnParams {
 export default class RenSDK {
 
     // Internal state
-    private network: string;
+    private network: Network;
     private readonly shifter: Shifter;
 
     // Takes the address of the adapter smart contract
-    constructor(network: string) {
+    constructor(network: Network) {
         this.network = network;
-        this.shifter = new Shifter(lightnodeURLs[network]);
+        this.shifter = new Shifter(network.lightnodeURL);
     }
 
     // Submits the commitment and transaction to the darknodes, and then submits
@@ -78,8 +78,8 @@ export default class RenSDK {
         }
 
         // TODO: Validate inputs
-        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, this.network, nonce);
-        const gatewayAddress = generateAddress(sendToken, hash);
+        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, this.network);
+        const gatewayAddress = generateAddress(sendToken, hash, this.network);
         const waitAfterShift = this._waitAfterShift(sendToken, strip0x(sendTo), sendAmount, nonce, contractFn, contractParams, gatewayAddress, hash);
         const result: Shift = {
             addr: () => gatewayAddress,

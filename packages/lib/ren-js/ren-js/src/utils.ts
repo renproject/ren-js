@@ -3,10 +3,10 @@ import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import { AbiCoder } from "web3-eth-abi";
 
 import { actionToDetails, Chain, Token } from "./assets";
-import { BitcoinUTXO, createBTCTestnetAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
-import { createZECTestnetAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
+import { BitcoinUTXO, createBTCAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
+import { createZECAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
 import { Ox, ShiftedInResponse, strip0x } from "./index";
-import { masterKeys, zBTC } from "./networks";
+import { Network } from "./networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 
@@ -24,7 +24,8 @@ export type Payload = Arg[];
 
 const unzip = (zip: Arg[]) => [zip.map(param => param.type), zip.map(param => param.value)];
 
-const rawEncode = (types: (string | {})[], paramaters: any[]) => (new AbiCoder()).encodeParameters(types, paramaters);
+// tslint:disable-next-line:no-any
+const rawEncode = (types: Array<string | {}>, paramaters: any[]) => (new AbiCoder()).encodeParameters(types, paramaters);
 
 // tslint:disable-next-line: no-any
 export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
@@ -45,8 +46,8 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, network: string, nonce: string): string => {
-    const token = zBTC[network]; // actionToDetails(_shiftAction).asset;
+export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: Network): string => {
+    const token = network.zBTC; // actionToDetails(_shiftAction).asset;
     console.log(`Payload and hash:`);
     console.log(_payload);
     const pHash = generatePHash(_payload);
@@ -61,14 +62,14 @@ export const generateHash = (_payload: Payload, amount: number | string, _to: st
 };
 
 // Generates the gateway address
-export const generateAddress = (_shiftAction: Token, hash: string): string => {
+export const generateAddress = (_shiftAction: Token, hash: string, network: Network): string => {
 
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return createBTCTestnetAddress(hash);
+            return createBTCAddress(network, hash);
         case Chain.ZCash:
-            return createZECTestnetAddress(hash);
+            return createZECAddress(network, hash);
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
     }
@@ -98,7 +99,7 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: ShiftedInResponse, network: string): Signature => {
+export const fixSignature = (response: ShiftedInResponse, network: Network): Signature => {
     const r = response.r;
     let s = new BN(strip0x(response.s), "hex");
     let v = ((parseInt(response.v || "0", 10) + 27) || 27);
@@ -131,7 +132,7 @@ export const fixSignature = (response: ShiftedInResponse, network: string): Sign
         )),
     };
 
-    const expected = Buffer.from(masterKeys[network].eth, "hex");
+    const expected = Buffer.from(network.masterKey.eth, "hex");
     if (recovered[v].equals(expected)) {
         // Do nothing
     } else if (recovered[switchV(v)].equals(expected)) {

@@ -1,7 +1,8 @@
 import { Networks as BNetworks, Opcode as BOpcode, Script as bScript } from "bitcore-lib";
 import { Networks as ZNetworks, Opcode as ZOpcode, Script as zScript } from "bitcore-lib-zcash";
 import BN from "bn.js";
-import { Network, NetworkMainnet } from "networks";
+
+import { Network, NetworkMainnet } from "../networks";
 
 // Remove 0x prefix from a hex string
 export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
@@ -27,5 +28,5 @@ export const createAddress =
                 .add(network.masterKey.mpkh)
                 .add(opcode.OP_EQUALVERIFY)
                 .add(opcode.OP_CHECKSIG)
-                .toScriptHashOut().toAddress(network === NetworkMainnet ? networks.livenet : networks.testnet).toString();
+                .toScriptHashOut().toAddress(network.name === NetworkMainnet.name ? networks.livenet : networks.testnet).toString();
             // TODO: Check: Is livenet = mainnet?

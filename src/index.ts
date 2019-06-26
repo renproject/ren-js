@@ -52,7 +52,7 @@ interface BurnParams {
 export default class RenSDK {
 
     // Internal state
-    private network: Network;
+    private readonly network: Network;
     private readonly shifter: Shifter;
 
     // Takes the address of the adapter smart contract

@@ -23,19 +23,19 @@
         },
         "shifter": {
             "BTCShifter": {
-                "address": "0xcAEd211A141BfbC7244F17a6dABeA7456b5E2Af5"
+                "address": "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
             },
             "ZECShifter": {
-                "address": "0x65E967F51be974d002090BdC604C088B8b79Dbb3"
+                "address": "0xEeC88ec22E6582409631530F44E48057E7Ed9bBa"
             },
             "zBTC": {
-                "address": "0x7cf9A2de7D5e81e6d4372D9b20D27AB8267295d5"
+                "address": "0x1aFf7F90Bab456637a17d666D647Ea441A189F2d"
             },
             "zZEC": {
-                "address": "0x47b8941De0B214E0d18154B4fDa1DbE0d1484215"
+                "address": "0x51f41985134842Aa009CACdD28B2C69fA97C4738"
             },
             "ShifterRegistry": {
-                "address": "0x89aB0D4e64b1cb7F961228b70595a46BF0761546"
+                "address": "0x40C605FF27411d3a2ea5A114D365a314cb7AC5f2"
             }
         },
         "tokens": {
@@ -44,11 +44,11 @@
                 "decimals": 18
             },
             "BTC": {
-                "address": "0x7cf9A2de7D5e81e6d4372D9b20D27AB8267295d5",
+                "address": "0x1aFf7F90Bab456637a17d666D647Ea441A189F2d",
                 "decimals": 8
             },
             "ZEC": {
-                "address": "0x47b8941De0B214E0d18154B4fDa1DbE0d1484215",
+                "address": "0x51f41985134842Aa009CACdD28B2C69fA97C4738",
                 "decimals": 8
             },
             "REN": {

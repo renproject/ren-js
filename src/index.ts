@@ -1,4 +1,5 @@
 import { crypto } from "bitcore-lib";
+import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { PromiEvent as Web3PromiEvent } from "web3-core";
 
@@ -7,7 +8,7 @@ import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
 import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
 import { Network } from "./networks";
-import PromiEvent from "./promievent";
+import { newPromiEvent, PromiEvent } from "./promievent";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
@@ -32,7 +33,7 @@ export interface Submit {
 export interface Wait { submit: () => PromiEvent<Submit>; }
 export interface Shift {
     addr: () => string;
-    wait: (confirmations: number) => Promise<Wait>;
+    wait: (confirmations: number) => PromiEvent<Wait>;
     waitSignSubmit?: (web3: Web3, from: string, confirmations: number) => Promise<SignAndSubmit>;
 }
 
@@ -127,43 +128,63 @@ export default class RenSDK {
         }
 
     private readonly _waitAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, gatewayAddress: string, hash: string) =>
-        async (confirmations: number): Promise<Wait> => {
-            let deposits: UTXO[] = [];
-            const depositedAmount = (): number => {
-                return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next);
-            };
-            while (deposits.length === 0 || depositedAmount() < amount) {
-                try {
-                    deposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
-                } catch (error) {
-                    console.error(error);
-                    continue;
-                }
-                if (deposits.length > 0) { break; }
-                await sleep(10 * SECONDS);
-            }
+        (confirmations: number): PromiEvent<Wait> => {
+            const promiEvent = newPromiEvent<Wait>();
 
-            return {
-                submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, contractFn, contractParams, hash),
-            };
+            (async () => {
+                let deposits: OrderedMap<string, UTXO> = OrderedMap();
+                const depositedAmount = (): number => {
+                    return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next, 0);
+                };
+                // tslint:disable-next-line: no-constant-condition
+                while (true) {
+                    if (!(deposits.size === 0 || depositedAmount() < amount)) {
+                        break;
+                    }
+                    try {
+                        const newDeposits = await retrieveDeposits(shiftAction, gatewayAddress, 10, confirmations);
+                        let newDeposit = false;
+                        for (const deposit of newDeposits) {
+                            if (!deposits.has(deposit.utxo.txHash)) {
+                                deposits = deposits.set(deposit.utxo.txHash, deposit);
+                                promiEvent.emit("deposit", deposit.utxo);
+                                newDeposit = true;
+                            }
+                        }
+                        if (newDeposit) { continue; }
+                    } catch (error) {
+                        console.error(error);
+                        continue;
+                    }
+                    await sleep(10 * SECONDS);
+                }
+                promiEvent.resolve(
+                    {
+                        submit: this._submitDepositAfterShift(shiftAction, to, amount, nonce, contractFn, contractParams, hash),
+                    }
+                );
+            })().catch(promiEvent.reject);
+
+            return promiEvent;
         }
 
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, hash: string) =>
         (): PromiEvent<Submit> => {
-            const promiEvent = new PromiEvent<Submit>(async (resolve) => {
+            const promiEvent = newPromiEvent<Submit>();
 
+            (async () => {
                 const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash, this.network);
 
-                promiEvent.events.emit("messageID", messageID);
+                promiEvent.emit("messageID", messageID);
 
                 const response = await this._checkForResponse(messageID) as ShiftedInResponse;
 
-                resolve({
+                promiEvent.resolve({
                     signAndSubmit: this._signAndSubmitAfterShift(to, contractFn, contractParams, signatureToString(fixSignature(response, this.network)), response.amount, response.nhash),
                     messageID,
                 });
-            });
+            })().catch(promiEvent.reject);
 
             return promiEvent;
         }

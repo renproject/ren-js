@@ -5,6 +5,7 @@ import bs58 from "bs58";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import { BN } from "ethereumjs-util";
+import qrcode from "qrcode-terminal";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
@@ -23,6 +24,8 @@ chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
 // tslint:disable:no-unused-expression
+
+const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
@@ -143,7 +146,11 @@ describe("SDK methods", function () {
         return utxoAmount;
     };
 
-    const mintTest = async (btcShifter: string, adapterContract: string, amount: number, ethAddress: string, btcAddress: string, btcPrivateKey: bitcore.PrivateKey): Promise<void> => {
+    const mintTest = async (
+        btcShifter: string, adapterContract: string, amount: number,
+        ethAddress: string, fromAddress: string, btcAddress: string,
+        btcPrivateKey: bitcore.PrivateKey
+    ): Promise<void> => {
         const params: Arg[] = [
             {
                 name: "_shifter",
@@ -165,39 +172,47 @@ describe("SDK methods", function () {
         });
         const gatewayAddress = shift.addr();
 
-        // Deposit BTC to gateway address.
-        const utxos = await getBTCTestnetUTXOs(btcAddress, 10, 0);
-        const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
-        let utxoAmount = 0;
-        for (const utxo of utxos) {
-            if (utxoAmount >= amount) {
-                break;
+        if (USE_QRCODE) {
+
+            // Generate a QR code with the payment details - an alternative
+            qrcode.generate(`bitcoin:${gatewayAddress}?amount=${amount / 10 ** 8}`, { small: true });
+
+        } else {
+
+            // Deposit BTC to gateway address.
+            const utxos = await getBTCTestnetUTXOs(btcAddress, 10, 0);
+            const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
+            let utxoAmount = 0;
+            for (const utxo of utxos) {
+                if (utxoAmount >= amount) {
+                    break;
+                }
+                const bitcoreUTXO = new Transaction.UnspentOutput({
+                    txId: utxo.txHash,
+                    outputIndex: utxo.vout,
+                    address: new Address(btcAddress),
+                    script: new Script(utxo.scriptPubKey),
+                    satoshis: utxo.amount,
+                });
+                bitcoreUTXOs.push(bitcoreUTXO);
+                utxoAmount += utxo.amount;
             }
-            const bitcoreUTXO = new Transaction.UnspentOutput({
-                txId: utxo.txHash,
-                outputIndex: utxo.vout,
-                address: new Address(btcAddress),
-                script: new Script(utxo.scriptPubKey),
-                satoshis: utxo.amount,
-            });
-            bitcoreUTXOs.push(bitcoreUTXO);
-            utxoAmount += utxo.amount;
-        }
 
-        const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(btcPrivateKey);
+            const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(btcPrivateKey);
 
-        console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
-        try {
-            await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
-        } catch (error) {
-            console.log(`Unable to submit to Mercury (${error}). Trying chain.so...`);
+            console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
             try {
-                console.log(transaction.toString());
-                await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
-            } catch (chainError) {
-                console.error(`chain.so returned error ${chainError.message}`);
-                console.log(`\n\n\nPlease check ${btcAddress}'s balance!\n`);
-                throw error;
+                await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+            } catch (error) {
+                console.log(`Unable to submit to Mercury (${error}). Trying chain.so...`);
+                try {
+                    console.log(transaction.toString());
+                    await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
+                } catch (chainError) {
+                    console.error(`chain.so returned error ${chainError.message}`);
+                    console.log(`\n\n\nPlease check ${btcAddress}'s balance!\n`);
+                    throw error;
+                }
             }
         }
 
@@ -206,9 +221,11 @@ describe("SDK methods", function () {
         console.log(`Waiting for ${confirmations} confirmations...`);
         const deposit = await shift.wait(confirmations);
         console.log(`Submitting deposit!`);
-        const signature = await deposit.submit();
+        const signaturePromise = deposit.submit();
+        signaturePromise.on("messageID", (message) => console.log(`Message 2: ${message}`));
+        const signature = await signaturePromise;
         console.log(`Submitting signature!`);
-        const result = await signature.signAndSubmit(web3, ethAddress);
+        const result = await signature.signAndSubmit(web3, fromAddress);
         console.log(result);
     };
 
@@ -272,8 +289,9 @@ describe("SDK methods", function () {
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const btcShifter = network.BTCShifter;
-        const amount = 21000;
-        const ethAddress = accounts[0];
+        const amount = 0.000225 * (10 ** 8);
+        const ethAddress = "0xCe4DadfF600e3ffDf0A3C53B5429C8D8A9eC4f91"; // accounts[0];
+        const fromAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const btcAddress = btcPrivateKey.toAddress().toString();
         const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
@@ -281,7 +299,7 @@ describe("SDK methods", function () {
         // Test minting.
         console.log("Starting mint test:");
         const initialzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
-        await mintTest(btcShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey);
+        await mintTest(btcShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey);
         const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).

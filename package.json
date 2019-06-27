@@ -6,6 +6,9 @@
         "type": "git",
         "url": "git+https://github.com/republicprotocol/ren-js.git"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "keywords": [
         "ren",
         "renvm",
@@ -57,6 +60,7 @@
         "dotenv": "^8.0.0",
         "mocha": "^6.1.4",
         "npm-check-updates": "^3.1.11",
+        "qrcode-terminal": "^0.12.0",
         "truffle-contract": "4.0.20",
         "truffle-hdwallet-provider": "1.0.10",
         "ts-loader": "^6.0.3",

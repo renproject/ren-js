@@ -1,12 +1,13 @@
 import { crypto } from "bitcore-lib";
 import Web3 from "web3";
-import { PromiEvent } from "web3-core";
+import { PromiEvent as Web3PromiEvent } from "web3-core";
 
 import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
 import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
 import { Network } from "./networks";
+import PromiEvent from "./promievent";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
@@ -23,12 +24,12 @@ export { UTXO } from "./utils";
 
 // Types of RenSDK's methods ///////////////////////////////////////////////////
 // tslint:disable-next-line:no-any (FIXME:)
-export type SignAndSubmit = PromiEvent<any>;
+export type SignAndSubmit = Web3PromiEvent<any>;
 export interface Submit {
     signAndSubmit: (web3: Web3, from: string) => SignAndSubmit;
-    onMessageID: () => Promise<string>;
+    messageID: string;
 }
-export interface Wait { submit: () => Promise<Submit>; }
+export interface Wait { submit: () => PromiEvent<Submit>; }
 export interface Shift {
     addr: () => string;
     wait: (confirmations: number) => Promise<Wait>;
@@ -149,20 +150,22 @@ export default class RenSDK {
 
     // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, hash: string) =>
-        async (): Promise<Submit> => {
-            const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash, this.network);
+        (): PromiEvent<Submit> => {
+            const promiEvent = new PromiEvent<Submit>(async (resolve) => {
 
-            const response = await this._checkForResponse(messageID) as ShiftedInResponse;
+                const messageID = await this.shifter.submitDeposits(shiftAction, to, amount, nonce, generatePHash(contractParams), hash, this.network);
 
-            // TODO: Use github.com/primus/eventemitter3
-            const onMessageID = async () => {
-                return messageID;
-            };
+                promiEvent.events.emit("messageID", messageID);
 
-            return {
-                signAndSubmit: this._signAndSubmitAfterShift(to, contractFn, contractParams, signatureToString(fixSignature(response, this.network)), response.amount, response.nhash),
-                onMessageID,
-            };
+                const response = await this._checkForResponse(messageID) as ShiftedInResponse;
+
+                resolve({
+                    signAndSubmit: this._signAndSubmitAfterShift(to, contractFn, contractParams, signatureToString(fixSignature(response, this.network)), response.amount, response.nhash),
+                    messageID,
+                });
+            });
+
+            return promiEvent;
         }
 
     // tslint:disable-next-line: no-any (FIXME)

@@ -25,7 +25,7 @@ chai.should();
 
 // tslint:disable:no-unused-expression
 
-const USE_QRCODE = false;
+const USE_QRCODE = true;
 
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
@@ -176,6 +176,7 @@ describe("SDK methods", function () {
 
             // Generate a QR code with the payment details - an alternative
             qrcode.generate(`bitcoin:${gatewayAddress}?amount=${amount / 10 ** 8}`, { small: true });
+            console.log(`Please deposit ${amount / 10 ** 8} BTC to ${gatewayAddress}`);
 
         } else {
 
@@ -219,10 +220,12 @@ describe("SDK methods", function () {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
-        const deposit = await shift.wait(confirmations);
+        const depositPromise = shift.wait(confirmations);
+        depositPromise.on("deposit", (deposit) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(deposit)}`); });
+        const deposit = await depositPromise;
         console.log(`Submitting deposit!`);
         const signaturePromise = deposit.submit();
-        signaturePromise.on("messageID", (message) => console.log(`Message 2: ${message}`));
+        signaturePromise.on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
         const signature = await signaturePromise;
         console.log(`Submitting signature!`);
         const result = await signature.signAndSubmit(web3, fromAddress);

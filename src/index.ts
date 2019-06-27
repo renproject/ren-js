@@ -5,14 +5,14 @@ import { PromiEvent } from "web3-core";
 import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
-import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
+import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
 import { Network } from "./networks";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
 } from "./utils";
 
-export * from "./darknode/shifter";
+export * from "./lightnode/shifter";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";

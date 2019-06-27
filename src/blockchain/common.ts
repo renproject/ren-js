@@ -28,5 +28,4 @@ export const createAddress =
                 .add(Buffer.from(network.masterKey.mpkh, "hex"))
                 .add(opcode.OP_EQUALVERIFY)
                 .add(opcode.OP_CHECKSIG)
-                .toScriptHashOut().toAddress(network.name === NetworkMainnet.name ? networks.livenet : networks.testnet).toString();
-            // TODO: Check: Is livenet = mainnet?
+                .toScriptHashOut().toAddress(network.name === NetworkMainnet.name ? networks.mainnet : networks.testnet).toString();

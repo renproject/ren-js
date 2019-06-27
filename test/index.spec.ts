@@ -289,8 +289,7 @@ describe("SDK methods", function () {
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const btcShifter = network.BTCShifter;
-        const amount = 0.000225 * (10 ** 8);
-        const ethAddress = "0xCe4DadfF600e3ffDf0A3C53B5429C8D8A9eC4f91"; // accounts[0];
+        const ethAddress = accounts[0];
         const fromAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const btcAddress = btcPrivateKey.toAddress().toString();
@@ -303,14 +302,14 @@ describe("SDK methods", function () {
         const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
-        const balance = finalzBTCBalance.sub(initialzBTCBalance);
-        balance.should.bignumber.least(removeGasFee(removeVMFee(new BN(amount)), 10));
+        const balance = finalzBTCBalance.sub(initialzBTCBalance); // BN
+        balance.should.bignumber.least(removeVMFee(removeGasFee(new BN(amount), 10)));
         balance.should.bignumber.most(removeVMFee(new BN(amount)));
 
         // Test burning.
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
-        await burnTest(zBTCContract, btcShifter, adapterContract, balance, ethAddress, btcAddress);
+        await burnTest(zBTCContract, btcShifter, adapterContract, balance.toNumber(), ethAddress, btcAddress);
         let finalBTCBalance = await checkBTCBalance(btcAddress);
 
         // Validate balance.
@@ -331,7 +330,7 @@ describe("SDK methods", function () {
             finalBTCBalance = await checkBTCBalance(btcAddress);
         }
 
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeGasFee(removeVMFee(new BN(balance)), 10));
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(balance), 10)));
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(balance)));
     });
 });

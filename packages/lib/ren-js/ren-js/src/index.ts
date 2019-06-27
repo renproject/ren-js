@@ -6,7 +6,7 @@ import { PromiEvent as Web3PromiEvent } from "web3-core";
 import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
-import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./darknode/shifter";
+import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
 import { Network } from "./networks";
 import { newPromiEvent, PromiEvent } from "./promievent";
 import {
@@ -14,7 +14,7 @@ import {
     signatureToString, sleep, UTXO,
 } from "./utils";
 
-export * from "./darknode/shifter";
+export * from "./lightnode/shifter";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";

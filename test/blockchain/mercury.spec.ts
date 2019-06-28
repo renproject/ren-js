@@ -12,7 +12,7 @@ chai.should();
 
 describe.skip("mercury.ts", () => {
     it("Bitcoin UTXOS", async () => {
-        (await getBitcoinUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 1, 0))
+        (await getBitcoinUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0))
             .should.deep.equal(
                 [{
                     txHash: 'af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d',
@@ -24,7 +24,7 @@ describe.skip("mercury.ts", () => {
     });
 
     it("Bitcoin UTXOS", async () => {
-        (await getZcashUTXOs(NetworkTestnet)("tm9iMLAuYMzJHDJZAFmzVmEa81uddHz1viK", 1, 0))
+        (await getZcashUTXOs(NetworkTestnet)("tm9iMLAuYMzJHDJZAFmzVmEa81uddHz1viK", 0))
             .should.deep.equal(
                 [{
                     txHash: '6d6f1781c589d9eafc923d480fa39656da088110b4553c043f9da2cf843d2b03',

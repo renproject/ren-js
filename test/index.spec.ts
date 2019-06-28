@@ -139,10 +139,10 @@ describe("SDK methods", function () {
 
     // tslint:disable-next-line:no-any
     const checkBTCBalance = async (address: string): Promise<any> => {
-        const utxos = await getBitcoinUTXOs(network)(address, 10, 0);
+        const utxos = await getBitcoinUTXOs(network)(address, 0);
         let utxoAmount = new BN(0);
         for (const utxo of utxos) {
-            utxoAmount = utxoAmount.add(new BN(utxo.amount));
+            utxoAmount = utxoAmount.add(new BN(utxo.value));
         }
         return utxoAmount;
     };
@@ -180,7 +180,7 @@ describe("SDK methods", function () {
             console.log(`Please deposit ${amount / 10 ** 8} BTC to ${gatewayAddress}`);
         } else {
             // Deposit BTC to gateway address.
-            const utxos = await getBitcoinUTXOs(network)(btcAddress, 10, 0);
+            const utxos = await getBitcoinUTXOs(network)(btcAddress, 0);
             const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
             let utxoAmount = 0;
             for (const utxo of utxos) {
@@ -188,14 +188,14 @@ describe("SDK methods", function () {
                     break;
                 }
                 const bitcoreUTXO = new Transaction.UnspentOutput({
-                    txId: utxo.txHash,
-                    outputIndex: utxo.vout,
+                    txId: utxo.txid,
+                    outputIndex: utxo.output_no,
                     address: new Address(btcAddress),
-                    script: new Script(utxo.scriptPubKey),
-                    satoshis: utxo.amount,
+                    script: new Script(utxo.script_hex),
+                    satoshis: utxo.value,
                 });
                 bitcoreUTXOs.push(bitcoreUTXO);
-                utxoAmount += utxo.amount;
+                utxoAmount += utxo.value;
             }
 
             const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).change(new Address(btcAddress)).sign(btcPrivateKey);

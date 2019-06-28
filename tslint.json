@@ -43,6 +43,7 @@
         "prefer-array-literal": false,
         "match-default-export-name": false,
         "function-name": false,
+        "no-single-line-block-comment": false,
 
         "no-suspicious-comment": {
             "severity": "warning"

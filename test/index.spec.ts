@@ -25,7 +25,7 @@ chai.should();
 
 // tslint:disable:no-unused-expression
 
-const USE_QRCODE = true;
+const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
@@ -199,7 +199,7 @@ describe("SDK methods", function () {
                 utxoAmount += utxo.amount;
             }
 
-            const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(btcPrivateKey);
+            const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).change(new Address(btcAddress)).sign(btcPrivateKey);
 
             console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
             try {
@@ -221,7 +221,7 @@ describe("SDK methods", function () {
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
         const depositPromise = shift.wait(confirmations);
-        depositPromise.on("deposit", (deposit) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(deposit)}`); });
+        depositPromise.on("deposit", (message) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(message)}`); });
         const deposit = await depositPromise;
         console.log(`Submitting deposit!`);
         const signaturePromise = deposit.submit();

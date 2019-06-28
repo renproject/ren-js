@@ -2,14 +2,14 @@ import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import { AbiCoder } from "web3-eth-abi";
 
-import { BitcoinUTXO, createBTCAddress, getBTCTestnetUTXOs } from "../blockchain/btc";
+import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
-import { createZECAddress, getZECTestnetUTXOs, ZcashUTXO } from "../blockchain/zec";
+import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
 import { ShiftedInResponse } from "../lightnode/shifter";
 import { actionToDetails, Chain, Token } from "../types/assets";
 import { Network } from "../types/networks";
 
-export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
+export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO };
 
 // 32-byte zero value
 export const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -67,7 +67,7 @@ export const generateAddress = (_shiftAction: Token, hash: string, network: Netw
     switch (chain) {
         case Chain.Bitcoin:
             return createBTCAddress(network, hash);
-        case Chain.ZCash:
+        case Chain.Zcash:
             return createZECAddress(network, hash);
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
@@ -75,13 +75,13 @@ export const generateAddress = (_shiftAction: Token, hash: string, network: Netw
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
+export const retrieveDeposits = async (_network: Network, _shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBTCTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
-        case Chain.ZCash:
-            return (await getZECTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.ZCash, utxo }));
+            return (await getBitcoinUTXOs(_network)(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
+        case Chain.Zcash:
+            return (await getZcashUTXOs(_network)(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Zcash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }

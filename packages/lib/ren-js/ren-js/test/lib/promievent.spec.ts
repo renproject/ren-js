@@ -25,8 +25,8 @@ const createPromiEvent = <T>(value: T) => {
     return promiEvent;
 };
 
-describe("PromiEvent", () => {
-    it("", async () => {
+describe("promievent.ts", () => {
+    it("Can emit an event", async () => {
 
         const promiEvent = createPromiEvent(1);
 

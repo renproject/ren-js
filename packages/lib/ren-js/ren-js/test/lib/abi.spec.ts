@@ -6,14 +6,7 @@ require("dotenv").config();
 
 chai.should();
 
-describe("Test template", function () {
-    // Disable test timeout.
-    this.timeout(0);
-
-    before(async () => {
-        // Setup before tests
-    });
-
+describe("abi.ts", () => {
     it("payloadToABI", async () => {
         const expectedABI = [{
             name: "functionName",

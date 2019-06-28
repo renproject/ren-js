@@ -3,8 +3,9 @@ import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import { AbiCoder } from "web3-eth-abi";
 
 import { BitcoinUTXO, createBTCAddress, getBTCTestnetUTXOs } from "../blockchain/btc";
+import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZECTestnetUTXOs, ZcashUTXO } from "../blockchain/zec";
-import { Ox, ShiftedInResponse, strip0x } from "../index";
+import { ShiftedInResponse } from "../lightnode/shifter";
 import { actionToDetails, Chain, Token } from "../types/assets";
 import { Network } from "../types/networks";
 

@@ -17,6 +17,7 @@ describe("abi.ts", () => {
             ],
             outputs: [],
         }];
+
         payloadToABI("functionName", [{ name: "spender", type: "address" }, { name: "value", type: "uint256" }])
             .should.deep.eq(expectedABI);
     });
@@ -38,7 +39,7 @@ describe("abi.ts", () => {
             type: "function",
         }];
 
-        const abi = payloadToShiftInABI("functionName", [{ name: "spender", type: "address" }, { name: "value", type: "uint256" }])
+        payloadToShiftInABI("functionName", [{ name: "spender", type: "address" }, { name: "value", type: "uint256" }])
             .should.deep.eq(expectedABI);
     });
 });

@@ -8,12 +8,12 @@ import { getUTXOs } from "./mercury";
 export const createZECAddress = createAddress(Networks, Opcode, Script);
 
 export interface ZcashUTXO {
-    txHash: string; // hex string without 0x prefix
-    amount: number; // satoshis
-    scriptPubKey: string; // hex string without 0x prefix
-    vout: number;
+    txid: string; // hex string without 0x prefix
+    value: number; // satoshis
+    script_hex: string; // hex string without 0x prefix
+    output_no: number;
 }
 
-export const getZcashUTXOs = (network: Network) => getUTXOs<ZcashUTXO>(network.mercuryURL.zec);
+export const getZcashUTXOs = (network: Network) => getUTXOs<ZcashUTXO>(network.chainSoURL, network.chainSoName.zec);
 
 export const zecAddressToHex = (address: string) => Ox(decode58(address));

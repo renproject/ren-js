@@ -30,7 +30,8 @@ const USE_QRCODE = false;
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
-const MERCURY_URL = `https://ren-mercury.herokuapp.com/btc-testnet3`;
+// tslint:disable-next-line:no-http-string
+const MERCURY_URL = "http://139.59.221.34/btc-testnet3";
 const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 /*
@@ -127,7 +128,7 @@ describe("SDK methods", function () {
         let balance: BN;
 
         try {
-            balance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
+            balance = new BN((await contract.methods.balanceOf(address).call()).toString());
         } catch (error) {
             console.error("Cannot check balance");
             throw error;

@@ -8,12 +8,12 @@ import { getUTXOs } from "./mercury";
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
 
 export interface BitcoinUTXO {
-    txHash: string; // hex string without 0x prefix
-    amount: number; // satoshis
-    scriptPubKey: string; // hex string without 0x prefix
-    vout: number;
+    txid: string; // hex string without 0x prefix
+    value: number; // satoshis
+    script_hex: string; // hex string without 0x prefix
+    output_no: number;
 }
 
-export const getBitcoinUTXOs = (network: Network) => getUTXOs<BitcoinUTXO>(network.mercuryURL.btc);
+export const getBitcoinUTXOs = (network: Network) => getUTXOs<BitcoinUTXO>(network.chainSoURL, network.chainSoName.btc);
 
 export const btcAddressToHex = (address: string) => Ox(decode58(address));

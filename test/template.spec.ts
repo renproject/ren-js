@@ -15,7 +15,7 @@ describe("Test template", function () {
         // Setup before tests
     });
 
-    it("", async () => {
+    it("Test", async () => {
         // Run a test
     });
 });

@@ -12,7 +12,7 @@ import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenSDK, { getBTCTestnetUTXOs, ShiftObject } from "../src/index";
+import RenSDK, { getBitcoinUTXOs, ShiftObject } from "../src/index";
 import { payloadToABI } from "../src/lib/abi";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
@@ -138,7 +138,7 @@ describe("SDK methods", function () {
 
     // tslint:disable-next-line:no-any
     const checkBTCBalance = async (address: string): Promise<any> => {
-        const utxos = await getBTCTestnetUTXOs(address, 10, 0);
+        const utxos = await getBitcoinUTXOs(network)(address, 10, 0);
         let utxoAmount = new BN(0);
         for (const utxo of utxos) {
             utxoAmount = utxoAmount.add(new BN(utxo.amount));
@@ -179,7 +179,7 @@ describe("SDK methods", function () {
             console.log(`Please deposit ${amount / 10 ** 8} BTC to ${gatewayAddress}`);
         } else {
             // Deposit BTC to gateway address.
-            const utxos = await getBTCTestnetUTXOs(btcAddress, 10, 0);
+            const utxos = await getBitcoinUTXOs(network)(btcAddress, 10, 0);
             const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
             let utxoAmount = 0;
             for (const utxo of utxos) {

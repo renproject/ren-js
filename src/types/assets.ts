@@ -2,7 +2,7 @@
 export enum Chain {
     Bitcoin = "Btc",
     Ethereum = "Eth",
-    ZCash = "Zec",
+    Zcash = "Zec",
 }
 
 export enum Asset {

@@ -182,7 +182,7 @@ export class ShiftObject {
                     break;
                 }
                 try {
-                    const newDeposits = await retrieveDeposits(this.shiftDetails.shiftAction, this.shiftDetails.gatewayAddress, 10, confirmations);
+                    const newDeposits = await retrieveDeposits(this.shiftDetails.network, this.shiftDetails.shiftAction, this.shiftDetails.gatewayAddress, 10, confirmations);
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
                         if (!deposits.has(deposit.utxo.txHash)) {

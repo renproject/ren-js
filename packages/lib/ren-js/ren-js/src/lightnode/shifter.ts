@@ -1,6 +1,6 @@
 import { Ox, strip0x } from "../blockchain/common";
-import { Token } from "../index";
 import { SECONDS, sleep } from "../lib/utils";
+import { Token } from "../types/assets";
 import { Network } from "../types/networks";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";

@@ -1,7 +1,5 @@
 import { AbiItem } from "web3-utils";
 
-import { Payload } from "./utils";
-
 const shiftInABITemplate: AbiItem = {
     constant: false,
     inputs: [
@@ -25,7 +23,7 @@ const shiftInABITemplate: AbiItem = {
     type: "function"
 };
 
-export const payloadToABI = (methodName: string, payload: Payload): AbiItem[] => {
+export const payloadToABI = (methodName: string, payload: Array<{ type: string, name: string }>): AbiItem[] => {
     return [
         {
             name: methodName,
@@ -38,7 +36,7 @@ export const payloadToABI = (methodName: string, payload: Payload): AbiItem[] =>
     ];
 };
 
-export const payloadToShiftInABI = (methodName: string, payload: Payload): AbiItem[] => {
+export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: string, name: string }>): AbiItem[] => {
     return [
         {
             ...shiftInABITemplate,

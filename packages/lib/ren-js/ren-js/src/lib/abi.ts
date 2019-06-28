@@ -16,11 +16,10 @@ const shiftInABITemplate: AbiItem = {
             type: "bytes"
         },
     ],
-    name: "shiftIn",
     outputs: [],
     payable: true,
     stateMutability: "payable",
-    type: "function"
+    type: "function",
 };
 
 export const payloadToABI = (methodName: string, payload: Array<{ type: string, name: string }>): AbiItem[] => {

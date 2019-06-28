@@ -6,7 +6,11 @@ export interface Network {
         btc: string,
         zec: string,
     };
-
+    chainSoName: {
+        btc: string,
+        zec: string,
+    };
+    chainSoURL: string;
     masterKey: {
         mpkh: string;
         eth: string;
@@ -22,6 +26,11 @@ export const NetworkMainnet: Network = {
         btc: "",
         zec: "",
     },
+    chainSoName: {
+        btc: "",
+        zec: "",
+    },
+    chainSoURL: "",
     masterKey: {
         mpkh: "",
         eth: "",
@@ -30,13 +39,23 @@ export const NetworkMainnet: Network = {
     BTCShifter: "",
 };
 
-export const NetworkTestnet: Network = {
-    name: "testnet",
-    lightnodeURL: "https://lightnode-testnet.herokuapp.com",
+// Configurations shared by Testnet and Devnet
+const generalTestnet = {
     mercuryURL: {
         btc: "https://ren-mercury.herokuapp.com/btc-testnet3",
         zec: "https://ren-mercury.herokuapp.com/zec-testnet",
     },
+    chainSoName: {
+        btc: "BTCTEST",
+        zec: "ZECTEST",
+    },
+    chainSoURL: "https://chain.so/api/v2",
+};
+
+export const NetworkTestnet: Network = {
+    name: "testnet",
+    lightnodeURL: "https://lightnode-testnet.herokuapp.com",
+    ...generalTestnet,
     masterKey: {
         mpkh: "feea966136a436e44c96335455771943452728fc",
         eth: "44Bb4eF43408072bC888Afd1a5986ba0Ce35Cb54",
@@ -48,10 +67,7 @@ export const NetworkTestnet: Network = {
 export const NetworkDevnet: Network = {
     name: "devnet",
     lightnodeURL: "https://lightnode-devnet.herokuapp.com",
-    mercuryURL: {
-        btc: "https://ren-mercury.herokuapp.com/btc-testnet3",
-        zec: "https://ren-mercury.herokuapp.com/zec-testnet",
-    },
+    ...generalTestnet,
     masterKey: {
         mpkh: "390e916c0f9022ef6cc44f05cd5094b2d9597574",
         eth: "723eb4380e03df6a6f98cc1338b00cfbe5e45218",

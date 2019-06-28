@@ -62,7 +62,6 @@ export const generateHash = (_payload: Payload, amount: number | string, _to: st
 
 // Generates the gateway address
 export const generateAddress = (_shiftAction: Token, hash: string, network: Network): string => {
-
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
@@ -79,9 +78,9 @@ export const retrieveDeposits = async (_network: Network, _shiftAction: Token, _
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
+            return (await getBitcoinUTXOs(_network)(_depositAddress, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
         case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Zcash, utxo }));
+            return (await getZcashUTXOs(_network)(_depositAddress, _confirmations)).map(utxo => ({ chain: Chain.Zcash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }

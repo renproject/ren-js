@@ -153,7 +153,7 @@ export default class RenSDK {
         }
 
         const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
-        const response = await this.shifter.checkForResponse(messageID) as ShiftedOutResponse;
+        const response = await this.shifter.waitForResponse(messageID) as ShiftedOutResponse;
 
         return response;
     }
@@ -220,7 +220,7 @@ export class ShiftObject {
 
             promiEvent.emit("messageID", messageID);
 
-            const response = await this.shiftDetails.shifter.checkForResponse(messageID) as ShiftedInResponse;
+            const response = await this.shiftDetails.shifter.waitForResponse(messageID) as ShiftedInResponse;
 
             promiEvent.resolve(new Signature(this.shiftDetails, response, messageID));
         })().catch(promiEvent.reject);

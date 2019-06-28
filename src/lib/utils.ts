@@ -62,7 +62,6 @@ export const generateHash = (_payload: Payload, amount: number | string, _to: st
 
 // Generates the gateway address
 export const generateAddress = (_shiftAction: Token, hash: string, network: Network): string => {
-
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:

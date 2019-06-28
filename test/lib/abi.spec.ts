@@ -6,7 +6,7 @@ require("dotenv").config();
 
 chai.should();
 
-describe("Test template", function () {
+describe("ABI", function () {
     // Disable test timeout.
     this.timeout(0);
 

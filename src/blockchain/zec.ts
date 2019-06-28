@@ -6,15 +6,15 @@ import { getUTXOs } from "./mercury";
 
 export const createZECAddress = createAddress(Networks, Opcode, Script);
 
-const testnetMercury = "https://ren-mercury.herokuapp.com/zec-testnet";
+const testnetAPI = "https://chain.so/api/v2";
 
 export interface ZcashUTXO {
-    txHash: string; // hex string without 0x prefix
-    amount: number; // satoshis
-    scriptPubKey: string; // hex string without 0x prefix
-    vout: number;
+    txid: string; // hex string without 0x prefix
+    value: number; // satoshis
+    script_hex: string; // hex string without 0x prefix
+    output_no: number;
 }
 
-export const getZECTestnetUTXOs = getUTXOs<ZcashUTXO>(testnetMercury);
+export const getZECTestnetUTXOs = getUTXOs<ZcashUTXO>(testnetAPI, "ZECTEST");
 
 export const zecAddressToHex = (address: string) => Ox(decode58(address));

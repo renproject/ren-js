@@ -74,13 +74,13 @@ export const generateAddress = (_shiftAction: Token, hash: string, network: Netw
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
+export const retrieveDeposits = async (_shiftAction: Token, _depositAddress: string, _confirmations = 0): Promise<UTXO[]> => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBTCTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
+            return (await getBTCTestnetUTXOs(_depositAddress, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin, utxo }));
         case Chain.ZCash:
-            return (await getZECTestnetUTXOs(_depositAddress, _limit, _confirmations)).map(utxo => ({ chain: Chain.ZCash, utxo }));
+            return (await getZECTestnetUTXOs(_depositAddress, _confirmations)).map(utxo => ({ chain: Chain.ZCash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }

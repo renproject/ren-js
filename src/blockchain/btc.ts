@@ -6,15 +6,15 @@ import { getUTXOs } from "./mercury";
 
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
 
-const testnetMercury = "https://ren-mercury.herokuapp.com/btc-testnet3";
+const testnetAPI = "https://chain.so/api/v2";
 
 export interface BitcoinUTXO {
-    txHash: string; // hex string without 0x prefix
-    amount: number; // satoshis
-    scriptPubKey: string; // hex string without 0x prefix
-    vout: number;
+    txid: string; // hex string without 0x prefix
+    value: number; // satoshis
+    script_hex: string; // hex string without 0x prefix
+    output_no: number;
 }
 
-export const getBTCTestnetUTXOs = getUTXOs<BitcoinUTXO>(testnetMercury);
+export const getBTCTestnetUTXOs = getUTXOs<BitcoinUTXO>(testnetAPI, "BTCTEST");
 
 export const btcAddressToHex = (address: string) => Ox(decode58(address));

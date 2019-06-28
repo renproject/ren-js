@@ -174,7 +174,7 @@ export class ShiftObject {
         (async () => {
             let deposits: OrderedMap<string, UTXO> = OrderedMap();
             const depositedAmount = (): number => {
-                return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next, 0);
+                return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
             };
             // tslint:disable-next-line: no-constant-condition
             while (true) {
@@ -182,11 +182,11 @@ export class ShiftObject {
                     break;
                 }
                 try {
-                    const newDeposits = await retrieveDeposits(this.shiftDetails.shiftAction, this.shiftDetails.gatewayAddress, 10, confirmations);
+                    const newDeposits = await retrieveDeposits(this.shiftDetails.shiftAction, this.shiftDetails.gatewayAddress, confirmations);
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
-                        if (!deposits.has(deposit.utxo.txHash)) {
-                            deposits = deposits.set(deposit.utxo.txHash, deposit);
+                        if (!deposits.has(deposit.utxo.txid)) {
+                            deposits = deposits.set(deposit.utxo.txid, deposit);
                             promiEvent.emit("deposit", deposit.utxo);
                             newDeposit = true;
                         }

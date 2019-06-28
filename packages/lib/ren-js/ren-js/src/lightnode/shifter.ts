@@ -1,3 +1,5 @@
+import { SECONDS, sleep } from "utils";
+
 import { Ox, strip0x } from "../blockchain/common";
 import { Token } from "../index";
 import { Network } from "../networks";
@@ -109,4 +111,22 @@ export class Shifter {
         }
         throw new Error(`Signature not available`);
     }
+
+    public waitForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
+        let response: ShiftedInResponse | ShiftedOutResponse | undefined;
+        while (!response) {
+            try {
+                response = await this.checkForResponse(messageID) as ShiftedInResponse;
+                if (response) {
+                    break;
+                }
+            } catch (error) {
+                await sleep(5 * SECONDS);
+                // TODO: Ignore "result not available",
+                // throw otherwise
+            }
+        }
+        return response;
+    }
+
 }

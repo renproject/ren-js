@@ -48,8 +48,6 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
 
 export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: Network): string => {
     const token = network.zBTC; // actionToDetails(_shiftAction).asset;
-    console.log(`Payload and hash:`);
-    console.log(_payload);
     const pHash = generatePHash(_payload);
 
     const hash = rawEncode(

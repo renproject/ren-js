@@ -1,3 +1,5 @@
+// tslint:disable: no-use-before-declare
+
 import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
@@ -77,121 +79,6 @@ interface ShiftDetails {
     hash: string;
 }
 
-export class Signature {
-    public shiftDetails: ShiftDetails;
-    public response: ShiftedInResponse;
-    public signature: string;
-    public messageID: string;
-
-    constructor(shiftDetails: ShiftDetails, response: ShiftedInResponse, messageID: string) {
-        this.shiftDetails = shiftDetails;
-        this.response = response;
-        this.messageID = messageID;
-        this.signature = signatureToString(fixSignature(response, this.shiftDetails.network));
-    }
-
-    public signAndSubmit = (web3: Web3, from: string) => {
-        const params = [
-            ...this.shiftDetails.contractParams.map(value => value.value),
-            Ox(this.response.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.nhash), // _nHash: string
-            Ox(this.signature), // _sig: string
-        ];
-
-        const ABI = payloadToShiftInABI(this.shiftDetails.contractFn, this.shiftDetails.contractParams);
-        const contract = new web3.eth.Contract(ABI, this.shiftDetails.to);
-
-        return contract.methods[this.shiftDetails.contractFn](
-            ...params,
-        ).send({ from, gas: 1000000 });
-    }
-}
-
-export class DepositGroup {
-    public shiftDetails: ShiftDetails;
-
-    constructor(shiftDetails: ShiftDetails) {
-        this.shiftDetails = shiftDetails;
-    }
-
-    public submit = (): PromiEvent<Signature> => {
-        const promiEvent = newPromiEvent<Signature>();
-
-        (async () => {
-            const messageID = await this.shiftDetails.shifter.submitDeposits(
-                this.shiftDetails.shiftAction,
-                this.shiftDetails.to,
-                this.shiftDetails.amount,
-                this.shiftDetails.nonce,
-                generatePHash(this.shiftDetails.contractParams),
-                this.shiftDetails.hash,
-                this.shiftDetails.network,
-            );
-
-            promiEvent.emit("messageID", messageID);
-
-            const response = await this.shiftDetails.shifter.checkForResponse(messageID) as ShiftedInResponse;
-
-            promiEvent.resolve(new Signature(this.shiftDetails, response, messageID));
-        })().catch(promiEvent.reject);
-
-        return promiEvent;
-    }
-}
-
-export class ShiftObject {
-    public shiftDetails: ShiftDetails;
-
-    constructor(shiftDetails: ShiftDetails) {
-        this.shiftDetails = shiftDetails;
-    }
-
-    public addr = () => this.shiftDetails.gatewayAddress;
-
-    public wait = (confirmations: number): PromiEvent<DepositGroup> => {
-        const promiEvent = newPromiEvent<DepositGroup>();
-
-        (async () => {
-            let deposits: OrderedMap<string, UTXO> = OrderedMap();
-            const depositedAmount = (): number => {
-                return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next, 0);
-            };
-            // tslint:disable-next-line: no-constant-condition
-            while (true) {
-                if (!(deposits.size === 0 || depositedAmount() < this.shiftDetails.amount)) {
-                    break;
-                }
-                try {
-                    const newDeposits = await retrieveDeposits(this.shiftDetails.shiftAction, this.shiftDetails.gatewayAddress, 10, confirmations);
-                    let newDeposit = false;
-                    for (const deposit of newDeposits) {
-                        if (!deposits.has(deposit.utxo.txHash)) {
-                            deposits = deposits.set(deposit.utxo.txHash, deposit);
-                            promiEvent.emit("deposit", deposit.utxo);
-                            newDeposit = true;
-                        }
-                    }
-                    if (newDeposit) { continue; }
-                } catch (error) {
-                    console.error(error);
-                    continue;
-                }
-                await sleep(10 * SECONDS);
-            }
-            promiEvent.resolve(new DepositGroup(this.shiftDetails));
-        })().catch(promiEvent.reject);
-
-        return promiEvent;
-    }
-
-    // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3: Web3, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
-        const deposit = await this.wait(confirmations);
-        const signature = await deposit.submit();
-        return signature.signAndSubmit(web3, from);
-    }
-}
-
 export default class RenSDK {
     // Internal state
     private readonly network: Network;
@@ -259,5 +146,112 @@ export default class RenSDK {
             gatewayAddress,
             hash,
         });
+    }
+}
+
+export class ShiftObject {
+    public shiftDetails: ShiftDetails;
+
+    constructor(shiftDetails: ShiftDetails) {
+        this.shiftDetails = shiftDetails;
+    }
+
+    public addr = () => this.shiftDetails.gatewayAddress;
+
+    public wait = (confirmations: number): PromiEvent<this> => {
+        const promiEvent = newPromiEvent<this>();
+
+        (async () => {
+            let deposits: OrderedMap<string, UTXO> = OrderedMap();
+            const depositedAmount = (): number => {
+                return deposits.map(item => item.utxo.amount).reduce((prev, next) => prev + next, 0);
+            };
+            // tslint:disable-next-line: no-constant-condition
+            while (true) {
+                if (!(deposits.size === 0 || depositedAmount() < this.shiftDetails.amount)) {
+                    break;
+                }
+                try {
+                    const newDeposits = await retrieveDeposits(this.shiftDetails.shiftAction, this.shiftDetails.gatewayAddress, 10, confirmations);
+                    let newDeposit = false;
+                    for (const deposit of newDeposits) {
+                        if (!deposits.has(deposit.utxo.txHash)) {
+                            deposits = deposits.set(deposit.utxo.txHash, deposit);
+                            promiEvent.emit("deposit", deposit.utxo);
+                            newDeposit = true;
+                        }
+                    }
+                    if (newDeposit) { continue; }
+                } catch (error) {
+                    console.error(error);
+                    continue;
+                }
+                await sleep(10 * SECONDS);
+            }
+            promiEvent.resolve(this);
+        })().catch(promiEvent.reject);
+
+        return promiEvent;
+    }
+
+    public submit = (): PromiEvent<Signature> => {
+        const promiEvent = newPromiEvent<Signature>();
+
+        (async () => {
+            const messageID = await this.shiftDetails.shifter.submitDeposits(
+                this.shiftDetails.shiftAction,
+                this.shiftDetails.to,
+                this.shiftDetails.amount,
+                this.shiftDetails.nonce,
+                generatePHash(this.shiftDetails.contractParams),
+                this.shiftDetails.hash,
+                this.shiftDetails.network,
+            );
+
+            promiEvent.emit("messageID", messageID);
+
+            const response = await this.shiftDetails.shifter.checkForResponse(messageID) as ShiftedInResponse;
+
+            promiEvent.resolve(new Signature(this.shiftDetails, response, messageID));
+        })().catch(promiEvent.reject);
+
+        return promiEvent;
+    }
+
+    // tslint:disable-next-line:no-any
+    public waitAndSubmit = async (web3: Web3, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
+        await this.wait(confirmations);
+        const signature = await this.submit();
+        return signature.signAndSubmit(web3, from);
+    }
+}
+
+export class Signature {
+    public shiftDetails: ShiftDetails;
+    public response: ShiftedInResponse;
+    public signature: string;
+    public messageID: string;
+
+    constructor(shiftDetails: ShiftDetails, response: ShiftedInResponse, messageID: string) {
+        this.shiftDetails = shiftDetails;
+        this.response = response;
+        this.messageID = messageID;
+        this.signature = signatureToString(fixSignature(response, this.shiftDetails.network));
+    }
+
+    public signAndSubmit = (web3: Web3, from: string) => {
+        const params = [
+            ...this.shiftDetails.contractParams.map(value => value.value),
+            Ox(this.response.amount.toString(16)), // _amount: BigNumber
+            Ox(this.response.nhash), // _nHash: string
+            Ox(this.signature), // _sig: string
+        ];
+
+        const ABI = payloadToShiftInABI(this.shiftDetails.contractFn, this.shiftDetails.contractParams);
+        const contract = new web3.eth.Contract(ABI, this.shiftDetails.to);
+
+        return contract.methods[this.shiftDetails.contractFn](
+            ...params,
+        ).send({ from, gas: 1000000 });
     }
 }

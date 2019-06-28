@@ -1,7 +1,7 @@
 import chai from "chai";
 
-import { newPromiEvent, PromiEvent } from "../../src/promievent";
-import { sleep } from "../../src/utils";
+import { newPromiEvent, PromiEvent } from "../../src/lib/promievent";
+import { sleep } from "../../src/lib/utils";
 
 require("dotenv").config();
 

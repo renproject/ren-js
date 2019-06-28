@@ -1,8 +1,7 @@
-import { SECONDS, sleep } from "utils";
-
 import { Ox, strip0x } from "../blockchain/common";
 import { Token } from "../index";
-import { Network } from "../networks";
+import { SECONDS, sleep } from "../lib/utils";
+import { Network } from "../types/networks";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
 

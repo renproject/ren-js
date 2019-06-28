@@ -76,7 +76,7 @@ interface ShiftDetails {
     hash: string;
 }
 
-class Signature {
+export class Signature {
     public shiftDetails: ShiftDetails;
     public response: ShiftedInResponse;
     public signature: string;
@@ -106,8 +106,7 @@ class Signature {
     }
 }
 
-class DepositGroup {
-
+export class DepositGroup {
     public shiftDetails: ShiftDetails;
 
     constructor(shiftDetails: ShiftDetails) {
@@ -139,7 +138,7 @@ class DepositGroup {
     }
 }
 
-class ShiftObject {
+export class ShiftObject {
     public shiftDetails: ShiftDetails;
 
     constructor(shiftDetails: ShiftDetails) {
@@ -184,16 +183,15 @@ class ShiftObject {
         return promiEvent;
     }
 
-    public waitAndSubmit = () =>
-        async (web3: Web3, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
-            const deposit = await this.wait(confirmations);
-            const signature = await deposit.submit();
-            return signature.signAndSubmit(web3, from);
-        }
+    // tslint:disable-next-line:no-any
+    public waitAndSubmit = async (web3: Web3, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
+        const deposit = await this.wait(confirmations);
+        const signature = await deposit.submit();
+        return signature.signAndSubmit(web3, from);
+    }
 }
 
 export default class RenSDK {
-
     // Internal state
     private readonly network: Network;
     private readonly shifter: Shifter;
@@ -210,7 +208,6 @@ export default class RenSDK {
         const { web3, sendToken, txHash } = params;
 
         const receipt = await web3.eth.getTransactionReceipt(txHash);
-
         if (!receipt.logs) {
             throw Error("No events found in transaction");
         }
@@ -219,8 +216,6 @@ export default class RenSDK {
         for (const [, event] of Object.entries(receipt.logs)) {
             if (event.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
                 ref = event.topics[1] as string;
-                // const log = web3.eth.abi.decodeParameters(["bytes", "uint256", "uint256", "bytes32"], event.data);
-                // ref = log.ref;
                 break;
             }
         }
@@ -230,7 +225,6 @@ export default class RenSDK {
         }
 
         const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
-
         const response = await this.shifter.checkForResponse(messageID) as ShiftedOutResponse;
 
         return response;

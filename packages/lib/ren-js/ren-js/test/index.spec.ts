@@ -14,7 +14,7 @@ import { AbiItem } from "web3-utils";
 import { payloadToABI } from "../src/abi";
 import { Tokens } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenSDK, { getBTCTestnetUTXOs, Shift } from "../src/index";
+import RenSDK, { getBTCTestnetUTXOs, ShiftObject } from "../src/index";
 import { Network, NetworkTestnet } from "../src/networks";
 import { Arg } from "../src/utils";
 
@@ -150,7 +150,7 @@ describe("SDK methods", function () {
         btcShifter: string, adapterContract: string, amount: number,
         ethAddress: string, fromAddress: string, btcAddress: string,
         btcPrivateKey: bitcore.PrivateKey,
-        submit: (shift: Shift, fromAddress: string) => Promise<void>,
+        submit: (shift: ShiftObject, fromAddress: string) => Promise<void>,
     ): Promise<void> => {
         const params: Arg[] = [
             {
@@ -218,7 +218,7 @@ describe("SDK methods", function () {
         await submit(shift, fromAddress);
     };
 
-    const submitIndividual = async (shift: Shift, fromAddress: string): Promise<void> => {
+    const submitIndividual = async (shift: ShiftObject, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
@@ -234,10 +234,10 @@ describe("SDK methods", function () {
         console.log(result);
     };
 
-    const submitTogether = async (shift: Shift, fromAddress: string): Promise<void> => {
+    const submitTogether = async (shift: ShiftObject, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        const result = await shift.waitSignSubmit(web3, fromAddress, confirmations);
+        const result = await shift.waitAndSubmit(web3, fromAddress, confirmations);
         console.log(result);
     };
 
@@ -293,6 +293,13 @@ describe("SDK methods", function () {
             ...params,
         ).send({ from: ethAddress, gas: 1000000 });
         console.log(result);
+
+        const response = await sdk.burnDetails({
+            web3,
+            sendToken: Tokens.BTC.Eth2Btc,
+            txHash: result.transactionHash,
+        });
+        console.log(response);
     };
 
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
@@ -322,31 +329,12 @@ describe("SDK methods", function () {
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
         await burnTest(zBTCContract, network.BTCShifter, adapterContract, balance.toNumber(), ethAddress, btcAddress);
-        let finalBTCBalance = await checkBTCBalance(btcAddress);
-
-        // Validate balance.
-        let timeElapsed = 0;
-        while (finalBTCBalance.cmp(initialBTCBalance) === 0) {
-            console.log("Balance has not updated, retrying in 10 seconds.");
-
-            // Stop checking after 5 minutes.
-            if (timeElapsed >= 300) {
-                console.log("Timed out.");
-                break;
-            }
-
-            // Sleep for 10 seconds.
-            await new Promise(resolve => setTimeout(resolve, 10 * 1000));
-            timeElapsed += 10;
-
-            finalBTCBalance = await checkBTCBalance(btcAddress);
-        }
+        const finalBTCBalance = await checkBTCBalance(btcAddress);
 
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(balance), 10)));
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(balance)));
     });
 
-    // tslint:disable-next-line:mocha-avoid-only
     it("should be able to mint using the helper function", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);

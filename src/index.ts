@@ -2,6 +2,7 @@ import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { PromiEvent as Web3PromiEvent } from "web3-core";
+import { keccak256 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./abi";
 import { Token } from "./assets";
@@ -212,9 +213,12 @@ export default class RenSDK {
             throw Error("No events found in transaction");
         }
 
+        // Currently should equal 0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116
+        const burnTopic = keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");
+
         let ref;
         for (const [, event] of Object.entries(receipt.logs)) {
-            if (event.topics[0] === "0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116") {
+            if (event.topics[0] === burnTopic) {
                 ref = event.topics[1] as string;
                 break;
             }

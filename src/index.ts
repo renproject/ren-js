@@ -23,19 +23,21 @@ export * from "./networks";
 
 export { UTXO } from "./utils";
 
-// Types of RenSDK's methods ///////////////////////////////////////////////////
-// tslint:disable-next-line:no-any (FIXME:)
-export type SignAndSubmit = Web3PromiEvent<any>;
+// Types of RenSDK's methods
+export interface PartialShift {
+    addr: () => string;
+    wait: (confirmations: number) => PromiEvent<Wait>;
+}
+export interface Shift extends PartialShift {
+    waitSignSubmit: (web3: Web3, from: string, confirmations: number) => Promise<SignAndSubmit>;
+}
+export interface Wait { submit: () => PromiEvent<Submit>; }
 export interface Submit {
     signAndSubmit: (web3: Web3, from: string) => SignAndSubmit;
     messageID: string;
 }
-export interface Wait { submit: () => PromiEvent<Submit>; }
-export interface Shift {
-    addr: () => string;
-    wait: (confirmations: number) => PromiEvent<Wait>;
-    waitSignSubmit?: (web3: Web3, from: string, confirmations: number) => Promise<SignAndSubmit>;
-}
+// tslint:disable-next-line:no-any (FIXME:)
+export type SignAndSubmit = Web3PromiEvent<any>;
 
 interface ShiftParams {
     sendToken: Token;
@@ -110,7 +112,7 @@ export default class RenSDK {
         const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, this.network);
         const gatewayAddress = generateAddress(sendToken, hash, this.network);
         const waitAfterShift = this._waitAfterShift(sendToken, strip0x(sendTo), sendAmount, nonce, contractFn, contractParams, gatewayAddress, hash);
-        const result: Shift = {
+        const result: PartialShift = {
             addr: () => gatewayAddress,
             wait: waitAfterShift,
         };
@@ -120,7 +122,7 @@ export default class RenSDK {
         };
     }
 
-    private readonly _waitSignSubmit = (shift: Shift) =>
+    private readonly _waitSignSubmit = (shift: PartialShift) =>
         async (web3: Web3, from: string, confirmations: number): Promise<SignAndSubmit> => {
             const deposit = await shift.wait(confirmations);
             const signature = await deposit.submit();
@@ -168,7 +170,6 @@ export default class RenSDK {
             return promiEvent;
         }
 
-    // tslint:disable-next-line: no-any (FIXME)
     private readonly _submitDepositAfterShift = (shiftAction: Token, to: string, amount: number, nonce: string, contractFn: string, contractParams: Payload, hash: string) =>
         (): PromiEvent<Submit> => {
             const promiEvent = newPromiEvent<Submit>();
@@ -189,7 +190,6 @@ export default class RenSDK {
             return promiEvent;
         }
 
-    // tslint:disable-next-line: no-any (FIXME)
     private readonly _signAndSubmitAfterShift = (to: string, contractFn: string, contractParams: Payload, signature: string, amount: number | string, nhash: string) =>
         (web3: Web3, from: string): SignAndSubmit => {
             const params = [

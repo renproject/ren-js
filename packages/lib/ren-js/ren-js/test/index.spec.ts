@@ -11,12 +11,12 @@ import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
-import { payloadToABI } from "../src/abi";
-import { Tokens } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBTCTestnetUTXOs, ShiftObject } from "../src/index";
-import { Network, NetworkTestnet } from "../src/networks";
-import { Arg } from "../src/utils";
+import { payloadToABI } from "../src/lib/abi";
+import { Arg } from "../src/lib/utils";
+import { Tokens } from "../src/types/assets";
+import { Network, NetworkTestnet } from "../src/types/networks";
 
 require("dotenv").config();
 

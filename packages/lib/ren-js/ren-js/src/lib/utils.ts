@@ -2,11 +2,11 @@ import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import { AbiCoder } from "web3-eth-abi";
 
-import { actionToDetails, Chain, Token } from "./assets";
-import { BitcoinUTXO, createBTCAddress, getBTCTestnetUTXOs } from "./blockchain/btc";
-import { createZECAddress, getZECTestnetUTXOs, ZcashUTXO } from "./blockchain/zec";
-import { Ox, ShiftedInResponse, strip0x } from "./index";
-import { Network } from "./networks";
+import { BitcoinUTXO, createBTCAddress, getBTCTestnetUTXOs } from "../blockchain/btc";
+import { createZECAddress, getZECTestnetUTXOs, ZcashUTXO } from "../blockchain/zec";
+import { Ox, ShiftedInResponse, strip0x } from "../index";
+import { actionToDetails, Chain, Token } from "../types/assets";
+import { Network } from "../types/networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.ZCash, utxo: ZcashUTXO };
 

@@ -6,25 +6,25 @@ import Web3 from "web3";
 import { PromiEvent as Web3PromiEvent } from "web3-core";
 import { keccak256 } from "web3-utils";
 
-import { payloadToShiftInABI } from "./abi";
-import { Token } from "./assets";
 import { Ox, strip0x } from "./blockchain/common";
-import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
-import { Network } from "./networks";
-import { newPromiEvent, PromiEvent } from "./promievent";
+import { payloadToShiftInABI } from "./lib/abi";
+import { newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
     signatureToString, sleep, UTXO,
-} from "./utils";
+} from "./lib/utils";
+import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
+import { Token } from "./types/assets";
+import { Network } from "./types/networks";
 
 export * from "./lightnode/shifter";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";
-export * from "./assets";
-export * from "./networks";
+export * from "./types/assets";
+export * from "./types/networks";
 
-export { UTXO } from "./utils";
+export { UTXO } from "./lib/utils";
 
 interface ShiftParams {
     /**

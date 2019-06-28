@@ -33,15 +33,14 @@ interface ShiftParams {
     sendToken: Token;
 
     /**
-     * The receiving address, in a format matching that of the destination
-     * chain
-     */
-    sendTo: string;
-
-    /**
      * The amount of `sendToken` to be sent
      */
     sendAmount: number;
+
+    /**
+     * The address of the adapter smart contract
+     */
+    sendTo: string;
 
     /**
      * The name of the function to be called on the Adapter contract
@@ -49,19 +48,30 @@ interface ShiftParams {
     contractFn: string;
 
     /**
-     * The parameters to be passed to the Adapter contract
+     * The parameters to be passed to the adapter contract
      */
     contractParams: Payload;
 
     /**
-     * An option to override the default nonce generated randomly.
+     * An option to override the default nonce generated randomly
      */
     nonce?: string;
 }
 
 interface BurnParams {
+    /**
+     * The Web3 instance
+     */
     web3: Web3;
+
+    /**
+     * The token, including the origin and destination chains
+     */
     sendToken: Token;
+
+    /**
+     * The hash of the burn transaction on Ethereum
+     */
     txHash: string;
 }
 
@@ -84,13 +94,40 @@ export default class RenSDK {
     private readonly network: Network;
     private readonly shifter: Shifter;
 
-    // Takes the address of the adapter smart contract
+    // Takes a Network object that contains relevant addresses
     constructor(network: Network) {
         this.network = network;
         this.shifter = new Shifter(network.lightnodeURL);
     }
 
-    // Submits the commitment and transaction to the darknodes, and then submits
+    // Submits the commitment and transaction to the Darknodes, and then submits
+    // the signature to the adapter address
+    public shift = (params: ShiftParams): ShiftObject => {
+        const { sendToken, contractFn, contractParams, sendAmount, sendTo } = params;
+        let { nonce } = params;
+
+        if (!nonce) {
+            nonce = Ox(crypto.Random.getRandomBuffer(32));
+        }
+
+        // TODO: Validate inputs
+        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, this.network);
+        const gatewayAddress = generateAddress(sendToken, hash, this.network);
+        return new ShiftObject({
+            shifter: this.shifter,
+            network: this.network,
+            shiftAction: sendToken,
+            to: strip0x(sendTo),
+            amount: sendAmount,
+            nonce,
+            contractFn,
+            contractParams,
+            gatewayAddress,
+            hash,
+        });
+    }
+
+    // Submits the commitment and transaction to the Darknodes, and then submits
     // the signature to the adapter address
     public burnDetails = async (params: BurnParams): Promise<ShiftedOutResponse> => {
         const { web3, sendToken, txHash } = params;
@@ -119,33 +156,6 @@ export default class RenSDK {
         const response = await this.shifter.checkForResponse(messageID) as ShiftedOutResponse;
 
         return response;
-    }
-
-    // Submits the commitment and transaction to the darknodes, and then submits
-    // the signature to the adapter address
-    public shift = (params: ShiftParams): ShiftObject => {
-        const { sendToken, contractFn, contractParams, sendAmount, sendTo } = params;
-        let { nonce } = params;
-
-        if (!nonce) {
-            nonce = Ox(crypto.Random.getRandomBuffer(32));
-        }
-
-        // TODO: Validate inputs
-        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, this.network);
-        const gatewayAddress = generateAddress(sendToken, hash, this.network);
-        return new ShiftObject({
-            shifter: this.shifter,
-            network: this.network,
-            shiftAction: sendToken,
-            to: strip0x(sendTo),
-            amount: sendAmount,
-            nonce,
-            contractFn,
-            contractParams,
-            gatewayAddress,
-            hash,
-        });
     }
 }
 

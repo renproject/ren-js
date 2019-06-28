@@ -14,7 +14,7 @@ import { AbiItem } from "web3-utils";
 import { payloadToABI } from "../src/abi";
 import { Tokens } from "../src/assets";
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenSDK, { getBTCTestnetUTXOs } from "../src/index";
+import RenSDK, { getBTCTestnetUTXOs, Shift } from "../src/index";
 import { Network, NetworkTestnet } from "../src/networks";
 import { Arg } from "../src/utils";
 
@@ -25,7 +25,7 @@ chai.should();
 
 // tslint:disable:no-unused-expression
 
-const USE_QRCODE = true;
+const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
 // tslint:disable-next-line:mocha-no-side-effect-code
@@ -149,7 +149,8 @@ describe("SDK methods", function () {
     const mintTest = async (
         btcShifter: string, adapterContract: string, amount: number,
         ethAddress: string, fromAddress: string, btcAddress: string,
-        btcPrivateKey: bitcore.PrivateKey
+        btcPrivateKey: bitcore.PrivateKey,
+        submit: (shift: Shift, fromAddress: string) => Promise<void>,
     ): Promise<void> => {
         const params: Arg[] = [
             {
@@ -173,13 +174,10 @@ describe("SDK methods", function () {
         const gatewayAddress = shift.addr();
 
         if (USE_QRCODE) {
-
             // Generate a QR code with the payment details - an alternative
             qrcode.generate(`bitcoin:${gatewayAddress}?amount=${amount / 10 ** 8}`, { small: true });
             console.log(`Please deposit ${amount / 10 ** 8} BTC to ${gatewayAddress}`);
-
         } else {
-
             // Deposit BTC to gateway address.
             const utxos = await getBTCTestnetUTXOs(btcAddress, 10, 0);
             const bitcoreUTXOs: Transaction.UnspentOutput[] = [];
@@ -199,7 +197,7 @@ describe("SDK methods", function () {
                 utxoAmount += utxo.amount;
             }
 
-            const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).sign(btcPrivateKey);
+            const transaction = new bitcore.Transaction().from(bitcoreUTXOs).to(gatewayAddress, amount).change(new Address(btcAddress)).sign(btcPrivateKey);
 
             console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
             try {
@@ -217,11 +215,15 @@ describe("SDK methods", function () {
             }
         }
 
+        await submit(shift, fromAddress);
+    };
+
+    const submitIndividual = async (shift: Shift, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
         const depositPromise = shift.wait(confirmations);
-        depositPromise.on("deposit", (deposit) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(deposit)}`); });
+        depositPromise.on("deposit", (message) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(message)}`); });
         const deposit = await depositPromise;
         console.log(`Submitting deposit!`);
         const signaturePromise = deposit.submit();
@@ -229,6 +231,13 @@ describe("SDK methods", function () {
         const signature = await signaturePromise;
         console.log(`Submitting signature!`);
         const result = await signature.signAndSubmit(web3, fromAddress);
+        console.log(result);
+    };
+
+    const submitTogether = async (shift: Shift, fromAddress: string): Promise<void> => {
+        // Wait for deposit to be received and submit to Lightnode + Ethereum.
+        const confirmations = 0;
+        const result = await shift.waitSignSubmit(web3, fromAddress, confirmations);
         console.log(result);
     };
 
@@ -291,7 +300,6 @@ describe("SDK methods", function () {
 
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-        const btcShifter = network.BTCShifter;
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
         const fromAddress = accounts[0];
@@ -302,7 +310,7 @@ describe("SDK methods", function () {
         // Test minting.
         console.log("Starting mint test:");
         const initialzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
-        await mintTest(btcShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey);
+        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey, submitIndividual);
         const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
@@ -313,7 +321,7 @@ describe("SDK methods", function () {
         // Test burning.
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
-        await burnTest(zBTCContract, btcShifter, adapterContract, balance.toNumber(), ethAddress, btcAddress);
+        await burnTest(zBTCContract, network.BTCShifter, adapterContract, balance.toNumber(), ethAddress, btcAddress);
         let finalBTCBalance = await checkBTCBalance(btcAddress);
 
         // Validate balance.
@@ -336,5 +344,26 @@ describe("SDK methods", function () {
 
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(balance), 10)));
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(balance)));
+    });
+
+    // tslint:disable-next-line:mocha-avoid-only
+    it("should be able to mint using the helper function", async () => {
+        const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
+        const amount = 0.000225 * (10 ** 8);
+        const ethAddress = accounts[0];
+        const fromAddress = accounts[0];
+        const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
+        const btcAddress = btcPrivateKey.toAddress().toString();
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
+
+        console.log("Starting mint test:");
+        const initialzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey, submitTogether);
+        const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+
+        // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
+        const balance = finalzBTCBalance.sub(initialzBTCBalance); // BN
+        balance.should.bignumber.least(removeVMFee(removeGasFee(new BN(amount), 10)));
+        balance.should.bignumber.most(removeVMFee(new BN(amount)));
     });
 });

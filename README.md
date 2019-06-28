@@ -24,7 +24,7 @@ npm install --save @renproject/ren
 Importing using the require syntax
 
 ```javascript
-var { RenSDK } = require("@renproject/ren");
+const { RenSDK } = require("@renproject/ren");
 ```
 
 Importing using the ES6 syntax
@@ -36,9 +36,10 @@ import { RenSDK } from "@renproject/ren";
 ## Usage
 
 ```javascript
-const web3 =  window.web3;
-var sdk = new RenSDK(web3);
+const sdk = new RenSDK("testnet");
 ```
+
+For more information, [check out an example](https://app.gitbook.com/@renproject/s/developers/getting-started/trading).
 
 <hr />
 

@@ -8,7 +8,7 @@ export const getUTXOs = <T>(endpoint: string, network: string) => async (address
     // Convert value to Satoshi
     for (const [, tx] of Object.entries(data.data.txs)) {
         // tslint:disable-next-line:no-any
-        (tx as any).value = (tx as any).value * (10 ** 8);
+        (tx as any).value = (tx as any).value * (10 ** 8); // TODO: Use BN
     }
     return data.data.txs;
 };

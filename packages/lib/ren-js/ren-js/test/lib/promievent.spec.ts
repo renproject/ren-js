@@ -1,14 +1,13 @@
 import chai from "chai";
 
 import { newPromiEvent, PromiEvent } from "../../src/promievent";
+import { sleep } from "../../src/utils";
 
 require("dotenv").config();
 
 chai.use(require("chai-bignumber")(require("bignumber.js")));
 chai.should();
 
-// tslint:disable-next-line: no-string-based-set-timeout
-const sleep = async (seconds: number) => new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 const waitForEvent = async <T>(promiEvent: PromiEvent<T>, event: string) => new Promise((resolve) => {
     promiEvent.on(event, resolve);
 });

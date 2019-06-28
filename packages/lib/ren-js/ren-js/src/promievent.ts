@@ -35,8 +35,10 @@ class InternalPromiEvent<T> {
     public eventEmitter: EventEmitter;
 
     // @ts-ignore
+    // tslint:disable-next-line: no-any
     public emit: (event: string, ...values: any[]) => void;
     // @ts-ignore
+    // tslint:disable-next-line: no-any
     public on: (event: string, callback: (...values: any[]) => void | Promise<void>) => void;
 
     /**
@@ -66,7 +68,8 @@ class InternalPromiEvent<T> {
      *
      * @returns {Function}
      */
-    proxyHandler(target: any, name: string) {
+    // tslint:disable-next-line: no-any
+    public proxyHandler(target: any, name: string) {
         if (name === "resolve" || name === "reject") {
             return target[name];
         }

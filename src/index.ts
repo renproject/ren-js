@@ -15,7 +15,7 @@ import {
 } from "./lib/utils";
 import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
 import { Token } from "./types/assets";
-import { Network } from "./types/networks";
+import { Network, NetworkDevnet, NetworkMainnet, NetworkTestnet } from "./types/networks";
 
 export * from "./lightnode/shifter";
 export * from "./blockchain/btc";
@@ -95,9 +95,28 @@ export default class RenSDK {
     private readonly shifter: Shifter;
 
     // Takes a Network object that contains relevant addresses
-    constructor(network: Network) {
-        this.network = network;
-        this.shifter = new Shifter(network.lightnodeURL);
+    constructor(network?: Network | string) {
+        if (typeof network === "string") {
+            switch (network.toLowerCase()) {
+                case "":
+                case "mainnet":
+                    this.network = NetworkMainnet;
+                    break;
+                case "testnet":
+                    this.network = NetworkTestnet;
+                    break;
+                case "devnet":
+                    this.network = NetworkDevnet;
+                    break;
+                default:
+                    throw new Error(`Unsupported network "${network}"`);
+            }
+        } else if (network === undefined || network === null) {
+            this.network = NetworkMainnet;
+        } else {
+            this.network = network;
+        }
+        this.shifter = new Shifter(this.network.lightnodeURL);
     }
 
     // Submits the commitment and transaction to the Darknodes, and then submits

@@ -16,7 +16,7 @@ import RenSDK, { getBitcoinUTXOs, ShiftObject } from "../src/index";
 import { payloadToABI } from "../src/lib/abi";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
-import { Network, NetworkTestnet } from "../src/types/networks";
+import { Network, NetworkDevnet, NetworkMainnet, NetworkTestnet } from "../src/types/networks";
 
 require("dotenv").config();
 
@@ -305,6 +305,17 @@ describe("SDK methods", function () {
 
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
+
+    it("should be able to pass in different networks", async () => {
+        new RenSDK();
+        new RenSDK("mainnet");
+        new RenSDK("testnet");
+        new RenSDK("devnet");
+        new RenSDK(NetworkMainnet);
+        new RenSDK(NetworkTestnet);
+        new RenSDK(NetworkDevnet);
+        (() => new RenSDK("fake-network")).should.throw(/Unsupported network "fake-network"/);
+    });
 
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";

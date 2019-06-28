@@ -22,7 +22,6 @@
  * @date 2018
  */
 
-import { PromiEvent as Web3PromiEvent } from "web3-core";
 import { EventEmitter } from "events";
 
 // TODO: add handleSuccess() and handleError() method instead of having them in the send method class
@@ -86,6 +85,6 @@ class InternalPromiEvent<T> {
     }
 }
 
+// Tell Typescript that InternalPromiEvent<T> implements Promise<T>.
+export type PromiEvent<T> = InternalPromiEvent<T> & Promise<T>;
 export const newPromiEvent = <T>() => new InternalPromiEvent<T>() as PromiEvent<T>;
-
-export type PromiEvent<T> = Web3PromiEvent<T> & InternalPromiEvent<T> & Promise<T>;

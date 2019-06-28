@@ -165,8 +165,8 @@ describe("SDK methods", function () {
             }
         ];
         const shift = sdk.shift({
-            sendToken: Tokens.BTC.Btc2Eth,
             sendTo: adapterContract,
+            sendToken: Tokens.BTC.Btc2Eth,
             sendAmount: amount,
             contractFn: "shiftIn",
             contractParams: params,

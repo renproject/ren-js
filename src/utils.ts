@@ -89,6 +89,7 @@ export const retrieveDeposits = async (_shiftAction: Token, _depositAddress: str
 };
 
 export const SECONDS = 1000;
+// tslint:disable-next-line: no-string-based-set-timeout
 export const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
 
 export interface Signature { r: string; s: string; v: number; }

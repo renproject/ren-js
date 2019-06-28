@@ -127,7 +127,7 @@ describe("SDK methods", function () {
         let balance: BN;
 
         try {
-            balance = new BN((await contract.methods.balanceOf(accounts[0]).call()).toString());
+            balance = new BN((await contract.methods.balanceOf(address).call()).toString());
         } catch (error) {
             console.error("Cannot check balance");
             throw error;

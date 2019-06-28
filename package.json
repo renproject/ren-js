@@ -108,6 +108,7 @@
             "**/*.d.ts"
         ],
         "reporter": [
+            "text",
             "html"
         ],
         "include": [

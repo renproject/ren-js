@@ -68,8 +68,6 @@ export class Shifter {
             args,
         });
 
-        console.log(response);
-
         if (!response.result) {
             throw new Error("Invalid message");
         }

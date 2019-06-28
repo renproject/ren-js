@@ -24,6 +24,7 @@ describe("Test template", function () {
             ],
             outputs: [],
         }];
+
         payloadToABI("functionName", [{ name: "spender", type: "address" }, { name: "value", type: "uint256" }])
             .should.deep.eq(expectedABI);
     });
@@ -45,7 +46,7 @@ describe("Test template", function () {
             type: "function",
         }];
 
-        const abi = payloadToShiftInABI("functionName", [{ name: "spender", type: "address" }, { name: "value", type: "uint256" }])
+        payloadToShiftInABI("functionName", [{ name: "spender", type: "address" }, { name: "value", type: "uint256" }])
             .should.deep.eq(expectedABI);
     });
 });

@@ -223,13 +223,14 @@ describe("SDK methods", function () {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
-        const depositPromise = shift.wait(confirmations);
-        depositPromise.on("deposit", (message) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(message)}`); });
-        const deposit = await depositPromise;
+
+        const deposit = await shift.wait(confirmations)
+            .on("deposit", (message) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(message)}`); });
         console.log(`Submitting deposit!`);
-        const signaturePromise = deposit.submit();
-        signaturePromise.on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
-        const signature = await signaturePromise;
+
+        const signature = await deposit.submit()
+            .on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
+
         console.log(`Submitting signature!`);
         const result = await signature.signAndSubmit(web3, fromAddress);
         console.log(result);
@@ -299,7 +300,9 @@ describe("SDK methods", function () {
             web3,
             sendToken: Tokens.BTC.Eth2Btc,
             txHash: result.transactionHash,
-        });
+        })
+            .on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
+
         console.log(response);
     };
 

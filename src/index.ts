@@ -4,14 +4,13 @@ import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { PromiEvent as Web3PromiEvent } from "web3-core";
-import { keccak256 } from "web3-utils";
 
 import { Ox, strip0x } from "./blockchain/common";
 import { payloadToShiftInABI } from "./lib/abi";
 import { newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateHash, generatePHash, Payload, retrieveDeposits, SECONDS,
-    signatureToString, sleep, UTXO,
+    BURN_TOPIC, fixSignature, generateAddress, generateHash, generatePHash, Payload,
+    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO,
 } from "./lib/utils";
 import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
 import { Token } from "./types/assets";
@@ -148,33 +147,40 @@ export default class RenSDK {
 
     // Submits the commitment and transaction to the Darknodes, and then submits
     // the signature to the adapter address
-    public burnDetails = async (params: BurnParams): Promise<ShiftedOutResponse> => {
+    public burnDetails = (params: BurnParams): PromiEvent<ShiftedOutResponse> => {
         const { web3, sendToken, txHash } = params;
 
-        const receipt = await web3.eth.getTransactionReceipt(txHash);
-        if (!receipt.logs) {
-            throw Error("No events found in transaction");
-        }
+        const promiEvent = newPromiEvent<ShiftedOutResponse>();
 
-        // Currently should equal 0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116
-        const burnTopic = keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");
+        (async () => {
 
-        let ref;
-        for (const [, event] of Object.entries(receipt.logs)) {
-            if (event.topics[0] === burnTopic) {
-                ref = event.topics[1] as string;
-                break;
+            const receipt = await web3.eth.getTransactionReceipt(txHash);
+            if (!receipt.logs) {
+                throw Error("No events found in transaction");
             }
-        }
 
-        if (!ref) {
-            throw Error("No reference ID found in logs");
-        }
+            let ref;
+            for (const [, event] of Object.entries(receipt.logs)) {
+                if (event.topics[0] === BURN_TOPIC) {
+                    ref = event.topics[1] as string;
+                    break;
+                }
+            }
 
-        const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
-        const response = await this.shifter.waitForResponse(messageID) as ShiftedOutResponse;
+            if (!ref) {
+                throw Error("No reference ID found in logs");
+            }
 
-        return response;
+            const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
+            promiEvent.emit("messageID", messageID);
+
+            const response = await this.shifter.waitForResponse(messageID) as ShiftedOutResponse;
+
+            return response;
+
+        })().catch(promiEvent.reject);
+
+        return promiEvent;
     }
 }
 

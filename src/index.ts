@@ -174,11 +174,8 @@ export default class RenSDK {
             const messageID = await this.shifter.submitWithdrawal(sendToken, ref);
             promiEvent.emit("messageID", messageID);
 
-            const response = await this.shifter.waitForResponse(messageID) as ShiftedOutResponse;
-
-            return response;
-
-        })().catch(promiEvent.reject);
+            return await this.shifter.waitForResponse(messageID) as ShiftedOutResponse;
+        })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
     }
@@ -223,8 +220,8 @@ export class ShiftObject {
                 }
                 await sleep(10 * SECONDS);
             }
-            promiEvent.resolve(this);
-        })().catch(promiEvent.reject);
+            return this;
+        })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
     }
@@ -247,8 +244,8 @@ export class ShiftObject {
 
             const response = await this.shiftDetails.shifter.waitForResponse(messageID) as ShiftedInResponse;
 
-            promiEvent.resolve(new Signature(this.shiftDetails, response, messageID));
-        })().catch(promiEvent.reject);
+            return new Signature(this.shiftDetails, response, messageID);
+        })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
     }

@@ -1,7 +1,7 @@
 import { Ox, strip0x } from "../blockchain/common";
 import { SECONDS, sleep } from "../lib/utils";
 import { Token } from "../types/assets";
-import { Network } from "../types/networks";
+import { NetworkDetails } from "../types/networks";
 import { Lightnode } from "./lightnode";
 import { Args, JSONRPCResponse } from "./types";
 
@@ -75,7 +75,7 @@ export class Shifter {
         return response.result.messageID;
     }
 
-    public submitDeposits = async (action: Token, to: string, amount: number, nonce: string, pHash: string, hash: string, network: Network): Promise<string> => {
+    public submitDeposits = async (action: Token, to: string, amount: number, nonce: string, pHash: string, hash: string, network: NetworkDetails): Promise<string> => {
         return this.submitMessage(action, [
             { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
             { name: "amount", type: "u64", value: amount },

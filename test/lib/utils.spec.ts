@@ -1,7 +1,7 @@
 import chai from "chai";
 
 import { strip0x } from "../../src/blockchain/common";
-import { generateAddress, generateHash, generatePHash } from "../../src/lib/utils";
+import { BURN_TOPIC, generateAddress, generateHash, generatePHash } from "../../src/lib/utils";
 import { Tokens } from "../../src/types/assets";
 import { NetworkTestnet } from "../../src/types/networks";
 
@@ -53,5 +53,9 @@ describe("Utils", function () {
         const hash = "0xdf7490bdf74b57ae18aebe3d8beb8ea3e11604f2bae4e2487adfd6b13dbd39c9";
         const expectedAddress = "2MvPVJVxeEiEG7kH2Y67xmV58gXQKQKjZAn";
         generateAddress(Tokens.BTC.Btc2Eth, hash, NetworkTestnet).should.equal(expectedAddress);
+    });
+
+    it("Burn Topic hash", () => {
+        BURN_TOPIC.should.equal("0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116");
     });
 });

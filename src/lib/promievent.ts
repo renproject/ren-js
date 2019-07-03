@@ -39,7 +39,7 @@ class InternalPromiEvent<T> {
     public emit: (event: string, ...values: any[]) => void;
     // @ts-ignore
     // tslint:disable-next-line: no-any
-    public on: (event: string, callback: (...values: any[]) => void | Promise<void>) => void;
+    public on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
 
     /**
      * @constructor

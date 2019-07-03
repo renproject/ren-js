@@ -1,6 +1,7 @@
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import { AbiCoder } from "web3-eth-abi";
+import { keccak256 as web3Keccak256 } from "web3-utils";
 
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
@@ -148,3 +149,6 @@ export const fixSignature = (response: ShiftedInResponse, network: Network): Sig
 
     return signature;
 };
+
+// Currently should equal 0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116
+export const BURN_TOPIC = web3Keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");

@@ -1,4 +1,10 @@
-export interface Network {
+export enum Network {
+    Mainnet = "mainnet",
+    Testnet = "testnet",
+    Devnet = "devnet",
+}
+
+export interface NetworkDetails {
     name: string;
     lightnodeURL: string;
 
@@ -19,8 +25,8 @@ export interface Network {
     BTCShifter: string;
 }
 
-export const NetworkMainnet: Network = {
-    name: "mainnet",
+export const NetworkMainnet: NetworkDetails = {
+    name: Network.Mainnet,
     lightnodeURL: "",
     mercuryURL: {
         btc: "",
@@ -52,8 +58,8 @@ const generalTestnet = {
     chainSoURL: "https://chain.so/api/v2",
 };
 
-export const NetworkTestnet: Network = {
-    name: "testnet",
+export const NetworkTestnet: NetworkDetails = {
+    name: Network.Testnet,
     lightnodeURL: "https://lightnode-testnet.herokuapp.com",
     ...generalTestnet,
     masterKey: {
@@ -64,8 +70,8 @@ export const NetworkTestnet: Network = {
     BTCShifter: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f",
 };
 
-export const NetworkDevnet: Network = {
-    name: "devnet",
+export const NetworkDevnet: NetworkDetails = {
+    name: Network.Devnet,
     lightnodeURL: "https://lightnode-devnet.herokuapp.com",
     ...generalTestnet,
     masterKey: {

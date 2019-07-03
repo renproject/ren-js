@@ -2,7 +2,7 @@ import { Networks as BNetworks, Opcode as BOpcode, Script as bScript } from "bit
 import { Networks as ZNetworks, Opcode as ZOpcode, Script as zScript } from "bitcore-lib-zcash";
 import BN from "bn.js";
 
-import { Network, NetworkMainnet } from "../types/networks";
+import { NetworkDetails, NetworkMainnet } from "../types/networks";
 
 // Remove 0x prefix from a hex string
 export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
@@ -18,7 +18,7 @@ export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : he
 
 export const createAddress =
     (networks: typeof BNetworks | typeof ZNetworks, opcode: typeof BOpcode | typeof ZOpcode, script: typeof bScript | typeof zScript) =>
-        (network: Network, gHash: string) =>
+        (network: NetworkDetails, gHash: string) =>
             new script()
                 .add(Buffer.from(strip0x(gHash), "hex"))
                 // .add(mintToAddress) // Is this meant to be here?

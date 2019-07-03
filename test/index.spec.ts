@@ -16,7 +16,9 @@ import RenSDK, { getBitcoinUTXOs, ShiftObject } from "../src/index";
 import { payloadToABI } from "../src/lib/abi";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
-import { Network, NetworkDevnet, NetworkMainnet, NetworkTestnet } from "../src/types/networks";
+import {
+    NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,
+} from "../src/types/networks";
 
 require("dotenv").config();
 
@@ -111,7 +113,7 @@ describe("SDK methods", function () {
 
     let provider: HDWalletProvider;
     let web3: Web3;
-    let network: Network;
+    let network: NetworkDetails;
     let sdk: RenSDK;
     let accounts: string[];
 

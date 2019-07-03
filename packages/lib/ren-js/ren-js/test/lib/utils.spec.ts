@@ -46,16 +46,19 @@ describe("Utils", function () {
         const to = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const nonce = "0x3205f743e45858d2a797a88d867264ab9d3b310fc0853056cdd92d9b1b4bd1d5";
 
-        generateHash(payload, amount, strip0x(to), Tokens.BTC.Btc2Eth, nonce, NetworkTestnet).should.equal(expectedHash);
+        generateHash(payload, amount, strip0x(to), Tokens.BTC.Btc2Eth, nonce, NetworkTestnet)
+            .should.equal(expectedHash);
     });
 
     it("generateAddress", () => {
         const hash = "0xdf7490bdf74b57ae18aebe3d8beb8ea3e11604f2bae4e2487adfd6b13dbd39c9";
         const expectedAddress = "2MvPVJVxeEiEG7kH2Y67xmV58gXQKQKjZAn";
-        generateAddress(Tokens.BTC.Btc2Eth, hash, NetworkTestnet).should.equal(expectedAddress);
+        generateAddress(Tokens.BTC.Btc2Eth, hash, NetworkTestnet)
+            .should.equal(expectedAddress);
     });
 
     it("Burn Topic hash", () => {
-        BURN_TOPIC.should.equal("0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116");
+        BURN_TOPIC
+            .should.equal("0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116");
     });
 });

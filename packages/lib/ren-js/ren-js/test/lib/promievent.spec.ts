@@ -35,4 +35,9 @@ describe("promievent.ts", () => {
         (await promiEvent)
             .should.equal(1);
     });
+
+    it("Can listen and await", async () => {
+        (await new Promise((resolve) => createPromiEvent(1).on("value", resolve)))
+            .should.equal(1);
+    });
 });

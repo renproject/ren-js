@@ -92,10 +92,14 @@ interface ShiftDetails {
 }
 
 export default class RenSDK {
-    // Expose constants
+    // Expose constants so they can be accessed on the RenSDK class
+    // e.g. `RenSDK.Tokens`
     public static Tokens = Tokens;
     public static Networks = Network;
     public static Chains = Chain;
+
+    // Expose constants again without `static` so they can be accessed on
+    // instances - e.g. `(new RenSDK()).Tokens`
     public Tokens = Tokens;
     public Networks = Network;
     public Chains = Chain;

@@ -1,3 +1,5 @@
+// tslint:disable: no-console
+
 import axios from "axios";
 import BigNumber from "bignumber.js";
 import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
@@ -12,7 +14,7 @@ import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenSDK, { getBitcoinUTXOs, ShiftObject } from "../src/index";
+import RenSDK, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
 import { payloadToABI } from "../src/lib/abi";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
@@ -126,7 +128,7 @@ describe("SDK methods", function () {
     });
 
     // tslint:disable-next-line:no-any
-    const checkzBTCBalance = async (contract: Contract, address: string): Promise<any> => {
+    const checkZBTCBalance = async (contract: Contract, address: string): Promise<any> => {
         let balance: BN;
 
         try {
@@ -153,7 +155,7 @@ describe("SDK methods", function () {
         btcShifter: string, adapterContract: string, amount: number,
         ethAddress: string, fromAddress: string, btcAddress: string,
         btcPrivateKey: bitcore.PrivateKey,
-        submit: (shift: ShiftObject, fromAddress: string) => Promise<void>,
+        submit: (shift: ShiftInObject, fromAddress: string) => Promise<void>,
     ): Promise<void> => {
         const params: Arg[] = [
             {
@@ -167,7 +169,7 @@ describe("SDK methods", function () {
                 value: ethAddress,
             }
         ];
-        const shift = sdk.shift({
+        const shift = sdk.shiftIn({
             sendTo: adapterContract,
             sendToken: Tokens.BTC.Btc2Eth,
             sendAmount: amount,
@@ -221,24 +223,24 @@ describe("SDK methods", function () {
         await submit(shift, fromAddress);
     };
 
-    const submitIndividual = async (shift: ShiftObject, fromAddress: string): Promise<void> => {
+    const submitIndividual = async (shift: ShiftInObject, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
 
-        const deposit = await shift.wait(confirmations)
+        const deposit = await shift.waitForDeposit(confirmations)
             .on("deposit", (message) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(message)}`); });
         console.log(`Submitting deposit!`);
 
-        const signature = await deposit.submit()
-            .on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
+        const signature = await deposit.submitToRenVM()
+            .on("messageID", (message) => { console.log(`[EVENT] Received messageID: ${message}`); });
 
         console.log(`Submitting signature!`);
-        const result = await signature.signAndSubmit(provider, fromAddress);
+        const result = await signature.submitToEthereum(provider, fromAddress);
         console.log(result);
     };
 
-    const submitTogether = async (shift: ShiftObject, fromAddress: string): Promise<void> => {
+    const submitTogether = async (shift: ShiftInObject, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         const result = await shift.waitAndSubmit(provider, fromAddress, confirmations);
@@ -266,9 +268,15 @@ describe("SDK methods", function () {
         console.log("Approving contract.");
         await zBTCContract.methods.approve(
             ...approveParams,
-        ).send({ from: ethAddress, gas: 1000000 });
+        ).send({ from: ethAddress, gas: 1000000 })
+            .catch((error: Error) => {
+                if (error && error.message && error.message.match(/Invalid block number/)) {
+                    return;
+                }
+                throw error;
+            });
 
-        // Send burn request to adapter contract.
+        // // Send burn request to adapter contract.
         const payload: Arg[] = [
             {
                 name: "_shifter",
@@ -286,24 +294,36 @@ describe("SDK methods", function () {
                 value: Ox(amount.toString(16)),
             },
         ];
-        const ABI = payloadToABI("shiftOut", payload);
-        const contract = new web3.eth.Contract(ABI, adapterContract);
-        const params = [
-            ...payload.map(value => value.value),
-        ];
-        console.log("Burning tokens.");
+        // const ABI = payloadToABI("shiftOut", payload);
+        // const contract = new web3.eth.Contract(ABI, adapterContract);
+        // const params = [
+        //     ...payload.map(value => value.value),
+        // ];
+        // console.log("Burning tokens.");
 
-        const result = await contract.methods.shiftOut(
-            ...params,
-        ).send({ from: ethAddress, gas: 1000000 });
-        console.log(result);
+        // const result = await contract.methods.shiftOut(
+        //     ...params,
+        // ).send({ from: ethAddress, gas: 1000000 }).catch((error: Error) => {
+        //     if (error && error.message && error.message.match(/Invalid block number/)) {
+        //         return;
+        //     }
+        //     throw error;
+        // });
+        // console.log(result);
 
-        const response = await sdk.burnDetails({
+        const shiftOutObject = await sdk.shiftOut({
+            sendTo: adapterContract,
+            contractFn: "shiftOut",
+            contractParams: payload,
+            from: ethAddress,
+
             web3Provider: provider,
             sendToken: Tokens.BTC.Eth2Btc,
-            txHash: result.transactionHash,
-        })
-            .on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
+            // txHash: result.transactionHash,
+        });
+
+        const response = await shiftOutObject.submitToRenVM()
+            .on("messageID", (message) => { console.log(`[EVENT] Received messageID: ${message}`); });
 
         console.log(response);
     };
@@ -333,26 +353,28 @@ describe("SDK methods", function () {
 
         // Test minting.
         console.log("Starting mint test:");
-        const initialzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+        const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
         await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey, submitIndividual);
-        const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+        const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
-        const balance = finalzBTCBalance.sub(initialzBTCBalance); // BN
+        const balance = finalZBTCBalance.sub(initialZBTCBalance); // BN
         balance.should.bignumber.least(removeVMFee(removeGasFee(new BN(amount), 10)));
         balance.should.bignumber.most(removeVMFee(new BN(amount)));
 
-        // Test burning.
+        // // Test burning.
+        const burnValue = balance.toNumber();
+        // const burnValue = amount;
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
-        await burnTest(zBTCContract, network.BTCShifter, adapterContract, balance.toNumber(), ethAddress, btcAddress);
+        await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
         const finalBTCBalance = await checkBTCBalance(btcAddress);
 
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(balance), 10)));
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(balance)));
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(burnValue)));
     });
 
-    it("should be able to mint using the helper function", async () => {
+    it.skip("should be able to mint using the helper function", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
@@ -362,12 +384,12 @@ describe("SDK methods", function () {
         const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
 
         console.log("Starting mint test:");
-        const initialzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+        const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
         await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey, submitTogether);
-        const finalzBTCBalance = await checkzBTCBalance(zBTCContract, ethAddress);
+        const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
-        const balance = finalzBTCBalance.sub(initialzBTCBalance); // BN
+        const balance = finalZBTCBalance.sub(initialZBTCBalance); // BN
         balance.should.bignumber.least(removeVMFee(removeGasFee(new BN(amount), 10)));
         balance.should.bignumber.most(removeVMFee(new BN(amount)));
     });

@@ -6,7 +6,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
-import { ShiftedInResponse } from "../lightnode/shifter";
+import { ShiftedInResponse } from "../lightnode/renVMNetwork";
 import { actionToDetails, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -152,3 +152,12 @@ export const fixSignature = (response: ShiftedInResponse, network: NetworkDetail
 
 // Currently should equal 0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116
 export const BURN_TOPIC = web3Keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");
+
+// tslint:disable-next-line: no-any
+export const ignoreError = (error: any): boolean => {
+    try {
+        return (error && error.message && error.message.match(/Invalid block number/));
+    } catch (error) {
+        return false;
+    }
+};

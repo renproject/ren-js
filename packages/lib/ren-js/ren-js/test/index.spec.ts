@@ -16,7 +16,7 @@ import { AbiItem } from "web3-utils";
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
 import { payloadToABI } from "../src/lib/abi";
-import { Arg } from "../src/lib/utils";
+import { Arg, ignoreError } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
 import {
     NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,
@@ -236,7 +236,8 @@ describe("SDK methods", function () {
             .on("messageID", (message) => { console.log(`[EVENT] Received messageID: ${message}`); });
 
         console.log(`Submitting signature!`);
-        const result = await signature.submitToEthereum(provider, fromAddress);
+        const result = await signature.submitToEthereum(provider, fromAddress)
+            .on("transactionHash", (message) => { console.log(`[EVENT] Received transactionHash: ${message}`); });
         console.log(result);
     };
 
@@ -320,7 +321,8 @@ describe("SDK methods", function () {
             web3Provider: provider,
             sendToken: Tokens.BTC.Eth2Btc,
             // txHash: result.transactionHash,
-        });
+        })
+            .on("transactionHash", (message) => { console.log(`[EVENT] Received transactionHash: ${message}`); });
 
         const response = await shiftOutObject.submitToRenVM()
             .on("messageID", (message) => { console.log(`[EVENT] Received messageID: ${message}`); });

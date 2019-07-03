@@ -12,8 +12,8 @@ import { Ox, strip0x } from "./blockchain/common";
 import { payloadToABI, payloadToShiftInABI } from "./lib/abi";
 import { newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    BURN_TOPIC, fixSignature, generateAddress, generateHash, generatePHash, ignoreError,
-    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO,
+    BURN_TOPIC, fixSignature, generateAddress, generateHash, generatePHash, retrieveDeposits,
+    SECONDS, signatureToString, sleep, UTXO,
 } from "./lib/utils";
 import { RenVMNetwork, ShiftedInResponse, ShiftedOutResponse } from "./lightnode/renVMNetwork";
 import { Chain, Token, Tokens } from "./types/assets";
@@ -125,10 +125,10 @@ export default class RenSDK {
                             ...transactionConfig,
                         })
                             .on("transactionHash", resolve)
-                            .catch((error: Error) => {
-                                try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-                                reject(error);
-                            })
+                        // .catch((error: Error) => {
+                        //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
+                        //     reject(error);
+                        // })
                     );
                 }
 
@@ -363,10 +363,10 @@ export class Signature {
         ).send({
             from,
             ...this.params.transactionConfig,
-        })
-            .catch((error: Error) => {
-                try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-                throw error;
-            });
+        });
+        // .catch((error: Error) => {
+        //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
+        //     throw error;
+        // });
     }
 }

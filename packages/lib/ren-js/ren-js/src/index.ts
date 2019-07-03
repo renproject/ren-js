@@ -4,6 +4,7 @@ import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { PromiEvent as Web3PromiEvent } from "web3-core";
+import { provider } from "web3-providers";
 
 import { Ox, strip0x } from "./blockchain/common";
 import { payloadToShiftInABI } from "./lib/abi";
@@ -59,9 +60,9 @@ interface ShiftParams {
 
 interface BurnParams {
     /**
-     * The Web3 instance
+     * A Web3 provider
      */
-    web3: Web3;
+    web3Provider: provider;
 
     /**
      * The token, including the origin and destination chains
@@ -148,8 +149,9 @@ export default class RenSDK {
     // Submits the commitment and transaction to the Darknodes, and then submits
     // the signature to the adapter address
     public burnDetails = (params: BurnParams): PromiEvent<ShiftedOutResponse> => {
-        const { web3, sendToken, txHash } = params;
+        const { web3Provider, sendToken, txHash } = params;
 
+        const web3 = new Web3(web3Provider);
         const promiEvent = newPromiEvent<ShiftedOutResponse>();
 
         (async () => {
@@ -251,10 +253,10 @@ export class ShiftObject {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3: Web3, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
+    public waitAndSubmit = async (web3Provider: provider, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
         await this.wait(confirmations);
         const signature = await this.submit();
-        return signature.signAndSubmit(web3, from);
+        return signature.signAndSubmit(web3Provider, from);
     }
 }
 
@@ -271,7 +273,7 @@ export class Signature {
         this.signature = signatureToString(fixSignature(response, this.shiftDetails.network));
     }
 
-    public signAndSubmit = (web3: Web3, from: string) => {
+    public signAndSubmit = (web3Provider: provider, from: string) => {
         const params = [
             ...this.shiftDetails.contractParams.map(value => value.value),
             Ox(this.response.amount.toString(16)), // _amount: BigNumber
@@ -280,6 +282,7 @@ export class Signature {
         ];
 
         const ABI = payloadToShiftInABI(this.shiftDetails.contractFn, this.shiftDetails.contractParams);
+        const web3 = new Web3(web3Provider);
         const contract = new web3.eth.Contract(ABI, this.shiftDetails.to);
 
         return contract.methods[this.shiftDetails.contractFn](

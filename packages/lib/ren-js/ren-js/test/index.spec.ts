@@ -232,14 +232,14 @@ describe("SDK methods", function () {
             .on("messageID", (message) => console.log(`[EVENT] Received messageID: ${message}`));
 
         console.log(`Submitting signature!`);
-        const result = await signature.signAndSubmit(web3, fromAddress);
+        const result = await signature.signAndSubmit(provider, fromAddress);
         console.log(result);
     };
 
     const submitTogether = async (shift: ShiftObject, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        const result = await shift.waitAndSubmit(web3, fromAddress, confirmations);
+        const result = await shift.waitAndSubmit(provider, fromAddress, confirmations);
         console.log(result);
     };
 
@@ -297,7 +297,7 @@ describe("SDK methods", function () {
         console.log(result);
 
         const response = await sdk.burnDetails({
-            web3,
+            web3Provider: provider,
             sendToken: Tokens.BTC.Eth2Btc,
             txHash: result.transactionHash,
         })

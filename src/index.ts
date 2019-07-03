@@ -14,8 +14,10 @@ import {
     retrieveDeposits, SECONDS, signatureToString, sleep, UTXO,
 } from "./lib/utils";
 import { ShiftedInResponse, ShiftedOutResponse, Shifter } from "./lightnode/shifter";
-import { Token } from "./types/assets";
-import { Network, NetworkDevnet, NetworkMainnet, NetworkTestnet } from "./types/networks";
+import { Chain, Token, Tokens } from "./types/assets";
+import {
+    Network, NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,
+} from "./types/networks";
 
 export * from "./lightnode/shifter";
 export * from "./blockchain/btc";
@@ -77,7 +79,7 @@ interface BurnParams {
 
 interface ShiftDetails {
     shifter: Shifter;
-    network: Network;
+    network: NetworkDetails;
 
     shiftAction: Token;
     to: string;
@@ -90,12 +92,20 @@ interface ShiftDetails {
 }
 
 export default class RenSDK {
+    // Expose constants
+    public static Tokens = Tokens;
+    public static Networks = Network;
+    public static Chains = Chain;
+    public Tokens = Tokens;
+    public Networks = Network;
+    public Chains = Chain;
+
     // Internal state
-    private readonly network: Network;
+    private readonly network: NetworkDetails;
     private readonly shifter: Shifter;
 
     // Takes a Network object that contains relevant addresses
-    constructor(network?: Network | string) {
+    constructor(network?: NetworkDetails | string) {
         if (typeof network === "string") {
             switch (network.toLowerCase()) {
                 case "":

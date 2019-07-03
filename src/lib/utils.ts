@@ -8,7 +8,7 @@ import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
 import { ShiftedInResponse } from "../lightnode/shifter";
 import { actionToDetails, Chain, Token } from "../types/assets";
-import { Network } from "../types/networks";
+import { NetworkDetails } from "../types/networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO };
 
@@ -48,7 +48,7 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: Network): string => {
+export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
     const token = network.zBTC; // actionToDetails(_shiftAction).asset;
     const pHash = generatePHash(_payload);
 
@@ -62,7 +62,7 @@ export const generateHash = (_payload: Payload, amount: number | string, _to: st
 };
 
 // Generates the gateway address
-export const generateAddress = (_shiftAction: Token, hash: string, network: Network): string => {
+export const generateAddress = (_shiftAction: Token, hash: string, network: NetworkDetails): string => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
@@ -75,7 +75,7 @@ export const generateAddress = (_shiftAction: Token, hash: string, network: Netw
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_network: Network, _shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
+export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
@@ -98,7 +98,7 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: ShiftedInResponse, network: Network): Signature => {
+export const fixSignature = (response: ShiftedInResponse, network: NetworkDetails): Signature => {
     const r = response.r;
     let s = new BN(strip0x(response.s), "hex");
     let v = ((parseInt(response.v || "0", 10) + 27) || 27);

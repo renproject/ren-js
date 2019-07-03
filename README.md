@@ -39,7 +39,7 @@ import { RenSDK } from "@renproject/ren";
 const sdk = new RenSDK("testnet");
 ```
 
-For more information, [check out an example](https://app.gitbook.com/@renproject/s/developers/getting-started/trading).
+For more information, [check out an example](https://app.gitbook.com/@renproject/s/developers/examples/bitcoin-payments).
 
 <hr />
 

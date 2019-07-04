@@ -1,12 +1,12 @@
 import { crypto } from "bitcore-lib";
-import { BitcoinUTXO } from "blockchain/btc";
-import { ZcashUTXO } from "blockchain/zec";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
+import { BitcoinUTXO } from "./blockchain/btc";
 import { Ox, strip0x } from "./blockchain/common";
+import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {

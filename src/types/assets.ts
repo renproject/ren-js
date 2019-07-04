@@ -1,4 +1,4 @@
-import { btcAddressToHex } from "blockchain/btc";
+import { btcAddressToHex } from "../blockchain/btc";
 
 export enum Chain {
     Bitcoin = "Btc",

@@ -29,7 +29,7 @@
         "lint:all": "npm run --silent lint:ts && npm run --silent lint:extra",
         "lint": "npm run --silent lint:ts",
         "watch": "cross-env NODE_ENV=development webpack --watch --mode development --display-error-details --progress --color",
-        "build:dev": "cross-env NODE_ENV=development webpack --mode development --display-error-details --progress --color",
+        "build": "cross-env NODE_ENV=development webpack --mode development --display-error-details --progress --color",
         "build:prod": "npm run clean && cross-env NODE_ENV=production webpack --mode production --progress --color",
         "test": "nyc ./node_modules/ts-mocha/bin/ts-mocha --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.ts ./test/**/*.ts",
         "clean": "rm -rf dist",

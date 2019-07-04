@@ -15,8 +15,7 @@ import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
-import { payloadToABI } from "../src/lib/abi";
-import { Arg, ignoreError } from "../src/lib/utils";
+import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
 import {
     NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,
@@ -229,22 +228,22 @@ describe("SDK methods", function () {
         console.log(`Waiting for ${confirmations} confirmations...`);
 
         const deposit = await shift.waitForDeposit(confirmations)
-            .on("deposit", (message) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(message)}`); });
+            .on("deposit", (depositObject) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(depositObject)}`); });
         console.log(`Submitting deposit!`);
 
         const signature = await deposit.submitToRenVM()
-            .on("messageID", (message) => { console.log(`[EVENT] Received messageID: ${message}`); });
+            .on("messageID", (messageID: string) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
 
         console.log(`Submitting signature!`);
-        const result = await signature.submitToEthereum(provider, fromAddress)
-            .on("transactionHash", (message) => { console.log(`[EVENT] Received transactionHash: ${message}`); });
+        const result = await signature.submitToEthereum(provider, { from: fromAddress })
+            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
         console.log(result);
     };
 
     const submitTogether = async (shift: ShiftInObject, fromAddress: string): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        const result = await shift.waitAndSubmit(provider, fromAddress, confirmations);
+        const result = await shift.waitAndSubmit(provider, confirmations, { from: fromAddress });
         console.log(result);
     };
 
@@ -277,7 +276,7 @@ describe("SDK methods", function () {
                 throw error;
             });
 
-        // // Send burn request to adapter contract.
+        // Send burn request to adapter contract.
         const payload: Arg[] = [
             {
                 name: "_shifter",
@@ -316,16 +315,16 @@ describe("SDK methods", function () {
             sendTo: adapterContract,
             contractFn: "shiftOut",
             contractParams: payload,
-            from: ethAddress,
+            txConfig: { from: ethAddress },
 
             web3Provider: provider,
             sendToken: Tokens.BTC.Eth2Btc,
             // txHash: result.transactionHash,
         })
-            .on("transactionHash", (message) => { console.log(`[EVENT] Received transactionHash: ${message}`); });
+            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
 
         const response = await shiftOutObject.submitToRenVM()
-            .on("messageID", (message) => { console.log(`[EVENT] Received messageID: ${message}`); });
+            .on("messageID", (messageID) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
 
         console.log(response);
     };
@@ -365,15 +364,15 @@ describe("SDK methods", function () {
         balance.should.bignumber.most(removeVMFee(new BN(amount)));
 
         // // Test burning.
-        const burnValue = balance.toNumber();
-        // const burnValue = amount;
-        console.log("Starting burn test:");
-        const initialBTCBalance = await checkBTCBalance(btcAddress);
-        await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
-        const finalBTCBalance = await checkBTCBalance(btcAddress);
+        // const burnValue = balance.toNumber();
+        // // const burnValue = amount;
+        // console.log("Starting burn test:");
+        // const initialBTCBalance = await checkBTCBalance(btcAddress);
+        // await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
+        // const finalBTCBalance = await checkBTCBalance(btcAddress);
 
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
-        finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(burnValue)));
+        // finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
+        // finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(burnValue)));
     });
 
     it.skip("should be able to mint using the helper function", async () => {

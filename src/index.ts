@@ -3,17 +3,19 @@
 import { crypto } from "bitcore-lib";
 import { BitcoinUTXO } from "blockchain/btc";
 import { ZcashUTXO } from "blockchain/zec";
+// @ts-ignore unused warning because we need BN for TransactionConfig
+import BN from "bn.js";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
-import { PromiEvent as Web3PromiEvent } from "web3-core";
+import { PromiEvent as Web3PromiEvent, TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
 import { Ox, strip0x } from "./blockchain/common";
 import { payloadToABI, payloadToShiftInABI } from "./lib/abi";
-import { newPromiEvent, PromiEvent } from "./lib/promievent";
+import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    BURN_TOPIC, fixSignature, generateAddress, generateHash, generatePHash, retrieveDeposits,
-    SECONDS, signatureToString, sleep, UTXO,
+    BURN_TOPIC, fixSignature, generateAddress, generateHash, generatePHash, ignoreError,
+    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO,
 } from "./lib/utils";
 import { RenVMNetwork, ShiftedInResponse, ShiftedOutResponse } from "./lightnode/renVMNetwork";
 import { Chain, Token, Tokens } from "./types/assets";
@@ -88,7 +90,7 @@ export default class RenSDK {
 
         (async () => {
 
-            const { transactionConfig, sendToken, web3Provider, contractFn, contractParams, sendTo, from } = params as ShiftOutParamsAll;
+            const { txConfig, sendToken, web3Provider, contractFn, contractParams, sendTo } = params as ShiftOutParamsAll;
             let { burnReference, txHash } = params as ShiftOutParamsAll;
 
             // There are three parameter configs:
@@ -108,7 +110,7 @@ export default class RenSDK {
                 // Handle situation (2)
                 // Make a call to the provided contract and Pass on the
                 // transaction hash.
-                if (contractParams && contractFn && sendTo && from) {
+                if (contractParams && contractFn && sendTo) {
 
                     const callParams = [
                         ...contractParams.map(value => value.value),
@@ -117,18 +119,20 @@ export default class RenSDK {
                     const ABI = payloadToABI(contractFn, contractParams);
                     const contract = new web3.eth.Contract(ABI, sendTo);
 
-                    txHash = await new Promise((resolve, reject) =>
-                        contract.methods[contractFn](
-                            ...callParams,
-                        ).send({
-                            from,
-                            ...transactionConfig,
+                    const tx = contract.methods[contractFn](
+                        ...callParams,
+                    ).send({
+                        ...txConfig,
+                    });
+
+                    forwardEvents(tx, promiEvent);
+
+                    txHash = await new Promise((resolve, reject) => tx
+                        .on("transactionHash", resolve)
+                        .catch((error: Error) => {
+                            try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
+                            reject(error);
                         })
-                            .on("transactionHash", resolve)
-                        // .catch((error: Error) => {
-                        //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-                        //     reject(error);
-                        // })
                     );
                 }
 
@@ -300,10 +304,10 @@ export class ShiftInObject {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, from: string, confirmations: number): Promise<Web3PromiEvent<any>> => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO): Promise<Web3PromiEvent<any>> => {
         await this.waitForDeposit(confirmations);
-        const signature = await this.submitToRenVM();
-        return signature.submitToEthereum(web3Provider, from);
+        const signature = await this.submitToRenVM(specifyUTXO);
+        return signature.submitToEthereum(web3Provider, txConfig);
     }
 }
 
@@ -322,7 +326,34 @@ export class Signature {
         this.signature = signatureToString(fixSignature(response, network));
     }
 
-    public createTransaction = () => {
+    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig) => {
+        const params = [
+            ...this.params.contractParams.map(value => value.value),
+            Ox(this.response.amount.toString(16)), // _amount: BigNumber
+            Ox(this.response.nhash), // _nHash: string
+            Ox(this.signature), // _sig: string
+        ];
+
+        const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
+        const web3 = new Web3(web3Provider);
+        const contract = new web3.eth.Contract(ABI, this.params.sendTo);
+
+        return contract.methods[this.params.contractFn](
+            ...params,
+        ).send({
+            ...this.params.txConfig,
+            ...txConfig,
+        });
+        // .catch((error: Error) => {
+        //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
+        //     throw error;
+        // });
+    }
+
+    /**
+     * Alternative to `submitToEthereum` that doesn't need a web3 instance
+     */
+    public createTransaction = (txConfig?: TransactionConfig) => {
         const params = [
             ...this.params.contractParams.map(value => value.value),
             Ox(this.response.amount.toString(16)), // _amount: BigNumber
@@ -342,31 +373,7 @@ export class Signature {
         return {
             to: this.params.sendTo,
             data,
-            value: 0,
+            ...txConfig,
         };
-    }
-
-    public submitToEthereum = (web3Provider: provider, from: string) => {
-        const params = [
-            ...this.params.contractParams.map(value => value.value),
-            Ox(this.response.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.nhash), // _nHash: string
-            Ox(this.signature), // _sig: string
-        ];
-
-        const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
-        const web3 = new Web3(web3Provider);
-        const contract = new web3.eth.Contract(ABI, this.params.sendTo);
-
-        return contract.methods[this.params.contractFn](
-            ...params,
-        ).send({
-            from,
-            ...this.params.transactionConfig,
-        });
-        // .catch((error: Error) => {
-        //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-        //     throw error;
-        // });
     }
 }

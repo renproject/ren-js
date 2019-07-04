@@ -24,22 +24,29 @@
 
 import { EventEmitter } from "events";
 
-// TODO: add handleSuccess() and handleError() method instead of having them in the send method class
 class InternalPromiEvent<T> {
-    public promise: Promise<T>;
-    // @ts-ignore
+    public readonly [Symbol.toStringTag]: "Promise";
+    public readonly promise: Promise<T>;
+    // @ts-ignore no initializer because of proxyHandler
     public resolve: (value?: T) => void;
-    // @ts-ignore
+    // @ts-ignore no initializer because of proxyHandler
     // tslint:disable-next-line: no-any
     public reject: (reason?: any) => void;
     public eventEmitter: EventEmitter;
 
-    // @ts-ignore
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly emit: EventEmitter["emit"];
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly removeListener: EventEmitter["removeListener"];
+    // @ts-ignore no initializer because of proxyHandler
     // tslint:disable-next-line: no-any
-    public emit: (event: string, ...values: any[]) => void;
-    // @ts-ignore
-    // tslint:disable-next-line: no-any
-    public on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    public readonly on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly then: Promise<T>["then"];
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly catch: Promise<T>["catch"];
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly finally: Promise<T>["finally"];
 
     /**
      * @constructor
@@ -60,16 +67,8 @@ class InternalPromiEvent<T> {
 
     /**
      * Proxy handler to call the promise or eventEmitter methods
-     *
-     * @method proxyHandler
-     *
-     * @param {PromiEvent} target
-     * @param {String|Symbol} name
-     *
-     * @returns {Function}
      */
-    // tslint:disable-next-line: no-any
-    public proxyHandler(target: any, name: string) {
+    public proxyHandler(target: PromiEvent<T>, name: string) {
         if (name === "resolve" || name === "reject") {
             return target[name];
         }
@@ -91,3 +90,22 @@ class InternalPromiEvent<T> {
 // Tell Typescript that InternalPromiEvent<T> implements Promise<T>.
 export type PromiEvent<T> = InternalPromiEvent<T> & Promise<T>;
 export const newPromiEvent = <T>() => new InternalPromiEvent<T>() as PromiEvent<T>;
+
+export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, filterFn = (_name: string) => true) => {
+    // tslint:disable-next-line: no-any
+    const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
+        if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) { src.on(eventName, listener); }
+    };
+
+    // tslint:disable-next-line: no-any
+    const forwardEmitterRemoveListener = (eventName: string, listener: (...args: any[]) => void) => {
+        src.removeListener(eventName, listener);
+    };
+
+    // Listeners bound to the destination emitter should be bound to the source emitter.
+    dest.on("newListener", forwardEmitterNewListener);
+
+    // When a listener is removed from the destination emitter, remove it from the source emitter
+    // (otherwise it will continue to be called).
+    dest.on("removeListener", forwardEmitterRemoveListener);
+};

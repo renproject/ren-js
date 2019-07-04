@@ -50,7 +50,7 @@ For more information, [check out an example](https://app.gitbook.com/@renproject
 ```bash
 yarn run watch
 # or
-yarn run build:dev
+yarn run build
 ```
 
 ### Tests

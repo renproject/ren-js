@@ -1,3 +1,4 @@
+import { btcAddressToHex } from "blockchain/btc";
 
 export enum Chain {
     Bitcoin = "Btc",
@@ -20,6 +21,7 @@ export const Tokens = {
     BTC: {
         Btc2Eth: Token.Btc2Eth,
         Eth2Btc: Token.Eth2Btc,
+        addressToHex: btcAddressToHex,
     }
 };
 

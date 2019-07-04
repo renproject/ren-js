@@ -19,4 +19,9 @@ describe("Static exports", () => {
         renSDK.Tokens.should.equal(Tokens);
         renSDK.Chains.should.equal(Chain);
     });
+
+    it("Exposes BTC.addressToHex", () => {
+        RenSDK.Tokens.BTC.addressToHex("2MsjneiPJPfDRcbE9bCRs1RDQ2w7Bgh3nkC")
+            .should.equal("0xc40566e98bcfb81185df27a5fdc60cd4c206415b1f08630ccd");
+    });
 });

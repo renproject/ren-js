@@ -21,7 +21,7 @@ interface ContractCall {
     contractParams: Payload;
 
     // Set transaction options:
-    transactionConfig?: TransactionConfig;
+    txConfig?: TransactionConfig;
 }
 
 export interface ShiftInParams extends ContractCall {
@@ -54,11 +54,6 @@ interface ShiftOutParamsContractCall extends ShiftOutParamsCommon, Partial<Contr
      * A Web3 provider
      */
     web3Provider: provider;
-
-    /**
-     * The account to call the transaction from
-     */
-    from: string;
 }
 
 interface ShiftOutParamsTxHash extends ShiftOutParamsCommon {

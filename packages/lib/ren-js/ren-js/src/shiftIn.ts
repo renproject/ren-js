@@ -10,8 +10,8 @@ import { Ox, strip0x } from "./blockchain/common";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateHash, generatePHash, retrieveDeposits, SECONDS,
-    signatureToString, sleep, UTXO, withDefaultAccount,
+    fixSignature, generateAddress, generateHash, generatePHash, ignoreError, retrieveDeposits,
+    SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
 } from "./lib/utils";
 import { RenVMNetwork, ShiftedInResponse } from "./lightnode/renVMNetwork";
 import { NetworkDetails } from "./types/networks";
@@ -172,11 +172,11 @@ export class Signature {
 
             forwardEvents(tx, promiEvent);
 
-            return await tx;
-            // .catch((error: Error) => {
-            //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-            //     throw error;
-            // });
+            return await tx
+                .catch((error: Error) => {
+                    try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
+                    throw error;
+                });
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

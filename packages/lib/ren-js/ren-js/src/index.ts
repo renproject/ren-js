@@ -1,13 +1,13 @@
 // tslint:disable: no-use-before-declare
 
-import { ShiftInObject } from "shiftIn";
-import { ShiftOutObject } from "shiftOut";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
 import { RenVMNetwork } from "./lightnode/renVMNetwork";
+import { ShiftInObject } from "./shiftIn";
+import { ShiftOutObject } from "./shiftOut";
 import { Chain, Tokens } from "./types/assets";
 import {
     Network, NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,

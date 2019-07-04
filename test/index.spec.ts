@@ -121,9 +121,10 @@ describe("SDK methods", function () {
     before(async () => {
         provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
         web3 = new Web3(provider);
+        accounts = await web3.eth.getAccounts();
+        web3.eth.defaultAccount = accounts[0];
         network = NetworkTestnet;
         sdk = new RenSDK(network);
-        accounts = await web3.eth.getAccounts();
     });
 
     // tslint:disable-next-line:no-any
@@ -152,9 +153,9 @@ describe("SDK methods", function () {
 
     const mintTest = async (
         btcShifter: string, adapterContract: string, amount: number,
-        ethAddress: string, fromAddress: string, btcAddress: string,
+        ethAddress: string, btcAddress: string,
         btcPrivateKey: bitcore.PrivateKey,
-        submit: (shift: ShiftInObject, fromAddress: string) => Promise<void>,
+        submit: (shift: ShiftInObject) => Promise<void>,
     ): Promise<void> => {
         const params: Arg[] = [
             {
@@ -219,10 +220,10 @@ describe("SDK methods", function () {
             }
         }
 
-        await submit(shift, fromAddress);
+        await submit(shift);
     };
 
-    const submitIndividual = async (shift: ShiftInObject, fromAddress: string): Promise<void> => {
+    const submitIndividual = async (shift: ShiftInObject): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         console.log(`Waiting for ${confirmations} confirmations...`);
@@ -235,15 +236,15 @@ describe("SDK methods", function () {
             .on("messageID", (messageID: string) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
 
         console.log(`Submitting signature!`);
-        const result = await signature.submitToEthereum(provider, { from: fromAddress })
+        const result = await signature.submitToEthereum(provider)
             .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
         console.log(result);
     };
 
-    const submitTogether = async (shift: ShiftInObject, fromAddress: string): Promise<void> => {
+    const submitTogether = async (shift: ShiftInObject): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        const result = await shift.waitAndSubmit(provider, confirmations, { from: fromAddress });
+        const result = await shift.waitAndSubmit(provider, confirmations);
         console.log(result);
     };
 
@@ -347,7 +348,6 @@ describe("SDK methods", function () {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
-        const fromAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
         const btcAddress = btcPrivateKey.toAddress().toString();
         const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
@@ -355,7 +355,7 @@ describe("SDK methods", function () {
         // Test minting.
         console.log("Starting mint test:");
         const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
-        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey, submitIndividual);
+        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitIndividual);
         const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
@@ -375,7 +375,7 @@ describe("SDK methods", function () {
         // finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(burnValue)));
     });
 
-    it.skip("should be able to mint using the helper function", async () => {
+    it("should be able to mint using the helper function", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
@@ -386,7 +386,7 @@ describe("SDK methods", function () {
 
         console.log("Starting mint test:");
         const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
-        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, fromAddress, btcAddress, btcPrivateKey, submitTogether);
+        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitTogether);
         const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).

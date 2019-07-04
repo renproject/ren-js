@@ -1,24 +1,14 @@
 // tslint:disable: no-use-before-declare
 
-import { crypto } from "bitcore-lib";
-import { BitcoinUTXO } from "blockchain/btc";
-import { ZcashUTXO } from "blockchain/zec";
-// @ts-ignore unused warning because we need BN for TransactionConfig
-import BN from "bn.js";
-import { OrderedMap } from "immutable";
+import { ShiftInObject } from "shiftIn";
+import { ShiftOutObject } from "shiftOut";
 import Web3 from "web3";
-import { PromiEvent as Web3PromiEvent, TransactionConfig } from "web3-core";
-import { provider } from "web3-providers";
 
-import { Ox, strip0x } from "./blockchain/common";
-import { payloadToABI, payloadToShiftInABI } from "./lib/abi";
+import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
-import {
-    BURN_TOPIC, fixSignature, generateAddress, generateHash, generatePHash, ignoreError,
-    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO,
-} from "./lib/utils";
-import { RenVMNetwork, ShiftedInResponse, ShiftedOutResponse } from "./lightnode/renVMNetwork";
-import { Chain, Token, Tokens } from "./types/assets";
+import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
+import { RenVMNetwork } from "./lightnode/renVMNetwork";
+import { Chain, Tokens } from "./types/assets";
 import {
     Network, NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,
 } from "./types/networks";
@@ -31,6 +21,8 @@ export * from "./blockchain/common";
 export * from "./types/assets";
 export * from "./types/networks";
 export * from "./types/parameters";
+export * from "./shiftIn";
+export * from "./shiftOut";
 
 export { UTXO } from "./lib/utils";
 
@@ -121,9 +113,9 @@ export default class RenSDK {
 
                     const tx = contract.methods[contractFn](
                         ...callParams,
-                    ).send({
+                    ).send(await withDefaultAccount(web3, {
                         ...txConfig,
-                    });
+                    }));
 
                     forwardEvents(tx, promiEvent);
 
@@ -170,210 +162,5 @@ export default class RenSDK {
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
-    }
-}
-
-export class ShiftOutObject {
-    private readonly renVMNetwork: RenVMNetwork;
-    private readonly sendToken: Token;
-    private readonly burnReference: string;
-
-    constructor(renVMNetwork: RenVMNetwork, sendToken: Token, burnReference: string) {
-        this.renVMNetwork = renVMNetwork;
-        this.sendToken = sendToken;
-        this.burnReference = burnReference;
-    }
-
-    public submitToRenVM = () => {
-        const promiEvent = newPromiEvent<ShiftedOutResponse>();
-
-        (async () => {
-            const messageID = await this.renVMNetwork.submitWithdrawal(this.sendToken, this.burnReference);
-            promiEvent.emit("messageID", messageID);
-
-            return await this.renVMNetwork.waitForResponse(messageID) as ShiftedOutResponse;
-        })().then(promiEvent.resolve).catch(promiEvent.reject);
-
-        return promiEvent;
-    }
-}
-
-export class ShiftInObject {
-    public utxo: BitcoinUTXO | ZcashUTXO | undefined;
-    public gatewayAddress: string;
-    private readonly network: NetworkDetails;
-    private readonly renVMNetwork: RenVMNetwork;
-    private readonly params: ShiftInParams;
-
-    constructor(renVMNetwork: RenVMNetwork, network: NetworkDetails, params: ShiftInParams) {
-        this.params = params;
-        this.network = network;
-        this.renVMNetwork = renVMNetwork;
-
-        const { sendToken, contractParams, sendAmount, sendTo } = params;
-
-        if (!this.params.nonce) {
-            this.params.nonce = Ox(crypto.Random.getRandomBuffer(32));
-        }
-
-        // TODO: Validate inputs
-        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, this.params.nonce, network);
-        const gatewayAddress = generateAddress(sendToken, hash, network);
-        this.gatewayAddress = gatewayAddress;
-    }
-
-    public addr = () => this.gatewayAddress;
-
-    public waitForDeposit = (confirmations: number): PromiEvent<this> => {
-        const promiEvent = newPromiEvent<this>();
-
-        (async () => {
-            let deposits: OrderedMap<string, UTXO> = OrderedMap();
-            // const depositedAmount = (): number => {
-            //     return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
-            // };
-            // tslint:disable-next-line: no-constant-condition
-            while (true) {
-                if (deposits.size > 0) {
-                    // Sort deposits
-                    const greatestTx = deposits.sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first(undefined);
-                    if (greatestTx && greatestTx.utxo.value >= this.params.sendAmount) {
-                        this.utxo = greatestTx.utxo;
-                        break;
-                    }
-                }
-
-                try {
-                    const newDeposits = await retrieveDeposits(this.network, this.params.sendToken, this.gatewayAddress, confirmations);
-
-                    let newDeposit = false;
-                    for (const deposit of newDeposits) {
-                        if (!deposits.has(deposit.utxo.txid)) {
-                            deposits = deposits.set(deposit.utxo.txid, deposit);
-                            promiEvent.emit("deposit", deposit.utxo);
-                            newDeposit = true;
-                        }
-                    }
-                    if (newDeposit) { continue; }
-                } catch (error) {
-                    // tslint:disable-next-line: no-console
-                    console.error(error);
-                    continue;
-                }
-                await sleep(10 * SECONDS);
-            }
-            return this;
-        })().then(promiEvent.resolve).catch(promiEvent.reject);
-
-        return promiEvent;
-    }
-
-    public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO): PromiEvent<Signature> => {
-        const promiEvent = newPromiEvent<Signature>();
-
-        const utxo = specifyUTXO || this.utxo;
-        if (!utxo) {
-            throw new Error("Unable to submit without UTXO. Call wait() or provide a UTXO as a parameter.");
-        }
-
-        const nonce = this.params.nonce;
-        if (!nonce) {
-            throw new Error("Unable to submitToRenVM without nonce");
-        }
-
-        (async () => {
-            const messageID = await this.renVMNetwork.submitDeposits(
-                this.params.sendToken,
-                this.params.sendTo,
-                this.params.sendAmount,
-                nonce,
-                generatePHash(this.params.contractParams),
-                utxo.txid,
-                utxo.output_no,
-                this.network,
-            );
-
-            promiEvent.emit("messageID", messageID);
-
-            const response = await this.renVMNetwork.waitForResponse(messageID) as ShiftedInResponse;
-
-            return new Signature(this.network, this.params, response, messageID);
-        })().then(promiEvent.resolve).catch(promiEvent.reject);
-
-        return promiEvent;
-    }
-
-    // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO): Promise<Web3PromiEvent<any>> => {
-        await this.waitForDeposit(confirmations);
-        const signature = await this.submitToRenVM(specifyUTXO);
-        return signature.submitToEthereum(web3Provider, txConfig);
-    }
-}
-
-export class Signature {
-    public params: ShiftInParams;
-    public network: NetworkDetails;
-    public response: ShiftedInResponse;
-    public signature: string;
-    public messageID: string;
-
-    constructor(network: NetworkDetails, params: ShiftInParams, response: ShiftedInResponse, messageID: string) {
-        this.params = params;
-        this.network = network;
-        this.response = response;
-        this.messageID = messageID;
-        this.signature = signatureToString(fixSignature(response, network));
-    }
-
-    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig) => {
-        const params = [
-            ...this.params.contractParams.map(value => value.value),
-            Ox(this.response.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.nhash), // _nHash: string
-            Ox(this.signature), // _sig: string
-        ];
-
-        const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
-        const web3 = new Web3(web3Provider);
-        const contract = new web3.eth.Contract(ABI, this.params.sendTo);
-
-        return contract.methods[this.params.contractFn](
-            ...params,
-        ).send({
-            ...this.params.txConfig,
-            ...txConfig,
-        });
-        // .catch((error: Error) => {
-        //     try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-        //     throw error;
-        // });
-    }
-
-    /**
-     * Alternative to `submitToEthereum` that doesn't need a web3 instance
-     */
-    public createTransaction = (txConfig?: TransactionConfig) => {
-        const params = [
-            ...this.params.contractParams.map(value => value.value),
-            Ox(this.response.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.nhash), // _nHash: string
-            Ox(this.signature), // _sig: string
-        ];
-
-        const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
-        // tslint:disable-next-line: no-any
-        const web3 = new (Web3 as any)() as Web3;
-        const contract = new web3.eth.Contract(ABI);
-
-        const data = contract.methods[this.params.contractFn](
-            ...params,
-        ).encodeABI();
-
-        return {
-            to: this.params.sendTo,
-            data,
-            ...txConfig,
-        };
     }
 }

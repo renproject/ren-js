@@ -1,5 +1,7 @@
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
+import Web3 from "web3";
+import { TransactionConfig } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
@@ -160,4 +162,19 @@ export const ignoreError = (error: any): boolean => {
     } catch (error) {
         return false;
     }
+};
+
+export const withDefaultAccount = async (web3: Web3, config: TransactionConfig): Promise<TransactionConfig> => {
+    if (!config.from) {
+        if (web3.eth.defaultAccount) {
+            config.from = web3.eth.defaultAccount;
+        } else {
+            const accounts = await web3.eth.getAccounts();
+            if (accounts.length === 0) {
+                throw new Error("Must provide a 'from' address in the transaction config");
+            }
+            config.from = accounts[0];
+        }
+    }
+    return config;
 };

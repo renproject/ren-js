@@ -1,44 +1,5 @@
 version: 2
 jobs:
-  build:
-    working_directory: ~/ren-sdk-ts
-    docker:
-      - image: circleci/node:lts
-    steps:
-      - checkout
-      - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-      - run:
-          name: Install Dependencies
-          command: yarn install
-      - save_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-          paths:
-            - ./node_modules
-      - run: mkdir ~/junit
-      - run:
-          command: mocha test --reporter mocha-junit-reporter
-          environment:
-            MOCHA_FILE: ~/junit/test-results.xml
-          when: always
-      - run:
-          name: Run tests
-          command: yarn test
-      - run:
-          name: Run code coverage
-          command: './node_modules/.bin/nyc report --reporter=text-lcov'
-      - store_artifacts:
-          path: test-results.xml
-          prefix: tests
-      - store_artifacts:
-          path: coverage
-          prefix: coverage
-      - store_test_results:
-          path: test-results.xml
-
-
-version: 2
-jobs:
     build:
         environment:
             NODE_ENV: development

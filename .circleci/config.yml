@@ -15,6 +15,12 @@ jobs:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
+      - run: mkdir ~/junit
+      - run:
+          command: mocha test --reporter mocha-junit-reporter
+          environment:
+            MOCHA_FILE: ~/junit/test-results.xml
+          when: always
       - run:
           name: Run tests
           command: yarn test
@@ -29,3 +35,72 @@ jobs:
           prefix: coverage
       - store_test_results:
           path: test-results.xml
+
+
+version: 2
+jobs:
+    build:
+        environment:
+            NODE_ENV: development
+        docker:
+            - image: circleci/node:8
+        working_directory: ~/ren-sdk-ts
+        steps:
+            - checkout
+
+            # Download and cache dependencies
+            - restore_cache:
+                keys:
+                    - v1-dependencies-{{ checksum "package.json" }}
+                    # fallback to using the latest cache if no exact match is found
+                    - v1-dependencies-
+
+            - run: yarn install
+
+            - run: yarn add mocha-junit-reporter # just for CircleCI
+
+            - save_cache:
+                paths:
+                    - node_modules
+                key: v1-dependencies-{{ checksum "package.json" }}
+
+            - run: mkdir reports
+
+            # Run mocha
+            - run:
+                name: Run tests
+                command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                when: always
+
+            # Run eslint
+            - run:
+                name: Run TSLint
+                command: |
+                    yarn run lint:ts --format junit --out ./reports/eslint/eslint.xml
+                when: always
+
+            # Run coverage report for Code Climate
+
+            - run:
+                name: code-coverage
+                command: |
+                    mkdir coverage
+                    # nyc report requires that nyc has already been run,
+                    # which creates the .nyc_output folder containing necessary data
+                    ./node_modules/.bin/nyc report --reporter=text-lcov > coverage/lcov.info
+                when: always
+
+            # Upload results
+
+            - store_test_results:
+                path: reports
+
+            - store_artifacts:
+                path: ./reports/mocha/test-results.xml
+
+            - store_artifacts:
+                path: ./reports/eslint/eslint.xml
+
+            - store_artifacts: # upload test coverage as artifact
+                path: ./coverage/lcov.info
+                prefix: tests

@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import BigNumber from "bignumber.js";
-import bitcore, { Address, Networks, Script, Transaction } from "bitcore-lib";
+import bitcore, { Address, Script, Transaction } from "bitcore-lib";
 import bs58 from "bs58";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -17,7 +17,7 @@ import { Ox, strip0x } from "../src/blockchain/common";
 import RenSDK, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
-import { NetworkDetails, NetworkTestnet } from "../src/types/networks";
+import { NetworkDetails, NetworkTestnet, stringToNetwork } from "../src/types/networks";
 
 require("dotenv").config();
 
@@ -29,6 +29,7 @@ chai.should();
 const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
+const TEST_NETWORK = process.env.NETWORK;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
 // tslint:disable-next-line:no-http-string
@@ -121,7 +122,7 @@ describe.skip("SDK methods", function () {
         web3 = new Web3(provider);
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
-        network = NetworkTestnet;
+        network = stringToNetwork(TEST_NETWORK || "testnet");
         sdk = new RenSDK(network);
     });
 
@@ -335,7 +336,7 @@ describe.skip("SDK methods", function () {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
-        const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
+        const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
         const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
 
@@ -366,7 +367,7 @@ describe.skip("SDK methods", function () {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
-        const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, Networks.testnet);
+        const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
         const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
 

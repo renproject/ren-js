@@ -1,3 +1,6 @@
+import { Networks as BNetworks } from "bitcore-lib";
+import { Networks as ZNetworks } from "bitcore-lib-zcash";
+
 export enum Network {
     Mainnet = "mainnet",
     Testnet = "testnet",
@@ -21,6 +24,8 @@ export interface NetworkDetails {
         mpkh: string;
         eth: string;
     };
+    bitcoinNetwork: BNetworks.Network;
+    zcashNetwork: ZNetworks.Network;
     zBTC: string; // TODO: Use map of tokens
     BTCShifter: string;
 }
@@ -41,6 +46,8 @@ export const NetworkMainnet: NetworkDetails = {
         mpkh: "",
         eth: "",
     },
+    bitcoinNetwork: BNetworks.mainnet,
+    zcashNetwork: ZNetworks.mainnet,
     zBTC: "",
     BTCShifter: "",
 };
@@ -55,6 +62,8 @@ const generalTestnet = {
         btc: "BTCTEST",
         zec: "ZECTEST",
     },
+    bitcoinNetwork: BNetworks.testnet,
+    zcashNetwork: ZNetworks.testnet,
     chainSoURL: "https://chain.so/api/v2",
 };
 
@@ -80,4 +89,24 @@ export const NetworkDevnet: NetworkDetails = {
     },
     zBTC: "0x4eB1403f565c3e3145Afc3634F16e2F092545C2a",
     BTCShifter: "0x7a40fE9FB464510215C41Eae1216973514eeEBB1",
+};
+
+export const stringToNetwork = (network?: NetworkDetails | string | null | undefined): NetworkDetails => {
+    if (typeof network === "string") {
+        switch (network.toLowerCase()) {
+            case "":
+            case "mainnet":
+                return NetworkMainnet;
+            case "testnet":
+                return NetworkTestnet;
+            case "devnet":
+                return NetworkDevnet;
+            default:
+                throw new Error(`Unsupported network "${network}"`);
+        }
+    } else if (network === undefined || network === null) {
+        return NetworkMainnet;
+    } else {
+        return network;
+    }
 };

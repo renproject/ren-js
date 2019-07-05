@@ -37,7 +37,7 @@ jobs:
             - run:
                 name: Run tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json
+                command: TEST_NETWORK="testnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json
                 when: always
 
             # Run eslint

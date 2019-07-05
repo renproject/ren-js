@@ -9,9 +9,7 @@ import { RenVMNetwork } from "./lightnode/renVMNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
 import { Chain, Tokens } from "./types/assets";
-import {
-    Network, NetworkDetails, NetworkDevnet, NetworkMainnet, NetworkTestnet,
-} from "./types/networks";
+import { Network, NetworkDetails, stringToNetwork } from "./types/networks";
 import { ShiftInParams, ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
 
 export * from "./lightnode/renVMNetwork";
@@ -45,26 +43,7 @@ export default class RenSDK {
 
     // Takes a Network object that contains relevant addresses
     constructor(network?: NetworkDetails | string | null | undefined) {
-        if (typeof network === "string") {
-            switch (network.toLowerCase()) {
-                case "":
-                case "mainnet":
-                    this.network = NetworkMainnet;
-                    break;
-                case "testnet":
-                    this.network = NetworkTestnet;
-                    break;
-                case "devnet":
-                    this.network = NetworkDevnet;
-                    break;
-                default:
-                    throw new Error(`Unsupported network "${network}"`);
-            }
-        } else if (network === undefined || network === null) {
-            this.network = NetworkMainnet;
-        } else {
-            this.network = network;
-        }
+        this.network = stringToNetwork(network);
         this.renVMNetwork = new RenVMNetwork(this.network.lightnodeURL);
     }
 

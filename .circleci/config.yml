@@ -62,7 +62,7 @@ jobs:
                 name: Networks
                 command: |
                     mkdir -p ./reports/networks
-                    node .circleci/config.yml > ./reports/networks/networks.xml
+                    node .circleci/networks.js > ./reports/networks/networks.xml
                 when: always
 
             # Upload results

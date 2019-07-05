@@ -106,7 +106,7 @@ const minABI: AbiItem[] = [
     }
 ];
 
-describe("SDK methods", function () {
+describe.skip("SDK methods", function () {
     // Disable test timeout.
     this.timeout(0);
 

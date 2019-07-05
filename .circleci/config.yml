@@ -21,7 +21,10 @@ jobs:
                 command: yarn install
                 when: always
 
-            - run: yarn add mocha-multi-reporters mocha-junit-reporter # just for CircleCI
+            - run:
+                name: Install Mocha reporters # just for CircleCI
+                command: yarn add mocha-multi-reporters mocha-junit-reporter
+                when: always
 
             - save_cache:
                 paths:
@@ -53,6 +56,13 @@ jobs:
                     # nyc report requires that nyc has already been run,
                     # which creates the .nyc_output folder containing necessary data
                     ./node_modules/.bin/nyc report --reporter=text-lcov > coverage/lcov.info
+                when: always
+
+            - run:
+                name: Networks
+                command: |
+                    mkdir -p ./reports/networks
+                    node .circleci/config.yml > ./reports/networks/networks.xml
                 when: always
 
             # Upload results

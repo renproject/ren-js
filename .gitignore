@@ -8,6 +8,7 @@ node_modules
 # Coverage
 /.nyc_output
 /coverage
+/reports
 
 # IDE specific
 /.vscode

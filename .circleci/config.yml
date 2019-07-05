@@ -16,9 +16,12 @@ jobs:
                     # fallback to using the latest cache if no exact match is found
                     - v1-dependencies-
 
-            - run: yarn install
+            - run:
+                name: Install dependencies
+                command: yarn install
+                when: always
 
-            - run: yarn add mocha-junit-reporter # just for CircleCI
+            - run: yarn add mocha-multi-reporters mocha-junit-reporter # just for CircleCI
 
             - save_cache:
                 paths:
@@ -30,7 +33,8 @@ jobs:
             # Run mocha
             - run:
                 name: Run tests
-                command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json
                 when: always
 
             # Run eslint
@@ -45,7 +49,7 @@ jobs:
             - run:
                 name: code-coverage
                 command: |
-                    mkdir coverage
+                    mkdir -p coverage
                     # nyc report requires that nyc has already been run,
                     # which creates the .nyc_output folder containing necessary data
                     ./node_modules/.bin/nyc report --reporter=text-lcov > coverage/lcov.info

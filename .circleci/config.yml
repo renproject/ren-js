@@ -43,10 +43,7 @@ jobs:
             - run:
                 name: Run Devnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: |
-                    set -o errexit
-                    TEST_NETWORK="devnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json; echo $? > devnet || true
-                    set -o errexit
+                command: TEST_NETWORK="devnet" bash ./.circleci/runtest.bash
                 when: always
 
             # Run eslint

@@ -360,19 +360,19 @@ describe("SDK methods", function () {
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
         const balance = finalZBTCBalance.sub(initialZBTCBalance); // BN
-        balance.should.bignumber.least(removeVMFee(removeGasFee(new BN(amount), 10)));
-        balance.should.bignumber.most(removeVMFee(new BN(amount)));
+        balance.should.bignumber.at.least(removeVMFee(removeGasFee(new BN(amount), 10)));
+        balance.should.bignumber.at.most(removeVMFee(new BN(amount)));
 
         // // Test burning.
-        // const burnValue = balance.toNumber();
-        // // const burnValue = amount;
-        // console.log("Starting burn test:");
-        // const initialBTCBalance = await checkBTCBalance(btcAddress);
-        // await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
-        // const finalBTCBalance = await checkBTCBalance(btcAddress);
+        const burnValue = balance.toNumber();
+        // const burnValue = amount;
+        console.log("Starting burn test:");
+        const initialBTCBalance = await checkBTCBalance(btcAddress);
+        await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
+        const finalBTCBalance = await checkBTCBalance(btcAddress);
 
-        // finalBTCBalance.sub(initialBTCBalance).should.bignumber.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
-        // finalBTCBalance.sub(initialBTCBalance).should.bignumber.most(removeVMFee(new BN(burnValue)));
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.at.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
+        finalBTCBalance.sub(initialBTCBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));
     });
 
     it("should be able to mint using the helper function", async () => {
@@ -391,7 +391,7 @@ describe("SDK methods", function () {
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
         const balance = finalZBTCBalance.sub(initialZBTCBalance); // BN
-        balance.should.bignumber.least(removeVMFee(removeGasFee(new BN(amount), 10)));
-        balance.should.bignumber.most(removeVMFee(new BN(amount)));
+        balance.should.bignumber.at.least(removeVMFee(removeGasFee(new BN(amount), 10)));
+        balance.should.bignumber.at.most(removeVMFee(new BN(amount)));
     });
 });

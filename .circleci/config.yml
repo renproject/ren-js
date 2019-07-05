@@ -9,17 +9,17 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: install-dependencies
+          name: Install Dependencies
           command: yarn install
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
       - run:
-          name: test
+          name: Run tests
           command: yarn test
       - run:
-          name: code-coverage
+          name: Run code coverage
           command: './node_modules/.bin/nyc report --reporter=text-lcov'
       - store_artifacts:
           path: test-results.xml

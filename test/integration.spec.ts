@@ -29,7 +29,7 @@ chai.should();
 const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
-const TEST_NETWORK = process.env.NETWORK;
+const TEST_NETWORK = process.env.TEST_NETWORK;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
 // tslint:disable-next-line:no-http-string
@@ -107,7 +107,7 @@ const minABI: AbiItem[] = [
     }
 ];
 
-describe.skip("SDK methods", function () {
+describe("SDK methods", function () {
     // Disable test timeout.
     this.timeout(0);
 
@@ -124,6 +124,10 @@ describe.skip("SDK methods", function () {
         web3.eth.defaultAccount = accounts[0];
         network = stringToNetwork(TEST_NETWORK || "testnet");
         sdk = new RenSDK(network);
+
+        if (network.name === "devnet") {
+            throw new Error("I don't like devnet!");
+        }
     });
 
     // tslint:disable-next-line:no-any
@@ -332,7 +336,7 @@ describe.skip("SDK methods", function () {
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
-    it("should be able to mint and burn btc", async () => {
+    it.skip("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
@@ -363,7 +367,7 @@ describe.skip("SDK methods", function () {
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));
     });
 
-    it("should be able to mint using the helper function", async () => {
+    it.skip("should be able to mint using the helper function", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];

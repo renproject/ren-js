@@ -4,7 +4,7 @@
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/republicprotocol/ren-js.git"
+        "url": "git+https://github.com/republicprotocol/renvm-sdk-js.git"
     },
     "publishConfig": {
         "access": "public"
@@ -17,7 +17,7 @@
     "author": "Ren",
     "license": "GPL-3.0",
     "bugs": {
-        "url": "https://github.com/republicprotocol/ren-js/issues"
+        "url": "https://github.com/republicprotocol/renvm-sdk-js/issues"
     },
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

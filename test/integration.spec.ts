@@ -14,7 +14,7 @@ import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenSDK, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
+import RenVM, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
 import { NetworkDetails, NetworkTestnet, stringToNetwork } from "../src/types/networks";
@@ -40,7 +40,7 @@ const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 *MINTING*
 
-`const shift = RenSDK.shift("BTC0Btc2Eth", renExAddress, 0.5 BTC (in sats), randomNonce, payload);`
+`const shift = RenVM.shift("BTC0Btc2Eth", renExAddress, 0.5 BTC (in sats), randomNonce, payload);`
 `const gatewayAddress = await shift.addr();`
 _user deposits BTC to gateway address_
 
@@ -59,7 +59,7 @@ _e.g. on RenEx, this will mint BTC and swap it for DAI_
 
 _First, the front-end/user calls Web3.eth.Contract(adapter).burn() => LogShiftOut "1234"_
 
-`RenSDK.burnStatus("1234", btcAddress)`
+`RenVM.burnStatus("1234", btcAddress)`
 _Submit to darknodes => transaction hash_
 
  */
@@ -114,7 +114,7 @@ describe("SDK methods", function () {
     let provider: HDWalletProvider;
     let web3: Web3;
     let network: NetworkDetails;
-    let sdk: RenSDK;
+    let sdk: RenVM;
     let accounts: string[];
 
     before(async () => {
@@ -123,11 +123,7 @@ describe("SDK methods", function () {
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
         network = stringToNetwork(TEST_NETWORK || "testnet");
-        sdk = new RenSDK(network);
-
-        if (network.name === "devnet") {
-            throw new Error("I don't like devnet!");
-        }
+        sdk = new RenVM(network);
     });
 
     // tslint:disable-next-line:no-any
@@ -336,7 +332,7 @@ describe("SDK methods", function () {
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
-    it.skip("should be able to mint and burn btc", async () => {
+    it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
@@ -367,7 +363,7 @@ describe("SDK methods", function () {
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));
     });
 
-    it.skip("should be able to mint using the helper function", async () => {
+    it("should be able to mint using the helper function", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];

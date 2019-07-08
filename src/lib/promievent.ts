@@ -42,6 +42,9 @@ class InternalPromiEvent<T> {
     // tslint:disable-next-line: no-any
     public readonly on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
+    // tslint:disable-next-line: no-any
+    public readonly once: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    // @ts-ignore no initializer because of proxyHandler
     public readonly then: Promise<T>["then"];
     // @ts-ignore no initializer because of proxyHandler
     public readonly catch: Promise<T>["catch"];

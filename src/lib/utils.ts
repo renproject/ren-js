@@ -114,9 +114,9 @@ export const fixSignature = (response: ShiftedInResponse, network: NetworkDetail
         v = switchV(v);
     }
 
-    // Currently, the wrong `v` value may be returned from the Darknodes. We
-    // recover the address to see if we need to switch `v`. This can be removed
-    // once the Darknodes have been updated.
+    // Currently, the wrong `v` value may be returned from RenVM. We recover the
+    // address to see if we need to switch `v`. This can be removed once RenVM
+    // has been updated.
     const recovered = {
         [v]: pubToAddress(ecrecover(
             Buffer.from(strip0x(response.hash), "hex"),
@@ -140,7 +140,7 @@ export const fixSignature = (response: ShiftedInResponse, network: NetworkDetail
         console.warn("Switching v value");
         v = switchV(v);
     } else {
-        throw new Error("Invalid signature. Unable to recover darknode master public key.");
+        throw new Error("Invalid signature. Unable to recover mint authority from signature.");
     }
 
     const signature: Signature = {

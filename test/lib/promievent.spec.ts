@@ -57,4 +57,23 @@ describe("promievent.ts", () => {
         (await secondEvent).should.equal(2);
         (await thirdEvent).should.equal(1);
     });
+
+    it("Can forward events (2)", async () => {
+        const promiEvent1 = createPromiEvent(1, "1");
+
+        (async () => {
+            const promiEvent2 = createPromiEvent(2, "2");
+
+            forwardEvents(promiEvent1, promiEvent2);
+
+            promiEvent2.emit("1", 1);
+
+            return 1;
+        })().then(promiEvent1.resolve).catch(promiEvent1.reject);
+
+        const firstEvent = waitForEvent<number>(promiEvent1, "1");
+
+        (await firstEvent).should.equal(1);
+        (await promiEvent1).should.equal(1);
+    });
 });

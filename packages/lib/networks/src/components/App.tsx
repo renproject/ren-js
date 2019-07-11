@@ -35,8 +35,9 @@ class App extends React.Component<AppProps, AppState> {
         const mainnet = (await axios.get(`./networks/mainnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
         const testnet = (await axios.get(`./networks/testnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
         const devnet = (await axios.get(`./networks/devnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
+        const localnet = (await axios.get(`./networks/localnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
         this.setState({
-            networks: OrderedMap({ mainnet, testnet, devnet })
+            networks: OrderedMap({ mainnet, testnet, devnet, localnet })
         });
 
         let using;

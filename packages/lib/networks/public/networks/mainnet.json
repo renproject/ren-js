@@ -12,7 +12,8 @@
                 "address": "0x06dF0657ba5E8F5339e742212669F6E7EE3c5057"
             },
             "darknodeRegistry": {
-                "address": "0x34bd421C7948Bc16f826Fd99f9B785929b121633"
+                "address": "0x34bd421C7948Bc16f826Fd99f9B785929b121633",
+                "block": 7007558
             },
             "settlementRegistry": {
                 "address": "0x119da7a8500ade0766f758d934808179dc551036"

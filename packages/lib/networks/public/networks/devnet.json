@@ -9,7 +9,8 @@
                 "address": "0xfe48363206E1849a2F53f5214af932354c35FD89"
             },
             "darknodeRegistry": {
-                "address": "0x6E1a6b85f05bfec5c24C7a26E302cB28e639651c"
+                "address": "0x6E1a6b85f05bfec5c24C7a26E302cB28e639651c",
+                "block": 11692743
             },
             "darknodeRegistryStore": {
                 "address": "0xC126a308dd07Adfa4a445686dcF7CbC423185593"

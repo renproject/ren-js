@@ -1,5 +1,5 @@
 {
-  "name": "@renex/contracts",
+  "name": "@renproject/contracts",
   "version": "0.3.0",
   "homepage": "https://republicprotocol.github.io/contracts-ts",
   "main": "./lib.js",
@@ -9,7 +9,11 @@
     "lib.js",
     "lib.d.ts"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
+    "tslint-react": "^4.0.0",
     "web3-utils": "^1.0.0-beta.55"
   },
   "scripts": {
@@ -38,6 +42,7 @@
     "react-dom": "^16.8.6",
     "react-router-dom": "^5.0.1",
     "react-scripts": "^3.0.1",
+    "tslint-microsoft-contrib": "^6.2.0",
     "typescript": "^3.5.1"
   },
   "browserslist": {

@@ -1,0 +1,87 @@
+version: 2
+jobs:
+    build:
+        environment:
+            NODE_ENV: development
+        docker:
+            - image: circleci/node:8
+        working_directory: ~/ren-sdk-ts
+        steps:
+            - checkout
+
+            # Download and cache dependencies
+            - restore_cache:
+                keys:
+                    - v1-dependencies-{{ checksum "package.json" }}
+                    # fallback to using the latest cache if no exact match is found
+                    - v1-dependencies-
+
+            - run:
+                name: Install dependencies
+                command: yarn install
+                when: always
+
+            - run:
+                name: Install Mocha reporters # just for CircleCI
+                command: yarn add mocha-multi-reporters mocha-junit-reporter
+                when: always
+
+            - save_cache:
+                paths:
+                    - node_modules
+                key: v1-dependencies-{{ checksum "package.json" }}
+
+            - run: mkdir reports
+
+            # Run mocha
+            - run:
+                name: Run Testnet tests
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: TEST_NETWORK="testnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json ; echo $? > testnet
+                when: always
+
+            - run:
+                name: Run Devnet tests
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: TEST_NETWORK="devnet" bash ./.circleci/runtest.bash
+                when: always
+
+            # Run eslint
+            - run:
+                name: Run TSLint
+                command: |
+                    yarn run lint:ts --format junit --out ./reports/eslint/eslint.xml
+                when: always
+
+            # Run coverage report for Code Climate
+
+            - run:
+                name: code-coverage
+                command: |
+                    mkdir -p coverage
+                    # nyc report requires that nyc has already been run,
+                    # which creates the .nyc_output folder containing necessary data
+                    ./node_modules/.bin/nyc report --reporter=text-lcov > coverage/lcov.info
+                when: always
+
+            - run:
+                name: Networks
+                command: |
+                    mkdir -p ./reports/networks
+                    node .circleci/networks.js $(cat testnet) $(cat devnet) > ./reports/networks/networks.xml
+                when: always
+
+            # Upload results
+
+            - store_test_results:
+                path: reports
+
+            - store_artifacts:
+                path: ./reports/mocha/test-results.xml
+
+            - store_artifacts:
+                path: ./reports/eslint/eslint.xml
+
+            - store_artifacts: # upload test coverage as artifact
+                path: ./coverage/lcov.info
+                prefix: tests

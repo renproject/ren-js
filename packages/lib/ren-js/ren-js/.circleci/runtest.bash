@@ -1,0 +1,1 @@
+yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json; echo $? > devnet || true

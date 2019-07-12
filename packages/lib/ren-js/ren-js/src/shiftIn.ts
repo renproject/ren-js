@@ -1,7 +1,7 @@
 import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
-import { TransactionConfig } from "web3-core";
+import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 
 import { BitcoinUTXO } from "./blockchain/btc";
@@ -15,38 +15,48 @@ import {
 } from "./lib/utils";
 import { RenVMNetwork, ShiftedInResponse } from "./lightnode/renVMNetwork";
 import { NetworkDetails } from "./types/networks";
-import { ShiftInParams } from "./types/parameters";
+import { ShiftInFromDetails, ShiftInParams, ShiftInParamsAll } from "./types/parameters";
 
 export class ShiftInObject {
     public utxo: BitcoinUTXO | ZcashUTXO | undefined;
-    public gatewayAddress: string;
+    public gatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: RenVMNetwork;
-    private readonly params: ShiftInParams;
+    private readonly params: ShiftInParamsAll;
 
     constructor(renVMNetwork: RenVMNetwork, network: NetworkDetails, params: ShiftInParams) {
         this.params = params;
         this.network = network;
         this.renVMNetwork = renVMNetwork;
 
-        const { sendToken, contractParams, sendAmount, sendTo } = params;
+        if (!(params as ShiftInParamsAll).messageID) {
+            const { sendToken, contractParams, sendAmount, sendTo, nonce: maybeNonce } = params as ShiftInFromDetails;
 
-        if (!this.params.nonce) {
-            this.params.nonce = Ox(crypto.Random.getRandomBuffer(32));
+            const nonce = maybeNonce || Ox(crypto.Random.getRandomBuffer(32));
+            (this.params as ShiftInFromDetails).nonce = nonce;
+
+            // TODO: Validate inputs
+            const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, network);
+            const gatewayAddress = generateAddress(sendToken, hash, network);
+            this.gatewayAddress = gatewayAddress;
         }
-
-        // TODO: Validate inputs
-        const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, this.params.nonce, network);
-        const gatewayAddress = generateAddress(sendToken, hash, network);
-        this.gatewayAddress = gatewayAddress;
     }
 
     public addr = () => this.gatewayAddress;
 
     public waitForDeposit = (confirmations: number): PromiEvent<this> => {
         const promiEvent = newPromiEvent<this>();
-
         (async () => {
+            if (this.params.messageID) {
+                return this;
+            }
+
+            if (!this.gatewayAddress) {
+                throw new Error("Unable to calculate gateway address");
+            }
+
+            const { sendAmount, sendToken } = this.params as ShiftInFromDetails;
+
             let deposits: OrderedMap<string, UTXO> = OrderedMap();
             // const depositedAmount = (): number => {
             //     return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
@@ -56,14 +66,14 @@ export class ShiftInObject {
                 if (deposits.size > 0) {
                     // Sort deposits
                     const greatestTx = deposits.sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first(undefined);
-                    if (greatestTx && greatestTx.utxo.value >= this.params.sendAmount) {
+                    if (greatestTx && greatestTx.utxo.value >= sendAmount) {
                         this.utxo = greatestTx.utxo;
                         break;
                     }
                 }
 
                 try {
-                    const newDeposits = await retrieveDeposits(this.network, this.params.sendToken, this.gatewayAddress, confirmations);
+                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, confirmations);
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
@@ -95,29 +105,35 @@ export class ShiftInObject {
             throw new Error("Unable to submit without UTXO. Call wait() or provide a UTXO as a parameter.");
         }
 
-        const nonce = this.params.nonce;
-        if (!nonce) {
-            throw new Error("Unable to submitToRenVM without nonce");
-        }
-
         (async () => {
-            const messageID = await this.renVMNetwork.submitDeposits(
-                this.params.sendToken,
-                this.params.sendTo,
-                this.params.sendAmount,
-                nonce,
-                generatePHash(this.params.contractParams),
-                utxo.txid,
-                utxo.output_no,
-                this.network,
-            );
 
-            promiEvent.emit("messageID", messageID);
+            let messageID = this.params.messageID;
+
+            if (!messageID) {
+                const { nonce, sendToken, sendTo, sendAmount, contractParams } = this.params as ShiftInFromDetails;
+
+                if (!nonce) {
+                    throw new Error("Unable to submitToRenVM without nonce");
+                }
+
+                messageID = await this.renVMNetwork.submitDeposits(
+                    sendToken,
+                    sendTo,
+                    sendAmount,
+                    nonce,
+                    generatePHash(contractParams),
+                    utxo.txid,
+                    utxo.output_no,
+                    this.network,
+                );
+
+                promiEvent.emit("messageID", messageID);
+            }
 
             const response = await this.renVMNetwork.waitForResponse(messageID) as ShiftedInResponse;
 
             // tslint:disable-next-line: no-use-before-declare
-            return new Signature(this.network, this.params, response, messageID);
+            return new Signature(this.network, this.params as ShiftInParams, response, messageID);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
@@ -147,9 +163,9 @@ export class Signature {
     }
 
     // tslint:disable-next-line: no-any
-    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<any> => {
+    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt> => {
         // tslint:disable-next-line: no-any
-        const promiEvent = newPromiEvent<any>();
+        const promiEvent = newPromiEvent<TransactionReceipt>();
 
         (async () => {
             const params = [
@@ -172,11 +188,13 @@ export class Signature {
 
             forwardEvents(tx, promiEvent);
 
-            return await tx
+            return await new Promise<TransactionReceipt>((resolve, reject) => tx
+                .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })
                 .catch((error: Error) => {
-                    try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-                    throw error;
-                });
+                    try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
+                    reject(error);
+                })
+            );
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

@@ -44,14 +44,14 @@ describe("promievent.ts", () => {
     });
 
     it("Can forward events", async () => {
-        const promiEvent1 = createPromiEvent(1, "1");
-        const promiEvent2 = createPromiEvent(2, "2");
+        const promiEvent1 = createPromiEvent(1, "transactionHash");
+        const promiEvent2 = createPromiEvent(2, "receipt");
 
         forwardEvents(promiEvent1, promiEvent2);
 
-        const firstEvent = waitForEvent<number>(promiEvent1, "1");
-        const secondEvent = waitForEvent<number>(promiEvent2, "2");
-        const thirdEvent = waitForEvent<number>(promiEvent2, "1");
+        const firstEvent = waitForEvent<number>(promiEvent1, "transactionHash");
+        const secondEvent = waitForEvent<number>(promiEvent2, "receipt");
+        const thirdEvent = waitForEvent<number>(promiEvent2, "transactionHash");
 
         (await firstEvent).should.equal(1);
         (await secondEvent).should.equal(2);
@@ -59,19 +59,19 @@ describe("promievent.ts", () => {
     });
 
     it("Can forward events (2)", async () => {
-        const promiEvent1 = createPromiEvent(1, "1");
+        const promiEvent1 = createPromiEvent(1, "transactionHash");
 
         (async () => {
-            const promiEvent2 = createPromiEvent(2, "2");
+            const promiEvent2 = createPromiEvent(2, "receipt");
 
             forwardEvents(promiEvent1, promiEvent2);
 
-            promiEvent2.emit("1", 1);
+            promiEvent2.emit("transactionHash", 1);
 
             return 1;
         })().then(promiEvent1.resolve).catch(promiEvent1.reject);
 
-        const firstEvent = waitForEvent<number>(promiEvent1, "1");
+        const firstEvent = waitForEvent<number>(promiEvent1, "transactionHash");
 
         (await firstEvent).should.equal(1);
         (await promiEvent1).should.equal(1);

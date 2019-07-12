@@ -2,19 +2,16 @@
   "name": "@renproject/contracts",
   "version": "0.3.1",
   "homepage": "https://republicprotocol.github.io/contracts-ts",
-  "main": "./lib.js",
-  "types": "./lib.d.ts",
+  "main": "./dist/lib.js",
+  "types": "./dist/lib.d.ts",
   "files": [
-    "public/networks",
-    "lib.js",
-    "lib.d.ts"
+    "dist"
   ],
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "tslint-react": "^4.0.0",
-    "web3-utils": "^1.0.0-beta.55"
+    "darknode-sol": "https://github.com/renproject/darknode-sol#localnet"
   },
   "scripts": {
     "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
@@ -24,26 +21,28 @@
     "eject": "$npm_execpath run hash && react-scripts eject",
     "predeploy": "$npm_execpath run hash && $npm_execpath run build",
     "deploy": "$npm_execpath run hash && gh-pages -d build",
-    "prepublish": "rm lib.js; rm lib.d.ts; tsc -d --resolveJsonModule lib.ts"
+    "prepublish": "tsc --module esNext -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist"
   },
   "devDependencies": {
-    "@types/node": "^12.0.4",
+    "@types/node": "^12.6.2",
     "@types/query-string": "^6.3.0",
-    "@types/react": "^16.8.19",
+    "@types/react": "^16.8.23",
     "@types/react-dom": "^16.8.4",
-    "@types/react-router-dom": "^4.3.3",
-    "@types/underscore": "^1.8.18",
+    "@types/react-router-dom": "^4.3.4",
+    "@types/underscore": "^1.9.2",
     "axios": "^0.19.0",
     "change-case": "^3.1.0",
     "gh-pages": "^2.0.1",
     "immutable": "^3.8.2",
-    "query-string": "^6.5.0",
+    "query-string": "^6.8.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-router-dom": "^5.0.1",
     "react-scripts": "^3.0.1",
     "tslint-microsoft-contrib": "^6.2.0",
-    "typescript": "^3.5.1"
+    "tslint-react": "^4.0.0",
+    "typescript": "^3.5.3",
+    "web3-utils": "^1.0.0-beta.55"
   },
   "browserslist": {
     "production": [

@@ -1,7 +1,7 @@
-import * as devnetJSON from "./public/networks/devnet.json";
-import * as localnetJSON from "./public/networks/localnet.json";
-import * as mainnetJSON from "./public/networks/mainnet.json";
-import * as testnetJSON from "./public/networks/testnet.json";
+import devnetJSON from "./src/networks/devnet";
+import localnetJSON from "./src/networks/localnet";
+import mainnetJSON from "./src/networks/mainnet";
+import testnetJSON from "./src/networks/testnet";
 
 export const mainnet = mainnetJSON;
 export const testnet = testnetJSON;
@@ -21,3 +21,5 @@ export const RenNetworks = {
     [RenNetwork.Devnet]: devnet,
     [RenNetwork.Localnet]: localnet,
 }
+
+export type RenNetworkDetails = typeof mainnet | typeof testnet | typeof devnet | typeof localnet;

@@ -61,7 +61,7 @@ export class ShiftOutObject {
                     txHash = await new Promise((resolve, reject) => tx
                         .on("transactionHash", resolve)
                         .catch((error: Error) => {
-                            try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
+                            try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
                             reject(error);
                         })
                     );

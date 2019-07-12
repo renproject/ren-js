@@ -1,7 +1,7 @@
 import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
-import { TransactionConfig } from "web3-core";
+import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 
 import { BitcoinUTXO } from "./blockchain/btc";
@@ -163,9 +163,9 @@ export class Signature {
     }
 
     // tslint:disable-next-line: no-any
-    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<any> => {
+    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt> => {
         // tslint:disable-next-line: no-any
-        const promiEvent = newPromiEvent<any>();
+        const promiEvent = newPromiEvent<TransactionReceipt>();
 
         (async () => {
             const params = [
@@ -188,11 +188,13 @@ export class Signature {
 
             forwardEvents(tx, promiEvent);
 
-            return await tx
+            return await new Promise<TransactionReceipt>((resolve, reject) => tx
+                .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })
                 .catch((error: Error) => {
-                    try { if (ignoreError(error)) { return; } } catch (_error) { /* Ignore _error */ }
-                    throw error;
-                });
+                    try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
+                    reject(error);
+                })
+            );
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

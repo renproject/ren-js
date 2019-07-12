@@ -235,8 +235,10 @@ describe("SDK methods", function () {
             .on("messageID", (messageID: string) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
 
         console.log(`Submitting signature!`);
+        console.log("Waiting for tx...");
         const result = await signature.submitToEthereum(provider)
             .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+        console.log("Done waiting for tx!");
         console.log(result);
     };
 

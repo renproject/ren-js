@@ -1,6 +1,6 @@
-# Official Ren SDK
+# Official typescript RenVM SDK
 
-The official Javascript SDK for interacting with [Ren](https://renproject.io).
+The official Javascript SDK for interacting with the [RenVM](https://renproject.io).
 
 ## Links
 
@@ -9,7 +9,7 @@ The official Javascript SDK for interacting with [Ren](https://renproject.io).
 
 ## Installation
 
-Add the RenSDK using Yarn/npm:
+Add the RenVM SDK using Yarn/npm:
 
 ```bash
 yarn add @renproject/ren
@@ -23,20 +23,20 @@ npm install --save @renproject/ren
 
 Importing using the require syntax
 
-```javascript
-const { RenSDK } = require("@renproject/ren");
+```typescript
+const RenVM = require("@renproject/ren").default;
 ```
 
 Importing using the ES6 syntax
 
-```javascript
-import { RenSDK } from "@renproject/ren";
+```typescript
+import RenVM from "@renproject/ren";
 ```
 
 ## Usage
 
-```javascript
-const sdk = new RenSDK("testnet");
+```typescript
+const sdk = new RenVM("testnet");
 ```
 
 For more information, [check out an example](https://app.gitbook.com/@renproject/s/developers/examples/bitcoin-payments).

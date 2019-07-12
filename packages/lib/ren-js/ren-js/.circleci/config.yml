@@ -5,7 +5,7 @@ jobs:
             NODE_ENV: development
         docker:
             - image: circleci/node:8
-        working_directory: ~/ren-sdk-ts
+        working_directory: ~/renvm-sdk-js
         steps:
             - checkout
 

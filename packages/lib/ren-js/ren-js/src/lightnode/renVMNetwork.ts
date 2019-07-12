@@ -45,7 +45,7 @@ const decodeValue = (value: Type<string, string, any>) => {
     try {
         return value.type.match(/u[0-9]+/) ? value.value : Ox(Buffer.from(value.value, "base64"));
     } catch (error) {
-        throw new Error(`Unable to unmarshal value from Darknodes: ${JSON.stringify(value)} - ${error}`);
+        throw new Error(`Unable to unmarshal value from RenVM: ${JSON.stringify(value)} - ${error}`);
     }
 };
 

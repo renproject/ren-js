@@ -268,15 +268,19 @@ describe("SDK methods", function () {
         ];
 
         console.log("Approving contract.");
-        await zBTCContract.methods.approve(
+        await new Promise((resolve, reject) => zBTCContract.methods.approve(
             ...approveParams,
         ).send({ from: ethAddress, gas: 1000000 })
+            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); })
+            .on("confirmation", resolve)
             .catch((error: Error) => {
                 if (error && error.message && error.message.match(/Invalid block number/)) {
+                    console.error(error);
                     return;
                 }
-                throw error;
-            });
+                reject(error);
+            })
+        );
 
         // Send burn request to adapter contract.
         const payload: Arg[] = [
@@ -313,6 +317,8 @@ describe("SDK methods", function () {
         // });
         // console.log(result);
 
+        console.log("Reading burn from Ethereum.");
+
         const shiftOutObject = await sdk.shiftOut({
             sendTo: adapterContract,
             contractFn: "shiftOut",
@@ -324,6 +330,8 @@ describe("SDK methods", function () {
             // txHash: result.transactionHash,
         }).readFromEthereum()
             .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+
+        console.log("Submitting burn to RenVM.");
 
         const response = await shiftOutObject.submitToRenVM()
             .on("messageID", (messageID) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
@@ -359,6 +367,7 @@ describe("SDK methods", function () {
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
         await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
+        await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
         const finalBTCBalance = await checkBTCBalance(btcAddress);
 
         finalBTCBalance.sub(initialBTCBalance).should.bignumber.at.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));

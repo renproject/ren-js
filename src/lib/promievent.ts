@@ -23,6 +23,7 @@
  */
 
 import { EventEmitter } from "events";
+import { TransactionReceipt } from "web3-core";
 
 class InternalPromiEvent<T> {
     public readonly [Symbol.toStringTag]: "Promise";
@@ -41,6 +42,9 @@ class InternalPromiEvent<T> {
     // @ts-ignore no initializer because of proxyHandler
     // tslint:disable-next-line: no-any
     public readonly on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    // @ts-ignore no initializer because of proxyHandler
+    // tslint:disable-next-line: no-any
+    public readonly once: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly then: Promise<T>["then"];
     // @ts-ignore no initializer because of proxyHandler
@@ -92,20 +96,33 @@ export type PromiEvent<T> = InternalPromiEvent<T> & Promise<T>;
 export const newPromiEvent = <T>() => new InternalPromiEvent<T>() as PromiEvent<T>;
 
 export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, filterFn = (_name: string) => true) => {
-    // tslint:disable-next-line: no-any
-    const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
-        if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) { src.on(eventName, listener); }
-    };
+    // // tslint:disable-next-line: no-any
+    // const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
+    //     if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) {
+    //         console.log(`Forwarding ${eventName}!!! Listener:`);
+    //         console.log(listener);
+    //         src.on(eventName, listener);
+    //         src.on("transactionHash", (txHash) => { console.log(`Got transaction hash on src`); });
+    //     } else {
+    //         console.log("Can't forward PromiEvent event!");
+    //     }
+    // };
 
-    // tslint:disable-next-line: no-any
-    const forwardEmitterRemoveListener = (eventName: string, listener: (...args: any[]) => void) => {
-        src.removeListener(eventName, listener);
-    };
+    // // tslint:disable-next-line: no-any
+    // const forwardEmitterRemoveListener = (eventName: string, listener: (...args: any[]) => void) => {
+    //     src.removeListener(eventName, listener);
+    // };
 
-    // Listeners bound to the destination emitter should be bound to the source emitter.
-    dest.on("newListener", forwardEmitterNewListener);
+    // // Listeners bound to the destination emitter should be bound to the source emitter.
+    // dest.on("newListener", forwardEmitterNewListener);
 
-    // When a listener is removed from the destination emitter, remove it from the source emitter
-    // (otherwise it will continue to be called).
-    dest.on("removeListener", forwardEmitterRemoveListener);
+    // // When a listener is removed from the destination emitter, remove it from the source emitter
+    // // (otherwise it will continue to be called).
+    // dest.on("removeListener", forwardEmitterRemoveListener);
+
+    // Until the above is fixed, we manually forward each event name:
+    src.on("transactionHash", (eventReceipt: string) => { dest.emit("transactionHash", eventReceipt); });
+    src.on("receipt", (eventReceipt: TransactionReceipt) => { dest.emit("receipt", eventReceipt); });
+    src.on("confirmation", (confNumber: number, eventReceipt: TransactionReceipt) => { dest.emit("confirmation", confNumber, eventReceipt); });
+    src.on("error", (error: Error) => { dest.emit("error", error); });
 };

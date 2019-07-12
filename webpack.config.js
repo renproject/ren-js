@@ -26,7 +26,7 @@ module.exports = [
             path: path.resolve(__dirname, 'dist'),
             filename: 'browser.js',
             libraryTarget: 'var',
-            library: 'RenSDK', // This is the var name in browser
+            library: 'RenVM', // This is the var name in browser
             libraryExport: 'default'
         },
         node: {

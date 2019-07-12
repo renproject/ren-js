@@ -320,7 +320,7 @@ describe("SDK methods", function () {
             web3Provider: provider,
             sendToken: Tokens.BTC.Eth2Btc,
             // txHash: result.transactionHash,
-        })
+        }).readFromEthereum()
             .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
 
         const response = await shiftOutObject.submitToRenVM()

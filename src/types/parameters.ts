@@ -24,7 +24,15 @@ interface ContractCall {
     txConfig?: TransactionConfig;
 }
 
-export interface ShiftInParams extends ContractCall {
+export interface ShiftInFromMessageID extends ContractCall {
+    /**
+     * Provide the message ID returned from RenVM to continue a previous
+     * shiftIn.
+     */
+    messageID: string;
+}
+
+export interface ShiftInFromDetails extends ContractCall {
     /**
      * The token, including the origin and destination chains
      */
@@ -40,6 +48,9 @@ export interface ShiftInParams extends ContractCall {
      */
     nonce?: string;
 }
+
+export type ShiftInParams = ShiftInFromMessageID | ShiftInFromDetails;
+export type ShiftInParamsAll = Partial<ShiftInFromMessageID> & Partial<ShiftInFromDetails>;
 
 interface ShiftOutParamsCommon {
     /**

@@ -3179,7 +3179,7 @@ damerau-levenshtein@^1.0.4:
 
 "darknode-sol@https://github.com/renproject/darknode-sol#localnet":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#a40d08f172b210f379ca1a4a0b90ae9294aa1cf5"
+  resolved "https://github.com/renproject/darknode-sol#a79085fa0f431ae94bad04d2ec5f6c04f80bd94b"
   dependencies:
     openzeppelin-solidity "2.3.0"
 

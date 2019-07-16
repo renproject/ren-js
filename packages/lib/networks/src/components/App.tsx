@@ -5,6 +5,10 @@ import { HashRouter, Route } from "react-router-dom";
 import { OrderedMap } from "immutable";
 
 import { NetworkData } from "../lib/networks";
+import devnet from "../networks/devnet";
+import testnet from "../networks/testnet";
+import localnet from "../networks/localnet";
+import mainnet from "../networks/mainnet";
 import "../styles/App.css";
 import Loading from "./Loading";
 import Main from "./Main";
@@ -26,20 +30,11 @@ class App extends React.Component<AppProps, AppState> {
         super(props);
         this.state = {
             outOfDate: false,
-            networks: null,
+            networks: OrderedMap({ mainnet, testnet, devnet, localnet }),
         };
     }
 
     public async componentDidMount() {
-
-        const mainnet = (await axios.get(`./networks/mainnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        const testnet = (await axios.get(`./networks/testnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        const devnet = (await axios.get(`./networks/devnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        const localnet = (await axios.get(`./networks/localnet.json?v=${Math.random().toString(36).substring(7)}`)).data;
-        this.setState({
-            networks: OrderedMap({ mainnet, testnet, devnet, localnet })
-        });
-
         let using;
         let latest;
         try {

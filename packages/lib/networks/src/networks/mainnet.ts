@@ -16,10 +16,6 @@ export default {
     etherscan: "https://etherscan.io",
     addresses: {
         ren: {
-            AlternativeREN: {
-                address: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
-                abi: RenToken.abi as AbiItem[],
-            },
             DarknodeRegistryStore: {
                 address: DarknodeRegistryStore.networks[1].address,
                 abi: DarknodeRegistryStore.abi as AbiItem[],

@@ -12,13 +12,19 @@ import DarknodePayment from "darknode-sol/build/devnet/DarknodePayment.json";
 import BTCShifter from "darknode-sol/build/devnet/BTCShifter.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
-export default {
+import { Network } from "./network";
+
+export default Network({
     name: "devnet",
     chain: "kovan",
     label: "Devnet",
     chainLabel: "Kovan",
     infura: "https://kovan.infura.io",
     etherscan: "https://kovan.etherscan.io",
+    renVM: {
+        mpkh: "0x390e916c0f9022ef6cc44f05cd5094b2d9597574",
+        mintAuthority: "0x723eb4380e03df6a6f98cc1338b00cfbe5e45218",
+    },
     addresses: {
         ren: {
             DarknodeSlasher: {
@@ -96,4 +102,4 @@ export default {
             }
         }
     }
-}
+});

@@ -7,13 +7,19 @@ import DarknodeRewardVault from "darknode-sol/build/main/DarknodeRewardVault.jso
 import RenToken from "darknode-sol/build/main/RenToken.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
-export default {
+import { Network } from "./network";
+
+export default Network({
     name: "mainnet",
     chain: "main",
     label: "Mainnet",
     chainLabel: "Mainnet",
     infura: "https://mainnet.infura.io",
     etherscan: "https://etherscan.io",
+    renVM: {
+        mpkh: "",
+        mintAuthority: "",
+    },
     addresses: {
         ren: {
             DarknodeRegistryStore: {
@@ -92,4 +98,4 @@ export default {
             }
         }
     }
-}
+});

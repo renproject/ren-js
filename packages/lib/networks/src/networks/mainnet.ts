@@ -53,7 +53,28 @@ export default Network({
                 abi: DarknodePaymentStore.abi as AbiItem[],
             }
         },
-        shifter: {},
+        shifter: {
+            BTCShifter: {
+                address: "",
+                abi: [] as AbiItem[],
+            },
+            ZECShifter: {
+                address: "",
+                abi: [] as AbiItem[],
+            },
+            zBTC: {
+                address: "",
+                abi: [] as AbiItem[],
+            },
+            zZEC: {
+                address: "",
+                abi: [] as AbiItem[],
+            },
+            ShifterRegistry: {
+                address: "",
+                abi: [] as AbiItem[],
+            }
+        },
         tokens: {
             REN: {
                 address: RenToken.networks[1].address,

@@ -21,7 +21,7 @@
     "eject": "$npm_execpath run hash && react-scripts eject",
     "predeploy": "$npm_execpath run hash && $npm_execpath run build",
     "deploy": "$npm_execpath run hash && gh-pages -d build",
-    "prepublish": "tsc --module esNext -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist"
+    "prepublish": "tsc --module commonjs -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist"
   },
   "devDependencies": {
     "@types/node": "^12.6.2",

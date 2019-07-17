@@ -8,7 +8,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
-import { ShiftedInResponse } from "../lightnode/renVMNetwork";
+import { ShiftedInResponse } from "../renVM/renVMNetwork";
 import { actionToDetails, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -51,7 +51,7 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
 };
 
 export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    const token = network.zBTC; // actionToDetails(_shiftAction).asset;
+    const token = network.contracts.addresses.shifter.zBTC.address; // actionToDetails(_shiftAction).asset;
     const pHash = generatePHash(_payload);
 
     const hash = rawEncode(
@@ -133,7 +133,7 @@ export const fixSignature = (response: ShiftedInResponse, network: NetworkDetail
         )),
     };
 
-    const expected = Buffer.from(network.masterKey.eth, "hex");
+    const expected = Buffer.from(strip0x(network.contracts.renVM.mintAuthority), "hex");
     if (recovered[v].equals(expected)) {
         // Do nothing
     } else if (recovered[switchV(v)].equals(expected)) {

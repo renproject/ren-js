@@ -1,15 +1,20 @@
+// tslint:disable: no-http-string
+
+import { devnet, localnet, mainnet, testnet } from "@renproject/contracts";
 import { Networks as BNetworks } from "bitcore-lib";
 import { Networks as ZNetworks } from "bitcore-lib-zcash";
+import { List } from "immutable";
 
 export enum Network {
     Mainnet = "mainnet",
     Testnet = "testnet",
     Devnet = "devnet",
+    Localnet = "localnet",
 }
 
 export interface NetworkDetails {
     name: string;
-    lightnodeURL: string;
+    nodeURLs: string[];
 
     mercuryURL: {
         btc: string,
@@ -20,19 +25,14 @@ export interface NetworkDetails {
         zec: string,
     };
     chainSoURL: string;
-    masterKey: {
-        mpkh: string;
-        eth: string;
-    };
     bitcoinNetwork: BNetworks.Network;
     zcashNetwork: ZNetworks.Network;
-    zBTC: string; // TODO: Use map of tokens
-    BTCShifter: string;
+    contracts: typeof mainnet | typeof testnet | typeof devnet | typeof localnet;
 }
 
 export const NetworkMainnet: NetworkDetails = {
     name: Network.Mainnet,
-    lightnodeURL: "",
+    nodeURLs: [""],
     mercuryURL: {
         btc: "",
         zec: "",
@@ -42,18 +42,14 @@ export const NetworkMainnet: NetworkDetails = {
         zec: "",
     },
     chainSoURL: "",
-    masterKey: {
-        mpkh: "",
-        eth: "",
-    },
+
     bitcoinNetwork: BNetworks.mainnet,
     zcashNetwork: ZNetworks.mainnet,
-    zBTC: "",
-    BTCShifter: "",
+    contracts: mainnet,
 };
 
 // Configurations shared by Testnet and Devnet
-const generalTestnet = {
+const commonTestConfig = {
     mercuryURL: {
         btc: "https://ren-mercury.herokuapp.com/btc-testnet3",
         zec: "https://ren-mercury.herokuapp.com/zec-testnet",
@@ -69,26 +65,40 @@ const generalTestnet = {
 
 export const NetworkTestnet: NetworkDetails = {
     name: Network.Testnet,
-    lightnodeURL: "https://lightnode-testnet.herokuapp.com",
-    ...generalTestnet,
-    masterKey: {
-        mpkh: "feea966136a436e44c96335455771943452728fc",
-        eth: "44Bb4eF43408072bC888Afd1a5986ba0Ce35Cb54",
-    },
-    zBTC: "0x1aFf7F90Bab456637a17d666D647Ea441A189F2d",
-    BTCShifter: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f",
+    nodeURLs: ["https://lightnode-testnet.herokuapp.com"],
+    ...commonTestConfig,
+    contracts: testnet,
 };
+
+const USE_DEVNET_NODES = false;
+const devnetNodes = [
+    "/ip4/209.97.142.95/tcp/18514/ren/8MHBnQx4ftSrSLvQNBdrxjkbr34KTk",
+    "/ip4/159.203.5.109/tcp/18514/ren/8MKEFLAciYAgUsR4hG45oczthywtfo",
+    "/ip4/134.209.84.230/tcp/18514/ren/8MHRw1K57vFcYzTs6xiTiYs2iwxQX7",
+    "/ip4/67.207.83.83/tcp/18514/ren/8MJ6zb2jeGvneG2b3cxRzie7StTHcq",
+    "/ip4/68.183.198.209/tcp/18514/ren/8MHVWUvxEyq3i6vUCmVez5HafDATtR",
+    "/ip4/134.209.84.230/tcp/18514/ren/8MHMb2j7zacAMw8Wzvn2QBojDqwo52",
+    "/ip4/178.62.61.84/tcp/18514/ren/8MHXKcMVNEgo75FsbckSjnsrzmW2oi",
+    "/ip4/178.128.239.168/tcp/18514/ren/8MHhMWw8GeFxenczz2n23kMJkZg6xS",
+    "/ip4/178.128.241.255/tcp/18514/ren/8MJnxv8Uy3VzaWkeTXwhJ5pySRh6KW",
+    "/ip4/159.203.90.81/tcp/18514/ren/8MJJoxU42DG3v42jke7CwSLHXmvWA3",
+    "/ip4/178.62.120.202/tcp/18514/ren/8MJNcWGagTSTJtJWejrLFucMW21M8J",
+    "/ip4/138.68.245.91/tcp/18514/ren/8MGpj1s5zg8sXhHpbDurdCMnERGezW",
+];
 
 export const NetworkDevnet: NetworkDetails = {
     name: Network.Devnet,
-    lightnodeURL: "https://lightnode-devnet.herokuapp.com",
-    ...generalTestnet,
-    masterKey: {
-        mpkh: "390e916c0f9022ef6cc44f05cd5094b2d9597574",
-        eth: "723eb4380e03df6a6f98cc1338b00cfbe5e45218",
-    },
-    zBTC: "0x4eB1403f565c3e3145Afc3634F16e2F092545C2a",
-    BTCShifter: "0x7a40fE9FB464510215C41Eae1216973514eeEBB1",
+    nodeURLs: USE_DEVNET_NODES ? devnetNodes : ["https://lightnode-devnet.herokuapp.com"],
+    ...commonTestConfig,
+    contracts: devnet,
+};
+
+const localnetCount = 6;
+export const NetworkLocalnet: NetworkDetails = {
+    name: Network.Localnet,
+    nodeURLs: List(Array(localnetCount)).map((_, index) => `http://0.0.0.0:${6001 + 10 * index}`).toArray(),
+    ...commonTestConfig,
+    contracts: localnet,
 };
 
 export const stringToNetwork = (network?: NetworkDetails | string | null | undefined): NetworkDetails => {
@@ -101,6 +111,8 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
                 return NetworkTestnet;
             case "devnet":
                 return NetworkDevnet;
+            case "localnet":
+                return NetworkLocalnet;
             default:
                 throw new Error(`Unsupported network "${network}"`);
         }

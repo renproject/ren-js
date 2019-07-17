@@ -13,7 +13,7 @@ import {
     fixSignature, generateAddress, generateHash, generatePHash, ignoreError, retrieveDeposits,
     SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
 } from "./lib/utils";
-import { RenVMNetwork, ShiftedInResponse } from "./lightnode/renVMNetwork";
+import { RenVMNetwork, ShiftedInResponse } from "./renVM/renVMNetwork";
 import { NetworkDetails } from "./types/networks";
 import { ShiftInFromDetails, ShiftInParams, ShiftInParamsAll } from "./types/parameters";
 

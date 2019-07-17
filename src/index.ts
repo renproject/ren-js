@@ -1,11 +1,11 @@
-import { RenVMNetwork } from "./lightnode/renVMNetwork";
+import { RenVMNetwork } from "./renVM/renVMNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
 import { Chain, Tokens } from "./types/assets";
 import { Network, NetworkDetails, stringToNetwork } from "./types/networks";
 import { ShiftInParams, ShiftOutParams } from "./types/parameters";
 
-export * from "./lightnode/renVMNetwork";
+export * from "./renVM/renVMNetwork";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";
@@ -59,7 +59,7 @@ export default class RenVM {
      */
     constructor(network?: NetworkDetails | string | null | undefined) {
         this.network = stringToNetwork(network);
-        this.renVMNetwork = new RenVMNetwork(this.network.lightnodeURL);
+        this.renVMNetwork = new RenVMNetwork(this.network.nodeURLs);
     }
 
     /**

@@ -17,7 +17,7 @@ import { Ox, strip0x } from "../src/blockchain/common";
 import RenVM, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
 import { Arg } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
-import { NetworkDetails, NetworkTestnet, stringToNetwork } from "../src/types/networks";
+import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
 require("dotenv").config();
 
@@ -29,7 +29,7 @@ chai.should();
 const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
-const TEST_NETWORK = process.env.TEST_NETWORK;
+const NETWORK = process.env.NETWORK;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
 // tslint:disable-next-line:no-http-string
@@ -122,7 +122,7 @@ describe("SDK methods", function () {
         web3 = new Web3(provider);
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
-        network = stringToNetwork(TEST_NETWORK || "testnet");
+        network = stringToNetwork(NETWORK || "testnet");
         sdk = new RenVM(network);
     });
 
@@ -348,12 +348,12 @@ describe("SDK methods", function () {
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.contracts.addresses.shifter.zBTC.address));
 
         // Test minting.
         console.log("Starting mint test:");
         const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
-        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitIndividual);
+        await mintTest(network.contracts.addresses.shifter.BTCShifter.address, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitIndividual);
         const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
@@ -366,7 +366,7 @@ describe("SDK methods", function () {
         // const burnValue = amount;
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
-        await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
+        await burnTest(zBTCContract, network.contracts.addresses.shifter.BTCShifter.address, adapterContract, burnValue, ethAddress, btcAddress);
         await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
         const finalBTCBalance = await checkBTCBalance(btcAddress);
 
@@ -380,11 +380,11 @@ describe("SDK methods", function () {
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.contracts.addresses.shifter.zBTC.address));
 
         console.log("Starting mint test:");
         const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
-        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitTogether);
+        await mintTest(network.contracts.addresses.shifter.BTCShifter.address, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitTogether);
         const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).

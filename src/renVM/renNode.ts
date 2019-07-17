@@ -4,7 +4,7 @@ import {
     ReceiveMessageRequest, ReceiveMessageResponse, SendMessageRequest, SendMessageResponse,
 } from "./types";
 
-export class Lightnode {
+export class RenNode {
     public readonly lightnodeURL: string;
 
     constructor(lightnodeURL: string) {

@@ -4,7 +4,7 @@ import Web3 from "web3";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
-import { RenVMNetwork, ShiftedOutResponse } from "./lightnode/renVMNetwork";
+import { RenVMNetwork, ShiftedOutResponse } from "./renVM/renVMNetwork";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;

@@ -27,8 +27,24 @@ export type Args = Array<Arg<string, string, any>>;
 // tslint:disable-next-line: no-any
 export const decodeValue = (value: Arg<string, string, any>) => {
     try {
-        return value.type.match(/u[0-9]+/) ? value.value : Ox(Buffer.from(value.value, "base64"));
+        // ext_btcCompatUTXO
+        if (value.type === "ext_btcCompatUTXO") {
+            return value.value;
+        }
+
+        // u32, u64, etc.
+        if (value.type.match(/u[0-9]+/)) {
+            return value.value;
+        }
+
+        // b, b20, b32, etc.
+        if (value.type.match(/b[0-9]+/)) {
+            return Ox(Buffer.from(value.value, "base64"));
+        }
+
+        // Fallback
+        return Ox(Buffer.from(value.value, "base64"));
     } catch (error) {
-        throw new Error(`Unable to unmarshal value from RenVM: ${JSON.stringify(value)} - ${error}`);
+        throw new Error(`Unable to unmarshal ${value.name} of type ${value.type} from RenVM: ${JSON.stringify(value.value)} - ${error}`);
     }
 };

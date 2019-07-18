@@ -1,4 +1,4 @@
-import { RenVMNetwork } from "./renVM/renVMNetwork";
+import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
 import { Chain, Tokens } from "./types/assets";
@@ -50,7 +50,7 @@ export default class RenVM {
 
     // Internal state
     private readonly network: NetworkDetails;
-    private readonly renVMNetwork: RenVMNetwork;
+    private readonly renVMNetwork: ShifterNetwork;
 
     /**
      * Takes a Network object that contains relevant addresses.
@@ -59,7 +59,7 @@ export default class RenVM {
      */
     constructor(network?: NetworkDetails | string | null | undefined) {
         this.network = stringToNetwork(network);
-        this.renVMNetwork = new RenVMNetwork(this.network.nodeURLs);
+        this.renVMNetwork = new ShifterNetwork(this.network.nodeURLs);
     }
 
     /**

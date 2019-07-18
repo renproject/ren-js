@@ -14,8 +14,8 @@ import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenVM, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
-import { Arg, retryNTimes } from "../src/lib/utils";
+import RenVM, { getBitcoinUTXOs, ShiftInObject, ShiftOutObject } from "../src/index";
+import { Arg, retryNTimes, SECONDS, sleep } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
@@ -236,17 +236,24 @@ describe("SDK methods", function () {
 
         const deposit = await shift.waitForDeposit(confirmations)
             .on("deposit", (depositObject) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(depositObject)}`); });
-        console.log(`Submitting deposit!`);
 
+        await sleep(5 * SECONDS);
+
+        console.log(`Submitting deposit!`);
         const signature = await deposit.submitToRenVM()
             .on("messageID", (messageID: string) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
 
         console.log(`Submitting signature!`);
         console.log("Waiting for tx...");
-        const result = await signature.submitToEthereum(provider)
-            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
-        console.log("Done waiting for tx!");
-        console.log(result);
+        try {
+            const result = await signature.submitToEthereum(provider, { gas: 1000000 })
+                .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+            console.log("Done waiting for tx!");
+            console.log(result);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     };
 
     const submitTogether = async (shift: ShiftInObject): Promise<void> => {
@@ -326,17 +333,24 @@ describe("SDK methods", function () {
 
         console.log("Reading burn from Ethereum.");
 
-        const shiftOutObject = await sdk.shiftOut({
-            sendTo: adapterContract,
-            contractFn: "shiftOut",
-            contractParams: payload,
-            txConfig: { from: ethAddress },
+        let shiftOutObject: ShiftOutObject;
+        try {
+            shiftOutObject = await sdk.shiftOut({
+                sendTo: adapterContract,
+                contractFn: "shiftOut",
+                contractParams: payload,
+                txConfig: { from: ethAddress, gas: 1000000 },
 
-            web3Provider: provider,
-            sendToken: Tokens.BTC.Eth2Btc,
-            // txHash: result.transactionHash,
-        }).readFromEthereum()
-            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+                web3Provider: provider,
+                sendToken: Tokens.BTC.Eth2Btc,
+                // txHash: result.transactionHash,
+            }).readFromEthereum()
+                .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+        } catch (error) {
+            console.error(error);
+        }
+
+        await sleep(5 * SECONDS);
 
         console.log("Submitting burn to RenVM.");
 
@@ -351,7 +365,7 @@ describe("SDK methods", function () {
 
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-        const amount = 0.000225 * (10 ** 8);
+        let amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
@@ -370,6 +384,7 @@ describe("SDK methods", function () {
 
         // // Test burning.
         const burnValue = balance.toNumber();
+        // amount = 0.000225 * (10 ** 8);
         // const burnValue = amount;
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);

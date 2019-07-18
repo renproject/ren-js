@@ -186,10 +186,10 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
-"@renproject/contracts@0.3.7":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.7.tgz#9cb90fd366d1e63b35c2fc2b0d3131792d4e47e0"
-  integrity sha512-z+Br+aHye0mkdB5vhIK4ZNTdoxDBIBMYyzJqmnh+QakJ/Sk6xC3IweITp3oFq7Qz4iQktpg98oRYAPsnEb0MZw==
+"@renproject/contracts@^0.3.8":
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.8.tgz#657a6e3057be00bf11edb7f18ad8e5991caf79a9"
+  integrity sha512-Ynz1iBWz1XGW9a44PwfAdKkmt4s5WnukdY3SPAO6705zmbNg5dBQSTJJcB3Me4a9JQHyWkfExu25iI/UVEdCMw==
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#localnet"
 
@@ -1772,7 +1772,7 @@ cyclist@~0.2.2:
 
 "darknode-sol@https://github.com/renproject/darknode-sol#localnet":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#41040e41220fd7b0b08eec6f9bb2a46281f6ea17"
+  resolved "https://github.com/renproject/darknode-sol#7f62c02aec7a4e480e147732dd8371dec06aa289"
   dependencies:
     openzeppelin-solidity "2.3.0"
 

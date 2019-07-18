@@ -1,9 +1,9 @@
 import { Token } from "../types/assets";
-import { Arg } from "./jsonRPC";
+import { Arg, Args } from "./jsonRPC";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
 
-export type TxArgsArray = [
+export type MintArgsArray = [
     Arg<"phash", "b32", string>, // base64
     Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>, // base64
@@ -12,19 +12,39 @@ export type TxArgsArray = [
     Arg<"utxo", "ext_btcCompatUTXO", { "txHash": string; /* base64 */ "vOut": number; }>
 ];
 
+export type BurnArgsArray = [
+    Arg<"ref", "u64", number>,
+];
+
+export type TxOutputArgsArray = [
+    Arg<"phash", "b32", string>,
+    Arg<"amount", "u64", number>,
+    Arg<"token", "b20", string>,
+    Arg<"to", "b20", string>,
+    Arg<"n", "b32", string>,
+    Arg<"utxo", "ext_btcCompatUTXO", { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": 60000 }>,
+    Arg<"gas", "u64", number>,
+    Arg<"ghash", "b32", string>,
+    Arg<"nhash", "b32", string>,
+    Arg<"hash", "b32", string>,
+];
+
 export type TxSignatureArray = [
     Arg<"r", "b", string>, // base 64
     Arg<"s", "b", string>, // base 64
     Arg<"v", "b", string>, // base 64
 ];
 
-export interface SubmitTxRequest {
+export interface SubmitTxRequest<T extends Args> {
     // Tx being submitted.
     tx: {
         "to": Token;
-        "args": TxArgsArray;
+        "args": T;
     };
 }
+
+export type SubmitMintRequest = SubmitTxRequest<MintArgsArray>;
+export type SubmitBurnRequest = SubmitTxRequest<BurnArgsArray>;
 
 export interface QueryTxRequest {
     // TxHash of the transaction that will be returned.
@@ -36,7 +56,7 @@ export type SubmitTxResponse = {
     tx: {
         hash: string;
         to: Token;
-        args: TxArgsArray;
+        args: MintArgsArray;
     };
 };
 
@@ -65,27 +85,21 @@ export interface QueryTxResponse {
     tx: {
         hash: string;
         to: Token;
-        args: TxArgsArray;
+        args: TxOutputArgsArray;
         out: TxSignatureArray;
     };
     txStatus: TxStatus;
 }
 
-export interface MintApproval {
+export type QueryBurnResponse = {
     tx: {
         hash: string;
         to: Token;
-        args: TxArgsArray;
-        out: TxSignatureArray;
+        args: any;
+        out: any;
     };
     txStatus: TxStatus;
-}
-
-// export type ShiftedOutResponse = {
-//     amount: number;
-//     to: string;
-//     ref: number;
-// };
+};
 
 export interface Tx {
     hash: string;
@@ -95,7 +109,11 @@ export interface Tx {
         token: string;
         to: string;
         n: string;
-        utxo: { "txHash": string; "vOut": number; };
+        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": 60000 };
+        gas: number;
+        ghash: string;
+        nhash: string;
+        hash: string;
     };
     signature: {
         r: string;

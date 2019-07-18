@@ -98,11 +98,11 @@ export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: T
 
 export const SECONDS = 1000;
 // tslint:disable-next-line: no-string-based-set-timeout
-export const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
+export const sleep = async (milliseconds: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 export interface Signature { r: string; s: string; v: number; }
 
-export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${strip0x(sig.r)} ${sig.s} ${sig.v.toString(16)} `);
+export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
 
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
@@ -127,14 +127,14 @@ export const fixSignature = (response: Tx, network: NetworkDetails): Signature =
     // has been updated.
     const recovered = {
         [v]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.hash), "hex"),
+            Buffer.from(strip0x(response.args.hash), "hex"),
             v,
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),
 
         [switchV(v)]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.hash), "hex"),
+            Buffer.from(strip0x(response.args.hash), "hex"),
             switchV(v),
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),

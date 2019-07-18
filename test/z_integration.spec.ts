@@ -15,7 +15,7 @@ import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenVM, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
-import { Arg } from "../src/lib/utils";
+import { Arg, retryNTimes } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
@@ -32,8 +32,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
-// tslint:disable-next-line:no-http-string
-const MERCURY_URL = "http://139.59.221.34/btc-testnet3";
+const mercuryProtocol = "http";
 const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 /*
@@ -116,6 +115,7 @@ describe("SDK methods", function () {
     let network: NetworkDetails;
     let sdk: RenVM;
     let accounts: string[];
+    let MERCURY_URL;
 
     before(async () => {
         provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
@@ -124,6 +124,7 @@ describe("SDK methods", function () {
         web3.eth.defaultAccount = accounts[0];
         network = stringToNetwork(NETWORK || "testnet");
         sdk = new RenVM(network);
+        MERCURY_URL = `${mercuryProtocol}://139.59.221.34/btc-testnet3`;
     });
 
     // tslint:disable-next-line:no-any
@@ -205,12 +206,18 @@ describe("SDK methods", function () {
 
             console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
             try {
-                await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+                await retryNTimes(
+                    () => axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() }, { timeout: 5000 }),
+                    5,
+                );
             } catch (error) {
                 console.log(`Unable to submit to Mercury (${error}). Trying chain.so...`);
                 try {
                     console.log(transaction.toString());
-                    await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
+                    await retryNTimes(
+                        () => axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() }, { timeout: 5000 }),
+                        5,
+                    );
                 } catch (chainError) {
                     console.error(`chain.so returned error ${chainError.message}`);
                     console.log(`\n\n\nPlease check ${btcAddress}'s balance!\n`);

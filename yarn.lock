@@ -186,10 +186,10 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
-"@renproject/contracts@0.3.6":
-  version "0.3.6"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.6.tgz#44f59e3e0fcc3e4604e4393c0e9be6015392bec5"
-  integrity sha512-tLjHBz3dcqLBkZR0n5gD+a1Rm9XbAAtmJ/QfmNxGhGJHkHvqx5CGjFgOC9pJuSXhG9YQotWJNYY18ugGC8uGPQ==
+"@renproject/contracts@0.3.7":
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.7.tgz#9cb90fd366d1e63b35c2fc2b0d3131792d4e47e0"
+  integrity sha512-z+Br+aHye0mkdB5vhIK4ZNTdoxDBIBMYyzJqmnh+QakJ/Sk6xC3IweITp3oFq7Qz4iQktpg98oRYAPsnEb0MZw==
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#localnet"
 

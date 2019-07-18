@@ -1,5 +1,3 @@
-// tslint:disable: no-http-string
-
 import { devnet, localnet, mainnet, testnet } from "@renproject/contracts";
 import { Networks as BNetworks } from "bitcore-lib";
 import { Networks as ZNetworks } from "bitcore-lib-zcash";
@@ -94,9 +92,10 @@ export const NetworkDevnet: NetworkDetails = {
 };
 
 const localnetCount = 6;
+const localnetProtocol = "http";
 export const NetworkLocalnet: NetworkDetails = {
     name: Network.Localnet,
-    nodeURLs: List(Array(localnetCount)).map((_, index) => `http://0.0.0.0:${6001 + 10 * index}`).toArray(),
+    nodeURLs: List(Array(localnetCount)).map((_, index) => `${localnetProtocol}://0.0.0.0:${6001 + 10 * index}`).toArray(),
     ...commonTestConfig,
     contracts: localnet,
 };

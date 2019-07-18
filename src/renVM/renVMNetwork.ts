@@ -4,60 +4,22 @@ import { Ox, strip0x } from "../blockchain/common";
 import { SECONDS, sleep } from "../lib/utils";
 import { Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
+import { decodeValue, JSONRPCResponse } from "./jsonRPC";
 import { RenNode } from "./renNode";
-import { Args, JSONRPCResponse } from "./types";
-
-export interface ShiftedInResponse {
-    r: string;
-    s: string;
-    v: string;
-    phash: string;
-    amount: number;
-    token: string;
-    to: string;
-    nhash: string;
-    hash: string;
-    ghash: string;
-}
-
-export interface ShiftedOutResponse {
-    amount: number;
-    to: string;
-    ref: number;
-}
-
-interface Type<type extends string, name extends string, valueType> {
-    "type": type;
-    "name": name;
-    "value": valueType; // "8d8126"
-}
-
-type ShifterResponse = JSONRPCResponse<{
-    out: [
-        Type<"u64", "amount", string>, // "8d8126"
-        Type<"b20", "txHash", string>, // "18343428f9b057102c4a6da8d8011514a5ea8be2f44af636bcd26a8ae4e2b719"
-        Type<"b20", "r", string>, // "c762164060c7bbffbd0a76335d02ca8e69f792b13d8eb865a09690cc30aaf55e"
-        Type<"b20", "s", string>, // "b3785c63afb91bb58e98a89552fdf3cb6034e5f349ab1f37f67d9e314fd4f506"
-        Type<"b20", "v", string>, // "01"
-    ],
-}>;
-
-// tslint:disable-next-line: no-any
-const decodeValue = (value: Type<string, string, any>) => {
-    try {
-        return value.type.match(/u[0-9]+/) ? value.value : Ox(Buffer.from(value.value, "base64"));
-    } catch (error) {
-        throw new Error(`Unable to unmarshal value from RenVM: ${JSON.stringify(value)} - ${error}`);
-    }
-};
+import { QueryTxResponse, SubmitTxResponse, Tx, TxArgsArray, TxStatus } from "./transaction";
 
 const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<List<a>> => {
+    let errors = new Set<string>();
     let newList = List<a>();
     for (const entryP of list.toArray()) {
         try {
             newList = newList.push(await entryP);
         } catch (error) {
-            console.error(error);
+            const errorString = String(error);
+            if (!errors.has(errorString)) {
+                errors.add(errorString);
+                console.error(errorString);
+            }
             newList = newList.push(defaultValue);
         }
     }
@@ -71,13 +33,15 @@ export class RenVMNetwork {
         this.nodes = List(nodeURLs.map(nodeURL => new RenNode(nodeURL)));
     }
 
-    public submitMessage = async (action: Token, args: Args): Promise<string> => {
+    public submitTx = async (action: Token, args: TxArgsArray): Promise<JSONRPCResponse<SubmitTxResponse>> => {
 
         const responses = (await promiseAll(
             this.nodes.valueSeq().map(async (node) => {
-                const response = await node.sendMessage({
-                    to: action,
-                    args,
+                const response = await node.submitTx({
+                    tx: {
+                        to: action,
+                        args,
+                    }
                 });
                 if (!response.result || response.error) {
                     throw new Error(response.error.message || response.error) || new Error(`Invalid message`);
@@ -92,8 +56,7 @@ export class RenVMNetwork {
             throw new Error("No response from RenVM while submitting message");
         }
 
-        // tslint:disable-next-line:no-non-null-assertion
-        return first.result.messageID;
+        return first;
     }
 
     public submitDeposits = async (
@@ -106,7 +69,8 @@ export class RenVMNetwork {
         utxoVout: number,
         network: NetworkDetails,
     ): Promise<string> => {
-        return this.submitMessage(action, [
+        console.log(`Submitting utxo # ${utxoVout} ${utxoTxHash} (${Buffer.from(strip0x(utxoTxHash), "hex").toString("base64")})`);
+        const response = await this.submitTx(action, [
             // The hash of the payload data
             { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
             // The amount of BTC (in SATs) that has be transferred to the gateway
@@ -118,27 +82,46 @@ export class RenVMNetwork {
             // The nonce is used to randomize the gateway
             { name: "n", type: "b32", value: Buffer.from(strip0x(nonce), "hex").toString("base64") },
 
-            // The tx hash of the gateway address' utxo
-            { name: "utxoTxHash", type: "b32", value: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64") },
-            // The output index of the gateway address' utxo
-            { name: "utxoVout", type: "u32", value: utxoVout },
+            // UTXO
+            {
+                name: "utxo",
+                type: "ext_btcCompatUTXO",
+                value: {
+                    txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
+                    vOut: utxoVout,
+                }
+            },
         ]);
+
+        console.log(JSON.stringify(response));
+
+        if (!response.result) {
+            throw new Error(response.error || `Invalid response from RenVM`);
+        }
+
+        return Ox(Buffer.from(response.result.tx.hash, "base64"));
     }
 
     public submitWithdrawal = async (action: Token, ref: string): Promise<string> => {
-        return this.submitMessage(action, [
-            { name: "ref", type: "u64", value: parseInt(ref, 16) },
-        ]);
+        throw new Error("Not implemented.");
+        // return this.submitTx(action, [
+        //     { name: "ref", type: "u64", value: parseInt(ref, 16) },
+        // ]);
     }
 
-    public checkForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
+    public checkForResponse = async (utxoTxHash: string): Promise<Tx> => {
         try {
 
             const responses = (await promiseAll(
                 this.nodes.valueSeq().map(async (node) => {
-                    const response = await node.receiveMessage({ messageID }) as ShifterResponse;
+                    const query = {
+                        txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
+                    };
+                    console.log(`\n\nquery: ${JSON.stringify(query)}`);
+                    const response = await node.queryTx(query) as JSONRPCResponse<QueryTxResponse>;
+                    console.log(`response: ${JSON.stringify(response)}\n\n`);
                     if (!response.result || response.error) {
-                        throw new Error(response.error);
+                        throw new Error(response.error.message || JSON.stringify(response.error));
                     }
                     return response;
                 }).toList(),
@@ -150,31 +133,41 @@ export class RenVMNetwork {
                 throw new Error("No response from RenVM while retrieving result");
             }
 
-            if (first.result && first.result.out) {
-                let ret = {};
-                for (const value of first.result.out) {
-                    ret = { ...ret, [value.name]: decodeValue(value) };
+            if (first.result.txStatus === TxStatus.TxStatusDone && first.result.tx.out) {
+                let args = {};
+                for (const value of first.result.tx.args) {
+                    args = { ...args, [value.name]: decodeValue(value) };
                 }
-                return ret as ShiftedInResponse | ShiftedOutResponse;
+                let signature = {};
+                for (const value of first.result.tx.out) {
+                    signature = { ...signature, [value.name]: decodeValue(value) };
+                }
+                // tslint:disable-next-line: no-object-literal-type-assertion
+                return {
+                    hash: Ox(Buffer.from(first.result.tx.hash, "base64")),
+                    args,
+                    signature,
+                } as Tx;
             } else if (first.error) {
                 throw first.error;
             }
         } catch (error) {
             // tslint:disable-next-line: no-console
-            console.error(error);
+            console.error(String(error));
         }
         throw new Error(`Signature not available`);
     }
 
-    public waitForResponse = async (messageID: string): Promise<ShiftedInResponse | ShiftedOutResponse> => {
-        let response: ShiftedInResponse | ShiftedOutResponse | undefined;
+    public waitForResponse = async (messageID: string): Promise<Tx> => {
+        let response: Tx | undefined;
         while (!response) {
             try {
-                response = await this.checkForResponse(messageID) as ShiftedInResponse;
+                response = await this.checkForResponse(messageID);
                 if (response) {
                     break;
                 }
             } catch (error) {
+                console.error(String(error));
                 await sleep(5 * SECONDS);
                 // TODO: Ignore "result not available",
                 // throw otherwise

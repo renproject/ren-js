@@ -10,10 +10,11 @@ import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateHash, generatePHash, ignoreError, retrieveDeposits,
-    SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generateNHash, generatePHash, ignoreError,
+    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
 } from "./lib/utils";
-import { RenVMNetwork, ShiftedInResponse } from "./renVM/renVMNetwork";
+import { RenVMNetwork } from "./renVM/renVMNetwork";
+import { QueryTxResponse, Tx } from "./renVM/transaction";
 import { NetworkDetails } from "./types/networks";
 import { ShiftInFromDetails, ShiftInParams, ShiftInParamsAll } from "./types/parameters";
 
@@ -36,8 +37,8 @@ export class ShiftInObject {
             (this.params as ShiftInFromDetails).nonce = nonce;
 
             // TODO: Validate inputs
-            const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, network);
-            const gatewayAddress = generateAddress(sendToken, hash, network);
+            const gHash = generateGHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, network);
+            const gatewayAddress = generateAddress(sendToken, gHash, network);
             this.gatewayAddress = gatewayAddress;
         }
     }
@@ -86,7 +87,7 @@ export class ShiftInObject {
                     if (newDeposit) { continue; }
                 } catch (error) {
                     // tslint:disable-next-line: no-console
-                    console.error(error);
+                    console.error(String(error));
                     continue;
                 }
                 await sleep(10 * SECONDS);
@@ -130,7 +131,7 @@ export class ShiftInObject {
                 promiEvent.emit("messageID", messageID);
             }
 
-            const response = await this.renVMNetwork.waitForResponse(messageID) as ShiftedInResponse;
+            const response = await this.renVMNetwork.waitForResponse(messageID);
 
             // tslint:disable-next-line: no-use-before-declare
             return new Signature(this.network, this.params as ShiftInParams, response, messageID);
@@ -150,11 +151,11 @@ export class ShiftInObject {
 export class Signature {
     public params: ShiftInParams;
     public network: NetworkDetails;
-    public response: ShiftedInResponse;
+    public response: Tx;
     public signature: string;
     public messageID: string;
 
-    constructor(network: NetworkDetails, params: ShiftInParams, response: ShiftedInResponse, messageID: string) {
+    constructor(network: NetworkDetails, params: ShiftInParams, response: Tx, messageID: string) {
         this.params = params;
         this.network = network;
         this.response = response;
@@ -170,8 +171,8 @@ export class Signature {
         (async () => {
             const params = [
                 ...this.params.contractParams.map(value => value.value),
-                Ox(this.response.amount.toString(16)), // _amount: BigNumber
-                Ox(this.response.nhash), // _nHash: string
+                Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
+                Ox(this.response.args.n), // _nHash: string
                 Ox(this.signature), // _sig: string
             ];
 
@@ -191,7 +192,7 @@ export class Signature {
             return await new Promise<TransactionReceipt>((resolve, reject) => tx
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })
                 .catch((error: Error) => {
-                    try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
+                    try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                     reject(error);
                 })
             );
@@ -206,8 +207,8 @@ export class Signature {
     public createTransaction = async (txConfig?: TransactionConfig): Promise<TransactionConfig> => {
         const params = [
             ...this.params.contractParams.map(value => value.value),
-            Ox(this.response.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.nhash), // _nHash: string
+            Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
+            Ox(generateNHash(this.response)), // _nHash: string
             Ox(this.signature), // _sig: string
         ];
 

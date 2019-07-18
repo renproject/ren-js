@@ -1,8 +1,8 @@
 import axios, { AxiosResponse } from "axios";
 
-import {
-    ReceiveMessageRequest, ReceiveMessageResponse, SendMessageRequest, SendMessageResponse,
-} from "./types";
+import { retryNTimes } from "../lib/utils";
+import { JSONRPCResponse } from "./jsonRPC";
+import { QueryTxRequest, QueryTxResponse, SubmitTxRequest, SubmitTxResponse } from "./transaction";
 
 export class RenNode {
     public readonly lightnodeURL: string;
@@ -13,8 +13,9 @@ export class RenNode {
                 // tslint:disable-next-line: whitespace
                 const [, , ip, , port, ,] = lightnodeURL.split("/");
                 const fixedPort = port === "18514" ? "18514" : port;
-                // tslint:disable-next-line: no-http-string
-                this.lightnodeURL = `http://${ip}:${fixedPort}`;
+                // TODO: Use HTTPS if supported
+                const protocol = "http";
+                this.lightnodeURL = `${protocol}://${ip}:${fixedPort}`;
             } catch (error) {
                 throw new Error(`Malformatted address: ${lightnodeURL}`);
             }
@@ -23,10 +24,13 @@ export class RenNode {
         }
     }
 
-    public async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
+    public async submitTx(request: SubmitTxRequest): Promise<JSONRPCResponse<SubmitTxResponse>> {
         let resp;
         try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_sendMessage", request));
+            resp = await retryNTimes(
+                () => axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_submitTx", request), { timeout: 120000 }),
+                5,
+            );
             if (resp.status !== 200) {
                 throw this.responseError("Unexpected status code returned by Lightnode", resp);
             }
@@ -39,13 +43,16 @@ export class RenNode {
                 throw error;
             }
         }
-        return resp.data as SendMessageResponse;
+        return resp.data as JSONRPCResponse<SubmitTxResponse>;
     }
 
-    public async receiveMessage(request: ReceiveMessageRequest): Promise<ReceiveMessageResponse> {
+    public async queryTx(request: QueryTxRequest): Promise<JSONRPCResponse<QueryTxResponse>> {
         let resp;
         try {
-            resp = await axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_receiveMessage", request));
+            resp = await retryNTimes(
+                () => axios.post(`${this.lightnodeURL}`, this.generatePayload("ren_queryTx", request), { timeout: 120000 }),
+                5
+            );
             if (resp.status !== 200) {
                 throw this.responseError("Unexpected status code returned by Lightnode", resp);
             }
@@ -58,7 +65,7 @@ export class RenNode {
                 throw error;
             }
         }
-        return resp.data as ReceiveMessageResponse;
+        return resp.data as JSONRPCResponse<QueryTxResponse>;
     }
 
     private generatePayload(method: string, params?: unknown) {

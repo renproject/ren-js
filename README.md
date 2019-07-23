@@ -1,4 +1,4 @@
-# Official typescript RenVM SDK
+# RenVM SDK
 
 The official Javascript SDK for interacting with the [RenVM](https://renproject.io).
 

@@ -57,6 +57,12 @@ jobs:
                 when: always
 
             - run:
+                name: Run Localnet tests
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: TEST_NETWORK="localnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json ; echo $? > localnet
+                when: always
+
+            - run:
                 name: Run Devnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
                 command: TEST_NETWORK="devnet" bash ./.circleci/runtest.bash
@@ -84,7 +90,7 @@ jobs:
                 name: Networks
                 command: |
                     mkdir -p ./reports/networks
-                    node .circleci/networks.js $(cat testnet) $(cat devnet) > ./reports/networks/networks.xml
+                    node .circleci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
                 when: always
 
             # Upload results

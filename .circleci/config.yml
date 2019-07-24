@@ -21,6 +21,7 @@ jobs:
                     source $BASH_ENV
                     git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
                     cd darknode
+                    git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
                     go run cmd/localnet/main.go
 
             # Download and cache dependencies

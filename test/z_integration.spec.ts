@@ -14,10 +14,10 @@ import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 import { Ox, strip0x } from "../src/blockchain/common";
-import RenVM, { getBitcoinUTXOs, ShiftInObject } from "../src/index";
-import { Arg } from "../src/lib/utils";
+import RenVM, { getBitcoinUTXOs, ShiftInObject, ShiftOutObject } from "../src/index";
+import { Arg, retryNTimes, SECONDS, sleep } from "../src/lib/utils";
 import { Tokens } from "../src/types/assets";
-import { NetworkDetails, NetworkTestnet, stringToNetwork } from "../src/types/networks";
+import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
 require("dotenv").config();
 
@@ -29,11 +29,10 @@ chai.should();
 const USE_QRCODE = false;
 
 const MNEMONIC = process.env.MNEMONIC;
-const TEST_NETWORK = process.env.TEST_NETWORK;
+const NETWORK = process.env.NETWORK;
 // tslint:disable-next-line:mocha-no-side-effect-code
 const INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
-// tslint:disable-next-line:no-http-string
-const MERCURY_URL = "http://139.59.221.34/btc-testnet3";
+const mercuryProtocol = "http";
 const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
 /*
@@ -116,14 +115,16 @@ describe("SDK methods", function () {
     let network: NetworkDetails;
     let sdk: RenVM;
     let accounts: string[];
+    let MERCURY_URL;
 
     before(async () => {
         provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
         web3 = new Web3(provider);
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
-        network = stringToNetwork(TEST_NETWORK || "testnet");
+        network = stringToNetwork(NETWORK || "testnet");
         sdk = new RenVM(network);
+        MERCURY_URL = `${mercuryProtocol}://139.59.221.34/btc-testnet3`;
     });
 
     // tslint:disable-next-line:no-any
@@ -205,12 +206,18 @@ describe("SDK methods", function () {
 
             console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
             try {
-                await axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() });
+                await retryNTimes(
+                    () => axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() }, { timeout: 5000 }),
+                    5,
+                );
             } catch (error) {
                 console.log(`Unable to submit to Mercury (${error}). Trying chain.so...`);
                 try {
                     console.log(transaction.toString());
-                    await axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() });
+                    await retryNTimes(
+                        () => axios.post("https://chain.so/api/v2/send_tx/BTCTEST", { tx_hex: transaction.toString() }, { timeout: 5000 }),
+                        5,
+                    );
                 } catch (chainError) {
                     console.error(`chain.so returned error ${chainError.message}`);
                     console.log(`\n\n\nPlease check ${btcAddress}'s balance!\n`);
@@ -229,17 +236,24 @@ describe("SDK methods", function () {
 
         const deposit = await shift.waitForDeposit(confirmations)
             .on("deposit", (depositObject) => { console.log(`[EVENT] Received a new deposit: ${JSON.stringify(depositObject)}`); });
-        console.log(`Submitting deposit!`);
 
+        await sleep(5 * SECONDS);
+
+        console.log(`Submitting deposit!`);
         const signature = await deposit.submitToRenVM()
             .on("messageID", (messageID: string) => { console.log(`[EVENT] Received messageID: ${messageID}`); });
 
         console.log(`Submitting signature!`);
         console.log("Waiting for tx...");
-        const result = await signature.submitToEthereum(provider)
-            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
-        console.log("Done waiting for tx!");
-        console.log(result);
+        try {
+            const result = await signature.submitToEthereum(provider, { gas: 1000000 })
+                .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+            console.log("Done waiting for tx!");
+            console.log(result);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     };
 
     const submitTogether = async (shift: ShiftInObject): Promise<void> => {
@@ -319,17 +333,24 @@ describe("SDK methods", function () {
 
         console.log("Reading burn from Ethereum.");
 
-        const shiftOutObject = await sdk.shiftOut({
-            sendTo: adapterContract,
-            contractFn: "shiftOut",
-            contractParams: payload,
-            txConfig: { from: ethAddress },
+        let shiftOutObject: ShiftOutObject;
+        try {
+            shiftOutObject = await sdk.shiftOut({
+                sendTo: adapterContract,
+                contractFn: "shiftOut",
+                contractParams: payload,
+                txConfig: { from: ethAddress, gas: 1000000 },
 
-            web3Provider: provider,
-            sendToken: Tokens.BTC.Eth2Btc,
-            // txHash: result.transactionHash,
-        }).readFromEthereum()
-            .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+                web3Provider: provider,
+                sendToken: Tokens.BTC.Eth2Btc,
+                // txHash: result.transactionHash,
+            }).readFromEthereum()
+                .on("transactionHash", (txHash: string) => { console.log(`[EVENT] Received txHash: ${txHash}`); });
+        } catch (error) {
+            console.error(error);
+        }
+
+        await sleep(5 * SECONDS);
 
         console.log("Submitting burn to RenVM.");
 
@@ -344,16 +365,16 @@ describe("SDK methods", function () {
 
     it("should be able to mint and burn btc", async () => {
         const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-        const amount = 0.000225 * (10 ** 8);
+        let amount = 0.000225 * (10 ** 8);
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.contracts.addresses.shifter.zBTC.address));
 
         // Test minting.
         console.log("Starting mint test:");
         const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
-        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitIndividual);
+        await mintTest(network.contracts.addresses.shifter.BTCShifter.address, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitIndividual);
         const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
@@ -363,10 +384,11 @@ describe("SDK methods", function () {
 
         // // Test burning.
         const burnValue = balance.toNumber();
+        // amount = 0.000225 * (10 ** 8);
         // const burnValue = amount;
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
-        await burnTest(zBTCContract, network.BTCShifter, adapterContract, burnValue, ethAddress, btcAddress);
+        await burnTest(zBTCContract, network.contracts.addresses.shifter.BTCShifter.address, adapterContract, burnValue, ethAddress, btcAddress);
         await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
         const finalBTCBalance = await checkBTCBalance(btcAddress);
 
@@ -380,11 +402,11 @@ describe("SDK methods", function () {
         const ethAddress = accounts[0];
         const btcPrivateKey = new bitcore.PrivateKey(BITCOIN_KEY, network.bitcoinNetwork);
         const btcAddress = btcPrivateKey.toAddress().toString();
-        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.zBTC));
+        const zBTCContract = new web3.eth.Contract(minABI, strip0x(network.contracts.addresses.shifter.zBTC.address));
 
         console.log("Starting mint test:");
         const initialZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
-        await mintTest(network.BTCShifter, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitTogether);
+        await mintTest(network.contracts.addresses.shifter.BTCShifter.address, adapterContract, amount, ethAddress, btcAddress, btcPrivateKey, submitTogether);
         const finalZBTCBalance = await checkZBTCBalance(zBTCContract, ethAddress);
 
         // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).

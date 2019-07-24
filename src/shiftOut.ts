@@ -4,13 +4,13 @@ import Web3 from "web3";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
-import { RenVMNetwork, ShiftedOutResponse } from "./lightnode/renVMNetwork";
+import { ShifterNetwork } from "./renVM/shifterNetwork";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;
-    private readonly renVMNetwork: RenVMNetwork;
+    private readonly renVMNetwork: ShifterNetwork;
 
-    constructor(renVMNetwork: RenVMNetwork, params: ShiftOutParams) {
+    constructor(renVMNetwork: ShifterNetwork, params: ShiftOutParams) {
         this.renVMNetwork = renVMNetwork;
         this.params = params;
     }
@@ -61,7 +61,7 @@ export class ShiftOutObject {
                     txHash = await new Promise((resolve, reject) => tx
                         .on("transactionHash", resolve)
                         .catch((error: Error) => {
-                            try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
+                            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                             reject(error);
                         })
                     );
@@ -105,8 +105,8 @@ export class ShiftOutObject {
         return promiEvent;
     }
 
-    public submitToRenVM = () => {
-        const promiEvent = newPromiEvent<ShiftedOutResponse>();
+    public submitToRenVM = (): PromiEvent<any> => {
+        const promiEvent = newPromiEvent<any>();
 
         const burnReference = this.params.burnReference;
         if (!burnReference) {
@@ -114,10 +114,10 @@ export class ShiftOutObject {
         }
 
         (async () => {
-            const messageID = await this.renVMNetwork.submitWithdrawal(this.params.sendToken, burnReference);
+            const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", messageID);
 
-            return await this.renVMNetwork.waitForResponse(messageID) as ShiftedOutResponse;
+            return await this.renVMNetwork.queryTokenFromEthereum(messageID) as any;
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

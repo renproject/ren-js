@@ -1,8 +1,13 @@
 import Axios from "axios";
 import BigNumber from "bignumber.js";
 
+import { retryNTimes } from "../lib/utils";
+
 export const getUTXOs = <T>(endpoint: string, network: string) => async (address: string, confirmations: number): Promise<T[]> => {
-    const resp = await Axios.get<T[]>(`${endpoint}/get_tx_unspent/${network}/${address}/${confirmations}`);
+    const resp = await retryNTimes(
+        () => Axios.get<T[]>(`${endpoint}/get_tx_unspent/${network}/${address}/${confirmations}`, { timeout: 10000 }),
+        5,
+    );
     // tslint:disable-next-line:no-any
     const data = (resp.data as any);
 

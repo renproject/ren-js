@@ -53,7 +53,7 @@ jobs:
             - run:
                 name: Run Testnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: TEST_NETWORK="testnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json ; echo $? > testnet
+                command: NETWORK="testnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json ; echo $? > testnet
                 when: always
 
             - run:
@@ -65,7 +65,7 @@ jobs:
             - run:
                 name: Run Devnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: TEST_NETWORK="devnet" bash ./.circleci/runtest.bash
+                command: NETWORK="devnet" bash ./.circleci/runtest.bash
                 when: always
 
             # Run eslint

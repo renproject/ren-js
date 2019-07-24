@@ -10,10 +10,11 @@ import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateHash, generatePHash, ignoreError, retrieveDeposits,
+    fixSignature, generateAddress, generateGHash, generatePHash, ignoreError, retrieveDeposits,
     SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
 } from "./lib/utils";
-import { RenVMNetwork, ShiftedInResponse } from "./lightnode/renVMNetwork";
+import { ShifterNetwork } from "./renVM/shifterNetwork";
+import { Tx } from "./renVM/transaction";
 import { NetworkDetails } from "./types/networks";
 import { ShiftInFromDetails, ShiftInParams, ShiftInParamsAll } from "./types/parameters";
 
@@ -21,10 +22,10 @@ export class ShiftInObject {
     public utxo: BitcoinUTXO | ZcashUTXO | undefined;
     public gatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
-    private readonly renVMNetwork: RenVMNetwork;
+    private readonly renVMNetwork: ShifterNetwork;
     private readonly params: ShiftInParamsAll;
 
-    constructor(renVMNetwork: RenVMNetwork, network: NetworkDetails, params: ShiftInParams) {
+    constructor(renVMNetwork: ShifterNetwork, network: NetworkDetails, params: ShiftInParams) {
         this.params = params;
         this.network = network;
         this.renVMNetwork = renVMNetwork;
@@ -36,8 +37,8 @@ export class ShiftInObject {
             (this.params as ShiftInFromDetails).nonce = nonce;
 
             // TODO: Validate inputs
-            const hash = generateHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, network);
-            const gatewayAddress = generateAddress(sendToken, hash, network);
+            const gHash = generateGHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, network);
+            const gatewayAddress = generateAddress(sendToken, gHash, network);
             this.gatewayAddress = gatewayAddress;
         }
     }
@@ -86,7 +87,8 @@ export class ShiftInObject {
                     if (newDeposit) { continue; }
                 } catch (error) {
                     // tslint:disable-next-line: no-console
-                    console.error(error);
+                    console.error(String(error));
+                    await sleep(1 * SECONDS);
                     continue;
                 }
                 await sleep(10 * SECONDS);
@@ -116,7 +118,7 @@ export class ShiftInObject {
                     throw new Error("Unable to submitToRenVM without nonce");
                 }
 
-                messageID = await this.renVMNetwork.submitDeposits(
+                messageID = await this.renVMNetwork.submitTokenToEthereum(
                     sendToken,
                     sendTo,
                     sendAmount,
@@ -130,7 +132,7 @@ export class ShiftInObject {
                 promiEvent.emit("messageID", messageID);
             }
 
-            const response = await this.renVMNetwork.waitForResponse(messageID) as ShiftedInResponse;
+            const response = await this.renVMNetwork.queryTokenToEthereum(messageID);
 
             // tslint:disable-next-line: no-use-before-declare
             return new Signature(this.network, this.params as ShiftInParams, response, messageID);
@@ -150,11 +152,11 @@ export class ShiftInObject {
 export class Signature {
     public params: ShiftInParams;
     public network: NetworkDetails;
-    public response: ShiftedInResponse;
+    public response: Tx;
     public signature: string;
     public messageID: string;
 
-    constructor(network: NetworkDetails, params: ShiftInParams, response: ShiftedInResponse, messageID: string) {
+    constructor(network: NetworkDetails, params: ShiftInParams, response: Tx, messageID: string) {
         this.params = params;
         this.network = network;
         this.response = response;
@@ -168,10 +170,14 @@ export class Signature {
         const promiEvent = newPromiEvent<TransactionReceipt>();
 
         (async () => {
+            console.log(`\n\nResponse:`);
+            console.log(this.response);
+
             const params = [
                 ...this.params.contractParams.map(value => value.value),
-                Ox(this.response.amount.toString(16)), // _amount: BigNumber
-                Ox(this.response.nhash), // _nHash: string
+                Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
+                Ox(this.response.args.nhash),
+                // Ox(this.response.args.n), // _nHash: string
                 Ox(this.signature), // _sig: string
             ];
 
@@ -179,6 +185,7 @@ export class Signature {
             const web3 = new Web3(web3Provider);
             const contract = new web3.eth.Contract(ABI, this.params.sendTo);
 
+            console.log("Sending!!!");
             const tx = contract.methods[this.params.contractFn](
                 ...params,
             ).send(await withDefaultAccount(web3, {
@@ -186,16 +193,21 @@ export class Signature {
                 ...txConfig,
             }));
 
+            console.log("After sending");
+
             forwardEvents(tx, promiEvent);
+
+            console.log("Forwarding promievents");
 
             return await new Promise<TransactionReceipt>((resolve, reject) => tx
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })
+                .on("error", (error: Error) => { console.error("!!! got an error 222!!!\n"); promiEvent.reject(error); })
                 .catch((error: Error) => {
-                    try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
+                    try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                     reject(error);
                 })
             );
-        })().then(promiEvent.resolve).catch(promiEvent.reject);
+        })().then(promiEvent.resolve).catch((error) => { console.error("!!! got an error!!!\n"); promiEvent.reject(error); });
 
         return promiEvent;
     }
@@ -206,8 +218,9 @@ export class Signature {
     public createTransaction = async (txConfig?: TransactionConfig): Promise<TransactionConfig> => {
         const params = [
             ...this.params.contractParams.map(value => value.value),
-            Ox(this.response.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.nhash), // _nHash: string
+            Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
+            Ox(this.response.args.nhash),
+            // Ox(generateNHash(this.response)), // _nHash: string
             Ox(this.signature), // _sig: string
         ];
 

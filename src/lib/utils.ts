@@ -8,7 +8,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
-import { ShiftedInResponse } from "../lightnode/renVMNetwork";
+import { Tx } from "../renVM/transaction";
 import { actionToDetails, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -46,31 +46,38 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
 
     const [types, values] = unzip(args);
 
-    // tslint:disable-next-line: no-any
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    const token = network.zBTC; // actionToDetails(_shiftAction).asset;
+export const generateGHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
+    const token = network.contracts.addresses.shifter.zBTC.address; // actionToDetails(_shiftAction).asset;
     const pHash = generatePHash(_payload);
 
-    const hash = rawEncode(
+    const encoded = rawEncode(
         ["bytes32", "uint256", "address", "address", "bytes32"],
         [Ox(pHash), amount, Ox(token), Ox(_to), Ox(nonce)],
     );
 
-    // tslint:disable-next-line: no-any
-    return Ox(keccak256(hash));
+    return Ox(keccak256(encoded));
+};
+
+export const generateNHash = (tx: Tx): string => {
+    const encoded = rawEncode(
+        ["bytes32", "bytes32"],
+        [Ox(tx.hash), Ox(tx.args.n)],
+    );
+
+    return Ox(keccak256(encoded));
 };
 
 // Generates the gateway address
-export const generateAddress = (_shiftAction: Token, hash: string, network: NetworkDetails): string => {
+export const generateAddress = (_shiftAction: Token, gHash: string, network: NetworkDetails): string => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return createBTCAddress(network, hash);
+            return createBTCAddress(network, gHash);
         case Chain.Zcash:
-            return createZECAddress(network, hash);
+            return createZECAddress(network, gHash);
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
     }
@@ -91,7 +98,7 @@ export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: T
 
 export const SECONDS = 1000;
 // tslint:disable-next-line: no-string-based-set-timeout
-export const sleep = async (timeout: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, timeout));
+export const sleep = async (milliseconds: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 export interface Signature { r: string; s: string; v: number; }
 
@@ -100,10 +107,11 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: ShiftedInResponse, network: NetworkDetails): Signature => {
-    const r = response.r;
-    let s = new BN(strip0x(response.s), "hex");
-    let v = ((parseInt(response.v || "0", 10) + 27) || 27);
+export const fixSignature = (response: Tx, network: NetworkDetails): Signature => {
+
+    const r = response.signature.r;
+    let s = new BN(strip0x(response.signature.s), "hex");
+    let v = ((parseInt(response.signature.v || "0", 10) + 27) || 27);
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
@@ -119,21 +127,21 @@ export const fixSignature = (response: ShiftedInResponse, network: NetworkDetail
     // has been updated.
     const recovered = {
         [v]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.hash), "hex"),
+            Buffer.from(strip0x(response.args.hash), "hex"),
             v,
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),
 
         [switchV(v)]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.hash), "hex"),
+            Buffer.from(strip0x(response.args.hash), "hex"),
             switchV(v),
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),
     };
 
-    const expected = Buffer.from(network.masterKey.eth, "hex");
+    const expected = Buffer.from(strip0x(network.contracts.renVM.mintAuthority), "hex");
     if (recovered[v].equals(expected)) {
         // Do nothing
     } else if (recovered[switchV(v)].equals(expected)) {
@@ -177,4 +185,24 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
         }
     }
     return config;
+};
+
+export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) => {
+    let returnError;
+    // tslint:disable-next-line: no-constant-condition
+    for (let i = 0; i < retries; i++) {
+        if (i > 0) {
+            console.debug(`Retrying...`);
+        }
+        try {
+            return await fnCall();
+        } catch (error) {
+            if (String(error).match(/timeout of .* exceeded/)) {
+                returnError = error;
+            } else {
+                throw error;
+            }
+        }
+    }
+    throw returnError;
 };

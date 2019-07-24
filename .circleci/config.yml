@@ -17,6 +17,8 @@ jobs:
                     wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
                     sudo tar -xvf go1.12.6.linux-amd64.tar.gz
                     sudo mv go /usr/local
+                    echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
+                    source $BASH_ENV
                     git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
                     cd darknode
                     go run cmd/localnet/main.go

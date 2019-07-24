@@ -31,6 +31,19 @@ jobs:
                     - node_modules
                 key: v1-dependencies-{{ checksum "package.json" }}
 
+            - run:
+                name: Start Localnet
+                command: |
+                    sudo apt-get update
+                    sudo apt-get -y upgrade
+                    wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
+                    sudo tar -xvf go1.12.6.linux-amd64.tar.gz
+                    sudo mv go /usr/local
+                    git clone https://github.com/renproject/darknode
+                    cd darknode
+                    go run cmd/localnet/main.go
+                background: true
+
             - run: mkdir reports
 
             # Run mocha

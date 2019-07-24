@@ -59,7 +59,7 @@ jobs:
             - run:
                 name: Run Localnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: TEST_NETWORK="localnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json ; echo $? > localnet
+                command: NETWORK="localnet" yarn run test --reporter mocha-multi-reporters --reporter-options configFile=.circleci/mocha.json ; echo $? > localnet
                 when: always
 
             - run:

@@ -99,7 +99,7 @@ export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, fil
     // // tslint:disable-next-line: no-any
     // const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
     //     if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) {
-    //         console.log(`Forwarding ${eventName}!!! Listener:`);
+    //         console.log(`Forwarding ${eventName} Listener:`);
     //         console.log(listener);
     //         src.on(eventName, listener);
     //         src.on("transactionHash", (txHash) => { console.log(`Got transaction hash on src`); });

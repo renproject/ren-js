@@ -1,14 +1,14 @@
 import BN from "bn.js";
 import { keccak256 } from "ethereumjs-util";
-import { QueryBurnResponse } from "renVM/transaction";
-import { ShiftOutParams, ShiftOutParamsAll } from "types/parameters";
 import Web3 from "web3";
 
 import { strip0x } from "./blockchain/common";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
-import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
+import { BURN_TOPIC, ignoreError, sleep, withDefaultAccount } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
+import { QueryBurnResponse } from "./renVM/transaction";
+import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;
@@ -83,6 +83,10 @@ export class ShiftOutObject {
                 let receipt;
                 while (!receipt) {
                     receipt = await web3.eth.getTransactionReceipt(txHash);
+                    if (receipt) {
+                        break;
+                    }
+                    await sleep(3 * 1000);
                 }
                 if (!receipt.logs) {
                     throw Error("No events found in transaction");
@@ -106,6 +110,9 @@ export class ShiftOutObject {
 
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
+        // TODO: Look into why .catch isn't being called on tx
+        promiEvent.on("error", promiEvent.reject);
+
         return promiEvent;
     }
 
@@ -115,7 +122,7 @@ export class ShiftOutObject {
         (async () => {
             const burnReference = this.params.burnReference;
             if (!burnReference) {
-                throw new Error("Must call `lookupBurn` before calling `submitToRenVM`");
+                throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
             }
 
             const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();

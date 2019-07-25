@@ -1,4 +1,3 @@
-import { crypto } from "bitcore-lib";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
@@ -10,8 +9,8 @@ import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, ignoreError, retrieveDeposits,
-    SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generatePHash, ignoreError, randomNonce,
+    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { Tx } from "./renVM/transaction";
@@ -33,7 +32,7 @@ export class ShiftInObject {
         if (!(params as ShiftInParamsAll).messageID) {
             const { sendToken, contractParams, sendAmount, sendTo, nonce: maybeNonce } = params as ShiftInFromDetails;
 
-            const nonce = maybeNonce || Ox(crypto.Random.getRandomBuffer(32));
+            const nonce = maybeNonce || randomNonce();
             (this.params as ShiftInFromDetails).nonce = nonce;
 
             // TODO: Validate inputs
@@ -102,16 +101,16 @@ export class ShiftInObject {
     public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO): PromiEvent<Signature> => {
         const promiEvent = newPromiEvent<Signature>();
 
-        const utxo = specifyUTXO || this.utxo;
-        if (!utxo) {
-            throw new Error("Unable to submit without UTXO. Call wait() or provide a UTXO as a parameter.");
-        }
-
         (async () => {
-
             let messageID = this.params.messageID;
 
             if (!messageID) {
+                const utxo = specifyUTXO || this.utxo;
+
+                if (!utxo) {
+                    throw new Error("Unable to submit without UTXO. Call waitForDeposit() or provide a UTXO as a parameter.");
+                }
+
                 const { nonce, sendToken, sendTo, sendAmount, contractParams } = this.params as ShiftInFromDetails;
 
                 if (!nonce) {
@@ -195,13 +194,15 @@ export class Signature {
 
             return await new Promise<TransactionReceipt>((resolve, reject) => tx
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })
-                .on("error", (error: Error) => { console.error("!!! got an error 222!!!\n"); promiEvent.reject(error); })
                 .catch((error: Error) => {
                     try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                     reject(error);
                 })
             );
-        })().then(promiEvent.resolve).catch((error) => { console.error("!!! got an error!!!\n"); promiEvent.reject(error); });
+        })().then(promiEvent.resolve).catch(promiEvent.reject);
+
+        // TODO: Look into why .catch isn't being called on tx
+        promiEvent.on("error", promiEvent.reject);
 
         return promiEvent;
     }

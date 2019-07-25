@@ -1,3 +1,4 @@
+import { randomNonce } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
@@ -41,12 +42,14 @@ export default class RenVM {
     public static Tokens = Tokens;
     public static Networks = Network;
     public static Chains = Chain;
+    public static randomNonce = randomNonce;
 
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenVM()).Tokens`
-    public Tokens = Tokens;
-    public Networks = Network;
-    public Chains = Chain;
+    public readonly Tokens = Tokens;
+    public readonly Networks = Network;
+    public readonly Chains = Chain;
+    public readonly randomNonce = randomNonce;
 
     // Internal state
     private readonly network: NetworkDetails;
@@ -69,7 +72,7 @@ export default class RenVM {
      * @param params See [[ShiftInParams]].
      * @returns An instance of [[ShiftInObject]].
      */
-    public shiftIn = (params: ShiftInParams): ShiftInObject => {
+    public readonly shiftIn = (params: ShiftInParams): ShiftInObject => {
         return new ShiftInObject(this.renVMNetwork, this.network, params);
     }
 
@@ -79,7 +82,7 @@ export default class RenVM {
      * @param params See [[ShiftOutParams]].
      * @returns An instance of [[ShiftOutObject]].
      */
-    public shiftOut = (params: ShiftOutParams): ShiftOutObject => {
+    public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
         return new ShiftOutObject(this.renVMNetwork, params);
     }
 }

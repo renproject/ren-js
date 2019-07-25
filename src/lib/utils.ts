@@ -1,3 +1,4 @@
+import { crypto } from "bitcore-lib";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import Web3 from "web3";
@@ -210,3 +211,5 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) 
     }
     throw returnError;
 };
+
+export const randomNonce = () => Ox(crypto.Random.getRandomBuffer(32));

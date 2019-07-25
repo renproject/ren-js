@@ -37,7 +37,7 @@ export class ShifterNetwork {
         this.network = new RenVMNetwork(nodeURLs);
     }
 
-    public submitTokenToEthereum = async (
+    public submitShiftIn = async (
         action: Token,
         to: string,
         amount: number,
@@ -83,7 +83,7 @@ export class ShifterNetwork {
         return Ox(Buffer.from(response.result.tx.hash, "base64"));
     }
 
-    public queryTokenToEthereum = async (utxoTxHash: string): Promise<Tx> => {
+    public queryShiftIn = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<Tx> => {
         let response: QueryTxResponse;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -97,6 +97,8 @@ export class ShifterNetwork {
                 if (result.result && result.result.txStatus === TxStatus.TxStatusDone) {
                     response = result.result;
                     break;
+                } else if (onStatus && result.result && result.result.txStatus) {
+                    onStatus(result.result.txStatus);
                 }
             } catch (error) {
                 console.error(String(error));
@@ -108,7 +110,7 @@ export class ShifterNetwork {
         return unmarshalTx(response);
     }
 
-    public submitTokenFromEthereum = async (action: Token, ref: string): Promise<string> => {
+    public submitShiftOut = async (action: Token, ref: string): Promise<string> => {
         const response = await this.network.broadcastMessage<SubmitBurnRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {
                 tx: {
@@ -126,7 +128,7 @@ export class ShifterNetwork {
         return Ox(Buffer.from(response.result.tx.hash, "base64"));
     }
 
-    public queryTokenFromEthereum = async (utxoTxHash: string): Promise<QueryBurnResponse> => {
+    public queryShiftOut = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<QueryBurnResponse> => {
         let response: QueryBurnResponse;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -140,6 +142,8 @@ export class ShifterNetwork {
                 if (result.result && result.result.txStatus === TxStatus.TxStatusDone) {
                     response = result.result;
                     break;
+                } else if (onStatus && result.result && result.result.txStatus) {
+                    onStatus(result.result.txStatus);
                 }
             } catch (error) {
                 console.error(String(error));

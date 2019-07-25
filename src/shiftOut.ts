@@ -125,7 +125,9 @@ export class ShiftOutObject {
             // const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", messageID);
 
-            return await this.renVMNetwork.queryTokenFromEthereum(messageID);
+            return await this.renVMNetwork.queryShiftOut(messageID, (status) => {
+                promiEvent.emit("status", status);
+            });
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

@@ -118,7 +118,7 @@ export class ShiftInObject {
                     throw new Error("Unable to submitToRenVM without nonce");
                 }
 
-                messageID = await this.renVMNetwork.submitTokenToEthereum(
+                messageID = await this.renVMNetwork.submitShiftIn(
                     sendToken,
                     sendTo,
                     sendAmount,
@@ -132,7 +132,9 @@ export class ShiftInObject {
                 promiEvent.emit("messageID", messageID);
             }
 
-            const response = await this.renVMNetwork.queryTokenToEthereum(messageID);
+            const response = await this.renVMNetwork.queryShiftIn(messageID, (status) => {
+                promiEvent.emit("status", status);
+            });
 
             // tslint:disable-next-line: no-use-before-declare
             return new Signature(this.network, this.params as ShiftInParams, response, messageID);

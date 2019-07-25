@@ -88,9 +88,9 @@ export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: T
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(_depositAddress, _confirmations)).map(utxo => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
+            return (await getBitcoinUTXOs(_network)(_depositAddress, _confirmations)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
         case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(_depositAddress, _confirmations)).map(utxo => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
+            return (await getZcashUTXOs(_network)(_depositAddress, _confirmations)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }
@@ -98,7 +98,7 @@ export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: T
 
 export const SECONDS = 1000;
 // tslint:disable-next-line: no-string-based-set-timeout
-export const sleep = async (milliseconds: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, milliseconds));
+export const sleep = async (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 export interface Signature { r: string; s: string; v: number; }
 
@@ -191,15 +191,19 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) 
     let returnError;
     // tslint:disable-next-line: no-constant-condition
     for (let i = 0; i < retries; i++) {
-        if (i > 0) {
-            console.debug(`Retrying...`);
-        }
+        // if (i > 0) {
+        //     console.debug(`Retrying...`);
+        // }
         try {
             return await fnCall();
         } catch (error) {
             if (String(error).match(/timeout of .* exceeded/)) {
                 returnError = error;
             } else {
+                const errorMessage = error.response && (error.response.data && error.response.data.message || error.response.statusText);
+                if (errorMessage) {
+                    error.message += ` (${errorMessage})`;
+                }
                 throw error;
             }
         }

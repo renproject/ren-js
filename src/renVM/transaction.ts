@@ -51,14 +51,14 @@ export interface QueryTxRequest {
     txHash: string;
 }
 
-export type SubmitTxResponse = {
+export interface SubmitTxResponse {
     // Tx being submitted.
     tx: {
         hash: string;
         to: Token;
         args: MintArgsArray;
     };
-};
+}
 
 export enum TxStatus {
     // TxStatusNil is used for transactions that have not been seen, or are
@@ -91,15 +91,15 @@ export interface QueryTxResponse {
     txStatus: TxStatus;
 }
 
-export type QueryBurnResponse = {
+export interface QueryBurnResponse {
     tx: {
         hash: string;
         to: Token;
-        args: any;
-        out: any;
+        args: unknown;
+        out: unknown;
     };
     txStatus: TxStatus;
-};
+}
 
 export interface Tx {
     hash: string;

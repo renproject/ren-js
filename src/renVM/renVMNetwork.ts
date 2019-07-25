@@ -1,8 +1,7 @@
 import { List } from "immutable";
 
-import { SECONDS, sleep } from "../lib/utils";
 import { JSONRPCResponse } from "./jsonRPC";
-import { generatePayload, RenNode, RPCMethod } from "./renNode";
+import { RenNode, RPCMethod } from "./renNode";
 
 const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<List<a>> => {
     const errors = new Set<string>();
@@ -32,12 +31,10 @@ export class RenVMNetwork {
     public broadcastMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<JSONRPCResponse<Response>> => {
         const responses = (await promiseAll(
             this.nodes.valueSeq().map(async (node) => {
-                console.debug(JSON.stringify(generatePayload(method, args), null, "    "));
                 const response = await node.sendMessage<Request, Response>(
                     method,
                     args,
                 );
-                console.debug(response);
                 if (!response.result || response.error) {
                     throw new Error(response.error.message || response.error) || new Error(`Invalid message`);
                 }

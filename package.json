@@ -37,8 +37,8 @@
         "prepare": "npm run build:prod"
     },
     "devDependencies": {
-        "@babel/core": "^7.5.4",
-        "@babel/plugin-proposal-object-rest-spread": "^7.5.4",
+        "@babel/core": "^7.5.5",
+        "@babel/plugin-proposal-object-rest-spread": "^7.5.5",
         "@types/bn.js": "^4.11.5",
         "@types/chai": "^4.1.7",
         "@types/chai-as-promised": "7.1.0",
@@ -58,7 +58,7 @@
         "chai-bignumber": "noiach/chai-bignumber#fd75e47",
         "cross-env": "5.2.0",
         "dotenv": "^8.0.0",
-        "mocha": "^6.1.4",
+        "mocha": "^6.2.0",
         "npm-check-updates": "^3.1.20",
         "nyc": "^14.1.1",
         "qrcode-terminal": "^0.12.0",
@@ -75,7 +75,7 @@
         "typedoc": "^0.15.0-0",
         "typedoc-webpack-plugin": "1.1.4",
         "typescript": "3.5.3",
-        "webpack": "4.35.3",
+        "webpack": "4.36.1",
         "webpack-cli": "3.3.6",
         "webpack-node-externals": "1.7.2"
     },
@@ -85,7 +85,7 @@
         "@types/bn.js": "^4.11.5",
         "@types/bs58": "^4.0.0",
         "@types/ethereumjs-util": "^5.2.0",
-        "@types/node": "^12.6.3",
+        "@types/node": "^12.6.8",
         "axios": "^0.19.0",
         "bignumber.js": "^9.0.0",
         "bitcore-lib": "^8.3.4",

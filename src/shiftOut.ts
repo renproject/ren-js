@@ -1,6 +1,10 @@
+import BN from "bn.js";
+import { keccak256 } from "ethereumjs-util";
+import { QueryBurnResponse } from "renVM/transaction";
 import { ShiftOutParams, ShiftOutParamsAll } from "types/parameters";
 import Web3 from "web3";
 
+import { strip0x } from "./blockchain/common";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
@@ -105,19 +109,23 @@ export class ShiftOutObject {
         return promiEvent;
     }
 
-    public submitToRenVM = (): PromiEvent<any> => {
-        const promiEvent = newPromiEvent<any>();
-
-        const burnReference = this.params.burnReference;
-        if (!burnReference) {
-            throw new Error("Must call `lookupBurn` before calling `submitToRenVM`");
-        }
+    public submitToRenVM = (): PromiEvent<QueryBurnResponse> => {
+        const promiEvent = newPromiEvent<QueryBurnResponse>();
 
         (async () => {
-            const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
+            const burnReference = this.params.burnReference;
+            if (!burnReference) {
+                throw new Error("Must call `lookupBurn` before calling `submitToRenVM`");
+            }
+
+            const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
+
+            const messageID = keccak256(`txHash_${"BTC0Eth2Btc"}_${burnReferenceNumber}`).toString("hex");
+
+            // const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", messageID);
 
-            return await this.renVMNetwork.queryTokenFromEthereum(messageID) as any;
+            return await this.renVMNetwork.queryTokenFromEthereum(messageID);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

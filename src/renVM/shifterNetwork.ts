@@ -12,6 +12,24 @@ import {
 
 const ErrInvalidResponse = `Invalid response from RenVM`;
 
+const unmarshalTx = (response: QueryTxResponse): Tx => {
+    // Unmarshal
+    let args = {};
+    for (const value of response.tx.args) {
+        args = { ...args, [value.name]: decodeValue(value) };
+    }
+    let signature = {};
+    for (const value of response.tx.out) {
+        signature = { ...signature, [value.name]: decodeValue(value) };
+    }
+    // tslint:disable-next-line: no-object-literal-type-assertion
+    return {
+        hash: Ox(Buffer.from(response.tx.hash, "base64")),
+        args,
+        signature,
+    } as Tx;
+};
+
 export class ShifterNetwork {
     public network: RenVMNetwork;
 
@@ -87,22 +105,7 @@ export class ShifterNetwork {
             }
             await sleep(5 * SECONDS);
         }
-
-        // Unmarshal
-        let args = {};
-        for (const value of response.tx.args) {
-            args = { ...args, [value.name]: decodeValue(value) };
-        }
-        let signature = {};
-        for (const value of response.tx.out) {
-            signature = { ...signature, [value.name]: decodeValue(value) };
-        }
-        // tslint:disable-next-line: no-object-literal-type-assertion
-        return {
-            hash: Ox(Buffer.from(response.tx.hash, "base64")),
-            args,
-            signature,
-        } as Tx;
+        return unmarshalTx(response);
     }
 
     public submitTokenFromEthereum = async (action: Token, ref: string): Promise<string> => {

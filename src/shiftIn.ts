@@ -66,7 +66,7 @@ export class ShiftInObject {
             while (true) {
                 if (deposits.size > 0) {
                     // Sort deposits
-                    const greatestTx = deposits.sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first(undefined);
+                    const greatestTx = deposits.sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
                     if (greatestTx && greatestTx.utxo.value >= sendAmount) {
                         this.utxo = greatestTx.utxo;
                         break;
@@ -170,9 +170,6 @@ export class Signature {
         const promiEvent = newPromiEvent<TransactionReceipt>();
 
         (async () => {
-            console.log(`\n\nResponse:`);
-            console.log(this.response);
-
             const params = [
                 ...this.params.contractParams.map(value => value.value),
                 Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
@@ -185,7 +182,6 @@ export class Signature {
             const web3 = new Web3(web3Provider);
             const contract = new web3.eth.Contract(ABI, this.params.sendTo);
 
-            console.log("Sending!!!");
             const tx = contract.methods[this.params.contractFn](
                 ...params,
             ).send(await withDefaultAccount(web3, {
@@ -193,11 +189,7 @@ export class Signature {
                 ...txConfig,
             }));
 
-            console.log("After sending");
-
             forwardEvents(tx, promiEvent);
-
-            console.log("Forwarding promievents");
 
             return await new Promise<TransactionReceipt>((resolve, reject) => tx
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })

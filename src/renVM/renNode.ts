@@ -2,9 +2,6 @@ import axios, { AxiosResponse } from "axios";
 
 import { retryNTimes } from "../lib/utils";
 import { JSONRPCResponse } from "./jsonRPC";
-import {
-    QueryTxRequest, QueryTxResponse, SubmitMintRequest, SubmitTxResponse,
-} from "./transaction";
 
 export enum RPCMethod {
     SubmitTx = "ren_submitTx",
@@ -41,7 +38,6 @@ export class RenNode {
     public async sendMessage<Request, Response>(method: RPCMethod, request: Request): Promise<JSONRPCResponse<Response>> {
         let resp;
         try {
-
             resp = await retryNTimes(
                 () => axios.post(
                     this.nodeURL,
@@ -54,12 +50,9 @@ export class RenNode {
             }
         } catch (error) {
             if (error.response) {
-                throw new Error(
-                    `Lightnode returned status ${error.response.status} with reason: ${error.response.data}`,
-                );
-            } else {
-                throw error;
+                error.message = `Lightnode returned status ${error.response.status} with reason: ${error.response.data}`;
             }
+            throw error;
         }
         return resp.data as JSONRPCResponse<Response>;
     }

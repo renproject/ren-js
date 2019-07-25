@@ -6,11 +6,13 @@ let common = {
     entry: './src/index.ts',
     devtool: 'source-map',
     module: {
-        rules: [{
-            test: /\.tsx?$/,
-            use: ['babel-loader', 'ts-loader'],
-            exclude: /node_modules/
-        },]
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: ['babel-loader', 'ts-loader'],
+                exclude: /node_modules/
+            }
+        ]
     },
     plugins: [],
     resolve: {

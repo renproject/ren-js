@@ -96,9 +96,9 @@
         "ethereumjs-util": "^6.1.0",
         "immutable": "^4.0.0-rc.12",
         "wallet-address-validator": "^0.2.4",
-        "web3": "^1.0.0-beta.55",
-        "web3-core": "^1.0.0-beta.55",
-        "web3-eth-abi": "^1.0.0-beta.55"
+        "web3": "1.0.0-beta.55",
+        "web3-core": "1.0.0-beta.55",
+        "web3-eth-abi": "1.0.0-beta.55"
     },
     "nyc": {
         "extension": [

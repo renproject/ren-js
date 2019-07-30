@@ -17,6 +17,7 @@ interface NetworkType<C extends Contract, A extends Addresses<C>> {
     name: string;
     chain: string;
     label: string;
+    networkID: number;
     chainLabel: string;
     infura: string;
     etherscan: string;

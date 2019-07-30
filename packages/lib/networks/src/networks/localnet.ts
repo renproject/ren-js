@@ -14,11 +14,14 @@ import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
 import { Network } from "./network";
 
+const networkID = 42;
+
 export default Network({
     name: "localnet",
     chain: "kovan",
     label: "Localnet",
     chainLabel: "Kovan",
+    networkID,
     infura: "https://kovan.infura.io",
     etherscan: "https://kovan.etherscan.io",
     renVM: {
@@ -28,46 +31,46 @@ export default Network({
     addresses: {
         ren: {
             DarknodeSlasher: {
-                address: DarknodeSlasher.networks[42].address,
+                address: DarknodeSlasher.networks[networkID].address,
                 abi: DarknodeSlasher.abi as AbiItem[],
             },
             DarknodeRegistry: {
-                address: DarknodeRegistry.networks[42].address,
+                address: DarknodeRegistry.networks[networkID].address,
                 abi: DarknodeRegistry.abi as AbiItem[],
                 block: 11974083
             },
             DarknodeRegistryStore: {
-                address: DarknodeRegistryStore.networks[42].address,
+                address: DarknodeRegistryStore.networks[networkID].address,
                 abi: DarknodeRegistryStore.abi as AbiItem[],
             },
             DarknodePayment: {
-                address: DarknodePayment.networks[42].address,
+                address: DarknodePayment.networks[networkID].address,
                 abi: DarknodePayment.abi as AbiItem[],
             },
             DarknodePaymentStore: {
-                address: DarknodePaymentStore.networks[42].address,
+                address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
             }
         },
         shifter: {
             BTCShifter: {
-                address: BTCShifter.networks[42].address,
+                address: BTCShifter.networks[networkID].address,
                 abi: BTCShifter.abi as AbiItem[],
             },
             ZECShifter: {
-                address: ZECShifter.networks[42].address,
+                address: ZECShifter.networks[networkID].address,
                 abi: ZECShifter.abi as AbiItem[],
             },
             zBTC: {
-                address: zBTC.networks[42].address,
+                address: zBTC.networks[networkID].address,
                 abi: zBTC.abi as AbiItem[],
             },
             zZEC: {
-                address: zZEC.networks[42].address,
+                address: zZEC.networks[networkID].address,
                 abi: zZEC.abi as AbiItem[],
             },
             ShifterRegistry: {
-                address: ShifterRegistry.networks[42].address,
+                address: ShifterRegistry.networks[networkID].address,
                 abi: ShifterRegistry.abi as AbiItem[],
             }
         },
@@ -77,17 +80,17 @@ export default Network({
                 decimals: 18
             },
             BTC: {
-                address: zBTC.networks[42].address,
+                address: zBTC.networks[networkID].address,
                 abi: zBTC.abi as AbiItem[],
                 decimals: 8
             },
             ZEC: {
-                address: zZEC.networks[42].address,
+                address: zZEC.networks[networkID].address,
                 abi: zZEC.abi as AbiItem[],
                 decimals: 8
             },
             REN: {
-                address: RenToken.networks[42].address,
+                address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 decimals: 18
             },

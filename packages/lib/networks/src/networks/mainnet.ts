@@ -9,11 +9,14 @@ import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
 import { Network } from "./network";
 
+const networkID = 1;
+
 export default Network({
     name: "mainnet",
     chain: "main",
     label: "Mainnet",
     chainLabel: "Mainnet",
+    networkID,
     infura: "https://mainnet.infura.io",
     etherscan: "https://etherscan.io",
     renVM: {
@@ -23,11 +26,11 @@ export default Network({
     addresses: {
         ren: {
             DarknodeRegistryStore: {
-                address: DarknodeRegistryStore.networks[1].address,
+                address: DarknodeRegistryStore.networks[networkID].address,
                 abi: DarknodeRegistryStore.abi as AbiItem[],
             },
             DarknodeRegistry: {
-                address: DarknodeRegistry.networks[1].address,
+                address: DarknodeRegistry.networks[networkID].address,
                 abi: DarknodeRegistry.abi as AbiItem[],
                 block: 7007558
             },
@@ -38,18 +41,18 @@ export default Network({
                 address: "0x6b8bb175c092de7d81860b18db360b734a2598e0"
             },
             DarknodeRewardVault: {
-                address: DarknodeRewardVault.networks[1].address,
+                address: DarknodeRewardVault.networks[networkID].address,
                 abi: DarknodeRewardVault.abi as AbiItem[],
             },
             DarknodeSlasher: {
                 address: "0x0000000000000000000000000000000000000000"
             },
             DarknodePayment: {
-                address: DarknodePayment.networks[1].address,
+                address: DarknodePayment.networks[networkID].address,
                 abi: DarknodePayment.abi as AbiItem[],
             },
             DarknodePaymentStore: {
-                address: DarknodePaymentStore.networks[1].address,
+                address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
             }
         },
@@ -77,7 +80,7 @@ export default Network({
         },
         tokens: {
             REN: {
-                address: RenToken.networks[1].address,
+                address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 decimals: 18,
             },
@@ -96,7 +99,7 @@ export default Network({
                 decimals: 18,
             },
             REN: {
-                address: RenToken.networks[1].address,
+                address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 decimals: 18,
             },

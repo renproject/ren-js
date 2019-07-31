@@ -49,8 +49,8 @@ export const NetworkMainnet: NetworkDetails = {
 // Configurations shared by Testnet and Devnet
 const commonTestConfig = {
     mercuryURL: {
-        btc: "https://ren-mercury.herokuapp.com/btc-testnet3",
-        zec: "https://ren-mercury.herokuapp.com/zec-testnet",
+        btc: "",
+        zec: "",
     },
     chainSoName: {
         btc: "BTCTEST",

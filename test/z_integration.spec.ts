@@ -397,7 +397,8 @@ describe("SDK methods", function () {
         balance.should.bignumber.at.most(new BN(amount));
 
         // // Test burning.
-        const burnValue = balance.toNumber();
+        const burnValue = finalZBTCBalance;
+        // const burnValue = balance.toNumber();
         // amount = 0.000225 * (10 ** 8);
         // const burnValue = amount;
         console.log("Starting burn test:");

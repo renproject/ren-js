@@ -397,9 +397,9 @@ describe("SDK methods", function () {
         balance.should.bignumber.at.most(new BN(amount));
 
         // // Test burning.
-        // const burnValue = balance.toNumber();
+        const burnValue = balance.toNumber();
         // amount = 0.000225 * (10 ** 8);
-        const burnValue = amount;
+        // const burnValue = amount;
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
         await burnTest(zBTCContract, network.contracts.addresses.shifter.BTCShifter.address, adapterContract, burnValue, ethAddress, btcAddress);

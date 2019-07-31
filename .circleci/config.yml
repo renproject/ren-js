@@ -4,7 +4,7 @@ jobs:
         environment:
             NODE_ENV: development
         docker:
-            - image: circleci/node:8
+            - image: circleci/node:10.16
         working_directory: ~/renvm-sdk-js
         steps:
             - checkout
@@ -34,7 +34,7 @@ jobs:
 
             - run:
                 name: Install dependencies
-                command: yarn install
+                command: sudo npm install --global yarn && yarn version && yarn install --network-concurrency 1
                 when: always
 
             - run:

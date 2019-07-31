@@ -1,4 +1,5 @@
 import { btcAddressToHex } from "../blockchain/btc";
+import { zecAddressToHex } from "../blockchain/zec";
 
 export enum Chain {
     Bitcoin = "Btc",
@@ -15,6 +16,8 @@ export enum Asset {
 export enum Token {
     Btc2Eth = "BTC0Btc2Eth",
     Eth2Btc = "BTC0Eth2Btc",
+    Zec2Eth = "ZEC0Zec2Eth",
+    Eth2Zec = "ZEC0Eth2Zec",
 }
 
 export const Tokens = {
@@ -22,6 +25,11 @@ export const Tokens = {
         Btc2Eth: Token.Btc2Eth,
         Eth2Btc: Token.Eth2Btc,
         addressToHex: btcAddressToHex,
+    },
+    ZEC: {
+        Zec2Eth: Token.Zec2Eth,
+        Eth2Zec: Token.Eth2Zec,
+        addressToHex: zecAddressToHex,
     }
 };
 

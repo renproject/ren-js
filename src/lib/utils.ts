@@ -10,7 +10,7 @@ import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/bt
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
 import { Tx } from "../renVM/transaction";
-import { actionToDetails, Chain, Token } from "../types/assets";
+import { actionToDetails, Asset, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO };
@@ -51,7 +51,17 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
 };
 
 export const generateGHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    const token = network.contracts.addresses.shifter.zBTC.address; // actionToDetails(_shiftAction).asset;
+    let token;
+    switch (actionToDetails(_shiftAction).asset) {
+        case Asset.BTC:
+            token = network.contracts.addresses.shifter.zBTC.address;
+            break;
+        case Asset.ZEC:
+            token = network.contracts.addresses.shifter.zZEC.address;
+            break;
+        default:
+            throw new Error(`Invalid action ${_shiftAction}`);
+    }
     const pHash = generatePHash(_payload);
 
     const encoded = rawEncode(

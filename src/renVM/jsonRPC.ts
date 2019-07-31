@@ -28,7 +28,7 @@ export type Args = Array<Arg<string, string, any>>;
 export const decodeValue = (value: Arg<string, string, any>) => {
     try {
         // ext_btcCompatUTXO
-        if (value.type === "ext_btcCompatUTXO") {
+        if (value.type === "ext_btcCompatUTXO" || value.type === "ext_zecCompatUTXO") {
             return value.value;
         }
 

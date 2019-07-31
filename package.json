@@ -31,10 +31,9 @@
         "watch": "cross-env NODE_ENV=development webpack --watch --mode development --display-error-details --progress --color",
         "build": "cross-env NODE_ENV=development webpack --mode development --display-error-details --progress --color",
         "build:prod": "$npm_execpath run clean && cross-env NODE_ENV=production webpack --mode production --progress --color",
-        "test": ". ./.env || true; nyc ./node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.ts ./test/**/*.ts",
+        "test": "./.env || true; nyc ./node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.ts ./test/**/*.ts",
         "clean": "rm -rf dist",
-        "prepublishOnly": "$npm_execpath run lint",
-        "prepare": "$npm_execpath run build:prod"
+        "prepublishOnly": "$npm_execpath run lint && $npm_execpath run build:prod"
     },
     "devDependencies": {
         "@babel/core": "^7.5.5",

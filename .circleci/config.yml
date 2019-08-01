@@ -91,6 +91,7 @@ jobs:
                 command: |
                     mkdir -p ./reports/networks
                     node .circleci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
+                    echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
                 when: always
 
             # Upload results
@@ -103,6 +104,9 @@ jobs:
 
             - store_artifacts:
                 path: ./reports/eslint/eslint.xml
+
+            - store_artifacts:
+                path: ./network-status.json
 
             - store_artifacts: # upload test coverage as artifact
                 path: ./coverage/lcov.info

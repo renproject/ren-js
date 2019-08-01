@@ -111,7 +111,10 @@ export class ShiftOutObject {
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         // TODO: Look into why .catch isn't being called on tx
-        promiEvent.on("error", promiEvent.reject);
+        promiEvent.on("error", (error) => {
+            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+            promiEvent.reject(error);
+        });
 
         return promiEvent;
     }

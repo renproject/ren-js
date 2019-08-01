@@ -134,7 +134,8 @@ describe("SDK methods", function () {
         web3.eth.defaultAccount = accounts[0];
         network = stringToNetwork(NETWORK || "testnet");
         sdk = new RenVM(network);
-        MERCURY_URL = `${mercuryProtocol}://139.59.221.34/btc-testnet3`;
+        // tslint:disable-next-line: no-http-string
+        MERCURY_URL = `http://139.59.217.120:5000/btc/testnet`;
     });
 
     // tslint:disable-next-line:no-any
@@ -217,7 +218,11 @@ describe("SDK methods", function () {
             console.log(`Transferring ${amount / 10 ** 8} BTC to ${gatewayAddress} (from ${btcAddress})`);
             try {
                 await retryNTimes(
-                    () => axios.post(`${MERCURY_URL}/tx`, { stx: transaction.toString() }, { timeout: 5000 }),
+                    () => axios.post(
+                        MERCURY_URL,
+                        { jsonrpc: "2.0", method: "sendrawtransaction", params: [transaction.toString()] },
+                        { timeout: 5000 }
+                    ),
                     5,
                 );
             } catch (error) {
@@ -392,9 +397,10 @@ describe("SDK methods", function () {
         balance.should.bignumber.at.most(new BN(amount));
 
         // // Test burning.
+        const burnValue = finalZBTCBalance;
         // const burnValue = balance.toNumber();
         // amount = 0.000225 * (10 ** 8);
-        const burnValue = amount;
+        // const burnValue = amount;
         console.log("Starting burn test:");
         const initialBTCBalance = await checkBTCBalance(btcAddress);
         await burnTest(zBTCContract, network.contracts.addresses.shifter.BTCShifter.address, adapterContract, burnValue, ethAddress, btcAddress);

@@ -51,10 +51,10 @@ describe("SDK methods", function () {
     let sdk: RenVM;
     let accounts: string[];
     let MERCURY_URL;
-    let INFURA_URL;
 
     before(async () => {
-        provider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
+        const infuraURL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
+        provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
         web3 = new Web3(provider);
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
@@ -62,7 +62,6 @@ describe("SDK methods", function () {
         sdk = new RenVM(network);
         // tslint:disable-next-line: no-http-string
         MERCURY_URL = `http://139.59.217.120:5000/btc/testnet`;
-        INFURA_URL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
     });
 
     // tslint:disable-next-line:no-any

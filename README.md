@@ -1,5 +1,9 @@
 # RenVM SDK
 
+[![CircleCI](https://circleci.com/gh/renproject/renvm-sdk-js.svg?style=shield)](https://circleci.com/gh/renproject/renvm-sdk-js)
+![Testnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/renvm-sdk-js/testnet)
+![Devnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/renvm-sdk-js/devnet)
+
 The official Javascript SDK for interacting with the [RenVM](https://renproject.io).
 
 ## Links

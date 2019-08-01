@@ -21,8 +21,7 @@ export class RenNode {
     constructor(lightnodeURL: string) {
         if (lightnodeURL.charAt(0) === "/") {
             try {
-                // tslint:disable-next-line: whitespace
-                const [, , ip, , port, ,] = lightnodeURL.split("/");
+                const [, , ip, , port, ,] = lightnodeURL.split("/"); // tslint:disable-line: whitespace
                 const fixedPort = port === "18514" ? "18515" : port;
                 // TODO: Use HTTPS if supported
                 const protocol = "http";

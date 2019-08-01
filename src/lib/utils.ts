@@ -30,7 +30,7 @@ export type Payload = Arg[];
 const unzip = (zip: Arg[]) => [zip.map(param => param.type), zip.map(param => param.value)];
 
 // tslint:disable-next-line:no-any
-const rawEncode = (types: Array<string | {}>, paramaters: any[]) => (new AbiCoder()).encodeParameters(types, paramaters);
+const rawEncode = (types: Array<string | {}>, parameters: any[]) => (new AbiCoder()).encodeParameters(types, parameters);
 
 // tslint:disable-next-line: no-any
 export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {

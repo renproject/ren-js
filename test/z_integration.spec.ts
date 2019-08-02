@@ -1,6 +1,7 @@
 // tslint:disable: no-console
 
 /// <reference types="./testutils/chai" />
+/// <reference types="./testutils/declarations" />
 /// <reference types="../src/types/declarations/bitcore-lib" />
 
 import BigNumber from "bignumber.js";
@@ -23,7 +24,7 @@ import { sleep } from "../src/lib/utils";
 import { Args } from "../src/renVM/jsonRPC";
 import { Token, Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
-import { sendBTC, sendZEC } from "./testutils/btczec";
+import { sendBTC, sendZEC } from "./testutils/btc+zec";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -65,7 +66,8 @@ describe("SDK methods", function () {
         sdk = new RenVM(network);
     });
 
-    const checkERC20Balance = async (contract: Contract, address: string): Promise<BN> => new BN((await contract.methods.balanceOf(address).call()).toString());
+    const checkERC20Balance = async (contract: Contract, address: string): Promise<BN> =>
+        new BN((await contract.methods.balanceOf(address).call()).toString());
 
     const sumUTXOs = (utxos: Array<BitcoinUTXO | ZcashUTXO>) => utxos.reduce((sum, utxo) => sum.add(new BN(utxo.value)), new BN(0));
 
@@ -135,7 +137,7 @@ describe("SDK methods", function () {
     const submitTogether = async (shift: ShiftInObject): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        const result = await shift.waitAndSubmit(provider, confirmations);
+        await shift.waitAndSubmit(provider, confirmations);
     };
 
     const burnTest = async (
@@ -197,21 +199,6 @@ describe("SDK methods", function () {
                 value: Ox(amount.toString(16)),
             },
         ];
-        // const ABI = payloadToABI("shiftOut", payload);
-        // const contract = new web3.eth.Contract(ABI, adapterContract);
-        // const params = [
-        //     ...payload.map(value => value.value),
-        // ];
-        // console.log("Burning tokens.");
-
-        // const result = await contract.methods.shiftOut(
-        //     ...params,
-        // ).send({ from: ethAddress, gas: 1000000 }).catch((error: Error) => {
-        //     if (error && error.message && error.message.match(/Invalid block number/)) {
-        //         return;
-        //     }
-        //     throw error;
-        // });
 
         console.log("Reading burn from Ethereum.");
 
@@ -327,7 +314,7 @@ describe("SDK methods", function () {
                     amount,
                     ethAddress,
                     testcase.sendAsset,
-                    submitIndividual,
+                    submitTogether,
                 );
                 const finalERC20Balance = await checkERC20Balance(erc20Contract, ethAddress);
 

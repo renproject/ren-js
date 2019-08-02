@@ -6,11 +6,8 @@ import axios from "axios";
 import {
     PrivateKey as BPrivateKey, Script as BScript, Transaction as BTransaction,
 } from "bitcore-lib";
-import {
-    PrivateKey as ZPrivateKey, Script as ZScript, Transaction as ZTransaction,
-} from "bitcore-lib-zcash";
-import qrcode from "qrcode-terminal";
 import chalk from "chalk";
+import qrcode from "qrcode-terminal";
 
 import { getBitcoinUTXOs, getZcashUTXOs } from "../../src/index";
 import { retryNTimes } from "../../src/lib/utils";

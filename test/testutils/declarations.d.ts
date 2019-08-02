@@ -1,2 +1,9 @@
-declare module "web3-eth-contract";
-declare module "truffle-hdwallet-provider";
+declare module "truffle-hdwallet-provider" {
+    const HDWalletProvider;
+    type HDWalletProvider = any;
+    export default HDWalletProvider;
+}
+
+declare module "web3-eth-contract" {
+    export type Contract = any;
+}

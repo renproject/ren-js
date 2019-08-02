@@ -1,9 +1,9 @@
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { decode as decode58 } from "bs58";
 
+import { getUTXOs } from "../getUTXOs/mercury";
 import { NetworkDetails } from "../types/networks";
 import { createAddress, Ox } from "./common";
-import { getUTXOs } from "./mercury";
 
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
 
@@ -14,6 +14,6 @@ export interface BitcoinUTXO {
     output_no: number;
 }
 
-export const getBitcoinUTXOs = (network: NetworkDetails) => getUTXOs<BitcoinUTXO>(network.chainSoURL, network.chainSoName.btc);
+export const getBitcoinUTXOs = (network: NetworkDetails) => getUTXOs(network.chainSoURL, network.chainSoName.btc);
 
 export const btcAddressToHex = (address: string) => Ox(decode58(address));

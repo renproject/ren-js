@@ -1,7 +1,7 @@
 import chai from "chai";
 
 import { strip0x } from "../../src/blockchain/common";
-import { BURN_TOPIC, generateAddress, generateHash, generatePHash } from "../../src/lib/utils";
+import { BURN_TOPIC, generateAddress, generateGHash, generatePHash } from "../../src/lib/utils";
 import { Tokens } from "../../src/types/assets";
 import { NetworkTestnet } from "../../src/types/networks";
 
@@ -29,7 +29,7 @@ describe("Utils", function () {
         generatePHash(payload).should.equal(expectedPHash);
     });
 
-    it("generateHash", () => {
+    it("generateGHash", () => {
         const expectedHash = "0xdf7490bdf74b57ae18aebe3d8beb8ea3e11604f2bae4e2487adfd6b13dbd39c9";
         const payload = [{
             name: "_shifter",
@@ -46,7 +46,7 @@ describe("Utils", function () {
         const to = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
         const nonce = "0x3205f743e45858d2a797a88d867264ab9d3b310fc0853056cdd92d9b1b4bd1d5";
 
-        generateHash(payload, amount, strip0x(to), Tokens.BTC.Btc2Eth, nonce, NetworkTestnet)
+        generateGHash(payload, amount, strip0x(to), Tokens.BTC.Btc2Eth, nonce, NetworkTestnet)
             .should.equal(expectedHash);
     });
 

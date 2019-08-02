@@ -16,8 +16,8 @@ export type JSONRPCResponse<T> = {
 };
 
 export interface Arg<name extends string, type extends string, valueType> {
-    type: type;
     name: name;
+    type: type;
     value: valueType; // "8d8126"
 }
 
@@ -25,7 +25,7 @@ export interface Arg<name extends string, type extends string, valueType> {
 export type Args = Array<Arg<string, string, any>>;
 
 // tslint:disable-next-line: no-any
-export const decodeValue = (value: Arg<string, string, any>) => {
+export const decodeValue = <Name extends string, Type extends string, Value>(value: Arg<Name, Type, Value>) => {
     try {
         // ext_btcCompatUTXO
         if (value.type === "ext_btcCompatUTXO" || value.type === "ext_zecCompatUTXO") {
@@ -39,11 +39,11 @@ export const decodeValue = (value: Arg<string, string, any>) => {
 
         // b, b20, b32, etc.
         if (value.type.match(/b[0-9]+/)) {
-            return Ox(Buffer.from(value.value, "base64"));
+            return Ox(Buffer.from(value.value as unknown as string, "base64"));
         }
 
         // Fallback
-        return Ox(Buffer.from(value.value, "base64"));
+        return Ox(Buffer.from(value.value as unknown as string, "base64"));
     } catch (error) {
         throw new Error(`Unable to unmarshal ${value.name} of type ${value.type} from RenVM: ${JSON.stringify(value.value)} - ${error}`);
     }

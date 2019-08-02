@@ -29,6 +29,8 @@ export class RenVMNetwork {
     }
 
     public broadcastMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<JSONRPCResponse<Response>> => {
+        console.log(method);
+        console.log(JSON.stringify(args, null, "    "));
         const responses = (await promiseAll(
             this.nodes.valueSeq().map(async (node) => {
                 const response = await node.sendMessage<Request, Response>(

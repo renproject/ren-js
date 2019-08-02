@@ -22,6 +22,8 @@
  * @date 2018
  */
 
+// tslint:disable: no-any
+
 import { EventEmitter } from "events";
 import { TransactionReceipt } from "web3-core";
 
@@ -31,7 +33,6 @@ class InternalPromiEvent<T> {
     // @ts-ignore no initializer because of proxyHandler
     public resolve: (value?: T) => void;
     // @ts-ignore no initializer because of proxyHandler
-    // tslint:disable-next-line: no-any
     public reject: (reason?: any) => void;
     public eventEmitter: EventEmitter;
 
@@ -40,10 +41,8 @@ class InternalPromiEvent<T> {
     // @ts-ignore no initializer because of proxyHandler
     public readonly removeListener: EventEmitter["removeListener"];
     // @ts-ignore no initializer because of proxyHandler
-    // tslint:disable-next-line: no-any
     public readonly on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
-    // tslint:disable-next-line: no-any
     public readonly once: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly then: Promise<T>["then"];
@@ -96,7 +95,6 @@ export type PromiEvent<T> = InternalPromiEvent<T> & Promise<T>;
 export const newPromiEvent = <T>() => new InternalPromiEvent<T>() as PromiEvent<T>;
 
 export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, filterFn = (_name: string) => true) => {
-    // // tslint:disable-next-line: no-any
     // const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
     //     if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) {
     //         console.log(`Forwarding ${eventName} Listener:`);
@@ -108,7 +106,6 @@ export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, fil
     //     }
     // };
 
-    // // tslint:disable-next-line: no-any
     // const forwardEmitterRemoveListener = (eventName: string, listener: (...args: any[]) => void) => {
     //     src.removeListener(eventName, listener);
     // };

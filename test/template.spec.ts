@@ -2,8 +2,6 @@ import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 
-require("dotenv").config();
-
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 

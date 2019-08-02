@@ -6,8 +6,6 @@ import chaiBigNumber from "chai-bignumber";
 import { getZcashUTXOs, NetworkTestnet } from "../../src";
 import { getBitcoinUTXOs } from "../../src/blockchain/btc";
 
-require("dotenv").config();
-
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 

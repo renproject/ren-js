@@ -9,6 +9,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
+import { Args } from "../renVM/jsonRPC";
 import { Tx } from "../renVM/transaction";
 import { actionToDetails, Asset, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
@@ -18,27 +19,18 @@ export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.
 // 32-byte zero value
 export const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-export interface Arg {
-    name: string;
-    type: string;
-    // tslint:disable-next-line: no-any
-    value: any;
-}
-
-export type Payload = Arg[];
-
-const unzip = (zip: Arg[]) => [zip.map(param => param.type), zip.map(param => param.value)];
+const unzip = (zip: Args) => [zip.map(param => param.type), zip.map(param => param.value)];
 
 // tslint:disable-next-line:no-any
 const rawEncode = (types: Array<string | {}>, parameters: any[]) => (new AbiCoder()).encodeParameters(types, parameters);
 
 // tslint:disable-next-line: no-any
-export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
+export const generatePHash = (...zip: Args | [Args]): string => {
     // You can annotate values passed in to soliditySha3.
     // Example: { type: "address", value: srcToken }
 
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = Array.isArray(zip) ? zip[0] as any as Arg[] : zip; // tslint:disable-line: no-any
+    const args = Array.isArray(zip) ? zip[0] as any as Args : zip; // tslint:disable-line: no-any
 
     // If the payload is empty, use 0x0
     if (args.length === 0) {
@@ -50,7 +42,7 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateGHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
+export const generateGHash = (_payload: Args, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
     let token;
     switch (actionToDetails(_shiftAction).asset) {
         case Asset.BTC:

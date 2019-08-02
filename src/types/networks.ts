@@ -49,8 +49,10 @@ export const NetworkMainnet: NetworkDetails = {
 // Configurations shared by Testnet and Devnet
 const commonTestConfig = {
     mercuryURL: {
-        btc: "",
-        zec: "",
+        // tslint:disable-next-line: no-http-string
+        btc: "http://139.59.217.120:5000/btc/testnet",
+        // tslint:disable-next-line: no-http-string
+        zec: "http://139.59.217.120:5000/zec/testnet",
     },
     chainSoName: {
         btc: "BTCTEST",

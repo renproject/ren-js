@@ -16,7 +16,7 @@ const unmarshalTx = (response: QueryTxResponse): Tx => {
     // Unmarshal
     let args = {};
     for (const value of response.tx.args) {
-        args = { ...args, [value.name]: decodeValue(value) };
+        args = { ...args, [value.name]: decodeValue<typeof value["name"], typeof value["type"], typeof value["value"]>(value) };
     }
     let signature = {};
     for (const value of response.tx.out) {
@@ -56,7 +56,7 @@ export class ShifterNetwork {
                 break;
             case Asset.ZEC:
                 token = network.contracts.addresses.shifter.zZEC.address;
-                utxoType = "ext_zecCompatUTXO";
+                utxoType = "ext_btcCompatUTXO"; // "ext_zecCompatUTXO";
                 break;
             default:
                 throw new Error(`Invalid action ${action}`);

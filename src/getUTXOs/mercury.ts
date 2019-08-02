@@ -18,7 +18,6 @@ export const getUTXOs = (endpoint: string, network: string) => async (address: s
             () => Axios.get<{ data: { txs: Array<BitcoinUTXO | ZcashUTXO> } }>(`${endpoint}/get_tx_unspent/${network}/${address}/${confirmations}`),
             5
         );
-        // tslint:disable-next-line:no-any
         const data = (resp.data);
 
         // Convert value to Satoshi

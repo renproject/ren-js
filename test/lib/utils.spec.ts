@@ -5,8 +5,6 @@ import { BURN_TOPIC, generateAddress, generateGHash, generatePHash } from "../..
 import { Tokens } from "../../src/types/assets";
 import { NetworkTestnet } from "../../src/types/networks";
 
-require("dotenv").config();
-
 chai.should();
 
 describe("Utils", function () {

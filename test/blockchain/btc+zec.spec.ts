@@ -8,8 +8,6 @@ import {
 } from "../../src";
 import { btcAddressToHex, createBTCAddress } from "../../src/blockchain/btc";
 
-require("dotenv").config();
-
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 

@@ -1933,7 +1933,7 @@ d@1:
 
 "darknode-sol@https://github.com/renproject/darknode-sol#localnet":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#488a8b4367a2ce33fb0eae14c7bf90967d85e851"
+  resolved "https://github.com/renproject/darknode-sol#5e0be6b853c806a2c97364b02260a5f8aa1b6ffa"
   dependencies:
     openzeppelin-solidity "2.3.0"
 

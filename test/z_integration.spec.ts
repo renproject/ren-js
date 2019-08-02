@@ -18,7 +18,7 @@ import { Contract } from "web3-eth-contract";
 
 import { Ox, strip0x } from "../src/blockchain/common";
 import RenVM, {
-    BitcoinUTXO, getBitcoinUTXOs, ShiftInObject, ShiftOutObject, ZcashUTXO,
+    BitcoinUTXO, getBitcoinUTXOs, getZcashUTXOs, ShiftInObject, ShiftOutObject, ZcashUTXO,
 } from "../src/index";
 import { sleep } from "../src/lib/utils";
 import { Args } from "../src/renVM/jsonRPC";
@@ -233,8 +233,8 @@ describe("SDK methods", function () {
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
     describe("minting and buning", () => {
-        const caseBTC = { name: "BTC", fn: () => ({ mintToken: Tokens.BTC.Btc2Eth, burnToken: Tokens.BTC.Eth2Btc, privateKey: () => new BPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zBTC, shifter: network.contracts.addresses.shifter.BTCShifter, sendAsset: sendBTC(network, BITCOIN_KEY) }) };
-        const caseZEC = { name: "ZEC", fn: () => ({ mintToken: Tokens.ZEC.Zec2Eth, burnToken: Tokens.ZEC.Eth2Zec, privateKey: () => new ZPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zZEC, shifter: network.contracts.addresses.shifter.ZECShifter, sendAsset: sendZEC(network, BITCOIN_KEY) }) };
+        const caseBTC = { name: "BTC", fn: () => ({ getUTXOS: getBitcoinUTXOs, mintToken: Tokens.BTC.Btc2Eth, burnToken: Tokens.BTC.Eth2Btc, privateKey: () => new BPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zBTC, shifter: network.contracts.addresses.shifter.BTCShifter, sendAsset: sendBTC(network, BITCOIN_KEY) }) };
+        const caseZEC = { name: "ZEC", fn: () => ({ getUTXOS: getZcashUTXOs, mintToken: Tokens.ZEC.Zec2Eth, burnToken: Tokens.ZEC.Eth2Zec, privateKey: () => new ZPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zZEC, shifter: network.contracts.addresses.shifter.ZECShifter, sendAsset: sendZEC(network, BITCOIN_KEY) }) };
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
@@ -278,11 +278,11 @@ describe("SDK methods", function () {
                 // const burnValue = amount;
                 console.log("Starting burn test:");
                 // TODO: FIXME: replace getBitcoinUTXOs with generic getUTXOs
-                const initialBalance = sumUTXOs(await getBitcoinUTXOs(network)(srcAddress.toString(), 0));
+                const initialBalance = sumUTXOs(await testcase.getUTXOS(network)(srcAddress.toString(), 0));
                 await burnTest(testcase.burnToken, erc20Contract, testcase.shifter.address, adapterContract, burnValue, ethAddress, srcAddress.toString());
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
-                const finalBalance = sumUTXOs(await getBitcoinUTXOs(network)(srcAddress.toString(), 0));
+                const finalBalance = sumUTXOs(await testcase.getUTXOS(network)(srcAddress.toString(), 0));
 
                 // finalBalance.sub(initialBalance).should.bignumber.at.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
                 // finalBalance.sub(initialBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));

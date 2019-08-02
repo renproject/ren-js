@@ -61,9 +61,9 @@ export const sendBTC = (
         const bitcoreUTXOs = [];
         let utxoAmount = 0;
         for (const utxo of utxos) {
-            if (utxoAmount >= amount) {
-                break;
-            }
+            // if (utxoAmount >= amount) {
+            //     break;
+            // }
             const bitcoreUTXO = new BTransaction.UnspentOutput({
                 txId: utxo.txid,
                 outputIndex: utxo.output_no,
@@ -74,6 +74,9 @@ export const sendBTC = (
             bitcoreUTXOs.push(bitcoreUTXO);
             utxoAmount += utxo.value;
         }
+
+        const change = utxoAmount - amount - 10000;
+        console.log(`${chalk.magenta(`[INFO]`)} ${srcAddress} has ${chalk.magenta(`${change / 10 ** 8}`)} tBTC remaining`);
 
         const transaction = new BTransaction().from(bitcoreUTXOs).to(gatewayAddress, amount).change(srcAddress).sign(privateKey);
 

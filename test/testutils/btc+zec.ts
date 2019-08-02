@@ -102,7 +102,7 @@ export const sendZEC = (
     const availableSatoshis = utxos.reduce((sum, utxo) => sum + utxo.value, 0);
 
     if (availableSatoshis < amountSatoshis + fees) {
-        throw new Error("Insufficient balance to broadcast transaction");
+        throw new Error(`Insufficient balance to broadcast transaction. Have: ${availableSatoshis / 10 ** 8}, want ${(amountSatoshis + fees) / 10 ** 8}`);
     }
 
     const change = availableSatoshis - amountSatoshis - fees;

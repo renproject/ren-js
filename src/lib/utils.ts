@@ -190,6 +190,23 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
     return config;
 };
 
+// tslint:disable-next-line: no-any
+export const extractError = (error: any): string => {
+    if (typeof error === "object") {
+        if (error.response) { return extractError(error.response); }
+        if (error.data) { return extractError(error.data); }
+        if (error.error) { return extractError(error.error); }
+        if (error.message) { return extractError(error.message); }
+        if (error.statusText) { return extractError(error.statusText); }
+        try {
+            return JSON.stringify(error);
+        } catch (error) {
+            // Ignore JSON error
+        }
+    }
+    return String(error);
+};
+
 export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) => {
     let returnError;
     // tslint:disable-next-line: no-constant-condition
@@ -203,7 +220,7 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) 
             if (String(error).match(/timeout of .* exceeded/)) {
                 returnError = error;
             } else {
-                const errorMessage = error.response && (error.response.data && error.response.data.message || error.response.statusText);
+                const errorMessage = extractError(error);
                 if (errorMessage) {
                     error.message += ` (${errorMessage})`;
                 }

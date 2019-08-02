@@ -48,7 +48,7 @@ export const actionToDetails = (shiftAction: Token): ActionDetails => {
     // re.exec("BTC0Eth2Btc") => ['BTC0Eth2Btc', 'BTC', 'Eth', 'Btc']
     const [, asset, from, to] = shiftActionRegex.exec(shiftAction) || defaultMatch;
     if (!asset || !from || !to) {
-        throw new Error("Invalid shift action");
+        throw new Error(`Invalid shift action "${shiftAction}"`);
     }
 
     return {

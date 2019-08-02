@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 
-import { retryNTimes } from "../lib/utils";
+import { extractError, retryNTimes } from "../lib/utils";
 import { JSONRPCResponse } from "./jsonRPC";
 
 export enum RPCMethod {
@@ -49,7 +49,7 @@ export class RenNode {
             }
         } catch (error) {
             if (error.response) {
-                error.message = `Lightnode returned status ${error.response.status} with reason: ${error.response.data}`;
+                error.message = `Lightnode returned status ${error.response.status} with reason: ${extractError(error)}`;
             }
             throw error;
         }

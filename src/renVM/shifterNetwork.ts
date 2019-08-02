@@ -59,7 +59,7 @@ export class ShifterNetwork {
                 utxoType = "ext_btcCompatUTXO"; // "ext_zecCompatUTXO";
                 break;
             default:
-                throw new Error(`Invalid action ${action}`);
+                throw new Error(`Unsupported action ${action}`);
         }
         const response = await this.network.broadcastMessage<SubmitMintRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {

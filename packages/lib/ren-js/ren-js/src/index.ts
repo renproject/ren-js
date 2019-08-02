@@ -1,11 +1,12 @@
-import { RenVMNetwork } from "./lightnode/renVMNetwork";
+import { randomNonce } from "./lib/utils";
+import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
 import { Chain, Tokens } from "./types/assets";
 import { Network, NetworkDetails, stringToNetwork } from "./types/networks";
 import { ShiftInParams, ShiftOutParams } from "./types/parameters";
 
-export * from "./lightnode/renVMNetwork";
+export * from "./renVM/renVMNetwork";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/common";
@@ -41,16 +42,18 @@ export default class RenVM {
     public static Tokens = Tokens;
     public static Networks = Network;
     public static Chains = Chain;
+    public static randomNonce = randomNonce;
 
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenVM()).Tokens`
-    public Tokens = Tokens;
-    public Networks = Network;
-    public Chains = Chain;
+    public readonly Tokens = Tokens;
+    public readonly Networks = Network;
+    public readonly Chains = Chain;
+    public readonly randomNonce = randomNonce;
 
     // Internal state
     private readonly network: NetworkDetails;
-    private readonly renVMNetwork: RenVMNetwork;
+    private readonly renVMNetwork: ShifterNetwork;
 
     /**
      * Takes a Network object that contains relevant addresses.
@@ -59,7 +62,7 @@ export default class RenVM {
      */
     constructor(network?: NetworkDetails | string | null | undefined) {
         this.network = stringToNetwork(network);
-        this.renVMNetwork = new RenVMNetwork(this.network.lightnodeURL);
+        this.renVMNetwork = new ShifterNetwork(this.network.nodeURLs);
     }
 
     /**
@@ -69,7 +72,7 @@ export default class RenVM {
      * @param params See [[ShiftInParams]].
      * @returns An instance of [[ShiftInObject]].
      */
-    public shiftIn = (params: ShiftInParams): ShiftInObject => {
+    public readonly shiftIn = (params: ShiftInParams): ShiftInObject => {
         return new ShiftInObject(this.renVMNetwork, this.network, params);
     }
 
@@ -79,7 +82,7 @@ export default class RenVM {
      * @param params See [[ShiftOutParams]].
      * @returns An instance of [[ShiftOutObject]].
      */
-    public shiftOut = (params: ShiftOutParams): ShiftOutObject => {
+    public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
         return new ShiftOutObject(this.renVMNetwork, params);
     }
 }

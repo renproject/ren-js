@@ -1,18 +1,23 @@
 const testnetFailed = parseInt(process.argv[2]) > 0;
 const devnetFailed = parseInt(process.argv[3]) > 0;
+const localnetFailed = parseInt(process.argv[4]) > 0;
+const totalFailed = testnetFailed + devnetFailed + localnetFailed;
+
+function generateBlock(name, failed) {
+    return `
+      <testsuite name="${name}" tests="1" failures="${failed ? "1" : "0"}" time="0">
+        <testcase name="${name}" time="0" classname="${name}">
+            ${failed ? `<failure message="${name} failed!"></failure>` : ""}
+        </testcase>
+      </testsuite>
+    `;
+}
 
 const x = `<?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="Darknode networks" time="0" tests="2" failures="${testnetFailed + devnetFailed}">
-  <testsuite name="Testnet" tests="1" failures="${testnetFailed ? "1" : "0"}" time="0">
-    <testcase name="Testnet" time="0" classname="Testnet">
-        ${testnetFailed ? `<failure message="Testnet failed!"></failure>` : ""}
-    </testcase>
-  </testsuite>
-  <testsuite name="Devnet" tests="1" failures="${devnetFailed ? "1" : "0"}" time="0">
-    <testcase name="Devnet" time="0" classname="Devnet">
-        ${devnetFailed ? `<failure message="Devnet failed!"></failure>` : ""}
-    </testcase>
-  </testsuite>
+<testsuites name="Darknode networks" time="0" tests="2" failures="${totalFailed}">
+    ${generateBlock("Testnet", testnetFailed)}
+    ${generateBlock("Devnet", devnetFailed)}
+    ${generateBlock("Localnet", localnetFailed)}
 </testsuites>`;
 
 console.log(x);

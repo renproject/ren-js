@@ -1,16 +1,20 @@
-import { ShiftOutParams, ShiftOutParamsAll } from "types/parameters";
+import BN from "bn.js";
+import { keccak256 } from "ethereumjs-util";
 import Web3 from "web3";
 
+import { strip0x } from "./blockchain/common";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
-import { BURN_TOPIC, ignoreError, withDefaultAccount } from "./lib/utils";
-import { RenVMNetwork, ShiftedOutResponse } from "./lightnode/renVMNetwork";
+import { BURN_TOPIC, ignoreError, sleep, withDefaultAccount } from "./lib/utils";
+import { ShifterNetwork } from "./renVM/shifterNetwork";
+import { QueryBurnResponse } from "./renVM/transaction";
+import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;
-    private readonly renVMNetwork: RenVMNetwork;
+    private readonly renVMNetwork: ShifterNetwork;
 
-    constructor(renVMNetwork: RenVMNetwork, params: ShiftOutParams) {
+    constructor(renVMNetwork: ShifterNetwork, params: ShiftOutParams) {
         this.renVMNetwork = renVMNetwork;
         this.params = params;
     }
@@ -61,7 +65,7 @@ export class ShiftOutObject {
                     txHash = await new Promise((resolve, reject) => tx
                         .on("transactionHash", resolve)
                         .catch((error: Error) => {
-                            try { if (ignoreError(error)) { console.error(error); return; } } catch (_error) { /* Ignore _error */ }
+                            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                             reject(error);
                         })
                     );
@@ -79,6 +83,10 @@ export class ShiftOutObject {
                 let receipt;
                 while (!receipt) {
                     receipt = await web3.eth.getTransactionReceipt(txHash);
+                    if (receipt) {
+                        break;
+                    }
+                    await sleep(3 * 1000);
                 }
                 if (!receipt.logs) {
                     throw Error("No events found in transaction");
@@ -102,22 +110,34 @@ export class ShiftOutObject {
 
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
+        // TODO: Look into why .catch isn't being called on tx
+        promiEvent.on("error", (error) => {
+            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+            promiEvent.reject(error);
+        });
+
         return promiEvent;
     }
 
-    public submitToRenVM = () => {
-        const promiEvent = newPromiEvent<ShiftedOutResponse>();
-
-        const burnReference = this.params.burnReference;
-        if (!burnReference) {
-            throw new Error("Must call `lookupBurn` before calling `submitToRenVM`");
-        }
+    public submitToRenVM = (): PromiEvent<QueryBurnResponse> => {
+        const promiEvent = newPromiEvent<QueryBurnResponse>();
 
         (async () => {
-            const messageID = await this.renVMNetwork.submitWithdrawal(this.params.sendToken, burnReference);
+            const burnReference = this.params.burnReference;
+            if (!burnReference) {
+                throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
+            }
+
+            const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
+
+            const messageID = keccak256(`txHash_${"BTC0Eth2Btc"}_${burnReferenceNumber}`).toString("hex");
+
+            // const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", messageID);
 
-            return await this.renVMNetwork.waitForResponse(messageID) as ShiftedOutResponse;
+            return await this.renVMNetwork.queryShiftOut(messageID, (status) => {
+                promiEvent.emit("status", status);
+            });
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

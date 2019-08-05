@@ -24,7 +24,7 @@ import { sleep } from "../src/lib/utils";
 import { Args } from "../src/renVM/jsonRPC";
 import { Token, Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
-import { sendBTC, sendZEC } from "./testutils/btc+zec";
+import { sendBTC, sendZEC } from "./testutils/btcAndZecUtils";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -301,8 +301,6 @@ describe("SDK methods", function () {
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const amount = 0.000225 * (10 ** 8);
                 const ethAddress = accounts[0];
-                const privateKey = testcase.privateKey();
-                const srcAddress = privateKey.toAddress();
                 const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, strip0x(testcase.shiftedToken.address));
 
                 console.log("Starting mint test:");

@@ -146,12 +146,12 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@renproject/contracts@0.3.10":
-  version "0.3.10"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.10.tgz#f46115c1f2908d5c5383336a035b143df2d6854d"
-  integrity sha512-xGBCmFfO4jHZwoPDSUlYz1j29K+FUaTLR9n75+tBVT28rTuQU4FRq84y7r8enMPG1+Q//7zxm8ZXz4Ila5tlww==
+"@renproject/contracts@0.3.13":
+  version "0.3.13"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.13.tgz#3bf288255c8efe7b4faaa2fa094e7dbe0f31b539"
+  integrity sha512-YZ6CM1DLymTm5tQ28RHgDiknYysQWHFL09nMuJF6oC9UesteFXDoFEy5NlVvGs4f8mjW2tVictTxZxnV7jSVtg==
   dependencies:
-    darknode-sol "https://github.com/renproject/darknode-sol#localnet"
+    darknode-sol "https://github.com/renproject/darknode-sol#be15db5d3720b8050a3a379c37260d87026e3626"
 
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
@@ -1931,9 +1931,9 @@ d@1:
     es5-ext "^0.10.50"
     type "^1.0.1"
 
-"darknode-sol@https://github.com/renproject/darknode-sol#localnet":
+"darknode-sol@https://github.com/renproject/darknode-sol#be15db5d3720b8050a3a379c37260d87026e3626":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#5e0be6b853c806a2c97364b02260a5f8aa1b6ffa"
+  resolved "https://github.com/renproject/darknode-sol#be15db5d3720b8050a3a379c37260d87026e3626"
   dependencies:
     openzeppelin-solidity "2.3.0"
 
@@ -6252,15 +6252,6 @@ scrypt.js@^0.3.0:
   integrity sha512-42LTc1nyFsyv/o0gcHtDztrn+aqpkaCNt5Qh7ATBZfhEZU7IC/0oT/qbBH+uRNoAPvs2fwiOId68FDEoSRA8/A==
   dependencies:
     scryptsy "^1.2.1"
-  optionalDependencies:
-    scrypt "^6.0.2"
-
-scrypt@^6.0.2:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/scrypt/-/scrypt-6.0.3.tgz#04e014a5682b53fa50c2d5cce167d719c06d870d"
-  integrity sha1-BOAUpWgrU/pQwtXM4WfXGcBthw0=
-  dependencies:
-    nan "^2.0.8"
 
 scryptsy@2.1.0:
   version "2.1.0"

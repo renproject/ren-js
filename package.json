@@ -31,7 +31,7 @@
         "watch": "cross-env NODE_ENV=development webpack --watch --mode development --display-error-details --progress --color",
         "build": "cross-env NODE_ENV=development webpack --mode development --display-error-details --progress --color",
         "build:prod": "$npm_execpath run clean && cross-env NODE_ENV=production webpack --mode production --progress --color",
-        "test": ". ./.env || true; nyc ./node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "test": "nyc ./node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "clean": "rm -rf dist",
         "prepublishOnly": "$npm_execpath run lint && $npm_execpath run build:prod"
     },
@@ -58,6 +58,7 @@
         "chai-bignumber": "noiach/chai-bignumber#fd75e47",
         "chalk": "^2.4.2",
         "cross-env": "5.2.0",
+        "dotenv": "^8.0.0",
         "mocha": "^6.2.0",
         "npm-check-updates": "^3.1.20",
         "nyc": "^14.1.1",

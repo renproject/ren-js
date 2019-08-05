@@ -40,7 +40,7 @@ export const sleepWithCountdown = async (seconds: number) => {
     process.stdout.write("\t\t\r");
 };
 
-const USE_QRCODE = false;
+require("dotenv")();
 
 const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;

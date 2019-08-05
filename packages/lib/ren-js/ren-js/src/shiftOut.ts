@@ -130,7 +130,7 @@ export class ShiftOutObject {
 
             const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
 
-            const messageID = keccak256(`txHash_${"BTC0Eth2Btc"}_${burnReferenceNumber}`).toString("hex");
+            const messageID = keccak256(`txHash_${this.params.sendToken}_${burnReferenceNumber}`).toString("hex");
 
             // const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", messageID);

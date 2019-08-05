@@ -14,6 +14,6 @@ export interface BitcoinUTXO {
     output_no: number;
 }
 
-export const getBitcoinUTXOs = (network: NetworkDetails) => getUTXOs(network.chainSoURL, network.chainSoName.btc);
+export const getBitcoinUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.btc);
 
 export const btcAddressToHex = (address: string) => Ox(decode58(address));

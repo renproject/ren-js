@@ -1,10 +1,10 @@
-import { List } from "immutable";
+import { List, OrderedSet } from "immutable";
 
 import { JSONRPCResponse } from "./jsonRPC";
 import { RenNode, RPCMethod } from "./renNode";
 
-const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<List<a>> => {
-    const errors = new Set<string>();
+const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[List<a>, OrderedSet<string>]> => {
+    let errors = OrderedSet<string>();
     let newList = List<a>();
     for (const entryP of list.toArray()) {
         try {
@@ -12,13 +12,13 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<L
         } catch (error) {
             const errorString = String(error);
             if (!errors.has(errorString)) {
-                errors.add(errorString);
+                errors = errors.add(errorString);
                 console.error(errorString);
             }
             newList = newList.push(defaultValue);
         }
     }
-    return newList;
+    return [newList, errors];
 };
 
 export class RenVMNetwork {
@@ -29,7 +29,8 @@ export class RenVMNetwork {
     }
 
     public broadcastMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<JSONRPCResponse<Response>> => {
-        const responses = (await promiseAll(
+        // tslint:disable-next-line: prefer-const
+        let [responses, errors] = await promiseAll(
             this.nodes.valueSeq().map(async (node) => {
                 const response = await node.sendMessage<Request, Response>(
                     method,
@@ -41,11 +42,16 @@ export class RenVMNetwork {
                 return response;
             }).toList(),
             null
-        )).filter((result) => result !== null);
+        );
+        responses = responses.filter((result) => result !== null);
 
         const first = responses.first(null);
         if (first === null) {
-            throw new Error("No response from RenVM while submitting message");
+            if (errors.size) {
+                throw new Error(errors.first());
+            } else {
+                throw new Error(`No response from RenVM while submitting message`);
+            }
         }
 
         return first;

@@ -4,8 +4,6 @@ import { EventEmitter } from "events";
 import { forwardEvents, newPromiEvent, PromiEvent } from "../../src/lib/promievent";
 import { sleep } from "../../src/lib/utils";
 
-require("dotenv").config();
-
 chai.use(require("chai-bignumber")(require("bignumber.js")));
 chai.should();
 

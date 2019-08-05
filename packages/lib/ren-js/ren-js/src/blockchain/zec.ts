@@ -14,6 +14,6 @@ export interface ZcashUTXO {
     output_no: number;
 }
 
-export const getZcashUTXOs = (network: NetworkDetails) => getUTXOs(network.chainSoURL, network.chainSoName.zec);
+export const getZcashUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.zec);
 
 export const zecAddressToHex = (address: string) => Ox(decode58(address));

@@ -9,8 +9,9 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
+import { Args } from "../renVM/jsonRPC";
 import { Tx } from "../renVM/transaction";
-import { actionToDetails, Chain, Token } from "../types/assets";
+import { actionToDetails, Asset, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO };
@@ -18,27 +19,18 @@ export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.
 // 32-byte zero value
 export const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-export interface Arg {
-    name: string;
-    type: string;
-    // tslint:disable-next-line: no-any
-    value: any;
-}
-
-export type Payload = Arg[];
-
-const unzip = (zip: Arg[]) => [zip.map(param => param.type), zip.map(param => param.value)];
+const unzip = (zip: Args) => [zip.map(param => param.type), zip.map(param => param.value)];
 
 // tslint:disable-next-line:no-any
-const rawEncode = (types: Array<string | {}>, paramaters: any[]) => (new AbiCoder()).encodeParameters(types, paramaters);
+const rawEncode = (types: Array<string | {}>, parameters: any[]) => (new AbiCoder()).encodeParameters(types, parameters);
 
 // tslint:disable-next-line: no-any
-export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
+export const generatePHash = (...zip: Args | [Args]): string => {
     // You can annotate values passed in to soliditySha3.
     // Example: { type: "address", value: srcToken }
 
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = Array.isArray(zip) ? zip[0] as any as Arg[] : zip; // tslint:disable-line: no-any
+    const args = Array.isArray(zip) ? zip[0] as any as Args : zip; // tslint:disable-line: no-any
 
     // If the payload is empty, use 0x0
     if (args.length === 0) {
@@ -50,8 +42,18 @@ export const generatePHash = (...zip: Arg[] | [Arg[]]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateGHash = (_payload: Payload, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    const token = network.contracts.addresses.shifter.zBTC.address; // actionToDetails(_shiftAction).asset;
+export const generateGHash = (_payload: Args, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
+    let token;
+    switch (actionToDetails(_shiftAction).asset) {
+        case Asset.BTC:
+            token = network.contracts.addresses.shifter.zBTC.address;
+            break;
+        case Asset.ZEC:
+            token = network.contracts.addresses.shifter.zZEC.address;
+            break;
+        default:
+            throw new Error(`Invalid action ${_shiftAction}`);
+    }
     const pHash = generatePHash(_payload);
 
     const encoded = rawEncode(
@@ -188,6 +190,23 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
     return config;
 };
 
+// tslint:disable-next-line: no-any
+export const extractError = (error: any): string => {
+    if (typeof error === "object") {
+        if (error.response) { return extractError(error.response); }
+        if (error.data) { return extractError(error.data); }
+        if (error.error) { return extractError(error.error); }
+        if (error.message) { return extractError(error.message); }
+        if (error.statusText) { return extractError(error.statusText); }
+        try {
+            return JSON.stringify(error);
+        } catch (error) {
+            // Ignore JSON error
+        }
+    }
+    return String(error);
+};
+
 export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) => {
     let returnError;
     // tslint:disable-next-line: no-constant-condition
@@ -201,7 +220,7 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) 
             if (String(error).match(/timeout of .* exceeded/)) {
                 returnError = error;
             } else {
-                const errorMessage = error.response && (error.response.data && error.response.data.message || error.response.statusText);
+                const errorMessage = extractError(error);
                 if (errorMessage) {
                     error.message += ` (${errorMessage})`;
                 }

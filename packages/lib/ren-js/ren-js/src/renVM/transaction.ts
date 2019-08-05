@@ -9,7 +9,7 @@ export type MintArgsArray = [
     Arg<"token", "b20", string>, // base64
     Arg<"to", "b20", string>, // base64
     Arg<"n", "b32", string>, // base64
-    Arg<"utxo", "ext_btcCompatUTXO", { "txHash": string; /* base64 */ "vOut": number; }>
+    Arg<"utxo", "ext_btcCompatUTXO" | "ext_zecCompatUTXO", { "txHash": string; /* base64 */ "vOut": number; }>
 ];
 
 export type BurnArgsArray = [
@@ -22,7 +22,7 @@ export type TxOutputArgsArray = [
     Arg<"token", "b20", string>,
     Arg<"to", "b20", string>,
     Arg<"n", "b32", string>,
-    Arg<"utxo", "ext_btcCompatUTXO", { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": 60000 }>,
+    Arg<"utxo", "ext_btcCompatUTXO" | "ext_zecCompatUTXO", { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": 60000 }>,
     Arg<"gas", "u64", number>,
     Arg<"ghash", "b32", string>,
     Arg<"nhash", "b32", string>,

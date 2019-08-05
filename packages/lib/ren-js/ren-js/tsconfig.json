@@ -30,8 +30,7 @@
     },
     "include": [
         "src/**/*",
-        "src/global.d.ts",
-        "node_modules/@types"
+        "test/testutils/chai.d.ts"
     ],
     "exclude": []
 }

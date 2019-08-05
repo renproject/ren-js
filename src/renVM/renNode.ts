@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 
-import { retryNTimes } from "../lib/utils";
+import { extractError, retryNTimes } from "../lib/utils";
 import { JSONRPCResponse } from "./jsonRPC";
 
 export enum RPCMethod {
@@ -21,8 +21,7 @@ export class RenNode {
     constructor(lightnodeURL: string) {
         if (lightnodeURL.charAt(0) === "/") {
             try {
-                // tslint:disable-next-line: whitespace
-                const [, , ip, , port, ,] = lightnodeURL.split("/");
+                const [, , ip, , port, ,] = lightnodeURL.split("/"); // tslint:disable-line: whitespace
                 const fixedPort = port === "18514" ? "18515" : port;
                 // TODO: Use HTTPS if supported
                 const protocol = "http";
@@ -50,7 +49,7 @@ export class RenNode {
             }
         } catch (error) {
             if (error.response) {
-                error.message = `Lightnode returned status ${error.response.status} with reason: ${error.response.data}`;
+                error.message = `Lightnode returned status ${error.response.status} with reason: ${extractError(error)}`;
             }
             throw error;
         }

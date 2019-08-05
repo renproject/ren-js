@@ -4,8 +4,6 @@ import RenVM, {
     NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet, strip0x,
 } from "../src/index";
 
-require("dotenv").config();
-
 chai.should();
 
 describe("RenVM networks", () => {

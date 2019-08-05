@@ -1,7 +1,7 @@
 import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
-import { Payload } from "../lib/utils";
+import { Args } from "../renVM/jsonRPC";
 import { Token } from "./assets";
 
 interface ContractCall {
@@ -18,7 +18,7 @@ interface ContractCall {
     /**
      * The parameters to be passed to the adapter contract
      */
-    contractParams: Payload;
+    contractParams: Args;
 
     // Set transaction options:
     txConfig?: TransactionConfig;

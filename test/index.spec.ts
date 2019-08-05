@@ -3,8 +3,6 @@ import chai from "chai";
 import RenVM, { Chain, Network, Tokens } from "../src/index";
 import { NetworkDevnet, NetworkMainnet, NetworkTestnet } from "../src/types/networks";
 
-require("dotenv").config();
-
 chai.should();
 
 describe("RenVM initialization and exports", () => {

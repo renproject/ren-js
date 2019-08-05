@@ -1,6 +1,6 @@
 import { Ox, strip0x } from "../blockchain/common";
 import { SECONDS, sleep } from "../lib/utils";
-import { Token } from "../types/assets";
+import { actionToDetails, Asset, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { decodeValue } from "./jsonRPC";
 import { RPCMethod } from "./renNode";
@@ -16,7 +16,7 @@ const unmarshalTx = (response: QueryTxResponse): Tx => {
     // Unmarshal
     let args = {};
     for (const value of response.tx.args) {
-        args = { ...args, [value.name]: decodeValue(value) };
+        args = { ...args, [value.name]: decodeValue<typeof value["name"], typeof value["type"], typeof value["value"]>(value) };
     }
     let signature = {};
     for (const value of response.tx.out) {
@@ -47,6 +47,20 @@ export class ShifterNetwork {
         utxoVout: number,
         network: NetworkDetails,
     ): Promise<string> => {
+        let token;
+        let utxoType: "ext_btcCompatUTXO" | "ext_zecCompatUTXO";
+        switch (actionToDetails(action).asset) {
+            case Asset.BTC:
+                token = network.contracts.addresses.shifter.zBTC.address;
+                utxoType = "ext_btcCompatUTXO";
+                break;
+            case Asset.ZEC:
+                token = network.contracts.addresses.shifter.zZEC.address;
+                utxoType = "ext_btcCompatUTXO"; // "ext_zecCompatUTXO";
+                break;
+            default:
+                throw new Error(`Unsupported action ${action}`);
+        }
         const response = await this.network.broadcastMessage<SubmitMintRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {
                 tx: {
@@ -56,8 +70,8 @@ export class ShifterNetwork {
                         { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
                         // The amount of BTC (in SATs) that has be transferred to the gateway
                         { name: "amount", type: "u64", value: amount },
-                        // The ERC20 contract address on Ethereum for ZBTC
-                        { name: "token", type: "b20", value: Buffer.from(strip0x(network.contracts.addresses.shifter.zBTC.address), "hex").toString("base64") },
+                        // The ERC20 contract address on Ethereum for zBTC
+                        { name: "token", type: "b20", value: Buffer.from(strip0x(token), "hex").toString("base64") },
                         // The address on the Ethereum blockchain to which ZBTC will be transferred
                         { name: "to", type: "b20", value: Buffer.from(strip0x(to), "hex").toString("base64") },
                         // The nonce is used to randomize the gateway
@@ -66,7 +80,7 @@ export class ShifterNetwork {
                         // UTXO
                         {
                             name: "utxo",
-                            type: "ext_btcCompatUTXO",
+                            type: utxoType,
                             value: {
                                 txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
                                 vOut: utxoVout,

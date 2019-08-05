@@ -2,8 +2,6 @@ import chai from "chai";
 
 import { payloadToABI, payloadToShiftInABI } from "../../src/lib/abi";
 
-require("dotenv").config();
-
 chai.should();
 
 describe("abi.ts", () => {

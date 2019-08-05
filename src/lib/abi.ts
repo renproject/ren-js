@@ -42,8 +42,7 @@ export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: s
             name: methodName,
             inputs: [
                 ...payload.map(value => ({ type: value.type, name: value.name })),
-                // tslint:disable-next-line: no-non-null-assertion
-                ...shiftInABITemplate.inputs!,
+                ...(shiftInABITemplate.inputs ? shiftInABITemplate.inputs : []),
             ]
         }
     ];

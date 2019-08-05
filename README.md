@@ -4,6 +4,7 @@
 [![npm version](http://img.shields.io/npm/v/@renproject/ren.svg?style=flat)](https://npmjs.org/package/@renproject/ren "View this project on npm")
 [![Testnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/renvm-sdk-js/testnet)](https://ren-status.herokuapp.com)
 [![Devnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/renvm-sdk-js/devnet)](https://ren-status.herokuapp.com)
+[![Localnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/renvm-sdk-js/localnet)](https://ren-status.herokuapp.com)
 
 The official Javascript SDK for interacting with the [RenVM](https://renproject.io).
 

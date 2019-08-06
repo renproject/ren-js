@@ -8,8 +8,9 @@ The official Javascript SDK for interacting with the [RenVM](https://renproject.
 
 ## Links
 
-* [Official SDK Docs](https://app.gitbook.com/@renproject/s/developers)
-* [Cloneable Examples](https://github.com/republicprotocol/dex-demo)
+* [Developer Docs](https://docs.renproject.io/developers/)
+* [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started)
+* [Example DEX](https://github.com/republicprotocol/dex-demo)
 
 ## Installation
 
@@ -45,9 +46,12 @@ const sdk = new RenVM("testnet");
 
 For more information, [check out an example](https://app.gitbook.com/@renproject/s/developers/examples/bitcoin-payments).
 
+<br />
+<br />
 <hr />
+<br />
 
-## Dev
+## Developer notes
 
 ### Building
 
@@ -57,7 +61,7 @@ yarn run watch
 yarn run build
 ```
 
-### Tests
+### Running tests
 
 You'll need to:
 
@@ -80,7 +84,7 @@ Then just run the following command to execute the tests. Make sure there is suf
 yarn run test
 ```
 
-### Update Typescript bindings
+### Update contract bindings
 
 In order to update the bindings in `src/contracts/bindings`, you need to clone [`darknode-sol`](https://github.com/renproject/darknode-sol) and run:
 

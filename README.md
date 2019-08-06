@@ -1,4 +1,4 @@
-# RenVM SDK
+# `🛠️ RenVM SDK`
 
 [![npm version](http://img.shields.io/npm/v/@renproject/ren.svg?style=flat)](https://npmjs.org/package/@renproject/ren "View this project on npm")
 [![CircleCI](https://circleci.com/gh/renproject/renvm-sdk-js.svg?style=shield&circle-token=6fc560c540eff6670e5675841d34b9769b887a49)](https://circleci.com/gh/renproject/renvm-sdk-js)
@@ -10,7 +10,7 @@ The official Javascript SDK for interacting with the [RenVM](https://renproject.
 
 * [Developer Docs](https://docs.renproject.io/developers/)
 * [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started)
-* [Example DEX](https://github.com/republicprotocol/dex-demo)
+* [Example DEX](https://github.com/republicprotocol/renvm-demo)
 
 ## Installation
 

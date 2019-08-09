@@ -6257,8 +6257,6 @@ scrypt.js@^0.3.0:
   integrity sha512-42LTc1nyFsyv/o0gcHtDztrn+aqpkaCNt5Qh7ATBZfhEZU7IC/0oT/qbBH+uRNoAPvs2fwiOId68FDEoSRA8/A==
   dependencies:
     scryptsy "^1.2.1"
-  optionalDependencies:
-    scrypt "^6.0.2"
 
 scryptsy@2.1.0:
   version "2.1.0"

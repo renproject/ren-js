@@ -28,10 +28,12 @@ export default Network({
             DarknodeRegistryStore: {
                 address: DarknodeRegistryStore.networks[networkID].address,
                 abi: DarknodeRegistryStore.abi as AbiItem[],
+                artifact: DarknodeRegistryStore,
             },
             DarknodeRegistry: {
                 address: DarknodeRegistry.networks[networkID].address,
                 abi: DarknodeRegistry.abi as AbiItem[],
+                artifact: DarknodeRegistry,
                 block: 7007558
             },
             SettlementRegistry: {
@@ -43,6 +45,7 @@ export default Network({
             DarknodeRewardVault: {
                 address: DarknodeRewardVault.networks[networkID].address,
                 abi: DarknodeRewardVault.abi as AbiItem[],
+                artifact: DarknodeRewardVault,
             },
             DarknodeSlasher: {
                 address: "0x0000000000000000000000000000000000000000"
@@ -50,38 +53,56 @@ export default Network({
             DarknodePayment: {
                 address: DarknodePayment.networks[networkID].address,
                 abi: DarknodePayment.abi as AbiItem[],
+                artifact: DarknodePayment,
             },
             DarknodePaymentStore: {
                 address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
+                artifact: DarknodePaymentStore,
             }
         },
         shifter: {
             BTCShifter: {
                 address: "",
                 abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
             },
             ZECShifter: {
                 address: "",
                 abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
             },
             zBTC: {
                 address: "",
                 abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
             },
             zZEC: {
                 address: "",
                 abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
             },
             ShifterRegistry: {
                 address: "",
                 abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
             }
         },
         tokens: {
             REN: {
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
+                artifact: RenToken,
                 decimals: 18,
             },
             DAI: {
@@ -101,6 +122,7 @@ export default Network({
             REN: {
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
+                artifact: RenToken,
                 decimals: 18,
             },
             ZRX: {
@@ -119,6 +141,7 @@ export default Network({
         erc: {
             ERC20: {
                 abi: ERC20.abi as AbiItem[],
+                artifact: ERC20,
             }
         }
     }

@@ -5,7 +5,7 @@ import Web3 from "web3";
 import { strip0x } from "./blockchain/common";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
-import { BURN_TOPIC, ignoreError, sleep, withDefaultAccount } from "./lib/utils";
+import { BURN_TOPIC, ignoreError, waitForReceipt, withDefaultAccount } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { QueryBurnResponse } from "./renVM/transaction";
 import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
@@ -80,14 +80,8 @@ export class ShiftOutObject {
                 // ShiftOut event.
                 // @dev WARNING: If multiple shiftOuts are present, ShiftOut
                 // should be called for each one, passing in the reference IDs.
-                let receipt;
-                while (!receipt) {
-                    receipt = await web3.eth.getTransactionReceipt(txHash);
-                    if (receipt) {
-                        break;
-                    }
-                    await sleep(3 * 1000);
-                }
+                const receipt = await waitForReceipt(web3, txHash);
+
                 if (!receipt.logs) {
                     throw Error("No events found in transaction");
                 }

@@ -87,13 +87,13 @@ export const generateAddress = (_shiftAction: Token, gHash: string, network: Net
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: Token, _depositAddress: string, _limit = 10, _confirmations = 0): Promise<UTXO[]> => {
+export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: Token, _depositAddress: string, confirmations = 0, endpoint = 0): Promise<UTXO[]> => {
     const chain = actionToDetails(_shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(_depositAddress, _confirmations)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
+            return (await getBitcoinUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
         case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(_depositAddress, _confirmations)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
+            return (await getZcashUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }
@@ -231,4 +231,38 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) 
     throw returnError;
 };
 
+/**
+ * Returns a random 32 byte hex string.
+ */
 export const randomNonce = () => Ox(crypto.Random.getRandomBuffer(32));
+
+/**
+ * Waits for the receipt of a transaction to be available, retrying every 3
+ * seconds until it is.
+ *
+ * @param web3 A web3 instance.
+ * @param transactionHash The hash of the transaction being read.
+ * @param nonce The nonce of the transaction, to detect if it has been
+ *        overwritten.
+ */
+export const waitForReceipt = async (web3: Web3, transactionHash: string, nonce?: number) => {
+
+    // TODO: Handle transactions being overwritten.
+
+    // Wait for confirmation
+    let receipt;
+    while (!receipt || !receipt.blockHash) {
+        receipt = await web3.eth.getTransactionReceipt(transactionHash);
+        if (receipt && receipt.blockHash) {
+            break;
+        }
+        await sleep(3 * 1000);
+    }
+
+    // Status might be undefined - so check against `false` explicitly.
+    if (receipt.status === false) {
+        throw new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`);
+    }
+
+    return receipt;
+};

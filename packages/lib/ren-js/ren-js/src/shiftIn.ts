@@ -61,6 +61,10 @@ export class ShiftInObject {
             // const depositedAmount = (): number => {
             //     return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
             // };
+
+            // Every nth time, try a different end-point
+            let retryCount = 0;
+
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 if (deposits.size > 0) {
@@ -73,7 +77,7 @@ export class ShiftInObject {
                 }
 
                 try {
-                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, confirmations);
+                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, confirmations, retryCount);
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
@@ -91,6 +95,7 @@ export class ShiftInObject {
                     continue;
                 }
                 await sleep(10 * SECONDS);
+                retryCount++;
             }
             return this;
         })().then(promiEvent.resolve).catch(promiEvent.reject);

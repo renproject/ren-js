@@ -87,33 +87,42 @@ export const fetchFromZechain = async (url: string): Promise<ZcashUTXO[]> => {
     }));
 };
 
-export const getUTXOs = (network: NetworkDetails, currencyName: string) => async (address: string, confirmations: number): Promise<Array<BitcoinUTXO | ZcashUTXO>> => {
-    try {
-        // Try from chain.so
-        return fetchFromChainSo(`${network.chainSoURL}/get_tx_unspent/${currencyName}/${address}/${confirmations}`);
-    } catch (chainSoError) {
-        // tslint:disable: no-console
-        console.error(chainSoError);
-        if (currencyName.match("BTC")) {
-            try {
-                // Try blockstream.info for testnet BTC
-                return fetchFromBlockstream(`https://blockstream.info/testnet/api/address/${address}/utxo`);
-            } catch (error) {
-                console.error(error);
-            }
-        } else if (currencyName.match("ZEC")) {
-            try {
-                // Try z.cash explorer for testnet ZEC
-                return fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`);
-            } catch (error) {
-                console.error(error);
-            }
-            // Mainnet only!
-            // return fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`);
-            // return fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`);
-        }
+/**
+ * Retrieves UTXOs for a BTC or ZEC address.
+ *
+ * @param network The Ren Network object
+ * @param currencyName "BTC" or "ZEC"
+ *
+ * @param address The BTC or ZEC address to retrieve the UTXOS for
+ * @param confirmations Restrict UTXOs to having at least this many
+ *        confirmations. If confirmations is 0, unconfirmed UTXOs are included.
+ * @param endpoint An offset to allow trying different endpoints first, in case
+ * o      one is out of sync.
+ */
+export const getUTXOs = (network: NetworkDetails, currencyName: string) => async (address: string, confirmations: number, endpoint = 0): Promise<Array<BitcoinUTXO | ZcashUTXO>> => {
+    const chainSoFn = () => fetchFromChainSo(`${network.chainSoURL}/get_tx_unspent/${currencyName}/${address}/${confirmations}`);
+    const blockstreamFn = () => fetchFromBlockstream(`https://blockstream.info/testnet/api/address/${address}/utxo`);
+    const insightFn = () => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`);
 
-        throw chainSoError;
+    const endpoints = [chainSoFn];
+    if (currencyName.match("BTC")) {
+        endpoints.push(blockstreamFn);
+    } else if (currencyName.match("ZEC")) {
+        endpoints.push(insightFn);
+        // Mainnet only!
+        // return fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`);
+        // return fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`);
     }
-    // tslint:enable: no-console
+
+    let firstError;
+
+    for (let i = 0; i < endpoints.length; i++) {
+        try {
+            return endpoints[(i + endpoint) % endpoints.length]();
+        } catch (error) {
+            firstError = firstError || error;
+        }
+    }
+
+    throw firstError;
 };

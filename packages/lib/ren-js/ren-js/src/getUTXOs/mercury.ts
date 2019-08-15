@@ -1,5 +1,6 @@
 import Axios from "axios";
 import BigNumber from "bignumber.js";
+import https from "https";
 
 import { BitcoinUTXO } from "../blockchain/btc";
 import { ZcashUTXO } from "../blockchain/zec";
@@ -52,7 +53,12 @@ export const fetchFromInsight = async (url: string) => {
             satoshis: number;
             confirmations: number;
             ts: number;
-        }>>(url),
+        }>>(url, {
+            // TTODO: Remove when certificate is fixed.
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false
+            })
+        }),
         5,
     );
     return response.data.map(utxo => ({
@@ -116,10 +122,13 @@ export const getUTXOs = (network: NetworkDetails, currencyName: string) => async
 
     let firstError;
 
+    console.log(endpoints);
     for (let i = 0; i < endpoints.length; i++) {
+        console.log(`!!!!!!!!!!!1 ${i}`);
         try {
-            return endpoints[(i + endpoint) % endpoints.length]();
+            return await endpoints[(i + endpoint) % endpoints.length]();
         } catch (error) {
+            console.error(error);
             firstError = firstError || error;
         }
     }

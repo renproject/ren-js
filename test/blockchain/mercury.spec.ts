@@ -9,8 +9,15 @@ chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
 describe("mercury.ts", () => {
-    it("Bitcoin UTXOS", async () => {
+    it("Bitcoin UTXOS from chain.so", async () => {
         const utxos = await getBitcoinUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0);
+        utxos.length.should.be.greaterThan(0);
+        utxos[0].txid.should.equal("af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d");
+        utxos[0].value.should.equal(13370);
+    });
+
+    it("Bitcoin UTXOS from blockstream.info", async () => {
+        const utxos = await getBitcoinUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0, 1);
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d");
         utxos[0].value.should.equal(13370);

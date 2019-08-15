@@ -122,13 +122,10 @@ export const getUTXOs = (network: NetworkDetails, currencyName: string) => async
 
     let firstError;
 
-    console.log(endpoints);
     for (let i = 0; i < endpoints.length; i++) {
-        console.log(`!!!!!!!!!!!1 ${i}`);
         try {
             return await endpoints[(i + endpoint) % endpoints.length]();
         } catch (error) {
-            console.error(error);
             firstError = firstError || error;
         }
     }

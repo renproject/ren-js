@@ -146,10 +146,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@renproject/contracts@0.3.14":
-  version "0.3.14"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.14.tgz#fdd1562571ca2a6fd87dc8b233c9129b032793ad"
-  integrity sha512-WsDE99pffvAfOaADv1qekCWHTGvIxx7zWaq8Y7aWNNeeNlOO/LLi/I3ui+vqbUg6EtZCuXquPIAjGk/LIC8+CA==
+"@renproject/contracts@0.3.15":
+  version "0.3.15"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.15.tgz#da6a16de02195f96aa453e4af642f171de1be93d"
+  integrity sha512-arKbXoHttdmBfg1L2RxOZ0GHtmnW5FsexmS66U2SL0LYfw41yTAG4bXveoWmVwCftwFRYVnHXAeIjVfituESow==
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#be15db5d3720b8050a3a379c37260d87026e3626"
 
@@ -1932,9 +1932,9 @@ d@1:
     es5-ext "^0.10.50"
     type "^1.0.1"
 
-"darknode-sol@https://github.com/renproject/darknode-sol#be15db5d3720b8050a3a379c37260d87026e3626":
+"darknode-sol@git+https://github.com/renproject/darknode-sol.git#be15db5d3720b8050a3a379c37260d87026e3626":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#be15db5d3720b8050a3a379c37260d87026e3626"
+  resolved "git+https://github.com/renproject/darknode-sol.git#be15db5d3720b8050a3a379c37260d87026e3626"
   dependencies:
     openzeppelin-solidity "2.3.0"
 

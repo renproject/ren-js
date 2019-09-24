@@ -27,7 +27,7 @@ export default Network({
     infura: "https://kovan.infura.io",
     etherscan: "https://kovan.etherscan.io",
     renVM: {
-        mpkh: "0x91729fc22d427659d578445bd92d3b2fc972b9fa",
+        mpkh: "0x90081b2120fcd9230001f4026c207bf2633ede35",
         mintAuthority: "0x1B9d58208879AA9aa9E10040b34cF2b684237621",
     },
     addresses: {

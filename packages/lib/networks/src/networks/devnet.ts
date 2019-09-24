@@ -1,7 +1,9 @@
 import { AbiItem } from "web3-utils";
+import zBTC from "darknode-sol/build/devnet/zBTC.json";
 import zZEC from "darknode-sol/build/devnet/zZEC.json";
 import ZECShifter from "darknode-sol/build/devnet/ZECShifter.json";
-import zBTC from "darknode-sol/build/devnet/zBTC.json";
+import zBCH from "darknode-sol/build/localnet/zBCH.json";
+import BCHShifter from "darknode-sol/build/localnet/BCHShifter.json";
 import ShifterRegistry from "darknode-sol/build/devnet/ShifterRegistry.json";
 import RenToken from "darknode-sol/build/devnet/RenToken.json";
 import DarknodeSlasher from "darknode-sol/build/devnet/DarknodeSlasher.json";
@@ -58,25 +60,35 @@ export default Network({
             }
         },
         shifter: {
+            zBTC: {
+                address: zBTC.networks[networkID].address,
+                abi: zBTC.abi as AbiItem[],
+                artifact: zBTC,
+            },
             BTCShifter: {
                 address: BTCShifter.networks[networkID].address,
                 abi: BTCShifter.abi as AbiItem[],
                 artifact: BTCShifter,
+            },
+            zZEC: {
+                address: zZEC.networks[networkID].address,
+                abi: zZEC.abi as AbiItem[],
+                artifact: zZEC,
             },
             ZECShifter: {
                 address: ZECShifter.networks[networkID].address,
                 abi: ZECShifter.abi as AbiItem[],
                 artifact: ZECShifter,
             },
-            zBTC: {
-                address: zBTC.networks[networkID].address,
-                abi: zBTC.abi as AbiItem[],
-                artifact: zBTC,
+            zBCH: {
+                address: zBCH.networks[networkID].address,
+                abi: zBCH.abi as AbiItem[],
+                artifact: zBCH,
             },
-            zZEC: {
-                address: zZEC.networks[networkID].address,
-                abi: zZEC.abi as AbiItem[],
-                artifact: zZEC,
+            BCHShifter: {
+                address: BCHShifter.networks[networkID].address,
+                abi: BCHShifter.abi as AbiItem[],
+                artifact: BCHShifter,
             },
             ShifterRegistry: {
                 address: ShifterRegistry.networks[networkID].address,
@@ -99,6 +111,12 @@ export default Network({
                 address: zZEC.networks[networkID].address,
                 abi: zZEC.abi as AbiItem[],
                 artifact: zZEC,
+                decimals: 8
+            },
+            BCH: {
+                address: zBCH.networks[networkID].address,
+                abi: zBCH.abi as AbiItem[],
+                artifact: zBCH,
                 decimals: 8
             },
             REN: {

@@ -62,7 +62,21 @@ export default Network({
             }
         },
         shifter: {
+            zBTC: {
+                address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
             BTCShifter: {
+                address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
+            zZEC: {
                 address: "",
                 abi: [] as AbiItem[],
                 artifact: {
@@ -76,14 +90,14 @@ export default Network({
                     abi: [],
                 },
             },
-            zBTC: {
+            zBCH: {
                 address: "",
                 abi: [] as AbiItem[],
                 artifact: {
                     abi: [],
                 },
             },
-            zZEC: {
+            BCHShifter: {
                 address: "",
                 abi: [] as AbiItem[],
                 artifact: {

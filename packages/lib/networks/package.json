@@ -1,6 +1,6 @@
 {
   "name": "@renproject/contracts",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "homepage": "https://republicprotocol.github.io/contracts-ts",
   "main": "./dist/lib.js",
   "types": "./dist/lib.d.ts",

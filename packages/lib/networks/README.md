@@ -14,9 +14,9 @@ console.log(mainnet.addresses.tokens["REN"].address);
 
 ## Deploying
 
-To deploy the front-end: `npm run deploy`.
+To deploy the **front-end**: `yarn deploy`.
 
-To deploy to npm: `npm version patch` and `npm publish`.
+To deploy to **npm**: `yarn publish`.
 
 ## Preview
 

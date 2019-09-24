@@ -4,9 +4,11 @@ import { join } from "path";
 import { Network } from "./network";
 
 export default (buildPath: string, networkID: number) => {
+    const zBTC = require(join(buildPath, "zBTC.json"));
     const zZEC = require(join(buildPath, "zZEC.json"));
     const ZECShifter = require(join(buildPath, "ZECShifter.json"));
-    const zBTC = require(join(buildPath, "zBTC.json"));
+    const zBCH = require(join(buildPath, "zBCH.json"));
+    const BCHShifter = require(join(buildPath, "BCHShifter.json"));
     const ShifterRegistry = require(join(buildPath, "ShifterRegistry.json"));
     const RenToken = require(join(buildPath, "RenToken.json"));
     const DarknodeSlasher = require(join(buildPath, "DarknodeSlasher.json"));
@@ -59,25 +61,35 @@ export default (buildPath: string, networkID: number) => {
                 }
             },
             shifter: {
+                zBTC: {
+                    address: zBTC.networks[networkID].address,
+                    abi: zBTC.abi as AbiItem[],
+                    artifact: zBTC,
+                },
                 BTCShifter: {
                     address: BTCShifter.networks[networkID].address,
                     abi: BTCShifter.abi as AbiItem[],
                     artifact: BTCShifter,
+                },
+                zZEC: {
+                    address: zZEC.networks[networkID].address,
+                    abi: zZEC.abi as AbiItem[],
+                    artifact: zZEC,
                 },
                 ZECShifter: {
                     address: ZECShifter.networks[networkID].address,
                     abi: ZECShifter.abi as AbiItem[],
                     artifact: ZECShifter,
                 },
-                zBTC: {
-                    address: zBTC.networks[networkID].address,
-                    abi: zBTC.abi as AbiItem[],
-                    artifact: zBTC,
+                zBCH: {
+                    address: zBCH.networks[networkID].address,
+                    abi: zBCH.abi as AbiItem[],
+                    artifact: zBCH,
                 },
-                zZEC: {
-                    address: zZEC.networks[networkID].address,
-                    abi: zZEC.abi as AbiItem[],
-                    artifact: zZEC,
+                BCHShifter: {
+                    address: BCHShifter.networks[networkID].address,
+                    abi: BCHShifter.abi as AbiItem[],
+                    artifact: BCHShifter,
                 },
                 ShifterRegistry: {
                     address: ShifterRegistry.networks[networkID].address,
@@ -100,6 +112,12 @@ export default (buildPath: string, networkID: number) => {
                     address: zZEC.networks[networkID].address,
                     abi: zZEC.abi as AbiItem[],
                     artifact: zZEC,
+                    decimals: 8
+                },
+                BCH: {
+                    address: zBCH.networks[networkID].address,
+                    abi: zBCH.abi as AbiItem[],
+                    artifact: zBCH,
                     decimals: 8
                 },
                 REN: {

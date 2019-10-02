@@ -1,9 +1,9 @@
 import { AbiItem } from "web3-utils";
-import zBTC from "darknode-sol/build/devnet/zBTC.json";
-import zZEC from "darknode-sol/build/devnet/zZEC.json";
-import ZECShifter from "darknode-sol/build/devnet/ZECShifter.json";
-import zBCH from "darknode-sol/build/localnet/zBCH.json";
-import BCHShifter from "darknode-sol/build/localnet/BCHShifter.json";
+import zBTC from "darknode-sol/build/testnet/zBTC.json";
+import zZEC from "darknode-sol/build/testnet/zZEC.json";
+import ZECShifter from "darknode-sol/build/testnet/ZECShifter.json";
+import zBCH from "darknode-sol/build/testnet/zBCH.json";
+import BCHShifter from "darknode-sol/build/testnet/BCHShifter.json";
 import ShifterRegistry from "darknode-sol/build/testnet/ShifterRegistry.json";
 import RenToken from "darknode-sol/build/testnet/RenToken.json";
 import DarknodeSlasher from "darknode-sol/build/testnet/DarknodeSlasher.json";

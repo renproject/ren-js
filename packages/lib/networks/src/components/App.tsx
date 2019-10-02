@@ -5,10 +5,11 @@ import { HashRouter, Route } from "react-router-dom";
 import { OrderedMap } from "immutable";
 
 import { NetworkData } from "../lib/networks";
+import chaosnet from "../networks/chaosnet";
 import devnet from "../networks/devnet";
-import testnet from "../networks/testnet";
 import localnet from "../networks/localnet";
 import mainnet from "../networks/mainnet";
+import testnet from "../networks/testnet";
 import "../styles/App.css";
 import Loading from "./Loading";
 import Main from "./Main";
@@ -30,7 +31,7 @@ class App extends React.Component<AppProps, AppState> {
         super(props);
         this.state = {
             outOfDate: false,
-            networks: OrderedMap({ mainnet, testnet, devnet, localnet }),
+            networks: OrderedMap({ mainnet, chaosnet, testnet, devnet, localnet }),
         };
     }
 

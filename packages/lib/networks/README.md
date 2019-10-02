@@ -1,6 +1,6 @@
 # Contract Index
 
-[republicprotocol.github.io/contracts-ts/](https://republicprotocol.github.io/contracts-ts/)
+[renproject.github.io/contracts-ts/](https://renproject.github.io/contracts-ts/)
 
 An index of smart contract addresses used by Ren, available as website and an npm package.
 

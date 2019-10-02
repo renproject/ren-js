@@ -59,7 +59,8 @@ class App extends React.Component<AppProps, AppState> {
                     {networks && networks.size > 0 ? <div className="App">
                         {outOfDate ? <OutOfDate /> : null}
                         {/* tslint:disable-next-line:jsx-no-lambda */}
-                        <Route path="/" exact render={() => <Main networks={networks} />} />
+                        <Route path="/" exact render={() => <Main network={"mainnet"} networks={networks} />} />
+                        {networks.map((_, network) => <Route path={`/${network}`} exact render={() => <Main network={network || "mainnet"} networks={networks} />} />).toArray()}
                     </div> : <Loading />}
                 </>
             </HashRouter>

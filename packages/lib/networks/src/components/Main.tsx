@@ -1,4 +1,3 @@
-import * as qs from "query-string";
 import * as React from "react";
 
 import { OrderedMap } from "immutable";
@@ -12,12 +11,12 @@ import Network from "./Network";
 
 const defaultState = {
     format: Format.TABLE,
-    network: "mainnet",
 };
 
 
 interface MainProps extends RouteComponentProps {
     networks: OrderedMap<string, NetworkData>;
+    network: string;
 }
 
 class Main extends React.Component<MainProps, typeof defaultState> {
@@ -25,15 +24,15 @@ class Main extends React.Component<MainProps, typeof defaultState> {
         super(props);
         this.state = defaultState
     }
-    public async componentDidMount() {
-        const network = qs.parse(this.props.location.search).network;
-        if (network && typeof network === "string" && this.props.networks.has(network)) {
-            this.setState({ network });
-        }
-    }
+    // public async componentDidMount() {
+    //     const network = qs.parse(this.props.location.search).network;
+    //     if (network && typeof network === "string" && this.props.networks.has(network)) {
+    //         this.setState({ network });
+    //     }
+    // }
     public render() {
-        const { networks } = this.props;
-        const { format, network } = this.state;
+        const { networks, network } = this.props;
+        const { format } = this.state;
         console.log(networks);
 
         return (
@@ -88,7 +87,11 @@ class Main extends React.Component<MainProps, typeof defaultState> {
 
     private handleInput = (event: React.FormEvent<HTMLInputElement>): void => {
         const element = (event.target as HTMLInputElement);
-        this.setState((state) => ({ ...state, [element.name]: element.value }));
+        if (element.name === "network") {
+            this.props.history.push(`/${element.value}`);
+        } else {
+            this.setState((state) => ({ ...state, [element.name]: element.value }));
+        }
     }
 
 }

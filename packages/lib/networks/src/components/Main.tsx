@@ -37,7 +37,7 @@ class Main extends React.Component<MainProps, typeof defaultState> {
         console.log(networks);
 
         return (
-            <div className="Main">
+            <div className={["Main", `Main-${network}`].join(" ")}>
                 <a style={{ position: "absolute", top: "20px", left: "20px" }} className="home-link" href="https://republicprotocol.github.io/tool-index/">
                     <Home style={{ height: "30px", width: "30px" }} />
                 </a>

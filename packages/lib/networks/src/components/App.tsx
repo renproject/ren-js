@@ -10,7 +10,7 @@ import devnet from "../networks/devnet";
 import localnet from "../networks/localnet";
 import mainnet from "../networks/mainnet";
 import testnet from "../networks/testnet";
-import "../styles/App.css";
+import "../styles/App.scss";
 import Loading from "./Loading";
 import Main from "./Main";
 import Source from "./Source";

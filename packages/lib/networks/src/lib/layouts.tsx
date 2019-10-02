@@ -32,7 +32,7 @@ const table: FormatFN = (networkData: NetworkData) => {
                                 {formatAddress(networkData.addresses[category][contractName].address)}
                             </td>
                             <td>
-                                <Link to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>ABI</Link>
+                                <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>
                             </td>
                         </tr>
                     )}
@@ -46,7 +46,9 @@ const json: FormatFN = (networkData: NetworkData) => {
     return <>
         <p><a href={`${process.env.PUBLIC_URL}/networks/${networkData.name}.json`}>Raw JSON</a></p>
         <pre><code>
-            {JSON.stringify(networkData, null, 4)}
+            {JSON.stringify(networkData, (name, value) => {
+                return (name === "artifact" || name === "abi") ? undefined : value;
+            }, 4)}
         </code></pre>
     </>;
 };

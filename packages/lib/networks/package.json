@@ -1,6 +1,6 @@
 {
   "name": "@renproject/contracts",
-  "version": "0.3.18",
+  "version": "0.3.19",
   "homepage": "https://republicprotocol.github.io/contracts-ts",
   "main": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
@@ -11,7 +11,7 @@
     "access": "public"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#f60d23ffa59203ae13a3d99688f12fdf704eb095"
+    "darknode-sol": "https://github.com/renproject/darknode-sol#54b7046a26b134768ef8d6be4d6c95f1cf724bff"
   },
   "scripts": {
     "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
@@ -24,25 +24,25 @@
     "prepublish": "tsc --module commonjs -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist"
   },
   "devDependencies": {
-    "@types/node": "^12.7.5",
+    "@types/node": "^12.7.9",
     "@types/query-string": "^6.3.0",
-    "@types/react": "^16.9.2",
-    "@types/react-dom": "^16.9.0",
-    "@types/react-router-dom": "^4.3.5",
+    "@types/react": "^16.9.4",
+    "@types/react-dom": "^16.9.1",
+    "@types/react-router-dom": "^5.1.0",
     "@types/underscore": "^1.9.3",
     "axios": "^0.19.0",
     "change-case": "^3.1.0",
     "gh-pages": "^2.1.1",
     "immutable": "^3.8.2",
     "query-string": "^6.8.3",
-    "react": "^16.9.0",
-    "react-dom": "^16.9.0",
-    "react-router-dom": "^5.0.1",
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1",
+    "react-router-dom": "^5.1.2",
     "react-scripts": "^3.1.2",
     "tslint-microsoft-contrib": "^6.2.0",
     "tslint-react": "^4.1.0",
     "typescript": "^3.6.3",
-    "web3-utils": "^1.0.0-beta.55"
+    "web3-utils": "^2.0.0-alpha.1"
   },
   "browserslist": {
     "production": [

@@ -1,5 +1,6 @@
 import { AbiItem } from "web3-utils";
 import zBTC from "darknode-sol/build/testnet/zBTC.json";
+import BTCShifter from "darknode-sol/build/testnet/BTCShifter.json";
 import zZEC from "darknode-sol/build/testnet/zZEC.json";
 import ZECShifter from "darknode-sol/build/testnet/ZECShifter.json";
 import zBCH from "darknode-sol/build/testnet/zBCH.json";
@@ -11,7 +12,6 @@ import DarknodeRegistryStore from "darknode-sol/build/testnet/DarknodeRegistrySt
 import DarknodeRegistry from "darknode-sol/build/testnet/DarknodeRegistry.json";
 import DarknodePaymentStore from "darknode-sol/build/testnet/DarknodePaymentStore.json";
 import DarknodePayment from "darknode-sol/build/testnet/DarknodePayment.json";
-import BTCShifter from "darknode-sol/build/testnet/BTCShifter.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
 import { Network } from "./network";

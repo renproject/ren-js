@@ -11,7 +11,7 @@
     "access": "public"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#54b7046a26b134768ef8d6be4d6c95f1cf724bff",
+    "darknode-sol": "https://github.com/renproject/darknode-sol#200e22493d986796f5e63c23b1a3fcc4f0e4169d",
     "node-sass": "^4.12.0"
   },
   "scripts": {

@@ -3222,9 +3222,9 @@ damerau-levenshtein@^1.0.4:
   resolved "https://registry.yarnpkg.com/damerau-levenshtein/-/damerau-levenshtein-1.0.5.tgz#780cf7144eb2e8dbd1c3bb83ae31100ccc31a414"
   integrity sha512-CBCRqFnpu715iPmw1KrdOrzRqbdFwQTwAWyyyYS42+iAgHCuXZ+/TdMgQkUENPomxEz9z1BEzuQU2Xw0kUuAgA==
 
-"darknode-sol@https://github.com/renproject/darknode-sol#54b7046a26b134768ef8d6be4d6c95f1cf724bff":
+"darknode-sol@https://github.com/renproject/darknode-sol#200e22493d986796f5e63c23b1a3fcc4f0e4169d":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#54b7046a26b134768ef8d6be4d6c95f1cf724bff"
+  resolved "https://github.com/renproject/darknode-sol#200e22493d986796f5e63c23b1a3fcc4f0e4169d"
   dependencies:
     openzeppelin-solidity "2.3.0"
 

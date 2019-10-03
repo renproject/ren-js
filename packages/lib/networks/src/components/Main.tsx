@@ -88,7 +88,7 @@ class Main extends React.Component<MainProps, typeof defaultState> {
     private handleInput = (event: React.FormEvent<HTMLInputElement>): void => {
         const element = (event.target as HTMLInputElement);
         if (element.name === "network") {
-            this.props.history.push(`/${element.value}`);
+            this.props.history.replace(`/${element.value}`);
         } else {
             this.setState((state) => ({ ...state, [element.name]: element.value }));
         }

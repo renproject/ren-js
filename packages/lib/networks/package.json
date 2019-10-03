@@ -1,6 +1,6 @@
 {
   "name": "@renproject/contracts",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "homepage": "https://renproject.github.io/contracts-ts",
   "main": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
@@ -11,7 +11,7 @@
     "access": "public"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#200e22493d986796f5e63c23b1a3fcc4f0e4169d",
+    "darknode-sol": "https://github.com/renproject/darknode-sol#7ff6489776ded39019873d1db6bfe66bfc47c648",
     "node-sass": "^4.12.0"
   },
   "scripts": {

@@ -26,8 +26,8 @@ export default Network({
     infura: "https://mainnet.infura.io",
     etherscan: "https://etherscan.io",
     renVM: {
-        mpkh: "",
-        mintAuthority: "",
+        mpkh: "0x8444bb73145bffb7d063853a44c21e898152ceeb",
+        mintAuthority: "0x5D0b91e8a8037C3EBB55f52D76BFc64CaBEBCAE1",
     },
     addresses: {
         ren: {

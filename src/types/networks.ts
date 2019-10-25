@@ -1,10 +1,11 @@
-import { devnet, localnet, mainnet, testnet } from "@renproject/contracts";
+import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
 import { Networks as BNetworks } from "bitcore-lib";
-import { Networks as ZNetworks } from "bitcore-lib-zcash";
+// import { Networks as ZNetworks } from "bitcore-lib-zcash";
 import { List } from "immutable";
 
 export enum Network {
     Mainnet = "mainnet",
+    Chaosnet = "chaosnet",
     Testnet = "testnet",
     Devnet = "devnet",
     Localnet = "localnet",
@@ -17,16 +18,43 @@ export interface NetworkDetails {
     mercuryURL: {
         btc: string,
         zec: string,
+        bch: string,
     };
     chainSoName: {
         btc: string,
         zec: string,
+        bch: string,
     };
     chainSoURL: string;
     bitcoinNetwork: BNetworks.Network;
-    zcashNetwork: ZNetworks.Network;
-    contracts: typeof mainnet | typeof testnet | typeof devnet | typeof localnet;
+    contracts: typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;
 }
+
+// Configurations shared by Mainnet and Chaosnet
+const commonMainConfig = {
+    mercuryURL: {
+        // tslint:disable-next-line: no-http-string
+        btc: "http://139.59.217.120:5000/btc/testnet",
+        // tslint:disable-next-line: no-http-string
+        zec: "http://139.59.217.120:5000/zec/testnet",
+        // tslint:disable-next-line: no-http-string
+        bch: "http://139.59.217.120:5000/bch/testnet",
+    },
+    chainSoName: {
+        btc: "BTCTEST",
+        zec: "ZECTEST",
+        bch: "BCHTEST",
+    },
+    bitcoinNetwork: BNetworks.testnet,
+    chainSoURL: "https://chain.so/api/v2",
+};
+
+export const NetworkChaosnet: NetworkDetails = {
+    name: Network.Testnet,
+    nodeURLs: ["https://lightnode-chaosnet.herokuapp.com"],
+    ...commonMainConfig,
+    contracts: chaosnet,
+};
 
 export const NetworkMainnet: NetworkDetails = {
     name: Network.Mainnet,
@@ -34,15 +62,15 @@ export const NetworkMainnet: NetworkDetails = {
     mercuryURL: {
         btc: "",
         zec: "",
+        bch: "",
     },
     chainSoName: {
         btc: "",
         zec: "",
+        bch: "",
     },
     chainSoURL: "",
-
     bitcoinNetwork: BNetworks.mainnet,
-    zcashNetwork: ZNetworks.mainnet,
     contracts: mainnet,
 };
 
@@ -53,13 +81,15 @@ const commonTestConfig = {
         btc: "http://139.59.217.120:5000/btc/testnet",
         // tslint:disable-next-line: no-http-string
         zec: "http://139.59.217.120:5000/zec/testnet",
+        // tslint:disable-next-line: no-http-string
+        bch: "http://139.59.217.120:5000/bch/testnet",
     },
     chainSoName: {
         btc: "BTCTEST",
         zec: "ZECTEST",
+        bch: "BCHTEST",
     },
     bitcoinNetwork: BNetworks.testnet,
-    zcashNetwork: ZNetworks.testnet,
     chainSoURL: "https://chain.so/api/v2",
 };
 

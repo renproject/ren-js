@@ -32,6 +32,9 @@ export class RenNode {
         } else {
             this.nodeURL = lightnodeURL;
         }
+        if (!this.nodeURL) {
+            throw new Error("Invalid lightnode URL");
+        }
     }
 
     public async sendMessage<Request, Response>(method: RPCMethod, request: Request): Promise<JSONRPCResponse<Response>> {

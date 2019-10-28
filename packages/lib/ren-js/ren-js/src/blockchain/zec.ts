@@ -3,7 +3,7 @@ import Base58Check from "bitcore-lib-zcash/lib/encoding/base58check";
 
 import { getUTXOs } from "../getUTXOs/mercury";
 import { NetworkDetails } from "../types/networks";
-import { createAddress, Ox } from "./common";
+import { createAddress, Ox, strip0x } from "./common";
 
 export const createZECAddress = createAddress(Networks, Opcode, Script);
 
@@ -20,4 +20,11 @@ export const zecAddressToHex = (address: string) => {
     const addressBuffer = new Address(address).toBuffer();
     // Concatenate checksum
     return Ox(Buffer.concat([addressBuffer, Base58Check.checksum(addressBuffer)]));
+};
+
+export const zecAddressFrom = (address: string, encoding: "hex" | "base64") => {
+    // tslint:disable-next-line: no-any
+    return (Address as any)
+        .fromBuffer(Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).slice(0, -4))
+        .toString();
 };

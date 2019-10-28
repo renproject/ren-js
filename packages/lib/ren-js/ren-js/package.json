@@ -33,7 +33,7 @@
         "build:prod": "$npm_execpath run clean && cross-env NODE_ENV=production webpack --mode production --progress --color",
         "test": "nyc ./node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "clean": "rm -rf dist",
-        "prepublishOnly": "$npm_execpath run lint && $npm_execpath run build:prod"
+        "prepare": "$npm_execpath run lint && $npm_execpath run build:prod"
     },
     "devDependencies": {
         "@babel/core": "^7.5.5",

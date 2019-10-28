@@ -1,9 +1,10 @@
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
+import { decode } from "bs58";
 
 import {
-    createZECAddress, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet,
+    createZECAddress, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet, Ox,
     zecAddressToHex,
 } from "../../src";
 import { btcAddressToHex, createBTCAddress } from "../../src/blockchain/btc";
@@ -14,18 +15,23 @@ chai.should();
 describe("btc.ts", () => {
     describe("createBTCAddress", async () => {
         [
-            { network: NetworkMainnet, expected: "3GhPbsey6igoAf99Akhjq97pKgQkDSv9fA", hex: "0x05a49bfb94554af98d1671e4325ed29a6ba531909689608b5d" },
-            { network: NetworkTestnet, expected: "2NBcq1kFTCLceTAbZ7bP4FQy2PXQgp9jVV3", hex: "0xc4c9883ca4685d551f11e7587ca3f3b8806af3255a86cc94fa" },
-            { network: NetworkDevnet, expected: "2MtwAyKZbBQZPsGxP1YJpkcYzp7LbkvUNqU", hex: "0xc412863f01ba5f995ac61bbc19408505f74d3725810054eb57" },
-            { network: NetworkLocalnet, expected: "2NDzLJ2KMJYmFKw1HLs4v9Q98CpFCFieYaF", hex: "0xc4e389aa7813cdb55b76f166f125d8ea5b86234dec11371dbc" },
+            { network: NetworkMainnet, actual: "bc1qc7slrfxkknqcq2jevvvkdgvrt8080852dfjewde450xdlk4ugp7szw5tk9", hex: "0x626331716337736c7266786b6b6e716371326a657676766b64677672743830383038353264666a6577646534353078646c6b3475677037737a7735746b39c8af1dac" },
+            { network: NetworkMainnet, actual: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", hex: "0x62633171617230737272723778666b7679356c3634336c79646e77397265353967747a7a7766356d64710ead9977" },
+            { network: NetworkMainnet, expected: "3GhPbsey6igoAf99Akhjq97pKgQkDSv9fA", get hex() { return Ox(decode(this.expected)); } },
+            { network: NetworkTestnet, expected: "2N4rtJpMggc72XKvHRQYoyyTKHkkPrCNEkv", get hex() { return Ox(decode(this.expected)); } },
+            { network: NetworkDevnet, expected: "2N29UCjbtgQPCa67d1qFPYciusV4w7yEwhn", get hex() { return Ox(decode(this.expected)); } },
+            { network: NetworkLocalnet, expected: "2NDzLJ2KMJYmFKw1HLs4v9Q98CpFCFieYaF", get hex() { return Ox(decode(this.expected)); } },
         ]
-            .forEach(({ network, expected, hex }) => {
+            .forEach(({ network, expected, hex, actual }) => {
                 it(network.name, async () => {
-                    const address = createBTCAddress(network, "0x1234");
-                    address.should.equal(expected);
-                    createBTCAddress(network, "1234")
-                        .should.equal(address);
-                    btcAddressToHex(address)
+                    if (expected) {
+                        const address = createBTCAddress(network, "0x1234");
+                        address.should.equal(expected);
+                        createBTCAddress(network, "1234")
+                            .should.equal(address);
+                    }
+                    expected = expected || actual;
+                    btcAddressToHex(expected)
                         .should.equal(hex);
                 });
             });
@@ -35,10 +41,10 @@ describe("btc.ts", () => {
 describe("zec.ts", () => {
     describe("createBTCAddress", async () => {
         [
-            { network: NetworkMainnet, expected: "t3ZZzcD5753UPmJC37BWrxxDjaLbq2Mqw6E", hex: "0x1cbda49bfb94554af98d1671e4325ed29a6ba5319096b4bf3f27" },
-            { network: NetworkTestnet, expected: "t2QvR11qhRfWGPibeJdaMJuGKYKcmeTtFHd", hex: "0x1cbac9883ca4685d551f11e7587ca3f3b8806af3255a36521ff4" },
-            { network: NetworkDevnet, expected: "t28Ekxb9qQjT1opxUCaW7p6rHxuYgi519yv", hex: "0x1cba12863f01ba5f995ac61bbc19408505f74d372581bb37bc25" },
-            { network: NetworkLocalnet, expected: "t2THvHHubXsesGV1NXuGDCtSRMcTHD8cch6", hex: "0x1cbae389aa7813cdb55b76f166f125d8ea5b86234decd6835f69" },
+            { network: NetworkMainnet, expected: "t3ZZzcD5753UPmJC37BWrxxDjaLbq2Mqw6E", get hex() { return Ox(decode(this.expected)); } },
+            { network: NetworkTestnet, expected: "t2JAUJ5wvuvzeTsvNcSk73TkcSYxUeXnGuh", get hex() { return Ox(decode(this.expected)); } },
+            { network: NetworkDevnet, expected: "t2FT4C1C8ujGpWe7iCsSgc72D2HH1y9TRmS", get hex() { return Ox(decode(this.expected)); } },
+            { network: NetworkLocalnet, expected: "t2THvHHubXsesGV1NXuGDCtSRMcTHD8cch6", get hex() { return Ox(decode(this.expected)); } },
         ]
             .forEach(({ network, expected, hex }) => {
                 it(network.name, async () => {

@@ -14,6 +14,7 @@ export enum Network {
 export interface NetworkDetails {
     name: string;
     nodeURLs: string[];
+    isTestnet: boolean;
 
     mercuryURL: {
         btc: string,
@@ -32,25 +33,26 @@ export interface NetworkDetails {
 
 // Configurations shared by Mainnet and Chaosnet
 const commonMainConfig = {
+    isTestnet: false,
     mercuryURL: {
         // tslint:disable-next-line: no-http-string
-        btc: "http://139.59.217.120:5000/btc/testnet",
+        btc: "http://139.59.217.120:5000/btc/mainnet",
         // tslint:disable-next-line: no-http-string
-        zec: "http://139.59.217.120:5000/zec/testnet",
+        zec: "http://139.59.217.120:5000/zec/mainnet",
         // tslint:disable-next-line: no-http-string
-        bch: "http://139.59.217.120:5000/bch/testnet",
+        bch: "http://139.59.217.120:5000/bch/mainnet",
     },
     chainSoName: {
-        btc: "BTCTEST",
-        zec: "ZECTEST",
-        bch: "BCHTEST",
+        btc: "BTC",
+        zec: "ZEC",
+        bch: "BCH",
     },
-    bitcoinNetwork: BNetworks.testnet,
+    bitcoinNetwork: BNetworks.mainnet,
     chainSoURL: "https://chain.so/api/v2",
 };
 
 export const NetworkChaosnet: NetworkDetails = {
-    name: Network.Testnet,
+    name: Network.Chaosnet,
     nodeURLs: ["https://lightnode-chaosnet.herokuapp.com"],
     ...commonMainConfig,
     contracts: chaosnet,
@@ -58,24 +60,14 @@ export const NetworkChaosnet: NetworkDetails = {
 
 export const NetworkMainnet: NetworkDetails = {
     name: Network.Mainnet,
-    nodeURLs: [""],
-    mercuryURL: {
-        btc: "",
-        zec: "",
-        bch: "",
-    },
-    chainSoName: {
-        btc: "",
-        zec: "",
-        bch: "",
-    },
-    chainSoURL: "",
-    bitcoinNetwork: BNetworks.mainnet,
+    nodeURLs: ["https://lightnode-mainnet.herokuapp.com"],
+    ...commonMainConfig,
     contracts: mainnet,
 };
 
 // Configurations shared by Testnet and Devnet
 const commonTestConfig = {
+    isTestnet: true,
     mercuryURL: {
         // tslint:disable-next-line: no-http-string
         btc: "http://139.59.217.120:5000/btc/testnet",

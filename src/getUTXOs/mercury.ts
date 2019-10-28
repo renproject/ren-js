@@ -107,7 +107,7 @@ export const fetchFromZechain = async (url: string): Promise<ZcashUTXO[]> => {
  */
 export const getUTXOs = (network: NetworkDetails, currencyName: string) => async (address: string, confirmations: number, endpoint = 0): Promise<Array<BitcoinUTXO | ZcashUTXO>> => {
     const chainSoFn = () => fetchFromChainSo(`${network.chainSoURL}/get_tx_unspent/${currencyName}/${address}/${confirmations}`);
-    const blockstreamFn = () => fetchFromBlockstream(`https://blockstream.info/testnet/api/address/${address}/utxo`);
+    const blockstreamFn = () => fetchFromBlockstream(`https://blockstream.info/${network.isTestnet ? "testnet/" : ""}api/address/${address}/utxo`);
     const insightFn = () => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`);
 
     const endpoints = [chainSoFn];

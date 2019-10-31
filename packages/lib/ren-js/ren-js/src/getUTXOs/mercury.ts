@@ -2,6 +2,7 @@ import Axios from "axios";
 import BigNumber from "bignumber.js";
 import https from "https";
 
+import { BCashUTXO } from "../blockchain/bch";
 import { BitcoinUTXO } from "../blockchain/btc";
 import { ZcashUTXO } from "../blockchain/zec";
 import { retryNTimes } from "../lib/utils";
@@ -93,31 +94,82 @@ export const fetchFromZechain = async (url: string): Promise<ZcashUTXO[]> => {
     }));
 };
 
+export const fetchFromBitcoinDotCom = async (url: string) => {
+    const response = await retryNTimes(
+        () => Axios.get<{
+            utxos: Array<{
+                address: string;
+                txid: string;
+                vout: number;
+                scriptPubKey: string;
+                amount: number;
+                satoshis: number;
+                confirmations: number;
+                ts: number;
+            }>
+        }>(url, {
+            // TTODO: Remove when certificate is fixed.
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false
+            })
+        }),
+        5,
+    );
+    return response.data.utxos.map(utxo => ({
+        txid: utxo.txid,
+        value: utxo.amount,
+        script_hex: utxo.scriptPubKey,
+        output_no: utxo.vout,
+    }));
+};
+
 /**
- * Retrieves UTXOs for a BTC or ZEC address.
+ * Retrieves UTXOs for a BTC, ZEC or BCH address.
  *
  * @param network The Ren Network object
- * @param currencyName "BTC" or "ZEC"
+ * @param currencyName "BTC", "ZEC" or "BCH"
  *
- * @param address The BTC or ZEC address to retrieve the UTXOS for
+ * @param address The BTC, ZEC or BCH address to retrieve the UTXOS for
  * @param confirmations Restrict UTXOs to having at least this many
  *        confirmations. If confirmations is 0, unconfirmed UTXOs are included.
  * @param endpoint An offset to allow trying different endpoints first, in case
  * o      one is out of sync.
  */
 export const getUTXOs = (network: NetworkDetails, currencyName: string) => async (address: string, confirmations: number, endpoint = 0): Promise<Array<BitcoinUTXO | ZcashUTXO>> => {
-    const chainSoFn = () => fetchFromChainSo(`${network.chainSoURL}/get_tx_unspent/${currencyName}/${address}/${confirmations}`);
-    const blockstreamFn = () => fetchFromBlockstream(`https://blockstream.info/${network.isTestnet ? "testnet/" : ""}api/address/${address}/utxo`);
-    const insightFn = () => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`);
+    const chainSoFn = () => fetchFromChainSo(`https://chain.so/api/v2/get_tx_unspent/${currencyName}/${address}/${confirmations}`);
 
-    const endpoints = [chainSoFn];
-    if (currencyName.match("BTC")) {
-        endpoints.push(blockstreamFn);
-    } else if (currencyName.match("ZEC")) {
-        endpoints.push(insightFn);
-        // Mainnet only!
-        // return fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`);
-        // return fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`);
+    let endpoints: Array<() => Promise<Array<BitcoinUTXO | ZcashUTXO | BCashUTXO>>> = [];
+    switch (currencyName.toLowerCase()) {
+        case "zbtc":
+        case "btc":
+            endpoints = [
+                chainSoFn,
+                () => fetchFromBlockstream(`https://blockstream.info/${network.isTestnet ? "testnet/" : ""}api/address/${address}/utxo`),
+            ];
+            break;
+        case "zzec":
+        case "zec":
+            endpoints = [
+                chainSoFn,
+                () => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`),
+            ];
+            if (!network.isTestnet) {
+                endpoints.push(() => fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`));
+                endpoints.push(() => fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`));
+            }
+            break;
+        case "zbch":
+        case "bch":
+            if (network.isTestnet) {
+                endpoints = [
+                    () => fetchFromBitcoinDotCom(`https://trest.bitcoin.com/v2/address/utxo/${address}`),
+                ];
+            } else {
+                endpoints = [
+                    () => fetchFromBitcoinDotCom(`https://rest.bitcoin.com/v2/address/utxo/${address}`),
+                ];
+            }
+            break;
     }
 
     let firstError;

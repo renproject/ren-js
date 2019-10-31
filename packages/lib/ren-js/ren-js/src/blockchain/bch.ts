@@ -7,7 +7,7 @@ import { createAddress, Ox } from "./common";
 
 export const createBCHAddress = createAddress(Networks, Opcode, Script);
 
-export interface BitcoinCashUTXO {
+export interface BCashUTXO {
     txid: string; // hex string without 0x prefix
     value: number; // satoshis
     script_hex: string; // hex string without 0x prefix

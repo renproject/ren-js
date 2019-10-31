@@ -6,6 +6,7 @@ import { TransactionConfig } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
+import { createBCHAddress } from "../blockchain/bch";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
@@ -51,6 +52,9 @@ export const generateGHash = (_payload: Args, amount: number | string, _to: stri
         case Asset.ZEC:
             token = network.contracts.addresses.shifter.zZEC.address;
             break;
+        case Asset.BCH:
+            token = network.contracts.addresses.shifter.zBCH.address;
+            break;
         default:
             throw new Error(`Invalid action ${_shiftAction}`);
     }
@@ -81,6 +85,8 @@ export const generateAddress = (_shiftAction: Token, gHash: string, network: Net
             return createBTCAddress(network, gHash);
         case Chain.Zcash:
             return createZECAddress(network, gHash);
+        case Chain.BCash:
+            return createBCHAddress(network, gHash);
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
     }

@@ -11,8 +11,8 @@
     "access": "public"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#7ff6489776ded39019873d1db6bfe66bfc47c648",
-    "node-sass": "^4.12.0"
+    "darknode-sol": "https://github.com/renproject/darknode-sol#42f1a180938ee3a81eb84291281a68675f2ef164",
+    "node-sass": "^4.13.0"
   },
   "scripts": {
     "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
@@ -22,27 +22,29 @@
     "eject": "$npm_execpath run hash && react-scripts eject",
     "predeploy": "$npm_execpath run hash && $npm_execpath run build",
     "deploy": "$npm_execpath run hash && gh-pages -d build",
-    "prepublish": "tsc --module commonjs -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist"
+    "prepublish": "tsc --module commonjs -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist",
+    "prepare": "patch-package"
   },
   "devDependencies": {
-    "@types/node": "^12.7.9",
+    "@types/node": "^12.12.3",
     "@types/query-string": "^6.3.0",
-    "@types/react": "^16.9.4",
-    "@types/react-dom": "^16.9.1",
-    "@types/react-router-dom": "^5.1.0",
+    "@types/react": "^16.9.11",
+    "@types/react-dom": "^16.9.3",
+    "@types/react-router-dom": "^5.1.1",
     "@types/underscore": "^1.9.3",
     "axios": "^0.19.0",
     "change-case": "^3.1.0",
     "gh-pages": "^2.1.1",
     "immutable": "^3.8.2",
+    "patch-package": "^6.2.0",
     "query-string": "^6.8.3",
-    "react": "^16.10.1",
-    "react-dom": "^16.10.1",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "^3.1.2",
+    "react-scripts": "^3.2.0",
     "tslint-microsoft-contrib": "^6.2.0",
     "tslint-react": "^4.1.0",
-    "typescript": "^3.6.3",
+    "typescript": "^3.6.4",
     "web3-utils": "^2.0.0-alpha.1"
   },
   "browserslist": {

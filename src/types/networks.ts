@@ -26,7 +26,6 @@ export interface NetworkDetails {
         zec: string,
         bch: string,
     };
-    chainSoURL: string;
     bitcoinNetwork: BNetworks.Network;
     contracts: typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;
 }
@@ -48,7 +47,6 @@ const commonMainConfig = {
         bch: "BCH",
     },
     bitcoinNetwork: BNetworks.mainnet,
-    chainSoURL: "https://chain.so/api/v2",
 };
 
 export const NetworkChaosnet: NetworkDetails = {
@@ -82,7 +80,6 @@ const commonTestConfig = {
         bch: "BCHTEST",
     },
     bitcoinNetwork: BNetworks.testnet,
-    chainSoURL: "https://chain.so/api/v2",
 };
 
 export const NetworkTestnet: NetworkDetails = {

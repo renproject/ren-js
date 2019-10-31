@@ -58,6 +58,10 @@ export class ShifterNetwork {
                 token = network.contracts.addresses.shifter.zZEC.address;
                 utxoType = "ext_btcCompatUTXO"; // "ext_zecCompatUTXO";
                 break;
+            case Asset.BCH:
+                token = network.contracts.addresses.shifter.zBCH.address;
+                utxoType = "ext_btcCompatUTXO";
+                break;
             default:
                 throw new Error(`Unsupported action ${action}`);
         }

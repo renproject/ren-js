@@ -3,6 +3,7 @@ import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 
+import { BCashUTXO } from "./blockchain/bch";
 import { BitcoinUTXO } from "./blockchain/btc";
 import { Ox, strip0x } from "./blockchain/common";
 import { ZcashUTXO } from "./blockchain/zec";
@@ -18,7 +19,7 @@ import { NetworkDetails } from "./types/networks";
 import { ShiftInFromDetails, ShiftInParams, ShiftInParamsAll } from "./types/parameters";
 
 export class ShiftInObject {
-    public utxo: BitcoinUTXO | ZcashUTXO | undefined;
+    public utxo: BitcoinUTXO | ZcashUTXO | BCashUTXO | undefined;
     public gatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: ShifterNetwork;
@@ -103,7 +104,7 @@ export class ShiftInObject {
         return promiEvent;
     }
 
-    public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO): PromiEvent<Signature> => {
+    public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO | BCashUTXO): PromiEvent<Signature> => {
         const promiEvent = newPromiEvent<Signature>();
 
         (async () => {
@@ -148,7 +149,7 @@ export class ShiftInObject {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO) => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO | BCashUTXO) => {
         await this.waitForDeposit(confirmations);
         const signature = await this.submitToRenVM(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);

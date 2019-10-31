@@ -151,11 +151,13 @@ export const getUTXOs = (network: NetworkDetails, currencyName: string) => async
         case "zec":
             endpoints = [
                 chainSoFn,
-                () => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`),
             ];
-            if (!network.isTestnet) {
-                endpoints.push(() => fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`));
-                endpoints.push(() => fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`));
+            if (network.isTestnet) {
+                endpoints.push(() => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`));
+            } else {
+                endpoints.push(() => fetchFromInsight(`https://zcash.blockexplorer.com/api/addr/${address}/utxo`));
+                // endpoints.push(() => fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`));
+                // endpoints.push(() => fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`));
             }
             break;
         case "zbch":

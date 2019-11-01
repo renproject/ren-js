@@ -33,8 +33,8 @@ describe("Utils", function () {
     });
 
     const testcases = [
-        { name: "testnet", network: NetworkTestnet, expectedHash: "0x6ac8690a3340bc5de36b39ea0a1f42a472765fd7ebe19351911e18838303dd3e", expectedAddress: "2N4bSqhvQbkrqAyn4KCsfqChTp2ypqdB8ya" },
-        { name: "devnet", network: NetworkDevnet, expectedHash: "0x4665a9c6b5286b27da5c858e465c32a1833c375d0ea7e8e98916ad735201af61", expectedAddress: "2MtTvmoSuVb3cSV7hAtCjYzPHei7pppRofo" },
+        { name: "testnet", network: NetworkTestnet, expectedHash: "0x6ac8690a3340bc5de36b39ea0a1f42a472765fd7ebe19351911e18838303dd3e", expectedAddress: "2NFHUxhcDYTc1sA9mK8go6eG1Tkb7Bqu1it" },
+        { name: "devnet", network: NetworkDevnet, expectedHash: "0x4665a9c6b5286b27da5c858e465c32a1833c375d0ea7e8e98916ad735201af61", expectedAddress: "2N8uAwCEh4fsNki1bMfyjVwS6769yf2Juoa" },
     ];
 
     for (const testcase of testcases) {

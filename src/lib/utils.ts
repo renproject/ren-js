@@ -6,7 +6,7 @@ import { TransactionConfig } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { createBCHAddress } from "../blockchain/bch";
+import { BCashUTXO, createBCHAddress, getBCashUTXOs } from "../blockchain/bch";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
@@ -15,7 +15,7 @@ import { Tx } from "../renVM/transaction";
 import { actionToDetails, Asset, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
-export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO };
+export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO } | { chain: Chain.BCash, utxo: BCashUTXO };
 
 // 32-byte zero value
 export const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -100,6 +100,8 @@ export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: T
             return (await getBitcoinUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
         case Chain.Zcash:
             return (await getZcashUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
+        case Chain.BCash:
+            return (await getBCashUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: BCashUTXO) => ({ chain: Chain.BCash as Chain.BCash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }

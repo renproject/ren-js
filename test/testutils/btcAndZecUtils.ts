@@ -26,20 +26,33 @@ const sendRawTransaction = async (txHex: string, mercuryURL: string, chainSO: st
             5,
         );
     } catch (error) {
-        console.log(`Unable to submit to Mercury (${(error.response && error.response.data && error.response.data.error && error.response.data.error.message) || error}). Trying chain.so...`);
+        console.log(`Unable to submit to Mercury (${(error.response && error.response.data && error.response.data.error && error.response.data.error.message) || error}). Trying BlockStream...`);
+
         try {
-            console.log(txHex);
             await retryNTimes(
-                () => axios.post(`https://chain.so/api/v2/send_tx/${chainSO}`, { tx_hex: txHex }, { timeout: 5000 }),
+                () => axios.post(
+                    `https://blockstream.info/testnet/api/tx`,
+                    txHex,
+                    { timeout: 5000 }
+                ),
                 5,
             );
-        } catch (chainError) {
-            console.error(`chain.so returned error ${chainError.message}`);
-            console.log(`\n\n\nPlease check your balance balance!\n`);
-            if (error.response && error.response.data && error.response.data.error && error.response.data.error.message) {
-                error.message = `${error.message}: ${error.response.data.error.message}`;
+        } catch (blockstreamError) {
+            console.log(`Unable to submit to BlockStream (${(blockstreamError.response && blockstreamError.response.data && blockstreamError.response.data.error && blockstreamError.response.data.blockstreamError.message) || error}). Trying chain.so...`);
+            try {
+                console.log(txHex);
+                await retryNTimes(
+                    () => axios.post(`https://chain.so/api/v2/send_tx/${chainSO}`, { tx_hex: txHex }, { timeout: 5000 }),
+                    5,
+                );
+            } catch (chainError) {
+                console.error(`chain.so returned error ${chainError.message}`);
+                console.log(`\n\n\nPlease check your balance balance!\n`);
+                if (error.response && error.response.data && error.response.data.error && error.response.data.error.message) {
+                    error.message = `${error.message}: ${error.response.data.error.message}`;
+                }
+                throw error;
             }
-            throw error;
         }
     }
 };
@@ -58,6 +71,7 @@ export const sendBTC = (
 
         // Deposit asset to gateway address.
         const utxos = await getBitcoinUTXOs(network)(srcAddress.toString(), 0);
+        utxos.reverse();
         const bitcoreUTXOs = [];
         let utxoAmount = 0;
         for (const utxo of utxos) {
@@ -71,12 +85,25 @@ export const sendBTC = (
                 script: new BScript(utxo.script_hex),
                 satoshis: utxo.value,
             });
+            console.log({
+                txId: utxo.txid,
+                outputIndex: utxo.output_no,
+                address: srcAddress,
+                script: new BScript(utxo.script_hex),
+                satoshis: utxo.value,
+            });
             bitcoreUTXOs.push(bitcoreUTXO);
             utxoAmount += utxo.value;
+            if (utxoAmount >= amount) {
+                break;
+            }
         }
 
         const change = utxoAmount - amount - 10000;
         console.log(`${chalk.magenta(`[INFO]`)} ${srcAddress} has ${chalk.magenta(`${change / 10 ** 8}`)} tBTC remaining`);
+
+        console.log(`amount: ${amount}`);
+        console.log(`change: ${change}`);
 
         const transaction = new BTransaction().from(bitcoreUTXOs).to(gatewayAddress, amount).change(srcAddress).sign(privateKey);
 

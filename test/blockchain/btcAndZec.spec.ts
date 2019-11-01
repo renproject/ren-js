@@ -5,9 +5,9 @@ import { decode } from "bs58";
 
 import {
     createZECAddress, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet, Ox,
-    zecAddressFromHex, zecAddressToHex,
+    zecAddressFrom, zecAddressToHex,
 } from "../../src";
-import { btcAddressFromHex, btcAddressToHex, createBTCAddress } from "../../src/blockchain/btc";
+import { btcAddressFrom, btcAddressToHex, createBTCAddress } from "../../src/blockchain/btc";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -38,7 +38,7 @@ describe("btc.ts", () => {
                     btcAddressToHex(expected)
                         .should.equal(hex);
 
-                    btcAddressFromHex(hex)
+                    btcAddressFrom(hex, "hex")
                         .should.equal(expected);
                 });
             });
@@ -62,7 +62,7 @@ describe("zec.ts", () => {
                     zecAddressToHex(address)
                         .should.equal(hex);
 
-                    zecAddressFromHex(hex)
+                    zecAddressFrom(hex, "hex")
                         .should.equal(expected);
                 });
             });

@@ -101,6 +101,8 @@ describe("SDK methods", function () {
         });
         const gatewayAddress = shift.addr();
 
+        console.log(`amount: ${amount}`);
+
         await sendAsset(gatewayAddress, amount);
 
         await submit(shift);

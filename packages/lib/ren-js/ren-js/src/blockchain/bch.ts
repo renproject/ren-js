@@ -14,6 +14,6 @@ export interface BCashUTXO {
     output_no: number;
 }
 
-export const getZcashUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.bch);
+export const getBCashUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.bch);
 
 export const bchAddressToHex = (address: string) => Ox(decode58(address));

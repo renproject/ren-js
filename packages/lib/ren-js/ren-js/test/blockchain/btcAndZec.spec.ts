@@ -7,6 +7,7 @@ import {
     createZECAddress, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet, Ox,
     zecAddressFrom, zecAddressToHex,
 } from "../../src";
+import { bchAddressFrom, bchAddressToHex, createBCHAddress } from "../../src/blockchain/bch";
 import { btcAddressFrom, btcAddressToHex, createBTCAddress } from "../../src/blockchain/btc";
 
 chai.use((chaiBigNumber)(BigNumber));
@@ -46,7 +47,7 @@ describe("btc.ts", () => {
 });
 
 describe("zec.ts", () => {
-    describe("createBTCAddress", async () => {
+    describe("createZECAddress", async () => {
         [
             { network: NetworkMainnet, expected: "t3ZZzcD5753UPmJC37BWrxxDjaLbq2Mqw6E", get hex() { return Ox(decode(this.expected)); } },
             { network: NetworkTestnet, expected: "t2JAUJ5wvuvzeTsvNcSk73TkcSYxUeXnGuh", get hex() { return Ox(decode(this.expected)); } },
@@ -63,6 +64,30 @@ describe("zec.ts", () => {
                         .should.equal(hex);
 
                     zecAddressFrom(hex, "hex")
+                        .should.equal(expected);
+                });
+            });
+    });
+});
+
+describe("bch.ts", () => {
+    describe("createBCHAddress", async () => {
+        [
+            { network: NetworkMainnet, expected: "bitcoincash:pzjfh7u52490nrgkw8jryhkjnf462vvsjc00elh6h4", get hex() { return Ox(Buffer.from(this.expected)); } },
+            { network: NetworkTestnet, expected: "bchtest:pplk0msfzrwy920zlnvsjjtkwf7hv0hpzyc9vu8h7c", get hex() { return Ox(Buffer.from(this.expected)); } },
+            { network: NetworkDevnet, expected: "bchtest:pps69qyfn8xx4w95xgyupkyy04wwjhgw4qlw8kx58p", get hex() { return Ox(Buffer.from(this.expected)); } },
+            { network: NetworkLocalnet, expected: "bchtest:pr3cn2ncz0xm2kmk79n0zfwcafdcvg6dashfp5llk3", get hex() { return Ox(Buffer.from(this.expected)); } },
+        ]
+            .forEach(({ network, expected, hex }) => {
+                it(network.name, async () => {
+                    const address = createBCHAddress(network, "0x1234");
+                    address.should.equal(expected);
+                    createBCHAddress(network, "1234")
+                        .should.equal(address);
+                    bchAddressToHex(address)
+                        .should.equal(hex);
+
+                    bchAddressFrom(hex, "hex")
                         .should.equal(expected);
                 });
             });

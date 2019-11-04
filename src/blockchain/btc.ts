@@ -1,5 +1,6 @@
-import { Address, Networks, Opcode, Script } from "bitcore-lib";
-import Base58Check from "bitcore-lib/lib/encoding/base58check";
+// import { Address, Networks, Opcode, Script } from "bitcore-lib";
+// import Base58Check from "bitcore-lib/lib/encoding/base58check";
+import { Networks, Opcode, Script } from "bitcore-lib";
 
 import { getUTXOs } from "../getUTXOs/mercury";
 import { NetworkDetails } from "../types/networks";
@@ -16,15 +17,21 @@ export interface BitcoinUTXO {
 
 export const getBitcoinUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.btc);
 
-export const btcAddressToHex = (address: string) => {
-    const addressBuffer = new Address(address).toBuffer();
-    // Concatenate checksum
-    return Ox(Buffer.concat([addressBuffer, Base58Check.checksum(addressBuffer)]));
-};
+// export const btcAddressToHex = (address: string) => {
+//     const addressBuffer = new Address(address).toBuffer();
+//     // Concatenate checksum
+//     return Ox(Buffer.concat([addressBuffer, Base58Check.checksum(addressBuffer)]));
+// };
+
+// export const btcAddressFrom = (address: string, encoding: "hex" | "base64") => {
+//     // tslint:disable-next-line: no-any
+//     return (Address as any)
+//         .fromBuffer(Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).slice(0, -4))
+//         .toString();
+// };
+
+export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
 
 export const btcAddressFrom = (address: string, encoding: "hex" | "base64") => {
-    // tslint:disable-next-line: no-any
-    return (Address as any)
-        .fromBuffer(Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).slice(0, -4))
-        .toString();
+    return Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).toString();
 };

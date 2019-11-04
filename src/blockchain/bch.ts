@@ -1,9 +1,8 @@
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
-import { decode as decode58 } from "bs58";
 
 import { getUTXOs } from "../getUTXOs/mercury";
 import { NetworkDetails } from "../types/networks";
-import { createAddress, Ox } from "./common";
+import { createAddress, Ox, strip0x } from "./common";
 
 export const createBCHAddress = createAddress(Networks, Opcode, Script);
 
@@ -16,4 +15,8 @@ export interface BCashUTXO {
 
 export const getBCashUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.bch);
 
-export const bchAddressToHex = (address: string) => Ox(decode58(address));
+export const bchAddressToHex = (address: string) => Ox(Buffer.from(address));
+
+export const bchAddressFrom = (address: string, encoding: "hex" | "base64") => {
+    return Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).toString();
+};

@@ -47,18 +47,18 @@ export default class RenVM {
     public static Chains = Chain;
     public static randomNonce = randomNonce;
 
+    public static getUTXOs = {
+        getBitcoinUTXOs,
+        getZcashUTXOs,
+        getBCashUTXOs,
+    };
+
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenVM()).Tokens`
     public readonly Tokens = Tokens;
     public readonly Networks = Network;
     public readonly Chains = Chain;
     public readonly randomNonce = randomNonce;
-
-    public readonly getUTXOs = {
-        getBitcoinUTXOs,
-        getZcashUTXOs,
-        getBCashUTXOs,
-    };
 
     // Internal state
     private readonly network: NetworkDetails;

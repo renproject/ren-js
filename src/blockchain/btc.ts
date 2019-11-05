@@ -3,7 +3,7 @@
 import { Networks, Opcode, Script } from "bitcore-lib";
 
 import { getUTXOs } from "../getUTXOs/mercury";
-import { NetworkDetails } from "../types/networks";
+import { NetworkDetails, stringToNetwork } from "../types/networks";
 import { createAddress, Ox, strip0x } from "./common";
 
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
@@ -15,7 +15,10 @@ export interface BitcoinUTXO {
     output_no: number;
 }
 
-export const getBitcoinUTXOs = (network: NetworkDetails) => getUTXOs(network, network.chainSoName.btc);
+export const getBitcoinUTXOs = (network: NetworkDetails | string) => {
+    const networkDetails = typeof network === "string" ? stringToNetwork(network) : network;
+    return getUTXOs(networkDetails, networkDetails.chainSoName.btc);
+};
 
 // export const btcAddressToHex = (address: string) => {
 //     const addressBuffer = new Address(address).toBuffer();

@@ -1,3 +1,6 @@
+import { getBCashUTXOs } from "./blockchain/bch";
+import { getBitcoinUTXOs } from "./blockchain/btc";
+import { getZcashUTXOs } from "./blockchain/zec";
 import { randomNonce } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
@@ -50,6 +53,12 @@ export default class RenVM {
     public readonly Networks = Network;
     public readonly Chains = Chain;
     public readonly randomNonce = randomNonce;
+
+    public readonly getUTXOs = {
+        getBitcoinUTXOs,
+        getZcashUTXOs,
+        getBCashUTXOs,
+    };
 
     // Internal state
     private readonly network: NetworkDetails;

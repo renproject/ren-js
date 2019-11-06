@@ -1,8 +1,3 @@
-import { TxStatus } from "renVM/transaction";
-
-import { getBCashUTXOs } from "./blockchain/bch";
-import { getBitcoinUTXOs } from "./blockchain/btc";
-import { getZcashUTXOs } from "./blockchain/zec";
 import { randomNonce } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
@@ -14,12 +9,14 @@ import { ShiftInParams, ShiftOutParams } from "./types/parameters";
 export * from "./renVM/renVMNetwork";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
+export * from "./blockchain/bch";
 export * from "./blockchain/common";
 export * from "./types/assets";
 export * from "./types/networks";
 export * from "./types/parameters";
 export * from "./shiftIn";
 export * from "./shiftOut";
+export * from "renVM/transaction";
 
 export { UTXO } from "./lib/utils";
 
@@ -48,14 +45,6 @@ export default class RenVM {
     public static Networks = Network;
     public static Chains = Chain;
     public static randomNonce = randomNonce;
-
-    public static getUTXOs = {
-        getBitcoinUTXOs,
-        getZcashUTXOs,
-        getBCashUTXOs,
-    };
-
-    public static TxStatus = TxStatus;
 
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenVM()).Tokens`

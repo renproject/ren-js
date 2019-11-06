@@ -7,6 +7,7 @@ import { Network, NetworkDetails, stringToNetwork } from "./types/networks";
 import { ShiftInParams, ShiftOutParams } from "./types/parameters";
 
 export * from "./renVM/renVMNetwork";
+export * from "./renVM/transaction";
 export * from "./blockchain/btc";
 export * from "./blockchain/zec";
 export * from "./blockchain/bch";
@@ -16,7 +17,6 @@ export * from "./types/networks";
 export * from "./types/parameters";
 export * from "./shiftIn";
 export * from "./shiftOut";
-export * from "renVM/transaction";
 
 export { UTXO } from "./lib/utils";
 

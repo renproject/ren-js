@@ -1,3 +1,5 @@
+import { TxStatus } from "renVM/transaction";
+
 import { getBCashUTXOs } from "./blockchain/bch";
 import { getBitcoinUTXOs } from "./blockchain/btc";
 import { getZcashUTXOs } from "./blockchain/zec";
@@ -52,6 +54,8 @@ export default class RenVM {
         getZcashUTXOs,
         getBCashUTXOs,
     };
+
+    public static TxStatus = TxStatus;
 
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenVM()).Tokens`

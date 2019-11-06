@@ -82,12 +82,12 @@ export class ShiftInObject {
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
-                        deposits = deposits.set(deposit.utxo.txid, deposit);
                         // tslint:disable-next-line: no-non-null-assertion
                         if (!deposits.has(deposit.utxo.txid) || deposits.get(deposit.utxo.txid)!.utxo.confirmations !== deposit.utxo.confirmations) {
-                            promiEvent.emit("deposit", deposit.utxo);
+                            promiEvent.emit("deposit", deposit);
                             newDeposit = true;
                         }
+                        deposits = deposits.set(deposit.utxo.txid, deposit);
                     }
                     if (newDeposit) { continue; }
                 } catch (error) {

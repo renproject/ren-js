@@ -8,8 +8,10 @@ import { ZcashUTXO } from "../blockchain/zec";
 import { retryNTimes } from "../lib/utils";
 import { NetworkDetails } from "../types/networks";
 
+type UTXO = BitcoinUTXO | ZcashUTXO | BCashUTXO;
+
 // Convert values to correct unit
-const fixValues = (utxos: Array<BitcoinUTXO | ZcashUTXO | BCashUTXO>, decimals: number) => {
+const fixValues = (utxos: UTXO[], decimals: number) => {
     return utxos.map(utxo => ({
         ...utxo,
         value: new BigNumber(utxo.value).multipliedBy(new BigNumber(10).exponentiatedBy(decimals)).toNumber(),
@@ -17,19 +19,23 @@ const fixValues = (utxos: Array<BitcoinUTXO | ZcashUTXO | BCashUTXO>, decimals: 
 };
 
 export const fetchFromChainSo = async (url: string) => {
-    const resp = await retryNTimes(
+    const response = await retryNTimes(
         () => Axios.get<{ data: { txs: Array<BitcoinUTXO | ZcashUTXO> } }>(url),
         5.
     );
-    const data = (resp.data);
 
-    return fixValues(data.data.txs, 8);
+    return fixValues(response.data.data.txs, 8);
 };
 
-export const fetchFromBlockstream = async (url: string) => {
+export const fetchFromBlockstream = async (url: string, getHeight: string): Promise<UTXO[]> => {
     const response = await retryNTimes(
         () => Axios.get<Array<{
-            status: unknown;
+            status: {
+                confirmed: boolean,
+                block_height: number,
+                block_hash: string,
+                block_time: number,
+            };
             txid: string;
             value: number;
             vout: number;
@@ -37,16 +43,23 @@ export const fetchFromBlockstream = async (url: string) => {
         5,
     );
 
+    const heightResponse = await retryNTimes(
+        () => Axios.get<string>(getHeight),
+        5,
+    );
+
+    // tslint:disable-next-line: no-object-literal-type-assertion
     return response.data.map(utxo => ({
         txid: utxo.txid,
         value: utxo.value,
         // Placeholder
         script_hex: "76a914b0c08e3b7da084d7dbe9431e9e49fb61fb3b64d788ac",
         output_no: utxo.vout,
+        confirmations: utxo.status.confirmed ? 1 + parseInt(heightResponse.data, 10) - utxo.status.block_height : 0,
     }));
 };
 
-export const fetchFromInsight = async (url: string, fixValue?: boolean) => {
+export const fetchFromInsight = async (url: string, fixValue?: boolean): Promise<UTXO[]> => {
     const response = await retryNTimes(
         () => Axios.get<Array<{
             address: string;
@@ -71,9 +84,10 @@ export const fetchFromInsight = async (url: string, fixValue?: boolean) => {
         value: utxo.amount,
         script_hex: utxo.scriptPubKey,
         output_no: utxo.vout,
+        confirmations: utxo.confirmations,
     }));
 
-    return fixValues ? fixValues(utxos, 8) : utxos;
+    return fixValue ? fixValues(utxos, 8) : utxos;
 };
 
 // export const fetchFromZechain = async (url: string): Promise<ZcashUTXO[]> => {
@@ -100,7 +114,7 @@ export const fetchFromInsight = async (url: string, fixValue?: boolean) => {
 //     }));
 // };
 
-export const fetchFromBitcoinDotCom = async (url: string) => {
+export const fetchFromBitcoinDotCom = async (url: string): Promise<UTXO[]> => {
     const response = await retryNTimes(
         () => Axios.get<{
             utxos: Array<{
@@ -126,6 +140,7 @@ export const fetchFromBitcoinDotCom = async (url: string) => {
         value: utxo.amount,
         script_hex: utxo.scriptPubKey,
         output_no: utxo.vout,
+        confirmations: utxo.confirmations,
     })), 8);
 };
 
@@ -144,11 +159,11 @@ export const fetchFromBitcoinDotCom = async (url: string) => {
 export const getUTXOs = (network: NetworkDetails, currencyName: string) => async (address: string, confirmations: number, endpoint = 0): Promise<Array<BitcoinUTXO | ZcashUTXO>> => {
     const chainSoFn = () => fetchFromChainSo(`https://chain.so/api/v2/get_tx_unspent/${currencyName}/${address}/${confirmations}`);
 
-    let endpoints: Array<() => Promise<Array<BitcoinUTXO | ZcashUTXO | BCashUTXO>>> = [];
+    let endpoints: Array<() => Promise<UTXO[]>> = [];
     if (currencyName.match(/btc/i)) {
         endpoints = [
             chainSoFn,
-            () => fetchFromBlockstream(`https://blockstream.info/${network.isTestnet ? "testnet/" : ""}api/address/${address}/utxo`),
+            () => fetchFromBlockstream(`https://blockstream.info/${network.isTestnet ? "testnet/" : ""}api/address/${address}/utxo`, `https://blockstream.info/${network.isTestnet ? "testnet/" : ""}api/blocks/tip/height`),
         ];
     } else if (currencyName.match(/zec/i)) {
         endpoints = [

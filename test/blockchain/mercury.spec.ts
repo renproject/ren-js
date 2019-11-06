@@ -15,6 +15,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d");
         utxos[0].value.should.equal(13370);
+        utxos[0].confirmations.should.be.greaterThan(0);
     });
 
     it("Testnet BTC UTXOS [second API]", async () => {
@@ -22,6 +23,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d");
         utxos[0].value.should.equal(13370);
+        utxos[0].confirmations.should.be.greaterThan(0);
     });
 
     it("Testnet ZCash UTXOS", async () => {
@@ -30,6 +32,7 @@ describe("mercury.ts", () => {
             utxos.length.should.be.greaterThan(0);
             utxos[0].txid.should.equal("6d6f1781c589d9eafc923d480fa39656da088110b4553c043f9da2cf843d2b03");
             utxos[0].value.should.equal(100000000);
+            utxos[0].confirmations.should.be.greaterThan(0);
         } catch (error) {
             console.error(`Still failing ZCash Testnet UTXO test`);
             // console.error(error);
@@ -41,6 +44,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("27c3a32f18d6274eb348dfd401defe6cccc2738eda277c4e55ae44370f91d98f");
         utxos[0].value.should.equal(12772);
+        utxos[0].confirmations.should.be.greaterThan(0);
     });
 
     it("Mainnet ZEC UTXOS", async () => {
@@ -48,6 +52,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("6482a18a61cea7da8abb7ac8c44939b701889343afac7130fec4898ad1b29307");
         utxos[0].value.should.equal(7873358);
+        utxos[0].confirmations.should.be.greaterThan(0);
     });
 
     it("Mainnet BCH UTXOS", async () => {
@@ -55,6 +60,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("98120f3d9834dc61839339123001717218428397ea8ab48412e53aa2bb8fbd64");
         utxos[0].value.should.equal(4532403);
+        utxos[0].confirmations.should.be.greaterThan(0);
     });
 
     it("Testnet BCH UTXOS", async () => {
@@ -62,6 +68,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("42d500e1b7ee277e270f9b997d9fab46e0801a9fc0b6114b530d77dbc6036af0");
         utxos[0].value.should.equal(5000000);
+        utxos[0].confirmations.should.be.greaterThan(0);
     });
 
 });

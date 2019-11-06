@@ -11,6 +11,7 @@ export interface BCashUTXO {
     value: number; // satoshis
     script_hex: string; // hex string without 0x prefix
     output_no: number;
+    confirmations: number;
 }
 
 export const getBCashUTXOs = (network: NetworkDetails | string) => {

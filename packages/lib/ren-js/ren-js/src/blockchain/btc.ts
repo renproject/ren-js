@@ -13,6 +13,7 @@ export interface BitcoinUTXO {
     value: number; // satoshis
     script_hex: string; // hex string without 0x prefix
     output_no: number;
+    confirmations: number;
 }
 
 export const getBitcoinUTXOs = (network: NetworkDetails | string) => {

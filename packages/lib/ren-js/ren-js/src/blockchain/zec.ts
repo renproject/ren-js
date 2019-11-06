@@ -12,6 +12,7 @@ export interface ZcashUTXO {
     value: number; // satoshis
     script_hex: string; // hex string without 0x prefix
     output_no: number;
+    confirmations: number;
 }
 
 export const getZcashUTXOs = (network: NetworkDetails | string) => {

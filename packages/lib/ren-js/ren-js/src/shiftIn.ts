@@ -70,7 +70,7 @@ export class ShiftInObject {
             while (true) {
                 if (deposits.size > 0) {
                     // Sort deposits
-                    const greatestTx = deposits.sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
+                    const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
                     if (greatestTx && greatestTx.utxo.value >= sendAmount) {
                         this.utxo = greatestTx.utxo;
                         break;
@@ -78,12 +78,13 @@ export class ShiftInObject {
                 }
 
                 try {
-                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, confirmations, retryCount);
+                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, 0, retryCount);
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
-                        if (!deposits.has(deposit.utxo.txid)) {
-                            deposits = deposits.set(deposit.utxo.txid, deposit);
+                        deposits = deposits.set(deposit.utxo.txid, deposit);
+                        // tslint:disable-next-line: no-non-null-assertion
+                        if (!deposits.has(deposit.utxo.txid) || deposits.get(deposit.utxo.txid)!.utxo.confirmations !== deposit.utxo.confirmations) {
                             promiEvent.emit("deposit", deposit.utxo);
                             newDeposit = true;
                         }

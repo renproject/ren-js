@@ -46,7 +46,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;
 const BITCOIN_KEY = process.env.TESTNET_BITCOIN_KEY;
 
-describe("SDK methods", function () {
+describe("Shifting in and shifting out", function () {
     // Disable test timeout.
     this.timeout(0);
 
@@ -239,7 +239,7 @@ describe("SDK methods", function () {
         const caseZEC = { name: "ZEC", fn: () => ({ getUTXOS: getZcashUTXOs, mintToken: Tokens.ZEC.Zec2Eth, burnToken: Tokens.ZEC.Eth2Zec, privateKey: () => new ZPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zZEC, shifter: network.contracts.addresses.shifter.ZECShifter, sendAsset: sendZEC(network, BITCOIN_KEY) }) };
 
         for (const testcaseFn of [
-            { ...caseBTC, it, },
+            { ...caseBTC, it: it, },
             { ...caseZEC, it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
@@ -247,7 +247,7 @@ describe("SDK methods", function () {
                 const testcase = testcaseFn.fn();
 
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-                const amount = 0.000225 * (10 ** 8);
+                const amount = Math.floor(0.00015 * (10 ** 8));
                 const ethAddress = accounts[0];
                 const privateKey = testcase.privateKey();
                 const srcAddress = privateKey.toAddress();

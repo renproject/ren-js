@@ -1,7 +1,9 @@
 import chai from "chai";
 
 import RenVM, { Chain, Network, Tokens } from "../src/index";
-import { NetworkDevnet, NetworkMainnet, NetworkTestnet } from "../src/types/networks";
+import {
+    NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,
+} from "../src/types/networks";
 
 chai.should();
 
@@ -11,11 +13,15 @@ describe("RenVM initialization and exports", () => {
             .should.be.an.instanceOf(RenVM);
         new RenVM("mainnet")
             .should.be.an.instanceOf(RenVM);
+        new RenVM("chaosnet")
+            .should.be.an.instanceOf(RenVM);
         new RenVM("testnet")
             .should.be.an.instanceOf(RenVM);
         new RenVM("devnet")
             .should.be.an.instanceOf(RenVM);
         new RenVM(NetworkMainnet)
+            .should.be.an.instanceOf(RenVM);
+        new RenVM(NetworkChaosnet)
             .should.be.an.instanceOf(RenVM);
         new RenVM(NetworkTestnet)
             .should.be.an.instanceOf(RenVM);
@@ -37,8 +43,8 @@ describe("RenVM initialization and exports", () => {
         renVM.Chains.should.equal(Chain);
     });
 
-    it("Exposes BTC.addressToHex", () => {
-        RenVM.Tokens.BTC.addressToHex("2MsjneiPJPfDRcbE9bCRs1RDQ2w7Bgh3nkC")
-            .should.equal("0xc40566e98bcfb81185df27a5fdc60cd4c206415b1f08630ccd");
-    });
+    // it("Exposes BTC.addressToHex", () => {
+    //     RenVM.Tokens.BTC.addressToHex("2MsjneiPJPfDRcbE9bCRs1RDQ2w7Bgh3nkC")
+    //         .should.equal("0xc40566e98bcfb81185df27a5fdc60cd4c206415b1f08630ccd");
+    // });
 });

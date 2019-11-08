@@ -127,6 +127,8 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
             case "":
             case "mainnet":
                 return NetworkMainnet;
+            case "chaosnet":
+                return NetworkChaosnet;
             case "testnet":
                 return NetworkTestnet;
             case "devnet":

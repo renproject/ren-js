@@ -47,7 +47,7 @@ export default class RenVM {
     public static randomNonce = randomNonce;
 
     // Expose constants again without `static` so they can be accessed on
-    // instances - e.g. `(new RenVM()).Tokens`
+    // instances - e.g. `(new RenVM("testnet")).Tokens`
     public readonly Tokens = Tokens;
     public readonly Networks = Network;
     public readonly Chains = Chain;

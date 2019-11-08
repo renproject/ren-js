@@ -126,7 +126,8 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
         switch (network.toLowerCase()) {
             case "":
             case "mainnet":
-                return NetworkMainnet;
+                throw new Error("Mainnet is not supported yet.");
+            // return NetworkMainnet;
             case "chaosnet":
                 return NetworkChaosnet;
             case "testnet":

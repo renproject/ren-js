@@ -41,6 +41,8 @@ import RenVM from "@renproject/ren";
 ## Usage
 
 ```typescript
+const sdk = new RenVM("chaosnet");
+// or on testnet
 const sdk = new RenVM("testnet");
 ```
 

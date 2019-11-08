@@ -115,12 +115,11 @@ export const sendBTC = (
     if (USE_QRCODE) {
         // Generate a QR code with the payment details - an alternative
         qrcode.generate(`bitcoin:${gatewayAddress}?amount=${amountSatoshis / 10 ** 8}`, { small: true });
-        console.log(`Please deposit ${amountSatoshis / 10 ** 8} BTC to ${gatewayAddress}`);
+        console.log(`Please deposit ${amountSatoshis / 10 ** 8} tBTC to ${gatewayAddress}`);
     } else {
-        console.log(`Please deposit ${amountSatoshis / 10 ** 8} BTC to ${gatewayAddress}`);
+        console.log(`Depositing ${amountSatoshis / 10 ** 8} tBTC to ${gatewayAddress}...`);
 
         // const alice = bitcoin.ECPair.fromPrivateKeyBuffer(Buffer.from(keyHex, "hex"), );
-        console.log(bitcoin.networks);
         const account = bitcoin.ECPair.fromWIF(rawPrivateKey, bitcoin.networks.testnet);
 
         const utxos = await getBitcoinUTXOs(network)(account.getAddress().toString(), 0);
@@ -135,14 +134,13 @@ export const sendBTC = (
         const availableSatoshis = utxos.reduce((sum, utxo) => sum + utxo.value, 0);
 
         if (availableSatoshis < amountSatoshis + fees) {
-            throw new Error(`Insufficient balance to broadcast transaction. Have: ${availableSatoshis / 10 ** 8}, want ${(amountSatoshis + fees) / 10 ** 8}`);
+            throw new Error(`Insufficient balance to fund test from ${account.getAddress()}. Have: ${availableSatoshis / 10 ** 8}, want ${(amountSatoshis + fees) / 10 ** 8}`);
         }
 
         // Add all inputs
         let sum = 0;
         const usedUTXOs = [];
         for (const utxo of utxos) {
-            console.log(`Adding ${utxo.txid}, ${utxo.output_no}`);
             tx.addInput(utxo.txid, utxo.output_no);
             sum += utxo.value;
             usedUTXOs.push(utxo);
@@ -179,7 +177,7 @@ export const sendZEC = (
     network: NetworkDetails,
     rawPrivateKey: string,
 ) => async (gatewayAddress: string, amountSatoshis: number) => {
-    console.log(`Please deposit ${amountSatoshis / 10 ** 8} ZEC to ${gatewayAddress}`);
+    console.log(`Depositing ${amountSatoshis / 10 ** 8} tZEC to ${gatewayAddress}...`);
 
     // const alice = bitcoin.ECPair.fromPrivateKeyBuffer(Buffer.from(keyHex, "hex"), );
     const account = bitcoin.ECPair.fromWIF(rawPrivateKey, bitcoin.networks.zcashTest);
@@ -196,7 +194,7 @@ export const sendZEC = (
     const availableSatoshis = utxos.reduce((sum, utxo) => sum + utxo.value, 0);
 
     if (availableSatoshis < amountSatoshis + fees) {
-        throw new Error(`Insufficient balance to broadcast transaction. Have: ${availableSatoshis / 10 ** 8}, want ${(amountSatoshis + fees) / 10 ** 8}`);
+        throw new Error(`Insufficient balance to fund test from ${account.getAddress()}. Have: ${availableSatoshis / 10 ** 8}, want ${(amountSatoshis + fees) / 10 ** 8}`);
     }
 
     const change = availableSatoshis - amountSatoshis - fees;

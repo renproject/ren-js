@@ -59,7 +59,7 @@ export const fetchFromBlockstream = async (url: string, getHeight: string): Prom
     }));
 };
 
-export const fetchFromInsight = async (url: string, fixValue?: boolean): Promise<UTXO[]> => {
+export const fetchFromInsight = async (url: string): Promise<UTXO[]> => {
     const response = await retryNTimes(
         () => Axios.get<Array<{
             address: string;
@@ -79,15 +79,13 @@ export const fetchFromInsight = async (url: string, fixValue?: boolean): Promise
         5,
     );
 
-    const utxos = response.data.map(utxo => ({
+    return fixValues(response.data.map(utxo => ({
         txid: utxo.txid,
         value: utxo.amount,
         script_hex: utxo.scriptPubKey,
         output_no: utxo.vout,
         confirmations: utxo.confirmations,
-    }));
-
-    return fixValue ? fixValues(utxos, 8) : utxos;
+    })), 8);
 };
 
 // export const fetchFromZechain = async (url: string): Promise<ZcashUTXO[]> => {
@@ -172,7 +170,7 @@ export const getUTXOs = (network: NetworkDetails, currencyName: string) => async
         if (network.isTestnet) {
             endpoints.push(() => fetchFromInsight(`https://explorer.testnet.z.cash/api/addr/${address}/utxo`));
         } else {
-            endpoints.push(() => fetchFromInsight(`https://zcash.blockexplorer.com/api/addr/${address}/utxo`, true));
+            endpoints.push(() => fetchFromInsight(`https://zcash.blockexplorer.com/api/addr/${address}/utxo`));
             // endpoints.push(() => fetchFromInsight(`https://zecblockexplorer.com/addr/${address}/utxo`));
             // endpoints.push(() => fetchFromZechain(`https://zechain.net/api/v1/addr/${address}/utxo`));
         }

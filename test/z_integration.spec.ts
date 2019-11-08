@@ -239,7 +239,7 @@ describe("Shifting in and shifting out", function () {
         const caseZEC = { name: "ZEC", fn: () => ({ getUTXOS: getZcashUTXOs, mintToken: Tokens.ZEC.Zec2Eth, burnToken: Tokens.ZEC.Eth2Zec, privateKey: () => new ZPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zZEC, shifter: network.contracts.addresses.shifter.ZECShifter, sendAsset: sendZEC(network, BITCOIN_KEY) }) };
 
         for (const testcaseFn of [
-            { ...caseBTC, it: it, },
+            { ...caseBTC, it, },
             { ...caseZEC, it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code

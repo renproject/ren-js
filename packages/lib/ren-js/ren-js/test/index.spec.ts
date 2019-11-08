@@ -9,10 +9,8 @@ chai.should();
 
 describe("RenVM initialization and exports", () => {
     it("should be able to pass in different networks", async () => {
-        new RenVM()
-            .should.be.an.instanceOf(RenVM);
-        new RenVM("mainnet")
-            .should.be.an.instanceOf(RenVM);
+        (() => new RenVM()).should.throw(/Mainnet is not supported yet/);
+        (() => new RenVM("mainnet")).should.throw(/Mainnet is not supported yet/);
         new RenVM("chaosnet")
             .should.be.an.instanceOf(RenVM);
         new RenVM("testnet")

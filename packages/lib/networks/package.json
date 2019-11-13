@@ -1,6 +1,6 @@
 {
   "name": "@renproject/contracts",
-  "version": "0.3.23",
+  "version": "0.3.24",
   "homepage": "https://renproject.github.io/contracts-ts",
   "main": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
@@ -35,7 +35,7 @@
     "axios": "^0.19.0",
     "change-case": "^3.1.0",
     "gh-pages": "^2.1.1",
-    "immutable": "^3.8.2",
+    "immutable": "^4.0.0-rc.12",
     "patch-package": "^6.2.0",
     "query-string": "^6.8.3",
     "react": "^16.11.0",

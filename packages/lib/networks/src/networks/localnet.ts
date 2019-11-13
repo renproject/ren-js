@@ -57,7 +57,7 @@ export default Network({
                 address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
                 artifact: DarknodePaymentStore,
-            }
+            },
         },
         shifter: {
             zBTC: {
@@ -94,7 +94,7 @@ export default Network({
                 address: ShifterRegistry.networks[networkID].address,
                 abi: ShifterRegistry.abi as AbiItem[],
                 artifact: ShifterRegistry,
-            }
+            },
         },
         tokens: {
             DAI: {
@@ -128,13 +128,13 @@ export default Network({
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                 decimals: 18
-            }
+            },
         },
         erc: {
             ERC20: {
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20,
-            }
+            },
         }
     }
 });

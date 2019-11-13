@@ -1,16 +1,16 @@
 import * as React from "react";
 
 import { OrderedMap } from "immutable";
-import { Format, formatFn } from "lib/layouts";
 import { titleCase } from "change-case";
 import { RouteComponentProps, withRouter } from "react-router";
 
+import { formatFn, FormatType, table } from "../lib/layouts";
 import { NetworkData } from "../lib/networks";
 import { ReactComponent as Home } from "../styles/home.svg";
 import Network from "./Network";
 
 const defaultState = {
-    format: Format.TABLE,
+    format: FormatType.TABLE,
 };
 
 
@@ -18,6 +18,8 @@ interface MainProps extends RouteComponentProps {
     networks: OrderedMap<string, NetworkData>;
     network: string;
 }
+
+export const publicNetwork = (_: any, network: string) => network === "chaosnet" || network === "testnet";
 
 class Main extends React.Component<MainProps, typeof defaultState> {
     constructor(props: MainProps) {
@@ -33,7 +35,7 @@ class Main extends React.Component<MainProps, typeof defaultState> {
     public render() {
         const { networks, network } = this.props;
         const { format } = this.state;
-        console.log(networks);
+        const networkDetails = networks.get(network);
 
         return (
             <div className={["Main", `Main-${network}`].join(" ")}>
@@ -42,10 +44,10 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                 </a>
                 <div className="network controls">
                     <h1>Contract Index</h1>
-                    <table className="config-table">
+                    <table className="config-table"><tbody>
                         <tr>
-                            {networks.map((_: NetworkData | undefined, networkName: string | undefined) =>
-                                <td key={networkName} className={network === networkName ? `config-checked` : ""}>
+                            {networks.filter(publicNetwork(0, network) ? publicNetwork : () => true).map((_: NetworkData | undefined, networkName: string | undefined) =>
+                                <td key={networkName} className={[network === networkName ? `config-checked` : ""].join(" ")}>
                                     <label><input type="radio"
                                         name="network"
                                         value={networkName}
@@ -56,12 +58,13 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                                     </label></td>
                             ).valueSeq().toArray()
                             }
-                        </tr></table>
+                        </tr>
+                    </tbody></table>
                     <br />
-                    <table className="config-table">
+                    <table className="config-table"><tbody>
                         <tr>
                             {formatFn.map((_, formatOpt: string | undefined) =>
-                                <td key={formatOpt} className={format === formatOpt ? `config-checked` : ""}>
+                                <td key={formatOpt} className={[format === formatOpt ? `config-checked` : "", "borderless"].join(" ")}>
                                     <label>
                                         <input type="radio"
                                             name="format"
@@ -72,15 +75,15 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                                         {formatOpt}
                                     </label>
                                 </td>
-                            ).toArray()}
+                            ).valueSeq().toArray()}
                         </tr>
-                    </table>
+                    </tbody></table>
                 </div>
-                <Network
-                    key={network}
-                    format={formatFn.get(format)}
-                    networkData={networks.get(network)}
-                />)
+                {networkDetails ? <Network
+                    // key={network}
+                    format={formatFn.get(format) || table}
+                    networkData={networkDetails}
+                /> : <>Unknown network {network}</>}
             </div >
         );
     }

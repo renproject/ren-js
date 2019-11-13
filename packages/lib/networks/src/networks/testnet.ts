@@ -32,11 +32,6 @@ export default Network({
     },
     addresses: {
         ren: {
-            DarknodeSlasher: {
-                address: DarknodeSlasher.networks[networkID].address,
-                abi: DarknodeSlasher.abi as AbiItem[],
-                artifact: DarknodeSlasher,
-            },
             DarknodeRegistry: {
                 address: DarknodeRegistry.networks[networkID].address,
                 abi: DarknodeRegistry.abi as AbiItem[],
@@ -57,9 +52,19 @@ export default Network({
                 address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
                 artifact: DarknodePaymentStore,
-            }
+            },
+            DarknodeSlasher: {
+                address: DarknodeSlasher.networks[networkID].address,
+                abi: DarknodeSlasher.abi as AbiItem[],
+                artifact: DarknodeSlasher,
+            },
         },
         shifter: {
+            ShifterRegistry: {
+                address: ShifterRegistry.networks[networkID].address,
+                abi: ShifterRegistry.abi as AbiItem[],
+                artifact: ShifterRegistry,
+            },
             zBTC: {
                 address: zBTC.networks[networkID].address,
                 abi: zBTC.abi as AbiItem[],
@@ -90,11 +95,6 @@ export default Network({
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
             },
-            ShifterRegistry: {
-                address: ShifterRegistry.networks[networkID].address,
-                abi: ShifterRegistry.abi as AbiItem[],
-                artifact: ShifterRegistry,
-            }
         },
         tokens: {
             DAI: {
@@ -128,13 +128,13 @@ export default Network({
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                 decimals: 18,
-            }
+            },
         },
         erc: {
             ERC20: {
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20,
-            }
+            },
         }
     }
 });

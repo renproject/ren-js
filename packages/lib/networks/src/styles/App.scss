@@ -15,9 +15,23 @@ a {
 }
 
 .Main-chaosnet {
+    background: #2C3038;
+
     .network {
-        background: #2C3038;
+        transition: all 300ms;
+        // background: #2C3038;
         color: white;
+
+        background:
+            #282c35 !important;
+        border: 1px solid rgba(145, 149, 160, .1) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .2) !important;
+        // border-radius: 40px !important;
+        // padding: 0 15px !important;
+    }
+
+    .home-link svg path {
+        fill: white;
     }
 
     a {
@@ -26,12 +40,12 @@ a {
     }
 
     .layout tr:nth-of-type(even) {
-        background: rgb(64, 68, 77);
+        background: rgb(45, 50, 60);
     }
 
     .layout td.borderless {
         border: 0;
-        background: #2C3038;
+        background: #282c35;
     }
 
     .config-table {
@@ -40,11 +54,11 @@ a {
 
     .layout td,
     .layout th {
-        border: 1px solid rgb(58, 61, 68);
+        border: 1px solid rgb(45, 50, 60);
     }
 }
 
-.App {
+.Main {
     min-height: 100vh;
     /* background-color: #f3f3f3; */
     color: #333;
@@ -52,6 +66,7 @@ a {
     content: "";
     left: 0;
     right: 0;
+    transition: background 1000ms;
 }
 
 .loading {

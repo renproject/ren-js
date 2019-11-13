@@ -11,34 +11,32 @@ const formatAddress = (address: string) => address ? toChecksumAddress(address) 
 
 export type FormatFN = (networkData: NetworkData) => JSX.Element;
 
-const table: FormatFN = (networkData: NetworkData) => {
+export const table: FormatFN = (networkData: NetworkData) => {
     return <table className="layout">
-        <tbody>
-            {Object.keys(networkData.addresses).map((category: string) =>
-                <>
-                    <tr><td className="borderless"><h4 key={category}>{titleCase(category)}</h4></td></tr>
-                    {Object.keys(networkData.addresses[category]).map((contractName: string) =>
-                        <tr key={contractName}>
-                            <td className="contract-name">
-                                <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}`}>
-                                    {category.match("[Tt]okens") ? contractName.toUpperCase() : contractName}
-                                </a>
-                                {networkData.addresses[category][contractName].new === true ?
-                                    <span style={{ color: "#191" }} title="Updated recently">{" "}●</span> :
-                                    <></>
-                                }
-                            </td>
-                            <td className="monospace">
-                                {formatAddress(networkData.addresses[category][contractName].address)}
-                            </td>
-                            <td>
-                                <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>
-                            </td>
-                        </tr>
-                    )}
-                </>
-            )}
-        </tbody>
+        {Object.keys(networkData.addresses).map((category: string) =>
+            <tbody key={category}>
+                <tr><td className="borderless"><h4>{titleCase(category)}</h4></td></tr>
+                {Object.keys(networkData.addresses[category]).map((contractName: string) =>
+                    <tr key={contractName}>
+                        <td className="contract-name">
+                            <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}`}>
+                                {category.match("[Tt]okens") ? contractName.toUpperCase() : contractName}
+                            </a>
+                            {networkData.addresses[category][contractName].new === true ?
+                                <span style={{ color: "#191" }} title="Updated recently">{" "}●</span> :
+                                <></>
+                            }
+                        </td>
+                        <td className="monospace">
+                            {formatAddress(networkData.addresses[category][contractName].address)}
+                        </td>
+                        <td>
+                            <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>
+                        </td>
+                    </tr>
+                )}
+            </tbody>
+        )}
     </table>;
 };
 
@@ -53,12 +51,11 @@ const json: FormatFN = (networkData: NetworkData) => {
     </>;
 };
 
-export enum Format {
+export enum FormatType {
     TABLE = "Table",
     JSON = "JSON",
 }
 
-export const formatFn = OrderedMap<string, FormatFN>({
-    [Format.TABLE]: table,
-    [Format.JSON]: json,
-});
+export const formatFn = OrderedMap<string, FormatFN>()
+    .set(FormatType.TABLE, table)
+    .set(FormatType.JSON, json);

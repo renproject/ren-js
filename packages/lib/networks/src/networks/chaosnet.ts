@@ -10,6 +10,7 @@ import DarknodePayment from "darknode-sol/build/chaosnet/DarknodePayment.json";
 import DarknodePaymentStore from "darknode-sol/build/chaosnet/DarknodePaymentStore.json";
 import DarknodeRegistry from "darknode-sol/build/chaosnet/DarknodeRegistry.json";
 import DarknodeRegistryStore from "darknode-sol/build/chaosnet/DarknodeRegistryStore.json";
+import DarknodeSlasher from "darknode-sol/build/chaosnet/DarknodeSlasher.json";
 import RenToken from "darknode-sol/build/chaosnet/RenToken.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
@@ -31,25 +32,16 @@ export default Network({
     },
     addresses: {
         ren: {
-            DarknodeRegistryStore: {
-                address: DarknodeRegistryStore.networks[networkID].address,
-                abi: DarknodeRegistryStore.abi as AbiItem[],
-                artifact: DarknodeRegistryStore,
-            },
             DarknodeRegistry: {
                 address: DarknodeRegistry.networks[networkID].address,
                 abi: DarknodeRegistry.abi as AbiItem[],
                 artifact: DarknodeRegistry,
                 block: 7007558
             },
-            SettlementRegistry: {
-                address: "0x119da7a8500ade0766f758d934808179dc551036"
-            },
-            Orderbook: {
-                address: "0x6b8bb175c092de7d81860b18db360b734a2598e0"
-            },
-            DarknodeSlasher: {
-                address: "0x0000000000000000000000000000000000000000"
+            DarknodeRegistryStore: {
+                address: DarknodeRegistryStore.networks[networkID].address,
+                abi: DarknodeRegistryStore.abi as AbiItem[],
+                artifact: DarknodeRegistryStore,
             },
             DarknodePayment: {
                 address: DarknodePayment.networks[networkID].address,
@@ -60,9 +52,19 @@ export default Network({
                 address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
                 artifact: DarknodePaymentStore,
-            }
+            },
+            DarknodeSlasher: {
+                address: DarknodeSlasher.networks[networkID].address,
+                abi: DarknodeSlasher.abi as AbiItem[],
+                artifact: DarknodeSlasher,
+            },
         },
         shifter: {
+            ShifterRegistry: {
+                address: ShifterRegistry.networks[networkID].address,
+                abi: ShifterRegistry.abi as AbiItem[],
+                artifact: ShifterRegistry,
+            },
             zBTC: {
                 address: zBTC.networks[networkID].address,
                 abi: zBTC.abi as AbiItem[],
@@ -93,11 +95,6 @@ export default Network({
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
             },
-            ShifterRegistry: {
-                address: ShifterRegistry.networks[networkID].address,
-                abi: ShifterRegistry.abi as AbiItem[],
-                artifact: ShifterRegistry,
-            }
         },
         tokens: {
             DAI: {
@@ -131,13 +128,13 @@ export default Network({
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                 decimals: 18
-            }
+            },
         },
         erc: {
             ERC20: {
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20,
-            }
+            },
         }
     }
 });

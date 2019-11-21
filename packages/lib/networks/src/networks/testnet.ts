@@ -66,32 +66,32 @@ export default Network({
                 artifact: ShifterRegistry,
             },
             zBTC: {
-                address: zBTC.networks[networkID].address,
+                _address: zBTC.networks[networkID].address,
                 abi: zBTC.abi as AbiItem[],
                 artifact: zBTC,
             },
             BTCShifter: {
-                address: BTCShifter.networks[networkID].address,
+                _address: BTCShifter.networks[networkID].address,
                 abi: BTCShifter.abi as AbiItem[],
                 artifact: BTCShifter,
             },
             zZEC: {
-                address: zZEC.networks[networkID].address,
+                _address: zZEC.networks[networkID].address,
                 abi: zZEC.abi as AbiItem[],
                 artifact: zZEC,
             },
             ZECShifter: {
-                address: ZECShifter.networks[networkID].address,
+                _address: ZECShifter.networks[networkID].address,
                 abi: ZECShifter.abi as AbiItem[],
                 artifact: ZECShifter,
             },
             zBCH: {
-                address: zBCH.networks[networkID].address,
+                _address: zBCH.networks[networkID].address,
                 abi: zBCH.abi as AbiItem[],
                 artifact: zBCH,
             },
             BCHShifter: {
-                address: BCHShifter.networks[networkID].address,
+                _address: BCHShifter.networks[networkID].address,
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
             },

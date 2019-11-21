@@ -19,7 +19,7 @@ export const table: FormatFN = (networkData: NetworkData) => {
                 {Object.keys(networkData.addresses[category]).map((contractName: string) =>
                     <tr key={contractName}>
                         <td className="contract-name">
-                            <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName].address}`}>
+                            <a href={`${networkData.etherscan}/address/${networkData.addresses[category][contractName]._address || networkData.addresses[category][contractName].address}`}>
                                 {category.match("[Tt]okens") ? contractName.toUpperCase() : contractName}
                             </a>
                             {networkData.addresses[category][contractName].new === true ?
@@ -31,7 +31,7 @@ export const table: FormatFN = (networkData: NetworkData) => {
                             {formatAddress(networkData.addresses[category][contractName].address)}
                         </td>
                         <td>
-                            <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>
+                            <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName]._address || networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>
                         </td>
                     </tr>
                 )}

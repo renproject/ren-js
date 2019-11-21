@@ -10,11 +10,13 @@ import { NetworkDetails } from "../types/networks";
 
 type UTXO = BitcoinUTXO | ZcashUTXO | BCashUTXO;
 
+const fixValue = (value: number, decimals: number) => new BigNumber(value).multipliedBy(new BigNumber(10).exponentiatedBy(decimals)).decimalPlaces(0).toNumber();
+
 // Convert values to correct unit
 const fixValues = (utxos: UTXO[], decimals: number) => {
     return utxos.map(utxo => ({
         ...utxo,
-        value: new BigNumber(utxo.value).multipliedBy(new BigNumber(10).exponentiatedBy(decimals)).toNumber(),
+        value: fixValue(utxo.value, decimals),
     }));
 };
 
@@ -79,13 +81,13 @@ export const fetchFromInsight = async (url: string): Promise<UTXO[]> => {
         5,
     );
 
-    return fixValues(response.data.map(utxo => ({
+    return response.data.map(utxo => ({
         txid: utxo.txid,
-        value: utxo.amount,
+        value: utxo.satoshis || fixValue(utxo.amount, 8),
         script_hex: utxo.scriptPubKey,
         output_no: utxo.vout,
         confirmations: utxo.confirmations,
-    })), 8);
+    }));
 };
 
 // export const fetchFromZechain = async (url: string): Promise<ZcashUTXO[]> => {

@@ -31,6 +31,7 @@ describe("mercury.ts", () => {
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("6d6f1781c589d9eafc923d480fa39656da088110b4553c043f9da2cf843d2b03");
         utxos[0].value.should.equal(100000000);
+
         utxos[0].confirmations.should.be.greaterThan(0);
     });
 

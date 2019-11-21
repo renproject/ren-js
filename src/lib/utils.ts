@@ -43,21 +43,21 @@ export const generatePHash = (...zip: Args | [Args]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const generateGHash = (_payload: Args, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    let token;
-    switch (actionToDetails(_shiftAction).asset) {
+export const getTokenAddress = (action: Token, network: NetworkDetails): string => {
+    switch (actionToDetails(action).asset) {
         case Asset.BTC:
-            token = network.contracts.addresses.shifter.zBTC.address;
-            break;
+            return network.contracts.addresses.shifter.zBTC._address;
         case Asset.ZEC:
-            token = network.contracts.addresses.shifter.zZEC.address;
-            break;
+            return network.contracts.addresses.shifter.zZEC._address;
         case Asset.BCH:
-            token = network.contracts.addresses.shifter.zBCH.address;
-            break;
+            return network.contracts.addresses.shifter.zBCH._address;
         default:
-            throw new Error(`Invalid action ${_shiftAction}`);
+            throw new Error(`Invalid action ${action}`);
     }
+};
+
+export const generateGHash = (_payload: Args, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
+    const token = getTokenAddress(_shiftAction, network);
     const pHash = generatePHash(_payload);
 
     const encoded = rawEncode(

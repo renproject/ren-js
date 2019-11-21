@@ -59,58 +59,58 @@ export default Network({
                 address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
                 artifact: DarknodePaymentStore,
-            }
+            },
         },
         shifter: {
-            zBTC: {
-                address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
-            },
-            BTCShifter: {
-                address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
-            },
-            zZEC: {
-                address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
-            },
-            ZECShifter: {
-                address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
-            },
-            zBCH: {
-                address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
-            },
-            BCHShifter: {
-                address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
-            },
             ShifterRegistry: {
                 address: "",
                 abi: [] as AbiItem[],
                 artifact: {
                     abi: [],
                 },
-            }
+            },
+            zBTC: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
+            BTCShifter: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
+            zZEC: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
+            ZECShifter: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
+            zBCH: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
+            BCHShifter: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
         },
         tokens: {
             REN: {
@@ -122,7 +122,7 @@ export default Network({
             DAI: {
                 address: "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359",
                 decimals: 18,
-            }
+            },
         },
         oldTokens: {
             DGX: {
@@ -150,13 +150,13 @@ export default Network({
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                 decimals: 18,
-            }
+            },
         },
         erc: {
             ERC20: {
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20,
-            }
-        }
+            },
+        },
     }
 });

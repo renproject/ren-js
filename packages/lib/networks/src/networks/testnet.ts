@@ -135,6 +135,6 @@ export default Network({
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20,
             },
-        }
+        },
     }
 });

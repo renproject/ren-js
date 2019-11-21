@@ -58,44 +58,44 @@ export default (buildPath: string, networkID: number) => {
                     address: DarknodePaymentStore.networks[networkID].address,
                     abi: DarknodePaymentStore.abi as AbiItem[],
                     artifact: DarknodePaymentStore,
-                }
+                },
             },
             shifter: {
-                zBTC: {
-                    address: zBTC.networks[networkID].address,
-                    abi: zBTC.abi as AbiItem[],
-                    artifact: zBTC,
-                },
-                BTCShifter: {
-                    address: BTCShifter.networks[networkID].address,
-                    abi: BTCShifter.abi as AbiItem[],
-                    artifact: BTCShifter,
-                },
-                zZEC: {
-                    address: zZEC.networks[networkID].address,
-                    abi: zZEC.abi as AbiItem[],
-                    artifact: zZEC,
-                },
-                ZECShifter: {
-                    address: ZECShifter.networks[networkID].address,
-                    abi: ZECShifter.abi as AbiItem[],
-                    artifact: ZECShifter,
-                },
-                zBCH: {
-                    address: zBCH.networks[networkID].address,
-                    abi: zBCH.abi as AbiItem[],
-                    artifact: zBCH,
-                },
-                BCHShifter: {
-                    address: BCHShifter.networks[networkID].address,
-                    abi: BCHShifter.abi as AbiItem[],
-                    artifact: BCHShifter,
-                },
                 ShifterRegistry: {
                     address: ShifterRegistry.networks[networkID].address,
                     abi: ShifterRegistry.abi as AbiItem[],
                     artifact: ShifterRegistry,
-                }
+                },
+                zBTC: {
+                    _address: zBTC.networks[networkID].address,
+                    abi: zBTC.abi as AbiItem[],
+                    artifact: zBTC,
+                },
+                BTCShifter: {
+                    _address: BTCShifter.networks[networkID].address,
+                    abi: BTCShifter.abi as AbiItem[],
+                    artifact: BTCShifter,
+                },
+                zZEC: {
+                    _address: zZEC.networks[networkID].address,
+                    abi: zZEC.abi as AbiItem[],
+                    artifact: zZEC,
+                },
+                ZECShifter: {
+                    _address: ZECShifter.networks[networkID].address,
+                    abi: ZECShifter.abi as AbiItem[],
+                    artifact: ZECShifter,
+                },
+                zBCH: {
+                    _address: zBCH.networks[networkID].address,
+                    abi: zBCH.abi as AbiItem[],
+                    artifact: zBCH,
+                },
+                BCHShifter: {
+                    _address: BCHShifter.networks[networkID].address,
+                    abi: BCHShifter.abi as AbiItem[],
+                    artifact: BCHShifter,
+                },
             },
             tokens: {
                 DAI: {
@@ -129,14 +129,14 @@ export default (buildPath: string, networkID: number) => {
                 ETH: {
                     address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                     decimals: 18
-                }
+                },
             },
             erc: {
                 ERC20: {
                     abi: ERC20.abi as AbiItem[],
                     artifact: ERC20,
-                }
-            }
+                },
+            },
         }
     });
 }

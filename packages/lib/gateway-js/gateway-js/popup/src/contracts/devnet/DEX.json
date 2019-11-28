@@ -1,0 +1,230 @@
+{
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "reserves",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "feeinBIPs",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "ethereum",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "_feeinBIPs",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "_src",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "_dst",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "_sendAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "_recvAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "LogTrade",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "name": "_src",
+          "type": "address"
+        },
+        {
+          "name": "_dst",
+          "type": "address"
+        },
+        {
+          "name": "_sendAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "trade",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": true,
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_a",
+          "type": "address"
+        },
+        {
+          "name": "_b",
+          "type": "address"
+        },
+        {
+          "name": "_reserve",
+          "type": "address"
+        }
+      ],
+      "name": "registerReserve",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_src",
+          "type": "address"
+        },
+        {
+          "name": "_dst",
+          "type": "address"
+        },
+        {
+          "name": "_sendAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "calculateReceiveAmount",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_a",
+          "type": "address"
+        },
+        {
+          "name": "_b",
+          "type": "address"
+        }
+      ],
+      "name": "reserve",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_a",
+          "type": "address"
+        },
+        {
+          "name": "_b",
+          "type": "address"
+        }
+      ],
+      "name": "tokenPairID",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.8+commit.23d335f2.Emscripten.clang"
+  },
+  "contractName": "DEX",
+  "networks": {
+    "42": {
+      "events": {},
+      "links": {},
+      "address": "0x641aBd6CC3E5CbDDAf2586A906d7F694C4d1ee2E",
+      "transactionHash": "0x552d6bee96bf67aba2056b93172561539f0531084cc74a6d0443220d0f900ca2"
+    }
+  },
+  "schemaVersion": "3.0.11",
+  "sourcePath": "dex-demo/ethereum-contracts/contracts/DEX.sol"
+}

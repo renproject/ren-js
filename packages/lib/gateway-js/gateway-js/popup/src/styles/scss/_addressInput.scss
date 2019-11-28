@@ -1,0 +1,272 @@
+.address-input {
+    padding: 0;
+    width: 100%;
+
+    .token--icon {
+        // width: 45px;
+        // height: 45px;
+        // max-width: unset;
+    }
+
+    >*+* {
+        margin-top: 15px;
+    }
+
+    .origin {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        padding: 10px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        >*+* {
+            margin-left: 5px;
+        }
+
+        img {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    input[type=text] {
+        width: 100%; // calc(100% - 16px); // padding
+        background: $background;
+        color: $grey-12;
+        border: 1px solid $grey-10;
+        box-sizing: border-box;
+        box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
+        border-radius: 6px;
+        height: 36px;
+        font-weight: 200;
+
+        &::placeholder {
+            font-weight: 500; // used to be 600
+            font-size: 14px;
+            line-height: 16px;
+
+            display: flex;
+            align-items: center;
+
+            color: $background;
+
+        }
+    }
+
+    canvas {
+        border: 10px solid white;
+    }
+
+    .address-input--message {
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 21px;
+        /* or 150% */
+
+        text-align: center;
+
+        color: $foreground;
+    }
+
+    h2 {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 24px;
+        color: $foreground;
+    }
+
+
+    .form-group {
+        position: relative;
+    }
+
+    .form-control {
+        transition: all 200ms;
+    }
+
+    .form-control-placeholder {
+        position: absolute;
+        top: -2px;
+        padding: 0 5px;
+        margin-left: 20px;
+        transition: all 200ms;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .form-control:focus+.form-control-placeholder,
+    .form-control:valid+.form-control-placeholder {
+        font-size: 75%;
+        transform: translate3d(0, -19px, 0);
+        opacity: 1;
+        background: $background;
+        color: $blue-bright;
+    }
+
+    .form-control:valid+.form-control-placeholder {
+        color: $grey-12;
+    }
+
+    .form-control:focus:valid+.form-control-placeholder {
+        color: $blue-bright;
+    }
+
+    .form-control:focus {
+        border: 1px solid $blue-bright;
+    }
+
+}
+
+
+.deposit-address {
+    @extend .address-input;
+
+    margin: 15px 0;
+
+    .popup--buttons {
+        margin-top: 0px;
+    }
+
+    .address-input--label {
+        margin-top: 10px;
+        font-weight: 500; // used to be 600
+        font-size: 12px;
+        line-height: 14px;
+        /* identical to box height */
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+
+        color: $foreground;
+    }
+
+    input {
+        font-weight: 500;
+        font-size: 12px;
+
+        color: $foreground !important;
+        transition: all 500ms;
+    }
+
+    .address-input--copy {
+        transition: all 500ms;
+        margin-top: 5px;
+        position: relative;
+        cursor: pointer;
+
+        svg {
+            position: absolute;
+            margin-top: 8px;
+            margin-left: -30px;
+            background: $background;
+
+            &:first-of-type {
+                width: 17px;
+                height: 17px;
+                margin-left: -52px;
+                background: $background;
+            }
+        }
+
+        .copied-text {
+            opacity: 0;
+        }
+    }
+
+    .copied-text {
+        position: absolute;
+        top: 0px;
+        padding: 0 5px;
+        margin-left: 20px;
+        transition: all 500ms;
+    }
+
+    .address-input--copied input {
+        border: 1px solid $blue-bright;
+    }
+
+    .address-input--copied .copied-text {
+        font-size: 75%;
+        transform: translate3d(0, -5px, 0);
+        opacity: 1;
+        background: $background;
+        color: $blue-bright;
+    }
+
+    .address-input--copied.copied-text {
+        color: initial;
+    }
+
+    .input:focus:valid+.copied-text {
+        color: $blue-bright;
+    }
+
+    .input:focus {
+        border: 1px solid $blue-bright;
+    }
+
+    .spinner {
+        margin-left: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 10px;
+
+        .loading {
+            opacity: 0.2;
+        }
+
+        span {
+            margin: 0;
+            margin-left: 10px;
+
+            font-weight: 500; // used to be 600
+            font-size: 14px;
+            line-height: 16px;
+
+            color: $grey-12;
+        }
+    }
+}
+
+.loading--blue {
+    &:after {
+        height: 25px !important;
+        width: 25px !important;
+        border-color: $blue-bright transparentize($color: $blue-bright, $amount: 0.5) transparentize($color: $blue-bright, $amount: 0.5) transparentize($color: $blue-bright, $amount: 0.5) !important;
+    }
+}
+
+.show-utxos {
+    >span {
+        padding: 0;
+    }
+
+    .show-utxos--utxo {
+        border: 1px solid $grey-10;
+        box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
+        border-radius: 6px;
+        height: 38px;
+        font-weight: 200;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+
+        a {
+            @extend .monospace;
+            color: $foreground;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        >span {
+            margin-top: 0;
+        }
+    }
+}

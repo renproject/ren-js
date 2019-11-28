@@ -1,17 +1,28 @@
 {
-  "extends": ["tslint:latest", "tslint-config-prettier", "tslint-immutable"],
+  "extends": [
+    "tslint:latest",
+    "tslint-config-prettier",
+    "tslint-immutable"
+  ],
   "rules": {
-    "interface-name": [true, "never-prefix"],
+    // "interface-name": [
+    //   true,
+    //   "never-prefix"
+    // ],
     // TODO: allow devDependencies only in **/*.spec.ts files:
     // waiting on https://github.com/palantir/tslint/pull/3708
-    "no-implicit-dependencies": [true, "dev"],
-
+    // "no-implicit-dependencies": [
+    //   true,
+    //   "dev"
+    // ],
     /* tslint-immutable rules */
     // Recommended built-in rules
     "no-var-keyword": true,
     "no-parameter-reassignment": true,
-    "typedef": [true, "call-signature"],
-
+    // "typedef": [
+    //   true,
+    //   "call-signature"
+    // ],
     // Immutability rules
     "readonly-keyword": true,
     "readonly-array": true,
@@ -19,16 +30,140 @@
     "no-object-mutation": true,
     "no-delete": true,
     "no-method-signature": true,
-
     // Functional style rules
     "no-this": true,
     "no-class": true,
     "no-mixed-interface": true,
     "no-expression-statement": [
       true,
-      { "ignore-prefix": ["console.", "process.exit"] }
+      {
+        "ignore-prefix": [
+          "console.",
+          "process.exit"
+        ]
+      }
     ],
-    "no-if-statement": true
+    "no-if-statement": true,
     /* end tslint-immutable rules */
+    // Disabled
+    "interface-name": false,
+    "jsx-boolean-value": false,
+    "max-classes-per-file": false,
+    "no-empty-interface": false,
+    "no-var-requires": false,
+    "object-literal-sort-keys": false,
+    "no-implicit-dependencies": false,
+    "space-before-function-paren": false,
+    "arrow-parens": false,
+    "jsx-wrap-multiline": false,
+    "one-variable-per-declaration": false,
+    "jsx-no-multiline-js": false,
+    "import-name": false,
+    "no-relative-imports": false,
+    "no-null-keyword": false,
+    "possible-timing-attack": false,
+    "no-submodule-imports": false,
+    "no-backbone-get-set-outside-model": false,
+    "prefer-type-cast": false,
+    "use-simple-attributes": false,
+    "newline-before-return": false,
+    "export-name": false,
+    "binary-expression-operand-order": false,
+    "strict-boolean-expressions": false,
+    "newline-per-chained-call": false,
+    "prefer-array-literal": false,
+    "match-default-export-name": false,
+    "function-name": false,
+    // "no-return-await": false,
+    // "ter-indent": false,
+    // Warnings
+    "no-suspicious-comment": {
+      "severity": "warning"
+    },
+    "no-console": {
+      "severity": "warning"
+    },
+    "strict-type-predicates": {
+      "severity": "warning"
+    },
+    // Enabled
+    "ordered-imports": true,
+    "no-object-literal-type-assertion": true,
+    "semicolon": true,
+    "eofline": true,
+    "no-non-null-assertion": true,
+    "no-floating-promises": true,
+    "typedef": true,
+    "no-any": true,
+    "no-angle-bracket-type-assertion": true,
+    "no-void-expression": true,
+    "no-use-before-declare": true,
+    "promise-function-async": true,
+    "prefer-readonly": true,
+    "await-promise": true,
+    "react-this-binding-issue": true,
+    "no-string-based-set-timeout": true,
+    "no-unnecessary-type-assertion": true,
+    "no-unnecessary-local-variable": false,
+    "only-arrow-functions": true,
+    // Configured
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
+    "quotemark": [
+      true,
+      "double",
+      "jsx-double"
+    ],
+    "indent": [
+      true,
+      "spaces",
+      4
+    ],
+    "variable-name": [
+      true,
+      "ban-keywords",
+      "check-format",
+      "allow-leading-underscore",
+      "allow-trailing-underscore",
+      "allow-pascal-case"
+    ],
+    "no-import-side-effect": [
+      true,
+      {
+        "ignore-module": "(\\.html|\\.css|\\.scss)$"
+      }
+    ],
+    "trailing-comma": [
+      true,
+      {
+        "multiline": true,
+        "esSpecCompliant": true
+      }
+    ],
+    "increment-decrement": [
+      true,
+      "allow-post"
+    ],
+    "align": [
+      true,
+      "parameters",
+      "statements"
+    ],
+    "array-type": [
+      true,
+      "array-simple"
+    ],
+    // Temporarily disabled - some work is required to get the project to
+    // abide by these
+    "no-unsafe-any": false,
+    "max-line-length": false,
+    "max-func-body-length": false,
+    "react-a11y-input-elements": false,
+    "react-a11y-role-has-required-aria-props": false,
+    "completed-docs": false
   }
 }

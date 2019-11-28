@@ -1,0 +1,526 @@
+{
+  "contractName": "ShifterRegistry",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "claimOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "isOwner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "_symbol",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "name": "_indexedSymbol",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "_shifterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "LogShifterRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "_symbol",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "name": "_indexedSymbol",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "_shifterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "LogShifterDeregistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "_currentShifterAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "_newShifterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "LogShifterUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "name": "_shifterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setShifter",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "name": "_newShifterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "updateShifter",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_symbol",
+          "type": "string"
+        }
+      ],
+      "name": "removeShifter",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_start",
+          "type": "address"
+        },
+        {
+          "name": "_count",
+          "type": "uint256"
+        }
+      ],
+      "name": "getShifters",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_start",
+          "type": "address"
+        },
+        {
+          "name": "_count",
+          "type": "uint256"
+        }
+      ],
+      "name": "getShiftedTokens",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_tokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getShifterByToken",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_tokenSymbol",
+          "type": "string"
+        }
+      ],
+      "name": "getShifterBySymbol",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_tokenSymbol",
+          "type": "string"
+        }
+      ],
+      "name": "getTokenBySymbol",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "sourcePath": "darknode-sol/contracts/Shifter/ShifterRegistry.sol",
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.8+commit.23d335f2.Emscripten.clang"
+  },
+  "networks": {
+    "42": {
+      "events": {
+        "0xad1b5a1f09ea4cf872d9274b59cccba2c4fb43f92eaf5a54b705449417adce1e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "_symbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_indexedSymbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_shifterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "LogShifterRegistered",
+          "type": "event",
+          "signature": "0xad1b5a1f09ea4cf872d9274b59cccba2c4fb43f92eaf5a54b705449417adce1e"
+        },
+        "0x7fa2fe506a0201656c1d87a8927899ad716ebd71b23fdabce40b56ae22056963": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "_symbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_indexedSymbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_shifterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "LogShifterDeregistered",
+          "type": "event",
+          "signature": "0x7fa2fe506a0201656c1d87a8927899ad716ebd71b23fdabce40b56ae22056963"
+        },
+        "0x78ef5fc29fe65855a5352e3954d6839f596542b47b3aeb40b84596358d06f09a": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_currentShifterAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_newShifterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "LogShifterUpdated",
+          "type": "event",
+          "signature": "0x78ef5fc29fe65855a5352e3954d6839f596542b47b3aeb40b84596358d06f09a"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event",
+          "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+        }
+      },
+      "links": {},
+      "address": "0xbA563a8510d86dE95F5a50007E180d6d4966ad12"
+    },
+    "1571705399371": {
+      "events": {
+        "0xad1b5a1f09ea4cf872d9274b59cccba2c4fb43f92eaf5a54b705449417adce1e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "_symbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_indexedSymbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_shifterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "LogShifterRegistered",
+          "type": "event",
+          "signature": "0xad1b5a1f09ea4cf872d9274b59cccba2c4fb43f92eaf5a54b705449417adce1e"
+        },
+        "0x7fa2fe506a0201656c1d87a8927899ad716ebd71b23fdabce40b56ae22056963": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "_symbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_indexedSymbol",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_shifterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "LogShifterDeregistered",
+          "type": "event",
+          "signature": "0x7fa2fe506a0201656c1d87a8927899ad716ebd71b23fdabce40b56ae22056963"
+        },
+        "0x78ef5fc29fe65855a5352e3954d6839f596542b47b3aeb40b84596358d06f09a": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_currentShifterAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "_newShifterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "LogShifterUpdated",
+          "type": "event",
+          "signature": "0x78ef5fc29fe65855a5352e3954d6839f596542b47b3aeb40b84596358d06f09a"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event",
+          "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+        }
+      },
+      "links": {},
+      "address": "0x7856A7Bf606b3F29dc7Ee2cAB378DB67600948ac",
+      "transactionHash": "0xeb4ec3f80cc7b75d68ed353765dd5935428f86b6d1671a80f924e066bd62c2ff"
+    }
+  },
+  "schemaVersion": "3.0.16"
+}

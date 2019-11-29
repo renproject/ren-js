@@ -5,14 +5,15 @@ import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Token, Tx } from "../../../state/generalTypes";
 import { network } from "../../../state/sdkContainer";
+import { OpeningOrderMini } from "../OpeningOrderMini";
 import { Popup } from "../Popup";
 
 export const SubmitToEthereum: React.StatelessComponent<{
+    mini: boolean,
     orderID: string,
     txHash: Tx | null,
     submit: (orderID: string, retry?: boolean) => Promise<void>,
-    hide?: () => void,
-}> = ({ orderID, txHash, submit, hide }) => {
+}> = ({ mini, orderID, txHash, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as Error | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
@@ -32,7 +33,7 @@ export const SubmitToEthereum: React.StatelessComponent<{
                 return;
             }
 
-            _catchInteractionErr_(shownError);
+            _catchInteractionErr_(shownError, "Error in SubmitToEthereum: submit");
             const match = String(shownError.message || shownError).match(/"transactionHash": "(0x[a-fA-F0-9]{64})"/);
             if (match && match.length >= 2) {
                 setFailedTransaction(match[1]);
@@ -54,7 +55,9 @@ export const SubmitToEthereum: React.StatelessComponent<{
         }
     }, [initialized, txHash, onSubmit]);
 
-    return <Popup cancel={!submitting || txHash ? hide : undefined}>
+    if (mini) { return <OpeningOrderMini orderID={orderID} />; }
+
+    return <Popup mini={mini}>
         <div className="address-input">
             <div className="popup--body">
                 <h2>Submit shift to Ethereum</h2>

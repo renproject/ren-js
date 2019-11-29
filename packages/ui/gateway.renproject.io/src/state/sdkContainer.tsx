@@ -11,10 +11,8 @@ import { TransactionReceipt } from "web3-core";
 
 import { syncGetDEXReserveAddress } from "../lib/contractAddresses";
 import { NETWORK } from "../lib/environmentVariables";
-import { _catchBackgroundErr_ } from "../lib/errors";
-import {
-    getAdapter, getReserve, HistoryEvent, NULL_BYTES32, ShiftInStatus, ShiftOutStatus, Token,
-} from "./generalTypes";
+import { _catchBackgroundErr_, _catchInteractionErr_ } from "../lib/errors";
+import { getReserve, HistoryEvent, ShiftInStatus, ShiftOutStatus, Token } from "./generalTypes";
 
 const BitcoinTx = (hash: string) => ({ hash, chain: Chain.Bitcoin });
 const ZCashTx = (hash: string) => ({ hash, chain: Chain.Zcash });
@@ -68,6 +66,28 @@ export class SDKContainer extends Container<typeof initialState> {
     public updateOrder = async (order: Partial<HistoryEvent>) => {
         // tslint:disable-next-line: no-object-literal-type-assertion
         await this.setState({ order: ({ ...this.state.order, ...order } as HistoryEvent) });
+    }
+
+    public updateToAddress = async (address: string, token: Token) => {
+        if (!this.state.order) {
+            return;
+        }
+        const defaultToken = this.state.order.commitment.sendToken.slice(0, 3) as Token;
+        console.log("here!");
+        const contractParams = this.state.order.commitment.contractParams.map(param => {
+            const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
+            try {
+                if (match && (match[1] === token || (!match[1] && token === defaultToken))) {
+                    return { ...param, value: RenVM.Tokens[token].addressToHex(address) };
+                }
+            } catch (error) {
+                _catchInteractionErr_(error, "...");
+            }
+            return param;
+        });
+        console.log("here 2!");
+        console.log(contractParams);
+        await this.setState({ order: ({ ...this.state.order, commitment: { ...this.state.order.commitment, contractParams } }) });
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -237,12 +257,12 @@ export class SDKContainer extends Container<typeof initialState> {
                 this.updateOrder({
                     messageID,
                     status: ShiftOutStatus.SubmittedToRenVM,
-                }).catch(_catchBackgroundErr_);
+                }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > submitToRenVM"));
             })
             .on("status", (renVMStatus: TxStatus) => {
                 this.updateOrder({
                     renVMStatus,
-                }).catch(_catchBackgroundErr_);
+                }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateOrder"));
             });
         // tslint:disable-next-line: no-any
         const address = (response as unknown as any).tx.args[1].value;
@@ -254,7 +274,7 @@ export class SDKContainer extends Container<typeof initialState> {
                     BCashTx(address) :
                     BitcoinTx(btcAddressFrom(address, "base64")),
             status: ShiftOutStatus.ReturnedFromRenVM,
-        }).catch(_catchBackgroundErr_);
+        }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateOrder"));
     }
 
     ////////////////////////////////////////////////////////////////////////////

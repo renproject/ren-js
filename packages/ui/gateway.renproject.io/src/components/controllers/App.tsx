@@ -22,49 +22,67 @@ import { OpeningOrder } from "./OpeningOrder";
 export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
     ({ containers: [uiContainer, sdkContainer], location }) => {
 
+        const pause = () => {
+            uiContainer.pause().catch((error) => _catchInteractionErr_(error, "Error in App: uiContainer.pause"));
+            window.parent.postMessage({ from: "ren", type: "pause", payload: { msg: "demo return value" } }, "*");
+        };
+
+        const resume = () => {
+            uiContainer.resume().catch((error) => _catchInteractionErr_(error, "Error in App: uiContainer.resume"));
+            window.parent.postMessage({ from: "ren", type: "resume", payload: { msg: "demo return value" } }, "*");
+        };
+
         React.useEffect(() => {
             window.onmessage = (e: any) => {
                 if (e.data && e.data.from === "ren") {
-                    if (e.data.type === "shift") {
-                        (async () => {
-                            console.log("Got shift!");
-                            const commitment = e.data.payload;
-                            const time = Date.now() / 1000;
-                            const currentOrderID = String(time);
+                    console.log(`Message: ${e.data.type}`);
+                    switch (e.data.type) {
+                        case "shift":
+                            (async () => {
+                                const commitment = e.data.payload;
+                                const time = Date.now() / 1000;
+                                const currentOrderID = String(time);
 
-                            // TODO: Clean up
-                            const shift = commitment.sendToken === ShiftActions.BTC.Btc2Eth || commitment.sendToken === ShiftActions.ZEC.Zec2Eth || commitment.sendToken === ShiftActions.BCH.Bch2Eth ? {
-                                // Cast required by TS to differentiate ShiftIn and ShiftOut types.
-                                shiftIn: true as true,
-                                status: ShiftInStatus.Committed,
-                            } : {
-                                    shiftIn: false as false,
-                                    status: ShiftOutStatus.Committed,
+                                // TODO: Clean up
+                                const shift = commitment.sendToken === ShiftActions.BTC.Btc2Eth || commitment.sendToken === ShiftActions.ZEC.Zec2Eth || commitment.sendToken === ShiftActions.BCH.Bch2Eth ? {
+                                    // Cast required by TS to differentiate ShiftIn and ShiftOut types.
+                                    shiftIn: true as true,
+                                    status: ShiftInStatus.Committed,
+                                } : {
+                                        shiftIn: false as false,
+                                        status: ShiftOutStatus.Committed,
+                                    };
+
+                                const nonce = RenSDK.randomNonce();
+
+                                const historyEvent: HistoryEvent = {
+                                    ...shift,
+                                    id: currentOrderID,
+                                    time,
+                                    inTx: null,
+                                    outTx: null,
+                                    commitment,
+                                    messageID: null,
+                                    renVMStatus: null,
+                                    nonce,
                                 };
 
-                            const nonce = RenSDK.randomNonce();
+                                await sdkContainer.updateOrder(historyEvent);
 
-                            const historyEvent: HistoryEvent = {
-                                ...shift,
-                                id: currentOrderID,
-                                time,
-                                inTx: null,
-                                outTx: null,
-                                commitment,
-                                messageID: null,
-                                renVMStatus: null,
-                                nonce,
-                            };
+                                await uiContainer.setState({
+                                    confirmedTrade: false,
+                                    currentOrderID: null,
+                                });
 
-                            await sdkContainer.updateOrder(historyEvent);
-
-                            await uiContainer.setState({
-                                confirmedTrade: false,
-                                currentOrderID: null,
-                            });
-
-                            await uiContainer.handleOrder(currentOrderID);
-                        })().catch(_catchInteractionErr_);
+                                await uiContainer.handleOrder(currentOrderID);
+                            })().catch((error) => _catchInteractionErr_(error, "Error in APp: onMessage"));
+                            break;
+                        case "pause":
+                            pause();
+                            break;
+                        case "resume":
+                            resume();
+                            break;
                     }
                 }
             };
@@ -113,35 +131,38 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
                 setInterval(() => uiContainer.lookForLogout(), 1 * 1000);
                 login().then(() => {
                     setInitialized(true);
-                }).catch(_catchBackgroundErr_);
+                }).catch((error) => _catchInteractionErr_(error, "Error in App: login"));
             }
         }, [initialized, uiContainer, location.search, login]);
 
         const { loggedOut } = uiContainer.state;
 
-        const { currentOrderID } = uiContainer.state;
-        console.log(currentOrderID, "currentOrderID");
+        const { currentOrderID, paused } = uiContainer.state;
 
-        return <main>
-            <div className="banner">
+        return <main className={paused ? "paused" : ""} onClick={paused ? resume : undefined}>
+            {!paused ? <div className="banner">
                 <Logo style={{ width: 40 }} /> <h1>RenVM</h1>
+                {network.isTestnet ? <span className="testnet-badge">Testnet</span> : <></>}
+                <div role="button" className={`popup--x`} onClick={pause} />
+            </div> : <></>}
+            <div className="main">
+                <ErrorBoundary>
+                    {currentOrderID ?
+                        <OpeningOrder orderID={currentOrderID} /> :
+                        <></>
+                    }
+                    {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
+                </ErrorBoundary>
+                {!paused ? <ErrorBoundary>
+                    {loggedOut ?
+                        <LoggedOutPopup oldAccount={loggedOut} /> :
+                        <></>
+                    }
+                </ErrorBoundary> : <></>}
             </div>
-            <ErrorBoundary>
-                {currentOrderID ?
-                    <OpeningOrder orderID={currentOrderID} /> :
-                    <></>
-                }
-                {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
-            </ErrorBoundary>
-            <ErrorBoundary>
-                {loggedOut ?
-                    <LoggedOutPopup oldAccount={loggedOut} /> :
-                    <></>
-                }
-            </ErrorBoundary>
-            <div className="footer">
+            {!paused ? <div className="footer">
                 <Logo style={{ width: 15 }} /> <h2>Gateway JS</h2>
-            </div>
+            </div> : <></>}
         </main>;
     }
 ));

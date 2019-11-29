@@ -34,7 +34,7 @@
     input[type=text] {
         width: 100%; // calc(100% - 16px); // padding
         background: $background;
-        color: $grey-12;
+        color: $foreground;
         border: 1px solid $grey-10;
         box-sizing: border-box;
         box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
@@ -55,8 +55,14 @@
         }
     }
 
-    canvas {
-        border: 10px solid white;
+    .qr-code {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+
+        canvas {
+            border: 10px solid white;
+        }
     }
 
     .address-input--message {
@@ -65,7 +71,7 @@
         line-height: 21px;
         /* or 150% */
 
-        text-align: center;
+        text-align: left;
 
         color: $foreground;
     }
@@ -89,7 +95,7 @@
 
     .form-control-placeholder {
         position: absolute;
-        top: -2px;
+        top: 10px;
         padding: 0 5px;
         margin-left: 20px;
         transition: all 200ms;
@@ -100,7 +106,7 @@
     .form-control:focus+.form-control-placeholder,
     .form-control:valid+.form-control-placeholder {
         font-size: 75%;
-        transform: translate3d(0, -19px, 0);
+        transform: translate3d(0, -15px, 0);
         opacity: 1;
         background: $background;
         color: $blue-bright;
@@ -124,6 +130,9 @@
 .deposit-address {
     @extend .address-input;
 
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-end;
     margin: 15px 0;
 
     .popup--buttons {
@@ -136,11 +145,6 @@
         font-size: 12px;
         line-height: 14px;
         /* identical to box height */
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
 
         color: $foreground;
     }
@@ -211,11 +215,10 @@
     }
 
     .spinner {
-        margin-left: 10px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin-top: 10px;
+        justify-content: left;
+        margin-top: 20px;
 
         .loading {
             opacity: 0.2;
@@ -223,13 +226,16 @@
 
         span {
             margin: 0;
-            margin-left: 10px;
+            margin-right: 10px;
 
             font-weight: 500; // used to be 600
             font-size: 14px;
-            line-height: 16px;
 
             color: $grey-12;
+        }
+
+        &.spinner--hidden {
+            opacity: 0;
         }
     }
 }

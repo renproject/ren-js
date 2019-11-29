@@ -5,6 +5,7 @@ import { TxStatus } from "@renproject/ren";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Token } from "../../../state/generalTypes";
+import { OpeningOrderMini } from "../OpeningOrderMini";
 import { Popup } from "../Popup";
 
 const renderTxStatus = (status: TxStatus | null) => {
@@ -27,13 +28,13 @@ const renderTxStatus = (status: TxStatus | null) => {
 };
 
 export const DepositReceived: React.StatelessComponent<{
+    mini: boolean;
     token?: Token;
     messageID: string | null;
     renVMStatus: TxStatus | null;
     orderID: string;
     submitDeposit?: (orderID: string, resubmit?: boolean) => Promise<unknown>;
-    hide?: () => void;
-}> = ({ token, renVMStatus, messageID, orderID, submitDeposit, hide }) => {
+}> = ({ mini, token, renVMStatus, messageID, orderID, submitDeposit }) => {
     const [submitted, setSubmitted] = React.useState(false);
     const [error, setError] = React.useState(null as Error | null);
 
@@ -46,7 +47,7 @@ export const DepositReceived: React.StatelessComponent<{
             } catch (error) {
                 setSubmitted(false);
                 setError(error);
-                _catchInteractionErr_(error);
+                _catchInteractionErr_(error, "Error in DepositReceived: submitDeposit");
             }
         }
     }, [orderID, submitDeposit]);
@@ -79,13 +80,15 @@ export const DepositReceived: React.StatelessComponent<{
 
     const waiting = (submitDeposit === undefined) || submitted;
 
-    return <Popup cancel={hide}>
+    if (mini) { return <OpeningOrderMini orderID={orderID} />; }
+
+    return <Popup mini={mini}>
         <div className="deposit-address">
             <div className="popup--body">
                 {token ? <TokenIcon className="token-icon" token={token} /> : null}
                 {waiting ? <Loading className="loading--blue" /> : <h2>Submit to RenVM</h2>}
                 {error ? <span style={{ marginTop: "20px" }} className="red">Unable to submit to RenVM <InfoLabel level={LabelLevel.Warning}>{`${error.message || error}`}</InfoLabel></span> : null}
-                {waiting ? <div className="address-input--message">
+                {waiting ? <div className="submitting-to-renvm">
                     <>
                         <p>Submitting order to RenVM...<br />This can take a few minutes.</p>
                         <p>Status: {<span>{renderTxStatus(renVMStatus)}.</span> || <Loading className="loading--small" />}</p>

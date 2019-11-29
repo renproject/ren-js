@@ -23,18 +23,22 @@
 
 .popup {
     // max-width: 94vw;
-    color: $grey-12;
+    // color: $grey-12;
     background-color: $background;
     border-radius: 6px;
 
     // box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
 
-    text-align: center;
+    text-align: left;
     // position: fixed;
     // top: 50%;
     // left: 50%;
     // transform: translate(-50%, -50%);
     z-index: 25;
+    flex: 1;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
 }
 
 .popup--header {
@@ -332,4 +336,9 @@
     border: 1px solid #aaa;
     font-size: 13px;
     border-radius: 3px;
+}
+
+.submitting-to-renvm {
+    margin-top: 15px;
+    text-align: center;
 }

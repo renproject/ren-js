@@ -16,7 +16,7 @@ interface Described {
 }
 
 interface ShownToUser {
-    shownToUser: string;
+    shownToUser?: string;
 }
 
 let pageLoaded: Date;
@@ -144,11 +144,11 @@ const _catchErr_ = <X extends Details>(error: any, details: X) => {
 };
 
 // Background exceptions are thrown in background loops and actions
-export const _catchBackgroundErr_ = <X extends Details & Described>(error: any, details?: X) => {
-    _catchErr_(error, { ignoreNetwork: true, ...details, category: "background_exception" });
+export const _catchBackgroundErr_ = <X extends Details & Described>(error: any, details: X | string) => {
+    _catchErr_(error, { ignoreNetwork: true, ...(typeof details === "string" ? { description: details } : details), category: "background_exception" });
 };
 
 // Interaction exceptions are thrown as a direct result of a user interaction
-export const _catchInteractionErr_ = <X extends Details & Described & ShownToUser>(error: any, details?: X) => {
-    _catchErr_(error, { ...details, category: "interaction_exception" });
+export const _catchInteractionErr_ = <X extends Details & Described & ShownToUser>(error: any, details: X | string) => {
+    _catchErr_(error, { ...(typeof details === "string" ? { description: details } : details), category: "interaction_exception" });
 };

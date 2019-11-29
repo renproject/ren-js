@@ -22,12 +22,12 @@ export const LoggedOutPopup = connect<Props & ConnectedProps<[UIContainer, SDKCo
             if (!web3) {
                 return;
             }
-            uiContainer.connect(web3, address, networkID).catch(_catchInteractionErr_);
-            sdkContainer.connect(web3, address, networkID).catch(_catchInteractionErr_);
+            uiContainer.connect(web3, address, networkID).catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: uiContainer.connect"));
+            sdkContainer.connect(web3, address, networkID).catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: sdkContainer.connect"));
         }, [uiContainer, sdkContainer, web3, networkID]);
 
         const close = React.useCallback(() => {
-            uiContainer.setLoggedOut().catch(_catchInteractionErr_);
+            uiContainer.setLoggedOut().catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: setLoggedOut"));
         }, [uiContainer]);
 
         React.useEffect(() => {
@@ -36,10 +36,10 @@ export const LoggedOutPopup = connect<Props & ConnectedProps<[UIContainer, SDKCo
                     const newAccounts = await web3.eth.getAccounts();
                     setAccounts(newAccounts);
                 }
-            })().catch(_catchInteractionErr_);
+            })().catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: getAccounts"));
         }, [networkID, web3]);
 
-        return <Popup cancel={close}>
+        return <Popup mini={false}>
             <div className="logged-out">
                 <h2>Logged out</h2>
                 <p>The address <span className="address">{oldAccount.slice(0, 12)}<span>{oldAccount.slice(12, -6)}</span>{oldAccount.slice(-6, -1)}</span> is no longer selected in your Web3 wallet.</p>

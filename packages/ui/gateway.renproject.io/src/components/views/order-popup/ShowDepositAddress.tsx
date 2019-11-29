@@ -11,6 +11,7 @@ import { network } from "../../../state/sdkContainer";
 import { ReactComponent as Arrow } from "../../../styles/images/arrow-right.svg";
 import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
 import { ReactComponent as QR } from "../../../styles/images/qr.svg";
+import { OpeningOrderMini } from "../OpeningOrderMini";
 import { Popup } from "../Popup";
 
 export const txUrl = (tx: Tx | null): string => {
@@ -32,17 +33,17 @@ export const txUrl = (tx: Tx | null): string => {
 const INTEROP_LINK = "#";
 
 interface Props {
+    mini: boolean;
     token: Token;
     amount: string;
     orderID: string;
     order: ShiftInEvent;
-    cancel(): void;
     generateAddress(orderID: string): string | undefined;
     waitForDeposit(orderID: string, onDeposit: (utxo: UTXO) => void): Promise<void>;
 }
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ amount, token, orderID, order, cancel, generateAddress, waitForDeposit }) => {
+    ({ mini, amount, token, orderID, order, generateAddress, waitForDeposit }) => {
         // Defaults for demo
 
         // tslint:disable-next-line: prefer-const
@@ -113,7 +114,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     <p>Only send the <b>exact</b> amount of {token.toUpperCase()} in a single transaction or funds will be lost. Future versions will allow sending any amount.</p>
                 </div>
                 <div className="address-input--label">
-                    Send {amount} {token.toUpperCase()} to:
+                    Send <b>{amount} {network.isTestnet ? <i>testnet </i> : ""}{token.toUpperCase()}</b> to:
                             </div>
                 <CopyToClipboard
                     text={depositAddress || ""}
@@ -134,10 +135,8 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                         <Copy />
                     </div>
                 </CopyToClipboard>
-                {showQR ? <QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /> : null}
-                {showSpinner ? <div className="spinner">
-                    <Loading />{" "}<span>Scanning for {token.toUpperCase()} deposits</span>
-                </div> : null}
+                {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null}
+                <div className={["spinner", !showSpinner ? "spinner--hidden" : ""].join(" ")}><span>Scanning for {token.toUpperCase()} deposits</span>{" "}<Loading /></div>
             </> :
             <>
                 {failed ? <div className="red">{`${failed.message || failed}`}</div> :
@@ -170,7 +169,17 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             </div> : null
         );
 
-        return <Popup cancel={cancel}>
+        if (mini) {
+            const last = utxos.last<UTXO>();
+            return <Popup mini={mini}>
+                <div className="side-strip"><TokenIcon token={token} /></div>
+                <div className="popup--body--details">
+                    {last ? <>{last.utxo.confirmations} / 2 confirmations</> : <>Waiting for deposit</>}
+                </div>
+            </Popup>;
+        }
+
+        return <Popup mini={mini}>
             <div className="deposit-address">
                 <div className="popup--body--actions">
                     {utxos.size > 0 ? showUTXOs : showAddress}

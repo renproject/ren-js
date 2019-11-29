@@ -5,16 +5,17 @@ import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Commitment, Token } from "../../../state/generalTypes";
 import { network } from "../../../state/sdkContainer";
+import { OpeningOrderMini } from "../OpeningOrderMini";
 import { Popup } from "../Popup";
 
 export const TokenAllowance: React.StatelessComponent<{
+    mini: boolean,
     token: Token,
     amount: string,
     commitment: Commitment | null,
     orderID: string;
     submit: (orderID: string) => Promise<void>,
-    hide?: () => void,
-}> = ({ token, amount, commitment, orderID, submit, hide }) => {
+}> = ({ mini, token, amount, commitment, orderID, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as Error | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
@@ -30,7 +31,7 @@ export const TokenAllowance: React.StatelessComponent<{
                 return;
             }
 
-            _catchInteractionErr_(err);
+            _catchInteractionErr_(err, "Error in TokenAllowance: submit");
             const match = String(err.message || err).match(/"transactionHash": "(0x[a-fA-F0-9]{64})"/);
             if (match && match.length >= 2) {
                 setFailedTransaction(match[1]);
@@ -39,7 +40,10 @@ export const TokenAllowance: React.StatelessComponent<{
             setError(err);
         });
     };
-    return <Popup cancel={!submitting ? hide : undefined}>
+
+    if (mini) { return <OpeningOrderMini orderID={orderID} />; }
+
+    return <Popup mini={mini}>
         <div className="address-input">
             <div className="popup--body">
                 <h2>Transfer Approval</h2>

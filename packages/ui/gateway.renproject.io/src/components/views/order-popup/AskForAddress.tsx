@@ -1,20 +1,19 @@
 import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
-import { Chain } from "@renproject/ren";
 
 import { IS_TESTNET } from "../../../lib/environmentVariables";
 import { Token, Tokens } from "../../../state/generalTypes";
-import { ReactComponent as MetaMask } from "../../../styles/images/metamask.svg";
+import { OpeningOrderMini } from "../OpeningOrderMini";
 import { Popup } from "../Popup";
 
 export const AskForAddress: React.StatelessComponent<{
+    orderID: string,
+    mini: boolean,
     token: Token,
     message: React.ReactNode,
-    defaultAddress: string,
-    onAddress(address: string): void;
-    cancel(): void;
-}> = ({ token, message, defaultAddress, onAddress, cancel }) => {
+    onAddress(address: string, token: Token): void;
+}> = ({ orderID, mini, token, message, onAddress }) => {
     // tslint:disable-next-line: prefer-const
     let [address, updateAddress] = React.useState("");
     const [error, updateError] = React.useState(null as string | null);
@@ -31,19 +30,10 @@ export const AskForAddress: React.StatelessComponent<{
         }
         try {
             updateSubmitting(true);
-            onAddress(address);
+            onAddress(address, token);
         } catch (error) {
             updateError(String(error.message || error));
             updateSubmitting(false);
-        }
-    };
-
-    const useDefaultAddress = () => {
-        address = defaultAddress;
-        updateAddress(defaultAddress);
-        const current = inputRef.current;
-        if (current) {
-            current.focus();
         }
     };
 
@@ -52,20 +42,16 @@ export const AskForAddress: React.StatelessComponent<{
         updateAddress((event.target as HTMLInputElement).value);
     };
 
-    React.useEffect(() => {
-        if (tokenDetails && tokenDetails.chain === Chain.Ethereum) {
-            address = defaultAddress;
-            updateAddress(defaultAddress);
-            submit();
-        }
-    }, [tokenDetails]);
+    if (mini) { return <OpeningOrderMini orderID={orderID} />; }
 
-    return <Popup cancel={cancel}>
+    return <Popup mini={mini}>
         <div className="address-input">
             <div className="popup--body">
-                <TokenIcon className="token-icon" token={token} />
-                <h2>{token} address</h2>
-                <div className="address-input--message">
+                <div className="popup--body--box--title">
+                    Enter <TokenIcon token={token} /> {token.toUpperCase()} address
+                </div>
+                <div className="popup--body--box">
+
                     {message}
                 </div>
                 <form onSubmit={submit}>
@@ -81,14 +67,9 @@ export const AskForAddress: React.StatelessComponent<{
                             ref={inputRef}
                         />
                         <label className="form-control-placeholder">{token} address</label>
-                        {tokenDetails && tokenDetails.chain === Chain.Ethereum ?
-                            <button type="button" className="metamask-logo" onClick={useDefaultAddress}><MetaMask /></button> :
-                            null
-                        }
                     </div>
-                    {error ? <span className="red"><br />{error}</span> : null}
                     <div className="popup--buttons">
-                        <button className="button open--confirm" disabled={address === "" || submitting || error !== null} type="submit"><span>{"Confirm"}</span></button>
+                        <button className="button open--confirm" disabled={address === "" || submitting || error !== null} type="submit"><span>{error ? error : "Confirm"}</span></button>
                     </div>
                 </form>
             </div>

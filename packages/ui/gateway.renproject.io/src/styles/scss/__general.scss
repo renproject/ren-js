@@ -1,5 +1,5 @@
 html {
-    @extend .hide-scrollbar;
+    @extend .no-scrollbar;
 
     &.noscroll {
         height: 100%;
@@ -24,6 +24,23 @@ body {
 html,
 body {
     background: $background;
+}
+
+main {
+    height: 100vh;
+    overflow-y: hidden;
+    padding-bottom: 30px;
+    padding-top: 71px;
+}
+
+.main {
+    // @extend .no-scrollbar;
+    // display: flex;
+    // flex-flow: column;
+    overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-flow: column;
 }
 
 h1 {
@@ -200,10 +217,16 @@ details {
     }
 }
 
-.hide-scrollbar::-webkit-scrollbar {
-    /* remove scrollbar space */
-    width: 0px;
-    height: 0px;
+.no-scrollbar {
+    overflow: -moz-scrollbars-none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        /* remove scrollbar space */
+        display: none;
+        width: 0px;
+        height: 0px;
+    }
 }
 
 button {
@@ -309,6 +332,8 @@ button {
     border-bottom: 1px solid #ccc;
     padding: 35px 20px;
     background: white;
+    position: fixed;
+    top: 0;
     // border-radius: 3px;
 
     h1 {
@@ -319,6 +344,18 @@ button {
 
     svg {
         margin-right: 10px;
+    }
+
+    .testnet-badge {
+        @extend .monospace;
+        text-transform: uppercase;
+        color: $blue-bright;
+        border: 1px solid $blue-bright;
+        padding: 2px 10px;
+        border-radius: 3px;
+        font-size: 16px;
+        letter-spacing: 2px;
+        margin-left: 10px;
     }
 }
 
@@ -333,6 +370,7 @@ button {
     align-items: center;
     border-top: 1px solid #ccc;
     background: white;
+    z-index: 1000;
     // border-radius: 3px;
 
     h2 {

@@ -37,6 +37,7 @@ const initialState = {
     networkID: network.contracts.networkID,
 
     loggedOut: null as string | null,
+    paused: false,
 
     preferredCurrency: Currency.USD,
 
@@ -109,6 +110,14 @@ export class UIContainer extends Container<typeof initialState> {
 
     public setLoggedOut = async (loggedOut?: string) => {
         return this.setState({ loggedOut: loggedOut || null });
+    }
+
+    public pause = async () => {
+        return this.setState({ paused: true });
+    }
+
+    public resume = async () => {
+        return this.setState({ paused: false });
     }
 
     // lookForLogout detects if 1) the user has changed or logged out of their Web3

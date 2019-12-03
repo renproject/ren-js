@@ -1,52 +1,52 @@
-# `🛠️ RenVM SDK`
+# `🛠️ RenJS`
 
 [![npm version](http://img.shields.io/npm/v/@renproject/ren.svg?style=flat)](https://npmjs.org/package/@renproject/ren "View this project on npm")
-[![CircleCI](https://circleci.com/gh/renproject/renvm-sdk-js.svg?style=shield&circle-token=6fc560c540eff6670e5675841d34b9769b887a49)](https://circleci.com/gh/renproject/renvm-sdk-js)
-![Testnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/renvm-sdk-js/testnet)
+[![CircleCI](https://circleci.com/gh/renproject/ren-js.svg?style=shield&circle-token=6fc560c540eff6670e5675841d34b9769b887a49)](https://circleci.com/gh/renproject/ren-js)
+![Testnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/ren-js/testnet)
 
-The official Javascript SDK for interacting with the [RenVM](https://renproject.io).
+The official Javascript SDK for interacting with the [RenJS](https://renproject.io).
 
 ## Links
 
 * [Developer Docs](https://docs.renproject.io/developers/)
 * [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started)
-* [Example DEX](https://github.com/republicprotocol/renvm-demo)
+* [Example DEX](https://github.com/renproject/renjs-demo)
 
 ## Installation
 
-Add the RenVM SDK using Yarn/npm:
+Install RenJS using Yarn/npm:
 
-```bash
+```sh
 yarn add @renproject/ren
 ```
 or
-```bash
+```sh
 npm install --save @renproject/ren
 ```
 
 ## Importing the SDK
 
-Importing using the require syntax
+Importing using require syntax
 
 ```typescript
-const RenVM = require("@renproject/ren").default;
+const RenJS = require("@renproject/ren");
 ```
 
-Importing using the ES6 syntax
+Importing using ES6 syntax
 
 ```typescript
-import RenVM from "@renproject/ren";
+import RenJS from "@renproject/ren";
 ```
 
 ## Usage
 
 ```typescript
-const sdk = new RenVM("chaosnet");
+const sdk = new RenJS("chaosnet");
 // or on testnet
-const sdk = new RenVM("testnet");
+const sdk = new RenJS("testnet");
 ```
 
-For more information, [check out an example](https://app.gitbook.com/@renproject/s/developers/examples/bitcoin-payments).
+For more information, [check out an example](https://docs.renproject.io/developers/more-examples/bitcoin-payments).
 
 <br />
 <br />
@@ -57,7 +57,7 @@ For more information, [check out an example](https://app.gitbook.com/@renproject
 
 ### Building
 
-```bash
+```sh
 yarn run watch
 # or
 yarn run build
@@ -73,7 +73,7 @@ You'll need to:
 
 Create a `.env` file which contains the following exported variables:
 
-```bash
+```sh
 export MNEMONIC="your mnemonic here"
 export TESTNET_BITCOIN_KEY="your bitcoin private key (encoded in WIF)"
 export INFURA_KEY="your infura key (for it's v3 endpoint)"
@@ -82,7 +82,7 @@ export NETWORK="mainnet or testnet"
 
 Then just run the following command to execute the tests. Make sure there is sufficient Kovan ETH in the linked account before running tests.
 
-```bash
+```sh
 yarn run test
 ```
 
@@ -90,6 +90,6 @@ yarn run test
 
 In order to update the bindings in `src/contracts/bindings`, you need to clone [`darknode-sol`](https://github.com/renproject/darknode-sol) and run:
 
-```bash
+```sh
 yarn run bindings:ts
 ```

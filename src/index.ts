@@ -24,30 +24,30 @@ export { UTXO } from "./lib/utils";
  * This is the main exported class.
  *
  * ```typescript
- * import RenVM from "@renproject/ren";
+ * import RenJS from "@renproject/ren";
  * ```
  *
  * It's initialized with a network, which controls both the RenVM network and
  * Ethereum chain to use:
  *
  * ```typescript
- * new RenVM(); // Same as `new RenVM("mainnet");`
- * new RenVM("testnet");
- * new RenVM({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
+ * new RenJS(); // Same as `new RenJS("mainnet");`
+ * new RenJS("testnet");
+ * new RenJS({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
  * ```
  *
  * It then exposes two main functions: [[shiftIn]] and [[shiftOut]].
  */
-export default class RenVM {
-    // Expose constants so they can be accessed on the RenVM class
-    // e.g. `RenVM.Tokens`
+export default class RenJS {
+    // Expose constants so they can be accessed on the RenJS class
+    // e.g. `RenJS.Tokens`
     public static Tokens = Tokens;
     public static Networks = Network;
     public static Chains = Chain;
     public static randomNonce = randomNonce;
 
     // Expose constants again without `static` so they can be accessed on
-    // instances - e.g. `(new RenVM("testnet")).Tokens`
+    // instances - e.g. `(new RenJS("testnet")).Tokens`
     public readonly Tokens = Tokens;
     public readonly Networks = Network;
     public readonly Chains = Chain;
@@ -88,3 +88,8 @@ export default class RenVM {
         return new ShiftOutObject(this.renVMNetwork, params);
     }
 }
+
+// tslint:disable: no-object-mutation
+module.exports = RenJS;
+module.exports.RenJS = RenJS;
+module.exports.default = RenJS;

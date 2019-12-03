@@ -16,8 +16,8 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
-import { Ox, strip0x } from "../src/blockchain/common";
-import RenVM, {
+import { Ox } from "../src/blockchain/common";
+import RenJS, {
     BitcoinUTXO, getBitcoinUTXOs, getZcashUTXOs, ShiftInObject, ShiftOutObject, ZcashUTXO,
 } from "../src/index";
 import { sleep } from "../src/lib/utils";
@@ -53,7 +53,7 @@ describe("Shifting in and shifting out", function () {
     let provider: HDWalletProvider;
     let web3: Web3;
     let network: NetworkDetails;
-    let sdk: RenVM;
+    let renJS: RenJS;
     let accounts: string[];
 
     before(async () => {
@@ -63,7 +63,7 @@ describe("Shifting in and shifting out", function () {
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
         network = stringToNetwork(NETWORK || "testnet");
-        sdk = new RenVM(network);
+        renJS = new RenJS(network);
     });
 
     const checkERC20Balance = async (contract: Contract, address: string): Promise<BN> =>
@@ -92,7 +92,7 @@ describe("Shifting in and shifting out", function () {
                 value: ethAddress,
             }
         ];
-        const shift = sdk.shiftIn({
+        const shift = renJS.shiftIn({
             sendTo: adapterContract,
             sendToken,
             sendAmount: amount,
@@ -206,7 +206,7 @@ describe("Shifting in and shifting out", function () {
 
         let shiftOutObject: ShiftOutObject;
         try {
-            shiftOutObject = await sdk.shiftOut({
+            shiftOutObject = await renJS.shiftOut({
                 sendTo: adapterContract,
                 contractFn: "shiftOut",
                 contractParams: payload,

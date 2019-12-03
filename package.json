@@ -4,20 +4,24 @@
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/renproject/renvm-sdk-js.git"
+        "url": "git+https://github.com/renproject/ren-js.git"
     },
     "publishConfig": {
         "access": "public"
     },
     "keywords": [
         "ren",
+        "ren-js",
         "renvm",
-        "sdk"
+        "ren project",
+        "cryptocurrencies",
+        "blockchain",
+        "interoperability"
     ],
     "author": "Ren",
     "license": "GPL-3.0",
     "bugs": {
-        "url": "https://github.com/renproject/renvm-sdk-js/issues"
+        "url": "https://github.com/renproject/ren-js/issues"
     },
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

@@ -4,13 +4,13 @@
 [![CircleCI](https://circleci.com/gh/renproject/ren-js.svg?style=shield&circle-token=6fc560c540eff6670e5675841d34b9769b887a49)](https://circleci.com/gh/renproject/ren-js)
 ![Testnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/ren-js/testnet)
 
-The official Javascript SDK for interacting with the [RenJS](https://renproject.io).
+The official Javascript SDK for interacting with [RenVM](https://renproject.io).
 
 ## Links
 
 * [Developer Docs](https://docs.renproject.io/developers/)
 * [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started)
-* [Example DEX](https://github.com/renproject/renjs-demo)
+* [ChaosDEX](https://github.com/renproject/chaosdex), a cross-chain DEX
 
 ## Installation
 
@@ -24,7 +24,7 @@ or
 npm install --save @renproject/ren
 ```
 
-## Importing the SDK
+## Importing RenJS
 
 Importing using require syntax
 
@@ -41,9 +41,9 @@ import RenJS from "@renproject/ren";
 ## Usage
 
 ```typescript
-const sdk = new RenJS("chaosnet");
+const renJS = new RenJS("chaosnet");
 // or on testnet
-const sdk = new RenJS("testnet");
+const renJS = new RenJS("testnet");
 ```
 
 For more information, [check out an example](https://docs.renproject.io/developers/more-examples/bitcoin-payments).

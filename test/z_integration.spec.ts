@@ -16,8 +16,8 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
-import { Ox, strip0x } from "../src/blockchain/common";
-import RenVM, {
+import { Ox } from "../src/blockchain/common";
+import RenJS, {
     BitcoinUTXO, getBitcoinUTXOs, getZcashUTXOs, ShiftInObject, ShiftOutObject, ZcashUTXO,
 } from "../src/index";
 import { sleep } from "../src/lib/utils";
@@ -53,7 +53,7 @@ describe("Shifting in and shifting out", function () {
     let provider: HDWalletProvider;
     let web3: Web3;
     let network: NetworkDetails;
-    let sdk: RenVM;
+    let renJS: RenJS;
     let accounts: string[];
 
     before(async () => {
@@ -63,7 +63,7 @@ describe("Shifting in and shifting out", function () {
         accounts = await web3.eth.getAccounts();
         web3.eth.defaultAccount = accounts[0];
         network = stringToNetwork(NETWORK || "testnet");
-        sdk = new RenVM(network);
+        renJS = new RenJS(network);
     });
 
     const checkERC20Balance = async (contract: Contract, address: string): Promise<BN> =>
@@ -92,7 +92,7 @@ describe("Shifting in and shifting out", function () {
                 value: ethAddress,
             }
         ];
-        const shift = sdk.shiftIn({
+        const shift = renJS.shiftIn({
             sendTo: adapterContract,
             sendToken,
             sendAmount: amount,
@@ -206,7 +206,7 @@ describe("Shifting in and shifting out", function () {
 
         let shiftOutObject: ShiftOutObject;
         try {
-            shiftOutObject = await sdk.shiftOut({
+            shiftOutObject = await renJS.shiftOut({
                 sendTo: adapterContract,
                 contractFn: "shiftOut",
                 contractParams: payload,
@@ -235,8 +235,8 @@ describe("Shifting in and shifting out", function () {
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
     describe("minting and buning", () => {
-        const caseBTC = { name: "BTC", fn: () => ({ getUTXOS: getBitcoinUTXOs, mintToken: Tokens.BTC.Btc2Eth, burnToken: Tokens.BTC.Eth2Btc, privateKey: () => new BPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zBTC, shifter: network.contracts.addresses.shifter.BTCShifter, sendAsset: sendBTC(network, BITCOIN_KEY) }) };
-        const caseZEC = { name: "ZEC", fn: () => ({ getUTXOS: getZcashUTXOs, mintToken: Tokens.ZEC.Zec2Eth, burnToken: Tokens.ZEC.Eth2Zec, privateKey: () => new ZPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: network.contracts.addresses.shifter.zZEC, shifter: network.contracts.addresses.shifter.ZECShifter, sendAsset: sendZEC(network, BITCOIN_KEY) }) };
+        const caseBTC = { name: "BTC", fn: () => ({ getUTXOS: getBitcoinUTXOs, mintToken: Tokens.BTC.Btc2Eth, burnToken: Tokens.BTC.Eth2Btc, privateKey: () => new BPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: "zBTC", shifter: network.contracts.addresses.shifter.BTCShifter, sendAsset: sendBTC(network, BITCOIN_KEY) }) };
+        const caseZEC = { name: "ZEC", fn: () => ({ getUTXOS: getZcashUTXOs, mintToken: Tokens.ZEC.Zec2Eth, burnToken: Tokens.ZEC.Eth2Zec, privateKey: () => new ZPrivateKey(BITCOIN_KEY, network.bitcoinNetwork), shiftedToken: "zZEC", shifter: network.contracts.addresses.shifter.ZECShifter, sendAsset: sendZEC(network, BITCOIN_KEY) }) };
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
@@ -251,14 +251,19 @@ describe("Shifting in and shifting out", function () {
                 const ethAddress = accounts[0];
                 const privateKey = testcase.privateKey();
                 const srcAddress = privateKey.toAddress();
-                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, strip0x(testcase.shiftedToken.address));
+                const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+                const shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
+                console.log("shiftedTokenAddress", shiftedTokenAddress);
+                const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(testcase.shiftedToken).call();
+                console.log("shifterAddress", shifterAddress);
+                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, shiftedTokenAddress);
 
                 // Test minting.
                 console.log("Starting mint test:");
                 const initialERC20Balance = await checkERC20Balance(erc20Contract, ethAddress);
                 await mintTest(
                     testcase.mintToken,
-                    testcase.shifter.address,
+                    shifterAddress,
                     adapterContract,
                     amount,
                     ethAddress,
@@ -281,7 +286,7 @@ describe("Shifting in and shifting out", function () {
                 console.log("Starting burn test:");
                 // TODO: FIXME: replace getBitcoinUTXOs with generic getUTXOs
                 const initialBalance = sumUTXOs(await testcase.getUTXOS(network)(srcAddress.toString(), 0));
-                await burnTest(testcase.burnToken, erc20Contract, testcase.shifter.address, adapterContract, burnValue, ethAddress, srcAddress.toString());
+                await burnTest(testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress.toString());
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
                 const finalBalance = sumUTXOs(await testcase.getUTXOS(network)(srcAddress.toString(), 0));
@@ -303,13 +308,16 @@ describe("Shifting in and shifting out", function () {
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const amount = 0.000225 * (10 ** 8);
                 const ethAddress = accounts[0];
-                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, strip0x(testcase.shiftedToken.address));
+                const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+                const shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
+                const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(testcase.shiftedToken).call();
+                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, shiftedTokenAddress);
 
                 console.log("Starting mint test:");
                 const initialERC20Balance = await checkERC20Balance(erc20Contract, ethAddress);
                 await mintTest(
                     testcase.mintToken,
-                    testcase.shifter.address,
+                    shifterAddress,
                     adapterContract,
                     amount,
                     ethAddress,

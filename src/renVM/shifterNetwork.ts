@@ -1,5 +1,5 @@
 import { Ox, strip0x } from "../blockchain/common";
-import { SECONDS, sleep } from "../lib/utils";
+import { getTokenAddress, SECONDS, sleep } from "../lib/utils";
 import { actionToDetails, Asset, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { decodeValue } from "./jsonRPC";
@@ -47,19 +47,16 @@ export class ShifterNetwork {
         utxoVout: number,
         network: NetworkDetails,
     ): Promise<string> => {
-        let token;
+        const token = getTokenAddress(action, network);
         let utxoType: "ext_btcCompatUTXO" | "ext_zecCompatUTXO";
         switch (actionToDetails(action).asset) {
             case Asset.BTC:
-                token = network.contracts.addresses.shifter.zBTC.address;
                 utxoType = "ext_btcCompatUTXO";
                 break;
             case Asset.ZEC:
-                token = network.contracts.addresses.shifter.zZEC.address;
                 utxoType = "ext_btcCompatUTXO"; // "ext_zecCompatUTXO";
                 break;
             case Asset.BCH:
-                token = network.contracts.addresses.shifter.zBCH.address;
                 utxoType = "ext_btcCompatUTXO";
                 break;
             default:

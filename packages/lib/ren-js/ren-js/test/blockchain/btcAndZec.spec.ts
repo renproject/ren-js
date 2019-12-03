@@ -53,18 +53,22 @@ describe("btc.ts", () => {
 describe("zec.ts", () => {
     describe("createZECAddress", async () => {
         [
+            { network: NetworkMainnet, actual: "t1QuA61jBJTG7udadwpz4SF4o9kKDShqn4H", get hex() { return Ox(decode(this.actual)); } },
             { network: NetworkMainnet, expected: "t3ZZzcD5753UPmJC37BWrxxDjaLbq2Mqw6E", get hex() { return Ox(decode(this.expected)); } },
             { network: NetworkTestnet, expected: "t2JAUJ5wvuvzeTsvNcSk73TkcSYxUeXnGuh", get hex() { return Ox(decode(this.expected)); } },
             { network: NetworkDevnet, expected: "t2FT4C1C8ujGpWe7iCsSgc72D2HH1y9TRmS", get hex() { return Ox(decode(this.expected)); } },
             { network: NetworkLocalnet, expected: "t2THvHHubXsesGV1NXuGDCtSRMcTHD8cch6", get hex() { return Ox(decode(this.expected)); } },
         ]
-            .forEach(({ network, expected, hex }) => {
+            .forEach(({ network, expected, actual, hex }) => {
                 it(network.name, async () => {
-                    const address = createZECAddress(network, "0x1234");
-                    address.should.equal(expected);
-                    createZECAddress(network, "1234")
-                        .should.equal(address);
-                    zecAddressToHex(address)
+                    if (expected) {
+                        const address = createZECAddress(network, "0x1234");
+                        address.should.equal(expected);
+                        createZECAddress(network, "1234")
+                            .should.equal(address);
+                    }
+                    expected = expected || actual;
+                    zecAddressToHex(expected)
                         .should.equal(hex);
 
                     zecAddressFrom(hex, "hex")

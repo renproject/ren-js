@@ -90,6 +90,5 @@ export default class RenJS {
 }
 
 // tslint:disable: no-object-mutation
-module.exports = RenJS;
 module.exports.RenJS = RenJS;
 module.exports.default = RenJS;

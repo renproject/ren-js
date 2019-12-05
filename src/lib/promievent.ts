@@ -118,8 +118,8 @@ export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, fil
     // dest.on("removeListener", forwardEmitterRemoveListener);
 
     // Until the above is fixed, we manually forward each event name:
-    src.on("transactionHash", (eventReceipt: string) => { dest.emit("transactionHash", eventReceipt); });
-    src.on("receipt", (eventReceipt: TransactionReceipt) => { dest.emit("receipt", eventReceipt); });
-    src.on("confirmation", (confNumber: number, eventReceipt: TransactionReceipt) => { dest.emit("confirmation", confNumber, eventReceipt); });
+    src.on("transactionHash", (eventReceipt: string) => { dest.emit("transactionHash", eventReceipt); dest.emit("eth_transactionHash", eventReceipt); });
+    src.on("receipt", (eventReceipt: TransactionReceipt) => { dest.emit("receipt", eventReceipt); dest.emit("eth_receipt", eventReceipt); });
+    src.on("confirmation", (confNumber: number, eventReceipt: TransactionReceipt) => { dest.emit("confirmation", confNumber, eventReceipt); dest.emit("eth_confirmation", confNumber, eventReceipt); });
     src.on("error", (error: Error) => { dest.emit("error", error); });
 };

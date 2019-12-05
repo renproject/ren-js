@@ -1,25 +1,25 @@
+import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 
-import { BCashUTXO } from "./blockchain/bch";
+import { BitcoinCashUTXO } from "./blockchain/bch";
 import { BitcoinUTXO } from "./blockchain/btc";
-import { Ox, strip0x } from "./blockchain/common";
 import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, ignoreError, randomNonce,
-    retrieveDeposits, SECONDS, signatureToString, sleep, UTXO, withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generatePHash, ignoreError, Ox, randomNonce,
+    retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, UTXO, withDefaultAccount,
 } from "./lib/utils";
-import { ShifterNetwork } from "./renVM/shifterNetwork";
-import { Tx } from "./renVM/transaction";
+import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
+import { QueryTxResponse, Tx } from "./renVM/transaction";
 import { NetworkDetails } from "./types/networks";
 import { ShiftInFromDetails, ShiftInParams, ShiftInParamsAll } from "./types/parameters";
 
 export class ShiftInObject {
-    public utxo: BitcoinUTXO | ZcashUTXO | BCashUTXO | undefined;
+    public utxo: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO | undefined;
     public gatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: ShifterNetwork;
@@ -30,14 +30,19 @@ export class ShiftInObject {
         this.network = network;
         this.renVMNetwork = renVMNetwork;
 
-        if (!(params as ShiftInParamsAll).messageID) {
-            const { sendToken, contractParams, sendAmount, sendTo, nonce: maybeNonce } = params as ShiftInFromDetails;
+        const renTxHash = (params as ShiftInParamsAll).renTxHash || (params as ShiftInParamsAll).messageID;
+
+        if (!renTxHash) {
+            const { sendToken, contractParams, sendTo, sendAmount, nonce: maybeNonce } = params as ShiftInFromDetails;
 
             const nonce = maybeNonce || randomNonce();
             (this.params as ShiftInFromDetails).nonce = nonce;
 
+            // const sendAmountString = BigNumber.isBigNumber(sendAmount) ? sendAmount.toFixed() : new BigNumber(sendAmount.toString()).toFixed();
+            const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
+
             // TODO: Validate inputs
-            const gHash = generateGHash(contractParams, sendAmount, strip0x(sendTo), sendToken, nonce, network);
+            const gHash = generateGHash(contractParams, sendAmountNumber, strip0x(sendTo), sendToken, nonce, network);
             const gatewayAddress = generateAddress(sendToken, gHash, network);
             this.gatewayAddress = gatewayAddress;
         }
@@ -48,7 +53,7 @@ export class ShiftInObject {
     public waitForDeposit = (confirmations: number): PromiEvent<this> => {
         const promiEvent = newPromiEvent<this>();
         (async () => {
-            if (this.params.messageID) {
+            if (this.params.renTxHash || this.params.messageID) {
                 return this;
             }
 
@@ -63,9 +68,6 @@ export class ShiftInObject {
             //     return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
             // };
 
-            // Every nth time, try a different end-point
-            let retryCount = 0;
-
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 if (deposits.size > 0) {
@@ -78,7 +80,7 @@ export class ShiftInObject {
                 }
 
                 try {
-                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, 0, retryCount);
+                    const newDeposits = await retrieveDeposits(this.network, sendToken, this.gatewayAddress, 0);
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
@@ -97,7 +99,6 @@ export class ShiftInObject {
                     continue;
                 }
                 await sleep(10 * SECONDS);
-                retryCount++;
             }
             return this;
         })().then(promiEvent.resolve).catch(promiEvent.reject);
@@ -105,13 +106,13 @@ export class ShiftInObject {
         return promiEvent;
     }
 
-    public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO | BCashUTXO): PromiEvent<Signature> => {
+    public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO): PromiEvent<Signature> => {
         const promiEvent = newPromiEvent<Signature>();
 
         (async () => {
-            let messageID = this.params.messageID;
+            let renTxHash = this.params.renTxHash || this.params.messageID;
 
-            if (!messageID) {
+            if (!renTxHash) {
                 const utxo = specifyUTXO || this.utxo;
 
                 if (!utxo) {
@@ -124,10 +125,12 @@ export class ShiftInObject {
                     throw new Error("Unable to submitToRenVM without nonce");
                 }
 
-                messageID = await this.renVMNetwork.submitShiftIn(
+                const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
+
+                renTxHash = await this.renVMNetwork.submitShiftIn(
                     sendToken,
                     sendTo,
-                    sendAmount,
+                    sendAmountNumber,
                     nonce,
                     generatePHash(contractParams),
                     utxo.txid,
@@ -135,22 +138,25 @@ export class ShiftInObject {
                     this.network,
                 );
 
-                promiEvent.emit("messageID", messageID);
+                promiEvent.emit("messageID", renTxHash);
+                promiEvent.emit("renTxHash", renTxHash);
             }
 
-            const response = await this.renVMNetwork.queryShiftIn(messageID, (status) => {
+            const marshalledResponse = await this.renVMNetwork.waitForTX<QueryTxResponse>(renTxHash, (status) => {
                 promiEvent.emit("status", status);
             });
 
+            const response = unmarshalTx(marshalledResponse);
+
             // tslint:disable-next-line: no-use-before-declare
-            return new Signature(this.network, this.params as ShiftInParams, response, messageID);
+            return new Signature(this.network, this.params as ShiftInParams, response, renTxHash);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO | BCashUTXO) => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO) => {
         await this.waitForDeposit(confirmations);
         const signature = await this.submitToRenVM(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);
@@ -162,13 +168,16 @@ export class Signature {
     public network: NetworkDetails;
     public response: Tx;
     public signature: string;
+    public renTxHash: string;
+    // Here to maintain backwards compatibility
     public messageID: string;
 
-    constructor(network: NetworkDetails, params: ShiftInParams, response: Tx, messageID: string) {
+    constructor(network: NetworkDetails, params: ShiftInParams, response: Tx, renTxHash: string) {
         this.params = params;
         this.network = network;
         this.response = response;
-        this.messageID = messageID;
+        this.renTxHash = renTxHash;
+        this.messageID = renTxHash;
         this.signature = signatureToString(fixSignature(response, network));
     }
 

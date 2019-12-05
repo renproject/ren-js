@@ -1,4 +1,4 @@
-import { Ox } from "../blockchain/common";
+import { Ox } from "../lib/utils";
 
 export type JSONRPCResponse<T> = {
     jsonrpc: string;

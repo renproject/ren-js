@@ -1,5 +1,4 @@
-import { Ox, strip0x } from "../blockchain/common";
-import { getTokenAddress, SECONDS, sleep } from "../lib/utils";
+import { getTokenAddress, Ox, SECONDS, sleep, strip0x } from "../lib/utils";
 import { actionToDetails, Asset, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { decodeValue } from "./jsonRPC";
@@ -10,9 +9,7 @@ import {
     SubmitTxResponse, Tx, TxStatus,
 } from "./transaction";
 
-const ErrInvalidResponse = `Invalid response from RenVM`;
-
-const unmarshalTx = (response: QueryTxResponse): Tx => {
+export const unmarshalTx = (response: QueryTxResponse): Tx => {
     // Unmarshal
     let args = {};
     for (const value of response.tx.args) {
@@ -91,38 +88,7 @@ export class ShifterNetwork {
                 }
             });
 
-        if (!response.result) {
-            throw new Error(response.error || ErrInvalidResponse);
-        }
-
-        return Ox(Buffer.from(response.result.tx.hash, "base64"));
-    }
-
-    public queryShiftIn = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<Tx> => {
-        let response: QueryTxResponse;
-        // tslint:disable-next-line: no-constant-condition
-        while (true) {
-            try {
-                const result = await this.network.broadcastMessage<QueryTxRequest, QueryTxResponse>(
-                    RPCMethod.QueryTx,
-                    {
-                        txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
-                    },
-                );
-                if (result.result && result.result.txStatus === TxStatus.TxStatusDone) {
-                    response = result.result;
-                    break;
-                } else if (onStatus && result.result && result.result.txStatus) {
-                    onStatus(result.result.txStatus);
-                }
-            } catch (error) {
-                console.error(String(error));
-                // TODO: Ignore "result not available",
-                // throw otherwise
-            }
-            await sleep(5 * SECONDS);
-        }
-        return unmarshalTx(response);
+        return Ox(Buffer.from(response.tx.hash, "base64"));
     }
 
     public submitShiftOut = async (action: Token, ref: string): Promise<string> => {
@@ -136,29 +102,29 @@ export class ShifterNetwork {
                 }
             });
 
-        if (!response.result) {
-            throw new Error(response.error || ErrInvalidResponse);
-        }
-
-        return Ox(Buffer.from(response.result.tx.hash, "base64"));
+        return Ox(Buffer.from(response.tx.hash, "base64"));
     }
 
-    public queryShiftOut = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<QueryBurnResponse> => {
-        let response: QueryBurnResponse;
+    public readonly queryTX = async <T extends QueryBurnResponse | QueryTxResponse>(utxoTxHash: string): Promise<T> => {
+        return await this.network.broadcastMessage<QueryTxRequest, QueryTxResponse>(
+            RPCMethod.QueryTx,
+            {
+                txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
+            },
+        ) as T;
+    }
+
+    public readonly waitForTX = async <T extends QueryBurnResponse | QueryTxResponse>(utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<T> => {
+        let response: T;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
             try {
-                const result = await this.network.broadcastMessage<QueryTxRequest, QueryTxResponse>(
-                    RPCMethod.QueryTx,
-                    {
-                        txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
-                    },
-                );
-                if (result.result && result.result.txStatus === TxStatus.TxStatusDone) {
-                    response = result.result;
+                const result = await this.queryTX(utxoTxHash);
+                if (result && result.txStatus === TxStatus.TxStatusDone) {
+                    response = result as T;
                     break;
-                } else if (onStatus && result.result && result.result.txStatus) {
-                    onStatus(result.result.txStatus);
+                } else if (onStatus && result && result.txStatus) {
+                    onStatus(result.txStatus);
                 }
             } catch (error) {
                 console.error(String(error));
@@ -167,7 +133,6 @@ export class ShifterNetwork {
             }
             await sleep(5 * SECONDS);
         }
-
         return response;
     }
 }

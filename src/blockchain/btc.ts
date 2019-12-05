@@ -1,10 +1,9 @@
-// import { Address, Networks, Opcode, Script } from "bitcore-lib";
-// import Base58Check from "bitcore-lib/lib/encoding/base58check";
 import { Networks, Opcode, Script } from "bitcore-lib";
+import { getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 
-import { getUTXOs } from "../getUTXOs/mercury";
+import { Ox, strip0x } from "../lib/utils";
 import { NetworkDetails, stringToNetwork } from "../types/networks";
-import { createAddress, Ox, strip0x } from "./common";
+import { createAddress } from "./common";
 
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
 
@@ -18,7 +17,9 @@ export interface BitcoinUTXO {
 
 export const getBitcoinUTXOs = (network: NetworkDetails | string) => {
     const networkDetails = typeof network === "string" ? stringToNetwork(network) : network;
-    return getUTXOs(networkDetails, networkDetails.chainSoName.btc);
+    return async (address: string, confirmations: number) => {
+        return getUTXOs(networkDetails.isTestnet, { address, confirmations });
+    };
 };
 
 // export const btcAddressToHex = (address: string) => {

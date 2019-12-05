@@ -1,8 +1,9 @@
 import chai from "chai";
 
-import RenJS, { Chain, Network, Tokens } from "../src/index";
+import RenJS from "../src/index";
+import { Chain, Tokens } from "../src/types/assets";
 import {
-    NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,
+    Network, NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,
 } from "../src/types/networks";
 
 chai.should();

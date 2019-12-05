@@ -1,5 +1,4 @@
 import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
-import { Networks as BNetworks } from "bitcore-lib";
 // import { Networks as ZNetworks } from "bitcore-lib-zcash";
 import { List } from "immutable";
 
@@ -15,6 +14,7 @@ export interface NetworkDetails {
     name: string;
     nodeURLs: string[];
     isTestnet: boolean;
+    ethNetwork: string;
 
     mercuryURL: {
         btc: string,
@@ -26,12 +26,12 @@ export interface NetworkDetails {
         zec: string,
         bch: string,
     };
-    bitcoinNetwork: BNetworks.Network;
     contracts: typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;
 }
 
 // Configurations shared by Mainnet and Chaosnet
 const commonMainConfig = {
+    ethNetwork: "mainnet",
     isTestnet: false,
     mercuryURL: {
         // tslint:disable-next-line: no-http-string
@@ -46,7 +46,6 @@ const commonMainConfig = {
         zec: "ZEC",
         bch: "BCH",
     },
-    bitcoinNetwork: BNetworks.mainnet,
 };
 
 export const NetworkChaosnet: NetworkDetails = {
@@ -65,6 +64,7 @@ export const NetworkMainnet: NetworkDetails = {
 
 // Configurations shared by Testnet and Devnet
 const commonTestConfig = {
+    ethNetwork: "kovan",
     isTestnet: true,
     mercuryURL: {
         // tslint:disable-next-line: no-http-string
@@ -79,7 +79,6 @@ const commonTestConfig = {
         zec: "ZECTEST",
         bch: "BCHTEST",
     },
-    bitcoinNetwork: BNetworks.testnet,
 };
 
 export const NetworkTestnet: NetworkDetails = {

@@ -40,13 +40,66 @@ import RenJS from "@renproject/ren";
 
 ## Usage
 
+Usage is described in the [getting started tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
+
+Example of bridging BTC into Ethereum:
+
 ```typescript
-const renJS = new RenJS("chaosnet");
-// or on testnet
-const renJS = new RenJS("testnet");
+// ... web3 is initialized
+
+const renJS = new RenJS("testnet"); // or "chaosnet"
+
+const amount = 0.001; // testnet BTC
+
+const shiftIn = renJS.shiftIn({
+    // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+    sendToken: RenJS.Tokens.BTC.Btc2Eth,
+
+    // Amount of BTC we are sending (in Satoshis)
+    sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
+
+    // The contract we want to interact with
+    sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
+
+    // The name of the function we want to call
+    contractFn: "deposit",
+
+    // Arguments expected for calling `deposit`
+    contractParams: [
+        {
+            name: "_msg",
+            type: "bytes",
+            value: web3.utils.fromAscii(`Depositing ${amount} BTC`),
+        }
+    ],
+});
+
+const gatewayAddress = shiftIn.addr();
+this.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
+
+await shiftIn.waitAndSubmit(web3.currentProvider, 0 /* confirmations */);
 ```
 
-For more information, [check out an example](https://docs.renproject.io/developers/more-examples/bitcoin-payments).
+Example of bridging BTC out of Ethereum:
+
+```typescript
+// ... zBTC is burnt in the Ethereum transaction `txHash`
+
+const renJS = new RenJS("testnet"); // or "chaosnet"
+
+const shiftOut = await renJS.shiftOut({
+    // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
+    sendToken: RenJS.Tokens.BTC.Eth2Btc,
+
+    // The web3 provider to talk to Ethereum
+    web3Provider: web3.currentProvider,
+
+    // The transaction hash of our contract call
+    txHash,
+}).readFromEthereum();
+
+await shiftOut.submitToRenVM();
+```
 
 <br />
 <br />

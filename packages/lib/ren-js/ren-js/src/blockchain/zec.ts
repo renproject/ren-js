@@ -1,9 +1,10 @@
 import { Address, Networks, Opcode, Script } from "bitcore-lib-zcash";
 import Base58Check from "bitcore-lib-zcash/lib/encoding/base58check";
+import { getUTXOs } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
 
-import { getUTXOs } from "../getUTXOs/mercury";
+import { Ox, strip0x } from "../lib/utils";
 import { NetworkDetails, stringToNetwork } from "../types/networks";
-import { createAddress, Ox, strip0x } from "./common";
+import { createAddress } from "./common";
 
 export const createZECAddress = createAddress(Networks, Opcode, Script);
 
@@ -17,7 +18,9 @@ export interface ZcashUTXO {
 
 export const getZcashUTXOs = (network: NetworkDetails | string) => {
     const networkDetails = typeof network === "string" ? stringToNetwork(network) : network;
-    return getUTXOs(networkDetails, networkDetails.chainSoName.zec);
+    return async (address: string, confirmations: number) => {
+        return getUTXOs(networkDetails.isTestnet, { address, confirmations });
+    };
 };
 
 export const zecAddressToHex = (address: string) => {

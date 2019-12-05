@@ -1,24 +1,58 @@
-import { randomNonce } from "./lib/utils";
+import _BN from "bn.js";
+
+import { bchAddressFrom, bchAddressToHex, getBitcoinCashUTXOs } from "./blockchain/bch";
+import { btcAddressFrom, btcAddressToHex, getBitcoinUTXOs } from "./blockchain/btc";
+import { getZcashUTXOs, zecAddressFrom, zecAddressToHex } from "./blockchain/zec";
+import { Ox, randomNonce, strip0x } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
+import { TxStatus } from "./renVM/transaction";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
 import { Chain, Tokens } from "./types/assets";
-import { Network, NetworkDetails, stringToNetwork } from "./types/networks";
+import {
+    Network, NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork,
+} from "./types/networks";
 import { ShiftInParams, ShiftOutParams } from "./types/parameters";
 
-export * from "./renVM/renVMNetwork";
-export * from "./renVM/transaction";
-export * from "./blockchain/btc";
-export * from "./blockchain/zec";
-export * from "./blockchain/bch";
-export * from "./blockchain/common";
-export * from "./types/assets";
-export * from "./types/networks";
-export * from "./types/parameters";
-export * from "./shiftIn";
-export * from "./shiftOut";
-
+// Export types
+export { BitcoinUTXO } from "./blockchain/btc";
+export { BitcoinCashUTXO } from "./blockchain/bch";
+export { ZcashUTXO } from "./blockchain/zec";
+export { ShiftInObject, Signature } from "./shiftIn";
+export { ShiftOutObject } from "./shiftOut";
 export { UTXO } from "./lib/utils";
+export { NetworkDetails } from "./types/networks";
+export { TxStatus } from "./renVM/transaction";
+
+const NetworkDetails = {
+    NetworkChaosnet,
+    NetworkTestnet,
+    stringToNetwork,
+};
+
+const utils = {
+    Ox,
+    strip0x,
+    randomNonce,
+
+    zec: {
+        getUTXOs: getZcashUTXOs,
+        addressToHex: zecAddressToHex,
+        addressFrom: zecAddressFrom,
+    },
+
+    btc: {
+        getUTXOs: getBitcoinUTXOs,
+        addressToHex: btcAddressToHex,
+        addressFrom: btcAddressFrom,
+    },
+
+    bch: {
+        getUTXOs: getBitcoinCashUTXOs,
+        addressToHex: bchAddressToHex,
+        addressFrom: bchAddressFrom,
+    }
+};
 
 /**
  * This is the main exported class.
@@ -43,19 +77,23 @@ export default class RenJS {
     // e.g. `RenJS.Tokens`
     public static Tokens = Tokens;
     public static Networks = Network;
+    public static NetworkDetails = NetworkDetails;
     public static Chains = Chain;
-    public static randomNonce = randomNonce;
+    public static TxStatus = TxStatus;
+    public static utils = utils;
 
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenJS("testnet")).Tokens`
     public readonly Tokens = Tokens;
     public readonly Networks = Network;
+    public readonly NetworkDetails = NetworkDetails;
     public readonly Chains = Chain;
-    public readonly randomNonce = randomNonce;
+    public readonly TxStatus = TxStatus;
+    public readonly utils = utils;
 
-    // Internal state
-    private readonly network: NetworkDetails;
-    private readonly renVMNetwork: ShifterNetwork;
+    // Not static
+    public readonly renVM: ShifterNetwork;
+    public readonly network: NetworkDetails;
 
     /**
      * Takes a Network object that contains relevant addresses.
@@ -64,7 +102,7 @@ export default class RenJS {
      */
     constructor(network?: NetworkDetails | string | null | undefined) {
         this.network = stringToNetwork(network);
-        this.renVMNetwork = new ShifterNetwork(this.network.nodeURLs);
+        this.renVM = new ShifterNetwork(this.network.nodeURLs);
     }
 
     /**
@@ -75,7 +113,7 @@ export default class RenJS {
      * @returns An instance of [[ShiftInObject]].
      */
     public readonly shiftIn = (params: ShiftInParams): ShiftInObject => {
-        return new ShiftInObject(this.renVMNetwork, this.network, params);
+        return new ShiftInObject(this.renVM, this.network, params);
     }
 
     /**
@@ -85,10 +123,10 @@ export default class RenJS {
      * @returns An instance of [[ShiftOutObject]].
      */
     public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
-        return new ShiftOutObject(this.renVMNetwork, params);
+        return new ShiftOutObject(this.renVM, params);
     }
 }
-
 // tslint:disable: no-object-mutation
+module.exports = RenJS;
 module.exports.RenJS = RenJS;
 module.exports.default = RenJS;

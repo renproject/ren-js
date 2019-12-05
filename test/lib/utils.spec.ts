@@ -1,5 +1,7 @@
 import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
 
+import RenJS from "../../src";
 import {
     BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash, strip0x,
 } from "../../src/lib/utils";
@@ -9,6 +11,7 @@ import {
     NetworkChaosnet, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet,
 } from "../../src/types/networks";
 
+chai.use(chaiAsPromised);
 chai.should();
 
 describe("Utils", function () {
@@ -70,6 +73,11 @@ describe("Utils", function () {
                 .should.equal(testcase.expectedAddress);
         });
     }
+
+    it(`queryTX`, async () => {
+        await new RenJS("testnet").renVM.queryTX("0")
+            .should.be.rejectedWith(/Lightnode returned status 500 with reason: method=ren_queryTx not available/);
+    });
 
     it.skip("fixSignature", () => {
         const response: Tx = {

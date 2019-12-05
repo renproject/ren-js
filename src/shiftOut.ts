@@ -2,10 +2,9 @@ import BN from "bn.js";
 import { keccak256 } from "ethereumjs-util";
 import Web3 from "web3";
 
-import { strip0x } from "./blockchain/common";
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
-import { BURN_TOPIC, ignoreError, waitForReceipt, withDefaultAccount } from "./lib/utils";
+import { BURN_TOPIC, ignoreError, strip0x, waitForReceipt, withDefaultAccount } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { QueryBurnResponse } from "./renVM/transaction";
 import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
@@ -26,7 +25,8 @@ export class ShiftOutObject {
         (async () => {
 
             const { txConfig, web3Provider, contractFn, contractParams, sendTo } = this.params;
-            let { burnReference, txHash } = this.params;
+            let { burnReference } = this.params;
+            let ethTxHash = this.params.ethTxHash || this.params.txHash;
 
             // There are three parameter configs:
             // Situation (1): A `burnReference` is provided
@@ -62,7 +62,7 @@ export class ShiftOutObject {
 
                     forwardEvents(tx, promiEvent);
 
-                    txHash = await new Promise((resolve, reject) => tx
+                    ethTxHash = await new Promise((resolve, reject) => tx
                         .on("transactionHash", resolve)
                         .catch((error: Error) => {
                             try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
@@ -71,7 +71,7 @@ export class ShiftOutObject {
                     );
                 }
 
-                if (!txHash) {
+                if (!ethTxHash) {
                     throw new Error("Must provide txHash or contract call details");
                 }
 
@@ -80,7 +80,7 @@ export class ShiftOutObject {
                 // ShiftOut event.
                 // @dev WARNING: If multiple shiftOuts are present, ShiftOut
                 // should be called for each one, passing in the reference IDs.
-                const receipt = await waitForReceipt(web3, txHash);
+                const receipt = await waitForReceipt(web3, ethTxHash);
 
                 if (!receipt.logs) {
                     throw Error("No events found in transaction");
@@ -124,12 +124,13 @@ export class ShiftOutObject {
 
             const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
 
-            const messageID = keccak256(`txHash_${this.params.sendToken}_${burnReferenceNumber}`).toString("hex");
+            const renTxHash = keccak256(`txHash_${this.params.sendToken}_${burnReferenceNumber}`).toString("hex");
 
-            // const messageID = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
-            promiEvent.emit("messageID", messageID);
+            // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
+            promiEvent.emit("messageID", renTxHash);
+            promiEvent.emit("renTxHash", renTxHash);
 
-            return await this.renVMNetwork.queryShiftOut(messageID, (status) => {
+            return await this.renVMNetwork.waitForTX<QueryBurnResponse>(renTxHash, (status) => {
                 promiEvent.emit("status", status);
             });
         })().then(promiEvent.resolve).catch(promiEvent.reject);

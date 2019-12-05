@@ -3,7 +3,7 @@ import { Arg, Args } from "./jsonRPC";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
 
-export type MintArgsArray = [
+type MintArgsArray = [
     Arg<"phash", "b32", string>, // base64
     Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>, // base64
@@ -12,11 +12,11 @@ export type MintArgsArray = [
     Arg<"utxo", "ext_btcCompatUTXO" | "ext_zecCompatUTXO", { "txHash": string; /* base64 */ "vOut": number; }>
 ];
 
-export type BurnArgsArray = [
+type BurnArgsArray = [
     Arg<"ref", "u64", number>,
 ];
 
-export type TxOutputArgsArray = [
+type TxOutputArgsArray = [
     Arg<"phash", "b32", string>,
     Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>,
@@ -29,13 +29,13 @@ export type TxOutputArgsArray = [
     Arg<"hash", "b32", string>,
 ];
 
-export type TxSignatureArray = [
+type TxSignatureArray = [
     Arg<"r", "b", string>, // base 64
     Arg<"s", "b", string>, // base 64
     Arg<"v", "b", string>, // base 64
 ];
 
-export interface SubmitTxRequest<T extends Args> {
+interface SubmitTxRequest<T extends Args> {
     // Tx being submitted.
     tx: {
         "to": Token;
@@ -109,8 +109,8 @@ export interface Tx {
         token: string;
         to: string;
         n: string;
-        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": 60000 };
-        gas: number;
+        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": number, ghash: string };
+        // gas: number;
         ghash: string;
         nhash: string;
         hash: string;

@@ -1,6 +1,5 @@
 import { List, OrderedSet } from "immutable";
 
-import { JSONRPCResponse } from "./jsonRPC";
 import { RenNode, RPCMethod } from "./renNode";
 
 const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[List<a>, OrderedSet<string>]> => {
@@ -28,7 +27,7 @@ export class RenVMNetwork {
         this.nodes = List(nodeURLs.map(nodeURL => new RenNode(nodeURL)));
     }
 
-    public broadcastMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<JSONRPCResponse<Response>> => {
+    public broadcastMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<Response> => {
         // tslint:disable-next-line: prefer-const
         let [responses, errors] = await promiseAll(
             this.nodes.valueSeq().map(async (node) => {
@@ -39,7 +38,7 @@ export class RenVMNetwork {
                 if (!response.result || response.error) {
                     throw new Error(response.error.message || response.error) || new Error(`Invalid message`);
                 }
-                return response;
+                return response.result;
             }).toList(),
             null
         );

@@ -8,7 +8,7 @@ export enum RPCMethod {
     QueryTx = "ren_queryTx",
 }
 
-export const generatePayload = (method: string, params?: unknown) => ({
+const generatePayload = (method: string, params?: unknown) => ({
     id: 1,
     jsonrpc: "2.0",
     method,

@@ -1,12 +1,13 @@
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
+import { getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
 
-import { getUTXOs } from "../getUTXOs/mercury";
+import { Ox, strip0x } from "../lib/utils";
 import { NetworkDetails, stringToNetwork } from "../types/networks";
-import { createAddress, Ox, strip0x } from "./common";
+import { createAddress } from "./common";
 
 export const createBCHAddress = createAddress(Networks, Opcode, Script);
 
-export interface BCashUTXO {
+export interface BitcoinCashUTXO {
     txid: string; // hex string without 0x prefix
     value: number; // satoshis
     script_hex: string; // hex string without 0x prefix
@@ -14,9 +15,11 @@ export interface BCashUTXO {
     confirmations: number;
 }
 
-export const getBCashUTXOs = (network: NetworkDetails | string) => {
+export const getBitcoinCashUTXOs = (network: NetworkDetails | string) => {
     const networkDetails = typeof network === "string" ? stringToNetwork(network) : network;
-    return getUTXOs(networkDetails, networkDetails.chainSoName.bch);
+    return async (address: string, confirmations: number) => {
+        return getUTXOs(networkDetails.isTestnet, { address, confirmations });
+    };
 };
 
 export const bchAddressToHex = (address: string) => Ox(Buffer.from(address));

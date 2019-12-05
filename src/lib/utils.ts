@@ -6,19 +6,30 @@ import { TransactionConfig } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { BCashUTXO, createBCHAddress, getBCashUTXOs } from "../blockchain/bch";
+import { BitcoinCashUTXO, createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
-import { Ox, strip0x } from "../blockchain/common";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
 import { Args } from "../renVM/jsonRPC";
 import { Tx } from "../renVM/transaction";
 import { actionToDetails, Asset, Chain, Token } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
-export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO } | { chain: Chain.BCash, utxo: BCashUTXO };
+export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO } | { chain: Chain.BitcoinCash, utxo: BitcoinCashUTXO };
 
 // 32-byte zero value
-export const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
+const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+// Remove 0x prefix from a hex string
+export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
+
+// Add a 0x prefix to a hex value, converting to a string first
+export const Ox = (hex: string | BN | Buffer) => {
+    const hexString = typeof hex === "string" ? hex : hex.toString("hex");
+    return hexString.substring(0, 2) === "0x" ? hexString : `0x${hexString}`;
+};
+
+// Pad a hex string if necessary so that its length is even
+// export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : hex;
 
 const unzip = (zip: Args) => [zip.map(param => param.type), zip.map(param => param.value)];
 
@@ -56,36 +67,36 @@ export const getTokenAddress = (action: Token, network: NetworkDetails): string 
     }
 };
 
-export const generateGHash = (_payload: Args, amount: number | string, _to: string, _shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    const token = getTokenAddress(_shiftAction, network);
-    const pHash = generatePHash(_payload);
+export const generateGHash = (payload: Args, amount: number | string, to: string, shiftAction: Token, nonce: string, network: NetworkDetails): string => {
+    const token = getTokenAddress(shiftAction, network);
+    const pHash = generatePHash(payload);
 
     const encoded = rawEncode(
         ["bytes32", "uint256", "address", "address", "bytes32"],
-        [Ox(pHash), amount, Ox(token), Ox(_to), Ox(nonce)],
+        [Ox(pHash), amount, Ox(token), Ox(to), Ox(nonce)],
     );
 
     return Ox(keccak256(encoded));
 };
 
-export const generateNHash = (tx: Tx): string => {
-    const encoded = rawEncode(
-        ["bytes32", "bytes32"],
-        [Ox(tx.hash), Ox(tx.args.n)],
-    );
+// export const generateNHash = (tx: Tx): string => {
+//     const encoded = rawEncode(
+//         ["bytes32", "bytes32"],
+//         [Ox(tx.hash), Ox(tx.args.n)],
+//     );
 
-    return Ox(keccak256(encoded));
-};
+//     return Ox(keccak256(encoded));
+// };
 
 // Generates the gateway address
-export const generateAddress = (_shiftAction: Token, gHash: string, network: NetworkDetails): string => {
-    const chain = actionToDetails(_shiftAction).from;
+export const generateAddress = (shiftAction: Token, gHash: string, network: NetworkDetails): string => {
+    const chain = actionToDetails(shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
             return createBTCAddress(network, gHash);
         case Chain.Zcash:
             return createZECAddress(network, gHash);
-        case Chain.BCash:
+        case Chain.BitcoinCash:
             return createBCHAddress(network, gHash);
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
@@ -93,15 +104,16 @@ export const generateAddress = (_shiftAction: Token, gHash: string, network: Net
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_network: NetworkDetails, _shiftAction: Token, _depositAddress: string, confirmations = 0, endpoint = 0): Promise<UTXO[]> => {
-    const chain = actionToDetails(_shiftAction).from;
+export const retrieveDeposits = async (_network: NetworkDetails, shiftAction: Token, depositAddress: string, confirmations = 0): Promise<UTXO[]> => {
+    const chain = actionToDetails(shiftAction).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
+            return (await getBitcoinUTXOs(_network)(depositAddress, confirmations)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
         case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
-        case Chain.BCash:
-            return (await getBCashUTXOs(_network)(_depositAddress, confirmations, endpoint)).map((utxo: BCashUTXO) => ({ chain: Chain.BCash as Chain.BCash, utxo }));
+            return (await getZcashUTXOs(_network)(depositAddress, confirmations)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
+        case Chain.BitcoinCash:
+            // tslint:disable-next-line: no-unnecessary-type-assertion
+            return (await getBitcoinCashUTXOs(_network)(depositAddress, confirmations)).map((utxo: BitcoinCashUTXO) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }
@@ -111,7 +123,7 @@ export const SECONDS = 1000;
 // tslint:disable-next-line: no-string-based-set-timeout
 export const sleep = async (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-export interface Signature { r: string; s: string; v: number; }
+interface Signature { r: string; s: string; v: number; }
 
 export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
 
@@ -119,7 +131,6 @@ const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
 export const fixSignature = (response: Tx, network: NetworkDetails): Signature => {
-
     const r = response.signature.r;
     let s = new BN(strip0x(response.signature.s), "hex");
     let v = ((parseInt(response.signature.v || "0", 10) + 27) || 27);
@@ -156,10 +167,11 @@ export const fixSignature = (response: Tx, network: NetworkDetails): Signature =
     if (recovered[v].equals(expected)) {
         // Do nothing
     } else if (recovered[switchV(v)].equals(expected)) {
-        console.warn("Switching v value");
+        // tslint:disable-next-line: no-console
+        console.info("[info][ren-js] switching v value");
         v = switchV(v);
     } else {
-        throw new Error("Invalid signature. Unable to recover mint authority from signature.");
+        throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
     }
 
     const signature: Signature = {

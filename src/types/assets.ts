@@ -1,12 +1,8 @@
-import { bchAddressToHex } from "../blockchain/bch";
-import { btcAddressToHex } from "../blockchain/btc";
-import { zecAddressToHex } from "../blockchain/zec";
-
 export enum Chain {
     Bitcoin = "Btc",
     Ethereum = "Eth",
     Zcash = "Zec",
-    BCash = "Bch",
+    BitcoinCash = "Bch",
 }
 
 export enum Asset {
@@ -27,23 +23,29 @@ export enum Token {
 
 export const Tokens = {
     BTC: {
+        Mint: Token.Btc2Eth,
         Btc2Eth: Token.Btc2Eth,
+
+        Burn: Token.Eth2Btc,
         Eth2Btc: Token.Eth2Btc,
-        addressToHex: btcAddressToHex,
     },
     ZEC: {
+        Mint: Token.Zec2Eth,
         Zec2Eth: Token.Zec2Eth,
+
+        Burn: Token.Eth2Zec,
         Eth2Zec: Token.Eth2Zec,
-        addressToHex: zecAddressToHex,
     },
     BCH: {
+        Mint: Token.Bch2Eth,
         Bch2Eth: Token.Bch2Eth,
+
+        Burn: Token.Eth2Bch,
         Eth2Bch: Token.Eth2Bch,
-        addressToHex: bchAddressToHex,
     },
 };
 
-export interface ActionDetails {
+interface ActionDetails {
     asset: Asset;
     from: Chain;
     to: Chain;

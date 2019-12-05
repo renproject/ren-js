@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
@@ -24,11 +26,15 @@ interface ContractCall {
     txConfig?: TransactionConfig;
 }
 
-export interface ShiftInFromMessageID extends ContractCall {
+export interface ShiftInFromRenTxHash extends ContractCall {
     /**
      * Provide the message ID returned from RenVM to continue a previous
      * shiftIn.
      */
+    renTxHash: string;
+}
+
+interface ShiftInFromRenTxHashOld extends ContractCall {
     messageID: string;
 }
 
@@ -41,7 +47,7 @@ export interface ShiftInFromDetails extends ContractCall {
     /**
      * The amount of `sendToken` to be sent
      */
-    sendAmount: number;
+    sendAmount: BN | BigNumber | number | string;
 
     /**
      * An option to override the default nonce generated randomly
@@ -49,8 +55,8 @@ export interface ShiftInFromDetails extends ContractCall {
     nonce?: string;
 }
 
-export type ShiftInParams = ShiftInFromMessageID | ShiftInFromDetails;
-export type ShiftInParamsAll = Partial<ShiftInFromMessageID> & Partial<ShiftInFromDetails>;
+export type ShiftInParams = ShiftInFromRenTxHash | ShiftInFromRenTxHashOld | ShiftInFromDetails;
+export type ShiftInParamsAll = Partial<ShiftInFromRenTxHash> & Partial<ShiftInFromRenTxHashOld> & Partial<ShiftInFromDetails>;
 
 interface ShiftOutParamsCommon {
     /**
@@ -71,6 +77,11 @@ interface ShiftOutParamsTxHash extends ShiftOutParamsCommon {
     /**
      * The hash of the burn transaction on Ethereum
      */
+    ethTxHash: string;
+}
+
+// Same as ShiftOutParamsTxHash, to remain backwards compatible
+interface ShiftOutParamsTxHashOld extends ShiftOutParamsCommon {
     txHash: string;
 }
 
@@ -81,5 +92,5 @@ interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
     burnReference: string;
 }
 
-export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | ShiftOutParamsTxHash;
-export type ShiftOutParamsAll = ShiftOutParamsCommon & Partial<ShiftOutParamsContractCall> & Partial<ShiftOutParamsBurnRef> & Partial<ShiftOutParamsTxHash>;
+export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | (ShiftOutParamsTxHash | ShiftOutParamsTxHashOld);
+export type ShiftOutParamsAll = ShiftOutParamsCommon & Partial<ShiftOutParamsContractCall> & Partial<ShiftOutParamsBurnRef> & (Partial<ShiftOutParamsTxHash> & Partial<ShiftOutParamsTxHashOld>);

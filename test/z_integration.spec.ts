@@ -233,7 +233,7 @@ describe("Shifting in and shifting out", function () {
         const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, shiftedToken: "zBCH", shifter: network.contracts.addresses.shifter.BCHShifter }) };
 
         for (const testcaseFn of [
-            { ...caseBTC, it, },
+            { ...caseBTC, it: it.skip, },
             { ...caseZEC, it: it.skip, },
             { ...caseBCH, it: it.skip, },
         ]) {

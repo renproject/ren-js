@@ -33,16 +33,16 @@ export class ShiftInObject {
         const renTxHash = (params as ShiftInParamsAll).renTxHash || (params as ShiftInParamsAll).messageID;
 
         if (!renTxHash) {
-            const { sendToken, contractParams, sendTo, sendAmount, nonce: maybeNonce } = params as ShiftInFromDetails;
+            const { sendToken, contractParams, sendTo, /*sendAmount,*/ nonce: maybeNonce } = params as ShiftInFromDetails;
 
             const nonce = maybeNonce || randomNonce();
             (this.params as ShiftInFromDetails).nonce = nonce;
 
             // const sendAmountString = BigNumber.isBigNumber(sendAmount) ? sendAmount.toFixed() : new BigNumber(sendAmount.toString()).toFixed();
-            const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
+            // const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
 
             // TODO: Validate inputs
-            const gHash = generateGHash(contractParams, sendAmountNumber, strip0x(sendTo), sendToken, nonce, network);
+            const gHash = generateGHash(contractParams, /*sendAmountNumber,*/ strip0x(sendTo), sendToken, nonce, network);
             const gatewayAddress = generateAddress(sendToken, gHash, network);
             this.gatewayAddress = gatewayAddress;
         }

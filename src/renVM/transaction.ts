@@ -5,7 +5,7 @@ import { Arg, Args } from "./jsonRPC";
 
 type MintArgsArray = [
     Arg<"phash", "b32", string>, // base64
-    Arg<"amount", "u64", number>,
+    // Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>, // base64
     Arg<"to", "b20", string>, // base64
     Arg<"n", "b32", string>, // base64
@@ -18,7 +18,7 @@ type BurnArgsArray = [
 
 type TxOutputArgsArray = [
     Arg<"phash", "b32", string>,
-    Arg<"amount", "u64", number>,
+    // Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>,
     Arg<"to", "b20", string>,
     Arg<"n", "b32", string>,

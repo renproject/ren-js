@@ -38,10 +38,10 @@ describe("Utils", function () {
 
     const testcases = [
         // { name: "mainnet", network: NetworkMainnet, expectedHash: "", expectedAddress: "" },
-        { name: "chaosnet", network: NetworkChaosnet, expectedHash: "0xde0f989dd17a89c6da29fae8a38e36dd8d4fd6d5416d389da7a760fc219a3010", expectedAddress: "38SYZCS9TAWxBcFyuZuweZHLVF4u2vTGxH" },
-        { name: "testnet", network: NetworkTestnet, expectedHash: "0x6ac8690a3340bc5de36b39ea0a1f42a472765fd7ebe19351911e18838303dd3e", expectedAddress: "2NFHUxhcDYTc1sA9mK8go6eG1Tkb7Bqu1it" },
-        { name: "devnet", network: NetworkDevnet, expectedHash: "0x4665a9c6b5286b27da5c858e465c32a1833c375d0ea7e8e98916ad735201af61", expectedAddress: "2N8uAwCEh4fsNki1bMfyjVwS6769yf2Juoa" },
-        { name: "localnet", network: NetworkLocalnet, expectedHash: "0x7652644d54e47c65104a6e175117d803a8f5ffd7fdb585cf2123b81ea4ba8b27", expectedAddress: "2NCFmMCp9CbwpSBkdFkeUoAQJtDVRbCsZsP" },
+        { name: "chaosnet", network: NetworkChaosnet, expectedHash: "0x3bca438afb8eac25dd98dfa67347f1c6aac8f9102b4c10c3272a7c3aaa2046a9", expectedAddress: "35KV2vwTMi6LRNLZ9NAAGpjPzzQfN7uAzP" },
+        { name: "testnet", network: NetworkTestnet, expectedHash: "0x81ec041a5c61de9f325b337a6e4df29d12aeef7d1fb62d7230ea87e112c7460c", expectedAddress: "2Mu9y93vrAF6C5Eps8mJQvamVhqE9B3TVCs" },
+        { name: "devnet", network: NetworkDevnet, expectedHash: "0x801702fa5c5604dd2e22465986f515567ff1a04e6b7a10eb3f605e28b038c031", expectedAddress: "2N9xBcd9T9D1Lzz3ZVj2izspFY7dgcRKJRw" },
+        { name: "localnet", network: NetworkLocalnet, expectedHash: "0x14b37a9ea93aece89a5c696544bcb713050bc07b87bc375acaa4ddd9cda41c11", expectedAddress: "2MyZ6nWRCmpdsxvtf1G3LiFgGHnZKvN17Pj" },
     ];
 
     for (const testcase of testcases) {
@@ -61,7 +61,7 @@ describe("Utils", function () {
             const to = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
             const nonce = "0x3205f743e45858d2a797a88d867264ab9d3b310fc0853056cdd92d9b1b4bd1d5";
 
-            generateGHash(payload, amount, strip0x(to), Tokens.BTC.Btc2Eth, nonce, testcase.network)
+            generateGHash(payload, /*amount,*/ strip0x(to), Tokens.BTC.Btc2Eth, nonce, testcase.network)
                 .should.equal(testcase.expectedHash);
         });
 

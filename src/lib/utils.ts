@@ -67,13 +67,13 @@ export const getTokenAddress = (action: Token, network: NetworkDetails): string 
     }
 };
 
-export const generateGHash = (payload: Args, amount: number | string, to: string, shiftAction: Token, nonce: string, network: NetworkDetails): string => {
+export const generateGHash = (payload: Args, /*amount: number | string,*/ to: string, shiftAction: Token, nonce: string, network: NetworkDetails): string => {
     const token = getTokenAddress(shiftAction, network);
     const pHash = generatePHash(payload);
 
     const encoded = rawEncode(
-        ["bytes32", "uint256", "address", "address", "bytes32"],
-        [Ox(pHash), amount, Ox(token), Ox(to), Ox(nonce)],
+        ["bytes32", /*"uint256",*/ "address", "address", "bytes32"],
+        [Ox(pHash), /*amount,*/ Ox(token), Ox(to), Ox(nonce)],
     );
 
     return Ox(keccak256(encoded));

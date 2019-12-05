@@ -67,7 +67,7 @@ export class ShifterNetwork {
                         // The hash of the payload data
                         { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
                         // The amount of BTC (in SATs) that has be transferred to the gateway
-                        { name: "amount", type: "u64", value: amount },
+                        // { name: "amount", type: "u64", value: amount },
                         // The ERC20 contract address on Ethereum for zBTC
                         { name: "token", type: "b20", value: Buffer.from(strip0x(token), "hex").toString("base64") },
                         // The address on the Ethereum blockchain to which ZBTC will be transferred

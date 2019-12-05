@@ -102,9 +102,9 @@
         "send-crypto": "0.1.4",
         "sha3": "^2.1.1",
         "wallet-address-validator": "^0.2.4",
-        "web3": "^2.0.0-alpha",
-        "web3-core": "^2.0.0-alpha",
-        "web3-eth-abi": "^2.0.0-alpha"
+        "web3": "^2.0.0-alpha.1",
+        "web3-core": "^2.0.0-alpha.1",
+        "web3-eth-abi": "^2.0.0-alpha.1"
     },
     "resolutions": {
         "sha3": "^2.1.1"

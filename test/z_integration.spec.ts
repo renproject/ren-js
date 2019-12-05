@@ -234,8 +234,8 @@ describe("Shifting in and shifting out", function () {
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
-            { ...caseZEC, it, },
-            { ...caseBCH, it, },
+            { ...caseZEC, it: it.skip, },
+            { ...caseBCH, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
@@ -292,7 +292,7 @@ describe("Shifting in and shifting out", function () {
         }
 
         for (const testcaseFn of [
-            { ...caseBTC, it, },
+            { ...caseBTC, it: it.skip, },
             { ...caseZEC, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code

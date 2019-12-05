@@ -135,6 +135,7 @@ describe("Shifting in and shifting out", function () {
     };
 
     const burnTest = async (
+        token: string,
         sendToken: Token,
         erc20Contract: Contract,
         shifterAddress: string,
@@ -185,7 +186,7 @@ describe("Shifting in and shifting out", function () {
             {
                 name: "_to",
                 type: "bytes",
-                value: Ox(bs58.decode(srcAddress).toString("hex")),
+                value: RenJS.utils[token.toLowerCase() as "btc" | "zec" | "bch"].addressToHex(srcAddress),
             },
             {
                 name: "_amount",
@@ -278,11 +279,11 @@ describe("Shifting in and shifting out", function () {
                 // amount = 0.000225 * (10 ** 8);
                 // const burnValue = amount;
                 console.log("Starting burn test:");
-                const initialBalance = await account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress.toString(), bn: BigNumber });
-                await burnTest(testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress.toString());
+                const initialBalance = await account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber });
+                await burnTest(testcase.token, testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress);
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
-                const finalBalance = await account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress.toString(), bn: BigNumber });
+                const finalBalance = await account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber });
 
                 // finalBalance.sub(initialBalance).should.bignumber.at.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
                 // finalBalance.sub(initialBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));

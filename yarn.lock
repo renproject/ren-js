@@ -7102,10 +7102,10 @@ semver@~5.4.1:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.4.1.tgz#e059c09d8571f0540823733433505d3a2f00b18e"
   integrity sha512-WfG/X9+oATh81XtllIo/I8gOiY9EXRdv1cQdyykeXK17YcUW3EXUAi2To4pcH6nZtJPr7ZOpM5OMyWJZm+8Rsg==
 
-send-crypto@0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.1.3.tgz#9c0ed7799cc1d92f31ed5d84faf8c21380a74256"
-  integrity sha512-z9FrBqO4li7j4pbZZXwwIE+ML7gevJucK6jFWYCLGs4qFunuVmYbyTv++uGFeC5oqbafQEYx9Qg7+xoaxtYUBQ==
+send-crypto@0.1.4:
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.1.4.tgz#c96b33485485f903c3a748f40fa4af8256ff2bfd"
+  integrity sha512-hp+Acbk1XIjexxLApW/P76qkBSDnWBg55S9xZZRLGfFRZIT/kdJ1Dw4WCmlw6iRm/LIglGiYC++0/mB8Ob/IPQ==
   dependencies:
     "@truffle/hdwallet-provider" "^1.0.26"
     "@types/bchaddrjs" "^0.4.0"
@@ -7211,10 +7211,10 @@ sha.js@^2.4.0, sha.js@^2.4.8:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-sha3@^2.0.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/sha3/-/sha3-2.1.0.tgz#d9432c115145e6685bed794a1f6c7a3bfdc9bf09"
-  integrity sha512-9j55sakgCgQ0/Y9Ez3fyHUVcKrl1gyTptt6QJVmg97JqZCoWofIkzpDH61brpHdfx3LWHk8bXiLPj44kS6bbpA==
+sha3@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/sha3/-/sha3-2.1.1.tgz#488c0f978a73ea540cc4f4a2235a77aed095c031"
+  integrity sha512-hj6dCLbWByenZarg2gb2VFD9zoY5kr/FMriDcbtVDLJ5geOWGOJCI0jQUjAzoY/ZHlkt8BSEbh9KJEDT8AGuJQ==
   dependencies:
     buffer "5.4.3"
 
@@ -8121,7 +8121,12 @@ typeforce@^1.11.3:
   resolved "https://registry.yarnpkg.com/typeforce/-/typeforce-1.18.0.tgz#d7416a2c5845e085034d70fcc5b6cc4a90edbfdc"
   integrity sha512-7uc1O8h1M1g0rArakJdf0uLRSSgFcYexrVoKo+bzJd32gd4gDy2L/Z+8/FjPnU9ydY3pEnVPtr9FyscYY60K1g==
 
-typescript@3.7.2, typescript@3.7.x, typescript@^3.6.4:
+typescript@3.7.3:
+  version "3.7.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
+  integrity sha512-Mcr/Qk7hXqFBXMN7p7Lusj1ktCBydylfQM/FZCk5glCNQJrCUKPkMHdo9R0MTFWsC/4kPFvDS0fDPvukfCkFsw==
+
+typescript@3.7.x, typescript@^3.6.4:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.2.tgz#27e489b95fa5909445e9fef5ee48d81697ad18fb"
   integrity sha512-ml7V7JfiN2Xwvcer+XAf2csGO1bPBdRbFCkYBczNZggrBZ9c7G3riSUeJmqEU5uOtXNPMhE3n+R4FA/3YOAWOQ==

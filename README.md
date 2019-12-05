@@ -29,7 +29,7 @@ npm install --save @renproject/ren
 Importing using require syntax
 
 ```typescript
-const RenJS = require("@renproject/ren").default;
+const RenJS = require("@renproject/ren");
 ```
 
 Importing using ES6 syntax

@@ -37,7 +37,7 @@
         "build:prod": "$npm_execpath run clean && cross-env NODE_ENV=production webpack --mode production --progress --color",
         "test": "nyc ./node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "clean": "rm -rf dist",
-        "prepublishOnly": "$npm_execpath run lint && $npm_execpath run build:prod"
+        "prepublishOnly": "npmignore && $npm_execpath run lint && $npm_execpath run build:prod"
     },
     "devDependencies": {
         "@babel/core": "^7.7.4",
@@ -65,6 +65,7 @@
         "dotenv": "^8.2.0",
         "mocha": "^6.2.2",
         "npm-check-updates": "^3.2.2",
+        "npmignore": "^0.2.0",
         "nyc": "^14.1.1",
         "qrcode-terminal": "^0.12.0",
         "truffle-hdwallet-provider": "1.0.17",

@@ -1,5 +1,5 @@
 import { Currency, sleep } from "@renproject/react-components";
-import RenSDK, { NetworkDetails, Tokens as ShiftActions } from "@renproject/ren";
+import RenJS, { NetworkDetails } from "@renproject/ren";
 import BigNumber from "bignumber.js";
 import { Map as ImmutableMap } from "immutable";
 import { Container } from "unstated";

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import RenSDK, { Tokens as ShiftActions } from "@renproject/ren";
+import RenJS from "@renproject/ren";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../../lib/errors";
@@ -44,7 +44,7 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
                                 const currentOrderID = String(time);
 
                                 // TODO: Clean up
-                                const shift = commitment.sendToken === ShiftActions.BTC.Btc2Eth || commitment.sendToken === ShiftActions.ZEC.Zec2Eth || commitment.sendToken === ShiftActions.BCH.Bch2Eth ? {
+                                const shift = commitment.sendToken === RenJS.Tokens.BTC.Btc2Eth || commitment.sendToken === RenJS.Tokens.ZEC.Zec2Eth || commitment.sendToken === RenJS.Tokens.BCH.Bch2Eth ? {
                                     // Cast required by TS to differentiate ShiftIn and ShiftOut types.
                                     shiftIn: true as true,
                                     status: ShiftInStatus.Committed,
@@ -53,7 +53,7 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
                                         status: ShiftOutStatus.Committed,
                                     };
 
-                                const nonce = RenSDK.randomNonce();
+                                const nonce = RenJS.utils.randomNonce();
 
                                 const historyEvent: HistoryEvent = {
                                     ...shift,

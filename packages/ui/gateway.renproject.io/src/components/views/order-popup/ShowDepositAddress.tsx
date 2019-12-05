@@ -1,34 +1,33 @@
 import * as React from "react";
 
 import { Loading, TokenIcon } from "@renproject/react-components";
-import { Chain, strip0x, UTXO } from "@renproject/ren";
+import RenJS, { UTXO } from "@renproject/ren";
 import { OrderedMap } from "immutable";
 import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 
 import { ShiftInEvent, Token, Tx } from "../../../state/generalTypes";
 import { network } from "../../../state/sdkContainer";
-import { ReactComponent as Arrow } from "../../../styles/images/arrow-right.svg";
 import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
 import { ReactComponent as QR } from "../../../styles/images/qr.svg";
-import { OpeningOrderMini } from "../OpeningOrderMini";
 import { Popup } from "../Popup";
 
 export const txUrl = (tx: Tx | null): string => {
     if (!tx) { return ""; }
     const isTx = tx.hash && tx.hash.slice && tx.hash.match(/(0x)?[a-fA-F0-9]+/);
     switch (tx.chain) {
-        case Chain.Ethereum:
+        case RenJS.Chains.Ethereum:
             return `${network.contracts.etherscan}/tx/${tx.hash}`;
-        case Chain.Bitcoin:
-            return `https://chain.so/${isTx ? "tx" : "address"}/BTC${network.isTestnet ? "TEST" : ""}/${strip0x(tx.hash)}`;
-        case Chain.Zcash:
-            return `https://chain.so/${isTx ? "tx" : "address"}/ZEC${network.isTestnet ? "TEST" : ""}/${strip0x(tx.hash)}`;
-        case Chain.BCash:
-            return `https://explorer.bitcoin.com/${network.isTestnet ? "t" : ""}bch/${isTx ? "tx" : "address"}/${strip0x(tx.hash)}`;
+        case RenJS.Chains.Bitcoin:
+            return `https://chain.so/${isTx ? "tx" : "address"}/BTC${network.isTestnet ? "TEST" : ""}/${RenJS.utils.strip0x(tx.hash)}`;
+        case RenJS.Chains.Zcash:
+            return `https://chain.so/${isTx ? "tx" : "address"}/ZEC${network.isTestnet ? "TEST" : ""}/${RenJS.utils.strip0x(tx.hash)}`;
+        case RenJS.Chains.BitcoinCash:
+            return `https://explorer.bitcoin.com/${network.isTestnet ? "t" : ""}bch/${isTx ? "tx" : "address"}/${RenJS.utils.strip0x(tx.hash)}`;
+        default:
+            throw new Error(`Unsupported chain ${tx.chain}`);
     }
 };
-
 
 const INTEROP_LINK = "#";
 

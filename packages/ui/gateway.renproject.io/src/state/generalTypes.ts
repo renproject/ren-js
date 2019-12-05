@@ -1,5 +1,5 @@
 import { Currency } from "@renproject/react-components";
-import { Chain, NetworkDetails, Token as SDKToken, TxStatus } from "@renproject/ren";
+import RenJS, { NetworkDetails, TxStatus } from "@renproject/ren";
 import { isMainnetAddress, isTestnetAddress } from "bchaddrjs";
 import { Map } from "immutable";
 import { validate } from "wallet-address-validator";
@@ -32,11 +32,11 @@ const bchValidator = (address: string, isTestnet: boolean) => {
 const ethValidator = (address: string, isTestnet: boolean) => validate(address, "eth", isTestnet ? "testnet" : "prod");
 
 export const Tokens = Map<Token, TokenDetails>()
-    .set(Token.DAI, { symbol: Token.DAI, name: "Dai", decimals: 18, priority: 100, chain: Chain.Ethereum, validator: ethValidator })
-    .set(Token.BTC, { symbol: Token.BTC, name: "Bitcoin", decimals: 8, priority: 200, chain: Chain.Bitcoin, validator: btcValidator })
-    // .set(Token.ETH, { symbol: Token.ETH, name: "Ethereum", decimals: 18, priority: 1024, chain: Chain.Ethereum, validator: ethValidator })
-    .set(Token.ZEC, { symbol: Token.ZEC, name: "Zcash", decimals: 8, priority: 201, chain: Chain.Zcash, validator: zecValidator })
-    .set(Token.BCH, { symbol: Token.BCH, name: "BCash", decimals: 8, priority: 202, chain: Chain.BCash, validator: bchValidator })
+    .set(Token.DAI, { symbol: Token.DAI, name: "Dai", decimals: 18, priority: 100, chain: RenJS.Chains.Ethereum, validator: ethValidator })
+    .set(Token.BTC, { symbol: Token.BTC, name: "Bitcoin", decimals: 8, priority: 200, chain: RenJS.Chains.Bitcoin, validator: btcValidator })
+    // .set(Token.ETH, { symbol: Token.ETH, name: "Ethereum", decimals: 18, priority: 1024, chain: RenJS.Chains.Ethereum, validator: ethValidator })
+    .set(Token.ZEC, { symbol: Token.ZEC, name: "Zcash", decimals: 8, priority: 201, chain: RenJS.Chains.Zcash, validator: zecValidator })
+    .set(Token.BCH, { symbol: Token.BCH, name: "BCash", decimals: 8, priority: 202, chain: RenJS.Chains.BitcoinCash, validator: bchValidator })
     ;
 
 export const isEthereumBased = (token: Token) => {
@@ -44,7 +44,7 @@ export const isEthereumBased = (token: Token) => {
     if (!details) {
         return false;
     }
-    return details.chain === Chain.Ethereum;
+    return details.chain === RenJS.Chains.Ethereum;
 };
 
 export const isERC20 = (token: Token) => isEthereumBased(token) && token !== Token.ETH;
@@ -54,7 +54,7 @@ export interface TokenDetails {
     symbol: Token;
     decimals: number;
     priority: number;
-    chain: Chain;
+    chain: RenJS["Chains"]["Ethereum"] | RenJS["Chains"]["Bitcoin"] | RenJS["Chains"]["Zcash"] | RenJS["Chains"]["BitcoinCash"];
     validator: (address: string, isTestnet: boolean) => boolean;
 }
 
@@ -79,7 +79,7 @@ export const getReserve = (web3: Web3, _networkID: number, tokenAddress: string)
     new (web3.eth.Contract)(DEXReserveABI as AbiItem[], tokenAddress); // syncGetDEXReserveAddress(networkID, token));
 
 export interface Commitment {
-    sendToken: SDKToken;
+    sendToken: string;
     sendTo: string;
     sendAmount: number;
     contractFn: string;
@@ -94,7 +94,7 @@ export enum CommitmentType {
 
 export interface Tx {
     hash: string;
-    chain: Chain;
+    chain: RenJS["Chains"]["Ethereum"] | RenJS["Chains"]["Bitcoin"] | RenJS["Chains"]["Zcash"] | RenJS["Chains"]["BitcoinCash"];
 }
 
 export enum ShiftInStatus {

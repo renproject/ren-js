@@ -1,9 +1,5 @@
 import { sleep } from "@renproject/react-components";
-import RenVM, {
-    btcAddressFrom, Chain, NetworkChaosnet, NetworkDetails, NetworkDevnet, NetworkLocalnet,
-    NetworkTestnet, Ox, ShiftInObject, Signature, Tokens as ShiftActions, TxStatus, UTXO,
-    zecAddressFrom,
-} from "@renproject/ren";
+import RenJS, { NetworkDetails, ShiftInObject, Signature, TxStatus, UTXO } from "@renproject/ren";
 import BigNumber from "bignumber.js";
 import { Container } from "unstated";
 import Web3 from "web3";
@@ -14,25 +10,25 @@ import { NETWORK } from "../lib/environmentVariables";
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../lib/errors";
 import { getReserve, HistoryEvent, ShiftInStatus, ShiftOutStatus, Token } from "./generalTypes";
 
-const BitcoinTx = (hash: string) => ({ hash, chain: Chain.Bitcoin });
-const ZCashTx = (hash: string) => ({ hash, chain: Chain.Zcash });
-const BCashTx = (hash: string) => ({ hash, chain: Chain.BCash });
-const EthereumTx = (hash: string) => ({ hash, chain: Chain.Ethereum });
+const BitcoinTx = (hash: string) => ({ hash, chain: RenJS.Chains.Bitcoin });
+const ZCashTx = (hash: string) => ({ hash, chain: RenJS.Chains.Zcash });
+const BCashTx = (hash: string) => ({ hash, chain: RenJS.Chains.BitcoinCash });
+const EthereumTx = (hash: string) => ({ hash, chain: RenJS.Chains.Ethereum });
 
-export let network: NetworkDetails = NetworkTestnet;
+export let network: NetworkDetails = RenJS.NetworkDetails.NetworkTestnet;
 switch (NETWORK) {
     case "development":
-        network = NetworkLocalnet; break;
+        network = RenJS.NetworkDetails.stringToNetwork("localnet"); break;
     case "devnet":
-        network = NetworkDevnet; break;
+        network = RenJS.NetworkDetails.stringToNetwork("devnet"); break;
     case "testnet":
-        network = NetworkTestnet; break;
+        network = RenJS.NetworkDetails.stringToNetwork("testnet"); break;
     case "chaosnet":
-        network = NetworkChaosnet; break;
+        network = RenJS.NetworkDetails.stringToNetwork("chaosnet"); break;
 }
 
 const initialState = {
-    sdkRenVM: null as null | RenVM,
+    sdkRenVM: null as null | RenJS,
     sdkAddress: null as string | null,
     sdkWeb3: null as Web3 | null,
     sdkNetworkID: 0,
@@ -58,7 +54,7 @@ export class SDKContainer extends Container<typeof initialState> {
         await this.setState({
             sdkWeb3: web3,
             sdkNetworkID: networkID,
-            sdkRenVM: new RenVM(network),
+            sdkRenVM: new RenJS(network),
             sdkAddress: address,
         });
     }
@@ -73,20 +69,17 @@ export class SDKContainer extends Container<typeof initialState> {
             return;
         }
         const defaultToken = this.state.order.commitment.sendToken.slice(0, 3) as Token;
-        console.log("here!");
         const contractParams = this.state.order.commitment.contractParams.map(param => {
             const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
             try {
                 if (match && (match[1] === token || (!match[1] && token === defaultToken))) {
-                    return { ...param, value: RenVM.Tokens[token].addressToHex(address) };
+                    return { ...param, value: RenJS.Tokens[token].addressToHex(address) };
                 }
             } catch (error) {
                 _catchInteractionErr_(error, "...");
             }
             return param;
         });
-        console.log("here 2!");
-        console.log(contractParams);
         await this.setState({ order: ({ ...this.state.order, commitment: { ...this.state.order.commitment, contractParams } }) });
     }
 
@@ -119,7 +112,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
     //     const dex = getExchange(web3, networkID);
 
-    //     const srcToken = order.commitment.sendToken === ShiftActions.ZEC.Zec2Eth ? Token.ZEC : order.commitment.sendToken === ShiftActions.BCH.Bch2Eth ? Token.BCH : Token.BTC;
+    //     const srcToken = order.commitment.sendToken === RenJS.Tokens.ZEC.Zec2Eth ? Token.ZEC : order.commitment.sendToken === RenJS.Tokens.BCH.Bch2Eth ? Token.BCH : Token.BTC;
     //     const amountBN = order.commitment.sendAmount;
     //     const srcTokenDetails = Tokens.get(srcToken);
     //     if (!srcTokenDetails) {
@@ -192,7 +185,8 @@ export class SDKContainer extends Container<typeof initialState> {
         if (!transactionHash) {
             const promiEvent = renVM.shiftOut({
                 web3Provider: web3.currentProvider,
-                sendToken: order.commitment.sendToken,
+                // tslint:disable-next-line: no-any
+                sendToken: order.commitment.sendToken as any,
                 sendTo: order.commitment.sendTo,
                 contractFn: order.commitment.contractFn,
                 contractParams: order.commitment.contractParams,
@@ -248,7 +242,8 @@ export class SDKContainer extends Container<typeof initialState> {
 
         const shiftOutObject = await renVM.shiftOut({
             web3Provider: web3.currentProvider,
-            sendToken: order.commitment.sendToken,
+            // tslint:disable-next-line: no-any
+            sendToken: order.commitment.sendToken as any,
             txHash: order.inTx.hash
         }).readFromEthereum();
 
@@ -267,12 +262,12 @@ export class SDKContainer extends Container<typeof initialState> {
         // tslint:disable-next-line: no-any
         const address = (response as unknown as any).tx.args[1].value;
         await this.updateOrder({
-            outTx: order.commitment.sendToken === ShiftActions.ZEC.Eth2Zec ?
-                ZCashTx(zecAddressFrom(address, "base64")) :
-                order.commitment.sendToken === ShiftActions.BCH.Eth2Bch ?
+            outTx: order.commitment.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
+                ZCashTx(RenJS.utils.zec.addressFrom(address, "base64")) :
+                order.commitment.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
                     // BCashTx(bchAddressFrom(address, "base64")) :
                     BCashTx(address) :
-                    BitcoinTx(btcAddressFrom(address, "base64")),
+                    BitcoinTx(RenJS.utils.btc.addressFrom(address, "base64")),
             status: ShiftOutStatus.ReturnedFromRenVM,
         }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateOrder"));
     }
@@ -298,7 +293,8 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
         return renVM.shiftIn({
-            sendToken: order.commitment.sendToken,
+            // tslint:disable-next-line: no-any
+            sendToken: order.commitment.sendToken as any,
             sendTo: order.commitment.sendTo,
             sendAmount: order.commitment.sendAmount,
             contractFn: order.commitment.contractFn,
@@ -359,7 +355,7 @@ export class SDKContainer extends Container<typeof initialState> {
             .on("messageID", onMessageID)
             .on("status", onStatus);
         await this.updateOrder({
-            inTx: BitcoinTx(Ox(Buffer.from(signature.response.args.utxo.txHash, "base64"))),
+            inTx: BitcoinTx(RenJS.utils.Ox(Buffer.from(signature.response.args.utxo.txHash, "base64"))),
             status: ShiftInStatus.ReturnedFromRenVM,
         });
         return signature;
@@ -395,7 +391,7 @@ export class SDKContainer extends Container<typeof initialState> {
                 (promiEvent as any).once("confirmation", (_confirmations: number, newReceipt: TransactionReceipt) => { resolve([newReceipt, txHash]); });
             });
         } else {
-            receipt = await this.getReceipt(web3, transactionHash);
+            receipt = await this.getReceipt(web3, transactionHash) as TransactionReceipt;
         }
 
         await this.updateOrder({

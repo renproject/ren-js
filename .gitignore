@@ -19,7 +19,7 @@ src/.DS_Store
 typedoc/
 /types
 
-.env
+*.env
 
 *.map
 dist

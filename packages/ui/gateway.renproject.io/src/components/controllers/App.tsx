@@ -14,6 +14,32 @@ import { ReactComponent as Logo } from "../../styles/images/logo-small.svg";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { LoggedOutPopup } from "../views/LoggedOutPopup";
 import { OpeningOrder } from "./OpeningOrder";
+import styled from "styled-components";
+
+const smallLogo = require("../../styles/images/logo-small-grey.png");
+
+const Footer: React.FC<{}> = props => {
+    const Container = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid #ccc;
+    position: fixed;
+    bottom:0;
+    height: 30px;
+    width: 100%;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.4);
+    `;
+    const RenVMLink = styled.a`
+    text-decoration: underline;
+    `;
+    return (
+        <Container>
+            <img src={smallLogo} style={{width: "10px", marginRight: "5px"}} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
+        </Container>
+    );
+};
 
 /**
  * App is the main visual component responsible for displaying different routes
@@ -160,9 +186,7 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
                     }
                 </ErrorBoundary> : <></>}
             </div>
-            {!paused ? <div className="footer">
-                <Logo style={{ width: 15 }} /> <h2>Gateway JS</h2>
-            </div> : <></>}
+            <Footer />
         </main>;
     }
 ));

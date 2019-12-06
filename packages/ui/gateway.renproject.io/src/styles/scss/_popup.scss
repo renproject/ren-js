@@ -68,14 +68,14 @@
     height: 12px;
     width: 12px;
     margin-top: 0;
-    background: url('../images/exit-black.svg');
+    background: url("../images/exit-black.svg");
     background-size: 100%;
     cursor: pointer;
 }
 
 .popup--x.popup--x--white {
     margin-top: 0px;
-    background: url('../images/exit.svg');
+    background: url("../images/exit.svg");
 }
 
 .popup.open,
@@ -100,7 +100,6 @@
 }
 
 .popup.open {
-
     // Open Order
     .open--tokens {
         display: flex;
@@ -196,7 +195,7 @@
     justify-content: center;
     flex-flow: column;
 
-    >span {
+    > span {
         margin-top: 15px;
     }
 }
@@ -208,14 +207,14 @@
     .address {
         @extend .monospace;
 
-        >span {
+        > span {
             background-color: $background;
             color: $background;
             font-size: 0px;
             border-bottom: 2px dotted transparentize($color: $grey-12, $amount: 0.5);
 
             &:after {
-                content: '...';
+                content: "...";
             }
         }
     }
@@ -228,7 +227,7 @@
         margin-top: 30px;
     }
 
-    .logged-out--account+.logged-out--account {
+    .logged-out--account + .logged-out--account {
         margin-top: 10px;
     }
 
@@ -283,7 +282,7 @@
 }
 
 .popup--body--details {
-    text-align: left;
+    text-align: center;
     color: $foreground;
     border-bottom: 1px solid #ccc;
     padding-bottom: 15px;
@@ -291,19 +290,30 @@
     padding: 10px 20px;
 
     .popup--body--title {
-        font-size: 20px;
+        font-size: 26px;
         margin-bottom: 2px;
     }
 
     .popup--body--values {
         font-size: 14px;
 
-        >span {
+        > span {
             line-height: 2.2;
         }
     }
 
-    >svg {
+    .clickable--amount {
+        color: #006fe8;
+        cursor: pointer;
+    }
+
+    .popup--token--icon .token--icon {
+        height: 55px;
+        max-width: 55px;
+        width: 55px;
+    }
+
+    > svg {
         width: 40px;
     }
 }

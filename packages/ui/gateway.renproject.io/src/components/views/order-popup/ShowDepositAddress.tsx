@@ -76,6 +76,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         };
 
         const showDepositAddress = () => {
+            // @ts-ignore
             setTimer(setTimeout(() => {
                 setShowSpinner(true);
             }, 5000)
@@ -94,6 +95,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             if (timer) {
                 clearTimeout(timer);
             }
+            // @ts-ignore
             setTimer(setTimeout(() => {
                 setCopied(false);
                 if (!showSpinner) {

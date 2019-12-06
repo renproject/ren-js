@@ -15,6 +15,8 @@ import { SubmitToEthereum } from "../views/order-popup/SubmitToEthereum";
 import { Popup } from "../views/Popup";
 import CopyToClipboard from "react-copy-to-clipboard";
 
+import styled from "styled-components";
+
 interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {
     orderID: string;
 }
@@ -95,10 +97,15 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
                     inner = <></>;
             }
 
+            const AmountSpan = styled.span`
+                color: #006fe8;
+                cursor: pointer;
+            `;
+
             return <>
                 {!paused ? <div className="popup--body--details">
                     <div className="popup--token--icon"><TokenIcon token={token} /></div>
-                    <div className="popup--body--title">Deposit <CopyToClipboard text={`${amount}`}><span className="clickable--amount">{amount}</span></CopyToClipboard> {token.toUpperCase()}</div>
+                    <div className="popup--body--title">Deposit <CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard> {token.toUpperCase()}</div>
                     <div>to</div>
                     <div className="popup--body--values">
                     <span><span className="url"><img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} /> {url}</span></span>{/* has requested <span className="url"><TokenIcon token={token} /><span> {amount} {token.toUpperCase()}</span></span> to the contract <span className="monospace url">{"0x1241343431431431431431".slice(0, 12)}...{"0x1241343431431431431431".slice(-5, -1)}</span> on Ethereum.</span>*/}

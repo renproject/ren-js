@@ -142,6 +142,24 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             background: linear-gradient(90deg, ${theme.primaryColor} 0%, ${theme.primaryColor.lighten(0.5)} 180%)
         `;
 
+        const DepositLabel = styled.label`
+        position: absolute;
+        top: 0;
+        width: 200px;
+        text-align: center;
+        margin-left: 100px;
+        font-size: 14px;
+        color: ${theme.lightGrey};
+        background-color: white;
+        margin-top: -10px;
+        `;
+
+        const StyledInput = styled.input`
+        color: ${theme.primaryColor.lighten(0.2)} !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        `;
+
 
         const showAddress = understood ?
             <>
@@ -150,8 +168,8 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     text={depositAddress || ""}
                     onCopy={onClickAddress}
                 >
-                    <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
-                        <input
+                    <div role="button" className={`address-input--copy ${copied || true ? "address-input--copied" : ""}`}>
+                        <StyledInput
                             type="text"
                             name="address"
                             disabled={true}
@@ -160,7 +178,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                             required={true}
                             aria-required={true}
                         />
-                        <label className="copied-text">Copied</label>
+                        <DepositLabel>Bitcoin Deposit Address</DepositLabel>
                         <QR className="qr" onClick={toggleQR} />
                         <Copy />
                     </div>

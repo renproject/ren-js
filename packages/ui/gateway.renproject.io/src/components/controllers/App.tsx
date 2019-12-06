@@ -167,8 +167,7 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
 
         return <main className={paused ? "paused" : ""} onClick={paused ? resume : undefined}>
             {!paused ? <div className="banner">
-                <Logo style={{ width: 40 }} /> <h1>RenVM</h1>
-                {network.isTestnet ? <span className="testnet-badge">Testnet</span> : <></>}
+                <span>{uiContainer.state.status}</span>
                 <div role="button" className={`popup--x`} onClick={pause} />
             </div> : <></>}
             <div className="main">

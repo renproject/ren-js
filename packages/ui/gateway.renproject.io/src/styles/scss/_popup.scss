@@ -62,20 +62,21 @@
 }
 
 .popup--x {
-    position: absolute;
+    // position: absolute;
     right: ((40px - 12px) / 2);
     top: ((40px - 12px) / 2);
     height: 12px;
     width: 12px;
     margin-top: 0;
-    background: url("../images/exit-black.svg");
+    mask-image: url("../images/exit-black.svg");
     background-size: 100%;
+    background-color: #b0b0b0;
     cursor: pointer;
 }
 
 .popup--x.popup--x--white {
     margin-top: 0px;
-    background: url("../images/exit.svg");
+    mask-image: url("../images/exit.svg");
 }
 
 .popup.open,

@@ -37,6 +37,7 @@ const initialState = {
     networkID: network.contracts.networkID,
 
     loggedOut: null as string | null,
+    status: "Deposit Information",
     paused: false,
 
     preferredCurrency: Currency.USD,

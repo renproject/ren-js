@@ -30,7 +30,7 @@ export const RenElementHTML = (uniqueID: string) => `
         left: 50%;
         transform: translate(-50%, -50%);
         width:460px;
-        height:410px;
+        height:470px;
         z-index:1000000;
         transition: all 300ms;
     }

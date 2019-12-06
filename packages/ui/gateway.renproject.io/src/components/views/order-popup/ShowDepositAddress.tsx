@@ -146,12 +146,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         const showAddress = understood ?
             <>
                 <ScanningBanner>Scanning for transaction</ScanningBanner>
-                <div className="address-input--message">
-                    <p>Only send the <b>exact</b> amount of {token.toUpperCase()} in a single transaction or funds will be lost. Future versions will allow sending any amount.</p>
-                </div>
-                <div className="address-input--label">
-                    Send <b>{amount} {network.isTestnet ? <i>testnet </i> : ""}{token.toUpperCase()}</b> to:
-                            </div>
                 <CopyToClipboard
                     text={depositAddress || ""}
                     onCopy={onClickAddress}

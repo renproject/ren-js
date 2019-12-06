@@ -75,7 +75,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         // Defaults for demo
 
         // tslint:disable-next-line: prefer-const
-        let [understood, setUnderstood] = React.useState(true);
+        let [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
         const [showQR, setShowQR] = React.useState(false);
         const [depositAddress, setDepositAddress] = React.useState<string | undefined>(undefined);

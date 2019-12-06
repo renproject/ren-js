@@ -3,6 +3,7 @@ import * as React from "react";
 import { Loading, TokenIcon } from "@renproject/react-components";
 import BigNumber from "bignumber.js";
 
+import QRCode from "qrcode.react";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { connect, ConnectedProps } from "../../state/connect";
 import { ShiftInStatus, ShiftOutEvent, ShiftOutStatus, Token } from "../../state/generalTypes";
@@ -28,6 +29,7 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
     ({ orderID, containers: [uiContainer, sdkContainer] }) => {
 
         // tslint:disable-next-line: prefer-const
+        const [showQR, setShowQR] = React.useState(false);
         let [returned, setReturned] = React.useState(false);
         const [ERC20Approved, setERC20Approved] = React.useState(false);
 
@@ -56,6 +58,7 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
         if (!order) {
             throw new Error(`Order ${orderID} not set`);
         }
+        const depositAddress = sdkContainer.generateAddress(orderID) || "";
 
         const { paused } = uiContainer.state;
 
@@ -77,10 +80,11 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         mini={paused}
                         orderID={orderID}
                         order={order}
-                        generateAddress={sdkContainer.generateAddress}
+                        depositAddress={depositAddress}
                         token={token}
                         amount={amount}
                         waitForDeposit={sdkContainer.waitForDeposits}
+                        onQRClick={() => setShowQR(!showQR)}
                     />;
                     break;
                 case ShiftInStatus.Deposited:
@@ -102,14 +106,26 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 cursor: pointer;
             `;
 
+            const QRCodeContainer = styled.div`
+            background: #FFFFFF;
+            border: 1px solid #DBE0E8;
+            border-radius: 6px;
+            display: inline-flex;
+            padding: 15px;
+            `;
+
             return <>
                 {!paused ? <div className="popup--body--details">
-                    <div className="popup--token--icon"><TokenIcon token={token} /></div>
-                    <div className="popup--body--title">Deposit <CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard> {token.toUpperCase()}</div>
-                    <div>to</div>
-                    <div className="popup--body--values">
-                    <span><span className="url"><img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} /> {url}</span></span>{/* has requested <span className="url"><TokenIcon token={token} /><span> {amount} {token.toUpperCase()}</span></span> to the contract <span className="monospace url">{"0x1241343431431431431431".slice(0, 12)}...{"0x1241343431431431431431".slice(-5, -1)}</span> on Ethereum.</span>*/}
-                    </div>
+                    {showQR ?
+                    <QRCodeContainer><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></QRCodeContainer>
+                    : <>
+                        <div className="popup--token--icon"><TokenIcon token={token} /></div>
+                        <div className="popup--body--title">Deposit <CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard> {token.toUpperCase()}</div>
+                        <div>to</div>
+                        <div className="popup--body--values">
+                            <span><span className="url"><img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} /> {url}</span></span>{/* has requested <span className="url"><TokenIcon token={token} /><span> {amount} {token.toUpperCase()}</span></span> to the contract <span className="monospace url">{"0x1241343431431431431431".slice(0, 12)}...{"0x1241343431431431431431".slice(-5, -1)}</span> on Ethereum.</span>*/}
+                        </div>
+                    </>}
                 </div> : <></>
                 }
                 {inner}

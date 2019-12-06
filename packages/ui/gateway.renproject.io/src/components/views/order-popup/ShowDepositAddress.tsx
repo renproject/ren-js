@@ -3,7 +3,6 @@ import * as React from "react";
 import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS, { UTXO } from "@renproject/ren";
 import { OrderedMap } from "immutable";
-import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 
 import { ShiftInEvent, Token, Tx } from "../../../state/generalTypes";
@@ -65,20 +64,19 @@ interface Props {
     token: Token;
     amount: string;
     orderID: string;
+    depositAddress: string;
     order: ShiftInEvent;
-    generateAddress(orderID: string): string | undefined;
+    onQRClick(): void;
     waitForDeposit(orderID: string, onDeposit: (utxo: UTXO) => void): Promise<void>;
 }
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, amount, token, orderID, order, generateAddress, waitForDeposit }) => {
+    ({ mini, amount, token, orderID, order, depositAddress, onQRClick, waitForDeposit }) => {
         // Defaults for demo
 
         // tslint:disable-next-line: prefer-const
         let [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
-        const [showQR, setShowQR] = React.useState(false);
-        const [depositAddress, setDepositAddress] = React.useState<string | undefined>(undefined);
         const [utxos, setUTXOs] = React.useState(OrderedMap<string, UTXO>());
 
         const [showSpinner, setShowSpinner] = React.useState(false);
@@ -89,16 +87,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         // useEffect replaces `componentDidMount` and `componentDidUpdate`.
         // To limit it to running once, we use the initialized hook.
         const [initialized, setInitialized] = React.useState(false);
-        React.useEffect(() => {
-            if (!initialized) {
-                try {
-                    setDepositAddress(generateAddress(orderID));
-                } catch (error) {
-                    setFailed(error);
-                }
-                setInitialized(true);
-            }
-        }, [initialized, generateAddress, orderID]);
 
         const onDeposit = (deposit: UTXO) => {
             setUTXOs(utxos.set(deposit.utxo.txid, deposit));
@@ -132,10 +120,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                 }
             }, 5000)
             );
-        };
-
-        const toggleQR = () => {
-            setShowQR(!showQR);
         };
 
         const ContinueButton = styled.button`
@@ -179,11 +163,11 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                             aria-required={true}
                         />
                         <DepositLabel>Bitcoin Deposit Address</DepositLabel>
-                        <QR className="qr" onClick={toggleQR} />
+                        <QR className="qr" onClick={onQRClick} />
                         <Copy />
                     </div>
                 </CopyToClipboard>
-                {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null}
+                {/* {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null} */}
             </> :
             <>
                 {failed ? <div className="red">{`${failed.message || failed}`}</div> :

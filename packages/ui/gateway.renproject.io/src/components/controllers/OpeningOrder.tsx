@@ -98,7 +98,7 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
             }
 
             const AmountSpan = styled.span`
-                color: #006fe8;
+                color: ${props => props.theme.primaryColor};
                 cursor: pointer;
             `;
 

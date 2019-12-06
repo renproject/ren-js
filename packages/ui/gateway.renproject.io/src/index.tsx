@@ -5,6 +5,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { Router } from "react-router-dom";
+import { ThemeProvider } from "styled-components";
 import { Provider } from "unstated";
 
 import { App } from "./components/controllers/App";
@@ -18,10 +19,17 @@ initializeSentry();
 const sdkContainer = new SDKContainer();
 const uiContainer = new UIContainer();
 
+const theme = {
+    primaryColor: "#006fe8"
+};
+
 ReactDOM.render(
     <Provider inject={[sdkContainer, uiContainer]}>
         <Router history={history}>
-            <App />
+
+            <ThemeProvider theme={theme}>
+                <App />
+            </ThemeProvider>
         </Router>
     </Provider>,
     document.getElementById("root") as HTMLElement

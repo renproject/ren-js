@@ -11,6 +11,8 @@ import { network } from "../../../state/sdkContainer";
 import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
 import { ReactComponent as QR } from "../../../styles/images/qr.svg";
 import { Popup } from "../Popup";
+import styled from "styled-components";
+import { theme } from "../../../theme";
 
 export const txUrl = (tx: Tx | null): string => {
     if (!tx) { return ""; }
@@ -109,6 +111,10 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             setShowQR(!showQR);
         };
 
+        const ContinueButton = styled.button`
+            background: linear-gradient(90deg, ${theme.primaryColor} 0%, ${theme.primaryColor.lighten(0.5)} 180%)
+        `;
+
         const showAddress = understood ?
             <>
                 <div className="address-input--message">
@@ -149,7 +155,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     </div>
                 }
                 <div className="popup--buttons">
-                    <button className="button open--confirm" disabled={depositAddress === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</button>
+                    <ContinueButton className="button" disabled={depositAddress === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</ContinueButton>
                 </div>
             </>;
 

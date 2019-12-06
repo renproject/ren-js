@@ -14,20 +14,18 @@ import { initializeSentry } from "./sentry";
 import { SDKContainer } from "./state/sdkContainer";
 import { UIContainer } from "./state/uiContainer";
 
+import { colors } from "./theme";
+
 initializeSentry();
 
 const sdkContainer = new SDKContainer();
 const uiContainer = new UIContainer();
 
-const theme = {
-    primaryColor: "#006fe8"
-};
-
 ReactDOM.render(
     <Provider inject={[sdkContainer, uiContainer]}>
         <Router history={history}>
 
-            <ThemeProvider theme={theme}>
+            <ThemeProvider theme={colors}>
                 <App />
             </ThemeProvider>
         </Router>

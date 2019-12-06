@@ -8,3 +8,4 @@ declare module "ethereumjs-wallet";
 declare module "ethereumjs-wallet/provider-engine";
 declare module "use-persisted-state";
 declare module "wallet-address-validator";
+declare module "styled-components-theme";

@@ -115,8 +115,18 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             background: linear-gradient(90deg, ${theme.primaryColor} 0%, ${theme.primaryColor.lighten(0.5)} 180%)
         `;
 
+        const ScanningDot = styled.span`
+            height: 15px;
+            width: 15px;
+            background-color: ${theme.primaryColor.lighten(0.2)};
+            border-radius: 50%;
+            display: inline-block;
+            border: solid 3px ${theme.primaryColor.lighten(0.9)};
+        `;
+
         const showAddress = understood ?
             <>
+                <div className={["spinner", !showSpinner ? "spinner--hidden" : ""].join(" ")}><ScanningDot /><span className="ellipsis">Scanning for transaction</span></div>
                 <div className="address-input--message">
                     <p>Only send the <b>exact</b> amount of {token.toUpperCase()} in a single transaction or funds will be lost. Future versions will allow sending any amount.</p>
                 </div>
@@ -143,7 +153,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     </div>
                 </CopyToClipboard>
                 {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null}
-                <div className={["spinner", !showSpinner ? "spinner--hidden" : ""].join(" ")}><span>Scanning for {token.toUpperCase()} deposits</span>{" "}<Loading /></div>
             </> :
             <>
                 {failed ? <div className="red">{`${failed.message || failed}`}</div> :

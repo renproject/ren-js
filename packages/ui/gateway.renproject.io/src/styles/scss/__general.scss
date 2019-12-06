@@ -9,10 +9,7 @@ html {
 }
 
 * {
-    font-family: 'SuisseIntl',
-        Helvetica,
-        Arial,
-        sans-serif;
+    font-family: "SuisseIntl", Helvetica, Arial, sans-serif;
 }
 
 body {
@@ -66,9 +63,9 @@ label {
     display: block;
 }
 
-input[type=number],
-input[type=text],
-input[type=password] {
+input[type="number"],
+input[type="text"],
+input[type="password"] {
     border: 1px solid $background;
     height: 35px;
     padding: 0 8px;
@@ -82,7 +79,7 @@ input[type=password] {
     }
 }
 
-input[type=checkbox] {
+input[type="checkbox"] {
     margin: 0 5px 0 0;
     vertical-align: middle;
 }
@@ -165,9 +162,8 @@ table th {
     padding: 20px 0;
 }
 
-
 .monospace {
-    font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
+    font-family: "Source Code Pro", "Courier New", Courier, monospace;
     letter-spacing: 0.5px;
 }
 
@@ -194,25 +190,25 @@ details {
 }
 
 .mobile-only {
-    @media(min-width: $min-md) {
+    @media (min-width: $min-md) {
         display: none !important;
     }
 }
 
 .no-mobile {
-    @media(max-width: $max-sm) {
+    @media (max-width: $max-sm) {
         display: none !important;
     }
 }
 
 .large-only {
-    @media(max-width: $max-lg) {
+    @media (max-width: $max-lg) {
         display: none !important;
     }
 }
 
 .no-large {
-    @media(min-width: $min-xl) {
+    @media (min-width: $min-xl) {
         display: none !important;
     }
 }
@@ -280,7 +276,7 @@ button {
     right: 55px;
     bottom: 35px;
 
-    @media(max-width: $max-xs) {
+    @media (max-width: $max-xs) {
         right: 10px;
         bottom: 10px;
     }
@@ -394,5 +390,29 @@ button {
 
     a {
         color: $blue-bright;
+    }
+}
+
+.ellipsis {
+    &:after {
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: bottom;
+        -webkit-animation: ellipsis steps(4, end) 900ms infinite;
+        animation: ellipsis steps(4, end) 900ms infinite;
+        content: "\2026"; /* ascii code for the ellipsis character */
+        width: 0px;
+    }
+
+    @keyframes ellipsis {
+        to {
+            width: 1.25em;
+        }
+    }
+
+    @-webkit-keyframes ellipsis {
+        to {
+            width: 1.25em;
+        }
     }
 }

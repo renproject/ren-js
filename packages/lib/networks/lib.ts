@@ -1,6 +1,5 @@
 import chaosnetJSON from "./src/networks/chaosnet";
 import devnetJSON from "./src/networks/devnet";
-import ganacheJSON from "./src/networks/ganache";
 import localnetJSON from "./src/networks/localnet";
 import mainnetJSON from "./src/networks/mainnet";
 import testnetJSON from "./src/networks/testnet";
@@ -10,7 +9,6 @@ export const chaosnet = chaosnetJSON;
 export const testnet = testnetJSON;
 export const devnet = devnetJSON;
 export const localnet = localnetJSON;
-export const ganache = ganacheJSON;
 
 export enum RenNetwork {
     Mainnet = "mainnet",

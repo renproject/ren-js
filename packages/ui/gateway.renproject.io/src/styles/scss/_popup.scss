@@ -284,6 +284,7 @@
 
 .popup--body--details {
     text-align: center;
+    background-color: #fdfdfe;
     color: $foreground;
     border-bottom: 1px solid #ccc;
     padding-bottom: 15px;
@@ -308,10 +309,13 @@
         cursor: pointer;
     }
 
-    .popup--token--icon .token--icon {
-        height: 55px;
-        max-width: 55px;
-        width: 55px;
+    .popup--token--icon {
+        padding: 15px 0;
+        .token--icon {
+            height: 55px;
+            max-width: 55px;
+            width: 55px;
+        }
     }
 
     > svg {

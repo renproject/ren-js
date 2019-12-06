@@ -289,8 +289,11 @@
     border-bottom: 1px solid #ccc;
     padding-bottom: 15px;
     min-height: 200px;
-
     padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
     .popup--body--title {
         font-size: 26px;

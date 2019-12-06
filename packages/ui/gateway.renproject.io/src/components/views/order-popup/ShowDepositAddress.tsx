@@ -115,31 +115,10 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             background: linear-gradient(90deg, ${theme.primaryColor} 0%, ${theme.primaryColor.lighten(0.5)} 180%)
         `;
 
-        const ScanningDot = styled.span`
-            height: 15px;
-            width: 15px;
-            background-color: ${theme.primaryColor.lighten(0.2)};
-            border-radius: 50%;
-            display: inline-block;
-            border: solid 3px ${theme.primaryColor.lighten(0.9)};
-            margin-right: 5px;
-        `;
-
-        const ScanningDiv = styled.div`
-            font-size: 13.44px;
-            color: ${theme.lightGrey};
-            display: flex;
-            justify-content: center;
-            padding: 40px 0;
-        `;
-
-        const ScanningText = styled.span`
-            min-width: 170px;
-        `;
 
         const showAddress = understood ?
             <>
-                <ScanningDiv><ScanningDot /><ScanningText className="ellipsis">Scanning for transaction</ScanningText></ScanningDiv>
+                <ScanningBanner>Scanning for transaction</ScanningBanner>
                 <div className="address-input--message">
                     <p>Only send the <b>exact</b> amount of {token.toUpperCase()} in a single transaction or funds will be lost. Future versions will allow sending any amount.</p>
                 </div>
@@ -216,3 +195,30 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             </div>
         </Popup>;
     };
+
+const ScanningBanner: React.FC<{}> = props => {
+    const ScanningDot = styled.span`
+            height: 15px;
+            width: 15px;
+            background-color: ${theme.primaryColor.lighten(0.2)};
+            border-radius: 50%;
+            display: inline-block;
+            border: solid 3px ${theme.primaryColor.lighten(0.9)};
+            margin-right: 5px;
+        `;
+
+    const ScanningDiv = styled.div`
+            font-size: 13.44px;
+            color: ${theme.lightGrey};
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+        `;
+
+    const ScanningText = styled.span`
+            min-width: 170px;
+        `;
+    return (
+        <ScanningDiv><ScanningDot /><ScanningText className="ellipsis">{props.children}</ScanningText></ScanningDiv>
+    );
+};

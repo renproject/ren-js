@@ -86,7 +86,7 @@
         "webpack-node-externals": "1.7.2"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.3.27",
+        "@renproject/contracts": "^0.3.28",
         "@types/bn.js": "^4.11.5",
         "@types/bs58": "^4.0.1",
         "@types/node": "^12.12.14",

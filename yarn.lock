@@ -181,10 +181,10 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@renproject/contracts@^0.3.27":
-  version "0.3.27"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.27.tgz#bf3ae0f172b9214d5f98f5d3e96eb0966a6ea34d"
-  integrity sha512-6dPednS7S17cTXgVfk46LgZcT5dm51eqQF/XSWe7OH/Ax5xZA8rwbgdI1Jiqm5KMPBfbf6arSZOEasEHAH1FTg==
+"@renproject/contracts@^0.3.28":
+  version "0.3.28"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.28.tgz#baaa6080fb84d38444e1fb96f56c2ed16e478262"
+  integrity sha512-n2g/k711MYTPv9UjNV8JNUvkheBAgigbupVK8szv/Y68J0BUdF/FC2eiL5JNTQgBQuJB9g877ZdR9c+kosmrWw==
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#e9e7357e3e8d6e30bbd03a72eaaefdcb9a0e6ad7"
 
@@ -2038,9 +2038,9 @@ camelcase@^5.0.0, camelcase@^5.3.1:
   integrity sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==
 
 caniuse-lite@^1.0.30000844:
-  version "1.0.30001013"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001013.tgz#da2440d4d266a17d40eb79bd19c0c8cc1d029c72"
-  integrity sha512-hOAXaWKuq/UVFgYawxIOdPdyMQdYcwOCDOjnZcKn7wCgFUrhP7smuNZjGLuJlPSgE6aRA4cRJ+bGSrhtEt7ZAg==
+  version "1.0.30001015"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001015.tgz#15a7ddf66aba786a71d99626bc8f2b91c6f0f5f0"
+  integrity sha512-/xL2AbW/XWHNu1gnIrO8UitBGoFthcsDgU9VLK1/dpsoxbaD5LscHozKze05R6WLsBvLhqv78dAPozMFQBYLbQ==
 
 caseless@~0.12.0:
   version "0.12.0"
@@ -2678,9 +2678,9 @@ default-require-extensions@^2.0.0:
     strip-bom "^3.0.0"
 
 defer-to-connect@^1.0.1:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/defer-to-connect/-/defer-to-connect-1.1.0.tgz#b41bd7efa8508cef13f8456975f7a278c72833fd"
-  integrity sha512-WE2sZoctWm/v4smfCAdjYbrfS55JiMRdlY9ZubFhsYbteCK9+BvAx4YV7nPjYM6ZnX5BcoVKwfmyx9sIFTgQMQ==
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/defer-to-connect/-/defer-to-connect-1.1.1.tgz#88ae694b93f67b81815a2c8c769aef6574ac8f2f"
+  integrity sha512-J7thop4u3mRTkYRQ+Vpfwy2G5Ehoy82I14+14W4YMDLKdWloI9gSzRbV30s/NckQGVJtPkWNcW4oMAUigTdqiQ==
 
 deferred-leveldown@~1.2.1:
   version "1.2.2"
@@ -2985,9 +2985,9 @@ error-ex@^1.3.1:
     is-arrayish "^0.2.1"
 
 es-abstract@^1.5.0, es-abstract@^1.5.1:
-  version "1.16.2"
-  resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.16.2.tgz#4e874331645e9925edef141e74fc4bd144669d34"
-  integrity sha512-jYo/J8XU2emLXl3OLwfwtuFfuF2w6DYPs+xy9ZfVyPkDcrauu6LYrw/q2TyCtrbc/KUdCiC5e9UajRhgNkVopA==
+  version "1.16.3"
+  resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.16.3.tgz#52490d978f96ff9f89ec15b5cf244304a5bca161"
+  integrity sha512-WtY7Fx5LiOnSYgF5eg/1T+GONaGmpvpPdCpSnYij+U2gDTL0UPfWrhDw7b2IYb+9NQJsYpCA0wOQvZfsd6YwRw==
   dependencies:
     es-to-primitive "^1.2.1"
     function-bind "^1.1.1"
@@ -6160,9 +6160,9 @@ package-json@^6.3.0:
     semver "^6.2.0"
 
 pacote@^9.5.8:
-  version "9.5.9"
-  resolved "https://registry.yarnpkg.com/pacote/-/pacote-9.5.9.tgz#fa3a08629c9390b2b99769c55b2cc137e1a24df3"
-  integrity sha512-S1nYW9ly+3btn3VmwRAk2LG3TEh8mkrFdY+psbnHSk8oPODbZ28uG0Z0d3yI0EpqcpLR6BukoVRf3H4IbGCkPQ==
+  version "9.5.10"
+  resolved "https://registry.yarnpkg.com/pacote/-/pacote-9.5.10.tgz#5a4fdf0bcea9dea2eb4a80ea56216f65681710b7"
+  integrity sha512-YfMv9yyUFojekkPB4x2pL7DvAaQ5KF+XObfrhNBreXkLopo9k9nOPszObZ4V7ORoLsaFq4ZaK851JxfJxfpfAg==
   dependencies:
     bluebird "^3.5.3"
     cacache "^12.0.2"
@@ -6480,9 +6480,9 @@ pseudomap@^1.0.2:
   integrity sha1-8FKijacOYYkX7wqKw0wa5aaChrM=
 
 psl@^1.1.24:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/psl/-/psl-1.5.0.tgz#47fd1292def7fdb1e138cd78afa8814cebcf7b13"
-  integrity sha512-4vqUjKi2huMu1OJiLhi3jN6jeeKvMZdI1tYgi/njW5zV52jNLgSAZSdN16m9bJFe61/cT8ulmw4qFitV9QRsEA==
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/psl/-/psl-1.6.0.tgz#60557582ee23b6c43719d9890fb4170ecd91e110"
+  integrity sha512-SYKKmVel98NCOYXpkwUqZqh0ahZeeKfmisiLIcEZdsb+WbLv02g/dI5BUmZnIyOe7RzZtLax81nnb2HbvC2tzA==
 
 public-encrypt@^4.0.0:
   version "4.0.3"
@@ -8159,15 +8159,10 @@ typeforce@^1.11.3:
   resolved "https://registry.yarnpkg.com/typeforce/-/typeforce-1.18.0.tgz#d7416a2c5845e085034d70fcc5b6cc4a90edbfdc"
   integrity sha512-7uc1O8h1M1g0rArakJdf0uLRSSgFcYexrVoKo+bzJd32gd4gDy2L/Z+8/FjPnU9ydY3pEnVPtr9FyscYY60K1g==
 
-typescript@3.7.3:
+typescript@3.7.3, typescript@3.7.x, typescript@^3.6.4:
   version "3.7.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
   integrity sha512-Mcr/Qk7hXqFBXMN7p7Lusj1ktCBydylfQM/FZCk5glCNQJrCUKPkMHdo9R0MTFWsC/4kPFvDS0fDPvukfCkFsw==
-
-typescript@3.7.x, typescript@^3.6.4:
-  version "3.7.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.2.tgz#27e489b95fa5909445e9fef5ee48d81697ad18fb"
-  integrity sha512-ml7V7JfiN2Xwvcer+XAf2csGO1bPBdRbFCkYBczNZggrBZ9c7G3riSUeJmqEU5uOtXNPMhE3n+R4FA/3YOAWOQ==
 
 uglify-js@^3.1.4:
   version "3.7.1"

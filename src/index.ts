@@ -23,6 +23,7 @@ export { ShiftOutObject } from "./shiftOut";
 export { UTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
 export { TxStatus } from "./renVM/transaction";
+export { Chain, Token } from "./types/assets";
 
 const NetworkDetails = {
     NetworkChaosnet,

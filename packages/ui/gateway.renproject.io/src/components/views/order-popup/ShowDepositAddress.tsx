@@ -31,6 +31,33 @@ export const txUrl = (tx: Tx | null): string => {
     }
 };
 
+const ScanningBanner: React.FC<{}> = props => {
+    const ScanningDot = styled.span`
+            height: 15px;
+            width: 15px;
+            background-color: ${theme.primaryColor.lighten(0.2)};
+            border-radius: 50%;
+            display: inline-block;
+            border: solid 3px ${theme.primaryColor.lighten(0.9)};
+            margin-right: 5px;
+        `;
+
+    const ScanningDiv = styled.div`
+            font-size: 13.44px;
+            color: ${theme.lightGrey};
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+        `;
+
+    const ScanningText = styled.span`
+            min-width: 170px;
+        `;
+    return (
+        <ScanningDiv><ScanningDot /><ScanningText className="ellipsis">{props.children}</ScanningText></ScanningDiv>
+    );
+};
+
 const INTEROP_LINK = "#";
 
 interface Props {
@@ -195,30 +222,3 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             </div>
         </Popup>;
     };
-
-const ScanningBanner: React.FC<{}> = props => {
-    const ScanningDot = styled.span`
-            height: 15px;
-            width: 15px;
-            background-color: ${theme.primaryColor.lighten(0.2)};
-            border-radius: 50%;
-            display: inline-block;
-            border: solid 3px ${theme.primaryColor.lighten(0.9)};
-            margin-right: 5px;
-        `;
-
-    const ScanningDiv = styled.div`
-            font-size: 13.44px;
-            color: ${theme.lightGrey};
-            display: flex;
-            justify-content: center;
-            padding: 40px 0;
-        `;
-
-    const ScanningText = styled.span`
-            min-width: 170px;
-        `;
-    return (
-        <ScanningDiv><ScanningDot /><ScanningText className="ellipsis">{props.children}</ScanningText></ScanningDiv>
-    );
-};

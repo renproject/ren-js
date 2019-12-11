@@ -36,9 +36,10 @@ class GatewayJS {
     private endpoint: string;
     public paused = false;
 
-    constructor() {
+    // FIXME: Passing in an endpoint is great for development but probably not very secure
+    constructor(endpoint?: string) {
         this.id = "1234";
-        this.endpoint = GATEWAY_ENDPOINT;
+        this.endpoint = endpoint || GATEWAY_ENDPOINT;
     }
 
     public getPopup = () => getElement(`_ren_gateway-${this.id}`);

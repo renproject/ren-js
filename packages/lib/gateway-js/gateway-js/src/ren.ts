@@ -8,7 +8,7 @@ export const RenGatewayContainerHTML = () => `
 </div>
 `;
 
-export const RenElementHTML = (uniqueID: string) => `
+export const RenElementHTML = (uniqueID: string, frameUrl: string) => `
 <div class="_ren_gateway" id="_ren_gateway-${uniqueID}">
     <style>
     ._ren_overlay {
@@ -59,7 +59,7 @@ export const RenElementHTML = (uniqueID: string) => `
     <div class="_ren_overlay"></div>
     <div class="_ren_iframeShadow" id="_ren_iframeShadow-${uniqueID}">
         <iframe class="_ren_iframe" id="_ren_iframe-${uniqueID}" style=""
-            src="https://gateway-js.herokuapp.com/" ></iframe>
+            src="${frameUrl}" ></iframe>
     </div>
 </div>
 `;

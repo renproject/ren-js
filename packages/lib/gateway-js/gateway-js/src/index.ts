@@ -2,6 +2,8 @@ import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
 
 // tslint:disable
 
+const GATEWAY_ENDPOINT = "https://gateway-js.herokuapp.com/";
+
 export interface Commitment {
     sendToken: string;
     sendTo: string;
@@ -31,10 +33,12 @@ function createElementFromHTML(htmlString: string) {
 // box-shadow: 0 0 32px 10px rgba(100, 100, 100, 0.9); 
 class GatewayJS {
     private id: string;
+    private endpoint: string;
     public paused = false;
 
     constructor() {
         this.id = "1234";
+        this.endpoint = GATEWAY_ENDPOINT;
     }
 
     public getPopup = () => getElement(`_ren_gateway-${this.id}`);
@@ -112,7 +116,7 @@ class GatewayJS {
 
         const container = this.getOrCreateGatewayContainer();
 
-        const popup = createElementFromHTML(RenElementHTML(this.id));
+        const popup = createElementFromHTML(RenElementHTML(this.id, this.endpoint));
 
         if (popup) {
             container.insertBefore(popup, container.lastChild);

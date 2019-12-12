@@ -66,19 +66,19 @@ interface Props {
     orderID: string;
     depositAddress: string;
     order: ShiftInEvent;
+    utxos: OrderedMap<string, UTXO>;
     onQRClick(): void;
     waitForDeposit(orderID: string, onDeposit: (utxo: UTXO) => void): Promise<void>;
+    onDeposit(utxo: UTXO): void;
 }
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, amount, token, orderID, order, depositAddress, onQRClick, waitForDeposit }) => {
+    ({ mini, amount, token, orderID, order, utxos, onQRClick, depositAddress, waitForDeposit, onDeposit }) => {
         // Defaults for demo
 
         // tslint:disable-next-line: prefer-const
         let [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
-        const [utxos, setUTXOs] = React.useState(OrderedMap<string, UTXO>());
-
         const [showSpinner, setShowSpinner] = React.useState(false);
 
         const [timer, setTimer] = React.useState<NodeJS.Timeout | null>(null);
@@ -87,10 +87,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         // useEffect replaces `componentDidMount` and `componentDidUpdate`.
         // To limit it to running once, we use the initialized hook.
         const [initialized, setInitialized] = React.useState(false);
-
-        const onDeposit = (deposit: UTXO) => {
-            setUTXOs(utxos.set(deposit.utxo.txid, deposit));
-        };
 
         const showDepositAddress = () => {
             // @ts-ignore

@@ -51,9 +51,7 @@
         "no-suspicious-comment": {
             "severity": "warning"
         },
-        "no-console": {
-            "severity": "warning"
-        },
+        "no-console": false,
         "strict-type-predicates": {
             "severity": "warning"
         },
@@ -67,7 +65,7 @@
         "typedef": true,
         "no-any": true,
         "no-angle-bracket-type-assertion": true,
-        "no-use-before-declare": true,
+        "no-use-before-declare": false,
         "promise-function-async": true,
         "prefer-readonly": true,
         "await-promise": true,

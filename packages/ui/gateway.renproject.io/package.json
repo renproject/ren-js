@@ -66,6 +66,7 @@
         "web3": "^2.0.0-alpha.1"
     },
     "devDependencies": {
+        "gateway-js": "github:renproject/gateway-js.git#efbacc6c5df256cc18706996e66575613521abbd",
         "gh-pages": "^2.1.1",
         "ncu": "^0.2.1",
         "node-sass": "^4.13.0",

@@ -1,7 +1,7 @@
 import { Currency, sleep } from "@renproject/react-components";
-import RenJS, { NetworkDetails } from "@renproject/ren";
+import RenJS, { NetworkDetails, UTXO } from "@renproject/ren";
 import BigNumber from "bignumber.js";
-import { Map as ImmutableMap } from "immutable";
+import { Map as ImmutableMap, OrderedMap } from "immutable";
 import { Container } from "unstated";
 import Web3 from "web3";
 
@@ -43,6 +43,7 @@ const initialState = {
     preferredCurrency: Currency.USD,
 
     address: null as string | null,
+    utxos: OrderedMap<string, UTXO>(),
     tokenPrices: ImmutableMap<Token, ImmutableMap<Currency, number>>(),
     accountBalances: ImmutableMap<Token, BigNumber>(),
     // balanceReserves: ImmutableMap<MarketPair, ReserveBalances>(),
@@ -101,6 +102,14 @@ export class UIContainer extends Container<typeof initialState> {
             currentOrderID: null,
             submitting: false,
         });
+    }
+
+    public deposit = async (deposit: UTXO) => {
+       const utxos = this.state.utxos.set(deposit.utxo.txid, deposit);
+       await this.setState({
+           utxos,
+       });
+       console.log(this.state.utxos);
     }
 
     public setSubmitting = async (submitting: boolean) => {

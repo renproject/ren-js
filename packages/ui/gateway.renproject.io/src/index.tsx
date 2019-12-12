@@ -4,12 +4,10 @@ import "./styles/index.scss";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { Router } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { Provider } from "unstated";
 
-import { App } from "./components/controllers/App";
-import { history } from "./lib/history";
+import { App } from "./components/App";
 import { initializeSentry } from "./sentry";
 import { SDKContainer } from "./state/sdkContainer";
 import { UIContainer } from "./state/uiContainer";
@@ -23,12 +21,9 @@ const uiContainer = new UIContainer();
 
 ReactDOM.render(
     <Provider inject={[sdkContainer, uiContainer]}>
-        <Router history={history}>
-
-            <ThemeProvider theme={colors}>
-                <App />
-            </ThemeProvider>
-        </Router>
+        <ThemeProvider theme={colors}>
+            <App />
+        </ThemeProvider>
     </Provider>,
     document.getElementById("root") as HTMLElement
 );

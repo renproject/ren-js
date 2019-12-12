@@ -60,10 +60,9 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
         }
         const depositAddress = sdkContainer.generateAddress(orderID) || "";
 
-        const { paused } = uiContainer.state;
+        const { paused, utxos } = uiContainer.state;
 
         const shiftIn = () => {
-
             const token = order.commitment.sendToken.slice(0, 3) as Token;
             const amount = new BigNumber(order.commitment.sendAmount).div(new BigNumber(10).exponentiatedBy(8)).toFixed(); // TODO: decimals
 
@@ -83,8 +82,10 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         depositAddress={depositAddress}
                         token={token}
                         amount={amount}
+                        utxos={utxos}
                         waitForDeposit={sdkContainer.waitForDeposits}
                         onQRClick={() => setShowQR(!showQR)}
+                        onDeposit={uiContainer.deposit}
                     />;
                     break;
                 case ShiftInStatus.Deposited:

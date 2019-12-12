@@ -1,8 +1,9 @@
 import * as React from "react";
 
-import RenJS from "@renproject/ren";
+import RenJS, { BitcoinUTXO, UTXO } from "@renproject/ren";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
+import { IS_DEVELOPMENT } from "../../lib/environmentVariables";
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../../lib/errors";
 import { getWeb3 } from "../../lib/getWeb3";
 import { setIntervalAndRun } from "../../lib/utils";
@@ -45,7 +46,7 @@ const Footer: React.FC<{}> = props => {
  * App is the main visual component responsible for displaying different routes
  * and running background app loops
  */
-export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
+export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
     ({ containers: [uiContainer, sdkContainer], location }) => {
 
         const pause = () => {
@@ -58,13 +59,66 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
             window.parent.postMessage({ from: "ren", type: "resume", payload: { msg: "demo return value" } }, "*");
         };
 
+        const debugTestMessages = async (payload: any) => {
+            // Make sure we're actually in a test environment
+            if (!IS_DEVELOPMENT) {
+                return;
+            }
+
+            switch (payload) {
+                case "confirming":
+                    // Handle the deposit
+                    const btcUtxo: BitcoinUTXO = {
+                        txid: "some-test-txid",
+                        value: 5678965,
+                        script_hex: "something",
+                        output_no: 5678,
+                        confirmations: 678,
+                    };
+                    const utxo: UTXO = {
+                        chain: RenJS.Chains.Bitcoin,
+                        utxo: btcUtxo,
+                    };
+                    await uiContainer.deposit(utxo);
+                    break;
+                case "confirmed":
+                    await sdkContainer.updateOrder({ status: ShiftInStatus.Deposited });
+                    break;
+                case "renvm-signed":
+                    const hash = RenJS.utils.Ox(Buffer.from("a4c139cf8e4795a3cb2ce8f12457ce502aa5b9db0535e9e374218c57c76c6ef5", "base64"));
+                    await sdkContainer.updateOrder({
+                        inTx: {
+                            hash,
+                            chain: RenJS.Chains.Bitcoin,
+                        },
+                        status: ShiftInStatus.ReturnedFromRenVM,
+                    });
+                    break;
+                case "submit-to-eth":
+                    const ethHash = "0xc9dec50563a30bb19100cece73e0396fe63523eb50c4c5f36a1530a0ee3991d8";
+                    await sdkContainer.updateOrder({
+                        status: ShiftInStatus.SubmittedToEthereum,
+                        outTx: { hash: ethHash, chain: RenJS.Chains.Ethereum },
+                    });
+                    break;
+
+                case "eth-confirmed":
+                    const ethHash2 = "0xc9dec50563a30bb19100cece73e0396fe63523eb50c4c5f36a1530a0ee3991d8";
+                    await sdkContainer.updateOrder({
+                        outTx: { hash: ethHash2, chain: RenJS.Chains.Ethereum },
+                        status: ShiftInStatus.RefundedOnEthereum,
+                    });
+                    break;
+            }
+        };
+
         React.useEffect(() => {
             window.onmessage = (e: any) => {
                 if (e.data && e.data.from === "ren") {
                     console.log(`Message: ${e.data.type}`);
-                    switch (e.data.type) {
-                        case "shift":
-                            (async () => {
+                    (async () => {
+                        switch (e.data.type) {
+                            case "shift":
                                 const commitment = e.data.payload;
                                 const time = Date.now() / 1000;
                                 const currentOrderID = String(time);
@@ -101,15 +155,19 @@ export const App = withRouter(connect<RouteComponentProps & ConnectedProps<[UICo
                                 });
 
                                 await uiContainer.handleOrder(currentOrderID);
-                            })().catch((error) => _catchInteractionErr_(error, "Error in APp: onMessage"));
-                            break;
-                        case "pause":
-                            pause();
-                            break;
-                        case "resume":
-                            resume();
-                            break;
-                    }
+                                break;
+                            case "test":
+                                await debugTestMessages(e.data.payload);
+                                break;
+                            case "pause":
+                                pause();
+                                break;
+                            case "resume":
+                                resume();
+                                break;
+
+                        }
+                    })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
             };
             window.parent.postMessage({ from: "ren", type: "ready", payload: {} }, "*");

@@ -96,6 +96,10 @@ class GatewayJS {
         this.getPopup().classList.remove("_ren_gateway-minified");
     }
 
+    public debug = (type: string, payload: any) => {
+        this.sendMessage(type, payload);
+    }
+
     public pause = () => {
         this.sendMessage("pause", {});
         this._pause();

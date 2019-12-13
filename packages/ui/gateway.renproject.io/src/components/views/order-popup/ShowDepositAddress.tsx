@@ -79,7 +79,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         // Defaults for demo
 
         // tslint:disable-next-line: prefer-const
-        let [understood, setUnderstood] = React.useState(false);
+        let [understood, setUnderstood] = React.useState(true);
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
 

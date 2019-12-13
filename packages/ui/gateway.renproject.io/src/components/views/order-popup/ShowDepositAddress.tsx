@@ -4,14 +4,16 @@ import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS, { UTXO } from "@renproject/ren";
 import { OrderedMap } from "immutable";
 import CopyToClipboard from "react-copy-to-clipboard";
+import styled from "styled-components";
 
 import { ShiftInEvent, Token, Tx } from "../../../state/generalTypes";
 import { network } from "../../../state/sdkContainer";
+import { pulseAnimation } from "../../../styles/animations";
 import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
 import { ReactComponent as QR } from "../../../styles/images/qr.svg";
-import { Popup } from "../Popup";
-import styled from "styled-components";
 import { theme } from "../../../theme";
+import { Popup } from "../Popup";
+import { lighten } from "polished";
 
 export const txUrl = (tx: Tx | null): string => {
     if (!tx) { return ""; }
@@ -32,13 +34,13 @@ export const txUrl = (tx: Tx | null): string => {
 
 const ScanningBanner: React.FC<{}> = props => {
     const ScanningDot = styled.span`
-            height: 15px;
-            width: 15px;
-            background-color: ${theme.primaryColor.lighten(0.2)};
+            height: 10px;
+            width: 10px;
+            background-color: ${p => lighten(0.1, p.theme.primaryColor)};
             border-radius: 50%;
-            display: inline-block;
-            border: solid 3px ${theme.primaryColor.lighten(0.9)};
-            margin-right: 5px;
+            display: block;
+            margin-right: 10px;
+            animation: ${p => pulseAnimation("6px", p.theme.primaryColor)};
         `;
 
     const ScanningDiv = styled.div`
@@ -46,6 +48,7 @@ const ScanningBanner: React.FC<{}> = props => {
             color: ${theme.lightGrey};
             display: flex;
             justify-content: center;
+            align-items: center;
             padding: 40px 0;
         `;
 

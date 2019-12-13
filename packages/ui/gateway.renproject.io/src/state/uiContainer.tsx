@@ -108,6 +108,7 @@ export class UIContainer extends Container<typeof initialState> {
        const utxos = this.state.utxos.set(deposit.utxo.txid, deposit);
        await this.setState({
            utxos,
+           status: "Confirming",
        });
        console.log(this.state.utxos);
     }

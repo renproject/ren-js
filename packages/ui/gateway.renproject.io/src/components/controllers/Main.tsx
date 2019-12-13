@@ -69,11 +69,11 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 case "confirming":
                     // Handle the deposit
                     const btcUtxo: BitcoinUTXO = {
-                        txid: "some-test-txid",
+                        txid: "0331c25055eb20129bd9beeb054b1f73d12f64a4917fa37a908e23ba0e287902",
                         value: 5678965,
                         script_hex: "something",
-                        output_no: 5678,
-                        confirmations: 678,
+                        output_no: 1,
+                        confirmations: 1,
                     };
                     const utxo: UTXO = {
                         chain: RenJS.Chains.Bitcoin,

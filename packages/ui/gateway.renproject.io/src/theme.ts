@@ -1,8 +1,4 @@
-import createTheme from "styled-components-theme";
-
-export const colors = {
+export const theme = {
     primaryColor: "#006fe8",
     lightGrey: "#87888C",
 };
-
-export const theme = createTheme(...Object.keys(colors));

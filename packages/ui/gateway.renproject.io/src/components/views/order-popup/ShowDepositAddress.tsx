@@ -11,7 +11,6 @@ import { network } from "../../../state/sdkContainer";
 import { pulseAnimation } from "../../../styles/animations";
 import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
 import { ReactComponent as QR } from "../../../styles/images/qr.svg";
-import { theme } from "../../../theme";
 import { Popup } from "../Popup";
 import { lighten } from "polished";
 
@@ -45,7 +44,7 @@ const ScanningBanner: React.FC<{}> = props => {
 
     const ScanningDiv = styled.div`
             font-size: 13.44px;
-            color: ${theme.lightGrey};
+            color: ${p => p.theme.lightGrey};
             display: flex;
             justify-content: center;
             align-items: center;
@@ -122,7 +121,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         };
 
         const ContinueButton = styled.button`
-            background: linear-gradient(90deg, ${theme.primaryColor} 0%, ${theme.primaryColor.lighten(0.5)} 180%)
+            background: ${p => `linear-gradient(90deg, ${p.theme.primaryColor} 0%, ${lighten(0.1, p.theme.primaryColor)} 180%)`};
         `;
 
         const DepositLabel = styled.label`
@@ -132,13 +131,13 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         text-align: center;
         margin-left: 100px;
         font-size: 14px;
-        color: ${theme.lightGrey};
+        color: ${p => p.theme.lightGrey};
         background-color: white;
         margin-top: -10px;
         `;
 
         const StyledInput = styled.input`
-        color: ${theme.primaryColor.lighten(0.2)} !important;
+        color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
         font-size: 14px !important;
         font-weight: 400 !important;
         `;

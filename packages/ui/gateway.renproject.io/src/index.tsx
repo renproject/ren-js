@@ -12,7 +12,7 @@ import { initializeSentry } from "./sentry";
 import { SDKContainer } from "./state/sdkContainer";
 import { UIContainer } from "./state/uiContainer";
 
-import { colors } from "./theme";
+import { theme } from "./theme";
 
 initializeSentry();
 
@@ -21,7 +21,7 @@ const uiContainer = new UIContainer();
 
 ReactDOM.render(
     <Provider inject={[sdkContainer, uiContainer]}>
-        <ThemeProvider theme={colors}>
+        <ThemeProvider theme={theme}>
             <App />
         </ThemeProvider>
     </Provider>,

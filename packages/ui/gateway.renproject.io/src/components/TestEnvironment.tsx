@@ -6,12 +6,14 @@ import BigNumber from "bignumber.js";
 const contractAddress = "0xa2aE9111634F5983e4e1C3E3823914841a4c7235";
 const address = "0xa2aE9111634F5983e4e1C3E3823914841a4c7235";
 
+const gatewayPopupUrl = process.env.REACT_APP_GATEWAY_POPUP_URL || "/#/";
+
 export const TestEnvironment: React.FC<{}> = props => {
     const [stage, setStage] = React.useState<string>("ready");
 
     // Does this actually reduce the payload when not testing??
     const GatewayJS = require("gateway-js").default;
-    const gw = new GatewayJS("/#/");
+    const gw = new GatewayJS(gatewayPopupUrl);
 
     const startSwap = async (amount: BigNumber) => {
         const response = await gw.open({

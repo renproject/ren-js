@@ -3,7 +3,7 @@ import * as React from "react";
 import RenJS, { BitcoinUTXO, UTXO } from "@renproject/ren";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { IS_DEVELOPMENT } from "../../lib/environmentVariables";
+import { ENABLE_TEST_ENDPOINT } from "../../lib/environmentVariables";
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../../lib/errors";
 import { getWeb3 } from "../../lib/getWeb3";
 import { setIntervalAndRun } from "../../lib/utils";
@@ -61,7 +61,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const debugTestMessages = async (payload: any) => {
             // Make sure we're actually in a test environment
-            if (!IS_DEVELOPMENT) {
+            if (!ENABLE_TEST_ENDPOINT) {
                 return;
             }
 

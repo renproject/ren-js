@@ -24,7 +24,6 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string) => `
     ._ren_iframeShadow {
         box-shadow: 0 20px 40px 0 rgba(0,0,0,0.5);
         border-radius: 6px;
-        background:#fff;
         position:absolute;
         top: 50%;
         left: 50%;
@@ -58,8 +57,8 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string) => `
     </style>
     <div class="_ren_overlay"></div>
     <div class="_ren_iframeShadow" id="_ren_iframeShadow-${uniqueID}">
-        <iframe class="_ren_iframe" id="_ren_iframe-${uniqueID}" style=""
-            src="${frameUrl}" ></iframe>
+        <iframe class="_ren_iframe" id="_ren_iframe-${uniqueID}" style="background-color: transparent"
+        allowtransparency="true" frameborder="0" src="${frameUrl}" ></iframe>
     </div>
 </div>
 `;

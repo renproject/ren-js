@@ -162,6 +162,13 @@ class GatewayJS {
                 }
             }
         };
+
+        const overlay = document.querySelector('._ren_overlay');
+        if (overlay) {
+            (overlay as any).onclick = () => {
+                this.pause();
+            };
+        }
     })
 };
 

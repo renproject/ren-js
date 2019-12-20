@@ -13,6 +13,7 @@ import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
 import { ReactComponent as QR } from "../../../styles/images/qr.svg";
 import { Popup } from "../Popup";
 import { lighten } from "polished";
+import { Tooltip } from "../../Tooltip";
 
 export const txUrl = (tx: Tx | null): string => {
     if (!tx) { return ""; }
@@ -145,6 +146,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
 
         const showAddress = understood ?
             <>
+            <Tooltip contents={<p>Hello world!</p>}>hover over me</Tooltip>
                 <ScanningBanner>Scanning for transaction</ScanningBanner>
                 <CopyToClipboard
                     text={depositAddress || ""}

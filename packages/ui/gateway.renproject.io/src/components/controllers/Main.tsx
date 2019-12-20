@@ -16,6 +16,7 @@ import { ErrorBoundary } from "../ErrorBoundary";
 import { LoggedOutPopup } from "../views/LoggedOutPopup";
 import { OpeningOrder } from "./OpeningOrder";
 import styled from "styled-components";
+import { Tooltip } from "../Tooltip";
 
 const smallLogo = require("../../styles/images/logo-small-grey.png");
 
@@ -23,7 +24,7 @@ const Footer: React.FC<{}> = props => {
     const Container = styled.div`
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     border-top: 1px solid #ccc;
     position: fixed;
     bottom:0;
@@ -31,13 +32,24 @@ const Footer: React.FC<{}> = props => {
     width: 100%;
     font-size: 12px;
     color: rgba(0, 0, 0, 0.4);
+    padding: 0 30px;
+    z-index: 100;
+    &::before {
+        content: '';
+    }
     `;
     const RenVMLink = styled.a`
     text-decoration: underline;
     `;
+    const infoIcon = require("../../styles/images/icons/info.svg");
     return (
         <Container>
+<div>
             <img src={smallLogo} style={{width: "10px", marginRight: "5px"}} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
+</div>
+<div>
+            <Tooltip contents={<p>Hello world!</p>}><img src={infoIcon} /></Tooltip>
+</div>
         </Container>
     );
 };

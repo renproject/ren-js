@@ -17,9 +17,31 @@ const onBottom = (color: string) => css`
   };
 `;
 
+const center = css`
+  margin-left: -50px;
+  &::after {
+    left: 50%;
+  }
+`;
+
+const left = css`
+  margin-left: -90px;
+  &::after {
+    left: 90%;
+  }
+`;
+
+const right = css`
+  margin-left: -10px;
+  &::after {
+    left: 10%;
+  }
+`;
+
 export const Tooltip: React.FC<{
     contents?: React.ReactNode;
     direction?: string;
+    align?: string;
 }> = props => {
     const color = "#333";
     const TooltipChild = styled.div`
@@ -32,22 +54,22 @@ export const Tooltip: React.FC<{
         position: absolute;
         left: 50%;
         width: 100px;
-        margin-left: -50px;
         opacity: 0;
         transition: all 0.2s;
         &::after {
             content: "";
             position: absolute;
-            left: 50%;
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
         }
         ${props.direction === "bottom" ? onBottom(color) : onTop(color)}
+        ${props.align === "left" ? left : props.align === "right" ? right : center}
     `;
     const TooltipContainer = styled.div`
         display: block;
         position: relative;
+        cursor: pointer;
         &:hover ${TooltipChild} {
             visibility: visible;
             opacity: 1;

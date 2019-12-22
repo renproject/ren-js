@@ -48,7 +48,7 @@ const Footer: React.FC<{}> = props => {
             <img src={smallLogo} style={{width: "10px", marginRight: "5px"}} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
 </div>
 <div>
-            <Tooltip contents={<p>Hello world!</p>}><img src={infoIcon} /></Tooltip>
+            <Tooltip align="left" width={200} contents={<span>Your tokens will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <a href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">here</a>.</span>}><img src={infoIcon} /></Tooltip>
 </div>
         </Container>
     );

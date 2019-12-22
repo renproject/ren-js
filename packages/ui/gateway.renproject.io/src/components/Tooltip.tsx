@@ -17,22 +17,22 @@ const onBottom = (color: string) => css`
   };
 `;
 
-const center = css`
-  margin-left: -50px;
+const center = (width: number) => css`
+  margin-left: -${width / 2}px;
   &::after {
     left: 50%;
   }
 `;
 
-const left = css`
-  margin-left: -90px;
+const left = (width: number) => css`
+  margin-left: -${width * 0.9}px;
   &::after {
     left: 90%;
   }
 `;
 
-const right = css`
-  margin-left: -10px;
+const right = (width: number) => css`
+  margin-left: -${width * 0.1}px;
   &::after {
     left: 10%;
   }
@@ -40,10 +40,12 @@ const right = css`
 
 export const Tooltip: React.FC<{
     contents?: React.ReactNode;
+    width?: number;
     direction?: string;
     align?: string;
 }> = props => {
     const color = "#333";
+    const width = props.width ? props.width : 100;
     const TooltipChild = styled.div`
         text-align: center;
         visibility: hidden;
@@ -53,7 +55,7 @@ export const Tooltip: React.FC<{
         border-radius: 4px;
         position: absolute;
         left: 50%;
-        width: 100px;
+        width: ${width}px;
         opacity: 0;
         transition: all 0.2s;
         &::after {
@@ -64,7 +66,7 @@ export const Tooltip: React.FC<{
             border-style: solid;
         }
         ${props.direction === "bottom" ? onBottom(color) : onTop(color)}
-        ${props.align === "left" ? left : props.align === "right" ? right : center}
+        ${props.align === "left" ? left(width) : props.align === "right" ? right(width) : center(width)}
     `;
     const TooltipContainer = styled.div`
         display: block;

@@ -146,7 +146,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
 
         const showAddress = understood ?
             <>
-            <Tooltip contents={<p>Hello world!</p>}>hover over me</Tooltip>
                 <ScanningBanner>Scanning for transaction</ScanningBanner>
                 <CopyToClipboard
                     text={depositAddress || ""}

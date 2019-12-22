@@ -39,8 +39,11 @@ export const TestEnvironment: React.FC<{}> = props => {
             ],
         });
         console.log(response);
-
     };
+
+    React.useEffect(() => {
+        document.title = "GatewayJS testing environment";
+    });
 
     const nextStage = () => {
         (async () => {

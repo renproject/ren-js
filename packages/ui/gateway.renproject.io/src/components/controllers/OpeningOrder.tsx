@@ -15,6 +15,9 @@ import { ShowDepositAddress } from "../views/order-popup/ShowDepositAddress";
 import { SubmitToEthereum } from "../views/order-popup/SubmitToEthereum";
 import { Popup } from "../views/Popup";
 import CopyToClipboard from "react-copy-to-clipboard";
+import { Tooltip } from "../Tooltip";
+
+import infoIcon from "../../styles/images/icons/info.svg";
 
 import styled from "styled-components";
 
@@ -115,6 +118,20 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
             padding: 15px;
             `;
 
+            const ParentContainer = styled.div`
+            display: flex;
+            align-content: center;
+            align-items: center;
+            `;
+
+            const ParentInfo = styled.span`
+            font-size: 18px;
+            margin-right: 5px;
+            & > img {
+                margin-right: 5px;
+            }
+            `;
+
             return <>
                 {!paused ? <div className="popup--body--details">
                     {showQR ?
@@ -123,9 +140,12 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         <div className="popup--token--icon"><TokenIcon token={token} /></div>
                         <div className="popup--body--title">Deposit <CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard> {token.toUpperCase()}</div>
                         <div>to</div>
-                        <div className="popup--body--values">
-                            <span><span className="url"><img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} /> {url}</span></span>{/* has requested <span className="url"><TokenIcon token={token} /><span> {amount} {token.toUpperCase()}</span></span> to the contract <span className="monospace url">{"0x1241343431431431431431".slice(0, 12)}...{"0x1241343431431431431431".slice(-5, -1)}</span> on Ethereum.</span>*/}
-                        </div>
+                        <ParentContainer>
+                            <ParentInfo>
+                                <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{title}
+                            </ParentInfo>
+                            <Tooltip align="left" width={300} contents={<pre>{url}</pre>}><img src={infoIcon} /></Tooltip>
+                        </ParentContainer>
                     </>}
                 </div> : <></>
                 }

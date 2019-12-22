@@ -18,7 +18,9 @@ import { OpeningOrder } from "./OpeningOrder";
 import styled from "styled-components";
 import { Tooltip } from "../Tooltip";
 
-const smallLogo = require("../../styles/images/logo-small-grey.png");
+import infoIcon from "../../styles/images/icons/info.svg";
+
+import smallLogo from "../../styles/images/logo-small-grey.png";
 
 const Footer: React.FC<{}> = props => {
     const Container = styled.div`
@@ -41,7 +43,6 @@ const Footer: React.FC<{}> = props => {
     const RenVMLink = styled.a`
     text-decoration: underline;
     `;
-    const infoIcon = require("../../styles/images/icons/info.svg");
     return (
         <Container>
 <div>

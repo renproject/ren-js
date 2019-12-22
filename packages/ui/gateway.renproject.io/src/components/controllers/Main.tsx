@@ -255,7 +255,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     }
                 </ErrorBoundary> : <></>}
             </div>
-            <Footer />
+            {!paused && <Footer />}
         </main>;
     }
 ));

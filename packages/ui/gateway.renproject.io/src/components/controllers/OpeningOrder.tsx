@@ -69,6 +69,7 @@ export const OpeningOrder = connect<Props & ConnectedProps<[UIContainer, SDKCont
             const token = order.commitment.sendToken.slice(0, 3) as Token;
             const amount = new BigNumber(order.commitment.sendAmount).div(new BigNumber(10).exponentiatedBy(8)).toFixed(); // TODO: decimals
 
+            const title = window.parent.document.title;
             const url = window.location !== window.parent.location
                 ? document.referrer
                 : document.location.href;

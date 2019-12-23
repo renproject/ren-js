@@ -46,7 +46,7 @@ export const Tooltip: React.FC<{
 }> = props => {
     const color = "#333";
     const width = props.width ? props.width : 100;
-    const TooltipChild = styled.div`
+    const TooltipChild = styled.span`
         text-align: center;
         visibility: hidden;
         background-color: ${color};
@@ -68,8 +68,7 @@ export const Tooltip: React.FC<{
         ${props.direction === "bottom" ? onBottom(color) : onTop(color)}
         ${props.align === "left" ? left(width) : props.align === "right" ? right(width) : center(width)}
     `;
-    const TooltipContainer = styled.div`
-        display: block;
+    const TooltipContainer = styled.span`
         position: relative;
         cursor: pointer;
         &:hover ${TooltipChild} {

@@ -128,7 +128,8 @@
 
     display: flex;
     flex-flow: column;
-    justify-content: flex-end;
+    height: 100%;
+    // justify-content: flex-end;
     margin: 15px 0;
 
     .popup--buttons {

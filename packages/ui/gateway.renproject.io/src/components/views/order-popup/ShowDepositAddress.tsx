@@ -14,6 +14,7 @@ import { ReactComponent as QR } from "../../../styles/images/qr.svg";
 import { Popup } from "../Popup";
 import { lighten } from "polished";
 import { Tooltip } from "../../Tooltip";
+import infoIcon from "../../../styles/images/icons/info.svg";
 
 export const txUrl = (tx: Tx | null): string => {
     if (!tx) { return ""; }
@@ -182,9 +183,21 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                 </div>
             </>;
 
+        const ConfirmationsContainer = styled.div`
+        text-align: center;
+        `;
+        const ConfirmationsHeader = styled.span`
+        font-size: 14px;
+        margin-right: 5px;
+        color: #87888C;
+        `;
+
         const showUTXOs = (
             utxos.size > 0 ? <div className="show-utxos">
-                <p>Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains. This will be improved for Mainnet via 3rd parties. For more information, head <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</p>
+                <ConfirmationsContainer>
+                    <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
+                    <Tooltip width={250} contents={<span>Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains. This will be improved for Mainnet via 3rd parties. For more information, head <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</span>}><img src={infoIcon} /></Tooltip>
+                </ConfirmationsContainer>
                 {utxos.map(utxo => {
                     return <div key={utxo.utxo.txid} className="show-utxos--utxo">
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {utxo.utxo.txid.slice(0, 12)}...{utxo.utxo.txid.slice(-5, -1)}</a>

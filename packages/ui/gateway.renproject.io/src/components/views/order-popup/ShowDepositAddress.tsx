@@ -6,7 +6,7 @@ import { OrderedMap } from "immutable";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
-import { ShiftInEvent, Token, Tx } from "../../../state/generalTypes";
+import { ShiftInEvent, Token, Tx, Tokens } from "../../../state/generalTypes";
 import { network } from "../../../state/sdkContainer";
 import { pulseAnimation } from "../../../styles/animations";
 import { ReactComponent as Copy } from "../../../styles/images/copy.svg";
@@ -145,6 +145,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         `;
 
 
+        const tokenDetails = Tokens.get(token);
         const showAddress = understood ?
             <>
                 <ScanningBanner>Scanning for transaction</ScanningBanner>
@@ -162,7 +163,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                             required={true}
                             aria-required={true}
                         />
-                        <DepositLabel>Bitcoin Deposit Address</DepositLabel>
+                        <DepositLabel>{tokenDetails && tokenDetails.name} Deposit Address</DepositLabel>
                         <QR className="qr" onClick={onQRClick} />
                         <Copy />
                     </div>

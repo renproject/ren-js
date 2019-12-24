@@ -194,14 +194,15 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         color: #87888C;
         `;
 
-
         const ConfirmationsCount = styled.span`
-        margin-right: 10px;
+        margin-left: 10px;
         `;
         const ConfirmationsBlock = styled.div`
         display: flex;
         justify-content: center;
-        padding: 20px 0;
+        align-items: center;
+        padding: 10px 0;
+        margin-bottom: 20px;
         `;
 
         const showUTXOs = (
@@ -217,8 +218,8 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
                     </div> */}
                         <ConfirmationsBlock>
-                            <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? (2) : "?"} confirmations</ConfirmationsCount>
                             <Loading className="loading--blue" />
+                            <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? (2) : "?"} confirmations</ConfirmationsCount>
                         </ConfirmationsBlock>
                         <LabelledInput type="text" inputLabel="Transaction ID" width={105} value={utxo.utxo.txid} disabled={true} />
                     </div>;

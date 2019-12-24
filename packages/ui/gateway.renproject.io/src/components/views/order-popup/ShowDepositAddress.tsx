@@ -15,6 +15,7 @@ import { Popup } from "../Popup";
 import { lighten } from "polished";
 import { Tooltip } from "../../Tooltip";
 import infoIcon from "../../../styles/images/icons/info.svg";
+import { LabelledInput } from "../../LabelledInput";
 
 export const txUrl = (tx: Tx | null): string => {
     if (!tx) { return ""; }
@@ -193,6 +194,16 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         color: #87888C;
         `;
 
+
+        const ConfirmationsCount = styled.span`
+        margin-right: 10px;
+        `;
+        const ConfirmationsBlock = styled.div`
+        display: flex;
+        justify-content: center;
+        padding: 20px 0;
+        `;
+
         const showUTXOs = (
             utxos.size > 0 ? <div className="show-utxos">
                 <ConfirmationsContainer>
@@ -200,10 +211,16 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     <Tooltip width={250} contents={<span>Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains. This will be improved for Mainnet via 3rd parties. For more information, head <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</span>}><img src={infoIcon} /></Tooltip>
                 </ConfirmationsContainer>
                 {utxos.map(utxo => {
-                    return <div key={utxo.utxo.txid} className="show-utxos--utxo">
-                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {utxo.utxo.txid.slice(0, 12)}...{utxo.utxo.txid.slice(-5, -1)}</a>
-                        <span>{utxo.utxo.confirmations} / {order ? (2) : "?"} confirmations</span>
-                        <Loading className="loading--blue" />
+                    const hash = `${utxo.utxo.txid.slice(0, 12)}...${utxo.utxo.txid.slice(-5, -1)}`;
+                    return <div key={utxo.utxo.txid}>
+                        {/* <div className="show-utxos--utxo">
+                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
+                    </div> */}
+                        <ConfirmationsBlock>
+                            <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? (2) : "?"} confirmations</ConfirmationsCount>
+                            <Loading className="loading--blue" />
+                        </ConfirmationsBlock>
+                        <LabelledInput type="text" inputLabel="Transaction ID" width={105} value={utxo.utxo.txid} disabled={true} />
                     </div>;
                 }).valueSeq()}
                 {/* <details>

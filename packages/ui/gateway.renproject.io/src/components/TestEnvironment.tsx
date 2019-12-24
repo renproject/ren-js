@@ -77,7 +77,11 @@ export const TestEnvironment: React.FC<{}> = props => {
 
     return (
         <div>
-            <div>Testing environment</div>
+            <div>
+                <h1>Testing Environment</h1>
+                <p>To use this testing environment, you need to use a Web3 browser like Brave or Metamask for Chrome. Otherwise, it will be stuck on the loading screen.</p>
+                <p>Using the buttons below, start with opening the popup, then minimise the popup to click through the different stages of the swapping process.</p>
+            </div>
             <div>
                 <button disabled={stage !== "ready"} onClick={nextStage}>1. open popup</button>
             </div>

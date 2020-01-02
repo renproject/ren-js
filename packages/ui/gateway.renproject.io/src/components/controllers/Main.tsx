@@ -2,6 +2,7 @@ import * as React from "react";
 
 import RenJS, { BitcoinUTXO, UTXO } from "@renproject/ren";
 import { RouteComponentProps, withRouter } from "react-router-dom";
+import styled from "styled-components";
 
 import { ENABLE_TEST_ENDPOINT } from "../../lib/environmentVariables";
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../../lib/errors";
@@ -11,16 +12,14 @@ import { connect, ConnectedProps } from "../../state/connect";
 import { HistoryEvent, ShiftInStatus, ShiftOutStatus } from "../../state/generalTypes";
 import { network, SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
+import infoIcon from "../../styles/images/icons/info.svg";
+import smallLogo from "../../styles/images/logo-small-grey.png";
 import { ReactComponent as Logo } from "../../styles/images/logo-small.svg";
 import { ErrorBoundary } from "../ErrorBoundary";
+import { Tooltip } from "../Tooltip";
 import { LoggedOutPopup } from "../views/LoggedOutPopup";
 import { OpeningOrder } from "./OpeningOrder";
-import styled from "styled-components";
-import { Tooltip } from "../Tooltip";
-
-import infoIcon from "../../styles/images/icons/info.svg";
-
-import smallLogo from "../../styles/images/logo-small-grey.png";
+import { getStorage } from "./Storage";
 
 const Footer: React.FC<{}> = props => {
     const Container = styled.div`
@@ -45,12 +44,12 @@ const Footer: React.FC<{}> = props => {
     `;
     return (
         <Container>
-<div>
-            <img src={smallLogo} style={{width: "10px", marginRight: "5px"}} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
-</div>
-<div>
-            <Tooltip align="left" width={200} contents={<span>Your tokens will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <a href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">here</a>.</span>}><img src={infoIcon} /></Tooltip>
-</div>
+            <div>
+                <img src={smallLogo} style={{ width: "10px", marginRight: "5px" }} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
+            </div>
+            <div>
+                <Tooltip align="left" width={200} contents={<span>Your tokens will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <a href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">here</a>.</span>}><img src={infoIcon} /></Tooltip>
+            </div>
         </Container>
     );
 };
@@ -127,6 +126,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         React.useEffect(() => {
             window.onmessage = (e: any) => {
+                const url = window.location !== window.parent.location
+                    ? document.referrer
+                    : document.location.href;
                 if (e.data && e.data.from === "ren") {
                     console.log(`Message: ${e.data.type}`);
                     (async () => {
@@ -169,16 +171,15 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 await uiContainer.handleOrder(currentOrderID);
                                 break;
-                            case "test":
-                                await debugTestMessages(e.data.payload);
-                                break;
                             case "pause":
                                 pause();
                                 break;
                             case "resume":
                                 resume();
                                 break;
-
+                            case "getTrades":
+                                window.parent.postMessage({ from: "ren", type: "trades", payload: await getStorage(url) }, "*");
+                                break;
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }

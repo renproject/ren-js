@@ -44,6 +44,22 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string) => `
         box-shadow: 0 5px 10px 0 rgba(0,0,0,0.5);
     }
 
+    ._ren_gateway-minified+._ren_gateway-minified ._ren_iframeShadow {
+        margin-top: 60px;
+    }
+    ._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified ._ren_iframeShadow {
+        margin-top: 120px;
+    }
+    ._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified ._ren_iframeShadow {
+        margin-top: 180px;
+    }
+    ._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified ._ren_iframeShadow {
+        margin-top: 240px;
+    }
+    ._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified+._ren_gateway-minified ._ren_iframeShadow {
+        margin-top: 300px;
+    }
+
     ._ren_gateway-minified ._ren_overlay {
         display: none;
     }

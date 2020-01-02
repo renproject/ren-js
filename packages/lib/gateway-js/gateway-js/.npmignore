@@ -12,3 +12,4 @@ build/docs
 coverage
 .nyc_output
 *.log
+*.env

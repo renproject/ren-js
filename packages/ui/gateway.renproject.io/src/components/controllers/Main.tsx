@@ -14,7 +14,6 @@ import { network, SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import infoIcon from "../../styles/images/icons/info.svg";
 import smallLogo from "../../styles/images/logo-small-grey.png";
-import { ReactComponent as Logo } from "../../styles/images/logo-small.svg";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { Tooltip } from "../Tooltip";
 import { LoggedOutPopup } from "../views/LoggedOutPopup";
@@ -63,12 +62,12 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const pause = () => {
             uiContainer.pause().catch((error) => _catchInteractionErr_(error, "Error in App: uiContainer.pause"));
-            window.parent.postMessage({ from: "ren", type: "pause", payload: { msg: "demo return value" } }, "*");
+            window.parent.postMessage({ from: "ren", type: "pause", frameID: uiContainer.state.currentOrderID, payload: { msg: "demo return value" } }, "*");
         };
 
         const resume = () => {
             uiContainer.resume().catch((error) => _catchInteractionErr_(error, "Error in App: uiContainer.resume"));
-            window.parent.postMessage({ from: "ren", type: "resume", payload: { msg: "demo return value" } }, "*");
+            window.parent.postMessage({ from: "ren", type: "resume", frameID: uiContainer.state.currentOrderID, payload: { msg: "demo return value" } }, "*");
         };
 
         const debugTestMessages = async (payload: any) => {
@@ -135,8 +134,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                         switch (e.data.type) {
                             case "shift":
                                 const commitment = e.data.payload;
+                                const frameID = e.data.frameID;
                                 const time = Date.now() / 1000;
-                                const currentOrderID = String(time);
+                                const currentOrderID = frameID; // String(time);
 
                                 // TODO: Clean up
                                 const shift = commitment.sendToken === RenJS.Tokens.BTC.Btc2Eth || commitment.sendToken === RenJS.Tokens.ZEC.Zec2Eth || commitment.sendToken === RenJS.Tokens.BCH.Bch2Eth ? {
@@ -152,7 +152,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 const historyEvent: HistoryEvent = {
                                     ...shift,
-                                    id: currentOrderID,
+                                    id: frameID,
                                     time,
                                     inTx: null,
                                     outTx: null,
@@ -172,13 +172,19 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 await uiContainer.handleOrder(currentOrderID);
                                 break;
                             case "pause":
-                                pause();
+                                if (e.data.frameID === uiContainer.state.currentOrderID) {
+                                    pause();
+                                }
                                 break;
                             case "resume":
-                                resume();
+                                if (e.data.frameID === uiContainer.state.currentOrderID) {
+                                    resume();
+                                }
                                 break;
                             case "getTrades":
-                                window.parent.postMessage({ from: "ren", type: "trades", payload: await getStorage(url) }, "*");
+                                if (e.data.frameID === uiContainer.state.currentOrderID) {
+                                    window.parent.postMessage({ from: "ren", type: "trades", frameID: uiContainer.state.currentOrderID, payload: await getStorage(url) }, "*");
+                                }
                                 break;
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));

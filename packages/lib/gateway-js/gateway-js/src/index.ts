@@ -67,7 +67,7 @@ class GatewayJS {
     private sendMessage = (type: string, payload: any, iframeIn?: ChildNode) => {
         const frame = iframeIn || this.getIFrame();
         if (frame) {
-            (frame as any).contentWindow.postMessage({ from: "ren", type, payload }, '*');
+            (frame as any).contentWindow.postMessage({ from: "ren", frameID: this.id, type, payload }, '*');
         }
     }
 
@@ -165,12 +165,13 @@ class GatewayJS {
             container.insertBefore(popup, container.lastChild);
         }
 
-        window.onmessage = (e: any) => {
+        window.addEventListener('message', (e: any) => {
             if (e.data && e.data.from === "ren") {
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
                     case "ready":
                         this.sendMessage("shift", {
+                            frameID: this.id,
                             sendToken: params.sendToken,
                             sendTo: params.sendTo,
                             sendAmount: params.sendAmount,
@@ -182,22 +183,30 @@ class GatewayJS {
                         }
                         break;
                     case "pause":
-                        this._pause();
+                        if (e.data.frameID === this.id) {
+                            this._pause();
+                        }
                         break;
                     case "resume":
-                        this._resume();
+                        if (e.data.frameID === this.id) {
+                            this._resume();
+                        }
                         break;
                     case "cancel":
-                        this.close();
-                        reject(e.data.payload);
+                        if (e.data.frameID === this.id) {
+                            this.close();
+                            reject(e.data.payload);
+                        }
                         break;
                     case "done":
-                        this.close();
-                        resolve(e.data.payload);
+                        if (e.data.frameID === this.id) {
+                            this.close();
+                            resolve(e.data.payload);
+                        }
                         break;
                 }
             }
-        };
+        });
 
         const overlay = document.querySelector('._ren_overlay');
         if (overlay) {

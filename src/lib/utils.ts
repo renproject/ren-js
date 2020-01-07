@@ -11,7 +11,7 @@ import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/bt
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
 import { Args } from "../renVM/jsonRPC";
 import { Tx } from "../renVM/transaction";
-import { actionToDetails, Asset, Chain, Token } from "../types/assets";
+import { Asset, Chain, parseRenContract, RenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO } | { chain: Chain.BitcoinCash, utxo: BitcoinCashUTXO };
@@ -54,8 +54,8 @@ export const generatePHash = (...zip: Args | [Args]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const getTokenAddress = (action: Token, network: NetworkDetails): string => {
-    switch (actionToDetails(action).asset) {
+export const getTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
+    switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
             return network.contracts.addresses.shifter.zBTC._address;
         case Asset.ZEC:
@@ -63,12 +63,12 @@ export const getTokenAddress = (action: Token, network: NetworkDetails): string 
         case Asset.BCH:
             return network.contracts.addresses.shifter.zBCH._address;
         default:
-            throw new Error(`Invalid action ${action}`);
+            throw new Error(`Invalid Ren Contract ${renContract}`);
     }
 };
 
-export const generateGHash = (payload: Args, amount: number | string, to: string, shiftAction: Token, nonce: string, network: NetworkDetails): string => {
-    const token = getTokenAddress(shiftAction, network);
+export const generateGHash = (payload: Args, amount: number | string, to: string, renContract: RenContract, nonce: string, network: NetworkDetails): string => {
+    const token = getTokenAddress(renContract, network);
     const pHash = generatePHash(payload);
 
     const encoded = rawEncode(
@@ -77,6 +77,10 @@ export const generateGHash = (payload: Args, amount: number | string, to: string
     );
 
     return Ox(keccak256(encoded));
+};
+
+export const generateTxHash = (renContract: RenContract, encodedID: string) => {
+    return Ox(keccak256(`txHash_${renContract}_${encodedID}`));
 };
 
 // export const generateNHash = (tx: Tx): string => {
@@ -89,8 +93,8 @@ export const generateGHash = (payload: Args, amount: number | string, to: string
 // };
 
 // Generates the gateway address
-export const generateAddress = (shiftAction: Token, gHash: string, network: NetworkDetails): string => {
-    const chain = actionToDetails(shiftAction).from;
+export const generateAddress = (renContract: RenContract, gHash: string, network: NetworkDetails): string => {
+    const chain = parseRenContract(renContract).from;
     switch (chain) {
         case Chain.Bitcoin:
             return createBTCAddress(network, gHash);
@@ -104,8 +108,8 @@ export const generateAddress = (shiftAction: Token, gHash: string, network: Netw
 };
 
 // Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_network: NetworkDetails, shiftAction: Token, depositAddress: string, confirmations = 0): Promise<UTXO[]> => {
-    const chain = actionToDetails(shiftAction).from;
+export const retrieveDeposits = async (_network: NetworkDetails, renContract: RenContract, depositAddress: string, confirmations = 0): Promise<UTXO[]> => {
+    const chain = parseRenContract(renContract).from;
     switch (chain) {
         case Chain.Bitcoin:
             return (await getBitcoinUTXOs(_network)(depositAddress, confirmations)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));

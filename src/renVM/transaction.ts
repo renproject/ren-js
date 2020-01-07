@@ -1,4 +1,4 @@
-import { Token } from "../types/assets";
+import { RenContract } from "../types/assets";
 import { Arg, Args } from "./jsonRPC";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ type TxSignatureArray = [
 interface SubmitTxRequest<T extends Args> {
     // Tx being submitted.
     tx: {
-        "to": Token;
+        "to": RenContract;
         "args": T;
     };
 }
@@ -55,7 +55,7 @@ export interface SubmitTxResponse {
     // Tx being submitted.
     tx: {
         hash: string;
-        to: Token;
+        to: RenContract;
         args: MintArgsArray;
     };
 }
@@ -84,7 +84,7 @@ export enum TxStatus {
 export interface QueryTxResponse {
     tx: {
         hash: string;
-        to: Token;
+        to: RenContract;
         args: TxOutputArgsArray;
         out: TxSignatureArray;
     };
@@ -94,7 +94,7 @@ export interface QueryTxResponse {
 export interface QueryBurnResponse {
     tx: {
         hash: string;
-        to: Token;
+        to: RenContract;
         args: unknown;
         out: unknown;
     };

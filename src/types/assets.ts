@@ -12,7 +12,7 @@ export enum Asset {
     BCH = "BCH",
 }
 
-export enum Token {
+export enum RenContract {
     Btc2Eth = "BTC0Btc2Eth",
     Eth2Btc = "BTC0Eth2Btc",
     Zec2Eth = "ZEC0Zec2Eth",
@@ -23,44 +23,44 @@ export enum Token {
 
 export const Tokens = {
     BTC: {
-        Mint: Token.Btc2Eth,
-        Btc2Eth: Token.Btc2Eth,
+        Mint: RenContract.Btc2Eth,
+        Btc2Eth: RenContract.Btc2Eth,
 
-        Burn: Token.Eth2Btc,
-        Eth2Btc: Token.Eth2Btc,
+        Burn: RenContract.Eth2Btc,
+        Eth2Btc: RenContract.Eth2Btc,
     },
     ZEC: {
-        Mint: Token.Zec2Eth,
-        Zec2Eth: Token.Zec2Eth,
+        Mint: RenContract.Zec2Eth,
+        Zec2Eth: RenContract.Zec2Eth,
 
-        Burn: Token.Eth2Zec,
-        Eth2Zec: Token.Eth2Zec,
+        Burn: RenContract.Eth2Zec,
+        Eth2Zec: RenContract.Eth2Zec,
     },
     BCH: {
-        Mint: Token.Bch2Eth,
-        Bch2Eth: Token.Bch2Eth,
+        Mint: RenContract.Bch2Eth,
+        Bch2Eth: RenContract.Bch2Eth,
 
-        Burn: Token.Eth2Bch,
-        Eth2Bch: Token.Eth2Bch,
+        Burn: RenContract.Eth2Bch,
+        Eth2Bch: RenContract.Eth2Bch,
     },
 };
 
-interface ActionDetails {
+interface RenContractDetails {
     asset: Asset;
     from: Chain;
     to: Chain;
 }
 
-const shiftActionRegex = /^(.*)0(.*)2(.*)$/;
+const renContractRegex = /^(.*)0(.*)2(.*)$/;
 const defaultMatch = [undefined, undefined, undefined, undefined];
 
-// actionToDetails splits an action (e.g. `BTC0Eth2Btc`) into the asset
+// parseRenContract splits an action (e.g. `BTC0Eth2Btc`) into the asset
 // (`BTC`), the from chain (`Eth`)
-export const actionToDetails = (shiftAction: Token): ActionDetails => {
+export const parseRenContract = (renContract: RenContract): RenContractDetails => {
     // re.exec("BTC0Eth2Btc") => ['BTC0Eth2Btc', 'BTC', 'Eth', 'Btc']
-    const [, asset, from, to] = shiftActionRegex.exec(shiftAction) || defaultMatch;
+    const [, asset, from, to] = renContractRegex.exec(renContract) || defaultMatch;
     if (!asset || !from || !to) {
-        throw new Error(`Invalid shift action "${shiftAction}"`);
+        throw new Error(`Invalid Ren Contract "${renContract}"`);
     }
 
     return {

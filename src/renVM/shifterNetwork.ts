@@ -1,5 +1,5 @@
 import { getTokenAddress, Ox, SECONDS, sleep, strip0x } from "../lib/utils";
-import { actionToDetails, Asset, Token } from "../types/assets";
+import { Asset, parseRenContract, RenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { decodeValue } from "./jsonRPC";
 import { RPCMethod } from "./renNode";
@@ -35,7 +35,7 @@ export class ShifterNetwork {
     }
 
     public submitShiftIn = async (
-        action: Token,
+        renContract: RenContract,
         to: string,
         amount: number,
         nonce: string,
@@ -44,9 +44,9 @@ export class ShifterNetwork {
         utxoVout: number,
         network: NetworkDetails,
     ): Promise<string> => {
-        const token = getTokenAddress(action, network);
+        const token = getTokenAddress(renContract, network);
         let utxoType: "ext_btcCompatUTXO" | "ext_zecCompatUTXO";
-        switch (actionToDetails(action).asset) {
+        switch (parseRenContract(renContract).asset) {
             case Asset.BTC:
                 utxoType = "ext_btcCompatUTXO";
                 break;
@@ -57,12 +57,12 @@ export class ShifterNetwork {
                 utxoType = "ext_btcCompatUTXO";
                 break;
             default:
-                throw new Error(`Unsupported action ${action}`);
+                throw new Error(`Unsupported action ${renContract}`);
         }
         const response = await this.network.broadcastMessage<SubmitMintRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {
                 tx: {
-                    to: action,
+                    to: renContract,
                     args: [
                         // The hash of the payload data
                         { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
@@ -91,11 +91,11 @@ export class ShifterNetwork {
         return Ox(Buffer.from(response.tx.hash, "base64"));
     }
 
-    public submitShiftOut = async (action: Token, ref: string): Promise<string> => {
+    public submitShiftOut = async (renContract: RenContract, ref: string): Promise<string> => {
         const response = await this.network.broadcastMessage<SubmitBurnRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {
                 tx: {
-                    to: action,
+                    to: renContract,
                     args: [
                         { name: "ref", type: "u64", value: parseInt(ref, 16) },
                     ],

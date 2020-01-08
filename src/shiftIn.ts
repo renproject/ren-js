@@ -69,7 +69,11 @@ export class ShiftInObject {
             try {
                 // Check if the darknodes have already seen the transaction
                 const queryTxResponse = await this.queryTx();
-                if (queryTxResponse.txStatus === TxStatus.TxStatusDone || queryTxResponse.txStatus === TxStatus.TxStatusExecuting) {
+                if (
+                    queryTxResponse.txStatus === TxStatus.TxStatusDone ||
+                    queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
+                    queryTxResponse.txStatus === TxStatus.TxStatusPending
+                ) {
                     // Shift has already been submitted to RenVM - no need to
                     // wait for deposit.
                     return this;

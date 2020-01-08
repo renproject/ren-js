@@ -1,3 +1,7 @@
+import { bchAddressFrom, bchAddressToHex, getBitcoinCashUTXOs } from "../blockchain/bch";
+import { btcAddressFrom, btcAddressToHex, getBitcoinUTXOs } from "../blockchain/btc";
+import { getZcashUTXOs, zecAddressFrom, zecAddressToHex } from "../blockchain/zec";
+
 export enum Chain {
     Bitcoin = "Btc",
     Ethereum = "Eth",
@@ -21,27 +25,56 @@ export enum RenContract {
     Eth2Bch = "BCH0Eth2Bch",
 }
 
+export const btcUtils = {
+    getUTXOs: getBitcoinUTXOs,
+    addressToHex: btcAddressToHex,
+    addressFrom: btcAddressFrom,
+};
+
+export const zecUtils = {
+    getUTXOs: getZcashUTXOs,
+    addressToHex: zecAddressToHex,
+    addressFrom: zecAddressFrom,
+};
+
+export const bchUtils = {
+    getUTXOs: getBitcoinCashUTXOs,
+    addressToHex: bchAddressToHex,
+    addressFrom: bchAddressFrom,
+};
+
 export const Tokens = {
+    // Bitcoin
     BTC: {
         Mint: RenContract.Btc2Eth,
         Btc2Eth: RenContract.Btc2Eth,
 
         Burn: RenContract.Eth2Btc,
         Eth2Btc: RenContract.Eth2Btc,
+
+        ...btcUtils,
     },
+
+    // Zcash
     ZEC: {
         Mint: RenContract.Zec2Eth,
         Zec2Eth: RenContract.Zec2Eth,
 
         Burn: RenContract.Eth2Zec,
         Eth2Zec: RenContract.Eth2Zec,
+
+        ...zecUtils,
     },
+
+    // Bitcoin Cash
     BCH: {
         Mint: RenContract.Bch2Eth,
         Bch2Eth: RenContract.Bch2Eth,
 
         Burn: RenContract.Eth2Bch,
         Eth2Bch: RenContract.Eth2Bch,
+
+        ...bchUtils
     },
 };
 

@@ -1,14 +1,11 @@
 import _BN from "bn.js";
 
-import { bchAddressFrom, bchAddressToHex, getBitcoinCashUTXOs } from "./blockchain/bch";
-import { btcAddressFrom, btcAddressToHex, getBitcoinUTXOs } from "./blockchain/btc";
-import { getZcashUTXOs, zecAddressFrom, zecAddressToHex } from "./blockchain/zec";
 import { Ox, randomNonce, strip0x } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { TxStatus } from "./renVM/transaction";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
-import { Chain, Tokens } from "./types/assets";
+import { bchUtils, btcUtils, Chain, Tokens, zecUtils } from "./types/assets";
 import {
     Network, NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork,
 } from "./types/networks";
@@ -36,23 +33,17 @@ const utils = {
     strip0x,
     randomNonce,
 
-    zec: {
-        getUTXOs: getZcashUTXOs,
-        addressToHex: zecAddressToHex,
-        addressFrom: zecAddressFrom,
-    },
+    // Bitcoin
+    BTC: btcUtils,
+    btc: btcUtils,
 
-    btc: {
-        getUTXOs: getBitcoinUTXOs,
-        addressToHex: btcAddressToHex,
-        addressFrom: btcAddressFrom,
-    },
+    // Zcash
+    ZEC: zecUtils,
+    zec: zecUtils,
 
-    bch: {
-        getUTXOs: getBitcoinCashUTXOs,
-        addressToHex: bchAddressToHex,
-        addressFrom: bchAddressFrom,
-    }
+    // Bitcoin Cash
+    BCH: bchUtils,
+    bch: bchUtils,
 };
 
 /**

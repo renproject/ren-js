@@ -3,6 +3,7 @@ import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
+import { sha3 } from "web3-utils";
 
 import { BitcoinCashUTXO } from "./blockchain/bch";
 import { BitcoinUTXO } from "./blockchain/btc";
@@ -16,6 +17,7 @@ import {
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
 import { QueryTxResponse, Tx, TxStatus } from "./renVM/transaction";
+import { parseRenContract } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 import {
     ShiftInFromDetails, ShiftInFromRenTxHash, ShiftInParams, ShiftInParamsAll,
@@ -71,8 +73,7 @@ export class ShiftInObject {
                 const queryTxResponse = await this.queryTx();
                 if (
                     queryTxResponse.txStatus === TxStatus.TxStatusDone ||
-                    queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
-                    queryTxResponse.txStatus === TxStatus.TxStatusPending
+                    queryTxResponse.txStatus === TxStatus.TxStatusExecuting
                 ) {
                     // Shift has already been submitted to RenVM - no need to
                     // wait for deposit.
@@ -238,6 +239,46 @@ export class Signature {
         const promiEvent = newPromiEvent<TransactionReceipt>();
 
         (async () => {
+
+            const web3 = new Web3(web3Provider);
+
+            const { sendToken: renContract } = this.params as ShiftInFromDetails;
+
+            // Check if the signature has already been submitted
+            if (renContract) {
+                try {
+                    const shifterRegistry = new web3.eth.Contract(this.network.contracts.addresses.shifter.ShifterRegistry.abi, this.network.contracts.addresses.shifter.ShifterRegistry.address);
+                    const token = parseRenContract(renContract).asset;
+                    const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(`z${token}`).call();
+                    const shifter = new web3.eth.Contract(this.network.contracts.addresses.shifter.BTCShifter.abi, shifterAddress);
+                    // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
+                    // the contract
+                    const status = await shifter.methods.status(this.response.args.hash).call();
+                    if (status) {
+                        const recentRegistrationEvents = await web3.eth.getPastLogs({
+                            address: shifterAddress,
+                            fromBlock: "1",
+                            toBlock: "latest",
+                            // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
+                            // address.slice(2), null, null] as any,
+                            topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.response.args.hash] as string[],
+                        });
+                        if (!recentRegistrationEvents.length) {
+                            throw new Error(`Shift has been submitted but no log was found.`);
+                        }
+                        const log = recentRegistrationEvents[0];
+                        promiEvent.emit("transactionHash", log.transactionHash);
+                        promiEvent.emit("confirmation", 1);
+                        const receipt = await web3.eth.getTransactionReceipt(log.transactionHash);
+                        return receipt;
+                    }
+                } catch (error) {
+                    // tslint:disable-next-line: no-console
+                    console.error(error);
+                    // Continue with transaction
+                }
+            }
+
             const params = [
                 ...this.params.contractParams.map(value => value.value),
                 Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
@@ -247,7 +288,7 @@ export class Signature {
             ];
 
             const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
-            const web3 = new Web3(web3Provider);
+
             const contract = new web3.eth.Contract(ABI, this.params.sendTo);
 
             const tx = contract.methods[this.params.contractFn](
@@ -259,9 +300,10 @@ export class Signature {
 
             forwardEvents(tx, promiEvent);
 
-            return await new Promise<TransactionReceipt>((resolve, reject) => tx
-                .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { resolve(receipt); })
+            return await new Promise<TransactionReceipt>((innerResolve, reject) => tx
+                .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { innerResolve(receipt); })
                 .catch((error: Error) => {
+                    // tslint:disable-next-line: no-console
                     try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                     reject(error);
                 })
@@ -270,6 +312,7 @@ export class Signature {
 
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
+            // tslint:disable-next-line: no-console
             try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });

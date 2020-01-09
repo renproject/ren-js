@@ -71,6 +71,7 @@ describe("Shifting in and shifting out", function () {
         amount: number,
         ethAddress: string,
         submit: (shift: ShiftInObject) => Promise<void>,
+        nonce?: string,
     ): Promise<void> => {
         const params: Args = [
             {
@@ -90,6 +91,7 @@ describe("Shifting in and shifting out", function () {
             sendAmount: amount,
             contractFn: "shiftIn",
             contractParams: params,
+            nonce: nonce || RenJS.utils.randomNonce(),
         });
         const gatewayAddress = shift.addr();
 
@@ -263,6 +265,7 @@ describe("Shifting in and shifting out", function () {
                 // Test minting.
                 console.log("Starting mint test:");
                 const initialERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
+                const nonce = RenJS.utils.randomNonce();
                 await mintTest(
                     testcase.token,
                     testcase.mintToken,
@@ -271,7 +274,19 @@ describe("Shifting in and shifting out", function () {
                     amount,
                     ethAddress,
                     submitIndividual,
+                    nonce,
                 );
+
+                // await mintTest(
+                //     testcase.token,
+                //     testcase.mintToken,
+                //     shifterAddress,
+                //     adapterContract,
+                //     amount,
+                //     ethAddress,
+                //     submitIndividual,
+                //     nonce,
+                // );
 
                 const finalERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
 

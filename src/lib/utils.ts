@@ -193,7 +193,10 @@ export const BURN_TOPIC = web3Keccak256("LogShiftOut(bytes,uint256,uint256,bytes
 // tslint:disable-next-line: no-any
 export const ignoreError = (error: any): boolean => {
     try {
-        return (error && error.message && error.message.match(/Invalid block number/));
+        return (error && error.message && (
+            error.message.match(/Invalid block number/) ||
+            error.message.match(/Timeout exceeded during the transaction confirmation process./)
+        ));
     } catch (error) {
         return false;
     }

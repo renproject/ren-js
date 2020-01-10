@@ -73,7 +73,8 @@ export class ShiftInObject {
                 const queryTxResponse = await this.queryTx();
                 if (
                     queryTxResponse.txStatus === TxStatus.TxStatusDone ||
-                    queryTxResponse.txStatus === TxStatus.TxStatusExecuting
+                    queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
+                    queryTxResponse.txStatus === TxStatus.TxStatusPending
                 ) {
                     // Shift has already been submitted to RenVM - no need to
                     // wait for deposit.
@@ -267,9 +268,32 @@ export class Signature {
                             throw new Error(`Shift has been submitted but no log was found.`);
                         }
                         const log = recentRegistrationEvents[0];
-                        promiEvent.emit("transactionHash", log.transactionHash);
-                        promiEvent.emit("confirmation", 1);
                         const receipt = await web3.eth.getTransactionReceipt(log.transactionHash);
+                        promiEvent.emit("transactionHash", log.transactionHash);
+
+                        const emitConfirmation = async () => {
+                            const currentBlock = await web3.eth.getBlockNumber();
+                            promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt);
+                        };
+
+                        // The following section should be revised to properly
+                        // register the event emitter to the transaction's
+                        // confirmations, so that on("confirmation") works
+                        // as expected. This code branch only occurs if a
+                        // completed trade is passed to RenJS again, which
+                        // should not usually happen.
+
+                        // Emit confirmation now and in 1s, since a common use
+                        // case may be to have the following code, which doesn't
+                        // work if we emit the txHash and confirmations
+                        // with no time in between:
+                        //
+                        // ```js
+                        // const txHash = await new Promise((resolve, reject) => shift.on("transactionHash", resolve).catch(reject));
+                        // shift.on("confirmation", () => { /* do something */ });
+                        // ```
+                        await emitConfirmation();
+                        setTimeout(emitConfirmation, 1000);
                         return receipt;
                     }
                 } catch (error) {

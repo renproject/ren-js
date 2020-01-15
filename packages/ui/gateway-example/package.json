@@ -2,7 +2,7 @@
     "name": "gateway-example",
     "version": "0.0.0",
     "private": true,
-    "homepage": "https://renproject.github.io/gateway-example/",
+    "homepage": "https://renproject.github.io/gateway-example",
     "scripts": {
         "start": "react-scripts start",
         "build": "NODE_OPTIONS=--max_old_space_size=4096 REACT_APP_SOURCE_VERSION=$SOURCE_VERSION react-scripts build",

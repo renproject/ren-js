@@ -1,0 +1,79 @@
+.test-background {
+    background: #eee;
+    min-height: 100vh;
+}
+
+.test-banner {
+    height: 60px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    border-bottom: 1px solid #999;
+    background: white;
+
+    >.container {
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+    h1 {
+        font-size: 24px;
+        margin: 0;
+    }
+}
+
+._ren_gateway-minified>._ren_iframeShadow {
+    margin-top: 60px;
+}
+
+.test-environment {
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 500px;
+    background: white;
+
+    margin-top: 15vh;
+
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    border-radius: 2px;
+    text-align: center;
+
+    .box {
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        padding: 10px;
+
+        p+p {
+            margin-bottom: 0;
+        }
+
+        margin-bottom: 20px;
+    }
+
+    >div>button {
+        text-transform: uppercase;
+        background: #006fe8;
+        color: white;
+        padding: 0 20px;
+        width: 100%;
+        margin: 0 auto;
+        border: none;
+        margin-bottom: 5px;
+        border-radius: 2px;
+        line-height: 250%;
+
+
+        padding-top: 3px;
+
+        &:not(:disabled):active {
+            background: #006fe8;
+            color: white;
+            font-weight: 900;
+        }
+
+        &:disabled {
+            background: #eee;
+            border: 1px solid darken($color: #eee, $amount: 10);
+            color: #eee;
+        }
+    }
+}

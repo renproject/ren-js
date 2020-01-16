@@ -1,8 +1,7 @@
 import _BN from "bn.js";
 
-import { DarknodeGroup } from "renVM/darknodeGroup";
-
 import { Ox, randomNonce, strip0x } from "./lib/utils";
+import { DarknodeGroup } from "./renVM/darknodeGroup";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { TxStatus } from "./renVM/transaction";
 import { ShiftInObject } from "./shiftIn";

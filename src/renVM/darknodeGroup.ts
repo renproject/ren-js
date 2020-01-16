@@ -1,6 +1,7 @@
 import { List, OrderedSet } from "immutable";
 
-import { RenNode, RPCMethod } from "./renNode";
+import { Darknode } from "./darknode";
+import { QueryPeers, QueryStat, RPCMethod } from "./jsonRPC";
 
 const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[List<a>, OrderedSet<string>]> => {
     let errors = OrderedSet<string>();
@@ -20,27 +21,23 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
     return [newList, errors];
 };
 
-export class RenVMNetwork {
-    public nodes: List<RenNode>;
+export class DarknodeGroup {
+    public nodes: List<Darknode>;
 
     constructor(nodeURLs: string[]) {
-        this.nodes = List(nodeURLs.map(nodeURL => new RenNode(nodeURL)));
+        this.nodes = List(nodeURLs.map(nodeURL => new Darknode(nodeURL)));
     }
 
-    public broadcastMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<Response> => {
+    public sendMessage = async <Request, Response>(method: RPCMethod, args: Request): Promise<Response> => {
         // tslint:disable-next-line: prefer-const
         let [responses, errors] = await promiseAll(
-            this.nodes.valueSeq().map(async (node) => {
-                const response = await node.sendMessage<Request, Response>(
+            this.nodes.valueSeq().map(
+                async (node) => node.sendMessage<Request, Response>(
                     method,
                     args,
-                );
-                if (!response.result || response.error) {
-                    throw new Error(response.error.message || response.error) || new Error(`Invalid message`);
-                }
-                return response.result;
-            }).toList(),
-            null
+                ),
+            ).toList(),
+            null,
         );
         responses = responses.filter((result) => result !== null);
 
@@ -55,4 +52,7 @@ export class RenVMNetwork {
 
         return first;
     }
+
+    public queryStat = async () => this.sendMessage<{}, QueryStat>(RPCMethod.QueryStat, {});
+    public queryPeers = async () => this.sendMessage<{}, QueryPeers>(RPCMethod.QueryPeers, {});
 }

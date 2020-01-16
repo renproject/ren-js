@@ -1,5 +1,7 @@
 import _BN from "bn.js";
 
+import { DarknodeGroup } from "renVM/darknodeGroup";
+
 import { Ox, randomNonce, strip0x } from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { TxStatus } from "./renVM/transaction";
@@ -21,6 +23,9 @@ export { UTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
 export { TxStatus } from "./renVM/transaction";
 export { Chain, RenContract as Token, RenContract } from "./types/assets";
+export { Darknode } from "./renVM/darknode";
+export { DarknodeGroup } from "./renVM/darknodeGroup";
+export { RPCMethod } from "./renVM/jsonRPC";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -85,6 +90,7 @@ export default class RenJS {
 
     // Not static
     public readonly renVM: ShifterNetwork;
+    public readonly lightnode: DarknodeGroup;
     public readonly network: NetworkDetails;
 
     /**
@@ -94,7 +100,8 @@ export default class RenJS {
      */
     constructor(network?: NetworkDetails | string | null | undefined) {
         this.network = stringToNetwork(network);
-        this.renVM = new ShifterNetwork(this.network.nodeURLs);
+        this.lightnode = new DarknodeGroup(this.network.nodeURLs);
+        this.renVM = new ShifterNetwork(this.lightnode);
     }
 
     /**

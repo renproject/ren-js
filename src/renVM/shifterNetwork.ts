@@ -1,9 +1,8 @@
 import { getTokenAddress, Ox, SECONDS, sleep, strip0x } from "../lib/utils";
 import { Asset, parseRenContract, RenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
-import { decodeValue } from "./jsonRPC";
-import { RPCMethod } from "./renNode";
-import { RenVMNetwork } from "./renVMNetwork";
+import { DarknodeGroup } from "./darknodeGroup";
+import { decodeValue, RPCMethod } from "./jsonRPC";
 import {
     QueryBurnResponse, QueryTxRequest, QueryTxResponse, SubmitBurnRequest, SubmitMintRequest,
     SubmitTxResponse, Tx, TxStatus,
@@ -28,10 +27,10 @@ export const unmarshalTx = (response: QueryTxResponse): Tx => {
 };
 
 export class ShifterNetwork {
-    public network: RenVMNetwork;
+    public network: DarknodeGroup;
 
-    constructor(nodeURLs: string[]) {
-        this.network = new RenVMNetwork(nodeURLs);
+    constructor(network: DarknodeGroup) {
+        this.network = network;
     }
 
     public submitShiftIn = async (
@@ -59,7 +58,7 @@ export class ShifterNetwork {
             default:
                 throw new Error(`Unsupported action ${renContract}`);
         }
-        const response = await this.network.broadcastMessage<SubmitMintRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
+        const response = await this.network.sendMessage<SubmitMintRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {
                 tx: {
                     to: renContract,
@@ -92,7 +91,7 @@ export class ShifterNetwork {
     }
 
     public submitShiftOut = async (renContract: RenContract, ref: string): Promise<string> => {
-        const response = await this.network.broadcastMessage<SubmitBurnRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
+        const response = await this.network.sendMessage<SubmitBurnRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
             {
                 tx: {
                     to: renContract,
@@ -106,7 +105,7 @@ export class ShifterNetwork {
     }
 
     public readonly queryTX = async <T extends QueryBurnResponse | QueryTxResponse>(utxoTxHash: string): Promise<T> => {
-        return await this.network.broadcastMessage<QueryTxRequest, QueryTxResponse>(
+        return await this.network.sendMessage<QueryTxRequest, QueryTxResponse>(
             RPCMethod.QueryTx,
             {
                 txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),

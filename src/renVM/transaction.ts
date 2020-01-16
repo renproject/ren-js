@@ -1,9 +1,8 @@
-import { RenContract } from "../types/assets";
-import { Arg, Args } from "./jsonRPC";
+import { Arg } from "./arg";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
 
-type MintArgsArray = [
+export type MintArgsArray = [
     Arg<"phash", "b32", string>, // base64
     Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>, // base64
@@ -12,11 +11,11 @@ type MintArgsArray = [
     Arg<"utxo", "ext_btcCompatUTXO" | "ext_zecCompatUTXO", { "txHash": string; /* base64 */ "vOut": number; }>
 ];
 
-type BurnArgsArray = [
+export type BurnArgsArray = [
     Arg<"ref", "u64", number>,
 ];
 
-type TxOutputArgsArray = [
+export type TxOutputArgsArray = [
     Arg<"phash", "b32", string>,
     Arg<"amount", "u64", number>,
     Arg<"token", "b20", string>,
@@ -29,36 +28,11 @@ type TxOutputArgsArray = [
     Arg<"hash", "b32", string>,
 ];
 
-type TxSignatureArray = [
+export type TxSignatureArray = [
     Arg<"r", "b", string>, // base 64
     Arg<"s", "b", string>, // base 64
     Arg<"v", "b", string>, // base 64
 ];
-
-interface SubmitTxRequest<T extends Args> {
-    // Tx being submitted.
-    tx: {
-        "to": RenContract;
-        "args": T;
-    };
-}
-
-export type SubmitMintRequest = SubmitTxRequest<MintArgsArray>;
-export type SubmitBurnRequest = SubmitTxRequest<BurnArgsArray>;
-
-export interface QueryTxRequest {
-    // TxHash of the transaction that will be returned.
-    txHash: string;
-}
-
-export interface SubmitTxResponse {
-    // Tx being submitted.
-    tx: {
-        hash: string;
-        to: RenContract;
-        args: MintArgsArray;
-    };
-}
 
 export enum TxStatus {
     // TxStatusNil is used for transactions that have not been seen, or are
@@ -79,26 +53,6 @@ export enum TxStatus {
     // TxStatusReverted is used for transactions that were reverted during
     // execution.
     TxStatusReverted = "reverted",
-}
-
-export interface QueryTxResponse {
-    tx: {
-        hash: string;
-        to: RenContract;
-        args: TxOutputArgsArray;
-        out: TxSignatureArray;
-    };
-    txStatus: TxStatus;
-}
-
-export interface QueryBurnResponse {
-    tx: {
-        hash: string;
-        to: RenContract;
-        args: unknown;
-        out: unknown;
-    };
-    txStatus: TxStatus;
 }
 
 export interface Tx {

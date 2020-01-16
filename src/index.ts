@@ -1,7 +1,9 @@
 import _BN from "bn.js";
 
 import { Ox, randomNonce, strip0x } from "./lib/utils";
+import { Darknode } from "./renVM/darknode";
 import { DarknodeGroup } from "./renVM/darknodeGroup";
+import { RPCMethod } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { TxStatus } from "./renVM/transaction";
 import { ShiftInObject } from "./shiftIn";
@@ -77,6 +79,9 @@ export default class RenJS {
     public static Chains = Chain;
     public static TxStatus = TxStatus;
     public static utils = utils;
+    public static Darknode = Darknode;
+    public static DarknodeGroup = DarknodeGroup;
+    public static RPCMethod = RPCMethod;
 
     // Expose constants again without `static` so they can be accessed on
     // instances - e.g. `(new RenJS("testnet")).Tokens`
@@ -86,6 +91,9 @@ export default class RenJS {
     public readonly Chains = Chain;
     public readonly TxStatus = TxStatus;
     public readonly utils = utils;
+    public readonly Darknode = Darknode;
+    public readonly DarknodeGroup = DarknodeGroup;
+    public readonly RPCMethod = RPCMethod;
 
     // Not static
     public readonly renVM: ShifterNetwork;

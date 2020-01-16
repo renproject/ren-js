@@ -76,7 +76,7 @@ describe("Utils", function () {
 
     it(`queryTX`, async () => {
         await new RenJS("testnet").renVM.queryTX("0")
-            .should.be.rejectedWith(/Lightnode returned status 500 with reason: method=ren_queryTx not available/);
+            .should.be.rejectedWith(/Node returned status 500 with reason: method=ren_queryTx not available/);
     });
 
     it.skip("fixSignature", () => {

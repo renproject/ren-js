@@ -3,7 +3,7 @@ import BN from "bn.js";
 import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
-import { Args } from "../renVM/jsonRPC";
+import { Args } from "../renVM/arg";
 import { RenContract } from "./assets";
 
 interface ContractCall {

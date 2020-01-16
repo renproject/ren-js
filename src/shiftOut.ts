@@ -6,8 +6,8 @@ import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
     BURN_TOPIC, generateTxHash, ignoreError, strip0x, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
+import { ResponseQueryTx } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
-import { QueryBurnResponse } from "./renVM/transaction";
 import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
 
 export class ShiftOutObject {
@@ -121,10 +121,10 @@ export class ShiftOutObject {
         return generateTxHash(this.params.sendToken, this.params.burnReference);
     }
 
-    public queryTx = async () => this.renVMNetwork.queryTX<QueryBurnResponse>(this.renTxHash());
+    public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (): PromiEvent<QueryBurnResponse> => {
-        const promiEvent = newPromiEvent<QueryBurnResponse>();
+    public submitToRenVM = (): PromiEvent<ResponseQueryTx> => {
+        const promiEvent = newPromiEvent<ResponseQueryTx>();
 
         (async () => {
             const burnReference = this.params.burnReference;
@@ -140,7 +140,7 @@ export class ShiftOutObject {
             promiEvent.emit("messageID", renTxHash);
             promiEvent.emit("renTxHash", renTxHash);
 
-            return await this.renVMNetwork.waitForTX<QueryBurnResponse>(renTxHash, (status) => {
+            return await this.renVMNetwork.waitForTX(renTxHash, (status) => {
                 promiEvent.emit("status", status);
             });
         })().then(promiEvent.resolve).catch(promiEvent.reject);

@@ -9,7 +9,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinCashUTXO, createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
-import { Args } from "../renVM/jsonRPC";
+import { Args } from "../renVM/arg";
 import { Tx } from "../renVM/transaction";
 import { Asset, Chain, parseRenContract, RenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
@@ -237,7 +237,7 @@ export const extractError = (error: any): string => {
 export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) => {
     let returnError;
     // tslint:disable-next-line: no-constant-condition
-    for (let i = 0; i < retries; i++) {
+    for (let i = 0; retries === -1 || i < retries; i++) {
         // if (i > 0) {
         //     console.debug(`Retrying...`);
         // }

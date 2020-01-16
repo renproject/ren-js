@@ -1,7 +1,10 @@
 import axios, { AxiosResponse } from "axios";
 
 import { extractError, retryNTimes } from "../lib/utils";
-import { JSONRPCResponse, QueryPeers, QueryStat, RPCMethod } from "./jsonRPC";
+import {
+    JSONRPCResponse, ParamsQueryBlock, ParamsQueryBlocks, ParamsQueryEpoch, ParamsQueryTx,
+    ParamsSubmitBurn, ParamsSubmitMint, RPCMethod, RPCParams, RPCResponse,
+} from "./jsonRPC";
 
 const generatePayload = (method: string, params?: unknown) => ({
     id: 1,
@@ -32,10 +35,10 @@ export class Darknode {
         }
     }
 
-    public async sendMessage<Request, Response>(method: RPCMethod, request: Request, retry = 5): Promise<Response> {
+    public async sendMessage<Method extends RPCMethod>(method: Method, request: RPCParams<Method>, retry = 5): Promise<RPCResponse<Method>> {
         try {
             const response = await retryNTimes(
-                () => axios.post<JSONRPCResponse<Response>>(
+                () => axios.post<JSONRPCResponse<RPCResponse<Method>>>(
                     this.nodeURL,
                     generatePayload(method, request),
                     { timeout: 120000 }),
@@ -59,8 +62,23 @@ export class Darknode {
         }
     }
 
-    public queryStat = async () => this.sendMessage<{}, QueryStat>(RPCMethod.QueryStat, {});
-    public queryPeers = async () => this.sendMessage<{}, QueryPeers>(RPCMethod.QueryPeers, {});
+    public queryBlock = async (blockHeight: ParamsQueryBlock["blockHeight"], retry?: number) =>
+        this.sendMessage<RPCMethod.QueryBlock>(RPCMethod.QueryBlock, { blockHeight }, retry)
+    public queryBlocks = async (blockHeight: ParamsQueryBlocks["blockHeight"], n: ParamsQueryBlocks["n"], retry?: number) =>
+        this.sendMessage<RPCMethod.QueryBlocks>(RPCMethod.QueryBlocks, { blockHeight, n }, retry)
+    public submitTx = async (tx: ParamsSubmitBurn["tx"] | ParamsSubmitMint["tx"], retry?: number) =>
+        // tslint:disable-next-line: no-object-literal-type-assertion
+        this.sendMessage<RPCMethod.SubmitTx>(RPCMethod.SubmitTx, { tx } as ParamsSubmitBurn | ParamsSubmitMint, retry)
+    public queryTx = async (txHash: ParamsQueryTx["txHash"], retry?: number) =>
+        this.sendMessage<RPCMethod.QueryTx>(RPCMethod.QueryTx, { txHash }, retry)
+    public queryNumPeers = async (retry?: number) =>
+        this.sendMessage<RPCMethod.QueryNumPeers>(RPCMethod.QueryNumPeers, {}, retry)
+    public queryPeers = async (retry?: number) =>
+        this.sendMessage<RPCMethod.QueryPeers>(RPCMethod.QueryPeers, {}, retry)
+    public queryEpoch = async (epochHash: ParamsQueryEpoch["epochHash"], retry?: number) =>
+        this.sendMessage<RPCMethod.QueryEpoch>(RPCMethod.QueryEpoch, { epochHash }, retry)
+    public queryStat = async (retry?: number) =>
+        this.sendMessage<RPCMethod.QueryStat>(RPCMethod.QueryStat, {}, retry)
 
     private responseError(msg: string, response: AxiosResponse): ResponseError {
         const error = new Error(msg) as ResponseError;

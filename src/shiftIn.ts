@@ -16,7 +16,7 @@ import {
     withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
-import { QueryTxResponse, Tx, TxStatus } from "./renVM/transaction";
+import { Tx, TxStatus } from "./renVM/transaction";
 import { parseRenContract } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 import {
@@ -144,7 +144,7 @@ export class ShiftInObject {
         return generateTxHash(renContract, encodedGHash);
     }
 
-    public queryTx = async () => this.renVMNetwork.queryTX<QueryTxResponse>(this.renTxHash());
+    public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
     public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO): PromiEvent<Signature> => {
         const promiEvent = newPromiEvent<Signature>();
@@ -195,7 +195,7 @@ export class ShiftInObject {
                 promiEvent.emit("renTxHash", renTxHash);
             }
 
-            const marshalledResponse = await this.renVMNetwork.waitForTX<QueryTxResponse>(renTxHash, (status) => {
+            const marshalledResponse = await this.renVMNetwork.waitForTX(renTxHash, (status) => {
                 promiEvent.emit("status", status);
             });
 

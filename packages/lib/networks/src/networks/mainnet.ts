@@ -25,6 +25,13 @@ export default Network({
     },
     addresses: {
         ren: {
+            Protocol: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
             DarknodeRegistryStore: {
                 address: DarknodeRegistryStore.networks[networkID].address,
                 abi: DarknodeRegistryStore.abi as AbiItem[],

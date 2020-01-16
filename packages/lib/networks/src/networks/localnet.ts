@@ -32,6 +32,13 @@ export default Network({
     },
     addresses: {
         ren: {
+            Protocol: {
+                _address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
             DarknodeSlasher: {
                 address: DarknodeSlasher.networks[networkID].address,
                 abi: DarknodeSlasher.abi as AbiItem[],

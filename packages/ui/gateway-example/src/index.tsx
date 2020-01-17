@@ -66,7 +66,10 @@ export const GatewayExample: React.FC<{}> = props => {
                     value: address,
                 }
             ],
-        }).catch((error) => { setOpening(false); console.error(error); setError(error.message) });
+        })
+            .result()
+            .then(console.log)
+            .catch((error) => { setOpening(false); console.error(error); setError(error.message) });
         setOpening(false);
     }, [endpoint]);
 
@@ -83,9 +86,12 @@ export const GatewayExample: React.FC<{}> = props => {
                 if (trade.status === ShiftInStatus.ConfirmedOnEthereum) {
                     continue;
                 }
-                const gw = new GatewayJS(endpoint);
-                gw.open(trade.commitment);
+                const gw = new GatewayJS(endpoint).open(trade.commitment);
                 gw.pause();
+                gw
+                    .result()
+                    .then(console.log)
+                    .catch(error => { console.error(error); setError(error.message) });
                 // await gw.cancel();
             }
         })().catch(error => { console.error("Error in TestEnvironment.tsx: unfinishedTrades", error); setError(error.message) });

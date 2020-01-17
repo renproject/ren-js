@@ -1156,10 +1156,10 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@renproject/gateway-js@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@renproject/gateway-js/-/gateway-js-0.0.3.tgz#5f8ab2e8847a6c117ade8691cf72b888ffa8c7ee"
-  integrity sha512-3TopolIWXOQGFypIxoMAE4nnwDh+h3medf8Td3nYplKGrHh7xLTDLrF+CrF1ncsfbH/pzRMn8dMMBdgAvGIsPg==
+"@renproject/gateway-js@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@renproject/gateway-js/-/gateway-js-0.0.4.tgz#f4be58588d364455a0e175f003ada70671329bfe"
+  integrity sha512-p9uSJe1STzLbtwuzeM91TS4sciH2B7hojbsW+xp7OiA6PfsCUIyldKW+HeAuQhepCcbDAt2CvwMAtZalIPiwLg==
 
 "@svgr/babel-plugin-add-jsx-attribute@^4.2.0":
   version "4.2.0"

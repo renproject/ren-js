@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import GatewayJS from "@renproject/gateway-js";
+import GatewayJS, { HistoryEvent } from "@renproject/gateway-js";
 // TODO: Don't require RenJS to be imported
 import RenJS from "@renproject/ren";
 import BigNumber from "bignumber.js";
@@ -31,9 +31,13 @@ enum Endpoints {
 export const GatewayExample: React.FC<{}> = props => {
 
     const [endpoint, setEndpoint] = React.useState(Endpoints.TESTNET)
+    const [recovering, setRecovering] = React.useState(false);
+    const [opening, setOpening] = React.useState(false);
+    const [error, setError] = React.useState(null as string | null);
 
     // Called when the main button is pressed.
     const startSwap = React.useCallback(async () => {
+        setOpening(true);
         const amount = new BigNumber(0.000225);
         const gw = new GatewayJS(endpoint);
         const response = await gw.open({
@@ -62,28 +66,29 @@ export const GatewayExample: React.FC<{}> = props => {
                     value: address,
                 }
             ],
-        });
-        console.log(response);
+        }).catch((error) => { setOpening(false); console.error(error); setError(error.message) });
+        setOpening(false);
     }, [endpoint]);
 
     // Run once on load - check if there are any open trades that need to be
     // finished.
     const recoverTrades = React.useCallback(() => {
+        setRecovering(true);
         (async () => {
             const gw = new GatewayJS(endpoint);
             // TODO: export trade type
             // tslint:disable-next-line: no-any
-            const unfinishedTrades: any[] = await gw.unfinishedTrades();
+            const unfinishedTrades: Map<string, HistoryEvent> = await gw.unfinishedTrades();
             for (const trade of Array.from(unfinishedTrades.values())) {
                 if (trade.status === ShiftInStatus.ConfirmedOnEthereum) {
                     continue;
                 }
-                console.log(trade);
-                const responsePromise = gw.open(trade.commitment);
-                // gw.pause(); // TODO - fix pausing immediately
-                console.log(await responsePromise);
+                const gw = new GatewayJS(endpoint);
+                gw.open(trade.commitment);
+                gw.pause();
+                // await gw.cancel();
             }
-        })().catch(error => console.error("Error in TestEnvironment.tsx: unfinishedTrades", error));
+        })().catch(error => { console.error("Error in TestEnvironment.tsx: unfinishedTrades", error); setError(error.message) });
     }, [endpoint]);
 
     return (
@@ -95,13 +100,14 @@ export const GatewayExample: React.FC<{}> = props => {
                 <div className="box">
                     <p>To use this testing environment, you need to use a Web3 browser like Brave or Metamask for Firefox/Chrome.</p>
                 </div>
-                <select value={endpoint} onChange={e => setEndpoint(e.target.value as Endpoints)}>
+                <select disabled={opening || recovering} value={endpoint} onChange={e => setEndpoint(e.target.value as Endpoints)}>
                     <option value={Endpoints.TESTNET}>Testnet</option>
                     <option value={Endpoints.CHAOSNET}>Chaosnet</option>
                     <option value={Endpoints.LOCALHOST}>Localhost</option>
                 </select>
+                {error ? <div className="box">{error}</div> : <></>}
                 <div>
-                    <button onClick={recoverTrades}>Recover trades</button>
+                    <button disabled={recovering} onClick={recoverTrades}>Recover trades</button>
                 </div>
                 <div>
                     <button className="blue" onClick={startSwap}>Open GatewayJS</button>

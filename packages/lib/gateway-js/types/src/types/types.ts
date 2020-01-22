@@ -1,3 +1,4 @@
+import { ShiftParams } from "./parameters";
 import { Chain } from "./renVM";
 
 export enum GatewayMessageType {
@@ -20,15 +21,6 @@ export interface GatewayMessage<Payload> {
     type: GatewayMessageType;
     payload: Payload;
     error?: string;
-}
-
-export interface Commitment {
-    sendToken: string;
-    sendTo: string;
-    sendAmount: number;
-    contractFn: string;
-    contractParams: Array<{ name: string, value: string | number, type: string }>;
-    nonce?: string;
 }
 
 export interface Tx {
@@ -70,7 +62,7 @@ interface HistoryEventCommon {
     time: number; // Seconds since Unix epoch
     inTx: Tx | null;
     outTx: Tx | null;
-    commitment: Commitment;
+    commitment: ShiftParams;
     messageID: string | null;
     nonce: string;
     renVMStatus: TxStatus | null;
@@ -79,7 +71,7 @@ interface HistoryEventCommon {
 export interface ShiftInEvent extends HistoryEventCommon {
     shiftIn: true;
     status: ShiftInStatus;
-    commitment: Commitment;
+    commitment: ShiftParams;
 }
 
 export interface ShiftOutEvent extends HistoryEventCommon {

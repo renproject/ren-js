@@ -105,3 +105,5 @@ interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
 
 export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | (ShiftOutParamsTxHash | ShiftOutParamsTxHashOld);
 export type ShiftOutParamsAll = ShiftOutParamsCommon & Partial<ShiftOutParamsContractCall> & Partial<ShiftOutParamsBurnRef> & (Partial<ShiftOutParamsTxHash> & Partial<ShiftOutParamsTxHashOld>);
+
+export type ShiftParams = ShiftInParams | ShiftOutParams;

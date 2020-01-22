@@ -23,8 +23,6 @@
  */
 
 // tslint:disable: no-any
-// tslint:disable: readonly-array
-// tslint:disable: readonly-keyword
 
 import { EventEmitter } from "events";
 

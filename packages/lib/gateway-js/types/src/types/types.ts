@@ -1,7 +1,4 @@
-import { Chain } from "./renJsCommon";
-
-// tslint:disable: readonly-keyword
-// tslint:disable: readonly-array
+import { Chain } from "./renVM";
 
 export enum GatewayMessageType {
     Pause = "pause",

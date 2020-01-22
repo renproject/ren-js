@@ -1,5 +1,5 @@
-import { ShiftParams } from "./parameters";
-import { Chain } from "./renVM";
+import { ShiftInParams, ShiftOutParams, ShiftParams } from "./parameters";
+import { Chain, RenContract } from "./renVM";
 
 export enum GatewayMessageType {
     Pause = "pause",
@@ -57,12 +57,16 @@ export declare enum TxStatus {
     TxStatusReverted = "reverted"
 }
 
+export interface SendTokenInterface {
+    sendToken: RenContract;
+}
+
 interface HistoryEventCommon {
     id: string;
     time: number; // Seconds since Unix epoch
     inTx: Tx | null;
     outTx: Tx | null;
-    commitment: ShiftParams;
+    commitment: ShiftParams & SendTokenInterface;
     messageID: string | null;
     nonce: string;
     renVMStatus: TxStatus | null;
@@ -71,12 +75,13 @@ interface HistoryEventCommon {
 export interface ShiftInEvent extends HistoryEventCommon {
     shiftIn: true;
     status: ShiftInStatus;
-    commitment: ShiftParams;
+    commitment: ShiftInParams & SendTokenInterface;
 }
 
 export interface ShiftOutEvent extends HistoryEventCommon {
     shiftIn: false;
     status: ShiftOutStatus;
+    commitment: ShiftOutParams & SendTokenInterface;
 }
 
 export type HistoryEvent = ShiftInEvent | ShiftOutEvent;

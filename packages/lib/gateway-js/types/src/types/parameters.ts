@@ -107,3 +107,4 @@ export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef 
 export type ShiftOutParamsAll = ShiftOutParamsCommon & Partial<ShiftOutParamsContractCall> & Partial<ShiftOutParamsBurnRef> & (Partial<ShiftOutParamsTxHash> & Partial<ShiftOutParamsTxHashOld>);
 
 export type ShiftParams = ShiftInParams | ShiftOutParams;
+export type ShiftParamsAll = ShiftInParamsAll | ShiftOutParamsAll;

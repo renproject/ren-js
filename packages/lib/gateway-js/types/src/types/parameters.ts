@@ -67,7 +67,7 @@ export interface ShiftInFromDetails extends ContractCall {
 }
 
 export type ShiftInParams = ShiftInFromRenTxHash | ShiftInFromRenTxHashOld | ShiftInFromDetails;
-export type ShiftInParamsAll = Partial<ShiftInFromRenTxHash> & Partial<ShiftInFromRenTxHashOld> & Partial<ShiftInFromDetails>;
+export type ShiftInParamsAll = ShiftInParams & Partial<ShiftInFromRenTxHash> & Partial<ShiftInFromRenTxHashOld> & Partial<ShiftInFromDetails>;
 
 export interface ShiftOutParamsCommon {
     /**
@@ -104,7 +104,7 @@ export interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
 }
 
 export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | (ShiftOutParamsTxHash | ShiftOutParamsTxHashOld);
-export type ShiftOutParamsAll = ShiftOutParamsCommon & Partial<ShiftOutParamsContractCall> & Partial<ShiftOutParamsBurnRef> & (Partial<ShiftOutParamsTxHash> & Partial<ShiftOutParamsTxHashOld>);
+export type ShiftOutParamsAll = ShiftOutParams & Partial<ShiftOutParamsContractCall> & Partial<ShiftOutParamsBurnRef> & (Partial<ShiftOutParamsTxHash> & Partial<ShiftOutParamsTxHashOld>);
 
 export type ShiftParams = ShiftInParams | ShiftOutParams;
 export type ShiftParamsAll = ShiftInParamsAll | ShiftOutParamsAll;

@@ -1,4 +1,4 @@
-import { ShiftInParams, ShiftOutParams } from "./parameters";
+import { ShiftInParamsAll, ShiftOutParamsAll } from "./parameters";
 import { Chain, RenContract } from "./renVM";
 
 export enum GatewayMessageType {
@@ -61,26 +61,29 @@ export interface SendTokenInterface {
     sendToken: RenContract;
 }
 
+export interface ShiftNonce {
+    nonce: string;
+}
+
 interface HistoryEventCommon {
     id: string;
     time: number; // Seconds since Unix epoch
     inTx: Tx | null;
     outTx: Tx | null;
     messageID: string | null;
-    nonce: string;
     renVMStatus: TxStatus | null;
 }
 
 export interface ShiftInEvent extends HistoryEventCommon {
     shiftIn: true;
     status: ShiftInStatus;
-    shiftParams: ShiftInParams & SendTokenInterface;
+    shiftParams: ShiftInParamsAll & SendTokenInterface & ShiftNonce;
 }
 
 export interface ShiftOutEvent extends HistoryEventCommon {
     shiftIn: false;
     status: ShiftOutStatus;
-    shiftParams: ShiftOutParams & SendTokenInterface;
+    shiftParams: Exclude<ShiftOutParamsAll & SendTokenInterface & ShiftNonce, "web3Provider">;
 }
 
 export type HistoryEvent = ShiftInEvent | ShiftOutEvent;

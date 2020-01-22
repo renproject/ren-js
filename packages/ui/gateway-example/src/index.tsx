@@ -37,12 +37,12 @@ export const GatewayExample: React.FC<{}> = props => {
     // Called when the main button is pressed.
     const startSwap = React.useCallback(async () => {
         setOpening(true);
+        setError(null);
         const amount = new BigNumber(0.000225); // BTC
         const gw = new GatewayJS(endpoint);
-        await gw.open({
+        gw.open({
 
             // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-            // TODO: Expose from GatewayJS
             sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
 
             // Amount of BTC we are sending (in Satoshis)
@@ -54,7 +54,7 @@ export const GatewayExample: React.FC<{}> = props => {
             // The name of the function we want to call
             contractFn: "shiftIn",
 
-            // TODO: Expose from GatewayJS
+            // The nonce is used to guarantee a unique deposit address.
             nonce: GatewayJS.utils.randomNonce(),
 
             // Arguments expected for calling `deposit`
@@ -67,15 +67,16 @@ export const GatewayExample: React.FC<{}> = props => {
             ],
         })
             .result()
-            .then(console.log)
-            .catch((error) => { setOpening(false); console.error(error); setError(error.message) });
-        setOpening(false);
+            .on("status", (status, details) => console.log(`[GOT STATUS] ${status} (${details})`))
+            .then(result => { console.log(result); setOpening(false); })
+            .catch(error => { setOpening(false); console.error(error); setError(error.message) });
     }, [endpoint]);
 
     // Run once on load - check if there are any open trades that need to be
     // finished.
     const recoverTrades = React.useCallback(() => {
         setRecovering(true);
+        setError(null);
         (async () => {
             const gw = new GatewayJS(endpoint);
             // TODO: export trade type
@@ -87,11 +88,12 @@ export const GatewayExample: React.FC<{}> = props => {
                 }
                 const gw = new GatewayJS(endpoint).open(trade.commitment);
                 gw.pause();
+                (window as any).gw = gw;
                 gw
                     .result()
-                    .then(console.log)
-                    .catch(error => { console.error(error); setError(error.message) });
-                // await gw.cancel();
+                    .on("status", (status, details) => console.log(`[GOT STATUS] ${status} (${details})`))
+                    .then(result => { console.log(result); })
+                    .catch(error => { console.error(error); setError(error.message); });
             }
         })().catch(error => { console.error("Error in TestEnvironment.tsx: getGateways", error); setError(error.message) });
     }, [endpoint]);
@@ -110,13 +112,13 @@ export const GatewayExample: React.FC<{}> = props => {
                     <option value={Endpoints.CHAOSNET}>Chaosnet</option>
                     <option value={Endpoints.LOCALHOST}>Localhost</option>
                 </select>
-                {error ? <div className="box">{error}</div> : <></>}
                 <div>
                     <button disabled={recovering} onClick={recoverTrades}>Recover trades</button>
                 </div>
                 <div>
                     <button className="blue" onClick={startSwap}>Open GatewayJS</button>
                 </div>
+                {error ? <div className="box red">{error}</div> : <></>}
             </div>
         </div>
     );

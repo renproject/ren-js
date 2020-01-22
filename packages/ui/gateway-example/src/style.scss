@@ -61,6 +61,11 @@
         text-align: center;
     }
 
+    .red {
+        color: rgb(255, 77, 77);
+        border-color: rgb(255, 77, 77);
+    }
+
     >div>button {
         text-transform: uppercase;
         padding: 0 20px;

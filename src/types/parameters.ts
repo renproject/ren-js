@@ -89,7 +89,7 @@ interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
     /**
      * The reference ID of the burn emitted in the contract log
      */
-    burnReference: string;
+    burnReference: string | number;
 }
 
 export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | (ShiftOutParamsTxHash | ShiftOutParamsTxHashOld);

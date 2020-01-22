@@ -1,10 +1,10 @@
-import BN from "bn.js";
+import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
 import {
-    BURN_TOPIC, generateTxHash, ignoreError, strip0x, waitForReceipt, withDefaultAccount,
+    BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryTx } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
@@ -118,7 +118,8 @@ export class ShiftOutObject {
         if (!this.params.burnReference) {
             throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
         }
-        return generateTxHash(this.params.sendToken, this.params.burnReference);
+        const burnReference = new BigNumber(this.params.burnReference).toFixed();
+        return generateTxHash(this.params.sendToken, burnReference);
     }
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
@@ -132,9 +133,7 @@ export class ShiftOutObject {
                 throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
             }
 
-            const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
-
-            const renTxHash = generateTxHash(this.params.sendToken, burnReferenceNumber);
+            const renTxHash = this.renTxHash();
 
             // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", renTxHash);

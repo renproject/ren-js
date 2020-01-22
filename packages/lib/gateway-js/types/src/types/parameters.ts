@@ -17,7 +17,7 @@ export interface TransactionConfig {
     chainId?: number;
 }
 
-interface ContractCall {
+export interface ContractCall {
     /**
      * The address of the adapter smart contract
      */
@@ -45,7 +45,7 @@ export interface ShiftInFromRenTxHash extends ContractCall {
     renTxHash: string;
 }
 
-interface ShiftInFromRenTxHashOld extends ContractCall {
+export interface ShiftInFromRenTxHashOld extends ContractCall {
     messageID: string;
 }
 
@@ -69,14 +69,14 @@ export interface ShiftInFromDetails extends ContractCall {
 export type ShiftInParams = ShiftInFromRenTxHash | ShiftInFromRenTxHashOld | ShiftInFromDetails;
 export type ShiftInParamsAll = Partial<ShiftInFromRenTxHash> & Partial<ShiftInFromRenTxHashOld> & Partial<ShiftInFromDetails>;
 
-interface ShiftOutParamsCommon {
+export interface ShiftOutParamsCommon {
     /**
      * The token, including the origin and destination chains
      */
     sendToken: RenContract;
 }
 
-interface ShiftOutParamsContractCall extends ShiftOutParamsCommon, Partial<ContractCall> {
+export interface ShiftOutParamsContractCall extends ShiftOutParamsCommon, Partial<ContractCall> {
 
     /**
      * A Web3 provider
@@ -84,7 +84,7 @@ interface ShiftOutParamsContractCall extends ShiftOutParamsCommon, Partial<Contr
     web3Provider: provider;
 }
 
-interface ShiftOutParamsTxHash extends ShiftOutParamsCommon {
+export interface ShiftOutParamsTxHash extends ShiftOutParamsCommon {
     /**
      * The hash of the burn transaction on Ethereum
      */
@@ -92,11 +92,11 @@ interface ShiftOutParamsTxHash extends ShiftOutParamsCommon {
 }
 
 // Same as ShiftOutParamsTxHash, to remain backwards compatible
-interface ShiftOutParamsTxHashOld extends ShiftOutParamsCommon {
+export interface ShiftOutParamsTxHashOld extends ShiftOutParamsCommon {
     txHash: string;
 }
 
-interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
+export interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
     /**
      * The reference ID of the burn emitted in the contract log
      */

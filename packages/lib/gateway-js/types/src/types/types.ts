@@ -36,7 +36,6 @@ export enum ShiftInStatus {
     ReturnedFromRenVM = "shiftIn_returnedFromRenVM",
     SubmittedToEthereum = "shiftIn_submittedToEthereum",
     ConfirmedOnEthereum = "shiftIn_confirmedOnEthereum",
-    RefundedOnEthereum = "shiftIn_refundedOnEthereum",
 }
 
 export enum ShiftOutStatus {
@@ -45,7 +44,7 @@ export enum ShiftOutStatus {
     ConfirmedOnEthereum = "shiftOut_confirmedOnEthereum",
     SubmittedToRenVM = "shiftOut_submittedToRenVM",
     ReturnedFromRenVM = "shiftOut_returnedFromRenVM",
-    RefundedOnEthereum = "shiftOut_refundedOnEthereum",
+    NoBurnFound = "shiftOut_noBurnFound",
 }
 
 export declare enum TxStatus {

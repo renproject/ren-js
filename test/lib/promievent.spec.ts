@@ -1,7 +1,8 @@
 import chai from "chai";
 import { EventEmitter } from "events";
+import { newPromiEvent, PromiEvent } from "@renproject/ren-js-common";
 
-import { forwardEvents, newPromiEvent, PromiEvent } from "../../src/lib/promievent";
+import { forwardEvents } from "../../src/lib/promievent";
 import { sleep } from "../../src/lib/utils";
 
 chai.use(require("chai-bignumber")(require("bignumber.js")));

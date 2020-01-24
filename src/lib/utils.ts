@@ -7,14 +7,22 @@ import { TransactionConfig } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { BitcoinCashUTXO, createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
-import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
-import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
+import { createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
+import { createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
+import { createZECAddress, getZcashUTXOs } from "../blockchain/zec";
 import { Tx } from "../renVM/transaction";
 import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
-export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO } | { chain: Chain.BitcoinCash, utxo: BitcoinCashUTXO };
+export interface UTXODetails {
+    readonly txid: string; // hex string without 0x prefix
+    readonly value: number; // satoshis
+    readonly script_hex?: string; // hex string without 0x prefix
+    readonly output_no: number;
+    readonly confirmations: number;
+}
+
+export type UTXO = { chain: Chain.Bitcoin, utxo: UTXODetails } | { chain: Chain.Zcash, utxo: UTXODetails } | { chain: Chain.BitcoinCash, utxo: UTXODetails };
 
 // 32-byte zero value
 export const NULL = (bytes: number) => "0x" + "00".repeat(bytes);
@@ -112,12 +120,12 @@ export const retrieveDeposits = async (_network: NetworkDetails, renContract: Re
     const chain = parseRenContract(renContract).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(depositAddress, confirmations)).map((utxo: BitcoinUTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
+            return (await getBitcoinUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXODetails) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
         case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(depositAddress, confirmations)).map((utxo: ZcashUTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
+            return (await getZcashUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXODetails) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
         case Chain.BitcoinCash:
             // tslint:disable-next-line: no-unnecessary-type-assertion
-            return (await getBitcoinCashUTXOs(_network)(depositAddress, confirmations)).map((utxo: BitcoinCashUTXO) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
+            return (await getBitcoinCashUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXODetails) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }

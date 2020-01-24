@@ -14,12 +14,9 @@ import { bchUtils, btcUtils, Tokens, zecUtils } from "./types/assets";
 import { NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork } from "./types/networks";
 
 // Export types
-export { BitcoinUTXO } from "./blockchain/btc";
-export { BitcoinCashUTXO } from "./blockchain/bch";
-export { ZcashUTXO } from "./blockchain/zec";
 export { ShiftInObject, Signature } from "./shiftIn";
 export { ShiftOutObject } from "./shiftOut";
-export { UTXO } from "./lib/utils";
+export { UTXO, UTXODetails as BitcoinUTXO, UTXODetails as BitcoinCashUTXO, UTXODetails as ZcashUTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
 export { TxStatus } from "./renVM/transaction";
 export { Chain, RenContract as Token, RenContract } from "@renproject/ren-js-common";

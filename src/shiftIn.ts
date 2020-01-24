@@ -9,14 +9,11 @@ import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
-import { BitcoinCashUTXO } from "./blockchain/bch";
-import { BitcoinUTXO } from "./blockchain/btc";
-import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError, Ox,
-    randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, UTXO,
+    randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, UTXO, UTXODetails,
     withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
@@ -25,7 +22,7 @@ import { parseRenContract } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftInObject {
-    public utxo: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO | undefined;
+    public utxo: UTXODetails | undefined;
     public gatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: ShifterNetwork;
@@ -152,7 +149,7 @@ export class ShiftInObject {
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (specifyUTXO?: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO): PromiEvent<Signature> => {
+    public submitToRenVM = (specifyUTXO?: UTXODetails): PromiEvent<Signature> => {
         const promiEvent = newPromiEvent<Signature>();
 
         (async () => {
@@ -219,7 +216,7 @@ export class ShiftInObject {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO) => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXODetails) => {
         await this.waitForDeposit(confirmations);
         const signature = await this.submitToRenVM(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);

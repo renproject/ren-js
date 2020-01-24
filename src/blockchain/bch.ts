@@ -7,14 +7,6 @@ import { createAddress } from "./common";
 
 export const createBCHAddress = createAddress(Networks, Opcode, Script);
 
-export interface BitcoinCashUTXO {
-    txid: string; // hex string without 0x prefix
-    value: number; // satoshis
-    script_hex: string; // hex string without 0x prefix
-    output_no: number;
-    confirmations: number;
-}
-
 export const getBitcoinCashUTXOs = (network: NetworkDetails | string) => {
     const networkDetails = typeof network === "string" ? stringToNetwork(network) : network;
     return async (address: string, confirmations: number) => {

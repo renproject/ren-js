@@ -1,4 +1,4 @@
-import { Arg } from "./arg";
+import { Arg } from "@renproject/ren-js-common";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
 

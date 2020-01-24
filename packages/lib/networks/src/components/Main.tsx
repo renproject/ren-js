@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { titleCase } from "change-case";
+import { capitalCase } from "change-case";
 import { OrderedMap } from "immutable";
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -56,7 +56,7 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                                         checked={network === networkName}
                                         onChange={this.handleInput}
                                     />
-                                        {titleCase(networkName || "")}
+                                        {capitalCase(networkName || "")}
                                     </label></td>
                             ).valueSeq().toArray()
                             }

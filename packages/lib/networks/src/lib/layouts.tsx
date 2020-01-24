@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { titleCase } from "change-case";
+import { capitalCase } from "change-case";
 import { OrderedMap } from "immutable";
 import { Link } from "react-router-dom";
 import { toChecksumAddress } from "web3-utils";
@@ -15,7 +15,7 @@ export const table: FormatFN = (networkData: NetworkData) => {
     return <table className="layout">
         {Object.keys(networkData.addresses).map((category: string) =>
             <tbody key={category}>
-                <tr><td className="borderless"><h4>{titleCase(category)}</h4></td></tr>
+                <tr><td className="borderless"><h4>{capitalCase(category)}</h4></td></tr>
                 {Object.keys(networkData.addresses[category]).map((contractName: string) =>
                     <tr key={contractName}>
                         <td className="contract-name">

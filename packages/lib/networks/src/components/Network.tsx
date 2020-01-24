@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { titleCase } from "change-case";
+import { capitalCase } from "change-case";
 
 import { FormatFN } from "../lib/layouts";
 import { NetworkData } from "../lib/networks";
@@ -15,7 +15,7 @@ class Network extends React.Component<INetworkProps> {
         const { format, networkData } = this.props;
         return (
             <div className="network">
-                <h2>{titleCase(networkData.name)}</h2>
+                <h2>{capitalCase(networkData.name)}</h2>
                 {format(networkData)}
             </div>
         );

@@ -48,6 +48,9 @@
     "typescript": "^3.7.5",
     "web3-utils": "^2.0.0-alpha.1"
   },
+  "resolutions": {
+    "@types/react": "^16.9.19"
+  },
   "browserslist": {
     "production": [
       ">0.2%",

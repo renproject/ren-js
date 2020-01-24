@@ -1,5 +1,7 @@
+import { Asset, RenContract } from "@renproject/ren-js-common";
+
 import { getTokenAddress, Ox, SECONDS, sleep, strip0x } from "../lib/utils";
-import { Asset, parseRenContract, RenContract } from "../types/assets";
+import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";
 import { decodeValue, ResponseQueryTx, RPCMethod } from "./jsonRPC";
@@ -110,10 +112,14 @@ export class ShifterNetwork {
         );
     }
 
-    public readonly waitForTX = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<ResponseQueryTx> => {
+    public readonly waitForTX = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void, _cancelRequested?: () => boolean): Promise<ResponseQueryTx> => {
         let response;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
+            if (_cancelRequested && _cancelRequested()) {
+                throw new Error(`waitForTX cancelled`);
+            }
+
             try {
                 const result = await this.queryTX(utxoTxHash);
                 if (result && result.txStatus === TxStatus.TxStatusDone) {

@@ -1,6 +1,6 @@
+import { Arg, Args, RenContract } from "@renproject/ren-js-common";
+
 import { Ox } from "../lib/utils";
-import { RenContract } from "../types/assets";
-import { Arg, Args } from "./arg";
 import {
     BurnArgsArray, MintArgsArray, TxOutputArgsArray, TxSignatureArray, TxStatus,
 } from "./transaction";

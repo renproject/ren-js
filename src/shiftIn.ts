@@ -1,3 +1,7 @@
+import {
+    newPromiEvent, PromiEvent, ShiftInFromDetails, ShiftInFromRenTxHash, ShiftInParams,
+    ShiftInParamsAll,
+} from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
@@ -9,7 +13,7 @@ import { BitcoinCashUTXO } from "./blockchain/bch";
 import { BitcoinUTXO } from "./blockchain/btc";
 import { ZcashUTXO } from "./blockchain/zec";
 import { payloadToShiftInABI } from "./lib/abi";
-import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
+import { forwardEvents } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError, Ox,
     randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, UTXO,
@@ -19,9 +23,6 @@ import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
 import { Tx, TxStatus } from "./renVM/transaction";
 import { parseRenContract } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
-import {
-    ShiftInFromDetails, ShiftInFromRenTxHash, ShiftInParams, ShiftInParamsAll,
-} from "./types/parameters";
 
 export class ShiftInObject {
     public utxo: BitcoinUTXO | ZcashUTXO | BitcoinCashUTXO | undefined;
@@ -57,6 +58,7 @@ export class ShiftInObject {
 
     public waitForDeposit = (confirmations: number): PromiEvent<this> => {
         const promiEvent = newPromiEvent<this>();
+
         (async () => {
             if (this.params.renTxHash || this.params.messageID) {
                 return this;
@@ -91,6 +93,10 @@ export class ShiftInObject {
 
             // tslint:disable-next-line: no-constant-condition
             while (true) {
+                if (promiEvent._isCancelled()) {
+                    throw new Error("waitForDeposit cancelled");
+                }
+
                 if (deposits.size > 0) {
                     // Sort deposits
                     const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
@@ -195,9 +201,13 @@ export class ShiftInObject {
                 promiEvent.emit("renTxHash", renTxHash);
             }
 
-            const marshalledResponse = await this.renVMNetwork.waitForTX(renTxHash, (status) => {
-                promiEvent.emit("status", status);
-            });
+            const marshalledResponse = await this.renVMNetwork.waitForTX(
+                renTxHash,
+                (status) => {
+                    promiEvent.emit("status", status);
+                },
+                () => promiEvent._isCancelled(),
+            );
 
             const response = unmarshalTx(marshalledResponse);
 

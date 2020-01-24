@@ -15,7 +15,7 @@ import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
 import RenJS, { ShiftInObject, ShiftOutObject, Token } from "../src/index";
-import { Ox, sleep } from "../src/lib/utils";
+import { Ox, retryNTimes, sleep } from "../src/lib/utils";
 import { Args } from "../src/renVM/jsonRPC";
 import { Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
@@ -124,7 +124,7 @@ describe("Shifting in and shifting out", function () {
         console.log(`Submitting signature!`);
         console.log("Waiting for tx...");
         try {
-            const result = await signature.submitToEthereum(provider, { gas: 1000000 })
+            await signature.submitToEthereum(provider, { gas: 1000000 })
                 .on("eth_transactionHash", (txHash: string) => { console.log(`${chalk.blue("[EVENT]")} Received txHash: ${txHash}`); });
             console.log("Done waiting for tx!");
         } catch (error) {
@@ -263,8 +263,8 @@ describe("Shifting in and shifting out", function () {
                 const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, shiftedTokenAddress);
 
                 // Test minting.
-                console.log("Starting mint test:");
-                const initialERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
+                console.log("\n\nStarting mint test:");
+                const initialERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
                 const nonce = RenJS.utils.randomNonce();
                 await mintTest(
                     testcase.token,
@@ -277,18 +277,7 @@ describe("Shifting in and shifting out", function () {
                     nonce,
                 );
 
-                // await mintTest(
-                //     testcase.token,
-                //     testcase.mintToken,
-                //     shifterAddress,
-                //     adapterContract,
-                //     amount,
-                //     ethAddress,
-                //     submitIndividual,
-                //     nonce,
-                // );
-
-                const finalERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
+                const finalERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
 
                 // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
                 const balance = finalERC20Balance.minus(initialERC20Balance); // BN
@@ -301,11 +290,11 @@ describe("Shifting in and shifting out", function () {
                 // amount = 0.000225 * (10 ** 8);
                 // const burnValue = amount;
                 console.log("Starting burn test:");
-                const initialBalance = await account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber });
+                const initialBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
                 await burnTest(testcase.token, testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress);
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
-                const finalBalance = await account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber });
+                const finalBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
 
                 // finalBalance.sub(initialBalance).should.bignumber.at.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
                 // finalBalance.sub(initialBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));

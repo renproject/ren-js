@@ -1,5 +1,7 @@
 import _BN from "bn.js";
 
+import { Chain, Network, ShiftInParams, ShiftOutParams } from "@renproject/ren-js-common";
+
 import { Ox, randomNonce, strip0x } from "./lib/utils";
 import { Darknode } from "./renVM/darknode";
 import { DarknodeGroup } from "./renVM/darknodeGroup";
@@ -8,11 +10,8 @@ import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { TxStatus } from "./renVM/transaction";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
-import { bchUtils, btcUtils, Chain, Tokens, zecUtils } from "./types/assets";
-import {
-    Network, NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork,
-} from "./types/networks";
-import { ShiftInParams, ShiftOutParams } from "./types/parameters";
+import { bchUtils, btcUtils, Tokens, zecUtils } from "./types/assets";
+import { NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork } from "./types/networks";
 
 // Export types
 export { BitcoinUTXO } from "./blockchain/btc";
@@ -23,7 +22,7 @@ export { ShiftOutObject } from "./shiftOut";
 export { UTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
 export { TxStatus } from "./renVM/transaction";
-export { Chain, RenContract as Token, RenContract } from "./types/assets";
+export { Chain, RenContract as Token, RenContract } from "@renproject/ren-js-common";
 export { Darknode } from "./renVM/darknode";
 export { DarknodeGroup } from "./renVM/darknodeGroup";
 export { RPCMethod } from "./renVM/jsonRPC";
@@ -83,19 +82,8 @@ export default class RenJS {
     public static DarknodeGroup = DarknodeGroup;
     public static RPCMethod = RPCMethod;
 
-    // Expose constants again without `static` so they can be accessed on
-    // instances - e.g. `(new RenJS("testnet")).Tokens`
-    public readonly Tokens = Tokens;
-    public readonly Networks = Network;
-    public readonly NetworkDetails = NetworkDetails;
-    public readonly Chains = Chain;
-    public readonly TxStatus = TxStatus;
-    public readonly utils = utils;
-    public readonly Darknode = Darknode;
-    public readonly DarknodeGroup = DarknodeGroup;
-    public readonly RPCMethod = RPCMethod;
-
     // Not static
+    public readonly utils = utils;
     public readonly renVM: ShifterNetwork;
     public readonly lightnode: DarknodeGroup;
     public readonly network: NetworkDetails;
@@ -132,7 +120,3 @@ export default class RenJS {
         return new ShiftOutObject(this.renVM, params);
     }
 }
-// tslint:disable: no-object-mutation
-module.exports = RenJS;
-module.exports.RenJS = RenJS;
-module.exports.default = RenJS;

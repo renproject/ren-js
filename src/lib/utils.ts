@@ -1,3 +1,4 @@
+import { Args, Asset, Chain, RenContract } from "@renproject/ren-js-common";
 import { crypto } from "bitcore-lib";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
@@ -9,15 +10,14 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { BitcoinCashUTXO, createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { BitcoinUTXO, createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs, ZcashUTXO } from "../blockchain/zec";
-import { Args } from "../renVM/arg";
 import { Tx } from "../renVM/transaction";
-import { Asset, Chain, parseRenContract, RenContract } from "../types/assets";
+import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: BitcoinUTXO } | { chain: Chain.Zcash, utxo: ZcashUTXO } | { chain: Chain.BitcoinCash, utxo: BitcoinCashUTXO };
 
 // 32-byte zero value
-const NULL32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const NULL = (bytes: number) => "0x" + "00".repeat(bytes);
 
 // Remove 0x prefix from a hex string
 export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
@@ -46,7 +46,7 @@ export const generatePHash = (...zip: Args | [Args]): string => {
 
     // If the payload is empty, use 0x0
     if (args.length === 0) {
-        return NULL32;
+        return NULL(32);
     }
 
     const [types, values] = unzip(args);
@@ -251,7 +251,7 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number) 
                 if (errorMessage) {
                     error.message += ` (${errorMessage})`;
                 }
-                throw error;
+                returnError = error;
             }
         }
     }

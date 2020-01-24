@@ -1,14 +1,7 @@
 import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
+import { Network } from "@renproject/ren-js-common";
 // import { Networks as ZNetworks } from "bitcore-lib-zcash";
 import { List } from "immutable";
-
-export enum Network {
-    Mainnet = "mainnet",
-    Chaosnet = "chaosnet",
-    Testnet = "testnet",
-    Devnet = "devnet",
-    Localnet = "localnet",
-}
 
 export interface NetworkDetails {
     name: string;

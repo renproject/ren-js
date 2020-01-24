@@ -1,9 +1,10 @@
+import { Network } from "@renproject/ren-js-common";
 import chai from "chai";
 
-import RenJS from "../src/index";
-import { Chain, Tokens } from "../src/types/assets";
+import RenJS, { Chain } from "../src/index";
+import { Tokens } from "../src/types/assets";
 import {
-    Network, NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,
+    NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,
 } from "../src/types/networks";
 
 chai.should();
@@ -35,15 +36,63 @@ describe("RenJS initialization and exports", () => {
         RenJS.Chains.should.equal(Chain);
     });
 
-    it("On initialized class", async () => {
-        const renJS = new RenJS("testnet");
-        renJS.Networks.should.equal(Network);
-        renJS.Tokens.should.equal(Tokens);
-        renJS.Chains.should.equal(Chain);
-    });
-
     // it("Exposes BTC.addressToHex", () => {
     //     RenJS.Tokens.BTC.addressToHex("2MsjneiPJPfDRcbE9bCRs1RDQ2w7Bgh3nkC")
     //         .should.equal("0xc40566e98bcfb81185df27a5fdc60cd4c206415b1f08630ccd");
     // });
+
+    it("cancel waitForDeposit", async () => {
+        const renJS = new RenJS("testnet");
+        const amount = 0.001; // testnet BTC
+
+        const shiftIn = renJS.shiftIn({
+            // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+            sendToken: RenJS.Tokens.BTC.Btc2Eth,
+
+            // Amount of BTC we are sending (in Satoshis)
+            sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
+
+            // The contract we want to interact with
+            sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
+
+            // The name of the function we want to call
+            contractFn: "deposit",
+
+            // Arguments expected for calling `deposit`
+            contractParams: [],
+        });
+
+        // tslint:disable-next-line: await-promise
+        await new Promise((_, reject) => {
+
+            const wait = shiftIn.waitForDeposit(0);
+
+            wait._cancel();
+
+            wait.catch(reject);
+
+        }).should.be.rejectedWith(/waitForDeposit cancelled/);
+    });
+
+    it("cancel submitToRenVM", async () => {
+        const renJS = new RenJS("testnet");
+
+        const shiftOut = await renJS.shiftOut({
+            // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
+            sendToken: RenJS.Tokens.BTC.Eth2Btc,
+
+            burnReference: 0,
+        }).readFromEthereum();
+
+        // tslint:disable-next-line: await-promise
+        await new Promise((_, reject) => {
+
+            const wait = shiftOut.submitToRenVM();
+
+            wait._cancel();
+
+            wait.catch(reject);
+
+        }).should.be.rejectedWith(/waitForTX cancelled/);
+    });
 });

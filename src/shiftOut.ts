@@ -1,14 +1,16 @@
+import {
+    newPromiEvent, PromiEvent, ShiftOutParams, ShiftOutParamsAll,
+} from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
-import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
+import { forwardEvents } from "./lib/promievent";
 import {
     BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryTx } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
-import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;
@@ -35,7 +37,7 @@ export class ShiftOutObject {
             // Situation (3): A txHash is provided
 
             // For (1), we don't have to do anything.
-            if (!burnReference) {
+            if (!burnReference && burnReference !== 0) {
 
                 if (!web3Provider) {
                     throw new Error("Must provide burn reference ID or web3 provider");
@@ -94,7 +96,7 @@ export class ShiftOutObject {
                     }
                 }
 
-                if (!burnReference) {
+                if (!burnReference && burnReference !== 0) {
                     throw Error("No reference ID found in logs");
                 }
             }
@@ -115,7 +117,7 @@ export class ShiftOutObject {
     }
 
     public renTxHash = () => {
-        if (!this.params.burnReference) {
+        if (!this.params.burnReference && this.params.burnReference !== 0) {
             throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
         }
         const burnReference = new BigNumber(this.params.burnReference).toFixed();
@@ -129,7 +131,7 @@ export class ShiftOutObject {
 
         (async () => {
             const burnReference = this.params.burnReference;
-            if (!burnReference) {
+            if (!burnReference && burnReference !== 0) {
                 throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
             }
 
@@ -139,9 +141,13 @@ export class ShiftOutObject {
             promiEvent.emit("messageID", renTxHash);
             promiEvent.emit("renTxHash", renTxHash);
 
-            return await this.renVMNetwork.waitForTX(renTxHash, (status) => {
-                promiEvent.emit("status", status);
-            });
+            return await this.renVMNetwork.waitForTX(
+                renTxHash,
+                (status) => {
+                    promiEvent.emit("status", status);
+                },
+                () => promiEvent._isCancelled(),
+            );
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

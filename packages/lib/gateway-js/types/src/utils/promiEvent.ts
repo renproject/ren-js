@@ -26,7 +26,7 @@
 
 import { EventEmitter } from "events";
 
-class InternalPromiEvent<T> {
+export class InternalPromiEvent<T> {
     public readonly [Symbol.toStringTag]: "Promise";
     public readonly promise: Promise<T>;
     // @ts-ignore no initializer because of proxyHandler
@@ -34,6 +34,7 @@ class InternalPromiEvent<T> {
     // @ts-ignore no initializer because of proxyHandler
     public reject: (reason?: any) => void;
     public eventEmitter: EventEmitter;
+    private _cancelled: boolean;
 
     // @ts-ignore no initializer because of proxyHandler
     public readonly emit: EventEmitter["emit"];
@@ -43,6 +44,10 @@ class InternalPromiEvent<T> {
     public readonly on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly once: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly _cancel: () => void;
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly _isCancelled: () => boolean;
     // @ts-ignore no initializer because of proxyHandler
     public readonly then: Promise<T>["then"];
     // @ts-ignore no initializer because of proxyHandler
@@ -59,6 +64,8 @@ class InternalPromiEvent<T> {
             this.resolve = resolve;
             this.reject = reject;
         });
+
+        this._cancelled = false;
 
         this.eventEmitter = new EventEmitter();
 
@@ -81,6 +88,16 @@ class InternalPromiEvent<T> {
 
         if (name === "catch") {
             return target.promise.catch.bind(target.promise);
+        }
+
+        if (name === "_cancel") {
+            // tslint:disable-next-line: no-object-mutation
+            return () => { this._cancelled = true; };
+        }
+
+        if (name === "_isCancelled") {
+            // tslint:disable-next-line: no-object-mutation
+            return () => this._cancelled === true;
         }
 
         // tslint:disable-next-line: no-if-statement

@@ -12,6 +12,8 @@ import DarknodeRegistry from "darknode-sol/build/localnet/DarknodeRegistry.json"
 import DarknodePaymentStore from "darknode-sol/build/localnet/DarknodePaymentStore.json";
 import DarknodePayment from "darknode-sol/build/localnet/DarknodePayment.json";
 import BTCShifter from "darknode-sol/build/localnet/BTCShifter.json";
+import Protocol from "darknode-sol/build/devnet/Protocol.json";
+import ProtocolLogic from "darknode-sol/build/devnet/ProtocolLogic.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
 
 import { Network } from "./network";
@@ -33,11 +35,9 @@ export default Network({
     addresses: {
         ren: {
             Protocol: {
-                _address: "",
-                abi: [] as AbiItem[],
-                artifact: {
-                    abi: [],
-                },
+                address: Protocol.networks[networkID].address,
+                abi: ProtocolLogic.abi as AbiItem[],
+                artifact: Protocol,
             },
             DarknodeSlasher: {
                 address: DarknodeSlasher.networks[networkID].address,

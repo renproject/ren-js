@@ -1,6 +1,6 @@
 {
   "name": "@renproject/contracts",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "homepage": "https://renproject.github.io/contracts-ts",
   "main": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
@@ -11,7 +11,7 @@
     "access": "public"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#3b0d0b88930f7b39d41c60d876de2d59067a8766"
+    "darknode-sol": "https://github.com/renproject/darknode-sol#9be1a5a014bd596426629b2c9cf90109e55e34be"
   },
   "scripts": {
     "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",

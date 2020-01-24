@@ -1,20 +1,20 @@
-import { AbiItem } from "web3-utils";
-import zBTC from "darknode-sol/build/chaosnet/zBTC.json";
-import BTCShifter from "darknode-sol/build/chaosnet/BTCShifter.json";
-import zZEC from "darknode-sol/build/chaosnet/zZEC.json";
-import ZECShifter from "darknode-sol/build/chaosnet/ZECShifter.json";
-import zBCH from "darknode-sol/build/chaosnet/zBCH.json";
 import BCHShifter from "darknode-sol/build/chaosnet/BCHShifter.json";
-import ShifterRegistry from "darknode-sol/build/chaosnet/ShifterRegistry.json";
+import BTCShifter from "darknode-sol/build/chaosnet/BTCShifter.json";
 import DarknodePayment from "darknode-sol/build/chaosnet/DarknodePayment.json";
 import DarknodePaymentStore from "darknode-sol/build/chaosnet/DarknodePaymentStore.json";
 import DarknodeRegistry from "darknode-sol/build/chaosnet/DarknodeRegistry.json";
 import DarknodeRegistryStore from "darknode-sol/build/chaosnet/DarknodeRegistryStore.json";
 import DarknodeSlasher from "darknode-sol/build/chaosnet/DarknodeSlasher.json";
-import RenToken from "darknode-sol/build/chaosnet/RenToken.json";
 import Protocol from "darknode-sol/build/chaosnet/Protocol.json";
 import ProtocolLogic from "darknode-sol/build/chaosnet/ProtocolLogic.json";
+import RenToken from "darknode-sol/build/chaosnet/RenToken.json";
+import ShifterRegistry from "darknode-sol/build/chaosnet/ShifterRegistry.json";
+import zBCH from "darknode-sol/build/chaosnet/zBCH.json";
+import zBTC from "darknode-sol/build/chaosnet/zBTC.json";
+import ZECShifter from "darknode-sol/build/chaosnet/ZECShifter.json";
+import zZEC from "darknode-sol/build/chaosnet/zZEC.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import { AbiItem } from "web3-utils";
 
 import { Network } from "./network";
 

@@ -1,9 +1,9 @@
 import * as React from "react";
 
+import { titleCase } from "change-case";
 import { OrderedMap } from "immutable";
 import { Link } from "react-router-dom";
 import { toChecksumAddress } from "web3-utils";
-import { titleCase } from "change-case";
 
 import { NetworkData } from "./networks";
 

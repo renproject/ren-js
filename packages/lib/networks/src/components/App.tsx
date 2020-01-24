@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import axios from "axios";
-import { HashRouter, Route } from "react-router-dom";
 import { OrderedMap } from "immutable";
+import { HashRouter, Route } from "react-router-dom";
 
 import { NetworkData } from "../lib/networks";
 import chaosnet from "../networks/chaosnet";
@@ -26,6 +26,10 @@ interface AppState {
     networks: OrderedMap<string, NetworkData> | null;
 }
 
+class OutOfDate extends React.Component {
+    public render = () => <div className="outOfDate">This page is out of date. Force refresh the window to update the page (Ctrl-Shift-R or Cmd-Shift-R).</div>;
+}
+
 class App extends React.Component<AppProps, AppState> {
     constructor(props: AppProps) {
         super(props);
@@ -40,6 +44,7 @@ class App extends React.Component<AppProps, AppState> {
         let latest;
         try {
             using = commitHash.HASH;
+            // tslint:disable-next-line: insecure-random
             latest = (await axios.get(`./commitHash.json?v=${Math.random().toString(36).substring(7)}`)).data.HASH;
             if (using !== latest) {
                 this.setState({ outOfDate: true });
@@ -58,18 +63,15 @@ class App extends React.Component<AppProps, AppState> {
                     <Route path="/source" component={Source} />
                     {networks && networks.size > 0 ? <div className="App">
                         {outOfDate ? <OutOfDate /> : null}
-                        {/* tslint:disable-next-line:jsx-no-lambda */}
+                        {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
                         <Route path="/" exact render={() => <Main network={"chaosnet"} networks={networks} />} />
+                        {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
                         {networks.map((_, network) => <Route key={network} path={`/${network}`} exact render={() => <Main key={"main"} network={network || "chaosnet"} networks={networks} />} />).valueSeq().toArray()}
                     </div> : <Loading />}
                 </>
             </HashRouter>
         );
     }
-}
-
-class OutOfDate extends React.Component {
-    public render = () => <div className="outOfDate">This page is out of date. Force refresh the window to update the page (Ctrl-Shift-R or Cmd-Shift-R).</div>;
 }
 
 export default App;

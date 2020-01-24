@@ -11,7 +11,8 @@
     "access": "public"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#9be1a5a014bd596426629b2c9cf90109e55e34be"
+    "darknode-sol": "https://github.com/renproject/darknode-sol#9be1a5a014bd596426629b2c9cf90109e55e34be",
+    "tslint": "^6.0.0"
   },
   "scripts": {
     "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",

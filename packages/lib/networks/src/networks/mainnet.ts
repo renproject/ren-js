@@ -1,11 +1,11 @@
-import { AbiItem } from "web3-utils";
+import ERC20 from "darknode-sol/build/erc/ERC20.json";
 import DarknodePayment from "darknode-sol/build/main/DarknodePayment.json";
 import DarknodePaymentStore from "darknode-sol/build/main/DarknodePaymentStore.json";
 import DarknodeRegistry from "darknode-sol/build/main/DarknodeRegistry.json";
 import DarknodeRegistryStore from "darknode-sol/build/main/DarknodeRegistryStore.json";
 import DarknodeRewardVault from "darknode-sol/build/main/DarknodeRewardVault.json";
 import RenToken from "darknode-sol/build/main/RenToken.json";
-import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import { AbiItem } from "web3-utils";
 
 import { Network } from "./network";
 

@@ -1,20 +1,20 @@
-import { AbiItem } from "web3-utils";
-import zBTC from "darknode-sol/build/devnet/zBTC.json";
-import BTCShifter from "darknode-sol/build/devnet/BTCShifter.json";
-import zZEC from "darknode-sol/build/devnet/zZEC.json";
-import ZECShifter from "darknode-sol/build/devnet/ZECShifter.json";
-import zBCH from "darknode-sol/build/devnet/zBCH.json";
 import BCHShifter from "darknode-sol/build/devnet/BCHShifter.json";
-import ShifterRegistry from "darknode-sol/build/devnet/ShifterRegistry.json";
-import RenToken from "darknode-sol/build/devnet/RenToken.json";
-import DarknodeSlasher from "darknode-sol/build/devnet/DarknodeSlasher.json";
-import DarknodeRegistryStore from "darknode-sol/build/devnet/DarknodeRegistryStore.json";
-import DarknodeRegistry from "darknode-sol/build/devnet/DarknodeRegistry.json";
-import DarknodePaymentStore from "darknode-sol/build/devnet/DarknodePaymentStore.json";
+import BTCShifter from "darknode-sol/build/devnet/BTCShifter.json";
 import DarknodePayment from "darknode-sol/build/devnet/DarknodePayment.json";
+import DarknodePaymentStore from "darknode-sol/build/devnet/DarknodePaymentStore.json";
+import DarknodeRegistry from "darknode-sol/build/devnet/DarknodeRegistry.json";
+import DarknodeRegistryStore from "darknode-sol/build/devnet/DarknodeRegistryStore.json";
+import DarknodeSlasher from "darknode-sol/build/devnet/DarknodeSlasher.json";
 import Protocol from "darknode-sol/build/devnet/Protocol.json";
 import ProtocolLogic from "darknode-sol/build/devnet/ProtocolLogic.json";
+import RenToken from "darknode-sol/build/devnet/RenToken.json";
+import ShifterRegistry from "darknode-sol/build/devnet/ShifterRegistry.json";
+import zBCH from "darknode-sol/build/devnet/zBCH.json";
+import zBTC from "darknode-sol/build/devnet/zBTC.json";
+import ZECShifter from "darknode-sol/build/devnet/ZECShifter.json";
+import zZEC from "darknode-sol/build/devnet/zZEC.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import { AbiItem } from "web3-utils";
 
 import { Network } from "./network";
 

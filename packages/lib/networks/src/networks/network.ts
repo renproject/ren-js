@@ -1,16 +1,16 @@
 import { AbiItem } from "web3-utils";
 
 interface Contract {
-    address?: string,
-    abi?: AbiItem[],
-    block?: number,
-    decimals?: number,
+    address?: string;
+    abi?: AbiItem[];
+    block?: number;
+    decimals?: number;
 }
 
 interface Addresses<C extends Contract> {
     [category: string]: {
         [contract: string]: C,
-    }
+    };
 }
 
 interface NetworkType<C extends Contract, A extends Addresses<C>> {
@@ -24,7 +24,7 @@ interface NetworkType<C extends Contract, A extends Addresses<C>> {
     renVM: {
         mintAuthority: string;
         mpkh: string;
-    }
+    };
     addresses: A;
 }
 

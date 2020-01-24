@@ -1,20 +1,20 @@
-import { AbiItem } from "web3-utils";
-import zBTC from "darknode-sol/build/testnet/zBTC.json";
-import BTCShifter from "darknode-sol/build/testnet/BTCShifter.json";
-import zZEC from "darknode-sol/build/testnet/zZEC.json";
-import ZECShifter from "darknode-sol/build/testnet/ZECShifter.json";
-import zBCH from "darknode-sol/build/testnet/zBCH.json";
+import ERC20 from "darknode-sol/build/erc/ERC20.json";
 import BCHShifter from "darknode-sol/build/testnet/BCHShifter.json";
-import ShifterRegistry from "darknode-sol/build/testnet/ShifterRegistry.json";
-import RenToken from "darknode-sol/build/testnet/RenToken.json";
-import DarknodeSlasher from "darknode-sol/build/testnet/DarknodeSlasher.json";
-import DarknodeRegistryStore from "darknode-sol/build/testnet/DarknodeRegistryStore.json";
-import DarknodeRegistry from "darknode-sol/build/testnet/DarknodeRegistry.json";
-import DarknodePaymentStore from "darknode-sol/build/testnet/DarknodePaymentStore.json";
+import BTCShifter from "darknode-sol/build/testnet/BTCShifter.json";
 import DarknodePayment from "darknode-sol/build/testnet/DarknodePayment.json";
+import DarknodePaymentStore from "darknode-sol/build/testnet/DarknodePaymentStore.json";
+import DarknodeRegistry from "darknode-sol/build/testnet/DarknodeRegistry.json";
+import DarknodeRegistryStore from "darknode-sol/build/testnet/DarknodeRegistryStore.json";
+import DarknodeSlasher from "darknode-sol/build/testnet/DarknodeSlasher.json";
 import Protocol from "darknode-sol/build/testnet/Protocol.json";
 import ProtocolLogic from "darknode-sol/build/testnet/ProtocolLogic.json";
-import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import RenToken from "darknode-sol/build/testnet/RenToken.json";
+import ShifterRegistry from "darknode-sol/build/testnet/ShifterRegistry.json";
+import zBCH from "darknode-sol/build/testnet/zBCH.json";
+import zBTC from "darknode-sol/build/testnet/zBTC.json";
+import ZECShifter from "darknode-sol/build/testnet/ZECShifter.json";
+import zZEC from "darknode-sol/build/testnet/zZEC.json";
+import { AbiItem } from "web3-utils";
 
 import { Network } from "./network";
 

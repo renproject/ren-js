@@ -1,20 +1,20 @@
-import { AbiItem } from "web3-utils";
-import zZEC from "darknode-sol/build/localnet/zZEC.json";
-import ZECShifter from "darknode-sol/build/localnet/ZECShifter.json";
-import zBTC from "darknode-sol/build/localnet/zBTC.json";
-import zBCH from "darknode-sol/build/localnet/zBCH.json";
-import BCHShifter from "darknode-sol/build/localnet/BCHShifter.json";
-import ShifterRegistry from "darknode-sol/build/localnet/ShifterRegistry.json";
-import RenToken from "darknode-sol/build/localnet/RenToken.json";
-import DarknodeSlasher from "darknode-sol/build/localnet/DarknodeSlasher.json";
-import DarknodeRegistryStore from "darknode-sol/build/localnet/DarknodeRegistryStore.json";
-import DarknodeRegistry from "darknode-sol/build/localnet/DarknodeRegistry.json";
-import DarknodePaymentStore from "darknode-sol/build/localnet/DarknodePaymentStore.json";
-import DarknodePayment from "darknode-sol/build/localnet/DarknodePayment.json";
-import BTCShifter from "darknode-sol/build/localnet/BTCShifter.json";
 import Protocol from "darknode-sol/build/devnet/Protocol.json";
 import ProtocolLogic from "darknode-sol/build/devnet/ProtocolLogic.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import BCHShifter from "darknode-sol/build/localnet/BCHShifter.json";
+import BTCShifter from "darknode-sol/build/localnet/BTCShifter.json";
+import DarknodePayment from "darknode-sol/build/localnet/DarknodePayment.json";
+import DarknodePaymentStore from "darknode-sol/build/localnet/DarknodePaymentStore.json";
+import DarknodeRegistry from "darknode-sol/build/localnet/DarknodeRegistry.json";
+import DarknodeRegistryStore from "darknode-sol/build/localnet/DarknodeRegistryStore.json";
+import DarknodeSlasher from "darknode-sol/build/localnet/DarknodeSlasher.json";
+import RenToken from "darknode-sol/build/localnet/RenToken.json";
+import ShifterRegistry from "darknode-sol/build/localnet/ShifterRegistry.json";
+import zBCH from "darknode-sol/build/localnet/zBCH.json";
+import zBTC from "darknode-sol/build/localnet/zBTC.json";
+import ZECShifter from "darknode-sol/build/localnet/ZECShifter.json";
+import zZEC from "darknode-sol/build/localnet/zZEC.json";
+import { AbiItem } from "web3-utils";
 
 import { Network } from "./network";
 

@@ -1,8 +1,8 @@
 import * as qs from "query-string";
 import * as React from "react";
 
-import { RouteComponentProps, withRouter } from "react-router-dom";
 import axios from "axios";
+import { RouteComponentProps, withRouter } from "react-router-dom";
 
 interface SourceState {
     raw: string | null;
@@ -33,7 +33,7 @@ class Source extends React.Component<SourceProps, SourceState> {
         try {
             result = (await axios.get(URL)).data.result[0];
         } catch (error) {
-            this.setState({ raw: `${error}` })
+            this.setState({ raw: `${error}` });
             return;
         }
 

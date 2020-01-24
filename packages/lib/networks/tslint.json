@@ -46,18 +46,14 @@
     "function-name": false,
     // "no-return-await": false,
     // "ter-indent": false,
-
+    "no-console": false,
     // Warnings
     "no-suspicious-comment": {
-      "severity": "warning"
-    },
-    "no-console": {
       "severity": "warning"
     },
     "strict-type-predicates": {
       "severity": "warning"
     },
-
     // Enabled
     "ordered-imports": true,
     "no-object-literal-type-assertion": true,
@@ -78,11 +74,13 @@
     "no-unnecessary-type-assertion": true,
     "no-unnecessary-local-variable": false,
     "only-arrow-functions": true,
-
     // Configured
-    "no-unused-variable": [true, {
-      "ignore-pattern": "^_"
-    }],
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
     "quotemark": [
       true,
       "double",
@@ -114,14 +112,19 @@
         "esSpecCompliant": true
       }
     ],
-    "increment-decrement": [true, "allow-post"],
+    "increment-decrement": [
+      true,
+      "allow-post"
+    ],
     "align": [
       true,
       "parameters",
       "statements"
     ],
-    "array-type": [true, "array-simple"],
-
+    "array-type": [
+      true,
+      "array-simple"
+    ],
     // Temporarily disabled - some work is required to get the project to
     // abide by these
     "no-unsafe-any": false,

@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { OrderedMap } from "immutable";
 import { titleCase } from "change-case";
+import { OrderedMap } from "immutable";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import { formatFn, FormatType, table } from "../lib/layouts";
@@ -19,12 +19,13 @@ interface MainProps extends RouteComponentProps {
     network: string;
 }
 
+// tslint:disable-next-line: no-any
 export const publicNetwork = (_: any, network: string) => network === "chaosnet" || network === "testnet";
 
 class Main extends React.Component<MainProps, typeof defaultState> {
     constructor(props: MainProps) {
         super(props);
-        this.state = defaultState
+        this.state = defaultState;
     }
     // public async componentDidMount() {
     //     const network = qs.parse(this.props.location.search).network;
@@ -48,7 +49,8 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                         <tr>
                             {networks.filter(publicNetwork(0, network) ? publicNetwork : () => true).map((_: NetworkData | undefined, networkName: string | undefined) =>
                                 <td key={networkName} className={[network === networkName ? `config-checked` : ""].join(" ")}>
-                                    <label><input type="radio"
+                                    <label><input
+                                        type="radio"
                                         name="network"
                                         value={networkName}
                                         checked={network === networkName}
@@ -66,7 +68,8 @@ class Main extends React.Component<MainProps, typeof defaultState> {
                             {formatFn.map((_, formatOpt: string | undefined) =>
                                 <td key={formatOpt} className={[format === formatOpt ? `config-checked` : "", "borderless"].join(" ")}>
                                     <label>
-                                        <input type="radio"
+                                        <input
+                                            type="radio"
                                             name="format"
                                             value={formatOpt}
                                             checked={format === formatOpt}
@@ -88,7 +91,7 @@ class Main extends React.Component<MainProps, typeof defaultState> {
         );
     }
 
-    private handleInput = (event: React.FormEvent<HTMLInputElement>): void => {
+    private readonly handleInput = (event: React.FormEvent<HTMLInputElement>): void => {
         const element = (event.target as HTMLInputElement);
         if (element.name === "network") {
             this.props.history.replace(`/${element.value}`);

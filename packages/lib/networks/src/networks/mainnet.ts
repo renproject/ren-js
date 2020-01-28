@@ -118,6 +118,13 @@ export default Network({
                     abi: [],
                 },
             },
+            BasicAdapter: {
+                address: "",
+                abi: [] as AbiItem[],
+                artifact: {
+                    abi: [],
+                },
+            },
         },
         tokens: {
             REN: {

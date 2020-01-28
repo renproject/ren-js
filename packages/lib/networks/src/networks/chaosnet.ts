@@ -1,3 +1,4 @@
+import BasicAdapter from "darknode-sol/build/chaosnet/BasicAdapter.json";
 import BCHShifter from "darknode-sol/build/chaosnet/BCHShifter.json";
 import BTCShifter from "darknode-sol/build/chaosnet/BTCShifter.json";
 import DarknodePayment from "darknode-sol/build/chaosnet/DarknodePayment.json";
@@ -101,6 +102,11 @@ export default Network({
                 _address: BCHShifter.networks[networkID].address,
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
+            },
+            BasicAdapter: {
+                address: BasicAdapter.networks[networkID].address,
+                abi: BasicAdapter.abi as AbiItem[],
+                artifact: BasicAdapter,
             },
         },
         tokens: {

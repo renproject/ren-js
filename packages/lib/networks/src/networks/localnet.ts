@@ -1,6 +1,7 @@
 import Protocol from "darknode-sol/build/devnet/Protocol.json";
 import ProtocolLogic from "darknode-sol/build/devnet/ProtocolLogic.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import BasicAdapter from "darknode-sol/build/localnet/BasicAdapter.json";
 import BCHShifter from "darknode-sol/build/localnet/BCHShifter.json";
 import BTCShifter from "darknode-sol/build/localnet/BTCShifter.json";
 import DarknodePayment from "darknode-sol/build/localnet/DarknodePayment.json";
@@ -101,6 +102,11 @@ export default Network({
                 _address: BCHShifter.networks[networkID].address,
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
+            },
+            BasicAdapter: {
+                address: BasicAdapter.networks[networkID].address,
+                abi: BasicAdapter.abi as AbiItem[],
+                artifact: BasicAdapter,
             },
         },
         tokens: {

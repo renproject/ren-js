@@ -1,4 +1,5 @@
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
+import BasicAdapter from "darknode-sol/build/testnet/BasicAdapter.json";
 import BCHShifter from "darknode-sol/build/testnet/BCHShifter.json";
 import BTCShifter from "darknode-sol/build/testnet/BTCShifter.json";
 import DarknodePayment from "darknode-sol/build/testnet/DarknodePayment.json";
@@ -101,6 +102,11 @@ export default Network({
                 _address: BCHShifter.networks[networkID].address,
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
+            },
+            BasicAdapter: {
+                address: BasicAdapter.networks[networkID].address,
+                abi: BasicAdapter.abi as AbiItem[],
+                artifact: BasicAdapter,
             },
         },
         tokens: {

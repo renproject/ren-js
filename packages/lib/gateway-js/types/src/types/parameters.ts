@@ -26,12 +26,12 @@ export interface ContractCall {
     /**
      * The name of the function to be called on the Adapter contract
      */
-    contractFn: string;
+    contractFn?: string;
 
     /**
      * The parameters to be passed to the adapter contract
      */
-    contractParams: Args;
+    contractParams?: Args;
 
     // Set transaction options:
     txConfig?: TransactionConfig;

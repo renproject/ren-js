@@ -1,6 +1,6 @@
 import test, { ExecutionContext } from "ava";
 
-import { value } from "./value";
+import { value } from "../index";
 
 test("value conversion", (t: ExecutionContext<unknown>) => {
     // BTC

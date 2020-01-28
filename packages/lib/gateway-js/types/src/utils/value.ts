@@ -10,11 +10,11 @@ const convert = (valueIn: BigNumber, fromUnit: BigNumber, toUnit: BigNumber) => 
     return valueIn.multipliedBy(fromUnit).dividedBy(toUnit);
 };
 
-export type NumberValue = string | number | BigNumber | BN;
+type NumberValue = string | number | BigNumber | BN;
 
 const toBigNumber = (valueIn: NumberValue): BigNumber => BigNumber.isBigNumber(valueIn) ? new BigNumber(valueIn) : new BigNumber(valueIn.toString());
 
-export class BaseValue<T extends { [unit: string]: BigNumber }> {
+class BaseValue<T extends { [unit: string]: BigNumber }> {
     private readonly value: BigNumber;
     private readonly unitTypes: T;
     constructor(unitTypes: T, valueIn: NumberValue, unit: keyof T) { this.unitTypes = unitTypes; this.value = convert(toBigNumber(valueIn), this.unitTypes[unit], new BigNumber("1")); }
@@ -24,14 +24,14 @@ export class BaseValue<T extends { [unit: string]: BigNumber }> {
 
 // BTC /////////////////////////////////////////////////////////////////////////
 
-export const BTCUnits = {
+const BTCUnits = {
     sats: new BigNumber("0.00000001"),
     ubtc: new BigNumber("0.000001"),
     mbtc: new BigNumber("0.001"),
     btc: new BigNumber("1"),
 };
 
-export class BTCValue extends BaseValue<typeof BTCUnits> {
+class BTCValue extends BaseValue<typeof BTCUnits> {
     public static units = BTCUnits;
     public static synonyms = [{ synonyms: ["bitcoin", "bitcoins", "tbtc"], unit: "btc" as "btc" }]; // tbtc is used to indicate testnet btc
     constructor(valueIn: NumberValue, unit: keyof typeof BTCUnits) { super(BTCUnits, valueIn, unit); }
@@ -43,14 +43,14 @@ export class BTCValue extends BaseValue<typeof BTCUnits> {
 
 // BCH /////////////////////////////////////////////////////////////////////////
 
-export const BCHUnits = {
+const BCHUnits = {
     sats: new BigNumber("0.00000001"),
     ubch: new BigNumber("0.000001"),
     mbch: new BigNumber("0.001"),
     bch: new BigNumber("1"),
 };
 
-export class BCHValue extends BaseValue<typeof BCHUnits> {
+class BCHValue extends BaseValue<typeof BCHUnits> {
     public static units = BCHUnits;
     public static synonyms = [{ synonyms: ["bitcoin-cash", "bcash", "tbch"], unit: "btc" as "bch" }];
     constructor(valueIn: NumberValue, unit: keyof typeof BCHUnits) { super(BCHUnits, valueIn, unit); }
@@ -62,14 +62,14 @@ export class BCHValue extends BaseValue<typeof BCHUnits> {
 
 // ZEC /////////////////////////////////////////////////////////////////////////
 
-export const ZECUnits = {
+const ZECUnits = {
     zats: new BigNumber("0.00000001"),
     uzec: new BigNumber("0.000001"),
     mzec: new BigNumber("0.001"),
     zec: new BigNumber("1"),
 };
 
-export class ZECValue extends BaseValue<typeof ZECUnits> {
+class ZECValue extends BaseValue<typeof ZECUnits> {
     public static units = ZECUnits;
     public static synonyms = [{ synonyms: ["zcash", "tzec", "taz"], unit: "zec" as "zec" }];
     constructor(valueIn: NumberValue, unit: keyof typeof ZECUnits) { super(ZECUnits, valueIn, unit); }
@@ -81,13 +81,13 @@ export class ZECValue extends BaseValue<typeof ZECUnits> {
 
 // Sats ////////////////////////////////////////////////////////////////////////
 
-export const SatsUnits = {
+const SatsUnits = {
     sats: new BigNumber("0.00000001"),
     bch: new BigNumber("1"),
     btc: new BigNumber("1"),
 };
 
-export class SatsValue extends BaseValue<typeof SatsUnits> {
+class SatsValue extends BaseValue<typeof SatsUnits> {
     public static units = SatsUnits;
     public static synonyms = [{}];
     constructor(valueIn: NumberValue, unit: keyof typeof SatsUnits) { super(SatsUnits, valueIn, unit); }
@@ -100,7 +100,7 @@ export class SatsValue extends BaseValue<typeof SatsUnits> {
 
 // ETH /////////////////////////////////////////////////////////////////////////
 
-export const ETHUnits = {
+const ETHUnits = {
     wei: new BigNumber("0.000000000000000001"),
     kwei: new BigNumber("0.000000000000001"),
     mwei: new BigNumber("0.000000000001"),
@@ -109,7 +109,7 @@ export const ETHUnits = {
     eth: new BigNumber("1"),
 };
 
-export class ETHValue extends BaseValue<typeof ETHUnits> {
+class ETHValue extends BaseValue<typeof ETHUnits> {
     public static units = ETHUnits;
     public static synonyms = [{ synonyms: ["ethereum", "ether", "keth"], unit: "eth" as "eth" }];
     constructor(valueIn: NumberValue, unit: keyof typeof ETHUnits) { super(ETHUnits, valueIn, unit); }
@@ -124,9 +124,9 @@ export class ETHValue extends BaseValue<typeof ETHUnits> {
 ////////////////////////////////////////////////////////////////////////////////
 
 const valueClasses = [BTCValue, BCHValue, ZECValue, ETHValue];
-export type Units = keyof typeof BTCUnits | keyof typeof BCHUnits | keyof typeof ZECUnits | keyof typeof SatsUnits | keyof typeof ETHUnits;
+type Units = keyof typeof BTCUnits | keyof typeof BCHUnits | keyof typeof ZECUnits | keyof typeof SatsUnits | keyof typeof ETHUnits;
 
-export type Value<Unit> = Unit extends "sats" ? SatsValue :
+export type Value<Unit = ""> = Unit extends "sats" ? SatsValue :
     Unit extends keyof typeof BTCUnits ? BTCValue :
     Unit extends keyof typeof BCHUnits ? BCHValue :
     Unit extends keyof typeof ZECUnits ? ZECValue :

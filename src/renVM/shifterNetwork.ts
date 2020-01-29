@@ -1,6 +1,6 @@
-import { Asset, RenContract } from "@renproject/ren-js-common";
+import { Asset, Ox, RenContract, strip0x } from "@renproject/ren-js-common";
 
-import { getTokenAddress, Ox, SECONDS, sleep, strip0x } from "../lib/utils";
+import { getTokenAddress, SECONDS, sleep } from "../lib/utils";
 import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";

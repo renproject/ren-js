@@ -6,19 +6,24 @@ import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents } from "./lib/promievent";
+import { resolveContractCall, resolveSendTo } from "./lib/resolveContractCall";
 import {
     BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryTx } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
+import { NetworkDetails } from "./types/networks";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;
     private readonly renVMNetwork: ShifterNetwork;
+    private readonly network: NetworkDetails;
 
-    constructor(renVMNetwork: ShifterNetwork, params: ShiftOutParams) {
+    constructor(renVMNetwork: ShifterNetwork, _network: NetworkDetails, params: ShiftOutParams) {
         this.renVMNetwork = renVMNetwork;
-        this.params = params;
+        this.network = _network;
+        this.params = resolveSendTo(params, { shiftIn: false }) as ShiftOutParamsAll;
+        this.params = resolveContractCall(this.network, this.params.sendToken, this.params);
     }
 
     public readFromEthereum = (): PromiEvent<ShiftOutObject> => {
@@ -27,7 +32,7 @@ export class ShiftOutObject {
 
         (async () => {
 
-            const { txConfig, web3Provider, contractFn, contractParams, sendTo } = this.params;
+            const { web3Provider, contractCalls } = this.params;
             let { burnReference } = this.params;
             let ethTxHash = this.params.ethTxHash || this.params.txHash;
 
@@ -40,7 +45,7 @@ export class ShiftOutObject {
             if (!burnReference && burnReference !== 0) {
 
                 if (!web3Provider) {
-                    throw new Error("Must provide burn reference ID or web3 provider");
+                    throw new Error("Must provide burn reference ID or web3 provider.");
                 }
 
                 const web3 = new Web3(web3Provider);
@@ -48,34 +53,43 @@ export class ShiftOutObject {
                 // Handle situation (2)
                 // Make a call to the provided contract and Pass on the
                 // transaction hash.
-                if (contractParams && contractFn && sendTo) {
+                if (contractCalls) {
 
-                    const callParams = [
-                        ...contractParams.map(value => value.value),
-                    ];
+                    for (let i = 0; i < contractCalls.length; i++) {
+                        const contractCall = contractCalls[i];
+                        const last = i === contractCalls.length - 1;
 
-                    const ABI = payloadToABI(contractFn, contractParams);
-                    const contract = new web3.eth.Contract(ABI, sendTo);
+                        const { contractParams, contractFn, sendTo, txConfig } = await contractCall;
 
-                    const tx = contract.methods[contractFn](
-                        ...callParams,
-                    ).send(await withDefaultAccount(web3, {
-                        ...txConfig,
-                    }));
+                        const callParams = [
+                            ...(contractParams || []).map(value => value.value),
+                        ];
 
-                    forwardEvents(tx, promiEvent);
+                        const ABI = payloadToABI(contractFn, contractParams);
+                        const contract = new web3.eth.Contract(ABI, sendTo);
 
-                    ethTxHash = await new Promise((resolve, reject) => tx
-                        .on("transactionHash", resolve)
-                        .catch((error: Error) => {
-                            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
-                            reject(error);
-                        })
-                    );
+                        const tx = contract.methods[contractFn](
+                            ...callParams,
+                        ).send(await withDefaultAccount(web3, {
+                            ...txConfig,
+                        }));
+
+                        if (last) {
+                            forwardEvents(tx, promiEvent);
+                        }
+
+                        ethTxHash = await new Promise((resolve, reject) => tx
+                            .on("transactionHash", resolve)
+                            .catch((error: Error) => {
+                                try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+                                reject(error);
+                            })
+                        );
+                    }
                 }
 
                 if (!ethTxHash) {
-                    throw new Error("Must provide txHash or contract call details");
+                    throw new Error("Must provide txHash or contract call details.");
                 }
 
                 // Handle (3) and continue handling (2)

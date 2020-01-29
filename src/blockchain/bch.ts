@@ -1,7 +1,7 @@
+import { Ox, strip0x } from "@renproject/ren-js-common";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import { getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
 
-import { Ox, strip0x } from "../lib/utils";
 import { NetworkDetails, stringToNetwork } from "../types/networks";
 import { createAddress } from "./common";
 

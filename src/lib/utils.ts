@@ -1,4 +1,7 @@
-import { Args, Asset, Chain, RenContract } from "@renproject/ren-js-common";
+import {
+    Args, Asset, Chain, NULL, Ox, RenContract, strip0x, value,
+} from "@renproject/ren-js-common";
+import BigNumber from "bignumber.js";
 import { crypto } from "bitcore-lib";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
@@ -11,7 +14,7 @@ import { createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs } from "../blockchain/zec";
 import { Tx } from "../renVM/transaction";
-import { parseRenContract } from "../types/assets";
+import { bchUtils, btcUtils, parseRenContract, zecUtils } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
 export interface UTXODetails {
@@ -23,18 +26,6 @@ export interface UTXODetails {
 }
 
 export type UTXO = { chain: Chain.Bitcoin, utxo: UTXODetails } | { chain: Chain.Zcash, utxo: UTXODetails } | { chain: Chain.BitcoinCash, utxo: UTXODetails };
-
-// 32-byte zero value
-export const NULL = (bytes: number) => "0x" + "00".repeat(bytes);
-
-// Remove 0x prefix from a hex string
-export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
-
-// Add a 0x prefix to a hex value, converting to a string first
-export const Ox = (hex: string | BN | Buffer) => {
-    const hexString = typeof hex === "string" ? hex : hex.toString("hex");
-    return hexString.substring(0, 2) === "0x" ? hexString : `0x${hexString}`;
-};
 
 // Pad a hex string if necessary so that its length is even
 // export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : hex;
@@ -60,6 +51,15 @@ export const generatePHash = (...zip: Args | [Args]): string => {
     const [types, values] = unzip(args);
 
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
+};
+
+export const getAssetSymbol = (asset: Asset): string => {
+    switch (asset) {
+        case Asset.BTC: return "zBTC";
+        case Asset.BCH: return "zBCH";
+        case Asset.ZEC: return "zZEC";
+        case Asset.ETH: throw new Error(`Asset ${asset} has no symbol`);
+    }
 };
 
 export const getTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
@@ -217,7 +217,7 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
         } else {
             const accounts = await web3.eth.getAccounts();
             if (accounts.length === 0) {
-                throw new Error("Must provide a 'from' address in the transaction config");
+                throw new Error("Must provide a 'from' address in the transaction config.");
             }
             config.from = accounts[0];
         }
@@ -300,4 +300,25 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string, nonce?
     }
 
     return receipt;
+};
+
+export const toBigNumber = (n: BigNumber | { toString(): string }) => BigNumber.isBigNumber(n) ? new BigNumber(n.toFixed()) : new BigNumber(n.toString());
+
+export const utils = {
+    Ox,
+    strip0x,
+    randomNonce,
+    value,
+
+    // Bitcoin
+    BTC: btcUtils,
+    btc: btcUtils,
+
+    // Zcash
+    ZEC: zecUtils,
+    zec: zecUtils,
+
+    // Bitcoin Cash
+    BCH: bchUtils,
+    bch: bchUtils,
 };

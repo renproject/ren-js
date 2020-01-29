@@ -14,28 +14,12 @@ The official Javascript SDK for interacting with [RenVM](https://renproject.io).
 
 ## Installation
 
-Install RenJS using Yarn/npm:
+Install RenJS:
 
 ```sh
 yarn add @renproject/ren
-```
-or
-```sh
+# Or
 npm install --save @renproject/ren
-```
-
-## Importing RenJS
-
-Importing using require syntax
-
-```typescript
-const RenJS = require("@renproject/ren");
-```
-
-Importing using ES6 syntax
-
-```typescript
-import RenJS from "@renproject/ren";
 ```
 
 ## Usage
@@ -45,60 +29,43 @@ Usage is described in the [getting started tutorial](https://docs.renproject.io/
 Example of bridging BTC into Ethereum:
 
 ```typescript
-// ... web3 is initialized
-
 const renJS = new RenJS("testnet"); // or "chaosnet"
+const web3 = new Web3("... Ethereum node or Infura ...");
 
-const amount = 0.001; // testnet BTC
+const amount = 0.001;
 
 const shiftIn = renJS.shiftIn({
-    // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-    sendToken: RenJS.Tokens.BTC.Btc2Eth,
-
-    // Amount of BTC we are sending (in Satoshis)
-    sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
-
-    // The contract we want to interact with
-    sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
-
-    // The name of the function we want to call
-    contractFn: "deposit",
-
-    // Arguments expected for calling `deposit`
-    contractParams: [
-        {
-            name: "_msg",
-            type: "bytes",
-            value: web3.utils.fromAscii(`Depositing ${amount} BTC`),
-        }
-    ],
+    sendToken: "BTC", // Bridge BTC to Ethereum
+    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
+    sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
 });
 
 const gatewayAddress = shiftIn.addr();
-this.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
+console.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
 
-await shiftIn.waitAndSubmit(web3.currentProvider, 0 /* confirmations */);
+shiftIn.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
+    .then(console.log)
+    .catch(console.error);
 ```
 
 Example of bridging BTC out of Ethereum:
 
 ```typescript
-// ... zBTC is burnt in the Ethereum transaction `txHash`
-
 const renJS = new RenJS("testnet"); // or "chaosnet"
+const web3 = new Web3("... Ethereum node or Infura ...");
 
-const shiftOut = await renJS.shiftOut({
-    // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
-    sendToken: RenJS.Tokens.BTC.Eth2Btc,
+const amount = 0.001;
 
-    // The web3 provider to talk to Ethereum
+renJS.shiftOut({
+    sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
+    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
+    sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
     web3Provider: web3.currentProvider,
-
-    // The transaction hash of our contract call
-    txHash,
-}).readFromEthereum();
-
-await shiftOut.submitToRenVM();
+})
+    .readFromEthereum()
+    .then(tx => tx.submitToRenVM())
+    .then(console.log)
+    .catch(console.error);
 ```
 
 <br />

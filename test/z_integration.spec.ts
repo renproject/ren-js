@@ -3,8 +3,8 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
+import { Args, Ox } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
-import bs58 from "bs58";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import chalk from "chalk";
@@ -15,9 +15,8 @@ import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
 import RenJS, { ShiftInObject, ShiftOutObject, Token } from "../src/index";
-import { Ox, retryNTimes, sleep } from "../src/lib/utils";
-import { Args } from "../src/renVM/jsonRPC";
-import { Tokens } from "../src/types/assets";
+import { retryNTimes, sleep } from "../src/lib/utils";
+import { parseRenContract, Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
 chai.use((chaiBigNumber)(BigNumber));
@@ -139,6 +138,29 @@ describe("Shifting in and shifting out", function () {
         await shift.waitAndSubmit(provider, confirmations);
     };
 
+    const submitToRenVM = async (shiftOutObject: ShiftOutObject) => {
+        try {
+            shiftOutObject = await shiftOutObject.readFromEthereum()
+                .on("eth_transactionHash", (txHash: string) => { console.log(`${chalk.blue("[EVENT]")} Received txHash: ${txHash}`); });
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+
+        await sleepWithCountdown(5);
+
+        console.log("Submitting burn to RenVM.");
+
+        await shiftOutObject.submitToRenVM()
+            .on("renTxHash", (renTxHash) => {
+                console.log(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`);
+                console.log("shiftOutObject.renTxHash()", shiftOutObject.renTxHash());
+                shiftOutObject.renTxHash().should.equal(renTxHash);
+            })
+            .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
+        console.log(""); // new line
+    };
+
     const burnTest = async (
         token: string,
         sendToken: Token,
@@ -202,35 +224,18 @@ describe("Shifting in and shifting out", function () {
 
         console.log("Reading burn from Ethereum.");
 
-        let shiftOutObject: ShiftOutObject;
-        try {
-            shiftOutObject = await renJS.shiftOut({
-                sendTo: adapterContract,
-                contractFn: "shiftOut",
-                contractParams: payload,
-                txConfig: { from: ethAddress, gas: 1000000 },
+        let shiftOutObject: ShiftOutObject = renJS.shiftOut({
+            sendTo: adapterContract,
+            contractFn: "shiftOut",
+            contractParams: payload,
+            txConfig: { from: ethAddress, gas: 1000000 },
 
-                web3Provider: provider,
-                sendToken,
-                // txHash: result.transactionHash,
-            }).readFromEthereum()
-                .on("eth_transactionHash", (txHash: string) => { console.log(`${chalk.blue("[EVENT]")} Received txHash: ${txHash}`); });
-        } catch (error) {
-            console.error(error);
-        }
+            web3Provider: provider,
+            sendToken,
+            // txHash: result.transactionHash,
+        });
 
-        await sleepWithCountdown(5);
-
-        console.log("Submitting burn to RenVM.");
-
-        await shiftOutObject.submitToRenVM()
-            .on("renTxHash", (renTxHash) => {
-                console.log(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`);
-                console.log("shiftOutObject.renTxHash()", shiftOutObject.renTxHash());
-                shiftOutObject.renTxHash().should.equal(renTxHash);
-            })
-            .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
-        console.log(""); // new line
+        await submitToRenVM(shiftOutObject);
     };
 
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
@@ -243,8 +248,8 @@ describe("Shifting in and shifting out", function () {
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
-            { ...caseZEC, it: it.skip, },
-            { ...caseBCH, it: it.skip, },
+            { ...caseZEC, it, },
+            { ...caseBCH, it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
@@ -303,8 +308,8 @@ describe("Shifting in and shifting out", function () {
         }
 
         for (const testcaseFn of [
-            { ...caseBTC, it: it.skip, },
-            { ...caseZEC, it: it.skip, },
+            { ...caseBTC, it, },
+            { ...caseZEC, it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint ${testcaseFn.name} using the helper function`, async () => {
@@ -337,6 +342,54 @@ describe("Shifting in and shifting out", function () {
                 // balance.should.bignumber.at.least(removeVMFee(removeGasFee(new BN(amount), 10)));
                 balance.should.bignumber.at.most(amount);
             });
+        }
+    });
+
+    it.skip("simple interface - mint", async () => {
+        for (const contract of [RenJS.Tokens.BTC.Mint]) {
+            const { asset: token } = parseRenContract(contract);
+            const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+
+            const shift = new RenJS("testnet").shiftIn({
+                // Send BTC to an Ethereum address
+                sendToken: token as ("BTC" | "ZEC" | "BCH"),
+
+                // Amount of BTC we are sending
+                sendAmount: amount,
+
+                // The recipient Ethereum address
+                sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
+            });
+
+            const gatewayAddress = shift.addr();
+
+            const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
+            console.log(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
+            await account.sendSats(gatewayAddress, amount, token);
+
+            await submitIndividual(shift);
+        }
+    });
+
+    it.skip("simple interface - burn", async () => {
+        for (const contract of [RenJS.Tokens.BTC.Burn]) {
+            const { asset: token } = parseRenContract(contract);
+            const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+
+            const shift = new RenJS("testnet").shiftOut({
+                web3Provider: provider,
+
+                // Send BTC to an Ethereum address
+                sendToken: token as ("BTC" | "ZEC" | "BCH"),
+
+                // Amount of BTC we are sending
+                sendAmount: amount,
+
+                // The recipient Ethereum address
+                sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6",
+            });
+
+            await submitToRenVM(shift);
         }
     });
 });

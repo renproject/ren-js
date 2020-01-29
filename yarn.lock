@@ -369,18 +369,17 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
-"@renproject/contracts@^0.3.31":
-  version "0.3.31"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.31.tgz#e87bfc3ce7e50f186488b76e3a9c3eb61f5a8779"
-  integrity sha512-kqb/5hSafZwbFxhpnKnVlDVTg/dqUXEGK0g40hBAZ+Mr9pa1k44wv2JsLbQ7di0+F+I8wfppBNqlWGeRuCWXFA==
+"@renproject/contracts@^0.3.32":
+  version "0.3.32"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.32.tgz#2927f7d27c964ee94ce164f5a81fc90f71b59380"
+  integrity sha512-S3/w4XK9vogQflrDFtSO2hGnHNjJ6x1XJuUVjelV8Hr+tk+S1YLmmDRNKq7wC/rQXO8XxIrjq8qb0OjOgrDseQ==
   dependencies:
-    darknode-sol "https://github.com/renproject/darknode-sol#9be1a5a014bd596426629b2c9cf90109e55e34be"
-    tslint "^6.0.0"
+    darknode-sol "https://github.com/renproject/darknode-sol#ff7d0a442a52ae7990e0ee21a51b037c47450448"
 
-"@renproject/ren-js-common@^0.0.11":
-  version "0.0.11"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.11.tgz#40b018895c8ec06182acba7098bd1024ebdbe52f"
-  integrity sha512-iwE/DpHmo1WYOheRecwB9rOVRhve8gid0WcIKMbQ+6PWngGs/OCIm3+TUSwOVkKOZ5u8MOjv9taLJwgNnvi5SA==
+"@renproject/ren-js-common@^0.0.17":
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.17.tgz#c85f3c4bb5b775cf4603bcf53f42ebf54c9b5a2f"
+  integrity sha512-I0AL93feIwPra7E6NI61lJKaqPZHKZCQgq6qvalRbU6K/mVaXA9KWHIwWJrli3Ihq/MVDwVQ5maoIXVTHhgy9w==
   dependencies:
     "@types/bn.js" "^4.11.6"
     bignumber.js "^9.0.0"
@@ -598,10 +597,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.17.6.tgz#1aaabd6f6470a6ac3824ab1e94d731ca1326d93d"
   integrity sha512-0a2X6cgN3RdPBL2MIlR6Lt0KlM7fOFsutuXcdglcOq6WvLnYXgPQSh0Mx6tO1KCAE8MxbHSOSTWDoUxRq+l3DA==
 
-"@types/node@^13.5.0":
-  version "13.5.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.5.0.tgz#4e498dbf355795a611a87ae5ef811a8660d42662"
-  integrity sha512-Onhn+z72D2O2Pb2ql2xukJ55rglumsVo1H6Fmyi8mlU9SvKdBk/pUSUAiBY/d9bAOF7VVWajX3sths/+g6ZiAQ==
+"@types/node@^13.5.1":
+  version "13.5.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.5.1.tgz#6fae50892d1841f4b38b298e2f78fb68c5960cb9"
+  integrity sha512-Jj2W7VWQ2uM83f8Ls5ON9adxN98MvyJsMSASYFuSvrov8RMRY64Ayay7KV35ph1TSGIJ2gG9ZVDdEq3c3zaydA==
 
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
@@ -2848,12 +2847,12 @@ create-hmac@^1.1.0, create-hmac@^1.1.2, create-hmac@^1.1.3, create-hmac@^1.1.4:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-cross-env@6.0.3:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/cross-env/-/cross-env-6.0.3.tgz#4256b71e49b3a40637a0ce70768a6ef5c72ae941"
-  integrity sha512-+KqxF6LCvfhWvADcDPqo64yVIB31gv/jQulX2NGzKS/g3GEVz6/pt4wjHFtFWsHMddebWD/sDthJemzM4MaAag==
+cross-env@7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/cross-env/-/cross-env-7.0.0.tgz#5a3b2ddce51ec713ea58f2fb79ce22e65b4f5479"
+  integrity sha512-rV6M9ldNgmwP7bx5u6rZsTbYidzwvrwIYZnT08hSGLcQCcggofgFW+sNe7IhA1SRauPS0QuLbbX+wdNtpqE5CQ==
   dependencies:
-    cross-spawn "^7.0.0"
+    cross-spawn "^7.0.1"
 
 cross-fetch@^2.1.0, cross-fetch@^2.1.1:
   version "2.2.3"
@@ -2883,7 +2882,7 @@ cross-spawn@^5.0.1:
     shebang-command "^1.2.0"
     which "^1.2.9"
 
-cross-spawn@^7.0.0:
+cross-spawn@^7.0.0, cross-spawn@^7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-7.0.1.tgz#0ab56286e0f7c24e153d04cc2aa027e43a9a5d14"
   integrity sha512-u7v4o84SwFpD32Z8IIcPZ6z1/ie24O6RU3RbtL5Y316l3KuHVPx9ItBgWQ6VlfAFnRnTtMUrsQ9MUUTuEZjogg==
@@ -2927,9 +2926,9 @@ d@1, d@^1.0.1:
     es5-ext "^0.10.50"
     type "^1.0.1"
 
-"darknode-sol@https://github.com/renproject/darknode-sol#9be1a5a014bd596426629b2c9cf90109e55e34be":
+"darknode-sol@https://github.com/renproject/darknode-sol#ff7d0a442a52ae7990e0ee21a51b037c47450448":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#9be1a5a014bd596426629b2c9cf90109e55e34be"
+  resolved "https://github.com/renproject/darknode-sol#ff7d0a442a52ae7990e0ee21a51b037c47450448"
   dependencies:
     "@openzeppelin/upgrades" "^2.6.0"
     openzeppelin-solidity "2.4.0"
@@ -6298,10 +6297,10 @@ mkdirp@*, mkdirp@0.5.1, mkdirp@^0.5.0, mkdirp@^0.5.1:
   dependencies:
     minimist "0.0.8"
 
-mocha@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/mocha/-/mocha-7.0.0.tgz#c60d14bf3de9601f549b3ff5be657eb8381c54bf"
-  integrity sha512-CirsOPbO3jU86YKjjMzFLcXIb5YiGLUrjrXFHoJ3e2z9vWiaZVCZQ2+gtRGMPWF+nFhN6AWwLM/juzAQ6KRkbA==
+mocha@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/mocha/-/mocha-7.0.1.tgz#276186d35a4852f6249808c6dd4a1376cbf6c6ce"
+  integrity sha512-9eWmWTdHLXh72rGrdZjNbG3aa1/3NRPpul1z0D979QpEnFdCG0Q5tv834N+94QEN2cysfV72YocQ3fn87s70fg==
   dependencies:
     ansi-colors "3.2.3"
     browser-stdout "1.3.1"
@@ -8849,10 +8848,10 @@ ts-node@7.0.1:
     source-map-support "^0.5.6"
     yn "^2.0.0"
 
-ts-unused-exports@^5.5.0:
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/ts-unused-exports/-/ts-unused-exports-5.5.0.tgz#23796fa6ea6303f9476f902aec811b22a5fc7f4c"
-  integrity sha512-eI2oXovQ/Yki1JC3T0zn09csYiMSAK09qr8Yd0DQISWBOSxvEBMmn9s1C9PIId5L2EoRnkWKNTfQ3nHT6iSUwA==
+ts-unused-exports@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/ts-unused-exports/-/ts-unused-exports-6.0.0.tgz#9dd4593590b315178b87f9f9f149ee178c499906"
+  integrity sha512-j/DdY+JKyY72BcDbSA0MQ5FGA3E1eFiWk0OaWpJ7KRyO1boYZOtxUP17VhvKk5ovhrUudf9k9Hqvy4m7SZy5SA==
   dependencies:
     chalk "^3.0.0"
     tsconfig-paths "^3.9.0"
@@ -8913,7 +8912,7 @@ tslint-react@^4.2.0:
   dependencies:
     tsutils "^3.9.1"
 
-tslint@6.0.0, tslint@^6.0.0:
+tslint@6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-6.0.0.tgz#1c0148beac4779924216302f192cdaa153618310"
   integrity sha512-9nLya8GBtlFmmFMW7oXXwoXS1NkrccqTqAtwXzdPV9e2mqSEvCki6iHL/Fbzi5oqbugshzgGPk7KBb2qNP1DSA==
@@ -9038,10 +9037,10 @@ typedoc-webpack-plugin@1.1.4:
     lodash.clone "^4.5.0"
     lodash.merge "^4.6.0"
 
-typedoc@^0.16.8:
-  version "0.16.8"
-  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.16.8.tgz#3eb68fcaf8aceacc9f2c521b94360b6e5fd03e2e"
-  integrity sha512-KO5z33qZ/+dXY5e87YtrD6sr7/BjrD70L0EwzwvQEvS0vuzQRHbXfeeJHschYjpMp3D2BmX4bwEKUMEN8dHDAA==
+typedoc@^0.16.9:
+  version "0.16.9"
+  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.16.9.tgz#d6f46f4dea7d3362029927a92981efdf896f435b"
+  integrity sha512-UvOGoy76yqwCXwxPgatwgXWfsQ3FczyZ6ZNLjhCPK+TsDir6LiU3YB6N9XZmPv36E+7LA860mnc8a0v6YADKFw==
   dependencies:
     "@types/minimatch" "3.0.3"
     fs-extra "^8.1.0"

@@ -1,6 +1,5 @@
 import {
-    newPromiEvent, PromiEvent, ShiftInFromDetails, ShiftInFromRenTxHash, ShiftInParams,
-    ShiftInParamsAll,
+    newPromiEvent, Ox, PromiEvent, RenContract, ShiftInParams, ShiftInParamsAll, strip0x,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -11,9 +10,10 @@ import { sha3 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./lib/abi";
 import { forwardEvents } from "./lib/promievent";
+import { resolveContractCall, resolveSendTo } from "./lib/resolveContractCall";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError, Ox,
-    randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, UTXO, UTXODetails,
+    fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError,
+    randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, UTXO, UTXODetails,
     withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
@@ -28,25 +28,41 @@ export class ShiftInObject {
     private readonly renVMNetwork: ShifterNetwork;
     private readonly params: ShiftInParamsAll;
 
-    constructor(renVMNetwork: ShifterNetwork, network: NetworkDetails, params: ShiftInParams) {
-        this.params = params;
-        this.network = network;
-        this.renVMNetwork = renVMNetwork;
+    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftInParams) {
+        this.params = resolveSendTo(_params, { shiftIn: true }) as ShiftInParamsAll;
+        this.network = _network;
+        this.renVMNetwork = _renVMNetwork;
 
-        const renTxHash = (params as ShiftInParamsAll).renTxHash || (params as ShiftInParamsAll).messageID;
+        const renTxHash = this.params.renTxHash || this.params.messageID;
 
         if (!renTxHash) {
-            const { sendToken: renContract, contractParams, sendTo, sendAmount, nonce: maybeNonce } = params as ShiftInFromDetails;
+            this.params = resolveContractCall(this.network, this.params.sendToken as RenContract, this.params);
+
+            const { sendToken: renContract, contractCalls, sendAmount, nonce: maybeNonce } = this.params;
+
+            if (!contractCalls || !contractCalls.length) {
+                throw new Error(`Must provide Ren transaction hash or contract call details.`);
+            }
+
+            if (!renContract) {
+                throw new Error(`Must provide Ren transaction hash or token to be shifted.`);
+            }
+
+            if (!sendAmount) {
+                throw new Error(`Must provide Ren transaction hash or amount to be shifted.`);
+            }
+
+            const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
             const nonce = maybeNonce || randomNonce();
-            (this.params as ShiftInFromDetails).nonce = nonce;
+            this.params.nonce = nonce;
 
             // const sendAmountString = BigNumber.isBigNumber(sendAmount) ? sendAmount.toFixed() : new BigNumber(sendAmount.toString()).toFixed();
             const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
 
             // TODO: Validate inputs
-            const gHash = generateGHash(contractParams, sendAmountNumber, strip0x(sendTo), renContract, nonce, network);
-            const gatewayAddress = generateAddress(renContract, gHash, network);
+            const gHash = generateGHash(contractParams || [], sendAmountNumber, strip0x(sendTo), renContract, nonce, this.network);
+            const gatewayAddress = generateAddress(renContract, gHash, this.network);
             this.gatewayAddress = gatewayAddress;
         }
     }
@@ -62,10 +78,18 @@ export class ShiftInObject {
             }
 
             if (!this.gatewayAddress) {
-                throw new Error("Unable to calculate gateway address");
+                throw new Error("Unable to calculate gateway address.");
             }
 
-            const { sendAmount, sendToken: renContract } = this.params as ShiftInFromDetails;
+            const { sendAmount, sendToken: renContract } = this.params;
+
+            if (!renContract) {
+                throw new Error(`Must provide token to be shifted.`);
+            }
+
+            if (!sendAmount) {
+                throw new Error(`Must provide amount to be shifted.`);
+            }
 
             try {
                 // Check if the darknodes have already seen the transaction
@@ -91,7 +115,7 @@ export class ShiftInObject {
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 if (promiEvent._isCancelled()) {
-                    throw new Error("waitForDeposit cancelled");
+                    throw new Error("waitForDeposit cancelled.");
                 }
 
                 if (deposits.size > 0) {
@@ -131,18 +155,33 @@ export class ShiftInObject {
     }
 
     public renTxHash = () => {
-        if ((this.params as ShiftInFromRenTxHash).renTxHash) {
-            return (this.params as ShiftInFromRenTxHash).renTxHash;
+        const renTxHash = this.params.renTxHash || this.params.messageID;
+        if (renTxHash) {
+            return renTxHash;
         }
 
-        const { contractParams, sendAmount, sendToken: renContract, nonce, sendTo } = this.params as ShiftInFromDetails;
+        const { contractCalls, sendToken: renContract, sendAmount, nonce } = this.params;
 
         if (!nonce) {
-            throw new Error(`Unable to generate renTxHash without nonce`);
+            throw new Error(`Unable to generate renTxHash without nonce.`);
         }
 
+        if (!contractCalls || !contractCalls.length) {
+            throw new Error(`Unable to generate renTxHash without contract call details.`);
+        }
+
+        if (!renContract) {
+            throw new Error(`Unable to generate renTxHash without token being shifted.`);
+        }
+
+        if (!sendAmount) {
+            throw new Error(`Unable to generate renTxHash without send amount.`);
+        }
+
+        const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
+
         const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
-        const gHash = generateGHash(contractParams, sendAmountNumber, strip0x(sendTo), renContract, nonce, this.network);
+        const gHash = generateGHash(contractParams || [], sendAmountNumber, strip0x(sendTo), renContract, nonce, this.network);
         const encodedGHash = Buffer.from(strip0x(gHash), "hex").toString("base64");
         return generateTxHash(renContract, encodedGHash);
     }
@@ -158,11 +197,25 @@ export class ShiftInObject {
             const utxo = specifyUTXO || this.utxo;
             if (utxo) {
 
-                const { nonce, sendToken, sendTo, sendAmount, contractParams } = this.params as ShiftInFromDetails;
+                const { contractCalls, sendToken: renContract, nonce, sendAmount } = this.params;
 
                 if (!nonce) {
-                    throw new Error("Unable to submitToRenVM without nonce");
+                    throw new Error("Unable to submit to RenVM without nonce.");
                 }
+
+                if (!contractCalls || !contractCalls.length) {
+                    throw new Error(`Unable to submit to RenVM without contract call details.`);
+                }
+
+                if (!renContract) {
+                    throw new Error(`Unable to submit to RenVM without token being shifted.`);
+                }
+
+                if (!sendAmount) {
+                    throw new Error(`Unable to submit to RenVM without send amount.`);
+                }
+
+                const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
                 const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
 
@@ -170,11 +223,11 @@ export class ShiftInObject {
                 // know about the transaction.
                 try {
                     renTxHash = await this.renVMNetwork.submitShiftIn(
-                        sendToken,
+                        renContract,
                         sendTo,
                         sendAmountNumber,
                         nonce,
-                        generatePHash(contractParams),
+                        generatePHash(contractParams || []),
                         utxo.txid,
                         utxo.output_no,
                         this.network,
@@ -224,7 +277,7 @@ export class ShiftInObject {
 }
 
 export class Signature {
-    public params: ShiftInParams;
+    public params: ShiftInParamsAll;
     public network: NetworkDetails;
     public response: Tx;
     public signature: string;
@@ -232,13 +285,22 @@ export class Signature {
     // Here to maintain backwards compatibility
     public messageID: string;
 
-    constructor(network: NetworkDetails, params: ShiftInParams, response: Tx, renTxHash: string) {
-        this.params = params;
-        this.network = network;
-        this.response = response;
-        this.renTxHash = renTxHash;
-        this.messageID = renTxHash;
-        this.signature = signatureToString(fixSignature(response, network));
+    constructor(_network: NetworkDetails, _params: ShiftInParams, _response: Tx, _renTxHash: string) {
+        this.params = resolveSendTo(_params, { shiftIn: true }) as ShiftInParamsAll;
+        this.network = _network;
+        this.response = _response;
+        this.renTxHash = _renTxHash;
+        this.messageID = _renTxHash;
+
+        const params = this.params;
+
+        const renTxHash = params.renTxHash || params.messageID;
+
+        if (!renTxHash) {
+            this.params = resolveContractCall(this.network, params.sendToken as RenContract, params);
+        }
+
+        this.signature = signatureToString(fixSignature(this.response, this.network));
     }
 
     // tslint:disable-next-line: no-any
@@ -250,7 +312,7 @@ export class Signature {
 
             const web3 = new Web3(web3Provider);
 
-            const { sendToken: renContract } = this.params as ShiftInFromDetails;
+            const { sendToken: renContract } = this.params;
 
             // Check if the signature has already been submitted
             if (renContract) {
@@ -310,28 +372,51 @@ export class Signature {
                 }
             }
 
-            const params = [
-                ...this.params.contractParams.map(value => value.value),
-                Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
-                Ox(this.response.args.nhash),
-                // Ox(this.response.args.n), // _nHash: string
-                Ox(this.signature), // _sig: string
-            ];
+            const { contractCalls } = this.params;
 
-            const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
+            let tx: PromiEvent<unknown> | undefined;
 
-            const contract = new web3.eth.Contract(ABI, this.params.sendTo);
+            for (const contractCall of contractCalls) {
 
-            const tx = contract.methods[this.params.contractFn](
-                ...params,
-            ).send(await withDefaultAccount(web3, {
-                ...this.params.txConfig,
-                ...txConfig,
-            }));
+                const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
+
+                const params = [
+                    ...(contractParams || []).map(value => value.value),
+                    Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
+                    Ox(this.response.args.nhash),
+                    // Ox(this.response.args.n), // _nHash: string
+                    Ox(this.signature), // _sig: string
+                ];
+
+                const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
+
+                const contract = new web3.eth.Contract(ABI, sendTo);
+
+                tx = contract.methods[contractFn](
+                    ...params,
+                ).send(await withDefaultAccount(web3, {
+                    ...txConfigParam,
+                    ...txConfig,
+                }));
+
+                // tslint:disable-next-line: no-non-null-assertion
+                await new Promise((resolve, reject) => tx!
+                    .on("transactionHash", resolve)
+                    .catch((error: Error) => {
+                        try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+                        reject(error);
+                    })
+                );
+            }
+
+            if (tx === undefined) {
+                throw new Error(`Must provide contract call.`);
+            }
 
             forwardEvents(tx, promiEvent);
 
-            return await new Promise<TransactionReceipt>((innerResolve, reject) => tx
+            // tslint:disable-next-line: no-non-null-assertion
+            return await new Promise<TransactionReceipt>((innerResolve, reject) => tx!
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { innerResolve(receipt); })
                 .catch((error: Error) => {
                     // tslint:disable-next-line: no-console
@@ -355,27 +440,37 @@ export class Signature {
      * Alternative to `submitToEthereum` that doesn't need a web3 instance
      */
     public createTransaction = async (txConfig?: TransactionConfig): Promise<TransactionConfig> => {
+        const { contractCalls } = this.params;
+
+        if (!contractCalls || contractCalls.length !== 1) {
+            throw new Error(`Must provide exactly one contract call to createTransaction.`);
+        }
+
+        const contractCall = contractCalls[0];
+
+        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
+
         const params = [
-            ...this.params.contractParams.map(value => value.value),
+            ...(contractParams || []).map(value => value.value),
             Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
             Ox(this.response.args.nhash),
             // Ox(generateNHash(this.response)), // _nHash: string
             Ox(this.signature), // _sig: string
         ];
 
-        const ABI = payloadToShiftInABI(this.params.contractFn, this.params.contractParams);
+        const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
         // tslint:disable-next-line: no-any
-        const web3 = new (Web3 as any)() as Web3;
+        const web3: Web3 = new (Web3 as any)();
         const contract = new web3.eth.Contract(ABI);
 
-        const data = contract.methods[this.params.contractFn](
+        const data = contract.methods[contractFn](
             ...params,
         ).encodeABI();
 
         return await withDefaultAccount(web3, {
-            to: this.params.sendTo,
+            to: sendTo,
             data,
-            ...this.params.txConfig,
+            ...txConfigParam,
             ...txConfig,
         });
     }

@@ -28,10 +28,13 @@ export class Darknode {
                 throw new Error(`Malformatted address: ${ipOrMultiaddress}`);
             }
         } else {
+            if (ipOrMultiaddress.indexOf("://") === -1) {
+                throw new Error(`Invalid node URL without protocol: ${ipOrMultiaddress}.`);
+            }
             this.nodeURL = ipOrMultiaddress;
         }
         if (!this.nodeURL) {
-            throw new Error("Invalid node URL");
+            throw new Error("Invalid empty node URL.");
         }
     }
 

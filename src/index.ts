@@ -2,7 +2,7 @@ import _BN from "bn.js";
 
 import { Chain, Network, ShiftInParams, ShiftOutParams } from "@renproject/ren-js-common";
 
-import { Ox, randomNonce, strip0x } from "./lib/utils";
+import { utils } from "./lib/utils";
 import { Darknode } from "./renVM/darknode";
 import { DarknodeGroup } from "./renVM/darknodeGroup";
 import { RPCMethod } from "./renVM/jsonRPC";
@@ -10,7 +10,7 @@ import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { TxStatus } from "./renVM/transaction";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
-import { bchUtils, btcUtils, Tokens, zecUtils } from "./types/assets";
+import { Tokens } from "./types/assets";
 import { NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork } from "./types/networks";
 
 // Export types
@@ -28,24 +28,6 @@ const NetworkDetails = {
     NetworkChaosnet,
     NetworkTestnet,
     stringToNetwork,
-};
-
-const utils = {
-    Ox,
-    strip0x,
-    randomNonce,
-
-    // Bitcoin
-    BTC: btcUtils,
-    btc: btcUtils,
-
-    // Zcash
-    ZEC: zecUtils,
-    zec: zecUtils,
-
-    // Bitcoin Cash
-    BCH: bchUtils,
-    bch: bchUtils,
 };
 
 /**
@@ -114,6 +96,6 @@ export default class RenJS {
      * @returns An instance of [[ShiftOutObject]].
      */
     public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
-        return new ShiftOutObject(this.renVM, params);
+        return new ShiftOutObject(this.renVM, this.network, params);
     }
 }

@@ -1,9 +1,10 @@
+import { strip0x } from "@renproject/ren-js-common";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
 import RenJS from "../../src";
 import {
-    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash, strip0x,
+    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash,
 } from "../../src/lib/utils";
 import { Tx } from "../../src/renVM/transaction";
 import { Tokens } from "../../src/types/assets";

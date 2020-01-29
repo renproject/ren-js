@@ -119,7 +119,7 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
             case "":
             case "mainnet":
                 // return NetworkMainnet;
-                throw new Error("Mainnet is not supported yet");
+                throw new Error("Mainnet is not supported yet.");
             case "chaosnet":
                 return NetworkChaosnet;
             case "testnet":
@@ -133,7 +133,7 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
         }
     } else if (network === undefined || network === null) {
         // return NetworkChaosnet;
-        throw new Error("Mainnet is not supported yet");
+        throw new Error("Mainnet is not supported yet.");
     } else {
         return network;
     }

@@ -1,6 +1,8 @@
 
 // Types
-export * from "./types/parameters";
+export * from "./types/parameters/common";
+export * from "./types/parameters/shiftIn";
+export * from "./types/parameters/shiftOut";
 export * from "./types/renVM";
 export * from "./types/types";
 

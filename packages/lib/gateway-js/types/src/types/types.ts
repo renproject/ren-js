@@ -1,4 +1,5 @@
-import { ShiftInParamsAll, ShiftOutParamsAll } from "./parameters";
+import { ShiftInParamsAll } from "./parameters/shiftIn";
+import { ShiftOutParamsAll } from "./parameters/shiftOut";
 import { Chain, RenContract } from "./renVM";
 
 export enum GatewayMessageType {

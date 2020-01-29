@@ -81,6 +81,7 @@ export class ShiftOutObject {
                         ethTxHash = await new Promise((resolve, reject) => tx
                             .on("transactionHash", resolve)
                             .catch((error: Error) => {
+                                // tslint:disable-next-line: no-console
                                 try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
                                 reject(error);
                             })
@@ -123,6 +124,7 @@ export class ShiftOutObject {
 
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
+            // tslint:disable-next-line: no-console
             try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });

@@ -129,6 +129,7 @@ export class ShifterNetwork {
                     onStatus(result.txStatus);
                 }
             } catch (error) {
+                // tslint:disable-next-line: no-console
                 console.error(String(error));
                 // TODO: Ignore "result not available",
                 // throw otherwise

@@ -16,6 +16,7 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
             const errorString = String(error);
             if (!errors.has(errorString)) {
                 errors = errors.add(errorString);
+                // tslint:disable-next-line: no-console
                 console.error(errorString);
             }
             newList = newList.push(defaultValue);

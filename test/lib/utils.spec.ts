@@ -1,3 +1,5 @@
+// tslint:disable: no-console
+
 import { strip0x } from "@renproject/ren-js-common";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
@@ -76,6 +78,7 @@ describe("Utils", function () {
     }
 
     it(`queryTX`, async () => {
+        // tslint:disable-next-line: await-promise
         await new RenJS("testnet").renVM.queryTX("0")
             .should.be.rejectedWith(/Node returned status 500 with reason: method=ren_queryTx not available/);
     });
@@ -107,6 +110,6 @@ describe("Utils", function () {
             }
         };
 
-        console.log(fixSignature(response, NetworkDevnet));
+        console.debug(fixSignature(response, NetworkDevnet));
     });
 });

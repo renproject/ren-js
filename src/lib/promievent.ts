@@ -4,12 +4,12 @@ import { TransactionReceipt } from "web3-core";
 export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, filterFn = (_name: string) => true) => {
     // const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
     //     if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) {
-    //         console.log(`Forwarding ${eventName} Listener:`);
-    //         console.log(listener);
+    //         console.info(`Forwarding ${eventName} Listener:`);
+    //         console.info(listener);
     //         src.on(eventName, listener);
-    //         src.on("transactionHash", (txHash) => { console.log(`Got transaction hash on src`); });
+    //         src.on("transactionHash", (txHash) => { console.info(`Got transaction hash on src`); });
     //     } else {
-    //         console.log("Can't forward PromiEvent event!");
+    //         console.info("Can't forward PromiEvent event!");
     //     }
     // };
 

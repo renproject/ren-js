@@ -1,10 +1,11 @@
 import BN from "bn.js";
-import { keccak256 } from "ethereumjs-util";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
 import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
-import { BURN_TOPIC, ignoreError, strip0x, waitForReceipt, withDefaultAccount } from "./lib/utils";
+import {
+    BURN_TOPIC, generateTxHash, ignoreError, strip0x, waitForReceipt, withDefaultAccount,
+} from "./lib/utils";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { QueryBurnResponse } from "./renVM/transaction";
 import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
@@ -113,6 +114,15 @@ export class ShiftOutObject {
         return promiEvent;
     }
 
+    public renTxHash = () => {
+        if (!this.params.burnReference) {
+            throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
+        }
+        return generateTxHash(this.params.sendToken, this.params.burnReference);
+    }
+
+    public queryTx = async () => this.renVMNetwork.queryTX<QueryBurnResponse>(this.renTxHash());
+
     public submitToRenVM = (): PromiEvent<QueryBurnResponse> => {
         const promiEvent = newPromiEvent<QueryBurnResponse>();
 
@@ -124,7 +134,7 @@ export class ShiftOutObject {
 
             const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
 
-            const renTxHash = keccak256(`txHash_${this.params.sendToken}_${burnReferenceNumber}`).toString("hex");
+            const renTxHash = generateTxHash(this.params.sendToken, burnReferenceNumber);
 
             // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("messageID", renTxHash);

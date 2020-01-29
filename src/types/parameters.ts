@@ -4,7 +4,7 @@ import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
 import { Args } from "../renVM/jsonRPC";
-import { Token } from "./assets";
+import { RenContract } from "./assets";
 
 interface ContractCall {
     /**
@@ -42,7 +42,7 @@ export interface ShiftInFromDetails extends ContractCall {
     /**
      * The token, including the origin and destination chains
      */
-    sendToken: Token;
+    sendToken: RenContract;
 
     /**
      * The amount of `sendToken` to be sent
@@ -62,7 +62,7 @@ interface ShiftOutParamsCommon {
     /**
      * The token, including the origin and destination chains
      */
-    sendToken: Token;
+    sendToken: RenContract;
 }
 
 interface ShiftOutParamsContractCall extends ShiftOutParamsCommon, Partial<ContractCall> {

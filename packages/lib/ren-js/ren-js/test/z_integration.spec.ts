@@ -14,10 +14,10 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
-import RenJS, { ShiftInObject, ShiftOutObject } from "../src/index";
+import RenJS, { ShiftInObject, ShiftOutObject, Token } from "../src/index";
 import { Ox, sleep } from "../src/lib/utils";
 import { Args } from "../src/renVM/jsonRPC";
-import { Token, Tokens } from "../src/types/assets";
+import { Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
 chai.use((chaiBigNumber)(BigNumber));
@@ -112,7 +112,10 @@ describe("Shifting in and shifting out", function () {
 
         console.log(`Submitting deposit!`);
         const signature = await deposit.submitToRenVM()
-            .on("renTxHash", (renTxHash: string) => { console.log(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`); })
+            .on("renTxHash", (renTxHash: string) => {
+                console.log(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`);
+                deposit.renTxHash().should.equal(renTxHash);
+            })
             .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
         console.log(""); // new line
 
@@ -219,7 +222,11 @@ describe("Shifting in and shifting out", function () {
         console.log("Submitting burn to RenVM.");
 
         await shiftOutObject.submitToRenVM()
-            .on("renTxHash", (renTxHash) => { console.log(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`); })
+            .on("renTxHash", (renTxHash) => {
+                console.log(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`);
+                console.log("shiftOutObject.renTxHash()", shiftOutObject.renTxHash());
+                shiftOutObject.renTxHash().should.equal(renTxHash);
+            })
             .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
         console.log(""); // new line
     };

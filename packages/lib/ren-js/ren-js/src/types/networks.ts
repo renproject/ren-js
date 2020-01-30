@@ -1,14 +1,7 @@
 import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
+import { Network } from "@renproject/ren-js-common";
 // import { Networks as ZNetworks } from "bitcore-lib-zcash";
 import { List } from "immutable";
-
-export enum Network {
-    Mainnet = "mainnet",
-    Chaosnet = "chaosnet",
-    Testnet = "testnet",
-    Devnet = "devnet",
-    Localnet = "localnet",
-}
 
 export interface NetworkDetails {
     name: string;
@@ -126,7 +119,7 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
             case "":
             case "mainnet":
                 // return NetworkMainnet;
-                throw new Error("Mainnet is not supported yet");
+                throw new Error("Mainnet is not supported yet.");
             case "chaosnet":
                 return NetworkChaosnet;
             case "testnet":
@@ -140,7 +133,7 @@ export const stringToNetwork = (network?: NetworkDetails | string | null | undef
         }
     } else if (network === undefined || network === null) {
         // return NetworkChaosnet;
-        throw new Error("Mainnet is not supported yet");
+        throw new Error("Mainnet is not supported yet.");
     } else {
         return network;
     }

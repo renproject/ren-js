@@ -22,26 +22,26 @@ const shiftInABITemplate: AbiItem = {
     type: "function",
 };
 
-export const payloadToABI = (methodName: string, payload: Array<{ type: string, name: string }>): AbiItem[] => {
+export const payloadToABI = (methodName: string, payload: Array<{ type: string, name: string }> | undefined): AbiItem[] => {
     return [
         {
             name: methodName,
             type: "function",
             inputs: [
-                ...payload.map(value => ({ type: value.type, name: value.name })),
+                ...(payload || []).map(value => ({ type: value.type, name: value.name })),
             ],
             outputs: [],
         }
     ];
 };
 
-export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: string, name: string }>): AbiItem[] => {
+export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: string, name: string }> | undefined): AbiItem[] => {
     return [
         {
             ...shiftInABITemplate,
             name: methodName,
             inputs: [
-                ...payload.map(value => ({ type: value.type, name: value.name })),
+                ...(payload || []).map(value => ({ type: value.type, name: value.name })),
                 ...(shiftInABITemplate.inputs ? shiftInABITemplate.inputs : []),
             ]
         }

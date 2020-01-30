@@ -44,7 +44,7 @@
         "match-default-export-name": false,
         "function-name": false,
         "no-single-line-block-comment": false,
-
+        "no-unnecessary-type-assertion": false,
         "no-suspicious-comment": {
             "severity": "warning"
         },
@@ -54,7 +54,6 @@
         "strict-type-predicates": {
             "severity": "warning"
         },
-
         "ordered-imports": true,
         "no-object-literal-type-assertion": true,
         "semicolon": true,
@@ -71,13 +70,14 @@
         "await-promise": true,
         "react-this-binding-issue": true,
         "no-string-based-set-timeout": true,
-        "no-unnecessary-type-assertion": true,
         "no-unnecessary-local-variable": false,
         "only-arrow-functions": true,
-
-        "no-unused-variable": [true, {
-            "ignore-pattern": "^_"
-        }],
+        "no-unused-variable": [
+            true,
+            {
+                "ignore-pattern": "^_"
+            }
+        ],
         "quotemark": [
             true,
             "double",
@@ -109,14 +109,19 @@
                 "esSpecCompliant": true
             }
         ],
-        "increment-decrement": [true, "allow-post"],
+        "increment-decrement": [
+            true,
+            "allow-post"
+        ],
         "align": [
             true,
             "parameters",
             "statements"
         ],
-        "array-type": [true, "array-simple"],
-
+        "array-type": [
+            true,
+            "array-simple"
+        ],
         "no-unsafe-any": false,
         "max-line-length": false,
         "max-func-body-length": false,

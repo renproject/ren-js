@@ -1,9 +1,12 @@
+// tslint:disable: no-console
+
+import { strip0x } from "@renproject/ren-js-common";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
 import RenJS from "../../src";
 import {
-    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash, strip0x,
+    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash,
 } from "../../src/lib/utils";
 import { Tx } from "../../src/renVM/transaction";
 import { Tokens } from "../../src/types/assets";
@@ -75,8 +78,9 @@ describe("Utils", function () {
     }
 
     it(`queryTX`, async () => {
+        // tslint:disable-next-line: await-promise
         await new RenJS("testnet").renVM.queryTX("0")
-            .should.be.rejectedWith(/Lightnode returned status 500 with reason: method=ren_queryTx not available/);
+            .should.be.rejectedWith(/Node returned status 500 with reason: method=ren_queryTx not available/);
     });
 
     it.skip("fixSignature", () => {
@@ -106,6 +110,6 @@ describe("Utils", function () {
             }
         };
 
-        console.log(fixSignature(response, NetworkDevnet));
+        console.debug(fixSignature(response, NetworkDevnet));
     });
 });

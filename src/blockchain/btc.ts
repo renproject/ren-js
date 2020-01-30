@@ -1,19 +1,11 @@
+import { Ox, strip0x } from "@renproject/ren-js-common";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 
-import { Ox, strip0x } from "../lib/utils";
 import { NetworkDetails, stringToNetwork } from "../types/networks";
 import { createAddress } from "./common";
 
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
-
-export interface BitcoinUTXO {
-    txid: string; // hex string without 0x prefix
-    value: number; // satoshis
-    script_hex: string; // hex string without 0x prefix
-    output_no: number;
-    confirmations: number;
-}
 
 export const getBitcoinUTXOs = (network: NetworkDetails | string) => {
     const networkDetails = typeof network === "string" ? stringToNetwork(network) : network;

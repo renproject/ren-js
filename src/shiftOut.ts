@@ -1,33 +1,40 @@
-import BN from "bn.js";
+import {
+    newPromiEvent, PromiEvent, ShiftOutParams, ShiftOutParamsAll,
+} from "@renproject/ren-js-common";
+import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
-import { forwardEvents, newPromiEvent, PromiEvent } from "./lib/promievent";
+import { processShiftOutParams } from "./lib/processParams";
+import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    BURN_TOPIC, generateTxHash, ignoreError, strip0x, waitForReceipt, withDefaultAccount,
+    BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
+import { ResponseQueryTx } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
-import { QueryBurnResponse } from "./renVM/transaction";
-import { ShiftOutParams, ShiftOutParamsAll } from "./types/parameters";
+import { TxStatus } from "./types/assets";
+import { NetworkDetails } from "./types/networks";
 
 export class ShiftOutObject {
     private readonly params: ShiftOutParamsAll;
     private readonly renVMNetwork: ShifterNetwork;
+    private readonly network: NetworkDetails;
 
-    constructor(renVMNetwork: ShifterNetwork, params: ShiftOutParams) {
-        this.renVMNetwork = renVMNetwork;
-        this.params = params;
+    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftOutParams) {
+        this.renVMNetwork = _renVMNetwork;
+        this.network = _network;
+        this.params = processShiftOutParams(this.network, _params);
     }
 
-    public readFromEthereum = (): PromiEvent<ShiftOutObject> => {
+    public readFromEthereum = (): PromiEvent<ShiftOutObject, Web3Events & RenWeb3Events> => {
 
-        const promiEvent = newPromiEvent<ShiftOutObject>();
+        const promiEvent = newPromiEvent<ShiftOutObject, Web3Events & RenWeb3Events>();
 
         (async () => {
 
-            const { txConfig, web3Provider, contractFn, contractParams, sendTo } = this.params;
+            const { web3Provider, contractCalls } = this.params;
             let { burnReference } = this.params;
-            let ethTxHash = this.params.ethTxHash || this.params.txHash;
+            let ethTxHash = this.params.ethTxHash;
 
             // There are three parameter configs:
             // Situation (1): A `burnReference` is provided
@@ -35,10 +42,10 @@ export class ShiftOutObject {
             // Situation (3): A txHash is provided
 
             // For (1), we don't have to do anything.
-            if (!burnReference) {
+            if (!burnReference && burnReference !== 0) {
 
                 if (!web3Provider) {
-                    throw new Error("Must provide burn reference ID or web3 provider");
+                    throw new Error("Must provide burn reference ID or web3 provider.");
                 }
 
                 const web3 = new Web3(web3Provider);
@@ -46,34 +53,44 @@ export class ShiftOutObject {
                 // Handle situation (2)
                 // Make a call to the provided contract and Pass on the
                 // transaction hash.
-                if (contractParams && contractFn && sendTo) {
+                if (contractCalls) {
 
-                    const callParams = [
-                        ...contractParams.map(value => value.value),
-                    ];
+                    for (let i = 0; i < contractCalls.length; i++) {
+                        const contractCall = contractCalls[i];
+                        const last = i === contractCalls.length - 1;
 
-                    const ABI = payloadToABI(contractFn, contractParams);
-                    const contract = new web3.eth.Contract(ABI, sendTo);
+                        const { contractParams, contractFn, sendTo, txConfig } = await contractCall;
 
-                    const tx = contract.methods[contractFn](
-                        ...callParams,
-                    ).send(await withDefaultAccount(web3, {
-                        ...txConfig,
-                    }));
+                        const callParams = [
+                            ...(contractParams || []).map(value => value.value),
+                        ];
 
-                    forwardEvents(tx, promiEvent);
+                        const ABI = payloadToABI(contractFn, contractParams);
+                        const contract = new web3.eth.Contract(ABI, sendTo);
 
-                    ethTxHash = await new Promise((resolve, reject) => tx
-                        .on("transactionHash", resolve)
-                        .catch((error: Error) => {
-                            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
-                            reject(error);
-                        })
-                    );
+                        const tx = contract.methods[contractFn](
+                            ...callParams,
+                        ).send(await withDefaultAccount(web3, {
+                            ...txConfig,
+                        }));
+
+                        if (last) {
+                            forwardEvents(tx, promiEvent);
+                        }
+
+                        ethTxHash = await new Promise((resolve, reject) => tx
+                            .on("transactionHash", resolve)
+                            .catch((error: Error) => {
+                                // tslint:disable-next-line: no-console
+                                try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+                                reject(error);
+                            })
+                        );
+                    }
                 }
 
                 if (!ethTxHash) {
-                    throw new Error("Must provide txHash or contract call details");
+                    throw new Error("Must provide txHash or contract call details.");
                 }
 
                 // Handle (3) and continue handling (2)
@@ -94,7 +111,7 @@ export class ShiftOutObject {
                     }
                 }
 
-                if (!burnReference) {
+                if (!burnReference && burnReference !== 0) {
                     throw Error("No reference ID found in logs");
                 }
             }
@@ -107,6 +124,7 @@ export class ShiftOutObject {
 
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
+            // tslint:disable-next-line: no-console
             try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });
@@ -115,34 +133,36 @@ export class ShiftOutObject {
     }
 
     public renTxHash = () => {
-        if (!this.params.burnReference) {
+        if (!this.params.burnReference && this.params.burnReference !== 0) {
             throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
         }
-        return generateTxHash(this.params.sendToken, this.params.burnReference);
+        const burnReference = new BigNumber(this.params.burnReference).toFixed();
+        return generateTxHash(this.params.sendToken, burnReference);
     }
 
-    public queryTx = async () => this.renVMNetwork.queryTX<QueryBurnResponse>(this.renTxHash());
+    public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (): PromiEvent<QueryBurnResponse> => {
-        const promiEvent = newPromiEvent<QueryBurnResponse>();
+    public submitToRenVM = (): PromiEvent<ResponseQueryTx, { renTxHash: [string], status: [TxStatus] }> => {
+        const promiEvent = newPromiEvent<ResponseQueryTx, { renTxHash: [string], status: [TxStatus] }>();
 
         (async () => {
             const burnReference = this.params.burnReference;
-            if (!burnReference) {
+            if (!burnReference && burnReference !== 0) {
                 throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
             }
 
-            const burnReferenceNumber = new BN(strip0x(burnReference), "hex").toString();
-
-            const renTxHash = generateTxHash(this.params.sendToken, burnReferenceNumber);
+            const renTxHash = this.renTxHash();
 
             // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
-            promiEvent.emit("messageID", renTxHash);
             promiEvent.emit("renTxHash", renTxHash);
 
-            return await this.renVMNetwork.waitForTX<QueryBurnResponse>(renTxHash, (status) => {
-                promiEvent.emit("status", status);
-            });
+            return await this.renVMNetwork.waitForTX(
+                renTxHash,
+                (status) => {
+                    promiEvent.emit("status", status);
+                },
+                () => promiEvent._isCancelled(),
+            );
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

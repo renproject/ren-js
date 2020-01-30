@@ -1,6 +1,6 @@
+import { strip0x } from "@renproject/ren-js-common";
 import { Networks as BNetworks, Opcode as BOpcode, Script as bScript } from "bitcore-lib";
 
-import { strip0x } from "../lib/utils";
 import { NetworkDetails } from "../types/networks";
 
 export const createAddress =

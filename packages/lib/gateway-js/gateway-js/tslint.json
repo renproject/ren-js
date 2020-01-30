@@ -26,26 +26,18 @@
     // Immutability rules
     "readonly-keyword": true,
     "readonly-array": true,
-    "no-let": true,
+    "no-let": false,
     "no-object-mutation": true,
     "no-delete": true,
     "no-method-signature": true,
     // Functional style rules
-    "no-this": true,
-    "no-class": true,
+    "no-this": false,
+    "no-class": false,
     "no-mixed-interface": true,
-    "no-expression-statement": [
-      true,
-      {
-        "ignore-prefix": [
-          "console.",
-          "process.exit"
-        ]
-      }
-    ],
-    "no-if-statement": true,
+    "no-if-statement": false,
     /* end tslint-immutable rules */
     // Disabled
+    "no-expression-statement": false,
     "interface-name": false,
     "jsx-boolean-value": false,
     "max-classes-per-file": false,
@@ -77,12 +69,10 @@
     // "no-return-await": false,
     // "ter-indent": false,
     // Warnings
-    "no-suspicious-comment": {
-      "severity": "warning"
-    },
-    "no-console": {
-      "severity": "warning"
-    },
+    "no-console": false,
+    // "no-console": {
+    //   "severity": "warning"
+    // },
     "strict-type-predicates": {
       "severity": "warning"
     },
@@ -101,8 +91,6 @@
     "promise-function-async": true,
     "prefer-readonly": true,
     "await-promise": true,
-    "react-this-binding-issue": true,
-    "no-string-based-set-timeout": true,
     "no-unnecessary-type-assertion": true,
     "no-unnecessary-local-variable": false,
     "only-arrow-functions": true,

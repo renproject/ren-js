@@ -1,8 +1,6 @@
-import { Arg, Args, Ox, RenContract } from "@renproject/ren-js-common";
+import { Arg, Args, Ox, RenContract, TxStatus } from "@renproject/ren-js-common";
 
-import {
-    BurnArgsArray, MintArgsArray, TxOutputArgsArray, TxSignatureArray, TxStatus,
-} from "./transaction";
+import { BurnArgsArray, MintArgsArray, TxOutputArgsArray, TxSignatureArray } from "./transaction";
 
 export enum RPCMethod {
     // QueryBlock returns a block identified by the block height.

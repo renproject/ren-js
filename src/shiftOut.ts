@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, PromiEvent, ShiftOutParams, ShiftOutParamsAll,
+    newPromiEvent, PromiEvent, ShiftOutParams, ShiftOutParamsAll, TxStatus,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -141,8 +141,8 @@ export class ShiftOutObject {
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (): PromiEvent<ResponseQueryTx, { renTxHash: [string], status: [string] }> => {
-        const promiEvent = newPromiEvent<ResponseQueryTx, { renTxHash: [string], status: [string] }>();
+    public submitToRenVM = (): PromiEvent<ResponseQueryTx, { renTxHash: [string], status: [TxStatus] }> => {
+        const promiEvent = newPromiEvent<ResponseQueryTx, { renTxHash: [string], status: [TxStatus] }>();
 
         (async () => {
             const burnReference = this.params.burnReference;

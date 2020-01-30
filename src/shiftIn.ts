@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x,
+    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x, TxStatus,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -17,7 +17,7 @@ import {
     withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
-import { Tx, TxStatus } from "./renVM/transaction";
+import { Tx } from "./renVM/transaction";
 import { parseRenContract } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
@@ -186,8 +186,8 @@ export class ShiftInObject {
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (specifyUTXO?: UTXODetails): PromiEvent<Signature, { "renTxHash": [string], "status": [string] }> => {
-        const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [string] }>();
+    public submitToRenVM = (specifyUTXO?: UTXODetails): PromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }> => {
+        const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
             let renTxHash = this.params.renTxHash || this.renTxHash();

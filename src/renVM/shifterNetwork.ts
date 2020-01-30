@@ -1,11 +1,11 @@
-import { Asset, Ox, RenContract, strip0x } from "@renproject/ren-js-common";
+import { Asset, Ox, RenContract, strip0x, TxStatus } from "@renproject/ren-js-common";
 
 import { getTokenAddress, SECONDS, sleep } from "../lib/utils";
 import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";
 import { decodeValue, ResponseQueryTx, RPCMethod } from "./jsonRPC";
-import { Tx, TxStatus } from "./transaction";
+import { Tx } from "./transaction";
 
 export const unmarshalTx = (response: ResponseQueryTx): Tx => {
     // Unmarshal

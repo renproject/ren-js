@@ -8,7 +8,7 @@ import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { getAssetSymbol, toBigNumber, utils } from "./utils";
 
-export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: T, { shiftIn }: { shiftIn: boolean }): T => {
+export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): typeof params => {
     if ((params as ShiftInFromDetails | ShiftOutParams).sendToken) {
         (params as ShiftInFromDetails | ShiftOutParams).sendToken = ((): RenContract => {
             const token = (params as ShiftInFromDetails | ShiftOutParams).sendToken;
@@ -33,7 +33,12 @@ export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: 
  * This function checks if this is the case and makes the required changes to
  * the parameters;
  */
-export const resolveContractCall = <T extends ShiftOutParamsAll | ShiftInParamsAll>(network: NetworkDetails, sendToken: RenContract, params: T): T => {
+export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsAll>(network: NetworkDetails, params: T): T => {
+
+    if ((params as ShiftOutParamsAll).burnReference || (params as ShiftOutParamsAll).ethTxHash) {
+        // Burn already submitted to Ethereum.
+        return params;
+    }
 
     if (params.contractCalls) {
         // Check that the params are accompanied by a function name
@@ -52,59 +57,64 @@ export const resolveContractCall = <T extends ShiftOutParamsAll | ShiftInParamsA
         return params;
     }
 
-    const contractCall = (params as ShiftInParams as DetailedContractCall);
+    const { sendTo, contractParams, contractFn, txConfig, ...restOfParams } = (params as unknown as DetailedContractCall);
 
-    if (!contractCall.sendTo) {
+    if (!sendTo) {
         return params;
     }
 
     // Check that the params are accompanied by a function name
-    if (contractCall.contractParams && !contractCall.contractFn) {
+    if (contractParams && !contractFn) {
         throw new Error("Contract function name must be provided with contract parameters.");
     }
 
     // Check if the RenJS has been passed in the contract call details
-    if (contractCall.contractFn) {
+    if (contractFn) {
         return {
-            ...params,
+            ...restOfParams,
             contractCalls: [{
-                sendTo: contractCall.sendTo,
-                contractParams: contractCall.contractParams || [],
-                contractFn: contractCall.contractFn,
-                txConfig: contractCall.txConfig,
+                sendTo,
+                contractParams: contractParams || [],
+                contractFn,
+                txConfig,
             }],
-        };
+        } as unknown as T;
     }
 
     // The contract call hasn't been provided - but `sendTo` has. We overwrite
     // the contract call with a simple adapter call.
 
+    const sendToken = params.sendToken;
+    if (!sendToken) {
+        throw new Error(`Send token must be provided in order to send directly to an address.`);
+    }
+
     const renContract = parseRenContract(sendToken);
     if (renContract.to === Chain.Ethereum) {
         // Shift in
         return {
-            ...params,
+            ...restOfParams,
             contractCalls: [{
                 sendTo: network.contracts.addresses.shifter.BasicAdapter.address,
                 contractFn: "shiftIn",
                 contractParams: [
                     { type: "address", name: "_shifterRegistry", value: network.contracts.addresses.shifter.ShifterRegistry.address },
                     { type: "string", name: "_symbol", value: getAssetSymbol(renContract.asset) },
-                    { type: "address", name: "_address", value: contractCall.sendTo },
+                    { type: "address", name: "_address", value: sendTo },
                 ],
-                txConfig: contractCall.txConfig,
+                txConfig,
             }],
-        };
+        } as unknown as T;
     } else {
         // Shift out
 
-        const simpleContractCall = (params as ShiftInParams as BurnContractCallSimple);
+        const { sendAmount, ...restOfBurnParams } = (restOfParams as BurnContractCallSimple);
 
-        if (!simpleContractCall.sendAmount) {
+        if (!sendAmount) {
             throw new Error(`Send amount must be provided in order to send directly to an address.`);
         }
 
-        const addressToHex = utils[parseRenContract(sendToken).asset as "BTC" | "ZEC" | "BCH"].addressToHex(simpleContractCall.sendTo);
+        const addressToHex = utils[parseRenContract(sendToken).asset as "BTC" | "ZEC" | "BCH"].addressToHex(sendTo);
 
         const approve = new Promise(async (resolve) => {
             const web3 = new Web3((params as ShiftOutParamsAll).web3Provider);
@@ -116,14 +126,14 @@ export const resolveContractCall = <T extends ShiftOutParamsAll | ShiftInParamsA
                 contractFn: "approve",
                 contractParams: [
                     { type: "address", name: "spender", value: network.contracts.addresses.shifter.BasicAdapter.address },
-                    { type: "uint256", name: "amount", value: toBigNumber(simpleContractCall.sendAmount).toFixed() },
+                    { type: "uint256", name: "amount", value: toBigNumber(sendAmount).toFixed() },
                 ],
-                txConfig: contractCall.txConfig,
+                txConfig,
             });
         });
 
         return {
-            ...params,
+            ...restOfBurnParams,
             contractCalls: [
                 approve,
                 {
@@ -133,10 +143,14 @@ export const resolveContractCall = <T extends ShiftOutParamsAll | ShiftInParamsA
                         { type: "address", name: "_shifterRegistry", value: network.contracts.addresses.shifter.ShifterRegistry.address },
                         { type: "string", name: "_symbol", value: getAssetSymbol(renContract.asset) },
                         { type: "bytes", name: "_to", value: addressToHex },
-                        { type: "uint256", name: "_amount", value: toBigNumber(simpleContractCall.sendAmount).toFixed() },
+                        { type: "uint256", name: "_amount", value: toBigNumber(sendAmount).toFixed() },
                     ],
-                    txConfig: { gas: 200000, ...contractCall.txConfig },
+                    txConfig: { gas: 200000, ...txConfig },
                 }]
-        };
+        } as unknown as T;
     }
+};
+
+export const processParameters = <T extends ShiftInParams | ShiftOutParams, K extends ShiftInParamsAll | ShiftOutParamsAll>(_network: NetworkDetails, _params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): K => {
+    return resolveContractCall(_network, resolveSendTo(_params, { shiftIn }) as K);
 };

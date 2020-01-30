@@ -69,7 +69,8 @@ describe("RenJS initialization and exports", () => {
 
             wait._cancel();
 
-            wait.catch(reject);
+            wait.then((result) => { reject(`Unexpected resolution from 'waitForDeposit' with result ${result}`); })
+                .catch(reject);
 
         }).should.be.rejectedWith(/waitForDeposit cancelled/);
     });

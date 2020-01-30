@@ -376,10 +376,10 @@
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#ff7d0a442a52ae7990e0ee21a51b037c47450448"
 
-"@renproject/ren-js-common@^0.0.17":
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.17.tgz#c85f3c4bb5b775cf4603bcf53f42ebf54c9b5a2f"
-  integrity sha512-I0AL93feIwPra7E6NI61lJKaqPZHKZCQgq6qvalRbU6K/mVaXA9KWHIwWJrli3Ihq/MVDwVQ5maoIXVTHhgy9w==
+"@renproject/ren-js-common@^0.0.18":
+  version "0.0.18"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.18.tgz#db71661cecee729f029a91e2c22e2be3e46b7491"
+  integrity sha512-9ReiGt1DEaOs8I18SaR25NuA4M05hnJ5ljm7LaPOJvHAvSERiw2qn7sg9dixVeEp2TZ6SzMItZJ7A0rPI2Qt6w==
   dependencies:
     "@types/bn.js" "^4.11.6"
     bignumber.js "^9.0.0"
@@ -498,9 +498,9 @@
   integrity sha512-HF8faEUA4JurIm+68VaA2KedtZf5LYdXpQEAbIAN79DwWQbO82BNTksZgCH3UMqbZHXex9C6TrBfg7OUInRISQ==
 
 "@types/chai@^4.2.7":
-  version "4.2.7"
-  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.7.tgz#1c8c25cbf6e59ffa7d6b9652c78e547d9a41692d"
-  integrity sha512-luq8meHGYwvky0O7u0eQZdA7B4Wd9owUCqvbw2m3XCrCU8mplYOujMBbvyS547AxJkC+pGnd0Cm15eNxEUNU8g==
+  version "4.2.8"
+  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.8.tgz#c8d645506db0d15f4aafd4dfa873f443ad87ea59"
+  integrity sha512-U1bQiWbln41Yo6EeHMr+34aUhvrMVyrhn9lYfPSpLTCrZlGxU4Rtn1bocX+0p2Fc/Jkd2FanCEXdw0WNfHHM0w==
 
 "@types/color-name@^1.1.1":
   version "1.1.1"
@@ -598,9 +598,9 @@
   integrity sha512-0a2X6cgN3RdPBL2MIlR6Lt0KlM7fOFsutuXcdglcOq6WvLnYXgPQSh0Mx6tO1KCAE8MxbHSOSTWDoUxRq+l3DA==
 
 "@types/node@^13.5.1":
-  version "13.5.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.5.1.tgz#6fae50892d1841f4b38b298e2f78fb68c5960cb9"
-  integrity sha512-Jj2W7VWQ2uM83f8Ls5ON9adxN98MvyJsMSASYFuSvrov8RMRY64Ayay7KV35ph1TSGIJ2gG9ZVDdEq3c3zaydA==
+  version "13.5.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.5.2.tgz#3de53b55fd39efc428a901a0f6db31f761cfa131"
+  integrity sha512-Fr6a47c84PRLfd7M7u3/hEknyUdQrrBA6VoPmkze0tcflhU5UnpWEX2kn12ktA/lb+MNHSqFlSiPHIHsaErTPA==
 
 "@types/stack-utils@^1.0.1":
   version "1.0.1"

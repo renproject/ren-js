@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, Ox, PromiEvent, RenContract, ShiftInParams, ShiftInParamsAll, strip0x,
+    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -9,8 +9,8 @@ import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./lib/abi";
-import { forwardEvents } from "./lib/promievent";
-import { resolveContractCall, resolveSendTo } from "./lib/resolveContractCall";
+import { processParameters } from "./lib/processParameters";
+import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError,
     randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, UTXO, UTXODetails,
@@ -29,15 +29,13 @@ export class ShiftInObject {
     private readonly params: ShiftInParamsAll;
 
     constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftInParams) {
-        this.params = resolveSendTo(_params, { shiftIn: true }) as ShiftInParamsAll;
         this.network = _network;
         this.renVMNetwork = _renVMNetwork;
+        this.params = processParameters(this.network, _params, { shiftIn: true });
 
-        const renTxHash = this.params.renTxHash || this.params.messageID;
+        const renTxHash = this.params.renTxHash;
 
         if (!renTxHash) {
-            this.params = resolveContractCall(this.network, this.params.sendToken as RenContract, this.params);
-
             const { sendToken: renContract, contractCalls, sendAmount, nonce: maybeNonce } = this.params;
 
             if (!contractCalls || !contractCalls.length) {
@@ -69,11 +67,11 @@ export class ShiftInObject {
 
     public addr = () => this.gatewayAddress;
 
-    public waitForDeposit = (confirmations: number): PromiEvent<this> => {
-        const promiEvent = newPromiEvent<this>();
+    public waitForDeposit = (confirmations: number): PromiEvent<this, { "deposit": [UTXO] }> => {
+        const promiEvent = newPromiEvent<this, { "deposit": [UTXO] }>();
 
         (async () => {
-            if (this.params.renTxHash || this.params.messageID) {
+            if (this.params.renTxHash) {
                 return this;
             }
 
@@ -155,7 +153,7 @@ export class ShiftInObject {
     }
 
     public renTxHash = () => {
-        const renTxHash = this.params.renTxHash || this.params.messageID;
+        const renTxHash = this.params.renTxHash;
         if (renTxHash) {
             return renTxHash;
         }
@@ -188,11 +186,11 @@ export class ShiftInObject {
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (specifyUTXO?: UTXODetails): PromiEvent<Signature> => {
-        const promiEvent = newPromiEvent<Signature>();
+    public submitToRenVM = (specifyUTXO?: UTXODetails): PromiEvent<Signature, { "renTxHash": [string], "status": [string] }> => {
+        const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [string] }>();
 
         (async () => {
-            let renTxHash = this.params.renTxHash || this.params.messageID || this.renTxHash();
+            let renTxHash = this.params.renTxHash || this.renTxHash();
 
             const utxo = specifyUTXO || this.utxo;
             if (utxo) {
@@ -247,7 +245,6 @@ export class ShiftInObject {
                     }
                 }
 
-                promiEvent.emit("messageID", renTxHash);
                 promiEvent.emit("renTxHash", renTxHash);
             }
 
@@ -286,27 +283,19 @@ export class Signature {
     public messageID: string;
 
     constructor(_network: NetworkDetails, _params: ShiftInParams, _response: Tx, _renTxHash: string) {
-        this.params = resolveSendTo(_params, { shiftIn: true }) as ShiftInParamsAll;
         this.network = _network;
         this.response = _response;
         this.renTxHash = _renTxHash;
         this.messageID = _renTxHash;
-
-        const params = this.params;
-
-        const renTxHash = params.renTxHash || params.messageID;
-
-        if (!renTxHash) {
-            this.params = resolveContractCall(this.network, params.sendToken as RenContract, params);
-        }
+        this.params = processParameters(this.network, _params, { shiftIn: true });
 
         this.signature = signatureToString(fixSignature(this.response, this.network));
     }
 
     // tslint:disable-next-line: no-any
-    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt> => {
+    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
         // tslint:disable-next-line: no-any
-        const promiEvent = newPromiEvent<TransactionReceipt>();
+        const promiEvent = newPromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>();
 
         (async () => {
 
@@ -374,7 +363,7 @@ export class Signature {
 
             const { contractCalls } = this.params;
 
-            let tx: PromiEvent<unknown> | undefined;
+            let tx: PromiEvent<unknown, Web3Events> | undefined;
 
             for (const contractCall of contractCalls) {
 

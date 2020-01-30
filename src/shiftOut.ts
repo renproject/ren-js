@@ -5,8 +5,8 @@ import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
-import { forwardEvents } from "./lib/promievent";
-import { resolveContractCall, resolveSendTo } from "./lib/resolveContractCall";
+import { processParameters } from "./lib/processParameters";
+import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
@@ -19,22 +19,21 @@ export class ShiftOutObject {
     private readonly renVMNetwork: ShifterNetwork;
     private readonly network: NetworkDetails;
 
-    constructor(renVMNetwork: ShifterNetwork, _network: NetworkDetails, params: ShiftOutParams) {
-        this.renVMNetwork = renVMNetwork;
+    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftOutParams) {
+        this.renVMNetwork = _renVMNetwork;
         this.network = _network;
-        this.params = resolveSendTo(params, { shiftIn: false }) as ShiftOutParamsAll;
-        this.params = resolveContractCall(this.network, this.params.sendToken, this.params);
+        this.params = processParameters(this.network, _params, { shiftIn: false });
     }
 
-    public readFromEthereum = (): PromiEvent<ShiftOutObject> => {
+    public readFromEthereum = (): PromiEvent<ShiftOutObject, Web3Events & RenWeb3Events> => {
 
-        const promiEvent = newPromiEvent<ShiftOutObject>();
+        const promiEvent = newPromiEvent<ShiftOutObject, Web3Events & RenWeb3Events>();
 
         (async () => {
 
             const { web3Provider, contractCalls } = this.params;
             let { burnReference } = this.params;
-            let ethTxHash = this.params.ethTxHash || this.params.txHash;
+            let ethTxHash = this.params.ethTxHash;
 
             // There are three parameter configs:
             // Situation (1): A `burnReference` is provided
@@ -142,8 +141,8 @@ export class ShiftOutObject {
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (): PromiEvent<ResponseQueryTx> => {
-        const promiEvent = newPromiEvent<ResponseQueryTx>();
+    public submitToRenVM = (): PromiEvent<ResponseQueryTx, { renTxHash: [string], status: [string] }> => {
+        const promiEvent = newPromiEvent<ResponseQueryTx, { renTxHash: [string], status: [string] }>();
 
         (async () => {
             const burnReference = this.params.burnReference;
@@ -154,7 +153,6 @@ export class ShiftOutObject {
             const renTxHash = this.renTxHash();
 
             // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
-            promiEvent.emit("messageID", renTxHash);
             promiEvent.emit("renTxHash", renTxHash);
 
             return await this.renVMNetwork.waitForTX(

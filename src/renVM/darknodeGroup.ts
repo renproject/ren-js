@@ -32,7 +32,7 @@ export class DarknodeGroup {
         this.nodes = List(nodeURLs.map(nodeURL => new Darknode(nodeURL)));
     }
 
-    public sendMessage = async <Method extends RPCMethod>(method: Method, request: RPCParams<Method>, retry = 5): Promise<RPCResponse<Method>> => {
+    public sendMessage = async <Method extends RPCMethod>(method: Method, request: RPCParams<Method>, retry = 1): Promise<RPCResponse<Method>> => {
         // tslint:disable-next-line: prefer-const
         let [responses, errors] = await promiseAll(
             this.nodes.valueSeq().map(

@@ -1,7 +1,21 @@
 import { PromiEvent } from "@renproject/ren-js-common";
 import { TransactionReceipt } from "web3-core";
 
-export const forwardEvents = <T, Y>(src: PromiEvent<T>, dest: PromiEvent<Y>, filterFn = (_name: string) => true) => {
+export type Web3Events = {
+    transactionHash: [string];
+    receipt: [TransactionReceipt],
+    confirmation: [number, TransactionReceipt],
+    error: [Error],
+};
+
+export type RenWeb3Events = {
+    eth_transactionHash: [string];
+    eth_receipt: [TransactionReceipt],
+    eth_confirmation: [number, TransactionReceipt],
+    error: [Error],
+};
+
+export const forwardEvents = <T, TEvents extends Web3Events, Y, YEvents extends Web3Events & RenWeb3Events>(src: PromiEvent<T, TEvents>, dest: PromiEvent<Y, YEvents>, filterFn = (_name: string) => true) => {
     // const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
     //     if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) {
     //         console.info(`Forwarding ${eventName} Listener:`);

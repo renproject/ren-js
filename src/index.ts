@@ -23,6 +23,7 @@ export { Chain, RenContract as Token, RenContract } from "@renproject/ren-js-com
 export { Darknode } from "./renVM/darknode";
 export { DarknodeGroup } from "./renVM/darknodeGroup";
 export { RPCMethod } from "./renVM/jsonRPC";
+export { processParameters } from "./lib/processParameters";
 
 const NetworkDetails = {
     NetworkChaosnet,

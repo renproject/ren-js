@@ -3,13 +3,13 @@ import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
 
-import { processParameters } from "../src/lib/processParameters";
+import { processShiftInParams, processShiftOutParams } from "../src/lib/processParams";
 import { NetworkTestnet } from "../src/types/networks";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
-describe("resolveContractCall", () => {
+describe("processParams", () => {
     let web3: Web3;
 
     before(() => {
@@ -17,26 +17,26 @@ describe("resolveContractCall", () => {
     });
 
     it("Shift out", () => {
-        processParameters(NetworkTestnet, {
+        processShiftOutParams(NetworkTestnet, {
             sendToken: "BTC",
             ethTxHash: "ethTxHash",
-        }, { shiftIn: false })
+        })
             .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethTxHash: "ethTxHash" });
 
-        processParameters(NetworkTestnet, {
+        processShiftOutParams(NetworkTestnet, {
             sendToken: "BTC",
             burnReference: 1,
-        }, { shiftIn: false })
+        })
             .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 });
 
-        processParameters(NetworkTestnet, {
+        processShiftOutParams(NetworkTestnet, {
             sendToken: "BTC",
             web3Provider: {},
             sendTo: "sendTo",
             contractFn: "contractFn",
             contractParams: [{ name: "name", type: "type", value: "1" }],
             txConfig: { gas: 2 },
-        }, { shiftIn: false })
+        })
             .should.deep.equal({
                 sendToken: "BTC0Eth2Btc",
                 web3Provider: {},
@@ -48,12 +48,12 @@ describe("resolveContractCall", () => {
                 }],
             });
 
-        JSON.stringify(processParameters(NetworkTestnet, {
+        JSON.stringify(processShiftOutParams(NetworkTestnet, {
             sendToken: "BTC",
             web3Provider: web3.currentProvider,
             sendTo: "sendTo",
             sendAmount: "0",
-        }, { shiftIn: false }))
+        }))
             .should.equal(JSON.stringify({
                 sendToken: "BTC0Eth2Btc",
                 web3Provider: web3.currentProvider,
@@ -90,14 +90,14 @@ describe("resolveContractCall", () => {
     });
 
     it("Shift in", () => {
-        processParameters(NetworkTestnet, {
+        processShiftInParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
             sendTo: "sendTo",
             contractFn: "contractFn",
             contractParams: [{ name: "name", type: "type", value: "1" }],
             txConfig: { gas: 2 },
-        }, { shiftIn: true })
+        })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
                 renTxHash: "renTxHash",
@@ -109,14 +109,14 @@ describe("resolveContractCall", () => {
                 }],
             });
 
-        processParameters(NetworkTestnet, {
+        processShiftInParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
             sendTo: "sendTo",
             contractFn: "contractFn",
             contractParams: [{ name: "name", type: "type", value: "1" }],
             txConfig: { gas: 2 },
-        }, { shiftIn: true })
+        })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
                 renTxHash: "renTxHash",
@@ -128,12 +128,12 @@ describe("resolveContractCall", () => {
                 }],
             });
 
-        processParameters(NetworkTestnet, {
+        processShiftInParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
             sendTo: "sendTo",
             txConfig: { gas: 2 },
-        }, { shiftIn: true })
+        })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
                 renTxHash: "renTxHash",

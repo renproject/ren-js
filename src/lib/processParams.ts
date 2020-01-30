@@ -151,6 +151,16 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
     }
 };
 
-export const processParameters = <T extends ShiftInParams | ShiftOutParams, K extends ShiftInParamsAll | ShiftOutParamsAll>(_network: NetworkDetails, _params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): K => {
-    return resolveContractCall(_network, resolveSendTo(_params, { shiftIn }) as K);
+export const processShiftInParams = (_network: NetworkDetails, _params: ShiftInParams): ShiftInParamsAll => {
+    return resolveContractCall(_network, resolveSendTo(_params, { shiftIn: true }) as ShiftInParamsAll);
 };
+
+export const processShiftOutParams = (_network: NetworkDetails, _params: ShiftOutParams): ShiftOutParamsAll => {
+    return resolveContractCall(_network, resolveSendTo(_params, { shiftIn: false }) as ShiftOutParamsAll);
+};
+
+// Type generics are not playing well.
+
+// export const processParameters = <T extends ShiftInParams | ShiftOutParams, K extends ShiftInParamsAll | ShiftOutParamsAll>(_network: NetworkDetails, _params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): K => {
+//     return resolveContractCall(_network, resolveSendTo(_params, { shiftIn }) as K);
+// };

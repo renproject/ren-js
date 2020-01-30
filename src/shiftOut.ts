@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
 import { payloadToABI } from "./lib/abi";
-import { processParameters } from "./lib/processParameters";
+import { processShiftOutParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
@@ -22,7 +22,7 @@ export class ShiftOutObject {
     constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftOutParams) {
         this.renVMNetwork = _renVMNetwork;
         this.network = _network;
-        this.params = processParameters(this.network, _params, { shiftIn: false });
+        this.params = processShiftOutParams(this.network, _params);
     }
 
     public readFromEthereum = (): PromiEvent<ShiftOutObject, Web3Events & RenWeb3Events> => {

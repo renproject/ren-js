@@ -9,7 +9,7 @@ import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./lib/abi";
-import { processParameters } from "./lib/processParameters";
+import { processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError,
@@ -31,7 +31,7 @@ export class ShiftInObject {
     constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftInParams) {
         this.network = _network;
         this.renVMNetwork = _renVMNetwork;
-        this.params = processParameters(this.network, _params, { shiftIn: true });
+        this.params = processShiftInParams(this.network, _params);
 
         const renTxHash = this.params.renTxHash;
 
@@ -287,7 +287,7 @@ export class Signature {
         this.response = _response;
         this.renTxHash = _renTxHash;
         this.messageID = _renTxHash;
-        this.params = processParameters(this.network, _params, { shiftIn: true });
+        this.params = processShiftInParams(this.network, _params);
 
         this.signature = signatureToString(fixSignature(this.response, this.network));
     }

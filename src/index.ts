@@ -1,6 +1,6 @@
 import _BN from "bn.js";
 
-import { Chain, Network, ShiftInParams, ShiftOutParams, TxStatus } from "@renproject/ren-js-common";
+import { Chain, Network, ShiftInParams, ShiftOutParams } from "@renproject/ren-js-common";
 
 import { utils } from "./lib/utils";
 import { Darknode } from "./renVM/darknode";
@@ -9,7 +9,7 @@ import { RPCMethod } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
-import { Tokens } from "./types/assets";
+import { Tokens, TxStatus } from "./types/assets";
 import { NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork } from "./types/networks";
 
 // Export types
@@ -17,11 +17,12 @@ export { ShiftInObject, Signature } from "./shiftIn";
 export { ShiftOutObject } from "./shiftOut";
 export { UTXO, UTXODetails as BitcoinUTXO, UTXODetails as BitcoinCashUTXO, UTXODetails as ZcashUTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
-export { TxStatus, Chain, RenContract as Token, RenContract } from "@renproject/ren-js-common";
+export { Chain, RenContract as Token, RenContract } from "@renproject/ren-js-common";
 export { Darknode } from "./renVM/darknode";
 export { DarknodeGroup } from "./renVM/darknodeGroup";
 export { RPCMethod } from "./renVM/jsonRPC";
 export { processShiftInParams, processShiftOutParams } from "./lib/processParams";
+export { TxStatus, parseRenContract } from "./types/assets";
 
 const NetworkDetails = {
     NetworkChaosnet,

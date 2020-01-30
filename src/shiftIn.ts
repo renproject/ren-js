@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x, TxStatus,
+    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -18,7 +18,7 @@ import {
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
 import { Tx } from "./renVM/transaction";
-import { parseRenContract } from "./types/assets";
+import { parseRenContract, TxStatus } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftInObject {
@@ -102,6 +102,7 @@ export class ShiftInObject {
                     return this;
                 }
             } catch (error) {
+                console.error(error);
                 // Ignore error
             }
 
@@ -365,7 +366,9 @@ export class Signature {
 
             let tx: PromiEvent<unknown, Web3Events> | undefined;
 
-            for (const contractCall of contractCalls) {
+            for (let i = 0; i < contractCalls.length; i++) {
+                const contractCall = contractCalls[i];
+                const last = i === contractCalls.length - 1;
 
                 const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
@@ -388,6 +391,11 @@ export class Signature {
                     ...txConfig,
                 }));
 
+                if (last) {
+                    // tslint:disable-next-line: no-non-null-assertion
+                    forwardEvents(tx!, promiEvent);
+                }
+
                 // tslint:disable-next-line: no-non-null-assertion
                 await new Promise((resolve, reject) => tx!
                     .on("transactionHash", resolve)
@@ -402,8 +410,6 @@ export class Signature {
             if (tx === undefined) {
                 throw new Error(`Must provide contract call.`);
             }
-
-            forwardEvents(tx, promiEvent);
 
             // tslint:disable-next-line: no-non-null-assertion
             return await new Promise<TransactionReceipt>((innerResolve, reject) => tx!

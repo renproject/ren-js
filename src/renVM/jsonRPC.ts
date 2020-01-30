@@ -1,5 +1,6 @@
-import { Arg, Args, Ox, RenContract, TxStatus } from "@renproject/ren-js-common";
+import { Arg, Args, Ox, RenContract } from "@renproject/ren-js-common";
 
+import { TxStatus } from "../types/assets";
 import { BurnArgsArray, MintArgsArray, TxOutputArgsArray, TxSignatureArray } from "./transaction";
 
 export enum RPCMethod {

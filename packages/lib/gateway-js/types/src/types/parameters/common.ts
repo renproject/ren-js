@@ -28,10 +28,18 @@ export interface DetailedContractCall {
 }
 
 // export type Undefined<T> = { [key in keyof T]: undefined };
+export type UndefinedExceptFirst2<A, B> = { [key in (keyof A | keyof B)]: key extends (keyof A) ? A[key] : undefined };
 export type UndefinedExceptFirst3<A, B, C> = { [key in (keyof A | keyof B | keyof C)]: key extends (keyof A) ? A[key] : undefined };
-export type UndefinedExceptFirst4<A, B, C, D> = { [key in (keyof A | keyof B | keyof C | keyof D)]: key extends (keyof A) ? A[key] : undefined };
 
 export type ContractCallMultiple<T> = { contractCalls: T[] };
 
 export type ShiftParams = ShiftInParams | ShiftOutParams;
 export type ShiftParamsAll = ShiftInParamsAll | ShiftOutParamsAll;
+
+// export const isShiftOutParams = (value: ShiftOutParams | ShiftInParams): value is ShiftOutParams => {
+//     return (value as ShiftOutParamsContractCall).web3Provider || (value as ShiftOutParamsTxHash).ethTxHash || (value as ShiftOutParamsBurnRef).burnReference;
+// };
+
+// export const isShiftOutParamsAll = (value: ShiftOutParamsAll | ShiftInParamsAll): value is ShiftOutParamsAll => {
+//     return (value as ShiftOutParamsAll).web3Provider || (value as ShiftOutParamsAll).ethTxHash || (value as ShiftOutParamsAll).burnReference;
+// };

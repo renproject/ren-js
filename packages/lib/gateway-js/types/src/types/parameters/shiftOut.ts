@@ -3,7 +3,7 @@ import BN from "bn.js";
 
 import { RenContract } from "../renVM";
 import {
-    BaseContractCall, ContractCallMultiple, DetailedContractCall, UndefinedExceptFirst4,
+    BaseContractCall, ContractCallMultiple, DetailedContractCall, UndefinedExceptFirst3,
 } from "./common";
 
 // tslint:disable-next-line: no-any
@@ -37,10 +37,6 @@ export interface ShiftOutParamsTxHash extends ShiftOutParamsCommon {
     ethTxHash: string; // The hash of the burn transaction on Ethereum
 }
 
-export interface ShiftOutParamsTxHashOld extends ShiftOutParamsCommon {
-    txHash: string; // Same as ShiftOutParamsTxHash, to remain backwards compatible
-}
-
 /*******************************************************************************
  * Option 3: Provide an the burn reference from Ethereum. This can be used to
  * track RenVM's progress.
@@ -53,11 +49,10 @@ export interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
 /******************************************************************************/
 
 export type ShiftOutParamsContractCallAll = ContractCallMultiple<Promise<DetailedContractCall> | DetailedContractCall> & { web3Provider: provider };
-export type ShiftOutParamsContractCallU = UndefinedExceptFirst4<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsTxHashOld, ShiftOutParamsBurnRef>;
-export type ShiftOutParamsTxHashU = UndefinedExceptFirst4<ShiftOutParamsTxHash, ShiftOutParamsContractCallAll, ShiftOutParamsTxHashOld, ShiftOutParamsBurnRef>;
-export type ShiftOutParamsTxHashOldU = UndefinedExceptFirst4<ShiftOutParamsTxHashOld, ShiftOutParamsTxHash, ShiftOutParamsContractCallAll, ShiftOutParamsBurnRef>;
-export type ShiftOutParamsBurnRefU = UndefinedExceptFirst4<ShiftOutParamsBurnRef, ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsTxHashOld>;
+export type ShiftOutParamsContractCallU = UndefinedExceptFirst3<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsBurnRef>;
+export type ShiftOutParamsTxHashU = UndefinedExceptFirst3<ShiftOutParamsTxHash, ShiftOutParamsContractCallAll, ShiftOutParamsBurnRef>;
+export type ShiftOutParamsBurnRefU = UndefinedExceptFirst3<ShiftOutParamsBurnRef, ShiftOutParamsContractCallAll, ShiftOutParamsTxHash>;
 
-export type ShiftOutParamsAll = (ShiftOutParamsContractCallU | ShiftOutParamsTxHashU | ShiftOutParamsTxHashOldU | ShiftOutParamsBurnRefU) & { sendToken: RenContract };
+export type ShiftOutParamsAll = (ShiftOutParamsContractCallU | ShiftOutParamsTxHashU | ShiftOutParamsBurnRefU) & { sendToken: RenContract };
 
-export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | ShiftOutParamsTxHash | ShiftOutParamsTxHashOld;
+export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | ShiftOutParamsTxHash;

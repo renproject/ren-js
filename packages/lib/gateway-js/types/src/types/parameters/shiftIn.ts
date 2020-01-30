@@ -3,7 +3,7 @@ import BN from "bn.js";
 
 import { RenContract } from "../renVM";
 import {
-    BaseContractCall, ContractCallMultiple, DetailedContractCall, UndefinedExceptFirst3,
+    BaseContractCall, ContractCallMultiple, DetailedContractCall, UndefinedExceptFirst2,
 } from "./common";
 
 export type MintContractCallSingle = BaseContractCall | DetailedContractCall;
@@ -39,18 +39,13 @@ export type ShiftInFromRenTxHash = MintContractCall & {
     renTxHash: string; // Provide the transaction hash returned from RenVM to continue a previous shiftIn.
 };
 
-export type ShiftInFromRenTxHashOld = MintContractCall & {
-    messageID: string;
-};
-
 /******************************************************************************/
 
 // `ShiftInParamsAll` is used internally by RenJS.
 
-export type ShiftInFromDetailsU = UndefinedExceptFirst3<ShiftInFromDetails & { sendToken: RenContract }, ShiftInFromRenTxHash, ShiftInFromRenTxHashOld>;
-export type ShiftInFromRenTxHashU = UndefinedExceptFirst3<ShiftInFromRenTxHash, ShiftInFromDetails, ShiftInFromRenTxHashOld>;
-export type ShiftInFromRenTxHashOldU = UndefinedExceptFirst3<ShiftInFromRenTxHashOld, ShiftInFromDetails, ShiftInFromRenTxHash>;
+export type ShiftInFromDetailsU = UndefinedExceptFirst2<ShiftInFromDetails & { sendToken: RenContract }, ShiftInFromRenTxHash>;
+export type ShiftInFromRenTxHashU = UndefinedExceptFirst2<ShiftInFromRenTxHash, ShiftInFromDetails>;
 
-export type ShiftInParamsAll = (ShiftInFromDetailsU | ShiftInFromRenTxHashU | ShiftInFromRenTxHashOldU) & ContractCallMultiple<DetailedContractCall>;
+export type ShiftInParamsAll = (ShiftInFromDetailsU | ShiftInFromRenTxHashU) & ContractCallMultiple<DetailedContractCall>;
 
-export type ShiftInParams = ShiftInFromRenTxHash | ShiftInFromRenTxHashOld | ShiftInFromDetails;
+export type ShiftInParams = ShiftInFromRenTxHash | ShiftInFromDetails;

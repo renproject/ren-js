@@ -26,7 +26,7 @@
 
 import { EventEmitter } from "events";
 
-export class InternalPromiEvent<T> {
+export class InternalPromiEvent<T, EventTypes extends { [event: string]: any[] } = {}> {
     public readonly [Symbol.toStringTag]: "Promise";
     public readonly promise: Promise<T>;
     // @ts-ignore no initializer because of proxyHandler
@@ -37,13 +37,13 @@ export class InternalPromiEvent<T> {
     private _cancelled: boolean;
 
     // @ts-ignore no initializer because of proxyHandler
-    public readonly emit: EventEmitter["emit"];
+    public readonly emit: <Event extends keyof EventTypes>(event: Event, ...args: EventTypes[Event]) => boolean; // EventEmitter["emit"]
     // @ts-ignore no initializer because of proxyHandler
     public readonly removeListener: EventEmitter["removeListener"];
     // @ts-ignore no initializer because of proxyHandler
-    public readonly on: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    public readonly on: <Event extends keyof EventTypes>(event: Event, callback: (...values: EventTypes[Event]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
-    public readonly once: (event: string, callback: (...values: any[]) => void | Promise<void>) => this;
+    public readonly once: <Event extends keyof EventTypes>(event: Event, callback: (...values: EventTypes[Event]) => void | Promise<void>) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly _cancel: () => void;
     // @ts-ignore no initializer because of proxyHandler
@@ -77,7 +77,7 @@ export class InternalPromiEvent<T> {
     /**
      * Proxy handler to call the promise or eventEmitter methods
      */
-    public proxyHandler(target: PromiEvent<T>, name: string) {
+    public proxyHandler(target: PromiEvent<T, EventTypes>, name: string) {
         if (name === "resolve" || name === "reject") {
             return target[name];
         }
@@ -108,5 +108,5 @@ export class InternalPromiEvent<T> {
 }
 
 // Tell Typescript that InternalPromiEvent<T> implements Promise<T>.
-export type PromiEvent<T> = InternalPromiEvent<T> & Promise<T>;
-export const newPromiEvent = <T>() => new InternalPromiEvent<T>() as PromiEvent<T>;
+export type PromiEvent<T, EventTypes extends { [event: string]: any[] } = {}> = InternalPromiEvent<T, EventTypes> & Promise<T>;
+export const newPromiEvent = <T, EventTypes extends { [event: string]: any[] } = {}>() => new InternalPromiEvent<T, EventTypes>() as PromiEvent<T, EventTypes>;

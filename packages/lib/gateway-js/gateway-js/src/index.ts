@@ -327,7 +327,7 @@ export default class GatewayJS {
     /**
      * Creates a new Gateway instance.
      */
-    public readonly open = (params: (ShiftParams & SendTokenInterface) | HistoryEvent): Gateway => {
+    public readonly open = (params: (Exclude<ShiftParams, "web3Provider"> & SendTokenInterface) | HistoryEvent): Gateway => {
         return new Gateway(this.endpoint).open(params);
     }
 }

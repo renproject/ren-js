@@ -1,6 +1,7 @@
 import {
-    Chain, GatewayMessage, GatewayMessageType, HistoryEvent, Network, newPromiEvent, PromiEvent,
-    SendTokenInterface, ShiftInParamsAll, ShiftInStatus, ShiftOutStatus, ShiftParams, Tokens,
+    BurnContractCall, Chain, GatewayMessage, GatewayMessageType, HistoryEvent, Network,
+    newPromiEvent, PromiEvent, SendTokenInterface, ShiftInParams, ShiftInParamsAll, ShiftInStatus,
+    ShiftOutParamsBurnRef, ShiftOutParamsCommon, ShiftOutParamsTxHash, ShiftOutStatus, Tokens,
 } from "@renproject/ren-js-common";
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
@@ -150,7 +151,7 @@ export class Gateway {
         window.addEventListener("message", listener);
     })
 
-    public readonly open = (shiftParams: (Exclude<ShiftParams, "web3Provider"> & SendTokenInterface) | HistoryEvent): Gateway => {
+    public readonly open = (shiftParams: ((ShiftInParams | ShiftOutParamsNoProvider) & SendTokenInterface) | HistoryEvent): Gateway => {
 
         // Certain types can't be sent via sendMessage.
         if (typeof (shiftParams as ShiftInParamsAll).sendAmount === "object") {
@@ -303,6 +304,11 @@ export class Gateway {
     }
 }
 
+
+export declare type ShiftOutParamsContractCallNoProvider = ShiftOutParamsCommon & BurnContractCall & {
+};
+export declare type ShiftOutParamsNoProvider = ShiftOutParamsContractCallNoProvider | ShiftOutParamsBurnRef | ShiftOutParamsTxHash;
+
 export default class GatewayJS {
 
     public static readonly Tokens = Tokens;
@@ -325,13 +331,13 @@ export default class GatewayJS {
     }
 
     /**
-     * Creates a new Gateway instance.
+     * Creates a new Gateway instance. (Note - Exclude<..., "web3Provider">
+     *  doesn't seem to work.)
      */
-    public readonly open = (params: (Exclude<ShiftParams, "web3Provider"> & SendTokenInterface) | HistoryEvent): Gateway => {
+    public readonly open = (params: ((ShiftInParams | ShiftOutParamsNoProvider) & SendTokenInterface) | HistoryEvent): Gateway => {
         return new Gateway(this.endpoint).open(params);
     }
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

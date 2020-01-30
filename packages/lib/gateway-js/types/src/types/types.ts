@@ -82,7 +82,7 @@ interface HistoryEventCommon {
     time: number; // Seconds since Unix epoch
     inTx: Tx | null;
     outTx: Tx | null;
-    messageID: string | null;
+    renTxHash: string | null;
     renVMStatus: TxStatus | null;
 }
 

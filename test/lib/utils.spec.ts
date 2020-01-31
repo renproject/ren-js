@@ -1,7 +1,12 @@
-import chai from "chai";
+// tslint:disable: no-console
 
+import { strip0x } from "@renproject/ren-js-common";
+import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+
+import RenJS from "../../src";
 import {
-    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash, strip0x,
+    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash,
 } from "../../src/lib/utils";
 import { Tx } from "../../src/renVM/transaction";
 import { Tokens } from "../../src/types/assets";
@@ -9,6 +14,7 @@ import {
     NetworkChaosnet, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet,
 } from "../../src/types/networks";
 
+chai.use(chaiAsPromised);
 chai.should();
 
 describe("Utils", function () {
@@ -71,6 +77,12 @@ describe("Utils", function () {
         });
     }
 
+    it(`queryTX`, async () => {
+        // tslint:disable-next-line: await-promise
+        await new RenJS("testnet").renVM.queryTX("0")
+            .should.be.rejectedWith(/Node returned status 500 with reason: method=ren_queryTx not available/);
+    });
+
     it.skip("fixSignature", () => {
         const response: Tx = {
             hash: "0xec7f5d0fc132d87ff65095f9caee08be659a9b7f5b9bd2250291c94bb5d94801",
@@ -98,6 +110,6 @@ describe("Utils", function () {
             }
         };
 
-        console.log(fixSignature(response, NetworkDevnet));
+        console.debug(fixSignature(response, NetworkDevnet));
     });
 });

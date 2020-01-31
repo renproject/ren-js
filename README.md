@@ -1,104 +1,81 @@
 # `🛠️ RenJS`
 
-[![npm version](http://img.shields.io/npm/v/@renproject/ren.svg?style=flat)](https://npmjs.org/package/@renproject/ren "View this project on npm")
-[![CircleCI](https://circleci.com/gh/renproject/ren-js.svg?style=shield&circle-token=6fc560c540eff6670e5675841d34b9769b887a49)](https://circleci.com/gh/renproject/ren-js)
-![Testnet status](https://img.shields.io/endpoint?url=https://ren-status.herokuapp.com/api/shield/renproject/ren-js/testnet)
+There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
 
-The official Javascript SDK for interacting with [RenVM](https://renproject.io).
+1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/gateway-js)): The simplest way to get started, providing a full user experience.
+2. **RenJS** (this repository): A lower-level SDK which can be integrated into your existing user interface.
 
-## Links
+See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.
 
-* [Developer Docs](https://docs.renproject.io/developers/)
-* [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started)
-* [ChaosDEX](https://github.com/renproject/chaosdex), a cross-chain DEX
+## About
+
+RenJS is a Node.js and browser SDK for bridging BTC, BCH and ZEC to your project. See the following examples:
+
+* **Decentralized *dApp***:
+    * [ChaosDEX](https://github.com/renproject/chaosdex): A decentralized exchange that uses RenJS to enable depositing and withdrawing BTC, BCH and ZEC.
+* **Node.js server**:
+    * [Interoperability Examples](https://github.com/renproject/interoperability-examples): Examples on speeding up BTC deposits for users and providing gas
+* **Command-line application**:
+    * [ChaosDEX Trading Bot](https://github.com/renproject/chaosdex-trading-bot): A trading bot that automatically trades between BTC, BCH, ZEC and DAI (currently still SAI).
+
+<br />
+<hr />
+<br />
 
 ## Installation
 
-Install RenJS using Yarn/npm:
+Install RenJS:
 
 ```sh
 yarn add @renproject/ren
-```
-or
-```sh
+# Or
 npm install --save @renproject/ren
-```
-
-## Importing RenJS
-
-Importing using require syntax
-
-```typescript
-const RenJS = require("@renproject/ren");
-```
-
-Importing using ES6 syntax
-
-```typescript
-import RenJS from "@renproject/ren";
 ```
 
 ## Usage
 
 Usage is described in the [getting started tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
 
-Example of bridging BTC into Ethereum:
+Example of bridging BTC into Ethereum (see [Infura](https://infura.io/) for initializing Web3):
 
 ```typescript
-// ... web3 is initialized
-
 const renJS = new RenJS("testnet"); // or "chaosnet"
+const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
-const amount = 0.001; // testnet BTC
+const amount = 0.001;
 
 const shiftIn = renJS.shiftIn({
-    // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-    sendToken: RenJS.Tokens.BTC.Btc2Eth,
-
-    // Amount of BTC we are sending (in Satoshis)
-    sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
-
-    // The contract we want to interact with
-    sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
-
-    // The name of the function we want to call
-    contractFn: "deposit",
-
-    // Arguments expected for calling `deposit`
-    contractParams: [
-        {
-            name: "_msg",
-            type: "bytes",
-            value: web3.utils.fromAscii(`Depositing ${amount} BTC`),
-        }
-    ],
+    sendToken: "BTC", // Bridge BTC to Ethereum
+    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
+    sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
 });
 
 const gatewayAddress = shiftIn.addr();
-this.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
+console.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
 
-await shiftIn.waitAndSubmit(web3.currentProvider, 0 /* confirmations */);
+shiftIn.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
+    .then(console.log)
+    .catch(console.error);
 ```
 
 Example of bridging BTC out of Ethereum:
 
 ```typescript
-// ... zBTC is burnt in the Ethereum transaction `txHash`
-
 const renJS = new RenJS("testnet"); // or "chaosnet"
+const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
-const shiftOut = await renJS.shiftOut({
-    // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
-    sendToken: RenJS.Tokens.BTC.Eth2Btc,
+const amount = 0.001;
 
-    // The web3 provider to talk to Ethereum
+renJS.shiftOut({
+    sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
+    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
+    sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
     web3Provider: web3.currentProvider,
-
-    // The transaction hash of our contract call
-    txHash,
-}).readFromEthereum();
-
-await shiftOut.submitToRenVM();
+})
+    .readFromEthereum()
+    .then(tx => tx.submitToRenVM())
+    .then(console.log)
+    .catch(console.error);
 ```
 
 <br />
@@ -111,9 +88,10 @@ await shiftOut.submitToRenVM();
 ### Building
 
 ```sh
-yarn run watch
-# or
 yarn run build
+# or watch, to rebuild on new changes:
+yarn run watch
+
 ```
 
 ### Running tests
@@ -137,12 +115,4 @@ Then just run the following command to execute the tests. Make sure there is suf
 
 ```sh
 yarn run test
-```
-
-### Update contract bindings
-
-In order to update the bindings in `src/contracts/bindings`, you need to clone [`darknode-sol`](https://github.com/renproject/darknode-sol) and run:
-
-```sh
-yarn run bindings:ts
 ```

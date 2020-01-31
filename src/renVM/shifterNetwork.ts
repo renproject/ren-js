@@ -1,15 +1,13 @@
-import { getTokenAddress, Ox, SECONDS, sleep, strip0x } from "../lib/utils";
-import { actionToDetails, Asset, Token } from "../types/assets";
-import { NetworkDetails } from "../types/networks";
-import { decodeValue } from "./jsonRPC";
-import { RPCMethod } from "./renNode";
-import { RenVMNetwork } from "./renVMNetwork";
-import {
-    QueryBurnResponse, QueryTxRequest, QueryTxResponse, SubmitBurnRequest, SubmitMintRequest,
-    SubmitTxResponse, Tx, TxStatus,
-} from "./transaction";
+import { Asset, Ox, RenContract, strip0x } from "@renproject/ren-js-common";
 
-export const unmarshalTx = (response: QueryTxResponse): Tx => {
+import { getTokenAddress, SECONDS, sleep } from "../lib/utils";
+import { parseRenContract, TxStatus } from "../types/assets";
+import { NetworkDetails } from "../types/networks";
+import { DarknodeGroup } from "./darknodeGroup";
+import { decodeValue, ResponseQueryTx, RPCMethod } from "./jsonRPC";
+import { Tx } from "./transaction";
+
+export const unmarshalTx = (response: ResponseQueryTx): Tx => {
     // Unmarshal
     let args = {};
     for (const value of response.tx.args) {
@@ -28,14 +26,14 @@ export const unmarshalTx = (response: QueryTxResponse): Tx => {
 };
 
 export class ShifterNetwork {
-    public network: RenVMNetwork;
+    public network: DarknodeGroup;
 
-    constructor(nodeURLs: string[]) {
-        this.network = new RenVMNetwork(nodeURLs);
+    constructor(network: DarknodeGroup) {
+        this.network = network;
     }
 
     public submitShiftIn = async (
-        action: Token,
+        renContract: RenContract,
         to: string,
         amount: number,
         nonce: string,
@@ -44,9 +42,9 @@ export class ShifterNetwork {
         utxoVout: number,
         network: NetworkDetails,
     ): Promise<string> => {
-        const token = getTokenAddress(action, network);
+        const token = getTokenAddress(renContract, network);
         let utxoType: "ext_btcCompatUTXO" | "ext_zecCompatUTXO";
-        switch (actionToDetails(action).asset) {
+        switch (parseRenContract(renContract).asset) {
             case Asset.BTC:
                 utxoType = "ext_btcCompatUTXO";
                 break;
@@ -57,12 +55,12 @@ export class ShifterNetwork {
                 utxoType = "ext_btcCompatUTXO";
                 break;
             default:
-                throw new Error(`Unsupported action ${action}`);
+                throw new Error(`Unsupported action ${renContract}`);
         }
-        const response = await this.network.broadcastMessage<SubmitMintRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
+        const response = await this.network.sendMessage(RPCMethod.SubmitTx,
             {
                 tx: {
-                    to: action,
+                    to: renContract,
                     args: [
                         // The hash of the payload data
                         { name: "phash", type: "b32", value: Buffer.from(strip0x(pHash), "hex").toString("base64") },
@@ -91,11 +89,11 @@ export class ShifterNetwork {
         return Ox(Buffer.from(response.tx.hash, "base64"));
     }
 
-    public submitShiftOut = async (action: Token, ref: string): Promise<string> => {
-        const response = await this.network.broadcastMessage<SubmitBurnRequest, SubmitTxResponse>(RPCMethod.SubmitTx,
+    public submitShiftOut = async (renContract: RenContract, ref: string): Promise<string> => {
+        const response = await this.network.sendMessage(RPCMethod.SubmitTx,
             {
                 tx: {
-                    to: action,
+                    to: renContract,
                     args: [
                         { name: "ref", type: "u64", value: parseInt(ref, 16) },
                     ],
@@ -105,28 +103,33 @@ export class ShifterNetwork {
         return Ox(Buffer.from(response.tx.hash, "base64"));
     }
 
-    public readonly queryTX = async <T extends QueryBurnResponse | QueryTxResponse>(utxoTxHash: string): Promise<T> => {
-        return await this.network.broadcastMessage<QueryTxRequest, QueryTxResponse>(
+    public readonly queryTX = async (utxoTxHash: string): Promise<ResponseQueryTx> => {
+        return await this.network.sendMessage(
             RPCMethod.QueryTx,
             {
                 txHash: Buffer.from(strip0x(utxoTxHash), "hex").toString("base64"),
             },
-        ) as T;
+        );
     }
 
-    public readonly waitForTX = async <T extends QueryBurnResponse | QueryTxResponse>(utxoTxHash: string, onStatus?: (status: TxStatus) => void): Promise<T> => {
-        let response: T;
+    public readonly waitForTX = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void, _cancelRequested?: () => boolean): Promise<ResponseQueryTx> => {
+        let response;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
+            if (_cancelRequested && _cancelRequested()) {
+                throw new Error(`waitForTX cancelled`);
+            }
+
             try {
                 const result = await this.queryTX(utxoTxHash);
                 if (result && result.txStatus === TxStatus.TxStatusDone) {
-                    response = result as T;
+                    response = result;
                     break;
                 } else if (onStatus && result && result.txStatus) {
                     onStatus(result.txStatus);
                 }
             } catch (error) {
+                // tslint:disable-next-line: no-console
                 console.error(String(error));
                 // TODO: Ignore "result not available",
                 // throw otherwise

@@ -22,4 +22,4 @@ const xmlCircleCI = `<?xml version="1.0" encoding="UTF-8"?>
     ${generateBlock("Localnet", localnetFailed)}
 </testsuites>`;
 
-console.log(xmlCircleCI);
+console.info(xmlCircleCI);

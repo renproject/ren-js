@@ -56,7 +56,6 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "@renproject/ren": "^0.5.2",
     "@renproject/ren-js-common": "^0.0.20"
   },
   "devDependencies": {

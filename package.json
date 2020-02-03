@@ -87,7 +87,7 @@
     },
     "dependencies": {
         "@renproject/contracts": "^0.3.32",
-        "@renproject/ren-js-common": "^0.0.19",
+        "@renproject/ren-js-common": "https://github.com/renproject/ren-js-common#feat/darknode-0.1.0",
         "@types/bn.js": "^4.11.6",
         "@types/bs58": "^4.0.1",
         "@types/node": "^13.5.1",

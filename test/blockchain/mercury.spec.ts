@@ -67,8 +67,8 @@ describe("mercury.ts", () => {
             utxos[0].value.should.equal(5000000);
             utxos[0].confirmations.should.be.greaterThan(0);
         } catch (error) {
-            console.error(`Still failing BCash Testnet UTXO test`);
-            // console.error(error);
+            // tslint:disable-next-line: no-console
+            console.warn(`Still failing BCash Testnet UTXO test (${((error || {}).message || "").slice(0, 100)})`);
         }
     });
 

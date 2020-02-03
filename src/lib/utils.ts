@@ -13,7 +13,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs } from "../blockchain/zec";
-import { Tx } from "../renVM/transaction";
+import { UnmarshalledTx } from "../renVM/transaction";
 import { bchUtils, btcUtils, parseRenContract, zecUtils } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -87,7 +87,14 @@ export const generateGHash = (payload: Args, /* amount: number | string, */ to: 
     return Ox(keccak256(encoded));
 };
 
-export const generateTxHash = (renContract: RenContract, encodedID: string) => {
+export const toBase64 = (input: string | Buffer) =>
+    (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex")).toString("base64");
+
+export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXODetails) => {
+    return Ox(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txid)}_${utxo.output_no}`));
+};
+
+export const generateShiftOutTxHash = (renContract: RenContract, encodedID: string) => {
     return Ox(keccak256(`txHash_${renContract}_${encodedID}`));
 };
 
@@ -142,10 +149,14 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: Tx, network: NetworkDetails): Signature => {
-    const r = response.signature.r;
-    let s = new BN(strip0x(response.signature.s), "hex");
-    let v = ((parseInt(response.signature.v || "0", 10) + 27) || 27);
+export const fixSignature = (response: UnmarshalledTx, network: NetworkDetails): Signature => {
+    if (!response.out) {
+        throw new Error(`Expected transaction response to have signature`);
+    }
+
+    const r = response.out.r;
+    let s = new BN(strip0x(response.out.s), "hex");
+    let v = ((parseInt(response.out.v || "0", 10) + 27) || 27);
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
@@ -161,14 +172,14 @@ export const fixSignature = (response: Tx, network: NetworkDetails): Signature =
     // has been updated.
     const recovered = {
         [v]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.args.hash), "hex"),
+            Buffer.from(strip0x(response.autogen.sighash), "hex"),
             v,
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),
 
         [switchV(v)]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.args.hash), "hex"),
+            Buffer.from(strip0x(response.autogen.sighash), "hex"),
             switchV(v),
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
@@ -321,4 +332,11 @@ export const utils = {
     // Bitcoin Cash
     BCH: bchUtils,
     bch: bchUtils,
+};
+
+export const assert = (assertion: boolean, sentence?: string): assertion is true => {
+    if (!assertion) {
+        throw new Error(`Failed assertion${sentence ? `: ${assertion}` : ""}`);
+    }
+    return true;
 };

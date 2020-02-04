@@ -1,8 +1,11 @@
 import _BN from "bn.js";
 
-import { Chain, Network, ShiftInParams, ShiftOutParams } from "@renproject/ren-js-common";
+import {
+    Asset, Chain, Network, RenContract, ShiftedToken, ShiftInParams, ShiftOutParams,
+} from "@renproject/ren-js-common";
+import Web3 from "web3";
 
-import { utils } from "./lib/utils";
+import { getShifterAddress, getTokenAddress, utils } from "./lib/utils";
 import { Darknode } from "./renVM/darknode";
 import { DarknodeGroup } from "./renVM/darknodeGroup";
 import { RPCMethod } from "./renVM/jsonRPC";
@@ -98,4 +101,7 @@ export default class RenJS {
     public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
         return new ShiftOutObject(this.renVM, this.network, params);
     }
+
+    public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
+    public readonly getShifterAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getShifterAddress(this.network, web3, token);
 }

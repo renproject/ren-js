@@ -1,7 +1,7 @@
 import { Ox, RenContract, RenVMArg, RenVMType, strip0x } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 
-import { assert, getTokenAddress, SECONDS, sleep, toBase64 } from "../lib/utils";
+import { assert, SECONDS, sleep, syncGetTokenAddress, toBase64 } from "../lib/utils";
 import { TxStatus } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";
@@ -90,7 +90,7 @@ export class ShifterNetwork {
         utxoVout: number,
         network: NetworkDetails,
     ): Promise<string> => {
-        const token = getTokenAddress(renContract, network);
+        const token = syncGetTokenAddress(renContract, network);
         const response = await this.network.sendMessage(RPCMethod.SubmitTx,
             {
                 tx: {

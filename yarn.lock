@@ -376,17 +376,9 @@
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#ff7d0a442a52ae7990e0ee21a51b037c47450448"
 
-"@renproject/ren-js-common@^0.0.19":
-  version "0.0.19"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.19.tgz#acf1cd0740ae352dd12ae3a0ed59e1eb9c18b6ee"
-  integrity sha512-k2DmjosRk6M+XqRxZAiuDrVBL9XtLXskOuomt0gM9arb3GLVTInKXIlM2cclF7YdRSVlQrjNxcBTQDvN5ekDnw==
-  dependencies:
-    "@types/bn.js" "^4.11.6"
-    bignumber.js "^9.0.0"
-
 "@renproject/ren-js-common@https://github.com/renproject/ren-js-common#feat/darknode-0.1.0":
   version "0.0.21"
-  resolved "https://github.com/renproject/ren-js-common#e87d9c02eda17d9a9ab368b2c73d3c302e327fce"
+  resolved "https://github.com/renproject/ren-js-common#8db89b0a024e4da7f75d49823e3e4d3f49e8f005"
   dependencies:
     "@types/bn.js" "^4.11.6"
     bignumber.js "^9.0.0"

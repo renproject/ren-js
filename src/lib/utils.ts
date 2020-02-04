@@ -1,5 +1,5 @@
 import {
-    Args, Asset, Chain, NULL, Ox, RenContract, strip0x, value,
+    Asset, Chain, EthArgs, NULL, Ox, RenContract, ShiftedToken, strip0x, value,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { crypto } from "bitcore-lib";
@@ -30,18 +30,18 @@ export type UTXO = { chain: Chain.Bitcoin, utxo: UTXODetails } | { chain: Chain.
 // Pad a hex string if necessary so that its length is even
 // export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : hex;
 
-const unzip = (zip: Args) => [zip.map(param => param.type), zip.map(param => param.value)];
+const unzip = (zip: EthArgs) => [zip.map(param => param.type), zip.map(param => param.value)];
 
 // tslint:disable-next-line:no-any
 const rawEncode = (types: Array<string | {}>, parameters: any[]) => (new AbiCoder()).encodeParameters(types, parameters);
 
 // tslint:disable-next-line: no-any
-export const generatePHash = (...zip: Args | [Args]): string => {
+export const generatePHash = (...zip: EthArgs | [EthArgs]): string => {
     // You can annotate values passed in to soliditySha3.
     // Example: { type: "address", value: srcToken }
 
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = Array.isArray(zip) ? zip[0] as any as Args : zip; // tslint:disable-line: no-any
+    const args = Array.isArray(zip) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
 
     // If the payload is empty, use 0x0
     if (args.length === 0) {
@@ -53,16 +53,19 @@ export const generatePHash = (...zip: Args | [Args]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const getAssetSymbol = (asset: Asset): string => {
-    switch (asset) {
-        case Asset.BTC: return "zBTC";
-        case Asset.BCH: return "zBCH";
-        case Asset.ZEC: return "zZEC";
-        case Asset.ETH: throw new Error(`Asset ${asset} has no symbol`);
+export const getTokenName = (tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")): ShiftedToken => {
+    switch (tokenOrContract) {
+        case ShiftedToken.zBTC: case ShiftedToken.zZEC: case ShiftedToken.zBCH: return tokenOrContract;
+        case Asset.BTC: case "BTC": return ShiftedToken.zBTC;
+        case Asset.ZEC: case "ZEC": return ShiftedToken.zZEC;
+        case Asset.BCH: case "BCH": return ShiftedToken.zBCH;
+        case Asset.ETH: throw new Error(`Unexpected token ${tokenOrContract}`);
+        default:
+            return getTokenName(parseRenContract(tokenOrContract).asset);
     }
 };
 
-export const getTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
+export const syncGetTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
     switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
             return network.contracts.addresses.shifter.zBTC._address;
@@ -75,8 +78,8 @@ export const getTokenAddress = (renContract: RenContract, network: NetworkDetail
     }
 };
 
-export const generateGHash = (payload: Args, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: NetworkDetails): string => {
-    const token = getTokenAddress(renContract, network);
+export const generateGHash = (payload: EthArgs, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: NetworkDetails): string => {
+    const token = syncGetTokenAddress(renContract, network);
     const pHash = generatePHash(payload);
 
     const encoded = rawEncode(
@@ -314,6 +317,26 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string, nonce?
 };
 
 export const toBigNumber = (n: BigNumber | { toString(): string }) => BigNumber.isBigNumber(n) ? new BigNumber(n.toFixed()) : new BigNumber(n.toString());
+
+export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+    try {
+        const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+        return await shifterRegistry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
+    } catch (error) {
+        (error || {}).error = `Error looking up ${tokenOrContract} token address: ${error.message}`;
+        throw error;
+    }
+};
+
+export const getShifterAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+    try {
+        const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+        return await shifterRegistry.methods.getShifterBySymbol(getTokenName(tokenOrContract)).call();
+    } catch (error) {
+        (error || {}).error = `Error looking up ${tokenOrContract} shifter address: ${error.message}`;
+        throw error;
+    }
+};
 
 export const utils = {
     Ox,

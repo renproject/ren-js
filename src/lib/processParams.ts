@@ -6,7 +6,7 @@ import Web3 from "web3";
 
 import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
-import { getAssetSymbol, toBigNumber, utils } from "./utils";
+import { getTokenAddress, getTokenName, toBigNumber, utils } from "./utils";
 
 export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): typeof params => {
     if ((params as ShiftInFromDetails | ShiftOutParams).sendToken) {
@@ -99,7 +99,7 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
                 contractFn: "shiftIn",
                 contractParams: [
                     { type: "address", name: "_shifterRegistry", value: network.contracts.addresses.shifter.ShifterRegistry.address },
-                    { type: "string", name: "_symbol", value: getAssetSymbol(renContract.asset) },
+                    { type: "string", name: "_symbol", value: getTokenName(renContract.asset) },
                     { type: "address", name: "_address", value: sendTo },
                 ],
                 txConfig,
@@ -118,9 +118,7 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
 
         const approve = new Promise(async (resolve) => {
             const web3 = new Web3((params as ShiftOutParamsAll).web3Provider);
-            const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-            const contract = parseRenContract(sendToken);
-            const shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(getAssetSymbol(contract.asset)).call();
+            const shiftedTokenAddress = await getTokenAddress(network, web3, sendToken);
             resolve({
                 sendTo: shiftedTokenAddress,
                 contractFn: "approve",
@@ -141,7 +139,7 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
                     contractFn: "shiftOut",
                     contractParams: [
                         { type: "address", name: "_shifterRegistry", value: network.contracts.addresses.shifter.ShifterRegistry.address },
-                        { type: "string", name: "_symbol", value: getAssetSymbol(renContract.asset) },
+                        { type: "string", name: "_symbol", value: getTokenName(renContract.asset) },
                         { type: "bytes", name: "_to", value: addressToHex },
                         { type: "uint256", name: "_amount", value: toBigNumber(sendAmount).toFixed() },
                     ],

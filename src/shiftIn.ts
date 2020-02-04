@@ -12,13 +12,13 @@ import { payloadToShiftInABI } from "./lib/abi";
 import { processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash, ignoreError,
-    randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, UTXO, UTXODetails,
-    withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash,
+    getShifterAddress, ignoreError, randomNonce, retrieveDeposits, SECONDS, signatureToString,
+    sleep, toBase64, UTXO, UTXODetails, withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
 import { UnmarshalledTx } from "./renVM/transaction";
-import { parseRenContract, TxStatus } from "./types/assets";
+import { TxStatus } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftInObject {
@@ -317,9 +317,7 @@ export class Signature {
             // Check if the signature has already been submitted
             if (renContract) {
                 try {
-                    const shifterRegistry = new web3.eth.Contract(this.network.contracts.addresses.shifter.ShifterRegistry.abi, this.network.contracts.addresses.shifter.ShifterRegistry.address);
-                    const token = parseRenContract(renContract).asset;
-                    const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(`z${token}`).call();
+                    const shifterAddress = await getShifterAddress(this.network, web3, renContract);
                     const shifter = new web3.eth.Contract(this.network.contracts.addresses.shifter.BTCShifter.abi, shifterAddress);
                     // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
                     // the contract

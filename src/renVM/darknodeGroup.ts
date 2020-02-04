@@ -49,7 +49,6 @@ export class DarknodeGroup {
         const first = responses.first(null);
         if (first === null) {
             if (errors.size) {
-                console.error(errors.first());
                 throw new Error(errors.first());
             } else {
                 throw new Error(`No response from RenVM while submitting message`);

@@ -364,7 +364,7 @@ describe("Shifting in and shifting out", function () {
 
             const shift = new RenJS("testnet").shiftIn({
                 // Send BTC to an Ethereum address
-                sendToken: token as ("BTC" | "ZEC" | "BCH"),
+                sendToken: token as "BTC" | "ZEC" | "BCH",
 
                 // Amount of BTC we are sending
                 sendAmount: amount,
@@ -395,7 +395,7 @@ describe("Shifting in and shifting out", function () {
                 web3Provider: provider,
 
                 // Send BTC to an Ethereum address
-                sendToken: token as ("BTC" | "ZEC" | "BCH"),
+                sendToken: token as "BTC" | "ZEC" | "BCH",
 
                 // Amount of BTC we are sending
                 sendAmount: amount,

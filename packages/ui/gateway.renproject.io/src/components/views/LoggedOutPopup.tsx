@@ -23,12 +23,8 @@ export const LoggedOutPopup = connect<Props & ConnectedProps<[UIContainer, SDKCo
                 return;
             }
             uiContainer.connect(web3, address, networkID).catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: uiContainer.connect"));
-            sdkContainer.connect(web3, address, networkID).catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: sdkContainer.connect"));
+            sdkContainer.connect(web3, address).catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: sdkContainer.connect"));
         }, [uiContainer, sdkContainer, web3, networkID]);
-
-        const close = React.useCallback(() => {
-            uiContainer.setLoggedOut().catch((error) => _catchInteractionErr_(error, "Error in LoggedOutPopup: setLoggedOut"));
-        }, [uiContainer]);
 
         React.useEffect(() => {
             (async () => {
@@ -40,7 +36,7 @@ export const LoggedOutPopup = connect<Props & ConnectedProps<[UIContainer, SDKCo
         }, [networkID, web3]);
 
         return <Popup mini={false}>
-            <div className="logged-out">
+            <div className="logged-out popup--body">
                 <h2>Logged out</h2>
                 <p>The address <span className="address">{oldAccount.slice(0, 12)}<span>{oldAccount.slice(12, -6)}</span>{oldAccount.slice(-6, -1)}</span> is no longer selected in your Web3 wallet.</p>
                 {accounts ?
@@ -51,7 +47,7 @@ export const LoggedOutPopup = connect<Props & ConnectedProps<[UIContainer, SDKCo
                                 {accounts.map(account => {
                                     const onClick = () => { onLogin(account); };
                                     return <button onClick={onClick} key={account} className="logged-out--account">
-                                        <Blocky address={account} /> <span>{account}</span>
+                                        <Blocky address={account} /> <span className="logged-out--account--short">{account}</span>
                                     </button>;
                                 })}
                             </div>

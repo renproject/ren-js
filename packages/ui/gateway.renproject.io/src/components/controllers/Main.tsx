@@ -1,57 +1,27 @@
 import * as React from "react";
 
-import RenJS, { BitcoinUTXO, UTXO } from "@renproject/ren";
+import RenJS, { processShiftInParams, processShiftOutParams } from "@renproject/ren";
+import {
+    HistoryEvent, SendTokenInterface, ShiftInEvent, ShiftInParams, ShiftInParamsAll, ShiftInStatus,
+    ShiftOutEvent, ShiftOutParams, ShiftOutParamsAll, ShiftOutStatus, sleep,
+} from "@renproject/ren-js-common";
+import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
-import styled from "styled-components";
 
-import { ENABLE_TEST_ENDPOINT } from "../../lib/environmentVariables";
-import { _catchBackgroundErr_, _catchInteractionErr_ } from "../../lib/errors";
+import { _catchInteractionErr_ } from "../../lib/errors";
 import { getWeb3 } from "../../lib/getWeb3";
-import { setIntervalAndRun } from "../../lib/utils";
+import {
+    acknowledgeMessage, GatewayMessage, GatewayMessageType, postMessageToClient,
+} from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
-import { HistoryEvent, ShiftInStatus, ShiftOutStatus } from "../../state/generalTypes";
 import { network, SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
-import infoIcon from "../../styles/images/icons/info.svg";
-import smallLogo from "../../styles/images/logo-small-grey.png";
-import { ErrorBoundary } from "../ErrorBoundary";
-import { Tooltip } from "../Tooltip";
+import { Footer } from "../views/Footer";
 import { LoggedOutPopup } from "../views/LoggedOutPopup";
-import { OpeningOrder } from "./OpeningOrder";
-import { getStorage } from "./Storage";
-
-const Footer: React.FC<{}> = props => {
-    const Container = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid #ccc;
-    position: fixed;
-    bottom:0;
-    height: 30px;
-    width: 100%;
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.4);
-    padding: 0 30px;
-    z-index: 100;
-    &::before {
-        content: '';
-    }
-    `;
-    const RenVMLink = styled.a`
-    text-decoration: underline;
-    `;
-    return (
-        <Container>
-            <div>
-                <img src={smallLogo} style={{ width: "10px", marginRight: "5px" }} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
-            </div>
-            <div>
-                <Tooltip align="left" width={200} contents={<span>Your tokens will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <a href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">here</a>.</span>}><img src={infoIcon} /></Tooltip>
-            </div>
-        </Container>
-    );
-};
+import { ErrorBoundary } from "./ErrorBoundary";
+import { OpeningShift } from "./OpeningShift";
+import { ProgressBar } from "./ProgressBar";
+import { getStorage, removeStorageTrade } from "./Storage";
 
 /**
  * App is the main visual component responsible for displaying different routes
@@ -60,137 +30,163 @@ const Footer: React.FC<{}> = props => {
 export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
     ({ containers: [uiContainer, sdkContainer], location }) => {
 
-        const pause = () => {
-            uiContainer.pause().catch((error) => _catchInteractionErr_(error, "Error in App: uiContainer.pause"));
-            window.parent.postMessage({ from: "ren", type: "pause", frameID: uiContainer.state.currentOrderID, payload: { msg: "demo return value" } }, "*");
-        };
-
-        const resume = () => {
-            uiContainer.resume().catch((error) => _catchInteractionErr_(error, "Error in App: uiContainer.resume"));
-            window.parent.postMessage({ from: "ren", type: "resume", frameID: uiContainer.state.currentOrderID, payload: { msg: "demo return value" } }, "*");
-        };
-
-        const debugTestMessages = async (payload: any) => {
-            // Make sure we're actually in a test environment
-            if (!ENABLE_TEST_ENDPOINT) {
-                return;
+        const pause = React.useCallback(async (fromClient?: boolean) => {
+            if (!fromClient) {
+                const sendMsg = () => {
+                    if (uiContainer.state.gatewayPopupID) {
+                        postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Pause, {});
+                    }
+                };
+                // The client send a pause or resume reminder message every
+                // second, so there's a change that the user clicks pause or
+                // resume just as the client sends the reminder.
+                sendMsg();
+                setTimeout(sendMsg, 100);
             }
+            return uiContainer.pause();
+        }, []);
 
-            switch (payload) {
-                case "confirming":
-                    // Handle the deposit
-                    const btcUtxo: BitcoinUTXO = {
-                        txid: "0331c25055eb20129bd9beeb054b1f73d12f64a4917fa37a908e23ba0e287902",
-                        value: 5678965,
-                        script_hex: "something",
-                        output_no: 1,
-                        confirmations: 1,
-                    };
-                    const utxo: UTXO = {
-                        chain: RenJS.Chains.Bitcoin,
-                        utxo: btcUtxo,
-                    };
-                    await uiContainer.deposit(utxo);
-                    break;
-                case "confirmed":
-                    await sdkContainer.updateOrder({ status: ShiftInStatus.Deposited });
-                    break;
-                case "renvm-signed":
-                    const hash = RenJS.utils.Ox(Buffer.from("a4c139cf8e4795a3cb2ce8f12457ce502aa5b9db0535e9e374218c57c76c6ef5", "base64"));
-                    await sdkContainer.updateOrder({
-                        inTx: {
-                            hash,
-                            chain: RenJS.Chains.Bitcoin,
-                        },
-                        status: ShiftInStatus.ReturnedFromRenVM,
-                    });
-                    break;
-                case "submit-to-eth":
-                    const ethHash = "0xc9dec50563a30bb19100cece73e0396fe63523eb50c4c5f36a1530a0ee3991d8";
-                    await sdkContainer.updateOrder({
-                        status: ShiftInStatus.SubmittedToEthereum,
-                        outTx: { hash: ethHash, chain: RenJS.Chains.Ethereum },
-                    });
-                    break;
+        const pauseOnClick = React.useCallback(() => pause(false), [pause]);
 
-                case "eth-confirmed":
-                    const ethHash2 = "0xc9dec50563a30bb19100cece73e0396fe63523eb50c4c5f36a1530a0ee3991d8";
-                    await sdkContainer.updateOrder({
-                        outTx: { hash: ethHash2, chain: RenJS.Chains.Ethereum },
-                        status: ShiftInStatus.RefundedOnEthereum,
-                    });
-                    break;
+        const resume = React.useCallback(async (fromClient?: boolean) => {
+            if (!fromClient) {
+                const sendMsg = () => {
+                    if (uiContainer.state.gatewayPopupID) {
+                        postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Resume, {});
+                    }
+                };
+                // See above on pausing.
+                sendMsg();
+                setTimeout(sendMsg, 100);
             }
-        };
+            return uiContainer.resume();
+        }, []);
+
+        const resumeOnClick = React.useCallback(() => resume(false), [resume]);
+
+        const cancelShift = React.useCallback(async (fromClient?: boolean) => {
+            while (!sdkContainer.state.shift) {
+                await sleep(100);
+            }
+            await removeStorageTrade(sdkContainer.state.shift.shiftParams.nonce);
+            if (!fromClient && uiContainer.state.gatewayPopupID) {
+                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
+            }
+        }, []);
+
+        const cancelOnClick = React.useCallback(() => cancelShift(false), [pause]);
+
+        const onDone = React.useCallback(async () => {
+            if (uiContainer.state.gatewayPopupID) {
+                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, {});
+            }
+            uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
+        }, []);
+
+        // React.useEffect(() => {
+        //     const queryParams = parseLocation(location.search.replace(/^\?/, ""));
+        //     const queryShiftID = queryParams.id;
+        //     if (queryShiftID !== uiContainer.state.gatewayPopupID) {
+        //         uiContainer.handleShift(queryShiftID).catch(console.error);
+        //     }
+        // }, [uiContainer.state.gatewayPopupID]);
 
         React.useEffect(() => {
-            window.onmessage = (e: any) => {
-                const url = window.location !== window.parent.location
-                    ? document.referrer
-                    : document.location.href;
-                if (e.data && e.data.from === "ren") {
-                    console.log(`Message: ${e.data.type}`);
+            const queryParams = parseLocation(location.search.replace(/^\?/, ""));
+            const queryShiftID = queryParams.id;
+            uiContainer.handleShift(queryShiftID).catch(console.error);
+
+            // tslint:disable-next-line: no-any
+            window.onmessage = (e: { data: GatewayMessage<any> }) => {
+                if (e.data && e.data.from === "ren" && e.data.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
                         switch (e.data.type) {
-                            case "shift":
-                                const commitment = e.data.payload;
-                                const frameID = e.data.frameID;
+                            case GatewayMessageType.Shift:
+                                acknowledgeMessage(e.data);
+                                const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: HistoryEvent | (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface) } = e.data.payload;
+                                await (alreadyPaused ? pause() : resume());
+                                const shiftID = e.data.frameID;
                                 const time = Date.now() / 1000;
-                                const currentOrderID = frameID; // String(time);
 
-                                // TODO: Clean up
-                                const shift = commitment.sendToken === RenJS.Tokens.BTC.Btc2Eth || commitment.sendToken === RenJS.Tokens.ZEC.Zec2Eth || commitment.sendToken === RenJS.Tokens.BCH.Bch2Eth ? {
-                                    // Cast required by TS to differentiate ShiftIn and ShiftOut types.
-                                    shiftIn: true as true,
-                                    status: ShiftInStatus.Committed,
-                                } : {
+                                let historyEvent: HistoryEvent | undefined;
+                                let shiftParams: HistoryEvent["shiftParams"];
+
+                                if (shiftParamsIn.hasOwnProperty("shiftParams")) {
+                                    historyEvent = shiftParamsIn as unknown as HistoryEvent;
+                                    shiftParams = { ...historyEvent.shiftParams };
+                                    shiftParams.nonce = historyEvent.shiftParams.nonce || RenJS.utils.randomNonce();
+                                } else {
+                                    historyEvent = undefined;
+                                    shiftParams = {
+                                        ...(shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)),
+                                        nonce: (shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)).nonce || RenJS.utils.randomNonce(),
+                                    };
+                                }
+
+                                let shiftDetails;
+
+                                if (shiftParams.sendToken === RenJS.Tokens.BTC.Btc2Eth ||
+                                    shiftParams.sendToken === RenJS.Tokens.ZEC.Zec2Eth ||
+                                    shiftParams.sendToken === RenJS.Tokens.BCH.Bch2Eth) {
+                                    shiftDetails = {
+                                        // Cast required by TS to differentiate ShiftIn and ShiftOut types.
+                                        shiftIn: true as true,
+                                        status: ShiftInStatus.Committed,
+                                        // tslint:disable-next-line: no-object-literal-type-assertion
+                                        shiftParams: processShiftInParams(network, shiftParams as ShiftInParams) as ShiftInEvent["shiftParams"],
+                                    };
+                                } else {
+                                    shiftDetails = {
                                         shiftIn: false as false,
                                         status: ShiftOutStatus.Committed,
+                                        shiftParams: processShiftOutParams(network, shiftParams as ShiftOutParams) as unknown as ShiftOutEvent["shiftParams"],
                                     };
+                                }
 
-                                const nonce = RenJS.utils.randomNonce();
-
-                                const historyEvent: HistoryEvent = {
-                                    ...shift,
-                                    id: frameID,
+                                historyEvent = {
+                                    ...shiftDetails,
+                                    id: shiftID,
                                     time,
                                     inTx: null,
                                     outTx: null,
-                                    commitment,
-                                    messageID: null,
+                                    renTxHash: null,
                                     renVMStatus: null,
-                                    nonce,
+                                    ...historyEvent,
                                 };
 
-                                await sdkContainer.updateOrder(historyEvent);
+                                await sdkContainer.updateShift(historyEvent);
 
-                                await uiContainer.setState({
-                                    confirmedTrade: false,
-                                    currentOrderID: null,
-                                });
+                                break;
+                            case GatewayMessageType.Pause:
+                                acknowledgeMessage(e.data);
+                                pause(true).catch(console.error);
 
-                                await uiContainer.handleOrder(currentOrderID);
                                 break;
-                            case "pause":
-                                if (e.data.frameID === uiContainer.state.currentOrderID) {
-                                    pause();
-                                }
+                            case GatewayMessageType.Cancel:
+                                acknowledgeMessage(e.data);
+                                cancelShift(true).catch(console.error);
                                 break;
-                            case "resume":
-                                if (e.data.frameID === uiContainer.state.currentOrderID) {
-                                    resume();
-                                }
+                            case GatewayMessageType.Resume:
+                                acknowledgeMessage(e.data);
+                                resume(true).catch(console.error);
                                 break;
-                            case "getTrades":
-                                if (e.data.frameID === uiContainer.state.currentOrderID) {
-                                    window.parent.postMessage({ from: "ren", type: "trades", frameID: uiContainer.state.currentOrderID, payload: await getStorage(url) }, "*");
-                                }
+                            case GatewayMessageType.GetTrades:
+                                acknowledgeMessage(e.data);
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, await getStorage());
                                 break;
+                            case GatewayMessageType.GetStatus:
+                                acknowledgeMessage(e.data, sdkContainer.getShiftStatus());
+                                break;
+                            default:
+                                // Acknowledge that we got the message. We don't
+                                // know how to handle it, but we don't want
+                                // the parent window to keep re-sending it.
+                                acknowledgeMessage(e.data);
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
             };
-            window.parent.postMessage({ from: "ren", type: "ready", payload: {} }, "*");
+            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {});
         }, []);
 
         const login = React.useCallback(async () => {
@@ -200,6 +196,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 web3 = await getWeb3();
             } catch (error) {
                 // ignore error
+                return;
             }
 
             const πNetworkID = web3.eth.net.getId();
@@ -207,7 +204,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
             const networkID = await πNetworkID;
             if (network.contracts.networkID && networkID !== network.contracts.networkID) {
-                alert(`Please switch to the ${network.contracts.chainLabel} Ethereum network.`);
+                await uiContainer.setState({ wrongNetwork: networkID });
                 return;
             }
             const addresses = await πAddresses;
@@ -215,53 +212,47 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
             await Promise.all([
                 uiContainer.connect(web3, address, networkID),
-                sdkContainer.connect(web3, address, networkID),
+                sdkContainer.connect(web3, address),
             ]);
 
-        }, [sdkContainer, uiContainer]);
-
-        const logout = React.useCallback(async () => {
-            await uiContainer.clearAddress();
-        }, [uiContainer]);
+        }, []);
 
         // useEffect replaces `componentDidMount` and `componentDidUpdate`.
         // To limit it to running once, we use the initialized hook.
         const [initialized, setInitialized] = React.useState(false);
         React.useEffect(() => {
             if (!initialized) {
+                setInitialized(true);
 
                 // Start loops to update prices and balances
-                setIntervalAndRun(() => uiContainer.updateTokenPrices().catch(() => { /* ignore */ }), 30 * 1000);
                 setInterval(() => uiContainer.lookForLogout(), 1 * 1000);
-                login().then(() => {
-                    setInitialized(true);
-                }).catch((error) => _catchInteractionErr_(error, "Error in App: login"));
+                login().catch((error) => { setInitialized(false); _catchInteractionErr_(error, "Error in App: login"); });
             }
-        }, [initialized, uiContainer, location.search, login]);
+        }, [initialized, login]);
 
-        const { loggedOut } = uiContainer.state;
+        const { loggedOut, paused } = uiContainer.state;
+        const { shift } = sdkContainer.state;
 
-        const { currentOrderID, paused } = uiContainer.state;
-
-        return <main className={paused ? "paused" : ""} onClick={paused ? resume : undefined}>
+        return <main className={paused ? "paused" : ""} onClick={paused ? resumeOnClick : undefined}>
             {!paused ? <div className="banner">
-                <span>{uiContainer.state.status}</span>
-                <div role="button" className={`popup--x`} onClick={pause} />
+                <span>Gateway by Ren Project</span>
+                {shift ?
+                    (shift.status === ShiftInStatus.Committed || shift.status === ShiftOutStatus.Committed) ?
+                        <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :
+                        (shift.status === ShiftInStatus.ConfirmedOnEthereum || shift.status === ShiftOutStatus.ReturnedFromRenVM) ?
+                            <div role="button" className={`popup--cancel`} onClick={onDone}>Close</div> :
+                            <div role="button" className={`popup--x`} onClick={pauseOnClick} />
+                    :
+                    <></>
+                }
             </div> : <></>}
             <div className="main">
-                <ErrorBoundary>
-                    {currentOrderID ?
-                        <OpeningOrder orderID={currentOrderID} /> :
-                        <></>
-                    }
-                    {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
-                </ErrorBoundary>
-                {!paused ? <ErrorBoundary>
-                    {loggedOut ?
-                        <LoggedOutPopup oldAccount={loggedOut} /> :
-                        <></>
-                    }
-                </ErrorBoundary> : <></>}
+                {loggedOut && !paused ?
+                    <ErrorBoundary><LoggedOutPopup oldAccount={loggedOut} /></ErrorBoundary> :
+                    shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>
+                }
+                {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
+                {!paused && shift ? <ProgressBar /> : <></>}
             </div>
             {!paused && <Footer />}
         </main>;

@@ -1,0 +1,62 @@
+._ren {
+
+    .shift-progress {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        // justify-content: space-between;
+        border-top: 1px solid #ccc;
+        height: 67px;
+        width: 100%;
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.4);
+        padding: 0 30px;
+        z-index: 100;
+    }
+
+    .shift-progress--item {
+        display: flex;
+        flex-flow: column;
+        align-items: center;
+        justify-content: center;
+        width: 100px;
+    }
+
+    .shift-progress--number {
+        height: 16px;
+        width: 16px;
+        border-radius: 100%;
+        text-align: center;
+        font-size: 9px;
+        margin: 10px 0;
+        color: #87888C;
+        border: 1px solid #ECEFF1;
+
+        &::before {
+            content: "";
+            z-index: -1;
+            // margin-left: 50%;
+            width: calc(100px - 100%);
+            height: 2px;
+            background: #eee;
+            display: block;
+            position: relative;
+            top: calc(50% - 1px);
+            left: 100%;
+        }
+    }
+
+    .shift-progress--item--done>.shift-progress--number {
+        background: $blue-bright;
+        color: white;
+        border: 1px solid $blue-bright;
+    }
+
+    .shift-progress--item--done>.shift-progress--number::before {
+        background: $blue-bright;
+    }
+
+    .shift-progress--item:last-child>.shift-progress--number::before {
+        width: 0;
+    }
+}

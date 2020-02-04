@@ -45,6 +45,7 @@
         "match-default-export-name": false,
         "function-name": false,
         "no-void-expression": false,
+        "no-unnecessary-type-assertion": false,
         // "no-return-await": false,
         // "ter-indent": false,
         // Warnings
@@ -71,7 +72,6 @@
         "await-promise": true,
         "react-this-binding-issue": true,
         "no-string-based-set-timeout": true,
-        "no-unnecessary-type-assertion": true,
         "no-unnecessary-local-variable": false,
         "only-arrow-functions": true,
         // Configured

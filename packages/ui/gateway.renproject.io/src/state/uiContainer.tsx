@@ -1,18 +1,15 @@
-import { Currency, sleep } from "@renproject/react-components";
-import RenJS, { NetworkDetails, UTXO } from "@renproject/ren";
+import { NetworkDetails, UTXO } from "@renproject/ren";
 import BigNumber from "bignumber.js";
-import { Map as ImmutableMap, OrderedMap } from "immutable";
+import { OrderedMap } from "immutable";
 import { Container } from "unstated";
 import Web3 from "web3";
 
 import { syncGetTokenAddress } from "../lib/contractAddresses";
 import { ETHEREUM_NODE } from "../lib/environmentVariables";
-import { _catchInteractionErr_ } from "../lib/errors";
-import { getTokenPricesInCurrencies } from "../lib/market";
 import { getERC20, Token } from "./generalTypes";
 import { network } from "./sdkContainer";
 
-export const fetchEthereumTokenBalance = async (web3: Web3, networkID: number, networkDetails: NetworkDetails, token: Token, address: string): Promise<BigNumber> => {
+const fetchEthereumTokenBalance = async (web3: Web3, networkID: number, networkDetails: NetworkDetails, token: Token, address: string): Promise<BigNumber> => {
     if (!web3) {
         return new BigNumber(0);
     }
@@ -30,29 +27,18 @@ export const fetchEthereumTokenBalance = async (web3: Web3, networkID: number, n
     return new BigNumber(balance);
 };
 
-export type ReserveBalances = Map<Token, BigNumber>;
-
 const initialState = {
     web3: new Web3(ETHEREUM_NODE),
     networkID: network.contracts.networkID,
+    wrongNetwork: undefined as number | undefined,
 
     loggedOut: null as string | null,
-    status: "Deposit Information",
     paused: false,
-
-    preferredCurrency: Currency.USD,
 
     address: null as string | null,
     utxos: OrderedMap<string, UTXO>(),
-    tokenPrices: ImmutableMap<Token, ImmutableMap<Currency, number>>(),
-    accountBalances: ImmutableMap<Token, BigNumber>(),
-    // balanceReserves: ImmutableMap<MarketPair, ReserveBalances>(),
 
-    confirmedTrade: false,
-    submitting: false,
-
-    currentOrderID: null as string | null,
-
+    gatewayPopupID: null as string | null,
     network,
 };
 
@@ -60,31 +46,18 @@ export class UIContainer extends Container<typeof initialState> {
     public state = initialState;
 
     public connect = async (web3: Web3, address: string | null, networkID: number): Promise<void> => {
-        await this.setState({ web3, networkID, address, loggedOut: null });
+        await this.setState(state => ({ ...state, web3, networkID, address, loggedOut: null }));
     }
 
     public clearAddress = async (): Promise<void> => {
-        await this.setState({ address: null });
+        await this.setState(state => ({ ...state, address: null }));
     }
 
-    public onConfirmedTrade = async () => {
-        await this.setState({ confirmedTrade: true });
-    }
-
-    public handleOrder = async (orderID: string | null) => {
-        await this.setState({ submitting: false, currentOrderID: orderID });
+    public handleShift = async (gatewayPopupID: string | null) => {
+        await this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
     }
 
     // Token prices ////////////////////////////////////////////////////////////
-
-    public setCurrency = async (preferredCurrency: Currency) => {
-        await this.setState({ preferredCurrency });
-    }
-
-    public updateTokenPrices = async (): Promise<void> => {
-        const tokenPrices = await getTokenPricesInCurrencies();
-        await this.setState({ tokenPrices });
-    }
 
     public fetchEthereumTokenBalance = async (token: Token, address: string): Promise<BigNumber> => {
         const { web3, networkID, network: networkDetails } = this.state;
@@ -94,44 +67,42 @@ export class UIContainer extends Container<typeof initialState> {
         return fetchEthereumTokenBalance(web3, networkID, networkDetails, token, address);
     }
 
-    // Inputs for swap /////////////////////////////////////////////////////////
-
     public resetTrade = async () => {
-        await this.setState({
-            confirmedTrade: false,
-            currentOrderID: null,
+        await this.setState(state => ({
+            ...state,
+            gatewayPopupID: null,
             submitting: false,
-        });
+        }));
     }
 
     public deposit = async (deposit: UTXO) => {
-       const utxos = this.state.utxos.set(deposit.utxo.txid, deposit);
-       await this.setState({
-           utxos,
-           status: "Confirming",
-       });
-       console.log(this.state.utxos);
+        const utxos = this.state.utxos.set(deposit.utxo.txid, deposit);
+        await this.setState(state => ({
+            ...state,
+            utxos,
+        }));
     }
 
     public setSubmitting = async (submitting: boolean) => {
-        await this.setState({
+        await this.setState(state => ({
+            ...state,
             submitting,
-        });
+        }));
     }
 
     public setLoggedOut = async (loggedOut?: string) => {
-        return this.setState({ loggedOut: loggedOut || null });
+        return this.setState(state => ({ ...state, loggedOut: loggedOut || null }));
     }
 
     public pause = async () => {
-        return this.setState({ paused: true });
+        return this.setState(state => ({ ...state, paused: true }));
     }
 
     public resume = async () => {
-        return this.setState({ paused: false });
+        await this.setState(state => ({ ...state, paused: false }));
     }
 
-    // lookForLogout detects if 1) the user has changed or logged out of their Web3
+    // lookForLogout detects if the user has changed or logged out of their Web3
     // wallet
     public lookForLogout = async () => {
         const { address, web3 } = this.state;

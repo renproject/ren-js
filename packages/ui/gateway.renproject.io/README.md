@@ -1,25 +1,25 @@
-# Gateway Website
+# `gateway.renproject.io`
 
-This is the website that will be opened by [GatewayJS](https://github.com/renproject/gateway-js).
+`gateway.renproject.io` is the iframe opened by GatewayJS.
 
+The docs can be found in the [GatewayJS repository](https://github.com/renproject/gateway-js).
 
 ## Development
 
+Setup:
+
 ```bash
-# Setup
 git clone https://github.com/renproject/gateway.renproject.io
 cd gateway.renproject.io
 yarn install
+```
 
-# Start the development environment
-yarn run start
+Running the server:
+
+```bash
+yarn start
 ```
 
 This will run the website on <http://localhost:3000>.
 
-To test out the different stages of the process, you can access the testing environment page at <http://localhost:3000/#/test>.
-
-The test page has been tested to work on Chrome + Metamask.
-
-To deploy the staging test environment to Github pages, run the `staging.sh` bash script.
-
+See [renproject/gateway-example](https://github.com/renproject/gateway-example) for testing.

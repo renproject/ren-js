@@ -2,10 +2,9 @@
 /* tslint:disable */
 
 import { EventLog } from "web3/types";
-import { TransactionObject, BlockType } from "web3/eth/types";
+import { BlockType, TransactionObject } from "web3/eth/types";
 import BN from "bn.js";
 import { EventEmitter } from "events";
-// @ts-ignore
 import PromiEvent from "web3/promiEvent";
 
 interface EstimateGasOptions {

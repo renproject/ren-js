@@ -17,12 +17,9 @@ export const getWeb3 = async () => new Promise<Web3>(async (resolve, reject) => 
     if (window.ethereum) {
         try {
             // Request account access if needed
-            console.log(`Getting ethereum`);
             await window.ethereum.enable();
-            console.log(`got ethereum`);
             resolve(new Web3(window.ethereum));
         } catch (error) {
-            console.log(`no ethereum`);
             reject(error);
         }
     } else if (window.web3) {

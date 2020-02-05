@@ -82,6 +82,7 @@ export default Network({
                 artifact: {
                     abi: [],
                 },
+                description: "shifterRegistry.getTokenBySymbol(zBTC)",
             },
             BTCShifter: {
                 _address: "",
@@ -89,6 +90,7 @@ export default Network({
                 artifact: {
                     abi: [],
                 },
+                description: "shifterRegistry.getShifterBySymbol(zBTC)",
             },
             zZEC: {
                 _address: "",
@@ -96,6 +98,7 @@ export default Network({
                 artifact: {
                     abi: [],
                 },
+                description: "shifterRegistry.getTokenBySymbol(zZEC)",
             },
             ZECShifter: {
                 _address: "",
@@ -103,6 +106,7 @@ export default Network({
                 artifact: {
                     abi: [],
                 },
+                description: "shifterRegistry.getShifterBySymbol(zZEC)",
             },
             zBCH: {
                 _address: "",
@@ -110,6 +114,7 @@ export default Network({
                 artifact: {
                     abi: [],
                 },
+                description: "shifterRegistry.getTokenBySymbol(zBCH)",
             },
             BCHShifter: {
                 _address: "",
@@ -117,6 +122,7 @@ export default Network({
                 artifact: {
                     abi: [],
                 },
+                description: "shifterRegistry.getShifterBySymbol(zBCH)",
             },
             BasicAdapter: {
                 address: "",

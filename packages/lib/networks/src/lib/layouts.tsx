@@ -28,7 +28,7 @@ export const table: FormatFN = (networkData: NetworkData) => {
                             }
                         </td>
                         <td className="monospace">
-                            {formatAddress(networkData.addresses[category][contractName].address)}
+                            {networkData.addresses[category][contractName].address ? formatAddress(networkData.addresses[category][contractName].address) : networkData.addresses[category][contractName].description}
                         </td>
                         <td>
                             <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName]._address || networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>

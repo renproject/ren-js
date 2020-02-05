@@ -77,31 +77,37 @@ export default Network({
                 _address: zBTC.networks[networkID].address,
                 abi: zBTC.abi as AbiItem[],
                 artifact: zBTC,
+                description: "shifterRegistry.getTokenBySymbol(zBTC)",
             },
             BTCShifter: {
                 _address: BTCShifter.networks[networkID].address,
                 abi: BTCShifter.abi as AbiItem[],
                 artifact: BTCShifter,
+                description: "shifterRegistry.getShifterBySymbol(zBTC)",
             },
             zZEC: {
                 _address: zZEC.networks[networkID].address,
                 abi: zZEC.abi as AbiItem[],
                 artifact: zZEC,
+                description: "shifterRegistry.getTokenBySymbol(zZEC)",
             },
             ZECShifter: {
                 _address: ZECShifter.networks[networkID].address,
                 abi: ZECShifter.abi as AbiItem[],
                 artifact: ZECShifter,
+                description: "shifterRegistry.getShifterBySymbol(zZEC)",
             },
             zBCH: {
                 _address: zBCH.networks[networkID].address,
                 abi: zBCH.abi as AbiItem[],
                 artifact: zBCH,
+                description: "shifterRegistry.getTokenBySymbol(zBCH)",
             },
             BCHShifter: {
                 _address: BCHShifter.networks[networkID].address,
                 abi: BCHShifter.abi as AbiItem[],
                 artifact: BCHShifter,
+                description: "shifterRegistry.getShifterBySymbol(zBCH)",
             },
             BasicAdapter: {
                 address: BasicAdapter.networks[networkID].address,

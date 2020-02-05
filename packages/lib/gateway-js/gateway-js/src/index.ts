@@ -6,8 +6,10 @@ import {
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
 import {
-    createElementFromHTML, GATEWAY_ENDPOINT, getElement, randomBytes, resolveEndpoint, sleep, utils,
+    createElementFromHTML, GATEWAY_ENDPOINT_PRODUCTION, GATEWAY_ENDPOINT_STAGING, getElement,
+    randomBytes, resolveEndpoint, sleep, utils,
 } from "./utils";
+import { validateString } from "./validate";
 
 export { Chain, Network, Tokens, HistoryEvent, ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent } from "@renproject/ren-js-common";
 
@@ -31,18 +33,13 @@ export class Gateway {
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
+    private readonly network: Network | string;
     private readonly endpoint: string;
 
-    // FIXME: Passing in an endpoint is great for development but probably not very secure
-    constructor(endpoint?: Network | string) {
-        this.endpoint = resolveEndpoint(endpoint || GATEWAY_ENDPOINT);
+    constructor(network: Network | string, endpoint: string) {
+        this.network = network;
+        this.endpoint = endpoint;
         this.id = randomBytes(8);
-
-        // setInterval(() => {
-        //     if (this.isOpen) {
-        //         this.isPaused ? this.pause() : this.resume();
-        //     }
-        // }, 5 * 1000);
     }
 
     public readonly getPopup = () => getElement(`_ren_gateway-${this.id}`);
@@ -106,10 +103,11 @@ export class Gateway {
 
         const iframe = (uniqueID: string, iframeURL: string) => `
         <iframe class="_ren_iframe-hidden" id="_ren_iframe-hidden-${uniqueID}" style="display: none"
-            src="${`${iframeURL}#/get-trades?id=${uniqueID}`}" ></iframe>
+            src="${iframeURL}"></iframe>
         `;
 
-        const popup = createElementFromHTML(iframe(this.id, this.endpoint));
+        const endpoint = resolveEndpoint(this.endpoint, this.network, "get-trades", this.id);
+        const popup = createElementFromHTML(iframe(this.id, endpoint));
 
         if (popup) {
             container.insertBefore(popup, container.lastChild);
@@ -172,7 +170,8 @@ export class Gateway {
 
             const container = this.getOrCreateGatewayContainer();
 
-            const popup = createElementFromHTML(RenElementHTML(this.id, `${this.endpoint}#/?id=${this.id}`, this.isPaused));
+            const endpoint = resolveEndpoint(this.endpoint, this.network, "", this.id);
+            const popup = createElementFromHTML(RenElementHTML(this.id, endpoint, this.isPaused));
 
             if (popup) {
                 container.insertBefore(popup, container.lastChild);
@@ -318,16 +317,22 @@ export default class GatewayJS {
     public static readonly ShiftOutStatus = ShiftOutStatus;
     public static readonly utils = utils;
 
+    private readonly network: Network;
     private readonly endpoint: string;
-    constructor(endpoint?: Network | string) {
-        this.endpoint = resolveEndpoint(endpoint || GATEWAY_ENDPOINT);
+    // tslint:disable-next-line: readonly-keyword
+    constructor(network: Network | string, options?: { endpoint?: string }) {
+        const publicNetworks: readonly Network[] = [Network.Chaosnet, Network.Testnet];
+        validateString<Network>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(Network) as readonly Network[]);
+        this.network = network as Network;
+        // NOTE: In a future release, all networks will use the production endpoint.
+        this.endpoint = (options && options.endpoint) || (this.network === Network.Chaosnet || this.network === Network.Mainnet ? GATEWAY_ENDPOINT_PRODUCTION : GATEWAY_ENDPOINT_STAGING);
     }
 
     /**
      * Returns a map containing previously opened gateways.
      */
     public readonly getGateways = async (): Promise<Map<string, HistoryEvent>> => {
-        return new Gateway(this.endpoint).getGateways();
+        return new Gateway(this.network, this.endpoint).getGateways();
     }
 
     /**
@@ -335,7 +340,7 @@ export default class GatewayJS {
      *  doesn't seem to work.)
      */
     public readonly open = (params: ((ShiftInParams | ShiftOutParamsNoProvider) & SendTokenInterface) | HistoryEvent): Gateway => {
-        return new Gateway(this.endpoint).open(params);
+        return new Gateway(this.network, this.endpoint).open(params);
     }
 }
 

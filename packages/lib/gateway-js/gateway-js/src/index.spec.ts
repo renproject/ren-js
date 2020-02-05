@@ -2,8 +2,16 @@ import test, { ExecutionContext } from "ava";
 
 import GatewayJS from "./index";
 
-console.log(GatewayJS);
+test("can initialize gateway", (t: ExecutionContext<unknown>) => {
+    let gateway = new GatewayJS("testnet");
+    t.is(!!gateway, true);
 
-test((t: ExecutionContext<unknown>) => {
-    t.is(true, true);
+    let returnedError;
+    try {
+        gateway = new GatewayJS("testing");
+    } catch (error) {
+        returnedError = error;
+    }
+
+    t.is(returnedError.message, "Invalid network. Expected one of chaosnet, testnet");
 });

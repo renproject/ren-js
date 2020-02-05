@@ -1,8 +1,8 @@
 import { Network, value } from "@renproject/ren-js-common";
 
 // For now, the endpoints are network specific.
-export const GATEWAY_ENDPOINT = "https://gateway-staging.renproject.io/";
-export const GATEWAY_ENDPOINT_CHAOSNET = "https://gateway.renproject.io/";
+export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";
+export const GATEWAY_ENDPOINT_PRODUCTION = "https://gateway.renproject.io/";
 
 export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -21,19 +21,12 @@ export const createElementFromHTML = (htmlString: string) => {
     return div.firstChild;
 };
 
-export const resolveEndpoint = (endpoint: Network | string) => {
-    switch (endpoint) {
-        case Network.Testnet:
-            return GATEWAY_ENDPOINT;
-        case Network.Chaosnet:
-            return GATEWAY_ENDPOINT_CHAOSNET;
-        case Network.Mainnet:
-        case Network.Devnet:
-        case Network.Localnet:
-            throw new Error(`GatewayJS does not support the network ${endpoint} yet.`);
-        default:
-            return endpoint;
-    }
+export const resolveEndpoint = (endpointIn: string, network: Network | string, pathIn: string, shiftID?: string) => {
+    // Remove ending '/' from endpoint
+    const endpoint = endpointIn.slice(endpointIn.length - 1) === "/" ? endpointIn.slice(0, endpointIn.length - 1) : endpointIn;
+    // Remove starting '/' from path
+    const path = pathIn.slice(0, 1) === "/" ? pathIn.slice(1, pathIn.length) : pathIn;
+    return `${endpoint}/#/${path}?network=${network}&${shiftID ? `id=${shiftID}` : ""}`;
 };
 
 export const randomBytes = (bytes: number) => {

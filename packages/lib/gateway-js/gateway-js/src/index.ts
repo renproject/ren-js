@@ -1,7 +1,7 @@
 import {
-    BurnContractCall, Chain, GatewayMessage, GatewayMessageType, HistoryEvent, Network,
-    newPromiEvent, PromiEvent, SendTokenInterface, ShiftInParams, ShiftInParamsAll, ShiftInStatus,
-    ShiftOutParamsBurnRef, ShiftOutParamsCommon, ShiftOutParamsTxHash, ShiftOutStatus, Tokens,
+    BurnContractCallSimple, Chain, GatewayMessage, GatewayMessageType, GatewayParams,
+    GatewayShiftInParamsExtra, HistoryEvent, newPromiEvent, PromiEvent, RenNetwork,
+    ShiftInFromDetails, ShiftInStatus, ShiftOutStatus, Tokens,
 } from "@renproject/ren-js-common";
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
@@ -11,12 +11,14 @@ import {
 } from "./utils";
 import { validateString } from "./validate";
 
-export { Chain, Network, Tokens, HistoryEvent, ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent } from "@renproject/ren-js-common";
+export { Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent, ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent } from "@renproject/ren-js-common";
+
+const toFixed = (input: { readonly toFixed?: () => string; readonly toString: () => string }) => input.toFixed ? input.toFixed() : input.toString();
 
 export class Gateway {
 
     public static readonly Tokens = Tokens;
-    public static readonly Networks = Network;
+    public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
     public static readonly ShiftInStatus = ShiftInStatus;
     public static readonly ShiftOutStatus = ShiftOutStatus;
@@ -33,10 +35,10 @@ export class Gateway {
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
-    private readonly network: Network | string;
+    private readonly network: RenNetwork | string;
     private readonly endpoint: string;
 
-    constructor(network: Network | string, endpoint: string) {
+    constructor(network: RenNetwork | string, endpoint: string) {
         this.network = network;
         this.endpoint = endpoint;
         this.id = randomBytes(8);
@@ -149,17 +151,43 @@ export class Gateway {
         window.addEventListener("message", listener);
     })
 
-    public readonly open = (shiftParams: ((ShiftInParams | ShiftOutParamsNoProvider) & SendTokenInterface) | HistoryEvent): Gateway => {
+    public readonly open = (shiftParams: GatewayParams): Gateway => {
 
-        // Certain types can't be sent via sendMessage.
-        if (typeof (shiftParams as ShiftInParamsAll).sendAmount === "object") {
+        // Certain types can't be sent via sendMessage - e.g. BigNumbers.
+        try {
             // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-            (shiftParams as any).sendAmount = (((shiftParams as ShiftInParamsAll).sendAmount as any).toFixed) ?
-                // tslint:disable-next-line: no-any no-unnecessary-type-assertion
-                (shiftParams as any).sendAmount.toFixed() :
-                // tslint:disable-next-line: no-any no-unnecessary-type-assertion
-                (shiftParams as any).sendAmount.toString();
-        }
+            if (typeof (shiftParams as BurnContractCallSimple).sendAmount === "object") {
+                // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
+                (shiftParams as BurnContractCallSimple).sendAmount = toFixed((shiftParams as BurnContractCallSimple).sendAmount);
+            }
+        } catch (error) { console.error(error); }
+        try {
+            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
+            if (typeof (shiftParams as GatewayShiftInParamsExtra).suggestedAmount === "object") {
+                // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
+                (shiftParams as GatewayShiftInParamsExtra).suggestedAmount = toFixed((shiftParams as GatewayShiftInParamsExtra).suggestedAmount);
+            }
+        } catch (error) { console.error(error); }
+        try {
+            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
+            const requiredAmount = (shiftParams as ShiftInFromDetails).requiredAmount;
+            if (typeof requiredAmount === "object") {
+                // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
+                const min = (requiredAmount as { max: any, min: any }).min;
+                // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
+                const max = (requiredAmount as { max: any, min: any }).max;
+                if (min || max) {
+                    // tslint:disable-next-line: no-object-mutation no-unnecessary-type-assertion
+                    (shiftParams as ShiftInFromDetails).requiredAmount = {
+                        min: min ? toFixed(min) : undefined,
+                        max: max ? toFixed(max) : undefined,
+                    };
+                } else {
+                    // tslint:disable-next-line: no-object-mutation no-any no-unnecessary-type-assertion
+                    (shiftParams as ShiftInFromDetails).requiredAmount = toFixed((shiftParams as ShiftInFromDetails).requiredAmount as any);
+                }
+            }
+        } catch (error) { console.error(error); }
 
         (async () => {
 
@@ -304,28 +332,24 @@ export class Gateway {
 }
 
 
-export declare type ShiftOutParamsContractCallNoProvider = ShiftOutParamsCommon & BurnContractCall & {
-};
-export declare type ShiftOutParamsNoProvider = ShiftOutParamsContractCallNoProvider | ShiftOutParamsBurnRef | ShiftOutParamsTxHash;
-
 export default class GatewayJS {
 
     public static readonly Tokens = Tokens;
-    public static readonly Networks = Network;
+    public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
     public static readonly ShiftInStatus = ShiftInStatus;
     public static readonly ShiftOutStatus = ShiftOutStatus;
     public static readonly utils = utils;
 
-    private readonly network: Network;
+    private readonly network: RenNetwork;
     private readonly endpoint: string;
     // tslint:disable-next-line: readonly-keyword
-    constructor(network: Network | string, options?: { endpoint?: string }) {
-        const publicNetworks: readonly Network[] = [Network.Chaosnet, Network.Testnet];
-        validateString<Network>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(Network) as readonly Network[]);
-        this.network = network as Network;
+    constructor(network: RenNetwork | string, options?: { endpoint?: string }) {
+        const publicNetworks: readonly RenNetwork[] = [RenNetwork.Chaosnet, RenNetwork.Testnet];
+        validateString<RenNetwork>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(RenNetwork) as readonly RenNetwork[]);
+        this.network = network as RenNetwork;
         // NOTE: In a future release, all networks will use the production endpoint.
-        this.endpoint = (options && options.endpoint) || (this.network === Network.Chaosnet || this.network === Network.Mainnet ? GATEWAY_ENDPOINT_PRODUCTION : GATEWAY_ENDPOINT_STAGING);
+        this.endpoint = (options && (options.endpoint === "staging" ? GATEWAY_ENDPOINT_STAGING : options.endpoint)) || GATEWAY_ENDPOINT_PRODUCTION;
     }
 
     /**
@@ -339,7 +363,7 @@ export default class GatewayJS {
      * Creates a new Gateway instance. (Note - Exclude<..., "web3Provider">
      *  doesn't seem to work.)
      */
-    public readonly open = (params: ((ShiftInParams | ShiftOutParamsNoProvider) & SendTokenInterface) | HistoryEvent): Gateway => {
+    public readonly open = (params: GatewayParams): Gateway => {
         return new Gateway(this.network, this.endpoint).open(params);
     }
 }

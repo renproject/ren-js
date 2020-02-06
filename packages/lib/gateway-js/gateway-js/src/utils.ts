@@ -1,4 +1,4 @@
-import { Network, value } from "@renproject/ren-js-common";
+import { RenNetwork, value } from "@renproject/ren-js-common";
 
 // For now, the endpoints are network specific.
 export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";
@@ -21,7 +21,7 @@ export const createElementFromHTML = (htmlString: string) => {
     return div.firstChild;
 };
 
-export const resolveEndpoint = (endpointIn: string, network: Network | string, pathIn: string, shiftID?: string) => {
+export const resolveEndpoint = (endpointIn: string, network: RenNetwork | string, pathIn: string, shiftID?: string) => {
     // Remove ending '/' from endpoint
     const endpoint = endpointIn.slice(endpointIn.length - 1) === "/" ? endpointIn.slice(0, endpointIn.length - 1) : endpointIn;
     // Remove starting '/' from path

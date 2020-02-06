@@ -3,9 +3,9 @@ import RenJS, {
     NetworkDetails, parseRenContract, ShiftInObject, Signature, TxStatus, UTXO,
 } from "@renproject/ren";
 import {
-    Asset, HistoryEvent, RenContract, SendTokenInterface, ShiftInEvent, ShiftInParams,
-    ShiftInParamsAll, ShiftInStatus, ShiftNonce, ShiftOutEvent, ShiftOutParams, ShiftOutParamsAll,
-    ShiftOutStatus,
+    Asset, HistoryEvent, RenContract, RenVMArg, RenVMType, SendTokenInterface, ShiftInEvent,
+    ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftNonce, ShiftOutEvent, ShiftOutParams,
+    ShiftOutParamsAll, ShiftOutStatus,
 } from "@renproject/ren-js-common";
 import { Container } from "unstated";
 import Web3 from "web3";
@@ -231,7 +231,15 @@ export class SDKContainer extends Container<typeof initialState> {
                 }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateShift"));
             });
         // tslint:disable-next-line: no-any
-        const address = (response as unknown as any).tx.args[1].value;
+        // TODO: Fix returned types for burning
+        const toArg = response.tx.in[1] as unknown as RenVMArg<"to", RenVMType.TypeB>;
+        if (toArg.name !== "to") {
+            console.groupCollapsed(`Unable to read field "to" from RenVM response.`);
+            console.log(response);
+            console.groupEnd();
+            throw new Error(`Unable to read field "to" from RenVM response.`);
+        }
+        const address = toArg.value;
         await this.updateShift({
             outTx: shift.shiftParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
                 ZCashTx(RenJS.utils.zec.addressFrom(address, "base64")) :

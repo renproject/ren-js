@@ -83,11 +83,10 @@ export class ShifterNetwork {
     public submitShiftIn = async (
         renContract: RenContract,
         to: string,
-        amount: number,
         nonce: string,
         pHash: string,
         utxoTxHash: string,
-        utxoVout: number,
+        utxoVout: string,
         network: NetworkDetails,
     ): Promise<string> => {
         const token = syncGetTokenAddress(renContract, network);
@@ -113,7 +112,7 @@ export class ShifterNetwork {
                             type: RenVMType.ExtTypeBtcCompatUTXO,
                             value: {
                                 txHash: toBase64(utxoTxHash),
-                                vOut: utxoVout.toFixed(),
+                                vOut: utxoVout,
                             }
                         },
                     ],

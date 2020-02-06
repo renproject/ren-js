@@ -1,7 +1,7 @@
 import _BN from "bn.js";
 
 import {
-    Asset, Chain, Network, RenContract, ShiftedToken, ShiftInParams, ShiftOutParams,
+    Asset, Chain, RenContract, RenNetwork, ShiftedToken, ShiftInParams, ShiftOutParams,
 } from "@renproject/ren-js-common";
 import Web3 from "web3";
 
@@ -20,7 +20,7 @@ export { ShiftInObject, Signature } from "./shiftIn";
 export { ShiftOutObject } from "./shiftOut";
 export { UTXO, UTXODetails as BitcoinUTXO, UTXODetails as BitcoinCashUTXO, UTXODetails as ZcashUTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
-export { Chain, RenContract as Token, RenContract } from "@renproject/ren-js-common";
+export { Chain, RenContract as Token, RenContract, RenNetwork } from "@renproject/ren-js-common";
 export { Darknode } from "./renVM/darknode";
 export { DarknodeGroup } from "./renVM/darknodeGroup";
 export { RPCMethod } from "./renVM/jsonRPC";
@@ -55,7 +55,7 @@ export default class RenJS {
     // Expose constants so they can be accessed on the RenJS class
     // e.g. `RenJS.Tokens`
     public static Tokens = Tokens;
-    public static Networks = Network;
+    public static Networks = RenNetwork;
     public static NetworkDetails = NetworkDetails;
     public static Chains = Chain;
     public static TxStatus = TxStatus;

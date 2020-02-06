@@ -96,7 +96,7 @@ describe("Shifting in and shifting out", function () {
         const shift = renJS.shiftIn({
             sendTo: adapterContract,
             sendToken: renVMToken,
-            sendAmount: amount,
+            // sendAmount: amount,
             contractFn: "shiftIn",
             contractParams: params,
             nonce: nonce || RenJS.utils.randomNonce(),
@@ -367,7 +367,7 @@ describe("Shifting in and shifting out", function () {
                 sendToken: token as "BTC" | "ZEC" | "BCH",
 
                 // Amount of BTC we are sending
-                sendAmount: amount,
+                // sendAmount: amount,
 
                 // The recipient Ethereum address
                 sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",

@@ -25,6 +25,11 @@ export interface UTXODetails {
     readonly confirmations: number;
 }
 
+export interface UTXOInput {
+    readonly txid: string; // hex string without 0x prefix
+    readonly output_no: number;
+}
+
 export type UTXO = { chain: Chain.Bitcoin, utxo: UTXODetails } | { chain: Chain.Zcash, utxo: UTXODetails } | { chain: Chain.BitcoinCash, utxo: UTXODetails };
 
 // Pad a hex string if necessary so that its length is even
@@ -90,10 +95,21 @@ export const generateGHash = (payload: EthArgs, /* amount: number | string, */ t
     return Ox(keccak256(encoded));
 };
 
+export const generateSighash = (pHash: string, amount: number | string, to: string, renContract: RenContract, nonceHash: string, network: NetworkDetails): string => {
+    const token = syncGetTokenAddress(renContract, network);
+
+    const encoded = rawEncode(
+        ["bytes32", "uint256", "address", "address", "bytes32"],
+        [Ox(pHash), amount, token, to, nonceHash],
+    );
+
+    return Ox(keccak256(encoded));
+};
+
 export const toBase64 = (input: string | Buffer) =>
     (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex")).toString("base64");
 
-export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXODetails) => {
+export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOInput) => {
     return Ox(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txid)}_${utxo.output_no}`));
 };
 
@@ -155,6 +171,12 @@ const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25
 export const fixSignature = (response: UnmarshalledTx, network: NetworkDetails): Signature => {
     if (!response.out) {
         throw new Error(`Expected transaction response to have signature`);
+    }
+
+    const expectedSighash = generateSighash(response.in.phash, response.in.amount.toFixed(), response.in.to, response.to, response.autogen.nhash, network);
+    if (Ox(response.autogen.sighash) !== Ox(expectedSighash)) {
+        // tslint:disable-next-line: no-console
+        console.warn(`Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${response.autogen.sighash}`);
     }
 
     const r = response.out.r;

@@ -5,12 +5,13 @@ import GatewayJS, { ShiftInStatus, ShiftOutStatus } from "@renproject/gateway-js
 
 import "./style.scss";
 
+// If the network is changed, `sendTo` should be changed too.
 const gatewayJS = new GatewayJS("testnet");
 
 const startShiftIn = async () => {
     const amount = 0.000225; // BTC
     const recipient = prompt("Enter Ethereum address to receive BTC");
-    if (!recipient) { throw new Error(`No recipient provided. `) };
+    if (!recipient) { return; };
 
     gatewayJS.open({
         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
@@ -42,6 +43,26 @@ const startShiftIn = async () => {
         .catch(console.error);
 };
 
+// const startShiftOut = async () => {
+//     const amount = 0.000225; // BTC
+//     const recipient = prompt("Enter Bitcoin address to receive BTC");
+//     if (!recipient) { return; };
+
+//     gatewayJS.open({
+//         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+//         sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
+
+//         // Amount of BTC we are sending (in Satoshis)
+//         sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+
+//         // The contract we want to interact with
+//         sendTo: "0xa2aE9111634F5983e4e1C3E3823914841a4c7235",
+//     }).result()
+//         .on("status", (status) => console.log(`[GOT STATUS] ${status}`))
+//         .then(console.log)
+//         .catch(console.error);
+// };
+
 const recoverTrades = async () => {
     // Re-open incomplete trades
     const previousGateways = await gatewayJS.getGateways();
@@ -63,6 +84,7 @@ const GatewayExample = () => {
         <div className="test-environment">
             <p className="box">To use this testing environment, you need to use a Web3 browser like Brave or Metamask for Firefox/Chrome.</p>
             <button onClick={startShiftIn} className="blue">Shift in with GatewayJS</button>
+            {/* <button onClick={startShiftOut} className="blue">Shift out with GatewayJS</button> */}
         </div>
     </div>;
 }

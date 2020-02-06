@@ -173,6 +173,11 @@ body {
         color: $red;
     }
 
+    .warning {
+        color: $orange;
+        font-weight: bold;
+    }
+
     span[role="button"],
     label {
         user-select: none;
@@ -288,7 +293,7 @@ body {
         font-size: 16px;
         // border-radius: 3px;
 
-        span {
+        >span {
             width: 100%;
             position: absolute;
             left: 0;

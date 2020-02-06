@@ -1,27 +1,30 @@
 import { HistoryEvent } from "@renproject/ren-js-common";
 import localForage from "localforage";
 
+import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
+
 const stores = new Map<string, LocalForage>();
 
 export const getURL = () => (window.location !== window.parent.location
     ? document.referrer
     : document.location.href);
 
-const getStore = (domainIn: string) => {
-    const domain = (new URL(domainIn)).hostname;
-    let store = stores.get(domain);
+const getStore = (network: string, domainIn: string) => {
+    let storeName = (new URL(domainIn)).hostname;
+    if (network !== DEFAULT_NETWORK) { storeName += `-${network}`; }
+    let store = stores.get(storeName);
     if (store) { return store; }
     store = localForage.createInstance({
-        name: domain,
+        name: storeName,
     });
-    stores.set(domain, store);
+    stores.set(storeName, store);
     return store;
 };
 
-export const getStorage = async (domainIn?: string): Promise<Map<string, HistoryEvent>> => {
+export const getStorage = async (network: string, domainIn?: string): Promise<Map<string, HistoryEvent>> => {
     const domain = domainIn || getURL();
 
-    const store = getStore(domain);
+    const store = getStore(network, domain);
 
     const keys = await store.keys();
 
@@ -36,10 +39,10 @@ export const getStorage = async (domainIn?: string): Promise<Map<string, History
 
 const cancelled = new Set<string>();
 
-export const updateStorageTrade = async (trade: HistoryEvent, domainIn?: string) => {
+export const updateStorageTrade = async (network: string, trade: HistoryEvent, domainIn?: string) => {
     const domain = domainIn || getURL();
 
-    const store = getStore(domain);
+    const store = getStore(network, domain);
 
     if (!cancelled.has(trade.shiftParams.nonce)) {
         await store.setItem(trade.shiftParams.nonce, trade);
@@ -48,10 +51,10 @@ export const updateStorageTrade = async (trade: HistoryEvent, domainIn?: string)
     return;
 };
 
-export const removeStorageTrade = async (nonce: string, domainIn?: string) => {
+export const removeStorageTrade = async (network: string, nonce: string, domainIn?: string) => {
     const domain = domainIn || getURL();
 
-    const store = getStore(domain);
+    const store = getStore(network, domain);
 
     cancelled.add(nonce);
     await store.removeItem(nonce);

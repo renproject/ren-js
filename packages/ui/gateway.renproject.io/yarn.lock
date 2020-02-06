@@ -1441,36 +1441,29 @@
     react-router-dom "^5.1.2"
     react-select "^3.0.8"
 
-"@renproject/ren-js-common@^0.0.19":
-  version "0.0.19"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.19.tgz#acf1cd0740ae352dd12ae3a0ed59e1eb9c18b6ee"
-  integrity sha512-k2DmjosRk6M+XqRxZAiuDrVBL9XtLXskOuomt0gM9arb3GLVTInKXIlM2cclF7YdRSVlQrjNxcBTQDvN5ekDnw==
+"@renproject/ren-js-common@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.2.tgz#6711115d119809408848742a0198ae84941341e3"
+  integrity sha512-vpe3iRGHZUqui+8Umkft1wVgX49QGbtP5j7dTT5ydyTmOAS9qR0dzyg69spF83ozIUN2bDT0IzPV2w+bsegUIQ==
   dependencies:
     "@types/bn.js" "^4.11.6"
     bignumber.js "^9.0.0"
+    events "^3.1.0"
 
-"@renproject/ren-js-common@^0.0.20":
-  version "0.0.20"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.20.tgz#376240e23ed42748ce722321d055234c4eab5b83"
-  integrity sha512-coMC563b3X5sKHTHVqnYI8Q/azZF4fLf/l2KzCyO/2/a4+yMfz1hOfPiicEJ30NA7V+bQN79nSbAkQaFriEZAQ==
-  dependencies:
-    "@types/bn.js" "^4.11.6"
-    bignumber.js "^9.0.0"
-
-"@renproject/ren@^0.5.3":
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-0.5.3.tgz#ea6bfccda3419da5418631f14e18182fc8662a80"
-  integrity sha512-z+2aDgR06X0FMAlrho4yuVnK4po+Nt17IubnoUYtVRT7HX5vXZEJ9FOgb+mVCIAkSjVHeRhUdpjUYZ6aALRNJg==
+"@renproject/ren@^0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-0.6.0.tgz#4d6973202dbc5a1a7eb8237eb2eb8ac0c8bba687"
+  integrity sha512-tHuO35FYPw8wgxz0kfGcs9K2J1CdEeYpvgoxFqfxUpLRSCeRwB7G4HXLlHQldw+c8AWn7GPzV4YDkaLvHnLDcw==
   dependencies:
     "@renproject/contracts" "^0.3.32"
-    "@renproject/ren-js-common" "^0.0.19"
+    "@renproject/ren-js-common" "^0.1.2"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
-    "@types/node" "^13.5.1"
+    "@types/node" "^13.7.0"
     axios "^0.19.2"
     bignumber.js "^9.0.0"
-    bitcore-lib "^8.14.4"
-    bitcore-lib-cash "^8.14.4"
+    bitcore-lib "^8.15.0"
+    bitcore-lib-cash "^8.15.0"
     bitcore-lib-zcash zcash-hackworks/bitcore-lib-zcash
     bn.js "^5.1.1"
     bs58 "^4.0.1"
@@ -1897,10 +1890,15 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.22.tgz#b8d9eae3328b96910a373cf06ac8d3c5abe9c200"
   integrity sha512-r5i93jqbPWGXYXxianGATOxTelkp6ih/U0WVnvaqAvTqM+0U6J3kw6Xk6uq/dWNRkEVw/0SLcO5ORXbVNz4FMQ==
 
-"@types/node@^13.5.1", "@types/node@^13.5.2":
+"@types/node@^13.5.2":
   version "13.5.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.5.2.tgz#3de53b55fd39efc428a901a0f6db31f761cfa131"
   integrity sha512-Fr6a47c84PRLfd7M7u3/hEknyUdQrrBA6VoPmkze0tcflhU5UnpWEX2kn12ktA/lb+MNHSqFlSiPHIHsaErTPA==
+
+"@types/node@^13.7.0":
+  version "13.7.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.7.0.tgz#b417deda18cf8400f278733499ad5547ed1abec4"
+  integrity sha512-GnZbirvmqZUzMgkFn70c74OQpTTUcCzlhQliTzYjQMqg+hVKcDnxdL19Ne3UdYzdMA/+W3eb646FWn/ZaT1NfQ==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -3576,12 +3574,12 @@ bitcoin-ops@^1.3.0:
   resolved "https://registry.yarnpkg.com/bitcoin-ops/-/bitcoin-ops-1.4.1.tgz#e45de620398e22fd4ca6023de43974ff42240278"
   integrity sha512-pef6gxZFztEhaE9RY9HmWVmiIHqCb2OyS4HPKkpc6CIiiOa3Qmuoylxc5P2EkU3w+5eTSifI9SEZC88idAIGow==
 
-bitcore-lib-cash@^8.14.4:
-  version "8.14.4"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-8.14.4.tgz#35595d4355b64eeb0839648656b42c24d58d8c5c"
-  integrity sha512-76pGRxgop1zQop1oMmb/IM/EzRwtp9X4AdLwaPWU3LL0JhTXQssKQY6BZ6bDN7pySVs4gMN/gUQoPITwltdYLA==
+bitcore-lib-cash@^8.15.0:
+  version "8.15.0"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-8.15.0.tgz#359f3a60cda904068f25d1e89548e5775debd9ab"
+  integrity sha512-mLXOg6O0nqWXaJDIAibYWf/38KqoIzh9SRQIBkfm7vKn4ypqUMPB3dNXMTqABzrjxgGjPUw6T0IlyiIj8J//NQ==
   dependencies:
-    bitcore-lib "^8.14.4"
+    bitcore-lib "^8.15.0"
     bn.js "=4.11.8"
     bs58 "^4.0.1"
     buffer-compare "=1.1.1"
@@ -3600,10 +3598,10 @@ bitcore-lib-zcash@zcash-hackworks/bitcore-lib-zcash:
     inherits "=2.0.1"
     lodash "=3.10.1"
 
-bitcore-lib@^8.14.4:
-  version "8.14.4"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-8.14.4.tgz#61803c446a78f83d4733e55d08a938555cd17ce6"
-  integrity sha512-YkIGObg2CvZ+kIbVtNkLnzMW5PEPPzm+fwjrdzSRwhU5YeuY3VjT+V1ldksGusM7wz5kywFL9KASsiB6NDFj7A==
+bitcore-lib@^8.15.0:
+  version "8.15.0"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-8.15.0.tgz#5e379120fc833624484443783322e3300dfb757e"
+  integrity sha512-OhAdINElZa/Q63W23xNg+0HZfX0xHOp10UnJygpUZgHv15pRVfgPoyxdMIkQNuH/dBgF9o2Y9h4w2Z7qwqdKHg==
   dependencies:
     bech32 "=1.1.3"
     bn.js "=4.11.8"
@@ -6393,6 +6391,11 @@ events@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.0.0.tgz#9a0a0dfaf62893d92b875b8f2698ca4114973e88"
   integrity sha512-Dc381HFWJzEOhQ+d8pkNon++bk9h6cdAoAj4iE6Q4y6xgTzySWXlKn05/TVNpjnfRqi/X0EpJEJohPjNI3zpVA==
+
+events@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/events/-/events-3.1.0.tgz#84279af1b34cb75aa88bf5ff291f6d0bd9b31a59"
+  integrity sha512-Rv+u8MLHNOdMjTAFeT3nCjHn2aGlx435FP/sDHNaRhDEMwyI/aB22Kj2qIN8R0cw3z28psEQLYwxVKLsKrMgWg==
 
 eventsource@^1.0.7:
   version "1.0.7"

@@ -1,10 +1,8 @@
 
-import RenJS from "@renproject/ren";
+import RenJS, { NetworkDetails } from "@renproject/ren";
 import { Tx } from "@renproject/ren-js-common";
 
-import { network } from "../state/sdkContainer";
-
-export const txUrl = (tx: Tx | null): string => {
+export const txUrl = (tx: Tx | null, network: NetworkDetails): string => {
     if (!tx) { return ""; }
     const isTx = tx.hash && tx.hash.slice && tx.hash.match(/^(0x)?[a-fA-F0-9]+$/);
     switch (tx.chain) {

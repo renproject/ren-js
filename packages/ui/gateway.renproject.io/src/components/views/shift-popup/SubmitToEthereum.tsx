@@ -5,15 +5,15 @@ import { Tx } from "@renproject/ren-js-common";
 import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
-import { network } from "../../../state/sdkContainer";
 import { OpeningShiftMini } from "../OpeningShiftMini";
 import { Popup } from "../Popup";
 
 export const SubmitToEthereum: React.StatelessComponent<{
     mini: boolean,
     txHash: Tx | null,
+    etherscan: string,
     submit: (retry?: boolean) => Promise<void>,
-}> = ({ mini, txHash, submit }) => {
+}> = ({ mini, txHash, etherscan, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as Error | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
@@ -83,9 +83,8 @@ export const SubmitToEthereum: React.StatelessComponent<{
                     Error submitting to Ethereum <InfoLabel level={LabelLevel.Warning}>{`${error.message || error}`}</InfoLabel>
                     {failedTransaction ? <>
                         <br />
-                        See the <a className="blue" href={`https://dashboard.tenderly.dev/tx/${network.contracts.chain}/${failedTransaction}/error`}>Transaction Stack Trace</a> for more details.
+                        See the <a className="blue" href={`${etherscan}/tx/${failedTransaction}`}>Transaction Stack Trace</a> for more details.
                         <br />
-                        If you see <span className="monospace">"nonce hash already spent"</span> your trade may have already gone through.
                     </> : null}
                 </span> : null}
                 <div className="popup--buttons">

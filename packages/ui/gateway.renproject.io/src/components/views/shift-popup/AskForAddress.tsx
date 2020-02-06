@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
 
-import { IS_TESTNET } from "../../../lib/environmentVariables";
 import { Token, Tokens } from "../../../state/generalTypes";
 import { OpeningShiftMini } from "../OpeningShiftMini";
 import { Popup } from "../Popup";
@@ -11,8 +10,9 @@ export const AskForAddress: React.StatelessComponent<{
     mini: boolean,
     token: Token,
     message: React.ReactNode,
+    isTestnet: boolean,
     onAddress(address: string, token: Token): void;
-}> = ({ mini, token, message, onAddress }) => {
+}> = ({ mini, token, message, isTestnet, onAddress }) => {
     // tslint:disable-next-line: prefer-const
     let [address, updateAddress] = React.useState("");
     const [error, updateError] = React.useState(null as string | null);
@@ -23,7 +23,7 @@ export const AskForAddress: React.StatelessComponent<{
 
     const submit = (event?: React.FormEvent<HTMLFormElement>) => {
         if (event) { event.preventDefault(); }
-        if (!error && tokenDetails && !tokenDetails.validator(address, IS_TESTNET)) {
+        if (!error && tokenDetails && !tokenDetails.validator(address, isTestnet)) {
             updateError(`Invalid ${tokenDetails.chain.toUpperCase()} address`);
             return;
         }

@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/browser";
 
 import { ExtraErrorData } from "@sentry/integrations";
 
-import { ENVIRONMENT, SENTRY_DSN, SOURCE_VERSION } from "./environmentVariables";
+import { SENTRY_DSN, SENTRY_ENVIRONMENT, SOURCE_VERSION } from "./environmentVariables";
 import { pageLoadedAt } from "./errors";
 
 export const initializeSentry = () => {
@@ -13,7 +13,7 @@ export const initializeSentry = () => {
         dsn: SENTRY_DSN,
 
         // Used to separate production and staging errors
-        environment: ENVIRONMENT,
+        environment: SENTRY_ENVIRONMENT,
 
         // Used to track errors across versions
         release: SOURCE_VERSION,

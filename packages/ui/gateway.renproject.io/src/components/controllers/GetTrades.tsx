@@ -3,6 +3,7 @@ import * as React from "react";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
+import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import {
     acknowledgeMessage, GatewayMessage, GatewayMessageType, postMessageToClient,
@@ -22,6 +23,8 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
             const queryShiftID = queryParams.id;
             uiContainer.handleShift(queryShiftID).catch(console.error);
+            const renNetwork: string = queryParams.network || DEFAULT_NETWORK;
+            uiContainer.setState({ renNetwork }).catch(console.error);
 
             // tslint:disable-next-line: no-any
             window.onmessage = (e: { data: GatewayMessage<any> }) => {
@@ -30,7 +33,7 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
                         switch (e.data.type) {
                             case GatewayMessageType.GetTrades:
                                 acknowledgeMessage(e.data);
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, await getStorage());
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, await getStorage(uiContainer.state.renNetwork || renNetwork));
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't

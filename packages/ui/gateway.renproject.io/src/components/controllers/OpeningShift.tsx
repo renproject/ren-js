@@ -2,7 +2,8 @@ import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
 import {
-    DetailedContractCall, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus,
+    DetailedContractCall, GatewayShiftInParamsExtra, ShiftInEvent, ShiftInStatus, ShiftOutEvent,
+    ShiftOutStatus,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import QRCode from "qrcode.react";
@@ -10,7 +11,8 @@ import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
 import infoIcon from "../../images/icons/info.svg";
-import { isPromise, _catchInteractionErr_ } from "../../lib/errors";
+// tslint:disable-next-line: ordered-imports
+import { _catchInteractionErr_, isPromise } from "../../lib/errors";
 import { GatewayMessageType, postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { Token } from "../../state/generalTypes";
@@ -67,7 +69,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             throw new Error(`Unable to load shift details`);
         }
 
-        const { paused, utxos } = uiContainer.state;
+        const { paused, utxos, wrongNetwork, expectedNetwork } = uiContainer.state;
 
         const AmountSpan = styled.span`
                 color: ${props => props.theme.primaryColor};
@@ -116,15 +118,22 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
 
             const token = shiftParams.sendToken.slice(0, 3) as Token;
 
-            const amount = shiftParams.sendAmount ? new BigNumber(
-                BigNumber.isBigNumber(shiftParams.sendAmount) ? shiftParams.sendAmount : shiftParams.sendAmount.toString()
+            const requiredAmount = shiftParams.requiredAmount ? new BigNumber(
+                BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
             ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
+
+            const shiftInParamsExtra = shiftParams as unknown as GatewayShiftInParamsExtra;
+            const suggestedAmount = shiftInParamsExtra.suggestedAmount ? new BigNumber(
+                BigNumber.isBigNumber(shiftInParamsExtra.suggestedAmount) ? shiftInParamsExtra.suggestedAmount : shiftInParamsExtra.suggestedAmount.toString()
+            ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
+
+            const amount = requiredAmount || suggestedAmount;
 
             let depositAddress;
 
             let inner = <></>;
             if (!sdkRenVM) {
-                inner = <LogIn token={token} paused={paused} wrongNetwork={uiContainer.state.wrongNetwork} />;
+                inner = <LogIn correctNetwork={expectedNetwork || "correct"} token={token} paused={paused} wrongNetwork={wrongNetwork} />;
             } else {
                 switch (shift.status) {
                     case ShiftInStatus.Committed:
@@ -138,6 +147,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 mini={paused}
                                 key={requestedToken}
                                 token={requestedToken}
+                                isTestnet={sdkRenVM.network.isTestnet}
                                 message={<>Your {requestedToken.toUpperCase()} address is required for <span className="url">{variableName}</span></>}
                                 onAddress={sdkContainer.updateToAddress}
                             />;
@@ -154,6 +164,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 waitForDeposit={sdkContainer.waitForDeposits}
                                 onQRClick={toggleShowQR}
                                 onDeposit={uiContainer.deposit}
+                                networkDetails={sdkRenVM.network}
                             />;
                         }
                         break;
@@ -163,10 +174,10 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         break;
                     case ShiftInStatus.ReturnedFromRenVM:
                     case ShiftInStatus.SubmittedToEthereum:
-                        inner = <SubmitToEthereum mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
+                        inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
                         break;
                     case ShiftInStatus.ConfirmedOnEthereum:
-                        return <Complete mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        return <Complete networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
                     // onDone().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: shiftIn > onDone"));
                     // inner = <></>;
                 }
@@ -181,7 +192,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                             <div className="popup--body--title">
                                 Deposit {amount ? <><CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard>{" "}</> : <></>}{token.toUpperCase()}
                             </div>
-                            <div>to</div>
+                            <div>{sdkRenVM?.network.isTestnet ? "(testnet tokens)" : ""}{" "}to</div>
                             <ParentContainer>
                                 <ParentInfo>
                                     <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{title}
@@ -203,7 +214,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             let inner = <></>;
 
             if (!sdkRenVM) {
-                inner = <LogIn token={token} paused={paused} wrongNetwork={uiContainer.state.wrongNetwork} />;
+                inner = <LogIn correctNetwork={expectedNetwork || "correct"} token={token} paused={paused} wrongNetwork={wrongNetwork} />;
             } else {
                 switch (shift.status) {
                     case ShiftOutStatus.Committed:
@@ -216,11 +227,12 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 mini={paused}
                                 key={requestedToken}
                                 token={requestedToken}
+                                isTestnet={sdkRenVM.network.isTestnet}
                                 message={<>Your {requestedToken.toUpperCase()} address is required for <span className="url">{variableName}</span></>}
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
-                            inner = <SubmitToEthereum mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                            inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         }
                         // const submit = async (submitOrderID: string) => {
                         //     await sdkContainer.approveTokenTransfer(submitOrderID);
@@ -232,7 +244,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         break;
                     case ShiftOutStatus.SubmittedToEthereum:
                         // Submit the trade to Ethereum
-                        inner = <SubmitToEthereum mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                        inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         break;
                     case ShiftOutStatus.ConfirmedOnEthereum:
                     case ShiftOutStatus.SubmittedToRenVM:
@@ -244,11 +256,11 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         inner = <></>;
                         break;
                     case ShiftOutStatus.ReturnedFromRenVM:
-                        return <Complete mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        return <Complete networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
                 }
             }
 
-            const contractAddress = shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls?.length - 1] as unknown as DetailedContractCall).sendTo) || "";
+            const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls?.length - 1] as unknown as DetailedContractCall).sendTo)) || "";
 
             return <>
                 {!paused ? <div className="popup--body--details">

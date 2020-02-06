@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import { Loading, TokenIcon } from "@renproject/react-components";
-import { parseRenContract, UTXO } from "@renproject/ren";
-import { Asset, ShiftInEvent } from "@renproject/ren-js-common";
+import { NetworkDetails, UTXO } from "@renproject/ren";
+import { ShiftInEvent } from "@renproject/ren-js-common";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import CopyToClipboard from "react-copy-to-clipboard";
@@ -13,6 +13,7 @@ import { ReactComponent as QR } from "../../../images/qr.svg";
 import { txUrl } from "../../../lib/txUrl";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token, Tokens } from "../../../state/generalTypes";
+import { numberOfConfirmations } from "../../../state/sdkContainer";
 import { LabelledInput } from "../LabelledInput";
 import { Popup } from "../Popup";
 import { Tooltip } from "../tooltip/Tooltip";
@@ -55,17 +56,17 @@ interface Props {
     depositAddress: string;
     order: ShiftInEvent;
     utxos: OrderedMap<string, UTXO>;
+    networkDetails: NetworkDetails;
     onQRClick(): void;
     waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
     onDeposit(utxo: UTXO): void;
 }
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, token, order, utxos, onQRClick, depositAddress, waitForDeposit, onDeposit }) => {
+    ({ mini, token, order, utxos, onQRClick, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
 
-        // tslint:disable-next-line: prefer-const
-        let [understood, setUnderstood] = React.useState(false);
+        const [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
 
@@ -79,7 +80,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             }, 5000) as any, // tslint:disable-line: no-any
             );
             setUnderstood(true);
-            understood = true;
             waitForDeposit(onDeposit)
                 .catch((error) => {
                     setFailed(error);
@@ -88,7 +88,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
 
         React.useEffect(() => {
             showDepositAddress();
-        }, []);
+        }, []); // tslint:disable-line: react-hooks/exhaustive-deps
 
         const onClickAddress = React.useCallback(() => {
             setCopied(true);
@@ -102,7 +102,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                 }
             }, 5000) as any, // tslint:disable-line: no-any
             );
-        }, []);
+        }, [showSpinner, timer]);
 
         const ContinueButton = styled.button`
             background: ${p => `linear-gradient(90deg, ${p.theme.primaryColor} 0%, ${lighten(0.1, p.theme.primaryColor)} 180%)`};
@@ -227,9 +227,9 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     </div> */}
                         <ConfirmationsBlock>
                             <Loading className="loading--blue" />
-                            <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? (parseRenContract(order.shiftParams.sendToken).asset === Asset.ZEC ? 6 : 2) : "?"} confirmations</ConfirmationsCount>
+                            <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : "?"} confirmations</ConfirmationsCount>
                         </ConfirmationsBlock>
-                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })}><LabelledInput style={{ textAlign: "center", maxWidth: "unset" }} type="text" inputLabel="Transaction ID" width={105} value={utxo.utxo.txid} disabled={true} /></a>
+                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid }, networkDetails)}><LabelledInput style={{ textAlign: "center", maxWidth: "unset" }} type="text" inputLabel="Transaction ID" width={105} value={utxo.utxo.txid} disabled={true} /></a>
                     </div>;
                 }).valueSeq()}
                 {/* <details>
@@ -244,7 +244,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             return <Popup mini={mini}>
                 <div className="side-strip"><TokenIcon token={token} /></div>
                 <div className="popup--body--details">
-                    {last ? <>{last.utxo.confirmations} / {(parseRenContract(order.shiftParams.sendToken).asset === Asset.ZEC ? 6 : 2)} confirmations</> : <>Waiting for deposit</>}
+                    {last ? <>{last.utxo.confirmations} / {numberOfConfirmations(order.shiftParams.sendToken, networkDetails)} confirmations</> : <>Waiting for deposit</>}
                 </div>
             </Popup>;
         }

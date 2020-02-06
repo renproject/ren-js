@@ -19,8 +19,8 @@
     "dependencies": {
         "@renproject/fonts": "^1.0.1",
         "@renproject/react-components": "^1.0.37",
-        "@renproject/ren": "^0.5.3",
-        "@renproject/ren-js-common": "^0.0.20",
+        "@renproject/ren": "^0.6.0",
+        "@renproject/ren-js-common": "^0.1.2",
         "@sentry/browser": "^5.11.2",
         "@sentry/core": "^5.11.2",
         "@sentry/integrations": "^5.11.1",

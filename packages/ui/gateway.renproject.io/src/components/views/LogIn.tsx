@@ -9,10 +9,9 @@ import { ReactComponent as Metamask } from "../../images/metamask.svg";
 import { ReactComponent as Status } from "../../images/status.svg";
 import { ReactComponent as Trust } from "../../images/trust.svg";
 import { Token } from "../../state/generalTypes";
-import { network } from "../../state/sdkContainer";
 import { Popup } from "../views/Popup";
 
-export const LogIn = ({ token, paused, wrongNetwork }: { token: Token, paused: boolean, wrongNetwork: number | undefined }) => {
+export const LogIn = ({ token, paused, wrongNetwork, correctNetwork }: { token: Token, paused: boolean, wrongNetwork: number | undefined, correctNetwork: string }) => {
     return <Popup mini={paused}>
         {paused ? <>
             <div className="side-strip"><TokenIcon token={token} /></div>
@@ -31,7 +30,7 @@ export const LogIn = ({ token, paused, wrongNetwork }: { token: Token, paused: b
                         <a target="_blank" rel="noopener noreferrer" title="Status Web3 Browser" href="https://status.im"><Status /></a>
                         {/* tslint:enable: react-a11y-anchors */}
                     </div>
-                    {wrongNetwork ? <>Please switch to the {network.contracts.chainLabel} Ethereum network.</> : <>Connect your Ethereum Web3 wallet to continue</>}
+                    {wrongNetwork ? <>Please switch to the {correctNetwork} Ethereum network.</> : <>Connect your Ethereum Web3 wallet to continue</>}
                 </div>
             </>}
     </Popup>;

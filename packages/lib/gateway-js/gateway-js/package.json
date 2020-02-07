@@ -8,7 +8,7 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/noiach/gateway-js",
+  "repository": "https://github.com/renproject/gateway-js",
   "license": "MIT",
   "keywords": [],
   "scripts": {

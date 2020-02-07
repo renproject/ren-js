@@ -1,6 +1,6 @@
 // tslint:disable: no-console
 
-import { RenContract, strip0x } from "@renproject/ren-js-common";
+import { EthArgs, RenContract, strip0x } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
@@ -18,13 +18,17 @@ import {
 chai.use(chaiAsPromised);
 chai.should();
 
+require("dotenv").config();
+
+const NETWORK = process.env.NETWORK;
+
 describe("Utils", function () {
     // Disable test timeout.
     this.timeout(0);
 
     it("generatePHash", () => {
         const expectedPHash = "0x65749241113ce04d4242ca414a5ba67c27eea1e74a5540367a1726770700bae2";
-        const payload = [{
+        const payload: EthArgs = [{
             name: "_shifter",
             type: "address",
             value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
@@ -53,7 +57,7 @@ describe("Utils", function () {
 
     for (const testcase of testcases) {
         it(`generateGHash for ${testcase.name}`, () => {
-            const payload = [{
+            const payload: EthArgs = [{
                 name: "_shifter",
                 type: "address",
                 value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
@@ -80,8 +84,8 @@ describe("Utils", function () {
 
     it(`queryTX`, async () => {
         // tslint:disable-next-line: await-promise
-        await new RenJS("testnet").renVM.queryTX("0")
-            .should.be.rejectedWith(/Node returned status 500 with reason: method=ren_queryTx not available/);
+        await new RenJS(NETWORK).renVM.queryTX("0")
+            .should.be.rejectedWith(/Node returned status 404 with reason: tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/);
     });
 
     it.skip("fixSignature", () => {

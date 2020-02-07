@@ -376,13 +376,14 @@
   dependencies:
     darknode-sol "https://github.com/renproject/darknode-sol#ff7d0a442a52ae7990e0ee21a51b037c47450448"
 
-"@renproject/ren-js-common@^0.0.19":
-  version "0.0.19"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.0.19.tgz#acf1cd0740ae352dd12ae3a0ed59e1eb9c18b6ee"
-  integrity sha512-k2DmjosRk6M+XqRxZAiuDrVBL9XtLXskOuomt0gM9arb3GLVTInKXIlM2cclF7YdRSVlQrjNxcBTQDvN5ekDnw==
+"@renproject/ren-js-common@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.2.tgz#6711115d119809408848742a0198ae84941341e3"
+  integrity sha512-vpe3iRGHZUqui+8Umkft1wVgX49QGbtP5j7dTT5ydyTmOAS9qR0dzyg69spF83ozIUN2bDT0IzPV2w+bsegUIQ==
   dependencies:
     "@types/bn.js" "^4.11.6"
     bignumber.js "^9.0.0"
+    events "^3.1.0"
 
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
@@ -3822,6 +3823,11 @@ events@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.0.0.tgz#9a0a0dfaf62893d92b875b8f2698ca4114973e88"
   integrity sha512-Dc381HFWJzEOhQ+d8pkNon++bk9h6cdAoAj4iE6Q4y6xgTzySWXlKn05/TVNpjnfRqi/X0EpJEJohPjNI3zpVA==
+
+events@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/events/-/events-3.1.0.tgz#84279af1b34cb75aa88bf5ff291f6d0bd9b31a59"
+  integrity sha512-Rv+u8MLHNOdMjTAFeT3nCjHn2aGlx435FP/sDHNaRhDEMwyI/aB22Kj2qIN8R0cw3z28psEQLYwxVKLsKrMgWg==
 
 evp_bytestokey@^1.0.0, evp_bytestokey@^1.0.3:
   version "1.0.3"

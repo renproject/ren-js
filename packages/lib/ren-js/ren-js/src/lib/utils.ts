@@ -1,5 +1,5 @@
 import {
-    Args, Asset, Chain, NULL, Ox, RenContract, strip0x, value,
+    Asset, Chain, EthArgs, NULL, Ox, RenContract, ShiftedToken, strip0x, value,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { crypto } from "bitcore-lib";
@@ -13,7 +13,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs } from "../blockchain/zec";
-import { Tx } from "../renVM/transaction";
+import { UnmarshalledTx } from "../renVM/transaction";
 import { bchUtils, btcUtils, parseRenContract, zecUtils } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -25,23 +25,28 @@ export interface UTXODetails {
     readonly confirmations: number;
 }
 
+export interface UTXOInput {
+    readonly txid: string; // hex string without 0x prefix
+    readonly output_no: number;
+}
+
 export type UTXO = { chain: Chain.Bitcoin, utxo: UTXODetails } | { chain: Chain.Zcash, utxo: UTXODetails } | { chain: Chain.BitcoinCash, utxo: UTXODetails };
 
 // Pad a hex string if necessary so that its length is even
 // export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : hex;
 
-const unzip = (zip: Args) => [zip.map(param => param.type), zip.map(param => param.value)];
+const unzip = (zip: EthArgs) => [zip.map(param => param.type), zip.map(param => param.value)];
 
 // tslint:disable-next-line:no-any
 const rawEncode = (types: Array<string | {}>, parameters: any[]) => (new AbiCoder()).encodeParameters(types, parameters);
 
 // tslint:disable-next-line: no-any
-export const generatePHash = (...zip: Args | [Args]): string => {
+export const generatePHash = (...zip: EthArgs | [EthArgs]): string => {
     // You can annotate values passed in to soliditySha3.
     // Example: { type: "address", value: srcToken }
 
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = Array.isArray(zip) ? zip[0] as any as Args : zip; // tslint:disable-line: no-any
+    const args = Array.isArray(zip) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
 
     // If the payload is empty, use 0x0
     if (args.length === 0) {
@@ -53,16 +58,19 @@ export const generatePHash = (...zip: Args | [Args]): string => {
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
 };
 
-export const getAssetSymbol = (asset: Asset): string => {
-    switch (asset) {
-        case Asset.BTC: return "zBTC";
-        case Asset.BCH: return "zBCH";
-        case Asset.ZEC: return "zZEC";
-        case Asset.ETH: throw new Error(`Asset ${asset} has no symbol`);
+export const getTokenName = (tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")): ShiftedToken => {
+    switch (tokenOrContract) {
+        case ShiftedToken.zBTC: case ShiftedToken.zZEC: case ShiftedToken.zBCH: return tokenOrContract;
+        case Asset.BTC: case "BTC": return ShiftedToken.zBTC;
+        case Asset.ZEC: case "ZEC": return ShiftedToken.zZEC;
+        case Asset.BCH: case "BCH": return ShiftedToken.zBCH;
+        case Asset.ETH: throw new Error(`Unexpected token ${tokenOrContract}`);
+        default:
+            return getTokenName(parseRenContract(tokenOrContract).asset);
     }
 };
 
-export const getTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
+export const syncGetTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
     switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
             return network.contracts.addresses.shifter.zBTC._address;
@@ -75,19 +83,37 @@ export const getTokenAddress = (renContract: RenContract, network: NetworkDetail
     }
 };
 
-export const generateGHash = (payload: Args, amount: number | string, to: string, renContract: RenContract, nonce: string, network: NetworkDetails): string => {
-    const token = getTokenAddress(renContract, network);
+export const generateGHash = (payload: EthArgs, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: NetworkDetails): string => {
+    const token = syncGetTokenAddress(renContract, network);
     const pHash = generatePHash(payload);
 
     const encoded = rawEncode(
-        ["bytes32", "uint256", "address", "address", "bytes32"],
-        [Ox(pHash), amount, Ox(token), Ox(to), Ox(nonce)],
+        ["bytes32", /*"uint256",*/ "address", "address", "bytes32"],
+        [Ox(pHash), /*amount,*/ Ox(token), Ox(to), Ox(nonce)],
     );
 
     return Ox(keccak256(encoded));
 };
 
-export const generateTxHash = (renContract: RenContract, encodedID: string) => {
+export const generateSighash = (pHash: string, amount: number | string, to: string, renContract: RenContract, nonceHash: string, network: NetworkDetails): string => {
+    const token = syncGetTokenAddress(renContract, network);
+
+    const encoded = rawEncode(
+        ["bytes32", "uint256", "address", "address", "bytes32"],
+        [Ox(pHash), amount, token, to, nonceHash],
+    );
+
+    return Ox(keccak256(encoded));
+};
+
+export const toBase64 = (input: string | Buffer) =>
+    (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex")).toString("base64");
+
+export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOInput) => {
+    return Ox(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txid)}_${utxo.output_no}`));
+};
+
+export const generateShiftOutTxHash = (renContract: RenContract, encodedID: string) => {
     return Ox(keccak256(`txHash_${renContract}_${encodedID}`));
 };
 
@@ -142,10 +168,20 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: Tx, network: NetworkDetails): Signature => {
-    const r = response.signature.r;
-    let s = new BN(strip0x(response.signature.s), "hex");
-    let v = ((parseInt(response.signature.v || "0", 10) + 27) || 27);
+export const fixSignature = (response: UnmarshalledTx, network: NetworkDetails): Signature => {
+    if (!response.out) {
+        throw new Error(`Expected transaction response to have signature`);
+    }
+
+    const expectedSighash = generateSighash(response.in.phash, response.in.amount.toFixed(), response.in.to, response.to, response.autogen.nhash, network);
+    if (Ox(response.autogen.sighash) !== Ox(expectedSighash)) {
+        // tslint:disable-next-line: no-console
+        console.warn(`Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${response.autogen.sighash}`);
+    }
+
+    const r = response.out.r;
+    let s = new BN(strip0x(response.out.s), "hex");
+    let v = ((parseInt(response.out.v || "0", 10) + 27) || 27);
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
@@ -161,14 +197,14 @@ export const fixSignature = (response: Tx, network: NetworkDetails): Signature =
     // has been updated.
     const recovered = {
         [v]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.args.hash), "hex"),
+            Buffer.from(strip0x(response.autogen.sighash), "hex"),
             v,
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
         )),
 
         [switchV(v)]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.args.hash), "hex"),
+            Buffer.from(strip0x(response.autogen.sighash), "hex"),
             switchV(v),
             Buffer.from(strip0x(r), "hex"),
             s.toArrayLike(Buffer, "be", 32),
@@ -304,6 +340,26 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string, nonce?
 
 export const toBigNumber = (n: BigNumber | { toString(): string }) => BigNumber.isBigNumber(n) ? new BigNumber(n.toFixed()) : new BigNumber(n.toString());
 
+export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+    try {
+        const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+        return await shifterRegistry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
+    } catch (error) {
+        (error || {}).error = `Error looking up ${tokenOrContract} token address: ${error.message}`;
+        throw error;
+    }
+};
+
+export const getShifterAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+    try {
+        const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+        return await shifterRegistry.methods.getShifterBySymbol(getTokenName(tokenOrContract)).call();
+    } catch (error) {
+        (error || {}).error = `Error looking up ${tokenOrContract} shifter address: ${error.message}`;
+        throw error;
+    }
+};
+
 export const utils = {
     Ox,
     strip0x,
@@ -321,4 +377,11 @@ export const utils = {
     // Bitcoin Cash
     BCH: bchUtils,
     bch: bchUtils,
+};
+
+export const assert = (assertion: boolean, sentence?: string): assertion is true => {
+    if (!assertion) {
+        throw new Error(`Failed assertion${sentence ? `: ${assertion}` : ""}`);
+    }
+    return true;
 };

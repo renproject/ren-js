@@ -9,6 +9,8 @@ import { NetworkTestnet } from "../src/types/networks";
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
+require("dotenv").config();
+
 describe("processParams", () => {
     let web3: Web3;
 
@@ -34,7 +36,7 @@ describe("processParams", () => {
             web3Provider: {},
             sendTo: "sendTo",
             contractFn: "contractFn",
-            contractParams: [{ name: "name", type: "type", value: "1" }],
+            contractParams: [{ name: "name", type: "uint", value: "1" }],
             txConfig: { gas: 2 },
         })
             .should.deep.equal({

@@ -2,6 +2,7 @@ import {
     newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
@@ -12,17 +13,17 @@ import { payloadToShiftInABI } from "./lib/abi";
 import { processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, generateTxHash, ignoreError,
-    randomNonce, retrieveDeposits, SECONDS, signatureToString, sleep, UTXO, UTXODetails,
-    withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash,
+    getShifterAddress, ignoreError, randomNonce, retrieveDeposits, SECONDS, signatureToString,
+    sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
-import { Tx } from "./renVM/transaction";
-import { parseRenContract, TxStatus } from "./types/assets";
+import { UnmarshalledTx } from "./renVM/transaction";
+import { TxStatus } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftInObject {
-    public utxo: UTXODetails | undefined;
+    public utxo: UTXOInput | undefined;
     public gatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: ShifterNetwork;
@@ -36,7 +37,7 @@ export class ShiftInObject {
         const renTxHash = this.params.renTxHash;
 
         if (!renTxHash) {
-            const { sendToken: renContract, contractCalls, sendAmount, nonce: maybeNonce } = this.params;
+            const { sendToken: renContract, contractCalls, nonce: maybeNonce } = this.params;
 
             if (!contractCalls || !contractCalls.length) {
                 throw new Error(`Must provide Ren transaction hash or contract call details.`);
@@ -46,20 +47,13 @@ export class ShiftInObject {
                 throw new Error(`Must provide Ren transaction hash or token to be shifted.`);
             }
 
-            if (!sendAmount) {
-                throw new Error(`Must provide Ren transaction hash or amount to be shifted.`);
-            }
-
             const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
             const nonce = maybeNonce || randomNonce();
             this.params.nonce = nonce;
 
-            // const sendAmountString = BigNumber.isBigNumber(sendAmount) ? sendAmount.toFixed() : new BigNumber(sendAmount.toString()).toFixed();
-            const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
-
             // TODO: Validate inputs
-            const gHash = generateGHash(contractParams || [], sendAmountNumber, strip0x(sendTo), renContract, nonce, this.network);
+            const gHash = generateGHash(contractParams || [], strip0x(sendTo), renContract, nonce, this.network);
             const gatewayAddress = generateAddress(renContract, gHash, this.network);
             this.gatewayAddress = gatewayAddress;
         }
@@ -71,6 +65,7 @@ export class ShiftInObject {
         const promiEvent = newPromiEvent<this, { "deposit": [UTXO] }>();
 
         (async () => {
+            // If the deposit has already been submitted, skip "waitForDeposit".
             if (this.params.renTxHash) {
                 return this;
             }
@@ -79,32 +74,28 @@ export class ShiftInObject {
                 throw new Error("Unable to calculate gateway address.");
             }
 
-            const { sendAmount, sendToken: renContract } = this.params;
+            const { requiredAmount, sendToken: renContract } = this.params;
 
             if (!renContract) {
                 throw new Error(`Must provide token to be shifted.`);
             }
 
-            if (!sendAmount) {
-                throw new Error(`Must provide amount to be shifted.`);
-            }
-
-            try {
-                // Check if the darknodes have already seen the transaction
-                const queryTxResponse = await this.queryTx();
-                if (
-                    queryTxResponse.txStatus === TxStatus.TxStatusDone ||
-                    queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
-                    queryTxResponse.txStatus === TxStatus.TxStatusPending
-                ) {
-                    // Shift has already been submitted to RenVM - no need to
-                    // wait for deposit.
-                    return this;
-                }
-            } catch (error) {
-                console.error(error);
-                // Ignore error
-            }
+            // try {
+            //     // Check if the darknodes have already seen the transaction
+            //     const queryTxResponse = await this.queryTx();
+            //     if (
+            //         queryTxResponse.txStatus === TxStatus.TxStatusDone ||
+            //         queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
+            //         queryTxResponse.txStatus === TxStatus.TxStatusPending
+            //     ) {
+            //         // Shift has already been submitted to RenVM - no need to
+            //         // wait for deposit.
+            //         return this;
+            //     }
+            // } catch (error) {
+            //     console.error(error);
+            //     // Ignore error
+            // }
 
             let deposits: OrderedMap<string, UTXO> = OrderedMap();
             // const depositedAmount = (): number => {
@@ -120,7 +111,25 @@ export class ShiftInObject {
                 if (deposits.size > 0) {
                     // Sort deposits
                     const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
-                    if (greatestTx && greatestTx.utxo.value >= sendAmount) {
+
+                    // Handle required minimum and maximum amount
+                    let minimum = new BigNumber(0);
+                    let maximum = new BigNumber(Infinity);
+                    if (requiredAmount) {
+                        if (BigNumber.isBigNumber(requiredAmount) || typeof requiredAmount === "number" || typeof requiredAmount === "string" || BN.isBN(requiredAmount)) {
+                            minimum = toBigNumber(requiredAmount);
+                        } else {
+                            const requiredAmountSpread = requiredAmount as { min: BN | BigNumber | number | string, max: BN | BigNumber | number | string };
+                            if (requiredAmountSpread.min) {
+                                minimum = toBigNumber(requiredAmountSpread.min);
+                            }
+                            if (requiredAmountSpread.max) {
+                                maximum = toBigNumber(maximum);
+                            }
+                        }
+                    }
+
+                    if (greatestTx && new BigNumber(greatestTx.utxo.value).gte(minimum) && new BigNumber(greatestTx.utxo.value).lte(maximum)) {
                         this.utxo = greatestTx.utxo;
                         break;
                     }
@@ -153,13 +162,18 @@ export class ShiftInObject {
         return promiEvent;
     }
 
-    public renTxHash = () => {
+    public renTxHash = (specifyUTXO?: UTXOInput) => {
         const renTxHash = this.params.renTxHash;
         if (renTxHash) {
             return renTxHash;
         }
 
-        const { contractCalls, sendToken: renContract, sendAmount, nonce } = this.params;
+        const { contractCalls, sendToken: renContract, nonce } = this.params;
+
+        const utxo = specifyUTXO || this.utxo;
+        if (!utxo) {
+            throw new Error(`Unable to generate renTxHash without UTXO. Call 'waitForDeposit' first.`);
+        }
 
         if (!nonce) {
             throw new Error(`Unable to generate renTxHash without nonce.`);
@@ -173,30 +187,29 @@ export class ShiftInObject {
             throw new Error(`Unable to generate renTxHash without token being shifted.`);
         }
 
-        if (!sendAmount) {
-            throw new Error(`Unable to generate renTxHash without send amount.`);
-        }
-
         const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
-        const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
-        const gHash = generateGHash(contractParams || [], sendAmountNumber, strip0x(sendTo), renContract, nonce, this.network);
-        const encodedGHash = Buffer.from(strip0x(gHash), "hex").toString("base64");
-        return generateTxHash(renContract, encodedGHash);
+        const gHash = generateGHash(contractParams || [], strip0x(sendTo), renContract, nonce, this.network);
+        const encodedGHash = toBase64(gHash);
+        return generateShiftInTxHash(renContract, encodedGHash, utxo);
     }
 
-    public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
+    public queryTx = async (specifyUTXO?: UTXOInput) => this.renVMNetwork.queryTX(this.renTxHash(specifyUTXO));
 
-    public submitToRenVM = (specifyUTXO?: UTXODetails): PromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }> => {
+    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }> => {
         const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
-            let renTxHash = this.params.renTxHash || this.renTxHash();
-
             const utxo = specifyUTXO || this.utxo;
+            let renTxHash = this.params.renTxHash;
             if (utxo) {
+                const utxoRenTxHash = this.renTxHash(utxo);
+                if (renTxHash && renTxHash !== utxoRenTxHash) {
+                    throw new Error(`Inconsistent RenVM transaction hash: got ${renTxHash} but expected ${utxoRenTxHash}`);
+                }
+                renTxHash = utxoRenTxHash;
 
-                const { contractCalls, sendToken: renContract, nonce, sendAmount } = this.params;
+                const { contractCalls, sendToken: renContract, nonce } = this.params;
 
                 if (!nonce) {
                     throw new Error("Unable to submit to RenVM without nonce.");
@@ -210,13 +223,7 @@ export class ShiftInObject {
                     throw new Error(`Unable to submit to RenVM without token being shifted.`);
                 }
 
-                if (!sendAmount) {
-                    throw new Error(`Unable to submit to RenVM without send amount.`);
-                }
-
                 const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
-
-                const sendAmountNumber = BigNumber.isBigNumber(sendAmount) ? sendAmount.toNumber() : new BigNumber(sendAmount.toString()).toNumber();
 
                 // Try to submit to RenVM. If that fails, see if they already
                 // know about the transaction.
@@ -224,19 +231,16 @@ export class ShiftInObject {
                     renTxHash = await this.renVMNetwork.submitShiftIn(
                         renContract,
                         sendTo,
-                        sendAmountNumber,
                         nonce,
                         generatePHash(contractParams || []),
                         utxo.txid,
-                        utxo.output_no,
+                        utxo.output_no.toFixed(),
                         this.network,
                     );
                 } catch (error) {
-                    renTxHash = this.renTxHash();
-
                     try {
                         // Check if the darknodes have already seen the transaction
-                        const queryTxResponse = await this.queryTx();
+                        const queryTxResponse = await this.queryTx(utxo);
                         if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
                             throw new Error(`Transaction ${renTxHash} has not been submitted previously.`);
                         }
@@ -247,6 +251,8 @@ export class ShiftInObject {
                 }
 
                 promiEvent.emit("renTxHash", renTxHash);
+            } else if (!renTxHash) {
+                throw new Error(`Must call 'waitForDeposit' or provide UTXO or RenVM transaction hash.`);
             }
 
             const marshalledResponse = await this.renVMNetwork.waitForTX(
@@ -267,7 +273,7 @@ export class ShiftInObject {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXODetails) => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXOInput) => {
         await this.waitForDeposit(confirmations);
         const signature = await this.submitToRenVM(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);
@@ -277,13 +283,13 @@ export class ShiftInObject {
 export class Signature {
     public params: ShiftInParamsAll;
     public network: NetworkDetails;
-    public response: Tx;
+    public response: UnmarshalledTx;
     public signature: string;
     public renTxHash: string;
     // Here to maintain backwards compatibility
     public messageID: string;
 
-    constructor(_network: NetworkDetails, _params: ShiftInParams, _response: Tx, _renTxHash: string) {
+    constructor(_network: NetworkDetails, _params: ShiftInParams, _response: UnmarshalledTx, _renTxHash: string) {
         this.network = _network;
         this.response = _response;
         this.renTxHash = _renTxHash;
@@ -307,13 +313,11 @@ export class Signature {
             // Check if the signature has already been submitted
             if (renContract) {
                 try {
-                    const shifterRegistry = new web3.eth.Contract(this.network.contracts.addresses.shifter.ShifterRegistry.abi, this.network.contracts.addresses.shifter.ShifterRegistry.address);
-                    const token = parseRenContract(renContract).asset;
-                    const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(`z${token}`).call();
+                    const shifterAddress = await getShifterAddress(this.network, web3, renContract);
                     const shifter = new web3.eth.Contract(this.network.contracts.addresses.shifter.BTCShifter.abi, shifterAddress);
                     // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
                     // the contract
-                    const status = await shifter.methods.status(this.response.args.hash).call();
+                    const status = await shifter.methods.status(this.response.autogen.sighash).call();
                     if (status) {
                         const recentRegistrationEvents = await web3.eth.getPastLogs({
                             address: shifterAddress,
@@ -321,7 +325,7 @@ export class Signature {
                             toBlock: "latest",
                             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
                             // address.slice(2), null, null] as any,
-                            topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.response.args.hash] as string[],
+                            topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.response.autogen.sighash] as string[],
                         });
                         if (!recentRegistrationEvents.length) {
                             throw new Error(`Shift has been submitted but no log was found.`);
@@ -372,13 +376,18 @@ export class Signature {
 
                 const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
-                const params = [
-                    ...(contractParams || []).map(value => value.value),
-                    Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
-                    Ox(this.response.args.nhash),
-                    // Ox(this.response.args.n), // _nHash: string
-                    Ox(this.signature), // _sig: string
-                ];
+                let params;
+                if (last) {
+                    params = [
+                        ...(contractParams || []).map(value => value.value),
+                        Ox(this.response.in.amount.toString(16)), // _amount: BigNumber
+                        Ox(this.response.autogen.nhash),
+                        // Ox(this.response.args.n), // _nHash: string
+                        Ox(this.signature), // _sig: string
+                    ];
+                } else {
+                    params = (contractParams || []).map(value => value.value);
+                }
 
                 const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
 
@@ -448,8 +457,8 @@ export class Signature {
 
         const params = [
             ...(contractParams || []).map(value => value.value),
-            Ox(this.response.args.amount.toString(16)), // _amount: BigNumber
-            Ox(this.response.args.nhash),
+            Ox(this.response.in.amount.toString(16)), // _amount: BigNumber
+            Ox(this.response.autogen.nhash),
             // Ox(generateNHash(this.response)), // _nHash: string
             Ox(this.signature), // _sig: string
         ];

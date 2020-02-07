@@ -1,5 +1,6 @@
-import { Network } from "@renproject/ren-js-common";
+import { RenNetwork } from "@renproject/ren-js-common";
 import chai from "chai";
+import Web3 from "web3";
 
 import RenJS, { Chain } from "../src/index";
 import { Tokens } from "../src/types/assets";
@@ -8,6 +9,8 @@ import {
 } from "../src/types/networks";
 
 chai.should();
+
+require("dotenv").config();
 
 describe("RenJS initialization and exports", () => {
     it("should be able to pass in different networks", async () => {
@@ -31,7 +34,7 @@ describe("RenJS initialization and exports", () => {
     });
 
     it("On uninitialized class", async () => {
-        RenJS.Networks.should.equal(Network);
+        RenJS.Networks.should.equal(RenNetwork);
         RenJS.Tokens.should.equal(Tokens);
         RenJS.Chains.should.equal(Chain);
     });
@@ -50,7 +53,7 @@ describe("RenJS initialization and exports", () => {
             sendToken: RenJS.Tokens.BTC.Btc2Eth,
 
             // Amount of BTC we are sending (in Satoshis)
-            sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
+            requiredAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
 
             // The contract we want to interact with
             sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
@@ -96,4 +99,21 @@ describe("RenJS initialization and exports", () => {
 
         }).should.be.rejectedWith(/waitForTX cancelled/);
     });
+
+    for (const network of ["devnet", "testnet", "chaosnet"]) {
+        it(`get token and shifter addresses for ${network}`, async () => {
+            const renJS = new RenJS(network);
+
+            const infuraURL = `${renJS.network.contracts.infura}/v3/${process.env.INFURA_KEY}`;
+            const web3 = new Web3(infuraURL);
+
+            for (const asset of ["BTC", "ZEC", "BCH"] as const) { // Without const, defaults to string[]
+                (await renJS.getTokenAddress(web3, asset))
+                    .should.equal(renJS.network.contracts.addresses.shifter[`z${asset}`]._address);
+
+                (await renJS.getShifterAddress(web3, asset))
+                    .should.equal(renJS.network.contracts.addresses.shifter[`${asset}Shifter`]._address);
+            }
+        });
+    }
 });

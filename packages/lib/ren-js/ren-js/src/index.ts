@@ -1,8 +1,11 @@
 import _BN from "bn.js";
 
-import { Chain, Network, ShiftInParams, ShiftOutParams } from "@renproject/ren-js-common";
+import {
+    Asset, Chain, RenContract, RenNetwork, ShiftedToken, ShiftInParams, ShiftOutParams,
+} from "@renproject/ren-js-common";
+import Web3 from "web3";
 
-import { utils } from "./lib/utils";
+import { getShifterAddress, getTokenAddress, utils } from "./lib/utils";
 import { Darknode } from "./renVM/darknode";
 import { DarknodeGroup } from "./renVM/darknodeGroup";
 import { RPCMethod } from "./renVM/jsonRPC";
@@ -17,7 +20,7 @@ export { ShiftInObject, Signature } from "./shiftIn";
 export { ShiftOutObject } from "./shiftOut";
 export { UTXO, UTXODetails as BitcoinUTXO, UTXODetails as BitcoinCashUTXO, UTXODetails as ZcashUTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
-export { Chain, RenContract as Token, RenContract } from "@renproject/ren-js-common";
+export { Chain, RenContract as Token, RenContract, RenNetwork } from "@renproject/ren-js-common";
 export { Darknode } from "./renVM/darknode";
 export { DarknodeGroup } from "./renVM/darknodeGroup";
 export { RPCMethod } from "./renVM/jsonRPC";
@@ -52,7 +55,7 @@ export default class RenJS {
     // Expose constants so they can be accessed on the RenJS class
     // e.g. `RenJS.Tokens`
     public static Tokens = Tokens;
-    public static Networks = Network;
+    public static Networks = RenNetwork;
     public static NetworkDetails = NetworkDetails;
     public static Chains = Chain;
     public static TxStatus = TxStatus;
@@ -98,4 +101,7 @@ export default class RenJS {
     public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
         return new ShiftOutObject(this.renVM, this.network, params);
     }
+
+    public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
+    public readonly getShifterAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getShifterAddress(this.network, web3, token);
 }

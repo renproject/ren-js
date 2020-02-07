@@ -3,7 +3,7 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { Args, Ox } from "@renproject/ren-js-common";
+import { EthArgs, Ox, RenVMType } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -22,6 +22,15 @@ import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
+const logger = {
+    printLine: (s, overwrite = false) => overwrite ? process.stdout.write(`\u001b[0K\r${s}\r`) : console.debug(s),
+    event: (eventString, { overwrite } = { overwrite: false }) => { logger.printLine(`${chalk.blue("[EVENT]")} ${eventString}`, overwrite); },
+    info: (eventString, { overwrite } = { overwrite: false }) => { logger.printLine(`${chalk.yellow("[INFO]")} ${eventString}`, overwrite); },
+    consoleLine: (divider = "—") => { logger.printLine(`\n${chalk.yellow(divider.repeat(process.stdout.columns))}`); },
+    error: (error) => logger.printLine(chalk.red(`[ERROR] ${error}`)),
+    newLine: () => logger.printLine(""),
+};
+
 // A debug `sleep`. It prints a count-down to the console.
 // tslint:disable-next-line: no-string-based-set-timeout
 export const sleepWithCountdown = async (seconds: number) => {
@@ -38,8 +47,6 @@ require("dotenv").config();
 const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
-
-const consoleLine = (divider = "—") => { console.debug(`\n${divider.repeat(process.stdout.columns)}`); };
 
 describe("Shifting in and shifting out", function () {
     // Disable test timeout.
@@ -74,7 +81,7 @@ describe("Shifting in and shifting out", function () {
         submit: (shift: ShiftInObject) => Promise<void>,
         nonce?: string,
     ): Promise<void> => {
-        const params: Args = [
+        const params: EthArgs = [
             {
                 name: "_shifter",
                 type: "address",
@@ -89,7 +96,7 @@ describe("Shifting in and shifting out", function () {
         const shift = renJS.shiftIn({
             sendTo: adapterContract,
             sendToken: renVMToken,
-            sendAmount: amount,
+            // sendAmount: amount,
             contractFn: "shiftIn",
             contractParams: params,
             nonce: nonce || RenJS.utils.randomNonce(),
@@ -97,7 +104,7 @@ describe("Shifting in and shifting out", function () {
         const gatewayAddress = shift.addr();
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
-        console.debug(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
+        logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
         await account.sendSats(gatewayAddress, amount, token);
 
         await submit(shift);
@@ -106,30 +113,29 @@ describe("Shifting in and shifting out", function () {
     const submitIndividual = async (shift: ShiftInObject): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        console.debug(`Waiting for ${confirmations} confirmations...`);
+        logger.info(`Waiting for ${confirmations} confirmations...`);
 
         const deposit = await shift.waitForDeposit(confirmations)
-            .on("deposit", (depositObject) => { console.debug(`${chalk.blue("[EVENT]")} Received a new deposit: ${JSON.stringify(depositObject)}`); });
+            .on("deposit", (depositObject) => { logger.event(`Received a new deposit: ${JSON.stringify(depositObject)}`); });
 
         await sleepWithCountdown(5);
 
-        console.debug(`Submitting deposit!`);
+        logger.info(`Submitting deposit to RenVM...`);
         const signature = await deposit.submitToRenVM()
             .on("renTxHash", (renTxHash: string) => {
-                console.debug(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`);
+                logger.event(`Received renTxHash: ${renTxHash}`);
                 deposit.renTxHash().should.equal(renTxHash);
             })
-            .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
-        console.debug(""); // new line
+            .on("status", (status) => { logger.event(`Received status: ${chalk.green(status)}`, { overwrite: true }); });
+        logger.newLine();
 
-        console.debug(`Submitting signature!`);
-        console.debug("Waiting for tx...");
+        logger.info(`Submitting signature to Ethereum...`);
         try {
             await signature.submitToEthereum(provider, { gas: 1000000 })
-                .on("eth_transactionHash", (txHash: string) => { console.debug(`${chalk.blue("[EVENT]")} Received txHash: ${txHash}`); });
-            console.debug("Done waiting for tx!");
+                .on("eth_transactionHash", (txHash: string) => { logger.event(`Received txHash: ${txHash}`); });
+            logger.info("Done waiting for Ethereum TX.");
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             throw error;
         }
     };
@@ -143,24 +149,24 @@ describe("Shifting in and shifting out", function () {
     const submitToRenVM = async (shiftOutObject: ShiftOutObject) => {
         try {
             shiftOutObject = await shiftOutObject.readFromEthereum()
-                .on("eth_transactionHash", (txHash: string) => { console.debug(`${chalk.blue("[EVENT]")} Received txHash: ${txHash}`); });
+                .on("eth_transactionHash", (txHash: string) => { logger.event(`Received txHash: ${txHash}`); });
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             throw error;
         }
 
         await sleepWithCountdown(5);
 
-        console.debug("Submitting burn to RenVM.");
+        logger.info("Submitting burn to RenVM...");
 
         await shiftOutObject.submitToRenVM()
             .on("renTxHash", (renTxHash) => {
-                console.debug(`${chalk.blue("[EVENT]")} Received renTxHash: ${renTxHash}`);
-                console.debug("shiftOutObject.renTxHash()", shiftOutObject.renTxHash());
+                logger.event(`Received renTxHash: ${renTxHash}`);
+                logger.info(`shiftOutObject.renTxHash(): ${shiftOutObject.renTxHash()}`);
                 shiftOutObject.renTxHash().should.equal(renTxHash);
             })
             .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
-        console.debug(""); // new line
+        logger.newLine();
     };
 
     const burnTest = async (
@@ -174,7 +180,7 @@ describe("Shifting in and shifting out", function () {
         srcAddress: string,
     ) => {
         // Approve contract to spend the shifted token.
-        const approvePayload: Args = [
+        const approvePayload: EthArgs = [
             {
                 name: "spender",
                 type: "address",
@@ -190,15 +196,15 @@ describe("Shifting in and shifting out", function () {
             ...approvePayload.map(value => value.value),
         ];
 
-        console.debug("Approving contract.");
+        logger.info("Approving contract.");
         await new Promise((resolve, reject) => erc20Contract.methods.approve(
             ...approveParams,
         ).send({ from: ethAddress, gas: 1000000 })
-            .on("transactionHash", (txHash: string) => { console.debug(`${chalk.blue("[EVENT]")} Received txHash: ${txHash}`); })
+            .on("transactionHash", (txHash: string) => { logger.event(`Received txHash: ${txHash}`); })
             .on("confirmation", resolve)
             .catch((error: Error) => {
                 if (error && error.message && error.message.match(/Invalid block number/)) {
-                    console.error(error);
+                    logger.error(error);
                     return;
                 }
                 reject(error);
@@ -206,7 +212,7 @@ describe("Shifting in and shifting out", function () {
         );
 
         // Send burn request to adapter contract.
-        const payload: Args = [
+        const payload: EthArgs = [
             {
                 name: "_shifter",
                 type: "address",
@@ -224,7 +230,7 @@ describe("Shifting in and shifting out", function () {
             },
         ];
 
-        console.debug("Reading burn from Ethereum.");
+        logger.info("Reading burn from Ethereum.");
 
         const shiftOutObject: ShiftOutObject = renJS.shiftOut({
             sendTo: adapterContract,
@@ -268,8 +274,8 @@ describe("Shifting in and shifting out", function () {
                 const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, shiftedTokenAddress);
 
                 // Test minting.
-                consoleLine();
-                console.debug("Starting mint test:");
+                logger.consoleLine();
+                logger.info("Starting mint test:");
                 const initialERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
                 const nonce = RenJS.utils.randomNonce();
                 await mintTest(
@@ -296,8 +302,8 @@ describe("Shifting in and shifting out", function () {
                 // amount = 0.000225 * (10 ** 8);
                 // const burnValue = amount;
 
-                consoleLine();
-                console.debug("Starting burn test:");
+                logger.consoleLine();
+                logger.info("Starting burn test:");
                 const initialBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
                 await burnTest(testcase.token, testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress);
                 // tslint:disable-next-line: no-string-based-set-timeout
@@ -327,8 +333,8 @@ describe("Shifting in and shifting out", function () {
 
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
 
-                consoleLine();
-                console.debug("Starting mint test:");
+                logger.consoleLine();
+                logger.info("Starting mint test:");
                 const initialERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
                 await mintTest(
                     testcase.token,
@@ -351,17 +357,17 @@ describe("Shifting in and shifting out", function () {
 
     it.skip("simple interface - mint", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
-            consoleLine();
-            console.debug(`Starting mint test`);
+            logger.consoleLine();
+            logger.info(`Starting mint test`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const shift = new RenJS("testnet").shiftIn({
                 // Send BTC to an Ethereum address
-                sendToken: token as ("BTC" | "ZEC" | "BCH"),
+                sendToken: token as "BTC" | "ZEC" | "BCH",
 
                 // Amount of BTC we are sending
-                sendAmount: amount,
+                // sendAmount: amount,
 
                 // The recipient Ethereum address
                 sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
@@ -370,7 +376,7 @@ describe("Shifting in and shifting out", function () {
             const gatewayAddress = shift.addr();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
-            console.debug(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
+            logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
             await account.sendSats(gatewayAddress, amount, token);
 
             await submitIndividual(shift);
@@ -379,8 +385,8 @@ describe("Shifting in and shifting out", function () {
 
     it.skip("simple interface - burn", async () => {
         for (const contract of [RenJS.Tokens.BTC.Burn]) {
-            consoleLine();
-            console.debug(`Starting burn test`);
+            logger.consoleLine();
+            logger.info(`Starting burn test`);
 
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
@@ -389,7 +395,7 @@ describe("Shifting in and shifting out", function () {
                 web3Provider: provider,
 
                 // Send BTC to an Ethereum address
-                sendToken: token as ("BTC" | "ZEC" | "BCH"),
+                sendToken: token as "BTC" | "ZEC" | "BCH",
 
                 // Amount of BTC we are sending
                 sendAmount: amount,

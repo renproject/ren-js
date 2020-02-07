@@ -1,7 +1,9 @@
-import { Arg, Args, Ox, RenContract } from "@renproject/ren-js-common";
+import { RenContract, RenVMArgs } from "@renproject/ren-js-common";
 
 import { TxStatus } from "../types/assets";
-import { BurnArgsArray, MintArgsArray, TxOutputArgsArray, TxSignatureArray } from "./transaction";
+import {
+    BurnArgsArray, MintArgsArray, TxAutogen, TxResponseOutputs, TxReturnedInputs,
+} from "./transaction";
 
 export enum RPCMethod {
     // QueryBlock returns a block identified by the block height.
@@ -45,29 +47,33 @@ export type JSONRPCResponse<T> = {
 };
 
 // tslint:disable-next-line: no-any
-export const decodeValue = <Name extends string, Type extends string, Value>(value: Arg<Name, Type, Value>) => {
-    try {
-        // ext_btcCompatUTXO
-        if (value.type === "ext_btcCompatUTXO" || value.type === "ext_zecCompatUTXO") {
-            return value.value;
-        }
+// export const decodeArg = <Name extends string, Type extends RenVMType.ExtTypeBtcCompatUTXO, Value>(arg: Arg<Name, Type, Value>):
+//     Type extends RenVMType.ExtTypeBtcCompatUTXO ? Value :
+//     Type extends "u256" | "u64" | "u32" ? BigNumber :
+//     Type extends "b" | "b20" | "b32" ? Buffer :
+//     Value => {
+//     try {
+//         // ext_btcCompatUTXO
+//         if (arg.type === RenVMType.ExtTypeBtcCompatUTXO) {
+//             return arg.value;
+//         }
 
-        // u32, u64, etc.
-        if (value.type.match(/u[0-9]+/)) {
-            return value.value;
-        }
+//         // u32, u64, etc.
+//         if (arg.type.match(/u[0-9]+/)) {
+//             return new BigNumber(arg.value);
+//         }
 
-        // b, b20, b32, etc.
-        if (value.type.match(/b[0-9]+/)) {
-            return Ox(Buffer.from(value.value as unknown as string, "base64"));
-        }
+//         // b, b20, b32, etc.
+//         if (arg.type.match(/b[0-9]+/)) {
+//             return Ox(Buffer.from(arg.value as unknown as string, "base64"));
+//         }
 
-        // Fallback
-        return Ox(Buffer.from(value.value as unknown as string, "base64"));
-    } catch (error) {
-        throw new Error(`Unable to unmarshal ${value.name} of type ${value.type} from RenVM: ${JSON.stringify(value.value)} - ${error}`);
-    }
-};
+//         // Fallback
+//         return Ox(Buffer.from(arg.value as unknown as string, "base64"));
+//     } catch (error) {
+//         throw new Error(`Unable to unmarshal ${arg.name} of type ${arg.type} from RenVM: ${JSON.stringify(arg.value)} - ${error}`);
+//     }
+// };
 
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.
 export interface ParamsQueryBlock {
@@ -87,11 +93,11 @@ export interface ParamsQueryBlocks {
 }
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
-interface ParamsSubmitTx<T extends Args> {
+interface ParamsSubmitTx<T extends RenVMArgs> {
     // Tx being submitted.
     tx: {
-        "to": RenContract;
-        "args": T;
+        to: RenContract;
+        in: T;
     };
 }
 
@@ -155,8 +161,9 @@ export interface ResponseQueryTx {
     tx: {
         hash: string;
         to: RenContract;
-        args: TxOutputArgsArray;
-        out: TxSignatureArray;
+        in: TxReturnedInputs;
+        autogen: TxAutogen;
+        out?: TxResponseOutputs;
     };
     // TxStatus string`json:"txStatus"`
     txStatus: TxStatus;

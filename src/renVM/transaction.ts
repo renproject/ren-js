@@ -1,54 +1,62 @@
-import { Arg } from "@renproject/ren-js-common";
+import {
+    RenContract, RenVMArg, RenVMInputUTXO, RenVMOutputUTXO, RenVMType,
+} from "@renproject/ren-js-common";
+import BigNumber from "bignumber.js";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
 
 export type MintArgsArray = [
-    Arg<"phash", "b32", string>, // base64
-    Arg<"amount", "u64", number>,
-    Arg<"token", "b20", string>, // base64
-    Arg<"to", "b20", string>, // base64
-    Arg<"n", "b32", string>, // base64
-    Arg<"utxo", "ext_btcCompatUTXO" | "ext_zecCompatUTXO", { "txHash": string; /* base64 */ "vOut": number; }>
+    RenVMArg<"phash", RenVMType.TypeB32>, // base64
+    // Arg<"amount", RenVMType.TypeU64, number>,
+    RenVMArg<"token", RenVMType.ExtTypeEthCompatAddress>, // base64
+    RenVMArg<"to", RenVMType.ExtTypeEthCompatAddress>, // base64
+    RenVMArg<"n", RenVMType.TypeB32>, // base64
+    RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMInputUTXO>
 ];
 
 export type BurnArgsArray = [
-    Arg<"ref", "u64", number>,
+    RenVMArg<"ref", RenVMType.TypeU64>,
 ];
 
-export type TxOutputArgsArray = [
-    Arg<"phash", "b32", string>,
-    Arg<"amount", "u64", number>,
-    Arg<"token", "b20", string>,
-    Arg<"to", "b20", string>,
-    Arg<"n", "b32", string>,
-    Arg<"utxo", "ext_btcCompatUTXO" | "ext_zecCompatUTXO", { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": 60000 }>,
-    Arg<"gas", "u64", number>,
-    Arg<"ghash", "b32", string>,
-    Arg<"nhash", "b32", string>,
-    Arg<"hash", "b32", string>,
+export type TxReturnedInputs = [
+    RenVMArg<"phash", RenVMType.TypeB32>, // base64
+    // RenVMArg<"amount", RenVMType.TypeU64>,
+    RenVMArg<"token", RenVMType.ExtTypeEthCompatAddress>, // base64
+    RenVMArg<"to", RenVMType.ExtTypeEthCompatAddress>, // base64
+    RenVMArg<"n", RenVMType.TypeB32>, // base64
+    RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>,
+    RenVMArg<"amount", RenVMType.TypeU256>,
 ];
 
-export type TxSignatureArray = [
-    Arg<"r", "b", string>, // base 64
-    Arg<"s", "b", string>, // base 64
-    Arg<"v", "b", string>, // base 64
+export type TxResponseOutputs = [
+    RenVMArg<"r", RenVMType.TypeB>, // base64
+    RenVMArg<"s", RenVMType.TypeB>, // base64
+    RenVMArg<"v", RenVMType.TypeB>, // base64
 ];
 
-export interface Tx {
-    hash: string;
-    args: {
-        phash: string;
-        amount: number;
+export type TxAutogen = [
+    RenVMArg<"ghash", RenVMType.TypeB32>, // base 64
+    RenVMArg<"nhash", RenVMType.TypeB32>, // base 64
+    RenVMArg<"sighash", RenVMType.TypeB32>, // base 64
+];
+
+export interface UnmarshalledTx {
+    hash: string; // Buffer;
+    to: RenContract;
+    in: {
+        phash: string; // Buffer;
         token: string;
         to: string;
-        n: string;
-        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": number, ghash: string };
-        // gas: number;
-        ghash: string;
-        nhash: string;
-        hash: string;
+        n: string; // Buffer;
+        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": BigNumber };
+        amount: BigNumber;
     };
-    signature: {
+    autogen: {
+        ghash: string; // Buffer;
+        nhash: string; // Buffer;
+        sighash: string; // Buffer;
+    };
+    out?: {
         r: string;
         s: string;
         v: string;

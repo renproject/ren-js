@@ -1,7 +1,7 @@
 import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
-import { Network } from "@renproject/ren-js-common";
+import { RenNetwork } from "@renproject/ren-js-common";
+
 // import { Networks as ZNetworks } from "bitcore-lib-zcash";
-import { List } from "immutable";
 
 export interface NetworkDetails {
     name: string;
@@ -42,14 +42,14 @@ const commonMainConfig = {
 };
 
 export const NetworkChaosnet: NetworkDetails = {
-    name: Network.Chaosnet,
+    name: RenNetwork.Chaosnet,
     nodeURLs: ["https://lightnode-chaosnet.herokuapp.com"],
     ...commonMainConfig,
     contracts: chaosnet,
 };
 
 export const NetworkMainnet: NetworkDetails = {
-    name: Network.Mainnet,
+    name: RenNetwork.Mainnet,
     nodeURLs: ["https://lightnode-mainnet.herokuapp.com"],
     ...commonMainConfig,
     contracts: mainnet,
@@ -75,7 +75,7 @@ const commonTestConfig = {
 };
 
 export const NetworkTestnet: NetworkDetails = {
-    name: Network.Testnet,
+    name: RenNetwork.Testnet,
     nodeURLs: ["https://lightnode-testnet.herokuapp.com"],
     ...commonTestConfig,
     contracts: testnet,
@@ -98,7 +98,7 @@ const devnetNodes = [
 ];
 
 export const NetworkDevnet: NetworkDetails = {
-    name: Network.Devnet,
+    name: RenNetwork.Devnet,
     nodeURLs: USE_DEVNET_NODES ? devnetNodes : ["https://lightnode-devnet.herokuapp.com"],
     ...commonTestConfig,
     contracts: devnet,
@@ -107,8 +107,8 @@ export const NetworkDevnet: NetworkDetails = {
 const localnetCount = 12;
 const localnetProtocol = "http";
 export const NetworkLocalnet: NetworkDetails = {
-    name: Network.Localnet,
-    nodeURLs: List(Array(localnetCount)).map((_, index) => `${localnetProtocol}://0.0.0.0:${6001 + 10 * index}`).toArray(),
+    name: RenNetwork.Localnet,
+    nodeURLs: Array.from(Array(localnetCount)).map((_, index) => `${localnetProtocol}://0.0.0.0:${6001 + 10 * index}`),
     ...commonTestConfig,
     contracts: localnet,
 };

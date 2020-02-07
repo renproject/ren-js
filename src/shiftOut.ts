@@ -8,7 +8,7 @@ import { payloadToABI } from "./lib/abi";
 import { processShiftOutParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    BURN_TOPIC, generateTxHash, ignoreError, waitForReceipt, withDefaultAccount,
+    BURN_TOPIC, generateShiftOutTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryTx } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
@@ -137,7 +137,7 @@ export class ShiftOutObject {
             throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
         }
         const burnReference = new BigNumber(this.params.burnReference).toFixed();
-        return generateTxHash(this.params.sendToken, burnReference);
+        return generateShiftOutTxHash(this.params.sendToken, burnReference);
     }
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());

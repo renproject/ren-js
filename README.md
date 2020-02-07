@@ -7,6 +7,10 @@ There's two official Javascript SDKs for interacting with [RenVM](https://renpro
 
 See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.
 
+## Changelog
+
+See the [Releases](https://github.com/renproject/ren-js/releases) page.
+
 ## About
 
 RenJS is a Node.js and browser SDK for bridging BTC, BCH and ZEC to your project. See the following examples:

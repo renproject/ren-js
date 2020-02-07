@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import BN from "bn.js";
 
 import { HistoryEvent, SendTokenInterface } from "../types";
 import { ShiftInParams, ShiftInParamsAll } from "./shiftIn";
@@ -6,8 +7,6 @@ import {
     BurnContractCall, ShiftOutParams, ShiftOutParamsAll, ShiftOutParamsBurnRef,
     ShiftOutParamsCommon, ShiftOutParamsTxHash,
 } from "./shiftOut";
-
-import BN = require("bn.js");
 
 export type ShiftParams = ShiftInParams | ShiftOutParams;
 export type ShiftParamsAll = ShiftInParamsAll | ShiftOutParamsAll;

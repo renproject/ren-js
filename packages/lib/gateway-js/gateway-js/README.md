@@ -7,6 +7,10 @@ There's two official Javascript SDKs for interacting with [RenVM](https://renpro
 
 See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using GatewayJS.
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md).
+
 ## About
 
 GatewayJS is an SDK for bridging BTC, BCH and ZEC to your Ethereum-based dApp. GatewayJS lets your users deposit and withdraw cryptocurrencies into your smart contracts through the following widget:

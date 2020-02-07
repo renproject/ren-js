@@ -2,9 +2,7 @@ import BigNumber from "bignumber.js";
 import BN from "bn.js";
 
 import { RenContract } from "../renVM";
-import {
-    BaseContractCall, ContractCallMultiple, DetailedContractCall, UndefinedExceptFirst2,
-} from "./common";
+import { AllParams2, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
 
 export type MintContractCallSingle = BaseContractCall | DetailedContractCall;
 
@@ -23,7 +21,7 @@ export type ShiftInFromDetails = MintContractCall & {
     /**
      * The amount of `sendToken` to be sent
      */
-    sendAmount: BN | BigNumber | number | string;
+    requiredAmount?: BN | BigNumber | number | string | { min?: BN | BigNumber | number | string, max?: BN | BigNumber | number | string };
 
     /**
      * An option to override the default nonce generated randomly
@@ -43,9 +41,5 @@ export type ShiftInFromRenTxHash = MintContractCall & {
 
 // `ShiftInParamsAll` is used internally by RenJS.
 
-export type ShiftInFromDetailsU = UndefinedExceptFirst2<ShiftInFromDetails & { sendToken: RenContract }, ShiftInFromRenTxHash>;
-export type ShiftInFromRenTxHashU = UndefinedExceptFirst2<ShiftInFromRenTxHash, ShiftInFromDetails>;
-
-export type ShiftInParamsAll = (ShiftInFromDetailsU | ShiftInFromRenTxHashU) & ContractCallMultiple<DetailedContractCall>;
-
 export type ShiftInParams = ShiftInFromRenTxHash | ShiftInFromDetails;
+export type ShiftInParamsAll = AllParams2<ShiftInFromDetails & { sendToken: RenContract }, ShiftInFromRenTxHash> & ContractCallMultiple<DetailedContractCall>;

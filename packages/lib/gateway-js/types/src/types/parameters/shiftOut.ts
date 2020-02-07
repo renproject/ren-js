@@ -2,9 +2,7 @@ import BigNumber from "bignumber.js";
 import BN from "bn.js";
 
 import { RenContract } from "../renVM";
-import {
-    BaseContractCall, ContractCallMultiple, DetailedContractCall, UndefinedExceptFirst3,
-} from "./common";
+import { AllParams3, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
 
 // tslint:disable-next-line: no-any
 type provider = any;
@@ -49,10 +47,7 @@ export interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
 /******************************************************************************/
 
 export type ShiftOutParamsContractCallAll = ContractCallMultiple<Promise<DetailedContractCall> | DetailedContractCall> & { web3Provider: provider };
-export type ShiftOutParamsContractCallU = UndefinedExceptFirst3<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsBurnRef>;
-export type ShiftOutParamsTxHashU = UndefinedExceptFirst3<ShiftOutParamsTxHash, ShiftOutParamsContractCallAll, ShiftOutParamsBurnRef>;
-export type ShiftOutParamsBurnRefU = UndefinedExceptFirst3<ShiftOutParamsBurnRef, ShiftOutParamsContractCallAll, ShiftOutParamsTxHash>;
 
-export type ShiftOutParamsAll = (ShiftOutParamsContractCallU | ShiftOutParamsTxHashU | ShiftOutParamsBurnRefU) & { sendToken: RenContract };
+export type ShiftOutParamsAll = (AllParams3<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsBurnRef>) & { sendToken: RenContract };
 
 export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | ShiftOutParamsTxHash;

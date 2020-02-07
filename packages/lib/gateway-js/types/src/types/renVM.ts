@@ -1,4 +1,4 @@
-export enum Network {
+export enum RenNetwork {
     Mainnet = "mainnet",
     Chaosnet = "chaosnet",
     Testnet = "testnet",
@@ -58,11 +58,85 @@ export const Tokens = {
     },
 };
 
-export interface Arg<name extends string, type extends string, valueType> {
-    name: name;
-    type: type;
-    value: valueType; // "8d8126"
+export enum RenVMType {
+    TypeAddress = "address",
+    TypeStr = "str",
+    TypeB32 = "b32",
+    TypeB = "b",
+    TypeI8 = "i8",
+    TypeI16 = "i16",
+    TypeI32 = "i32",
+    TypeI64 = "i64",
+    TypeI128 = "i128",
+    TypeI256 = "i256",
+    TypeU8 = "u8",
+    TypeU16 = "u16",
+    TypeU32 = "u32",
+    TypeU64 = "u64",
+    TypeU128 = "u128",
+    TypeU256 = "u256",
+    TypeRecord = "record",
+    TypeList = "list",
+
+    // Ext
+    ExtTypeEthCompatAddress = "ext_ethCompatAddress",
+    ExtTypeBtcCompatUTXO = "ext_btcCompatUTXO",
+    ExtTypeBtcCompatUTXOs = "ext_btcCompatUTXOs",
+    ExtTypeEthCompatTx = "ext_ethCompatTx",
+}
+
+export interface RenVMOutputUTXO {
+    txHash: string;
+    vOut: string;
+    scriptPubKey: string;
+    amount: string;
+}
+
+export interface RenVMInputUTXO {
+    txHash: string;
+    vOut: string;
+}
+
+export type RenVMUTXO = RenVMOutputUTXO | RenVMInputUTXO;
+
+export type Base64String = string;
+export type HexString = string;
+export type DecimalString = string;
+
+export type RenVMParameterValue<type extends RenVMType> =
+    type extends RenVMType.TypeAddress ? string :
+    type extends RenVMType.TypeStr ? Base64String :
+    type extends RenVMType.TypeB32 ? Base64String :
+    type extends RenVMType.TypeB ? Base64String :
+    type extends RenVMType.TypeI8 ? DecimalString :
+    type extends RenVMType.TypeI16 ? DecimalString :
+    type extends RenVMType.TypeI32 ? DecimalString :
+    type extends RenVMType.TypeI64 ? DecimalString :
+    type extends RenVMType.TypeI128 ? DecimalString :
+    type extends RenVMType.TypeI256 ? DecimalString :
+    type extends RenVMType.TypeU8 ? DecimalString :
+    type extends RenVMType.TypeU16 ? DecimalString :
+    type extends RenVMType.TypeU32 ? DecimalString :
+    type extends RenVMType.TypeU64 ? DecimalString :
+    type extends RenVMType.TypeU128 ? DecimalString :
+    type extends RenVMType.TypeU256 ? DecimalString :
+    // tslint:disable-next-line: no-any
+    type extends RenVMType.TypeRecord ? any :
+    // tslint:disable-next-line: no-any
+    type extends RenVMType.TypeList ? any[] :
+    type extends RenVMType.ExtTypeEthCompatAddress ? HexString :
+    type extends RenVMType.ExtTypeBtcCompatUTXO ? RenVMUTXO :
+    type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO :
+    // tslint:disable-next-line: no-any
+    type extends RenVMType.ExtTypeEthCompatTx ? any :
+    // tslint:disable-next-line: no-any
+    any;
+
+export interface RenVMArg<Name extends string, Type extends RenVMType, Value extends RenVMParameterValue<Type> = RenVMParameterValue<Type>> {
+    name: Name;
+    type: Type;
+    value: Value;
 }
 
 // tslint:disable-next-line: no-any
-export type Args = Array<Arg<string, string, any>>;
+export type RenVMArgs = Array<RenVMArg<string, RenVMType>>;

@@ -10,7 +10,11 @@
   "module": "build/module/index.js",
   "repository": "https://github.com/renproject/gateway-js",
   "license": "MIT",
-  "keywords": [],
+  "keywords": [
+    "renproject",
+    "gateway-js",
+    "renvm"
+  ],
   "scripts": {
     "describe": "npm-scripts-info",
     "build": "run-s clean && run-p build:*",

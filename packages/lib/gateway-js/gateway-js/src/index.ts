@@ -1,28 +1,26 @@
 import {
-    BurnContractCallSimple, Chain, GatewayMessage, GatewayMessageType, GatewayParams,
-    GatewayShiftInParamsExtra, HistoryEvent, newPromiEvent, PromiEvent, RenNetwork,
-    ShiftInFromDetails, ShiftInStatus, ShiftOutStatus, Tokens,
+    Chain, GatewayConstructor, GatewayInstance, GatewayJSConstructor, GatewayJSInterface,
+    GatewayMessage, GatewayMessageType, GatewayParams, gatewayUtils, HistoryEvent, newPromiEvent,
+    PromiEvent, randomBytes, RenNetwork, ShiftInStatus, ShiftOutStatus, Tokens,
 } from "@renproject/ren-js-common";
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
 import {
     createElementFromHTML, GATEWAY_ENDPOINT_PRODUCTION, GATEWAY_ENDPOINT_STAGING, getElement,
-    randomBytes, resolveEndpoint, sleep, utils,
+    prepareParamsForSendMessage, resolveEndpoint, sleep,
 } from "./utils";
 import { validateString } from "./validate";
 
 export { Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent, ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent } from "@renproject/ren-js-common";
 
-const toFixed = (input: { readonly toFixed?: () => string; readonly toString: () => string }) => input.toFixed ? input.toFixed() : input.toString();
-
-export class Gateway {
+export class Gateway implements GatewayInstance {
 
     public static readonly Tokens = Tokens;
     public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
     public static readonly ShiftInStatus = ShiftInStatus;
     public static readonly ShiftOutStatus = ShiftOutStatus;
-    public static readonly utils = utils;
+    public static readonly utils = gatewayUtils;
 
     // tslint:disable: readonly-keyword
     public isPaused = false;
@@ -44,29 +42,9 @@ export class Gateway {
         this.id = randomBytes(8);
     }
 
-    public readonly getPopup = () => getElement(`_ren_gateway-${this.id}`);
-    public readonly getIFrame = () => getElement(`_ren_iframe-${this.id}`);
-    public readonly getOrCreateGatewayContainer = () => {
-        try {
-            return getElement(`_ren_gatewayContainer`);
-        } catch (error) {
-            // Ignore error
-        }
-
-        const body: ReadonlyArray<HTMLBodyElement | HTMLHtmlElement> = [...(Array.from(document.getElementsByTagName("body")) || []), ...(Array.from(document.getElementsByTagName("html")) || [])];
-
-        const popup = createElementFromHTML(RenGatewayContainerHTML());
-
-        if (body[0] && popup) {
-            body[0].insertBefore(popup, body[0].lastChild);
-        }
-
-        return getElement(`_ren_gatewayContainer`);
-    }
-
     public readonly close = () => {
         try {
-            const renElement = this.getPopup();
+            const renElement = this._getPopup();
             if (renElement.parentElement) {
                 renElement.parentElement.removeChild(renElement);
             }
@@ -100,8 +78,8 @@ export class Gateway {
         return this._sendMessage(GatewayMessageType.GetStatus, {});
     }
 
-    public readonly getGateways = async () => new Promise<Map<string, HistoryEvent>>((resolve, reject) => {
-        const container = this.getOrCreateGatewayContainer();
+    public readonly _getGateways = async () => new Promise<Map<string, HistoryEvent>>((resolve, reject) => {
+        const container = this._getOrCreateGatewayContainer();
 
         const iframe = (uniqueID: string, iframeURL: string) => `
         <iframe class="_ren_iframe-hidden" id="_ren_iframe-hidden-${uniqueID}" style="display: none"
@@ -120,7 +98,7 @@ export class Gateway {
 
         const close = () => {
             if (popup) {
-                window.removeEventListener("message", listener);
+                this._removeListener(listener);
                 container.removeChild(popup);
             }
         };
@@ -130,12 +108,12 @@ export class Gateway {
             if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
-                    case "ready":
+                    case GatewayMessageType.Ready:
                         if (popup) {
                             this._sendMessage(GatewayMessageType.GetTrades, { frameID: this.id }, popup).catch(console.error);
                         }
                         break;
-                    case "getTrades":
+                    case GatewayMessageType.GetTrades:
                         if (e.data.error) {
                             close();
                             reject(new Error(e.data.error));
@@ -148,55 +126,22 @@ export class Gateway {
             }
         };
 
-        window.addEventListener("message", listener);
+        this._addListener(listener);
     })
 
-    public readonly open = (shiftParams: GatewayParams): Gateway => {
+    public readonly result = () => this.promiEvent;
 
-        // Certain types can't be sent via sendMessage - e.g. BigNumbers.
-        try {
-            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-            if (typeof (shiftParams as BurnContractCallSimple).sendAmount === "object") {
-                // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-                (shiftParams as BurnContractCallSimple).sendAmount = toFixed((shiftParams as BurnContractCallSimple).sendAmount);
-            }
-        } catch (error) { console.error(error); }
-        try {
-            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-            if (typeof (shiftParams as GatewayShiftInParamsExtra).suggestedAmount === "object") {
-                // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-                (shiftParams as GatewayShiftInParamsExtra).suggestedAmount = toFixed((shiftParams as GatewayShiftInParamsExtra).suggestedAmount);
-            }
-        } catch (error) { console.error(error); }
-        try {
-            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-            const requiredAmount = (shiftParams as ShiftInFromDetails).requiredAmount;
-            if (typeof requiredAmount === "object") {
-                // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
-                const min = (requiredAmount as { max: any, min: any }).min;
-                // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
-                const max = (requiredAmount as { max: any, min: any }).max;
-                if (min || max) {
-                    // tslint:disable-next-line: no-object-mutation no-unnecessary-type-assertion
-                    (shiftParams as ShiftInFromDetails).requiredAmount = {
-                        min: min ? toFixed(min) : undefined,
-                        max: max ? toFixed(max) : undefined,
-                    };
-                } else {
-                    // tslint:disable-next-line: no-object-mutation no-any no-unnecessary-type-assertion
-                    (shiftParams as ShiftInFromDetails).requiredAmount = toFixed((shiftParams as ShiftInFromDetails).requiredAmount as any);
-                }
-            }
-        } catch (error) { console.error(error); }
+    public readonly _open = (shiftParamsIn: GatewayParams): Gateway => {
+        const shiftParams = prepareParamsForSendMessage(shiftParamsIn);
 
         (async () => {
 
             // Check that GatewayJS isn't already open
             let existingPopup;
-            try { existingPopup = this.getPopup(); } catch (error) { /* Ignore error */ }
+            try { existingPopup = this._getPopup(); } catch (error) { /* Ignore error */ }
             if (existingPopup) { throw new Error("GatewayJS already open"); }
 
-            const container = this.getOrCreateGatewayContainer();
+            const container = this._getOrCreateGatewayContainer();
 
             const endpoint = resolveEndpoint(this.endpoint, this.network, "", this.id);
             const popup = createElementFromHTML(RenElementHTML(this.id, endpoint, this.isPaused));
@@ -210,53 +155,16 @@ export class Gateway {
             // tslint:disable-next-line: no-any
             let listener: (e: { readonly data: GatewayMessage<any> }) => void;
 
-            const close = () => {
+            const onClose = () => {
                 // Remove listener
-                window.removeEventListener("message", listener);
+                this._removeListener(listener);
                 this.close();
             };
 
             // tslint:disable-next-line: no-any
-            listener = (e: { readonly data: GatewayMessage<any> }) => {
-                if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
-                    // alert(`I got a message: ${JSON.stringify(e.data)}`);
-                    switch (e.data.type) {
-                        case "ready":
-                            this._sendMessage(GatewayMessageType.Shift, {
-                                shift: shiftParams,
-                                paused: this.isPaused,
-                            }).catch(console.error);
-                            break;
-                        case GatewayMessageType.Status:
-                            this.promiEvent.emit("status", e.data.payload.status, e.data.payload.details);
-                            break;
-                        case GatewayMessageType.Pause:
-                            this._pause();
-                            break;
-                        case GatewayMessageType.Resume:
-                            this._resume();
-                            break;
-                        case GatewayMessageType.Cancel:
-                            close();
-                            if (this.isCancelling) {
-                                // tslint:disable-next-line: no-object-mutation
-                                this.isCancelling = false;
-                                return;
-                            } else {
-                                // tslint:disable-next-line: no-object-mutation
-                                this.isCancelling = false;
-                                this.promiEvent.reject(new Error("Shift cancelled by user"));
-                                return;
-                            }
-                        case GatewayMessageType.Done:
-                            close();
-                            this.promiEvent.resolve(e.data.payload);
-                            return;
-                    }
-                }
-            };
+            listener = this._eventListener(shiftParams, onClose);
 
-            window.addEventListener("message", listener);
+            this._addListener(listener);
 
             // Add handler to overlay
             const overlay = document.querySelector("._ren_overlay");
@@ -272,14 +180,53 @@ export class Gateway {
         return this;
     }
 
-    public readonly result = () => this.promiEvent;
+    private readonly _eventListener = (shiftParams: GatewayParams, onClose: () => void) =>
+        // tslint:disable-next-line: no-any
+        (e: { readonly data: GatewayMessage<any> }) => {
+            if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
+                // alert(`I got a message: ${JSON.stringify(e.data)}`);
+                switch (e.data.type) {
+                    case GatewayMessageType.Ready:
+                        this._sendMessage(GatewayMessageType.Shift, {
+                            shift: shiftParams,
+                            paused: this.isPaused,
+                        }).catch(console.error);
+                        break;
+                    case GatewayMessageType.Status:
+                        this.promiEvent.emit("status", e.data.payload.status, e.data.payload.details);
+                        break;
+                    case GatewayMessageType.Pause:
+                        this._pause();
+                        break;
+                    case GatewayMessageType.Resume:
+                        this._resume();
+                        break;
+                    case GatewayMessageType.Cancel:
+                        onClose();
+                        if (this.isCancelling) {
+                            // tslint:disable-next-line: no-object-mutation
+                            this.isCancelling = false;
+                            return;
+                        } else {
+                            // tslint:disable-next-line: no-object-mutation
+                            this.isCancelling = false;
+                            this.promiEvent.reject(new Error("Shift cancelled by user"));
+                            return;
+                        }
+                    case GatewayMessageType.Done:
+                        onClose();
+                        this.promiEvent.resolve(e.data.payload);
+                        return;
+                }
+            }
+        }
 
-
-    private readonly _sendMessage = async <T>(type: GatewayMessageType, payload: T, iframeIn?: ChildNode) => new Promise<void>(async (resolve) => {
+    // tslint:disable-next-line: no-any
+    private readonly _sendMessage = async <T>(type: GatewayMessageType, payload: T, iframeIn?: ChildNode) => new Promise<any>(async (resolve) => {
 
         // TODO: Allow response in acknowledgement.
 
-        const frame = iframeIn || this.getIFrame();
+        const frame = iframeIn || this._getIFrame();
 
         while (!frame) {
             await sleep(1 * 1000);
@@ -293,7 +240,7 @@ export class Gateway {
         let acknowledged = false;
         const removeListener = () => {
             acknowledged = true;
-            window.removeEventListener("message", listener);
+            this._removeListener(listener);
         };
 
         // tslint:disable-next-line: no-any
@@ -304,7 +251,7 @@ export class Gateway {
             }
         };
 
-        window.addEventListener("message", listener);
+        this._addListener(listener);
 
         // Repeat message until acknowledged
         // tslint:disable-next-line: no-any
@@ -317,29 +264,60 @@ export class Gateway {
         }
     })
 
+    // tslint:disable-next-line: no-any
+    private readonly _addListener = (listener: (e: { readonly data: GatewayMessage<any> }) => void) => {
+        window.addEventListener("message", listener);
+    }
+
+    // tslint:disable-next-line: no-any
+    private readonly _removeListener = (listener: (e: { readonly data: GatewayMessage<any> }) => void) => {
+        window.removeEventListener("message", listener);
+    }
 
     private readonly _pause = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = true;
-        this.getPopup().classList.add("_ren_gateway-minified");
+        this._getPopup().classList.add("_ren_gateway-minified");
     }
 
     private readonly _resume = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = false;
-        this.getPopup().classList.remove("_ren_gateway-minified");
+        this._getPopup().classList.remove("_ren_gateway-minified");
     }
+
+    private readonly _getPopup = () => getElement(`_ren_gateway-${this.id}`);
+    private readonly _getIFrame = () => getElement(`_ren_iframe-${this.id}`);
+    private readonly _getOrCreateGatewayContainer = () => {
+        try {
+            return getElement(`_ren_gatewayContainer`);
+        } catch (error) {
+            // Ignore error
+        }
+
+        const body: ReadonlyArray<HTMLBodyElement | HTMLHtmlElement> = [...(Array.from(document.getElementsByTagName("body")) || []), ...(Array.from(document.getElementsByTagName("html")) || [])];
+
+        const popup = createElementFromHTML(RenGatewayContainerHTML());
+
+        if (body[0] && popup) {
+            body[0].insertBefore(popup, body[0].lastChild);
+        }
+
+        return getElement(`_ren_gatewayContainer`);
+    }
+
 }
 
+const _gatewayTypeCheck: GatewayConstructor = Gateway;
 
-export default class GatewayJS {
+export default class GatewayJS implements GatewayJSInterface {
 
     public static readonly Tokens = Tokens;
     public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
     public static readonly ShiftInStatus = ShiftInStatus;
     public static readonly ShiftOutStatus = ShiftOutStatus;
-    public static readonly utils = utils;
+    public static readonly utils = gatewayUtils;
 
     private readonly network: RenNetwork;
     private readonly endpoint: string;
@@ -356,7 +334,7 @@ export default class GatewayJS {
      * Returns a map containing previously opened gateways.
      */
     public readonly getGateways = async (): Promise<Map<string, HistoryEvent>> => {
-        return new Gateway(this.network, this.endpoint).getGateways();
+        return new Gateway(this.network, this.endpoint)._getGateways();
     }
 
     /**
@@ -364,10 +342,11 @@ export default class GatewayJS {
      *  doesn't seem to work.)
      */
     public readonly open = (params: GatewayParams): Gateway => {
-        return new Gateway(this.network, this.endpoint).open(params);
+        return new Gateway(this.network, this.endpoint)._open(params);
     }
 }
 
+const _gatewayJSTypeCheck: GatewayJSConstructor = GatewayJS;
 
 ////////////////////////////////////////////////////////////////////////////////
 // EXPORTS                                                                    //

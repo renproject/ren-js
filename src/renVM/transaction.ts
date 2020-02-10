@@ -18,7 +18,7 @@ export type BurnArgsArray = [
     RenVMArg<"ref", RenVMType.TypeU64>,
 ];
 
-export type TxReturnedInputs = [
+export type TxMintReturnedInputs = [
     RenVMArg<"phash", RenVMType.TypeB32>, // base64
     // RenVMArg<"amount", RenVMType.TypeU64>,
     RenVMArg<"token", RenVMType.ExtTypeEthCompatAddress>, // base64
@@ -26,6 +26,12 @@ export type TxReturnedInputs = [
     RenVMArg<"n", RenVMType.TypeB32>, // base64
     RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>,
     RenVMArg<"amount", RenVMType.TypeU256>,
+];
+
+export type TxBurnReturnedInputs = [
+    RenVMArg<"ref", RenVMType.TypeU64>,
+    RenVMArg<"to", RenVMType.TypeB>, // base64
+    RenVMArg<"amount", RenVMType.TypeU64>,
 ];
 
 export type TxResponseOutputs = [
@@ -40,7 +46,7 @@ export type TxAutogen = [
     RenVMArg<"sighash", RenVMType.TypeB32>, // base 64
 ];
 
-export interface UnmarshalledTx {
+export interface UnmarshalledMintTx {
     hash: string; // Buffer;
     to: RenContract;
     in: {
@@ -60,5 +66,15 @@ export interface UnmarshalledTx {
         r: string;
         s: string;
         v: string;
+    };
+}
+
+export interface UnmarshalledBurnTx {
+    hash: string; // Buffer;
+    to: RenContract;
+    in: {
+        ref: BigNumber;
+        to: string; // Buffer;
+        amount: BigNumber;
     };
 }

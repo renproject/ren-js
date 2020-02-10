@@ -13,7 +13,7 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs } from "../blockchain/zec";
-import { UnmarshalledTx } from "../renVM/transaction";
+import { UnmarshalledMintTx } from "../renVM/transaction";
 import { bchUtils, btcUtils, parseRenContract, zecUtils } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -168,7 +168,7 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: UnmarshalledTx, network: NetworkDetails): Signature => {
+export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetails): Signature => {
     if (!response.out) {
         throw new Error(`Expected transaction response to have signature`);
     }

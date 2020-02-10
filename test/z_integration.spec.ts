@@ -363,13 +363,7 @@ describe("Shifting in and shifting out", function () {
             const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const shift = new RenJS("testnet").shiftIn({
-                // Send BTC to an Ethereum address
                 sendToken: token as "BTC" | "ZEC" | "BCH",
-
-                // Amount of BTC we are sending
-                // sendAmount: amount,
-
-                // The recipient Ethereum address
                 sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             });
 
@@ -393,18 +387,35 @@ describe("Shifting in and shifting out", function () {
 
             const shift = new RenJS("testnet").shiftOut({
                 web3Provider: provider,
-
-                // Send BTC to an Ethereum address
                 sendToken: token as "BTC" | "ZEC" | "BCH",
-
-                // Amount of BTC we are sending
                 sendAmount: amount,
-
-                // The recipient Ethereum address
                 sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6",
             });
 
             await submitToRenVM(shift);
+        }
+    });
+
+    it.skip("recover trade", async () => {
+        for (const contract of [RenJS.Tokens.BTC.Mint]) {
+            logger.consoleLine();
+            logger.info(`Starting mint test - recovering trade`);
+            const { asset: token } = parseRenContract(contract);
+            const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+
+            const shift = new RenJS("testnet").shiftIn({
+                sendToken: token as "BTC" | "ZEC" | "BCH",
+                sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
+            });
+
+            const gatewayAddress = shift.addr();
+
+            const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
+            logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
+            await account.sendSats(gatewayAddress, amount, token);
+
+            await submitIndividual(shift);
+            await submitIndividual(shift);
         }
     });
 });

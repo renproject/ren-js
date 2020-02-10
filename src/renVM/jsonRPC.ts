@@ -2,7 +2,8 @@ import { RenContract, RenVMArgs } from "@renproject/ren-js-common";
 
 import { TxStatus } from "../types/assets";
 import {
-    BurnArgsArray, MintArgsArray, TxAutogen, TxResponseOutputs, TxReturnedInputs,
+    BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxMintReturnedInputs,
+    TxResponseOutputs,
 } from "./transaction";
 
 export enum RPCMethod {
@@ -156,18 +157,31 @@ export interface ResponseSubmitTx {
 
 // ResponseQueryTx defines the response of the MethodQueryTx.
 
-export interface ResponseQueryTx {
+export interface ResponseQueryMintTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
         hash: string;
         to: RenContract;
-        in: TxReturnedInputs;
+        in: TxMintReturnedInputs;
         autogen: TxAutogen;
         out?: TxResponseOutputs;
     };
     // TxStatus string`json:"txStatus"`
     txStatus: TxStatus;
 }
+
+export interface ResponseQueryBurnTx {
+    // Tx       abi.Tx`json:"tx"`
+    tx: {
+        hash: string;
+        to: RenContract;
+        in: TxBurnReturnedInputs;
+    };
+    // TxStatus string`json:"txStatus"`
+    txStatus: TxStatus;
+}
+
+export type ResponseQueryTx = ResponseQueryMintTx | ResponseQueryBurnTx;
 
 // ResponseQueryNumPeers defines the response of the MethodQueryNumPeers.
 export interface ResponseQueryNumPeers {

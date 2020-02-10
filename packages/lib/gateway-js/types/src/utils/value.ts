@@ -4,7 +4,8 @@
  */
 
 import BigNumber from "bignumber.js";
-import BN from "bn.js";
+
+import { BN } from "../types/general";
 
 const convert = (valueIn: BigNumber, fromUnit: BigNumber, toUnit: BigNumber) => {
     return valueIn.multipliedBy(fromUnit).dividedBy(toUnit);
@@ -12,7 +13,8 @@ const convert = (valueIn: BigNumber, fromUnit: BigNumber, toUnit: BigNumber) => 
 
 type NumberValue = string | number | BigNumber | BN;
 
-const toBigNumber = (valueIn: NumberValue): BigNumber => BigNumber.isBigNumber(valueIn) ? new BigNumber(valueIn) : new BigNumber(valueIn.toString());
+export const toBigNumber = (valueIn: NumberValue): BigNumber => BigNumber.isBigNumber(valueIn) ? new BigNumber(valueIn) : new BigNumber(valueIn.toString());
+export const toFixed = (input: { readonly toFixed?: () => string; readonly toString: () => string }) => input.toFixed ? input.toFixed() : input.toString();
 
 class BaseValue<T extends { [unit: string]: BigNumber }> {
     private readonly value: BigNumber;

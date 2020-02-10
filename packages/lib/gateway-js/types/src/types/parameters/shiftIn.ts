@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
-import BN from "bn.js";
 
+import { BN } from "../general";
 import { RenContract } from "../renVM";
 import { AllParams2, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
 

@@ -1,5 +1,5 @@
-import BN from "bn.js";
 
+import { BN } from "../types/general";
 import { AllParams2, EthArgs } from "../types/parameters/common";
 import { AbiItem } from "./abi";
 

@@ -6,6 +6,8 @@ export * from "./types/parameters/shiftOut";
 export * from "./types/parameters/parameters";
 export * from "./types/renVM";
 export * from "./types/types";
+export * from "./types/general";
+export * from "./types/gatewayJS";
 
 // Utils
 export * from "./utils/promiEvent";

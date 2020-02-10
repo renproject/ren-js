@@ -1,4 +1,4 @@
-import BN from "bn.js";
+import { BN } from "../general";
 
 export enum ShiftedToken {
     zBTC = "zBTC",

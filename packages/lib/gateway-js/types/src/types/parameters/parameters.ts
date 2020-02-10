@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
-import BN from "bn.js";
 
+import { BN } from "../general";
 import { HistoryEvent, SendTokenInterface } from "../types";
 import { ShiftInParams, ShiftInParamsAll } from "./shiftIn";
 import {

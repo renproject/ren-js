@@ -4,6 +4,7 @@ import {
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { OrderedMap } from "immutable";
+import { ResponseQueryMintTx } from "renVM/jsonRPC";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
@@ -17,8 +18,8 @@ import {
     getShifterAddress, ignoreError, randomNonce, retrieveDeposits, SECONDS, signatureToString,
     sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
 } from "./lib/utils";
-import { ShifterNetwork, unmarshalTx } from "./renVM/shifterNetwork";
-import { UnmarshalledTx } from "./renVM/transaction";
+import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
+import { UnmarshalledMintTx } from "./renVM/transaction";
 import { TxStatus } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
@@ -246,6 +247,8 @@ export class ShiftInObject {
                         }
                     } catch (errorInner) {
                         // Ignore errorInner.
+                        // tslint:disable-next-line: no-console
+                        console.error(errorInner);
                         throw error;
                     }
                 }
@@ -255,7 +258,7 @@ export class ShiftInObject {
                 throw new Error(`Must call 'waitForDeposit' or provide UTXO or RenVM transaction hash.`);
             }
 
-            const marshalledResponse = await this.renVMNetwork.waitForTX(
+            const marshalledResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
                 renTxHash,
                 (status) => {
                     promiEvent.emit("status", status);
@@ -263,7 +266,7 @@ export class ShiftInObject {
                 () => promiEvent._isCancelled(),
             );
 
-            const response = unmarshalTx(marshalledResponse);
+            const response = unmarshalMintTx(marshalledResponse);
 
             // tslint:disable-next-line: no-use-before-declare
             return new Signature(this.network, this.params as ShiftInParams, response, renTxHash);
@@ -283,13 +286,13 @@ export class ShiftInObject {
 export class Signature {
     public params: ShiftInParamsAll;
     public network: NetworkDetails;
-    public response: UnmarshalledTx;
+    public response: UnmarshalledMintTx;
     public signature: string;
     public renTxHash: string;
     // Here to maintain backwards compatibility
     public messageID: string;
 
-    constructor(_network: NetworkDetails, _params: ShiftInParams, _response: UnmarshalledTx, _renTxHash: string) {
+    constructor(_network: NetworkDetails, _params: ShiftInParams, _response: UnmarshalledMintTx, _renTxHash: string) {
         this.network = _network;
         this.response = _response;
         this.renTxHash = _renTxHash;
@@ -397,6 +400,11 @@ export class Signature {
                     ...params,
                 ).send(await withDefaultAccount(web3, {
                     ...txConfigParam,
+                    ...{
+                        value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
+                        gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
+                    },
+
                     ...txConfig,
                 }));
 
@@ -475,7 +483,13 @@ export class Signature {
         return await withDefaultAccount(web3, {
             to: sendTo,
             data,
+
             ...txConfigParam,
+            ...{
+                value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
+                gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
+            },
+
             ...txConfig,
         });
     }

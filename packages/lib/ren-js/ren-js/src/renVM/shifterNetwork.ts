@@ -5,8 +5,8 @@ import { assert, SECONDS, sleep, syncGetTokenAddress, toBase64 } from "../lib/ut
 import { TxStatus } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";
-import { ResponseQueryTx, RPCMethod } from "./jsonRPC";
-import { UnmarshalledTx } from "./transaction";
+import { ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod } from "./jsonRPC";
+import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./transaction";
 
 const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
 const decodeNumber = (input: string) => new BigNumber(input);
@@ -20,56 +20,81 @@ const decodeNumber = (input: string) => new BigNumber(input);
 const assertArgumentType = <ArgType>(
     name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
     type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
-    arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? RenVMArg<Name, Type, Value> : never): ArgType extends RenVMArg<infer _Name, infer _Type, infer Value> ? Value : never => {
+    arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? RenVMArg<Name, Type, Value> : never
+): ArgType extends RenVMArg<infer _Name, infer _Type, infer Value> ? Value : never => {
     assert(arg.type === type, `Expected argument ${name} of type ${type} but got ${arg.name} of type ${arg.type}`);
     return arg.value;
 };
 
-export const unmarshalTx = (response: ResponseQueryTx): UnmarshalledTx => {
-    const [phashArg, tokenArg, toArg, nArg, utxoArg, amountArg] = response.tx.in;
+const assertAndDecodeBytes = <ArgType>(
+    name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
+    type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
+    arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
+): string => {
+    return decodeBytes(assertArgumentType<ArgType>(name, type, arg));
+};
 
-    const phash = assertArgumentType<typeof phashArg>("phash", RenVMType.TypeB32, phashArg);
-    const token = assertArgumentType<typeof tokenArg>("token", RenVMType.ExtTypeEthCompatAddress, tokenArg);
-    const to = assertArgumentType<typeof toArg>("to", RenVMType.ExtTypeEthCompatAddress, toArg);
-    const n = assertArgumentType<typeof nArg>("n", RenVMType.TypeB32, nArg);
-    const utxo = assertArgumentType<typeof utxoArg>("utxo", utxoArg.type, utxoArg);
-    const amount = assertArgumentType<typeof amountArg>("amount", RenVMType.TypeU256, amountArg);
+const assertAndDecodeNumber = <ArgType>(
+    name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
+    type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
+    arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
+): BigNumber => {
+    return decodeNumber(assertArgumentType<ArgType>(name, type, arg));
+};
+
+const assertAndDecodeAddress = <ArgType>(
+    name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
+    type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
+    arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
+): string => {
+    return Ox(assertArgumentType<ArgType>(name, type, arg));
+};
+
+export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMintTx => {
+    const [phashArg, tokenArg, toArg, nArg, utxoArg, amountArg] = response.tx.in;
+    const phash = assertAndDecodeBytes<typeof phashArg>("phash", RenVMType.TypeB32, phashArg);
+    const token = assertAndDecodeAddress<typeof tokenArg>("token", RenVMType.ExtTypeEthCompatAddress, tokenArg);
+    const to = assertAndDecodeAddress<typeof toArg>("to", RenVMType.ExtTypeEthCompatAddress, toArg);
+    const n = assertAndDecodeBytes<typeof nArg>("n", RenVMType.TypeB32, nArg);
+    const utxoRaw = assertArgumentType<typeof utxoArg>("utxo", utxoArg.type, utxoArg);
+    const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU256, amountArg);
+
+    const utxo = { "txHash": utxoRaw.txHash, "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": utxoRaw.scriptPubKey, "amount": decodeNumber(utxoRaw.amount) };
 
     const [ghashArg, nhashArg, sighashArg] = response.tx.autogen;
-    const ghash = assertArgumentType<typeof ghashArg>("ghash", RenVMType.TypeB32, ghashArg);
-    const nhash = assertArgumentType<typeof nhashArg>("nhash", RenVMType.TypeB32, nhashArg);
-    const sighash = assertArgumentType<typeof sighashArg>("sighash", RenVMType.TypeB32, sighashArg);
+    const ghash = assertAndDecodeBytes<typeof ghashArg>("ghash", RenVMType.TypeB32, ghashArg);
+    const nhash = assertAndDecodeBytes<typeof nhashArg>("nhash", RenVMType.TypeB32, nhashArg);
+    const sighash = assertAndDecodeBytes<typeof sighashArg>("sighash", RenVMType.TypeB32, sighashArg);
 
-    let out: UnmarshalledTx["out"];
+    let out: UnmarshalledMintTx["out"];
     if (response.tx.out) {
         const [rArg, sArg, vArg] = response.tx.out;
-        const r = assertArgumentType<typeof rArg>("r", RenVMType.TypeB, rArg);
-        const s = assertArgumentType<typeof sArg>("s", RenVMType.TypeB, sArg);
-        const v = assertArgumentType<typeof vArg>("v", RenVMType.TypeB, vArg);
-        out = {
-            r: decodeBytes(r),
-            s: decodeBytes(s),
-            v: decodeBytes(v),
-        };
+        const r = assertAndDecodeBytes<typeof rArg>("r", RenVMType.TypeB, rArg);
+        const s = assertAndDecodeBytes<typeof sArg>("s", RenVMType.TypeB, sArg);
+        const v = assertAndDecodeBytes<typeof vArg>("v", RenVMType.TypeB, vArg);
+        out = { r, s, v };
     }
 
     return {
         hash: decodeBytes(response.tx.hash),
         to: response.tx.to,
-        in: {
-            phash: decodeBytes(phash),
-            token: Ox(token),
-            to: Ox(to),
-            n: decodeBytes(n),
-            utxo: { "txHash": utxo.txHash, "vOut": parseInt(utxo.vOut, 10), "scriptPubKey": utxo.scriptPubKey, "amount": decodeNumber(utxo.amount) },
-            amount: decodeNumber(amount),
-        },
-        autogen: {
-            sighash: decodeBytes(sighash),
-            ghash: decodeBytes(ghash),
-            nhash: decodeBytes(nhash),
-        },
+        in: { phash, token, to, n, utxo, amount },
+        autogen: { sighash, ghash, nhash },
         out,
+    };
+};
+
+export const unmarshalBurnTx = (response: ResponseQueryBurnTx): UnmarshalledBurnTx => {
+    const [refArg, toArg, amountArg] = response.tx.in;
+
+    const ref = assertAndDecodeNumber<typeof refArg>("ref", RenVMType.TypeU64, refArg);
+    const to = assertAndDecodeBytes<typeof toArg>("to", RenVMType.TypeB, toArg);
+    const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU64, amountArg);
+
+    return {
+        hash: decodeBytes(response.tx.hash),
+        to: response.tx.to,
+        in: { ref, to, amount },
     };
 };
 
@@ -136,16 +161,16 @@ export class ShifterNetwork {
         return Ox(Buffer.from(response.tx.hash, "base64"));
     }
 
-    public readonly queryTX = async (utxoTxHash: string): Promise<ResponseQueryTx> => {
+    public readonly queryTX = async <T extends ResponseQueryMintTx | ResponseQueryBurnTx>(utxoTxHash: string): Promise<T> => {
         return await this.network.sendMessage(
             RPCMethod.QueryTx,
             {
                 txHash: toBase64(utxoTxHash),
             },
-        );
+        ) as T;
     }
 
-    public readonly waitForTX = async (utxoTxHash: string, onStatus?: (status: TxStatus) => void, _cancelRequested?: () => boolean): Promise<ResponseQueryTx> => {
+    public readonly waitForTX = async <T extends ResponseQueryMintTx | ResponseQueryBurnTx>(utxoTxHash: string, onStatus?: (status: TxStatus) => void, _cancelRequested?: () => boolean): Promise<T> => {
         let response;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -154,7 +179,7 @@ export class ShifterNetwork {
             }
 
             try {
-                const result = await this.queryTX(utxoTxHash);
+                const result = await this.queryTX<T>(utxoTxHash);
                 if (result && result.txStatus === TxStatus.TxStatusDone) {
                     response = result;
                     break;

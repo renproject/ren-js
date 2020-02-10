@@ -2,7 +2,9 @@ import {
     newPromiEvent, PromiEvent, ShiftOutParams, ShiftOutParamsAll,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
+import { UnmarshalledBurnTx } from "renVM/transaction";
 import Web3 from "web3";
+import { TransactionConfig } from "web3-core";
 
 import { payloadToABI } from "./lib/abi";
 import { processShiftOutParams } from "./lib/processParams";
@@ -10,8 +12,8 @@ import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     BURN_TOPIC, generateShiftOutTxHash, ignoreError, waitForReceipt, withDefaultAccount,
 } from "./lib/utils";
-import { ResponseQueryTx } from "./renVM/jsonRPC";
-import { ShifterNetwork } from "./renVM/shifterNetwork";
+import { ResponseQueryBurnTx } from "./renVM/jsonRPC";
+import { ShifterNetwork, unmarshalBurnTx } from "./renVM/shifterNetwork";
 import { TxStatus } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
@@ -26,7 +28,7 @@ export class ShiftOutObject {
         this.params = processShiftOutParams(this.network, _params);
     }
 
-    public readFromEthereum = (): PromiEvent<ShiftOutObject, Web3Events & RenWeb3Events> => {
+    public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<ShiftOutObject, Web3Events & RenWeb3Events> => {
 
         const promiEvent = newPromiEvent<ShiftOutObject, Web3Events & RenWeb3Events>();
 
@@ -59,7 +61,7 @@ export class ShiftOutObject {
                         const contractCall = contractCalls[i];
                         const last = i === contractCalls.length - 1;
 
-                        const { contractParams, contractFn, sendTo, txConfig } = await contractCall;
+                        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = await contractCall;
 
                         const callParams = [
                             ...(contractParams || []).map(value => value.value),
@@ -71,6 +73,12 @@ export class ShiftOutObject {
                         const tx = contract.methods[contractFn](
                             ...callParams,
                         ).send(await withDefaultAccount(web3, {
+                            ...txConfigParam,
+                            ...{
+                                value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
+                                gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
+                            },
+
                             ...txConfig,
                         }));
 
@@ -142,8 +150,8 @@ export class ShiftOutObject {
 
     public queryTx = async () => this.renVMNetwork.queryTX(this.renTxHash());
 
-    public submitToRenVM = (): PromiEvent<ResponseQueryTx, { renTxHash: [string], status: [TxStatus] }> => {
-        const promiEvent = newPromiEvent<ResponseQueryTx, { renTxHash: [string], status: [TxStatus] }>();
+    public submitToRenVM = (): PromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }> => {
+        const promiEvent = newPromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }>();
 
         (async () => {
             const burnReference = this.params.burnReference;
@@ -156,13 +164,14 @@ export class ShiftOutObject {
             // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("renTxHash", renTxHash);
 
-            return await this.renVMNetwork.waitForTX(
+            const response = await this.renVMNetwork.waitForTX<ResponseQueryBurnTx>(
                 renTxHash,
                 (status) => {
                     promiEvent.emit("status", status);
                 },
                 () => promiEvent._isCancelled(),
             );
+            return unmarshalBurnTx(response);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

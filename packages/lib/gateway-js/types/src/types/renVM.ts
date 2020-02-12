@@ -86,15 +86,17 @@ export enum RenVMType {
 }
 
 export interface RenVMOutputUTXO {
-    txHash: string;
-    vOut: string;
-    scriptPubKey: string;
-    amount: string;
+    txHash: RenVMParameterValue<RenVMType.TypeB32>;
+    vOut: RenVMParameterValue<RenVMType.TypeU32>;
+    scriptPubKey: RenVMParameterValue<RenVMType.TypeB>;
+    amount: RenVMParameterValue<RenVMType.TypeU64>;
 }
 
 export interface RenVMInputUTXO {
-    txHash: string;
-    vOut: string;
+    txHash: RenVMParameterValue<RenVMType.TypeB32>;
+    vOut: RenVMParameterValue<RenVMType.TypeU32>;
+    scriptPubKey?: RenVMParameterValue<RenVMType.TypeB>;
+    amount?: RenVMParameterValue<RenVMType.TypeU64>;
 }
 
 export type RenVMUTXO = RenVMOutputUTXO | RenVMInputUTXO;
@@ -126,7 +128,7 @@ export type RenVMParameterValue<type extends RenVMType> =
     type extends RenVMType.TypeList ? any[] :
     type extends RenVMType.ExtTypeEthCompatAddress ? HexString :
     type extends RenVMType.ExtTypeBtcCompatUTXO ? RenVMUTXO :
-    type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO :
+    type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO[] :
     // tslint:disable-next-line: no-any
     type extends RenVMType.ExtTypeEthCompatTx ? any :
     // tslint:disable-next-line: no-any

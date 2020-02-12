@@ -1,8 +1,10 @@
-import { Ox, RenContract, RenVMArg, RenVMType, strip0x } from "@renproject/ren-js-common";
+import {
+    Chain, Ox, RenContract, RenVMArg, RenVMType, strip0x, Tokens, TxStatus,
+} from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 
-import { assert, SECONDS, sleep, syncGetTokenAddress, toBase64 } from "../lib/utils";
-import { TxStatus } from "../types/assets";
+import { assert, SECONDS, sleep, syncGetTokenAddress, toBase64, utils } from "../lib/utils";
+import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";
 import { ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod } from "./jsonRPC";
@@ -51,15 +53,17 @@ const assertAndDecodeAddress = <ArgType>(
 };
 
 export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMintTx => {
+    // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
+
     const [phashArg, tokenArg, toArg, nArg, utxoArg, amountArg] = response.tx.in;
     const phash = assertAndDecodeBytes<typeof phashArg>("phash", RenVMType.TypeB32, phashArg);
     const token = assertAndDecodeAddress<typeof tokenArg>("token", RenVMType.ExtTypeEthCompatAddress, tokenArg);
     const to = assertAndDecodeAddress<typeof toArg>("to", RenVMType.ExtTypeEthCompatAddress, toArg);
     const n = assertAndDecodeBytes<typeof nArg>("n", RenVMType.TypeB32, nArg);
     const utxoRaw = assertArgumentType<typeof utxoArg>("utxo", utxoArg.type, utxoArg);
-    const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU256, amountArg);
+    const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU256, amountArg).toFixed();
 
-    const utxo = { "txHash": utxoRaw.txHash, "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": utxoRaw.scriptPubKey, "amount": decodeNumber(utxoRaw.amount) };
+    const utxo = { "txHash": utxoRaw.txHash, "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": utxoRaw.scriptPubKey, "amount": decodeNumber(utxoRaw.amount).toFixed() };
 
     const [ghashArg, nhashArg, sighashArg] = response.tx.autogen;
     const ghash = assertAndDecodeBytes<typeof ghashArg>("ghash", RenVMType.TypeB32, ghashArg);
@@ -77,6 +81,7 @@ export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMint
 
     return {
         hash: decodeBytes(response.tx.hash),
+        txStatus: response.txStatus,
         to: response.tx.to,
         in: { phash, token, to, n, utxo, amount },
         autogen: { sighash, ghash, nhash },
@@ -87,9 +92,20 @@ export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMint
 export const unmarshalBurnTx = (response: ResponseQueryBurnTx): UnmarshalledBurnTx => {
     const [refArg, toArg, amountArg] = response.tx.in;
 
-    const ref = assertAndDecodeNumber<typeof refArg>("ref", RenVMType.TypeU64, refArg);
-    const to = assertAndDecodeBytes<typeof toArg>("to", RenVMType.TypeB, toArg);
-    const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU64, amountArg);
+    const ref = assertAndDecodeNumber<typeof refArg>("ref", RenVMType.TypeU64, refArg).toFixed();
+    const toRaw = assertArgumentType<typeof toArg>("to", RenVMType.TypeB, toArg);
+    let amount;
+    try {
+        amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU256, amountArg).toFixed();
+    } catch (error) {
+        amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU64, amountArg).toFixed();
+    }
+
+    const to = response.tx.to === Tokens.ZEC.Eth2Zec ?
+        utils.zec.addressFrom(toRaw) :
+        response.tx.to === Tokens.BCH.Eth2Bch ?
+            utils.bch.addressFrom(toRaw) :
+            utils.btc.addressFrom(toRaw);
 
     return {
         hash: decodeBytes(response.tx.hash),
@@ -97,6 +113,14 @@ export const unmarshalBurnTx = (response: ResponseQueryBurnTx): UnmarshalledBurn
         in: { ref, to, amount },
     };
 };
+
+export const unmarshalTx = ((response: ResponseQueryMintTx | ResponseQueryBurnTx): UnmarshalledMintTx | UnmarshalledBurnTx => {
+    if (parseRenContract(response.tx.to).to === Chain.Ethereum) {
+        return unmarshalMintTx(response as ResponseQueryMintTx);
+    } else {
+        return unmarshalBurnTx(response as ResponseQueryBurnTx);
+    }
+});
 
 export class ShifterNetwork {
     public network: DarknodeGroup;

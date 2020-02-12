@@ -3,7 +3,7 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { EthArgs, Ox, RenVMType } from "@renproject/ren-js-common";
+import { EthArgs, Ox, RenContract, RenVMType } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";

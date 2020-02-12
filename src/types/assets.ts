@@ -66,24 +66,3 @@ export const parseRenContract = (renContract: RenContract): RenContractDetails =
         to: to as Chain
     };
 };
-
-export enum TxStatus {
-    // TxStatusNil is used for transactions that have not been seen, or are
-    // otherwise unknown.
-    TxStatusNil = "nil",
-    // TxStatusConfirming is used for transactions that are currently waiting
-    // for their underlying blockchain transactions to ne confirmed.
-    TxStatusConfirming = "confirming",
-    // TxStatusPending is used for transactions that are waiting for consensus
-    // to be reached on when the transaction should be executed.
-    TxStatusPending = "pending",
-    // TxStatusExecuting is used for transactions that are currently being
-    // executed.
-    TxStatusExecuting = "executing",
-    // TxStatusDone is used for transactions that have been successfully
-    // executed.
-    TxStatusDone = "done",
-    // TxStatusReverted is used for transactions that were reverted during
-    // execution.
-    TxStatusReverted = "reverted",
-}

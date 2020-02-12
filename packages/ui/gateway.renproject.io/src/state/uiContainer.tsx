@@ -24,63 +24,31 @@ const initialState = {
 export class UIContainer extends Container<typeof initialState> {
     public state = initialState;
 
-    public connect = async (web3: Web3, address: string | null): Promise<void> => {
-        await this.setState(state => ({ ...state, web3, address, loggedOut: null }));
-    }
+    public connect = async (web3: Web3, address: string | null): Promise<void> => this.setState(state => ({ ...state, web3, address, loggedOut: null }));
 
-    public clearAddress = async (): Promise<void> => {
-        await this.setState(state => ({ ...state, address: null }));
-    }
+    public clearAddress = async (): Promise<void> => this.setState(state => ({ ...state, address: null }));
 
-    public handleShift = async (gatewayPopupID: string | null) => {
-        await this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
-    }
+    public handleShift = async (gatewayPopupID: string | null) => this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
 
-    // Token prices ////////////////////////////////////////////////////////////
+    public resetTrade = async () => this.setState(state => ({ ...state, gatewayPopupID: null, submitting: false }));
 
-    public resetTrade = async () => {
-        await this.setState(state => ({
-            ...state,
-            gatewayPopupID: null,
-            submitting: false,
-        }));
-    }
+    public deposit = async (deposit: UTXO) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txid, deposit) }));
 
-    public deposit = async (deposit: UTXO) => {
-        const utxos = this.state.utxos.set(deposit.utxo.txid, deposit);
-        await this.setState(state => ({
-            ...state,
-            utxos,
-        }));
-    }
+    public setSubmitting = async (submitting: boolean) => this.setState(state => ({ ...state, submitting }));
 
-    public setSubmitting = async (submitting: boolean) => {
-        await this.setState(state => ({
-            ...state,
-            submitting,
-        }));
-    }
+    public setLoggedOut = async (loggedOut?: string) => this.setState(state => ({ ...state, loggedOut: loggedOut || null }));
 
-    public setLoggedOut = async (loggedOut?: string) => {
-        return this.setState(state => ({ ...state, loggedOut: loggedOut || null }));
-    }
+    public pause = async () => this.setState(state => ({ ...state, paused: true }));
+    public resume = async () => this.setState(state => ({ ...state, paused: false }));
 
-    public pause = async () => {
-        return this.setState(state => ({ ...state, paused: true }));
-    }
-
-    public resume = async () => {
-        await this.setState(state => ({ ...state, paused: false }));
-    }
-
-    // lookForLogout detects if the user has changed or logged out of their Web3
-    // wallet
+    /**
+     * lookForLogout detects if the user has changed or logged out of their Web3
+     * wallet
+     */
     public lookForLogout = async () => {
         const { address, web3 } = this.state;
 
-        if (!address || !web3) {
-            return;
-        }
+        if (!address || !web3) { return; }
 
         const accounts = (await web3.eth.getAccounts())
             .map((web3Address: string) => web3Address.toLowerCase());

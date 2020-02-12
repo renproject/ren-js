@@ -5,11 +5,7 @@ import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import { GetTrades } from "./GetTrades";
 import { Main } from "./Main";
 
-const NotFound = () => {
-    return (
-        <div>404 Not Found</div>
-    );
-};
+const NotFound = () => <div>404 Not Found</div>;
 
 export const App = () => {
     return (

@@ -31,7 +31,7 @@ export const DepositReceived: React.StatelessComponent<{
     token: Token;
     renTxHash: string | null;
     renVMStatus: TxStatus | null;
-    submitDeposit: (resubmit?: boolean) => Promise<unknown>;
+    submitDeposit: () => Promise<unknown>;
 }> = ({ mini, token, renVMStatus, renTxHash, submitDeposit }) => {
     const [error, setError] = React.useState(null as Error | null);
 

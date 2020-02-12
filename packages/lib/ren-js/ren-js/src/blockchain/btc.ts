@@ -1,6 +1,8 @@
 import { Ox, strip0x } from "@renproject/ren-js-common";
 import { Networks, Opcode, Script } from "bitcore-lib";
+import { encode } from "bs58";
 import { getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
+import { validate } from "wallet-address-validator";
 
 import { NetworkDetails, stringToNetwork } from "../types/networks";
 import { createAddress } from "./common";
@@ -29,6 +31,41 @@ export const getBitcoinUTXOs = (network: NetworkDetails | string) => {
 
 export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
 
-export const btcAddressFrom = (address: string, encoding: "hex" | "base64") => {
-    return Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).toString();
+const isBTCAddress = (address: string) => validate(address, "btc", "testnet") || validate(address, "btc", "prod");
+
+export interface Tactics {
+    decoders: Array<(address: string) => Buffer>;
+    encoders: Array<(buffer: Buffer) => string>;
+}
+
+const btcTactics: Tactics = {
+    decoders: [
+        (address: string) => Buffer.from(address),
+        (address: string) => Buffer.from(address, "base64"),
+        (address: string) => Buffer.from(strip0x(address), "hex"),
+    ],
+    encoders: [
+        (buffer: Buffer) => encode(buffer), // base58
+        (buffer: Buffer) => buffer.toString(),
+    ],
 };
+
+export const anyAddressFrom =
+    (isAnyAddress: (address: string) => boolean, { encoders, decoders }: Tactics) =>
+        (address: string) => {
+            for (const encoder of encoders) {
+                for (const decoder of decoders) {
+                    try {
+                        const encoded = encoder(decoder(address));
+                        if (isAnyAddress(encoded)) {
+                            return encoded;
+                        }
+                    } catch (error) {
+                        // Ignore errors
+                    }
+                }
+            }
+            return address;
+        };
+
+export const btcAddressFrom = anyAddressFrom(isBTCAddress, btcTactics);

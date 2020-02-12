@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x,
+    newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x, TxStatus,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -20,7 +20,6 @@ import {
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
 import { UnmarshalledMintTx } from "./renVM/transaction";
-import { TxStatus } from "./types/assets";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftInObject {
@@ -38,7 +37,11 @@ export class ShiftInObject {
         const renTxHash = this.params.renTxHash;
 
         if (!renTxHash) {
-            const { sendToken: renContract, contractCalls, nonce: maybeNonce } = this.params;
+            const { sendToken: renContract, contractCalls, nonce: maybeNonce, requiredAmount } = this.params;
+
+            if (requiredAmount && toBigNumber(requiredAmount).lte(10000)) {
+                throw new Error(`Required amount (${requiredAmount}) is less than minimum shift amount`);
+            }
 
             if (!contractCalls || !contractCalls.length) {
                 throw new Error(`Must provide Ren transaction hash or contract call details.`);
@@ -195,7 +198,8 @@ export class ShiftInObject {
         return generateShiftInTxHash(renContract, encodedGHash, utxo);
     }
 
-    public queryTx = async (specifyUTXO?: UTXOInput) => this.renVMNetwork.queryTX(this.renTxHash(specifyUTXO));
+    public queryTx = async (specifyUTXO?: UTXOInput) =>
+        unmarshalMintTx(await this.renVMNetwork.queryTX(this.renTxHash(specifyUTXO)))
 
     public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }> => {
         const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }>();
@@ -238,6 +242,9 @@ export class ShiftInObject {
                         utxo.output_no.toFixed(),
                         this.network,
                     );
+                    if (renTxHash !== utxoRenTxHash) {
+                        console.warn(`Unexpected txHash returned from RenVM: expected ${utxoRenTxHash} but got ${renTxHash}`);
+                    }
                 } catch (error) {
                     try {
                         // Check if the darknodes have already seen the transaction
@@ -383,7 +390,7 @@ export class Signature {
                 if (last) {
                     params = [
                         ...(contractParams || []).map(value => value.value),
-                        Ox(this.response.in.amount.toString(16)), // _amount: BigNumber
+                        Ox(new BigNumber(this.response.in.amount).toString(16)), // _amount: BigNumber
                         Ox(this.response.autogen.nhash),
                         // Ox(this.response.args.n), // _nHash: string
                         Ox(this.signature), // _sig: string
@@ -465,7 +472,7 @@ export class Signature {
 
         const params = [
             ...(contractParams || []).map(value => value.value),
-            Ox(this.response.in.amount.toString(16)), // _amount: BigNumber
+            Ox(new BigNumber(this.response.in.amount).toString(16)), // _amount: BigNumber
             Ox(this.response.autogen.nhash),
             // Ox(generateNHash(this.response)), // _nHash: string
             Ox(this.signature), // _sig: string

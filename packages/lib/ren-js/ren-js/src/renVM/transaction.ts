@@ -1,7 +1,6 @@
 import {
-    RenContract, RenVMArg, RenVMInputUTXO, RenVMOutputUTXO, RenVMType,
+    RenContract, RenVMArg, RenVMInputUTXO, RenVMOutputUTXO, RenVMType, TxStatus,
 } from "@renproject/ren-js-common";
-import BigNumber from "bignumber.js";
 
 // Minting/Shifting ////////////////////////////////////////////////////////////
 
@@ -31,7 +30,7 @@ export type TxMintReturnedInputs = [
 export type TxBurnReturnedInputs = [
     RenVMArg<"ref", RenVMType.TypeU64>,
     RenVMArg<"to", RenVMType.TypeB>, // base64
-    RenVMArg<"amount", RenVMType.TypeU64>,
+    RenVMArg<"amount", RenVMType.TypeU256> | RenVMArg<"amount", RenVMType.TypeU64>,
 ];
 
 export type TxResponseOutputs = [
@@ -48,14 +47,15 @@ export type TxAutogen = [
 
 export interface UnmarshalledMintTx {
     hash: string; // Buffer;
+    txStatus: TxStatus;
     to: RenContract;
     in: {
         phash: string; // Buffer;
         token: string;
         to: string;
         n: string; // Buffer;
-        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": BigNumber };
-        amount: BigNumber;
+        utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": string };
+        amount: string;
     };
     autogen: {
         ghash: string; // Buffer;
@@ -73,8 +73,8 @@ export interface UnmarshalledBurnTx {
     hash: string; // Buffer;
     to: RenContract;
     in: {
-        ref: BigNumber;
+        ref: string;
         to: string; // Buffer;
-        amount: BigNumber;
+        amount: string;
     };
 }

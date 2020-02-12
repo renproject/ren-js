@@ -1,8 +1,8 @@
-import { RenNetwork } from "@renproject/ren-js-common";
+import { Chain, RenNetwork } from "@renproject/ren-js-common";
 import chai from "chai";
 import Web3 from "web3";
 
-import RenJS, { Chain } from "../src/index";
+import RenJS from "../src/index";
 import { Tokens } from "../src/types/assets";
 import {
     NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,

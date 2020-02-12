@@ -1,7 +1,7 @@
 import _BN from "bn.js";
 
 import {
-    Asset, Chain, RenContract, RenNetwork, ShiftedToken, ShiftInParams, ShiftOutParams,
+    Asset, Chain, RenContract, RenNetwork, ShiftedToken, ShiftInParams, ShiftOutParams, TxStatus,
 } from "@renproject/ren-js-common";
 import Web3 from "web3";
 
@@ -12,7 +12,7 @@ import { RPCMethod } from "./renVM/jsonRPC";
 import { ShifterNetwork } from "./renVM/shifterNetwork";
 import { ShiftInObject } from "./shiftIn";
 import { ShiftOutObject } from "./shiftOut";
-import { Tokens, TxStatus } from "./types/assets";
+import { Tokens } from "./types/assets";
 import { NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork } from "./types/networks";
 
 // Export types
@@ -20,12 +20,14 @@ export { ShiftInObject, Signature } from "./shiftIn";
 export { ShiftOutObject } from "./shiftOut";
 export { UTXO, UTXODetails as BitcoinUTXO, UTXODetails as BitcoinCashUTXO, UTXODetails as ZcashUTXO } from "./lib/utils";
 export { NetworkDetails } from "./types/networks";
-export { Chain, RenContract as Token, RenContract, RenNetwork } from "@renproject/ren-js-common";
+export { Chain, RenContract as Token, RenContract, RenNetwork, TxStatus } from "@renproject/ren-js-common";
 export { Darknode } from "./renVM/darknode";
 export { DarknodeGroup } from "./renVM/darknodeGroup";
-export { RPCMethod } from "./renVM/jsonRPC";
+export { RPCMethod, ResponseQueryTx } from "./renVM/jsonRPC";
 export { processShiftInParams, processShiftOutParams } from "./lib/processParams";
-export { TxStatus, parseRenContract } from "./types/assets";
+export { parseRenContract } from "./types/assets";
+export { unmarshalTx } from "./renVM/shifterNetwork";
+export { UnmarshalledMintTx, UnmarshalledBurnTx } from "./renVM/transaction";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -105,3 +107,31 @@ export default class RenJS {
     public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
     public readonly getShifterAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getShifterAddress(this.network, web3, token);
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// EXPORTS                                                                    //
+// Based on https://github.com/MikeMcl/bignumber.js/blob/master/bignumber.js  //
+////////////////////////////////////////////////////////////////////////////////
+
+// tslint:disable: no-any no-object-mutation strict-type-predicates no-typeof-undefined
+
+// tslint:disable-next-line: no-string-literal
+(RenJS as any)["default"] = (RenJS as any).RenJS = RenJS;
+
+// AMD
+try {
+    // @ts-ignore
+    if (typeof define === "function" && define.amd) { define(() => RenJS); }
+} catch (error) { /* ignore */ }
+
+// Node.js and other environments that support module.exports.
+try { // @ts-ignore
+    if (typeof module !== "undefined" && module.exports) { module.exports = RenJS; }
+} catch (error) { /* ignore */ }
+
+// Browser.
+try {
+    // @ts-ignore
+    if (typeof window !== "undefined" && window) { (window as any).RenJS = RenJS; }
+} catch (error) { /* ignore */ }

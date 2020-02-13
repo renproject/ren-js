@@ -28,6 +28,7 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
         paused: boolean,
     } :
     Type extends GatewayMessageType.GetTrades ? ({} | Map<string, HistoryEvent>) :
+    Type extends GatewayMessageType.Trades ? Map<string, HistoryEvent> :
     Type extends GatewayMessageType.Status ? {
         status: ShiftInStatus | ShiftOutStatus | undefined;
         details: null;
@@ -41,11 +42,11 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     // tslint:disable-next-line: no-any
     Type extends GatewayMessageType.Acknowledgement ? any : never;
 
-export interface GatewayMessage<Payload> {
+export interface GatewayMessage<Type extends GatewayMessageType> {
     from: "ren";
     frameID: string;
     messageID: string;
-    type: GatewayMessageType;
-    payload: Payload;
+    type: Type;
+    payload: GatewayMessagePayload<Type>;
     error?: string;
 }

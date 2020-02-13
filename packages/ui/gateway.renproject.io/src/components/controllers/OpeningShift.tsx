@@ -2,8 +2,8 @@ import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
 import {
-    DetailedContractCall, GatewayShiftInParamsExtra, ShiftInEvent, ShiftInStatus, ShiftOutEvent,
-    ShiftOutStatus,
+    DetailedContractCall, GatewayMessageType, GatewayShiftInParamsExtra, ShiftInEvent,
+    ShiftInStatus, ShiftOutEvent, ShiftOutStatus,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import QRCode from "qrcode.react";
@@ -13,7 +13,7 @@ import styled from "styled-components";
 import infoIcon from "../../images/icons/info.svg";
 // tslint:disable-next-line: ordered-imports
 import { _catchInteractionErr_, isPromise } from "../../lib/errors";
-import { GatewayMessageType, postMessageToClient } from "../../lib/postMessage";
+import { postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { Token } from "../../state/generalTypes";
 import { SDKContainer } from "../../state/sdkContainer";
@@ -51,16 +51,16 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
 
         const toggleShowQR = React.useCallback(() => setShowQR(!showQR), [showQR]);
 
-        const onDone = async () => {
+        const onNoBurnFound = async () => {
             if (returned) {
                 return;
             }
             returned = true;
             setReturned(true);
             if (uiContainer.state.gatewayPopupID) {
-                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, {});
+                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Error, { message: `No token burn found in transaction.` });
             }
-            uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
+            uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onNoBurnFound > resetTrade"));
         };
 
         const { sdkRenVM, shift } = sdkContainer.state;
@@ -178,8 +178,6 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         break;
                     case ShiftInStatus.ConfirmedOnEthereum:
                         return <Complete networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
-                    // onDone().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: shiftIn > onDone"));
-                    // inner = <></>;
                 }
             }
 
@@ -250,9 +248,8 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                     case ShiftOutStatus.SubmittedToRenVM:
                         inner = <DepositReceived token={token} mini={paused} renVMStatus={renVMStatus} renTxHash={renTxHash} submitDeposit={sdkContainer.submitBurnToRenVM} />;
                         break;
-                    // TODO: Handle `NoBurnFound` properly.
                     case ShiftOutStatus.NoBurnFound:
-                        onDone().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: shiftOut > onDone"));
+                        onNoBurnFound().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: shiftOut > onNoBurnFound"));
                         inner = <></>;
                         break;
                     case ShiftOutStatus.ReturnedFromRenVM:

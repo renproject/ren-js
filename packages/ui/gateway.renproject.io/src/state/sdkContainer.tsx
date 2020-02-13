@@ -3,9 +3,9 @@ import RenJS, {
     NetworkDetails, parseRenContract, ShiftInObject, Signature, TxStatus, UTXO,
 } from "@renproject/ren";
 import {
-    Asset, HistoryEvent, RenContract, SendTokenInterface, ShiftInEvent, ShiftInParams,
-    ShiftInParamsAll, ShiftInStatus, ShiftNonce, ShiftOutEvent, ShiftOutParams, ShiftOutParamsAll,
-    ShiftOutStatus, Tx,
+    Asset, GatewayMessageType, HistoryEvent, RenContract, SendTokenInterface, ShiftInEvent,
+    ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftNonce, ShiftOutEvent, ShiftOutParams,
+    ShiftOutParamsAll, ShiftOutStatus, Tx,
 } from "@renproject/ren-js-common";
 import { Container } from "unstated";
 import Web3 from "web3";
@@ -14,7 +14,7 @@ import { TransactionReceipt } from "web3-core";
 import { updateStorageTrade } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
 import { _catchBackgroundErr_, _catchInteractionErr_, isPromise } from "../lib/errors";
-import { GatewayMessageType, postMessageToClient } from "../lib/postMessage";
+import { postMessageToClient } from "../lib/postMessage";
 import { Token } from "./generalTypes";
 import { UIContainer } from "./uiContainer";
 
@@ -172,23 +172,16 @@ export class SDKContainer extends Container<typeof initialState> {
         // }
 
         const { sdkWeb3: web3, sdkRenVM: renVM } = this.state;
-        if (!web3 || !renVM) {
-            throw new Error(`Invalid values required to submit deposit`);
-        }
+        if (!web3) { throw new Error(`Web3 not initialized`); }
+        if (!renVM) { throw new Error(`RenVM not initialized`); }
 
         const shift = this.state.shift;
-        if (!shift) {
-            throw new Error("Shift not set");
-        }
-
-        if (!shift.inTx) {
-            throw new Error(`Invalid values required to submit deposit`);
-        }
+        if (!shift) { throw new Error("Shift not set"); }
+        if (!shift.inTx) { throw new Error(`Invalid values required to submit deposit`); }
 
         const shiftOutObject = await renVM.shiftOut({
             web3Provider: web3.currentProvider,
-            // tslint:disable-next-line: no-any
-            sendToken: shift.shiftParams.sendToken as any,
+            sendToken: shift.shiftParams.sendToken,
             ethTxHash: shift.inTx.hash
         }).readFromEthereum();
 
@@ -301,6 +294,29 @@ export class SDKContainer extends Container<typeof initialState> {
         });
 
         return signature;
+    }
+
+    public queryShiftStatus = async () => {
+        const { sdkWeb3: web3, sdkRenVM: renVM } = this.state;
+        if (!web3) { throw new Error(`Web3 not initialized`); }
+        if (!renVM) { throw new Error(`RenVM not initialized`); }
+
+        const shift = this.state.shift;
+        if (!shift) { throw new Error("Shift not set"); }
+
+        const renTxHash = shift.renTxHash;
+        if (!renTxHash) { throw new Error(`Invalid values required to query status`); }
+
+        if (shift.shiftIn) {
+            return renVM.shiftIn({
+                renTxHash,
+                contractCalls: [],
+            }).queryTx();
+        } else {
+            return renVM.shiftOut({
+                renTxHash,
+            }).queryTx();
+        }
     }
 
     public submitMintToEthereum = async (retry = false) => {

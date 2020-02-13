@@ -2,8 +2,9 @@ import * as React from "react";
 
 import RenJS, { processShiftInParams, processShiftOutParams } from "@renproject/ren";
 import {
-    HistoryEvent, RenNetwork, SendTokenInterface, ShiftInEvent, ShiftInParams, ShiftInParamsAll,
-    ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutParamsAll, ShiftOutStatus, sleep,
+    GatewayMessage, GatewayMessageType, GatewayParams, HistoryEvent, RenNetwork, SendTokenInterface,
+    ShiftInEvent, ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftOutEvent, ShiftOutParams,
+    ShiftOutParamsAll, ShiftOutStatus, sleep, UnmarshalledTx,
 } from "@renproject/ren-js-common";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
@@ -11,9 +12,7 @@ import { RouteComponentProps, withRouter } from "react-router-dom";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { getWeb3 } from "../../lib/getWeb3";
-import {
-    acknowledgeMessage, GatewayMessage, GatewayMessageType, postMessageToClient,
-} from "../../lib/postMessage";
+import { acknowledgeMessage, postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
@@ -82,8 +81,14 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         const cancelOnClick = React.useCallback(() => cancelShift(false), [cancelShift]);
 
         const onDone = React.useCallback(async () => {
+            let response: {} | UnmarshalledTx = {};
+            try {
+                response = await sdkContainer.queryShiftStatus();
+            } catch (error) {
+                _catchInteractionErr_(error, { description: "Error in Main.tsx: onDone > queryShiftStatus" });
+            }
             if (uiContainer.state.gatewayPopupID) {
-                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, {});
+                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
             }
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
         }, [uiContainer]);
@@ -106,14 +111,15 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
             // tslint:disable-next-line: no-any
             window.onmessage = (e: { data: GatewayMessage<any> }) => {
-                if (e.data && e.data.from === "ren" && e.data.frameID === uiContainer.state.gatewayPopupID) {
+                const message = e.data;
+                if (message && message.from === "ren" && message.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
-                        switch (e.data.type) {
+                        switch (message.type) {
                             case GatewayMessageType.Shift:
-                                acknowledgeMessage(e.data);
-                                const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: HistoryEvent | (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface) } = e.data.payload;
+                                acknowledgeMessage(message);
+                                const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: GatewayParams } = (message as GatewayMessage<GatewayMessageType.Shift>).payload;
                                 await (alreadyPaused ? pause() : resume());
-                                const shiftID = e.data.frameID;
+                                const shiftID = message.frameID;
                                 const time = Date.now() / 1000;
 
                                 let historyEvent: HistoryEvent | undefined;
@@ -166,30 +172,30 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 break;
                             case GatewayMessageType.Pause:
-                                acknowledgeMessage(e.data);
+                                acknowledgeMessage(message);
                                 pause(true).catch(console.error);
 
                                 break;
                             case GatewayMessageType.Cancel:
-                                acknowledgeMessage(e.data);
+                                acknowledgeMessage(message);
                                 cancelShift(true).catch(console.error);
                                 break;
                             case GatewayMessageType.Resume:
-                                acknowledgeMessage(e.data);
+                                acknowledgeMessage(message);
                                 resume(true).catch(console.error);
                                 break;
                             case GatewayMessageType.GetTrades:
-                                acknowledgeMessage(e.data);
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, await getStorage(urlRenNetwork));
+                                acknowledgeMessage(message);
+                                postMessageToClient(window, message.frameID, GatewayMessageType.GetTrades, await getStorage(urlRenNetwork));
                                 break;
                             case GatewayMessageType.GetStatus:
-                                acknowledgeMessage(e.data, sdkContainer.getShiftStatus());
+                                acknowledgeMessage(message, sdkContainer.getShiftStatus());
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't
                                 // know how to handle it, but we don't want
                                 // the parent window to keep re-sending it.
-                                acknowledgeMessage(e.data);
+                                acknowledgeMessage(message);
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }

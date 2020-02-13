@@ -1441,21 +1441,29 @@
     react-router-dom "^5.1.2"
     react-select "^3.0.8"
 
-"@renproject/ren-js-common@^0.1.5":
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.5.tgz#07c1b249958750895b7c0b31f86033aa181f40fc"
-  integrity sha512-N5PHrMLNkk9NLAvi5WweZZAemgaJ6q14mlb5hWPChZ9tQ8TSISliSi45yd8lpyabbEOTLDcGPwMCMSiidGEHkA==
+"@renproject/ren-js-common@^0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.6.tgz#affb3c39cbab345c24e9795eb0d85c3c83b785e8"
+  integrity sha512-fGpW/IqGF2/5Ekm0RAYltcEVJbOvayIBSCvsvoCdkWe8n/UrrLK3tCdMg7XfDVjKcimnfz8q4lJ5dGwSfsJDYA==
   dependencies:
     bignumber.js "^9.0.0"
     events "^3.1.0"
 
-"@renproject/ren@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-0.7.0.tgz#a4657398cef3ccca2f6ba4d2b49f6c4f944283ca"
-  integrity sha512-bIp3U4FCHLrBmcOE0yw3MzRj8PbC4VECUFbpBLA4czvLpR0UAvYOaFXrtUkNf0p6r5F41YnsryO3Gt/ihVIf0A==
+"@renproject/ren-js-common@^0.1.9":
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.9.tgz#cb9da52fb91ca74fa8dc23b97a80d423828e9d5f"
+  integrity sha512-BTKOA+LWptOMqxqvFeh8kO4d1k8NTJlQXrprzt1UmwfCFSSZ7x4Ut4yB9ch8CvbaV8vxAcyrFm9At9j141ePnw==
+  dependencies:
+    bignumber.js "^9.0.0"
+    events "^3.1.0"
+
+"@renproject/ren@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-0.7.1.tgz#882b141e44e4097e3c96f4334daeb543aaebfbf3"
+  integrity sha512-jKpVne5eCBRfB1y7g8eOMb9GRH+BVVxTrgdYzWUzWARBtRxzM7IWvAFFvbqWO63fVKTAWLjZKDMl+/A3PsQ1mQ==
   dependencies:
     "@renproject/contracts" "^0.3.33"
-    "@renproject/ren-js-common" "^0.1.5"
+    "@renproject/ren-js-common" "^0.1.6"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/node" "^13.7.0"

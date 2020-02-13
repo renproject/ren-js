@@ -1,13 +1,12 @@
 import * as React from "react";
 
+import { GatewayMessage, GatewayMessageType, HistoryEvent } from "@renproject/ren-js-common";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
-import {
-    acknowledgeMessage, GatewayMessage, GatewayMessageType, postMessageToClient,
-} from "../../lib/postMessage";
+import { acknowledgeMessage, postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { UIContainer } from "../../state/uiContainer";
 import { getStorage } from "./Storage";
@@ -33,7 +32,10 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
                         switch (e.data.type) {
                             case GatewayMessageType.GetTrades:
                                 acknowledgeMessage(e.data);
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, await getStorage(uiContainer.state.renNetwork || renNetwork));
+                                const storage: Map<string, HistoryEvent> = await getStorage(uiContainer.state.renNetwork || renNetwork);
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.Trades, storage);
+                                // `GetTrades` remains for backwards compatibility
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, storage);
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't

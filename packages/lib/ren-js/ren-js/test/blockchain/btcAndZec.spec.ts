@@ -42,7 +42,7 @@ describe("btc.ts", () => {
                     btcAddressToHex(expected)
                         .should.equal(hex);
 
-                    btcAddressFrom(hex, "hex")
+                    btcAddressFrom(hex)
                         .should.equal(expected);
                 });
             });
@@ -71,7 +71,7 @@ describe("zec.ts", () => {
                     RenJS.utils.zec.addressToHex(expected)
                         .should.equal(hex);
 
-                    RenJS.utils.zec.addressFrom(hex, "hex")
+                    RenJS.utils.zec.addressFrom(hex)
                         .should.equal(expected);
                 });
             });
@@ -96,7 +96,7 @@ describe("bch.ts", () => {
                     RenJS.utils.bch.addressToHex(address)
                         .should.equal(hex);
 
-                    RenJS.utils.bch.addressFrom(hex, "hex")
+                    RenJS.utils.bch.addressFrom(hex)
                         .should.equal(expected);
                 });
             });

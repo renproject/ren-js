@@ -1,6 +1,6 @@
 // tslint:disable: no-console
 
-import { EthArgs, RenContract, strip0x } from "@renproject/ren-js-common";
+import { EthArgs, RenContract, strip0x, TxStatus, UnmarshalledTx } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
@@ -9,7 +9,6 @@ import RenJS from "../../src";
 import {
     BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash,
 } from "../../src/lib/utils";
-import { UnmarshalledTx } from "../../src/renVM/transaction";
 import { Tokens } from "../../src/types/assets";
 import {
     NetworkChaosnet, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet,
@@ -91,6 +90,7 @@ describe("Utils", function () {
     it.skip("fixSignature", () => {
         const response: UnmarshalledTx = {
             to: RenContract.Btc2Eth,
+            txStatus: TxStatus.TxStatusDone,
             hash: "0xec7f5d0fc132d87ff65095f9caee08be659a9b7f5b9bd2250291c94bb5d94801",
             in: {
                 phash: "0xacb3833774a06f15079030f357276c71faabb1f006f804c80ded65782453f5e9",
@@ -98,12 +98,12 @@ describe("Utils", function () {
                 to: "0xc99ab5d1d0fbf99912dbf0da1adc69d4a3a1e9eb",
                 n: "0xc90399b95e4614dc60a212a987e6a71f1574605936713b97313299aee7dfcd90",
                 utxo: {
-                    amount: new BigNumber(14999),
+                    amount: "14999",
                     scriptPubKey: "qRSgMyIWk6jew6wDt7Za2oV68oBdc4c=",
                     txHash: "Zdpl+CoLsDqEH7yIhXYxv43lFkkj0eQS84YEax9cS+w=",
                     vOut: 0
                 },
-                amount: new BigNumber(14999),
+                amount: "14999",
             },
             autogen: {
                 ghash: "0x6b622afc190d985b5a26f15df93396ea5ba5cbdda9652423bf53e243d76f688d",

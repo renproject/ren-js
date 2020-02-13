@@ -1,10 +1,10 @@
 import {
     newPromiEvent, Ox, PromiEvent, ShiftInParams, ShiftInParamsAll, strip0x, TxStatus,
+    UnmarshalledMintTx,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { OrderedMap } from "immutable";
-import { ResponseQueryMintTx } from "renVM/jsonRPC";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
@@ -18,8 +18,8 @@ import {
     getShifterAddress, ignoreError, randomNonce, renTxHashToBase64, retrieveDeposits, SECONDS,
     signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
 } from "./lib/utils";
+import { ResponseQueryMintTx } from "./renVM/jsonRPC";
 import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
-import { UnmarshalledMintTx } from "./renVM/transaction";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftInObject {

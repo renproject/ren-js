@@ -15,7 +15,7 @@ export type RenWeb3Events = {
     error: [Error],
 };
 
-export const forwardEvents = <T, TEvents extends Web3Events, Y, YEvents extends Web3Events & RenWeb3Events>(src: PromiEvent<T, TEvents>, dest: PromiEvent<Y, YEvents>, filterFn = (_name: string) => true) => {
+export const forwardEvents = <T, TEvents extends Web3Events, Y, YEvents extends Web3Events & RenWeb3Events>(src: PromiEvent<T, TEvents>, dest: PromiEvent<Y, YEvents>/*, filterFn = (_name: string) => true*/) => {
     // const forwardEmitterNewListener = (eventName: string, listener: (...args: any[]) => void) => {
     //     if (filterFn(eventName) && listener.name.indexOf("__forward_emitter_") !== 0) {
     //         console.info(`Forwarding ${eventName} Listener:`);

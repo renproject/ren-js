@@ -1,5 +1,5 @@
 import {
-    Asset, Chain, EthArgs, NULL, Ox, RenContract, ShiftedToken, strip0x, value,
+    Asset, Chain, EthArgs, NULL, Ox, RenContract, ShiftedToken, strip0x, UnmarshalledMintTx, value,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import { crypto } from "bitcore-lib";
@@ -13,7 +13,6 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 import { createBCHAddress, getBitcoinCashUTXOs } from "../blockchain/bch";
 import { createBTCAddress, getBitcoinUTXOs } from "../blockchain/btc";
 import { createZECAddress, getZcashUTXOs } from "../blockchain/zec";
-import { UnmarshalledMintTx } from "../renVM/transaction";
 import { bchUtils, btcUtils, parseRenContract, zecUtils } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 
@@ -325,10 +324,11 @@ export const randomNonce = () => Ox(crypto.Random.getRandomBuffer(32));
  *
  * @param web3 A web3 instance.
  * @param transactionHash The hash of the transaction being read.
- * @param nonce The nonce of the transaction, to detect if it has been
+ *
+ * @/param nonce The nonce of the transaction, to detect if it has been
  *        overwritten.
  */
-export const waitForReceipt = async (web3: Web3, transactionHash: string, nonce?: number) => {
+export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/) => {
 
     // TODO: Handle transactions being overwritten.
 

@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, Ox, PromiEvent, ShiftOutParams, ShiftOutParamsAll, TxStatus,
+    newPromiEvent, Ox, PromiEvent, ShiftOutParams, ShiftOutParamsAll, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -14,7 +14,6 @@ import {
 } from "./lib/utils";
 import { ResponseQueryBurnTx } from "./renVM/jsonRPC";
 import { ShifterNetwork, unmarshalBurnTx } from "./renVM/shifterNetwork";
-import { UnmarshalledBurnTx } from "./renVM/transaction";
 import { NetworkDetails } from "./types/networks";
 
 export class ShiftOutObject {

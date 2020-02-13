@@ -45,7 +45,7 @@ describe("processParams", () => {
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
-                    contractParams: [{ name: "name", type: "type", value: "1" }],
+                    contractParams: [{ name: "name", type: "uint", value: "1" }],
                     txConfig: { gas: 2 },
                 }],
             });
@@ -97,7 +97,7 @@ describe("processParams", () => {
             renTxHash: "renTxHash",
             sendTo: "sendTo",
             contractFn: "contractFn",
-            contractParams: [{ name: "name", type: "type", value: "1" }],
+            contractParams: [{ name: "name", type: "address", value: "1" }],
             txConfig: { gas: 2 },
         })
             .should.deep.equal({
@@ -106,7 +106,7 @@ describe("processParams", () => {
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
-                    contractParams: [{ name: "name", type: "type", value: "1" }],
+                    contractParams: [{ name: "name", type: "address", value: "1" }],
                     txConfig: { gas: 2 },
                 }],
             });
@@ -116,7 +116,7 @@ describe("processParams", () => {
             renTxHash: "renTxHash",
             sendTo: "sendTo",
             contractFn: "contractFn",
-            contractParams: [{ name: "name", type: "type", value: "1" }],
+            contractParams: [{ name: "name", type: "address", value: "1" }],
             txConfig: { gas: 2 },
         })
             .should.deep.equal({
@@ -125,7 +125,7 @@ describe("processParams", () => {
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
-                    contractParams: [{ name: "name", type: "type", value: "1" }],
+                    contractParams: [{ name: "name", type: "address", value: "1" }],
                     txConfig: { gas: 2 },
                 }],
             });

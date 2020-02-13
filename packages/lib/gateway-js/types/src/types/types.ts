@@ -11,6 +11,7 @@ export enum GatewayMessageType {
     Status = "status",
     GetStatus = "getStatus",
     Cancel = "cancel",
+    Error = "error",
     Done = "done",
     Acknowledgement = "acknowledgement",
 }

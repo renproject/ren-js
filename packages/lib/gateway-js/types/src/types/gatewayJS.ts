@@ -8,6 +8,7 @@ import { value } from "../utils/value";
 import { GatewayParams } from "./parameters/parameters";
 import { Chain, RenNetwork, Tokens } from "./renVM";
 import { HistoryEvent, ShiftInStatus, ShiftOutStatus } from "./types";
+import { UnmarshalledTx } from "./unmarshalled";
 
 // Utils
 
@@ -60,7 +61,7 @@ export interface GatewayInstance {
     readonly cancel: () => Promise<GatewayInstance>;
     readonly getStatus: () => Promise<ShiftInStatus | ShiftOutStatus>;
     // tslint:disable-next-line: no-any
-    readonly result: () => PromiEvent<any, { status: [ShiftInStatus | ShiftOutStatus, any] }>;
+    readonly result: () => PromiEvent<UnmarshalledTx | {}, { status: [ShiftInStatus | ShiftOutStatus, any] }>;
 
     // Should not called on GatewayJS instead.
     readonly _getGateways: () => Promise<Map<string, HistoryEvent>>;

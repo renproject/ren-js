@@ -1,5 +1,5 @@
 import {
-    newPromiEvent, PromiEvent, ShiftOutParams, ShiftOutParamsAll, TxStatus,
+    newPromiEvent, Ox, PromiEvent, ShiftOutParams, ShiftOutParamsAll, TxStatus,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -9,7 +9,8 @@ import { payloadToABI } from "./lib/abi";
 import { processShiftOutParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    BURN_TOPIC, generateShiftOutTxHash, ignoreError, waitForReceipt, withDefaultAccount,
+    BURN_TOPIC, generateShiftOutTxHash, ignoreError, renTxHashToBase64, waitForReceipt,
+    withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryBurnTx } from "./renVM/jsonRPC";
 import { ShifterNetwork, unmarshalBurnTx } from "./renVM/shifterNetwork";
@@ -32,6 +33,10 @@ export class ShiftOutObject {
         const promiEvent = newPromiEvent<ShiftOutObject, Web3Events & RenWeb3Events>();
 
         (async () => {
+
+            if (this.params.renTxHash) {
+                return this;
+            }
 
             const { web3Provider, contractCalls } = this.params;
             let { burnReference } = this.params;
@@ -140,6 +145,11 @@ export class ShiftOutObject {
     }
 
     public renTxHash = () => {
+        const renTxHash = this.params.renTxHash;
+        if (renTxHash) {
+            return renTxHashToBase64(renTxHash);
+        }
+
         if (!this.params.burnReference && this.params.burnReference !== 0) {
             throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
         }
@@ -148,14 +158,14 @@ export class ShiftOutObject {
     }
 
     public queryTx = async () =>
-        unmarshalBurnTx(await this.renVMNetwork.queryTX(this.renTxHash()))
+        unmarshalBurnTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(), "base64"))))
 
     public submitToRenVM = (): PromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }> => {
         const promiEvent = newPromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }>();
 
         (async () => {
-            const burnReference = this.params.burnReference;
-            if (!burnReference && burnReference !== 0) {
+            const { burnReference } = this.params;
+            if (!this.params.renTxHash && (!burnReference && burnReference !== 0)) {
                 throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
             }
 
@@ -165,7 +175,7 @@ export class ShiftOutObject {
             promiEvent.emit("renTxHash", renTxHash);
 
             const response = await this.renVMNetwork.waitForTX<ResponseQueryBurnTx>(
-                renTxHash,
+                Ox(Buffer.from(renTxHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
                 },

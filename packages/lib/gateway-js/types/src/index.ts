@@ -8,6 +8,7 @@ export * from "./types/renVM";
 export * from "./types/types";
 export * from "./types/general";
 export * from "./types/gatewayJS";
+export * from "./types/unmarshalled";
 
 // Utils
 export * from "./utils/promiEvent";

@@ -3,7 +3,7 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { EthArgs, Ox, RenContract, RenVMType } from "@renproject/ren-js-common";
+import { EthArgs, Ox, RenContract } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -14,8 +14,10 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
-import RenJS, { ShiftInObject, ShiftOutObject, Token } from "../src/index";
+import RenJS from "../src/index";
 import { retryNTimes, sleep } from "../src/lib/utils";
+import { ShiftInObject } from "../src/shiftIn";
+import { ShiftOutObject } from "../src/shiftOut";
 import { parseRenContract, Tokens } from "../src/types/assets";
 import { NetworkDetails, stringToNetwork } from "../src/types/networks";
 
@@ -73,7 +75,7 @@ describe("Shifting in and shifting out", function () {
 
     const mintTest = async (
         token: string,
-        renVMToken: Token,
+        renVMToken: RenContract,
         shifterAddress: string,
         adapterContract: string,
         amount: number,
@@ -171,7 +173,7 @@ describe("Shifting in and shifting out", function () {
 
     const burnTest = async (
         token: string,
-        sendToken: Token,
+        sendToken: RenContract,
         erc20Contract: Contract,
         shifterAddress: string,
         adapterContract: string,
@@ -256,8 +258,8 @@ describe("Shifting in and shifting out", function () {
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
-            { ...caseZEC, it: it, },
-            { ...caseBCH, it: it, },
+            { ...caseZEC, it: it.skip, },
+            { ...caseBCH, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
@@ -317,8 +319,8 @@ describe("Shifting in and shifting out", function () {
         }
 
         for (const testcaseFn of [
-            { ...caseBTC, it: it, },
-            { ...caseZEC, it: it, },
+            { ...caseBTC, it: it.skip, },
+            { ...caseZEC, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint ${testcaseFn.name} using the helper function`, async () => {
@@ -398,7 +400,7 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it("recover trade", async () => {
+    it.skip("recover trade", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering trade`);

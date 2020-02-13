@@ -15,20 +15,6 @@ import { ShiftOutObject } from "./shiftOut";
 import { Tokens } from "./types/assets";
 import { NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork } from "./types/networks";
 
-// Export types
-export { ShiftInObject, Signature } from "./shiftIn";
-export { ShiftOutObject } from "./shiftOut";
-export { UTXO, UTXODetails as BitcoinUTXO, UTXODetails as BitcoinCashUTXO, UTXODetails as ZcashUTXO } from "./lib/utils";
-export { NetworkDetails } from "./types/networks";
-export { Chain, RenContract as Token, RenContract, RenNetwork, TxStatus } from "@renproject/ren-js-common";
-export { Darknode } from "./renVM/darknode";
-export { DarknodeGroup } from "./renVM/darknodeGroup";
-export { RPCMethod, ResponseQueryTx } from "./renVM/jsonRPC";
-export { processShiftInParams, processShiftOutParams } from "./lib/processParams";
-export { parseRenContract } from "./types/assets";
-export { unmarshalTx } from "./renVM/shifterNetwork";
-export { UnmarshalledMintTx, UnmarshalledBurnTx } from "./renVM/transaction";
-
 const NetworkDetails = {
     NetworkChaosnet,
     NetworkTestnet,

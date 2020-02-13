@@ -22,7 +22,7 @@ typedoc/
 *.env
 
 *.map
-dist
+build
 misc
 
 
@@ -33,6 +33,6 @@ ts*.json
 typedoc.js
 webpack.config.js
 test/
-dist/browser*
-dist/*.map
-!dist
+build/browser*
+build/*.map
+!build

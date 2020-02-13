@@ -1,5 +1,6 @@
 import {
-    Chain, Ox, RenContract, RenVMArg, RenVMType, strip0x, Tokens, TxStatus,
+    Chain, Ox, RenContract, RenVMArg, RenVMType, strip0x, Tokens, TxStatus, UnmarshalledBurnTx,
+    UnmarshalledMintTx,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 
@@ -8,7 +9,6 @@ import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
 import { DarknodeGroup } from "./darknodeGroup";
 import { ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod } from "./jsonRPC";
-import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./transaction";
 
 const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
 const decodeNumber = (input: string) => new BigNumber(input);

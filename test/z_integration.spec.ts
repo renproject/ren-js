@@ -256,8 +256,8 @@ describe("Shifting in and shifting out", function () {
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
-            { ...caseZEC, it: it.skip, },
-            { ...caseBCH, it: it.skip, },
+            { ...caseZEC, it: it, },
+            { ...caseBCH, it: it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
@@ -317,8 +317,8 @@ describe("Shifting in and shifting out", function () {
         }
 
         for (const testcaseFn of [
-            { ...caseBTC, it: it.skip, },
-            { ...caseZEC, it: it.skip, },
+            { ...caseBTC, it: it, },
+            { ...caseZEC, it: it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint ${testcaseFn.name} using the helper function`, async () => {
@@ -382,6 +382,8 @@ describe("Shifting in and shifting out", function () {
             logger.consoleLine();
             logger.info(`Starting burn test`);
 
+            // TODO: Check balance of token before attempting to mint.
+
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
@@ -396,7 +398,7 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it.skip("recover trade", async () => {
+    it("recover trade", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering trade`);
@@ -417,5 +419,49 @@ describe("Shifting in and shifting out", function () {
             await submitIndividual(shift);
             await submitIndividual(shift);
         }
+    });
+
+    it("recover burn from renTxHash", async () => {
+        logger.consoleLine();
+        logger.info(`Starting burn test - recovering burn from renTxHash`);
+
+        const shift64 = new RenJS("devnet").shiftOut({
+            renTxHash: "FBcH+vnMdybRYgaQB2Hm9rwg3MkgTcQFeh7j3/v10kI=",
+        });
+
+        const result64 = await shift64.submitToRenVM();
+
+        const shiftHex = new RenJS("devnet").shiftOut({
+            renTxHash: "0x141707faf9cc7726d16206900761e6f6bc20dcc9204dc4057a1ee3dffbf5d242",
+        });
+
+        const resultHex = await shiftHex.submitToRenVM();
+
+        result64.should.deep.equal(resultHex);
+
+        console.log(JSON.stringify(result64, null, "    "));
+    });
+
+    it("recover mint from renTxHash", async () => {
+        logger.consoleLine();
+        logger.info(`Starting mint test - recovering mint from renTxHash`);
+
+        const shift64 = new RenJS("devnet").shiftIn({
+            renTxHash: "2+jzYRh/e0KR3nmvu4/IMFs+U8zL1NnJULyStGaFaKM=",
+            contractCalls: [],
+        });
+
+        const result64 = await shift64.queryTx();
+
+        const shiftHex = new RenJS("devnet").shiftIn({
+            renTxHash: "0xdbe8f361187f7b4291de79afbb8fc8305b3e53cccbd4d9c950bc92b4668568a3",
+            contractCalls: [],
+        });
+
+        const resultHex = await shiftHex.queryTx();
+
+        result64.should.deep.equal(resultHex);
+
+        console.log(JSON.stringify(result64, null, "    "));
     });
 });

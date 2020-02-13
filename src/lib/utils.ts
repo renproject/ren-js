@@ -109,12 +109,24 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
 export const toBase64 = (input: string | Buffer) =>
     (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex")).toString("base64");
 
+export const renTxHashToBase64 = (renTxHash: Buffer | string) => {
+    if (Buffer.isBuffer(renTxHash)) {
+        return renTxHash.toString("base64");
+    }
+
+    // Check if it's hex-encoded
+    if (renTxHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)) {
+        return Buffer.from(strip0x(renTxHash), "hex").toString("base64");
+    }
+    return renTxHash;
+};
+
 export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOInput) => {
-    return Ox(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txid)}_${utxo.output_no}`));
+    return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txid)}_${utxo.output_no}`));
 };
 
 export const generateShiftOutTxHash = (renContract: RenContract, encodedID: string) => {
-    return Ox(keccak256(`txHash_${renContract}_${encodedID}`));
+    return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}`));
 };
 
 // export const generateNHash = (tx: Tx): string => {

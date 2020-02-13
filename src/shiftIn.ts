@@ -15,8 +15,8 @@ import { processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash,
-    getShifterAddress, ignoreError, randomNonce, retrieveDeposits, SECONDS, signatureToString,
-    sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
+    getShifterAddress, ignoreError, randomNonce, renTxHashToBase64, retrieveDeposits, SECONDS,
+    signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
 } from "./lib/utils";
 import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
 import { UnmarshalledMintTx } from "./renVM/transaction";
@@ -169,7 +169,7 @@ export class ShiftInObject {
     public renTxHash = (specifyUTXO?: UTXOInput) => {
         const renTxHash = this.params.renTxHash;
         if (renTxHash) {
-            return renTxHash;
+            return renTxHashToBase64(renTxHash);
         }
 
         const { contractCalls, sendToken: renContract, nonce } = this.params;
@@ -199,14 +199,14 @@ export class ShiftInObject {
     }
 
     public queryTx = async (specifyUTXO?: UTXOInput) =>
-        unmarshalMintTx(await this.renVMNetwork.queryTX(this.renTxHash(specifyUTXO)))
+        unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
 
     public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }> => {
         const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
             const utxo = specifyUTXO || this.utxo;
-            let renTxHash = this.params.renTxHash;
+            let renTxHash = this.params.renTxHash ? renTxHashToBase64(this.params.renTxHash) : undefined;
             if (utxo) {
                 const utxoRenTxHash = this.renTxHash(utxo);
                 if (renTxHash && renTxHash !== utxoRenTxHash) {
@@ -266,7 +266,7 @@ export class ShiftInObject {
             }
 
             const marshalledResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
-                renTxHash,
+                Ox(Buffer.from(renTxHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
                 },
@@ -295,19 +295,18 @@ export class Signature {
     public network: NetworkDetails;
     public response: UnmarshalledMintTx;
     public signature: string;
-    public renTxHash: string;
-    // Here to maintain backwards compatibility
-    public messageID: string;
+    public _renTxHash: string;
 
     constructor(_network: NetworkDetails, _params: ShiftInParams, _response: UnmarshalledMintTx, _renTxHash: string) {
         this.network = _network;
         this.response = _response;
-        this.renTxHash = _renTxHash;
-        this.messageID = _renTxHash;
+        this._renTxHash = _renTxHash;
         this.params = processShiftInParams(this.network, _params);
 
         this.signature = signatureToString(fixSignature(this.response, this.network));
     }
+
+    public renTxHash = () => this._renTxHash;
 
     // tslint:disable-next-line: no-any
     public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {

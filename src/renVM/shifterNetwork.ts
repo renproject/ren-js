@@ -55,6 +55,8 @@ const assertAndDecodeAddress = <ArgType>(
 export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMintTx => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
+    assert(parseRenContract(response.tx.to).to === Chain.Ethereum, `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.to})`);
+
     const [phashArg, tokenArg, toArg, nArg, utxoArg, amountArg] = response.tx.in;
     const phash = assertAndDecodeBytes<typeof phashArg>("phash", RenVMType.TypeB32, phashArg);
     const token = assertAndDecodeAddress<typeof tokenArg>("token", RenVMType.ExtTypeEthCompatAddress, tokenArg);
@@ -63,7 +65,7 @@ export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMint
     const utxoRaw = assertArgumentType<typeof utxoArg>("utxo", utxoArg.type, utxoArg);
     const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU256, amountArg).toFixed();
 
-    const utxo = { "txHash": utxoRaw.txHash, "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": utxoRaw.scriptPubKey, "amount": decodeNumber(utxoRaw.amount).toFixed() };
+    const utxo = { "txHash": decodeBytes(utxoRaw.txHash), "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": decodeBytes(utxoRaw.scriptPubKey), "amount": decodeNumber(utxoRaw.amount).toFixed() };
 
     const [ghashArg, nhashArg, sighashArg] = response.tx.autogen;
     const ghash = assertAndDecodeBytes<typeof ghashArg>("ghash", RenVMType.TypeB32, ghashArg);
@@ -90,8 +92,10 @@ export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMint
 };
 
 export const unmarshalBurnTx = (response: ResponseQueryBurnTx): UnmarshalledBurnTx => {
-    const [refArg, toArg, amountArg] = response.tx.in;
 
+    assert(parseRenContract(response.tx.to).from === Chain.Ethereum, `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.to})`);
+
+    const [refArg, toArg, amountArg] = response.tx.in;
     const ref = assertAndDecodeNumber<typeof refArg>("ref", RenVMType.TypeU64, refArg).toFixed();
     const toRaw = assertArgumentType<typeof toArg>("to", RenVMType.TypeB, toArg);
     let amount;
@@ -168,7 +172,7 @@ export class ShifterNetwork {
                 }
             });
 
-        return Ox(Buffer.from(response.tx.hash, "base64"));
+        return response.tx.hash;
     }
 
     public submitShiftOut = async (renContract: RenContract, ref: string): Promise<string> => {
@@ -182,7 +186,7 @@ export class ShifterNetwork {
                 }
             });
 
-        return Ox(Buffer.from(response.tx.hash, "base64"));
+        return response.tx.hash;
     }
 
     public readonly queryTX = async <T extends ResponseQueryMintTx | ResponseQueryBurnTx>(utxoTxHash: string): Promise<T> => {
@@ -212,9 +216,12 @@ export class ShifterNetwork {
                 }
             } catch (error) {
                 // tslint:disable-next-line: no-console
-                console.error(String(error));
-                // TODO: Ignore "result not available",
-                // throw otherwise
+                if (String((error || {}).message).match(/(not found)|(not available)/)) {
+                    // ignore
+                } else {
+                    console.error(String(error));
+                    // TODO: throw unepected errors
+                }
             }
             await sleep(5 * SECONDS);
         }

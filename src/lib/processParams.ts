@@ -1,6 +1,6 @@
 import {
     BurnContractCallSimple, Chain, DetailedContractCall, RenContract, ShiftInFromDetails,
-    ShiftInParams, ShiftInParamsAll, ShiftOutParams, ShiftOutParamsAll,
+    ShiftInParams, ShiftInParamsAll, ShiftOutParams, ShiftOutParamsAll, ShiftOutParamsCommon,
 } from "@renproject/ren-js-common";
 import Web3 from "web3";
 
@@ -9,9 +9,9 @@ import { NetworkDetails } from "../types/networks";
 import { getTokenAddress, getTokenName, toBigNumber, utils } from "./utils";
 
 export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): typeof params => {
-    if ((params as ShiftInFromDetails | ShiftOutParams).sendToken) {
-        (params as ShiftInFromDetails | ShiftOutParams).sendToken = ((): RenContract => {
-            const token = (params as ShiftInFromDetails | ShiftOutParams).sendToken;
+    if ((params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken) {
+        (params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken = ((): RenContract => {
+            const token = (params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken;
             switch (token) {
                 case "BTC":
                     return shiftIn ? RenContract.Btc2Eth : RenContract.Eth2Btc;

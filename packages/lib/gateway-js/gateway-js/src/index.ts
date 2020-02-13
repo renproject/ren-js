@@ -1,13 +1,14 @@
 import {
     Chain, GatewayConstructor, GatewayInstance, GatewayJSConstructor, GatewayJSInterface,
-    GatewayMessage, GatewayMessageType, GatewayParams, gatewayUtils, HistoryEvent, newPromiEvent,
-    PromiEvent, randomBytes, RenNetwork, ShiftInStatus, ShiftOutStatus, Tokens,
+    GatewayMessage, GatewayMessagePayload, GatewayMessageType, GatewayParams, gatewayUtils,
+    HistoryEvent, newPromiEvent, PromiEvent, randomBytes, RenNetwork, ShiftInStatus, ShiftOutStatus,
+    sleep, Tokens,
 } from "@renproject/ren-js-common";
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
 import {
     createElementFromHTML, GATEWAY_ENDPOINT_PRODUCTION, GATEWAY_ENDPOINT_STAGING, getElement,
-    prepareParamsForSendMessage, resolveEndpoint, sleep,
+    prepareParamsForSendMessage, resolveEndpoint,
 } from "./utils";
 import { validateString } from "./validate";
 
@@ -29,7 +30,7 @@ export class Gateway implements GatewayInstance {
     // tslint:enable: readonly-keyword
 
     // tslint:disable-next-line: readonly-keyword readonly-array no-any
-    private readonly promiEvent: PromiEvent<any, { status: [ShiftInStatus | ShiftOutStatus, any] }> = newPromiEvent();
+    private readonly promiEvent: PromiEvent<any /* TODO */, { status: [ShiftInStatus | ShiftOutStatus, any] }> = newPromiEvent();
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
@@ -110,9 +111,11 @@ export class Gateway implements GatewayInstance {
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
                         if (popup) {
-                            this._sendMessage(GatewayMessageType.GetTrades, { frameID: this.id }, popup).catch(console.error);
+                            this._sendMessage(GatewayMessageType.GetTrades, {}, popup).catch(console.error);
                         }
                         break;
+                    case GatewayMessageType.Trades:
+                    // `GetTrades` remains for backwards compatibility
                     case GatewayMessageType.GetTrades:
                         if (e.data.error) {
                             close();
@@ -213,6 +216,10 @@ export class Gateway implements GatewayInstance {
                             this.promiEvent.reject(new Error("Shift cancelled by user"));
                             return;
                         }
+                    case GatewayMessageType.Error:
+                        onClose();
+                        this.promiEvent.reject(new Error(e.data.payload.message || "Error thrown from Gateway iframe."));
+                        return;
                     case GatewayMessageType.Done:
                         onClose();
                         this.promiEvent.resolve(e.data.payload);
@@ -222,7 +229,7 @@ export class Gateway implements GatewayInstance {
         }
 
     // tslint:disable-next-line: no-any
-    private readonly _sendMessage = async <T>(type: GatewayMessageType, payload: T, iframeIn?: ChildNode) => new Promise<any>(async (resolve) => {
+    private readonly _sendMessage = async <Type extends GatewayMessageType>(type: Type, payload: GatewayMessagePayload<Type>, iframeIn?: ChildNode) => new Promise<any>(async (resolve) => {
 
         // TODO: Allow response in acknowledgement.
 
@@ -257,7 +264,7 @@ export class Gateway implements GatewayInstance {
         // tslint:disable-next-line: no-any
         const contentWindow = (frame as any).contentWindow;
         while (!acknowledged && contentWindow) {
-            const gatewayMessage: GatewayMessage<T> = { from: "ren", frameID: this.id, type, payload, messageID };
+            const gatewayMessage: GatewayMessage<Type> = { from: "ren", frameID: this.id, type, payload, messageID };
             contentWindow.postMessage(gatewayMessage, "*");
             // Sleep for 1 second
             await sleep(1 * 1000);
@@ -353,31 +360,24 @@ const _gatewayJSTypeCheck: GatewayJSConstructor = GatewayJS;
 // Based on https://github.com/MikeMcl/bignumber.js/blob/master/bignumber.js  //
 ////////////////////////////////////////////////////////////////////////////////
 
-// tslint:disable: no-any no-object-mutation strict-type-predicates
+// tslint:disable: no-any no-object-mutation strict-type-predicates no-typeof-undefined
 
 // tslint:disable-next-line: no-string-literal
 (GatewayJS as any)["default"] = (GatewayJS as any).GatewayJS = GatewayJS;
 
-declare global {
-    let define: any;
-    // let module: any;
-}
-if (typeof define === "function" && define.amd) {
-    // AMD.
-    define(() => GatewayJS);
-
+// AMD
+try {
     // @ts-ignore
-} else if (typeof module !== "undefined" && module.exports) {
-    // Node.js and other environments that support module.exports.
-    try {
-        // @ts-ignore
-        module.exports = GatewayJS;
-    } catch (error) {
-        // ignore error
-    }
-} else {
-    // Browser.
-    if (typeof window !== "undefined" && window) {
-        (window as any).GatewayJS = GatewayJS;
-    }
-}
+    if (typeof define === "function" && define.amd) { define(() => GatewayJS); }
+} catch (error) { /* ignore */ }
+
+// Node.js and other environments that support module.exports.
+try { // @ts-ignore
+    if (typeof module !== "undefined" && module.exports) { module.exports = GatewayJS; }
+} catch (error) { /* ignore */ }
+
+// Browser.
+try {
+    // @ts-ignore
+    if (typeof window !== "undefined" && window) { (window as any).GatewayJS = GatewayJS; }
+} catch (error) { /* ignore */ }

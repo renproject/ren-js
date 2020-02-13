@@ -7,8 +7,6 @@ import {
 export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";
 export const GATEWAY_ENDPOINT_PRODUCTION = "https://gateway.renproject.io/";
 
-export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const getElement = (id: string) => {
     const element = document.getElementById(id);
     if (!element) {

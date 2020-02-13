@@ -105,32 +105,32 @@ export type Base64String = string;
 export type HexString = string;
 export type DecimalString = string;
 
-export type RenVMParameterValue<type extends RenVMType> =
-    type extends RenVMType.TypeAddress ? string :
-    type extends RenVMType.TypeStr ? Base64String :
-    type extends RenVMType.TypeB32 ? Base64String :
-    type extends RenVMType.TypeB ? Base64String :
-    type extends RenVMType.TypeI8 ? DecimalString :
-    type extends RenVMType.TypeI16 ? DecimalString :
-    type extends RenVMType.TypeI32 ? DecimalString :
-    type extends RenVMType.TypeI64 ? DecimalString :
-    type extends RenVMType.TypeI128 ? DecimalString :
-    type extends RenVMType.TypeI256 ? DecimalString :
-    type extends RenVMType.TypeU8 ? DecimalString :
-    type extends RenVMType.TypeU16 ? DecimalString :
-    type extends RenVMType.TypeU32 ? DecimalString :
-    type extends RenVMType.TypeU64 ? DecimalString :
-    type extends RenVMType.TypeU128 ? DecimalString :
-    type extends RenVMType.TypeU256 ? DecimalString :
+export type RenVMParameterValue<Type extends RenVMType> =
+    Type extends RenVMType.TypeAddress ? string :
+    Type extends RenVMType.TypeStr ? Base64String :
+    Type extends RenVMType.TypeB32 ? Base64String :
+    Type extends RenVMType.TypeB ? Base64String :
+    Type extends RenVMType.TypeI8 ? DecimalString :
+    Type extends RenVMType.TypeI16 ? DecimalString :
+    Type extends RenVMType.TypeI32 ? DecimalString :
+    Type extends RenVMType.TypeI64 ? DecimalString :
+    Type extends RenVMType.TypeI128 ? DecimalString :
+    Type extends RenVMType.TypeI256 ? DecimalString :
+    Type extends RenVMType.TypeU8 ? DecimalString :
+    Type extends RenVMType.TypeU16 ? DecimalString :
+    Type extends RenVMType.TypeU32 ? DecimalString :
+    Type extends RenVMType.TypeU64 ? DecimalString :
+    Type extends RenVMType.TypeU128 ? DecimalString :
+    Type extends RenVMType.TypeU256 ? DecimalString :
     // tslint:disable-next-line: no-any
-    type extends RenVMType.TypeRecord ? any :
+    Type extends RenVMType.TypeRecord ? any :
     // tslint:disable-next-line: no-any
-    type extends RenVMType.TypeList ? any[] :
-    type extends RenVMType.ExtTypeEthCompatAddress ? HexString :
-    type extends RenVMType.ExtTypeBtcCompatUTXO ? RenVMUTXO :
-    type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO[] :
+    Type extends RenVMType.TypeList ? any[] :
+    Type extends RenVMType.ExtTypeEthCompatAddress ? HexString :
+    Type extends RenVMType.ExtTypeBtcCompatUTXO ? RenVMUTXO :
+    Type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO[] :
     // tslint:disable-next-line: no-any
-    type extends RenVMType.ExtTypeEthCompatTx ? any :
+    Type extends RenVMType.ExtTypeEthCompatTx ? any :
     // tslint:disable-next-line: no-any
     any;
 

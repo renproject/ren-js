@@ -2,29 +2,6 @@ import { ShiftInParamsAll } from "./parameters/shiftIn";
 import { ShiftOutParamsAll } from "./parameters/shiftOut";
 import { Chain, RenContract } from "./renVM";
 
-export enum GatewayMessageType {
-    Pause = "pause",
-    Resume = "resume",
-    Ready = "ready",
-    Shift = "shift",
-    GetTrades = "getTrades",
-    Status = "status",
-    GetStatus = "getStatus",
-    Cancel = "cancel",
-    Error = "error",
-    Done = "done",
-    Acknowledgement = "acknowledgement",
-}
-
-export interface GatewayMessage<Payload> {
-    from: "ren";
-    frameID: string;
-    messageID: string;
-    type: GatewayMessageType;
-    payload: Payload;
-    error?: string;
-}
-
 export interface Tx {
     hash: string;
     chain: Chain;

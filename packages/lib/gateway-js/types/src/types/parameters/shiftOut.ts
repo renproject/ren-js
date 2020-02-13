@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 
 import { BN } from "../general";
 import { RenContract } from "../renVM";
-import { AllParams3, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
+import { AllParams4, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
 
 // tslint:disable-next-line: no-any
 type provider = any;
@@ -44,10 +44,14 @@ export interface ShiftOutParamsBurnRef extends ShiftOutParamsCommon {
     burnReference: string | number; // The reference ID of the burn emitted in the contract log
 }
 
+export interface ShiftOutParamsRenTxHash {
+    renTxHash: string;
+}
+
 /******************************************************************************/
 
 export type ShiftOutParamsContractCallAll = ContractCallMultiple<Promise<DetailedContractCall> | DetailedContractCall> & { web3Provider: provider };
 
-export type ShiftOutParamsAll = (AllParams3<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsBurnRef>) & { sendToken: RenContract };
+export type ShiftOutParamsAll = (AllParams4<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsBurnRef, ShiftOutParamsRenTxHash>) & { sendToken: RenContract };
 
-export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | ShiftOutParamsTxHash;
+export type ShiftOutParams = ShiftOutParamsContractCall | ShiftOutParamsBurnRef | ShiftOutParamsTxHash | ShiftOutParamsRenTxHash;

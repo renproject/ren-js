@@ -47,8 +47,10 @@ export interface DetailedContractCall {
 // export type Undefined<T> = { [key in keyof T]: undefined };
 export type UndefinedExceptFirst2<A, B> = { [key in (keyof A | keyof B)]: key extends (keyof A) ? A[key] : undefined };
 export type UndefinedExceptFirst3<A, B, C> = { [key in (keyof A | keyof B | keyof C)]: key extends (keyof A) ? A[key] : undefined };
+export type UndefinedExceptFirst4<A, B, C, D> = { [key in (keyof A | keyof B | keyof C | keyof D)]: key extends (keyof A) ? A[key] : undefined };
 
 export type AllParams2<A, B> = UndefinedExceptFirst2<A, B> | UndefinedExceptFirst2<B, A>;
 export type AllParams3<A, B, C> = UndefinedExceptFirst3<A, B, C> | UndefinedExceptFirst3<B, A, C> | UndefinedExceptFirst3<C, A, B>;
+export type AllParams4<A, B, C, D> = UndefinedExceptFirst4<A, B, C, D> | UndefinedExceptFirst4<B, A, C, D> | UndefinedExceptFirst4<C, A, B, D> | UndefinedExceptFirst4<D, A, B, C>;
 
 export type ContractCallMultiple<T> = { contractCalls: T[] };

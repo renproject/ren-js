@@ -18,7 +18,7 @@ const startShiftIn = async () => {
         sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
 
         // Amount of BTC we are sending (in Satoshis)
-        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+        suggestedAmount: GatewayJS.utils.value(amount, "btc").sats(),
 
         // The contract we want to interact with
         sendTo: "0xa2aE9111634F5983e4e1C3E3823914841a4c7235",
@@ -43,25 +43,26 @@ const startShiftIn = async () => {
         .catch(console.error);
 };
 
-// const startShiftOut = async () => {
-//     const amount = 0.000225; // BTC
-//     const recipient = prompt("Enter Bitcoin address to receive BTC");
-//     if (!recipient) { return; };
+const startShiftOut = async () => {
+    const amount = 0.000225; // BTC
+    const recipient = prompt("Enter Bitcoin address to receive BTC");
+    if (!recipient) { return; };
 
-//     gatewayJS.open({
-//         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-//         sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
+    gatewayJS.open({
+        // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+        sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
 
-//         // Amount of BTC we are sending (in Satoshis)
-//         sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+        // Amount of BTC we are sending (in Satoshis)
+        sendAmount: GatewayJS.utils.value(amount, "btc").sats().toFixed(),
 
-//         // The contract we want to interact with
-//         sendTo: "0xa2aE9111634F5983e4e1C3E3823914841a4c7235",
-//     }).result()
-//         .on("status", (status) => console.log(`[GOT STATUS] ${status}`))
-//         .then(console.log)
-//         .catch(console.error);
-// };
+        // The contract we want to interact with
+        sendTo: recipient,
+    }).result()
+        .on("status", (status) => console.log(`[GOT STATUS] ${status}`))
+        .then(console.log)
+        .catch(console.error);
+};
+
 
 const recoverTrades = async () => {
     // Re-open incomplete trades
@@ -84,7 +85,7 @@ const GatewayExample = () => {
         <div className="test-environment">
             <p className="box">To use this testing environment, you need to use a Web3 browser like Brave or Metamask for Firefox/Chrome.</p>
             <button onClick={startShiftIn} className="blue">Shift in with GatewayJS</button>
-            {/* <button onClick={startShiftOut} className="blue">Shift out with GatewayJS</button> */}
+            <button onClick={startShiftOut} className="blue">Shift out with GatewayJS</button>
         </div>
     </div>;
 }

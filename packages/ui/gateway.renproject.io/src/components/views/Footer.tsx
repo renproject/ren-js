@@ -6,8 +6,7 @@ import infoIcon from "../../images/icons/info.svg";
 import smallLogo from "../../images/logo-small-grey.png";
 import { Tooltip } from "./tooltip/Tooltip";
 
-export const Footer: React.FC<{}> = props => {
-    const Container = styled.div`
+const Container = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -24,10 +23,11 @@ export const Footer: React.FC<{}> = props => {
         content: '';
     }
     `;
-    const RenVMLink = styled.a`
+const RenVMLink = styled.a`
     text-decoration: underline;
     `;
 
+export const Footer: React.FC<{}> = props => {
     const bridgeInfo = `Your tokens will be bridged to Ethereum in a completely trustless and decentralized way.`;
 
     return (

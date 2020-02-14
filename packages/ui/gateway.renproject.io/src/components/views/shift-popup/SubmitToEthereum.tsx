@@ -8,6 +8,20 @@ import { _catchInteractionErr_ } from "../../../lib/errors";
 import { OpeningShiftMini } from "../OpeningShiftMini";
 import { Popup } from "../Popup";
 
+const TransparentButton = styled.button`
+        position: relative;
+        &:disabled {
+            color: rgba(255, 255, 255, 0.5);
+        }
+    `;
+const TransparentLoading = styled(Loading)`
+        position: absolute;
+        margin-left: 20px;
+        margin-top: 3px;
+        display: inline-block;
+        border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
+    `;
+
 export const SubmitToEthereum: React.StatelessComponent<{
     mini: boolean,
     txHash: Tx | null,
@@ -57,19 +71,6 @@ export const SubmitToEthereum: React.StatelessComponent<{
 
     if (mini) { return <OpeningShiftMini />; }
 
-    const TransparentButton = styled.button`
-        position: relative;
-        &:disabled {
-            color: rgba(255, 255, 255, 0.5);
-        }
-    `;
-    const TransparentLoading = styled(Loading)`
-        position: absolute;
-        margin-left: 20px;
-        margin-top: 3px;
-        display: inline-block;
-        border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
-    `;
     return <Popup mini={mini}>
         <div className="submit-to-ethereum">
             <div className="popup--body">

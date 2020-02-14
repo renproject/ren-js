@@ -95,7 +95,7 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error(`Error trying to update shift in storage without network being defined.`);
         }
 
-        let existingShift: HistoryEvent | {} = {};
+        let existingShift: HistoryEvent | Partial<HistoryEvent> = {};
         if (shiftIn.shiftParams) {
             existingShift = await getStorageItem(renNetwork, shiftIn.shiftParams.nonce) || {};
         }
@@ -110,8 +110,13 @@ export class SDKContainer extends Container<typeof initialState> {
             ...this.state.shift,
             ...shiftIn,
             // tslint:disable-next-line: no-any
-            time: min((existingShift as any).time, this.state.shift && this.state.shift.time, shiftIn.time),
+            time: min(existingShift.time, this.state.shift && this.state.shift.time, shiftIn.time),
+            inTx: shiftIn.inTx || (this.state.shift && this.state.shift.inTx) || existingShift.inTx,
+            outTx: shiftIn.outTx || (this.state.shift && this.state.shift.outTx) || existingShift.outTx,
+            renTxHash: shiftIn.renTxHash || (this.state.shift && this.state.shift.renTxHash) || existingShift.renTxHash,
+            renVMStatus: shiftIn.renVMStatus || (this.state.shift && this.state.shift.renVMStatus) || existingShift.renVMStatus,
         } as HistoryEvent;
+
         if (
             shift.status &&
             (!this.state.shift || (this.state.shift.status !== shift.status)) &&

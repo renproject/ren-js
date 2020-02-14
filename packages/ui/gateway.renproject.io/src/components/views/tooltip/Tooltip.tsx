@@ -1,7 +1,5 @@
 import * as React from "react";
 
-import styled from "styled-components";
-
 import { TooltipChildStyle, TooltipContainerStyle } from "./TooltipStyles";
 
 export const Tooltip: React.FC<{
@@ -10,12 +8,12 @@ export const Tooltip: React.FC<{
   direction?: string;
   align?: string;
 }> = ({ contents, width, direction, align, children }) => {
-  const TooltipChild = styled.span`${TooltipChildStyle(width, direction, align)}`;
-  const TooltipContainer = styled.span`${TooltipContainerStyle(TooltipChild)}`;
-  return <TooltipContainer>
-    <TooltipChild>
-      {contents}
-    </TooltipChild>
+  const child = <TooltipChildStyle width={width} direction={direction} align={align}>
+    {contents}
+  </TooltipChildStyle>;
+
+  return <TooltipContainerStyle child={child}>
+    {child}
     {children}
-  </TooltipContainer>;
+  </TooltipContainerStyle>;
 };

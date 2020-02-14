@@ -39,6 +39,36 @@ const getRequiredAddressAndName = (shiftParams: ShiftInEvent["shiftParams"] | Sh
     }, null as [string, RegExpMatchArray] | null);
 }, null as [string, RegExpMatchArray] | null) as [string, RegExpMatchArray] | null : null;
 
+const QRCodeContainer = styled.div`
+            background: #FFFFFF;
+            border: 1px solid #DBE0E8;
+            border-radius: 6px;
+            display: inline-flex;
+            padding: 15px;
+            `;
+
+const ParentContainer = styled.div`
+            display: flex;
+            align-content: center;
+            align-items: center;
+            `;
+
+const ParentInfo = styled.span`
+            font-size: 18px;
+            margin: 0 5px;
+            & > img {
+                margin: 0 5px;
+            }
+                        .address {
+                font-size: 14px;
+            }
+            `;
+
+const AmountSpan = styled.span`
+                color: ${props => props.theme.primaryColor};
+                cursor: pointer;
+            `;
+
 /**
  * OpeningShift is a visual component for allowing users to open new shifts
  */
@@ -70,36 +100,6 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
         }
 
         const { paused, utxos, wrongNetwork, expectedNetwork } = uiContainer.state;
-
-        const AmountSpan = styled.span`
-                color: ${props => props.theme.primaryColor};
-                cursor: pointer;
-            `;
-
-        const QRCodeContainer = styled.div`
-            background: #FFFFFF;
-            border: 1px solid #DBE0E8;
-            border-radius: 6px;
-            display: inline-flex;
-            padding: 15px;
-            `;
-
-        const ParentContainer = styled.div`
-            display: flex;
-            align-content: center;
-            align-items: center;
-            `;
-
-        const ParentInfo = styled.span`
-            font-size: 18px;
-            margin: 0 5px;
-            & > img {
-                margin: 0 5px;
-            }
-                        .address {
-                font-size: 14px;
-            }
-            `;
 
         // const title = window.parent.document.title;
         const url = getURL();

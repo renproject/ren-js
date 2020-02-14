@@ -3,6 +3,14 @@ import * as React from "react";
 import { lighten } from "polished";
 import styled from "styled-components";
 
+const OuterDiv = styled.div`
+    position: relative;
+    border: 1px solid #dbe0e8;
+    box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
+    border-radius: 6px;
+    transition: all 500ms;
+    `;
+
 // tslint:disable-next-line: no-any
 export const LabelledInput = (props: any) => {
     const { inputLabel, children, width, ...rest } = props;
@@ -24,14 +32,6 @@ export const LabelledInput = (props: any) => {
     color: ${p => p.theme.lightGrey};
     background-color: white;
     margin-top: -10px;
-    `;
-
-    const OuterDiv = styled.div`
-    position: relative;
-    border: 1px solid #dbe0e8;
-    box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
-    border-radius: 6px;
-    transition: all 500ms;
     `;
 
     return (

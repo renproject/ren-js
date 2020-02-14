@@ -19,8 +19,12 @@ import { LabelledInput } from "../LabelledInput";
 import { Popup } from "../Popup";
 import { Tooltip } from "../tooltip/Tooltip";
 
-const ScanningBanner: React.FC<{}> = props => {
-    const ScanningDot = styled.span`
+const ScanningText = styled.span`
+            min-width: 170px;
+            line-height: 100%;
+        `;
+
+const ScanningDot = styled.span`
             height: 10px;
             width: 10px;
             background-color: ${p => lighten(0.1, p.theme.primaryColor)};
@@ -31,7 +35,7 @@ const ScanningBanner: React.FC<{}> = props => {
             line-height: 100%;
         `;
 
-    const ScanningDiv = styled.div`
+const ScanningDiv = styled.div`
             font-size: 13.44px;
             color: ${p => p.theme.lightGrey};
             display: flex;
@@ -40,10 +44,7 @@ const ScanningBanner: React.FC<{}> = props => {
             padding: 40px 0;
         `;
 
-    const ScanningText = styled.span`
-            min-width: 170px;
-            line-height: 100%;
-        `;
+const ScanningBanner: React.FC<{}> = props => {
     return (
         <ScanningDiv><ScanningDot /><ScanningText className="ellipsis">{props.children}</ScanningText></ScanningDiv>
     );
@@ -62,6 +63,72 @@ interface Props {
     waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
     onDeposit(utxo: UTXO): void;
 }
+
+
+const ConfirmationsContainer = styled.div`
+        text-align: center;
+        `;
+const ConfirmationsHeader = styled.span`
+        font-size: 14px;
+        margin-right: 5px;
+        color: #87888C;
+        `;
+
+const ConfirmationsCount = styled.span`
+        margin-left: 10px;
+        `;
+const ConfirmationsBlock = styled.div`
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 0;
+        margin-bottom: 20px;
+        `;
+
+const DepositLabel = styled.label`
+        position: absolute;
+        top: 0;
+        width: 200px;
+        text-align: center;
+        margin-left: 100px;
+        font-size: 14px;
+        color: ${p => p.theme.lightGrey};
+        background-color: white;
+        margin-top: -10px;
+        `;
+
+const StyledInput = styled.input`
+        color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        `;
+
+const AddressControls = styled.div`
+            display: flex;
+            align-items: center;
+            margin-right: 13px;
+
+            button {
+                padding: 0;
+                min-width: 37px;
+                padding: 0 5px;
+                height: 20px;
+                border-radius: 20px;
+                border: 1px solid ${p => p.theme.primaryColor};
+                background: rgba(0, 111, 232, 0.1);
+                font-size: 10px;
+                line-height: 13px;
+                color: ${p => p.theme.primaryColor};
+            }
+
+            button + button {
+                margin-left: 5px;
+            }
+        `;
+
+const ContinueButton = styled.button`
+            background: ${p => `linear-gradient(90deg, ${p.theme.primaryColor} 0%, ${lighten(0.1, p.theme.primaryColor)} 180%)`};
+        `;
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
     ({ mini, token, order, utxos, onQRClick, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
@@ -105,51 +172,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             );
         }, [showSpinner, timer]);
 
-        const ContinueButton = styled.button`
-            background: ${p => `linear-gradient(90deg, ${p.theme.primaryColor} 0%, ${lighten(0.1, p.theme.primaryColor)} 180%)`};
-        `;
-
-        const DepositLabel = styled.label`
-        position: absolute;
-        top: 0;
-        width: 200px;
-        text-align: center;
-        margin-left: 100px;
-        font-size: 14px;
-        color: ${p => p.theme.lightGrey};
-        background-color: white;
-        margin-top: -10px;
-        `;
-
-        const StyledInput = styled.input`
-        color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
-        font-size: 14px !important;
-        font-weight: 400 !important;
-        `;
-
-        const AddressControls = styled.div`
-            display: flex;
-            align-items: center;
-            margin-right: 13px;
-
-            button {
-                padding: 0;
-                min-width: 37px;
-                padding: 0 5px;
-                height: 20px;
-                border-radius: 20px;
-                border: 1px solid ${p => p.theme.primaryColor};
-                background: rgba(0, 111, 232, 0.1);
-                font-size: 10px;
-                line-height: 13px;
-                color: ${p => p.theme.primaryColor};
-            }
-
-            button + button {
-                margin-left: 5px;
-            }
-        `;
-
         const tokenDetails = Tokens.get(token);
         const showAddress = understood ?
             <>
@@ -191,26 +213,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                     <ContinueButton className="button" disabled={depositAddress as string | null === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</ContinueButton>
                 </div>
             </>;
-
-        const ConfirmationsContainer = styled.div`
-        text-align: center;
-        `;
-        const ConfirmationsHeader = styled.span`
-        font-size: 14px;
-        margin-right: 5px;
-        color: #87888C;
-        `;
-
-        const ConfirmationsCount = styled.span`
-        margin-left: 10px;
-        `;
-        const ConfirmationsBlock = styled.div`
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 10px 0;
-        margin-bottom: 20px;
-        `;
 
         const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains. This will be improved for Mainnet via 3rd parties.`;
 

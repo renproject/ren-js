@@ -1,4 +1,4 @@
-import { css, StyledComponent } from "styled-components";
+import styled, { css } from "styled-components";
 
 const onTop = (color: string) => css`
   bottom: 110%;
@@ -37,21 +37,16 @@ const right = (width: number) => css`
   }
 `;
 
-export const TooltipChildStyle = (widthIn?: number, direction?: string, align?: string) => {
-
-  const color = "#333";
-  const width = widthIn ? widthIn : 100;
-
-  return css`
+export const TooltipChildStyle = styled.span<{ width?: number, align?: string, direction?: string }>`
         text-align: center;
         visibility: hidden;
-        background-color: ${color};
+        background-color: #333;
         color: white;
         padding: 10px;
         border-radius: 4px;
         position: absolute;
         left: 50%;
-        width: ${width}px;
+        width: ${props => props.width || 100}px;
         opacity: 0;
         transition: all 0.2s;
         z-index: 100;
@@ -62,19 +57,16 @@ export const TooltipChildStyle = (widthIn?: number, direction?: string, align?: 
             border-width: 5px;
             border-style: solid;
         }
-        ${direction === "bottom" ? onBottom(color) : onTop(color)}
-        ${align === "left" ? left(width) : align === "right" ? right(width) : center(width)}
+        ${props => props.direction === "bottom" ? onBottom("#333") : onTop("#333")}
+        ${props => props.align === "left" ? left(props.width || 100) : props.align === "right" ? right(props.width || 100) : center(props.width || 100)}
     `;
-};
 
 // tslint:disable-next-line: no-any
-export const TooltipContainerStyle = (child: StyledComponent<any, any>) => {
-  return css`
+export const TooltipContainerStyle = styled.span<{ child: JSX.Element }>`
     position: relative;
     cursor: pointer;
-        &: hover ${child} {
+        &: hover ${TooltipChildStyle} {
         visibility: visible;
         opacity: 1;
     }
     `;
-};

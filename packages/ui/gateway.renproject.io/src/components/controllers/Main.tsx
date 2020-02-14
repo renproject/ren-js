@@ -1,11 +1,14 @@
 import * as React from "react";
 
-import RenJS, { processShiftInParams, processShiftOutParams } from "@renproject/ren";
+import RenJS from "@renproject/ren";
 import {
     GatewayMessage, GatewayMessageType, GatewayParams, HistoryEvent, RenNetwork, SendTokenInterface,
     ShiftInEvent, ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftOutEvent, ShiftOutParams,
     ShiftOutParamsAll, ShiftOutStatus, sleep, UnmarshalledTx,
 } from "@renproject/ren-js-common";
+import {
+    processShiftInParams, processShiftOutParams,
+} from "@renproject/ren/build/main/lib/processParams";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
@@ -72,7 +75,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 retries++;
                 await sleep(100);
             }
-            await removeStorageTrade(sdkContainer.state.shift.shiftParams.nonce, uiContainer.state.renNetwork);
+            await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.shiftParams.nonce);
             if (!fromClient && uiContainer.state.gatewayPopupID) {
                 postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
             }

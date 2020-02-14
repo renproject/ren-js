@@ -1,4 +1,4 @@
-import { UTXO } from "@renproject/ren";
+import { UTXO } from "@renproject/ren/build/main/lib/utils";
 import { OrderedMap } from "immutable";
 import { Container } from "unstated";
 import Web3 from "web3";

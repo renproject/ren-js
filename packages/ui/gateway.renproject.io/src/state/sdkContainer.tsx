@@ -1,20 +1,23 @@
 import { sleep } from "@renproject/react-components";
-import RenJS, {
-    NetworkDetails, parseRenContract, ShiftInObject, Signature, TxStatus, UTXO,
-} from "@renproject/ren";
+import RenJS from "@renproject/ren";
 import {
     Asset, GatewayMessageType, HistoryEvent, RenContract, SendTokenInterface, ShiftInEvent,
     ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftNonce, ShiftOutEvent, ShiftOutParams,
-    ShiftOutParamsAll, ShiftOutStatus, Tx,
+    ShiftOutParamsAll, ShiftOutStatus, Tx, TxStatus,
 } from "@renproject/ren-js-common";
+import { UTXO } from "@renproject/ren/build/main/lib/utils";
+import { ShiftInObject, Signature } from "@renproject/ren/build/main/shiftIn";
+import { parseRenContract } from "@renproject/ren/build/main/types/assets";
+import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import { Container } from "unstated";
 import Web3 from "web3";
 import { TransactionReceipt } from "web3-core";
 
-import { updateStorageTrade } from "../components/controllers/Storage";
+import { getStorageItem, updateStorageTrade } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
-import { _catchBackgroundErr_, _catchInteractionErr_, isPromise } from "../lib/errors";
+import { _catchBackgroundErr_, _catchInteractionErr_, _ignoreErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
+import { isFunction, isPromise } from "../lib/utils";
 import { Token } from "./generalTypes";
 import { UIContainer } from "./uiContainer";
 
@@ -57,23 +60,58 @@ export class SDKContainer extends Container<typeof initialState> {
             sdkRenVM: new RenJS(network),
             sdkAddress: address,
         });
+
+        const { shift } = this.state;
+        if (shift && shift.shiftParams.contractCalls) {
+            for (let i = 0; i < shift.shiftParams.contractCalls.length; i++) {
+                const contractCall = shift.shiftParams.contractCalls[i];
+                if (isFunction(contractCall)) {
+                    try {
+                        shift.shiftParams.contractCalls[i] = await contractCall(web3.currentProvider);
+                    } catch (error) {
+                        _ignoreErr_(error);
+                    }
+                } else if (isPromise(contractCall)) {
+                    try {
+                        shift.shiftParams.contractCalls[i] = await contractCall;
+                    } catch (error) {
+                        _ignoreErr_(error);
+                    }
+                }
+            }
+            await this.updateShift(shift);
+        }
     }
 
     public getShiftStatus = (shift?: HistoryEvent) => {
         shift = shift || this.state.shift || undefined;
         if (!shift) { throw new Error("Shift not set"); }
-        return { status: this.state.shift?.status, details: null };
+        return { status: shift.status, details: null };
     }
 
     public updateShift = async (shiftIn: Partial<HistoryEvent>) => {
-
         const renNetwork = this.uiContainer.state.renNetwork;
         if (!renNetwork) {
             throw new Error(`Error trying to update shift in storage without network being defined.`);
         }
 
+        let existingShift: HistoryEvent | {} = {};
+        if (shiftIn.shiftParams) {
+            existingShift = await getStorageItem(renNetwork, shiftIn.shiftParams.nonce) || {};
+        }
+
+        const min = (firstValue: (number | null | undefined), ...values: Array<number | null | undefined>): (number | null | undefined) => {
+            return values.reduce((acc, value) => (acc === null || acc === undefined || (value !== undefined && value !== null && value < acc) ? value : acc), firstValue);
+        };
+
         // tslint:disable-next-line: no-object-literal-type-assertion
-        const shift = { ...this.state.shift, ...shiftIn } as HistoryEvent;
+        const shift = {
+            ...existingShift,
+            ...this.state.shift,
+            ...shiftIn,
+            // tslint:disable-next-line: no-any
+            time: min((existingShift as any).time, this.state.shift && this.state.shift.time, shiftIn.time),
+        } as HistoryEvent;
         if (
             shift.status &&
             (!this.state.shift || (this.state.shift.status !== shift.status)) &&
@@ -81,7 +119,11 @@ export class SDKContainer extends Container<typeof initialState> {
         ) {
             postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getShiftStatus(shift));
         }
-        await updateStorageTrade(renNetwork, shift);
+        try {
+            await updateStorageTrade(renNetwork, shift);
+        } catch (error) {
+            console.error(error);
+        }
         await this.setState({ shift });
     }
 
@@ -90,9 +132,10 @@ export class SDKContainer extends Container<typeof initialState> {
             return;
         }
 
-        const defaultToken = (this.state.shift.shiftParams as ShiftInParamsAll | ShiftOutParamsAll).sendToken?.slice(0, 3) as Token;
+        const sendToken = (this.state.shift.shiftParams as ShiftInParamsAll | ShiftOutParamsAll).sendToken;
+        const defaultToken = sendToken && (sendToken.slice(0, 3) as Token);
         const contractCalls = this.state.shift.shiftParams.contractCalls ? Array.from(this.state.shift.shiftParams.contractCalls).map(contractCall => {
-            return isPromise(contractCall) ? contractCall : contractCall.contractParams?.map(param => {
+            return (isFunction(contractCall) || isPromise(contractCall)) ? contractCall : contractCall.contractParams && contractCall.contractParams.map(param => {
                 const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
                 try {
                     if (match && (match[1] === token || (!match[1] && token === defaultToken))) {
@@ -185,13 +228,13 @@ export class SDKContainer extends Container<typeof initialState> {
             ethTxHash: shift.inTx.hash
         }).readFromEthereum();
 
+        const renTxHash = shiftOutObject.renTxHash();
+        this.updateShift({
+            renTxHash,
+            status: ShiftOutStatus.SubmittedToRenVM,
+        }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > renTxHash > updateShift"));
+
         const response = await shiftOutObject.submitToRenVM()
-            .on("renTxHash", (renTxHash: string) => {
-                this.updateShift({
-                    renTxHash,
-                    status: ShiftOutStatus.SubmittedToRenVM,
-                }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > submitToRenVM"));
-            })
             .on("status", (renVMStatus: TxStatus) => {
                 this.updateShift({
                     renVMStatus,

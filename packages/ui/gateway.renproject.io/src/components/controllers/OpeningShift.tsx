@@ -11,9 +11,9 @@ import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
 import infoIcon from "../../images/icons/info.svg";
-// tslint:disable-next-line: ordered-imports
-import { _catchInteractionErr_, isPromise } from "../../lib/errors";
+import { _catchInteractionErr_ } from "../../lib/errors";
 import { postMessageToClient } from "../../lib/postMessage";
+import { isFunction, isPromise } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
 import { Token } from "../../state/generalTypes";
 import { SDKContainer } from "../../state/sdkContainer";
@@ -31,7 +31,7 @@ interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {
 }
 
 const getRequiredAddressAndName = (shiftParams: ShiftInEvent["shiftParams"] | ShiftOutEvent["shiftParams"]) => shiftParams.contractCalls ? Array.from(shiftParams.contractCalls).reduce((accOuter, contractCall) => {
-    if (accOuter !== null || isPromise(contractCall)) { return accOuter; }
+    if (accOuter !== null || isFunction(contractCall) || isPromise(contractCall)) { return accOuter; }
     return (contractCall.contractParams || []).reduce((acc, param) => {
         if (acc !== null || !param || typeof param.value !== "string") { return acc; }
         const match = param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/);
@@ -177,7 +177,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
                         break;
                     case ShiftInStatus.ConfirmedOnEthereum:
-                        return <Complete networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        return <Complete token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
                 }
             }
 
@@ -190,7 +190,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                             <div className="popup--body--title">
                                 Deposit {amount ? <><CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard>{" "}</> : <></>}{token.toUpperCase()}
                             </div>
-                            <div>{sdkRenVM?.network.isTestnet ? "(testnet tokens)" : ""}{" "}to</div>
+                            <div>{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet tokens)" : ""}{" "}to</div>
                             <ParentContainer>
                                 <ParentInfo>
                                     <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{title}
@@ -253,11 +253,11 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         inner = <></>;
                         break;
                     case ShiftOutStatus.ReturnedFromRenVM:
-                        return <Complete networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        return <Complete token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
                 }
             }
 
-            const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls?.length - 1] as unknown as DetailedContractCall).sendTo)) || "";
+            const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls.length - 1] as unknown as DetailedContractCall).sendTo)) || "";
 
             return <>
                 {!paused ? <div className="popup--body--details">

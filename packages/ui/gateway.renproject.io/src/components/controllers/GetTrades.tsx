@@ -47,7 +47,7 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
                 }
             };
             postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {});
-        }, []);
+        }, [location.search]);
 
         return <></>;
     }

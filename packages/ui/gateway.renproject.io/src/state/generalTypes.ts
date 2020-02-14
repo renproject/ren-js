@@ -1,4 +1,6 @@
-import RenJS, { Chain, NetworkDetails } from "@renproject/ren";
+import RenJS from "@renproject/ren";
+import { Chain } from "@renproject/ren-js-common";
+import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import { isMainnetAddress, isTestnetAddress } from "bchaddrjs";
 import { Map } from "immutable";
 import { validate } from "wallet-address-validator";

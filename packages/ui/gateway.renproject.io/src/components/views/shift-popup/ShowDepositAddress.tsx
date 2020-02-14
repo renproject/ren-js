@@ -1,8 +1,9 @@
 import * as React from "react";
 
 import { Loading, TokenIcon } from "@renproject/react-components";
-import { NetworkDetails, UTXO } from "@renproject/ren";
 import { ShiftInEvent } from "@renproject/ren-js-common";
+import { UTXO } from "@renproject/ren/build/main/lib/utils";
+import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import CopyToClipboard from "react-copy-to-clipboard";

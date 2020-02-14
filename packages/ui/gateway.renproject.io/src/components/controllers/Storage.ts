@@ -37,6 +37,14 @@ export const getStorage = async (network: string, domainIn?: string): Promise<Ma
     return storage;
 };
 
+export const getStorageItem = async (network: string, nonce: string, domainIn?: string): Promise<HistoryEvent> => {
+    const domain = domainIn || getURL();
+
+    const store = getStore(network, domain);
+
+    return await store.getItem(nonce);
+};
+
 const cancelled = new Set<string>();
 
 export const updateStorageTrade = async (network: string, trade: HistoryEvent, domainIn?: string) => {

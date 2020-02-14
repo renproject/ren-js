@@ -153,6 +153,10 @@ export const _catchInteractionErr_ = <X extends Details & Described & ShownToUse
     _catchErr_(error, { ...(typeof details === "string" ? { description: details } : details), category: "interaction_exception" });
 };
 
-export const isPromise = <T>(p: any): p is Promise<T> => {
-    return p.hasOwnProperty("then");
+export const _ignoreErr_ = <X extends Details & Described & ShownToUser>(error: any, details?: X | string) => {
+    if (details) {
+        console.error(details, error);
+    } else {
+        console.error(error);
+    }
 };

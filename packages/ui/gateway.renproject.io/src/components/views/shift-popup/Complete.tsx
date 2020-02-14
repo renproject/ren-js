@@ -1,18 +1,27 @@
 import * as React from "react";
 
-import { NetworkDetails } from "@renproject/ren";
+import { TokenIcon } from "@renproject/react-components";
 import { Tx } from "@renproject/ren-js-common";
+import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 
 import { txUrl } from "../../../lib/txUrl";
+import { Token } from "../../../state/generalTypes";
 import { Popup } from "../Popup";
 
 export const Complete: React.StatelessComponent<{
     inTx: Tx | null,
     outTx: Tx | null,
     mini: boolean,
+    token: Token;
     networkDetails: NetworkDetails,
-}> = ({ mini, inTx, outTx, networkDetails }) => {
-    return <Popup mini={mini}>
+}> = ({ mini, inTx, outTx, token, networkDetails }) => mini ?
+    <Popup mini={true}>
+        <div className="side-strip"><TokenIcon token={token} /></div>
+        <div className="popup--body--details">
+            Done
+                </div>
+    </Popup> :
+    <Popup mini={false}>
         <div className="complete">
             <div className="popup--body">
                 <div className="circle-loader load-complete">
@@ -27,4 +36,3 @@ export const Complete: React.StatelessComponent<{
             </div>
         </div>
     </Popup>;
-};

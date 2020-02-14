@@ -1,6 +1,6 @@
 import {
-    BurnContractCallSimple, GatewayParams, GatewayShiftInParamsExtra, RenNetwork,
-    ShiftInFromDetails, toFixed,
+    BurnContractCallSimple, DetailedContractCall, GatewayParams, GatewayShiftInParamsExtra,
+    RenNetwork, ShiftInFromDetails, ShiftInParamsAll, toFixed,
 } from "@renproject/ren-js-common";
 
 // For now, the endpoints are network specific.
@@ -30,6 +30,19 @@ export const resolveEndpoint = (endpointIn: string, network: RenNetwork | string
     return `${endpoint}/#/${path}?network=${network}&${shiftID ? `id=${shiftID}` : ""}`;
 };
 
+// tslint:disable-next-line: readonly-keyword no-any
+const fixBigNumber = <Value extends { [keys: string]: any }>(value: Value, key: keyof Value) => {
+    try {
+        // tslint:disable-next-line: strict-type-predicates
+        if (value[key] && typeof value[key] === "object") {
+            // tslint:disable-next-line: no-object-mutation no-any
+            (value as any)[key] = toFixed(value[key]);
+        }
+    } catch (error) {
+        // Ignore error - may be readonly value
+    }
+};
+
 /**
  * prepareParamsForSendMessage turns possible BigNumber values into strings
  * before passing the params to sendMessage.
@@ -38,20 +51,13 @@ export const resolveEndpoint = (endpointIn: string, network: RenNetwork | string
  */
 export const prepareParamsForSendMessage = (shiftParams: GatewayParams): GatewayParams => {
     // Certain types can't be sent via sendMessage - e.g. BigNumbers.
-    try {
-        // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-        if (typeof (shiftParams as BurnContractCallSimple).sendAmount === "object") {
-            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-            (shiftParams as BurnContractCallSimple).sendAmount = toFixed((shiftParams as BurnContractCallSimple).sendAmount);
-        }
-    } catch (error) { console.error(error); }
-    try {
-        // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-        if (typeof (shiftParams as GatewayShiftInParamsExtra).suggestedAmount === "object") {
-            // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-            (shiftParams as GatewayShiftInParamsExtra).suggestedAmount = toFixed((shiftParams as GatewayShiftInParamsExtra).suggestedAmount);
-        }
-    } catch (error) { console.error(error); }
+
+    // tslint:disable-next-line: no-unnecessary-type-assertion
+    fixBigNumber(shiftParams as BurnContractCallSimple, "sendAmount");
+    // tslint:disable-next-line: no-unnecessary-type-assertion
+    fixBigNumber(shiftParams as GatewayShiftInParamsExtra, "suggestedAmount");
+
+    // Required amount
     try {
         // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
         const requiredAmount = (shiftParams as ShiftInFromDetails).requiredAmount;
@@ -67,8 +73,32 @@ export const prepareParamsForSendMessage = (shiftParams: GatewayParams): Gateway
                     max: max ? toFixed(max) : undefined,
                 };
             } else {
-                // tslint:disable-next-line: no-object-mutation no-any no-unnecessary-type-assertion
-                (shiftParams as ShiftInFromDetails).requiredAmount = toFixed((shiftParams as ShiftInFromDetails).requiredAmount as any);
+                // tslint:disable-next-line: no-unnecessary-type-assertion
+                fixBigNumber(shiftParams as ShiftInFromDetails, "requiredAmount");
+            }
+        }
+    } catch (error) { console.error(error); }
+
+    // Contract call values
+    try {
+        // tslint:disable-next-line: no-unnecessary-type-assertion
+        const contractParams = (shiftParams as DetailedContractCall).contractParams;
+        if (contractParams) {
+            for (const contractParam of contractParams) {
+                fixBigNumber(contractParam, "value");
+            }
+        }
+
+        // tslint:disable-next-line: no-unnecessary-type-assertion
+        const contractCalls = (shiftParams as ShiftInParamsAll).contractCalls;
+        if (contractCalls) {
+            for (const contractCall of contractCalls) {
+                const contractParamsInner = contractCall.contractParams;
+                if (contractParamsInner) {
+                    for (const contractParam of contractParamsInner) {
+                        fixBigNumber(contractParam, "value");
+                    }
+                }
             }
         }
     } catch (error) { console.error(error); }

@@ -2,7 +2,7 @@ import {
     Chain, GatewayConstructor, GatewayInstance, GatewayJSConstructor, GatewayJSInterface,
     GatewayMessage, GatewayMessagePayload, GatewayMessageType, GatewayParams, gatewayUtils,
     HistoryEvent, newPromiEvent, PromiEvent, randomBytes, RenNetwork, ShiftInStatus, ShiftOutStatus,
-    sleep, Tokens,
+    sleep, Tokens, UnmarshalledTx,
 } from "@renproject/ren-js-common";
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
@@ -30,7 +30,7 @@ export class Gateway implements GatewayInstance {
     // tslint:enable: readonly-keyword
 
     // tslint:disable-next-line: readonly-keyword readonly-array no-any
-    private readonly promiEvent: PromiEvent<any /* TODO */, { status: [ShiftInStatus | ShiftOutStatus, any] }> = newPromiEvent();
+    private readonly promiEvent: PromiEvent<UnmarshalledTx | {}, { status: [ShiftInStatus | ShiftOutStatus, any] }> = newPromiEvent();
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
@@ -265,6 +265,7 @@ export class Gateway implements GatewayInstance {
         const contentWindow = (frame as any).contentWindow;
         while (!acknowledged && contentWindow) {
             const gatewayMessage: GatewayMessage<Type> = { from: "ren", frameID: this.id, type, payload, messageID };
+            console.log("gatewayMessage", gatewayMessage);
             contentWindow.postMessage(gatewayMessage, "*");
             // Sleep for 1 second
             await sleep(1 * 1000);

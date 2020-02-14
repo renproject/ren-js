@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "describe": "npm-scripts-info",
-    "build": "run-s clean && run-p build:*",
+    "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
     "fix": "run-s fix:*",
@@ -25,7 +25,7 @@
     "test": "run-s build test:*",
     "test:lint": "tslint --project .",
     "test:unit": "nyc --silent ava",
-    "watch": "run-s clean build:main && run-p \"build:main -- -w\"",
+    "watch": "run-s build:main && run-p \"build:main -- -w\"",
     "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
     "cov:html": "nyc report --reporter=html",
     "cov:send": "nyc report --reporter=lcov && codecov",
@@ -35,13 +35,8 @@
     "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
     "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
     "version": "standard-version",
-    "_reset": "git clean -dfx && git reset --hard && npm i",
-    "reset": "echo 'reset disabled'",
-    "_clean": "trash build test",
-    "clean": "echo 'clean disabled'",
     "prepare": "run-s build",
-    "_prepare-release": "run-s reset test cov:check doc:html version doc:publish",
-    "prepare-release": "run-s reset doc:html version doc:publish"
+    "prepare-release": "run-s doc:html version doc:publish"
   },
   "scripts-info": {
     "info": "Display information about the package scripts",
@@ -53,14 +48,13 @@
     "doc": "Generate HTML API documentation and open it in a browser",
     "doc:json": "Generate API documentation in typedoc JSON format",
     "version": "Bump package.json version, update CHANGELOG.md, tag release",
-    "reset": "Delete all untracked files and reset the repo to the last commit",
-    "prepare-release": "One-step: clean, build, test, publish docs, and prep a release"
+    "prepare-release": "One-step: build, test, publish docs, and prep a release"
   },
   "engines": {
     "node": ">=8.9"
   },
   "dependencies": {
-    "@renproject/ren-js-common": "^0.1.9",
+    "@renproject/ren-js-common": "^0.1.11",
     "@types/bn.js": "^4.11.6"
   },
   "devDependencies": {
@@ -75,7 +69,6 @@
     "nyc": "^15.0.0",
     "open-cli": "^5.0.0",
     "standard-version": "^7.1.0",
-    "trash-cli": "^3.0.0",
     "ts-unused-exports": "^5.5.0",
     "tslint": "^6.0.0",
     "tslint-config-prettier": "^1.18.0",

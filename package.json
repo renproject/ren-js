@@ -100,7 +100,7 @@
     },
     "dependencies": {
         "@renproject/contracts": "^0.3.33",
-        "@renproject/ren-js-common": "^0.1.10",
+        "@renproject/ren-js-common": "^0.1.11",
         "@types/bn.js": "^4.11.6",
         "@types/bs58": "^4.0.1",
         "@types/node": "^13.7.0",

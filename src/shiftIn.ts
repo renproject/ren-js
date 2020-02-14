@@ -51,6 +51,7 @@ export class ShiftInObject {
                 throw new Error(`Must provide Ren transaction hash or token to be shifted.`);
             }
 
+            // Last contract call
             const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
             const nonce = maybeNonce || randomNonce();
@@ -191,6 +192,7 @@ export class ShiftInObject {
             throw new Error(`Unable to generate renTxHash without token being shifted.`);
         }
 
+        // Last contract call
         const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), renContract, nonce, this.network);
@@ -228,6 +230,7 @@ export class ShiftInObject {
                     throw new Error(`Unable to submit to RenVM without token being shifted.`);
                 }
 
+                // Last contract call
                 const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
                 // Try to submit to RenVM. If that fails, see if they already

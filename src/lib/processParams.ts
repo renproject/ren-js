@@ -43,7 +43,7 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
     if (params.contractCalls) {
         // Check that the params are accompanied by a function name
         for (const singleContractCall of params.contractCalls) {
-            if (singleContractCall.hasOwnProperty("then")) {
+            if (typeof singleContractCall === "function" || singleContractCall.hasOwnProperty("then")) {
                 continue;
             }
             if (!(singleContractCall as DetailedContractCall).sendTo) {
@@ -116,10 +116,11 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
 
         const addressToHex = utils[parseRenContract(sendToken).asset as "BTC" | "ZEC" | "BCH"].addressToHex(sendTo);
 
-        const approve = new Promise(async (resolve) => {
-            const web3 = new Web3((params as ShiftOutParamsAll).web3Provider);
+        // tslint:disable-next-line: no-any
+        const approve = async (web3Provider: any) => {
+            const web3 = new Web3(web3Provider);
             const shiftedTokenAddress = await getTokenAddress(network, web3, sendToken);
-            resolve({
+            return {
                 sendTo: shiftedTokenAddress,
                 contractFn: "approve",
                 contractParams: [
@@ -127,8 +128,8 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
                     { type: "uint256", name: "amount", value: toBigNumber(sendAmount).toFixed() },
                 ],
                 txConfig,
-            });
-        });
+            };
+        };
 
         return {
             ...restOfBurnParams,

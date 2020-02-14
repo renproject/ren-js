@@ -64,7 +64,7 @@ export class ShiftOutObject {
                         const contractCall = contractCalls[i];
                         const last = i === contractCalls.length - 1;
 
-                        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = await contractCall;
+                        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = typeof contractCall === "function" ? (await contractCall(web3Provider)) : await contractCall;
 
                         const callParams = [
                             ...(contractParams || []).map(value => value.value),

@@ -50,7 +50,7 @@ export interface ShiftOutParamsRenTxHash {
 
 /******************************************************************************/
 
-export type ShiftOutParamsContractCallAll = ContractCallMultiple<Promise<DetailedContractCall> | DetailedContractCall> & { web3Provider: provider };
+export type ShiftOutParamsContractCallAll = ContractCallMultiple<((web3Provider: provider) => Promise<DetailedContractCall>) | Promise<DetailedContractCall> | DetailedContractCall> & { web3Provider: provider };
 
 export type ShiftOutParamsAll = (AllParams4<ShiftOutParamsContractCallAll, ShiftOutParamsTxHash, ShiftOutParamsBurnRef, ShiftOutParamsRenTxHash>) & { sendToken: RenContract };
 

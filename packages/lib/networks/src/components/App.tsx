@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import axios from "axios";
 import { OrderedMap } from "immutable";
 import { HashRouter, Route } from "react-router-dom";
 
@@ -14,8 +13,6 @@ import "../styles/App.scss";
 import Loading from "./Loading";
 import Main from "./Main";
 import Source from "./Source";
-
-const commitHash = require("../commitHash.json");
 
 interface AppProps {
 
@@ -37,22 +34,6 @@ class App extends React.Component<AppProps, AppState> {
             outOfDate: false,
             networks: OrderedMap({ mainnet, chaosnet, testnet, devnet, localnet }),
         };
-    }
-
-    public async componentDidMount() {
-        let using;
-        let latest;
-        try {
-            using = commitHash.HASH;
-            // tslint:disable-next-line: insecure-random
-            latest = (await axios.get(`./commitHash.json?v=${Math.random().toString(36).substring(7)}`)).data.HASH;
-            if (using !== latest) {
-                this.setState({ outOfDate: true });
-            }
-        } catch (err) {
-            console.log(`Using commit hash ${using} but latest commit hash is ${latest}`);
-            console.error(err);
-        }
     }
 
     public render() {

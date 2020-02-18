@@ -14,13 +14,12 @@
     "darknode-sol": "https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2"
   },
   "scripts": {
-    "hash": "echo \"{\\\"HASH\\\": \\\"`git rev-parse HEAD`\\\"}\" > public/commitHash.json",
-    "start": "$npm_execpath run hash && react-scripts start",
-    "build": "$npm_execpath run hash && react-scripts build",
-    "test": "$npm_execpath run hash && react-scripts test --env=jsdom",
-    "eject": "$npm_execpath run hash && react-scripts eject",
-    "predeploy": "$npm_execpath run hash && $npm_execpath run build",
-    "deploy": "$npm_execpath run hash && gh-pages -d build",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "predeploy": "$npm_execpath run build",
+    "deploy": "gh-pages -d build",
     "prepublishOnly": "tsc --module commonjs -d --resolveJsonModule --esModuleInterop --moduleResolution node lib.ts --outDir dist",
     "prepare": "patch-package"
   },

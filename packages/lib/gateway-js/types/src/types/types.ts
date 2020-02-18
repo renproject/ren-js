@@ -62,6 +62,7 @@ interface HistoryEventCommon {
     outTx: Tx | null;
     renTxHash: string | null;
     renVMStatus: TxStatus | null;
+    returned: boolean;
 }
 
 export interface ShiftInEvent extends HistoryEventCommon {

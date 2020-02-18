@@ -3,6 +3,8 @@ import * as React from "react";
 import { lighten } from "polished";
 import styled from "styled-components";
 
+import { ScanningDot } from "./shift-popup/ShowDepositAddress";
+
 const OuterDiv = styled.div`
     position: relative;
     border: 1px solid #dbe0e8;
@@ -10,6 +12,50 @@ const OuterDiv = styled.div`
     border-radius: 6px;
     transition: all 500ms;
     `;
+
+// tslint:disable-next-line: no-any
+export const LabelledDiv = (props: any) => {
+    const { inputLabel, children, width, loading, ...rest } = props;
+    const setWidth = width ? width : 210;
+    const StyledInputFlex = styled.div`
+    display: flex;
+    align-items: center;
+    overflow-x: hidden;
+    height: 40px;
+    `;
+    const StyledInput = styled.div`
+    color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
+    font-size: 14px;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    padding: 0 20px;
+    overflow:hidden;
+    white-space:nowrap;
+    margin-top: 2px;
+    `;
+
+    const DepositLabel = styled.label`
+    position: absolute;
+    top: 0;
+    width: ${setWidth}px;
+    text-align: center;
+    margin-left: calc(calc(100% - ${setWidth}px) / 2);
+    font-size: 1.4rem;
+    color: ${p => p.theme.lightGrey};
+    background-color: white;
+    margin-top: -10px;
+    `;
+
+    return (
+        <OuterDiv>
+            <StyledInputFlex>
+                <StyledInput {...rest}>{props.children}</StyledInput>
+                {loading ? <ScanningDot /> : <></>}
+            </StyledInputFlex>
+            <DepositLabel>{inputLabel}</DepositLabel>
+        </OuterDiv>
+    );
+};
 
 // tslint:disable-next-line: no-any
 export const LabelledInput = (props: any) => {
@@ -21,14 +67,13 @@ export const LabelledInput = (props: any) => {
     font-weight: 400 !important;
     `;
 
-    const w = 105; // + (210 - setWidth) / 2;
     const DepositLabel = styled.label`
     position: absolute;
     top: 0;
     width: ${setWidth}px;
     text-align: center;
-    margin-left: ${w}px;
-    font-size: 14px;
+    margin-left: calc(calc(100% - ${setWidth}px) / 2);
+    font-size: 1.4rem;
     color: ${p => p.theme.lightGrey};
     background-color: white;
     margin-top: -10px;

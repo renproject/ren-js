@@ -1,4 +1,5 @@
 ._ren {
+
     .address-input {
         padding: 0;
         width: 100%;
@@ -41,7 +42,7 @@
 
             &::placeholder {
                 font-weight: 500; // used to be 600
-                font-size: 14px;
+                font-size: 1.4rem;
                 line-height: 16px;
 
                 display: flex;
@@ -84,21 +85,10 @@
             }
         }
 
-        .address-input--message {
-            font-weight: normal;
-            font-size: 14px;
-            line-height: 21px;
-            /* or 150% */
-
-            text-align: left;
-
-            color: $foreground;
-        }
-
         h2 {
             font-style: normal;
             font-weight: 500;
-            font-size: 18px;
+            font-size: 1.8rem;
             line-height: 24px;
             color: $foreground;
         }
@@ -185,7 +175,7 @@
         .address-input--label {
             margin-top: 10px;
             font-weight: 500; // used to be 600
-            font-size: 12px;
+            font-size: 1.2rem;
             line-height: 14px;
             /* identical to box height */
 
@@ -194,7 +184,7 @@
 
         input {
             font-weight: 500;
-            font-size: 12px;
+            font-size: 1.2rem;
 
             // color: $foreground !important;
             transition: all 500ms;
@@ -243,7 +233,7 @@
                 margin-right: 10px;
 
                 font-weight: 500; // used to be 600
-                font-size: 14px;
+                font-size: 1.4rem;
 
                 color: $grey-12;
             }
@@ -289,5 +279,10 @@
                 margin-top: 0;
             }
         }
+    }
+
+    .confirmation--progress {
+        margin-bottom: 0;
+        padding: 0 0px !important;
     }
 }

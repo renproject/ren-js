@@ -2,9 +2,9 @@ import * as React from "react";
 
 import RenJS from "@renproject/ren";
 import {
-    GatewayMessage, GatewayMessageType, GatewayParams, HistoryEvent, RenNetwork, SendTokenInterface,
-    ShiftInEvent, ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftOutEvent, ShiftOutParams,
-    ShiftOutParamsAll, ShiftOutStatus, sleep, UnmarshalledTx,
+    GatewayMessage, GatewayMessageType, GatewayParams, HistoryEvent, Ox, RenNetwork,
+    SendTokenInterface, ShiftInEvent, ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftOutEvent,
+    ShiftOutParams, ShiftOutParamsAll, ShiftOutStatus, sleep, strip0x, UnmarshalledTx,
 } from "@renproject/ren-js-common";
 import {
     processShiftInParams, processShiftOutParams,
@@ -23,7 +23,7 @@ import { Footer } from "../views/Footer";
 import { LoggedOutPopup } from "../views/LoggedOutPopup";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { OpeningShift } from "./OpeningShift";
-import { ProgressBar } from "./ProgressBar";
+import { ShiftProgress } from "./ProgressBar";
 import { getStorage, removeStorageTrade } from "./Storage";
 
 /**
@@ -77,6 +77,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             }
             await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.shiftParams.nonce);
             if (!fromClient && uiContainer.state.gatewayPopupID) {
+                await sdkContainer.updateShift({ returned: true });
                 postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
             }
         }, [uiContainer, sdkContainer]);
@@ -91,6 +92,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 _catchInteractionErr_(error, { description: "Error in Main.tsx: onDone > queryShiftStatus" });
             }
             if (uiContainer.state.gatewayPopupID) {
+                await sdkContainer.updateShift({ returned: true });
                 postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
             }
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
@@ -125,18 +127,20 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 const shiftID = message.frameID;
                                 const time = Date.now() / 1000;
 
+                                const randomID = Ox(strip0x(shiftID).repeat(4).slice(0, 64));
+
                                 let historyEvent: HistoryEvent | undefined;
                                 let shiftParams: HistoryEvent["shiftParams"];
 
                                 if (shiftParamsIn.hasOwnProperty("shiftParams")) {
                                     historyEvent = shiftParamsIn as unknown as HistoryEvent;
                                     shiftParams = { ...historyEvent.shiftParams };
-                                    shiftParams.nonce = historyEvent.shiftParams.nonce || RenJS.utils.randomNonce();
+                                    shiftParams.nonce = shiftParams.nonce || randomID;
                                 } else {
                                     historyEvent = undefined;
                                     shiftParams = {
                                         ...(shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)),
-                                        nonce: (shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)).nonce || RenJS.utils.randomNonce(),
+                                        nonce: (shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)).nonce || randomID,
                                     };
                                 }
 
@@ -168,10 +172,11 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     outTx: null,
                                     renTxHash: null,
                                     renVMStatus: null,
+                                    returned: false,
                                     ...historyEvent,
                                 };
 
-                                await sdkContainer.updateShift(historyEvent);
+                                await sdkContainer.updateShift(historyEvent, { sync: true });
 
                                 break;
                             case GatewayMessageType.Pause:
@@ -274,7 +279,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>
                 }
                 {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
-                {!paused && shift ? <ProgressBar /> : <></>}
+                {!paused && shift ? <ShiftProgress /> : <></>}
             </div>
             {!paused && <Footer />}
         </main>;

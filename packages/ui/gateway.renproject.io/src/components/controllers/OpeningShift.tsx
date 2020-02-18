@@ -44,8 +44,29 @@ const QRCodeContainer = styled.div`
             border: 1px solid #DBE0E8;
             border-radius: 6px;
             display: inline-flex;
-            padding: 15px;
+            padding: 10px;
+
+            size: 110px;
+            width: 132px;
+            height: 132px;
+
+            >canvas {
+                height: 110px !important;
+                width: 110px !important;
+            }
             `;
+
+const QRCodeOuter = styled.div`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            >span {
+                font-size: 1.4rem;
+                color: #3F3F48;
+                margin-top: 16px;
+            }
+`;
 
 const ParentContainer = styled.div`
             display: flex;
@@ -54,13 +75,13 @@ const ParentContainer = styled.div`
             `;
 
 const ParentInfo = styled.span`
-            font-size: 18px;
+            font-size: 1.8rem;
             margin: 0 5px;
             & > img {
                 margin: 0 5px;
             }
                         .address {
-                font-size: 14px;
+                font-size: 1.4rem;
             }
             `;
 
@@ -88,6 +109,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             returned = true;
             setReturned(true);
             if (uiContainer.state.gatewayPopupID) {
+                await sdkContainer.updateShift({ returned: true });
                 postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Error, { message: `No token burn found in transaction.` });
             }
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onNoBurnFound > resetTrade"));
@@ -174,7 +196,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         break;
                     case ShiftInStatus.ReturnedFromRenVM:
                     case ShiftInStatus.SubmittedToEthereum:
-                        inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
+                        inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
                         break;
                     case ShiftInStatus.ConfirmedOnEthereum:
                         return <Complete token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
@@ -184,13 +206,18 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             return <>
                 {!paused ? <div className="popup--body--details">
                     {showQR && depositAddress ?
-                        <QRCodeContainer><QRCode value={`bitcoin:${depositAddress}${amount ? `?amount=${amount}` : ""}`} /></QRCodeContainer>
+                        <QRCodeOuter>
+                            <QRCodeContainer>
+                                <QRCode value={`bitcoin:${depositAddress}${amount ? `?amount=${amount}` : ""}`} />
+                            </QRCodeContainer>
+                            <span>Deposit {amount ? <><CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard>{" "}</> : <></>}{token.toUpperCase()}</span>
+                        </QRCodeOuter>
                         : <>
                             <div className="popup--token--icon"><TokenIcon token={token} /></div>
                             <div className="popup--body--title">
                                 Deposit {amount ? <><CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard>{" "}</> : <></>}{token.toUpperCase()}
                             </div>
-                            <div>{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet tokens)" : ""}{" "}to</div>
+                            <div className="popup--title--to">{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet tokens)" : ""}{" "}to</div>
                             <ParentContainer>
                                 <ParentInfo>
                                     <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{title}
@@ -230,7 +257,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
-                            inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                            inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         }
                         // const submit = async (submitOrderID: string) => {
                         //     await sdkContainer.approveTokenTransfer(submitOrderID);
@@ -242,7 +269,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         break;
                     case ShiftOutStatus.SubmittedToEthereum:
                         // Submit the trade to Ethereum
-                        inner = <SubmitToEthereum etherscan={sdkRenVM.network.contracts.etherscan} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                        inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         break;
                     case ShiftOutStatus.ConfirmedOnEthereum:
                     case ShiftOutStatus.SubmittedToRenVM:

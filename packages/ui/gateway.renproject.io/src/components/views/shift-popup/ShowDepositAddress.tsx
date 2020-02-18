@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Loading, TokenIcon } from "@renproject/react-components";
+import { TokenIcon } from "@renproject/react-components";
 import { ShiftInEvent } from "@renproject/ren-js-common";
 import { UTXO } from "@renproject/ren/build/main/lib/utils";
 import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
@@ -12,11 +12,13 @@ import styled from "styled-components";
 import infoIcon from "../../../images/icons/info.svg";
 import { ReactComponent as QR } from "../../../images/qr.svg";
 import { txUrl } from "../../../lib/txUrl";
+import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token, Tokens } from "../../../state/generalTypes";
 import { numberOfConfirmations } from "../../../state/sdkContainer";
-import { LabelledInput } from "../LabelledInput";
+import { LabelledDiv } from "../LabelledInput";
 import { Popup } from "../Popup";
+import { ProgressBar } from "../ProgressBar";
 import { Tooltip } from "../tooltip/Tooltip";
 
 const ScanningText = styled.span`
@@ -24,7 +26,7 @@ const ScanningText = styled.span`
             line-height: 100%;
         `;
 
-const ScanningDot = styled.span`
+export const ScanningDot = styled.span`
             height: 10px;
             width: 10px;
             background-color: ${p => lighten(0.1, p.theme.primaryColor)};
@@ -33,6 +35,7 @@ const ScanningDot = styled.span`
             margin-right: 10px;
             animation: ${p => pulseAnimation("6px", p.theme.primaryColor)};
             line-height: 100%;
+            flex-shrink: 0;
         `;
 
 const ScanningDiv = styled.div`
@@ -50,7 +53,7 @@ const ScanningBanner: React.FC<{}> = props => {
     );
 };
 
-const INTEROP_LINK = "#";
+const INTEROP_LINK = "https://docs.renproject.io/ren/renvm/universal-interop#performance-or-confirmation-as-a-service";
 
 interface Props {
     mini: boolean;
@@ -69,29 +72,25 @@ const ConfirmationsContainer = styled.div`
         text-align: center;
         `;
 const ConfirmationsHeader = styled.span`
-        font-size: 14px;
+        font-size: 1.4rem;
         margin-right: 5px;
         color: #87888C;
         `;
 
-const ConfirmationsCount = styled.span`
-        margin-left: 10px;
-        `;
 const ConfirmationsBlock = styled.div`
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 10px 0;
         margin-bottom: 20px;
         `;
 
 const DepositLabel = styled.label`
         position: absolute;
         top: 0;
-        width: 200px;
+        width: 180px;
         text-align: center;
-        margin-left: 100px;
-        font-size: 14px;
+        margin-left: calc(calc(100% - 180px) / 2);
+        font-size: 1.4rem;
         color: ${p => p.theme.lightGrey};
         background-color: white;
         margin-top: -10px;
@@ -116,7 +115,7 @@ const AddressControls = styled.div`
                 border-radius: 20px;
                 border: 1px solid ${p => p.theme.primaryColor};
                 background: rgba(0, 111, 232, 0.1);
-                font-size: 10px;
+                font-size: 1.0rem;
                 line-height: 13px;
                 color: ${p => p.theme.primaryColor};
             }
@@ -201,14 +200,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                 {/* {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null} */}
             </> :
             <>
-                {failed ? <div className="red">{`${failed.message || failed}`}</div> :
-                    <div className="popup--body--box">
-                        <div className="popup--body--box--title">
-                            Transfer {token.toUpperCase()} trustlessly.
-                        </div>
-                        Your {token.toUpperCase()} will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <a href="https://renproject.io/#TODO">here</a>.
-                    </div>
-                }
+                {failed ? <div className="red">{`${failed.message || failed}`}</div> : <></>}
                 <div className="popup--buttons">
                     <ContinueButton className="button" disabled={depositAddress as string | null === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</ContinueButton>
                 </div>
@@ -229,10 +221,25 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
                     </div> */}
                         <ConfirmationsBlock>
-                            <Loading className="loading--blue" />
-                            <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : "?"} confirmations</ConfirmationsCount>
+                            <ProgressBar
+                                className="confirmation--progress"
+                                style={{ width: `${(order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : 2) <= 1 ? 50 : 100}%` }}
+                                items={[
+                                    ...range(order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : 2).map(i => ({})),
+                                    { label: "✓" }
+                                ]}
+                                progress={utxo.utxo.confirmations}
+                                pulse={true}
+                            />
+                            {/* {range(order ? 7 : 1).map(target =>
+                                <ProgressItem target={target + 1} progress={utxo.utxo.confirmations} />
+                            )} */}
+                            {/* <Loading className="loading--blue" /> */}
+                            {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : "?"} confirmations</ConfirmationsCount> */}
                         </ConfirmationsBlock>
-                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid }, networkDetails)}><LabelledInput style={{ textAlign: "center", maxWidth: "unset" }} type="text" inputLabel="Transaction ID" width={105} value={utxo.utxo.txid} disabled={true} /></a>
+                        <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid }, networkDetails)}>
+                            <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction ID" width={105}>{utxo.utxo.txid}</LabelledDiv>
+                        </a>
                     </div>;
                 }).valueSeq()}
                 {/* <details>

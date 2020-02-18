@@ -2,9 +2,12 @@ import * as React from "react";
 
 import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
 import { Tx } from "@renproject/ren-js-common";
+import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
+import { txUrl } from "../../../lib/txUrl";
+import { LabelledDiv } from "../LabelledInput";
 import { OpeningShiftMini } from "../OpeningShiftMini";
 import { Popup } from "../Popup";
 
@@ -25,9 +28,9 @@ const TransparentLoading = styled(Loading)`
 export const SubmitToEthereum: React.StatelessComponent<{
     mini: boolean,
     txHash: Tx | null,
-    etherscan: string,
+    networkDetails: NetworkDetails,
     submit: (retry?: boolean) => Promise<void>,
-}> = ({ mini, txHash, etherscan, submit }) => {
+}> = ({ mini, txHash, networkDetails, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as Error | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
@@ -74,23 +77,22 @@ export const SubmitToEthereum: React.StatelessComponent<{
     return <Popup mini={mini}>
         <div className="submit-to-ethereum">
             <div className="popup--body">
-                {/* <h2>Submit shift to Ethereum</h2>
-                <div className="address-input--message">
-                    Submit shift to Ethereum.{txHash ? <InfoLabel><span className="break-all">Tx Hash: {txHash.hash}</span></InfoLabel> : <></>}
-                    <br />
-                    <br />
-                </div> */}
                 {error ? <span className="ethereum-error red">
                     Error submitting to Ethereum <InfoLabel level={LabelLevel.Warning}>{`${error.message || error}`}</InfoLabel>
                     {failedTransaction ? <>
                         <br />
-                        See the <a className="blue" href={`${etherscan}/tx/${failedTransaction}`}>Transaction Stack Trace</a> for more details.
+                        See the <a className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Stack Trace</a> for more details.
                         <br />
                     </> : null}
                 </span> : null}
-                <div className="popup--buttons">
-                    <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Complete with MetaMask {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
-                </div>
+                {txHash ?
+                    <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(txHash, networkDetails)}>
+                        <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
+                    </a> :
+                    <div className="popup--buttons">
+                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Complete with MetaMask {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
+                    </div>
+                }
             </div>
         </div>
     </Popup>;

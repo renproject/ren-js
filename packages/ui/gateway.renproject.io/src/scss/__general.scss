@@ -13,7 +13,7 @@ html {
 }
 
 body {
-    font-size: 12px;
+    font-size: 1.2rem;
     margin: 0;
     // padding: 5px 10px;
 }
@@ -49,7 +49,7 @@ body {
     }
 
     h2 {
-        font-size: 16px;
+        font-size: 1.6rem;
         font-weight: 400;
         margin-top: 0;
         margin-bottom: 15px;
@@ -175,7 +175,7 @@ body {
 
     .warning {
         color: $orange;
-        font-weight: bold;
+        // font-weight: bold;
     }
 
     span[role="button"],
@@ -290,7 +290,7 @@ body {
         top: 0;
         justify-content: space-between;
         padding: 0 15px;
-        font-size: 16px;
+        font-size: 1.6rem;
         // border-radius: 3px;
 
         >span {
@@ -306,7 +306,7 @@ body {
 
         h1 {
             margin: 0;
-            font-size: 34px;
+            font-size: 3.4rem;
             @extend .monospace;
         }
 
@@ -321,7 +321,7 @@ body {
             border: 1px solid var($primaryColor);
             padding: 2px 10px;
             border-radius: 3px;
-            font-size: 16px;
+            font-size: 1.6rem;
             letter-spacing: 2px;
             margin-left: 10px;
         }
@@ -336,7 +336,7 @@ body {
 
     .not-in-iframe {
         @extend .centered;
-        font-size: 20px;
+        font-size: 2.0rem;
         color: $foreground;
 
         a {
@@ -367,5 +367,10 @@ body {
                 width: 1.25em;
             }
         }
+    }
+
+    .no-underline,
+    .no-underline:hover {
+        text-decoration: none;
     }
 }

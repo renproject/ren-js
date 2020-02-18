@@ -17,7 +17,7 @@ import { getStorageItem, updateStorageTrade } from "../components/controllers/St
 // tslint:disable-next-line: ordered-imports
 import { _catchBackgroundErr_, _catchInteractionErr_, _ignoreErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
-import { isFunction, isPromise } from "../lib/utils";
+import { compareShiftStatus, compareTxStatus, isFunction, isPromise } from "../lib/utils";
 import { Token } from "./generalTypes";
 import { UIContainer } from "./uiContainer";
 
@@ -61,7 +61,13 @@ export class SDKContainer extends Container<typeof initialState> {
             sdkAddress: address,
         });
 
-        const { shift } = this.state;
+        const shift = await this.fixShift(this.state.shift, web3);
+        if (shift) {
+            await this.updateShift(shift, { sync: true });
+        }
+    }
+
+    public fixShift = async (shift: HistoryEvent | null, web3: Web3) => {
         if (shift && shift.shiftParams.contractCalls) {
             for (let i = 0; i < shift.shiftParams.contractCalls.length; i++) {
                 const contractCall = shift.shiftParams.contractCalls[i];
@@ -79,8 +85,8 @@ export class SDKContainer extends Container<typeof initialState> {
                     }
                 }
             }
-            await this.updateShift(shift);
         }
+        return shift;
     }
 
     public getShiftStatus = (shift?: HistoryEvent) => {
@@ -89,14 +95,14 @@ export class SDKContainer extends Container<typeof initialState> {
         return { status: shift.status, details: null };
     }
 
-    public updateShift = async (shiftIn: Partial<HistoryEvent>) => {
+    public updateShift = async (shiftIn: Partial<HistoryEvent>, options?: { sync?: boolean }) => {
         const renNetwork = this.uiContainer.state.renNetwork;
         if (!renNetwork) {
             throw new Error(`Error trying to update shift in storage without network being defined.`);
         }
 
         let existingShift: HistoryEvent | Partial<HistoryEvent> = {};
-        if (shiftIn.shiftParams) {
+        if (options && options.sync && shiftIn.shiftParams) {
             existingShift = await getStorageItem(renNetwork, shiftIn.shiftParams.nonce) || {};
         }
 
@@ -105,7 +111,7 @@ export class SDKContainer extends Container<typeof initialState> {
         };
 
         // tslint:disable-next-line: no-object-literal-type-assertion
-        const shift = {
+        let shift = {
             ...existingShift,
             ...this.state.shift,
             ...shiftIn,
@@ -114,8 +120,14 @@ export class SDKContainer extends Container<typeof initialState> {
             inTx: shiftIn.inTx || (this.state.shift && this.state.shift.inTx) || existingShift.inTx,
             outTx: shiftIn.outTx || (this.state.shift && this.state.shift.outTx) || existingShift.outTx,
             renTxHash: shiftIn.renTxHash || (this.state.shift && this.state.shift.renTxHash) || existingShift.renTxHash,
-            renVMStatus: shiftIn.renVMStatus || (this.state.shift && this.state.shift.renVMStatus) || existingShift.renVMStatus,
+            renVMStatus: compareTxStatus(existingShift.renVMStatus, (this.state.shift && this.state.shift.renVMStatus), shiftIn.renVMStatus),
+            status: compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
         } as HistoryEvent;
+
+        const web3 = this.state.sdkWeb3;
+        if (web3) {
+            shift = (await this.fixShift(shift, web3)) || shift;
+        }
 
         if (
             shift.status &&

@@ -34,7 +34,7 @@ export const table: FormatFN = (networkData: NetworkData) => {
                             }
                         </td>
                         <td>
-                            <Link className="abi" to={`/source?address=${networkData.addresses[category][contractName]._address || networkData.addresses[category][contractName].address}&network=${networkData.chain}`}>🗎ABI</Link>
+                            {networkData.addresses[category][contractName].abi ? <Link className="abi" to={`./${networkData.name}/${category}/${contractName}`}>🗎ABI</Link> : <></>}
                         </td>
                     </tr>
                 )}

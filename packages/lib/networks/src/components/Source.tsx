@@ -1,59 +1,25 @@
-import * as qs from "query-string";
+// import * as qs from "query-string";
 import * as React from "react";
 
-import axios from "axios";
+// import axios from "axios";
+import { OrderedMap } from "immutable";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-interface SourceState {
-    raw: string | null;
+import { NetworkData } from "../lib/networks";
+
+interface SourceProps extends RouteComponentProps, RouteComponentProps {
+    networks: OrderedMap<string, NetworkData>;
+    network: string;
 }
 
-interface SourceProps extends RouteComponentProps {
-    abi: false;
-}
-
-class Source extends React.Component<SourceProps, SourceState> {
-    constructor(props: SourceProps) {
-        super(props);
-        this.state = {
-            raw: null,
-        };
+const Source = withRouter(({ networks, network, match: { params } }: SourceProps) => {
+    const { contractCategory, contractName } = params as { contractCategory: string, contractName: string };
+    const networkDetails = networks.get(network);
+    if (!networkDetails || !networkDetails.addresses[contractCategory] || !networkDetails.addresses[contractCategory][contractName]) {
+        return <>not found</>;
     }
+    const abi = networkDetails.addresses[contractCategory][contractName].abi;
+    return <pre>{JSON.stringify(abi, null, "    ")}</pre>;
+});
 
-    public async componentDidMount() {
-        const address = qs.parse(this.props.location.search).address;
-        const network = qs.parse(this.props.location.search).network;
-
-        const apiURL = (!network || network === "mainnet" || network === "main") ? `https://api.etherscan.io`
-            : `https://api-${network}.etherscan.io`;
-
-        const URL = `${apiURL}/api?module=contract&action=getsourcecode&address=${address}`;
-
-        let result;
-        try {
-            result = (await axios.get(URL)).data.result[0];
-        } catch (error) {
-            this.setState({ raw: `${error}` });
-            return;
-        }
-
-        // tslint:disable-next-line:prefer-const
-        let raw = result.ABI ? result.ABI : result.ABI;
-
-        try {
-            raw = JSON.stringify(JSON.parse(raw), null, 4);
-        } catch (err) {
-            // No ABI available - ignore error
-            raw = "No ABI available";
-        }
-
-        this.setState({ raw });
-    }
-
-    public render() {
-        const { raw } = this.state;
-        return <pre>{raw === null ? "" : raw}</pre>;
-    }
-}
-
-export default withRouter(Source);
+export default Source;

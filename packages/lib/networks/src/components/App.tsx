@@ -60,13 +60,14 @@ class App extends React.Component<AppProps, AppState> {
         return (
             <HashRouter>
                 <>
-                    <Route path="/source" component={Source} />
                     {networks && networks.size > 0 ? <div className="App">
                         {outOfDate ? <OutOfDate /> : null}
                         {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
                         <Route path="/" exact render={() => <Main network={"chaosnet"} networks={networks} />} />
                         {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
                         {networks.map((_, network) => <Route key={network} path={`/${network}`} exact render={() => <Main key={"main"} network={network || "chaosnet"} networks={networks} />} />).valueSeq().toArray()}
+                        {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
+                        {networks.map((_, network) => <Route key={network} path={`/${network}/:contractCategory/:contractName`} exact render={() => <Source key={"main"} network={network || "chaosnet"} networks={networks} />} />).valueSeq().toArray()}
                     </div> : <Loading />}
                 </>
             </HashRouter>

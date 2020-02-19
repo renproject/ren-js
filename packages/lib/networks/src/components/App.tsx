@@ -9,21 +9,20 @@ import localnet from "../networks/localnet";
 import mainnet from "../networks/mainnet";
 import testnet from "../networks/testnet";
 import "../styles/App.scss";
-import Loading from "./Loading";
-import Main from "./Main";
-import Source from "./Source";
+import { Main } from "./Main";
+import { Source } from "./Source";
 
 const networks = OrderedMap({ mainnet, chaosnet, testnet, devnet, localnet });
 
 const App = () => <HashRouter>
-    {networks && networks.size > 0 ? <div className="App">
+    <div className="App">
         {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
         <Route path="/" exact render={() => <Main network={"chaosnet"} networks={networks} />} />
         {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
         {networks.map((_, network) => <Route key={network} path={`/${network}`} exact render={() => <Main key={"main"} network={network || "chaosnet"} networks={networks} />} />).valueSeq().toArray()}
         {/* tslint:disable-next-line:jsx-no-lambda react-this-binding-issue */}
         {networks.map((_, network) => <Route key={network} path={`/${network}/:contractCategory/:contractName`} exact render={() => <Source key={"main"} network={network || "chaosnet"} networks={networks} />} />).valueSeq().toArray()}
-    </div> : <Loading />}
+    </div>
 </HashRouter>;
 
 export default App;

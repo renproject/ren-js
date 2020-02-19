@@ -69,10 +69,6 @@ a {
     transition: background 1000ms;
 }
 
-.loading {
-    margin-top: 100px;
-}
-
 .outOfDate {
     color: white;
     background: rgb(253, 33, 81);
@@ -195,33 +191,3 @@ label input {
     font-family: monospace;
     letter-spacing: 1px;
 }
-
-/* Loading.tsx */
-
-.lds-dual-ring:after {
-    content: ' ';
-    display: block;
-    width: 20px;
-    height: 20px;
-    margin: 0 auto;
-    border-radius: 50%;
-    border: 2px solid;
-    border-color: black transparent black transparent;
-    animation: lds-dual-ring 1.2s linear infinite;
-}
-
-.loading.alt.lds-dual-ring:after {
-    border-color: white transparent white transparent;
-}
-
-@keyframes lds-dual-ring {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* *********** */

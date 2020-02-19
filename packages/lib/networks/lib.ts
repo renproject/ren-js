@@ -24,6 +24,6 @@ export const RenNetworks = {
     [RenNetwork.Testnet]: testnet,
     [RenNetwork.Devnet]: devnet,
     [RenNetwork.Localnet]: localnet,
-}
+};
 
 export type RenNetworkDetails = typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;

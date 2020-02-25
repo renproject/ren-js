@@ -1963,10 +1963,15 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@openzeppelin/upgrades@^2.6.0":
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.6.0.tgz#595fcd77fdcbe56b9ffba53b0c17c7983389fe7d"
-  integrity sha512-vqL3ny0Z2M023H5cLiAS4qY+bjFYqhkPvxpfvYtTeaB2Bt/UeRD2Qk8+VvCFpojYOr9OBHu3RJWrFDcvgPcVxA==
+"@openzeppelin/contracts@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-2.5.0.tgz#e327a98ba1d26b7756ff62885a0aa0967a375449"
+  integrity sha512-t3jm8FrhL9tkkJTofkznTqo/XXdHi21w5yXwalEnaMOp22ZwZ0f/mmKdlgMMLPFa6bSVHbY88mKESwJT/7m5Lg==
+
+"@openzeppelin/upgrades@^2.7.1":
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.7.1.tgz#cd936af591553e4f76a7477ffdfb30b94e181f56"
+  integrity sha512-oTYCgfC9+gHqqKQRn6Q8YGzXu5J1ioeUfVTHTZQG0opzmQplVA5zkudUvgkgqzr219vfEW6kKJpFJhXqBgkQIw==
   dependencies:
     "@types/cbor" "^2.0.0"
     axios "^0.18.0"
@@ -2004,12 +2009,12 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
-"@renproject/contracts@^0.3.33":
-  version "0.3.33"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.33.tgz#bc98848d83981b66df355e8e54c2e6eb0f2533f7"
-  integrity sha512-ygq/178LHvYbuJRn7ApcawVftlatDAJecp0mPvMnGoM4tpk5TdWjFWFaOogvCy4YZjr8+9ytjaHBWfdAKfXlhg==
+"@renproject/contracts@^0.3.35":
+  version "0.3.35"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.35.tgz#a7323a8ce16036aa19782eb0b34a201c3f2de6c7"
+  integrity sha512-y4ORHU86j++oOZSSRb2SazNrKVgX8Ya7TlORYxMn59bNIJFr1K7mBe7fhx1iWvCG4Hjxt4qlho3MOaz9tzJAdQ==
   dependencies:
-    darknode-sol "https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2"
+    darknode-sol "https://github.com/renproject/darknode-sol#7d3c80c3f0306e5b8410f96488e4013643a0aaed"
 
 "@renproject/fonts@^1.0.1":
   version "1.0.1"
@@ -2033,29 +2038,21 @@
     react-router-dom "^5.1.2"
     react-select "^3.0.8"
 
-"@renproject/ren-js-common@^0.1.11":
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.11.tgz#ac94fcdfd0c9b149c70eded1b88b8c37ef63c1a1"
-  integrity sha512-9gJFQ1vxkWYh9Txa8omioSvKEWOQFVEGTSIDokY7onMVTpd3RhnyjnFNTVhiDMcg5HBEueFTMD54CXuadVvT9g==
+"@renproject/ren-js-common@^0.1.13":
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.13.tgz#b599627e8d31bc9e0da08f5cc87dd8b88360a337"
+  integrity sha512-ppQjKb9Yk5aTXI+wee1ZbshdjEFItmzZQUPU4/npDso5QurmhKA5BNNEKU3ogD4VZC6jQUIlxx+N7gKjWBbtrQ==
   dependencies:
     bignumber.js "^9.0.0"
     events "^3.1.0"
 
-"@renproject/ren-js-common@^0.1.12":
-  version "0.1.12"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.12.tgz#71d4a7ca536b80333dfcc362321265e50833dc4e"
-  integrity sha512-Vk9BFS1xPEPHTFdEgNC2WEqMuhw9+7hLvzKZGzqY0KBGWVBZHZ9HcJMtLCSEhrNcSHKTwNfmBzmLQyEtRFZ/Rw==
+"@renproject/ren@^0.7.3":
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-0.7.3.tgz#ce0de2cc313121d713f21be0fb63879f9bc334dd"
+  integrity sha512-sugfgWhutQNNNX9w8L+fHTV/nc+uX4ioVp0gnAjdnkjKP21kY2u2TT4J1w8vytkEn3jvKYLrRVL1+NCefpL+jA==
   dependencies:
-    bignumber.js "^9.0.0"
-    events "^3.1.0"
-
-"@renproject/ren@^0.7.2":
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-0.7.2.tgz#8125363a74342ccb742c3138662ffc456f4fd6f0"
-  integrity sha512-9i67emSRa47DXO5ldHp1NYwIM6Y12f3qG0HmPHrgFjqJcSBM5BhKfqqeMmBpvhs6Rd1ibkfpizeSpJ459ZmEqw==
-  dependencies:
-    "@renproject/contracts" "^0.3.33"
-    "@renproject/ren-js-common" "^0.1.11"
+    "@renproject/contracts" "^0.3.35"
+    "@renproject/ren-js-common" "^0.1.13"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/node" "^13.7.0"
@@ -4193,7 +4190,7 @@ bitcore-lib-cash@^8.16.0:
     inherits "=2.0.1"
     lodash "=4.17.15"
 
-bitcore-lib-zcash@zcash-hackworks/bitcore-lib-zcash:
+"bitcore-lib-zcash@github:zcash-hackworks/bitcore-lib-zcash":
   version "0.13.19"
   resolved "https://codeload.github.com/zcash-hackworks/bitcore-lib-zcash/tar.gz/e97ae1dd2e9f14d6076d5e5429c75d8965afa4ab"
   dependencies:
@@ -5782,12 +5779,12 @@ damerau-levenshtein@^1.0.4:
   resolved "https://registry.yarnpkg.com/damerau-levenshtein/-/damerau-levenshtein-1.0.5.tgz#780cf7144eb2e8dbd1c3bb83ae31100ccc31a414"
   integrity sha512-CBCRqFnpu715iPmw1KrdOrzRqbdFwQTwAWyyyYS42+iAgHCuXZ+/TdMgQkUENPomxEz9z1BEzuQU2Xw0kUuAgA==
 
-"darknode-sol@https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2":
+"darknode-sol@https://github.com/renproject/darknode-sol#7d3c80c3f0306e5b8410f96488e4013643a0aaed":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2"
+  resolved "https://github.com/renproject/darknode-sol#7d3c80c3f0306e5b8410f96488e4013643a0aaed"
   dependencies:
-    "@openzeppelin/upgrades" "^2.6.0"
-    openzeppelin-solidity "2.4.0"
+    "@openzeppelin/contracts" "^2.5.0"
+    "@openzeppelin/upgrades" "^2.7.1"
 
 dashdash@^1.12.0:
   version "1.14.1"
@@ -11096,11 +11093,6 @@ open@^7.0.2:
   dependencies:
     is-docker "^2.0.0"
     is-wsl "^2.1.1"
-
-openzeppelin-solidity@2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-2.4.0.tgz#5f0a7b30571c45493449166e57b947203415349d"
-  integrity sha512-533gc5jkspxW5YT0qJo02Za5q1LHwXK9CJCc48jNj/22ncNM/3M/3JfWLqfpB90uqLwOKOovpl0JfaMQTR+gXQ==
 
 opn@^5.5.0:
   version "5.5.0"

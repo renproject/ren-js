@@ -394,10 +394,15 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@openzeppelin/upgrades@^2.6.0":
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.6.0.tgz#595fcd77fdcbe56b9ffba53b0c17c7983389fe7d"
-  integrity sha512-vqL3ny0Z2M023H5cLiAS4qY+bjFYqhkPvxpfvYtTeaB2Bt/UeRD2Qk8+VvCFpojYOr9OBHu3RJWrFDcvgPcVxA==
+"@openzeppelin/contracts@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-2.5.0.tgz#e327a98ba1d26b7756ff62885a0aa0967a375449"
+  integrity sha512-t3jm8FrhL9tkkJTofkznTqo/XXdHi21w5yXwalEnaMOp22ZwZ0f/mmKdlgMMLPFa6bSVHbY88mKESwJT/7m5Lg==
+
+"@openzeppelin/upgrades@^2.7.1":
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades/-/upgrades-2.7.1.tgz#cd936af591553e4f76a7477ffdfb30b94e181f56"
+  integrity sha512-oTYCgfC9+gHqqKQRn6Q8YGzXu5J1ioeUfVTHTZQG0opzmQplVA5zkudUvgkgqzr219vfEW6kKJpFJhXqBgkQIw==
   dependencies:
     "@types/cbor" "^2.0.0"
     axios "^0.18.0"
@@ -435,17 +440,17 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
-"@renproject/contracts@^0.3.33":
-  version "0.3.33"
-  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.33.tgz#bc98848d83981b66df355e8e54c2e6eb0f2533f7"
-  integrity sha512-ygq/178LHvYbuJRn7ApcawVftlatDAJecp0mPvMnGoM4tpk5TdWjFWFaOogvCy4YZjr8+9ytjaHBWfdAKfXlhg==
+"@renproject/contracts@^0.3.35":
+  version "0.3.35"
+  resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.35.tgz#a7323a8ce16036aa19782eb0b34a201c3f2de6c7"
+  integrity sha512-y4ORHU86j++oOZSSRb2SazNrKVgX8Ya7TlORYxMn59bNIJFr1K7mBe7fhx1iWvCG4Hjxt4qlho3MOaz9tzJAdQ==
   dependencies:
-    darknode-sol "https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2"
+    darknode-sol "https://github.com/renproject/darknode-sol#7d3c80c3f0306e5b8410f96488e4013643a0aaed"
 
-"@renproject/ren-js-common@^0.1.11":
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.11.tgz#ac94fcdfd0c9b149c70eded1b88b8c37ef63c1a1"
-  integrity sha512-9gJFQ1vxkWYh9Txa8omioSvKEWOQFVEGTSIDokY7onMVTpd3RhnyjnFNTVhiDMcg5HBEueFTMD54CXuadVvT9g==
+"@renproject/ren-js-common@^0.1.13":
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.13.tgz#b599627e8d31bc9e0da08f5cc87dd8b88360a337"
+  integrity sha512-ppQjKb9Yk5aTXI+wee1ZbshdjEFItmzZQUPU4/npDso5QurmhKA5BNNEKU3ogD4VZC6jQUIlxx+N7gKjWBbtrQ==
   dependencies:
     bignumber.js "^9.0.0"
     events "^3.1.0"
@@ -3102,12 +3107,12 @@ dargs@^4.0.1:
   dependencies:
     number-is-nan "^1.0.0"
 
-"darknode-sol@https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2":
+"darknode-sol@https://github.com/renproject/darknode-sol#7d3c80c3f0306e5b8410f96488e4013643a0aaed":
   version "0.0.3"
-  resolved "https://github.com/renproject/darknode-sol#58af2b1be7b26e6e53c9a9c90169e30b8f83a3f2"
+  resolved "https://github.com/renproject/darknode-sol#7d3c80c3f0306e5b8410f96488e4013643a0aaed"
   dependencies:
-    "@openzeppelin/upgrades" "^2.6.0"
-    openzeppelin-solidity "2.4.0"
+    "@openzeppelin/contracts" "^2.5.0"
+    "@openzeppelin/upgrades" "^2.7.1"
 
 dashdash@^1.12.0:
   version "1.14.1"
@@ -7234,11 +7239,6 @@ open@^6.3.0:
   dependencies:
     is-wsl "^1.1.0"
 
-openzeppelin-solidity@2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-2.4.0.tgz#5f0a7b30571c45493449166e57b947203415349d"
-  integrity sha512-533gc5jkspxW5YT0qJo02Za5q1LHwXK9CJCc48jNj/22ncNM/3M/3JfWLqfpB90uqLwOKOovpl0JfaMQTR+gXQ==
-
 optimist@^0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/optimist/-/optimist-0.6.1.tgz#da3ea74686fa21a19a111c326e90eb15a0196686"
@@ -9887,6 +9887,11 @@ uuid@^3.3.2, uuid@^3.3.3:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.3.3.tgz#4568f0216e78760ee1dbf3a4d2cf53e224112866"
   integrity sha512-pW0No1RGHgzlpHJO1nsVrHKpOEIxkGg1xB+v0ZmdNH5OAeAwzAVrCnI2/6Mtx+Uys6iaylxa+D3g4j63IKKjSQ==
+
+uuid@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-7.0.0.tgz#1833d4b9ce50b732bfaa271f9cb74e974d303c79"
+  integrity sha512-LNUrNsXdI/fUsypJbWM8Jt4DgQdFAZh41p9C7WE9Cn+CULOEkoG2lgQyH68v3wnIy5K3fN4jdSt270K6IFA3MQ==
 
 validate-npm-package-license@^3.0.1:
   version "3.0.4"

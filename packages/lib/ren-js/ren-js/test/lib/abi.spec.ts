@@ -27,7 +27,7 @@ describe("abi.ts", () => {
                 { name: "_spender", type: "address" },
                 { name: "_value", type: "uint256" },
                 { name: "_amount", type: "uint256" },
-                { name: "_nonce", type: "bytes32" },
+                { name: "_nHash", type: "bytes32" },
                 { name: "_sig", type: "bytes" }
             ],
             name: "functionName",

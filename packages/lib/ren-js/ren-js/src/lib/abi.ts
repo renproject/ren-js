@@ -1,4 +1,4 @@
-import { AbiItem } from "web3-utils";
+import { AbiItem, EthType } from "@renproject/ren-js-common";
 
 const shiftInABITemplate: AbiItem = {
     constant: false,
@@ -8,7 +8,7 @@ const shiftInABITemplate: AbiItem = {
             type: "uint256"
         },
         {
-            name: "_nonce",
+            name: "_nHash",
             type: "bytes32"
         },
         {
@@ -28,7 +28,7 @@ export const payloadToABI = (methodName: string, payload: Array<{ type: string, 
             name: methodName,
             type: "function",
             inputs: [
-                ...(payload || []).map(value => ({ type: value.type, name: value.name })),
+                ...(payload || []).map(value => ({ type: value.type as EthType, name: value.name })),
             ],
             outputs: [],
         }
@@ -41,7 +41,7 @@ export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: s
             ...shiftInABITemplate,
             name: methodName,
             inputs: [
-                ...(payload || []).map(value => ({ type: value.type, name: value.name })),
+                ...(payload || []).map(value => ({ type: value.type as EthType, name: value.name })),
                 ...(shiftInABITemplate.inputs ? shiftInABITemplate.inputs : []),
             ]
         }

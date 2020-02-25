@@ -1,14 +1,21 @@
 import {
-    BurnContractCallSimple, Chain, DetailedContractCall, RenContract, ShiftInFromDetails,
-    ShiftInParams, ShiftInParamsAll, ShiftOutParams, ShiftOutParamsAll, ShiftOutParamsCommon,
+    BigNumber, BurnContractCallSimple, Chain, DetailedContractCall, Ox, RenContract,
+    ShiftInFromDetails, ShiftInParams, ShiftInParamsAll, ShiftOutParams, ShiftOutParamsAll,
+    ShiftOutParamsCommon, strip0x,
 } from "@renproject/ren-js-common";
 import Web3 from "web3";
 
+// import { Contract } from "web3-eth-contract";
 import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
-import { getTokenAddress, getTokenName, toBigNumber, utils } from "./utils";
+import { payloadToShiftInABI } from "./abi";
+import { getTokenAddress, getTokenName, randomNonce, toBigNumber, utils } from "./utils";
 
-export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): typeof params => {
+// TODO: Fetch from contract
+export const DEFAULT_SHIFT_FEE = new BigNumber(10000);
+export const DEFAULT_CONFIRMATIONLESS_FEE = new BigNumber(10000);
+
+export const resolveSendTo = <T extends ShiftInParamsAll | ShiftOutParamsAll>({ shiftIn }: { shiftIn: T extends ShiftOutParamsAll ? false : true }) => (params: T): typeof params => {
     if ((params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken) {
         (params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken = ((): RenContract => {
             const token = (params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken;
@@ -33,7 +40,7 @@ export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>(params: 
  * This function checks if this is the case and makes the required changes to
  * the parameters;
  */
-export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsAll>(network: NetworkDetails, params: T): T => {
+export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsAll>(network: NetworkDetails) => (params: T): T => {
 
     if ((params as ShiftOutParamsAll).burnReference || (params as ShiftOutParamsAll).ethTxHash) {
         // Burn already submitted to Ethereum.
@@ -150,12 +157,96 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
     }
 };
 
+export const processConfirmationlessParams = (network: NetworkDetails) => (params: ShiftInParamsAll) => {
+
+    if (params.confirmationless && params.contractCalls) {
+
+        if (network.name !== "devnet") {
+            throw new Error(`Confirmationless is currently only supported for 'devnet'`);
+        }
+
+        if (params.sendToken !== RenContract.Btc2Eth) {
+            throw new Error(`Confirmationless is currently only supported for BTC.`);
+        }
+
+        // TODO: Don't hard-code
+        const confirmationlessShifter = "0x42e339D2aef4AEC178cE8B2780B070F73FD234ba";
+
+        const fee = params.confirmationlessFee ? toBigNumber(params.confirmationlessFee) : DEFAULT_CONFIRMATIONLESS_FEE;
+
+        if (params.requiredAmount) {
+            const requiredAmount = toBigNumber(params.requiredAmount);
+            // TODO: Consider shift in fee.
+            if (requiredAmount.lte(fee.plus(DEFAULT_SHIFT_FEE))) {
+                throw new Error(`Required amount (${requiredAmount.toString()}) is less than confirmationlessFee (${fee.toString()}) and mint fee.`);
+            }
+        }
+
+        const lastCallIndex = params.contractCalls.length - 1;
+        if (lastCallIndex === -1) {
+            throw new Error(`No contract calls provided for confirmationless shift.`);
+        }
+
+        const { contractFn, contractParams, sendTo, txConfig } = params.contractCalls[lastCallIndex];
+
+        if (!contractParams || contractParams.length === 0 || !contractParams[0].name.match(/^_?shifter$/i)) {
+            throw new Error(`Confirmationless shift required the contract's first parameter to be called 'shifter' or '_shifter'`);
+        }
+
+        const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
+
+        const contract = new (new Web3("")).eth.Contract(ABI, sendTo);
+
+        const nHashPlaceholder = randomNonce();
+        const forwardedValue = new BigNumber(0);
+        const forwardedSig = Buffer.from([]);
+
+        // Overwrite the shifter being passed to the contract.
+        contractParams[0].value = confirmationlessShifter;
+
+        const encodedFunctionCall: string = contract.methods[contractFn](
+            ...(contractParams || []).map(value => value.value),
+            Ox(forwardedValue.toString(16)), // _amount: BigNumber
+            Ox(nHashPlaceholder),
+            // Ox(this.response.args.n), // _nHash: string
+            forwardedSig, // _sig: string
+        ).encodeABI();
+
+        const [encodedFunctionCallBeforeNHash, encodedFunctionCallAfterNHash] = encodedFunctionCall.split(strip0x(nHashPlaceholder)).map(Ox);
+
+        params.contractCalls[lastCallIndex] = {
+            // TODO: Don't hard-code
+            sendTo: confirmationlessShifter,
+            contractFn: "composeShiftIn",
+            contractParams: [
+                { type: "uint256", name: "_confirmationFee", value: fee.toString() },
+                { type: "address", name: "_targetContract", value: sendTo },
+                { type: "bytes", name: "_targetCallBeforeNHash", value: encodedFunctionCallBeforeNHash },
+                { type: "bytes", name: "_targetCallAfterNHash", value: encodedFunctionCallAfterNHash },
+            ],
+            txConfig,
+        };
+    }
+    return params;
+};
+
 export const processShiftInParams = (_network: NetworkDetails, _params: ShiftInParams): ShiftInParamsAll => {
-    return resolveContractCall(_network, resolveSendTo(_params, { shiftIn: true }) as ShiftInParamsAll);
+    const processors: Array<(params: ShiftInParamsAll) => ShiftInParamsAll> = [
+        resolveSendTo<ShiftInParamsAll>({ shiftIn: true }),
+        resolveContractCall<ShiftInParamsAll>(_network),
+        processConfirmationlessParams(_network),
+    ];
+
+    return processors.reduce((params, processor) => processor(params), _params as ShiftInParamsAll);
 };
 
 export const processShiftOutParams = (_network: NetworkDetails, _params: ShiftOutParams): ShiftOutParamsAll => {
-    return resolveContractCall(_network, resolveSendTo(_params, { shiftIn: false }) as ShiftOutParamsAll);
+    const processors: Array<(params: ShiftOutParamsAll) => ShiftOutParamsAll> = [
+        resolveSendTo<ShiftOutParamsAll>({ shiftIn: false }),
+        resolveContractCall<ShiftOutParamsAll>(_network),
+    ];
+
+    return processors.reduce((params, processor) => processor(params), _params as ShiftOutParamsAll);
 };
 
 // Type generics are not playing well.

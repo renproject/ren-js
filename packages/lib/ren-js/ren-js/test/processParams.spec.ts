@@ -60,7 +60,7 @@ describe("processParams", () => {
                 sendToken: "BTC0Eth2Btc",
                 web3Provider: web3.currentProvider,
                 contractCalls: [
-                    new Promise((resolve) => { resolve(); }),
+                    async (_w3: Web3) => new Promise((resolve) => { resolve(); }),
                     {
                         sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
                         contractFn: "shiftOut",

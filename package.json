@@ -97,11 +97,12 @@
         "tslint-microsoft-contrib": "^6.2.0",
         "tslint-react": "^4.2.0",
         "typedoc": "^0.16.9",
-        "typescript": "3.7.5"
+        "typescript": "3.7.5",
+        "uuid": "^7.0.0"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.3.33",
-        "@renproject/ren-js-common": "^0.1.11",
+        "@renproject/contracts": "^0.3.35",
+        "@renproject/ren-js-common": "^0.1.13",
         "@types/bn.js": "^4.11.6",
         "@types/bs58": "^4.0.1",
         "@types/node": "^13.7.0",

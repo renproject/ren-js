@@ -11,7 +11,7 @@ import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./lib/abi";
-import { processShiftInParams } from "./lib/processParams";
+import { DEFAULT_SHIFT_FEE, processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash,
@@ -39,7 +39,7 @@ export class ShiftInObject {
         if (!renTxHash) {
             const { sendToken: renContract, contractCalls, nonce: maybeNonce, requiredAmount } = this.params;
 
-            if (requiredAmount && toBigNumber(requiredAmount).lte(10000)) {
+            if (requiredAmount && toBigNumber(requiredAmount).lte(DEFAULT_SHIFT_FEE)) {
                 throw new Error(`Required amount (${requiredAmount}) is less than minimum shift amount`);
             }
 
@@ -231,7 +231,14 @@ export class ShiftInObject {
                 }
 
                 // Last contract call
-                const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
+                const { contractParams, sendTo, contractFn } = contractCalls[contractCalls.length - 1];
+
+                const fnABI = payloadToShiftInABI(contractFn, (contractParams || []));
+
+                const encodedParameters = (new Web3("").eth.abi.encodeParameters(
+                    (contractParams || []).map(i => i.type),
+                    (contractParams || []).map(i => i.value),
+                ));
 
                 // Try to submit to RenVM. If that fails, see if they already
                 // know about the transaction.
@@ -244,6 +251,9 @@ export class ShiftInObject {
                         utxo.txid,
                         utxo.output_no.toFixed(),
                         this.network,
+                        contractFn,
+                        fnABI,
+                        encodedParameters,
                     );
                     if (renTxHash !== utxoRenTxHash) {
                         console.warn(`Unexpected txHash returned from RenVM: expected ${utxoRenTxHash} but got ${renTxHash}`);

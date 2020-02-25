@@ -1,3 +1,4 @@
+import { AbiItem } from "../utils/abi";
 import { RenContract } from "./renVM";
 import { TxStatus } from "./types";
 
@@ -6,6 +7,11 @@ export interface UnmarshalledMintTx {
     txStatus: TxStatus;
     to: RenContract;
     in: {
+        p: {
+            abi: AbiItem[],
+            value: string,
+            fn: string,
+        };
         phash: string; // Buffer;
         token: string;
         to: string;

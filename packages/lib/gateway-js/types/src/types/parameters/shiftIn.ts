@@ -1,6 +1,4 @@
-import BigNumber from "bignumber.js";
-
-import { BN } from "../general";
+import { NumberValue } from "../../utils/value";
 import { RenContract } from "../renVM";
 import { AllParams2, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
 
@@ -21,12 +19,21 @@ export type ShiftInFromDetails = MintContractCall & {
     /**
      * The amount of `sendToken` to be sent
      */
-    requiredAmount?: BN | BigNumber | number | string | { min?: BN | BigNumber | number | string, max?: BN | BigNumber | number | string };
+    requiredAmount?: NumberValue | { min?: NumberValue, max?: NumberValue };
 
     /**
      * An option to override the default nonce generated randomly
      */
     nonce?: string;
+
+    /**
+     * Allow confirmationless providers to provide the shifted tokens
+     * before RenVM has provided a signature, at the cost of a fee.
+     * Currently, the the fee's default is a fixed value but may be fetched from
+     * various confirmationless providers in the future to get the best price.
+     */
+    confirmationless?: boolean;
+    confirmationlessFee?: NumberValue;
 };
 
 /*******************************************************************************

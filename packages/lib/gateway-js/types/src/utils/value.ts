@@ -11,7 +11,7 @@ const convert = (valueIn: BigNumber, fromUnit: BigNumber, toUnit: BigNumber) => 
     return valueIn.multipliedBy(fromUnit).dividedBy(toUnit);
 };
 
-type NumberValue = string | number | BigNumber | BN;
+export type NumberValue = string | number | BigNumber | BN;
 
 export const toBigNumber = (valueIn: NumberValue): BigNumber => BigNumber.isBigNumber(valueIn) ? new BigNumber(valueIn) : new BigNumber(valueIn.toString());
 export const toFixed = (input: { readonly toFixed?: () => string; readonly toString: () => string }) => input.toFixed ? input.toFixed() : input.toString();

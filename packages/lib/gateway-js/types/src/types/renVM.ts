@@ -83,6 +83,7 @@ export enum RenVMType {
     ExtTypeBtcCompatUTXO = "ext_btcCompatUTXO",
     ExtTypeBtcCompatUTXOs = "ext_btcCompatUTXOs",
     ExtTypeEthCompatTx = "ext_ethCompatTx",
+    ExtEthCompatPayload = "ext_ethCompatPayload",
 }
 
 export interface RenVMOutputUTXO {
@@ -104,6 +105,12 @@ export type RenVMUTXO = RenVMOutputUTXO | RenVMInputUTXO;
 export type Base64String = string;
 export type HexString = string;
 export type DecimalString = string;
+
+interface ExtEthCompatPayload {
+    abi: RenVMParameterValue<RenVMType.TypeB>;
+    value: RenVMParameterValue<RenVMType.TypeB>;
+    fn: RenVMParameterValue<RenVMType.TypeB>;
+}
 
 export type RenVMParameterValue<Type extends RenVMType> =
     Type extends RenVMType.TypeAddress ? string :
@@ -131,6 +138,7 @@ export type RenVMParameterValue<Type extends RenVMType> =
     Type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO[] :
     // tslint:disable-next-line: no-any
     Type extends RenVMType.ExtTypeEthCompatTx ? any :
+    Type extends RenVMType.ExtEthCompatPayload ? ExtEthCompatPayload :
     // tslint:disable-next-line: no-any
     any;
 

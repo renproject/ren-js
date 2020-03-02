@@ -1,7 +1,7 @@
 import {
-    BigNumber, BurnContractCallSimple, Chain, DetailedContractCall, Ox, RenContract,
-    ShiftInFromDetails, ShiftInParams, ShiftInParamsAll, ShiftOutParams, ShiftOutParamsAll,
-    ShiftOutParamsCommon, strip0x,
+    BigNumber, BurnContractCallSimple, Chain, DetailedContractCall, Ox, RenContract, RenNetwork,
+    ShiftInFromDetails, ShiftInFromDetailsConfirmationless, ShiftInParams, ShiftInParamsAll,
+    ShiftOutParams, ShiftOutParamsAll, ShiftOutParamsCommon, strip0x,
 } from "@renproject/ren-js-common";
 import Web3 from "web3";
 
@@ -157,22 +157,27 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
     }
 };
 
+export const confirmationlessShifters = {
+    [RenNetwork.Devnet]: "0xeaC1449abA83Fc6B6ed0442e5C86A485D8C43B75",
+};
+
 export const processConfirmationlessParams = (network: NetworkDetails) => (params: ShiftInParamsAll) => {
 
     if (params.confirmationless && params.contractCalls) {
-
-        if (network.name !== "devnet") {
-            throw new Error(`Confirmationless is currently only supported for 'devnet'`);
-        }
 
         if (params.sendToken !== RenContract.Btc2Eth) {
             throw new Error(`Confirmationless is currently only supported for BTC.`);
         }
 
         // TODO: Don't hard-code
-        const confirmationlessShifter = "0x42e339D2aef4AEC178cE8B2780B070F73FD234ba";
+        const confirmationlessShifter = confirmationlessShifters[network.name];
 
-        const fee = params.confirmationlessFee ? toBigNumber(params.confirmationlessFee) : DEFAULT_CONFIRMATIONLESS_FEE;
+        if (!confirmationlessShifter) {
+            throw new Error(`Confirmationless is currently only supported for 'devnet'`);
+        }
+
+        const passedInFee = (params as unknown as ShiftInFromDetailsConfirmationless).confirmationlessFee;
+        const fee = passedInFee ? toBigNumber(passedInFee) : DEFAULT_CONFIRMATIONLESS_FEE;
 
         if (params.requiredAmount) {
             const requiredAmount = toBigNumber(params.requiredAmount);
@@ -190,7 +195,7 @@ export const processConfirmationlessParams = (network: NetworkDetails) => (param
         const { contractFn, contractParams, sendTo, txConfig } = params.contractCalls[lastCallIndex];
 
         if (!contractParams || contractParams.length === 0 || !contractParams[0].name.match(/^_?shifter$/i)) {
-            throw new Error(`Confirmationless shift required the contract's first parameter to be called 'shifter' or '_shifter'`);
+            throw new Error(`Confirmationless shift requires the contract's first parameter to be called 'shifter' or '_shifter'`);
         }
 
         const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
@@ -226,6 +231,10 @@ export const processConfirmationlessParams = (network: NetworkDetails) => (param
             ],
             txConfig,
         };
+
+        // `confirmationless` is set to false so that the parameters aren't
+        // transformed twice.
+        params.confirmationless = false;
     }
     return params;
 };

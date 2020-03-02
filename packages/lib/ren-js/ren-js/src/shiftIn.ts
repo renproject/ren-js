@@ -11,12 +11,14 @@ import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./lib/abi";
-import { DEFAULT_SHIFT_FEE, processShiftInParams } from "./lib/processParams";
+import {
+    confirmationlessShifters, DEFAULT_SHIFT_FEE, processShiftInParams,
+} from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash,
-    getShifterAddress, ignoreError, randomNonce, renTxHashToBase64, retrieveDeposits, SECONDS,
-    signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generateShiftInTxHash, getShifterAddress,
+    ignoreError, randomNonce, renTxHashToBase64, retrieveDeposits, SECONDS, signatureToString,
+    sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryMintTx } from "./renVM/jsonRPC";
 import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
@@ -25,14 +27,20 @@ import { NetworkDetails } from "./types/networks";
 export class ShiftInObject {
     public utxo: UTXOInput | undefined;
     public gatewayAddress: string | undefined;
+    public signature: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: ShifterNetwork;
     private readonly params: ShiftInParamsAll;
+    private renVMResponse: UnmarshalledMintTx | undefined;
+    private readonly web3: Web3 | undefined;
+
+    public thirdPartyTransaction: string | undefined;
 
     constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftInParams) {
         this.network = _network;
         this.renVMNetwork = _renVMNetwork;
         this.params = processShiftInParams(this.network, _params);
+        this.web3 = this.params.web3Provider ? new Web3(this.params.web3Provider) : undefined;
 
         const renTxHash = this.params.renTxHash;
 
@@ -203,8 +211,8 @@ export class ShiftInObject {
     public queryTx = async (specifyUTXO?: UTXOInput) =>
         unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
 
-    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }> => {
-        const promiEvent = newPromiEvent<Signature, { "renTxHash": [string], "status": [TxStatus] }>();
+    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<ShiftInObject, { "renTxHash": [string], "status": [TxStatus] }> => {
+        const promiEvent = newPromiEvent<ShiftInObject, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
             const utxo = specifyUTXO || this.utxo;
@@ -247,7 +255,6 @@ export class ShiftInObject {
                         renContract,
                         sendTo,
                         nonce,
-                        generatePHash(contractParams || []),
                         utxo.txid,
                         utxo.output_no.toFixed(),
                         this.network,
@@ -278,18 +285,94 @@ export class ShiftInObject {
                 throw new Error(`Must call 'waitForDeposit' or provide UTXO or RenVM transaction hash.`);
             }
 
-            const marshalledResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
-                Ox(Buffer.from(renTxHash, "base64")),
-                (status) => {
-                    promiEvent.emit("status", status);
-                },
-                () => promiEvent._isCancelled(),
-            );
+            // const rawResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
+            //     Ox(Buffer.from(renTxHash, "base64")),
+            //     (status) => {
+            //         promiEvent.emit("status", status);
+            //     },
+            //     () => promiEvent._isCancelled(),
+            // );
 
-            const response = unmarshalMintTx(marshalledResponse);
+            const utxoTxHash = Ox(Buffer.from(renTxHash, "base64"));
+            const onStatus = (status: TxStatus) => { promiEvent.emit("status", status); };
+            const _cancelRequested = () => promiEvent._isCancelled();
+
+            let result: UnmarshalledMintTx | undefined;
+            let rawResponse;
+            // tslint:disable-next-line: no-constant-condition
+            while (true) {
+                if (_cancelRequested && _cancelRequested()) {
+                    throw new Error(`waitForTX cancelled`);
+                }
+
+                try {
+
+                    // Check if the shift is a confirmationless shift and has
+                    // been submitted to Ethereum.
+                    try {
+                        const { contractCalls } = this.params;
+                        if (result && this.web3 && contractCalls && contractCalls.length > 0) {
+                            const lastContractCall = contractCalls[contractCalls.length - 1];
+                            const { sendTo, contractParams } = lastContractCall;
+                            if (contractParams && contractParams.length > 1 && Ox(sendTo).toLowerCase() === Ox(confirmationlessShifters[this.network.name]).toLowerCase()) {
+
+                                const numberToHex = (n: BigNumber | number): string => {
+                                    const hex = strip0x(n.toString(16));
+                                    const padding = "0".repeat(64 - hex.length);
+                                    return "0x" + padding + hex;
+                                };
+
+                                const confirmationFee = numberToHex(new BigNumber(contractParams[0].value));
+                                const amount = numberToHex(new BigNumber(result.autogen.amount));
+                                const nHash = result.autogen.nhash;
+
+                                const logs = await this.web3.eth.getPastLogs({
+                                    address: sendTo,
+                                    fromBlock: "0",
+                                    toBlock: "latest",
+                                    topics: [sha3("LogConfirmationlessShiftIn(bytes32,uint256,uint256,address,bool)"), nHash, amount, confirmationFee],
+                                });
+
+                                if (logs.length > 0) {
+                                    this.renVMResponse = result;
+                                    this.signature = "";
+                                    this.thirdPartyTransaction = logs[0].transactionHash;
+                                    return this;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        // tslint:disable-next-line: no-console
+                        console.error(String(error));
+                    }
+
+                    result = unmarshalMintTx(await this.renVMNetwork.queryTX<ResponseQueryMintTx>(utxoTxHash));
+                    if (result && result.txStatus === TxStatus.TxStatusDone) {
+                        rawResponse = result;
+                        break;
+                    } else if (onStatus && result && result.txStatus) {
+                        onStatus(result.txStatus);
+                    }
+                } catch (error) {
+                    // tslint:disable-next-line: no-console
+                    if (String((error || {}).message).match(/(not found)|(not available)/)) {
+                        // ignore
+                    } else {
+                        // tslint:disable-next-line: no-console
+                        console.error(String(error));
+                        // TODO: throw unepected errors
+                    }
+                }
+                await sleep(5 * SECONDS);
+            }
+
+            this.renVMResponse = rawResponse;
+            this.signature = signatureToString(fixSignature(this.renVMResponse, this.network));
+
+            return this;
 
             // tslint:disable-next-line: no-use-before-declare
-            return new Signature(this.network, this.params as ShiftInParams, response, renTxHash);
+            // return new Signature(this.network, this.params as ShiftInParams, response, renTxHash);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
@@ -301,25 +384,6 @@ export class ShiftInObject {
         const signature = await this.submitToRenVM(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);
     }
-}
-
-export class Signature {
-    public params: ShiftInParamsAll;
-    public network: NetworkDetails;
-    public response: UnmarshalledMintTx;
-    public signature: string;
-    public _renTxHash: string;
-
-    constructor(_network: NetworkDetails, _params: ShiftInParams, _response: UnmarshalledMintTx, _renTxHash: string) {
-        this.network = _network;
-        this.response = _response;
-        this._renTxHash = _renTxHash;
-        this.params = processShiftInParams(this.network, _params);
-
-        this.signature = signatureToString(fixSignature(this.response, this.network));
-    }
-
-    public renTxHash = () => this._renTxHash;
 
     // tslint:disable-next-line: no-any
     public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
@@ -332,6 +396,44 @@ export class Signature {
 
             const { sendToken: renContract } = this.params;
 
+            const manualPromiEvent = async (txHash: string) => {
+                const receipt = await web3.eth.getTransactionReceipt(txHash);
+                promiEvent.emit("transactionHash", txHash);
+
+                const emitConfirmation = async () => {
+                    const currentBlock = await web3.eth.getBlockNumber();
+                    promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt);
+                };
+
+                // The following section should be revised to properly
+                // register the event emitter to the transaction's
+                // confirmations, so that on("confirmation") works
+                // as expected. This code branch only occurs if a
+                // completed trade is passed to RenJS again, which
+                // should not usually happen.
+
+                // Emit confirmation now and in 1s, since a common use
+                // case may be to have the following code, which doesn't
+                // work if we emit the txHash and confirmations
+                // with no time in between:
+                //
+                // ```js
+                // const txHash = await new Promise((resolve, reject) => shift.on("transactionHash", resolve).catch(reject));
+                // shift.on("confirmation", () => { /* do something */ });
+                // ```
+                await emitConfirmation();
+                setTimeout(emitConfirmation, 1000);
+                return receipt;
+            };
+
+            if (this.thirdPartyTransaction) {
+                return await manualPromiEvent(this.thirdPartyTransaction);
+            }
+
+            if (!this.renVMResponse || !this.signature) {
+                throw new Error(`Unable to submit to Ethereum without signature. Call 'submitToRenVM' first.`);
+            }
+
             // Check if the signature has already been submitted
             if (renContract) {
                 try {
@@ -339,7 +441,7 @@ export class Signature {
                     const shifter = new web3.eth.Contract(this.network.contracts.addresses.shifter.BTCShifter.abi, shifterAddress);
                     // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
                     // the contract
-                    const status = await shifter.methods.status(this.response.autogen.sighash).call();
+                    const status = await shifter.methods.status(this.renVMResponse.autogen.sighash).call();
                     if (status) {
                         const recentRegistrationEvents = await web3.eth.getPastLogs({
                             address: shifterAddress,
@@ -347,39 +449,13 @@ export class Signature {
                             toBlock: "latest",
                             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
                             // address.slice(2), null, null] as any,
-                            topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.response.autogen.sighash] as string[],
+                            topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
                         });
                         if (!recentRegistrationEvents.length) {
                             throw new Error(`Shift has been submitted but no log was found.`);
                         }
                         const log = recentRegistrationEvents[0];
-                        const receipt = await web3.eth.getTransactionReceipt(log.transactionHash);
-                        promiEvent.emit("transactionHash", log.transactionHash);
-
-                        const emitConfirmation = async () => {
-                            const currentBlock = await web3.eth.getBlockNumber();
-                            promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt);
-                        };
-
-                        // The following section should be revised to properly
-                        // register the event emitter to the transaction's
-                        // confirmations, so that on("confirmation") works
-                        // as expected. This code branch only occurs if a
-                        // completed trade is passed to RenJS again, which
-                        // should not usually happen.
-
-                        // Emit confirmation now and in 1s, since a common use
-                        // case may be to have the following code, which doesn't
-                        // work if we emit the txHash and confirmations
-                        // with no time in between:
-                        //
-                        // ```js
-                        // const txHash = await new Promise((resolve, reject) => shift.on("transactionHash", resolve).catch(reject));
-                        // shift.on("confirmation", () => { /* do something */ });
-                        // ```
-                        await emitConfirmation();
-                        setTimeout(emitConfirmation, 1000);
-                        return receipt;
+                        return await manualPromiEvent(log.transactionHash);
                     }
                 } catch (error) {
                     // tslint:disable-next-line: no-console
@@ -402,9 +478,9 @@ export class Signature {
                 if (last) {
                     params = [
                         ...(contractParams || []).map(value => value.value),
-                        Ox(new BigNumber(this.response.in.amount).toString(16)), // _amount: BigNumber
-                        Ox(this.response.autogen.nhash),
-                        // Ox(this.response.args.n), // _nHash: string
+                        Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
+                        Ox(this.renVMResponse.autogen.nhash),
+                        // Ox(this.renVMResponse.args.n), // _nHash: string
                         Ox(this.signature), // _sig: string
                     ];
                 } else {
@@ -478,15 +554,19 @@ export class Signature {
             throw new Error(`Must provide exactly one contract call to createTransaction.`);
         }
 
+        if (!this.renVMResponse || !this.signature) {
+            throw new Error(`Unable to create transaction without signature. Call 'submitToRenVM' first.`);
+        }
+
         const contractCall = contractCalls[0];
 
         const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
         const params = [
             ...(contractParams || []).map(value => value.value),
-            Ox(new BigNumber(this.response.in.amount).toString(16)), // _amount: BigNumber
-            Ox(this.response.autogen.nhash),
-            // Ox(generateNHash(this.response)), // _nHash: string
+            Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
+            Ox(this.renVMResponse.autogen.nhash),
+            // Ox(generateNHash(this.renVMResponse)), // _nHash: string
             Ox(this.signature), // _sig: string
         ];
 

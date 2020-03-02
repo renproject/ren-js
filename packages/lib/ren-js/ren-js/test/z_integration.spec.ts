@@ -3,7 +3,7 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { EthArgs, Ox, RenContract } from "@renproject/ren-js-common";
+import { EthArgs, Ox, RenContract, RenNetwork } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -13,8 +13,10 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
+import { sha3 } from "web3-utils";
 
 import RenJS from "../src/index";
+import { confirmationlessShifters } from "../src/lib/processParams";
 import { retryNTimes, sleep } from "../src/lib/utils";
 import { ShiftInObject } from "../src/shiftIn";
 import { ShiftOutObject } from "../src/shiftOut";
@@ -463,17 +465,18 @@ describe("Shifting in and shifting out", function () {
         result64.should.deep.equal(resultHex);
     });
 
-    it.skip("recover trade", async () => {
+    it.skip("confirmationless", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering trade`);
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.000225, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const tokenAddress = await renJS.getTokenAddress(web3, contract);
             const shifterAddress = await renJS.getShifterAddress(web3, contract);
 
             const shift = new RenJS("devnet").shiftIn({
+                web3Provider: provider,
                 sendToken: token as "BTC" | "ZEC" | "BCH",
                 sendTo: "0x1D88792D94933640EaBA06672f26f9d8c2d4CBcD",
                 contractFn: "shiftIn",

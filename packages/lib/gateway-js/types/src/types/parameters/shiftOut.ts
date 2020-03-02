@@ -2,10 +2,9 @@ import BigNumber from "bignumber.js";
 
 import { BN } from "../general";
 import { RenContract } from "../renVM";
-import { AllParams4, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
-
-// tslint:disable-next-line: no-any
-type provider = any;
+import {
+    AllParams4, BaseContractCall, ContractCallMultiple, DetailedContractCall, provider,
+} from "./common";
 
 export interface ShiftOutParamsCommon {
     sendToken: RenContract | "BTC" | "ZEC" | "BCH"; // The token, including the origin and destination chains

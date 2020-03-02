@@ -1,16 +1,20 @@
 import { NumberValue } from "../../utils/value";
 import { RenContract } from "../renVM";
-import { AllParams2, BaseContractCall, ContractCallMultiple, DetailedContractCall } from "./common";
+import {
+    AllParams2, BaseContractCall, ContractCallMultiple, DetailedContractCall, provider,
+} from "./common";
 
-export type MintContractCallSingle = BaseContractCall | DetailedContractCall;
+export type MintContractCallInline = BaseContractCall | DetailedContractCall;
 
-export type MintContractCall = MintContractCallSingle | ContractCallMultiple<DetailedContractCall>;
+export type MintContractCall = MintContractCallInline | ContractCallMultiple<DetailedContractCall>;
+export type MintContractCallIndividual = MintContractCallInline | { contractCalls?: [DetailedContractCall] };
 
 /*******************************************************************************
  * Option 1: Provide details to generate a gateway address.
  ******************************************************************************/
 
 export type ShiftInFromDetails = MintContractCall & {
+
     /**
      * The token, including the origin and destination chains
      */
@@ -26,15 +30,34 @@ export type ShiftInFromDetails = MintContractCall & {
      */
     nonce?: string;
 
+    web3Provider?: provider; // A Web3 provider
     /**
      * Allow confirmationless providers to provide the shifted tokens
      * before RenVM has provided a signature, at the cost of a fee.
      * Currently, the the fee's default is a fixed value but may be fetched from
      * various confirmationless providers in the future to get the best price.
      */
-    confirmationless?: boolean;
+    confirmationless?: true;
     confirmationlessFee?: NumberValue;
 };
+
+// export type ShiftInFromDetailsStandard = ShiftInFromDetailsCommon & {
+//     confirmationless?: false;
+// };
+
+// export type ShiftInFromDetailsConfirmationless = ShiftInFromDetailsCommon & { // & MintContractCallIndividual
+//     web3Provider: provider; // A Web3 provider
+//     /**
+//      * Allow confirmationless providers to provide the shifted tokens
+//      * before RenVM has provided a signature, at the cost of a fee.
+//      * Currently, the the fee's default is a fixed value but may be fetched from
+//      * various confirmationless providers in the future to get the best price.
+//      */
+//     confirmationless?: true;
+//     confirmationlessFee?: NumberValue;
+// };
+
+// export type ShiftInFromDetails = ShiftInFromDetailsStandard | ShiftInFromDetailsConfirmationless;
 
 /*******************************************************************************
  * Option 2: Recover from a Ren transaction hash.

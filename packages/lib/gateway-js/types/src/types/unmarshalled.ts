@@ -12,14 +12,14 @@ export interface UnmarshalledMintTx {
             value: string,
             fn: string,
         };
-        phash: string; // Buffer;
         token: string;
         to: string;
         n: string; // Buffer;
         utxo: { "txHash": string, "vOut": number, "scriptPubKey": string, "amount": string };
-        amount: string;
     };
     autogen: {
+        phash: string; // Buffer;
+        amount: string;
         ghash: string; // Buffer;
         nhash: string; // Buffer;
         sighash: string; // Buffer;

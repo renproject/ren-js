@@ -63,7 +63,7 @@ interface Props {
     utxos: OrderedMap<string, UTXO>;
     networkDetails: NetworkDetails;
     onQRClick(): void;
-    waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<any>; // tslint:disable-line: no-any
+    waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
     onDeposit(utxo: UTXO): void;
 }
 

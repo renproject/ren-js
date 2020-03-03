@@ -20,7 +20,7 @@ export const LoggedOutPopup = withRouter(connect<Props & RouteComponentProps & C
         const [accounts, setAccounts] = React.useState(null as string[] | null);
 
         const { web3 } = uiContainer.state;
-        const { sdkRenVM } = sdkContainer.state;
+        const { renJS: sdkRenVM } = sdkContainer.state;
 
         const onLogin = React.useCallback((address: string) => {
             if (!web3) {

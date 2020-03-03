@@ -6,7 +6,8 @@ import {
     ShiftOutParamsAll, ShiftOutStatus, Tx, TxStatus,
 } from "@renproject/ren-js-common";
 import { UTXO } from "@renproject/ren/build/main/lib/utils";
-import { ShiftInObject, Signature } from "@renproject/ren/build/main/shiftIn";
+import { ShiftInObject } from "@renproject/ren/build/main/shiftIn";
+import { ShiftOutObject } from "@renproject/ren/build/main/shiftOut";
 import { parseRenContract } from "@renproject/ren/build/main/types/assets";
 import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import { Container } from "unstated";
@@ -27,10 +28,11 @@ const BCashTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.BitcoinCash }
 const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum });
 
 const initialState = {
-    sdkRenVM: null as null | RenJS,
+    renJS: null as null | RenJS,
     sdkAddress: null as string | null,
-    sdkWeb3: null as Web3 | null,
+    web3: null as Web3 | null,
     shift: null as HistoryEvent | null,
+    sdkShift: null as ShiftInObject | ShiftOutObject | null,
 };
 
 export const numberOfConfirmations = (renContract: RenContract, networkDetails: NetworkDetails | undefined) =>
@@ -56,8 +58,8 @@ export class SDKContainer extends Container<typeof initialState> {
 
     public connect = async (web3: Web3, address: string | null, network: string): Promise<void> => {
         await this.setState({
-            sdkWeb3: web3,
-            sdkRenVM: new RenJS(network),
+            web3,
+            renJS: new RenJS(network),
             sdkAddress: address,
         });
 
@@ -124,7 +126,7 @@ export class SDKContainer extends Container<typeof initialState> {
             status: compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
         } as HistoryEvent;
 
-        const web3 = this.state.sdkWeb3;
+        const web3 = this.state.web3;
         if (web3) {
             shift = (await this.fixShift(shift, web3)) || shift;
         }
@@ -180,7 +182,7 @@ export class SDKContainer extends Container<typeof initialState> {
     ////////////////////////////////////////////////////////////////////////////
 
     public submitBurnToEthereum = async (retry = false) => {
-        const { sdkAddress: address, sdkWeb3: web3, sdkRenVM: renVM } = this.state;
+        const { sdkAddress: address, web3: web3, renJS: renVM } = this.state;
         if (!web3 || !renVM || !address) {
             throw new Error(`Invalid values required for swap`);
         }
@@ -231,7 +233,7 @@ export class SDKContainer extends Container<typeof initialState> {
         //     await this.updateShift({ status: ShiftOutStatus.ConfirmedOnEthereum, renTxHash: null });
         // }
 
-        const { sdkWeb3: web3, sdkRenVM: renVM } = this.state;
+        const { web3: web3, renJS: renVM } = this.state;
         if (!web3) { throw new Error(`Web3 not initialized`); }
         if (!renVM) { throw new Error(`RenVM not initialized`); }
 
@@ -281,7 +283,7 @@ export class SDKContainer extends Container<typeof initialState> {
     // 4. Submit the signature to Ethereum
 
     public shiftInObject = (): ShiftInObject => {
-        const { sdkRenVM: renVM } = this.state;
+        const { web3: web3, renJS: renVM, sdkShift } = this.state;
         if (!renVM) {
             throw new Error("Invalid parameters passed to `generateAddress`");
         }
@@ -290,7 +292,15 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Shift not set");
         }
 
-        return renVM.shiftIn(shift.shiftParams as ShiftInParams);
+        if (sdkShift) {
+            return sdkShift as ShiftInObject;
+        }
+
+        const newSdkShift = renVM.shiftIn({ web3Provider: web3 && web3.currentProvider, ...shift.shiftParams as ShiftInParams })
+
+        this.setState({ sdkShift: newSdkShift }).catch(console.error);
+
+        return newSdkShift;
     }
 
     // Takes a shiftParams as bytes or an array of primitive types and returns
@@ -310,18 +320,12 @@ export class SDKContainer extends Container<typeof initialState> {
 
         const promise = this
             .shiftInObject()
-            .waitForDeposit(numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined));
+            .waitForDeposit(numberOfConfirmations(shift.shiftParams.sendToken, this.state.renJS ? this.state.renJS.network : undefined));
         promise.on("deposit", (utxo: UTXO) => {
             this.updateShift({ status: ShiftInStatus.Deposited }).catch(error => _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"));
             onDeposit(utxo);
         });
-        await promise;
-        await this.updateShift({ status: ShiftInStatus.Confirmed });
-    }
 
-    // Submits the shiftParams and transaction to the darknodes, and then submits
-    // the signature to the adapter address
-    public submitMintToRenVM = async (): Promise<Signature> => {
         const onRenTxHash = (renTxHash: string) => {
             const shiftOnHash = this.state.shift;
             if (!shiftOnHash || !shiftOnHash.renTxHash || shiftOnHash.renTxHash !== renTxHash) {
@@ -335,21 +339,18 @@ export class SDKContainer extends Container<typeof initialState> {
             }).catch(console.error);
         };
 
-        const shift = this.state.shift;
-        if (!shift) { throw new Error("Shift not set"); }
+        const zeroConf = await this.shiftInObject().waitForDeposit(0);
 
-        const transaction = await this
-            .shiftInObject()
-            .waitForDeposit(numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined));
-
-        const signature = await transaction
+        const signature = await zeroConf
             .submitToRenVM()
             .on("renTxHash", onRenTxHash)
             .on("status", onStatus);
 
+        const queryTx = await signature.queryTx();
+
         // Update shift in store.
         await this.updateShift({
-            inTx: BitcoinTx(RenJS.utils.Ox(Buffer.from(signature.response.in.utxo.txHash, "base64"))),
+            inTx: BitcoinTx(RenJS.utils.Ox(Buffer.from(queryTx.in.utxo.txHash, "base64"))),
             status: ShiftInStatus.ReturnedFromRenVM,
         });
 
@@ -357,7 +358,7 @@ export class SDKContainer extends Container<typeof initialState> {
     }
 
     public queryShiftStatus = async () => {
-        const { sdkWeb3: web3, sdkRenVM: renVM } = this.state;
+        const { web3: web3, renJS: renVM } = this.state;
         if (!web3) { throw new Error(`Web3 not initialized`); }
         if (!renVM) { throw new Error(`RenVM not initialized`); }
 
@@ -380,7 +381,7 @@ export class SDKContainer extends Container<typeof initialState> {
     }
 
     public submitMintToEthereum = async (retry = false) => {
-        const { sdkAddress: address, sdkWeb3: web3 } = this.state;
+        const { sdkAddress: address, web3: web3 } = this.state;
         if (!web3 || !address) { throw new Error(`Invalid values required for swap`); }
 
         const shift = this.state.shift;
@@ -393,7 +394,18 @@ export class SDKContainer extends Container<typeof initialState> {
 
             [receipt, transactionHash] = await new Promise<[TransactionReceipt, string]>(async (resolve, reject) => {
 
-                const promiEvent = (await this.submitMintToRenVM()).submitToEthereum(web3.currentProvider);
+                console.log("Getting signature");
+
+                const transaction = await this
+                    .shiftInObject()
+                    .waitForDeposit(0);
+
+                const signature = await transaction
+                    .submitToRenVM();
+
+                console.log("Signature", signature);
+
+                const promiEvent = signature.submitToEthereum(web3.currentProvider);
                 promiEvent.catch((error) => reject(error));
 
                 const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent

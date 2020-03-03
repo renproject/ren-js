@@ -154,13 +154,13 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                         shiftIn: true as true,
                                         status: ShiftInStatus.Committed,
                                         // tslint:disable-next-line: no-object-literal-type-assertion
-                                        shiftParams: processShiftInParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, shiftParams as ShiftInParams) as ShiftInEvent["shiftParams"],
+                                        shiftParams: processShiftInParams((sdkContainer.state.renJS || new RenJS(urlRenNetwork)).network, shiftParams as ShiftInParams) as ShiftInEvent["shiftParams"],
                                     };
                                 } else {
                                     shiftDetails = {
                                         shiftIn: false as false,
                                         status: ShiftOutStatus.Committed,
-                                        shiftParams: processShiftOutParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, shiftParams as ShiftOutParams) as unknown as ShiftOutEvent["shiftParams"],
+                                        shiftParams: processShiftOutParams((sdkContainer.state.renJS || new RenJS(urlRenNetwork)).network, shiftParams as ShiftOutParams) as unknown as ShiftOutEvent["shiftParams"],
                                     };
                                 }
 
@@ -228,8 +228,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             const πAddresses = web3.eth.getAccounts();
 
             const networkID = await πNetworkID;
-            const expectedNetworkID = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.networkID;
-            const expectedNetwork = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.chainLabel;
+            const expectedNetworkID = (sdkContainer.state.renJS || new RenJS(urlRenNetwork)).network.contracts.networkID;
+            const expectedNetwork = (sdkContainer.state.renJS || new RenJS(urlRenNetwork)).network.contracts.chainLabel;
             if (networkID !== expectedNetworkID) {
                 await uiContainer.setState({ wrongNetwork: networkID, expectedNetwork });
                 return;

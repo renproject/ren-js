@@ -115,7 +115,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onNoBurnFound > resetTrade"));
         };
 
-        const { sdkRenVM, shift } = sdkContainer.state;
+        const { renJS: sdkRenVM, shift } = sdkContainer.state;
 
         if (!shift) {
             throw new Error(`Unable to load shift details`);
@@ -160,6 +160,8 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 switch (shift.status) {
                     case ShiftInStatus.Committed:
                     case ShiftInStatus.Deposited:
+                    case ShiftInStatus.Confirmed:
+                    case ShiftInStatus.SubmittedToRenVM:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
                         const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
                         if (requiredAddressAndName !== null) {
@@ -190,10 +192,10 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                             />;
                         }
                         break;
-                    case ShiftInStatus.Confirmed:
-                    case ShiftInStatus.SubmittedToRenVM:
-                        inner = <DepositReceived token={token} mini={paused} renVMStatus={shift.renVMStatus} renTxHash={shift.renTxHash} submitDeposit={sdkContainer.submitMintToRenVM} />;
-                        break;
+                    // case ShiftInStatus.Confirmed:
+                    // case ShiftInStatus.SubmittedToRenVM:
+                    //     inner = <DepositReceived token={token} mini={paused} renVMStatus={shift.renVMStatus} renTxHash={shift.renTxHash} submitDeposit={sdkContainer.submitMintToRenVM} />;
+                    //     break;
                     case ShiftInStatus.ReturnedFromRenVM:
                     case ShiftInStatus.SubmittedToEthereum:
                         inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;

@@ -1,16 +1,14 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { parse } from "qs";
 import GatewayJS, { ShiftInStatus, ShiftOutStatus } from "@renproject/gateway-js";
 
 import "./style.scss";
 
-// If the network is changed, `sendTo` should be changed too.
-const gatewayJS = new GatewayJS("testnet");
-
-const startShiftIn = async () => {
+const startShiftIn = async (gatewayJS: GatewayJS) => {
     const amount = 0.000225; // BTC
-    const recipient = prompt("Enter Ethereum address to receive BTC");
+    const recipient = prompt("Enter Ξ Ethereum address to receive BTC");
     if (!recipient) { return; };
 
     gatewayJS.open({
@@ -21,19 +19,7 @@ const startShiftIn = async () => {
         suggestedAmount: GatewayJS.utils.value(amount, "btc").sats(),
 
         // The contract we want to interact with
-        sendTo: "0xa2aE9111634F5983e4e1C3E3823914841a4c7235",
-
-        // The name of the function we want to call
-        contractFn: "shiftIn",
-
-        // Arguments expected for calling `deposit`
-        contractParams: [
-            {
-                name: "_to",
-                type: "address",
-                value: recipient,
-            }
-        ],
+        sendTo: recipient,
 
         // The nonce is used to guarantee a unique deposit address.
         nonce: GatewayJS.utils.randomNonce(),
@@ -43,9 +29,9 @@ const startShiftIn = async () => {
         .catch(console.error);
 };
 
-const startShiftOut = async () => {
+const startShiftOut = async (gatewayJS: GatewayJS) => {
     const amount = 0.000225; // BTC
-    const recipient = prompt("Enter Bitcoin address to receive BTC");
+    const recipient = prompt("Enter ₿ Bitcoin address to receive BTC");
     if (!recipient) { return; };
 
     gatewayJS.open({
@@ -64,7 +50,7 @@ const startShiftOut = async () => {
 };
 
 
-const recoverTrades = async () => {
+const recoverTrades = async (gatewayJS: GatewayJS) => {
     // Re-open incomplete trades
     const previousGateways = await gatewayJS.getGateways();
     for (const trade of Array.from(previousGateways.values())) {
@@ -79,13 +65,23 @@ const recoverTrades = async () => {
 }
 
 const GatewayExample = () => {
-    React.useEffect(() => { recoverTrades(); }, []);
+
+    const urlParameters = parse(window.location.search, { ignoreQueryPrefix: true });
+    console.log(urlParameters);
+
+    // If the network is changed, `sendTo` should be changed too.
+    const gatewayJS = React.useMemo(() => new GatewayJS(
+        urlParameters.network || "testnet",
+        { endpoint: urlParameters.endpoint || undefined },
+    ), []);
+
+    React.useEffect(() => { recoverTrades(gatewayJS); }, []);
     return <div className="test-background">
         <div className="test-banner"><div className="container"><h1>Testing Environment</h1></div></div>
         <div className="test-environment">
             <p className="box">To use this testing environment, you need to use a Web3 browser like Brave or Metamask for Firefox/Chrome.</p>
-            <button onClick={startShiftIn} className="blue">Shift in with GatewayJS</button>
-            <button onClick={startShiftOut} className="blue">Shift out with GatewayJS</button>
+            <button onClick={() => startShiftIn(gatewayJS)} className="blue">Shift in with GatewayJS</button>
+            <button onClick={() => startShiftOut(gatewayJS)} className="blue">Shift out with GatewayJS</button>
         </div>
     </div>;
 }

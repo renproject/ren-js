@@ -1,13 +1,1 @@
-## Feedback
-
-there's ways to model it like ethereum does...
-
-which I think is good, where you specify a wrapper around communicating with the rpc as a "provider" and layers on top of this should just abstract various things...
-
-this way you can allow for browser extensions and such if in-page use of darknodes is desired...
-
-would like to see a @renproject/sdk @renproject/core @renproject/lightnode-provider @renproject/darknode-provider @renproject/contracts...
-
-as far as the contracts I'm developing an actual wrapper around solc for github based contract development, and just designing a standard around those build trees
-
-yarn workspaces is real nifty for arranging those js codebases as scoped modules
+# `🛠️ ren-js`

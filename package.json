@@ -5,6 +5,7 @@
     "lerna": "^3.20.2"
   },
   "workspaces": [
-    "packages/lib/gateway-js/*"
+    "packages/lib/gateway-js/*",
+    "packages/lib/ren-js/*"
   ]
 }

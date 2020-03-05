@@ -258,8 +258,8 @@ describe("Shifting in and shifting out", function () {
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
-            { ...caseZEC, it: it.skip, },
-            { ...caseBCH, it: it.skip, },
+            { ...caseZEC, it, },
+            { ...caseBCH, it, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
@@ -423,7 +423,7 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it("recover burn from renTxHash", async () => {
+    it.skip("recover burn from renTxHash", async () => {
         logger.consoleLine();
         logger.info(`Starting burn test - recovering burn from renTxHash`);
 
@@ -442,7 +442,7 @@ describe("Shifting in and shifting out", function () {
         result64.should.deep.equal(resultHex);
     });
 
-    it("recover mint from renTxHash", async () => {
+    it.skip("recover mint from renTxHash", async () => {
         logger.consoleLine();
         logger.info(`Starting mint test - recovering mint from renTxHash`);
 

@@ -8443,10 +8443,10 @@ semver@~5.4.1:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.4.1.tgz#e059c09d8571f0540823733433505d3a2f00b18e"
   integrity sha512-WfG/X9+oATh81XtllIo/I8gOiY9EXRdv1cQdyykeXK17YcUW3EXUAi2To4pcH6nZtJPr7ZOpM5OMyWJZm+8Rsg==
 
-send-crypto@0.1.11:
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.1.11.tgz#2e055996811a9f4e5e1574360b5d4d2c0c163100"
-  integrity sha512-pGAvOZrEZyPcYmXTbweDfBw2eiqZY8xtQfYkWtzjd19F/9522q02JcpNmjjaKlBqH7ybjdZn0NzjBIE4+IPxXw==
+send-crypto@^0.1.12:
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.1.12.tgz#02f52ac968710275e78e590bd1ef7fc9690ba70b"
+  integrity sha512-9Q3pn76TohcR5PDIHfm1DPkAULEYBbvv6uuBhTJs13pt5D1KpydCvOPZ6gir4+X/WDLOWJvt6vlUvhthAiNxow==
   dependencies:
     "@truffle/hdwallet-provider" "^1.0.28"
     "@types/bchaddrjs" "^0.4.0"

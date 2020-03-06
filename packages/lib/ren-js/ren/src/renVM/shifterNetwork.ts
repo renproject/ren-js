@@ -29,13 +29,16 @@ const assertArgumentType = <ArgType>(
     return arg.value;
 };
 
-const assertAndDecodeBytes = <ArgType>(
+// 'ArgType extends RenVMArg<Name, infer Type, infer Value> ? RenVMArg<Name, Type, Value> : never'
+// 'ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? RenVMArg<Name, Type, Value> : never'
+
+const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
     name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
     type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
 ): string => {
     try {
-        return decodeBytes(assertArgumentType<ArgType>(name, type, arg));
+        return decodeBytes(assertArgumentType<ArgType>(name as any, type as any, arg as any));
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${arg.value} (type ${typeof arg.value}): ${error.message}`;
         throw error;
@@ -48,7 +51,7 @@ const assertAndDecodeNumber = <ArgType>(
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
 ): BigNumber => {
     try {
-        return decodeNumber(assertArgumentType<ArgType>(name, type, arg));
+        return decodeNumber(assertArgumentType<ArgType>(name as any, type as any, arg as any));
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${arg.value} (type ${typeof arg.value}): ${error.message}`;
         throw error;
@@ -61,7 +64,7 @@ const assertAndDecodeAddress = <ArgType extends RenVMArg<string, RenVMType>>(
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
 ): string => {
     try {
-        return Ox(assertArgumentType<ArgType>(name, type, arg));
+        return Ox(assertArgumentType<ArgType>(name as any, type as any, arg as any));
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${arg.value} (type ${typeof arg.value}): ${error.message}`;
         throw error;
@@ -82,19 +85,18 @@ const defaultPayload: ResponseQueryMintTx["tx"]["in"]["0"] = {
 const findField = <ArgType extends RenVMArg<string, RenVMType>>(
     field: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
     response: ResponseQueryMintTx,
-): (ArgType extends RenVMArg<infer Name, infer Type> ? RenVMArg<Name, Type> : never) => {
-    type RetArg = ArgType extends RenVMArg<infer Name, infer Type> ? RenVMArg<Name, Type> : never;
+): ArgType => {
 
     for (const outField of (response.tx.out || [])) {
-        if (outField.name === field) { return outField as RetArg; }
+        if (outField.name === field) { return outField as ArgType; }
     }
 
     for (const outField of response.tx.autogen) {
-        if (outField.name === field) { return outField as RetArg; }
+        if (outField.name === field) { return outField as ArgType; }
     }
 
     for (const outField of response.tx.in) {
-        if (outField.name === field) { return outField as RetArg; }
+        if (outField.name === field) { return outField as ArgType; }
     }
 
     throw new Error(`Unable to find field ${field} in response from RenVM`);
@@ -219,7 +221,7 @@ export class ShifterNetwork {
                     in: [
                         //
                         {
-                            name: "p" as const, type: RenVMType.ExtEthCompatPayload as const, value: {
+                            name: "p" as const, type: RenVMType.ExtEthCompatPayload, value: {
                                 abi: toBase64(Buffer.from(JSON.stringify(fnABI))),
                                 value: toBase64(encodedParameters),
                                 fn: toBase64(Buffer.from(fn)),
@@ -230,16 +232,16 @@ export class ShifterNetwork {
                         // The amount of BTC (in SATs) that has be transferred to the gateway
                         // { name: "amount" as const, type: "u64", as const value: amount },
                         // The ERC20 contract address on Ethereum for zBTC
-                        { name: "token" as const, type: RenVMType.ExtTypeEthCompatAddress as const, value: strip0x(token) },
+                        { name: "token" as const, type: RenVMType.ExtTypeEthCompatAddress, value: strip0x(token) },
                         // The address on the Ethereum blockchain to which ZBTC will be transferred
-                        { name: "to" as const, type: RenVMType.ExtTypeEthCompatAddress as const, value: strip0x(to) },
+                        { name: "to" as const, type: RenVMType.ExtTypeEthCompatAddress, value: strip0x(to) },
                         // The nonce is used to randomize the gateway
-                        { name: "n" as const, type: RenVMType.TypeB32 as const, value: toBase64(nonce) },
+                        { name: "n" as const, type: RenVMType.TypeB32, value: toBase64(nonce) },
 
                         // UTXO
                         {
                             name: "utxo" as const,
-                            type: RenVMType.ExtTypeBtcCompatUTXO as const,
+                            type: RenVMType.ExtTypeBtcCompatUTXO,
                             value: {
                                 txHash: toBase64(utxoTxHash),
                                 vOut: utxoVout,

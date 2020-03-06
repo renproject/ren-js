@@ -1,19 +1,15 @@
 import {
-    BigNumber, BurnContractCallSimple, Chain, DetailedContractCall, Ox, RenContract, RenNetwork,
-    ShiftInFromDetails, ShiftInFromDetailsConfirmationless, ShiftInParams, ShiftInParamsAll,
-    ShiftOutParams, ShiftOutParamsAll, ShiftOutParamsCommon, strip0x,
+    BigNumber, BurnContractCallSimple, Chain, DetailedContractCall, RenContract, ShiftInFromDetails,
+    ShiftInParams, ShiftInParamsAll, ShiftOutParams, ShiftOutParamsAll, ShiftOutParamsCommon,
 } from "@renproject/ren-js-common";
 import Web3 from "web3";
 
-// import { Contract } from "web3-eth-contract";
 import { parseRenContract } from "../types/assets";
 import { NetworkDetails } from "../types/networks";
-import { payloadToShiftInABI } from "./abi";
-import { getTokenAddress, getTokenName, randomNonce, toBigNumber, utils } from "./utils";
+import { getTokenAddress, getTokenName, toBigNumber, utils } from "./utils";
 
 // TODO: Fetch from contract
 export const DEFAULT_SHIFT_FEE = new BigNumber(10000);
-export const DEFAULT_CONFIRMATIONLESS_FEE = new BigNumber(10000);
 
 export const resolveSendTo = <T extends ShiftInParamsAll | ShiftOutParamsAll>({ shiftIn }: { shiftIn: T extends ShiftOutParamsAll ? false : true }) => (params: T): typeof params => {
     if ((params as ShiftInFromDetails | ShiftOutParamsCommon).sendToken) {
@@ -157,93 +153,10 @@ export const resolveContractCall = <T extends ShiftInParamsAll | ShiftOutParamsA
     }
 };
 
-export const confirmationlessShifters = {
-    [RenNetwork.Devnet]: "0xeaC1449abA83Fc6B6ed0442e5C86A485D8C43B75",
-};
-
-export const processConfirmationlessParams = (network: NetworkDetails) => (params: ShiftInParamsAll) => {
-
-    if (params.confirmationless && params.contractCalls) {
-
-        if (params.sendToken !== RenContract.Btc2Eth) {
-            throw new Error(`Confirmationless is currently only supported for BTC.`);
-        }
-
-        // TODO: Don't hard-code
-        const confirmationlessShifter = confirmationlessShifters[network.name];
-
-        if (!confirmationlessShifter) {
-            throw new Error(`Confirmationless is currently only supported for 'devnet'`);
-        }
-
-        const passedInFee = (params as unknown as ShiftInFromDetailsConfirmationless).confirmationlessFee;
-        const fee = passedInFee ? toBigNumber(passedInFee) : DEFAULT_CONFIRMATIONLESS_FEE;
-
-        if (params.requiredAmount) {
-            const requiredAmount = toBigNumber(params.requiredAmount);
-            // TODO: Consider shift in fee.
-            if (requiredAmount.lte(fee.plus(DEFAULT_SHIFT_FEE))) {
-                throw new Error(`Required amount (${requiredAmount.toString()}) is less than confirmationlessFee (${fee.toString()}) and mint fee.`);
-            }
-        }
-
-        const lastCallIndex = params.contractCalls.length - 1;
-        if (lastCallIndex === -1) {
-            throw new Error(`No contract calls provided for confirmationless shift.`);
-        }
-
-        const { contractFn, contractParams, sendTo, txConfig } = params.contractCalls[lastCallIndex];
-
-        if (!contractParams || contractParams.length === 0 || !contractParams[0].name.match(/^_?shifter$/i)) {
-            throw new Error(`Confirmationless shift requires the contract's first parameter to be called 'shifter' or '_shifter'`);
-        }
-
-        const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
-
-        const contract = new (new Web3("")).eth.Contract(ABI, sendTo);
-
-        const nHashPlaceholder = randomNonce();
-        const forwardedValue = new BigNumber(0);
-        const forwardedSig = Buffer.from([]);
-
-        // Overwrite the shifter being passed to the contract.
-        contractParams[0].value = confirmationlessShifter;
-
-        const encodedFunctionCall: string = contract.methods[contractFn](
-            ...(contractParams || []).map(value => value.value),
-            Ox(forwardedValue.toString(16)), // _amount: BigNumber
-            Ox(nHashPlaceholder),
-            // Ox(this.response.args.n), // _nHash: string
-            forwardedSig, // _sig: string
-        ).encodeABI();
-
-        const [encodedFunctionCallBeforeNHash, encodedFunctionCallAfterNHash] = encodedFunctionCall.split(strip0x(nHashPlaceholder)).map(Ox);
-
-        params.contractCalls[lastCallIndex] = {
-            // TODO: Don't hard-code
-            sendTo: confirmationlessShifter,
-            contractFn: "composeShiftIn",
-            contractParams: [
-                { type: "uint256", name: "_confirmationFee", value: fee.toString() },
-                { type: "address", name: "_targetContract", value: sendTo },
-                { type: "bytes", name: "_targetCallBeforeNHash", value: encodedFunctionCallBeforeNHash },
-                { type: "bytes", name: "_targetCallAfterNHash", value: encodedFunctionCallAfterNHash },
-            ],
-            txConfig,
-        };
-
-        // `confirmationless` is set to false so that the parameters aren't
-        // transformed twice.
-        params.confirmationless = false;
-    }
-    return params;
-};
-
 export const processShiftInParams = (_network: NetworkDetails, _params: ShiftInParams): ShiftInParamsAll => {
     const processors: Array<(params: ShiftInParamsAll) => ShiftInParamsAll> = [
         resolveSendTo<ShiftInParamsAll>({ shiftIn: true }),
         resolveContractCall<ShiftInParamsAll>(_network),
-        processConfirmationlessParams(_network),
     ];
 
     return processors.reduce((params, processor) => processor(params), _params as ShiftInParamsAll);

@@ -22,7 +22,7 @@ describe("ShiftOut response is returned correctly", () => {
             .in.to.should.equal("bitcoincash:qqnm45rptzzpvg0dx04erm7mrnz27jvkevaf3ys3c5");
     });
 
-    it("Testnet", async () => {
+    it.skip("Testnet", async () => {
         const renJS = new RenJS(RenNetwork.Testnet);
 
         (await renJS.shiftOut({ sendToken: "BTC", burnReference: 0x2dee }).submitToRenVM())
@@ -35,7 +35,7 @@ describe("ShiftOut response is returned correctly", () => {
             .in.to.should.equal("bchtest:qztw2wgjnu96f6vrrzw4j5sa9s0a60qwjcquagaf2r");
     });
 
-    it("Devnet", async () => {
+    it.skip("Devnet", async () => {
         const renJS = new RenJS(RenNetwork.Devnet);
 
         (await renJS.shiftOut({ sendToken: "BTC", burnReference: 0x4e7d }).submitToRenVM())

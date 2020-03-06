@@ -11,9 +11,7 @@ import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
 import { payloadToShiftInABI } from "./lib/abi";
-import {
-    confirmationlessShifters, DEFAULT_SHIFT_FEE, processShiftInParams,
-} from "./lib/processParams";
+import { DEFAULT_SHIFT_FEE, processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
     fixSignature, generateAddress, generateGHash, generateShiftInTxHash, getShifterAddress,
@@ -285,88 +283,50 @@ export class ShiftInObject {
                 throw new Error(`Must call 'waitForDeposit' or provide UTXO or RenVM transaction hash.`);
             }
 
-            // const rawResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
-            //     Ox(Buffer.from(renTxHash, "base64")),
-            //     (status) => {
-            //         promiEvent.emit("status", status);
-            //     },
-            //     () => promiEvent._isCancelled(),
-            // );
+            const rawResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
+                Ox(Buffer.from(renTxHash, "base64")),
+                (status) => {
+                    promiEvent.emit("status", status);
+                },
+                () => promiEvent._isCancelled(),
+            );
 
-            const utxoTxHash = Ox(Buffer.from(renTxHash, "base64"));
-            const onStatus = (status: TxStatus) => { promiEvent.emit("status", status); };
-            const _cancelRequested = () => promiEvent._isCancelled();
+            const response = unmarshalMintTx(rawResponse);
 
-            let result: UnmarshalledMintTx | undefined;
-            let rawResponse;
-            // tslint:disable-next-line: no-constant-condition
-            while (true) {
-                if (_cancelRequested && _cancelRequested()) {
-                    throw new Error(`waitForTX cancelled`);
-                }
+            // const utxoTxHash = Ox(Buffer.from(renTxHash, "base64"));
+            // const onStatus = (status: TxStatus) => { promiEvent.emit("status", status); };
+            // const _cancelRequested = () => promiEvent._isCancelled();
 
-                try {
+            // let result: UnmarshalledMintTx | undefined;
+            // let rawResponse;
+            // // tslint:disable-next-line: no-constant-condition
+            // while (true) {
+            //     if (_cancelRequested && _cancelRequested()) {
+            //         throw new Error(`waitForTX cancelled`);
+            //     }
 
-                    // Check if the shift is a confirmationless shift and has
-                    // been submitted to Ethereum.
-                    try {
-                        const { contractCalls } = this.params;
-                        if (result && this.web3 && contractCalls && contractCalls.length > 0) {
-                            const lastContractCall = contractCalls[contractCalls.length - 1];
-                            const { sendTo, contractParams } = lastContractCall;
-                            if (contractParams && contractParams.length > 1 && Ox(sendTo).toLowerCase() === Ox(confirmationlessShifters[this.network.name]).toLowerCase()) {
+            //     try {
+            //         result = unmarshalMintTx(await this.renVMNetwork.queryTX<ResponseQueryMintTx>(utxoTxHash));
+            //         if (result && result.txStatus === TxStatus.TxStatusDone) {
+            //             rawResponse = result;
+            //             break;
+            //         } else if (onStatus && result && result.txStatus) {
+            //             onStatus(result.txStatus);
+            //         }
+            //     } catch (error) {
+            //         // tslint:disable-next-line: no-console
+            //         if (String((error || {}).message).match(/(not found)|(not available)/)) {
+            //             // ignore
+            //         } else {
+            //             // tslint:disable-next-line: no-console
+            //             console.error(String(error));
+            //             // TODO: throw unepected errors
+            //         }
+            //     }
+            //     await sleep(5 * SECONDS);
+            // }
 
-                                const numberToHex = (n: BigNumber | number): string => {
-                                    const hex = strip0x(n.toString(16));
-                                    const padding = "0".repeat(64 - hex.length);
-                                    return "0x" + padding + hex;
-                                };
-
-                                const confirmationFee = numberToHex(new BigNumber(contractParams[0].value));
-                                const amount = numberToHex(new BigNumber(result.autogen.amount));
-                                const nHash = result.autogen.nhash;
-
-                                const logs = await this.web3.eth.getPastLogs({
-                                    address: sendTo,
-                                    fromBlock: "0",
-                                    toBlock: "latest",
-                                    topics: [sha3("LogConfirmationlessShiftIn(bytes32,uint256,uint256,address,bool)"), nHash, amount, confirmationFee],
-                                });
-
-                                if (logs.length > 0) {
-                                    this.renVMResponse = result;
-                                    this.signature = "";
-                                    this.thirdPartyTransaction = logs[0].transactionHash;
-                                    return this;
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        // tslint:disable-next-line: no-console
-                        console.error(String(error));
-                    }
-
-                    result = unmarshalMintTx(await this.renVMNetwork.queryTX<ResponseQueryMintTx>(utxoTxHash));
-                    if (result && result.txStatus === TxStatus.TxStatusDone) {
-                        rawResponse = result;
-                        break;
-                    } else if (onStatus && result && result.txStatus) {
-                        onStatus(result.txStatus);
-                    }
-                } catch (error) {
-                    // tslint:disable-next-line: no-console
-                    if (String((error || {}).message).match(/(not found)|(not available)/)) {
-                        // ignore
-                    } else {
-                        // tslint:disable-next-line: no-console
-                        console.error(String(error));
-                        // TODO: throw unepected errors
-                    }
-                }
-                await sleep(5 * SECONDS);
-            }
-
-            this.renVMResponse = rawResponse;
+            this.renVMResponse = response;
             this.signature = signatureToString(fixSignature(this.renVMResponse, this.network));
 
             return this;
@@ -397,12 +357,12 @@ export class ShiftInObject {
             const { sendToken: renContract } = this.params;
 
             const manualPromiEvent = async (txHash: string) => {
-                const receipt = await web3.eth.getTransactionReceipt(txHash);
+                const receipt: TransactionReceipt = await web3.eth.getTransactionReceipt(txHash);
                 promiEvent.emit("transactionHash", txHash);
 
                 const emitConfirmation = async () => {
                     const currentBlock = await web3.eth.getBlockNumber();
-                    promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt);
+                    promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt as any);
                 };
 
                 // The following section should be revised to properly
@@ -532,7 +492,7 @@ export class ShiftInObject {
                     reject(error);
                 })
             );
-        })().then(promiEvent.resolve).catch(promiEvent.reject);
+        })().then((receipt) => promiEvent.resolve(receipt as TransactionReceipt)).catch(promiEvent.reject);
 
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {

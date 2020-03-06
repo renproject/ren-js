@@ -6,7 +6,7 @@ import { crypto } from "bitcore-lib";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import Web3 from "web3";
-import { TransactionConfig } from "web3-core";
+import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
@@ -328,14 +328,14 @@ export const randomNonce = () => Ox(crypto.Random.getRandomBuffer(32));
  * @/param nonce The nonce of the transaction, to detect if it has been
  *        overwritten.
  */
-export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/) => {
+export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/): Promise<TransactionReceipt> => {
 
     // TODO: Handle transactions being overwritten.
 
     // Wait for confirmation
-    let receipt;
+    let receipt: TransactionReceipt | undefined;
     while (!receipt || !receipt.blockHash) {
-        receipt = await web3.eth.getTransactionReceipt(transactionHash);
+        receipt = (await web3.eth.getTransactionReceipt(transactionHash)) as TransactionReceipt;
         if (receipt && receipt.blockHash) {
             break;
         }

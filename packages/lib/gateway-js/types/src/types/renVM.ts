@@ -106,7 +106,7 @@ export type Base64String = string;
 export type HexString = string;
 export type DecimalString = string;
 
-interface ExtEthCompatPayload {
+export interface ExtEthCompatPayload {
     abi: RenVMParameterValue<RenVMType.TypeB>;
     value: RenVMParameterValue<RenVMType.TypeB>;
     fn: RenVMParameterValue<RenVMType.TypeB>;

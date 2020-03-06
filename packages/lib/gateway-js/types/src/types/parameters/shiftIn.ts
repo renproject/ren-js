@@ -31,33 +31,7 @@ export type ShiftInFromDetails = MintContractCall & {
     nonce?: string;
 
     web3Provider?: provider; // A Web3 provider
-    /**
-     * Allow confirmationless providers to provide the shifted tokens
-     * before RenVM has provided a signature, at the cost of a fee.
-     * Currently, the the fee's default is a fixed value but may be fetched from
-     * various confirmationless providers in the future to get the best price.
-     */
-    confirmationless?: true;
-    confirmationlessFee?: NumberValue;
 };
-
-// export type ShiftInFromDetailsStandard = ShiftInFromDetailsCommon & {
-//     confirmationless?: false;
-// };
-
-// export type ShiftInFromDetailsConfirmationless = ShiftInFromDetailsCommon & { // & MintContractCallIndividual
-//     web3Provider: provider; // A Web3 provider
-//     /**
-//      * Allow confirmationless providers to provide the shifted tokens
-//      * before RenVM has provided a signature, at the cost of a fee.
-//      * Currently, the the fee's default is a fixed value but may be fetched from
-//      * various confirmationless providers in the future to get the best price.
-//      */
-//     confirmationless?: true;
-//     confirmationlessFee?: NumberValue;
-// };
-
-// export type ShiftInFromDetails = ShiftInFromDetailsStandard | ShiftInFromDetailsConfirmationless;
 
 /*******************************************************************************
  * Option 2: Recover from a Ren transaction hash.

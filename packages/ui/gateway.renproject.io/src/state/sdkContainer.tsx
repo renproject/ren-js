@@ -6,7 +6,7 @@ import {
     ShiftOutParamsAll, ShiftOutStatus, Tx, TxStatus,
 } from "@renproject/ren-js-common";
 import { UTXO } from "@renproject/ren/build/main/lib/utils";
-import { ShiftInObject, Signature } from "@renproject/ren/build/main/shiftIn";
+import { ShiftInObject } from "@renproject/ren/build/main/shiftIn";
 import { parseRenContract } from "@renproject/ren/build/main/types/assets";
 import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import { Container } from "unstated";
@@ -321,7 +321,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
     // Submits the shiftParams and transaction to the darknodes, and then submits
     // the signature to the adapter address
-    public submitMintToRenVM = async (): Promise<Signature> => {
+    public submitMintToRenVM = async (): Promise<ShiftInObject> => {
         const onRenTxHash = (renTxHash: string) => {
             const shiftOnHash = this.state.shift;
             if (!shiftOnHash || !shiftOnHash.renTxHash || shiftOnHash.renTxHash !== renTxHash) {
@@ -347,9 +347,11 @@ export class SDKContainer extends Container<typeof initialState> {
             .on("renTxHash", onRenTxHash)
             .on("status", onStatus);
 
+        const response = await signature.queryTx();
+
         // Update shift in store.
         await this.updateShift({
-            inTx: BitcoinTx(RenJS.utils.Ox(Buffer.from(signature.response.in.utxo.txHash, "base64"))),
+            inTx: BitcoinTx(RenJS.utils.Ox(Buffer.from(response.in.utxo.txHash, "base64"))),
             status: ShiftInStatus.ReturnedFromRenVM,
         });
 

@@ -12,7 +12,7 @@
         "deploy": "gh-pages -d build"
     },
     "dependencies": {
-        "@renproject/gateway-js": "^0.3.1",
+        "@renproject/gateway-js": "file:../../lib/gateway-js/gateway",
         "@types/node": "^13.1.7",
         "@types/qs": "^6.9.1",
         "@types/react": "^16.9.17",
@@ -24,12 +24,6 @@
         "react-dom": "^16.12.0",
         "react-router-dom": "^5.1.2",
         "web3": "^2.0.0-alpha.1"
-    },
-    "devDependencies": {
-        "gh-pages": "^2.2.0",
-        "node-sass": "^4.13.1",
-        "react-scripts": "^3.3.0",
-        "typescript": "^3.7.5"
     },
     "browserslist": [
         ">0.2%",

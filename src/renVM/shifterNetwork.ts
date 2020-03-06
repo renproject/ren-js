@@ -1,6 +1,6 @@
 import {
-    AbiItem, Chain, Ox, RenContract, RenVMArg, RenVMType, strip0x, Tokens, TxStatus,
-    UnmarshalledBurnTx, UnmarshalledMintTx,
+    AbiItem, Chain, Ox, RenContract, RenVMArg, RenVMOutputUTXO, RenVMType, strip0x, Tokens,
+    TxStatus, UnmarshalledBurnTx, UnmarshalledMintTx,
 } from "@renproject/ren-js-common";
 import BigNumber from "bignumber.js";
 
@@ -55,7 +55,7 @@ const assertAndDecodeNumber = <ArgType>(
     }
 };
 
-const assertAndDecodeAddress = <ArgType>(
+const assertAndDecodeAddress = <ArgType extends RenVMArg<string, RenVMType>>(
     name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
     type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
@@ -68,57 +68,83 @@ const assertAndDecodeAddress = <ArgType>(
     }
 };
 
+const defaultPayload: ResponseQueryMintTx["tx"]["in"]["0"] = {
+    name: "p",
+    type: RenVMType.ExtEthCompatPayload,
+    value: {
+        abi: "W10=",
+        value: "",
+        fn: "",
+    },
+    // tslint:disable-next-line: no-any
+};
+
+const findField = <ArgType extends RenVMArg<string, RenVMType>>(
+    field: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
+    response: ResponseQueryMintTx,
+): (ArgType extends RenVMArg<infer Name, infer Type> ? RenVMArg<Name, Type> : never) => {
+    type RetArg = ArgType extends RenVMArg<infer Name, infer Type> ? RenVMArg<Name, Type> : never;
+
+    for (const outField of (response.tx.out || [])) {
+        if (outField.name === field) { return outField as RetArg; }
+    }
+
+    for (const outField of response.tx.autogen) {
+        if (outField.name === field) { return outField as RetArg; }
+    }
+
+    for (const outField of response.tx.in) {
+        if (outField.name === field) { return outField as RetArg; }
+    }
+
+    throw new Error(`Unable to find field ${field} in response from RenVM`);
+};
+
+const onError = <P>(getP: () => P, defaultP: P) => {
+    try { return getP(); } catch (error) { return defaultP; }
+};
+
 export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMintTx => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     assert(parseRenContract(response.tx.to).to === Chain.Ethereum, `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.to})`);
 
-    if (response.tx.in[0].name as string === "phash") {
-        response.tx.in = [{
-            name: "p",
-            type: RenVMType.ExtEthCompatPayload,
-            value: {
-                abi: "W10=",
-                value: "",
-                fn: "",
-            },
-            // tslint:disable-next-line: no-any
-        }, ...response.tx.in] as any;
-    }
+    type In = ResponseQueryMintTx["tx"]["in"];
 
-    const [pArg, phashArg, tokenArg, toArg, nArg, utxoArg, amountArg] = response.tx.in;
-    const pRaw = assertArgumentType<typeof pArg>("p", RenVMType.ExtEthCompatPayload, pArg);
-    const phash = assertAndDecodeBytes<typeof phashArg>("phash", RenVMType.TypeB32, phashArg);
-    const token = assertAndDecodeAddress<typeof tokenArg>("token", RenVMType.ExtTypeEthCompatAddress, tokenArg);
-    const to = assertAndDecodeAddress<typeof toArg>("to", RenVMType.ExtTypeEthCompatAddress, toArg);
-    const n = assertAndDecodeBytes<typeof nArg>("n", RenVMType.TypeB32, nArg);
-    const utxoRaw = assertArgumentType<typeof utxoArg>("utxo", utxoArg.type, utxoArg);
-    const amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU256, amountArg).toFixed();
+    const pRaw = assertArgumentType<In[0]>("p", RenVMType.ExtEthCompatPayload, onError(() => findField<In[0]>("p", response), defaultPayload));
+    const token = assertAndDecodeAddress<In[1]>("token", RenVMType.ExtTypeEthCompatAddress, findField<In[1]>("token", response));
+    const to = assertAndDecodeAddress<In[2]>("to", RenVMType.ExtTypeEthCompatAddress, findField<In[2]>("to", response));
+    const n = assertAndDecodeBytes<In[3]>("n", RenVMType.TypeB32, findField<In[3]>("n", response));
 
     const p = {
         abi: JSON.parse(decodeString(pRaw.abi)) as AbiItem[],
         value: decodeBytes(pRaw.value),
         fn: decodeString(pRaw.fn),
     };
+
+    type Autogen = ResponseQueryMintTx["tx"]["autogen"];
+    const ghash = assertAndDecodeBytes<Autogen[0]>("ghash", RenVMType.TypeB32, findField<Autogen[0]>("ghash", response));
+    const nhash = assertAndDecodeBytes<Autogen[1]>("nhash", RenVMType.TypeB32, findField<Autogen[1]>("nhash", response));
+    const sighash = assertAndDecodeBytes<Autogen[2]>("sighash", RenVMType.TypeB32, findField<Autogen[2]>("sighash", response));
+    const phash = assertAndDecodeBytes<Autogen[3]>("phash", RenVMType.TypeB32, findField<Autogen[3]>("phash", response));
+    const amount = assertAndDecodeNumber<Autogen[4]>("amount", RenVMType.TypeU256, findField<Autogen[4]>("amount", response)).toFixed();
+    const utxoRaw = assertArgumentType<Autogen[5]>("utxo", RenVMType.ExtTypeBtcCompatUTXO, findField<Autogen[5]>("utxo", response) as RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>);
+
     const utxo = { "txHash": decodeBytes(utxoRaw.txHash), "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": utxoRaw.scriptPubKey ? decodeBytes(utxoRaw.scriptPubKey) : "", "amount": decodeNumber(utxoRaw.amount).toFixed() };
 
-    const [ghashArg, nhashArg, sighashArg] = response.tx.autogen;
-    const ghash = assertAndDecodeBytes<typeof ghashArg>("ghash", RenVMType.TypeB32, ghashArg);
-    const nhash = assertAndDecodeBytes<typeof nhashArg>("nhash", RenVMType.TypeB32, nhashArg);
-    const sighash = assertAndDecodeBytes<typeof sighashArg>("sighash", RenVMType.TypeB32, sighashArg);
-
+    type Out = ResponseQueryMintTx["tx"]["out"] & {};
     let out: UnmarshalledMintTx["out"];
     if (response.tx.out) {
-        const [rArg, sArg, vArg] = response.tx.out;
+        const [rArg, sArg, vArg] = [findField<Out[0]>("r", response), findField<Out[1]>("s", response), findField<Out[2]>("v", response)];
         const r = rArg.type === RenVMType.TypeB ?
-            assertAndDecodeBytes<typeof rArg>("r", RenVMType.TypeB, rArg) :
-            assertAndDecodeBytes<typeof rArg>("r", RenVMType.TypeB32, rArg);
+            assertAndDecodeBytes<Out["0"]>("r", RenVMType.TypeB, rArg) :
+            assertAndDecodeBytes<Out["0"]>("r", RenVMType.TypeB32, rArg);
         const s = sArg.type === RenVMType.TypeB ?
-            assertAndDecodeBytes<typeof sArg>("s", RenVMType.TypeB, sArg) :
-            assertAndDecodeBytes<typeof sArg>("s", RenVMType.TypeB32, sArg);
+            assertAndDecodeBytes<Out["1"]>("s", RenVMType.TypeB, sArg) :
+            assertAndDecodeBytes<Out["1"]>("s", RenVMType.TypeB32, sArg);
         const v = vArg.type === RenVMType.TypeB ?
-            assertAndDecodeBytes<typeof vArg>("v", RenVMType.TypeB, vArg) :
-            Ox(assertAndDecodeNumber<typeof vArg>("v", RenVMType.TypeU8, vArg).toString(16));
+            assertAndDecodeBytes<Out["2"]>("v", RenVMType.TypeB, vArg) :
+            Ox(assertAndDecodeNumber<Out["2"]>("v", RenVMType.TypeU8, vArg).toString(16));
         out = { r, s, v };
     }
 
@@ -126,8 +152,8 @@ export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMint
         hash: decodeBytes(response.tx.hash),
         txStatus: response.txStatus,
         to: response.tx.to,
-        in: { p, phash, token, to, n, utxo, amount },
-        autogen: { sighash, ghash, nhash },
+        in: { p, token, to, n, utxo },
+        autogen: { sighash, ghash, nhash, phash, amount },
         out,
     };
 };
@@ -178,30 +204,31 @@ export class ShifterNetwork {
         renContract: RenContract,
         to: string,
         nonce: string,
-        pHash: string,
+        // pHash: string,
         utxoTxHash: string,
         utxoVout: string,
         network: NetworkDetails,
-        _fn: string,
-        _fnABI: AbiItem[],
-        _encodedParameters: string,
+        fn: string,
+        fnABI: AbiItem[],
+        encodedParameters: string,
     ): Promise<string> => {
         const token = syncGetTokenAddress(renContract, network);
+
         const response = await this.network.sendMessage(RPCMethod.SubmitTx,
             {
                 tx: {
                     to: renContract,
                     in: [
                         //
-                        // {
-                        //     name: "p" as const, type: RenVMType.ExtEthCompatPayload as const, value: {
-                        //         abi: toBase64(Buffer.from(JSON.stringify(fnABI))),
-                        //         value: toBase64(encodedParameters),
-                        //         fn: toBase64(Buffer.from(fn)),
-                        //     }
-                        // },
+                        {
+                            name: "p" as const, type: RenVMType.ExtEthCompatPayload as const, value: {
+                                abi: toBase64(Buffer.from(JSON.stringify(fnABI))),
+                                value: toBase64(encodedParameters),
+                                fn: toBase64(Buffer.from(fn)),
+                            }
+                        },
                         // The hash of the payload data
-                        { name: "phash" as const, type: RenVMType.TypeB32 as const, value: toBase64(pHash) },
+                        // { name: "phash" as const, type: RenVMType.TypeB32 as const, value: toBase64(pHash) },
                         // The amount of BTC (in SATs) that has be transferred to the gateway
                         // { name: "amount" as const, type: "u64", as const value: amount },
                         // The ERC20 contract address on Ethereum for zBTC

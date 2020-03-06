@@ -14,9 +14,9 @@ import { payloadToShiftInABI } from "./lib/abi";
 import { DEFAULT_SHIFT_FEE, processShiftInParams } from "./lib/processParams";
 import { forwardEvents, RenWeb3Events, Web3Events } from "./lib/promievent";
 import {
-    fixSignature, generateAddress, generateGHash, generatePHash, generateShiftInTxHash,
-    getShifterAddress, ignoreError, randomNonce, renTxHashToBase64, retrieveDeposits, SECONDS,
-    signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
+    fixSignature, generateAddress, generateGHash, generateShiftInTxHash, getShifterAddress,
+    ignoreError, randomNonce, renTxHashToBase64, retrieveDeposits, SECONDS, signatureToString,
+    sleep, toBase64, toBigNumber, UTXO, UTXOInput, withDefaultAccount,
 } from "./lib/utils";
 import { ResponseQueryMintTx } from "./renVM/jsonRPC";
 import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
@@ -247,7 +247,7 @@ export class ShiftInObject {
                         renContract,
                         sendTo,
                         nonce,
-                        generatePHash(contractParams || []),
+                        // generatePHash(contractParams || []),
                         utxo.txid,
                         utxo.output_no.toFixed(),
                         this.network,
@@ -402,7 +402,7 @@ export class Signature {
                 if (last) {
                     params = [
                         ...(contractParams || []).map(value => value.value),
-                        Ox(new BigNumber(this.response.in.amount).toString(16)), // _amount: BigNumber
+                        Ox(new BigNumber(this.response.autogen.amount).toString(16)), // _amount: BigNumber
                         Ox(this.response.autogen.nhash),
                         // Ox(this.response.args.n), // _nHash: string
                         Ox(this.signature), // _sig: string
@@ -484,7 +484,7 @@ export class Signature {
 
         const params = [
             ...(contractParams || []).map(value => value.value),
-            Ox(new BigNumber(this.response.in.amount).toString(16)), // _amount: BigNumber
+            Ox(new BigNumber(this.response.autogen.amount).toString(16)), // _amount: BigNumber
             Ox(this.response.autogen.nhash),
             // Ox(generateNHash(this.response)), // _nHash: string
             Ox(this.signature), // _sig: string

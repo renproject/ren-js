@@ -3,9 +3,7 @@ import { RenVMArg, RenVMInputUTXO, RenVMOutputUTXO, RenVMType } from "@renprojec
 // Minting/Shifting ////////////////////////////////////////////////////////////
 
 export type MintArgsArray = [
-    // RenVMArg<"p", RenVMType.ExtEthCompatPayload>,
-    RenVMArg<"phash", RenVMType.TypeB32>, // base64
-    // Arg<"amount", RenVMType.TypeU64, number>,
+    RenVMArg<"p", RenVMType.ExtEthCompatPayload>,
     RenVMArg<"token", RenVMType.ExtTypeEthCompatAddress>, // base64
     RenVMArg<"to", RenVMType.ExtTypeEthCompatAddress>, // base64
     RenVMArg<"n", RenVMType.TypeB32>, // base64
@@ -14,17 +12,6 @@ export type MintArgsArray = [
 
 export type BurnArgsArray = [
     RenVMArg<"ref", RenVMType.TypeU64>,
-];
-
-export type TxMintReturnedInputs = [
-    RenVMArg<"p", RenVMType.ExtEthCompatPayload>,
-    RenVMArg<"phash", RenVMType.TypeB32>, // base64
-    // RenVMArg<"amount", RenVMType.TypeU64>,
-    RenVMArg<"token", RenVMType.ExtTypeEthCompatAddress>, // base64
-    RenVMArg<"to", RenVMType.ExtTypeEthCompatAddress>, // base64
-    RenVMArg<"n", RenVMType.TypeB32>, // base64
-    RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>,
-    RenVMArg<"amount", RenVMType.TypeU256>,
 ];
 
 export type TxBurnReturnedInputs = [
@@ -43,4 +30,7 @@ export type TxAutogen = [
     RenVMArg<"ghash", RenVMType.TypeB32>, // base 64
     RenVMArg<"nhash", RenVMType.TypeB32>, // base 64
     RenVMArg<"sighash", RenVMType.TypeB32>, // base 64
+    RenVMArg<"phash", RenVMType.TypeB32>, // base64
+    RenVMArg<"amount", RenVMType.TypeU256>,
+    RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>,
 ];

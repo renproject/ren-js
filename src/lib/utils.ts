@@ -184,7 +184,7 @@ export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetai
         throw new Error(`Expected transaction response to have signature`);
     }
 
-    const expectedSighash = generateSighash(response.in.phash, response.in.amount, response.in.to, response.to, response.autogen.nhash, network);
+    const expectedSighash = generateSighash(response.autogen.phash, response.autogen.amount, response.in.to, response.to, response.autogen.nhash, network);
     if (Ox(response.autogen.sighash) !== Ox(expectedSighash)) {
         // tslint:disable-next-line: no-console
         console.warn(`Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${response.autogen.sighash}`);

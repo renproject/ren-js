@@ -1,8 +1,7 @@
 import { RenContract, RenVMArgs, TxStatus } from "@renproject/ren-js-common";
 
 import {
-    BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxMintReturnedInputs,
-    TxResponseOutputs,
+    BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxResponseOutputs,
 } from "./transaction";
 
 export enum RPCMethod {
@@ -174,7 +173,7 @@ export interface ResponseQueryMintTx extends ResponseQueryTx {
     tx: {
         hash: string;
         to: RenContract;
-        in: TxMintReturnedInputs;
+        in: MintArgsArray;
         autogen: TxAutogen;
         out?: TxResponseOutputs;
     };

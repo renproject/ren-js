@@ -2,8 +2,6 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@babel/core": "^7.8.7",
-    "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
     "@bitjson/npm-scripts-info": "^1.0.0",
     "@bitjson/typedoc": "^0.15.0-0",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -18,9 +16,6 @@
     "@types/node-persist": "3.0.0",
     "@types/node-rsa": "1.0.0",
     "@types/underscore": "^1.9.4",
-    "babel-loader": "8.0.6",
-    "babel-plugin-transform-es2015-modules-simple-commonjs": "^0.3.0",
-    "babel-polyfill": "6.26.0",
     "bitgo-utxo-lib": "^1.8.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
@@ -58,15 +53,7 @@
     "uuid": "^7.0.2"
   },
   "workspaces": [
-    "packages/lib/gateway-js/*",
-    "packages/lib/ren-js/*",
+    "packages/lib/*",
     "packages/ui/*"
-  ],
-  "dependencies": {
-    "@renproject/gateway-js": "file:packages/lib/gateway-js/gateway",
-    "@renproject/ren": "file:packages/lib/ren-js/ren",
-    "@renproject/ren-js-common": "file:packages/lib/gateway-js/types",
-    "gateway-example": "file:packages/ui/gateway-example",
-    "gateway.renproject.io": "file:packages/ui/gateway.renproject.io"
-  }
+  ]
 }

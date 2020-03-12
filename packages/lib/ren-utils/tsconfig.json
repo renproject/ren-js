@@ -1,0 +1,46 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "outDir": "build/main",
+        "rootDir": "src",
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "declaration": true,
+        "inlineSourceMap": true,
+        "esModuleInterop": true,
+        "strict": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "traceResolution": false,
+        "listEmittedFiles": false,
+        "listFiles": false,
+        "pretty": true,
+        "lib": [
+            "es2017",
+            "dom"
+        ],
+        "types": [],
+        "typeRoots": [
+            "node_modules/@types",
+            "src/types"
+        ],
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitThis": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictPropertyInitialization": true,
+        "alwaysStrict": true,
+        "strictFunctionTypes": true
+    },
+    "include": [
+        "src/**/*.ts",
+    ],
+    "exclude": [
+        "node_modules/**"
+    ],
+    "compileOnSave": false
+}

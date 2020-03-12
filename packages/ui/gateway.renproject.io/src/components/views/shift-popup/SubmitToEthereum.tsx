@@ -1,9 +1,9 @@
 import * as React from "react";
 
 import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
-import { Tx } from "@renproject/ren-js-common";
-import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
+import { Tx } from "@renproject/interfaces";
 import styled from "styled-components";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txUrl } from "../../../lib/txUrl";
@@ -90,7 +90,7 @@ export const SubmitToEthereum: React.StatelessComponent<{
                         <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
                     </a> :
                     <div className="popup--buttons">
-                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Complete with MetaMask {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
+                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
                     </div>
                 }
             </div>

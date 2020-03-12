@@ -1,4 +1,4 @@
-import { ShiftInStatus, ShiftOutStatus, TxStatus } from "@renproject/ren-js-common";
+import { ShiftInStatus, ShiftOutStatus, TxStatus } from "@renproject/interfaces";
 
 // tslint:disable-next-line: no-any
 export const isPromise = <T>(p: any): p is Promise<T> => {
@@ -29,14 +29,14 @@ export const compareTxStatus = (...statuses: Array<TxStatus | undefined | null>)
         (status: { status: TxStatus | undefined, index: number }) => status.index,
         statuses.map(status => {
             switch (status) {
-                case null: return { status: undefined, index: -1 };
-                case undefined: return { status, index: -1 };
                 case TxStatus.TxStatusNil: return { status, index: 0 };
                 case TxStatus.TxStatusConfirming: return { status, index: 1 };
                 case TxStatus.TxStatusPending: return { status, index: 2 };
                 case TxStatus.TxStatusExecuting: return { status, index: 3 };
                 case TxStatus.TxStatusDone: return { status, index: 4 };
                 case TxStatus.TxStatusReverted: return { status, index: 5 };
+
+                default: return { status: undefined, index: -1 }
             }
         }),
     ).status;
@@ -47,8 +47,6 @@ export const compareShiftStatus = (...statuses: Array<ShiftInStatus | ShiftOutSt
         (status: { status: ShiftInStatus | ShiftOutStatus | undefined, index: number }) => status.index,
         statuses.map(status => {
             switch (status) {
-                case null: return { status: undefined, index: -1 };
-                case undefined: return { status, index: -1 };
                 case ShiftInStatus.Committed: return { status, index: 0 };
                 case ShiftInStatus.Deposited: return { status, index: 1 };
                 case ShiftInStatus.Confirmed: return { status, index: 2 };
@@ -63,6 +61,8 @@ export const compareShiftStatus = (...statuses: Array<ShiftInStatus | ShiftOutSt
                 case ShiftOutStatus.SubmittedToRenVM: return { status, index: 3 };
                 case ShiftOutStatus.ReturnedFromRenVM: return { status, index: 4 };
                 case ShiftOutStatus.NoBurnFound: return { status, index: 5 };
+
+                default: return { status: undefined, index: -1 }
             }
         }),
     ).status;

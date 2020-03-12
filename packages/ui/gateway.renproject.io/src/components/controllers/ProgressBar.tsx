@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ShiftInStatus, ShiftOutStatus } from "@renproject/ren-js-common";
+import { ShiftInStatus, ShiftOutStatus } from "@renproject/interfaces";
 
 import infoIcon from "../../images/icons/info.svg";
 import { connect, ConnectedProps } from "../../state/connect";
@@ -50,7 +50,7 @@ export const ShiftProgress = connect<Props & ConnectedProps<[SDKContainer]>>([SD
                 <ProgressBar
                     className="shift-progress"
                     items={[
-                        { name: "MetaMask" },
+                        { name: "Ethereum" },
                         { name: "RenVM" },
                         { name: "Complete" },
                     ]}
@@ -62,7 +62,7 @@ export const ShiftProgress = connect<Props & ConnectedProps<[SDKContainer]>>([SD
                     items={[
                         { name: "Deposit" },
                         { name: "Confirmations", tooltip: "RenVM waits for 2 confirmations for BTC/BCH and 6 confirmations for ZEC" },
-                        { name: "MetaMask" },
+                        { name: "Ethereum" },
                         { name: "Complete" },
                     ]}
                     progress={progress}

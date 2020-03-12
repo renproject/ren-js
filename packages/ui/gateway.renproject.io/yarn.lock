@@ -2038,9 +2038,9 @@
     react-router-dom "^5.1.2"
     react-select "^3.0.8"
 
-"@renproject/ren-js-common@^0.1.13":
+"@renproject/interfaces@^0.1.13":
   version "0.1.13"
-  resolved "https://registry.yarnpkg.com/@renproject/ren-js-common/-/ren-js-common-0.1.13.tgz#b599627e8d31bc9e0da08f5cc87dd8b88360a337"
+  resolved "https://registry.yarnpkg.com/@renproject/interfaces/-/ren-js-common-0.1.13.tgz#b599627e8d31bc9e0da08f5cc87dd8b88360a337"
   integrity sha512-ppQjKb9Yk5aTXI+wee1ZbshdjEFItmzZQUPU4/npDso5QurmhKA5BNNEKU3ogD4VZC6jQUIlxx+N7gKjWBbtrQ==
   dependencies:
     bignumber.js "^9.0.0"
@@ -2052,7 +2052,7 @@
   integrity sha512-sugfgWhutQNNNX9w8L+fHTV/nc+uX4ioVp0gnAjdnkjKP21kY2u2TT4J1w8vytkEn3jvKYLrRVL1+NCefpL+jA==
   dependencies:
     "@renproject/contracts" "^0.3.35"
-    "@renproject/ren-js-common" "^0.1.13"
+    "@renproject/interfaces" "^0.1.13"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/node" "^13.7.0"

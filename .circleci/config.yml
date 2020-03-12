@@ -1,0 +1,114 @@
+version: 2
+jobs:
+    build:
+        environment:
+            NODE_ENV: development
+        docker:
+            - image: circleci/node:10.16
+        working_directory: ~/renjs/packages/lib/ren
+        steps:
+            - checkout:
+                path: ~/renjs
+
+            - run:
+                name: Start Localnet
+                background: true
+                command: |
+                    sudo apt-get update
+                    sudo apt-get -y upgrade
+                    wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
+                    sudo tar -xvf go1.12.6.linux-amd64.tar.gz
+                    sudo mv go /usr/local
+                    echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
+                    source $BASH_ENV
+                    git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
+                    cd darknode
+                    git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+                    go run cmd/localnet/main.go
+
+            # Download and cache dependencies
+            - restore_cache:
+                keys:
+                    - v1-dependencies-{{ checksum "yarn.lock" }}
+                    # fallback to using the latest cache if no exact match is found
+                    - v1-dependencies-
+
+            - run:
+                name: Install dependencies
+                command: sudo npm install --global yarn && yarn version && yarn install --network-concurrency 1
+                when: always
+
+            - run:
+                name: Install Mocha reporters # just for CircleCI
+                command: yarn add mocha-multi-reporters mocha-junit-reporter
+                when: always
+
+            - save_cache:
+                paths:
+                    - node_modules
+                key: v1-dependencies-{{ checksum "yarn.lock" }}
+
+            - run: mkdir reports
+
+            # Run mocha
+            - run:
+                name: Run Testnet tests
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: NETWORK="testnet" bash ./.circleci/runtest.bash
+                when: always
+
+            - run:
+                name: Run Localnet tests
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: NETWORK="localnet" bash ./.circleci/runtest.bash
+                when: always
+
+            - run:
+                name: Run Devnet tests
+                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                command: NETWORK="devnet" bash ./.circleci/runtest.bash
+                when: always
+
+            # Run eslint
+            - run:
+                name: Run TSLint
+                command: |
+                    yarn run lint:ts --format junit --out ./reports/eslint/eslint.xml
+                when: always
+
+            # Run coverage report for Code Climate
+
+            - run:
+                name: code-coverage
+                command: |
+                    mkdir -p coverage
+                    # nyc report requires that nyc has already been run,
+                    # which creates the .nyc_output folder containing necessary data
+                    ./node_modules/.bin/nyc report --reporter=text-lcov > coverage/lcov.info
+                when: always
+
+            - run:
+                name: Networks
+                command: |
+                    mkdir -p ./reports/networks
+                    node .circleci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
+                    echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
+                when: always
+
+            # Upload results
+
+            - store_test_results:
+                path: reports
+
+            - store_artifacts:
+                path: ./reports/mocha/test-results.xml
+
+            - store_artifacts:
+                path: ./reports/eslint/eslint.xml
+
+            - store_artifacts:
+                path: ./network-status.json
+
+            - store_artifacts: # upload test coverage as artifact
+                path: ./coverage/lcov.info
+                prefix: tests

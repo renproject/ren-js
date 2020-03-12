@@ -2,7 +2,7 @@
     "name": "gateway.renproject.io",
     "version": "1.0.0",
     "private": true,
-    "homepage": "https://gateway-js.herokuapp.com",
+    "homepage": "https://renproject.github.io/gateway.renproject.io",
     "scripts": {
         "lint:unused-exports": "ts-unused-exports ./tsconfig.json",
         "lint:ts": "tslint --project ./ -t stylish --quiet",
@@ -18,9 +18,9 @@
     },
     "dependencies": {
         "@renproject/fonts": "^1.0.1",
+        "@renproject/interfaces": "file:../../lib/ren-interfaces",
         "@renproject/react-components": "^1.0.37",
-        "@renproject/ren": "file:../../lib/ren-js/ren",
-        "@renproject/ren-js-common": "file:../../lib/gateway-js/types",
+        "@renproject/ren": "file:../../lib/ren",
         "@sentry/browser": "^5.13.2",
         "@sentry/core": "^5.13.2",
         "@sentry/integrations": "^5.13.2",

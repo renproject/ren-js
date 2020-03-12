@@ -1,17 +1,15 @@
 import { sleep } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import {
-    Asset, GatewayMessageType, HistoryEvent, RenContract, SendTokenInterface, ShiftInEvent,
-    ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftNonce, ShiftOutEvent, ShiftOutParams,
-    ShiftOutParamsAll, ShiftOutStatus, Tx, TxStatus,
-} from "@renproject/ren-js-common";
-import { UTXO } from "@renproject/ren/build/main/lib/utils";
+    Asset, GatewayMessageType, HistoryEvent, RenContract, SendTokenInterface,
+    SerializableShiftOutParams, ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftNonce,
+    ShiftOutEvent, ShiftOutParams, ShiftOutStatus, Tx, TxStatus,
+} from "@renproject/interfaces";
 import { ShiftInObject } from "@renproject/ren/build/main/shiftIn";
-import { parseRenContract } from "@renproject/ren/build/main/types/assets";
-import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
 import { Container } from "unstated";
 import Web3 from "web3";
-import { TransactionReceipt } from "web3-core";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import { parseRenContract, resolveInToken, UTXO } from "@renproject/utils";
 
 import { getStorageItem, updateStorageTrade } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
@@ -28,13 +26,13 @@ const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum }
 
 const initialState = {
     sdkRenVM: null as null | RenJS,
-    sdkAddress: null as string | null,
-    sdkWeb3: null as Web3 | null,
+    // sdkAddress: null as string | null,
+    // sdkWeb3: null as Web3 | null,
     shift: null as HistoryEvent | null,
 };
 
-export const numberOfConfirmations = (renContract: RenContract, networkDetails: NetworkDetails | undefined) =>
-    (parseRenContract(renContract).asset === Asset.ZEC ? 6 : 2) /
+export const numberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: NetworkDetails | undefined) =>
+    (parseRenContract(resolveInToken(renContract)).asset === Asset.ZEC ? 6 : 2) /
     // Confirmations are halved on devnet
     (networkDetails && networkDetails.name === "devnet" ? 2 : 1);
 
@@ -54,40 +52,41 @@ export class SDKContainer extends Container<typeof initialState> {
         this.uiContainer = uiContainer;
     }
 
-    public connect = async (web3: Web3, address: string | null, network: string): Promise<void> => {
+    public connect = async (network: string): Promise<void> => {
+        // public connect = async (web3: Web3, address: string | null, network: string): Promise<void> => {
         await this.setState({
-            sdkWeb3: web3,
+            // sdkWeb3: web3,
             sdkRenVM: new RenJS(network),
-            sdkAddress: address,
+            // sdkAddress: address,
         });
 
-        const shift = await this.fixShift(this.state.shift, web3);
-        if (shift) {
-            await this.updateShift(shift, { sync: true });
-        }
+        // const shift = await this.fixShift(this.state.shift, web3);
+        // if (shift) {
+        //     await this.updateShift(shift, { sync: true });
+        // }
     }
 
-    public fixShift = async (shift: HistoryEvent | null, web3: Web3) => {
-        if (shift && shift.shiftParams.contractCalls) {
-            for (let i = 0; i < shift.shiftParams.contractCalls.length; i++) {
-                const contractCall = shift.shiftParams.contractCalls[i];
-                if (isFunction(contractCall)) {
-                    try {
-                        shift.shiftParams.contractCalls[i] = await contractCall(web3.currentProvider);
-                    } catch (error) {
-                        _ignoreErr_(error);
-                    }
-                } else if (isPromise(contractCall)) {
-                    try {
-                        shift.shiftParams.contractCalls[i] = await contractCall;
-                    } catch (error) {
-                        _ignoreErr_(error);
-                    }
-                }
-            }
-        }
-        return shift;
-    }
+    // public fixShift = async (shift: HistoryEvent | null, web3: Web3) => {
+    //     if (shift && shift.shiftParams.contractCalls) {
+    //         for (let i = 0; i < shift.shiftParams.contractCalls.length; i++) {
+    //             const contractCall = shift.shiftParams.contractCalls[i];
+    //             if (isFunction(contractCall)) {
+    //                 try {
+    //                     shift.shiftParams.contractCalls[i] = await contractCall(web3.currentProvider);
+    //                 } catch (error) {
+    //                     _ignoreErr_(error);
+    //                 }
+    //             } else if (isPromise(contractCall)) {
+    //                 try {
+    //                     shift.shiftParams.contractCalls[i] = await contractCall;
+    //                 } catch (error) {
+    //                     _ignoreErr_(error);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     return shift;
+    // }
 
     public getShiftStatus = (shift?: HistoryEvent) => {
         shift = shift || this.state.shift || undefined;
@@ -102,7 +101,7 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
         let existingShift: HistoryEvent | Partial<HistoryEvent> = {};
-        if (options && options.sync && shiftIn.shiftParams) {
+        if (options && options.sync && shiftIn.shiftParams && shiftIn.shiftParams.nonce) {
             existingShift = await getStorageItem(renNetwork, shiftIn.shiftParams.nonce) || {};
         }
 
@@ -124,10 +123,10 @@ export class SDKContainer extends Container<typeof initialState> {
             status: compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
         } as HistoryEvent;
 
-        const web3 = this.state.sdkWeb3;
-        if (web3) {
-            shift = (await this.fixShift(shift, web3)) || shift;
-        }
+        // const web3 = this.state.sdkWeb3;
+        // if (web3) {
+        //     shift = (await this.fixShift(shift, web3)) || shift;
+        // }
 
         if (
             shift.status &&
@@ -149,7 +148,7 @@ export class SDKContainer extends Container<typeof initialState> {
             return;
         }
 
-        const sendToken = (this.state.shift.shiftParams as ShiftInParamsAll | ShiftOutParamsAll).sendToken;
+        const sendToken = (this.state.shift.shiftParams as ShiftInParams | ShiftOutParams).sendToken;
         const defaultToken = sendToken && (sendToken.slice(0, 3) as Token);
         const contractCalls = this.state.shift.shiftParams.contractCalls ? Array.from(this.state.shift.shiftParams.contractCalls).map(contractCall => {
             return (isFunction(contractCall) || isPromise(contractCall)) ? contractCall : contractCall.contractParams && contractCall.contractParams.map(param => {
@@ -180,8 +179,9 @@ export class SDKContainer extends Container<typeof initialState> {
     ////////////////////////////////////////////////////////////////////////////
 
     public submitBurnToEthereum = async (retry = false) => {
-        const { sdkAddress: address, sdkWeb3: web3, sdkRenVM: renVM } = this.state;
-        if (!web3 || !renVM || !address) {
+        const { sdkRenVM: renVM } = this.state;
+        // const { sdkAddress: address, sdkWeb3: web3, sdkRenVM: renVM } = this.state;
+        if (!renVM) {
             throw new Error(`Invalid values required for swap`);
         }
         const shift = this.state.shift;
@@ -191,8 +191,12 @@ export class SDKContainer extends Container<typeof initialState> {
         if (shift.shiftIn) {
             throw new Error(`Expected shift-out details but got shift-in`);
         }
+        const { gatewayPopupID } = this.uiContainer.state;
+        if (!gatewayPopupID) {
+            throw new Error(`No gateway popup ID.`);
+        }
 
-        const params: Exclude<ShiftOutParamsAll & SendTokenInterface & ShiftNonce, "web3Provider"> = shift.shiftParams;
+        const params: SerializableShiftOutParams = shift.shiftParams;
 
         // if (retry) {
         //     await this.approveTokenTransfer(shiftID);
@@ -202,24 +206,32 @@ export class SDKContainer extends Container<typeof initialState> {
         let transactionHash = shift.inTx && !retry ? shift.inTx.hash : null;
 
         if (!transactionHash) {
-            const promiEvent = renVM.shiftOut({
-                web3Provider: web3.currentProvider,
-                // tslint:disable-next-line: no-any
-                ...(params as ShiftOutParams),
-            }).readFromEthereum();
 
-            promiEvent.catch((error: Error) => {
-                throw error;
-            });
-            transactionHash = await new Promise<string>((resolve, reject) => promiEvent.on("transactionHash", resolve).catch(reject));
+            const transactionConfig = await renVM.shiftOut({
+                ...params
+            }).createTransaction();
+
+            const { txHash, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+            if (error) {
+                throw new Error(error);
+            }
+
+            if (!txHash) {
+                throw new Error("No txHash returned from Web3");
+            }
+
+            transactionHash = txHash;
+
             await this.updateShift({
-                inTx: EthereumTx(transactionHash),
+                inTx: EthereumTx(txHash),
                 status: ShiftOutStatus.SubmittedToEthereum,
             });
         }
 
-        // Wait for confirmation
-        await this.getReceipt(web3, transactionHash);
+        const { confirmations, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+        if (error) {
+            throw new Error(error);
+        }
 
         await this.updateShift({
             status: ShiftOutStatus.ConfirmedOnEthereum,
@@ -231,18 +243,27 @@ export class SDKContainer extends Container<typeof initialState> {
         //     await this.updateShift({ status: ShiftOutStatus.ConfirmedOnEthereum, renTxHash: null });
         // }
 
-        const { sdkWeb3: web3, sdkRenVM: renVM } = this.state;
-        if (!web3) { throw new Error(`Web3 not initialized`); }
+        const { sdkRenVM: renVM } = this.state;
+        // if (!web3) { throw new Error(`Web3 not initialized`); }
         if (!renVM) { throw new Error(`RenVM not initialized`); }
 
         const shift = this.state.shift;
         if (!shift) { throw new Error("Shift not set"); }
         if (!shift.inTx) { throw new Error(`Invalid values required to submit deposit`); }
 
+        const { gatewayPopupID } = this.uiContainer.state;
+        if (!gatewayPopupID) {
+            throw new Error(`No gateway popup ID.`);
+        }
+
+        const { burnReference, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionBurn, { txHash: shift.inTx.hash });
+        if (error) {
+            throw new Error(error);
+        }
+
         const shiftOutObject = await renVM.shiftOut({
-            web3Provider: web3.currentProvider,
             sendToken: shift.shiftParams.sendToken,
-            ethTxHash: shift.inTx.hash
+            burnReference: burnReference,
         }).readFromEthereum();
 
         const renTxHash = shiftOutObject.renTxHash();
@@ -359,8 +380,7 @@ export class SDKContainer extends Container<typeof initialState> {
     }
 
     public queryShiftStatus = async () => {
-        const { sdkWeb3: web3, sdkRenVM: renVM } = this.state;
-        if (!web3) { throw new Error(`Web3 not initialized`); }
+        const { sdkRenVM: renVM } = this.state;
         if (!renVM) { throw new Error(`RenVM not initialized`); }
 
         const shift = this.state.shift;
@@ -371,52 +391,70 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (shift.shiftIn) {
             return renVM.shiftIn({
+                sendToken: shift.shiftParams.sendToken,
                 renTxHash,
                 contractCalls: [],
             }).queryTx();
         } else {
             return renVM.shiftOut({
+                sendToken: shift.shiftParams.sendToken,
                 renTxHash,
             }).queryTx();
         }
     }
 
     public submitMintToEthereum = async (retry = false) => {
-        const { sdkAddress: address, sdkWeb3: web3 } = this.state;
-        if (!web3 || !address) { throw new Error(`Invalid values required for swap`); }
-
+        const { gatewayPopupID } = this.uiContainer.state;
         const shift = this.state.shift;
         if (!shift) { throw new Error("Shift not set"); }
+        if (!gatewayPopupID) {
+            throw new Error(`No gateway popup ID.`);
+        }
 
         let transactionHash = shift.outTx && !retry ? shift.outTx.hash : null;
-        let receipt: TransactionReceipt;
+        // let receipt: TransactionReceipt;
 
         if (!transactionHash) {
 
-            [receipt, transactionHash] = await new Promise<[TransactionReceipt, string]>(async (resolve, reject) => {
+            const transactionConfig = (await this.submitMintToRenVM()).createTransaction();
 
-                const promiEvent = (await this.submitMintToRenVM()).submitToEthereum(web3.currentProvider);
-                promiEvent.catch((error) => reject(error));
+            const { txHash, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+            if (error) {
+                console.error(error);
+                throw new Error(error);
+            }
 
-                const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent
-                    .on("transactionHash", resolveTx).catch(rejectTx));
+            if (!txHash) {
+                throw new Error("No txHash returned from Web3");
+            }
 
-                // Update shift in store.
-                await this.updateShift({
-                    status: ShiftInStatus.SubmittedToEthereum,
-                    outTx: EthereumTx(txHash),
-                });
+            // const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent
+            //     .on("transactionHash", resolveTx).catch(rejectTx));
 
-                // tslint:disable-next-line: no-any
-                promiEvent.once("confirmation", (_confirmations: number, newReceipt: any) => { resolve([newReceipt, txHash]); });
+            // Update shift in store.
+            await this.updateShift({
+                status: ShiftInStatus.SubmittedToEthereum,
+                outTx: EthereumTx(txHash),
             });
-        } else {
-            receipt = (await this.getReceipt(web3, transactionHash)) as TransactionReceipt;
+
+            transactionHash = txHash;
+
+            // tslint:disable-next-line: no-any
+            // promiEvent.once("confirmation", (_confirmations: number, newReceipt: any) => { resolve([newReceipt, txHash]); });
+            // });
+            // } else {
+            // receipt = (await this.getReceipt(web3, transactionHash)) as TransactionReceipt;
         }
 
-        // tslint:disable-next-line: no-any
-        if ((receipt as any).status === 0 || receipt.status === false || (receipt as any).status === "0x0") {
-            throw new Error(`Transaction ${transactionHash} was reverted.`);
+        // // tslint:disable-next-line: no-any
+        // if ((receipt as any).status === 0 || receipt.status === false || (receipt as any).status === "0x0") {
+        //     throw new Error(`Transaction ${transactionHash} was reverted.`);
+        // }
+
+        const { confirmations, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+        if (error) {
+            console.error(error);
+            throw new Error(error);
         }
 
         // Update shift in store.

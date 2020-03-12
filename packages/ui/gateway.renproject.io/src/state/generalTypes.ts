@@ -1,10 +1,10 @@
 import RenJS from "@renproject/ren";
-import { Chain } from "@renproject/ren-js-common";
-import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
+import { Chain } from "@renproject/interfaces";
 import { isMainnetAddress, isTestnetAddress } from "bchaddrjs";
 import { Map } from "immutable";
 import { validate } from "wallet-address-validator";
 import Web3 from "web3";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 
 import { ERC20Detailed } from "../lib/contracts/ERC20Detailed";
 

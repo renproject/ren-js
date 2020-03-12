@@ -2,25 +2,21 @@ import * as React from "react";
 
 import RenJS from "@renproject/ren";
 import {
-    GatewayMessage, GatewayMessageType, GatewayParams, HistoryEvent, Ox, RenNetwork,
-    SendTokenInterface, ShiftInEvent, ShiftInParams, ShiftInParamsAll, ShiftInStatus, ShiftOutEvent,
-    ShiftOutParams, ShiftOutParamsAll, ShiftOutStatus, sleep, strip0x, UnmarshalledTx,
-} from "@renproject/ren-js-common";
-import {
-    processShiftInParams, processShiftOutParams,
-} from "@renproject/ren/build/main/lib/processParams";
+    GatewayMessage, GatewayMessageType, HistoryEvent, Ox, RenNetwork, SendTokenInterface,
+    SerializableShiftParams, ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftOutEvent,
+    ShiftOutParams, ShiftOutStatus, sleep, strip0x, UnmarshalledTx,
+} from "@renproject/interfaces";
+import { processShiftInParams, processShiftOutParams } from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
-import { getWeb3 } from "../../lib/getWeb3";
-import { acknowledgeMessage, postMessageToClient } from "../../lib/postMessage";
+import { _acknowledgeMessage, _addListener, postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { Footer } from "../views/Footer";
-import { LoggedOutPopup } from "../views/LoggedOutPopup";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { OpeningShift } from "./OpeningShift";
 import { ShiftProgress } from "./ProgressBar";
@@ -75,7 +71,10 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 retries++;
                 await sleep(100);
             }
-            await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.shiftParams.nonce);
+            if (sdkContainer.state.shift.shiftParams.nonce) {
+                await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.shiftParams.nonce);
+                // TODO: Handle no nonce.
+            }
             if (!fromClient && uiContainer.state.gatewayPopupID) {
                 await sdkContainer.updateShift({ returned: true });
                 postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
@@ -107,6 +106,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         // }, [uiContainer.state.gatewayPopupID]);
 
         React.useEffect(() => {
+
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
             const queryShiftID = queryParams.id;
             uiContainer.handleShift(queryShiftID).catch(console.error);
@@ -115,14 +115,14 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
 
             // tslint:disable-next-line: no-any
-            window.onmessage = (e: { data: GatewayMessage<any> }) => {
+            _addListener((e: { data: GatewayMessage<any> }) => {
                 const message = e.data;
                 if (message && message.from === "ren" && message.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
                         switch (message.type) {
                             case GatewayMessageType.Shift:
-                                acknowledgeMessage(message);
-                                const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: GatewayParams } = (message as GatewayMessage<GatewayMessageType.Shift>).payload;
+                                _acknowledgeMessage(message);
+                                const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: SerializableShiftParams | ShiftInEvent | ShiftOutEvent } = (message as GatewayMessage<GatewayMessageType.Shift>).payload;
                                 await (alreadyPaused ? pause() : resume());
                                 const shiftID = message.frameID;
                                 const time = Date.now() / 1000;
@@ -139,8 +139,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 } else {
                                     historyEvent = undefined;
                                     shiftParams = {
-                                        ...(shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)),
-                                        nonce: (shiftParamsIn as (ShiftOutParamsAll & ShiftInParamsAll & SendTokenInterface)).nonce || randomID,
+                                        ...(shiftParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)),
+                                        nonce: (shiftParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)).nonce || randomID,
                                     };
                                 }
 
@@ -164,6 +164,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     };
                                 }
 
+
                                 historyEvent = {
                                     ...shiftDetails,
                                     id: shiftID,
@@ -180,84 +181,84 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 break;
                             case GatewayMessageType.Pause:
-                                acknowledgeMessage(message);
+                                _acknowledgeMessage(message);
                                 pause(true).catch(console.error);
 
                                 break;
                             case GatewayMessageType.Cancel:
-                                acknowledgeMessage(message);
+                                _acknowledgeMessage(message);
                                 cancelShift(true).catch(console.error);
                                 break;
                             case GatewayMessageType.Resume:
-                                acknowledgeMessage(message);
+                                _acknowledgeMessage(message);
                                 resume(true).catch(console.error);
                                 break;
                             case GatewayMessageType.GetTrades:
-                                acknowledgeMessage(message);
+                                _acknowledgeMessage(message);
                                 postMessageToClient(window, message.frameID, GatewayMessageType.GetTrades, await getStorage(urlRenNetwork));
                                 break;
                             case GatewayMessageType.GetStatus:
-                                acknowledgeMessage(message, sdkContainer.getShiftStatus());
+                                _acknowledgeMessage(message, sdkContainer.getShiftStatus());
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't
                                 // know how to handle it, but we don't want
                                 // the parent window to keep re-sending it.
-                                acknowledgeMessage(message);
+                                _acknowledgeMessage(message);
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
-            };
+            });
             postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {});
         }, []);
 
-        const login = React.useCallback(async () => {
-            const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-            const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
-            uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
+        // const login = React.useCallback(async () => {
+        //     const queryParams = parseLocation(location.search.replace(/^\?/, ""));
+        //     const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
+        //     uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
 
-            let web3 = uiContainer.state.web3;
-            try {
-                web3 = await getWeb3();
-            } catch (error) {
-                // ignore error
-                return;
-            }
+        //     // const πNetworkID = web3.eth.net.getId();
+        //     // const πAddresses = web3.eth.getAccounts();
 
-            const πNetworkID = web3.eth.net.getId();
-            const πAddresses = web3.eth.getAccounts();
+        //     // const networkID = await πNetworkID;
+        //     const expectedNetworkID = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.networkID;
+        //     const expectedNetwork = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.chainLabel;
+        //     if (networkID !== expectedNetworkID) {
+        //         await uiContainer.setState({ wrongNetwork: networkID, expectedNetwork });
+        //         return;
+        //     }
+        //     // const addresses = await πAddresses;
+        //     // const address = addresses.length > 0 ? addresses[0] : null;
 
-            const networkID = await πNetworkID;
-            const expectedNetworkID = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.networkID;
-            const expectedNetwork = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.chainLabel;
-            if (networkID !== expectedNetworkID) {
-                await uiContainer.setState({ wrongNetwork: networkID, expectedNetwork });
-                return;
-            }
-            const addresses = await πAddresses;
-            const address = addresses.length > 0 ? addresses[0] : null;
+        //     await Promise.all([
+        //         uiContainer.connect(),
+        //         sdkContainer.connect(urlRenNetwork),
+        //     ]);
 
-            await Promise.all([
-                uiContainer.connect(web3, address),
-                sdkContainer.connect(web3, address, urlRenNetwork),
-            ]);
-
-        }, []);
+        // }, []);
 
         // useEffect replaces `componentDidMount` and `componentDidUpdate`.
         // To limit it to running once, we use the initialized hook.
-        const [initialized, setInitialized] = React.useState(false);
+        // const [initialized, setInitialized] = React.useState(false);
+        // React.useEffect(() => {
+        //     if (!initialized) {
+        //         setInitialized(true);
+
+        //         // Start loops to update prices and balances
+        //         // setInterval(() => uiContainer.lookForLogout(), 1 * 1000);
+        //         // login().catch((error) => { setInitialized(false); _catchInteractionErr_(error, "Error in App: login"); });
+        //     }
+        // }, [initialized, login, uiContainer]);
+
         React.useEffect(() => {
-            if (!initialized) {
-                setInitialized(true);
+            const queryParams = parseLocation(location.search.replace(/^\?/, ""));
+            const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
+            uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
+            uiContainer.connect();
+            sdkContainer.connect(urlRenNetwork);
+        }, []);
 
-                // Start loops to update prices and balances
-                setInterval(() => uiContainer.lookForLogout(), 1 * 1000);
-                login().catch((error) => { setInitialized(false); _catchInteractionErr_(error, "Error in App: login"); });
-            }
-        }, [initialized, login, uiContainer]);
-
-        const { loggedOut, paused, renNetwork } = uiContainer.state;
+        const { paused, renNetwork } = uiContainer.state;
         const { shift } = sdkContainer.state;
 
         return <main className={paused ? "paused" : ""} onClick={paused ? resumeOnClick : undefined}>
@@ -274,10 +275,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 }
             </div> : <></>}
             <div className="main">
-                {loggedOut && !paused ?
-                    <ErrorBoundary><LoggedOutPopup oldAccount={loggedOut} /></ErrorBoundary> :
-                    shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>
-                }
+
+                {shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>}
                 {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
                 {!paused && shift ? <ShiftProgress /> : <></>}
             </div>

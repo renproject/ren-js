@@ -2,9 +2,8 @@ import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
 import {
-    DetailedContractCall, GatewayMessageType, GatewayShiftInParamsExtra, ShiftInEvent,
-    ShiftInStatus, ShiftOutEvent, ShiftOutStatus,
-} from "@renproject/ren-js-common";
+    GatewayMessageType, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus,
+} from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
@@ -144,9 +143,8 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
             ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
-            const shiftInParamsExtra = shiftParams as unknown as GatewayShiftInParamsExtra;
-            const suggestedAmount = shiftInParamsExtra.suggestedAmount ? new BigNumber(
-                BigNumber.isBigNumber(shiftInParamsExtra.suggestedAmount) ? shiftInParamsExtra.suggestedAmount : shiftInParamsExtra.suggestedAmount.toString()
+            const suggestedAmount = shiftParams.suggestedAmount ? new BigNumber(
+                BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
             ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
             const amount = requiredAmount || suggestedAmount;
@@ -284,7 +282,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 }
             }
 
-            const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls.length - 1] as unknown as DetailedContractCall).sendTo)) || "";
+            const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls.length - 1]).sendTo)) || "";
 
             return <>
                 {!paused ? <div className="popup--body--details">

@@ -7,17 +7,17 @@ import {
 const randomID = () => String(Math.random()).slice(2);
 
 // tslint:disable-next-line: no-any
-export const _addListener = (listener: (e: { readonly data: GatewayMessage<any> }) => void) => {
+export const addMessageListener = (listener: (e: { readonly data: GatewayMessage<any> }) => void) => {
     window.addEventListener("message", listener);
-}
+};
 
 // tslint:disable-next-line: no-any
-export const _removeListener = (listener: (e: { readonly data: GatewayMessage<any> }) => void) => {
+export const removeMessageListener = (listener: (e: { readonly data: GatewayMessage<any> }) => void) => {
     window.removeEventListener("message", listener);
-}
+};
 
 // TODO: Use same code as `gateway`
-export const postMessageToClient = <Type extends GatewayMessageType>(window: Window, frameID: string, type: Type, payload: GatewayMessagePayload<Type>) => new Promise<GatewayMessageResponse<Type>>(async (resolve) => {
+export const postMessageToClient = async <Type extends GatewayMessageType>(window: Window, frameID: string, type: Type, payload: GatewayMessagePayload<Type>) => new Promise<GatewayMessageResponse<Type>>(async (resolve) => {
     const messageID = randomID();
     const message: GatewayMessage<Type> = { from: "ren", type, frameID, payload, messageID };
 
@@ -27,7 +27,7 @@ export const postMessageToClient = <Type extends GatewayMessageType>(window: Win
     let acknowledged = false;
     const removeListener = () => {
         acknowledged = true;
-        _removeListener(listener);
+        removeMessageListener(listener);
     };
 
     // tslint:disable-next-line: no-any
@@ -38,7 +38,7 @@ export const postMessageToClient = <Type extends GatewayMessageType>(window: Win
         }
     };
 
-    _addListener(listener);
+    addMessageListener(listener);
 
     let count = 0;
 
@@ -61,7 +61,7 @@ export const postMessageToClient = <Type extends GatewayMessageType>(window: Win
 });
 
 // tslint:disable-next-line: no-any
-export const _acknowledgeMessage = <Type extends GatewayMessageType>(message: GatewayMessage<Type>, payload?: GatewayMessageResponse<Type>) => {
+export const acknowledgeMessage = <Type extends GatewayMessageType>(message: GatewayMessage<Type>, payload?: GatewayMessageResponse<Type>) => {
     if (message.type === GatewayMessageType.Acknowledgement) {
         return;
     }

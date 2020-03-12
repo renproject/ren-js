@@ -5,7 +5,7 @@
         "tslint-microsoft-contrib/latest"
     ],
     "rulesDirectory": [
-        "node_modules/tslint-microsoft-contrib"
+        "../../../node_modules/tslint-microsoft-contrib"
     ],
     "linterOptions": {
         "exclude": [

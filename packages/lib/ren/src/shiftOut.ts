@@ -2,8 +2,8 @@ import {
     newPromiEvent, Ox, PromiEvent, ShiftOutParams, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/interfaces";
 import {
-    BURN_TOPIC, extractBurnReference, generateShiftOutTxHash, ignoreError, processShiftOutParams,
-    renTxHashToBase64, resolveOutToken, waitForReceipt, withDefaultAccount,
+    extractBurnReference, generateShiftOutTxHash, ignoreError, processShiftOutParams,
+    renTxHashToBase64, resolveOutToken, withDefaultAccount,
 } from "@renproject/utils";
 import { payloadToABI, payloadToShiftInABI } from "@renproject/utils/build/main/lib/abi";
 import {

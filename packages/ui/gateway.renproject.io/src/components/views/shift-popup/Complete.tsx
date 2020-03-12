@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { TokenIcon } from "@renproject/react-components";
 import { Chain, Tx } from "@renproject/interfaces";
+import { TokenIcon } from "@renproject/react-components";
 import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 
 import { txUrl } from "../../../lib/txUrl";

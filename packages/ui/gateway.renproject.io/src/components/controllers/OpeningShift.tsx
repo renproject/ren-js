@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { TokenIcon } from "@renproject/react-components";
 import {
     GatewayMessageType, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus,
 } from "@renproject/interfaces";
+import { TokenIcon } from "@renproject/react-components";
 import BigNumber from "bignumber.js";
 import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
@@ -109,7 +109,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             setReturned(true);
             if (uiContainer.state.gatewayPopupID) {
                 await sdkContainer.updateShift({ returned: true });
-                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Error, { message: `No token burn found in transaction.` });
+                await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Error, { message: `No token burn found in transaction.` });
             }
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onNoBurnFound > resetTrade"));
         };

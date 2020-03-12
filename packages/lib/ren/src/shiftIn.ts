@@ -1,6 +1,5 @@
 import {
-    newPromiEvent, Ox, PromiEvent, RenContract, ShiftInParams, strip0x, TxStatus,
-    UnmarshalledMintTx,
+    newPromiEvent, Ox, PromiEvent, ShiftInParams, strip0x, TxStatus, UnmarshalledMintTx,
 } from "@renproject/interfaces";
 import {
     DEFAULT_SHIFT_FEE, fixSignature, generateAddress, generateGHash, generateShiftInTxHash,
@@ -32,7 +31,6 @@ export class ShiftInObject {
     private readonly renVMNetwork: ShifterNetwork;
     private readonly params: ShiftInParams;
     private renVMResponse: UnmarshalledMintTx | undefined;
-    private readonly web3: Web3 | undefined;
 
     public thirdPartyTransaction: string | undefined;
 
@@ -364,6 +362,7 @@ export class ShiftInObject {
 
                 const emitConfirmation = async () => {
                     const currentBlock = await web3.eth.getBlockNumber();
+                    // tslint:disable-next-line: no-any
                     promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt as any);
                 };
 

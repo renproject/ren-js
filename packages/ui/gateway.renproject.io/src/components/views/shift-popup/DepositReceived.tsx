@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { Loading, TokenIcon } from "@renproject/react-components";
 import { TxStatus } from "@renproject/interfaces";
+import { Loading, TokenIcon } from "@renproject/react-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Token } from "../../../state/generalTypes";

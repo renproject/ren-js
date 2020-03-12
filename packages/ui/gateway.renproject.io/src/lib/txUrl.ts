@@ -1,5 +1,5 @@
-import RenJS from "@renproject/ren";
 import { Tx } from "@renproject/interfaces";
+import RenJS from "@renproject/ren";
 import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 
 export const txUrl = (tx: Tx | null, network: NetworkDetails): string => {

@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
 import { Tx } from "@renproject/interfaces";
-import styled from "styled-components";
+import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
 import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txUrl } from "../../../lib/txUrl";

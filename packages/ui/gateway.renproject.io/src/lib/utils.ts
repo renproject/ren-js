@@ -36,7 +36,7 @@ export const compareTxStatus = (...statuses: Array<TxStatus | undefined | null>)
                 case TxStatus.TxStatusDone: return { status, index: 4 };
                 case TxStatus.TxStatusReverted: return { status, index: 5 };
 
-                default: return { status: undefined, index: -1 }
+                default: return { status: undefined, index: -1 };
             }
         }),
     ).status;
@@ -62,7 +62,7 @@ export const compareShiftStatus = (...statuses: Array<ShiftInStatus | ShiftOutSt
                 case ShiftOutStatus.ReturnedFromRenVM: return { status, index: 4 };
                 case ShiftOutStatus.NoBurnFound: return { status, index: 5 };
 
-                default: return { status: undefined, index: -1 }
+                default: return { status: undefined, index: -1 };
             }
         }),
     ).status;

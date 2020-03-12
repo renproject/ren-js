@@ -39,6 +39,7 @@ const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
 ): string => {
     try {
+        // tslint:disable-next-line: no-any
         return decodeBytes(assertArgumentType<ArgType>(name as any, type as any, arg as any));
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${arg.value} (type ${typeof arg.value}): ${error.message}`;
@@ -52,6 +53,7 @@ const assertAndDecodeNumber = <ArgType>(
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
 ): BigNumber => {
     try {
+        // tslint:disable-next-line: no-any
         return decodeNumber(assertArgumentType<ArgType>(name as any, type as any, arg as any));
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${arg.value} (type ${typeof arg.value}): ${error.message}`;
@@ -65,6 +67,7 @@ const assertAndDecodeAddress = <ArgType extends RenVMArg<string, RenVMType>>(
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? Value extends string ? RenVMArg<Name, Type, Value> : never : never
 ): string => {
     try {
+        // tslint:disable-next-line: no-any
         return Ox(assertArgumentType<ArgType>(name as any, type as any, arg as any));
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${arg.value} (type ${typeof arg.value}): ${error.message}`;

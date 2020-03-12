@@ -1,15 +1,12 @@
-import { sleep } from "@renproject/react-components";
-import RenJS from "@renproject/ren";
 import {
-    Asset, GatewayMessageType, HistoryEvent, RenContract, SendTokenInterface,
-    SerializableShiftOutParams, ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftNonce,
-    ShiftOutEvent, ShiftOutParams, ShiftOutStatus, Tx, TxStatus,
+    Asset, GatewayMessageType, HistoryEvent, RenContract, SerializableShiftOutParams, ShiftInEvent,
+    ShiftInParams, ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus, Tx, TxStatus,
 } from "@renproject/interfaces";
+import RenJS from "@renproject/ren";
 import { ShiftInObject } from "@renproject/ren/build/main/shiftIn";
-import { Container } from "unstated";
-import Web3 from "web3";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import { parseRenContract, resolveInToken, UTXO } from "@renproject/utils";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import { Container } from "unstated";
 
 import { getStorageItem, updateStorageTrade } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
@@ -110,7 +107,7 @@ export class SDKContainer extends Container<typeof initialState> {
         };
 
         // tslint:disable-next-line: no-object-literal-type-assertion
-        let shift = {
+        const shift = {
             ...existingShift,
             ...this.state.shift,
             ...shiftIn,
@@ -133,7 +130,7 @@ export class SDKContainer extends Container<typeof initialState> {
             (!this.state.shift || (this.state.shift.status !== shift.status)) &&
             this.uiContainer.state.gatewayPopupID
         ) {
-            postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getShiftStatus(shift));
+            await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getShiftStatus(shift));
         }
         try {
             await updateStorageTrade(renNetwork, shift);
@@ -207,13 +204,13 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (!transactionHash) {
 
-            const transactionConfig = await renVM.shiftOut({
+            const transactionConfig = renVM.shiftOut({
                 ...params
             }).createTransaction();
 
-            const { txHash, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
-            if (error) {
-                throw new Error(error);
+            const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+            if (sendTransactionError) {
+                throw new Error(sendTransactionError);
             }
 
             if (!txHash) {
@@ -228,7 +225,7 @@ export class SDKContainer extends Container<typeof initialState> {
             });
         }
 
-        const { confirmations, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+        const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
         if (error) {
             throw new Error(error);
         }
@@ -256,21 +253,21 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error(`No gateway popup ID.`);
         }
 
-        const { burnReference, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionBurn, { txHash: shift.inTx.hash });
-        if (error) {
-            throw new Error(error);
+        const { burnReference, error: getTransactionBurnError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionBurn, { txHash: shift.inTx.hash });
+        if (getTransactionBurnError) {
+            throw new Error(getTransactionBurnError);
         }
 
         const shiftOutObject = await renVM.shiftOut({
             sendToken: shift.shiftParams.sendToken,
-            burnReference: burnReference,
+            burnReference,
         }).readFromEthereum();
 
         const renTxHash = shiftOutObject.renTxHash();
         this.updateShift({
             renTxHash,
             status: ShiftOutStatus.SubmittedToRenVM,
-        }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > renTxHash > updateShift"));
+        }).catch((updateShiftError) => _catchBackgroundErr_(updateShiftError, "Error in sdkContainer: submitBurnToRenVM > renTxHash > updateShift"));
 
         const response = await shiftOutObject.submitToRenVM()
             .on("status", (renVMStatus: TxStatus) => {
@@ -418,10 +415,9 @@ export class SDKContainer extends Container<typeof initialState> {
 
             const transactionConfig = (await this.submitMintToRenVM()).createTransaction();
 
-            const { txHash, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
-            if (error) {
-                console.error(error);
-                throw new Error(error);
+            const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+            if (sendTransactionError) {
+                throw new Error(sendTransactionError);
             }
 
             if (!txHash) {
@@ -451,10 +447,9 @@ export class SDKContainer extends Container<typeof initialState> {
         //     throw new Error(`Transaction ${transactionHash} was reverted.`);
         // }
 
-        const { confirmations, error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
-        if (error) {
-            console.error(error);
-            throw new Error(error);
+        const { error: getTransactionStatusError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+        if (getTransactionStatusError) {
+            throw new Error(getTransactionStatusError);
         }
 
         // Update shift in store.
@@ -466,23 +461,22 @@ export class SDKContainer extends Container<typeof initialState> {
         return;
     }
 
-    private readonly getReceipt = async (web3: Web3, transactionHash: string) => {
-        // Wait for confirmation
-        let receipt;
-        while (!receipt || !receipt.blockHash) {
-            receipt = await web3.eth.getTransactionReceipt(transactionHash);
-            if (receipt && receipt.blockHash) {
-                break;
-            }
-            await sleep(3 * 1000);
-        }
+    // private readonly getReceipt = async (web3: Web3, transactionHash: string) => {
+    //     // Wait for confirmation
+    //     let receipt;
+    //     while (!receipt || !receipt.blockHash) {
+    //         receipt = await web3.eth.getTransactionReceipt(transactionHash);
+    //         if (receipt && receipt.blockHash) {
+    //             break;
+    //         }
+    //         await sleep(3 * 1000);
+    //     }
 
-        // Status might be undefined - so check against `false` explicitly.
-        if (receipt.status === false) {
-            throw new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`);
-        }
+    //     // Status might be undefined - so check against `false` explicitly.
+    //     if (receipt.status === false) {
+    //         throw new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`);
+    //     }
 
-        return receipt;
-    }
-
+    //     return receipt;
+    // }
 }

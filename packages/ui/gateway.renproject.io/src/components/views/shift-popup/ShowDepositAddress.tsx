@@ -1,13 +1,13 @@
 import * as React from "react";
 
-import { TokenIcon } from "@renproject/react-components";
 import { ShiftInEvent } from "@renproject/interfaces";
+import { TokenIcon } from "@renproject/react-components";
+import { UTXO } from "@renproject/utils";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
-import { resolveInToken, UTXO } from "@renproject/utils";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 
 import infoIcon from "../../../images/icons/info.svg";
 import { ReactComponent as QR } from "../../../images/qr.svg";

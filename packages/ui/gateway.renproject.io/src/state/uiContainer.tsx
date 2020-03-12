@@ -1,9 +1,6 @@
+import { UTXO } from "@renproject/utils";
 import { OrderedMap } from "immutable";
 import { Container } from "unstated";
-import Web3 from "web3";
-import { UTXO } from "@renproject/utils";
-
-import { ETHEREUM_NODE } from "../lib/environmentVariables";
 
 const initialState = {
     // web3: new Web3(ETHEREUM_NODE),

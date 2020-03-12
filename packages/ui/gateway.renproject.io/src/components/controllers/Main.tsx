@@ -1,18 +1,18 @@
 import * as React from "react";
 
-import RenJS from "@renproject/ren";
 import {
     GatewayMessage, GatewayMessageType, HistoryEvent, Ox, RenNetwork, SendTokenInterface,
     SerializableShiftParams, ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftOutEvent,
     ShiftOutParams, ShiftOutStatus, sleep, strip0x, UnmarshalledTx,
 } from "@renproject/interfaces";
+import RenJS from "@renproject/ren";
 import { processShiftInParams, processShiftOutParams } from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
-import { _acknowledgeMessage, _addListener, postMessageToClient } from "../../lib/postMessage";
+import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
@@ -31,15 +31,15 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const pause = React.useCallback(async (fromClient?: boolean) => {
             if (!fromClient) {
-                const sendMsg = () => {
+                const sendMsg = async () => {
                     if (uiContainer.state.gatewayPopupID) {
-                        postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Pause, {});
+                        await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Pause, {});
                     }
                 };
                 // The client send a pause or resume reminder message every
                 // second, so there's a change that the user clicks pause or
                 // resume just as the client sends the reminder.
-                sendMsg();
+                await sendMsg();
                 setTimeout(sendMsg, 100);
             }
             return uiContainer.pause();
@@ -49,13 +49,13 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const resume = React.useCallback(async (fromClient?: boolean) => {
             if (!fromClient) {
-                const sendMsg = () => {
+                const sendMsg = async () => {
                     if (uiContainer.state.gatewayPopupID) {
-                        postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Resume, {});
+                        await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Resume, {});
                     }
                 };
                 // See above on pausing.
-                sendMsg();
+                await sendMsg();
                 setTimeout(sendMsg, 100);
             }
             return uiContainer.resume();
@@ -77,7 +77,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             }
             if (!fromClient && uiContainer.state.gatewayPopupID) {
                 await sdkContainer.updateShift({ returned: true });
-                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
+                await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
             }
         }, [uiContainer, sdkContainer]);
 
@@ -92,7 +92,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             }
             if (uiContainer.state.gatewayPopupID) {
                 await sdkContainer.updateShift({ returned: true });
-                postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
+                await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
             }
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
         }, [uiContainer]);
@@ -115,13 +115,13 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
 
             // tslint:disable-next-line: no-any
-            _addListener((e: { data: GatewayMessage<any> }) => {
+            addMessageListener((e: { data: GatewayMessage<any> }) => {
                 const message = e.data;
                 if (message && message.from === "ren" && message.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
                         switch (message.type) {
                             case GatewayMessageType.Shift:
-                                _acknowledgeMessage(message);
+                                acknowledgeMessage(message);
                                 const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: SerializableShiftParams | ShiftInEvent | ShiftOutEvent } = (message as GatewayMessage<GatewayMessageType.Shift>).payload;
                                 await (alreadyPaused ? pause() : resume());
                                 const shiftID = message.frameID;
@@ -181,35 +181,35 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 break;
                             case GatewayMessageType.Pause:
-                                _acknowledgeMessage(message);
+                                acknowledgeMessage(message);
                                 pause(true).catch(console.error);
 
                                 break;
                             case GatewayMessageType.Cancel:
-                                _acknowledgeMessage(message);
+                                acknowledgeMessage(message);
                                 cancelShift(true).catch(console.error);
                                 break;
                             case GatewayMessageType.Resume:
-                                _acknowledgeMessage(message);
+                                acknowledgeMessage(message);
                                 resume(true).catch(console.error);
                                 break;
                             case GatewayMessageType.GetTrades:
-                                _acknowledgeMessage(message);
-                                postMessageToClient(window, message.frameID, GatewayMessageType.GetTrades, await getStorage(urlRenNetwork));
+                                acknowledgeMessage(message);
+                                await postMessageToClient(window, message.frameID, GatewayMessageType.GetTrades, await getStorage(urlRenNetwork));
                                 break;
                             case GatewayMessageType.GetStatus:
-                                _acknowledgeMessage(message, sdkContainer.getShiftStatus());
+                                acknowledgeMessage(message, sdkContainer.getShiftStatus());
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't
                                 // know how to handle it, but we don't want
                                 // the parent window to keep re-sending it.
-                                _acknowledgeMessage(message);
+                                acknowledgeMessage(message);
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
             });
-            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {});
+            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {}).catch(console.error);
         }, []);
 
         // const login = React.useCallback(async () => {
@@ -254,8 +254,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
             const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
-            uiContainer.connect();
-            sdkContainer.connect(urlRenNetwork);
+            uiContainer.connect().catch(console.error);
+            sdkContainer.connect(urlRenNetwork).catch(console.error);
         }, []);
 
         const { paused, renNetwork } = uiContainer.state;

@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { useEphemeralKey, useWeb3Network } from "@openzeppelin/network/react";
-import GatewayJS, { ShiftInStatus, ShiftOutStatus } from "@renproject/gateway";
+import GatewayJS from "@renproject/gateway";
 import { parse } from "qs";
 import { HttpProvider } from "web3-providers";
 

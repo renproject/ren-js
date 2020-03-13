@@ -71,19 +71,19 @@ jobs:
             - run:
                 name: Run Testnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: NETWORK="testnet" bash ./.circleci/runtest.bash
+                command: NETWORK="testnet" bash ./test/ci/runtest.bash
                 when: always
 
             - run:
                 name: Run Localnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: NETWORK="localnet" bash ./.circleci/runtest.bash
+                command: NETWORK="localnet" bash ./test/ci/runtest.bash
                 when: always
 
             - run:
                 name: Run Devnet tests
                 # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: NETWORK="devnet" bash ./.circleci/runtest.bash
+                command: NETWORK="devnet" bash ./test/ci/runtest.bash
                 when: always
 
             # Run eslint
@@ -101,14 +101,14 @@ jobs:
                     mkdir -p coverage
                     # nyc report requires that nyc has already been run,
                     # which creates the .nyc_output folder containing necessary data
-                    ./node_modules/.bin/nyc report --reporter=text-lcov > coverage/lcov.info
+                    yarn nyc report --reporter=text-lcov > coverage/lcov.info
                 when: always
 
             - run:
                 name: Networks
                 command: |
                     mkdir -p ./reports/networks
-                    node .circleci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
+                    node ./test/ci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
                     echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
                 when: always
 

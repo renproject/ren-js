@@ -34,8 +34,25 @@ jobs:
                     - v1-dependencies-
 
             - run:
+                name: Install yarn
+                command: sudo npm install --global yarn && yarn version
+                when: always
+
+            - run:
+                name: Lerna - install dependencies
+                path: ~/renjs
+                command: yarn install --network-concurrency 1
+                when: always
+            
+            - run:
+                name: Lerna - build
+                path: ~/renjs
+                command: lerna run --scope @renproject/* build
+                when: always
+
+            - run:
                 name: Install dependencies
-                command: sudo npm install --global yarn && yarn version && yarn install --network-concurrency 1
+                command: yarn install --network-concurrency 1
                 when: always
 
             - run:

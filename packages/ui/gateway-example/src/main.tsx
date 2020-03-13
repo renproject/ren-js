@@ -11,14 +11,17 @@ interface InjectedEthereum extends HttpProvider {
     enable: () => Promise<void>;
 }
 
+// tslint:disable-next-line: no-any
+type Web3 = any;
+
 declare global {
     interface Window {
         ethereum?: InjectedEthereum;
-        web3?: any;
+        web3?: Web3;
     }
 }
 
-const startShiftIn = async (web3: any, gatewayJS: GatewayJS, amount: string, ethereumAddress: string) => {
+const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string) => {
 
     gatewayJS.send({
         web3Provider: web3.currentProvider,
@@ -40,7 +43,7 @@ const startShiftIn = async (web3: any, gatewayJS: GatewayJS, amount: string, eth
         .catch(console.error);
 };
 
-// const startShiftOut = async (web3: any, gatewayJS: GatewayJS) => {
+// const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS) => {
 //     const amount = 0.000225; // BTC
 //     const recipient = prompt("Enter ₿ Bitcoin address to receive BTC");
 //     if (!recipient) { return; }
@@ -62,14 +65,14 @@ const startShiftIn = async (web3: any, gatewayJS: GatewayJS, amount: string, eth
 //         .catch(console.error);
 // };
 
-const recoverTrades = async (web3: any, gatewayJS: GatewayJS) => {
+const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
     // Re-open incomplete trades
     const previousGateways = await gatewayJS.getGateways();
     for (const trade of Array.from(previousGateways.values())) {
-        if (trade.status === ShiftInStatus.ConfirmedOnEthereum || trade.status === ShiftOutStatus.ReturnedFromRenVM) { continue; }
-        const gateway = trade.shiftIn ? gatewayJS.recover(web3.currentProvider, trade) : gatewayJS.recover(web3.currentProvider, trade);
-        gateway.pause().catch(console.error);
-        gateway.result()
+        await gatewayJS
+            .recoverShift(web3.currentProvider, trade)
+            .pause()
+            .result()
             .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
             .then(console.log)
             .catch(console.error);
@@ -84,7 +87,6 @@ export const GatewayExample = () => {
     } as any);
 
     const urlParameters = parse(window.location.search, { ignoreQueryPrefix: true });
-    console.log(urlParameters);
 
     // If the network is changed, `sendTo` should be changed too.
     const gatewayJS = React.useMemo(() => new GatewayJS(

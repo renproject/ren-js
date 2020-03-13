@@ -1,7 +1,7 @@
 import {
-    RenNetwork, SerializableShiftParams, ShiftInEvent, ShiftOutEvent, ShiftParams, toFixed,
+    RenNetwork, SerializableShiftParams, ShiftInEvent, ShiftInParams, ShiftOutEvent, ShiftParams,
+    toFixed,
 } from "@renproject/interfaces";
-import { ShiftInParams } from "@renproject/interfaces/build/main/types/parameters";
 
 // For now, the endpoints are network specific.
 export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";

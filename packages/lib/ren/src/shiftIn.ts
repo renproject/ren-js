@@ -2,16 +2,12 @@ import {
     newPromiEvent, Ox, PromiEvent, ShiftInParams, strip0x, TxStatus, UnmarshalledMintTx,
 } from "@renproject/interfaces";
 import {
-    DEFAULT_SHIFT_FEE, fixSignature, generateAddress, generateGHash, generateShiftInTxHash,
-    getShifterAddress, ignoreError, processShiftInParams, randomNonce, renTxHashToBase64,
-    resolveInToken, retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, toBigNumber,
-    UTXO, UTXOInput, withDefaultAccount,
+    DEFAULT_SHIFT_FEE, fixSignature, forwardEvents, generateAddress, generateGHash,
+    generateShiftInTxHash, getShifterAddress, ignoreError, NetworkDetails, payloadToShiftInABI,
+    processShiftInParams, randomNonce, renTxHashToBase64, RenWeb3Events, resolveInToken,
+    retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput,
+    Web3Events, withDefaultAccount,
 } from "@renproject/utils";
-import { payloadToShiftInABI } from "@renproject/utils/build/main/lib/abi";
-import {
-    forwardEvents, RenWeb3Events, Web3Events,
-} from "@renproject/utils/build/main/lib/promievent";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { OrderedMap } from "immutable";
@@ -38,7 +34,7 @@ export class ShiftInObject {
         this.network = _network;
         this.renVMNetwork = _renVMNetwork;
         this.params = processShiftInParams(this.network, _params);
-        this.web3 = this.params.web3Provider ? new Web3(this.params.web3Provider) : undefined;
+        // this.web3 = this.params.web3Provider ? new Web3(this.params.web3Provider) : undefined;
 
         const renTxHash = this.params.renTxHash;
 
@@ -261,6 +257,7 @@ export class ShiftInObject {
                         encodedParameters,
                     );
                     if (renTxHash !== utxoRenTxHash) {
+                        // tslint:disable-next-line: no-console
                         console.warn(`Unexpected txHash returned from RenVM: expected ${utxoRenTxHash} but got ${renTxHash}`);
                     }
                 } catch (error) {
@@ -320,7 +317,7 @@ export class ShiftInObject {
             //         } else {
             //             // tslint:disable-next-line: no-console
             //             console.error(String(error));
-            //             // TODO: throw unepected errors
+            //             // TODO: throw unexpected errors
             //         }
             //     }
             //     await sleep(5 * SECONDS);
@@ -493,7 +490,7 @@ export class ShiftInObject {
                     reject(error);
                 })
             );
-        })().then((receipt) => promiEvent.resolve(receipt as TransactionReceipt)).catch(promiEvent.reject);
+        })().then((receipt) => { promiEvent.resolve(receipt as TransactionReceipt); }).catch(promiEvent.reject);
 
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {

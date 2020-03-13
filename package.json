@@ -52,6 +52,11 @@
     "typescript": "^3.8.3",
     "uuid": "^7.0.2"
   },
+  "scripts": {
+    "build": "lerna run build --scope @renproject/*",
+    "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
+    "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example"
+  },
   "workspaces": [
     "packages/lib/*",
     "packages/ui/*"

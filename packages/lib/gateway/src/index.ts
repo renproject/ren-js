@@ -5,9 +5,9 @@ import {
     UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, randomBytes, resolveSendCall, utils, waitForReceipt, withDefaultAccount,
+    extractBurnReference, randomBytes, resolveSendCall, stringToNetwork, utils, waitForReceipt,
+    withDefaultAccount,
 } from "@renproject/utils";
-import { stringToNetwork } from "@renproject/utils/build/main/types/networks";
 import Web3 from "web3";
 import { provider } from "web3-providers";
 
@@ -64,15 +64,15 @@ export class Gateway {
         }
     }
 
-    public readonly pause = async () => {
+    public readonly pause = () => {
         this._pause();
-        await this._sendMessage(GatewayMessageType.Pause, {});
+        this._sendMessage(GatewayMessageType.Pause, {}).catch(console.error);
         return this;
     }
 
-    public readonly resume = async () => {
+    public readonly resume = () => {
         this._resume();
-        await this._sendMessage(GatewayMessageType.Resume, {});
+        this._sendMessage(GatewayMessageType.Resume, {}).catch(console.error);
         return this;
     }
 
@@ -115,7 +115,7 @@ export class Gateway {
         // tslint:disable-next-line: no-any
         listener = (e: { readonly data: GatewayMessage<any> }) => {
             if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
-                this._acknowledgeMessage(e.data, {}, popup);
+                this._acknowledgeMessage(e.data, {}, popup).catch(console.error);
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
@@ -192,7 +192,7 @@ export class Gateway {
             if (overlay) {
                 // tslint:disable-next-line: no-object-mutation no-any
                 (overlay as any).onclick = () => {
-                    this.pause().catch(console.error);
+                    this.pause();
                 };
             }
 
@@ -209,7 +209,7 @@ export class Gateway {
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         const shiftParamsFixed = prepareParamsForSendMessage(shiftParams);
                         this._sendMessage(GatewayMessageType.Shift, {
                             shift: shiftParamsFixed,
@@ -217,19 +217,19 @@ export class Gateway {
                         }).catch(console.error);
                         break;
                     case GatewayMessageType.Status:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         this.promiEvent.emit("status", e.data.payload.status, e.data.payload.details);
                         break;
                     case GatewayMessageType.Pause:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         this._pause();
                         break;
                     case GatewayMessageType.Resume:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         this._resume();
                         break;
                     case GatewayMessageType.Cancel:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         onClose();
                         if (this.isCancelling) {
                             // tslint:disable-next-line: no-object-mutation
@@ -253,10 +253,10 @@ export class Gateway {
                                     promiEvent.on("transactionHash", resolve);
                                     promiEvent.catch(reject);
                                 });
-                                this._acknowledgeMessage<GatewayMessageType.SendTransaction>(e.data, { txHash });
+                                this._acknowledgeMessage<GatewayMessageType.SendTransaction>(e.data, { txHash }).catch(console.error);
                             } catch (error) {
                                 console.error(error);
-                                this._acknowledgeMessage(e.data, { error: String(error.message || error) });
+                                this._acknowledgeMessage(e.data, { error: String(error.message || error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
@@ -268,10 +268,10 @@ export class Gateway {
                                 }
                                 const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetTransactionStatus>).txHash;
                                 await waitForReceipt(this.web3, txHash);
-                                this._acknowledgeMessage<GatewayMessageType.GetTransactionStatus>(e.data, { confirmations: 0 });
+                                this._acknowledgeMessage<GatewayMessageType.GetTransactionStatus>(e.data, { confirmations: 0 }).catch(console.error);
                             } catch (error) {
                                 console.error(error);
-                                this._acknowledgeMessage(e.data, { error: String(error.message || error) });
+                                this._acknowledgeMessage(e.data, { error: String(error.message || error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
@@ -284,25 +284,25 @@ export class Gateway {
                                 const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetTransactionBurn>).txHash;
 
                                 const burnReference = await extractBurnReference(this.web3, txHash);
-                                this._acknowledgeMessage<GatewayMessageType.GetTransactionBurn>(e.data, { burnReference });
+                                this._acknowledgeMessage<GatewayMessageType.GetTransactionBurn>(e.data, { burnReference }).catch(console.error);
                             } catch (error) {
                                 console.error(error);
-                                this._acknowledgeMessage(e.data, { error: String(error.message || error) });
+                                this._acknowledgeMessage(e.data, { error: String(error.message || error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
                     case GatewayMessageType.Error:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         onClose();
                         this.promiEvent.reject(new Error(e.data.payload.message || "Error thrown from Gateway iframe."));
                         return;
                     case GatewayMessageType.Done:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                         onClose();
                         this.promiEvent.resolve(e.data.payload);
                         return;
                     default:
-                        this._acknowledgeMessage(e.data);
+                        this._acknowledgeMessage(e.data).catch(console.error);
                 }
             }
         }
@@ -340,10 +340,14 @@ export class Gateway {
         this._addListener(listener);
 
         // Repeat message until acknowledged
-        // tslint:disable-next-line: no-any
         let count = 0;
+        // tslint:disable-next-line: no-any
         const contentWindow = (frame as any).contentWindow;
         while (!acknowledged && contentWindow) {
+            if (count >= 1000) {
+                throw new Error(`Lost communication with Gateway iFrame - unable post message.`);
+            }
+
             count++;
             const gatewayMessage: GatewayMessage<Type> = { from: "ren", frameID: this.id, type, payload, messageID };
             contentWindow.postMessage(gatewayMessage, "*");
@@ -365,6 +369,7 @@ export class Gateway {
         }
 
         const response: GatewayMessage<GatewayMessageType.Acknowledgement> = { from: "ren", type: GatewayMessageType.Acknowledgement, frameID: message.frameID, payload: payload || {}, messageID: message.messageID };
+        // tslint:disable-next-line: no-any
         const contentWindow = (frame as any).contentWindow;
         contentWindow.postMessage(response, "*");
     }
@@ -436,8 +441,20 @@ export default class GatewayJS {
     /**
      * Returns a map containing previously opened gateways.
      */
-    public readonly getGateways = async (): Promise<Map<string, HistoryEvent>> => {
-        return new Gateway(this.network, this.endpoint)._getGateways();
+    public readonly getGateways = async (options?: { all: boolean }): Promise<Map<string, HistoryEvent>> => {
+        const gateways = await new Gateway(this.network, this.endpoint)._getGateways();
+
+        // Delete gateways that have been returned
+        if (!options || !options.all) {
+            for (const key of gateways.keys()) {
+                const gateway = gateways.get(key);
+                if (gateway && gateway.returned) {
+                    gateways.delete(key);
+                }
+            }
+        }
+
+        return gateways;
     }
 
     /**
@@ -456,7 +473,7 @@ export default class GatewayJS {
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
-    public readonly recover = (web3Provider: provider, params: ShiftInEvent | ShiftOutEvent): Gateway => {
+    public readonly recoverShift = (web3Provider: provider, params: ShiftInEvent | ShiftOutEvent): Gateway => {
         return new Gateway(this.network, this.endpoint)._open(params, web3Provider);
     }
 }

@@ -45,6 +45,10 @@ export const postMessageToClient = async <Type extends GatewayMessageType>(windo
     // Repeat message until acknowledged
     // tslint:disable-next-line: no-any
     while (!acknowledged) {
+        if (count >= 1000) {
+            throw new Error(`Lost communication with app - unable post message.`);
+        }
+
         if (
             count === 0 || (
                 type !== GatewayMessageType.SendTransaction &&

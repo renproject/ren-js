@@ -1,6 +1,7 @@
-import { createBCHAddress, getBitcoinCashUTXOs } from "@renproject/chains/build/main/bch";
-import { createBTCAddress, getBitcoinUTXOs } from "@renproject/chains/build/main/btc";
-import { createZECAddress, getZcashUTXOs } from "@renproject/chains/build/main/zec";
+import {
+    createBCHAddress, createBTCAddress, createZECAddress, getBitcoinCashUTXOs, getBitcoinUTXOs,
+    getZcashUTXOs,
+} from "@renproject/chains";
 import {
     Asset, Chain, EthArgs, NULL, Ox, RenContract, SendParams, ShiftedToken, ShiftInParams,
     ShiftOutParams, strip0x, UnmarshalledMintTx, value,
@@ -16,6 +17,11 @@ import { keccak256 as web3Keccak256 } from "web3-utils";
 
 import { bchUtils, btcUtils, zecUtils } from "./assets";
 import { NetworkDetails } from "./types/networks";
+
+export * from "./types/networks";
+export * from "./lib/abi";
+export * from "./lib/promievent";
+export * from "./assets";
 
 export interface UTXODetails {
     readonly txid: string; // hex string without 0x prefix

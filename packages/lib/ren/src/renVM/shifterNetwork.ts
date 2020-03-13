@@ -3,9 +3,8 @@ import {
     TxStatus, UnmarshalledBurnTx, UnmarshalledMintTx,
 } from "@renproject/interfaces";
 import {
-    assert, parseRenContract, SECONDS, sleep, syncGetTokenAddress, toBase64, utils,
+    assert, NetworkDetails, parseRenContract, SECONDS, sleep, syncGetTokenAddress, toBase64, utils,
 } from "@renproject/utils";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import BigNumber from "bignumber.js";
 
 import { DarknodeGroup } from "./darknodeGroup";

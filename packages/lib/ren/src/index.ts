@@ -4,10 +4,10 @@ import {
     Asset, Chain, RenContract, RenNetwork, ShiftedToken, ShiftInParams, ShiftOutParams, Tokens,
     TxStatus,
 } from "@renproject/interfaces";
-import { getShifterAddress, getTokenAddress, utils } from "@renproject/utils";
 import {
-    NetworkChaosnet, NetworkDetails, NetworkTestnet, stringToNetwork,
-} from "@renproject/utils/build/main/types/networks";
+    getShifterAddress, getTokenAddress, NetworkChaosnet, NetworkDetails, NetworkTestnet,
+    stringToNetwork, utils,
+} from "@renproject/utils";
 import Web3 from "web3";
 
 import { Darknode } from "./renVM/darknode";

@@ -2,14 +2,10 @@ import {
     newPromiEvent, Ox, PromiEvent, ShiftOutParams, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, generateShiftOutTxHash, ignoreError, processShiftOutParams,
-    renTxHashToBase64, resolveOutToken, withDefaultAccount,
+    extractBurnReference, forwardEvents, generateShiftOutTxHash, ignoreError, NetworkDetails,
+    payloadToABI, payloadToShiftInABI, processShiftOutParams, renTxHashToBase64, RenWeb3Events,
+    resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
-import { payloadToABI, payloadToShiftInABI } from "@renproject/utils/build/main/lib/abi";
-import {
-    forwardEvents, RenWeb3Events, Web3Events,
-} from "@renproject/utils/build/main/lib/promievent";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
 import { TransactionConfig } from "web3-core";

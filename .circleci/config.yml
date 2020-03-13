@@ -34,8 +34,8 @@ jobs:
                     - v1-dependencies-
 
             - run:
-                name: Install yarn
-                command: sudo npm install --global yarn && yarn version
+                name: Install yarn and lerna
+                command: sudo npm install --global yarn && yarn version && sudo npm install --global lerna
                 when: always
 
             - run:

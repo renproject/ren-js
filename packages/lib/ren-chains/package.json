@@ -28,7 +28,7 @@
     "module": "build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
-        "build": "run-p build:*",
+        "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "fix": "run-s fix:*",
@@ -97,5 +97,5 @@
             "src"
         ]
     },
-    "gitHead": "bbf4cc8d7d51732a67c484b5f43db2c3e6239b58"
+    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc"
 }

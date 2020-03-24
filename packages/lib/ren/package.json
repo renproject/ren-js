@@ -45,10 +45,9 @@
         "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
-        "version": "standard-version",
         "prepare": "run-s build",
         "npmignore": "npmignore",
-        "prepare-release": "run-s npmignore doc:html version doc:publish"
+        "prepare-release": "run-s npmignore doc:html doc:publish"
     },
     "dependencies": {
         "@renproject/chains": "file:../ren-chains",

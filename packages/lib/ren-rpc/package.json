@@ -44,15 +44,15 @@
         "doc": "run-s doc:html && open-cli build/docs/index.html",
         "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
-        "prepare": "run-s build",
+        "prepare": "yarn build",
         "npmignore": "npmignore",
         "prepare-release": "run-s npmignore doc:html"
     },
     "dependencies": {
         "@renproject/contracts": "^0.3.35",
-        "@renproject/interfaces": "file:../ren-interfaces",
-        "@renproject/provider": "file:../ren-provider",
-        "@renproject/utils": "file:../ren-utils",
+        "@renproject/interfaces": "^0.9.0",
+        "@renproject/provider": "^0.9.0",
+        "@renproject/utils": "^0.9.0",
         "@types/bn.js": "^4.11.6",
         "@types/bs58": "^4.0.1",
         "@types/ethereumjs-util": "^6.1.0",
@@ -98,5 +98,6 @@
         "include": [
             "src"
         ]
-    }
+    },
+    "gitHead": "bbf4cc8d7d51732a67c484b5f43db2c3e6239b58"
 }

@@ -29,7 +29,7 @@
     "doc": "run-s doc:html && open-cli build/docs/index.html",
     "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
     "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
-    "prepare": "run-s build",
+    "prepare": "yarn build",
     "prepare-release": "run-s doc:html"
   },
   "scripts-info": {
@@ -63,5 +63,6 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  }
+  },
+  "gitHead": "bbf4cc8d7d51732a67c484b5f43db2c3e6239b58"
 }

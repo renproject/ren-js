@@ -27,10 +27,10 @@ export type TxResponseOutputs = [
 ];
 
 export type TxAutogen = [
+    RenVMArg<"phash", RenVMType.TypeB32>, // base64
     RenVMArg<"ghash", RenVMType.TypeB32>, // base 64
     RenVMArg<"nhash", RenVMType.TypeB32>, // base 64
-    RenVMArg<"sighash", RenVMType.TypeB32>, // base 64
-    RenVMArg<"phash", RenVMType.TypeB32>, // base64
     RenVMArg<"amount", RenVMType.TypeU256>,
     RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>,
+    RenVMArg<"sighash", RenVMType.TypeB32>, // base 64
 ];

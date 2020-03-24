@@ -129,12 +129,12 @@ export const unmarshalMintTx = (response: ResponseQueryMintTx): UnmarshalledMint
     };
 
     type Autogen = ResponseQueryMintTx["tx"]["autogen"];
-    const ghash = assertAndDecodeBytes<Autogen[0]>("ghash", RenVMType.TypeB32, findField<Autogen[0]>("ghash", response));
-    const nhash = assertAndDecodeBytes<Autogen[1]>("nhash", RenVMType.TypeB32, findField<Autogen[1]>("nhash", response));
-    const sighash = assertAndDecodeBytes<Autogen[2]>("sighash", RenVMType.TypeB32, findField<Autogen[2]>("sighash", response));
-    const phash = assertAndDecodeBytes<Autogen[3]>("phash", RenVMType.TypeB32, findField<Autogen[3]>("phash", response));
-    const amount = assertAndDecodeNumber<Autogen[4]>("amount", RenVMType.TypeU256, findField<Autogen[4]>("amount", response)).toFixed();
-    const utxoRaw = assertArgumentType<Autogen[5]>("utxo", RenVMType.ExtTypeBtcCompatUTXO, findField<Autogen[5]>("utxo", response) as RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>);
+    const phash = assertAndDecodeBytes<Autogen[0]>("phash", RenVMType.TypeB32, findField<Autogen[0]>("phash", response));
+    const ghash = assertAndDecodeBytes<Autogen[1]>("ghash", RenVMType.TypeB32, findField<Autogen[1]>("ghash", response));
+    const nhash = assertAndDecodeBytes<Autogen[2]>("nhash", RenVMType.TypeB32, findField<Autogen[2]>("nhash", response));
+    const amount = assertAndDecodeNumber<Autogen[3]>("amount", RenVMType.TypeU256, findField<Autogen[3]>("amount", response)).toFixed();
+    const utxoRaw = assertArgumentType<Autogen[4]>("utxo", RenVMType.ExtTypeBtcCompatUTXO, findField<Autogen[4]>("utxo", response) as RenVMArg<"utxo", RenVMType.ExtTypeBtcCompatUTXO, RenVMOutputUTXO>);
+    const sighash = assertAndDecodeBytes<Autogen[5]>("sighash", RenVMType.TypeB32, findField<Autogen[5]>("sighash", response));
 
     const utxo = { "txHash": decodeBytes(utxoRaw.txHash), "vOut": parseInt(utxoRaw.vOut, 10), "scriptPubKey": utxoRaw.scriptPubKey ? decodeBytes(utxoRaw.scriptPubKey) : "", "amount": decodeNumber(utxoRaw.amount).toFixed() };
 

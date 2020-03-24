@@ -1,6 +1,6 @@
 {
     "name": "gateway.renproject.io",
-    "version": "1.0.0",
+    "version": "0.9.0",
     "private": true,
     "homepage": "https://renproject.github.io/gateway.renproject.io",
     "scripts": {

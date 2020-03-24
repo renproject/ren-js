@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "0.7.3",
+    "version": "0.9.0",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",

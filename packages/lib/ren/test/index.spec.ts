@@ -1,12 +1,9 @@
-import { Chain, RenNetwork } from "@renproject/interfaces";
+import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
+import { NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet } from "@renproject/utils";
 import chai from "chai";
 import Web3 from "web3";
 
 import RenJS from "../src/index";
-import { Tokens } from "../src/types/assets";
-import {
-    NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet,
-} from "../src/types/networks";
 
 chai.should();
 
@@ -55,14 +52,16 @@ describe("RenJS initialization and exports", () => {
             // Amount of BTC we are sending (in Satoshis)
             requiredAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
 
-            // The contract we want to interact with
-            sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
+            contractCalls: [{
+                // The contract we want to interact with
+                sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
 
-            // The name of the function we want to call
-            contractFn: "deposit",
+                // The name of the function we want to call
+                contractFn: "deposit",
 
-            // Arguments expected for calling `deposit`
-            contractParams: [],
+                // Arguments expected for calling `deposit`
+                contractParams: [],
+            }],
         });
 
         // tslint:disable-next-line: await-promise

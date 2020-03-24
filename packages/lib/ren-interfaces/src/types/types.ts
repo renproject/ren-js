@@ -1,5 +1,6 @@
 import { SerializableShiftInParams, SerializableShiftOutParams } from "./parameters";
 import { Chain, RenContract } from "./renVM";
+import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./unmarshalled";
 
 export interface Tx {
     hash: string;
@@ -68,12 +69,14 @@ export interface ShiftInEvent extends HistoryEventCommon {
     shiftIn: true;
     status: ShiftInStatus;
     shiftParams: SerializableShiftInParams;
+    renVMQuery: UnmarshalledMintTx | null;
 }
 
 export interface ShiftOutEvent extends HistoryEventCommon {
     shiftIn: false;
     status: ShiftOutStatus;
     shiftParams: SerializableShiftOutParams;
+    renVMQuery: UnmarshalledBurnTx | null;
 }
 
 export type HistoryEvent = ShiftInEvent | ShiftOutEvent;

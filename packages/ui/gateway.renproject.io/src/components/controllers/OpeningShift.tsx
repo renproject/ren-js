@@ -158,6 +158,8 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 switch (shift.status) {
                     case ShiftInStatus.Committed:
                     case ShiftInStatus.Deposited:
+                    case ShiftInStatus.Confirmed:
+                    case ShiftInStatus.SubmittedToRenVM:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
                         const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
                         if (requiredAddressAndName !== null) {
@@ -182,15 +184,12 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 token={token}
                                 utxos={utxos}
                                 waitForDeposit={sdkContainer.waitForDeposits}
+                                confirmations={sdkContainer.getNumberOfConfirmations(shift)}
                                 onQRClick={toggleShowQR}
                                 onDeposit={uiContainer.deposit}
                                 networkDetails={sdkRenVM.network}
                             />;
                         }
-                        break;
-                    case ShiftInStatus.Confirmed:
-                    case ShiftInStatus.SubmittedToRenVM:
-                        inner = <DepositReceived token={token} mini={paused} renVMStatus={shift.renVMStatus} renTxHash={shift.renTxHash} submitDeposit={sdkContainer.submitMintToRenVM} />;
                         break;
                     case ShiftInStatus.ReturnedFromRenVM:
                     case ShiftInStatus.SubmittedToEthereum:

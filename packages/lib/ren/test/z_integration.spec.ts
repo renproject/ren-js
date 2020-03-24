@@ -3,7 +3,10 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { EthArgs, Ox, RenContract, RenNetwork } from "@renproject/interfaces";
+import { EthArgs, Ox, RenContract, RenNetwork, Tokens } from "@renproject/interfaces";
+import {
+    NetworkDetails, parseRenContract, retryNTimes, sleep, stringToNetwork,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -13,15 +16,10 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
-import { sha3 } from "web3-utils";
 
 import RenJS from "../src/index";
-import { confirmationlessShifters } from "../src/lib/processParams";
-import { retryNTimes, sleep } from "../src/lib/utils";
-import { ShiftInObject } from "../src/shiftIn";
-import { ShiftOutObject } from "../src/shiftOut";
-import { parseRenContract, Tokens } from "../src/types/assets";
-import { NetworkDetails, stringToNetwork } from "../src/types/networks";
+import { ShiftIn } from "../src/shiftIn";
+import { ShiftOut } from "../src/shiftOut";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -82,7 +80,7 @@ describe("Shifting in and shifting out", function () {
         adapterContract: string,
         amount: number,
         ethAddress: string,
-        submit: (shift: ShiftInObject) => Promise<void>,
+        submit: (shift: ShiftIn) => Promise<void>,
         nonce?: string,
     ): Promise<void> => {
         const params: EthArgs = [
@@ -98,8 +96,8 @@ describe("Shifting in and shifting out", function () {
             }
         ];
         const shift = renJS.shiftIn({
-            sendTo: adapterContract,
             sendToken: renVMToken,
+            sendTo: adapterContract,
             // sendAmount: amount,
             contractFn: "shiftIn",
             contractParams: params,
@@ -114,7 +112,7 @@ describe("Shifting in and shifting out", function () {
         await submit(shift);
     };
 
-    const submitIndividual = async (shift: ShiftInObject): Promise<void> => {
+    const submitIndividual = async (shift: ShiftIn): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         logger.info(`Waiting for ${confirmations} confirmations...`);
@@ -144,13 +142,13 @@ describe("Shifting in and shifting out", function () {
         }
     };
 
-    const submitTogether = async (shift: ShiftInObject): Promise<void> => {
+    const submitTogether = async (shift: ShiftIn): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         await shift.waitAndSubmit(provider, confirmations);
     };
 
-    const submitToRenVM = async (shiftOutObject: ShiftOutObject) => {
+    const submitToRenVM = async (shiftOutObject: ShiftOut) => {
         try {
             shiftOutObject = await shiftOutObject.readFromEthereum()
                 .on("eth_transactionHash", (txHash: string) => { logger.event(`Received txHash: ${txHash}`); });
@@ -236,7 +234,7 @@ describe("Shifting in and shifting out", function () {
 
         logger.info("Reading burn from Ethereum.");
 
-        const shiftOutObject: ShiftOutObject = renJS.shiftOut({
+        const shiftOutObject: ShiftOut = renJS.shiftOut({
             sendTo: adapterContract,
             contractFn: "shiftOut",
             contractParams: payload,
@@ -425,17 +423,19 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it("recover burn from renTxHash", async () => {
+    it.skip("recover burn from renTxHash", async () => {
         logger.consoleLine();
         logger.info(`Starting burn test - recovering burn from renTxHash`);
 
         const shift64 = new RenJS("devnet").shiftOut({
+            sendToken: "BTC",
             renTxHash: "FBcH+vnMdybRYgaQB2Hm9rwg3MkgTcQFeh7j3/v10kI=",
         });
 
         const result64 = await shift64.submitToRenVM();
 
         const shiftHex = new RenJS("devnet").shiftOut({
+            sendToken: "BTC",
             renTxHash: "0x141707faf9cc7726d16206900761e6f6bc20dcc9204dc4057a1ee3dffbf5d242",
         });
 
@@ -444,11 +444,12 @@ describe("Shifting in and shifting out", function () {
         result64.should.deep.equal(resultHex);
     });
 
-    it("recover mint from renTxHash", async () => {
+    it.skip("recover mint from renTxHash", async () => {
         logger.consoleLine();
         logger.info(`Starting mint test - recovering mint from renTxHash`);
 
         const shift64 = new RenJS("devnet").shiftIn({
+            sendToken: "BTC",
             renTxHash: "2+jzYRh/e0KR3nmvu4/IMFs+U8zL1NnJULyStGaFaKM=",
             contractCalls: [],
         });
@@ -456,6 +457,7 @@ describe("Shifting in and shifting out", function () {
         const result64 = await shift64.queryTx();
 
         const shiftHex = new RenJS("devnet").shiftIn({
+            sendToken: "BTC",
             renTxHash: "0xdbe8f361187f7b4291de79afbb8fc8305b3e53cccbd4d9c950bc92b4668568a3",
             contractCalls: [],
         });
@@ -478,14 +480,15 @@ describe("Shifting in and shifting out", function () {
             const shift = new RenJS("devnet").shiftIn({
                 web3Provider: provider,
                 sendToken: token as "BTC" | "ZEC" | "BCH",
-                sendTo: "0x1D88792D94933640EaBA06672f26f9d8c2d4CBcD",
-                contractFn: "shiftIn",
-                contractParams: [
-                    { type: "address", name: "_shifter", value: shifterAddress, },
-                    { type: "address", name: "_shiftedToken", value: tokenAddress, },
-                    { type: "address", name: "_address", value: "0x790ea424d35c4d53f364cfd95dc25a41e415edd7", },
-                ],
-                confirmationless: true,
+                contractCalls: [{
+                    sendTo: "0x1D88792D94933640EaBA06672f26f9d8c2d4CBcD",
+                    contractFn: "shiftIn",
+                    contractParams: [
+                        { type: "address", name: "_shifter", value: shifterAddress, },
+                        { type: "address", name: "_shiftedToken", value: tokenAddress, },
+                        { type: "address", name: "_address", value: "0x790ea424d35c4d53f364cfd95dc25a41e415edd7", },
+                    ],
+                }],
             });
 
             const gatewayAddress = shift.addr();

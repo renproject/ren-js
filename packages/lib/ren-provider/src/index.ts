@@ -1,2 +1,3 @@
-export { HttpProvider } from "./httpProvider";
-export { MultiProvider } from "./multiProvider";
+export * from "./httpProvider";
+export * from "./multiProvider";
+export * from "./jsonRPC";

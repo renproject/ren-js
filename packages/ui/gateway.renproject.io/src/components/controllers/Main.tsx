@@ -83,7 +83,10 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const cancelOnClick = React.useCallback(() => cancelShift(false), [cancelShift]);
 
+        let [pressedDone, setPressedDone] = React.useState(false);
         const onDone = React.useCallback(async () => {
+            pressedDone = true;
+            setPressedDone(pressedDone);
             let response: {} | UnmarshalledTx = {};
             try {
                 response = await sdkContainer.queryShiftStatus();
@@ -95,15 +98,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
             }
             uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
+            pressedDone = false;
+            setPressedDone(pressedDone);
         }, [uiContainer]);
-
-        // React.useEffect(() => {
-        //     const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-        //     const queryShiftID = queryParams.id;
-        //     if (queryShiftID !== uiContainer.state.gatewayPopupID) {
-        //         uiContainer.handleShift(queryShiftID).catch(console.error);
-        //     }
-        // }, [uiContainer.state.gatewayPopupID]);
 
         React.useEffect(() => {
 
@@ -173,6 +170,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     outTx: null,
                                     renTxHash: null,
                                     renVMStatus: null,
+                                    renVMQuery: null,
                                     returned: false,
                                     ...historyEvent,
                                 };
@@ -268,7 +266,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     (shift.status === ShiftInStatus.Committed || shift.status === ShiftOutStatus.Committed) ?
                         <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :
                         (shift.status === ShiftInStatus.ConfirmedOnEthereum || shift.status === ShiftOutStatus.ReturnedFromRenVM) ?
-                            <div role="button" className={`popup--cancel`} onClick={onDone}>Close</div> :
+                            <div role="button" className={`popup--cancel ${pressedDone ? "disabled" : ""}`} onClick={onDone}>Close</div> :
                             <div role="button" className={`popup--x`} onClick={pauseOnClick} />
                     :
                     <></>
@@ -278,7 +276,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                 {shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>}
                 {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
-                {!paused && shift ? <ShiftProgress /> : <></>}
+                {!paused && shift && sdkContainer.getNumberOfConfirmations() > 0 ? <ShiftProgress /> : <></>}
             </div>
             {!paused && <Footer />}
         </main>;

@@ -1,7 +1,7 @@
 import { extractError, retryNTimes } from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
 
-import { JSONRPCResponse } from "./jsonRPC";
+import { JSONRPCResponse, Provider } from "./jsonRPC";
 
 const generatePayload = (method: string, params?: unknown) => ({
     id: 1,
@@ -10,7 +10,8 @@ const generatePayload = (method: string, params?: unknown) => ({
     params,
 });
 
-export class HttpProvider {
+// tslint:disable-next-line: no-any
+export class HttpProvider<Requests extends { [event: string]: any } = {}, Responses extends { [event: string]: any } = {}> implements Provider {
     public readonly nodeURL: string;
 
     constructor(ipOrMultiaddress: string) {
@@ -35,10 +36,10 @@ export class HttpProvider {
         }
     }
 
-    public async sendMessage<Method extends string, Request, Response>(method: Method, request: Request, retry = 5): Promise<Response> {
+    public async sendMessage<Method extends string>(method: Method, request: Requests[Method], retry = 5): Promise<Responses[Method]> {
         try {
             const response = await retryNTimes(
-                () => axios.post<JSONRPCResponse<Response>>(
+                () => axios.post<JSONRPCResponse<Responses[Method]>>(
                     this.nodeURL,
                     generatePayload(method, request),
                     { timeout: 120000 }),

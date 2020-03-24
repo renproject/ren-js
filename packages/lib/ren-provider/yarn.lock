@@ -2331,10 +2331,6 @@ chai-as-promised@^7.1.1:
   dependencies:
     check-error "^1.0.2"
 
-chai-bignumber@noiach/chai-bignumber#fd75e47:
-  version "2.0.2"
-  resolved "https://codeload.github.com/noiach/chai-bignumber/tar.gz/fd75e47b2980c3a151d2a05b070293b18a9bddce"
-
 chai@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/chai/-/chai-4.2.0.tgz#760aa72cf20e3795e84b12877ce0e83737aa29e5"

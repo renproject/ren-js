@@ -3,7 +3,7 @@ import {
     ShiftInParams, ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus, Tx, TxStatus,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { ShiftInObject } from "@renproject/ren/build/main/shiftIn";
+import { ShiftIn } from "@renproject/ren/build/main/shiftIn";
 import { parseRenContract, resolveInToken, UTXO } from "@renproject/utils";
 import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import { Container } from "unstated";
@@ -85,10 +85,36 @@ export class SDKContainer extends Container<typeof initialState> {
     //     return shift;
     // }
 
+    public getNumberOfConfirmations = (shift?: HistoryEvent) => {
+        shift = shift || this.state.shift || undefined;
+        if (!shift) {
+            throw new Error("Shift not set");
+        }
+        // tslint:disable-next-line: strict-type-predicates
+        const confirmations = shift.shiftIn && shift.shiftParams.confirmations !== null && shift.shiftParams.confirmations !== undefined ?
+            shift.shiftParams.confirmations :
+            numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+        return confirmations;
+    }
+
     public getShiftStatus = (shift?: HistoryEvent) => {
         shift = shift || this.state.shift || undefined;
         if (!shift) { throw new Error("Shift not set"); }
         return { status: shift.status, details: null };
+    }
+
+    public returnShift = async (shift?: HistoryEvent) => {
+        if (!this.uiContainer.state.gatewayPopupID) {
+            throw new Error("Can't return without shift ID");
+        }
+
+        await this.updateShift({ returned: true });
+
+
+        const response = await this.queryShiftStatus();
+        console.log(response);
+
+        await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
     }
 
     public updateShift = async (shiftIn: Partial<HistoryEvent>, options?: { sync?: boolean }) => {
@@ -116,6 +142,7 @@ export class SDKContainer extends Container<typeof initialState> {
             inTx: shiftIn.inTx || (this.state.shift && this.state.shift.inTx) || existingShift.inTx,
             outTx: shiftIn.outTx || (this.state.shift && this.state.shift.outTx) || existingShift.outTx,
             renTxHash: shiftIn.renTxHash || (this.state.shift && this.state.shift.renTxHash) || existingShift.renTxHash,
+            renVMQuery: shiftIn.renVMQuery || (this.state.shift && this.state.shift.renVMQuery) || existingShift.renVMQuery,
             renVMStatus: compareTxStatus(existingShift.renVMStatus, (this.state.shift && this.state.shift.renVMStatus), shiftIn.renVMStatus),
             status: compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
         } as HistoryEvent;
@@ -275,6 +302,9 @@ export class SDKContainer extends Container<typeof initialState> {
                     renVMStatus,
                 }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateShift"));
             });
+
+        await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
+
         // TODO: Fix returned types for burning
         const address = response.in.to;
 
@@ -298,7 +328,7 @@ export class SDKContainer extends Container<typeof initialState> {
     // 3. Submit the deposit to RenVM and retrieve back a signature
     // 4. Submit the signature to Ethereum
 
-    public shiftInObject = (): ShiftInObject => {
+    public shiftInObject = (): ShiftIn => {
         const { sdkRenVM: renVM } = this.state;
         if (!renVM) {
             throw new Error("Invalid parameters passed to `generateAddress`");
@@ -325,25 +355,10 @@ export class SDKContainer extends Container<typeof initialState> {
         if (!shift) {
             throw new Error("Shift not set");
         }
-
-        const promise = this
-            .shiftInObject()
-            .waitForDeposit(numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined));
-        promise.on("deposit", (utxo: UTXO) => {
-            this.updateShift({ status: ShiftInStatus.Deposited }).catch(error => _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"));
-            onDeposit(utxo);
-        });
-        await promise;
-        await this.updateShift({ status: ShiftInStatus.Confirmed });
-    }
-
-    // Submits the shiftParams and transaction to the darknodes, and then submits
-    // the signature to the adapter address
-    public submitMintToRenVM = async (): Promise<ShiftInObject> => {
         const onRenTxHash = (renTxHash: string) => {
             const shiftOnHash = this.state.shift;
             if (!shiftOnHash || !shiftOnHash.renTxHash || shiftOnHash.renTxHash !== renTxHash) {
-                this.updateShift({ renTxHash, status: ShiftInStatus.SubmittedToRenVM })
+                this.updateShift({ renTxHash })
                     .catch(console.error);
             }
         };
@@ -352,35 +367,51 @@ export class SDKContainer extends Container<typeof initialState> {
                 renVMStatus,
             }).catch(console.error);
         };
-
-        const shift = this.state.shift;
-        if (!shift) { throw new Error("Shift not set"); }
-
         const transaction = await this
             .shiftInObject()
-            .waitForDeposit(numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined));
-
-        const signature = await transaction
+            .waitForDeposit(0);
+        const promise = this
+            .shiftInObject()
+            .waitForDeposit(this.getNumberOfConfirmations(shift));
+        promise.on("deposit", (utxo: UTXO) => {
+            this.updateShift({ status: ShiftInStatus.Deposited }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"); });
+            onDeposit(utxo);
+        });
+        const signaturePromise = transaction
             .submitToRenVM()
             .on("renTxHash", onRenTxHash)
             .on("status", onStatus);
+        const defaultNumberOfConfirmations = numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+        if (this.getNumberOfConfirmations(shift) < defaultNumberOfConfirmations) {
 
+            // tslint:disable-next-line: no-constant-condition
+            while (true) {
+                try {
+                    const response = await transaction.queryTx();
+                    await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
+                    break;
+                } catch (error) {
+                    // Ignore error
+                }
+            }
+
+            await this.returnShift();
+            return;
+        }
+        const signature = await signaturePromise;
+        await this.updateShift({ status: ShiftInStatus.ReturnedFromRenVM });
         const response = await signature.queryTx();
-
-        // Update shift in store.
-        await this.updateShift({
-            inTx: BitcoinTx(RenJS.utils.Ox(Buffer.from(response.in.utxo.txHash, "base64"))),
-            status: ShiftInStatus.ReturnedFromRenVM,
-        });
-
-        return signature;
+        await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
     }
 
     public queryShiftStatus = async () => {
-        const { sdkRenVM: renVM } = this.state;
-        if (!renVM) { throw new Error(`RenVM not initialized`); }
+        const { sdkRenVM: renVM, shift } = this.state;
 
-        const shift = this.state.shift;
+        if (shift && shift.renVMQuery && shift.renVMQuery.txStatus === TxStatus.TxStatusDone) {
+            return shift.renVMQuery;
+        }
+
+        if (!renVM) { throw new Error(`RenVM not initialized`); }
         if (!shift) { throw new Error("Shift not set"); }
 
         const renTxHash = shift.renTxHash;
@@ -413,7 +444,14 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (!transactionHash) {
 
-            const transactionConfig = (await this.submitMintToRenVM()).createTransaction();
+            const transaction = await this
+                .shiftInObject()
+                .waitForDeposit(0);
+
+            const signature = await transaction
+                .submitToRenVM();
+
+            const transactionConfig = signature.createTransaction();
 
             const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
             if (sendTransactionError) {

@@ -13,6 +13,7 @@ export const SECONDS = 1000;
  * @param ms The number of milliseconds to pause for.
  */
 export const sleep = async (ms: number): Promise<void> =>
+    // tslint:disable-next-line: no-string-based-set-timeout
     new Promise<void>(resolve => setTimeout(resolve, ms));
 
 

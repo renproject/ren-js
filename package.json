@@ -19,7 +19,7 @@
     "bitgo-utxo-lib": "^1.8.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "chai-bignumber": "noiach/chai-bignumber#fd75e47",
+    "chai-bignumber": "ren-forks/chai-bignumber#afa6f46dcbef0b7e622dc27b9b3354fc67afafbc",
     "chalk": "^3.0.0",
     "codecov": "^3.6.5",
     "cross-env": "7.0.2",

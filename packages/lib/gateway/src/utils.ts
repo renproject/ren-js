@@ -2,6 +2,7 @@ import {
     RenNetwork, SerializableShiftParams, ShiftInEvent, ShiftInParams, ShiftOutEvent, ShiftParams,
     toFixed,
 } from "@renproject/interfaces";
+import { NetworkDetails } from "@renproject/utils";
 
 // For now, the endpoints are network specific.
 export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";
@@ -22,12 +23,12 @@ export const createElementFromHTML = (htmlString: string) => {
     return div.firstChild;
 };
 
-export const resolveEndpoint = (endpointIn: string, network: RenNetwork | string, pathIn: string, shiftID?: string) => {
+export const resolveEndpoint = (endpointIn: string, network: NetworkDetails, pathIn: string, shiftID?: string) => {
     // Remove ending '/' from endpoint
     const endpoint = endpointIn.slice(endpointIn.length - 1) === "/" ? endpointIn.slice(0, endpointIn.length - 1) : endpointIn;
     // Remove starting '/' from path
     const path = pathIn.slice(0, 1) === "/" ? pathIn.slice(1, pathIn.length) : pathIn;
-    return `${endpoint}/#/${path}?network=${network}&${shiftID ? `id=${shiftID}` : ""}`;
+    return `${endpoint}/#/${path}?network=${network.name}&${shiftID ? `id=${shiftID}` : ""}`;
 };
 
 // tslint:disable-next-line: readonly-keyword no-any

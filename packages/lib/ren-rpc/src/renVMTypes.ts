@@ -2,7 +2,7 @@ import { RenContract, RenVMArgs, TxStatus } from "@renproject/interfaces";
 
 import {
     BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxResponseOutputs,
-} from "./renVM/transaction";
+} from "./transaction";
 
 export enum RPCMethod {
     // QueryBlock returns a block identified by the block height.
@@ -29,21 +29,6 @@ export enum RPCMethod {
     // information cannot be verified.
     QueryStat = "ren_queryStat",
 }
-
-export type JSONRPCResponse<T> = {
-    jsonrpc: string;
-    version: string;
-    result: T;
-    error: undefined;
-    id: number;
-} | {
-    jsonrpc: string;
-    version: string;
-    result: undefined;
-    // tslint:disable-next-line: no-any
-    error: any;
-    id: number;
-};
 
 // tslint:disable-next-line: no-any
 // export const decodeArg = <Name extends string, Type extends RenVMType.ExtTypeBtcCompatUTXO, Value>(arg: Arg<Name, Type, Value>):
@@ -227,6 +212,17 @@ export interface ResponseQueryStat {
     serviceUptime: number;
 }
 
+export type RenVMResponses = {
+    [RPCMethod.QueryBlock]: ResponseQueryBlock;
+    [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
+    [RPCMethod.SubmitTx]: ResponseSubmitTx;
+    [RPCMethod.QueryTx]: ResponseQueryTx;
+    [RPCMethod.QueryNumPeers]: ResponseQueryNumPeers;
+    [RPCMethod.QueryPeers]: ResponseQueryPeers;
+    [RPCMethod.QueryEpoch]: ResponseQueryEpoch;
+    [RPCMethod.QueryStat]: ResponseQueryStat;
+};
+
 export type RPCResponse<Method extends RPCMethod> =
     Method extends RPCMethod.QueryBlock ? ResponseQueryBlock
     : Method extends RPCMethod.QueryBlocks ? ResponseQueryBlocks
@@ -238,6 +234,17 @@ export type RPCResponse<Method extends RPCMethod> =
     : Method extends RPCMethod.QueryStat ? ResponseQueryStat
     // tslint:disable-next-line: no-any
     : any;
+
+export type RenVMParams = {
+    [RPCMethod.QueryBlock]: ParamsQueryBlock;
+    [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
+    [RPCMethod.SubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
+    [RPCMethod.QueryTx]: ParamsQueryTx;
+    [RPCMethod.QueryNumPeers]: ParamsQueryNumPeers;
+    [RPCMethod.QueryPeers]: ParamsQueryPeers;
+    [RPCMethod.QueryEpoch]: ParamsQueryEpoch;
+    [RPCMethod.QueryStat]: ParamsQueryStat;
+};
 
 export type RPCParams<Method extends RPCMethod> =
     Method extends RPCMethod.QueryBlock ? ParamsQueryBlock

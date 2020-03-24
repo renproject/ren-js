@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ShiftInEvent } from "@renproject/interfaces";
+import { ShiftInEvent, UnmarshalledMintTx } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { UTXO } from "@renproject/utils";
 import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
@@ -15,7 +15,6 @@ import { txUrl } from "../../../lib/txUrl";
 import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token, Tokens } from "../../../state/generalTypes";
-import { numberOfConfirmations } from "../../../state/sdkContainer";
 import { LabelledDiv } from "../LabelledInput";
 import { Popup } from "../Popup";
 import { ProgressBar } from "../ProgressBar";
@@ -62,6 +61,7 @@ interface Props {
     order: ShiftInEvent;
     utxos: OrderedMap<string, UTXO>;
     networkDetails: NetworkDetails;
+    confirmations: number;
     onQRClick(): void;
     waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
     onDeposit(utxo: UTXO): void;
@@ -130,7 +130,7 @@ const ContinueButton = styled.button`
         `;
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, token, order, utxos, onQRClick, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
+    ({ mini, token, order, utxos, confirmations, onQRClick, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
 
         const [understood, setUnderstood] = React.useState(false);
@@ -210,22 +210,22 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
 
         const showUTXOs = (
             utxos.size > 0 ? <div className="show-utxos">
-                <ConfirmationsContainer>
+                {confirmations ? <ConfirmationsContainer>
                     <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
                     {/* tslint:disable-next-line: react-a11y-anchors */}
                     <Tooltip width={250} contents={<span>{tooltipText} For more information, head <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</span>}><img alt={tooltipText} src={infoIcon} /></Tooltip>
-                </ConfirmationsContainer>
+                </ConfirmationsContainer> : <></>}
                 {utxos.map(utxo => {
                     return <div key={utxo.utxo.txid}>
                         {/* <div className="show-utxos--utxo">
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
                     </div> */}
-                        <ConfirmationsBlock>
+                        {confirmations ? <ConfirmationsBlock>
                             <ProgressBar
                                 className="confirmation--progress"
-                                style={{ width: `${(order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : 2) <= 1 ? 50 : 100}%` }}
+                                style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
                                 items={[
-                                    ...range(order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : 2).map(i => ({})),
+                                    ...range(confirmations).map(i => ({})),
                                     { label: "✓" }
                                 ]}
                                 progress={utxo.utxo.confirmations}
@@ -235,17 +235,13 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                                 <ProgressItem target={target + 1} progress={utxo.utxo.confirmations} />
                             )} */}
                             {/* <Loading className="loading--blue" /> */}
-                            {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : "?"} confirmations</ConfirmationsCount> */}
-                        </ConfirmationsBlock>
+                            {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {confirmations} confirmations</ConfirmationsCount> */}
+                        </ConfirmationsBlock> : <></>}
                         <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid }, networkDetails)}>
                             <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction ID" width={105}>{utxo.utxo.txid}</LabelledDiv>
                         </a>
                     </div>;
                 }).valueSeq()}
-                {/* <details>
-                    <summary>Show deposit address</summary>
-                    {showAddress}
-                </details> */}
             </div> : null
         );
 
@@ -254,7 +250,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             return <Popup mini={mini}>
                 <div className="side-strip"><TokenIcon token={token} /></div>
                 <div className="popup--body--details">
-                    {last ? <>{last.utxo.confirmations} / {numberOfConfirmations(order.shiftParams.sendToken, networkDetails)} confirmations</> : <>Waiting for deposit</>}
+                    {last ? <>{last.utxo.confirmations} / {confirmations} confirmations</> : <>Waiting for deposit</>}
                 </div>
             </Popup>;
         }

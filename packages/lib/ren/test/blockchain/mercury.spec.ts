@@ -1,17 +1,16 @@
+import { NetworkMainnet, NetworkTestnet } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 
 import RenJS from "../../src";
-import { getBitcoinUTXOs } from "../../src/blockchain/btc";
-import { NetworkMainnet, NetworkTestnet } from "../../src/types/networks";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
 describe("mercury.ts", () => {
     it("Testnet BTC UTXOS", async () => {
-        const utxos = await getBitcoinUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0);
+        const utxos = await RenJS.utils.btc.getUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0);
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d");
         utxos[0].value.should.equal(13370);
@@ -19,7 +18,7 @@ describe("mercury.ts", () => {
     });
 
     it("Testnet BTC UTXOS [second API]", async () => {
-        const utxos = await getBitcoinUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0);
+        const utxos = await RenJS.utils.btc.getUTXOs(NetworkTestnet)("n2e9DLJqFoAiaqjo2JFQSW1GVC6gMLXEPa", 0);
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("af946e4182f1e5cbf0e682233b037a3ec8a5692b4f037cf016c7d11f0a97766d");
         utxos[0].value.should.equal(13370);
@@ -36,7 +35,7 @@ describe("mercury.ts", () => {
     });
 
     it("Mainnet BTC UTXOS", async () => {
-        const utxos = await getBitcoinUTXOs(NetworkMainnet)("3EktnHQD7RiAE6uzMj2ZifT9YgRrkSgzQX", 0);
+        const utxos = await RenJS.utils.btc.getUTXOs(NetworkMainnet)("3EktnHQD7RiAE6uzMj2ZifT9YgRrkSgzQX", 0);
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("27c3a32f18d6274eb348dfd401defe6cccc2738eda277c4e55ae44370f91d98f");
         utxos[0].value.should.equal(12772);

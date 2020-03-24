@@ -33,6 +33,7 @@ export interface UnmarshalledMintTx {
 
 export interface UnmarshalledBurnTx {
     hash: string; // Buffer;
+    txStatus: TxStatus;
     to: RenContract;
     in: {
         ref: string;

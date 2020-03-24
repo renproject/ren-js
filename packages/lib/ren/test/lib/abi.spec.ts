@@ -1,6 +1,5 @@
+import { payloadToABI, payloadToShiftInABI } from "@renproject/utils";
 import chai from "chai";
-
-import { payloadToABI, payloadToShiftInABI } from "../../src/lib/abi";
 
 chai.should();
 

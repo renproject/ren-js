@@ -1,8 +1,9 @@
 import {
     newPromiEvent, Ox, PromiEvent, ShiftInParams, strip0x, TxStatus, UnmarshalledMintTx,
 } from "@renproject/interfaces";
+import { ResponseQueryMintTx } from "@renproject/rpc";
 import {
-    DEFAULT_SHIFT_FEE, fixSignature, forwardEvents, generateAddress, generateGHash,
+    DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardEvents, generateAddress, generateGHash,
     generateShiftInTxHash, getShifterAddress, ignoreError, NetworkDetails, payloadToShiftInABI,
     processShiftInParams, randomNonce, renTxHashToBase64, RenWeb3Events, resolveInToken,
     retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput,
@@ -16,10 +17,9 @@ import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
-import { ResponseQueryMintTx } from "./renVM/jsonRPC";
-import { ShifterNetwork, unmarshalMintTx } from "./renVM/shifterNetwork";
+import { ShifterNetwork, unmarshalMintTx } from "./shifterNetwork";
 
-export class ShiftInObject {
+export class ShiftIn {
     public utxo: UTXOInput | undefined;
     public gatewayAddress: string | undefined;
     public signature: string | undefined;
@@ -157,7 +157,7 @@ export class ShiftInObject {
                     if (newDeposit) { continue; }
                 } catch (error) {
                     // tslint:disable-next-line: no-console
-                    console.error(String(error));
+                    console.error(extractError(error));
                     await sleep(1 * SECONDS);
                     continue;
                 }
@@ -205,8 +205,8 @@ export class ShiftInObject {
     public queryTx = async (specifyUTXO?: UTXOInput) =>
         unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
 
-    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<ShiftInObject, { "renTxHash": [string], "status": [TxStatus] }> => {
-        const promiEvent = newPromiEvent<ShiftInObject, { "renTxHash": [string], "status": [TxStatus] }>();
+    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<ShiftIn, { "renTxHash": [string], "status": [TxStatus] }> => {
+        const promiEvent = newPromiEvent<ShiftIn, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
             const utxo = specifyUTXO || this.utxo;
@@ -316,7 +316,7 @@ export class ShiftInObject {
             //             // ignore
             //         } else {
             //             // tslint:disable-next-line: no-console
-            //             console.error(String(error));
+            //             console.error(extractError(error));
             //             // TODO: throw unexpected errors
             //         }
             //     }
@@ -471,7 +471,7 @@ export class ShiftInObject {
                     .on("transactionHash", resolve)
                     .catch((error: Error) => {
                         // tslint:disable-next-line: no-console
-                        try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+                        try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
                         reject(error);
                     })
                 );
@@ -486,7 +486,7 @@ export class ShiftInObject {
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { innerResolve(receipt); })
                 .catch((error: Error) => {
                     // tslint:disable-next-line: no-console
-                    try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+                    try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
                     reject(error);
                 })
             );
@@ -495,7 +495,7 @@ export class ShiftInObject {
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
             // tslint:disable-next-line: no-console
-            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+            try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });
 

@@ -18,7 +18,7 @@ describe("RenVM", () => {
         await darknode.submitTx({
             to: RenJS.Tokens.BTC.Mint,
             in: [
-                arg("phash", RenVMType.TypeB32, "base64 phash"),
+                arg("p", RenVMType.ExtEthCompatPayload, { abi: "", value: "", fn: "" }),
                 // arg("amount", RenVMType.TypeU64, 100),
                 arg("token", RenVMType.ExtTypeEthCompatAddress, "base64 token"),
                 arg("to", RenVMType.ExtTypeEthCompatAddress, "base64 to"),

@@ -1,19 +1,19 @@
 import {
     newPromiEvent, Ox, PromiEvent, ShiftOutParams, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/interfaces";
+import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
-    extractBurnReference, forwardEvents, generateShiftOutTxHash, ignoreError, NetworkDetails,
-    payloadToABI, payloadToShiftInABI, processShiftOutParams, renTxHashToBase64, RenWeb3Events,
-    resolveOutToken, Web3Events, withDefaultAccount,
+    extractBurnReference, extractError, forwardEvents, generateShiftOutTxHash, ignoreError,
+    NetworkDetails, payloadToABI, payloadToShiftInABI, processShiftOutParams, renTxHashToBase64,
+    RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
 import { TransactionConfig } from "web3-core";
 
-import { ResponseQueryBurnTx } from "./renVM/jsonRPC";
-import { ShifterNetwork, unmarshalBurnTx } from "./renVM/shifterNetwork";
+import { ShifterNetwork, unmarshalBurnTx } from "./shifterNetwork";
 
-export class ShiftOutObject {
+export class ShiftOut {
     private readonly params: ShiftOutParams;
     private readonly renVMNetwork: ShifterNetwork;
     private readonly network: NetworkDetails;
@@ -62,9 +62,9 @@ export class ShiftOutObject {
         };
     }
 
-    public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<ShiftOutObject, Web3Events & RenWeb3Events> => {
+    public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<ShiftOut, Web3Events & RenWeb3Events> => {
 
-        const promiEvent = newPromiEvent<ShiftOutObject, Web3Events & RenWeb3Events>();
+        const promiEvent = newPromiEvent<ShiftOut, Web3Events & RenWeb3Events>();
 
         (async () => {
 
@@ -128,7 +128,7 @@ export class ShiftOutObject {
                             .on("transactionHash", resolve)
                             .catch((error: Error) => {
                                 // tslint:disable-next-line: no-console
-                                try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+                                try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
                                 reject(error);
                             })
                         );
@@ -151,7 +151,7 @@ export class ShiftOutObject {
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
             // tslint:disable-next-line: no-console
-            try { if (ignoreError(error)) { console.error(String(error)); return; } } catch (_error) { /* Ignore _error */ }
+            try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });
 

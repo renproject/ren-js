@@ -1,15 +1,18 @@
+// tslint:disable: no-console
+
 import {
-    Chain, GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType,
-    HistoryEvent, newPromiEvent, PromiEvent, RenNetwork, SendParams, ShiftInEvent, ShiftInParams,
-    ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus, ShiftParams, sleep, Tokens,
-    UnmarshalledTx,
+    Asset, Chain, GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType,
+    HistoryEvent, newPromiEvent, PromiEvent, RenContract, RenNetwork, SendParams, ShiftedToken,
+    ShiftInEvent, ShiftInParams, ShiftInParamsSimple, ShiftInStatus, ShiftOutEvent, ShiftOutParams,
+    ShiftOutParamsSimple, ShiftOutStatus, ShiftParams, sleep, Tokens, UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, randomBytes, resolveSendCall, stringToNetwork, utils, waitForReceipt,
+    extractBurnReference, extractError, getShifterAddress, getTokenAddress, NetworkDetails,
+    parseRenContract, randomBytes, resolveSendCall, stringToNetwork, utils, waitForReceipt,
     withDefaultAccount,
 } from "@renproject/utils";
 import Web3 from "web3";
-import { provider } from "web3-providers";
+import { HttpProvider, provider as Web3Provider } from "web3-providers";
 
 import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
 import {
@@ -19,6 +22,33 @@ import {
 import { validateString } from "./validate";
 
 export { Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent, ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent } from "@renproject/interfaces";
+
+
+interface InjectedEthereum extends HttpProvider {
+    enable: () => Promise<void>;
+}
+
+export const getInjectedWeb3Provider = async (): Promise<Web3Provider> => {
+    let injectedProvider;
+
+    interface Web3Window {
+        web3?: Web3;
+        ethereum?: InjectedEthereum;
+    }
+
+    const web3Window = window as Web3Window;
+    if (web3Window.ethereum) {
+        await web3Window.ethereum.enable();
+        injectedProvider = web3Window.ethereum;
+    } else if (web3Window.web3) {
+        injectedProvider = web3Window.web3.currentProvider;
+    } else {
+        throw new Error("No Web3 provider provided to GatewayJS.");
+    }
+
+    return injectedProvider as Web3Provider;
+};
+
 
 export class Gateway {
 
@@ -32,7 +62,7 @@ export class Gateway {
     // tslint:disable: readonly-keyword
     public isPaused = false;
     public isOpen = false;
-    public currentProvider = undefined as provider | undefined;
+    public currentProvider = undefined as Web3Provider | undefined;
     private web3 = undefined as Web3 | undefined;
     private isCancelling = false;
     // tslint:enable: readonly-keyword
@@ -42,10 +72,10 @@ export class Gateway {
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
-    private readonly network: RenNetwork;
+    private readonly network: NetworkDetails;
     private readonly endpoint: string;
 
-    constructor(network: RenNetwork, endpoint: string) {
+    constructor(network: NetworkDetails, endpoint: string) {
         this.network = network;
         this.endpoint = endpoint;
         this.id = randomBytes(8);
@@ -87,6 +117,7 @@ export class Gateway {
         return this._sendMessage(GatewayMessageType.GetStatus, {});
     }
 
+    // tslint:disable-next-line: promise-must-complete
     public readonly _getGateways = async () => new Promise<Map<string, HistoryEvent>>((resolve, reject) => {
         const container = this._getOrCreateGatewayContainer();
 
@@ -143,17 +174,21 @@ export class Gateway {
 
     public readonly result = () => this.promiEvent;
 
-    public readonly _open = (shiftParams: ShiftParams | SendParams | ShiftInEvent | ShiftOutEvent, web3Provider?: provider): Gateway => {
+    public readonly _open = (shiftParams: ShiftParams | SendParams | ShiftInEvent | ShiftOutEvent, web3Provider?: Web3Provider): Gateway => {
 
         (async () => {
 
+            let provider: Web3Provider = web3Provider || (shiftParams as ShiftParams).web3Provider;
+            if (!provider) {
+                provider = await getInjectedWeb3Provider();
+            }
 
             // tslint:disable-next-line: no-object-mutation
-            this.web3 = new Web3(web3Provider || (shiftParams as ShiftParams).web3Provider);
+            this.web3 = new Web3(provider);
 
             if ((shiftParams as SendParams).sendAmount) {
                 // tslint:disable-next-line: no-parameter-reassignment
-                shiftParams = await resolveSendCall(this.web3, stringToNetwork(this.network), shiftParams as SendParams);
+                shiftParams = resolveSendCall(stringToNetwork(this.network), shiftParams as SendParams);
             }
 
             // Check that GatewayJS isn't already open
@@ -255,8 +290,7 @@ export class Gateway {
                                 });
                                 this._acknowledgeMessage<GatewayMessageType.SendTransaction>(e.data, { txHash }).catch(console.error);
                             } catch (error) {
-                                console.error(error);
-                                this._acknowledgeMessage(e.data, { error: String(error.message || error) }).catch(console.error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
@@ -270,8 +304,7 @@ export class Gateway {
                                 await waitForReceipt(this.web3, txHash);
                                 this._acknowledgeMessage<GatewayMessageType.GetTransactionStatus>(e.data, { confirmations: 0 }).catch(console.error);
                             } catch (error) {
-                                console.error(error);
-                                this._acknowledgeMessage(e.data, { error: String(error.message || error) }).catch(console.error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
@@ -287,7 +320,7 @@ export class Gateway {
                                 this._acknowledgeMessage<GatewayMessageType.GetTransactionBurn>(e.data, { burnReference }).catch(console.error);
                             } catch (error) {
                                 console.error(error);
-                                this._acknowledgeMessage(e.data, { error: String(error.message || error) }).catch(console.error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
@@ -427,13 +460,13 @@ export default class GatewayJS {
     public static readonly ShiftOutStatus = ShiftOutStatus;
     public static readonly utils = utils;
 
-    private readonly network: RenNetwork;
+    private readonly network: NetworkDetails;
     private readonly endpoint: string;
     // tslint:disable-next-line: readonly-keyword
     constructor(network: RenNetwork | string, options?: { endpoint?: string }) {
         const publicNetworks: readonly RenNetwork[] = [RenNetwork.Chaosnet, RenNetwork.Testnet];
         validateString<RenNetwork>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(RenNetwork) as readonly RenNetwork[]);
-        this.network = network as RenNetwork;
+        this.network = stringToNetwork(network);
         // NOTE: In a future release, all networks will use the production endpoint.
         this.endpoint = (options && (options.endpoint === "staging" ? GATEWAY_ENDPOINT_STAGING : options.endpoint)) || GATEWAY_ENDPOINT_PRODUCTION;
     }
@@ -457,25 +490,47 @@ export default class GatewayJS {
         return gateways;
     }
 
-    /**
-     * Creates a new Gateway instance. (Note - Exclude<..., "web3Provider">
-     *  doesn't seem to work.)
-     */
-    public readonly shiftIn = (params: ShiftInParams): Gateway => {
+    public readonly shiftIn = (params: ShiftInParams | ShiftInParamsSimple | SendParams): Gateway => {
+        if ((params as SendParams).sendAmount) {
+            params = resolveSendCall(this.network, params as SendParams);
+        } else if ((params as ShiftInParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftInParamsSimple;
+            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
+        }
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
-    public readonly shiftOut = (params: ShiftOutParams): Gateway => {
+    public readonly shiftOut = (params: ShiftOutParams | ShiftOutParamsSimple | SendParams): Gateway => {
+        if ((params as SendParams).sendAmount) {
+            params = resolveSendCall(this.network, params as SendParams);
+        } else if ((params as ShiftInParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftOutParamsSimple;
+            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
+        }
         return new Gateway(this.network, this.endpoint)._open(params);
+    }
+
+    public readonly open = (params: ShiftInParams | ShiftOutParams | ShiftInParamsSimple | ShiftOutParamsSimple | SendParams) => {
+        if (params.sendToken === "BTC" || params.sendToken === "ZEC" || params.sendToken === "BCH") {
+            throw new Error(`Ambiguous token ${params.sendToken} - call "shiftIn" or "shiftOut" instead of "open"`);
+        }
+        if (parseRenContract(params.sendToken).to === Chain.Ethereum) {
+            return this.shiftIn(params);
+        } else {
+            return this.shiftOut(params);
+        }
     }
 
     public readonly send = (params: SendParams): Gateway => {
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
-    public readonly recoverShift = (web3Provider: provider, params: ShiftInEvent | ShiftOutEvent): Gateway => {
+    public readonly recoverShift = (web3Provider: Web3Provider, params: ShiftInEvent | ShiftOutEvent): Gateway => {
         return new Gateway(this.network, this.endpoint)._open(params, web3Provider);
     }
+
+    public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);
+    public readonly getShifterAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getShifterAddress(stringToNetwork(this.network), web3, token);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -2,12 +2,12 @@ import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import { decode } from "bs58";
+import { NetworkDevnet, NetworkLocalnet, NetworkMainnet } from "@renproject/utils";
+import {
+    btcAddressFrom, btcAddressToHex, createBCHAddress, createBTCAddress, createZECAddress,
+} from "@renproject/chains";
 
 import RenJS from "../../src";
-import { bchAddressFrom, bchAddressToHex, createBCHAddress } from "../../src/blockchain/bch";
-import { btcAddressFrom, btcAddressToHex, createBTCAddress } from "../../src/blockchain/btc";
-import { createZECAddress } from "../../src/blockchain/zec";
-import { NetworkDevnet, NetworkLocalnet, NetworkMainnet } from "../../src/types/networks";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -62,9 +62,9 @@ describe("zec.ts", () => {
             .forEach(({ network, expected, actual, hex }) => {
                 it(network.name, async () => {
                     if (expected) {
-                        const address = createZECAddress(network, "0x1234");
+                        const address = createZECAddress(network.isTestnet, network.contracts.renVM.mpkh, "0x1234");
                         address.should.equal(expected);
-                        createZECAddress(network, "1234")
+                        createZECAddress(network.isTestnet, network.contracts.renVM.mpkh, "1234")
                             .should.equal(address);
                     }
                     expected = expected || actual;
@@ -89,9 +89,9 @@ describe("bch.ts", () => {
         ]
             .forEach(({ network, expected, hex }) => {
                 it(network.name, async () => {
-                    const address = createBCHAddress(network, "0x1234");
+                    const address = createBCHAddress(network.isTestnet, network.contracts.renVM.mpkh, "0x1234");
                     address.should.equal(expected);
-                    createBCHAddress(network, "1234")
+                    createBCHAddress(network.isTestnet, network.contracts.renVM.mpkh, "1234")
                         .should.equal(address);
                     RenJS.utils.bch.addressToHex(address)
                         .should.equal(hex);

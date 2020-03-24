@@ -1,18 +1,14 @@
 // tslint:disable: no-console
 
-import { EthArgs, RenContract, strip0x, TxStatus, UnmarshalledTx } from "@renproject/interfaces";
-import BigNumber from "bignumber.js";
+import { EthArgs, strip0x, Tokens } from "@renproject/interfaces";
+import {
+    BURN_TOPIC, generateAddress, generateGHash, generatePHash, NetworkChaosnet, NetworkDevnet,
+    NetworkLocalnet, NetworkTestnet,
+} from "@renproject/utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
 import RenJS from "../../src";
-import {
-    BURN_TOPIC, fixSignature, generateAddress, generateGHash, generatePHash,
-} from "../../src/lib/utils";
-import { Tokens } from "../../src/types/assets";
-import {
-    NetworkChaosnet, NetworkDevnet, NetworkLocalnet, NetworkMainnet, NetworkTestnet,
-} from "../../src/types/networks";
 
 chai.use(chaiAsPromised);
 chai.should();
@@ -87,36 +83,36 @@ describe("Utils", function () {
             .should.be.rejectedWith(/Node returned status 404 with reason: tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/);
     });
 
-    it.skip("fixSignature", () => {
-        const response: UnmarshalledTx = {
-            to: RenContract.Btc2Eth,
-            txStatus: TxStatus.TxStatusDone,
-            hash: "0xec7f5d0fc132d87ff65095f9caee08be659a9b7f5b9bd2250291c94bb5d94801",
-            in: {
-                phash: "0xacb3833774a06f15079030f357276c71faabb1f006f804c80ded65782453f5e9",
-                token: "0x916b8012e1813e5924a3eca400dbe6c7055a8484",
-                to: "0xc99ab5d1d0fbf99912dbf0da1adc69d4a3a1e9eb",
-                n: "0xc90399b95e4614dc60a212a987e6a71f1574605936713b97313299aee7dfcd90",
-                utxo: {
-                    amount: "14999",
-                    scriptPubKey: "qRSgMyIWk6jew6wDt7Za2oV68oBdc4c=",
-                    txHash: "Zdpl+CoLsDqEH7yIhXYxv43lFkkj0eQS84YEax9cS+w=",
-                    vOut: 0
-                },
-                amount: "14999",
-            },
-            autogen: {
-                ghash: "0x6b622afc190d985b5a26f15df93396ea5ba5cbdda9652423bf53e243d76f688d",
-                nhash: "0x57b161e0fcf308b177e5ad67bb63e47b294cf8055d5bdf96217068e101c59b22",
-                sighash: "0x465579a1833f92c992d9731d8dbcddca9765a93b39fb8c6653174db5b72948a1"
-            },
-            out: {
-                r: "0xcff867351a7bbfef426375408673b358342f9aca753c509dc6913a74161eae86",
-                s: "0x20cf47938793d5601b390c6e82dde674a629e68ce2c9d37cb91407a6da507d10",
-                v: "0x01"
-            }
-        };
+    // it.skip("fixSignature", () => {
+    //     const response: UnmarshalledTx = {
+    //         to: RenContract.Btc2Eth,
+    //         txStatus: TxStatus.TxStatusDone,
+    //         hash: "0xec7f5d0fc132d87ff65095f9caee08be659a9b7f5b9bd2250291c94bb5d94801",
+    //         in: {
+    //             phash: "0xacb3833774a06f15079030f357276c71faabb1f006f804c80ded65782453f5e9",
+    //             token: "0x916b8012e1813e5924a3eca400dbe6c7055a8484",
+    //             to: "0xc99ab5d1d0fbf99912dbf0da1adc69d4a3a1e9eb",
+    //             n: "0xc90399b95e4614dc60a212a987e6a71f1574605936713b97313299aee7dfcd90",
+    //             utxo: {
+    //                 amount: "14999",
+    //                 scriptPubKey: "qRSgMyIWk6jew6wDt7Za2oV68oBdc4c=",
+    //                 txHash: "Zdpl+CoLsDqEH7yIhXYxv43lFkkj0eQS84YEax9cS+w=",
+    //                 vOut: 0
+    //             },
+    //             amount: "14999",
+    //         },
+    //         autogen: {
+    //             ghash: "0x6b622afc190d985b5a26f15df93396ea5ba5cbdda9652423bf53e243d76f688d",
+    //             nhash: "0x57b161e0fcf308b177e5ad67bb63e47b294cf8055d5bdf96217068e101c59b22",
+    //             sighash: "0x465579a1833f92c992d9731d8dbcddca9765a93b39fb8c6653174db5b72948a1"
+    //         },
+    //         out: {
+    //             r: "0xcff867351a7bbfef426375408673b358342f9aca753c509dc6913a74161eae86",
+    //             s: "0x20cf47938793d5601b390c6e82dde674a629e68ce2c9d37cb91407a6da507d10",
+    //             v: "0x01"
+    //         }
+    //     };
 
-        console.debug(fixSignature(response, NetworkDevnet));
-    });
+    //     console.debug(fixSignature(response, NetworkDevnet));
+    // });
 });

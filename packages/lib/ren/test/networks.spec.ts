@@ -1,7 +1,7 @@
+import { NetworkDevnet, NetworkLocalnet, NetworkMainnet } from "@renproject/utils";
 import chai from "chai";
 
 import RenJS from "../src/index";
-import { NetworkDevnet, NetworkLocalnet, NetworkMainnet } from "../src/types/networks";
 
 chai.should();
 

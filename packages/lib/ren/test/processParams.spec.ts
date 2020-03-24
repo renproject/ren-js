@@ -2,9 +2,9 @@ import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
-
-import { processShiftInParams, processShiftOutParams } from "../src/lib/processParams";
-import { NetworkTestnet } from "../src/types/networks";
+import {
+    NetworkTestnet, processShiftInParams, processShiftOutParams, resolveSendCall,
+} from "@renproject/utils";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -34,10 +34,12 @@ describe("processParams", () => {
         processShiftOutParams(NetworkTestnet, {
             sendToken: "BTC",
             web3Provider: {},
-            sendTo: "sendTo",
-            contractFn: "contractFn",
-            contractParams: [{ name: "name", type: "uint", value: "1" }],
-            txConfig: { gas: 2 },
+            contractCalls: [{
+                sendTo: "sendTo",
+                contractFn: "contractFn",
+                contractParams: [{ name: "name", type: "uint", value: "1" }],
+                txConfig: { gas: 2 },
+            }],
         })
             .should.deep.equal({
                 sendToken: "BTC0Eth2Btc",
@@ -50,7 +52,7 @@ describe("processParams", () => {
                 }],
             });
 
-        JSON.stringify(processShiftOutParams(NetworkTestnet, {
+        JSON.stringify(resolveSendCall(NetworkTestnet, {
             sendToken: "BTC",
             web3Provider: web3.currentProvider,
             sendTo: "sendTo",
@@ -95,10 +97,12 @@ describe("processParams", () => {
         processShiftInParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
-            sendTo: "sendTo",
-            contractFn: "contractFn",
-            contractParams: [{ name: "name", type: "address", value: "1" }],
-            txConfig: { gas: 2 },
+            contractCalls: [{
+                sendTo: "sendTo",
+                contractFn: "contractFn",
+                contractParams: [{ name: "name", type: "address", value: "1" }],
+                txConfig: { gas: 2 },
+            }],
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
@@ -114,10 +118,12 @@ describe("processParams", () => {
         processShiftInParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
-            sendTo: "sendTo",
-            contractFn: "contractFn",
-            contractParams: [{ name: "name", type: "address", value: "1" }],
-            txConfig: { gas: 2 },
+            contractCalls: [{
+                sendTo: "sendTo",
+                contractFn: "contractFn",
+                contractParams: [{ name: "name", type: "address", value: "1" }],
+                txConfig: { gas: 2 },
+            }],
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
@@ -130,10 +136,11 @@ describe("processParams", () => {
                 }],
             });
 
-        processShiftInParams(NetworkTestnet, {
+        resolveSendCall(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
             sendTo: "sendTo",
+            sendAmount: "0.01",
             txConfig: { gas: 2 },
         })
             .should.deep.equal({

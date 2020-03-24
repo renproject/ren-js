@@ -1,6 +1,8 @@
+import { extractError } from "@renproject/utils";
 import { List, OrderedSet } from "immutable";
 
 import { HttpProvider } from "./httpProvider";
+import { Provider } from "./jsonRPC";
 
 const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[List<a>, OrderedSet<string>]> => {
     let errors = OrderedSet<string>();
@@ -9,7 +11,7 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
         try {
             newList = newList.push(await entryP);
         } catch (error) {
-            const errorString = String(error);
+            const errorString = extractError(error);
             if (!errors.has(errorString)) {
                 errors = errors.add(errorString);
                 // tslint:disable-next-line: no-console
@@ -21,18 +23,18 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
     return [newList, errors];
 };
 
-export class MultiProvider {
-    public nodes: List<HttpProvider>;
+export class MultiProvider<Requests extends { [event: string]: any } = {}, Responses extends { [event: string]: any } = {}> implements Provider {
+    public nodes: List<HttpProvider<Requests, Responses>>;
 
     constructor(nodeURLs: string[]) {
-        this.nodes = List(nodeURLs.map(nodeURL => new HttpProvider(nodeURL)));
+        this.nodes = List(nodeURLs.map(nodeURL => new HttpProvider<Requests, Responses>(nodeURL)));
     }
 
-    public sendMessage = async <Method extends string, Request, Response>(method: Method, request: Request, retry = 1): Promise<Response> => {
+    public sendMessage = async <Method extends string>(method: Method, request: Requests[Method], retry = 1): Promise<Responses[Method]> => {
         // tslint:disable-next-line: prefer-const
         let [responses, errors] = await promiseAll(
             this.nodes.valueSeq().map(
-                async (node) => node.sendMessage<Method, Request, Response>(
+                async (node) => node.sendMessage<Method>(
                     method,
                     request,
                     retry,

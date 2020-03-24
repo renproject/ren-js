@@ -1,21 +1,20 @@
 import _BN from "bn.js";
 
 import {
-    Asset, Chain, RenContract, RenNetwork, ShiftedToken, ShiftInParams, ShiftOutParams, Tokens,
-    TxStatus,
+    Asset, Chain, RenContract, RenNetwork, SendParams, ShiftedToken, ShiftInParams,
+    ShiftInParamsSimple, ShiftOutParams, ShiftOutParamsSimple, Tokens,
 } from "@renproject/interfaces";
+import { MultiProvider, Provider } from "@renproject/provider";
+import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
 import {
     getShifterAddress, getTokenAddress, NetworkChaosnet, NetworkDetails, NetworkTestnet,
-    stringToNetwork, utils,
+    resolveSendCall, stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
-import { Darknode } from "./renVM/darknode";
-import { DarknodeGroup } from "./renVM/darknodeGroup";
-import { RPCMethod } from "./renVM/jsonRPC";
-import { ShifterNetwork } from "./renVM/shifterNetwork";
-import { ShiftInObject } from "./shiftIn";
-import { ShiftOutObject } from "./shiftOut";
+import { ShifterNetwork } from "./shifterNetwork";
+import { ShiftIn } from "./shiftIn";
+import { ShiftOut } from "./shiftOut";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -48,16 +47,12 @@ export default class RenJS {
     public static Networks = RenNetwork;
     public static NetworkDetails = NetworkDetails;
     public static Chains = Chain;
-    public static TxStatus = TxStatus;
     public static utils = utils;
-    public static Darknode = Darknode;
-    public static DarknodeGroup = DarknodeGroup;
-    public static RPCMethod = RPCMethod;
 
     // Not static
     public readonly utils = utils;
     public readonly renVM: ShifterNetwork;
-    public readonly lightnode: DarknodeGroup;
+    public readonly lightnode: RenVMProvider;
     public readonly network: NetworkDetails;
 
     /**
@@ -65,9 +60,10 @@ export default class RenJS {
      * @param network One of "mainnet" (or empty), "testnet" or a custom
      *                Network object.
      */
-    constructor(network?: NetworkDetails | string | null | undefined) {
+    constructor(network?: NetworkDetails | string | null | undefined, provider?: string | Provider) {
         this.network = stringToNetwork(network);
-        this.lightnode = new DarknodeGroup(this.network.nodeURLs);
+        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ? provider : new MultiProvider<RenVMParams, RenVMResponses>(provider ? [provider] : this.network.nodeURLs)) as unknown as Provider<RenVMParams, RenVMResponses>;
+        this.lightnode = new RenVMProvider(rpcProvider);
         this.renVM = new ShifterNetwork(this.lightnode);
     }
 
@@ -78,8 +74,14 @@ export default class RenJS {
      * @param params See [[ShiftInParams]].
      * @returns An instance of [[ShiftInObject]].
      */
-    public readonly shiftIn = (params: ShiftInParams): ShiftInObject => {
-        return new ShiftInObject(this.renVM, this.network, params);
+    public readonly shiftIn = (params: ShiftInParams | ShiftInParamsSimple | SendParams): ShiftIn => {
+        if ((params as SendParams).sendAmount) {
+            params = resolveSendCall(this.network, params as SendParams);
+        } else if ((params as ShiftInParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftInParamsSimple;
+            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
+        }
+        return new ShiftIn(this.renVM, this.network, params);
     }
 
     /**
@@ -88,8 +90,15 @@ export default class RenJS {
      * @param params See [[ShiftOutParams]].
      * @returns An instance of [[ShiftOutObject]].
      */
-    public readonly shiftOut = (params: ShiftOutParams): ShiftOutObject => {
-        return new ShiftOutObject(this.renVM, this.network, params);
+    public readonly shiftOut = (params: ShiftOutParams | ShiftOutParamsSimple | SendParams): ShiftOut => {
+        if ((params as SendParams).sendAmount) {
+            params = resolveSendCall(this.network, params as SendParams);
+        } else if ((params as ShiftInParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftOutParamsSimple;
+            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
+        }
+
+        return new ShiftOut(this.renVM, this.network, params);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);

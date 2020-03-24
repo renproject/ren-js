@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
+import { extractError } from "@renproject/utils";
 
 import { Token, Tokens } from "../../../state/generalTypes";
 import { OpeningShiftMini } from "../OpeningShiftMini";
@@ -31,7 +32,7 @@ export const AskForAddress: React.StatelessComponent<{
             updateSubmitting(true);
             onAddress(address, token);
         } catch (error) {
-            updateError(String(error.message || error));
+            updateError(extractError(error));
             updateSubmitting(false);
         }
     };

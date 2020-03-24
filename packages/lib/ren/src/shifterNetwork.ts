@@ -2,13 +2,14 @@ import {
     AbiItem, Chain, Ox, RenContract, RenVMArg, RenVMOutputUTXO, RenVMType, strip0x, Tokens,
     TxStatus, UnmarshalledBurnTx, UnmarshalledMintTx,
 } from "@renproject/interfaces";
+import { Provider } from "@renproject/provider";
+import {
+    RenVMParams, RenVMResponses, ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod,
+} from "@renproject/rpc";
 import {
     assert, NetworkDetails, parseRenContract, SECONDS, sleep, syncGetTokenAddress, toBase64, utils,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-
-import { DarknodeGroup } from "./darknodeGroup";
-import { ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod } from "./jsonRPC";
 
 const decodeString = (input: string) => Buffer.from(input, "base64").toString();
 const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
@@ -187,6 +188,7 @@ export const unmarshalBurnTx = (response: ResponseQueryBurnTx): UnmarshalledBurn
         hash: decodeBytes(response.tx.hash),
         to: response.tx.to,
         in: { ref, to, amount },
+        txStatus: response.txStatus,
     };
 };
 
@@ -199,9 +201,9 @@ export const unmarshalTx = ((response: ResponseQueryMintTx | ResponseQueryBurnTx
 });
 
 export class ShifterNetwork {
-    public network: DarknodeGroup;
+    public network: Provider<RenVMParams, RenVMResponses>;
 
-    constructor(network: DarknodeGroup) {
+    constructor(network: Provider<RenVMParams, RenVMResponses>) {
         this.network = network;
     }
 
@@ -217,7 +219,7 @@ export class ShifterNetwork {
         encodedParameters: string,
     ): Promise<string> => {
         const token = syncGetTokenAddress(renContract, network);
-        const response = await this.network.sendMessage(RPCMethod.SubmitTx,
+        const response = await this.network.sendMessage<RPCMethod.SubmitTx>(RPCMethod.SubmitTx,
             {
                 tx: {
                     to: renContract,

@@ -228,6 +228,11 @@ body {
         color: $grey-12;
     }
 
+    .link {
+        color: $blue-bright;
+        cursor: pointer;
+    }
+
     .loading--small {
         display: inline-block;
         transform: scale(0.5);

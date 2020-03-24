@@ -54,8 +54,6 @@ export interface ShiftParamsCommon {
 
     web3Provider?: provider; // A Web3 provider
 
-    contractCalls?: ContractCall[];
-
     // Recover from a Ren transaction hash.
     renTxHash?: string; // Provide the transaction hash returned from RenVM to continue a previous shiftIn.
 
@@ -74,11 +72,29 @@ export interface ShiftInParams extends ShiftParamsCommon {
     suggestedAmount?: NumberValue;
 
     confirmations?: number;
+
+    contractCalls?: ContractCall[];
+}
+
+export interface ShiftInParamsSimple extends ShiftParamsCommon, ContractCall {
+    /**
+     * The amount of `sendToken` to be sent
+     */
+    requiredAmount?: NumberValue | { min?: NumberValue, max?: NumberValue };
+
+    suggestedAmount?: NumberValue;
+
+    confirmations?: number;
 }
 
 export interface ShiftOutParams extends ShiftParamsCommon {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
+    burnReference?: string | number; // The reference ID of the burn emitted in the contract log
+    contractCalls?: ContractCall[];
+}
 
+export interface ShiftOutParamsSimple extends ShiftParamsCommon, ContractCall {
+    ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
 }
 
@@ -86,6 +102,7 @@ export interface SendParams extends ShiftParamsCommon {
     sendTo: string;
     sendAmount: NumberValue;
     txConfig?: TransactionConfig; // Set transaction options:
+    confirmations?: number;
 }
 
 export type SerializableShiftOutParams = Exclude<ShiftOutParams, "web3Provider">;

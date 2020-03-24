@@ -281,11 +281,17 @@ export const extractError = (error: any): string => {
         if (error.error) { return extractError(error.error); }
         if (error.message) { return extractError(error.message); }
         if (error.statusText) { return extractError(error.statusText); }
-        try {
-            return JSON.stringify(error);
-        } catch (error) {
-            // Ignore JSON error
+    }
+    try {
+        if (typeof error === "string") {
+            if (error.slice(0, 7) === "Error: ") {
+                error = error.slice(7);
+            }
+            return error;
         }
+        return JSON.stringify(error);
+    } catch (error) {
+        // Ignore JSON error
     }
     return String(error);
 };
@@ -300,10 +306,10 @@ export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number):
         try {
             return await fnCall();
         } catch (error) {
-            if (String(error).match(/timeout of .* exceeded/)) {
+            const errorMessage = extractError(error);
+            if (errorMessage.match(/timeout of .* exceeded/)) {
                 returnError = error;
             } else {
-                const errorMessage = extractError(error);
                 if (errorMessage) {
                     error.message += ` (${errorMessage})`;
                 }
@@ -503,10 +509,9 @@ export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>({ shiftI
  * This function checks if this is the case and makes the required changes to
  * the parameters;
  */
-export const resolveSendCall = async (web3: Web3, network: NetworkDetails, params: SendParams): Promise<ShiftInParams | ShiftOutParams> => {
+export const resolveSendCall = (network: NetworkDetails, params: SendParams): ShiftInParams | ShiftOutParams => {
 
     const { sendTo, txConfig, ...restOfParams } = params;
-
 
     // The contract call hasn't been provided - but `sendTo` has. We overwrite
     // the contract call with a simple adapter call.
@@ -541,30 +546,29 @@ export const resolveSendCall = async (web3: Web3, network: NetworkDetails, param
             throw new Error(`Send amount must be provided in order to send directly to an address.`);
         }
 
-        const addressToHex = utils[parseRenContract(sendToken).asset as "BTC" | "ZEC" | "BCH"].addressToHex(sendTo);
+        const token = parseRenContract(sendToken).asset as "BTC" | "ZEC" | "BCH";
+        const addressToHex = utils[token].addressToHex(sendTo);
 
-        const shiftedTokenAddress = await getTokenAddress(network, web3, sendToken);
-        const approve = {
-            sendTo: shiftedTokenAddress,
-            contractFn: "approve",
-            contractParams: [
-                { type: "address" as const, name: "spender", value: network.contracts.addresses.shifter.BasicAdapter.address },
-                { type: "uint256" as const, name: "amount", value: toBigNumber(sendAmount).toFixed() },
-            ],
-            txConfig,
-        };
+        // const shiftedTokenAddress = await getTokenAddress(network, web3, sendToken);
+        // const approve = {
+        //     sendTo: shiftedTokenAddress,
+        //     contractFn: "approve",
+        //     contractParams: [
+        //         { type: "address" as const, name: "spender", value: network.contracts.addresses.shifter.BasicAdapter.address },
+        //         { type: "uint256" as const, name: "amount", value: toBigNumber(sendAmount).toFixed() },
+        //     ],
+        //     txConfig,
+        // };
 
         return {
             ...restOfBurnParams,
             suggestedAmount: restOfParams.sendAmount,
             contractCalls: [
-                approve,
+                // approve,
                 {
-                    sendTo: network.contracts.addresses.shifter.BasicAdapter.address,
-                    contractFn: "shiftOut",
+                    sendTo: network.contracts.addresses.shifter[`${token.toUpperCase()}Shifter` as "BTCShifter" | "ZECShifter" | "BCHShifter"]._address,
+                    contractFn: "burn",
                     contractParams: [
-                        { type: "address" as const, name: "_shifterRegistry", value: network.contracts.addresses.shifter.ShifterRegistry.address },
-                        { type: "string" as const, name: "_symbol", value: getTokenName(renContract.asset) },
                         { type: "bytes" as const, name: "_to", value: addressToHex },
                         { type: "uint256" as const, name: "_amount", value: toBigNumber(sendAmount).toFixed() },
                     ],

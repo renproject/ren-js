@@ -2449,9 +2449,8 @@
 "@renproject/chains@file:packages/lib/ren-chains":
   version "0.7.3"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-chains-0.7.3-048d7968-bc23-4e32-9fc6-219eb71f9156-1583987592767/node_modules/@renproject/ren-chains"
     "@renproject/contracts" "^0.3.35"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-0.7.3-048d7968-bc23-4e32-9fc6-219eb71f9156-1583987592767/node_modules/@renproject/ren-interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-0.7.3-e79f7126-e415-426a-a9cd-45ce3ea8d76f-1584317843750/node_modules/@renproject/ren-interfaces"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2488,8 +2487,8 @@
 "@renproject/gateway@file:packages/lib/gateway":
   version "0.3.3"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-0.3.3-8711821d-d2c2-4a76-be19-f9a57da5303a-1583987592780/node_modules/@renproject/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-0.3.3-8711821d-d2c2-4a76-be19-f9a57da5303a-1583987592780/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-0.3.3-97dabdec-5253-460a-bbf9-c61c1f53ecff-1584317843755/node_modules/@renproject/ren-interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-0.3.3-97dabdec-5253-460a-bbf9-c61c1f53ecff-1584317843755/node_modules/@renproject/ren-utils"
     "@types/bn.js" "^4.11.6"
     "@types/node" "^13.7.7"
     web3 "^2.0.0-alpha.1"
@@ -2521,10 +2520,10 @@
 "@renproject/ren@file:packages/lib/ren":
   version "0.7.3"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dc5a1b76-ec1f-44e7-a5b4-935f1488abbc-1583987592774/node_modules/@renproject/ren-chains"
+    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dba758be-84d8-4c76-a607-e7656a5fd52e-1584317843756/node_modules/@renproject/ren-chains"
     "@renproject/contracts" "^0.3.35"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dc5a1b76-ec1f-44e7-a5b4-935f1488abbc-1583987592774/node_modules/@renproject/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dc5a1b76-ec1f-44e7-a5b4-935f1488abbc-1583987592774/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dba758be-84d8-4c76-a607-e7656a5fd52e-1584317843756/node_modules/@renproject/ren-interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dba758be-84d8-4c76-a607-e7656a5fd52e-1584317843756/node_modules/@renproject/ren-utils"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2549,9 +2548,9 @@
 "@renproject/utils@file:packages/lib/ren-utils":
   version "0.7.3"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-0.7.3-c02089e2-4bf7-4b14-abf9-d484897247fc-1583987592771/node_modules/@renproject/ren-chains"
+    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-0.7.3-fd4cbec1-231f-420d-afb5-714abe2f332b-1584317843746/node_modules/@renproject/ren-chains"
     "@renproject/contracts" "^0.3.35"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-0.7.3-c02089e2-4bf7-4b14-abf9-d484897247fc-1583987592771/node_modules/@renproject/ren-interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-0.7.3-fd4cbec1-231f-420d-afb5-714abe2f332b-1584317843746/node_modules/@renproject/ren-interfaces"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -5606,9 +5605,9 @@ chai-as-promised@^7.1.1:
   dependencies:
     check-error "^1.0.2"
 
-chai-bignumber@noiach/chai-bignumber#fd75e47:
+chai-bignumber@ren-forks/chai-bignumber#afa6f46dcbef0b7e622dc27b9b3354fc67afafbc:
   version "2.0.2"
-  resolved "https://codeload.github.com/noiach/chai-bignumber/tar.gz/fd75e47b2980c3a151d2a05b070293b18a9bddce"
+  resolved "https://codeload.github.com/ren-forks/chai-bignumber/tar.gz/afa6f46dcbef0b7e622dc27b9b3354fc67afafbc"
 
 chai@^4.2.0:
   version "4.2.0"

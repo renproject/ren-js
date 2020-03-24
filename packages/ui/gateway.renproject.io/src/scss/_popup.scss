@@ -25,6 +25,12 @@
         background-size: 100%;
         background-color: #b0b0b0;
         cursor: pointer;
+
+        transition: background-color 5ms;
+
+        &:hover {
+            background-color: #888;
+        }
     }
 
     .popup--cancel {
@@ -37,6 +43,10 @@
         align-items: center;
         padding: 5px;
         z-index: 10;
+
+        &.disabled {
+            opacity: 0.6;
+        }
     }
 
     .popup--buttons {
@@ -265,6 +275,10 @@
 
     .ethereum-error {
         text-align: center;
+        width: 100%;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
     }
 
     .complete {

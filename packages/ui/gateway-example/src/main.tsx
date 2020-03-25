@@ -2,12 +2,12 @@
 
 import * as React from "react";
 
-import { useEphemeralKey, useWeb3Network } from "@openzeppelin/network/react";
+import { useEphemeralKey, useWeb3Network } from "@openzeppelin/network/lib/react";
 import GatewayJS from "@renproject/gateway";
 import {
     Ox, RenContract, RenNetwork, ShiftInParams, strip0x, toBigNumber, UnmarshalledMintTx,
 } from "@renproject/interfaces";
-import { DEFAULT_SHIFT_FEE, payloadToShiftInABI, randomNonce, sleep } from "@renproject/utils";
+import { DEFAULT_SHIFT_FEE, randomNonce, sleep } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { parse } from "qs";
 import { HttpProvider } from "web3-providers";
@@ -26,6 +26,7 @@ declare global {
         web3?: Web3 | undefined;
     }
 }
+
 
 const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string) => {
 
@@ -105,27 +106,41 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     }
 };
 
-// const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS) => {
-//     const amount = 0.000225; // BTC
-//     const recipient = prompt("Enter ₿ Bitcoin address to receive BTC");
-//     if (!recipient) { return; }
+const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, recipient: string) => {
 
-//     gatewayJS.send({
-//         web3Provider: web3.currentProvider,
+    const amount = GatewayJS.utils.value(0.000225, "btc").sats().toFixed();
 
-//         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-//         sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
+    gatewayJS.shiftOut({
+        web3Provider: web3.currentProvider,
 
-//         // Amount of BTC we are sending (in Satoshis)
-//         sendAmount: GatewayJS.utils.value(amount, "btc").sats().toFixed(),
+        // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+        sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
 
-//         // The contract we want to interact with
-//         sendTo: recipient,
-//     }).result()
-//         .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
-//         .then(console.log)
-//         .catch(console.error);
-// };
+        contractCalls: [
+            {
+                sendTo: "0x916B8012E1813E5924a3Eca400dBE6C7055a8484",
+                contractFn: "approve",
+                contractParams: [
+                    { type: "address" as const, name: "spender", value: "0x2Faa571A69aed0CdE2d3C96c0Dce9D2aa2E3806C" },
+                    { type: "uint256" as const, name: "amount", value: toBigNumber(amount).toFixed() },
+                ],
+            },
+            {
+                sendTo: "0x2Faa571A69aed0CdE2d3C96c0Dce9D2aa2E3806C",
+                contractFn: "shiftOut",
+                contractParams: [
+                    { type: "address", name: "_shifter", value: await gatewayJS.getShifterAddress(web3, "BTC"), },
+                    { type: "address", name: "_shiftedToken", value: await gatewayJS.getTokenAddress(web3, "BTC"), },
+                    { type: "bytes", name: "_address", value: Ox(Buffer.from(recipient)) },
+                    { type: "uint256", name: "_value", value: amount },
+                ],
+                txConfig: { gas: 200000 },
+            }]
+    }).result()
+        .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
+        .then(console.log)
+        .catch(console.error);
+};
 
 const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
     // Re-open incomplete trades
@@ -143,7 +158,15 @@ const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
 
 export const GatewayExample = () => {
 
-    const context = useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
+    React.useEffect(() => {
+        if (window.ethereum) {
+            window.ethereum.enable().catch(console.error);
+        }
+    });
+
+    const context = { lib: new Web3(window.web3!.currentProvider) };
+
+    useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
         gsn: { signKey: useEphemeralKey() }
         // tslint:disable-next-line: no-any
     } as any);
@@ -169,7 +192,8 @@ export const GatewayExample = () => {
     const [amount, setAmount] = React.useState("");
 
     const validAddress = React.useMemo(() => {
-        return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
+        return true;
+        // return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
     }, [ethereumAddress]);
 
     const [errorMessage, setErrorMessage] = React.useState(null as string | null);
@@ -188,11 +212,13 @@ export const GatewayExample = () => {
         }
         setErrorMessage(null);
         try {
-            await startShiftIn(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network);
+            // await startShiftOut(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network);
+            await startShiftOut(context.lib as unknown as Web3, gatewayJS, ethereumAddress);
         } catch (error) {
+            console.error(error);
             setErrorMessage(String(error.message || error.error || JSON.stringify(error)));
         }
-    }, [startShiftIn, context.lib, gatewayJS, amount, ethereumAddress, validAddress]);
+    }, [startShiftOut, context.lib, gatewayJS, amount, ethereumAddress, validAddress]);
 
     return <>
         <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>

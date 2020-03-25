@@ -231,30 +231,41 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (!transactionHash) {
 
-            const transactionConfig = renVM.shiftOut({
+            const transactionConfigs = renVM.shiftOut({
                 ...params
-            }).createTransaction();
+            }).createTransactions();
 
-            const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
-            if (sendTransactionError) {
-                throw new Error(sendTransactionError);
+            for (let i = 0; i < transactionConfigs.length; i++) {
+                const transactionConfig = transactionConfigs[i];
+
+                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+                if (sendTransactionError) {
+                    throw new Error(sendTransactionError);
+                }
+
+                if (!txHash) {
+                    throw new Error("No txHash returned from Web3");
+                }
+
+                if (i === transactionConfigs.length - 1) {
+                    transactionHash = txHash;
+
+                    await this.updateShift({
+                        inTx: EthereumTx(txHash),
+                        status: ShiftOutStatus.SubmittedToEthereum,
+                    });
+                }
+
+                const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash });
+                if (error) {
+                    throw new Error(error);
+                }
             }
-
-            if (!txHash) {
-                throw new Error("No txHash returned from Web3");
+        } else {
+            const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+            if (error) {
+                throw new Error(error);
             }
-
-            transactionHash = txHash;
-
-            await this.updateShift({
-                inTx: EthereumTx(txHash),
-                status: ShiftOutStatus.SubmittedToEthereum,
-            });
-        }
-
-        const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
-        if (error) {
-            throw new Error(error);
         }
 
         await this.updateShift({
@@ -451,16 +462,25 @@ export class SDKContainer extends Container<typeof initialState> {
             const signature = await transaction
                 .submitToRenVM();
 
-            const transactionConfig = signature.createTransaction();
+            const transactionConfigs = signature.createTransactions();
 
-            const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
-            if (sendTransactionError) {
-                throw new Error(sendTransactionError);
+            for (let i = 0; i < transactionConfigs.length; i++) {
+                const transactionConfig = transactionConfigs[i];
+                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+                if (sendTransactionError) {
+                    throw new Error(sendTransactionError);
+                }
+
+                if (!txHash) {
+                    throw new Error("No txHash returned from Web3");
+                }
+
+                if (i === transactionConfigs.length - 1) {
+                    transactionHash = txHash;
+                }
             }
 
-            if (!txHash) {
-                throw new Error("No txHash returned from Web3");
-            }
+            transactionHash = transactionHash || "";
 
             // const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent
             //     .on("transactionHash", resolveTx).catch(rejectTx));
@@ -468,10 +488,8 @@ export class SDKContainer extends Container<typeof initialState> {
             // Update shift in store.
             await this.updateShift({
                 status: ShiftInStatus.SubmittedToEthereum,
-                outTx: EthereumTx(txHash),
+                outTx: EthereumTx(transactionHash),
             });
-
-            transactionHash = txHash;
 
             // tslint:disable-next-line: no-any
             // promiEvent.once("confirmation", (_confirmations: number, newReceipt: any) => { resolve([newReceipt, txHash]); });

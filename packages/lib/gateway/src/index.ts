@@ -510,14 +510,20 @@ export default class GatewayJS {
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
-    public readonly open = (params: ShiftInParams | ShiftOutParams | ShiftInParamsSimple | ShiftOutParamsSimple | SendParams) => {
-        if (params.sendToken === "BTC" || params.sendToken === "ZEC" || params.sendToken === "BCH") {
-            throw new Error(`Ambiguous token ${params.sendToken} - call "shiftIn" or "shiftOut" instead of "open"`);
+    public readonly open = (params: ShiftInParams | ShiftOutParams | ShiftInParamsSimple | ShiftOutParamsSimple | SendParams | ShiftInEvent | ShiftOutEvent) => {
+        // tslint:disable-next-line: strict-type-predicates
+        if ((params as ShiftInEvent).shiftIn !== undefined) {
+            return this.recoverShift(undefined as unknown as Web3Provider, params as ShiftInEvent | ShiftOutEvent);
         }
-        if (parseRenContract(params.sendToken).to === Chain.Ethereum) {
-            return this.shiftIn(params);
+
+        const sendToken = (params as ShiftInParams).sendToken;
+        if (sendToken === "BTC" || sendToken === "ZEC" || sendToken === "BCH") {
+            throw new Error(`Ambiguous token ${sendToken} - call "shiftIn" or "shiftOut" instead of "open"`);
+        }
+        if (parseRenContract(sendToken).to === Chain.Ethereum) {
+            return this.shiftIn(params as ShiftInParams);
         } else {
-            return this.shiftOut(params);
+            return this.shiftOut(params as ShiftOutParams);
         }
     }
 

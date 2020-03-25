@@ -4,8 +4,8 @@ import {
 import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardEvents, generateShiftOutTxHash, ignoreError,
-    NetworkDetails, payloadToABI, payloadToShiftInABI, processShiftOutParams, renTxHashToBase64,
-    RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
+    NetworkDetails, payloadToABI, processShiftOutParams, renTxHashToBase64, RenWeb3Events,
+    resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -24,42 +24,39 @@ export class ShiftOut {
         this.params = processShiftOutParams(this.network, _params);
     }
 
-    public createTransaction = (txConfig?: TransactionConfig): TransactionConfig => {
-        const { contractCalls } = this.params;
+    public createTransactions = (txConfig?: TransactionConfig): TransactionConfig[] => {
+        const contractCalls = this.params.contractCalls || [];
 
-        if (!contractCalls || contractCalls.length !== 1) {
-            throw new Error(`Must provide exactly one contract call to createTransaction.`);
-        }
+        return contractCalls.map(contractCall => {
 
-        const contractCall = contractCalls[0];
+            const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
-        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
+            const params = [
+                ...(contractParams || []).map(value => value.value),
+            ];
 
-        const params = [
-            ...(contractParams || []).map(value => value.value),
-        ];
+            const ABI = payloadToABI(contractFn, (contractParams || []));
+            // tslint:disable-next-line: no-any
+            const web3: Web3 = new (Web3 as any)();
+            const contract = new web3.eth.Contract(ABI);
 
-        const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
-        // tslint:disable-next-line: no-any
-        const web3: Web3 = new (Web3 as any)();
-        const contract = new web3.eth.Contract(ABI);
+            const data = contract.methods[contractFn](
+                ...params,
+            ).encodeABI();
 
-        const data = contract.methods[contractFn](
-            ...params,
-        ).encodeABI();
+            return {
+                to: sendTo,
+                data,
 
-        return {
-            to: sendTo,
-            data,
+                ...txConfigParam,
+                ...{
+                    value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
+                    gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
+                },
 
-            ...txConfigParam,
-            ...{
-                value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
-                gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
-            },
-
-            ...txConfig,
-        };
+                ...txConfig,
+            };
+        });
     }
 
     public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<ShiftOut, Web3Events & RenWeb3Events> => {

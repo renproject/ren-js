@@ -4,10 +4,10 @@ import {
 import { ResponseQueryMintTx } from "@renproject/rpc";
 import {
     DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardEvents, generateAddress, generateGHash,
-    generateShiftInTxHash, getShifterAddress, ignoreError, NetworkDetails, payloadToShiftInABI,
-    processShiftInParams, randomNonce, renTxHashToBase64, RenWeb3Events, resolveInToken,
-    retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, toBigNumber, UTXO, UTXOInput,
-    Web3Events, withDefaultAccount,
+    generateShiftInTxHash, getShifterAddress, ignoreError, NetworkDetails, payloadToABI,
+    payloadToShiftInABI, processShiftInParams, randomNonce, renTxHashToBase64, RenWeb3Events,
+    resolveInToken, retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, toBigNumber,
+    UTXO, UTXOInput, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -432,20 +432,15 @@ export class ShiftIn {
 
                 const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
-                let params;
-                if (last) {
-                    params = [
-                        ...(contractParams || []).map(value => value.value),
-                        Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
-                        Ox(this.renVMResponse.autogen.nhash),
-                        // Ox(this.renVMResponse.args.n), // _nHash: string
-                        Ox(this.signature), // _sig: string
-                    ];
-                } else {
-                    params = (contractParams || []).map(value => value.value);
-                }
+                const params = last ? [
+                    ...(contractParams || []).map(value => value.value),
+                    Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
+                    Ox(this.renVMResponse.autogen.nhash),
+                    // Ox(this.renVMResponse.args.n), // _nHash: string
+                    Ox(this.signature), // _sig: string
+                ] : (contractParams || []).map(value => value.value);
 
-                const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
+                const ABI = last ? payloadToShiftInABI(contractFn, (contractParams || [])) : payloadToABI(contractFn, (contractParams || []));
 
                 const contract = new web3.eth.Contract(ABI, sendTo);
 
@@ -505,49 +500,53 @@ export class ShiftIn {
     /**
      * Alternative to `submitToEthereum` that doesn't need a web3 instance
      */
-    public createTransaction = (txConfig?: TransactionConfig): TransactionConfig => {
-        const { contractCalls } = this.params;
+    public createTransactions = (txConfig?: TransactionConfig): TransactionConfig[] => {
+        const renVMResponse = this.renVMResponse;
+        const signature = this.signature;
+        const contractCalls = this.params.contractCalls || [];
 
-        if (!contractCalls || contractCalls.length !== 1) {
-            throw new Error(`Must provide exactly one contract call to createTransaction.`);
-        }
-
-        if (!this.renVMResponse || !this.signature) {
+        if (!renVMResponse || !signature) {
             throw new Error(`Unable to create transaction without signature. Call 'submitToRenVM' first.`);
         }
 
-        const contractCall = contractCalls[0];
+        return contractCalls.map((contractCall, i) => {
 
-        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
+            const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
-        const params = [
-            ...(contractParams || []).map(value => value.value),
-            Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
-            Ox(this.renVMResponse.autogen.nhash),
-            // Ox(generateNHash(this.renVMResponse)), // _nHash: string
-            Ox(this.signature), // _sig: string
-        ];
+            const params = i === contractCalls.length - 1 ?
+                [
+                    ...(contractParams || []).map(value => value.value),
+                    Ox(new BigNumber(renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
+                    Ox(renVMResponse.autogen.nhash),
+                    // Ox(generateNHash(renVMResponse)), // _nHash: string
+                    Ox(signature), // _sig: string
+                ] : [...(contractParams || []).map(value => value.value)];
 
-        const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
-        // tslint:disable-next-line: no-any
-        const web3: Web3 = new (Web3 as any)();
-        const contract = new web3.eth.Contract(ABI);
+            if (i === contractCalls.length - 1) { console.log("ABI 3"); }
+            const ABI = i === contractCalls.length - 1 ?
+                payloadToShiftInABI(contractFn, (contractParams || [])) :
+                payloadToABI(contractFn, (contractParams || []));
 
-        const data = contract.methods[contractFn](
-            ...params,
-        ).encodeABI();
+            // tslint:disable-next-line: no-any
+            const web3: Web3 = new (Web3 as any)();
+            const contract = new web3.eth.Contract(ABI);
 
-        return {
-            to: sendTo,
-            data,
+            const data = contract.methods[contractFn](
+                ...params,
+            ).encodeABI();
 
-            ...txConfigParam,
-            ...{
-                value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
-                gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
-            },
+            return {
+                to: sendTo,
+                data,
 
-            ...txConfig,
-        };
+                ...txConfigParam,
+                ...{
+                    value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
+                    gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
+                },
+
+                ...txConfig,
+            };
+        });
     }
 }

@@ -2,7 +2,7 @@
     "name": "gateway.renproject.io",
     "version": "0.9.0",
     "private": true,
-    "homepage": "https://renproject.github.io/gateway.renproject.io",
+    "homepage": "https://gateway.renproject.io",
     "scripts": {
         "lint:unused-exports": "ts-unused-exports ./tsconfig.json",
         "lint:ts": "tslint --project ./ -t stylish --quiet",

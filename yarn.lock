@@ -2446,32 +2446,6 @@
     web3-eth-contract "1.2.2"
     web3-utils "1.2.2"
 
-"@renproject/chains@file:packages/lib/ren-chains":
-  version "0.7.3"
-  dependencies:
-    "@renproject/contracts" "^0.3.35"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-0.7.3-e79f7126-e415-426a-a9cd-45ce3ea8d76f-1584317843750/node_modules/@renproject/ren-interfaces"
-    "@types/bn.js" "^4.11.6"
-    "@types/bs58" "^4.0.1"
-    "@types/ethereumjs-util" "^6.1.0"
-    "@types/node" "^13.7.7"
-    axios "^0.19.2"
-    bchaddrjs "^0.4.5"
-    bignumber.js "^9.0.0"
-    bitcore-lib "^8.16.0"
-    bitcore-lib-cash "^8.16.0"
-    bitcore-lib-zcash zcash-hackworks/bitcore-lib-zcash
-    bn.js "^5.1.1"
-    bs58 "^4.0.1"
-    ethereumjs-util "^6.2.0"
-    immutable "^4.0.0-rc.12"
-    send-crypto "0.1.12"
-    sha3 "^2.1.1"
-    wallet-address-validator "^0.2.4"
-    web3 "^2.0.0-alpha.1"
-    web3-core "^2.0.0-alpha.1"
-    web3-eth-abi "^2.0.0-alpha.1"
-
 "@renproject/contracts@^0.3.35":
   version "0.3.35"
   resolved "https://registry.yarnpkg.com/@renproject/contracts/-/contracts-0.3.35.tgz#a7323a8ce16036aa19782eb0b34a201c3f2de6c7"
@@ -2485,16 +2459,16 @@
   integrity sha512-OWk811Ay63UdPxY5nEg4N99Goz6K9HLaeGfUN2q0uehhQ70hJDqDQq/vYl5rtE07mv7MYX7GYTpj5POlPbZNRg==
 
 "@renproject/gateway@file:packages/lib/gateway":
-  version "0.3.3"
+  version "0.9.0"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-0.3.3-97dabdec-5253-460a-bbf9-c61c1f53ecff-1584317843755/node_modules/@renproject/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-0.3.3-97dabdec-5253-460a-bbf9-c61c1f53ecff-1584317843755/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "^0.9.0"
+    "@renproject/utils" "^0.9.0"
     "@types/bn.js" "^4.11.6"
     "@types/node" "^13.7.7"
     web3 "^2.0.0-alpha.1"
 
 "@renproject/interfaces@file:packages/lib/ren-interfaces":
-  version "0.1.13"
+  version "0.9.0"
   dependencies:
     "@types/node" "^13.7.7"
     bignumber.js "^9.0.0"
@@ -2518,12 +2492,14 @@
     react-select "^3.0.8"
 
 "@renproject/ren@file:packages/lib/ren":
-  version "0.7.3"
+  version "0.9.0"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dba758be-84d8-4c76-a607-e7656a5fd52e-1584317843756/node_modules/@renproject/ren-chains"
+    "@renproject/chains" "^0.9.0"
     "@renproject/contracts" "^0.3.35"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dba758be-84d8-4c76-a607-e7656a5fd52e-1584317843756/node_modules/@renproject/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-0.7.3-dba758be-84d8-4c76-a607-e7656a5fd52e-1584317843756/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "^0.9.0"
+    "@renproject/provider" "^0.9.0"
+    "@renproject/rpc" "^0.9.0"
+    "@renproject/utils" "^0.9.0"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2546,11 +2522,11 @@
     web3-eth-abi "^2.0.0-alpha.1"
 
 "@renproject/utils@file:packages/lib/ren-utils":
-  version "0.7.3"
+  version "0.9.0"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-0.7.3-fd4cbec1-231f-420d-afb5-714abe2f332b-1584317843746/node_modules/@renproject/ren-chains"
+    "@renproject/chains" "^0.9.0"
     "@renproject/contracts" "^0.3.35"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-0.7.3-fd4cbec1-231f-420d-afb5-714abe2f332b-1584317843746/node_modules/@renproject/ren-interfaces"
+    "@renproject/interfaces" "^0.9.0"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"

@@ -573,7 +573,8 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Sh
                         { type: "uint256" as const, name: "_amount", value: toBigNumber(sendAmount).toFixed() },
                     ],
                     txConfig: { gas: 200000, ...txConfig },
-                }]
+                }
+            ]
         };
     }
 };

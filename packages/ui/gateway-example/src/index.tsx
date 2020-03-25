@@ -58,3 +58,4 @@ const Index = withStyles(styles)(() => {
 });
 
 ReactDOM.render(<Index />, document.getElementById("root") as HTMLElement);
+

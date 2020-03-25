@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -49,9 +49,9 @@
         "prepare-release": "run-s npmignore doc:html"
     },
     "dependencies": {
-        "@renproject/chains": "^0.9.0",
+        "@renproject/chains": "^0.9.1",
         "@renproject/contracts": "^0.3.35",
-        "@renproject/interfaces": "^0.9.0",
+        "@renproject/interfaces": "^0.9.1",
         "@types/bn.js": "^4.11.6",
         "@types/bs58": "^4.0.1",
         "@types/ethereumjs-util": "^6.1.0",

@@ -22,6 +22,7 @@ import { Network } from "./network";
 const networkID = 1;
 
 export default Network({
+    version: "0.0.3",
     name: "chaosnet",
     chain: "main",
     label: "Chaosnet",

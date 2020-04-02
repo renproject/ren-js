@@ -14,6 +14,7 @@ interface Addresses<C extends Contract> {
 }
 
 interface NetworkType<C extends Contract, A extends Addresses<C>> {
+    version: "1.0.0" | "0.0.3";
     name: string;
     chain: string;
     label: string;

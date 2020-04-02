@@ -1,19 +1,21 @@
 import BasicAdapter from "darknode-sol/build/devnet/BasicAdapter.json";
-import BCHShifter from "darknode-sol/build/devnet/BCHShifter.json";
-import BTCShifter from "darknode-sol/build/devnet/BTCShifter.json";
+import BCHGateway from "darknode-sol/build/devnet/BCHGateway.json";
+import BTCGateway from "darknode-sol/build/devnet/BTCGateway.json";
 import DarknodePayment from "darknode-sol/build/devnet/DarknodePayment.json";
 import DarknodePaymentStore from "darknode-sol/build/devnet/DarknodePaymentStore.json";
-import DarknodeRegistry from "darknode-sol/build/devnet/DarknodeRegistry.json";
+import DarknodeRegistryLogic from "darknode-sol/build/devnet/DarknodeRegistryLogicV1.json";
+import DarknodeRegistryProxy from "darknode-sol/build/devnet/DarknodeRegistryProxy.json";
 import DarknodeRegistryStore from "darknode-sol/build/devnet/DarknodeRegistryStore.json";
 import DarknodeSlasher from "darknode-sol/build/devnet/DarknodeSlasher.json";
-import Protocol from "darknode-sol/build/devnet/Protocol.json";
-import ProtocolLogic from "darknode-sol/build/devnet/ProtocolLogic.json";
+import GatewayLogic from "darknode-sol/build/devnet/GatewayLogicV1.json";
+import GatewayRegistry from "darknode-sol/build/devnet/GatewayRegistry.json";
+import ProtocolLogic from "darknode-sol/build/devnet/ProtocolLogicV1.json";
+import ProtocolProxy from "darknode-sol/build/devnet/ProtocolProxy.json";
+import RenBCH from "darknode-sol/build/devnet/RenBCH.json";
+import RenBTC from "darknode-sol/build/devnet/RenBTC.json";
 import RenToken from "darknode-sol/build/devnet/RenToken.json";
-import ShifterRegistry from "darknode-sol/build/devnet/ShifterRegistry.json";
-import zBCH from "darknode-sol/build/devnet/zBCH.json";
-import zBTC from "darknode-sol/build/devnet/zBTC.json";
-import ZECShifter from "darknode-sol/build/devnet/ZECShifter.json";
-import zZEC from "darknode-sol/build/devnet/zZEC.json";
+import RenZEC from "darknode-sol/build/devnet/RenZEC.json";
+import ZECGateway from "darknode-sol/build/devnet/ZECGateway.json";
 import ERC20 from "darknode-sol/build/erc/ERC20.json";
 import { AbiItem } from "web3-utils";
 
@@ -22,6 +24,7 @@ import { Network } from "./network";
 const networkID = 42;
 
 export default Network({
+    version: "1.0.0",
     name: "devnet",
     chain: "kovan",
     label: "Devnet",
@@ -36,14 +39,19 @@ export default Network({
     addresses: {
         ren: {
             Protocol: {
-                address: Protocol.networks[networkID].address,
+                address: ProtocolProxy.networks[networkID].address,
                 abi: ProtocolLogic.abi as AbiItem[],
-                artifact: Protocol,
+                artifact: ProtocolProxy,
+            },
+            DarknodeSlasher: {
+                address: DarknodeSlasher.networks[networkID].address,
+                abi: DarknodeSlasher.abi as AbiItem[],
+                artifact: DarknodeSlasher,
             },
             DarknodeRegistry: {
-                address: DarknodeRegistry.networks[networkID].address,
-                abi: DarknodeRegistry.abi as AbiItem[],
-                artifact: DarknodeRegistry,
+                address: DarknodeRegistryProxy.networks[networkID].address,
+                abi: DarknodeRegistryLogic.abi as AbiItem[],
+                artifact: DarknodeRegistryLogic,
                 block: 11692743
             },
             DarknodeRegistryStore: {
@@ -61,53 +69,48 @@ export default Network({
                 abi: DarknodePaymentStore.abi as AbiItem[],
                 artifact: DarknodePaymentStore,
             },
-            DarknodeSlasher: {
-                address: DarknodeSlasher.networks[networkID].address,
-                abi: DarknodeSlasher.abi as AbiItem[],
-                artifact: DarknodeSlasher,
-            },
         },
         shifter: {
-            ShifterRegistry: {
-                address: ShifterRegistry.networks[networkID].address,
-                abi: ShifterRegistry.abi as AbiItem[],
-                artifact: ShifterRegistry,
+            GatewayRegistry: {
+                address: GatewayRegistry.networks[networkID].address,
+                abi: GatewayRegistry.abi as AbiItem[],
+                artifact: GatewayRegistry,
             },
-            zBTC: {
-                _address: zBTC.networks[networkID].address,
-                abi: zBTC.abi as AbiItem[],
-                artifact: zBTC,
-                description: "shifterRegistry.getTokenBySymbol(zBTC)",
+            RenBTC: {
+                _address: RenBTC.networks[networkID].address,
+                abi: RenBTC.abi as AbiItem[],
+                artifact: RenBTC,
+                description: "gatewayRegistry.getTokenBySymbol(\"BTC\")",
             },
-            BTCShifter: {
-                _address: BTCShifter.networks[networkID].address,
-                abi: BTCShifter.abi as AbiItem[],
-                artifact: BTCShifter,
-                description: "shifterRegistry.getShifterBySymbol(zBTC)",
+            BTCGateway: {
+                _address: BTCGateway.networks[networkID].address,
+                abi: GatewayLogic.abi as AbiItem[],
+                artifact: GatewayLogic,
+                description: "gatewayRegistry.getGatewayBySymbol(\"BTC\")",
             },
-            zZEC: {
-                _address: zZEC.networks[networkID].address,
-                abi: zZEC.abi as AbiItem[],
-                artifact: zZEC,
-                description: "shifterRegistry.getTokenBySymbol(zZEC)",
+            RenZEC: {
+                _address: RenZEC.networks[networkID].address,
+                abi: RenZEC.abi as AbiItem[],
+                artifact: RenZEC,
+                description: "gatewayRegistry.getTokenBySymbol(\"ZEC\")",
             },
-            ZECShifter: {
-                _address: ZECShifter.networks[networkID].address,
-                abi: ZECShifter.abi as AbiItem[],
-                artifact: ZECShifter,
-                description: "shifterRegistry.getShifterBySymbol(zZEC)",
+            ZECGateway: {
+                _address: ZECGateway.networks[networkID].address,
+                abi: GatewayLogic.abi as AbiItem[],
+                artifact: GatewayLogic,
+                description: "gatewayRegistry.getGatewayBySymbol(\"ZEC\")",
             },
-            zBCH: {
-                _address: zBCH.networks[networkID].address,
-                abi: zBCH.abi as AbiItem[],
-                artifact: zBCH,
-                description: "shifterRegistry.getTokenBySymbol(zBCH)",
+            RenBCH: {
+                _address: RenBCH.networks[networkID].address,
+                abi: RenBCH.abi as AbiItem[],
+                artifact: RenBCH,
+                description: "gatewayRegistry.getTokenBySymbol(\"BCH\")",
             },
-            BCHShifter: {
-                _address: BCHShifter.networks[networkID].address,
-                abi: BCHShifter.abi as AbiItem[],
-                artifact: BCHShifter,
-                description: "shifterRegistry.getShifterBySymbol(zBCH)",
+            BCHGateway: {
+                _address: BCHGateway.networks[networkID].address,
+                abi: GatewayLogic.abi as AbiItem[],
+                artifact: GatewayLogic,
+                description: "gatewayRegistry.getGatewayBySymbol(\"BCH\")",
             },
             BasicAdapter: {
                 address: BasicAdapter.networks[networkID].address,
@@ -121,21 +124,21 @@ export default Network({
                 decimals: 18
             },
             BTC: {
-                address: zBTC.networks[networkID].address,
-                abi: zBTC.abi as AbiItem[],
-                artifact: zBTC,
+                address: RenBTC.networks[networkID].address,
+                abi: RenBTC.abi as AbiItem[],
+                artifact: RenBTC,
                 decimals: 8
             },
             ZEC: {
-                address: zZEC.networks[networkID].address,
-                abi: zZEC.abi as AbiItem[],
-                artifact: zZEC,
+                address: RenZEC.networks[networkID].address,
+                abi: RenZEC.abi as AbiItem[],
+                artifact: RenZEC,
                 decimals: 8
             },
             BCH: {
-                address: zBCH.networks[networkID].address,
-                abi: zBCH.abi as AbiItem[],
-                artifact: zBCH,
+                address: RenBCH.networks[networkID].address,
+                abi: RenBCH.abi as AbiItem[],
+                artifact: RenBCH,
                 decimals: 8
             },
             REN: {

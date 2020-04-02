@@ -22,6 +22,7 @@ import { Network } from "./network";
 const networkID = 42;
 
 export default Network({
+    version: "0.0.3",
     name: "testnet",
     chain: "kovan",
     label: "Testnet",

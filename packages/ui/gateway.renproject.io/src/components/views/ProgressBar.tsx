@@ -17,6 +17,7 @@ export const ProgressPulse = styled.div`
         `;
 
 
+
 export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: { name?: React.ReactChild, label?: string | number, target: number, progress: number, pulse?: boolean, tooltip?: string }) =>
     <div className={classNames(`ren-progress-bar--item`, progress >= target ? "ren-progress-bar--item--done" : "", progress + 1 === target ? "ren-progress-bar--item--current" : "")}>
         {pulse && progress + 1 === target ?

@@ -1,13 +1,19 @@
-import { SerializableShiftInParams, SerializableShiftOutParams } from "./parameters";
+import { SerializableBurnAndReleaseParams, SerializableLockAndMintParams } from "./parameters";
 import { Chain, RenContract } from "./renVM";
 import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./unmarshalled";
+import { UTXODetails } from "./utxo";
 
-export interface Tx {
+export type Tx = {
+    chain: Chain.Bitcoin | Chain.Zcash | Chain.BitcoinCash;
+    address?: string;
+    hash?: string;
+    utxo?: UTXODetails;
+} | {
+    chain: Chain.Ethereum;
     hash: string;
-    chain: Chain;
-}
+};
 
-export enum ShiftInStatus {
+export enum LockAndMintStatus {
     Committed = "shiftIn_committed",
     Deposited = "shiftIn_deposited",
     Confirmed = "shiftIn_confirmed",
@@ -16,8 +22,11 @@ export enum ShiftInStatus {
     SubmittedToEthereum = "shiftIn_submittedToEthereum",
     ConfirmedOnEthereum = "shiftIn_confirmedOnEthereum",
 }
+// Backwards compatibility
+export const ShiftInStatus = LockAndMintStatus;
+export type ShiftInStatus = LockAndMintStatus;
 
-export enum ShiftOutStatus {
+export enum BurnAndReleaseStatus {
     Committed = "shiftOut_committed",
     SubmittedToEthereum = "shiftOut_submittedToEthereum",
     ConfirmedOnEthereum = "shiftOut_confirmedOnEthereum",
@@ -25,6 +34,9 @@ export enum ShiftOutStatus {
     ReturnedFromRenVM = "shiftOut_returnedFromRenVM",
     NoBurnFound = "shiftOut_noBurnFound",
 }
+// Backwards compatibility
+export const ShiftOutStatus = BurnAndReleaseStatus;
+export type ShiftOutStatus = BurnAndReleaseStatus;
 
 export enum TxStatus {
     // TxStatusNil is used for transactions that have not been seen, or are
@@ -51,10 +63,6 @@ export interface SendTokenInterface {
     sendToken: RenContract;
 }
 
-export interface ShiftNonce {
-    nonce: string;
-}
-
 interface HistoryEventCommon {
     id: string;
     time: number; // Seconds since Unix epoch
@@ -65,18 +73,20 @@ interface HistoryEventCommon {
     returned: boolean;
 }
 
-export interface ShiftInEvent extends HistoryEventCommon {
+export interface LockAndMintEvent extends HistoryEventCommon {
     shiftIn: true;
-    status: ShiftInStatus;
-    shiftParams: SerializableShiftInParams;
+    status: LockAndMintStatus;
+    shiftParams: SerializableLockAndMintParams;
     renVMQuery: UnmarshalledMintTx | null;
 }
+export type ShiftInEvent = LockAndMintEvent;
 
-export interface ShiftOutEvent extends HistoryEventCommon {
+export interface BurnAndReleaseEvent extends HistoryEventCommon {
     shiftIn: false;
-    status: ShiftOutStatus;
-    shiftParams: SerializableShiftOutParams;
+    status: BurnAndReleaseStatus;
+    shiftParams: SerializableBurnAndReleaseParams;
     renVMQuery: UnmarshalledBurnTx | null;
 }
+export type ShiftOutEvent = BurnAndReleaseEvent;
 
-export type HistoryEvent = ShiftInEvent | ShiftOutEvent;
+export type HistoryEvent = LockAndMintEvent | BurnAndReleaseEvent;

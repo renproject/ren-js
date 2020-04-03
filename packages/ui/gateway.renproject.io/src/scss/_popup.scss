@@ -3,16 +3,15 @@
         background-color: $background;
         border-radius: 6px;
         text-align: left;
-        flex: 1;
         display: flex;
         flex-flow: column;
         justify-content: center;
-        height: 192px;
         // overflow-y: auto;
     }
 
     .popup--body {
-        padding: 10px 30px;
+        width: 100%;
+        padding: 10px 20px;
     }
 
     .popup--x {
@@ -25,6 +24,10 @@
         background-size: 100%;
         background-color: #b0b0b0;
         cursor: pointer;
+
+        position: absolute;
+        top: 15px;
+        right: 10px;
 
         transition: background-color 5ms;
 
@@ -44,6 +47,11 @@
         padding: 5px;
         z-index: 10;
 
+        position: absolute;
+        top: 12px;
+        right: 5px;
+        height: 20px;
+
         &.disabled {
             opacity: 0.6;
         }
@@ -51,7 +59,12 @@
 
     .popup--buttons {
         display: flex;
-        height: 40px;
+
+        button {
+            height: 40px;
+        }
+
+        justify-content: center;
     }
 
     .popup--loading {
@@ -180,7 +193,8 @@
     }
 
     .popup--body--actions {
-        padding: 0 30px;
+        padding: 0 20px;
+        width: 100%;
     }
 
     .popup--body--details {
@@ -189,22 +203,29 @@
         color: $foreground;
         border-bottom: 1px solid #ccc;
         padding-bottom: 15px;
-        min-height: 200px;
-        padding: 10px 20px;
+        height: 187px;
+        padding: 0px 20px;
+        padding-top: 20px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        // justify-content: center;
         align-items: center;
 
         .popup--body--title {
             font-size: 2.6rem;
             // margin-bottom: 2px;
             line-height: 100%;
+            margin-bottom: 10px;
         }
 
         .popup--title--to {
-            font-size: 1.2rem;
-            color: #87888C;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 16px;
+
+            /* identical to box height */
+
+            color: #707575;
         }
 
         .popup--body--values {
@@ -216,12 +237,12 @@
         }
 
         .popup--token--icon {
-            padding: 15px 0;
+            margin-bottom: 20px;
 
             .token--icon {
-                height: 55px;
-                max-width: 55px;
-                width: 55px;
+                height: 50px;
+                max-width: 50px;
+                width: 50px;
             }
         }
 
@@ -249,7 +270,7 @@
         @extend .button;
         background: linear-gradient(180.19deg, $blue-light -125.02%, var($primaryColor) 98.68%);
         border-radius: 6px !important;
-        margin-bottom: -10px;
+        // margin-bottom: -10px;
         height: 40px;
     }
 
@@ -266,11 +287,17 @@
     }
 
     .submit-to-ethereum {
-        height: 100%;
+        @extend .popup--body--details;
+
+        // height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
         padding: 30px 0;
+
+        button {
+            width: 100vw;
+        }
     }
 
     .ethereum-error {
@@ -281,27 +308,7 @@
         margin-bottom: 8px;
     }
 
-    .complete {
-        display: flex;
-        flex-flow: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-
-        h2 {
-            font-size: 2.6rem;
-            font-weight: 300;
-        }
-
-        p {
-            font-size: 1.4rem;
-            text-align: center;
-            padding: 0 28px;
-
-            color: #87888C;
-
-        }
-
+    .complete--buttons {
         .popup--buttons {
             display: flex;
             flex-flow: column;
@@ -338,15 +345,51 @@
                 }
             }
         }
+    }
+
+    .complete {
+        @extend .popup--body--details;
+        padding-top: 0px;
+
+        display: flex;
+        flex-flow: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+
+        h2 {
+            font-size: 2.6rem;
+            font-weight: 300;
+        }
+
+        p {
+            font-size: 1.4rem;
+            text-align: center;
+            padding: 0 28px;
+
+            color: #87888C;
+
+        }
 
         .popup--body {
             padding: 10px 30px;
         }
 
+        .popup--buttons a {
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 16px;
+
+            /* identical to box height */
+            text-align: center;
+
+            color: #006FE8;
+        }
+
 
         // Define vars we'll be using
         $brand-success: #006FE8;
-        $loader-size: 7em;
+        $loader-size: 5em;
         $check-height: $loader-size/2;
         $check-width: $check-height/2;
         $check-left: ($loader-size/6 + $loader-size/12);

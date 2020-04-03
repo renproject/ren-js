@@ -16,10 +16,11 @@ import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
-import { Footer } from "../views/Footer";
+import { ColoredBanner } from "../views/ColoredBanner";
+// import { Footer } from "../views/Footer";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { OpeningShift } from "./OpeningShift";
-import { ShiftProgress } from "./ProgressBar";
+// import { ShiftProgress } from "./ProgressBar";
 import { getStorage, removeStorageTrade } from "./Storage";
 
 /**
@@ -260,25 +261,25 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         const { shift } = sdkContainer.state;
 
         return <main className={paused ? "paused" : ""} onClick={paused ? resumeOnClick : undefined}>
-            {!paused ? <div className="banner">
-                <span>Gateway {renNetwork === RenNetwork.Chaosnet || renNetwork === RenNetwork.Mainnet ? "by Ren Project" : <span className="warning"> {renNetwork}</span>}</span>
-                {shift ?
+            {/* {!paused ? <div className="banner"> */}
+            {/* <span>Gateway {renNetwork === RenNetwork.Chaosnet || renNetwork === RenNetwork.Mainnet ? "by Ren Project" : <span className="warning"> {renNetwork}</span>}</span> */}
+            {/* </div> : <></>} */}
+            <div className="main">
+                {!paused ? <ColoredBanner token={shift && shift.shiftParams.sendToken} /> : <></>}
+                {!paused && shift ?
                     (shift.status === ShiftInStatus.Committed || shift.status === ShiftOutStatus.Committed) ?
                         <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :
                         (shift.status === ShiftInStatus.ConfirmedOnEthereum || shift.status === ShiftOutStatus.ReturnedFromRenVM) ?
-                            <div role="button" className={`popup--cancel ${pressedDone ? "disabled" : ""}`} onClick={onDone}>Close</div> :
+                            <></> :
                             <div role="button" className={`popup--x`} onClick={pauseOnClick} />
                     :
                     <></>
                 }
-            </div> : <></>}
-            <div className="main">
-
                 {shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>}
                 {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
-                {!paused && shift && sdkContainer.getNumberOfConfirmations() > 0 ? <ShiftProgress /> : <></>}
+                {/* {!paused && shift && sdkContainer.getNumberOfConfirmations() > 0 ? <ShiftProgress /> : <></>} */}
             </div>
-            {!paused && <Footer />}
+            {/* {!paused && <Footer />} */}
         </main>;
     }
 ));

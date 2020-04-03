@@ -1,5 +1,7 @@
 import { SerializableShiftParams, TransactionConfig } from "./parameters";
-import { HistoryEvent, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus } from "./types";
+import {
+    BurnAndReleaseEvent, BurnAndReleaseStatus, HistoryEvent, LockAndMintEvent, LockAndMintStatus,
+} from "./types";
 import { UnmarshalledTx } from "./unmarshalled";
 
 export enum GatewayMessageType {
@@ -29,13 +31,13 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.Resume ? {} :
     Type extends GatewayMessageType.Ready ? {} :
     Type extends GatewayMessageType.Shift ? {
-        shift: SerializableShiftParams | ShiftInEvent | ShiftOutEvent,
+        shift: SerializableShiftParams | LockAndMintEvent | BurnAndReleaseEvent,
         paused: boolean,
     } :
     Type extends GatewayMessageType.GetTrades ? ({} | Map<string, HistoryEvent>) :
     Type extends GatewayMessageType.Trades ? Map<string, HistoryEvent> :
     Type extends GatewayMessageType.Status ? {
-        status: ShiftInStatus | ShiftOutStatus | undefined;
+        status: LockAndMintStatus | BurnAndReleaseStatus | undefined;
         details: null;
     } :
     Type extends GatewayMessageType.GetStatus ? {} :
@@ -54,7 +56,7 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
 
 export type GatewayMessageResponse<Type extends GatewayMessageType> =
     // tslint:disable-next-line: no-any
-    Type extends GatewayMessageType.GetStatus ? { status: ShiftInStatus | ShiftOutStatus, details: any | null } :
+    Type extends GatewayMessageType.GetStatus ? { status: LockAndMintStatus | BurnAndReleaseStatus, details: any | null } :
 
     Type extends GatewayMessageType.SendTransaction ? { txHash?: string, error?: string } :
     Type extends GatewayMessageType.GetTransactionStatus ? { confirmations?: number, error?: string } :

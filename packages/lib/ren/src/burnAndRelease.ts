@@ -1,10 +1,10 @@
 import {
-    newPromiEvent, Ox, PromiEvent, ShiftOutParams, TxStatus, UnmarshalledBurnTx,
+    newPromiEvent, Ox, PromiEvent, BurnAndReleaseParams, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/interfaces";
 import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardEvents, generateShiftOutTxHash, ignoreError,
-    NetworkDetails, payloadToABI, processShiftOutParams, renTxHashToBase64, RenWeb3Events,
+    NetworkDetails, payloadToABI, processBurnAndReleaseParams, renTxHashToBase64, RenWeb3Events,
     resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -13,15 +13,15 @@ import { TransactionConfig } from "web3-core";
 
 import { ShifterNetwork, unmarshalBurnTx } from "./shifterNetwork";
 
-export class ShiftOut {
-    private readonly params: ShiftOutParams;
+export class BurnAndRelease {
+    private readonly params: BurnAndReleaseParams;
     private readonly renVMNetwork: ShifterNetwork;
     private readonly network: NetworkDetails;
 
-    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftOutParams) {
+    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: BurnAndReleaseParams) {
         this.renVMNetwork = _renVMNetwork;
         this.network = _network;
-        this.params = processShiftOutParams(this.network, _params);
+        this.params = processBurnAndReleaseParams(this.network, _params);
     }
 
     public createTransactions = (txConfig?: TransactionConfig): TransactionConfig[] => {
@@ -59,9 +59,9 @@ export class ShiftOut {
         });
     }
 
-    public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<ShiftOut, Web3Events & RenWeb3Events> => {
+    public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<BurnAndRelease, Web3Events & RenWeb3Events> => {
 
-        const promiEvent = newPromiEvent<ShiftOut, Web3Events & RenWeb3Events>();
+        const promiEvent = newPromiEvent<BurnAndRelease, Web3Events & RenWeb3Events>();
 
         (async () => {
 

@@ -17,9 +17,9 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
+import { BurnAndRelease } from "../src/burnAndRelease";
 import RenJS from "../src/index";
-import { ShiftIn } from "../src/shiftIn";
-import { ShiftOut } from "../src/shiftOut";
+import { LockAndMint } from "../src/lockAndMint";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -80,14 +80,15 @@ describe("Shifting in and shifting out", function () {
         adapterContract: string,
         amount: number,
         ethAddress: string,
-        submit: (shift: ShiftIn) => Promise<void>,
+        contractVersion: "0.0.3" | "1.0.0",
+        submit: (shift: LockAndMint) => Promise<void>,
         nonce?: string,
     ): Promise<void> => {
         const params: EthArgs = [
             {
-                name: "_shifter",
-                type: "address",
-                value: shifterAddress,
+                name: "_symbol",
+                type: "string",
+                value: contractVersion === "0.0.3" ? "z" + token : token,
             },
             {
                 name: "_address",
@@ -99,7 +100,7 @@ describe("Shifting in and shifting out", function () {
             sendToken: renVMToken,
             sendTo: adapterContract,
             // sendAmount: amount,
-            contractFn: "shiftIn",
+            contractFn: contractVersion === "0.0.3" ? "shiftIn" : "mint",
             contractParams: params,
             nonce: nonce || RenJS.utils.randomNonce(),
         });
@@ -112,7 +113,7 @@ describe("Shifting in and shifting out", function () {
         await submit(shift);
     };
 
-    const submitIndividual = async (shift: ShiftIn): Promise<void> => {
+    const submitIndividual = async (shift: LockAndMint): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         logger.info(`Waiting for ${confirmations} confirmations...`);
@@ -142,13 +143,13 @@ describe("Shifting in and shifting out", function () {
         }
     };
 
-    const submitTogether = async (shift: ShiftIn): Promise<void> => {
+    const submitTogether = async (shift: LockAndMint): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         await shift.waitAndSubmit(provider, confirmations);
     };
 
-    const submitToRenVM = async (shiftOutObject: ShiftOut) => {
+    const submitToRenVM = async (shiftOutObject: BurnAndRelease) => {
         try {
             shiftOutObject = await shiftOutObject.readFromEthereum()
                 .on("eth_transactionHash", (txHash: string) => { logger.event(`Received txHash: ${txHash}`); });
@@ -180,6 +181,7 @@ describe("Shifting in and shifting out", function () {
         amount: number | BigNumber,
         ethAddress: string,
         srcAddress: string,
+        contractVersion: "0.0.3" | "1.0.0",
     ) => {
         // Approve contract to spend the shifted token.
         const approvePayload: EthArgs = [
@@ -216,9 +218,9 @@ describe("Shifting in and shifting out", function () {
         // Send burn request to adapter contract.
         const payload: EthArgs = [
             {
-                name: "_shifter",
-                type: "address",
-                value: shifterAddress,
+                name: "_symbol",
+                type: "string",
+                value: contractVersion === "0.0.3" ? "z" + token : token,
             },
             {
                 name: "_to",
@@ -234,9 +236,9 @@ describe("Shifting in and shifting out", function () {
 
         logger.info("Reading burn from Ethereum.");
 
-        const shiftOutObject: ShiftOut = renJS.shiftOut({
+        const shiftOutObject: BurnAndRelease = renJS.shiftOut({
             sendTo: adapterContract,
-            contractFn: "shiftOut",
+            contractFn: contractVersion === "0.0.3" ? "shiftOut" : "burn",
             contractParams: payload,
             txConfig: { from: ethAddress, gas: 1000000 },
 
@@ -252,9 +254,9 @@ describe("Shifting in and shifting out", function () {
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
     describe("minting and burning", () => {
-        const caseBTC = { name: "BTC", fn: () => ({ token: "BTC", mintToken: Tokens.BTC.Mint, burnToken: Tokens.BTC.Burn, shiftedToken: "zBTC", shifter: network.contracts.addresses.shifter.BTCShifter }) };
-        const caseZEC = { name: "ZEC", fn: () => ({ token: "ZEC", mintToken: Tokens.ZEC.Mint, burnToken: Tokens.ZEC.Burn, shiftedToken: "zZEC", shifter: network.contracts.addresses.shifter.ZECShifter }) };
-        const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, shiftedToken: "zBCH", shifter: network.contracts.addresses.shifter.BCHShifter }) };
+        const caseBTC = { name: "BTC", fn: () => ({ token: "BTC", mintToken: Tokens.BTC.Mint, burnToken: Tokens.BTC.Burn, shiftedToken: "BTC" }) };
+        const caseZEC = { name: "ZEC", fn: () => ({ token: "ZEC", mintToken: Tokens.ZEC.Mint, burnToken: Tokens.ZEC.Burn, shiftedToken: "ZEC" }) };
+        const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, shiftedToken: "BCH" }) };
 
         for (const testcaseFn of [
             { ...caseBTC, it, },
@@ -265,14 +267,30 @@ describe("Shifting in and shifting out", function () {
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
                 const testcase = testcaseFn.fn();
 
-                const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
+                // const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
+                const adapterContract = network.contracts.addresses.shifter.BasicAdapter.address;
                 const amount = Math.floor(0.00015 * (10 ** 8));
                 const ethAddress = accounts[0];
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
                 const srcAddress = await account.address(testcase.token);
-                const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-                const shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
-                const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(testcase.shiftedToken).call();
+                let registryABI;
+                let registryAddress;
+                let shifterAddress;
+                let shifterRegistry;
+                let shiftedTokenAddress;
+                if (network.contracts.version === "0.0.3") {
+                    registryABI = network.contracts.addresses.shifter.ShifterRegistry.abi;
+                    registryAddress = network.contracts.addresses.shifter.ShifterRegistry.address;
+                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
+                    shifterAddress = await shifterRegistry.methods.getShifterBySymbol("z" + testcase.shiftedToken).call();
+                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol("z" + testcase.shiftedToken).call();
+                } else {
+                    registryABI = network.contracts.addresses.shifter.GatewayRegistry.abi;
+                    registryAddress = network.contracts.addresses.shifter.GatewayRegistry.address;
+                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
+                    shifterAddress = await shifterRegistry.methods.getGatewayBySymbol(testcase.shiftedToken).call();
+                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
+                }
                 const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, shiftedTokenAddress);
 
                 // Test minting.
@@ -287,6 +305,7 @@ describe("Shifting in and shifting out", function () {
                     adapterContract,
                     amount,
                     ethAddress,
+                    network.contracts.version,
                     submitIndividual,
                     nonce,
                 );
@@ -307,7 +326,7 @@ describe("Shifting in and shifting out", function () {
                 logger.consoleLine();
                 logger.info("Starting burn test:");
                 const initialBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
-                await burnTest(testcase.token, testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress);
+                await burnTest(testcase.token, testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress, network.contracts.version);
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
                 const finalBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
@@ -329,9 +348,24 @@ describe("Shifting in and shifting out", function () {
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const amount = 0.000225 * (10 ** 8);
                 const ethAddress = accounts[0];
-                const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-                const shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
-                const shifterAddress = await shifterRegistry.methods.getShifterBySymbol(testcase.shiftedToken).call();
+                let registryABI;
+                let registryAddress;
+                let shifterAddress;
+                let shifterRegistry;
+                let shiftedTokenAddress;
+                if (network.contracts.version === "0.0.3") {
+                    registryABI = network.contracts.addresses.shifter.ShifterRegistry.abi;
+                    registryAddress = network.contracts.addresses.shifter.ShifterRegistry.address;
+                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
+                    shifterAddress = await shifterRegistry.methods.getShifterBySymbol("z" + testcase.shiftedToken).call();
+                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol("z" + testcase.shiftedToken).call();
+                } else {
+                    registryABI = network.contracts.addresses.shifter.GatewayRegistry.abi;
+                    registryAddress = network.contracts.addresses.shifter.GatewayRegistry.address;
+                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
+                    shifterAddress = await shifterRegistry.methods.getGatewayBySymbol(testcase.shiftedToken).call();
+                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
+                }
 
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
 
@@ -345,6 +379,7 @@ describe("Shifting in and shifting out", function () {
                     adapterContract,
                     amount,
                     ethAddress,
+                    network.contracts.version,
                     submitTogether,
                 );
                 const finalERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
@@ -357,16 +392,16 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it.skip("simple interface - mint", async () => {
+    it.only("simple interface - mint", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test`);
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.000225, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const shift = new RenJS("testnet").shiftIn({
+            const shift = renJS.shiftIn({
                 sendToken: token as "BTC" | "ZEC" | "BCH",
-                sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
+                sendTo: "0xD5B5b26521665Cb37623DCA0E49c553b41dbF076", // (await web3.eth.getAccounts())[0],
             });
 
             const gatewayAddress = shift.addr();
@@ -379,7 +414,7 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it.skip("simple interface - burn", async () => {
+    it("simple interface - burn", async () => {
         for (const contract of [RenJS.Tokens.BTC.Burn]) {
             logger.consoleLine();
             logger.info(`Starting burn test`);
@@ -387,9 +422,9 @@ describe("Shifting in and shifting out", function () {
             // TODO: Check balance of token before attempting to mint.
 
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.000225, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.00011, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const shift = new RenJS("testnet").shiftOut({
+            const shift = renJS.shiftOut({
                 web3Provider: provider,
                 sendToken: token as "BTC" | "ZEC" | "BCH",
                 sendAmount: amount,
@@ -467,28 +502,38 @@ describe("Shifting in and shifting out", function () {
         result64.should.deep.equal(resultHex);
     });
 
-    it.skip("confirmationless", async () => {
+    it("confirmationless", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering trade`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const tokenAddress = await renJS.getTokenAddress(web3, contract);
-            const shifterAddress = await renJS.getShifterAddress(web3, contract);
+            const contractVersion = network.contracts.version;
 
-            const shift = new RenJS("devnet").shiftIn({
-                web3Provider: provider,
-                sendToken: token as "BTC" | "ZEC" | "BCH",
-                contractCalls: [{
-                    sendTo: "0x1D88792D94933640EaBA06672f26f9d8c2d4CBcD",
-                    contractFn: "shiftIn",
-                    contractParams: [
-                        { type: "address", name: "_shifter", value: shifterAddress, },
-                        { type: "address", name: "_shiftedToken", value: tokenAddress, },
-                        { type: "address", name: "_address", value: "0x790ea424d35c4d53f364cfd95dc25a41e415edd7", },
-                    ],
-                }],
+            // const tokenAddress = await renJS.getTokenAddress(web3, contract);
+            // const shifterAddress = await renJS.getShifterAddress(web3, contract);
+
+            const adapterContract = network.contracts.addresses.shifter.BasicAdapter.address;
+
+            const shift = renJS.shiftIn({
+                sendToken: RenJS.Tokens.BTC.Btc2Eth,
+                sendTo: adapterContract,
+                // sendAmount: amount,
+                contractFn: contractVersion === "0.0.3" ? "shiftIn" : "mint",
+                contractParams: [
+                    {
+                        name: "_symbol",
+                        type: "string",
+                        value: contractVersion === "0.0.3" ? "z" + token : token,
+                    },
+                    {
+                        name: "_address",
+                        type: "address",
+                        value: "0x62ACc475F68254941e923958Fcad78e10A4CfF06",
+                    }
+                ],
+                // nonce: nonce || RenJS.utils.randomNonce(),
             });
 
             const gatewayAddress = shift.addr();

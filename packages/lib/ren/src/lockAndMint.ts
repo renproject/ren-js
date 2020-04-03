@@ -1,13 +1,14 @@
 import {
-    newPromiEvent, Ox, PromiEvent, ShiftInParams, strip0x, TxStatus, UnmarshalledMintTx,
+    Chain, newPromiEvent, Ox, PromiEvent, LockAndMintParams, strip0x, TxStatus, UnmarshalledMintTx,
+    UTXO, UTXOInput,
 } from "@renproject/interfaces";
 import { ResponseQueryMintTx } from "@renproject/rpc";
 import {
     DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardEvents, generateAddress, generateGHash,
-    generateShiftInTxHash, getShifterAddress, ignoreError, NetworkDetails, payloadToABI,
-    payloadToShiftInABI, processShiftInParams, randomNonce, renTxHashToBase64, RenWeb3Events,
-    resolveInToken, retrieveDeposits, SECONDS, signatureToString, sleep, toBase64, toBigNumber,
-    UTXO, UTXOInput, Web3Events, withDefaultAccount,
+    generateShiftInTxHash, getGatewayAddress, ignoreError, NetworkDetails, parseRenContract,
+    payloadToABI, payloadToShiftInABI, processLockAndMintParams, randomNonce, renTxHashToBase64,
+    RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits, SECONDS,
+    signatureToString, sleep, toBase64, toBigNumber, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -19,21 +20,21 @@ import { sha3 } from "web3-utils";
 
 import { ShifterNetwork, unmarshalMintTx } from "./shifterNetwork";
 
-export class ShiftIn {
+export class LockAndMint {
     public utxo: UTXOInput | undefined;
     public gatewayAddress: string | undefined;
     public signature: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: ShifterNetwork;
-    private readonly params: ShiftInParams;
+    private readonly params: LockAndMintParams;
     private renVMResponse: UnmarshalledMintTx | undefined;
 
     public thirdPartyTransaction: string | undefined;
 
-    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: ShiftInParams) {
+    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: LockAndMintParams) {
         this.network = _network;
         this.renVMNetwork = _renVMNetwork;
-        this.params = processShiftInParams(this.network, _params);
+        this.params = processLockAndMintParams(this.network, _params);
         // this.web3 = this.params.web3Provider ? new Web3(this.params.web3Provider) : undefined;
 
         const renTxHash = this.params.renTxHash;
@@ -68,12 +69,42 @@ export class ShiftIn {
 
     public addr = () => this.gatewayAddress;
 
-    public waitForDeposit = (confirmations: number): PromiEvent<this, { "deposit": [UTXO] }> => {
+    public waitForDeposit = (confirmations: number, specifyUTXO?: UTXOInput): PromiEvent<this, { "deposit": [UTXO] }> => {
         const promiEvent = newPromiEvent<this, { "deposit": [UTXO] }>();
 
         (async () => {
             // If the deposit has already been submitted, skip "waitForDeposit".
             if (this.params.renTxHash) {
+                return this;
+            }
+
+            if (specifyUTXO) {
+                let previousUtxoConfirmations = -1;
+                // tslint:disable-next-line: no-constant-condition
+                while (true) {
+                    const utxoConfirmations = await retrieveConfirmations(this.network, {
+                        chain: parseRenContract(resolveInToken(this.params.sendToken)).from,
+                        hash: specifyUTXO.txid
+                    });
+                    if (utxoConfirmations > previousUtxoConfirmations) {
+                        previousUtxoConfirmations = utxoConfirmations;
+                        promiEvent.emit("deposit", {
+                            chain: parseRenContract(resolveInToken(this.params.sendToken)).from as Chain.Bitcoin | Chain.BitcoinCash | Chain.Zcash,
+                            utxo: {
+                                txid: specifyUTXO.txid,
+                                value: 0, // TODO: Get value
+                                script_hex: "",
+                                output_no: specifyUTXO.output_no,
+                                confirmations: utxoConfirmations,
+                            }
+                        });
+                    }
+                    if (utxoConfirmations >= confirmations) {
+                        break;
+                    }
+                    await sleep(10);
+                }
+                this.utxo = specifyUTXO;
                 return this;
             }
 
@@ -205,8 +236,8 @@ export class ShiftIn {
     public queryTx = async (specifyUTXO?: UTXOInput) =>
         unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
 
-    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<ShiftIn, { "renTxHash": [string], "status": [TxStatus] }> => {
-        const promiEvent = newPromiEvent<ShiftIn, { "renTxHash": [string], "status": [TxStatus] }>();
+    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }> => {
+        const promiEvent = newPromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
             const utxo = specifyUTXO || this.utxo;
@@ -261,6 +292,7 @@ export class ShiftIn {
                         console.warn(`Unexpected txHash returned from RenVM: expected ${utxoRenTxHash} but got ${renTxHash}`);
                     }
                 } catch (error) {
+                    console.error(error);
                     try {
                         // Check if the darknodes have already seen the transaction
                         const queryTxResponse = await this.queryTx(utxo);
@@ -329,7 +361,7 @@ export class ShiftIn {
             return this;
 
             // tslint:disable-next-line: no-use-before-declare
-            // return new Signature(this.network, this.params as ShiftInParams, response, renTxHash);
+            // return new Signature(this.network, this.params as LockAndMintParams, response, renTxHash);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;
@@ -395,8 +427,11 @@ export class ShiftIn {
             // Check if the signature has already been submitted
             if (renContract) {
                 try {
-                    const shifterAddress = await getShifterAddress(this.network, web3, resolveInToken(renContract));
-                    const shifter = new web3.eth.Contract(this.network.contracts.addresses.shifter.BTCShifter.abi, shifterAddress);
+                    const shifterAddress = await getGatewayAddress(this.network, web3, resolveInToken(renContract));
+                    const abi = this.network.contracts.version === "0.0.3" ?
+                        this.network.contracts.addresses.shifter.BTCShifter.abi :
+                        this.network.contracts.addresses.shifter.BTCGateway.abi;
+                    const shifter = new web3.eth.Contract(abi, shifterAddress);
                     // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
                     // the contract
                     const status = await shifter.methods.status(this.renVMResponse.autogen.sighash).call();
@@ -522,7 +557,6 @@ export class ShiftIn {
                     Ox(signature), // _sig: string
                 ] : [...(contractParams || []).map(value => value.value)];
 
-            if (i === contractCalls.length - 1) { console.log("ABI 3"); }
             const ABI = i === contractCalls.length - 1 ?
                 payloadToShiftInABI(contractFn, (contractParams || [])) :
                 payloadToABI(contractFn, (contractParams || []));

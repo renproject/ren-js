@@ -5,7 +5,8 @@ import * as React from "react";
 import { useEphemeralKey, useWeb3Network } from "@openzeppelin/network/lib/react";
 import GatewayJS from "@renproject/gateway";
 import {
-    Ox, RenContract, RenNetwork, ShiftInParams, strip0x, toBigNumber, UnmarshalledMintTx,
+    Ox, RenContract, RenNetwork, SendParams, ShiftInParams, ShiftInParamsSimple, strip0x,
+    toBigNumber, UnmarshalledMintTx,
 } from "@renproject/interfaces";
 import { DEFAULT_SHIFT_FEE, randomNonce, sleep } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -30,80 +31,62 @@ declare global {
 
 const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string) => {
 
-    const shiftInParams: ShiftInParams = to0Conf(web3, network, {
-        web3Provider: web3.currentProvider,
-
-        // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+    const shiftInParams: SendParams = {
         sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+        sendTo: ethereumAddress,
+    };
 
-        suggestedAmount: GatewayJS.utils.value(amount, "btc").sats(),
-        contractCalls: [{
-            sendTo: "0x2Faa571A69aed0CdE2d3C96c0Dce9D2aa2E3806C", // network.contracts.addresses.shifter.BasicAdapter.address,
-            contractFn: "shiftIn",
-            contractParams: [
-                { type: "address", name: "_shifter", value: await gatewayJS.getShifterAddress(web3, "BTC"), },
-                { type: "address", name: "_shiftedToken", value: await gatewayJS.getTokenAddress(web3, "BTC"), },
-                { type: "address", name: "_address", value: ethereumAddress },
-            ],
-        }],
-
-        // The nonce is used to guarantee a unique deposit address.
-        nonce: GatewayJS.utils.randomNonce(),
-
-        confirmations: 0,
-
-    });
-
-    if (shiftInParams.confirmations === 0) {
-        setTxHash(null);
-    }
+    // if (shiftInParams.confirmations === 0) {
+    //     setTxHash(null);
+    // }
 
     const result = await gatewayJS.open(shiftInParams).result()
         .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); });
 
     console.log(result);
 
-    if (shiftInParams.confirmations === 0) {
-        if (!result || (Object.keys(result).length === 0 && result.constructor === Object)) {
-            throw new Error(`Expected valid result from GatewayJS`);
-        }
+    // if (shiftInParams.confirmations === 0) {
+    //     if (!result || (Object.keys(result).length === 0 && result.constructor === Object)) {
+    //         throw new Error(`Expected valid result from GatewayJS`);
+    //     }
 
-        const numberToHex = (n: BigNumber | number): string => {
-            const hex = strip0x(n.toString(16));
-            const padding = "0".repeat(64 - hex.length);
-            return "0x" + padding + hex;
-        };
+    //     const numberToHex = (n: BigNumber | number): string => {
+    //         const hex = strip0x(n.toString(16));
+    //         const padding = "0".repeat(64 - hex.length);
+    //         return "0x" + padding + hex;
+    //     };
 
-        const contractCalls = shiftInParams.contractCalls;
-        if (!contractCalls) {
-            throw new Error("No contract calls found");
-        }
+    //     const contractCalls = shiftInParams.contractCalls;
+    //     if (!contractCalls) {
+    //         throw new Error("No contract calls found");
+    //     }
 
-        const lastContractCall = contractCalls[contractCalls.length - 1];
-        if (!lastContractCall || !lastContractCall.contractParams) {
-            throw new Error("No contract call found");
-        }
+    //     const lastContractCall = contractCalls[contractCalls.length - 1];
+    //     if (!lastContractCall || !lastContractCall.contractParams) {
+    //         throw new Error("No contract call found");
+    //     }
 
-        const confirmationFee = numberToHex(new BigNumber(lastContractCall.contractParams[0].value));
-        const amountAfterFees = numberToHex(new BigNumber((result as UnmarshalledMintTx).autogen.amount));
-        const nHash = (result as UnmarshalledMintTx).autogen.nhash;
+    //     const confirmationFee = numberToHex(new BigNumber(lastContractCall.contractParams[0].value));
+    //     const amountAfterFees = numberToHex(new BigNumber((result as UnmarshalledMintTx).autogen.amount));
+    //     const nHash = (result as UnmarshalledMintTx).autogen.nhash;
 
-        // tslint:disable-next-line: no-constant-condition
-        while (true) {
-            const logs = await web3.eth.getPastLogs({
-                address: lastContractCall.sendTo,
-                fromBlock: "0",
-                toBlock: "latest",
-                topics: [web3.utils.sha3("LogConfirmationlessShiftIn(bytes32,uint256,uint256,address,bool)"), nHash, amountAfterFees, confirmationFee],
-            });
+    //     // tslint:disable-next-line: no-constant-condition
+    //     while (true) {
+    //         const logs = await web3.eth.getPastLogs({
+    //             address: lastContractCall.sendTo,
+    //             fromBlock: "0",
+    //             toBlock: "latest",
+    //             topics: [web3.utils.sha3("LogConfirmationlessShiftIn(bytes32,uint256,uint256,address,bool)"), nHash, amountAfterFees, confirmationFee],
+    //         });
 
-            if (logs.length > 0) {
-                setTxHash(logs[0].transactionHash);
-                break;
-            }
-            await sleep(1000);
-        }
-    }
+    //         if (logs.length > 0) {
+    //             setTxHash(logs[0].transactionHash);
+    //             break;
+    //         }
+    //         await sleep(1000);
+    //     }
+    // }
 };
 
 const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, recipient: string) => {
@@ -115,27 +98,8 @@ const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, recipient: string
 
         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
         sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
-
-        contractCalls: [
-            {
-                sendTo: "0x916B8012E1813E5924a3Eca400dBE6C7055a8484",
-                contractFn: "approve",
-                contractParams: [
-                    { type: "address" as const, name: "spender", value: "0x2Faa571A69aed0CdE2d3C96c0Dce9D2aa2E3806C" },
-                    { type: "uint256" as const, name: "amount", value: toBigNumber(amount).toFixed() },
-                ],
-            },
-            {
-                sendTo: "0x2Faa571A69aed0CdE2d3C96c0Dce9D2aa2E3806C",
-                contractFn: "shiftOut",
-                contractParams: [
-                    { type: "address", name: "_shifter", value: await gatewayJS.getShifterAddress(web3, "BTC"), },
-                    { type: "address", name: "_shiftedToken", value: await gatewayJS.getTokenAddress(web3, "BTC"), },
-                    { type: "bytes", name: "_address", value: Ox(Buffer.from(recipient)) },
-                    { type: "uint256", name: "_value", value: amount },
-                ],
-                txConfig: { gas: 200000 },
-            }]
+        sendTo: recipient,
+        sendAmount: amount,
     }).result()
         .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
         .then(console.log)
@@ -166,10 +130,10 @@ export const GatewayExample = () => {
 
     const context = { lib: new Web3(window.web3!.currentProvider) };
 
-    useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
-        gsn: { signKey: useEphemeralKey() }
-        // tslint:disable-next-line: no-any
-    } as any);
+    // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
+    //     gsn: { signKey: useEphemeralKey() }
+    //     // tslint:disable-next-line: no-any
+    // } as any);
 
     const urlParameters = parse(window.location.search, { ignoreQueryPrefix: true });
 
@@ -191,9 +155,8 @@ export const GatewayExample = () => {
     const [ethereumAddress, setEthereumAddress] = React.useState("");
     const [amount, setAmount] = React.useState("");
 
-    const validAddress = React.useMemo(() => {
-        return true;
-        // return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
+    const isMint = React.useMemo(() => {
+        return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
     }, [ethereumAddress]);
 
     const [errorMessage, setErrorMessage] = React.useState(null as string | null);
@@ -202,30 +165,33 @@ export const GatewayExample = () => {
 
     const onSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!validAddress) {
-            setErrorMessage("Please enter a valid Ethereum address.");
-            return;
-        }
+        // if (!validAddress) {
+        //     setErrorMessage("Please enter a valid Ethereum address.");
+        //     return;
+        // }
         if (!amount) {
             setErrorMessage("Please enter a valid amount.");
             return;
         }
         setErrorMessage(null);
         try {
-            // await startShiftOut(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network);
-            await startShiftOut(context.lib as unknown as Web3, gatewayJS, ethereumAddress);
+            if (isMint) {
+                await startShiftIn(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network);
+            } else {
+                await startShiftOut(context.lib as unknown as Web3, gatewayJS, ethereumAddress);
+            }
         } catch (error) {
             console.error(error);
             setErrorMessage(String(error.message || error.error || JSON.stringify(error)));
         }
-    }, [startShiftOut, context.lib, gatewayJS, amount, ethereumAddress, validAddress]);
+    }, [startShiftOut, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
 
     return <>
         <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>
             <p className="box">Send Testnet BTC to an Ethereum address (Kovan).</p>
 
             <div className="send">
-                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder="Ethereum address" />
+                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder="Enter Ethereum (mint) or Bitcoin (burn) address" />
             </div>
 
             <div className="send">
@@ -233,7 +199,7 @@ export const GatewayExample = () => {
                     <input value={amount} onChange={(e) => { setAmount(e.target.value); }} placeholder="Amount" />
                     <div className="box">BTC</div>
                 </div>
-                <button disabled={txHash === null} type="submit" className={`blue ${!amount || !validAddress ? "disabled" : ""}`}>Send</button>
+                <button disabled={txHash === null} type="submit" className={`blue ${!amount || /* !validAddress */ false ? "disabled" : ""}`}>{isMint ? "Mint" : "Burn"}</button>
             </div>
             {errorMessage ? <p className="box red">{errorMessage}</p> : <></>}
             {txHash === null ? <p>Submitting to Ethereum...</p> : <></>}

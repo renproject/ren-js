@@ -11,6 +11,7 @@ const OuterDiv = styled.div`
     box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
     border-radius: 6px;
     transition: all 500ms;
+    background: white;
     `;
 
 // tslint:disable-next-line: no-any

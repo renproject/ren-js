@@ -3,7 +3,7 @@ import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
 import {
-    NetworkTestnet, processShiftInParams, processShiftOutParams, resolveSendCall,
+    NetworkTestnet, processLockAndMintParams, processBurnAndReleaseParams, resolveSendCall,
 } from "@renproject/utils";
 
 chai.use((chaiBigNumber)(BigNumber));
@@ -19,19 +19,19 @@ describe("processParams", () => {
     });
 
     it("Shift out", () => {
-        processShiftOutParams(NetworkTestnet, {
+        processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
             ethTxHash: "ethTxHash",
         })
             .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethTxHash: "ethTxHash" });
 
-        processShiftOutParams(NetworkTestnet, {
+        processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
             burnReference: 1,
         })
             .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 });
 
-        processShiftOutParams(NetworkTestnet, {
+        processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
             web3Provider: {},
             contractCalls: [{
@@ -94,7 +94,7 @@ describe("processParams", () => {
     });
 
     it("Shift in", () => {
-        processShiftInParams(NetworkTestnet, {
+        processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
             contractCalls: [{
@@ -115,7 +115,7 @@ describe("processParams", () => {
                 }],
             });
 
-        processShiftInParams(NetworkTestnet, {
+        processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
             contractCalls: [{

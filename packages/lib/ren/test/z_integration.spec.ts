@@ -392,7 +392,7 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it.only("simple interface - mint", async () => {
+    it("simple interface - mint", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test`);

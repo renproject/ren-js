@@ -1,0 +1,145 @@
+@import "~@renproject/fonts/fonts";
+@import './common';
+
+html {
+    font-family: 'PingFang SC',
+        Helvetica,
+        Arial,
+        sans-serif;
+}
+
+#story-root {
+    padding-bottom: 100px;
+}
+
+.select-market--example {
+    width: 150px;
+
+    >*+* {
+        margin-top: 10px;
+    }
+}
+
+.examples {
+    max-width: 1080px;
+    margin: 0 auto;
+
+    >a {
+        text-decoration: none;
+    }
+
+    .example-group {
+        display: flex;
+        flex-wrap: wrap;
+
+        >* {
+            margin: 10px;
+        }
+    }
+
+    .home-button {
+        width: calc(100% - 10px);
+        background: $blue-bright;
+        color: white;
+        padding: 5px 10px;
+        margin-top: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.24);
+    }
+
+    $box-size: 150px;
+    $title-height: 30px;
+
+    .example-group--box {
+        display: flex;
+        flex-flow: column;
+
+        width: $box-size;
+        height: $box-size + $title-height;
+
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.24);
+
+        transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+
+        &:hover {
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16),
+                0 3px 6px rgba(0, 0, 0, 0.23);
+        }
+
+        &:active {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
+                0 1px 2px rgba(0, 0, 0, 0.24);
+        }
+
+        h3 {
+            padding: 5px;
+            margin: 0;
+            height: calc(#{$title-height} - 10px);
+
+            background: $blue-bright;
+            color: white;
+            font-size: 14px;
+        }
+    }
+
+    $padding: 10px;
+
+    .example-group--body {
+        width: $box-size - ($padding * 2);
+        height: $box-size - ($padding * 2);
+
+        padding: $padding;
+        overflow: hidden;
+    }
+
+    .example--preview {
+        text-decoration: none;
+        color: black;
+
+        .example--preview--inner {
+            transform: scale(0.4);
+            width: ($box-size - $padding * 2) / 0.4;
+            transform-origin: top left;
+        }
+    }
+
+    .example--source-code {
+        margin-top: 30px;
+
+        pre {
+            color: rgb(204, 204, 204);
+            background: rgb(45, 45, 45) none repeat scroll 0% 0%;
+            font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+            text-align: left;
+            white-space: pre;
+            word-spacing: normal;
+            word-break: normal;
+            overflow-wrap: normal;
+            line-height: 1.5;
+            -moz-tab-size: 4;
+            hyphens: none;
+            padding: 1em;
+            margin: 0.5em 0px;
+            overflow: auto;
+        }
+
+        code {
+            color: rgb(204, 204, 204);
+            background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%;
+            font-family: Consolas,
+                Monaco,
+                "Andale Mono",
+                "Ubuntu Mono",
+                monospace;
+            text-align: left;
+            white-space: pre;
+            word-spacing: normal;
+            word-break: normal;
+            overflow-wrap: normal;
+            line-height: 1.5;
+            -moz-tab-size: 4;
+            hyphens: none;
+        }
+    }
+}

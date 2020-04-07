@@ -1,6 +1,6 @@
 {
   "name": "@renproject/interfaces",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "GatewayJS allows dApp to easily and securely integrate with RenVM",
   "publishConfig": {
     "access": "public"
@@ -27,10 +27,11 @@
     "cov:send": "nyc report --reporter=lcov && codecov",
     "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
     "doc": "run-s doc:html && open-cli build/docs/index.html",
-    "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
-    "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
+    "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
+    "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
     "prepare": "yarn build",
-    "prepare-release": "run-s doc:html"
+    "prepare-release": "run-s doc:html",
+    "link": "yarn link"
   },
   "scripts-info": {
     "info": "Display information about the package scripts",
@@ -49,7 +50,7 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "@types/node": "^13.7.7",
+    "@types/node": "^13.9.8",
     "bignumber.js": "^9.0.0",
     "events": "^3.1.0"
   },

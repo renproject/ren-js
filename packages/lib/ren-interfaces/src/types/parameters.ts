@@ -55,7 +55,7 @@ export interface ShiftParamsCommon {
     web3Provider?: provider; // A Web3 provider
 
     // Recover from a Ren transaction hash.
-    renTxHash?: string; // Provide the transaction hash returned from RenVM to continue a previous shiftIn.
+    renTxHash?: string; // Provide the transaction hash returned from RenVM to continue a previous mint.
 
     /**
      * An option to override the default nonce generated randomly
@@ -63,7 +63,7 @@ export interface ShiftParamsCommon {
     nonce?: string;
 }
 
-export interface ShiftInParams extends ShiftParamsCommon {
+export interface LockAndMintParams extends ShiftParamsCommon {
     /**
      * The amount of `sendToken` to be sent
      */
@@ -75,8 +75,9 @@ export interface ShiftInParams extends ShiftParamsCommon {
 
     contractCalls?: ContractCall[];
 }
+export type ShiftInParams = LockAndMintParams;
 
-export interface ShiftInParamsSimple extends ShiftParamsCommon, ContractCall {
+export interface LockAndMintParamsSimple extends ShiftParamsCommon, ContractCall {
     /**
      * The amount of `sendToken` to be sent
      */
@@ -86,17 +87,20 @@ export interface ShiftInParamsSimple extends ShiftParamsCommon, ContractCall {
 
     confirmations?: number;
 }
+export type ShiftInParamsSimple = LockAndMintParamsSimple;
 
-export interface ShiftOutParams extends ShiftParamsCommon {
+export interface BurnAndReleaseParams extends ShiftParamsCommon {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
     contractCalls?: ContractCall[];
 }
+export type ShiftOutParams = BurnAndReleaseParams;
 
-export interface ShiftOutParamsSimple extends ShiftParamsCommon, ContractCall {
+export interface BurnAndReleaseParamsSimple extends ShiftParamsCommon, ContractCall {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
 }
+export type ShiftOutParamsSimple = BurnAndReleaseParamsSimple;
 
 export interface SendParams extends ShiftParamsCommon {
     sendTo: string;
@@ -105,8 +109,10 @@ export interface SendParams extends ShiftParamsCommon {
     confirmations?: number;
 }
 
-export type SerializableShiftOutParams = Exclude<ShiftOutParams, "web3Provider">;
-export type SerializableShiftInParams = Exclude<ShiftInParams, "web3Provider">;
+export type SerializableBurnAndReleaseParams = Exclude<BurnAndReleaseParams, "web3Provider">;
+export type SerializableLockAndMintParams = Exclude<LockAndMintParams, "web3Provider">;
+export type SerializableShiftOutParams = SerializableBurnAndReleaseParams;
+export type SerializableShiftInParams = SerializableLockAndMintParams;
 
-export type ShiftParams = ShiftInParams | ShiftOutParams;
-export type SerializableShiftParams = SerializableShiftInParams | SerializableShiftOutParams;
+export type ShiftParams = LockAndMintParams | BurnAndReleaseParams;
+export type SerializableShiftParams = SerializableLockAndMintParams | SerializableBurnAndReleaseParams;

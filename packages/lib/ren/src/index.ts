@@ -1,20 +1,20 @@
 import _BN from "bn.js";
 
 import {
-    Asset, Chain, RenContract, RenNetwork, SendParams, ShiftedToken, ShiftInParams,
-    ShiftInParamsSimple, ShiftOutParams, ShiftOutParamsSimple, Tokens,
+    Asset, Chain, RenContract, RenNetwork, SendParams, ShiftedToken, LockAndMintParams,
+    LockAndMintParamsSimple, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
 import {
-    getShifterAddress, getTokenAddress, NetworkChaosnet, NetworkDetails, NetworkTestnet,
+    getGatewayAddress, getTokenAddress, NetworkChaosnet, NetworkDetails, NetworkTestnet,
     resolveSendCall, stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
+import { BurnAndRelease } from "./burnAndRelease";
+import { LockAndMint } from "./lockAndMint";
 import { ShifterNetwork } from "./shifterNetwork";
-import { ShiftIn } from "./shiftIn";
-import { ShiftOut } from "./shiftOut";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -71,38 +71,43 @@ export default class RenJS {
      * Submits the commitment and transaction to RenVM, and then submits the
      * signature to the adapter address.
      *
-     * @param params See [[ShiftInParams]].
+     * @param params See [[LockAndMintParams]].
      * @returns An instance of [[ShiftInObject]].
      */
-    public readonly shiftIn = (params: ShiftInParams | ShiftInParamsSimple | SendParams): ShiftIn => {
-        if ((params as SendParams).sendAmount) {
+    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): LockAndMint => {
+        if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
             params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as ShiftInParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftInParamsSimple;
+        } else if ((params as LockAndMintParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new ShiftIn(this.renVM, this.network, params);
+        return new LockAndMint(this.renVM, this.network, params);
     }
 
     /**
      * Submits a burn log to RenVM.
      *
-     * @param params See [[ShiftOutParams]].
+     * @param params See [[BurnAndReleaseParams]].
      * @returns An instance of [[ShiftOutObject]].
      */
-    public readonly shiftOut = (params: ShiftOutParams | ShiftOutParamsSimple | SendParams): ShiftOut => {
-        if ((params as SendParams).sendAmount) {
+    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): BurnAndRelease => {
+        if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
             params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as ShiftInParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftOutParamsSimple;
+        } else if ((params as LockAndMintParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
 
-        return new ShiftOut(this.renVM, this.network, params);
+        return new BurnAndRelease(this.renVM, this.network, params);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
-    public readonly getShifterAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getShifterAddress(this.network, web3, token);
+    public readonly getGatewayAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
+
+    // Backwards compatibility
+    public readonly shiftIn = this.lockAndMint;
+    public readonly shiftOut = this.burnAndRelease;
+    public readonly getShifterAddress = this.getGatewayAddress;
 }
 
 

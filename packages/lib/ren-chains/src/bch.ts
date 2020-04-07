@@ -1,7 +1,7 @@
 import { Ox, strip0x } from "@renproject/interfaces";
 import { isMainnetAddress, isTestnetAddress, toCashAddress } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
-import { getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
+import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
 
 import { anyAddressFrom, Tactics } from "./btc";
 import { createAddress } from "./common";
@@ -11,6 +11,12 @@ export const createBCHAddress = createAddress(Networks, Opcode, Script);
 export const getBitcoinCashUTXOs = ({ isTestnet }: { isTestnet: boolean }) => {
     return async (address: string, confirmations: number) => {
         return getUTXOs(isTestnet, { address, confirmations });
+    };
+};
+
+export const getBitcoinCashConfirmations = ({ isTestnet }: { isTestnet: boolean }) => {
+    return async (txHash: string) => {
+        return getConfirmations(isTestnet, txHash);
     };
 };
 

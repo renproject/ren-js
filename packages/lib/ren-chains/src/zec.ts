@@ -2,7 +2,7 @@ import { Ox, strip0x } from "@renproject/interfaces";
 import { Address, Networks, Opcode, Script } from "bitcore-lib-zcash";
 import Base58Check from "bitcore-lib-zcash/lib/encoding/base58check";
 import { encode } from "bs58";
-import { getUTXOs } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
+import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
 import { validate } from "wallet-address-validator";
 
 import { anyAddressFrom, Tactics } from "./btc";
@@ -13,6 +13,12 @@ export const createZECAddress = createAddress(Networks, Opcode, Script);
 export const getZcashUTXOs = ({ isTestnet }: { isTestnet: boolean }) => {
     return async (address: string, confirmations: number) => {
         return getUTXOs(isTestnet, { address, confirmations });
+    };
+};
+
+export const getZcashConfirmations = ({ isTestnet }: { isTestnet: boolean }) => {
+    return async (txHash: string) => {
+        return getConfirmations(isTestnet, txHash);
     };
 };
 

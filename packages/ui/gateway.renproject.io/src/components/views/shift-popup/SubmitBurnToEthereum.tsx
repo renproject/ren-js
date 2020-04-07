@@ -1,21 +1,25 @@
 import * as React from "react";
 
 import { Tx } from "@renproject/interfaces";
-import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
-import styled from "styled-components";
+import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import { lighten } from "polished";
+import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txUrl } from "../../../lib/txUrl";
 import { LabelledDiv } from "../LabelledInput";
-import { OpeningShiftMini } from "../OpeningShiftMini";
 import { Popup } from "../Popup";
+import { ConnectedMini } from "./Mini";
 
 const TransparentButton = styled.button`
         position: relative;
+        opacity: 1;
         &:disabled {
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 1.0);
+            background-color: ${p => lighten(0.5, p.theme.primaryColor)};
+            opacity: 1 !important;
         }
     `;
 const TransparentLoading = styled(Loading)`
@@ -26,7 +30,7 @@ const TransparentLoading = styled(Loading)`
         border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
     `;
 
-export const SubmitToEthereum: React.StatelessComponent<{
+export const SubmitBurnToEthereum: React.StatelessComponent<{
     mini: boolean,
     txHash: Tx | null,
     networkDetails: NetworkDetails,
@@ -76,7 +80,7 @@ export const SubmitToEthereum: React.StatelessComponent<{
         }
     }, [initialized, txHash, onSubmit]);
 
-    if (mini) { return <OpeningShiftMini />; }
+    if (mini) { return <ConnectedMini message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
 
     return <Popup mini={mini}>
         <div className="submit-to-ethereum">
@@ -89,12 +93,16 @@ export const SubmitToEthereum: React.StatelessComponent<{
                         <br />
                     </> : null}
                 </div> : null}
-                {txHash ?
+            </div>
+        </div>
+        <div className="deposit-address">
+            <div className="popup--body--actions">
+                {txHash && !error ?
                     <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(txHash, networkDetails)}>
                         <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
                     </a> :
                     <div className="popup--buttons">
-                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
+                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>{submitting ? <>Submitting to Ethereum<TransparentLoading alt={true} /></> : <>Submit to Ethereum</>}</TransparentButton>
                     </div>
                 }
             </div>

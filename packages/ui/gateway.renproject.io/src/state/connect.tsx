@@ -1,7 +1,6 @@
 // tslint:disable:no-any
 import * as React from "react";
 
-// import { Loading } from "@renproject/react-components";
 import { Container, Subscribe } from "unstated";
 
 // import { PersistContainer } from "unstated-persist";

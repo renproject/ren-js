@@ -1,8 +1,8 @@
 {
     "name": "gateway.renproject.io",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "private": true,
-    "homepage": "https://renproject.github.io/gateway.renproject.io",
+    "homepage": "https://renproject.github.io/gateway-staging.renproject.io/",
     "scripts": {
         "lint:unused-exports": "ts-unused-exports ./tsconfig.json",
         "lint:ts": "tslint --project ./ -t stylish --quiet",
@@ -14,13 +14,15 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "predeploy": "$npm_execpath run build",
-        "deploy": "gh-pages -d build"
+        "deploy": "gh-pages -d build --repo git@github.com:renproject/gateway-staging.renproject.io.git",
+        "link": "yarn link @renproject/interfaces @renproject/react-components @renproject/utils @renproject/ren"
     },
     "dependencies": {
         "@renproject/fonts": "^1.0.1",
         "@renproject/interfaces": "file:../../lib/ren-interfaces",
-        "@renproject/react-components": "^1.0.37",
+        "@renproject/react-components": "file:../react-components",
         "@renproject/ren": "file:../../lib/ren",
+        "@renproject/utils": "file:../../lib/utils",
         "@sentry/browser": "^5.13.2",
         "@sentry/core": "^5.13.2",
         "@sentry/integrations": "^5.13.2",

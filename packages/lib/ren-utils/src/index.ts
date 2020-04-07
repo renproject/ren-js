@@ -1,10 +1,11 @@
 import {
-    createBCHAddress, createBTCAddress, createZECAddress, getBitcoinCashUTXOs, getBitcoinUTXOs,
+    createBCHAddress, createBTCAddress, createZECAddress, getBitcoinCashConfirmations,
+    getBitcoinCashUTXOs, getBitcoinConfirmations, getBitcoinUTXOs, getZcashConfirmations,
     getZcashUTXOs,
 } from "@renproject/chains";
 import {
-    Asset, Chain, EthArgs, NULL, Ox, RenContract, SendParams, ShiftedToken, ShiftInParams,
-    ShiftOutParams, strip0x, UnmarshalledMintTx, value,
+    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, NULL, Ox, RenContract,
+    SendParams, ShiftedToken, strip0x, Tx, UnmarshalledMintTx, UTXO, UTXODetails, UTXOInput, value,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import { crypto } from "bitcore-lib";
@@ -22,21 +23,6 @@ export * from "./types/networks";
 export * from "./lib/abi";
 export * from "./lib/promievent";
 export * from "./assets";
-
-export interface UTXODetails {
-    readonly txid: string; // hex string without 0x prefix
-    readonly value: number; // satoshis
-    readonly script_hex?: string; // hex string without 0x prefix
-    readonly output_no: number;
-    readonly confirmations: number;
-}
-
-export interface UTXOInput {
-    readonly txid: string; // hex string without 0x prefix
-    readonly output_no: number;
-}
-
-export type UTXO = { chain: Chain.Bitcoin, utxo: UTXODetails } | { chain: Chain.Zcash, utxo: UTXODetails } | { chain: Chain.BitcoinCash, utxo: UTXODetails };
 
 // Pad a hex string if necessary so that its length is even
 // export const evenHex = (hex: string) => hex.length % 2 ? `0${strip0x(hex)}` : hex;
@@ -104,11 +90,23 @@ export const getTokenName = (tokenOrContract: ShiftedToken | RenContract | Asset
 export const syncGetTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
     switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
-            return network.contracts.addresses.shifter.zBTC._address;
+            if (network.contracts.version === "0.0.3") {
+                return network.contracts.addresses.shifter.zBTC._address;
+            } else {
+                return network.contracts.addresses.shifter.RenBTC._address;
+            }
         case Asset.ZEC:
-            return network.contracts.addresses.shifter.zZEC._address;
+            if (network.contracts.version === "0.0.3") {
+                return network.contracts.addresses.shifter.zZEC._address;
+            } else {
+                return network.contracts.addresses.shifter.RenZEC._address;
+            }
         case Asset.BCH:
-            return network.contracts.addresses.shifter.zBCH._address;
+            if (network.contracts.version === "0.0.3") {
+                return network.contracts.addresses.shifter.zBCH._address;
+            } else {
+                return network.contracts.addresses.shifter.RenBCH._address;
+            }
         default:
             throw new Error(`Invalid Ren Contract ${renContract}`);
     }
@@ -244,7 +242,8 @@ export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetai
 };
 
 // Currently should equal 0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116
-export const BURN_TOPIC = web3Keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");
+export const BURN_TOPIC_OLD = web3Keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");
+export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
 
 // tslint:disable-next-line: no-any
 export const ignoreError = (error: any): boolean => {
@@ -384,18 +383,28 @@ export const toBigNumber = (n: BigNumber | { toString(): string }) => BigNumber.
 
 export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
-        const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-        return await shifterRegistry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
+        if (network.contracts.version === "0.0.3") {
+            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+            return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
+        } else {
+            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.GatewayRegistry.abi, network.contracts.addresses.shifter.GatewayRegistry.address);
+            return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
+        }
     } catch (error) {
         (error || {}).error = `Error looking up ${tokenOrContract} token address: ${error.message}`;
         throw error;
     }
 };
 
-export const getShifterAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
-        const shifterRegistry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-        return await shifterRegistry.methods.getShifterBySymbol(getTokenName(tokenOrContract)).call();
+        if (network.contracts.version === "0.0.3") {
+            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
+            return await registry.methods.getShifterBySymbol(getTokenName(tokenOrContract)).call();
+        } else {
+            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.GatewayRegistry.abi, network.contracts.addresses.shifter.GatewayRegistry.address);
+            return await registry.methods.getGatewayBySymbol(getTokenName(tokenOrContract)).call();
+        }
     } catch (error) {
         (error || {}).error = `Error looking up ${tokenOrContract} shifter address: ${error.message}`;
         throw error;
@@ -450,6 +459,24 @@ export const retrieveDeposits = async (_network: NetworkDetails, renContract: Re
     }
 };
 
+export const retrieveConfirmations = async (_network: NetworkDetails, transaction: Tx): Promise<number> => {
+    const txid = transaction.chain === Chain.Ethereum ? 0 : transaction.utxo ? transaction.utxo.txid : transaction.hash;
+    if (!txid) {
+        return 0;
+    }
+    switch (transaction.chain) {
+        case Chain.Bitcoin:
+            return (await getBitcoinConfirmations(_network)(txid));
+        case Chain.Zcash:
+            return (await getZcashConfirmations(_network)(txid));
+        case Chain.BitcoinCash:
+            // tslint:disable-next-line: no-unnecessary-type-assertion
+            return (await getBitcoinCashConfirmations(_network)(txid));
+        default:
+            throw new Error(`Unable to retrieve deposits for chain ${transaction.chain}`);
+    }
+};
+
 export const utils = {
     Ox,
     strip0x,
@@ -472,7 +499,7 @@ export const utils = {
 // TODO: Fetch from contract
 export const DEFAULT_SHIFT_FEE = new BigNumber(10000);
 
-export const resolveInToken = (sendToken: ShiftInParams["sendToken"]): RenContract => {
+export const resolveInToken = (sendToken: LockAndMintParams["sendToken"]): RenContract => {
     switch (sendToken) {
         case "BTC":
             return RenContract.Btc2Eth;
@@ -485,7 +512,7 @@ export const resolveInToken = (sendToken: ShiftInParams["sendToken"]): RenContra
     }
 };
 
-export const resolveOutToken = (sendToken: ShiftInParams["sendToken"]): RenContract => {
+export const resolveOutToken = (sendToken: LockAndMintParams["sendToken"]): RenContract => {
     switch (sendToken) {
         case "BTC":
             return RenContract.Eth2Btc;
@@ -498,40 +525,54 @@ export const resolveOutToken = (sendToken: ShiftInParams["sendToken"]): RenContr
     }
 };
 
-export const resolveSendTo = <T extends ShiftInParams | ShiftOutParams>({ shiftIn }: { shiftIn: boolean }) => (params: T): typeof params => {
+export const resolveSendTo = <T extends LockAndMintParams | BurnAndReleaseParams>({ shiftIn }: { shiftIn: boolean }) => (params: T): typeof params => {
     params.sendToken = shiftIn ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
     return params;
 };
 
 /**
- * `resolveContractCall` simplifies the arguments required by RenJS by allowing
+ * `resolveSendCall` simplifies the arguments required by RenJS by allowing
  * developers to pass in a non-contract address as the `sendTo` field.
  * This function checks if this is the case and makes the required changes to
  * the parameters;
  */
-export const resolveSendCall = (network: NetworkDetails, params: SendParams): ShiftInParams | ShiftOutParams => {
+export const resolveSendCall = (network: NetworkDetails, params: SendParams): LockAndMintParams | BurnAndReleaseParams => {
 
-    const { sendTo, txConfig, ...restOfParams } = params;
+    const { sendTo, sendAmount, txConfig, ...restOfParams } = params;
 
     // The contract call hasn't been provided - but `sendTo` has. We overwrite
     // the contract call with a simple adapter call.
 
-    const shiftIn = sendTo.match(/^(0x)[0-9a-fA-Z]{40}$/);
+    if (!sendTo) {
+        throw new Error(`"sendTo" parameter must be provided.`);
+    }
+
+    const shiftIn = String(sendTo).match(/^(0x)[0-9a-fA-Z]{40}$/);
 
     const sendToken = shiftIn ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
 
     const renContract = parseRenContract(sendToken);
     if (renContract.to === Chain.Ethereum) {
+
+        let shifter: string;
+        let shiftedToken: string;
+        if (network.contracts.version === "0.0.3") {
+            shifter = network.contracts.addresses.shifter[`${renContract.asset}Shifter`]._address;
+            shiftedToken = network.contracts.addresses.shifter[`z${renContract.asset}`]._address;
+        } else {
+            shifter = network.contracts.addresses.shifter[`${renContract.asset}Gateway` as "BTCGateway"]._address;
+            shiftedToken = network.contracts.addresses.shifter[`Ren${renContract.asset}`]._address;
+        }
+
         // Shift in
         return {
             ...restOfParams,
-            suggestedAmount: restOfParams.sendAmount,
+            suggestedAmount: sendAmount,
             contractCalls: [{
-                sendTo: "0x2Faa571A69aed0CdE2d3C96c0Dce9D2aa2E3806C", // network.contracts.addresses.shifter.BasicAdapter.address,
-                contractFn: "shiftIn",
+                sendTo: network.contracts.addresses.shifter.BasicAdapter.address,
+                contractFn: network.contracts.version === "0.0.3" ? "shiftIn" : "mint",
                 contractParams: [
-                    { type: "address", name: "_shifter", value: network.contracts.addresses.shifter[`${renContract.asset}Shifter`]._address },
-                    { type: "address", name: "_shiftedToken", value: network.contracts.addresses.shifter[`z${renContract.asset}`]._address },
+                    { type: "string", name: "_symbol", value: network.contracts.version === "0.0.3" ? "z" + renContract.asset : renContract.asset },
                     { type: "address", name: "_address", value: sendTo },
                 ],
                 txConfig,
@@ -539,8 +580,6 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Sh
         };
     } else {
         // Shift out
-
-        const { sendAmount, ...restOfBurnParams } = restOfParams;
 
         if (!sendAmount) {
             throw new Error(`Send amount must be provided in order to send directly to an address.`);
@@ -560,45 +599,56 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Sh
         //     txConfig,
         // };
 
+        let shifter: string;
+        if (network.contracts.version === "0.0.3") {
+            shifter = network.contracts.addresses.shifter[`${token.toUpperCase()}Shifter`]._address;
+        } else {
+            shifter = network.contracts.addresses.shifter[`${token.toUpperCase()}Gateway`]._address;
+        }
+
         return {
-            ...restOfBurnParams,
-            suggestedAmount: restOfParams.sendAmount,
+            ...restOfParams,
+            suggestedAmount: sendAmount,
             contractCalls: [
                 // approve,
                 {
-                    sendTo: network.contracts.addresses.shifter[`${token.toUpperCase()}Shifter` as "BTCShifter" | "ZECShifter" | "BCHShifter"]._address,
-                    contractFn: "burn",
+                    sendTo: shifter,
+                    contractFn: network.contracts.version === "0.0.3" ? "shiftOut" : "burn",
                     contractParams: [
                         { type: "bytes" as const, name: "_to", value: addressToHex },
                         { type: "uint256" as const, name: "_amount", value: toBigNumber(sendAmount).toFixed() },
                     ],
-                    txConfig: { gas: 200000, ...txConfig },
-                }]
+                    // txConfig: { gas: 200000, ...txConfig },
+                    txConfig,
+                }
+            ]
         };
     }
 };
 
-export const processShiftInParams = (_network: NetworkDetails, _params: ShiftInParams): ShiftInParams => {
-    const processors: Array<(params: ShiftInParams) => ShiftInParams> = [
-        resolveSendTo<ShiftInParams>({ shiftIn: true }),
-        // resolveContractCall<ShiftInParams>(_network),
+export const processLockAndMintParams = (_network: NetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
+    const processors: Array<(params: LockAndMintParams) => LockAndMintParams> = [
+        resolveSendTo<LockAndMintParams>({ shiftIn: true }),
+        // resolveContractCall<LockAndMintParams>(_network),
     ];
 
-    return processors.reduce((params, processor) => processor(params), _params as ShiftInParams);
+    return processors.reduce((params, processor) => processor(params), _params as LockAndMintParams);
 };
+export const processShiftInParams = processLockAndMintParams;
 
-export const processShiftOutParams = (_network: NetworkDetails, _params: ShiftOutParams): ShiftOutParams => {
-    const processors: Array<(params: ShiftOutParams) => ShiftOutParams> = [
-        resolveSendTo<ShiftOutParams>({ shiftIn: false }),
-        // resolveContractCall<ShiftOutParams>(_network),
+export const processBurnAndReleaseParams = (_network: NetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
+    const processors: Array<(params: BurnAndReleaseParams) => BurnAndReleaseParams> = [
+        resolveSendTo<BurnAndReleaseParams>({ shiftIn: false }),
+        // resolveContractCall<BurnAndReleaseParams>(_network),
     ];
 
-    return processors.reduce((params, processor) => processor(params), _params as ShiftOutParams);
+    return processors.reduce((params, processor) => processor(params), _params as BurnAndReleaseParams);
 };
+export const processShiftOutParams = processBurnAndReleaseParams;
 
 // Type generics are not playing well.
 
-// export const processParameters = <T extends ShiftInParams | ShiftOutParams, K extends ShiftInParams | ShiftOutParams>(_network: NetworkDetails, _params: T, { shiftIn }: { shiftIn: T extends ShiftOutParams ? false : true }): K => {
+// export const processParameters = <T extends LockAndMintParams | BurnAndReleaseParams, K extends LockAndMintParams | BurnAndReleaseParams>(_network: NetworkDetails, _params: T, { shiftIn }: { shiftIn: T extends BurnAndReleaseParams ? false : true }): K => {
 //     return resolveContractCall(_network, resolveSendTo(_params, { shiftIn }) as K);
 // };
 
@@ -613,7 +663,7 @@ export const extractBurnReference = async (web3: Web3, txHash: string): Promise<
     let burnReference: number | string | undefined;
 
     for (const [, event] of Object.entries(receipt.logs)) {
-        if (event.topics[0] === BURN_TOPIC) {
+        if (event.topics[0] === BURN_TOPIC || event.topics[0] === BURN_TOPIC_OLD) {
             burnReference = event.topics[1] as string;
             break;
         }

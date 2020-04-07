@@ -1,7 +1,7 @@
 import { Ox, strip0x } from "@renproject/interfaces";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { encode } from "bs58";
-import { getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
+import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
 import { createAddress } from "./common";
@@ -11,6 +11,12 @@ export const createBTCAddress = createAddress(Networks, Opcode, Script);
 export const getBitcoinUTXOs = ({ isTestnet }: { isTestnet: boolean }) => {
     return async (address: string, confirmations: number) => {
         return getUTXOs(isTestnet, { address, confirmations });
+    };
+};
+
+export const getBitcoinConfirmations = ({ isTestnet }: { isTestnet: boolean }) => {
+    return async (txHash: string) => {
+        return getConfirmations(isTestnet, txHash);
     };
 };
 

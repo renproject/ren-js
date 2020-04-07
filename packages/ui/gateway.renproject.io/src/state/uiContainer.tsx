@@ -1,4 +1,4 @@
-import { UTXO } from "@renproject/utils";
+import { UTXO } from "@renproject/interfaces";
 import { OrderedMap } from "immutable";
 import { Container } from "unstated";
 

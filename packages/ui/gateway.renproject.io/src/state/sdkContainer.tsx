@@ -1,10 +1,11 @@
 import {
-    Asset, GatewayMessageType, HistoryEvent, RenContract, SerializableShiftOutParams, ShiftInEvent,
-    ShiftInParams, ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus, Tx, TxStatus,
+    Asset, Chain, GatewayMessageType, HistoryEvent, RenContract, SerializableShiftOutParams,
+    ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus,
+    sleep, Tx, TxStatus, UTXO,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { ShiftIn } from "@renproject/ren/build/main/shiftIn";
-import { parseRenContract, resolveInToken, UTXO } from "@renproject/utils";
+import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
+import { parseRenContract, resolveInToken } from "@renproject/utils";
 import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import { Container } from "unstated";
 
@@ -16,9 +17,6 @@ import { compareShiftStatus, compareTxStatus, isFunction, isPromise } from "../l
 import { Token } from "./generalTypes";
 import { UIContainer } from "./uiContainer";
 
-const BitcoinTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Bitcoin });
-const ZCashTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Zcash });
-const BCashTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.BitcoinCash });
 const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum });
 
 const initialState = {
@@ -110,14 +108,12 @@ export class SDKContainer extends Container<typeof initialState> {
 
         await this.updateShift({ returned: true });
 
-
         const response = await this.queryShiftStatus();
-        console.log(response);
 
         await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
     }
 
-    public updateShift = async (shiftIn: Partial<HistoryEvent>, options?: { sync?: boolean }) => {
+    public updateShift = async (shiftIn: Partial<HistoryEvent>, options?: { sync?: boolean, force?: boolean }) => {
         const renNetwork = this.uiContainer.state.renNetwork;
         if (!renNetwork) {
             throw new Error(`Error trying to update shift in storage without network being defined.`);
@@ -132,19 +128,21 @@ export class SDKContainer extends Container<typeof initialState> {
             return values.reduce((acc, value) => (acc === null || acc === undefined || (value !== undefined && value !== null && value < acc) ? value : acc), firstValue);
         };
 
+        const force = options && options.force;
+
         // tslint:disable-next-line: no-object-literal-type-assertion
         const shift = {
             ...existingShift,
             ...this.state.shift,
             ...shiftIn,
             // tslint:disable-next-line: no-any
-            time: min(existingShift.time, this.state.shift && this.state.shift.time, shiftIn.time),
-            inTx: shiftIn.inTx || (this.state.shift && this.state.shift.inTx) || existingShift.inTx,
-            outTx: shiftIn.outTx || (this.state.shift && this.state.shift.outTx) || existingShift.outTx,
-            renTxHash: shiftIn.renTxHash || (this.state.shift && this.state.shift.renTxHash) || existingShift.renTxHash,
-            renVMQuery: shiftIn.renVMQuery || (this.state.shift && this.state.shift.renVMQuery) || existingShift.renVMQuery,
-            renVMStatus: compareTxStatus(existingShift.renVMStatus, (this.state.shift && this.state.shift.renVMStatus), shiftIn.renVMStatus),
-            status: compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
+            time: force && shiftIn.hasOwnProperty("time") ? shiftIn.time : min(existingShift.time, this.state.shift && this.state.shift.time, shiftIn.time),
+            inTx: force && shiftIn.hasOwnProperty("inTx") ? shiftIn.inTx : shiftIn.inTx || (this.state.shift && this.state.shift.inTx) || existingShift.inTx,
+            outTx: force && shiftIn.hasOwnProperty("outTx") ? shiftIn.outTx : shiftIn.outTx || (this.state.shift && this.state.shift.outTx) || existingShift.outTx,
+            renTxHash: force && shiftIn.hasOwnProperty("renTxHash") ? shiftIn.renTxHash : shiftIn.renTxHash || (this.state.shift && this.state.shift.renTxHash) || existingShift.renTxHash,
+            renVMQuery: force && shiftIn.hasOwnProperty("renVMQuery") ? shiftIn.renVMQuery : shiftIn.renVMQuery || (this.state.shift && this.state.shift.renVMQuery) || existingShift.renVMQuery,
+            renVMStatus: force && shiftIn.hasOwnProperty("renVMStatus") ? shiftIn.renVMStatus : compareTxStatus(existingShift.renVMStatus, (this.state.shift && this.state.shift.renVMStatus), shiftIn.renVMStatus),
+            status: force && shiftIn.hasOwnProperty("status") ? shiftIn.status : compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
         } as HistoryEvent;
 
         // const web3 = this.state.sdkWeb3;
@@ -222,6 +220,12 @@ export class SDKContainer extends Container<typeof initialState> {
 
         const params: SerializableShiftOutParams = shift.shiftParams;
 
+        if (retry) {
+            await this.updateShift({
+                inTx: undefined,
+            }, { force: true });
+        }
+
         // if (retry) {
         //     await this.approveTokenTransfer(shiftID);
         // }
@@ -231,33 +235,45 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (!transactionHash) {
 
-            const transactionConfig = renVM.shiftOut({
+            const transactionConfigs = renVM.shiftOut({
                 ...params
-            }).createTransaction();
+            }).createTransactions();
 
-            const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
-            if (sendTransactionError) {
-                throw new Error(sendTransactionError);
+            for (let i = 0; i < transactionConfigs.length; i++) {
+                const transactionConfig = transactionConfigs[i];
+
+                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+                if (sendTransactionError) {
+                    throw new Error(sendTransactionError);
+                }
+
+                if (!txHash) {
+                    throw new Error("No txHash returned from Web3");
+                }
+
+                if (i === transactionConfigs.length - 1) {
+                    transactionHash = txHash;
+
+                    await this.updateShift({
+                        inTx: EthereumTx(transactionHash),
+                        status: ShiftOutStatus.SubmittedToEthereum,
+                    });
+                }
+
+                const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash });
+                if (error) {
+                    throw new Error(error);
+                }
             }
-
-            if (!txHash) {
-                throw new Error("No txHash returned from Web3");
+        } else {
+            const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+            if (error) {
+                throw new Error(error);
             }
-
-            transactionHash = txHash;
-
-            await this.updateShift({
-                inTx: EthereumTx(txHash),
-                status: ShiftOutStatus.SubmittedToEthereum,
-            });
-        }
-
-        const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
-        if (error) {
-            throw new Error(error);
         }
 
         await this.updateShift({
+            inTx: transactionHash ? EthereumTx(transactionHash) : null,
             status: ShiftOutStatus.ConfirmedOnEthereum,
         });
     }
@@ -273,7 +289,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
         const shift = this.state.shift;
         if (!shift) { throw new Error("Shift not set"); }
-        if (!shift.inTx) { throw new Error(`Invalid values required to submit deposit`); }
+        if (!shift.inTx || shift.inTx.chain !== Chain.Ethereum) { throw new Error(`Must submit burn to Ethereum before RenVM.`); }
 
         const { gatewayPopupID } = this.uiContainer.state;
         if (!gatewayPopupID) {
@@ -310,10 +326,10 @@ export class SDKContainer extends Container<typeof initialState> {
 
         await this.updateShift({
             outTx: shift.shiftParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
-                ZCashTx(address) :
+                { chain: Chain.Zcash, address } :
                 shift.shiftParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
-                    BCashTx(address) :
-                    BitcoinTx(address),
+                    { chain: Chain.BitcoinCash, address } :
+                    { chain: Chain.Bitcoin, address },
             status: ShiftOutStatus.ReturnedFromRenVM,
         }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateShift"));
     }
@@ -328,7 +344,7 @@ export class SDKContainer extends Container<typeof initialState> {
     // 3. Submit the deposit to RenVM and retrieve back a signature
     // 4. Submit the signature to Ethereum
 
-    public shiftInObject = (): ShiftIn => {
+    public shiftInObject = (): LockAndMint => {
         const { sdkRenVM: renVM } = this.state;
         if (!renVM) {
             throw new Error("Invalid parameters passed to `generateAddress`");
@@ -356,6 +372,7 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Shift not set");
         }
         const onRenTxHash = (renTxHash: string) => {
+
             const shiftOnHash = this.state.shift;
             if (!shiftOnHash || !shiftOnHash.renTxHash || shiftOnHash.renTxHash !== renTxHash) {
                 this.updateShift({ renTxHash })
@@ -367,20 +384,29 @@ export class SDKContainer extends Container<typeof initialState> {
                 renVMStatus,
             }).catch(console.error);
         };
+
+        const specifyUTXO = shift.inTx && shift.inTx.chain !== Chain.Ethereum && shift.inTx.utxo ? {
+            txid: shift.inTx.utxo.txid,
+            output_no: shift.inTx.utxo.output_no
+        } : undefined;
+
         const transaction = await this
             .shiftInObject()
-            .waitForDeposit(0);
+            .waitForDeposit(0, specifyUTXO);
         const promise = this
             .shiftInObject()
-            .waitForDeposit(this.getNumberOfConfirmations(shift));
+            .waitForDeposit(this.getNumberOfConfirmations(shift), specifyUTXO);
         promise.on("deposit", (utxo: UTXO) => {
-            this.updateShift({ status: ShiftInStatus.Deposited }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"); });
+            this.updateShift({ status: ShiftInStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"); });
             onDeposit(utxo);
         });
         const signaturePromise = transaction
             .submitToRenVM()
             .on("renTxHash", onRenTxHash)
             .on("status", onStatus);
+
+        // If the number of confirmations being waited for are less than RenVM's
+        // default, check the transaction's status manually using queryTX.
         const defaultNumberOfConfirmations = numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
         if (this.getNumberOfConfirmations(shift) < defaultNumberOfConfirmations) {
 
@@ -440,27 +466,54 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
         let transactionHash = shift.outTx && !retry ? shift.outTx.hash : null;
+
+        if (retry) {
+            await this.updateShift({
+                inTx: undefined,
+            }, { force: true });
+        }
         // let receipt: TransactionReceipt;
 
         if (!transactionHash) {
 
-            const transaction = await this
-                .shiftInObject()
-                .waitForDeposit(0);
+            await sleep(500);
 
-            const signature = await transaction
-                .submitToRenVM();
+            let transaction = this
+                .shiftInObject();
 
-            const transactionConfig = signature.createTransaction();
-
-            const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
-            if (sendTransactionError) {
-                throw new Error(sendTransactionError);
+            let signature: LockAndMint;
+            if (!shift.inTx || shift.inTx.chain === Chain.Ethereum || !shift.inTx.utxo || shift.inTx.utxo.output_no === undefined) {
+                transaction = await transaction
+                    .waitForDeposit(0);
+                signature = await transaction
+                    .submitToRenVM();
+            } else {
+                signature = await transaction
+                    .submitToRenVM({
+                        txid: shift.inTx.utxo.txid,
+                        output_no: shift.inTx.utxo.output_no
+                    });
             }
 
-            if (!txHash) {
-                throw new Error("No txHash returned from Web3");
+            const transactionConfigs = signature.createTransactions();
+
+            for (let i = 0; i < transactionConfigs.length; i++) {
+                const transactionConfig = transactionConfigs[i];
+                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+                if (sendTransactionError) {
+                    throw new Error(sendTransactionError);
+                }
+
+                if (!txHash) {
+                    throw new Error("No txHash returned from Web3");
+                }
+
+                if (i === transactionConfigs.length - 1) {
+                    transactionHash = txHash;
+                }
             }
+
+            transactionHash = transactionHash || "";
 
             // const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent
             //     .on("transactionHash", resolveTx).catch(rejectTx));
@@ -468,10 +521,8 @@ export class SDKContainer extends Container<typeof initialState> {
             // Update shift in store.
             await this.updateShift({
                 status: ShiftInStatus.SubmittedToEthereum,
-                outTx: EthereumTx(txHash),
+                outTx: EthereumTx(transactionHash),
             });
-
-            transactionHash = txHash;
 
             // tslint:disable-next-line: no-any
             // promiEvent.once("confirmation", (_confirmations: number, newReceipt: any) => { resolve([newReceipt, txHash]); });

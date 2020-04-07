@@ -17,12 +17,12 @@ for (const network of networks) {
     const directory = path.join(dirname, `./${network}/*.json`);
     glob(directory, (globErr, files) => { // read the folder or folders if you want: example json/**/*.json
         if (globErr) {
-            console.log(`error while reading the files in ${directory}`, globErr);
+            console.info(`error while reading the files in ${directory}`, globErr);
         }
         files.forEach((file) => {
             fs.readFile(file, "utf8", (readErr, data) => { // Read each file
                 if (readErr) {
-                    console.log(`error while reading the contents of ${file}`, readErr);
+                    console.info(`error while reading the contents of ${file}`, readErr);
                 }
                 var obj = JSON.parse(data);
                 const newObj = {
@@ -38,9 +38,9 @@ for (const network of networks) {
                 if (data !== newData) {
                     fs.writeFile(file, JSON.stringify(newObj, null, "  "), (writeErr) => {
                         if (writeErr) {
-                            return console.log(writeErr);
+                            return console.info(writeErr);
                         }
-                        console.log(` Updated \x1b[33m${file}\x1b[0m.`);
+                        console.info(` Updated \x1b[33m${file}\x1b[0m.`);
                     });
                 }
             });

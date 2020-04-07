@@ -27,17 +27,13 @@ const bchValidator = (address: string, isTestnet: boolean) => {
 };
 
 export const Tokens = Map<Token, TokenDetails>()
-    .set(Token.BTC, { symbol: Token.BTC, name: "Bitcoin", decimals: 8, priority: 200, chain: RenJS.Chains.Bitcoin, validator: btcValidator })
-    // .set(Token.ETH, { symbol: Token.ETH, name: "Ethereum", decimals: 18, priority: 1024, chain: RenJS.Chains.Ethereum, validator: ethValidator })
-    .set(Token.ZEC, { symbol: Token.ZEC, name: "Zcash", decimals: 8, priority: 201, chain: RenJS.Chains.Zcash, validator: zecValidator })
-    .set(Token.BCH, { symbol: Token.BCH, name: "BCash", decimals: 8, priority: 202, chain: RenJS.Chains.BitcoinCash, validator: bchValidator })
+    .set(Token.BTC, { name: "Bitcoin", chain: RenJS.Chains.Bitcoin, validator: btcValidator })
+    .set(Token.ZEC, { name: "Zcash", chain: RenJS.Chains.Zcash, validator: zecValidator })
+    .set(Token.BCH, { name: "BitcoinCash", chain: RenJS.Chains.BitcoinCash, validator: bchValidator })
     ;
 
 interface TokenDetails {
     name: string;
-    symbol: Token;
-    decimals: number;
-    priority: number;
     chain: Chain.Ethereum | Chain.Bitcoin | Chain.Zcash | Chain.BitcoinCash;
     validator: (address: string, isTestnet: boolean) => boolean;
 }

@@ -1,13 +1,15 @@
 // tslint:disable: no-console
 
 import {
-    Asset, Chain, GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType,
-    HistoryEvent, newPromiEvent, PromiEvent, RenContract, RenNetwork, SendParams, ShiftedToken,
-    ShiftInEvent, ShiftInParams, ShiftInParamsSimple, ShiftInStatus, ShiftOutEvent, ShiftOutParams,
-    ShiftOutParamsSimple, ShiftOutStatus, ShiftParams, sleep, Tokens, UnmarshalledTx,
+    Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
+    BurnAndReleaseStatus, Chain, GatewayMessage, GatewayMessagePayload, GatewayMessageResponse,
+    GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintParamsSimple,
+    LockAndMintStatus, newPromiEvent, PromiEvent, RenContract, RenNetwork, SendParams, ShiftedToken,
+    ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus, ShiftParams, sleep, Tokens,
+    UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, extractError, getShifterAddress, getTokenAddress, NetworkDetails,
+    extractBurnReference, extractError, getGatewayAddress, getTokenAddress, NetworkDetails,
     parseRenContract, randomBytes, resolveSendCall, stringToNetwork, utils, waitForReceipt,
     withDefaultAccount,
 } from "@renproject/utils";
@@ -21,7 +23,11 @@ import {
 } from "./utils";
 import { validateString } from "./validate";
 
-export { Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent, ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent } from "@renproject/interfaces";
+export {
+    Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent,
+    LockAndMintStatus, BurnAndReleaseStatus, LockAndMintEvent, BurnAndReleaseEvent,
+    ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent,
+} from "@renproject/interfaces";
 
 
 interface InjectedEthereum extends HttpProvider {
@@ -55,8 +61,10 @@ export class Gateway {
     public static readonly Tokens = Tokens;
     public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
-    public static readonly ShiftInStatus = ShiftInStatus;
-    public static readonly ShiftOutStatus = ShiftOutStatus;
+    public static readonly LockAndMintStatus = LockAndMintStatus;
+    public static readonly ShiftInStatus = LockAndMintStatus;
+    public static readonly BurnAndReleaseStatus = BurnAndReleaseStatus;
+    public static readonly ShiftOutStatus = BurnAndReleaseStatus;
     public static readonly utils = utils;
 
     // tslint:disable: readonly-keyword
@@ -68,7 +76,7 @@ export class Gateway {
     // tslint:enable: readonly-keyword
 
     // tslint:disable-next-line: readonly-keyword readonly-array no-any
-    private readonly promiEvent: PromiEvent<UnmarshalledTx | {}, { status: [ShiftInStatus | ShiftOutStatus, any] }> = newPromiEvent();
+    private readonly promiEvent: PromiEvent<UnmarshalledTx | {}, { status: [LockAndMintStatus | BurnAndReleaseStatus, any] }> = newPromiEvent();
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
@@ -174,17 +182,25 @@ export class Gateway {
 
     public readonly result = () => this.promiEvent;
 
-    public readonly _open = (shiftParams: ShiftParams | SendParams | ShiftInEvent | ShiftOutEvent, web3Provider?: Web3Provider): Gateway => {
+    public readonly _open = (shiftParams: ShiftParams | SendParams | LockAndMintEvent | BurnAndReleaseEvent, web3Provider?: Web3Provider): Gateway => {
 
         (async () => {
 
             let provider: Web3Provider = web3Provider || (shiftParams as ShiftParams).web3Provider;
-            if (!provider) {
-                provider = await getInjectedWeb3Provider();
+
+            // Provider can be null if the developer is handling transactions
+            // outside of GatewayJS.
+            if (provider !== null) {
+
+                // If provider is undefined, use injected provider. This is to
+                // remain backwards compatible.
+                if (!provider) {
+                    provider = await getInjectedWeb3Provider();
+                }
+                this.web3 = new Web3(provider);
             }
 
             // tslint:disable-next-line: no-object-mutation
-            this.web3 = new Web3(provider);
 
             if ((shiftParams as SendParams).sendAmount) {
                 // tslint:disable-next-line: no-parameter-reassignment
@@ -223,7 +239,7 @@ export class Gateway {
             this._addListener(listener);
 
             // Add handler to overlay
-            const overlay = document.querySelector("._ren_overlay");
+            const overlay = this._getOverlay();
             if (overlay) {
                 // tslint:disable-next-line: no-object-mutation no-any
                 (overlay as any).onclick = () => {
@@ -237,7 +253,7 @@ export class Gateway {
     }
 
     // withDefaultAccount
-    private readonly _eventListener = (shiftParams: ShiftInParams | ShiftOutParams | ShiftInEvent | ShiftOutEvent, onClose: () => void) =>
+    private readonly _eventListener = (shiftParams: LockAndMintParams | BurnAndReleaseParams | LockAndMintEvent | BurnAndReleaseEvent, onClose: () => void) =>
         // tslint:disable-next-line: no-any
         (e: { readonly data: GatewayMessage<any> }) => {
             if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
@@ -420,15 +436,16 @@ export class Gateway {
     private readonly _pause = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = true;
-        this._getPopup().classList.add("_ren_gateway-minified");
+        try { this._getPopup().classList.add("_ren_gateway-minified"); } catch (error) { console.error(error); }
     }
 
     private readonly _resume = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = false;
-        this._getPopup().classList.remove("_ren_gateway-minified");
+        try { this._getPopup().classList.remove("_ren_gateway-minified"); } catch (error) { console.error(error); }
     }
 
+    private readonly _getOverlay = () => getElement(`_ren_overlay-${this.id}`);
     private readonly _getPopup = () => getElement(`_ren_gateway-${this.id}`);
     private readonly _getIFrame = () => getElement(`_ren_iframe-${this.id}`);
     private readonly _getOrCreateGatewayContainer = () => {
@@ -456,8 +473,10 @@ export default class GatewayJS {
     public static readonly Tokens = Tokens;
     public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
-    public static readonly ShiftInStatus = ShiftInStatus;
-    public static readonly ShiftOutStatus = ShiftOutStatus;
+    public static readonly LockAndMintStatus = LockAndMintStatus;
+    public static readonly ShiftInStatus = LockAndMintStatus;
+    public static readonly BurnAndReleaseStatus = BurnAndReleaseStatus;
+    public static readonly ShiftOutStatus = BurnAndReleaseStatus;
     public static readonly utils = utils;
 
     private readonly network: NetworkDetails;
@@ -490,34 +509,42 @@ export default class GatewayJS {
         return gateways;
     }
 
-    public readonly shiftIn = (params: ShiftInParams | ShiftInParamsSimple | SendParams): Gateway => {
+    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): Gateway => {
         if ((params as SendParams).sendAmount) {
             params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as ShiftInParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftInParamsSimple;
+        } else if ((params as LockAndMintParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
         return new Gateway(this.network, this.endpoint)._open(params);
     }
+    public readonly shiftIn = this.lockAndMint;
 
-    public readonly shiftOut = (params: ShiftOutParams | ShiftOutParamsSimple | SendParams): Gateway => {
+    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): Gateway => {
         if ((params as SendParams).sendAmount) {
             params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as ShiftInParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as ShiftOutParamsSimple;
+        } else if ((params as LockAndMintParamsSimple).sendTo) {
+            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
         return new Gateway(this.network, this.endpoint)._open(params);
     }
+    public readonly shiftOut = this.burnAndRelease;
 
-    public readonly open = (params: ShiftInParams | ShiftOutParams | ShiftInParamsSimple | ShiftOutParamsSimple | SendParams) => {
-        if (params.sendToken === "BTC" || params.sendToken === "ZEC" || params.sendToken === "BCH") {
-            throw new Error(`Ambiguous token ${params.sendToken} - call "shiftIn" or "shiftOut" instead of "open"`);
+    public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent) => {
+        // tslint:disable-next-line: strict-type-predicates
+        if ((params as LockAndMintEvent).shiftIn !== undefined) {
+            return this.recoverShift(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
         }
-        if (parseRenContract(params.sendToken).to === Chain.Ethereum) {
-            return this.shiftIn(params);
+
+        const sendToken = (params as LockAndMintParams).sendToken;
+        if (sendToken === "BTC" || sendToken === "ZEC" || sendToken === "BCH") {
+            throw new Error(`Ambiguous token ${sendToken} - call "lockAndMint" or "burnAndRelease" instead of "open"`);
+        }
+        if (parseRenContract(sendToken).to === Chain.Ethereum) {
+            return this.lockAndMint(params as LockAndMintParams);
         } else {
-            return this.shiftOut(params);
+            return this.burnAndRelease(params as BurnAndReleaseParams);
         }
     }
 
@@ -525,12 +552,13 @@ export default class GatewayJS {
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
-    public readonly recoverShift = (web3Provider: Web3Provider, params: ShiftInEvent | ShiftOutEvent): Gateway => {
+    public readonly recoverShift = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {
         return new Gateway(this.network, this.endpoint)._open(params, web3Provider);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);
-    public readonly getShifterAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getShifterAddress(stringToNetwork(this.network), web3, token);
+    public readonly getGatewayAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(stringToNetwork(this.network), web3, token);
+    public readonly getShifterAddress = this.getGatewayAddress;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

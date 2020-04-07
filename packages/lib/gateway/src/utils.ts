@@ -1,6 +1,6 @@
 import {
-    RenNetwork, SerializableShiftParams, ShiftInEvent, ShiftInParams, ShiftOutEvent, ShiftParams,
-    toFixed,
+    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, RenNetwork, SerializableShiftParams,
+    ShiftParams, toFixed,
 } from "@renproject/interfaces";
 import { NetworkDetails } from "@renproject/utils";
 
@@ -50,23 +50,19 @@ const fixBigNumber = <Value extends { [keys: string]: any }>(value: Value, key: 
  * The error message `can't clone ...` is thrown if this step is skipped.
  * @param shiftParams The parameters being fixed.
  */
-export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | ShiftInEvent | ShiftOutEvent): SerializableShiftParams | ShiftInEvent | ShiftOutEvent => {
+export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | LockAndMintEvent | BurnAndReleaseEvent): SerializableShiftParams | LockAndMintEvent | BurnAndReleaseEvent => {
     // Certain types can't be sent via sendMessage - e.g. BigNumbers.
-
-    if (!(shiftParamsIn as ShiftParams).web3Provider) {
-        return shiftParamsIn as ShiftInEvent | ShiftOutEvent;
-    }
 
     const { web3Provider, ...shiftParamsFiltered } = shiftParamsIn as ShiftParams;
     const shiftParams = shiftParamsFiltered as SerializableShiftParams;
 
     // tslint:disable-next-line: no-unnecessary-type-assertion
-    fixBigNumber(shiftParams as ShiftInParams, "suggestedAmount");
+    fixBigNumber(shiftParams as LockAndMintParams, "suggestedAmount");
 
     // Required amount
     try {
         // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-        const requiredAmount = (shiftParams as ShiftInParams).requiredAmount;
+        const requiredAmount = (shiftParams as LockAndMintParams).requiredAmount;
         if (typeof requiredAmount === "object") {
             // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
             const min = (requiredAmount as { max: any, min: any }).min;
@@ -74,13 +70,13 @@ export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | ShiftIn
             const max = (requiredAmount as { max: any, min: any }).max;
             if (min || max) {
                 // tslint:disable-next-line: no-object-mutation no-unnecessary-type-assertion
-                (shiftParams as ShiftInParams).requiredAmount = {
+                (shiftParams as LockAndMintParams).requiredAmount = {
                     min: min ? toFixed(min) : undefined,
                     max: max ? toFixed(max) : undefined,
                 };
             } else {
                 // tslint:disable-next-line: no-unnecessary-type-assertion
-                fixBigNumber(shiftParams as ShiftInParams, "requiredAmount");
+                fixBigNumber(shiftParams as LockAndMintParams, "requiredAmount");
             }
         }
     } catch (error) { console.error(error); }
@@ -88,7 +84,7 @@ export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | ShiftIn
     // Contract call values
     try {
         // tslint:disable-next-line: no-unnecessary-type-assertion
-        const contractCalls = (shiftParams as ShiftInParams).contractCalls;
+        const contractCalls = (shiftParams as LockAndMintParams).contractCalls;
         if (contractCalls) {
             for (const contractCall of contractCalls) {
                 const contractParamsInner = contractCall.contractParams;

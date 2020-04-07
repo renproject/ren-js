@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import {
-    GatewayMessageType, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus,
+    GatewayMessageType, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus, UnmarshalledTx,
 } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import BigNumber from "bignumber.js";
@@ -22,9 +22,13 @@ import { LogIn } from "../views/LogIn";
 import { AskForAddress } from "../views/shift-popup/AskForAddress";
 import { Complete } from "../views/shift-popup/Complete";
 import { DepositReceived } from "../views/shift-popup/DepositReceived";
+import { InvalidParameters } from "../views/shift-popup/InvalidParameters";
 import { ShowDepositAddress } from "../views/shift-popup/ShowDepositAddress";
-import { SubmitToEthereum } from "../views/shift-popup/SubmitToEthereum";
+import { SubmitBurnToEthereum } from "../views/shift-popup/SubmitBurnToEthereum";
+import { SubmitBurnToRenVM } from "../views/shift-popup/SubmitBurnToRenVM";
+import { SubmitMintToEthereum } from "../views/shift-popup/SubmitMintToEthereum";
 import { Tooltip } from "../views/tooltip/Tooltip";
+import { TransferDetails } from "../views/TransferDetails";
 
 interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {
 }
@@ -37,35 +41,6 @@ const getRequiredAddressAndName = (shiftParams: ShiftInEvent["shiftParams"] | Sh
         return match ? [param.name, match] : null;
     }, null as [string, RegExpMatchArray] | null);
 }, null as [string, RegExpMatchArray] | null) as [string, RegExpMatchArray] | null : null;
-
-const QRCodeContainer = styled.div`
-            background: #FFFFFF;
-            border: 1px solid #DBE0E8;
-            border-radius: 6px;
-            display: inline-flex;
-            padding: 10px;
-
-            size: 110px;
-            width: 132px;
-            height: 132px;
-
-            >canvas {
-                height: 110px !important;
-                width: 110px !important;
-            }
-            `;
-
-const QRCodeOuter = styled.div`
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-
-            >span {
-                font-size: 1.4rem;
-                color: #3F3F48;
-                margin-top: 16px;
-            }
-`;
 
 const ParentContainer = styled.div`
             display: flex;
@@ -133,21 +108,30 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
 
         const title = urlDomain(url);
 
+        let [pressedDone, setPressedDone] = React.useState(false);
+        const onDone = React.useCallback(async () => {
+            pressedDone = true;
+            setPressedDone(pressedDone);
+            let response: {} | UnmarshalledTx = {};
+            try {
+                response = await sdkContainer.queryShiftStatus();
+            } catch (error) {
+                _catchInteractionErr_(error, { description: "Error in Main.tsx: onDone > queryShiftStatus" });
+            }
+            if (uiContainer.state.gatewayPopupID) {
+                await sdkContainer.updateShift({ returned: true });
+                await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
+            }
+            uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
+            pressedDone = false;
+            setPressedDone(pressedDone);
+        }, [uiContainer]);
+
         const shiftIn = () => {
 
             const shiftParams = shift.shiftParams as ShiftInEvent["shiftParams"];
 
             const token = shiftParams.sendToken.slice(0, 3) as Token;
-
-            const requiredAmount = shiftParams.requiredAmount ? new BigNumber(
-                BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
-            ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
-
-            const suggestedAmount = shiftParams.suggestedAmount ? new BigNumber(
-                BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
-            ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
-
-            const amount = requiredAmount || suggestedAmount;
 
             let depositAddress;
 
@@ -157,9 +141,6 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             } else {
                 switch (shift.status) {
                     case ShiftInStatus.Committed:
-                    case ShiftInStatus.Deposited:
-                    case ShiftInStatus.Confirmed:
-                    case ShiftInStatus.SubmittedToRenVM:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
                         const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
                         if (requiredAddressAndName !== null) {
@@ -174,57 +155,68 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
+                            try {
+                                depositAddress = sdkContainer.generateAddress() || "";
+
+                                // Show the deposit address and wait for a deposit
+                                inner = <ShowDepositAddress
+                                    mini={paused}
+                                    order={shift}
+                                    depositAddress={depositAddress}
+                                    token={token}
+                                    utxos={utxos}
+                                    sdkRenVM={sdkRenVM}
+                                    shiftParams={shiftParams}
+                                    waitForDeposit={sdkContainer.waitForDeposits}
+                                    confirmations={sdkContainer.getNumberOfConfirmations(shift)}
+                                    onQRClick={toggleShowQR}
+                                    onDeposit={uiContainer.deposit}
+                                    networkDetails={sdkRenVM.network}
+                                />;
+                            } catch (error) {
+                                inner = <InvalidParameters mini={paused} token={token} />;
+                            }
+                        }
+                        break;
+                    case ShiftInStatus.Deposited:
+                    case ShiftInStatus.Confirmed:
+                    case ShiftInStatus.SubmittedToRenVM:
+                        try {
                             depositAddress = sdkContainer.generateAddress() || "";
 
+
                             // Show the deposit address and wait for a deposit
-                            inner = <ShowDepositAddress
+                            inner = <DepositReceived
                                 mini={paused}
                                 order={shift}
                                 depositAddress={depositAddress}
                                 token={token}
                                 utxos={utxos}
+                                sdkRenVM={sdkRenVM}
+                                shiftParams={shiftParams}
                                 waitForDeposit={sdkContainer.waitForDeposits}
                                 confirmations={sdkContainer.getNumberOfConfirmations(shift)}
                                 onQRClick={toggleShowQR}
                                 onDeposit={uiContainer.deposit}
                                 networkDetails={sdkRenVM.network}
                             />;
+                        } catch (error) {
+                            inner = <InvalidParameters mini={paused} token={token} />;
                         }
                         break;
                     case ShiftInStatus.ReturnedFromRenVM:
                     case ShiftInStatus.SubmittedToEthereum:
-                        inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
+                        inner = <SubmitMintToEthereum shift={shift} networkDetails={sdkRenVM.network} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
                         break;
                     case ShiftInStatus.ConfirmedOnEthereum:
-                        return <Complete token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        inner = <Complete onDone={onDone} pressedDone={pressedDone} token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        break;
                 }
             }
 
             return <>
-                {!paused ? <div className="popup--body--details">
-                    {showQR && depositAddress ?
-                        <QRCodeOuter>
-                            <QRCodeContainer>
-                                <QRCode value={`bitcoin:${depositAddress}${amount ? `?amount=${amount}` : ""}`} />
-                            </QRCodeContainer>
-                            <span>Deposit {amount ? <><CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard>{" "}</> : <></>}{token.toUpperCase()}</span>
-                        </QRCodeOuter>
-                        : <>
-                            <div className="popup--token--icon"><TokenIcon token={token} /></div>
-                            <div className="popup--body--title">
-                                Deposit {amount ? <><CopyToClipboard text={`${amount}`}><AmountSpan>{amount}</AmountSpan></CopyToClipboard>{" "}</> : <></>}{token.toUpperCase()}
-                            </div>
-                            <div className="popup--title--to">{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet tokens)" : ""}{" "}to</div>
-                            <ParentContainer>
-                                <ParentInfo>
-                                    <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{title}
-                                </ParentInfo>
-                                <Tooltip align="left" width={300} contents={<pre>{url}</pre>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip>
-                            </ParentContainer>
-                        </>}
-                </div> : <></>
-                }
                 {inner}
+                {!paused ? <TransferDetails shift={shift} /> : <></>}
             </>;
         };
 
@@ -254,7 +246,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
-                            inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                            inner = <SubmitBurnToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         }
                         // const submit = async (submitOrderID: string) => {
                         //     await sdkContainer.approveTokenTransfer(submitOrderID);
@@ -266,41 +258,27 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         break;
                     case ShiftOutStatus.SubmittedToEthereum:
                         // Submit the trade to Ethereum
-                        inner = <SubmitToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                        inner = <SubmitBurnToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         break;
                     case ShiftOutStatus.ConfirmedOnEthereum:
                     case ShiftOutStatus.SubmittedToRenVM:
-                        inner = <DepositReceived token={token} mini={paused} renVMStatus={renVMStatus} renTxHash={renTxHash} submitDeposit={sdkContainer.submitBurnToRenVM} />;
+                        inner = <SubmitBurnToRenVM token={token} mini={paused} renVMStatus={renVMStatus} renTxHash={renTxHash} submitDeposit={sdkContainer.submitBurnToRenVM} />;
                         break;
                     case ShiftOutStatus.NoBurnFound:
                         onNoBurnFound().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: shiftOut > onNoBurnFound"));
                         inner = <></>;
                         break;
                     case ShiftOutStatus.ReturnedFromRenVM:
-                        return <Complete token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        inner = <Complete onDone={onDone} pressedDone={pressedDone} token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
+                        break;
                 }
             }
 
             const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls.length - 1]).sendTo)) || "";
 
             return <>
-                {!paused ? <div className="popup--body--details">
-                    <div className="popup--token--icon"><TokenIcon token={token} /></div>
-                    <div className="popup--body--title">
-                        Receive {token.toUpperCase()}
-                    </div>
-                    <div>from</div>
-                    <ParentContainer>
-                        <ParentInfo>
-                            <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{title}
-                        </ParentInfo>
-                        <Tooltip align="left" width={300} contents={<pre>{url}</pre>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip>
-                        <ParentInfo>
-                            <span />(<span className="address">{contractAddress.slice(0, 12)}<span>{contractAddress.slice(12, -6)}</span>{contractAddress.slice(-6, -1)}</span>)
-                        </ParentInfo>
-                    </ParentContainer>
-                </div> : <></>}
                 {inner}
+                {!paused ? <TransferDetails shift={shift} /> : <></>}
             </>;
         };
 

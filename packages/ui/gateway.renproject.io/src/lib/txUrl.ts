@@ -1,6 +1,5 @@
-import { Chain, Tx } from "@renproject/interfaces";
+import { Chain, NetworkDetails, Tx } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { NetworkDetails } from "@renproject/utils";
 
 export const txUrl = (tx: Tx | null, network: NetworkDetails): string => {
     if (!tx) { return ""; }

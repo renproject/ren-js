@@ -1,11 +1,11 @@
 import {
-    newPromiEvent, Ox, PromiEvent, BurnAndReleaseParams, TxStatus, UnmarshalledBurnTx,
+    BurnAndReleaseParams, NetworkDetails, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/interfaces";
 import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardEvents, generateShiftOutTxHash, ignoreError,
-    NetworkDetails, payloadToABI, processBurnAndReleaseParams, renTxHashToBase64, RenWeb3Events,
-    resolveOutToken, Web3Events, withDefaultAccount,
+    newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent, renTxHashToBase64,
+    RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -171,13 +171,13 @@ export class BurnAndRelease {
     public queryTx = async () =>
         unmarshalBurnTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(), "base64"))))
 
-    public submitToRenVM = (): PromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }> => {
+    public submit = (): PromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }> => {
         const promiEvent = newPromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }>();
 
         (async () => {
             const { burnReference } = this.params;
             if (!this.params.renTxHash && (!burnReference && burnReference !== 0)) {
-                throw new Error("Must call `readFromEthereum` before calling `submitToRenVM`");
+                throw new Error("Must call `readFromEthereum` before calling `submit`");
             }
 
             const renTxHash = this.renTxHash();

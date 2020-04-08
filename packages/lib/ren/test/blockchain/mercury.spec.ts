@@ -58,7 +58,7 @@ describe("mercury.ts", () => {
         utxos[0].confirmations.should.be.greaterThan(0);
     });
 
-    it("Testnet BCH UTXOS", async () => {
+    it.skip("Testnet BCH UTXOS", async () => {
         const utxos = await RenJS.utils.bch.getUTXOs(NetworkTestnet)("bchtest:qrhfzqeen0a59gy3576n00k54p2ja9s3egxdkyy7hr", 0);
         utxos.length.should.be.greaterThan(0);
         utxos[0].txid.should.equal("d9d587c9f77996e5618141a564d46f3bb7c92a7cdd8cbe9142bc43eb18a63887");

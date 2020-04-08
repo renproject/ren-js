@@ -3,7 +3,7 @@ import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
 import {
-    NetworkTestnet, processLockAndMintParams, processBurnAndReleaseParams, resolveSendCall,
+    NetworkTestnet, processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
 } from "@renproject/utils";
 
 chai.use((chaiBigNumber)(BigNumber));
@@ -65,7 +65,7 @@ describe("processParams", () => {
                     async (_w3: Web3) => new Promise((resolve) => { resolve(); }),
                     {
                         sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
-                        contractFn: "shiftOut",
+                        contractFn: "burn",
                         contractParams: [
                             {
                                 "type": "address",

@@ -1,9 +1,11 @@
+import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import { TransactionConfig } from "web3-core";
 
-import { NumberValue } from "../utils/value";
 import { RenContract } from "./renVM";
 
 export { TransactionConfig } from "web3-core";
+export type NumberValue = string | number | BigNumber | BN;
 
 export enum ShiftedToken {
     zBTC = "zBTC",
@@ -65,10 +67,8 @@ export interface ShiftParamsCommon {
 
 export interface LockAndMintParams extends ShiftParamsCommon {
     /**
-     * The amount of `sendToken` to be sent
+     * The amount of `sendToken` that should be sent.
      */
-    requiredAmount?: NumberValue | { min?: NumberValue, max?: NumberValue };
-
     suggestedAmount?: NumberValue;
 
     confirmations?: number;
@@ -79,10 +79,8 @@ export type ShiftInParams = LockAndMintParams;
 
 export interface LockAndMintParamsSimple extends ShiftParamsCommon, ContractCall {
     /**
-     * The amount of `sendToken` to be sent
+     * The amount of `sendToken` that should be sent.
      */
-    requiredAmount?: NumberValue | { min?: NumberValue, max?: NumberValue };
-
     suggestedAmount?: NumberValue;
 
     confirmations?: number;

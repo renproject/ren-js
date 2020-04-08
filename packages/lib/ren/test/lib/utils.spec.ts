@@ -1,9 +1,9 @@
 // tslint:disable: no-console
 
-import { EthArgs, strip0x, Tokens } from "@renproject/interfaces";
+import { EthArgs, Tokens } from "@renproject/interfaces";
 import {
-    BURN_TOPIC, generateAddress, generateGHash, generatePHash, NetworkChaosnet, NetworkDevnet,
-    NetworkLocalnet, NetworkTestnet,
+    BURN_TOPIC, generateGHash, generatePHash, NetworkChaosnet, NetworkDevnet, NetworkLocalnet,
+    NetworkTestnet, strip0x,
 } from "@renproject/utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";

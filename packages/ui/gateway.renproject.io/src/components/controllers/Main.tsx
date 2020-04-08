@@ -1,12 +1,12 @@
 import * as React from "react";
 
 import {
-    GatewayMessage, GatewayMessageType, HistoryEvent, Ox, RenNetwork, SendTokenInterface,
-    SerializableShiftParams, ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftOutEvent,
-    ShiftOutParams, ShiftOutStatus, sleep, strip0x, UnmarshalledTx,
+    BurnAndReleaseStatus, EventType, GatewayMessage, GatewayMessageType, HistoryEvent,
+    LockAndMintStatus, RenNetwork, SendTokenInterface, SerializableShiftParams, ShiftInEvent,
+    ShiftInParams, ShiftOutEvent, ShiftOutParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { processShiftInParams, processShiftOutParams } from "@renproject/utils";
+import { Ox, processShiftInParams, processShiftOutParams, sleep, strip0x } from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
@@ -149,15 +149,15 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     shiftParams.sendToken === RenJS.Tokens.BCH.Bch2Eth) {
                                     shiftDetails = {
                                         // Cast required by TS to differentiate ShiftIn and ShiftOut types.
-                                        shiftIn: true as true,
-                                        status: ShiftInStatus.Committed,
+                                        eventType: EventType.LockAndMint as const,
+                                        status: LockAndMintStatus.Committed,
                                         // tslint:disable-next-line: no-object-literal-type-assertion
                                         shiftParams: processShiftInParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, shiftParams as ShiftInParams) as ShiftInEvent["shiftParams"],
                                     };
                                 } else {
                                     shiftDetails = {
-                                        shiftIn: false as false,
-                                        status: ShiftOutStatus.Committed,
+                                        eventType: EventType.BurnAndRelease as const,
+                                        status: BurnAndReleaseStatus.Committed,
                                         shiftParams: processShiftOutParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, shiftParams as ShiftOutParams) as unknown as ShiftOutEvent["shiftParams"],
                                     };
                                 }
@@ -267,9 +267,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             <div className="main">
                 {!paused ? <ColoredBanner token={shift && shift.shiftParams.sendToken} /> : <></>}
                 {!paused && shift ?
-                    (shift.status === ShiftInStatus.Committed || shift.status === ShiftOutStatus.Committed) ?
+                    (shift.status === LockAndMintStatus.Committed || shift.status === BurnAndReleaseStatus.Committed) ?
                         <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :
-                        (shift.status === ShiftInStatus.ConfirmedOnEthereum || shift.status === ShiftOutStatus.ReturnedFromRenVM) ?
+                        (shift.status === LockAndMintStatus.ConfirmedOnEthereum || shift.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
                             <></> :
                             <div role="button" className={`popup--x`} onClick={pauseOnClick} />
                     :

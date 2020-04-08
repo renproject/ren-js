@@ -1,9 +1,8 @@
 import * as React from "react";
 
-import { Tx } from "@renproject/interfaces";
+import { NetworkDetails, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import { lighten } from "polished";
 import styled from "styled-components";
 

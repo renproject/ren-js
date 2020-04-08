@@ -1,5 +1,6 @@
-import { PromiEvent } from "@renproject/interfaces";
 import { TransactionReceipt } from "web3-core";
+
+import { PromiEvent } from "./promiEvent";
 
 export type Web3Events = {
     transactionHash: [string];

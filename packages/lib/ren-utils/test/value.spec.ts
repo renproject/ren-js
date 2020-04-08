@@ -6,7 +6,7 @@ chai.should();
 
 require("dotenv").config();
 
-describe("RenJS initialization and exports", () => {
+describe("value", () => {
     it("should be able to pass in different networks", async () => {
 
         // tslint:disable-next-line: no-any

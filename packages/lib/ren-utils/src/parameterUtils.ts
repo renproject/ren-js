@@ -1,10 +1,10 @@
-import { BurnAndReleaseParams, Chain, LockAndMintParams, SendParams } from "@renproject/interfaces";
-
 import {
-    parseRenContract, resolveInToken, resolveOutToken, resolveSendTo, utils,
-} from "./renVMUtils";
-import { NetworkDetails } from "./types/networks";
-import { toBigNumber } from "./utils";
+    BurnAndReleaseParams, Chain, LockAndMintParams, NetworkDetails, SendParams,
+} from "@renproject/interfaces";
+
+import { parseRenContract, resolveInToken, resolveOutToken, resolveSendTo } from "./renVMUtils";
+import { utils } from "./utils";
+import { toBigNumber } from "./value";
 
 /**
  * `resolveSendCall` simplifies the arguments required by RenJS by allowing
@@ -23,32 +23,24 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
         throw new Error(`"sendTo" parameter must be provided.`);
     }
 
-    const shiftIn = String(sendTo).match(/^(0x)[0-9a-fA-Z]{40}$/);
+    const lockAndMint = String(sendTo).match(/^(0x)[0-9a-fA-Z]{40}$/);
 
-    const sendToken = shiftIn ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
+    const sendToken = lockAndMint ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
 
     const renContract = parseRenContract(sendToken);
     if (renContract.to === Chain.Ethereum) {
-
-        let shifter: string;
-        let shiftedToken: string;
-        if (network.contracts.version === "0.0.3") {
-            shifter = network.contracts.addresses.shifter[`${renContract.asset}Shifter`]._address;
-            shiftedToken = network.contracts.addresses.shifter[`z${renContract.asset}`]._address;
-        } else {
-            shifter = network.contracts.addresses.shifter[`${renContract.asset}Gateway` as "BTCGateway"]._address;
-            shiftedToken = network.contracts.addresses.shifter[`Ren${renContract.asset}`]._address;
-        }
+        const gateway = network.contracts.addresses.gateways[`${renContract.asset}Gateway` as "BTCGateway"]._address;
+        const gatewayToken = network.contracts.addresses.gateways[`Ren${renContract.asset}`]._address;
 
         // Shift in
         return {
             ...restOfParams,
             suggestedAmount: sendAmount,
             contractCalls: [{
-                sendTo: network.contracts.addresses.shifter.BasicAdapter.address,
-                contractFn: network.contracts.version === "0.0.3" ? "shiftIn" : "mint",
+                sendTo: network.contracts.addresses.gateways.BasicAdapter.address,
+                contractFn: "mint",
                 contractParams: [
-                    { type: "string", name: "_symbol", value: network.contracts.version === "0.0.3" ? "z" + renContract.asset : renContract.asset },
+                    { type: "string", name: "_symbol", value: renContract.asset },
                     { type: "address", name: "_address", value: sendTo },
                 ],
                 txConfig,
@@ -69,18 +61,13 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
         //     sendTo: shiftedTokenAddress,
         //     contractFn: "approve",
         //     contractParams: [
-        //         { type: "address" as const, name: "spender", value: network.contracts.addresses.shifter.BasicAdapter.address },
+        //         { type: "address" as const, name: "spender", value: network.contracts.addresses.gateways.BasicAdapter.address },
         //         { type: "uint256" as const, name: "amount", value: toBigNumber(sendAmount).toFixed() },
         //     ],
         //     txConfig,
         // };
 
-        let shifter: string;
-        if (network.contracts.version === "0.0.3") {
-            shifter = network.contracts.addresses.shifter[`${token.toUpperCase()}Shifter`]._address;
-        } else {
-            shifter = network.contracts.addresses.shifter[`${token.toUpperCase()}Gateway`]._address;
-        }
+        const shifter: string = network.contracts.addresses.gateways[`${token.toUpperCase()}Gateway`]._address;
 
         return {
             ...restOfParams,
@@ -89,7 +76,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
                 // approve,
                 {
                     sendTo: shifter,
-                    contractFn: network.contracts.version === "0.0.3" ? "shiftOut" : "burn",
+                    contractFn: "burn",
                     contractParams: [
                         { type: "bytes" as const, name: "_to", value: addressToHex },
                         { type: "uint256" as const, name: "_amount", value: toBigNumber(sendAmount).toFixed() },

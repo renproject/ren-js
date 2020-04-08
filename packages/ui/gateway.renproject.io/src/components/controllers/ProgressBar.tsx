@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ShiftInStatus, ShiftOutStatus } from "@renproject/interfaces";
+import { LockAndMintStatus, BurnAndReleaseStatus } from "@renproject/interfaces";
 
 import infoIcon from "../../images/icons/info.svg";
 import { connect, ConnectedProps } from "../../state/connect";
@@ -17,24 +17,24 @@ export const ProgressItem = ({ name, label, target, progress, tooltip }: { name?
         {name ? <div className="shift-progress--label">{name} {tooltip ? <Tooltip contents={tooltip}><img alt={`Tooltip: ${tooltip}`} src={infoIcon} /></Tooltip> : null}</div> : <></>}
     </div>;
 
-const statusToProgress = (status: ShiftInStatus | ShiftOutStatus) => {
+const statusToProgress = (status: LockAndMintStatus | BurnAndReleaseStatus) => {
     switch (status) {
         // Shift in
-        case ShiftInStatus.Committed: return 0;
-        case ShiftInStatus.Deposited: return 1;
-        case ShiftInStatus.Confirmed: return 1;
-        case ShiftInStatus.SubmittedToRenVM: return 1;
-        case ShiftInStatus.ReturnedFromRenVM: return 2;
-        case ShiftInStatus.SubmittedToEthereum: return 2;
-        case ShiftInStatus.ConfirmedOnEthereum: return 3;
+        case LockAndMintStatus.Committed: return 0;
+        case LockAndMintStatus.Deposited: return 1;
+        case LockAndMintStatus.Confirmed: return 1;
+        case LockAndMintStatus.SubmittedToRenVM: return 1;
+        case LockAndMintStatus.ReturnedFromRenVM: return 2;
+        case LockAndMintStatus.SubmittedToEthereum: return 2;
+        case LockAndMintStatus.ConfirmedOnEthereum: return 3;
 
         // Shift out
-        case ShiftOutStatus.Committed: return 0;
-        case ShiftOutStatus.SubmittedToEthereum: return 0;
-        case ShiftOutStatus.ConfirmedOnEthereum: return 1;
-        case ShiftOutStatus.NoBurnFound: return 1;
-        case ShiftOutStatus.SubmittedToRenVM: return 1;
-        case ShiftOutStatus.ReturnedFromRenVM: return 2;
+        case BurnAndReleaseStatus.Committed: return 0;
+        case BurnAndReleaseStatus.SubmittedToEthereum: return 0;
+        case BurnAndReleaseStatus.ConfirmedOnEthereum: return 1;
+        case BurnAndReleaseStatus.NoBurnFound: return 1;
+        case BurnAndReleaseStatus.SubmittedToRenVM: return 1;
+        case BurnAndReleaseStatus.ReturnedFromRenVM: return 2;
     }
 };
 

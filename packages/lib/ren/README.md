@@ -77,7 +77,7 @@ renJS.burnAndRelease({
     web3Provider: web3.currentProvider,
 })
     .readFromEthereum()
-    .then(tx => tx.submitToRenVM())
+    .then(tx => tx.submit())
     .then(console.log)
     .catch(console.error);
 ```

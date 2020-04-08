@@ -1,9 +1,9 @@
 // tslint:disable: no-console react-this-binding-issue
 
+import { RenContract, RenNetwork, ShiftInParams } from "@renproject/interfaces";
 import {
-    Ox, RenContract, RenNetwork, ShiftInParams, strip0x, toBigNumber,
-} from "@renproject/interfaces";
-import { DEFAULT_SHIFT_FEE, payloadToShiftInABI, randomNonce } from "@renproject/utils";
+    DEFAULT_SHIFT_FEE, Ox, payloadToShiftInABI, randomNonce, strip0x, toBigNumber,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { HttpProvider } from "web3-providers";
 
@@ -35,13 +35,13 @@ export const to0Conf = (web3: Web3, network: string | RenNetwork, params: ShiftI
 
     const fee = DEFAULT_CONFIRMATIONLESS_FEE;
 
-    if (params.requiredAmount) {
-        const requiredAmount = toBigNumber(params.requiredAmount.toString());
-        // TODO: Consider shift in fee.
-        if (requiredAmount.lte(fee.plus(DEFAULT_SHIFT_FEE))) {
-            throw new Error(`Required amount (${requiredAmount.toString()}) is less than confirmationlessFee (${fee.toString()}) and mint fee.`);
-        }
-    }
+    // if (params.requiredAmount) {
+    //     const requiredAmount = toBigNumber(params.requiredAmount.toString());
+    //     // TODO: Consider shift in fee.
+    //     if (requiredAmount.lte(fee.plus(DEFAULT_SHIFT_FEE))) {
+    //         throw new Error(`Required amount (${requiredAmount.toString()}) is less than confirmationlessFee (${fee.toString()}) and mint fee.`);
+    //     }
+    // }
 
     const lastCallIndex = params.contractCalls.length - 1;
     if (lastCallIndex === -1) {

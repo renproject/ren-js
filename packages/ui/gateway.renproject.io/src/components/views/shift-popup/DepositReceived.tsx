@@ -1,10 +1,9 @@
 import * as React from "react";
 
-import { ShiftInEvent, UTXO } from "@renproject/interfaces";
+import { NetworkDetails, ShiftInEvent, UTXO } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
@@ -124,13 +123,13 @@ export const DepositReceived: React.StatelessComponent<Props> =
             );
         }, [showSpinner, timer]);
 
-        const requiredAmount = shiftParams.requiredAmount ? new BigNumber(
-            BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
-        ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
+        // const requiredAmount = shiftParams.requiredAmount ? new BigNumber(
+        //     BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
+        // ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
-        const suggestedAmount = shiftParams.suggestedAmount ? new BigNumber(
-            BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
-        ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
+        // const suggestedAmount = shiftParams.suggestedAmount ? new BigNumber(
+        //     BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
+        // ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
         const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains.`;
 

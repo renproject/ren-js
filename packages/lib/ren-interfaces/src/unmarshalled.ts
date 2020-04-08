@@ -1,4 +1,4 @@
-import { AbiItem } from "../utils/abi";
+import { AbiItem } from "./abi";
 import { RenContract } from "./renVM";
 import { TxStatus } from "./types";
 

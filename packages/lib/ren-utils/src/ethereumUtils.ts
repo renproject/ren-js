@@ -1,12 +1,10 @@
 import Web3 from "web3";
-import { keccak256 as web3Keccak256 } from "web3-utils";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
+import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { sleep } from "./utils";
+import { sleep } from "./common";
 
-// Currently should equal 0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116
-const BURN_TOPIC_OLD = web3Keccak256("LogShiftOut(bytes,uint256,uint256,bytes)");
 export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
 
 /**
@@ -52,7 +50,7 @@ export const extractBurnReference = async (web3: Web3, txHash: string): Promise<
     let burnReference: number | string | undefined;
 
     for (const [, event] of Object.entries(receipt.logs)) {
-        if (event.topics[0] === BURN_TOPIC || event.topics[0] === BURN_TOPIC_OLD) {
+        if (event.topics[0] === BURN_TOPIC) {
             burnReference = event.topics[1] as string;
             break;
         }

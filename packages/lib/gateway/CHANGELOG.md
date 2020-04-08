@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [0.3.0](https://github.com/renproject/gateway-js/compare/v0.2.2...v0.3.0) (2020-02-05)
 
-When shifting in, an amount is no longer necessary. To maintain the previous behaviour, replace `sendAmount` with `requiredAmount`. However, it's better to not specify an amount, instead letting the user send any value in the BTC/BCH/ZEC deposit. If `requiredAmount` is used, there's currently no way of handling incorrect deposit amounts.
+An amount is no longer necessary for starting a mint. To maintain the previous behaviour, replace `sendAmount` with `requiredAmount`. However, it's better to not specify an amount, instead letting the user send any value in the BTC/BCH/ZEC deposit. If `requiredAmount` is used, there's currently no way of handling incorrect deposit amounts.
 
 ### [0.2.2](https://github.com/renproject/gateway-js/compare/v0.2.1...v0.2.2) (2020-01-31)
 
@@ -18,7 +18,7 @@ When shifting in, an amount is no longer necessary. To maintain the previous beh
 
 ## [0.2.0](https://github.com/renproject/gateway-js/compare/v0.1.0...v0.2.0) (2020-01-30)
 
-This version fixes the parameters expected by GatewayJS. The main difference from RenJS is that `web3Provider` must not be provided for shifting out.
+This version fixes the parameters expected by GatewayJS. The main difference from RenJS is that `web3Provider` must not be provided for burning.
 
 ## [0.1.0](https://github.com/renproject/gateway-js/compare/v0.0.8...v0.1.0) (2020-01-30)
 

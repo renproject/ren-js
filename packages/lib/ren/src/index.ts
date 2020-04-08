@@ -1,14 +1,15 @@
 import _BN from "bn.js";
 
 import {
-    Asset, Chain, RenContract, RenNetwork, SendParams, ShiftedToken, LockAndMintParams,
-    LockAndMintParamsSimple, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Tokens,
+    Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
+    LockAndMintParamsSimple, NetworkDetails, RenContract, RenNetwork, SendParams, ShiftedToken,
+    Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, NetworkChaosnet, NetworkDetails, NetworkTestnet,
-    resolveSendCall, stringToNetwork, utils,
+    getGatewayAddress, getTokenAddress, NetworkChaosnet, NetworkTestnet, resolveSendCall,
+    stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
@@ -38,7 +39,7 @@ const NetworkDetails = {
  * new RenJS({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
  * ```
  *
- * It then exposes two main functions: [[shiftIn]] and [[shiftOut]].
+ * It then exposes two main functions: [[lockAndMint]] and [[burnAndRelease]].
  */
 export default class RenJS {
     // Expose constants so they can be accessed on the RenJS class
@@ -103,11 +104,6 @@ export default class RenJS {
 
     public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
     public readonly getGatewayAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
-
-    // Backwards compatibility
-    public readonly shiftIn = this.lockAndMint;
-    public readonly shiftOut = this.burnAndRelease;
-    public readonly getShifterAddress = this.getGatewayAddress;
 }
 
 

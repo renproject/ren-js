@@ -50,7 +50,7 @@
         "link": "yarn link @renproject/interfaces @renproject/provider @renproject/utils && yarn link"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.4.0",
+        "@renproject/contracts": "^0.5.1",
         "@renproject/interfaces": "file:../ren-interfaces",
         "@renproject/provider": "file:../ren-provider",
         "@renproject/utils": "file:../ren-utils",

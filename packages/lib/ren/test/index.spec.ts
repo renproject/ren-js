@@ -41,16 +41,16 @@ describe("RenJS initialization and exports", () => {
     //         .should.equal("0xc40566e98bcfb81185df27a5fdc60cd4c206415b1f08630ccd");
     // });
 
-    it("cancel waitForDeposit", async () => {
+    it("cancel wait", async () => {
         const renJS = new RenJS("testnet");
         const amount = 0.001; // testnet BTC
 
-        const shiftIn = renJS.shiftIn({
+        const lockAndMint = renJS.lockAndMint({
             // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
             sendToken: RenJS.Tokens.BTC.Btc2Eth,
 
             // Amount of BTC we are sending (in Satoshis)
-            requiredAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
+            suggestedAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
 
             contractCalls: [{
                 // The contract we want to interact with
@@ -67,20 +67,20 @@ describe("RenJS initialization and exports", () => {
         // tslint:disable-next-line: await-promise
         await new Promise((_, reject) => {
 
-            const wait = shiftIn.waitForDeposit(0);
+            const wait = lockAndMint.wait(0);
 
             wait._cancel();
 
-            wait.then((result) => { reject(`Unexpected resolution from 'waitForDeposit' with result ${result}`); })
+            wait.then((result) => { reject(`Unexpected resolution from 'wait' with result ${result}`); })
                 .catch(reject);
 
-        }).should.be.rejectedWith(/waitForDeposit cancelled/);
+        }).should.be.rejectedWith(/wait cancelled/);
     });
 
-    it("cancel submitToRenVM", async () => {
+    it("cancel submit", async () => {
         const renJS = new RenJS("testnet");
 
-        const shiftOut = await renJS.shiftOut({
+        const burnAndRelease = await renJS.burnAndRelease({
             // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
             sendToken: RenJS.Tokens.BTC.Eth2Btc,
 
@@ -90,7 +90,7 @@ describe("RenJS initialization and exports", () => {
         // tslint:disable-next-line: await-promise
         await new Promise((_, reject) => {
 
-            const wait = shiftOut.submitToRenVM();
+            const wait = burnAndRelease.submit();
 
             wait._cancel();
 
@@ -108,10 +108,10 @@ describe("RenJS initialization and exports", () => {
 
             for (const asset of ["BTC", "ZEC", "BCH"] as const) { // Without const, defaults to string[]
                 (await renJS.getTokenAddress(web3, asset))
-                    .should.equal(renJS.network.contracts.addresses.shifter[`z${asset}`]._address);
+                    .should.equal(renJS.network.contracts.addresses.gateways[`${asset}`]._address);
 
-                (await renJS.getShifterAddress(web3, asset))
-                    .should.equal(renJS.network.contracts.addresses.shifter[`${asset}Shifter`]._address);
+                (await renJS.getGatewayAddress(web3, asset))
+                    .should.equal(renJS.network.contracts.addresses.gateways[`${asset}Gateway`]._address);
             }
         });
     }

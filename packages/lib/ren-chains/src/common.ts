@@ -1,5 +1,6 @@
-import { strip0x } from "@renproject/interfaces";
 import { Networks as BNetworks, Opcode as BOpcode, Script as bScript } from "bitcore-lib";
+
+import { strip0x } from "./hex";
 
 export const createAddress =
     (networks: typeof BNetworks, opcode: typeof BOpcode, script: typeof bScript) =>

@@ -1,9 +1,8 @@
 import * as React from "react";
 
-import { ShiftInEvent, UTXO } from "@renproject/interfaces";
+import { NetworkDetails, ShiftInEvent, UTXO } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
@@ -161,11 +160,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             );
         }, [showSpinner, timer]);
 
-        const requiredAmount = shiftParams.requiredAmount ? new BigNumber(
-            BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
-        ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
-
-        const suggestedAmount = shiftParams.suggestedAmount ? new BigNumber(
+        const amount = shiftParams.suggestedAmount ? new BigNumber(
             BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
         ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
@@ -179,8 +174,6 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         };
 
         const title = urlDomain(url);
-
-        const amount = requiredAmount || suggestedAmount;
 
         if (mini) {
             const last = utxos.last<UTXO>();

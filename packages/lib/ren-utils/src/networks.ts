@@ -1,26 +1,8 @@
 import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
-import { RenNetwork } from "@renproject/interfaces";
+import { NetworkDetails, RenNetwork } from "@renproject/interfaces";
 
 // import { Networks as ZNetworks } from "bitcore-lib-zcash";
 
-export interface NetworkDetails {
-    name: string;
-    nodeURLs: string[];
-    isTestnet: boolean;
-    ethNetwork: string;
-
-    mercuryURL: {
-        btc: string,
-        zec: string,
-        bch: string,
-    };
-    chainSoName: {
-        btc: string,
-        zec: string,
-        bch: string,
-    };
-    contracts: typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;
-}
 
 // Configurations shared by Mainnet and Chaosnet
 const commonMainConfig = {
@@ -43,7 +25,7 @@ const commonMainConfig = {
 
 export const NetworkChaosnet: NetworkDetails = {
     name: RenNetwork.Chaosnet,
-    nodeURLs: ["https://lightnode-chaosnet.herokuapp.com"],
+    nodeURLs: ["https://lightnode-chaosnet-new.herokuapp.com"],
     ...commonMainConfig,
     contracts: chaosnet,
 };

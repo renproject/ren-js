@@ -1,7 +1,5 @@
 import { RenVMArg, RenVMInputUTXO, RenVMOutputUTXO, RenVMType } from "@renproject/interfaces";
 
-// Minting/Shifting ////////////////////////////////////////////////////////////
-
 export type MintArgsArray = [
     RenVMArg<"p", RenVMType.ExtEthCompatPayload>,
     RenVMArg<"token", RenVMType.ExtTypeEthCompatAddress>, // base64

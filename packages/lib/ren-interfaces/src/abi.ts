@@ -1,4 +1,4 @@
-import { EthType } from "../types/parameters";
+import { EthType } from "./parameters";
 
 export type AbiType = "function" | "constructor" | "event" | "fallback";
 export type StateMutabilityType = "pure" | "view" | "nonpayable" | "payable";

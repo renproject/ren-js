@@ -1,12 +1,11 @@
 import {
-    Asset, Chain, GatewayMessageType, HistoryEvent, RenContract, SerializableShiftOutParams,
-    ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus,
-    sleep, Tx, TxStatus, UTXO,
+    Asset, BurnAndReleaseStatus, Chain, EventType, GatewayMessageType, HistoryEvent,
+    LockAndMintStatus, NetworkDetails, RenContract, SerializableShiftOutParams, ShiftInEvent,
+    ShiftInParams, ShiftOutEvent, ShiftOutParams, Tx, TxStatus, UTXO,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
-import { parseRenContract, resolveInToken } from "@renproject/utils";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import { parseRenContract, resolveInToken, sleep } from "@renproject/utils";
 import { Container } from "unstated";
 
 import { getStorageItem, updateStorageTrade } from "../components/controllers/Storage";
@@ -89,7 +88,7 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Shift not set");
         }
         // tslint:disable-next-line: strict-type-predicates
-        const confirmations = shift.shiftIn && shift.shiftParams.confirmations !== null && shift.shiftParams.confirmations !== undefined ?
+        const confirmations = shift.eventType === EventType.LockAndMint && shift.shiftParams.confirmations !== null && shift.shiftParams.confirmations !== undefined ?
             shift.shiftParams.confirmations :
             numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
         return confirmations;
@@ -187,10 +186,10 @@ export class SDKContainer extends Container<typeof initialState> {
         }) : this.state.shift.shiftParams.contractCalls;
         if (contractCalls) {
             let partial: Partial<HistoryEvent>;
-            if (this.state.shift.shiftIn) {
-                partial = { shiftIn: this.state.shift.shiftIn, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftInEvent["shiftParams"] };
+            if (this.state.shift.eventType === EventType.LockAndMint) {
+                partial = { eventType: this.state.shift.eventType, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftInEvent["shiftParams"] };
             } else {
-                partial = { shiftIn: this.state.shift.shiftIn, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftOutEvent["shiftParams"] };
+                partial = { eventType: this.state.shift.eventType, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftOutEvent["shiftParams"] };
             }
             await this.updateShift(partial);
         }
@@ -210,7 +209,7 @@ export class SDKContainer extends Container<typeof initialState> {
         if (!shift) {
             throw new Error("Shift not set");
         }
-        if (shift.shiftIn) {
+        if (shift.eventType === EventType.LockAndMint) {
             throw new Error(`Expected shift-out details but got shift-in`);
         }
         const { gatewayPopupID } = this.uiContainer.state;
@@ -235,7 +234,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (!transactionHash) {
 
-            const transactionConfigs = renVM.shiftOut({
+            const transactionConfigs = renVM.burnAndRelease({
                 ...params
             }).createTransactions();
 
@@ -256,7 +255,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
                     await this.updateShift({
                         inTx: EthereumTx(transactionHash),
-                        status: ShiftOutStatus.SubmittedToEthereum,
+                        status: BurnAndReleaseStatus.SubmittedToEthereum,
                     });
                 }
 
@@ -274,13 +273,13 @@ export class SDKContainer extends Container<typeof initialState> {
 
         await this.updateShift({
             inTx: transactionHash ? EthereumTx(transactionHash) : null,
-            status: ShiftOutStatus.ConfirmedOnEthereum,
+            status: BurnAndReleaseStatus.ConfirmedOnEthereum,
         });
     }
 
     public submitBurnToRenVM = async (_resubmit = false) => {
         // if (resubmit) {
-        //     await this.updateShift({ status: ShiftOutStatus.ConfirmedOnEthereum, renTxHash: null });
+        //     await this.updateShift({ status: BurnAndReleaseStatus.ConfirmedOnEthereum, renTxHash: null });
         // }
 
         const { sdkRenVM: renVM } = this.state;
@@ -301,7 +300,7 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error(getTransactionBurnError);
         }
 
-        const shiftOutObject = await renVM.shiftOut({
+        const shiftOutObject = await renVM.burnAndRelease({
             sendToken: shift.shiftParams.sendToken,
             burnReference,
         }).readFromEthereum();
@@ -309,10 +308,10 @@ export class SDKContainer extends Container<typeof initialState> {
         const renTxHash = shiftOutObject.renTxHash();
         this.updateShift({
             renTxHash,
-            status: ShiftOutStatus.SubmittedToRenVM,
+            status: BurnAndReleaseStatus.SubmittedToRenVM,
         }).catch((updateShiftError) => _catchBackgroundErr_(updateShiftError, "Error in sdkContainer: submitBurnToRenVM > renTxHash > updateShift"));
 
-        const response = await shiftOutObject.submitToRenVM()
+        const response = await shiftOutObject.submit()
             .on("status", (renVMStatus: TxStatus) => {
                 this.updateShift({
                     renVMStatus,
@@ -330,7 +329,7 @@ export class SDKContainer extends Container<typeof initialState> {
                 shift.shiftParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
                     { chain: Chain.BitcoinCash, address } :
                     { chain: Chain.Bitcoin, address },
-            status: ShiftOutStatus.ReturnedFromRenVM,
+            status: BurnAndReleaseStatus.ReturnedFromRenVM,
         }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateShift"));
     }
 
@@ -354,7 +353,7 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Shift not set");
         }
 
-        return renVM.shiftIn(shift.shiftParams as ShiftInParams);
+        return renVM.lockAndMint(shift.shiftParams as ShiftInParams);
     }
 
     // Takes a shiftParams as bytes or an array of primitive types and returns
@@ -392,16 +391,16 @@ export class SDKContainer extends Container<typeof initialState> {
 
         const transaction = await this
             .shiftInObject()
-            .waitForDeposit(0, specifyUTXO);
+            .wait(0, specifyUTXO);
         const promise = this
             .shiftInObject()
-            .waitForDeposit(this.getNumberOfConfirmations(shift), specifyUTXO);
+            .wait(this.getNumberOfConfirmations(shift), specifyUTXO);
         promise.on("deposit", (utxo: UTXO) => {
-            this.updateShift({ status: ShiftInStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"); });
+            this.updateShift({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
             onDeposit(utxo);
         });
         const signaturePromise = transaction
-            .submitToRenVM()
+            .submit()
             .on("renTxHash", onRenTxHash)
             .on("status", onStatus);
 
@@ -425,7 +424,7 @@ export class SDKContainer extends Container<typeof initialState> {
             return;
         }
         const signature = await signaturePromise;
-        await this.updateShift({ status: ShiftInStatus.ReturnedFromRenVM });
+        await this.updateShift({ status: LockAndMintStatus.ReturnedFromRenVM });
         const response = await signature.queryTx();
         await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
     }
@@ -443,14 +442,14 @@ export class SDKContainer extends Container<typeof initialState> {
         const renTxHash = shift.renTxHash;
         if (!renTxHash) { throw new Error(`Invalid values required to query status`); }
 
-        if (shift.shiftIn) {
-            return renVM.shiftIn({
+        if (shift.eventType === EventType.LockAndMint) {
+            return renVM.lockAndMint({
                 sendToken: shift.shiftParams.sendToken,
                 renTxHash,
                 contractCalls: [],
             }).queryTx();
         } else {
-            return renVM.shiftOut({
+            return renVM.burnAndRelease({
                 sendToken: shift.shiftParams.sendToken,
                 renTxHash,
             }).queryTx();
@@ -484,12 +483,12 @@ export class SDKContainer extends Container<typeof initialState> {
             let signature: LockAndMint;
             if (!shift.inTx || shift.inTx.chain === Chain.Ethereum || !shift.inTx.utxo || shift.inTx.utxo.output_no === undefined) {
                 transaction = await transaction
-                    .waitForDeposit(0);
+                    .wait(0);
                 signature = await transaction
-                    .submitToRenVM();
+                    .submit();
             } else {
                 signature = await transaction
-                    .submitToRenVM({
+                    .submit({
                         txid: shift.inTx.utxo.txid,
                         output_no: shift.inTx.utxo.output_no
                     });
@@ -520,7 +519,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
             // Update shift in store.
             await this.updateShift({
-                status: ShiftInStatus.SubmittedToEthereum,
+                status: LockAndMintStatus.SubmittedToEthereum,
                 outTx: EthereumTx(transactionHash),
             });
 
@@ -544,7 +543,7 @@ export class SDKContainer extends Container<typeof initialState> {
         // Update shift in store.
         await this.updateShift({
             outTx: EthereumTx(transactionHash),
-            status: ShiftInStatus.ConfirmedOnEthereum,
+            status: LockAndMintStatus.ConfirmedOnEthereum,
         });
 
         return;

@@ -1,6 +1,7 @@
 import {
-    GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType, sleep,
+    GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType,
 } from "@renproject/interfaces";
+import { sleep} from "@renproject/utils";
 
 // TODO: Generate uuid properly
 // tslint:disable-next-line: insecure-random

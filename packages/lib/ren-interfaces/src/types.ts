@@ -14,29 +14,23 @@ export type Tx = {
 };
 
 export enum LockAndMintStatus {
-    Committed = "shiftIn_committed",
-    Deposited = "shiftIn_deposited",
-    Confirmed = "shiftIn_confirmed",
-    SubmittedToRenVM = "shiftIn_submittedToRenVM",
-    ReturnedFromRenVM = "shiftIn_returnedFromRenVM",
-    SubmittedToEthereum = "shiftIn_submittedToEthereum",
-    ConfirmedOnEthereum = "shiftIn_confirmedOnEthereum",
+    Committed = "mint_committed",
+    Deposited = "mint_deposited",
+    Confirmed = "mint_confirmed",
+    SubmittedToRenVM = "mint_submittedToRenVM",
+    ReturnedFromRenVM = "mint_returnedFromRenVM",
+    SubmittedToEthereum = "mint_submittedToEthereum",
+    ConfirmedOnEthereum = "mint_confirmedOnEthereum",
 }
-// Backwards compatibility
-export const ShiftInStatus = LockAndMintStatus;
-export type ShiftInStatus = LockAndMintStatus;
 
 export enum BurnAndReleaseStatus {
-    Committed = "shiftOut_committed",
-    SubmittedToEthereum = "shiftOut_submittedToEthereum",
-    ConfirmedOnEthereum = "shiftOut_confirmedOnEthereum",
-    SubmittedToRenVM = "shiftOut_submittedToRenVM",
-    ReturnedFromRenVM = "shiftOut_returnedFromRenVM",
-    NoBurnFound = "shiftOut_noBurnFound",
+    Committed = "burn_committed",
+    SubmittedToEthereum = "burn_submittedToEthereum",
+    ConfirmedOnEthereum = "burn_confirmedOnEthereum",
+    SubmittedToRenVM = "burn_submittedToRenVM",
+    ReturnedFromRenVM = "burn_returnedFromRenVM",
+    NoBurnFound = "burn_noBurnFound",
 }
-// Backwards compatibility
-export const ShiftOutStatus = BurnAndReleaseStatus;
-export type ShiftOutStatus = BurnAndReleaseStatus;
 
 export enum TxStatus {
     // TxStatusNil is used for transactions that have not been seen, or are
@@ -73,8 +67,13 @@ interface HistoryEventCommon {
     returned: boolean;
 }
 
+export enum EventType {
+    LockAndMint = "lockAndMint",
+    BurnAndRelease = "burnAndRelease",
+}
+
 export interface LockAndMintEvent extends HistoryEventCommon {
-    shiftIn: true;
+    eventType: EventType.LockAndMint;
     status: LockAndMintStatus;
     shiftParams: SerializableLockAndMintParams;
     renVMQuery: UnmarshalledMintTx | null;
@@ -82,7 +81,7 @@ export interface LockAndMintEvent extends HistoryEventCommon {
 export type ShiftInEvent = LockAndMintEvent;
 
 export interface BurnAndReleaseEvent extends HistoryEventCommon {
-    shiftIn: false;
+    eventType: EventType.BurnAndRelease;
     status: BurnAndReleaseStatus;
     shiftParams: SerializableBurnAndReleaseParams;
     renVMQuery: UnmarshalledBurnTx | null;

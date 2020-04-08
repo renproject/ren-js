@@ -1,12 +1,12 @@
 import {
-    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, RenNetwork, SerializableShiftParams,
-    ShiftParams, toFixed,
+    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, NetworkDetails, RenNetwork,
+    SerializableShiftParams, ShiftParams,
 } from "@renproject/interfaces";
-import { NetworkDetails } from "@renproject/utils";
+import { toFixed } from "@renproject/utils";
 
 // For now, the endpoints are network specific.
 export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";
-export const GATEWAY_ENDPOINT_PRODUCTION = "https://gateway.renproject.io/";
+export const GATEWAY_ENDPOINT_PRODUCTION = "https://renproject.github.io/gateway-staging.renproject.io/";
 
 export const getElement = (id: string) => {
     const element = document.getElementById(id);
@@ -58,28 +58,6 @@ export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | LockAnd
 
     // tslint:disable-next-line: no-unnecessary-type-assertion
     fixBigNumber(shiftParams as LockAndMintParams, "suggestedAmount");
-
-    // Required amount
-    try {
-        // tslint:disable-next-line: no-any no-object-mutation no-unnecessary-type-assertion
-        const requiredAmount = (shiftParams as LockAndMintParams).requiredAmount;
-        if (typeof requiredAmount === "object") {
-            // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
-            const min = (requiredAmount as { max: any, min: any }).min;
-            // tslint:disable-next-line: no-any readonly-keyword no-unnecessary-type-assertion
-            const max = (requiredAmount as { max: any, min: any }).max;
-            if (min || max) {
-                // tslint:disable-next-line: no-object-mutation no-unnecessary-type-assertion
-                (shiftParams as LockAndMintParams).requiredAmount = {
-                    min: min ? toFixed(min) : undefined,
-                    max: max ? toFixed(max) : undefined,
-                };
-            } else {
-                // tslint:disable-next-line: no-unnecessary-type-assertion
-                fixBigNumber(shiftParams as LockAndMintParams, "requiredAmount");
-            }
-        }
-    } catch (error) { console.error(error); }
 
     // Contract call values
     try {

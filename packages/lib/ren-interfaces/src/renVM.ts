@@ -1,3 +1,25 @@
+import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
+
+export interface NetworkDetails {
+    name: string;
+    nodeURLs: string[];
+    isTestnet: boolean;
+    ethNetwork: string;
+
+    mercuryURL: {
+        btc: string,
+        zec: string,
+        bch: string,
+    };
+    chainSoName: {
+        btc: string,
+        zec: string,
+        bch: string,
+    };
+    contracts: typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;
+}
+
+
 export enum RenNetwork {
     Mainnet = "mainnet",
     Chaosnet = "chaosnet",

@@ -1,7 +1,8 @@
 import * as React from "react";
 
 import {
-    GatewayMessageType, ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus, UnmarshalledTx,
+    BurnAndReleaseStatus, GatewayMessageType, LockAndMintStatus, ShiftInEvent, ShiftOutEvent,
+    UnmarshalledTx,
 } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import BigNumber from "bignumber.js";
@@ -140,7 +141,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 inner = <LogIn correctNetwork={expectedNetwork || "correct"} token={token} paused={paused} wrongNetwork={wrongNetwork} />;
             } else {
                 switch (shift.status) {
-                    case ShiftInStatus.Committed:
+                    case LockAndMintStatus.Committed:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
                         const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
                         if (requiredAddressAndName !== null) {
@@ -178,9 +179,9 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                             }
                         }
                         break;
-                    case ShiftInStatus.Deposited:
-                    case ShiftInStatus.Confirmed:
-                    case ShiftInStatus.SubmittedToRenVM:
+                    case LockAndMintStatus.Deposited:
+                    case LockAndMintStatus.Confirmed:
+                    case LockAndMintStatus.SubmittedToRenVM:
                         try {
                             depositAddress = sdkContainer.generateAddress() || "";
 
@@ -204,11 +205,11 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                             inner = <InvalidParameters mini={paused} token={token} />;
                         }
                         break;
-                    case ShiftInStatus.ReturnedFromRenVM:
-                    case ShiftInStatus.SubmittedToEthereum:
+                    case LockAndMintStatus.ReturnedFromRenVM:
+                    case LockAndMintStatus.SubmittedToEthereum:
                         inner = <SubmitMintToEthereum shift={shift} networkDetails={sdkRenVM.network} mini={paused} txHash={shift.outTx} submit={sdkContainer.submitMintToEthereum} />;
                         break;
-                    case ShiftInStatus.ConfirmedOnEthereum:
+                    case LockAndMintStatus.ConfirmedOnEthereum:
                         inner = <Complete onDone={onDone} pressedDone={pressedDone} token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
                         break;
                 }
@@ -231,7 +232,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 inner = <LogIn correctNetwork={expectedNetwork || "correct"} token={token} paused={paused} wrongNetwork={wrongNetwork} />;
             } else {
                 switch (shift.status) {
-                    case ShiftOutStatus.Committed:
+                    case BurnAndReleaseStatus.Committed:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
                         const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
                         if (requiredAddressAndName) {
@@ -256,19 +257,19 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         //     return <TokenAllowance token={order.orderInputs.srcToken} amount={order.orderInputs.srcAmount} submit={submit} shiftParams={shiftParams} />;
                         // }
                         break;
-                    case ShiftOutStatus.SubmittedToEthereum:
+                    case BurnAndReleaseStatus.SubmittedToEthereum:
                         // Submit the trade to Ethereum
                         inner = <SubmitBurnToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={shift.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         break;
-                    case ShiftOutStatus.ConfirmedOnEthereum:
-                    case ShiftOutStatus.SubmittedToRenVM:
+                    case BurnAndReleaseStatus.ConfirmedOnEthereum:
+                    case BurnAndReleaseStatus.SubmittedToRenVM:
                         inner = <SubmitBurnToRenVM token={token} mini={paused} renVMStatus={renVMStatus} renTxHash={renTxHash} submitDeposit={sdkContainer.submitBurnToRenVM} />;
                         break;
-                    case ShiftOutStatus.NoBurnFound:
+                    case BurnAndReleaseStatus.NoBurnFound:
                         onNoBurnFound().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: shiftOut > onNoBurnFound"));
                         inner = <></>;
                         break;
-                    case ShiftOutStatus.ReturnedFromRenVM:
+                    case BurnAndReleaseStatus.ReturnedFromRenVM:
                         inner = <Complete onDone={onDone} pressedDone={pressedDone} token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={shift.inTx} outTx={shift.outTx} />;
                         break;
                 }

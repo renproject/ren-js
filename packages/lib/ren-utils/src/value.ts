@@ -3,15 +3,12 @@
  * See `value.spec.ts` for example usage.
  */
 
+import { NumberValue } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
-
-import { BN } from "../types/general";
 
 const convert = (valueIn: BigNumber, fromUnit: BigNumber, toUnit: BigNumber) => {
     return valueIn.multipliedBy(fromUnit).dividedBy(toUnit);
 };
-
-export type NumberValue = string | number | BigNumber | BN;
 
 export const toBigNumber = (valueIn: NumberValue): BigNumber => BigNumber.isBigNumber(valueIn) ? new BigNumber(valueIn) : new BigNumber(valueIn.toString());
 export const toFixed = (input: { readonly toFixed?: () => string; readonly toString: () => string }) => input.toFixed ? input.toFixed() : input.toString();

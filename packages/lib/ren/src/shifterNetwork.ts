@@ -1,5 +1,5 @@
 import {
-    AbiItem, Chain, Ox, RenContract, RenVMArg, RenVMOutputUTXO, RenVMType, strip0x, Tokens,
+    AbiItem, Chain, NetworkDetails, RenContract, RenVMArg, RenVMOutputUTXO, RenVMType, Tokens,
     TxStatus, UnmarshalledBurnTx, UnmarshalledMintTx,
 } from "@renproject/interfaces";
 import { Provider } from "@renproject/provider";
@@ -7,7 +7,7 @@ import {
     RenVMParams, RenVMResponses, ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod,
 } from "@renproject/rpc";
 import {
-    assert, NetworkDetails, parseRenContract, SECONDS, sleep, syncGetTokenAddress, toBase64, utils,
+    assert, Ox, parseRenContract, SECONDS, sleep, strip0x, syncGetTokenAddress, toBase64, utils,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 

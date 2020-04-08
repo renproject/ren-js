@@ -1,14 +1,14 @@
 import {
-    Chain, LockAndMintParams, newPromiEvent, Ox, PromiEvent, strip0x, TxStatus, UnmarshalledMintTx,
-    UTXO, UTXOInput,
+    Chain, LockAndMintParams, NetworkDetails, TxStatus, UnmarshalledMintTx, UTXO, UTXOInput,
 } from "@renproject/interfaces";
 import { ResponseQueryMintTx } from "@renproject/rpc";
 import {
     DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardEvents, generateAddress, generateGHash,
-    generateShiftInTxHash, getGatewayAddress, ignoreError, NetworkDetails, parseRenContract,
-    payloadToABI, payloadToShiftInABI, processLockAndMintParams, randomNonce, renTxHashToBase64,
-    RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits, SECONDS,
-    signatureToString, sleep, toBase64, toBigNumber, Web3Events, withDefaultAccount,
+    generateShiftInTxHash, getGatewayAddress, ignoreError, newPromiEvent, Ox, parseRenContract,
+    payloadToABI, payloadToShiftInABI, processLockAndMintParams, PromiEvent, randomNonce,
+    renTxHashToBase64, RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits,
+    SECONDS, signatureToString, sleep, strip0x, toBase64, toBigNumber, Web3Events,
+    withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -40,11 +40,7 @@ export class LockAndMint {
         const renTxHash = this.params.renTxHash;
 
         if (!renTxHash) {
-            const { sendToken: renContract, contractCalls, nonce: maybeNonce, requiredAmount } = this.params;
-
-            if (requiredAmount && toBigNumber(requiredAmount).lte(DEFAULT_SHIFT_FEE)) {
-                throw new Error(`Required amount (${requiredAmount}) is less than minimum shift amount`);
-            }
+            const { sendToken: renContract, contractCalls, nonce: maybeNonce } = this.params;
 
             if (!contractCalls || !contractCalls.length) {
                 throw new Error(`Must provide Ren transaction hash or contract call details.`);
@@ -69,11 +65,11 @@ export class LockAndMint {
 
     public addr = () => this.gatewayAddress;
 
-    public waitForDeposit = (confirmations: number, specifyUTXO?: UTXOInput): PromiEvent<this, { "deposit": [UTXO] }> => {
+    public wait = (confirmations: number, specifyUTXO?: UTXOInput): PromiEvent<this, { "deposit": [UTXO] }> => {
         const promiEvent = newPromiEvent<this, { "deposit": [UTXO] }>();
 
         (async () => {
-            // If the deposit has already been submitted, skip "waitForDeposit".
+            // If the deposit has already been submitted, "wait" can be skipped.
             if (this.params.renTxHash) {
                 return this;
             }
@@ -112,7 +108,7 @@ export class LockAndMint {
                 throw new Error("Unable to calculate gateway address.");
             }
 
-            const { requiredAmount, sendToken: renContract } = this.params;
+            const { sendToken: renContract } = this.params;
 
             if (!renContract) {
                 throw new Error(`Must provide token to be shifted.`);
@@ -143,7 +139,7 @@ export class LockAndMint {
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 if (promiEvent._isCancelled()) {
-                    throw new Error("waitForDeposit cancelled.");
+                    throw new Error("wait cancelled.");
                 }
 
                 if (deposits.size > 0) {
@@ -151,21 +147,8 @@ export class LockAndMint {
                     const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
 
                     // Handle required minimum and maximum amount
-                    let minimum = new BigNumber(0);
-                    let maximum = new BigNumber(Infinity);
-                    if (requiredAmount) {
-                        if (BigNumber.isBigNumber(requiredAmount) || typeof requiredAmount === "number" || typeof requiredAmount === "string" || BN.isBN(requiredAmount)) {
-                            minimum = toBigNumber(requiredAmount);
-                        } else {
-                            const requiredAmountSpread = requiredAmount as { min: BN | BigNumber | number | string, max: BN | BigNumber | number | string };
-                            if (requiredAmountSpread.min) {
-                                minimum = toBigNumber(requiredAmountSpread.min);
-                            }
-                            if (requiredAmountSpread.max) {
-                                maximum = toBigNumber(maximum);
-                            }
-                        }
-                    }
+                    const minimum = new BigNumber(10000);
+                    const maximum = new BigNumber(Infinity);
 
                     if (greatestTx && new BigNumber(greatestTx.utxo.value).gte(minimum) && new BigNumber(greatestTx.utxo.value).lte(maximum)) {
                         this.utxo = greatestTx.utxo;
@@ -210,7 +193,7 @@ export class LockAndMint {
 
         const utxo = specifyUTXO || this.utxo;
         if (!utxo) {
-            throw new Error(`Unable to generate renTxHash without UTXO. Call 'waitForDeposit' first.`);
+            throw new Error(`Unable to generate renTxHash without UTXO. Call 'wait' first.`);
         }
 
         if (!nonce) {
@@ -236,7 +219,7 @@ export class LockAndMint {
     public queryTx = async (specifyUTXO?: UTXOInput) =>
         unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
 
-    public submitToRenVM = (specifyUTXO?: UTXOInput): PromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }> => {
+    public submit = (specifyUTXO?: UTXOInput): PromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }> => {
         const promiEvent = newPromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
@@ -309,7 +292,7 @@ export class LockAndMint {
 
                 promiEvent.emit("renTxHash", renTxHash);
             } else if (!renTxHash) {
-                throw new Error(`Must call 'waitForDeposit' or provide UTXO or RenVM transaction hash.`);
+                throw new Error(`Must call 'wait' or provide UTXO or RenVM transaction hash.`);
             }
 
             const rawResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
@@ -369,8 +352,8 @@ export class LockAndMint {
 
     // tslint:disable-next-line:no-any
     public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXOInput) => {
-        await this.waitForDeposit(confirmations);
-        const signature = await this.submitToRenVM(specifyUTXO);
+        await this.wait(confirmations);
+        const signature = await this.submit(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);
     }
 
@@ -421,16 +404,14 @@ export class LockAndMint {
             }
 
             if (!this.renVMResponse || !this.signature) {
-                throw new Error(`Unable to submit to Ethereum without signature. Call 'submitToRenVM' first.`);
+                throw new Error(`Unable to submit to Ethereum without signature. Call 'submit' first.`);
             }
 
             // Check if the signature has already been submitted
             if (renContract) {
                 try {
                     const shifterAddress = await getGatewayAddress(this.network, web3, resolveInToken(renContract));
-                    const abi = this.network.contracts.version === "0.0.3" ?
-                        this.network.contracts.addresses.shifter.BTCShifter.abi :
-                        this.network.contracts.addresses.shifter.BTCGateway.abi;
+                    const abi = this.network.contracts.addresses.gateways.BTCGateway.abi;
                     const shifter = new web3.eth.Contract(abi, shifterAddress);
                     // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
                     // the contract
@@ -549,7 +530,7 @@ export class LockAndMint {
         const contractCalls = this.params.contractCalls || [];
 
         if (!renVMResponse || !signature) {
-            throw new Error(`Unable to create transaction without signature. Call 'submitToRenVM' first.`);
+            throw new Error(`Unable to create transaction without signature. Call 'submit' first.`);
         }
 
         return contractCalls.map((contractCall, i) => {

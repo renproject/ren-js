@@ -2,16 +2,15 @@
 
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
-    BurnAndReleaseStatus, Chain, GatewayMessage, GatewayMessagePayload, GatewayMessageResponse,
-    GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintParamsSimple,
-    LockAndMintStatus, newPromiEvent, PromiEvent, RenContract, RenNetwork, SendParams, ShiftedToken,
-    ShiftInEvent, ShiftInStatus, ShiftOutEvent, ShiftOutStatus, ShiftParams, sleep, Tokens,
-    UnmarshalledTx,
+    BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
+    GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
+    LockAndMintParamsSimple, LockAndMintStatus, NetworkDetails, RenContract, RenNetwork, SendParams,
+    ShiftedToken, ShiftParams, Tokens, UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, extractError, getGatewayAddress, getTokenAddress, NetworkDetails,
-    parseRenContract, randomBytes, resolveSendCall, stringToNetwork, utils, waitForReceipt,
-    withDefaultAccount,
+    extractBurnReference, extractError, getGatewayAddress, getTokenAddress, newPromiEvent,
+    parseRenContract, PromiEvent, randomBytes, resolveSendCall, sleep, stringToNetwork, utils,
+    waitForReceipt, withDefaultAccount,
 } from "@renproject/utils";
 import Web3 from "web3";
 import { HttpProvider, provider as Web3Provider } from "web3-providers";
@@ -26,7 +25,6 @@ import { validateString } from "./validate";
 export {
     Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent,
     LockAndMintStatus, BurnAndReleaseStatus, LockAndMintEvent, BurnAndReleaseEvent,
-    ShiftInStatus, ShiftOutStatus, ShiftInEvent, ShiftOutEvent,
 } from "@renproject/interfaces";
 
 
@@ -518,7 +516,6 @@ export default class GatewayJS {
         }
         return new Gateway(this.network, this.endpoint)._open(params);
     }
-    public readonly shiftIn = this.lockAndMint;
 
     public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): Gateway => {
         if ((params as SendParams).sendAmount) {
@@ -529,11 +526,10 @@ export default class GatewayJS {
         }
         return new Gateway(this.network, this.endpoint)._open(params);
     }
-    public readonly shiftOut = this.burnAndRelease;
 
     public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent) => {
         // tslint:disable-next-line: strict-type-predicates
-        if ((params as LockAndMintEvent).shiftIn !== undefined) {
+        if ((params as LockAndMintEvent).eventType === EventType.LockAndMint) {
             return this.recoverShift(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
         }
 

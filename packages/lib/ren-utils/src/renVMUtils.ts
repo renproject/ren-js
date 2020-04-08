@@ -1,21 +1,14 @@
 import {
-    createBCHAddress, createBTCAddress, createZECAddress, getBitcoinCashConfirmations,
-    getBitcoinCashUTXOs, getBitcoinConfirmations, getBitcoinUTXOs, getZcashConfirmations,
-    getZcashUTXOs,
-} from "@renproject/chains";
-import {
-    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, NULL, Ox, RenContract,
-    ShiftedToken, strip0x, Tx, UnmarshalledMintTx, UTXO, UTXODetails, UTXOInput, value,
+    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, NetworkDetails, RenContract,
+    ShiftedToken, UnmarshalledMintTx, UTXOInput,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import Web3 from "web3";
 
-import { bchUtils, btcUtils, zecUtils } from "./assets";
+import { NULL, Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
-import { NetworkDetails } from "./types/networks";
-import { randomBytes, toBase64, unzip } from "./utils";
 
 // export const generateNHash = (tx: Tx): string => {
 //     const encoded = rawEncode(
@@ -82,25 +75,15 @@ export const getTokenName = (tokenOrContract: ShiftedToken | RenContract | Asset
 };
 
 export const syncGetTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
+    console.log("network.contracts.addresses");
+    console.log(network.contracts.addresses);
     switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
-            if (network.contracts.version === "0.0.3") {
-                return network.contracts.addresses.shifter.zBTC._address;
-            } else {
-                return network.contracts.addresses.shifter.RenBTC._address;
-            }
+            return network.contracts.addresses.gateways.RenBTC._address;
         case Asset.ZEC:
-            if (network.contracts.version === "0.0.3") {
-                return network.contracts.addresses.shifter.zZEC._address;
-            } else {
-                return network.contracts.addresses.shifter.RenZEC._address;
-            }
+            return network.contracts.addresses.gateways.RenZEC._address;
         case Asset.BCH:
-            if (network.contracts.version === "0.0.3") {
-                return network.contracts.addresses.shifter.zBCH._address;
-            } else {
-                return network.contracts.addresses.shifter.RenBCH._address;
-            }
+            return network.contracts.addresses.gateways.RenBCH._address;
         default:
             throw new Error(`Invalid Ren Contract ${renContract}`);
     }
@@ -230,13 +213,8 @@ export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetai
 
 export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
-        if (network.contracts.version === "0.0.3") {
-            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-            return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
-        } else {
-            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.GatewayRegistry.abi, network.contracts.addresses.shifter.GatewayRegistry.address);
-            return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
-        }
+        const registry = new web3.eth.Contract(network.contracts.addresses.gateways.GatewayRegistry.abi, network.contracts.addresses.gateways.GatewayRegistry.address);
+        return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
     } catch (error) {
         (error || {}).error = `Error looking up ${tokenOrContract} token address: ${error.message}`;
         throw error;
@@ -245,13 +223,8 @@ export const getTokenAddress = async (network: NetworkDetails, web3: Web3, token
 
 export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
-        if (network.contracts.version === "0.0.3") {
-            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.ShifterRegistry.abi, network.contracts.addresses.shifter.ShifterRegistry.address);
-            return await registry.methods.getShifterBySymbol(getTokenName(tokenOrContract)).call();
-        } else {
-            const registry = new web3.eth.Contract(network.contracts.addresses.shifter.GatewayRegistry.abi, network.contracts.addresses.shifter.GatewayRegistry.address);
-            return await registry.methods.getGatewayBySymbol(getTokenName(tokenOrContract)).call();
-        }
+        const registry = new web3.eth.Contract(network.contracts.addresses.gateways.GatewayRegistry.abi, network.contracts.addresses.gateways.GatewayRegistry.address);
+        return await registry.methods.getGatewayBySymbol(getTokenName(tokenOrContract)).call();
     } catch (error) {
         (error || {}).error = `Error looking up ${tokenOrContract} shifter address: ${error.message}`;
         throw error;
@@ -259,79 +232,10 @@ export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tok
 };
 
 
-// Generates the gateway address
-export const generateAddress = (renContract: RenContract, gHash: string, network: NetworkDetails): string => {
-    const chain = parseRenContract(renContract).from;
-    const mpkh = network.contracts.renVM.mpkh;
-    switch (chain) {
-        case Chain.Bitcoin:
-            return createBTCAddress(network.isTestnet, mpkh, gHash);
-        case Chain.Zcash:
-            return createZECAddress(network.isTestnet, mpkh, gHash);
-        case Chain.BitcoinCash:
-            return createBCHAddress(network.isTestnet, mpkh, gHash);
-        default:
-            throw new Error(`Unable to generate deposit address for chain ${chain}`);
-    }
-};
-
-// Retrieves unspent deposits at the provided address
-export const retrieveDeposits = async (_network: NetworkDetails, renContract: RenContract, depositAddress: string, confirmations = 0): Promise<UTXO[]> => {
-    const chain = parseRenContract(renContract).from;
-    switch (chain) {
-        case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXODetails) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
-        case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXODetails) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
-        case Chain.BitcoinCash:
-            // tslint:disable-next-line: no-unnecessary-type-assertion
-            return (await getBitcoinCashUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXODetails) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
-        default:
-            throw new Error(`Unable to retrieve deposits for chain ${chain}`);
-    }
-};
-
-export const retrieveConfirmations = async (_network: NetworkDetails, transaction: Tx): Promise<number> => {
-    const txid = transaction.chain === Chain.Ethereum ? 0 : transaction.utxo ? transaction.utxo.txid : transaction.hash;
-    if (!txid) {
-        return 0;
-    }
-    switch (transaction.chain) {
-        case Chain.Bitcoin:
-            return (await getBitcoinConfirmations(_network)(txid));
-        case Chain.Zcash:
-            return (await getZcashConfirmations(_network)(txid));
-        case Chain.BitcoinCash:
-            // tslint:disable-next-line: no-unnecessary-type-assertion
-            return (await getBitcoinCashConfirmations(_network)(txid));
-        default:
-            throw new Error(`Unable to retrieve deposits for chain ${transaction.chain}`);
-    }
-};
-
 /**
  * Returns a random 32 byte hex string (prefixed with '0x').
  */
 export const randomNonce = () => randomBytes(32);
-
-export const utils = {
-    Ox,
-    strip0x,
-    randomNonce,
-    value,
-
-    // Bitcoin
-    BTC: btcUtils,
-    btc: btcUtils,
-
-    // Zcash
-    ZEC: zecUtils,
-    zec: zecUtils,
-
-    // Bitcoin Cash
-    BCH: bchUtils,
-    bch: bchUtils,
-};
 
 // TODO: Fetch from contract
 export const DEFAULT_SHIFT_FEE = new BigNumber(10000);

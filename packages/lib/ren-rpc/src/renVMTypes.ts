@@ -30,35 +30,6 @@ export enum RPCMethod {
     QueryStat = "ren_queryStat",
 }
 
-// tslint:disable-next-line: no-any
-// export const decodeArg = <Name extends string, Type extends RenVMType.ExtTypeBtcCompatUTXO, Value>(arg: Arg<Name, Type, Value>):
-//     Type extends RenVMType.ExtTypeBtcCompatUTXO ? Value :
-//     Type extends "u256" | "u64" | "u32" ? BigNumber :
-//     Type extends "b" | "b20" | "b32" ? Buffer :
-//     Value => {
-//     try {
-//         // ext_btcCompatUTXO
-//         if (arg.type === RenVMType.ExtTypeBtcCompatUTXO) {
-//             return arg.value;
-//         }
-
-//         // u32, u64, etc.
-//         if (arg.type.match(/u[0-9]+/)) {
-//             return new BigNumber(arg.value);
-//         }
-
-//         // b, b20, b32, etc.
-//         if (arg.type.match(/b[0-9]+/)) {
-//             return Ox(Buffer.from(arg.value as unknown as string, "base64"));
-//         }
-
-//         // Fallback
-//         return Ox(Buffer.from(arg.value as unknown as string, "base64"));
-//     } catch (error) {
-//         throw new Error(`Unable to unmarshal ${arg.name} of type ${arg.type} from RenVM: ${JSON.stringify(arg.value)} - ${error}`);
-//     }
-// };
-
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.
 export interface ParamsQueryBlock {
     // BlockHeight of the block that will be returned. A nil value can be used

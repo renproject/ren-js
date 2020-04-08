@@ -132,7 +132,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
             BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
         ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
-        const tooltipText = `Waiting for confirmations. Thi can take up to twenty minutes due to confirmation times on various blockchains.`;
+        const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains.`;
 
         if (mini) {
             const last = utxos.last<UTXO>();

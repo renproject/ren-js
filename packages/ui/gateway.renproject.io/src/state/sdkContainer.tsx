@@ -180,7 +180,7 @@ export class SDKContainer extends Container<typeof initialState> {
                         return { ...param, value: RenJS.Tokens[token].addressToHex(address) };
                     }
                 } catch (error) {
-                    _catchInteractionErr_(error, "...");
+                    _catchInteractionErr_(error, "Error in sdkContainer: updateToAddress, addressToHex");
                 }
                 return param;
             });

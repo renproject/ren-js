@@ -41,14 +41,14 @@ export const TransferDetails: React.StatelessComponent<{
 
     return <div className="transfer-details">
         <div className="transfer-details--row">
-            <div className="transfer-details--left">Integrator <Tooltip align="left" width={300} contents={"..."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
+            <div className="transfer-details--left">Integrator <Tooltip align="right" width={300} contents={"To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
                 <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{" "}{title}{" "}
                 <Tooltip align="left" width={300} contents={<pre>{url}</pre>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip>
             </div>
         </div>
         <div className="transfer-details--row">
-            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="left" width={300} contents={"..."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
+            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={"Fees charged by RenVM to cover transaction and operational fees."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
                 0.1%
             </div>

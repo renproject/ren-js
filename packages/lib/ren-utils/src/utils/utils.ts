@@ -1,6 +1,6 @@
 
-import { BN } from "../types/general";
-import { EthArgs } from "../types/parameters";
+import BN from "bn.js";
+
 import { AbiItem } from "./abi";
 
 /**

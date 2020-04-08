@@ -1,5 +1,5 @@
 import {
-    Chain, newPromiEvent, Ox, PromiEvent, LockAndMintParams, strip0x, TxStatus, UnmarshalledMintTx,
+    Chain, LockAndMintParams, newPromiEvent, Ox, PromiEvent, strip0x, TxStatus, UnmarshalledMintTx,
     UTXO, UTXOInput,
 } from "@renproject/interfaces";
 import { ResponseQueryMintTx } from "@renproject/rpc";
@@ -436,7 +436,7 @@ export class LockAndMint {
                     // the contract
                     const status = await shifter.methods.status(this.renVMResponse.autogen.sighash).call();
                     if (status) {
-                        const recentRegistrationEvents = await web3.eth.getPastLogs({
+                        const recentRegistrationEventsOld = await web3.eth.getPastLogs({
                             address: shifterAddress,
                             fromBlock: "1",
                             toBlock: "latest",
@@ -444,10 +444,18 @@ export class LockAndMint {
                             // address.slice(2), null, null] as any,
                             topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
                         });
-                        if (!recentRegistrationEvents.length) {
+                        const recentRegistrationEvents = await web3.eth.getPastLogs({
+                            address: shifterAddress,
+                            fromBlock: "1",
+                            toBlock: "latest",
+                            // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
+                            // address.slice(2), null, null] as any,
+                            topics: [sha3("LogMint(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
+                        });
+                        if (!recentRegistrationEventsOld.length && !recentRegistrationEvents.length) {
                             throw new Error(`Shift has been submitted but no log was found.`);
                         }
-                        const log = recentRegistrationEvents[0];
+                        const log = recentRegistrationEventsOld[0] || recentRegistrationEvents[0];
                         return await manualPromiEvent(log.transactionHash);
                     }
                 } catch (error) {

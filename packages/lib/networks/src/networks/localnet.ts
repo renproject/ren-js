@@ -73,7 +73,7 @@ export default Network({
                 artifact: DarknodePaymentStore,
             },
         },
-        shifter: {
+        gateways: {
             GatewayRegistry: {
                 address: GatewayRegistry.networks[networkID].address,
                 abi: GatewayRegistry.abi as AbiItem[],

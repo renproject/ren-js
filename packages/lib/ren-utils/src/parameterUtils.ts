@@ -29,9 +29,6 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
 
     const renContract = parseRenContract(sendToken);
     if (renContract.to === Chain.Ethereum) {
-        const gateway = network.contracts.addresses.gateways[`${renContract.asset}Gateway` as "BTCGateway"]._address;
-        const gatewayToken = network.contracts.addresses.gateways[`Ren${renContract.asset}`]._address;
-
         // Shift in
         return {
             ...restOfParams,
@@ -56,9 +53,9 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
         const token = parseRenContract(sendToken).asset as "BTC" | "ZEC" | "BCH";
         const addressToHex = utils[token].addressToHex(sendTo);
 
-        // const shiftedTokenAddress = await getTokenAddress(network, web3, sendToken);
+        // const tokenAddress = await getTokenAddress(network, web3, sendToken);
         // const approve = {
-        //     sendTo: shiftedTokenAddress,
+        //     sendTo: tokenAddress,
         //     contractFn: "approve",
         //     contractParams: [
         //         { type: "address" as const, name: "spender", value: network.contracts.addresses.gateways.BasicAdapter.address },
@@ -67,7 +64,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
         //     txConfig,
         // };
 
-        const shifter: string = network.contracts.addresses.gateways[`${token.toUpperCase()}Gateway`]._address;
+        const gateway: string = network.contracts.addresses.gateways[`${token.toUpperCase()}Gateway`]._address;
 
         return {
             ...restOfParams,
@@ -75,7 +72,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
             contractCalls: [
                 // approve,
                 {
-                    sendTo: shifter,
+                    sendTo: gateway,
                     contractFn: "burn",
                     contractParams: [
                         { type: "bytes" as const, name: "_to", value: addressToHex },
@@ -91,20 +88,18 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
 
 export const processLockAndMintParams = (_network: NetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
     const processors: Array<(params: LockAndMintParams) => LockAndMintParams> = [
-        resolveSendTo<LockAndMintParams>({ shiftIn: true }),
+        resolveSendTo<LockAndMintParams>({ isMint: true }),
         // resolveContractCall<LockAndMintParams>(_network),
     ];
 
     return processors.reduce((params, processor) => processor(params), _params as LockAndMintParams);
 };
-export const processShiftInParams = processLockAndMintParams;
 
 export const processBurnAndReleaseParams = (_network: NetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
     const processors: Array<(params: BurnAndReleaseParams) => BurnAndReleaseParams> = [
-        resolveSendTo<BurnAndReleaseParams>({ shiftIn: false }),
+        resolveSendTo<BurnAndReleaseParams>({ isMint: false }),
         // resolveContractCall<BurnAndReleaseParams>(_network),
     ];
 
     return processors.reduce((params, processor) => processor(params), _params as BurnAndReleaseParams);
 };
-export const processShiftOutParams = processBurnAndReleaseParams;

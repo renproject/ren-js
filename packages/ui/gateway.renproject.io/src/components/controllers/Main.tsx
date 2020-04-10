@@ -2,8 +2,8 @@ import * as React from "react";
 
 import {
     BurnAndReleaseStatus, EventType, GatewayMessage, GatewayMessageType, HistoryEvent,
-    LockAndMintStatus, RenNetwork, SendTokenInterface, SerializableShiftParams, ShiftInEvent,
-    ShiftInParams, ShiftOutEvent, ShiftOutParams, UnmarshalledTx,
+    LockAndMintStatus, SendTokenInterface, SerializableTransferParams, ShiftInEvent, ShiftInParams,
+    ShiftOutEvent, ShiftOutParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { Ox, processShiftInParams, processShiftOutParams, sleep, strip0x } from "@renproject/utils";
@@ -72,8 +72,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 retries++;
                 await sleep(100);
             }
-            if (sdkContainer.state.shift.shiftParams.nonce) {
-                await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.shiftParams.nonce);
+            if (sdkContainer.state.shift.transferParams.nonce) {
+                await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.transferParams.nonce);
                 // TODO: Handle no nonce.
             }
             if (!fromClient && uiContainer.state.gatewayPopupID) {
@@ -118,9 +118,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 if (message && message.from === "ren" && message.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
                         switch (message.type) {
-                            case GatewayMessageType.Shift:
+                            case GatewayMessageType.TransferDetails:
                                 acknowledgeMessage(message);
-                                const { paused: alreadyPaused, shift: shiftParamsIn }: { paused: boolean, shift: SerializableShiftParams | ShiftInEvent | ShiftOutEvent } = (message as GatewayMessage<GatewayMessageType.Shift>).payload;
+                                const { paused: alreadyPaused, shift: transferParamsIn }: { paused: boolean, shift: SerializableTransferParams | ShiftInEvent | ShiftOutEvent } = (message as GatewayMessage<GatewayMessageType.TransferDetails>).payload;
                                 await (alreadyPaused ? pause() : resume());
                                 const shiftID = message.frameID;
                                 const time = Date.now() / 1000;
@@ -128,37 +128,37 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 const randomID = Ox(strip0x(shiftID).repeat(4).slice(0, 64));
 
                                 let historyEvent: HistoryEvent | undefined;
-                                let shiftParams: HistoryEvent["shiftParams"];
+                                let transferParams: HistoryEvent["transferParams"];
 
-                                if (shiftParamsIn.hasOwnProperty("shiftParams")) {
-                                    historyEvent = shiftParamsIn as unknown as HistoryEvent;
-                                    shiftParams = { ...historyEvent.shiftParams };
-                                    shiftParams.nonce = shiftParams.nonce || randomID;
+                                if (transferParamsIn.hasOwnProperty("transferParams")) {
+                                    historyEvent = transferParamsIn as unknown as HistoryEvent;
+                                    transferParams = { ...historyEvent.transferParams };
+                                    transferParams.nonce = transferParams.nonce || randomID;
                                 } else {
                                     historyEvent = undefined;
-                                    shiftParams = {
-                                        ...(shiftParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)),
-                                        nonce: (shiftParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)).nonce || randomID,
+                                    transferParams = {
+                                        ...(transferParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)),
+                                        nonce: (transferParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)).nonce || randomID,
                                     };
                                 }
 
                                 let shiftDetails;
 
-                                if (shiftParams.sendToken === RenJS.Tokens.BTC.Btc2Eth ||
-                                    shiftParams.sendToken === RenJS.Tokens.ZEC.Zec2Eth ||
-                                    shiftParams.sendToken === RenJS.Tokens.BCH.Bch2Eth) {
+                                if (transferParams.sendToken === RenJS.Tokens.BTC.Btc2Eth ||
+                                    transferParams.sendToken === RenJS.Tokens.ZEC.Zec2Eth ||
+                                    transferParams.sendToken === RenJS.Tokens.BCH.Bch2Eth) {
                                     shiftDetails = {
                                         // Cast required by TS to differentiate ShiftIn and ShiftOut types.
                                         eventType: EventType.LockAndMint as const,
                                         status: LockAndMintStatus.Committed,
                                         // tslint:disable-next-line: no-object-literal-type-assertion
-                                        shiftParams: processShiftInParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, shiftParams as ShiftInParams) as ShiftInEvent["shiftParams"],
+                                        transferParams: processShiftInParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as ShiftInParams) as ShiftInEvent["transferParams"],
                                     };
                                 } else {
                                     shiftDetails = {
                                         eventType: EventType.BurnAndRelease as const,
                                         status: BurnAndReleaseStatus.Committed,
-                                        shiftParams: processShiftOutParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, shiftParams as ShiftOutParams) as unknown as ShiftOutEvent["shiftParams"],
+                                        transferParams: processShiftOutParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as ShiftOutParams) as unknown as ShiftOutEvent["transferParams"],
                                     };
                                 }
 
@@ -192,9 +192,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 acknowledgeMessage(message);
                                 resume(true).catch(console.error);
                                 break;
-                            case GatewayMessageType.GetTrades:
+                            case GatewayMessageType.GetTransfers:
                                 acknowledgeMessage(message);
-                                await postMessageToClient(window, message.frameID, GatewayMessageType.GetTrades, await getStorage(urlRenNetwork));
+                                await postMessageToClient(window, message.frameID, GatewayMessageType.GetTransfers, await getStorage(urlRenNetwork));
                                 break;
                             case GatewayMessageType.GetStatus:
                                 acknowledgeMessage(message, sdkContainer.getShiftStatus());
@@ -265,7 +265,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             {/* <span>Gateway {renNetwork === RenNetwork.Chaosnet || renNetwork === RenNetwork.Mainnet ? "by Ren Project" : <span className="warning"> {renNetwork}</span>}</span> */}
             {/* </div> : <></>} */}
             <div className="main">
-                {!paused ? <ColoredBanner token={shift && shift.shiftParams.sendToken} /> : <></>}
+                {!paused ? <ColoredBanner token={shift && shift.transferParams.sendToken} /> : <></>}
                 {!paused && shift ?
                     (shift.status === LockAndMintStatus.Committed || shift.status === BurnAndReleaseStatus.Committed) ?
                         <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :

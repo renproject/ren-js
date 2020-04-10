@@ -22,7 +22,7 @@ This version fixes the parameters expected by GatewayJS. The main difference fro
 
 ## [0.1.0](https://github.com/renproject/gateway-js/compare/v0.0.8...v0.1.0) (2020-01-30)
 
-GatewayJS is easier to use with a simpler interface if you just want to send zBTC, zBCH or zZEC directly to an Ethereum address. Omit the contract parameters and details, and set `sendTo` to a normal address instead of a contract. `GatewayJS.utils.value` makes it easier to specify amounts.
+GatewayJS is easier to use with a simpler interface if you just want to send BTC, BCH or ZEC directly to an Ethereum address. Omit the contract parameters and details, and set `sendTo` to a normal address instead of a contract. `GatewayJS.utils.value` makes it easier to specify amounts.
 
 ### [0.0.8](https://github.com/renproject/gateway-js/compare/v0.0.7...v0.0.8) (2020-01-30)
 

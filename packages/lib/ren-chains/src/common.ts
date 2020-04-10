@@ -4,7 +4,7 @@ import { strip0x } from "./hex";
 
 export const createAddress =
     (networks: typeof BNetworks, opcode: typeof BOpcode, script: typeof bScript) =>
-        (isTestnet: boolean, mpkh: string, gHash: string) => {
+        (isTestnet: boolean, mpkh: string, gHash: string): string => {
             return new script()
                 .add(Buffer.from(strip0x(gHash), "hex"))
                 // .add(mintToAddress) // Is this meant to be here?

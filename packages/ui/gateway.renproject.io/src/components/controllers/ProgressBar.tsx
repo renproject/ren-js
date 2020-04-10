@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { LockAndMintStatus, BurnAndReleaseStatus } from "@renproject/interfaces";
+import { BurnAndReleaseStatus, LockAndMintStatus } from "@renproject/interfaces";
 
 import infoIcon from "../../images/icons/info.svg";
 import { connect, ConnectedProps } from "../../state/connect";
@@ -46,7 +46,7 @@ export const ShiftProgress = connect<Props & ConnectedProps<[SDKContainer]>>([SD
         const progress = shift ? statusToProgress(shift.status) : 0;
 
         return shift ?
-            shift.shiftParams.sendToken.slice(4, 7).toLowerCase() === "eth" ?
+            shift.transferParams.sendToken.slice(4, 7).toLowerCase() === "eth" ?
                 <ProgressBar
                     className="shift-progress"
                     items={[

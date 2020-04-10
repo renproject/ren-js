@@ -1,6 +1,6 @@
 import {
     Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, NetworkDetails, RenContract,
-    ShiftedToken, UnmarshalledMintTx, UTXOInput,
+    RenTokens, UnmarshalledMintTx, UTXOIndex,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -19,11 +19,12 @@ import { rawEncode } from "./ethereumUtils";
 //     return Ox(keccak256(encoded));
 // };
 
-// tslint:disable-next-line: no-any
+/**
+ * Hash the payloads associated with a RenVM cross-chain transaction.
+ *
+ * @param zip An array (or spread) of parameters with with types defined.
+ */
 export const generatePHash = (...zip: EthArgs | [EthArgs]): string => {
-    // You can annotate values passed in to soliditySha3.
-    // Example: { type: "address", value: srcToken }
-
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
     const args = Array.isArray(zip) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
 
@@ -46,8 +47,10 @@ interface RenContractDetails {
 const renContractRegex = /^(.*)0(.*)2(.*)$/;
 const defaultMatch = [undefined, undefined, undefined, undefined];
 
-// parseRenContract splits an action (e.g. `BTC0Eth2Btc`) into the asset
-// (`BTC`), the from chain (`Eth`)
+/**
+ * parseRenContract splits a RenVM contract (e.g. `BTC0Eth2Btc`) into the asset
+ * (`BTC`), the origin chain (`Eth`) and the target chain (`Btc`).
+ */
 export const parseRenContract = (renContract: RenContract): RenContractDetails => {
     // re.exec("BTC0Eth2Btc") => ['BTC0Eth2Btc', 'BTC', 'Eth', 'Btc']
     const [, asset, from, to] = renContractRegex.exec(renContract) || defaultMatch;
@@ -62,12 +65,12 @@ export const parseRenContract = (renContract: RenContract): RenContractDetails =
     };
 };
 
-export const getTokenName = (tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")): ShiftedToken => {
+export const getTokenName = (tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")): RenTokens => {
     switch (tokenOrContract) {
-        case ShiftedToken.zBTC: case ShiftedToken.zZEC: case ShiftedToken.zBCH: return tokenOrContract;
-        case Asset.BTC: case "BTC": return ShiftedToken.zBTC;
-        case Asset.ZEC: case "ZEC": return ShiftedToken.zZEC;
-        case Asset.BCH: case "BCH": return ShiftedToken.zBCH;
+        case RenTokens.BTC: case RenTokens.ZEC: case RenTokens.BCH: return tokenOrContract as RenTokens;
+        case Asset.BTC: case "BTC": return RenTokens.BTC;
+        case Asset.ZEC: case "ZEC": return RenTokens.ZEC;
+        case Asset.BCH: case "BCH": return RenTokens.BCH;
         case Asset.ETH: throw new Error(`Unexpected token ${tokenOrContract}`);
         default:
             return getTokenName(parseRenContract(tokenOrContract).asset);
@@ -75,8 +78,6 @@ export const getTokenName = (tokenOrContract: ShiftedToken | RenContract | Asset
 };
 
 export const syncGetTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
-    console.log("network.contracts.addresses");
-    console.log(network.contracts.addresses);
     switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
             return network.contracts.addresses.gateways.RenBTC._address;
@@ -124,8 +125,8 @@ export const renTxHashToBase64 = (renTxHash: Buffer | string) => {
     return renTxHash;
 };
 
-export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOInput) => {
-    return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txid)}_${utxo.output_no}`));
+export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex) => {
+    return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`));
 };
 
 export const generateShiftOutTxHash = (renContract: RenContract, encodedID: string) => {
@@ -211,7 +212,7 @@ export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetai
     return signature;
 };
 
-export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
         const registry = new web3.eth.Contract(network.contracts.addresses.gateways.GatewayRegistry.abi, network.contracts.addresses.gateways.GatewayRegistry.address);
         return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
@@ -221,12 +222,12 @@ export const getTokenAddress = async (network: NetworkDetails, web3: Web3, token
     }
 };
 
-export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
         const registry = new web3.eth.Contract(network.contracts.addresses.gateways.GatewayRegistry.abi, network.contracts.addresses.gateways.GatewayRegistry.address);
         return await registry.methods.getGatewayBySymbol(getTokenName(tokenOrContract)).call();
     } catch (error) {
-        (error || {}).error = `Error looking up ${tokenOrContract} shifter address: ${error.message}`;
+        (error || {}).error = `Error looking up ${tokenOrContract}Gateway address: ${error.message}`;
         throw error;
     }
 };
@@ -266,7 +267,7 @@ export const resolveOutToken = (sendToken: LockAndMintParams["sendToken"]): RenC
     }
 };
 
-export const resolveSendTo = <T extends LockAndMintParams | BurnAndReleaseParams>({ shiftIn }: { shiftIn: boolean }) => (params: T): typeof params => {
-    params.sendToken = shiftIn ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
+export const resolveSendTo = <T extends LockAndMintParams | BurnAndReleaseParams>({ isMint }: { isMint: boolean }) => (params: T): typeof params => {
+    params.sendToken = isMint ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
     return params;
 };

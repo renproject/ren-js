@@ -1,6 +1,5 @@
-import { newPromiEvent, PromiEvent, sleep } from "@renproject/interfaces";
+import { forwardWeb3Events, newPromiEvent, PromiEvent, sleep } from "@renproject/utils";
 import chai from "chai";
-import { forwardEvents } from "@renproject/utils";
 
 chai.use(require("chai-bignumber")(require("bignumber.js")));
 chai.should();
@@ -46,7 +45,7 @@ describe("promievent.ts", () => {
         const promiEvent1 = createPromiEvent(1, "transactionHash");
         const promiEvent2 = createPromiEvent(2, "receipt");
 
-        forwardEvents(promiEvent1, promiEvent2);
+        forwardWeb3Events(promiEvent1, promiEvent2);
 
         const firstEvent = waitForEvent<number, number>(promiEvent1, "transactionHash");
         const secondEvent = waitForEvent<number, number>(promiEvent2, "receipt");
@@ -63,7 +62,7 @@ describe("promievent.ts", () => {
         (async () => {
             const promiEvent2 = createPromiEvent(2, "receipt");
 
-            forwardEvents(promiEvent1, promiEvent2);
+            forwardWeb3Events(promiEvent1, promiEvent2);
 
             promiEvent2.emit("transactionHash", 1);
 

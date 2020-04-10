@@ -200,7 +200,7 @@ export const unmarshalTx = ((response: ResponseQueryMintTx | ResponseQueryBurnTx
     }
 });
 
-export class ShifterNetwork {
+export class RenVMNetwork {
     public network: Provider<RenVMParams, RenVMResponses>;
 
     constructor(network: Provider<RenVMParams, RenVMResponses>) {
@@ -236,9 +236,9 @@ export class ShifterNetwork {
                         // { name: "phash" as const, type: RenVMType.TypeB32 as const, value: toBase64(pHash) },
                         // The amount of BTC (in SATs) that has be transferred to the gateway
                         // { name: "amount" as const, type: "u64", as const value: amount },
-                        // The ERC20 contract address on Ethereum for zBTC
+                        // The ERC20 contract address on Ethereum for BTC
                         { name: "token" as const, type: RenVMType.ExtTypeEthCompatAddress, value: strip0x(token) },
-                        // The address on the Ethereum blockchain to which ZBTC will be transferred
+                        // The address on the Ethereum blockchain to which BTC will be transferred
                         { name: "to" as const, type: RenVMType.ExtTypeEthCompatAddress, value: strip0x(to) },
                         // The nonce is used to randomize the gateway
                         { name: "n" as const, type: RenVMType.TypeB32, value: toBase64(nonce) },

@@ -61,18 +61,18 @@ export class SDKContainer extends Container<typeof initialState> {
     }
 
     // public fixShift = async (shift: HistoryEvent | null, web3: Web3) => {
-    //     if (shift && shift.shiftParams.contractCalls) {
-    //         for (let i = 0; i < shift.shiftParams.contractCalls.length; i++) {
-    //             const contractCall = shift.shiftParams.contractCalls[i];
+    //     if (shift && shift.transferParams.contractCalls) {
+    //         for (let i = 0; i < shift.transferParams.contractCalls.length; i++) {
+    //             const contractCall = shift.transferParams.contractCalls[i];
     //             if (isFunction(contractCall)) {
     //                 try {
-    //                     shift.shiftParams.contractCalls[i] = await contractCall(web3.currentProvider);
+    //                     shift.transferParams.contractCalls[i] = await contractCall(web3.currentProvider);
     //                 } catch (error) {
     //                     _ignoreErr_(error);
     //                 }
     //             } else if (isPromise(contractCall)) {
     //                 try {
-    //                     shift.shiftParams.contractCalls[i] = await contractCall;
+    //                     shift.transferParams.contractCalls[i] = await contractCall;
     //                 } catch (error) {
     //                     _ignoreErr_(error);
     //                 }
@@ -88,9 +88,9 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Shift not set");
         }
         // tslint:disable-next-line: strict-type-predicates
-        const confirmations = shift.eventType === EventType.LockAndMint && shift.shiftParams.confirmations !== null && shift.shiftParams.confirmations !== undefined ?
-            shift.shiftParams.confirmations :
-            numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+        const confirmations = shift.eventType === EventType.LockAndMint && shift.transferParams.confirmations !== null && shift.transferParams.confirmations !== undefined ?
+            shift.transferParams.confirmations :
+            numberOfConfirmations(shift.transferParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
         return confirmations;
     }
 
@@ -119,8 +119,8 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
         let existingShift: HistoryEvent | Partial<HistoryEvent> = {};
-        if (options && options.sync && shiftIn.shiftParams && shiftIn.shiftParams.nonce) {
-            existingShift = await getStorageItem(renNetwork, shiftIn.shiftParams.nonce) || {};
+        if (options && options.sync && shiftIn.transferParams && shiftIn.transferParams.nonce) {
+            existingShift = await getStorageItem(renNetwork, shiftIn.transferParams.nonce) || {};
         }
 
         const min = (firstValue: (number | null | undefined), ...values: Array<number | null | undefined>): (number | null | undefined) => {
@@ -169,9 +169,9 @@ export class SDKContainer extends Container<typeof initialState> {
             return;
         }
 
-        const sendToken = (this.state.shift.shiftParams as ShiftInParams | ShiftOutParams).sendToken;
+        const sendToken = (this.state.shift.transferParams as ShiftInParams | ShiftOutParams).sendToken;
         const defaultToken = sendToken && (sendToken.slice(0, 3) as Token);
-        const contractCalls = this.state.shift.shiftParams.contractCalls ? Array.from(this.state.shift.shiftParams.contractCalls).map(contractCall => {
+        const contractCalls = this.state.shift.transferParams.contractCalls ? Array.from(this.state.shift.transferParams.contractCalls).map(contractCall => {
             return (isFunction(contractCall) || isPromise(contractCall)) ? contractCall : contractCall.contractParams && contractCall.contractParams.map(param => {
                 const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
                 try {
@@ -183,13 +183,13 @@ export class SDKContainer extends Container<typeof initialState> {
                 }
                 return param;
             });
-        }) : this.state.shift.shiftParams.contractCalls;
+        }) : this.state.shift.transferParams.contractCalls;
         if (contractCalls) {
             let partial: Partial<HistoryEvent>;
             if (this.state.shift.eventType === EventType.LockAndMint) {
-                partial = { eventType: this.state.shift.eventType, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftInEvent["shiftParams"] };
+                partial = { eventType: this.state.shift.eventType, transferParams: { ...this.state.shift.transferParams, contractCalls } as unknown as ShiftInEvent["transferParams"] };
             } else {
-                partial = { eventType: this.state.shift.eventType, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftOutEvent["shiftParams"] };
+                partial = { eventType: this.state.shift.eventType, transferParams: { ...this.state.shift.transferParams, contractCalls } as unknown as ShiftOutEvent["transferParams"] };
             }
             await this.updateShift(partial);
         }
@@ -217,7 +217,7 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error(`No gateway popup ID.`);
         }
 
-        const params: SerializableShiftOutParams = shift.shiftParams;
+        const params: SerializableShiftOutParams = shift.transferParams;
 
         if (retry) {
             await this.updateShift({
@@ -295,13 +295,13 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error(`No gateway popup ID.`);
         }
 
-        const { burnReference, error: getTransactionBurnError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionBurn, { txHash: shift.inTx.hash });
+        const { burnReference, error: getTransactionBurnError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxBurn, { txHash: shift.inTx.hash });
         if (getTransactionBurnError) {
             throw new Error(getTransactionBurnError);
         }
 
         const shiftOutObject = await renVM.burnAndRelease({
-            sendToken: shift.shiftParams.sendToken,
+            sendToken: shift.transferParams.sendToken,
             burnReference,
         }).readFromEthereum();
 
@@ -324,9 +324,9 @@ export class SDKContainer extends Container<typeof initialState> {
         const address = response.in.to;
 
         await this.updateShift({
-            outTx: shift.shiftParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
+            outTx: shift.transferParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
                 { chain: Chain.Zcash, address } :
-                shift.shiftParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
+                shift.transferParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
                     { chain: Chain.BitcoinCash, address } :
                     { chain: Chain.Bitcoin, address },
             status: BurnAndReleaseStatus.ReturnedFromRenVM,
@@ -353,10 +353,10 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Shift not set");
         }
 
-        return renVM.lockAndMint(shift.shiftParams as ShiftInParams);
+        return renVM.lockAndMint(shift.transferParams as ShiftInParams);
     }
 
-    // Takes a shiftParams as bytes or an array of primitive types and returns
+    // Takes a transferParams as bytes or an array of primitive types and returns
     // the deposit address
     public generateAddress = (): string | undefined => {
         return this
@@ -406,7 +406,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
         // If the number of confirmations being waited for are less than RenVM's
         // default, check the transaction's status manually using queryTX.
-        const defaultNumberOfConfirmations = numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+        const defaultNumberOfConfirmations = numberOfConfirmations(shift.transferParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
         if (this.getNumberOfConfirmations(shift) < defaultNumberOfConfirmations) {
 
             // tslint:disable-next-line: no-constant-condition
@@ -444,13 +444,13 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (shift.eventType === EventType.LockAndMint) {
             return renVM.lockAndMint({
-                sendToken: shift.shiftParams.sendToken,
+                sendToken: shift.transferParams.sendToken,
                 renTxHash,
                 contractCalls: [],
             }).queryTx();
         } else {
             return renVM.burnAndRelease({
-                sendToken: shift.shiftParams.sendToken,
+                sendToken: shift.transferParams.sendToken,
                 renTxHash,
             }).queryTx();
         }

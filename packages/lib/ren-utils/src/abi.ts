@@ -1,6 +1,6 @@
 import { AbiItem, EthType } from "@renproject/interfaces";
 
-const shiftInABITemplate: AbiItem = {
+const mintABITemplate: AbiItem = {
     constant: false,
     inputs: [
         {
@@ -38,11 +38,11 @@ export const payloadToABI = (methodName: string, payload: Array<{ type: string, 
 export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: string, name: string }> | undefined): AbiItem[] => {
     return [
         {
-            ...shiftInABITemplate,
+            ...mintABITemplate,
             name: methodName,
             inputs: [
                 ...(payload || []).map(value => ({ type: value.type as EthType, name: value.name })),
-                ...(shiftInABITemplate.inputs ? shiftInABITemplate.inputs : []),
+                ...(mintABITemplate.inputs ? mintABITemplate.inputs : []),
             ]
         }
     ];

@@ -34,7 +34,7 @@ import { TransferDetails } from "../views/TransferDetails";
 interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {
 }
 
-const getRequiredAddressAndName = (shiftParams: ShiftInEvent["shiftParams"] | ShiftOutEvent["shiftParams"]) => shiftParams.contractCalls ? Array.from(shiftParams.contractCalls).reduce((accOuter, contractCall) => {
+const getRequiredAddressAndName = (transferParams: ShiftInEvent["transferParams"] | ShiftOutEvent["transferParams"]) => transferParams.contractCalls ? Array.from(transferParams.contractCalls).reduce((accOuter, contractCall) => {
     if (accOuter !== null || isFunction(contractCall) || isPromise(contractCall)) { return accOuter; }
     return (contractCall.contractParams || []).reduce((acc, param) => {
         if (acc !== null || !param || typeof param.value !== "string") { return acc; }
@@ -130,9 +130,9 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
 
         const shiftIn = () => {
 
-            const shiftParams = shift.shiftParams as ShiftInEvent["shiftParams"];
+            const transferParams = shift.transferParams as ShiftInEvent["transferParams"];
 
-            const token = shiftParams.sendToken.slice(0, 3) as Token;
+            const token = transferParams.sendToken.slice(0, 3) as Token;
 
             let depositAddress;
 
@@ -143,7 +143,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 switch (shift.status) {
                     case LockAndMintStatus.Committed:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
-                        const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
+                        const requiredAddressAndName = getRequiredAddressAndName(transferParams);
                         if (requiredAddressAndName !== null) {
                             const [variableName, requiredAddress] = requiredAddressAndName;
                             const requestedToken = requiredAddress[1] as Token || token;
@@ -167,7 +167,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                     token={token}
                                     utxos={utxos}
                                     sdkRenVM={sdkRenVM}
-                                    shiftParams={shiftParams}
+                                    transferParams={transferParams}
                                     waitForDeposit={sdkContainer.waitForDeposits}
                                     confirmations={sdkContainer.getNumberOfConfirmations(shift)}
                                     onQRClick={toggleShowQR}
@@ -194,7 +194,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                                 token={token}
                                 utxos={utxos}
                                 sdkRenVM={sdkRenVM}
-                                shiftParams={shiftParams}
+                                transferParams={transferParams}
                                 waitForDeposit={sdkContainer.waitForDeposits}
                                 confirmations={sdkContainer.getNumberOfConfirmations(shift)}
                                 onQRClick={toggleShowQR}
@@ -222,9 +222,9 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
         };
 
         const shiftOut = () => {
-            const { renTxHash, shiftParams, renVMStatus } = shift as ShiftOutEvent;
+            const { renTxHash, transferParams, renVMStatus } = shift as ShiftOutEvent;
 
-            const token = shift.shiftParams.sendToken.slice(0, 3) as Token;
+            const token = shift.transferParams.sendToken.slice(0, 3) as Token;
 
             let inner = <></>;
 
@@ -234,7 +234,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 switch (shift.status) {
                     case BurnAndReleaseStatus.Committed:
                         // tslint:disable-next-line: no-unnecessary-type-assertion
-                        const requiredAddressAndName = getRequiredAddressAndName(shiftParams);
+                        const requiredAddressAndName = getRequiredAddressAndName(transferParams);
                         if (requiredAddressAndName) {
                             const [variableName, requiredAddress] = requiredAddressAndName;
                             const requestedToken = requiredAddress[1] as Token || token;
@@ -254,7 +254,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                         //     setERC20Approved(true);
                         // };
                         // if (isERC20(order.orderInputs.srcToken) && !ERC20Approved) {
-                        //     return <TokenAllowance token={order.orderInputs.srcToken} amount={order.orderInputs.srcAmount} submit={submit} shiftParams={shiftParams} />;
+                        //     return <TokenAllowance token={order.orderInputs.srcToken} amount={order.orderInputs.srcAmount} submit={submit} transferParams={transferParams} />;
                         // }
                         break;
                     case BurnAndReleaseStatus.SubmittedToEthereum:
@@ -275,7 +275,7 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
                 }
             }
 
-            const contractAddress = (shift.shiftParams.contractCalls && ((shift.shiftParams.contractCalls[shift.shiftParams.contractCalls.length - 1]).sendTo)) || "";
+            const contractAddress = (shift.transferParams.contractCalls && ((shift.transferParams.contractCalls[shift.transferParams.contractCalls.length - 1]).sendTo)) || "";
 
             return <>
                 {inner}
@@ -283,6 +283,6 @@ export const OpeningShift = connect<Props & ConnectedProps<[UIContainer, SDKCont
             </>;
         };
 
-        return shift.shiftParams.sendToken.slice(4, 7).toLowerCase() === "eth" ? shiftOut() : shiftIn();
+        return shift.transferParams.sendToken.slice(4, 7).toLowerCase() === "eth" ? shiftOut() : shiftIn();
     }
 );

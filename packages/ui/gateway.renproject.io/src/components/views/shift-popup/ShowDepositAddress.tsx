@@ -34,7 +34,7 @@ interface Props {
     token: Token;
     depositAddress: string;
     order: ShiftInEvent;
-    shiftParams: ShiftInEvent["shiftParams"];
+    transferParams: ShiftInEvent["transferParams"];
     utxos: OrderedMap<string, UTXO>;
     networkDetails: NetworkDetails;
     confirmations: number;
@@ -113,7 +113,7 @@ const ContinueButton = styled.button`
         `;
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, token, order, utxos, sdkRenVM, shiftParams, confirmations, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
+    ({ mini, token, order, utxos, sdkRenVM, transferParams, confirmations, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
 
         const [showQR, setShowQR] = React.useState(false);
@@ -160,8 +160,8 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             );
         }, [showSpinner, timer]);
 
-        const amount = shiftParams.suggestedAmount ? new BigNumber(
-            BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
+        const amount = transferParams.suggestedAmount ? new BigNumber(
+            BigNumber.isBigNumber(transferParams.suggestedAmount) ? transferParams.suggestedAmount : transferParams.suggestedAmount.toString()
         ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
         // const title = window.parent.document.title;

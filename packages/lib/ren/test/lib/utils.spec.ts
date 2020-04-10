@@ -24,7 +24,7 @@ describe("Utils", function () {
     it("generatePHash", () => {
         const expectedPHash = "0x65749241113ce04d4242ca414a5ba67c27eea1e74a5540367a1726770700bae2";
         const payload: EthArgs = [{
-            name: "_shifter",
+            name: "_gateway",
             type: "address",
             value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
         },
@@ -39,7 +39,7 @@ describe("Utils", function () {
 
     it("Burn Topic hash", () => {
         BURN_TOPIC
-            .should.equal("0x2275318eaeb892d338c6737eebf5f31747c1eab22b63ccbc00cd93d4e785c116");
+            .should.equal("0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e");
     });
 
     const testcases = [
@@ -53,7 +53,7 @@ describe("Utils", function () {
     for (const testcase of testcases) {
         it(`generateGHash for ${testcase.name}`, () => {
             const payload: EthArgs = [{
-                name: "_shifter",
+                name: "_gateway",
                 type: "address",
                 value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
             },

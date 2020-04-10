@@ -30,7 +30,7 @@ export const ConnectedMini = connect<Props & ConnectedProps<[SDKContainer]>>([SD
             throw new Error(`Unable to load shift details`);
         }
 
-        const token = shift.shiftParams.sendToken.slice(0, 3) as Token;
+        const token = shift.transferParams.sendToken.slice(0, 3) as Token;
 
         return <Mini token={token} message={message} />;
     }

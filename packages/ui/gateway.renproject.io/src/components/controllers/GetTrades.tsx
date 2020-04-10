@@ -30,12 +30,10 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
                 if (e.data && e.data.from === "ren" && e.data.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
                         switch (e.data.type) {
-                            case GatewayMessageType.GetTrades:
+                            case GatewayMessageType.GetTransfers:
                                 acknowledgeMessage(e.data);
                                 const storage: Map<string, HistoryEvent> = await getStorage(uiContainer.state.renNetwork || renNetwork);
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.Trades, storage).catch(console.error);
-                                // `GetTrades` remains for backwards compatibility
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, storage).catch(console.error);
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.Transfers, storage).catch(console.error);
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't

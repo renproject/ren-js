@@ -7,10 +7,10 @@ import { RenContract } from "./renVM";
 export { TransactionConfig } from "web3-core";
 export type NumberValue = string | number | BigNumber | BN;
 
-export enum ShiftedToken {
-    zBTC = "zBTC",
-    zZEC = "zZEC",
-    zBCH = "zBCH",
+export enum RenTokens {
+    BTC = "BTC",
+    ZEC = "ZEC",
+    BCH = "BCH",
 }
 
 // tslint:disable-next-line: no-any
@@ -48,7 +48,7 @@ export interface ContractCall {
     txConfig?: TransactionConfig; // Set transaction options:
 }
 
-export interface ShiftParamsCommon {
+export interface TransferParamsCommon {
     /**
      * The token, including the origin and destination chains
      */
@@ -65,7 +65,7 @@ export interface ShiftParamsCommon {
     nonce?: string;
 }
 
-export interface LockAndMintParams extends ShiftParamsCommon {
+export interface LockAndMintParams extends TransferParamsCommon {
     /**
      * The amount of `sendToken` that should be sent.
      */
@@ -77,7 +77,7 @@ export interface LockAndMintParams extends ShiftParamsCommon {
 }
 export type ShiftInParams = LockAndMintParams;
 
-export interface LockAndMintParamsSimple extends ShiftParamsCommon, ContractCall {
+export interface LockAndMintParamsSimple extends TransferParamsCommon, ContractCall {
     /**
      * The amount of `sendToken` that should be sent.
      */
@@ -87,20 +87,20 @@ export interface LockAndMintParamsSimple extends ShiftParamsCommon, ContractCall
 }
 export type ShiftInParamsSimple = LockAndMintParamsSimple;
 
-export interface BurnAndReleaseParams extends ShiftParamsCommon {
+export interface BurnAndReleaseParams extends TransferParamsCommon {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
     contractCalls?: ContractCall[];
 }
 export type ShiftOutParams = BurnAndReleaseParams;
 
-export interface BurnAndReleaseParamsSimple extends ShiftParamsCommon, ContractCall {
+export interface BurnAndReleaseParamsSimple extends TransferParamsCommon, ContractCall {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
 }
 export type ShiftOutParamsSimple = BurnAndReleaseParamsSimple;
 
-export interface SendParams extends ShiftParamsCommon {
+export interface SendParams extends TransferParamsCommon {
     sendTo: string;
     sendAmount: NumberValue;
     txConfig?: TransactionConfig; // Set transaction options:
@@ -112,5 +112,5 @@ export type SerializableLockAndMintParams = Exclude<LockAndMintParams, "web3Prov
 export type SerializableShiftOutParams = SerializableBurnAndReleaseParams;
 export type SerializableShiftInParams = SerializableLockAndMintParams;
 
-export type ShiftParams = LockAndMintParams | BurnAndReleaseParams;
-export type SerializableShiftParams = SerializableLockAndMintParams | SerializableBurnAndReleaseParams;
+export type TransferParams = LockAndMintParams | BurnAndReleaseParams;
+export type SerializableTransferParams = SerializableLockAndMintParams | SerializableBurnAndReleaseParams;

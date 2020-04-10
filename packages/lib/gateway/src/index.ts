@@ -2,10 +2,10 @@
 
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
-    BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
+    BurnAndReleaseStatus, Chain, errors, EventType, GatewayMessage, GatewayMessagePayload,
     GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
-    LockAndMintParamsSimple, LockAndMintStatus, NetworkDetails, RenContract, RenNetwork, SendParams,
-    ShiftedToken, ShiftParams, Tokens, UnmarshalledTx,
+    LockAndMintParamsSimple, LockAndMintStatus, NetworkDetails, RenContract, RenNetwork, RenTokens,
+    SendParams, Tokens, TransferParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
     extractBurnReference, extractError, getGatewayAddress, getTokenAddress, newPromiEvent,
@@ -13,57 +13,22 @@ import {
     waitForReceipt, withDefaultAccount,
 } from "@renproject/utils";
 import Web3 from "web3";
-import { HttpProvider, provider as Web3Provider } from "web3-providers";
+import { provider as Web3Provider } from "web3-providers";
 
-import { RenElementHTML, RenGatewayContainerHTML } from "./ren";
+import { RenElementHTML, RenGatewayContainerHTML, RenIFrame } from "./html";
 import {
     createElementFromHTML, GATEWAY_ENDPOINT_PRODUCTION, GATEWAY_ENDPOINT_STAGING, getElement,
     prepareParamsForSendMessage, resolveEndpoint,
 } from "./utils";
 import { validateString } from "./validate";
+import { useBrowserWeb3 } from "./web3";
 
 export {
     Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent,
     LockAndMintStatus, BurnAndReleaseStatus, LockAndMintEvent, BurnAndReleaseEvent,
 } from "@renproject/interfaces";
 
-
-interface InjectedEthereum extends HttpProvider {
-    enable: () => Promise<void>;
-}
-
-export const getInjectedWeb3Provider = async (): Promise<Web3Provider> => {
-    let injectedProvider;
-
-    interface Web3Window {
-        web3?: Web3;
-        ethereum?: InjectedEthereum;
-    }
-
-    const web3Window = window as Web3Window;
-    if (web3Window.ethereum) {
-        await web3Window.ethereum.enable();
-        injectedProvider = web3Window.ethereum;
-    } else if (web3Window.web3) {
-        injectedProvider = web3Window.web3.currentProvider;
-    } else {
-        throw new Error("No Web3 provider provided to GatewayJS.");
-    }
-
-    return injectedProvider as Web3Provider;
-};
-
-
 export class Gateway {
-
-    public static readonly Tokens = Tokens;
-    public static readonly Networks = RenNetwork;
-    public static readonly Chains = Chain;
-    public static readonly LockAndMintStatus = LockAndMintStatus;
-    public static readonly ShiftInStatus = LockAndMintStatus;
-    public static readonly BurnAndReleaseStatus = BurnAndReleaseStatus;
-    public static readonly ShiftOutStatus = BurnAndReleaseStatus;
-    public static readonly utils = utils;
 
     // tslint:disable: readonly-keyword
     public isPaused = false;
@@ -127,13 +92,8 @@ export class Gateway {
     public readonly _getGateways = async () => new Promise<Map<string, HistoryEvent>>((resolve, reject) => {
         const container = this._getOrCreateGatewayContainer();
 
-        const iframe = (uniqueID: string, iframeURL: string) => `
-        <iframe class="_ren_iframe-hidden" id="_ren_iframe-hidden-${uniqueID}" style="display: none"
-            src="${iframeURL}"></iframe>
-        `;
-
         const endpoint = resolveEndpoint(this.endpoint, this.network, "get-trades", this.id);
-        const popup = createElementFromHTML(iframe(this.id, endpoint));
+        const popup = createElementFromHTML(RenIFrame(this.id, endpoint));
 
         if (popup) {
             container.insertBefore(popup, container.lastChild);
@@ -157,12 +117,10 @@ export class Gateway {
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
                         if (popup) {
-                            this._sendMessage(GatewayMessageType.GetTrades, {}, popup).catch(console.error);
+                            this._sendMessage(GatewayMessageType.GetTransfers, {}, popup).catch(console.error);
                         }
                         break;
-                    case GatewayMessageType.Trades:
-                    // `GetTrades` remains for backwards compatibility
-                    case GatewayMessageType.GetTrades:
+                    case GatewayMessageType.Transfers:
                         if (e.data.error) {
                             close();
                             reject(new Error(e.data.error));
@@ -180,29 +138,22 @@ export class Gateway {
 
     public readonly result = () => this.promiEvent;
 
-    public readonly _open = (shiftParams: ShiftParams | SendParams | LockAndMintEvent | BurnAndReleaseEvent, web3Provider?: Web3Provider): Gateway => {
+    public readonly _open = (transferParams: TransferParams | SendParams | LockAndMintEvent | BurnAndReleaseEvent, web3Provider?: Web3Provider): Gateway => {
 
         (async () => {
 
-            let provider: Web3Provider = web3Provider || (shiftParams as ShiftParams).web3Provider;
-
             // Provider can be null if the developer is handling transactions
             // outside of GatewayJS.
+            const provider: Web3Provider = web3Provider || (transferParams as TransferParams).web3Provider;
             if (provider !== null) {
-
-                // If provider is undefined, use injected provider. This is to
-                // remain backwards compatible.
-                if (!provider) {
-                    provider = await getInjectedWeb3Provider();
-                }
                 this.web3 = new Web3(provider);
             }
 
             // tslint:disable-next-line: no-object-mutation
 
-            if ((shiftParams as SendParams).sendAmount) {
+            if ((transferParams as SendParams).sendAmount) {
                 // tslint:disable-next-line: no-parameter-reassignment
-                shiftParams = resolveSendCall(stringToNetwork(this.network), shiftParams as SendParams);
+                transferParams = resolveSendCall(stringToNetwork(this.network), transferParams as SendParams);
             }
 
             // Check that GatewayJS isn't already open
@@ -231,7 +182,7 @@ export class Gateway {
             };
 
             // tslint:disable-next-line: no-any
-            listener = this._eventListener(shiftParams, onClose);
+            listener = this._eventListener(transferParams, onClose);
 
 
             this._addListener(listener);
@@ -250,18 +201,16 @@ export class Gateway {
         return this;
     }
 
-    // withDefaultAccount
-    private readonly _eventListener = (shiftParams: LockAndMintParams | BurnAndReleaseParams | LockAndMintEvent | BurnAndReleaseEvent, onClose: () => void) =>
-        // tslint:disable-next-line: no-any
-        (e: { readonly data: GatewayMessage<any> }) => {
+    private readonly _eventListener = (transferParams: LockAndMintParams | BurnAndReleaseParams | LockAndMintEvent | BurnAndReleaseEvent, onClose: () => void) =>
+        (e: { readonly data: GatewayMessage<GatewayMessageType> }) => {
             if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
                         this._acknowledgeMessage(e.data).catch(console.error);
-                        const shiftParamsFixed = prepareParamsForSendMessage(shiftParams);
-                        this._sendMessage(GatewayMessageType.Shift, {
-                            shift: shiftParamsFixed,
+                        const transferParamsFixed = prepareParamsForSendMessage(transferParams);
+                        this._sendMessage(GatewayMessageType.TransferDetails, {
+                            transferDetails: transferParamsFixed,
                             paused: this.isPaused,
                         }).catch(console.error);
                         break;
@@ -287,51 +236,51 @@ export class Gateway {
                         } else {
                             // tslint:disable-next-line: no-object-mutation
                             this.isCancelling = false;
-                            this.promiEvent.reject(new Error("Shift cancelled by user"));
+                            this.promiEvent.reject(new Error("Transfer cancelled by user"));
                             return;
                         }
-                    case GatewayMessageType.SendTransaction:
+                    case GatewayMessageType.SendEthereumTx:
                         (async () => {
                             try {
                                 if (!this.web3) {
                                     throw new Error(`No Web3 defined`);
                                 }
-                                const txConfig = await withDefaultAccount(this.web3, (e.data.payload as GatewayMessagePayload<GatewayMessageType.SendTransaction>).transactionConfig);
+                                const txConfig = await withDefaultAccount(this.web3, (e.data.payload as GatewayMessagePayload<GatewayMessageType.SendEthereumTx>).transactionConfig);
                                 const promiEvent = this.web3.eth.sendTransaction(txConfig);
                                 const txHash = await new Promise<string>((resolve, reject) => {
                                     promiEvent.on("transactionHash", resolve);
                                     promiEvent.catch(reject);
                                 });
-                                this._acknowledgeMessage<GatewayMessageType.SendTransaction>(e.data, { txHash }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.SendEthereumTx>(e.data as GatewayMessage<GatewayMessageType.SendEthereumTx>, { txHash }).catch(console.error);
                             } catch (error) {
                                 this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
-                    case GatewayMessageType.GetTransactionStatus:
+                    case GatewayMessageType.GetEthereumTxStatus:
                         (async () => {
                             try {
                                 if (!this.web3) {
                                     throw new Error(`No Web3 defined`);
                                 }
-                                const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetTransactionStatus>).txHash;
+                                const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetEthereumTxStatus>).txHash;
                                 await waitForReceipt(this.web3, txHash);
-                                this._acknowledgeMessage<GatewayMessageType.GetTransactionStatus>(e.data, { confirmations: 0 }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxStatus>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxStatus>, { confirmations: 0 }).catch(console.error);
                             } catch (error) {
                                 this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;
-                    case GatewayMessageType.GetTransactionBurn:
+                    case GatewayMessageType.GetEthereumTxBurn:
                         (async () => {
                             try {
                                 if (!this.web3) {
                                     throw new Error(`No Web3 defined`);
                                 }
-                                const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetTransactionBurn>).txHash;
+                                const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetEthereumTxBurn>).txHash;
 
                                 const burnReference = await extractBurnReference(this.web3, txHash);
-                                this._acknowledgeMessage<GatewayMessageType.GetTransactionBurn>(e.data, { burnReference }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxBurn>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxBurn>, { burnReference }).catch(console.error);
                             } catch (error) {
                                 console.error(error);
                                 this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
@@ -472,10 +421,8 @@ export default class GatewayJS {
     public static readonly Networks = RenNetwork;
     public static readonly Chains = Chain;
     public static readonly LockAndMintStatus = LockAndMintStatus;
-    public static readonly ShiftInStatus = LockAndMintStatus;
     public static readonly BurnAndReleaseStatus = BurnAndReleaseStatus;
-    public static readonly ShiftOutStatus = BurnAndReleaseStatus;
-    public static readonly utils = utils;
+    public static readonly utils = { ...utils, useBrowserWeb3 };
 
     private readonly network: NetworkDetails;
     private readonly endpoint: string;
@@ -552,8 +499,8 @@ export default class GatewayJS {
         return new Gateway(this.network, this.endpoint)._open(params, web3Provider);
     }
 
-    public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);
-    public readonly getGatewayAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(stringToNetwork(this.network), web3, token);
+    public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);
+    public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(stringToNetwork(this.network), web3, token);
     public readonly getShifterAddress = this.getGatewayAddress;
 }
 

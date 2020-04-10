@@ -2,8 +2,7 @@ import _BN from "bn.js";
 
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
-    LockAndMintParamsSimple, NetworkDetails, RenContract, RenNetwork, SendParams, ShiftedToken,
-    Tokens,
+    LockAndMintParamsSimple, NetworkDetails, RenContract, RenNetwork, RenTokens, SendParams, Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
@@ -15,7 +14,7 @@ import Web3 from "web3";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
-import { ShifterNetwork } from "./shifterNetwork";
+import { RenVMNetwork } from "./renVMNetwork";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -39,6 +38,9 @@ const NetworkDetails = {
  * new RenJS({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
  * ```
  *
+ * A second optional parameter lets you provide a RenVM RPC provider or a
+ * lightnode URL.
+ *
  * It then exposes two main functions: [[lockAndMint]] and [[burnAndRelease]].
  */
 export default class RenJS {
@@ -52,7 +54,7 @@ export default class RenJS {
 
     // Not static
     public readonly utils = utils;
-    public readonly renVM: ShifterNetwork;
+    public readonly renVM: RenVMNetwork;
     public readonly lightnode: RenVMProvider;
     public readonly network: NetworkDetails;
 
@@ -63,9 +65,19 @@ export default class RenJS {
      */
     constructor(network?: NetworkDetails | string | null | undefined, provider?: string | Provider) {
         this.network = stringToNetwork(network);
-        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ? provider : new MultiProvider<RenVMParams, RenVMResponses>(provider ? [provider] : this.network.nodeURLs)) as unknown as Provider<RenVMParams, RenVMResponses>;
+
+        // Use provided provider, provider URL or default lightnode URL.
+        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ?
+            provider :
+            new MultiProvider<RenVMParams, RenVMResponses>(
+                provider ?
+                    [provider] :
+                    this.network.nodeURLs
+            )
+        ) as unknown as Provider<RenVMParams, RenVMResponses>;
+
         this.lightnode = new RenVMProvider(rpcProvider);
-        this.renVM = new ShifterNetwork(this.lightnode);
+        this.renVM = new RenVMNetwork(this.lightnode);
     }
 
     /**
@@ -102,8 +114,8 @@ export default class RenJS {
         return new BurnAndRelease(this.renVM, this.network, params);
     }
 
-    public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
-    public readonly getGatewayAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
+    public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
+    public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
 }
 
 

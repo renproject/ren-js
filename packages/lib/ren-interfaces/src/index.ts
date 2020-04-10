@@ -1,4 +1,5 @@
 export * from "./abi";
+export * from "./errors";
 export * from "./general";
 export * from "./messages";
 export * from "./parameters";

@@ -1,7 +1,7 @@
 import {
     GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType,
 } from "@renproject/interfaces";
-import { sleep} from "@renproject/utils";
+import { sleep } from "@renproject/utils";
 
 // TODO: Generate uuid properly
 // tslint:disable-next-line: insecure-random
@@ -52,9 +52,9 @@ export const postMessageToClient = async <Type extends GatewayMessageType>(windo
 
         if (
             count === 0 || (
-                type !== GatewayMessageType.SendTransaction &&
-                type !== GatewayMessageType.GetTransactionBurn &&
-                type !== GatewayMessageType.GetTransactionStatus
+                type !== GatewayMessageType.SendEthereumTx &&
+                type !== GatewayMessageType.GetEthereumTxBurn &&
+                type !== GatewayMessageType.GetEthereumTxStatus
             )
         ) {
             count++;

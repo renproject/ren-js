@@ -1,17 +1,7 @@
 import { SerializableBurnAndReleaseParams, SerializableLockAndMintParams } from "./parameters";
-import { Chain, RenContract } from "./renVM";
+import { RenContract } from "./renVM";
 import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./unmarshalled";
-import { UTXODetails } from "./utxo";
-
-export type Tx = {
-    chain: Chain.Bitcoin | Chain.Zcash | Chain.BitcoinCash;
-    address?: string;
-    hash?: string;
-    utxo?: UTXODetails;
-} | {
-    chain: Chain.Ethereum;
-    hash: string;
-};
+import { Tx } from "./utxo";
 
 export enum LockAndMintStatus {
     Committed = "mint_committed",
@@ -75,7 +65,7 @@ export enum EventType {
 export interface LockAndMintEvent extends HistoryEventCommon {
     eventType: EventType.LockAndMint;
     status: LockAndMintStatus;
-    shiftParams: SerializableLockAndMintParams;
+    transferParams: SerializableLockAndMintParams;
     renVMQuery: UnmarshalledMintTx | null;
 }
 export type ShiftInEvent = LockAndMintEvent;
@@ -83,7 +73,7 @@ export type ShiftInEvent = LockAndMintEvent;
 export interface BurnAndReleaseEvent extends HistoryEventCommon {
     eventType: EventType.BurnAndRelease;
     status: BurnAndReleaseStatus;
-    shiftParams: SerializableBurnAndReleaseParams;
+    transferParams: SerializableBurnAndReleaseParams;
     renVMQuery: UnmarshalledBurnTx | null;
 }
 export type ShiftOutEvent = BurnAndReleaseEvent;

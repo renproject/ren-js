@@ -1,3 +1,9 @@
+
+export const RenIFrame = (uniqueID: string, iframeURL: string) => `
+<iframe class="_ren_iframe-hidden" id="_ren_iframe-hidden-${uniqueID}" style="display: none"
+    src="${iframeURL}"></iframe>
+`;
+
 export const RenGatewayContainerHTML = () => `
 <div id="_ren_gatewayContainer" id="_ren_gatewayContainer">
     <style>

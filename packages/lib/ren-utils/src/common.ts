@@ -41,11 +41,13 @@ export const NULL = (bytes: number) => Ox("00".repeat(bytes));
 
 export const unzip = (zip: EthArgs) => [zip.map(param => param.type), zip.map(param => param.value)];
 
+/**
+ * Convert a hex string or Buffer to base64.
+ */
 export const toBase64 = (input: string | Buffer) =>
     (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex")).toString("base64");
 
-// tslint:disable-next-line: no-any
-export const ignoreError = (error: any): boolean => {
+export const ignorePromiEventError = (error: any): boolean => { // tslint:disable-line: no-any
     try {
         return (error && error.message && (
             error.message.match(/Invalid block number/) ||
@@ -136,7 +138,7 @@ export const assert = (assertion: boolean, sentence?: string): assertion is true
 
 /**
  * Converts an Ethereum ABI and values to the parameters expected by RenJS
- * for shifting in.
+ * for minting.
  * @param options The ABI of the function, or ABI of the contract and the
  *                function name.
  * @param args The values of the parameters - one per function input.

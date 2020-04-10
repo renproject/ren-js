@@ -52,12 +52,12 @@ export const updateStorageTrade = async (network: string, trade: HistoryEvent, d
 
     const store = getStore(network, domain);
 
-    if (!trade.shiftParams.nonce) {
+    if (!trade.transferParams.nonce) {
         throw new Error(`Shift must have nonce`);
     }
 
-    if (!cancelled.has(trade.shiftParams.nonce)) {
-        await store.setItem(trade.shiftParams.nonce, trade);
+    if (!cancelled.has(trade.transferParams.nonce)) {
+        await store.setItem(trade.transferParams.nonce, trade);
     }
 
     return;

@@ -1,13 +1,14 @@
 import {
-    Chain, LockAndMintParams, NetworkDetails, TxStatus, UnmarshalledMintTx, UTXO, UTXOInput,
+    Chain, LockAndMintParams, NetworkDetails, TxStatus, UnmarshalledMintTx, UTXOIndex,
+    UTXOWithChain,
 } from "@renproject/interfaces";
 import { ResponseQueryMintTx } from "@renproject/rpc";
 import {
-    DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardEvents, generateAddress, generateGHash,
-    generateShiftInTxHash, getGatewayAddress, ignoreError, newPromiEvent, Ox, parseRenContract,
-    payloadToABI, payloadToShiftInABI, processLockAndMintParams, PromiEvent, randomNonce,
-    renTxHashToBase64, RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits,
-    SECONDS, signatureToString, sleep, strip0x, toBase64, toBigNumber, Web3Events,
+    DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardWeb3Events, generateAddress,
+    generateGHash, generateShiftInTxHash, getGatewayAddress, ignorePromiEventError, newPromiEvent,
+    Ox, parseRenContract, payloadToABI, payloadToShiftInABI, processLockAndMintParams, PromiEvent,
+    randomNonce, renTxHashToBase64, RenWeb3Events, resolveInToken, retrieveConfirmations,
+    retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, toBase64, toBigNumber, Web3Events,
     withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -18,20 +19,20 @@ import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 import { sha3 } from "web3-utils";
 
-import { ShifterNetwork, unmarshalMintTx } from "./shifterNetwork";
+import { RenVMNetwork, unmarshalMintTx } from "./renVMNetwork";
 
 export class LockAndMint {
-    public utxo: UTXOInput | undefined;
+    public utxo: UTXOIndex | undefined;
     public gatewayAddress: string | undefined;
     public signature: string | undefined;
     private readonly network: NetworkDetails;
-    private readonly renVMNetwork: ShifterNetwork;
+    private readonly renVMNetwork: RenVMNetwork;
     private readonly params: LockAndMintParams;
     private renVMResponse: UnmarshalledMintTx | undefined;
 
     public thirdPartyTransaction: string | undefined;
 
-    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: LockAndMintParams) {
+    constructor(_renVMNetwork: RenVMNetwork, _network: NetworkDetails, _params: LockAndMintParams) {
         this.network = _network;
         this.renVMNetwork = _renVMNetwork;
         this.params = processLockAndMintParams(this.network, _params);
@@ -47,7 +48,7 @@ export class LockAndMint {
             }
 
             if (!renContract) {
-                throw new Error(`Must provide Ren transaction hash or token to be shifted.`);
+                throw new Error(`Must provide Ren transaction hash or token to be transferred.`);
             }
 
             // Last contract call
@@ -65,8 +66,8 @@ export class LockAndMint {
 
     public addr = () => this.gatewayAddress;
 
-    public wait = (confirmations: number, specifyUTXO?: UTXOInput): PromiEvent<this, { "deposit": [UTXO] }> => {
-        const promiEvent = newPromiEvent<this, { "deposit": [UTXO] }>();
+    public wait = (confirmations: number, specifyUTXO?: UTXOIndex): PromiEvent<this, { "deposit": [UTXOWithChain] }> => {
+        const promiEvent = newPromiEvent<this, { "deposit": [UTXOWithChain] }>();
 
         (async () => {
             // If the deposit has already been submitted, "wait" can be skipped.
@@ -80,17 +81,16 @@ export class LockAndMint {
                 while (true) {
                     const utxoConfirmations = await retrieveConfirmations(this.network, {
                         chain: parseRenContract(resolveInToken(this.params.sendToken)).from,
-                        hash: specifyUTXO.txid
+                        hash: specifyUTXO.txHash
                     });
                     if (utxoConfirmations > previousUtxoConfirmations) {
                         previousUtxoConfirmations = utxoConfirmations;
                         promiEvent.emit("deposit", {
                             chain: parseRenContract(resolveInToken(this.params.sendToken)).from as Chain.Bitcoin | Chain.BitcoinCash | Chain.Zcash,
                             utxo: {
-                                txid: specifyUTXO.txid,
-                                value: 0, // TODO: Get value
-                                script_hex: "",
-                                output_no: specifyUTXO.output_no,
+                                txHash: specifyUTXO.txHash,
+                                amount: 0, // TODO: Get value
+                                vOut: specifyUTXO.vOut,
                                 confirmations: utxoConfirmations,
                             }
                         });
@@ -111,7 +111,7 @@ export class LockAndMint {
             const { sendToken: renContract } = this.params;
 
             if (!renContract) {
-                throw new Error(`Must provide token to be shifted.`);
+                throw new Error(`Must provide token to be transferred.`);
             }
 
             // try {
@@ -131,7 +131,7 @@ export class LockAndMint {
             //     // Ignore error
             // }
 
-            let deposits: OrderedMap<string, UTXO> = OrderedMap();
+            let deposits: OrderedMap<string, UTXOWithChain> = OrderedMap();
             // const depositedAmount = (): number => {
             //     return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
             // };
@@ -144,13 +144,13 @@ export class LockAndMint {
 
                 if (deposits.size > 0) {
                     // Sort deposits
-                    const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.value > b.utxo.value ? -1 : 1).first<UTXO>(undefined);
+                    const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.amount > b.utxo.amount ? -1 : 1).first<UTXOWithChain>(undefined);
 
                     // Handle required minimum and maximum amount
                     const minimum = new BigNumber(10000);
                     const maximum = new BigNumber(Infinity);
 
-                    if (greatestTx && new BigNumber(greatestTx.utxo.value).gte(minimum) && new BigNumber(greatestTx.utxo.value).lte(maximum)) {
+                    if (greatestTx && new BigNumber(greatestTx.utxo.amount).gte(minimum) && new BigNumber(greatestTx.utxo.amount).lte(maximum)) {
                         this.utxo = greatestTx.utxo;
                         break;
                     }
@@ -162,11 +162,11 @@ export class LockAndMint {
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
                         // tslint:disable-next-line: no-non-null-assertion
-                        if (!deposits.has(deposit.utxo.txid) || deposits.get(deposit.utxo.txid)!.utxo.confirmations !== deposit.utxo.confirmations) {
+                        if (!deposits.has(deposit.utxo.txHash) || deposits.get(deposit.utxo.txHash)!.utxo.confirmations !== deposit.utxo.confirmations) {
                             promiEvent.emit("deposit", deposit);
                             newDeposit = true;
                         }
-                        deposits = deposits.set(deposit.utxo.txid, deposit);
+                        deposits = deposits.set(deposit.utxo.txHash, deposit);
                     }
                     if (newDeposit) { continue; }
                 } catch (error) {
@@ -183,7 +183,7 @@ export class LockAndMint {
         return promiEvent;
     }
 
-    public renTxHash = (specifyUTXO?: UTXOInput) => {
+    public renTxHash = (specifyUTXO?: UTXOIndex) => {
         const renTxHash = this.params.renTxHash;
         if (renTxHash) {
             return renTxHashToBase64(renTxHash);
@@ -205,7 +205,7 @@ export class LockAndMint {
         }
 
         if (!renContract) {
-            throw new Error(`Unable to generate renTxHash without token being shifted.`);
+            throw new Error(`Unable to generate renTxHash without token being transferred.`);
         }
 
         // Last contract call
@@ -216,10 +216,10 @@ export class LockAndMint {
         return generateShiftInTxHash(resolveInToken(renContract), encodedGHash, utxo);
     }
 
-    public queryTx = async (specifyUTXO?: UTXOInput) =>
+    public queryTx = async (specifyUTXO?: UTXOIndex) =>
         unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
 
-    public submit = (specifyUTXO?: UTXOInput): PromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }> => {
+    public submit = (specifyUTXO?: UTXOIndex): PromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }> => {
         const promiEvent = newPromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }>();
 
         (async () => {
@@ -243,7 +243,7 @@ export class LockAndMint {
                 }
 
                 if (!renContract) {
-                    throw new Error(`Unable to submit to RenVM without token being shifted.`);
+                    throw new Error(`Unable to submit to RenVM without token being transferred.`);
                 }
 
                 // Last contract call
@@ -263,8 +263,8 @@ export class LockAndMint {
                         resolveInToken(renContract),
                         sendTo,
                         nonce,
-                        utxo.txid,
-                        utxo.output_no.toFixed(),
+                        utxo.txHash,
+                        utxo.vOut.toFixed(),
                         this.network,
                         contractFn,
                         fnABI,
@@ -351,7 +351,7 @@ export class LockAndMint {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXOInput) => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXOIndex) => {
         await this.wait(confirmations);
         const signature = await this.submit(specifyUTXO);
         return signature.submitToEthereum(web3Provider, txConfig);
@@ -391,8 +391,8 @@ export class LockAndMint {
                 // with no time in between:
                 //
                 // ```js
-                // const txHash = await new Promise((resolve, reject) => shift.on("transactionHash", resolve).catch(reject));
-                // shift.on("confirmation", () => { /* do something */ });
+                // const txHash = await new Promise((resolve, reject) => lockAndMint.on("transactionHash", resolve).catch(reject));
+                // lockAndMint.on("confirmation", () => { /* do something */ });
                 // ```
                 await emitConfirmation();
                 setTimeout(emitConfirmation, 1000);
@@ -410,15 +410,17 @@ export class LockAndMint {
             // Check if the signature has already been submitted
             if (renContract) {
                 try {
-                    const shifterAddress = await getGatewayAddress(this.network, web3, resolveInToken(renContract));
-                    const abi = this.network.contracts.addresses.gateways.BTCGateway.abi;
-                    const shifter = new web3.eth.Contract(abi, shifterAddress);
+                    const gatewayAddress = await getGatewayAddress(this.network, web3, resolveInToken(renContract));
+                    const gatewayContract = new web3.eth.Contract(
+                        this.network.contracts.addresses.gateways.BTCGateway.abi,
+                        gatewayAddress,
+                    );
                     // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
                     // the contract
-                    const status = await shifter.methods.status(this.renVMResponse.autogen.sighash).call();
+                    const status = await gatewayContract.methods.status(this.renVMResponse.autogen.sighash).call();
                     if (status) {
                         const recentRegistrationEventsOld = await web3.eth.getPastLogs({
-                            address: shifterAddress,
+                            address: gatewayAddress,
                             fromBlock: "1",
                             toBlock: "latest",
                             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
@@ -426,7 +428,7 @@ export class LockAndMint {
                             topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
                         });
                         const recentRegistrationEvents = await web3.eth.getPastLogs({
-                            address: shifterAddress,
+                            address: gatewayAddress,
                             fromBlock: "1",
                             toBlock: "latest",
                             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
@@ -482,7 +484,7 @@ export class LockAndMint {
 
                 if (last) {
                     // tslint:disable-next-line: no-non-null-assertion
-                    forwardEvents(tx!, promiEvent);
+                    forwardWeb3Events(tx!, promiEvent);
                 }
 
                 // tslint:disable-next-line: no-non-null-assertion
@@ -490,7 +492,7 @@ export class LockAndMint {
                     .on("transactionHash", resolve)
                     .catch((error: Error) => {
                         // tslint:disable-next-line: no-console
-                        try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
+                        try { if (ignorePromiEventError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
                         reject(error);
                     })
                 );
@@ -505,7 +507,7 @@ export class LockAndMint {
                 .once("confirmation", (_confirmations: number, receipt: TransactionReceipt) => { innerResolve(receipt); })
                 .catch((error: Error) => {
                     // tslint:disable-next-line: no-console
-                    try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
+                    try { if (ignorePromiEventError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
                     reject(error);
                 })
             );
@@ -514,7 +516,7 @@ export class LockAndMint {
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
             // tslint:disable-next-line: no-console
-            try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
+            try { if (ignorePromiEventError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });
 

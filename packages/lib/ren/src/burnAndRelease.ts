@@ -3,22 +3,22 @@ import {
 } from "@renproject/interfaces";
 import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
-    extractBurnReference, extractError, forwardEvents, generateShiftOutTxHash, ignoreError,
-    newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent, renTxHashToBase64,
-    RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
+    extractBurnReference, extractError, forwardWeb3Events, generateShiftOutTxHash,
+    ignorePromiEventError, newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent,
+    renTxHashToBase64, RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
 import { TransactionConfig } from "web3-core";
 
-import { ShifterNetwork, unmarshalBurnTx } from "./shifterNetwork";
+import { RenVMNetwork, unmarshalBurnTx } from "./renVMNetwork";
 
 export class BurnAndRelease {
     private readonly params: BurnAndReleaseParams;
-    private readonly renVMNetwork: ShifterNetwork;
+    private readonly renVMNetwork: RenVMNetwork;
     private readonly network: NetworkDetails;
 
-    constructor(_renVMNetwork: ShifterNetwork, _network: NetworkDetails, _params: BurnAndReleaseParams) {
+    constructor(_renVMNetwork: RenVMNetwork, _network: NetworkDetails, _params: BurnAndReleaseParams) {
         this.renVMNetwork = _renVMNetwork;
         this.network = _network;
         this.params = processBurnAndReleaseParams(this.network, _params);
@@ -118,14 +118,14 @@ export class BurnAndRelease {
                         }));
 
                         if (last) {
-                            forwardEvents(tx, promiEvent);
+                            forwardWeb3Events(tx, promiEvent);
                         }
 
                         ethTxHash = await new Promise((resolve, reject) => tx
                             .on("transactionHash", resolve)
                             .catch((error: Error) => {
                                 // tslint:disable-next-line: no-console
-                                try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
+                                try { if (ignorePromiEventError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
                                 reject(error);
                             })
                         );
@@ -148,7 +148,7 @@ export class BurnAndRelease {
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
             // tslint:disable-next-line: no-console
-            try { if (ignoreError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
+            try { if (ignorePromiEventError(error)) { console.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
             promiEvent.reject(error);
         });
 

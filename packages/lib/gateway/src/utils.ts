@@ -1,6 +1,6 @@
 import {
     BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, NetworkDetails, RenNetwork,
-    SerializableShiftParams, ShiftParams,
+    SerializableTransferParams, TransferParams,
 } from "@renproject/interfaces";
 import { toFixed } from "@renproject/utils";
 
@@ -23,12 +23,12 @@ export const createElementFromHTML = (htmlString: string) => {
     return div.firstChild;
 };
 
-export const resolveEndpoint = (endpointIn: string, network: NetworkDetails, pathIn: string, shiftID?: string) => {
+export const resolveEndpoint = (endpointIn: string, network: NetworkDetails, pathIn: string, transferID?: string) => {
     // Remove ending '/' from endpoint
     const endpoint = endpointIn.slice(endpointIn.length - 1) === "/" ? endpointIn.slice(0, endpointIn.length - 1) : endpointIn;
     // Remove starting '/' from path
     const path = pathIn.slice(0, 1) === "/" ? pathIn.slice(1, pathIn.length) : pathIn;
-    return `${endpoint}/#/${path}?network=${network.name}&${shiftID ? `id=${shiftID}` : ""}`;
+    return `${endpoint}/#/${path}?network=${network.name}&${transferID ? `id=${transferID}` : ""}`;
 };
 
 // tslint:disable-next-line: readonly-keyword no-any
@@ -48,21 +48,21 @@ const fixBigNumber = <Value extends { [keys: string]: any }>(value: Value, key: 
  * prepareParamsForSendMessage turns possible BigNumber values into strings
  * before passing the params to sendMessage.
  * The error message `can't clone ...` is thrown if this step is skipped.
- * @param shiftParams The parameters being fixed.
+ * @param transferParamsIn The parameters being fixed.
  */
-export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | LockAndMintEvent | BurnAndReleaseEvent): SerializableShiftParams | LockAndMintEvent | BurnAndReleaseEvent => {
+export const prepareParamsForSendMessage = (transferParamsIn: TransferParams | LockAndMintEvent | BurnAndReleaseEvent): SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent => {
     // Certain types can't be sent via sendMessage - e.g. BigNumbers.
 
-    const { web3Provider, ...shiftParamsFiltered } = shiftParamsIn as ShiftParams;
-    const shiftParams = shiftParamsFiltered as SerializableShiftParams;
+    const { web3Provider, ...transferParamsFiltered } = transferParamsIn as TransferParams;
+    const transferParams = transferParamsFiltered as SerializableTransferParams;
 
     // tslint:disable-next-line: no-unnecessary-type-assertion
-    fixBigNumber(shiftParams as LockAndMintParams, "suggestedAmount");
+    fixBigNumber(transferParams as LockAndMintParams, "suggestedAmount");
 
     // Contract call values
     try {
         // tslint:disable-next-line: no-unnecessary-type-assertion
-        const contractCalls = (shiftParams as LockAndMintParams).contractCalls;
+        const contractCalls = (transferParams as LockAndMintParams).contractCalls;
         if (contractCalls) {
             for (const contractCall of contractCalls) {
                 const contractParamsInner = contractCall.contractParams;
@@ -75,5 +75,5 @@ export const prepareParamsForSendMessage = (shiftParamsIn: ShiftParams | LockAnd
         }
     } catch (error) { console.error(error); }
 
-    return shiftParams;
+    return transferParams;
 };

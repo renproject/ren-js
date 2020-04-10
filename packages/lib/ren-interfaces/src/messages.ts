@@ -1,4 +1,4 @@
-import { SerializableShiftParams, TransactionConfig } from "./parameters";
+import { SerializableTransferParams, TransactionConfig } from "./parameters";
 import {
     BurnAndReleaseEvent, BurnAndReleaseStatus, HistoryEvent, LockAndMintEvent, LockAndMintStatus,
 } from "./types";
@@ -8,10 +8,10 @@ export enum GatewayMessageType {
     Pause = "pause",
     Resume = "resume",
     Ready = "ready",
-    Shift = "shift",
+    TransferDetails = "transferDetails",
 
-    Trades = "trades",
-    GetTrades = "getTrades",
+    Transfers = "Transfers",
+    GetTransfers = "GetTransfers",
 
     Status = "status",
     GetStatus = "getStatus",
@@ -19,9 +19,9 @@ export enum GatewayMessageType {
     Error = "error",
     Done = "done",
 
-    SendTransaction = "sendTransaction",
-    GetTransactionStatus = "getTransactionStatus",
-    GetTransactionBurn = "getTransactionBurn",
+    SendEthereumTx = "sendEthereumTx",
+    GetEthereumTxStatus = "getEthereumTxStatus",
+    GetEthereumTxBurn = "getEthereumTxBurn",
 
     Acknowledgement = "acknowledgement",
 }
@@ -30,12 +30,12 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.Pause ? {} :
     Type extends GatewayMessageType.Resume ? {} :
     Type extends GatewayMessageType.Ready ? {} :
-    Type extends GatewayMessageType.Shift ? {
-        shift: SerializableShiftParams | LockAndMintEvent | BurnAndReleaseEvent,
+    Type extends GatewayMessageType.TransferDetails ? {
+        transferDetails: SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent,
         paused: boolean,
     } :
-    Type extends GatewayMessageType.GetTrades ? ({} | Map<string, HistoryEvent>) :
-    Type extends GatewayMessageType.Trades ? Map<string, HistoryEvent> :
+    Type extends GatewayMessageType.GetTransfers ? {} :
+    Type extends GatewayMessageType.Transfers ? Map<string, HistoryEvent> :
     Type extends GatewayMessageType.Status ? {
         status: LockAndMintStatus | BurnAndReleaseStatus | undefined;
         details: null;
@@ -47,9 +47,9 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     } :
     Type extends GatewayMessageType.Done ? {} | UnmarshalledTx :
 
-    Type extends GatewayMessageType.SendTransaction ? { transactionConfig: TransactionConfig } :
-    Type extends GatewayMessageType.GetTransactionStatus ? { txHash: string } :
-    Type extends GatewayMessageType.GetTransactionBurn ? { txHash: string } :
+    Type extends GatewayMessageType.SendEthereumTx ? { transactionConfig: TransactionConfig } :
+    Type extends GatewayMessageType.GetEthereumTxStatus ? { txHash: string } :
+    Type extends GatewayMessageType.GetEthereumTxBurn ? { txHash: string } :
 
     // tslint:disable-next-line: no-any
     Type extends GatewayMessageType.Acknowledgement ? any : never;
@@ -58,9 +58,9 @@ export type GatewayMessageResponse<Type extends GatewayMessageType> =
     // tslint:disable-next-line: no-any
     Type extends GatewayMessageType.GetStatus ? { status: LockAndMintStatus | BurnAndReleaseStatus, details: any | null } :
 
-    Type extends GatewayMessageType.SendTransaction ? { txHash?: string, error?: string } :
-    Type extends GatewayMessageType.GetTransactionStatus ? { confirmations?: number, error?: string } :
-    Type extends GatewayMessageType.GetTransactionBurn ? { burnReference?: string | number, error?: string } :
+    Type extends GatewayMessageType.SendEthereumTx ? { txHash?: string, error?: string } :
+    Type extends GatewayMessageType.GetEthereumTxStatus ? { confirmations?: number, error?: string } :
+    Type extends GatewayMessageType.GetEthereumTxBurn ? { burnReference?: string | number, error?: string } :
     never;
 
 export interface GatewayMessage<Type extends GatewayMessageType> {

@@ -81,6 +81,8 @@ describe("RenJS initialization and exports", () => {
         const renJS = new RenJS("testnet");
 
         const burnAndRelease = await renJS.burnAndRelease({
+            web3: null,
+
             // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
             sendToken: RenJS.Tokens.BTC.Eth2Btc,
 
@@ -100,7 +102,7 @@ describe("RenJS initialization and exports", () => {
     });
 
     for (const network of ["devnet", "testnet", "chaosnet"]) {
-        it(`get token and shifter addresses for ${network}`, async () => {
+        it(`get token and gateway addresses for ${network}`, async () => {
             const renJS = new RenJS(network);
 
             const infuraURL = `${renJS.network.contracts.infura}/v3/${process.env.INFURA_KEY}`;
@@ -108,7 +110,7 @@ describe("RenJS initialization and exports", () => {
 
             for (const asset of ["BTC", "ZEC", "BCH"] as const) { // Without const, defaults to string[]
                 (await renJS.getTokenAddress(web3, asset))
-                    .should.equal(renJS.network.contracts.addresses.gateways[`${asset}`]._address);
+                    .should.equal(renJS.network.contracts.addresses.gateways[`Ren${asset}`]._address);
 
                 (await renJS.getGatewayAddress(web3, asset))
                     .should.equal(renJS.network.contracts.addresses.gateways[`${asset}Gateway`]._address);

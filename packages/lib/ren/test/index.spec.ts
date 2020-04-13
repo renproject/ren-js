@@ -81,8 +81,6 @@ describe("RenJS initialization and exports", () => {
         const renJS = new RenJS("testnet");
 
         const burnAndRelease = await renJS.burnAndRelease({
-            web3: null,
-
             // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
             sendToken: RenJS.Tokens.BTC.Eth2Btc,
 

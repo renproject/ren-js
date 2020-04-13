@@ -408,10 +408,10 @@ describe.skip("Cross chain transactions", function () {
         }
     });
 
-    it.skip("recover trade", async () => {
+    it.skip("recover transfer", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
-            logger.info(`Starting mint test - recovering trade`);
+            logger.info(`Starting mint test - recovering transfer`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.000225, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
@@ -483,14 +483,9 @@ describe.skip("Cross chain transactions", function () {
     it("confirmationless", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
-            logger.info(`Starting mint test - recovering trade`);
+            logger.info(`Starting mint test - recovering transfer`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
-
-            const contractVersion = network.contracts.version;
-
-            // const tokenAddress = await renJS.getTokenAddress(web3, contract);
-            // const gatewayAddress = await renJS.getGatewayAddress(web3, contract);
 
             const adapterContract = network.contracts.addresses.gateways.BasicAdapter.address;
 

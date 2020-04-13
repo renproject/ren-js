@@ -68,7 +68,6 @@ export interface LockAndMintEvent extends HistoryEventCommon {
     transferParams: SerializableLockAndMintParams;
     renVMQuery: UnmarshalledMintTx | null;
 }
-export type ShiftInEvent = LockAndMintEvent;
 
 export interface BurnAndReleaseEvent extends HistoryEventCommon {
     eventType: EventType.BurnAndRelease;
@@ -76,6 +75,5 @@ export interface BurnAndReleaseEvent extends HistoryEventCommon {
     transferParams: SerializableBurnAndReleaseParams;
     renVMQuery: UnmarshalledBurnTx | null;
 }
-export type ShiftOutEvent = BurnAndReleaseEvent;
 
 export type HistoryEvent = LockAndMintEvent | BurnAndReleaseEvent;

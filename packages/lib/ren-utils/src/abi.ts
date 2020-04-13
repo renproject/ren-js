@@ -35,7 +35,7 @@ export const payloadToABI = (methodName: string, payload: Array<{ type: string, 
     ];
 };
 
-export const payloadToShiftInABI = (methodName: string, payload: Array<{ type: string, name: string }> | undefined): AbiItem[] => {
+export const payloadToMintABI = (methodName: string, payload: Array<{ type: string, name: string }> | undefined): AbiItem[] => {
     return [
         {
             ...mintABITemplate,

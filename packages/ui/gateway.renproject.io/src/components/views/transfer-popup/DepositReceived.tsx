@@ -1,24 +1,18 @@
 import * as React from "react";
 
-import { NetworkDetails, ShiftInEvent, UTXO } from "@renproject/interfaces";
-import { TokenIcon } from "@renproject/react-components";
+import { LockAndMintEvent, NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
-import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
-import QRCode from "qrcode.react";
-import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
 import infoIcon from "../../../images/icons/info.svg";
-import { ReactComponent as QR } from "../../../images/qr.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
-import { Token, Tokens } from "../../../state/generalTypes";
-import { getURL } from "../../controllers/Storage";
+import { Token } from "../../../state/generalTypes";
 import { Popup } from "../Popup";
 import { ProgressBar } from "../ProgressBar";
 import { Tooltip } from "../tooltip/Tooltip";
@@ -36,21 +30,19 @@ export const ScanningDot = styled.span`
             flex-shrink: 0;
         `;
 
-const INTEROP_LINK = "https://docs.renproject.io/ren/renvm/universal-interop#performance-or-confirmation-as-a-service";
-
 interface Props {
     mini: boolean;
     token: Token;
     depositAddress: string;
-    order: ShiftInEvent;
-    transferParams: ShiftInEvent["transferParams"];
-    utxos: OrderedMap<string, UTXO>;
+    order: LockAndMintEvent;
+    transferParams: LockAndMintEvent["transferParams"];
+    utxos: OrderedMap<string, UTXOWithChain>;
     networkDetails: NetworkDetails;
     confirmations: number;
     sdkRenVM: RenJS | null;
     onQRClick(): void;
-    waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
-    onDeposit(utxo: UTXO): void;
+    waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
+    onDeposit(utxo: UTXOWithChain): void;
 }
 
 const ConfirmationsContainer = styled.div`
@@ -77,11 +69,9 @@ const StyledLabel = styled.span`
         `;
 
 export const DepositReceived: React.StatelessComponent<Props> =
-    ({ mini, token, order, utxos, sdkRenVM, transferParams, confirmations, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
+    ({ mini, token, utxos, confirmations, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
 
-        const [showQR, setShowQR] = React.useState(false);
-        const [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
 
@@ -96,7 +86,6 @@ export const DepositReceived: React.StatelessComponent<Props> =
                 setShowSpinner(true);
             }, 5000) as any, // tslint:disable-line: no-any
             );
-            setUnderstood(true);
             setShowFullError(false);
             waitForDeposit(onDeposit)
                 .catch((error) => {
@@ -123,18 +112,10 @@ export const DepositReceived: React.StatelessComponent<Props> =
             );
         }, [showSpinner, timer]);
 
-        // const requiredAmount = transferParams.requiredAmount ? new BigNumber(
-        //     BigNumber.isBigNumber(transferParams.requiredAmount) ? transferParams.requiredAmount : transferParams.requiredAmount.toString()
-        // ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
-
-        // const suggestedAmount = transferParams.suggestedAmount ? new BigNumber(
-        //     BigNumber.isBigNumber(transferParams.suggestedAmount) ? transferParams.suggestedAmount : transferParams.suggestedAmount.toString()
-        // ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
-
         const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains.`;
 
         if (mini) {
-            const last = utxos.last<UTXO>();
+            const last = utxos.last<UTXOWithChain>();
             return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
         }
 
@@ -152,7 +133,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
                                 <Tooltip width={250} contents={<span>{tooltipText}</span>/* Read about confirmationless deposits <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</span>*/}><img alt={tooltipText} src={infoIcon} /></Tooltip>
                             </ConfirmationsContainer> : <></>}
                             {utxos.map(utxo => {
-                                return <div key={utxo.utxo.txid}>
+                                return <div key={utxo.utxo.txHash}>
                                     {/* <div className="show-utxos--utxo">
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
                     </div> */}
@@ -181,8 +162,8 @@ export const DepositReceived: React.StatelessComponent<Props> =
             <div className="deposit-address">
                 <div className="popup--body--actions">
                     {utxos.map(utxo => {
-                        return <div key={utxo.utxo.txid}>
-                            <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid }, networkDetails)}>
+                        return <div key={utxo.utxo.txHash}>
+                            <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(utxo, networkDetails)}>
                                 <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
                                     <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
                                 </div>

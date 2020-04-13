@@ -75,7 +75,6 @@ export interface LockAndMintParams extends TransferParamsCommon {
 
     contractCalls?: ContractCall[];
 }
-export type ShiftInParams = LockAndMintParams;
 
 export interface LockAndMintParamsSimple extends TransferParamsCommon, ContractCall {
     /**
@@ -85,20 +84,17 @@ export interface LockAndMintParamsSimple extends TransferParamsCommon, ContractC
 
     confirmations?: number;
 }
-export type ShiftInParamsSimple = LockAndMintParamsSimple;
 
 export interface BurnAndReleaseParams extends TransferParamsCommon {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
     contractCalls?: ContractCall[];
 }
-export type ShiftOutParams = BurnAndReleaseParams;
 
 export interface BurnAndReleaseParamsSimple extends TransferParamsCommon, ContractCall {
     ethTxHash?: string; // The hash of the burn transaction on Ethereum
     burnReference?: string | number; // The reference ID of the burn emitted in the contract log
 }
-export type ShiftOutParamsSimple = BurnAndReleaseParamsSimple;
 
 export interface SendParams extends TransferParamsCommon {
     sendTo: string;
@@ -109,8 +105,6 @@ export interface SendParams extends TransferParamsCommon {
 
 export type SerializableBurnAndReleaseParams = Exclude<BurnAndReleaseParams, "web3Provider">;
 export type SerializableLockAndMintParams = Exclude<LockAndMintParams, "web3Provider">;
-export type SerializableShiftOutParams = SerializableBurnAndReleaseParams;
-export type SerializableShiftInParams = SerializableLockAndMintParams;
 
 export type TransferParams = LockAndMintParams | BurnAndReleaseParams;
 export type SerializableTransferParams = SerializableLockAndMintParams | SerializableBurnAndReleaseParams;

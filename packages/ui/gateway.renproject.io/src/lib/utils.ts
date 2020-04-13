@@ -1,4 +1,4 @@
-import { LockAndMintStatus, BurnAndReleaseStatus, TxStatus } from "@renproject/interfaces";
+import { BurnAndReleaseStatus, LockAndMintStatus, TxStatus } from "@renproject/interfaces";
 
 // tslint:disable-next-line: no-any
 export const isPromise = <T>(p: any): p is Promise<T> => {
@@ -42,7 +42,7 @@ export const compareTxStatus = (...statuses: Array<TxStatus | undefined | null>)
     ).status;
 };
 
-export const compareShiftStatus = (...statuses: Array<LockAndMintStatus | BurnAndReleaseStatus | undefined | null>): LockAndMintStatus | BurnAndReleaseStatus | undefined => {
+export const compareTransferStatus = (...statuses: Array<LockAndMintStatus | BurnAndReleaseStatus | undefined | null>): LockAndMintStatus | BurnAndReleaseStatus | undefined => {
     return maxBy(
         (status: { status: LockAndMintStatus | BurnAndReleaseStatus | undefined, index: number }) => status.index,
         statuses.map(status => {

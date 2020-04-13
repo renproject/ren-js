@@ -1,12 +1,14 @@
 import * as React from "react";
 
 import {
-    BurnAndReleaseStatus, EventType, GatewayMessage, GatewayMessageType, HistoryEvent,
-    LockAndMintStatus, SendTokenInterface, SerializableTransferParams, ShiftInEvent, ShiftInParams,
-    ShiftOutEvent, ShiftOutParams, UnmarshalledTx,
+    BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, EventType, GatewayMessage,
+    GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintStatus,
+    SendTokenInterface, SerializableTransferParams,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { Ox, processShiftInParams, processShiftOutParams, sleep, strip0x } from "@renproject/utils";
+import {
+    Ox, processBurnAndReleaseParams, processLockAndMintParams, sleep, strip0x,
+} from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
@@ -19,9 +21,9 @@ import { UIContainer } from "../../state/uiContainer";
 import { ColoredBanner } from "../views/ColoredBanner";
 // import { Footer } from "../views/Footer";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { OpeningShift } from "./OpeningShift";
-// import { ShiftProgress } from "./ProgressBar";
-import { getStorage, removeStorageTrade } from "./Storage";
+import { HandlingTransfer } from "./HandlingTransfer";
+// import { TransferProgress } from "./ProgressBar";
+import { getStorage, removeStorageTransfer } from "./Storage";
 
 /**
  * App is the main visual component responsible for displaying different routes
@@ -64,50 +66,31 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const resumeOnClick = React.useCallback(() => resume(false), [resume]);
 
-        const cancelShift = React.useCallback(async (fromClient?: boolean) => {
+        const cancelTransfer = React.useCallback(async (fromClient?: boolean) => {
             let retries = 0;
-            while (!sdkContainer.state.shift || !uiContainer.state.renNetwork) {
+            while (!sdkContainer.state.transfer || !uiContainer.state.renNetwork) {
                 // Make errors less frequent as retries increase (by checking if retries is a square).
-                if (Math.floor(Math.sqrt(retries)) ** 2 === retries) { console.error(`Waiting for shift information to cancel shift.`); }
+                if (Math.floor(Math.sqrt(retries)) ** 2 === retries) { console.error(`Waiting for transfer information to cancel transfer.`); }
                 retries++;
                 await sleep(100);
             }
-            if (sdkContainer.state.shift.transferParams.nonce) {
-                await removeStorageTrade(uiContainer.state.renNetwork, sdkContainer.state.shift.transferParams.nonce);
+            if (sdkContainer.state.transfer.transferParams.nonce) {
+                await removeStorageTransfer(uiContainer.state.renNetwork, sdkContainer.state.transfer.transferParams.nonce);
                 // TODO: Handle no nonce.
             }
             if (!fromClient && uiContainer.state.gatewayPopupID) {
-                await sdkContainer.updateShift({ returned: true });
+                await sdkContainer.updateTransfer({ returned: true });
                 await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
             }
         }, [uiContainer, sdkContainer]);
 
-        const cancelOnClick = React.useCallback(() => cancelShift(false), [cancelShift]);
-
-        let [pressedDone, setPressedDone] = React.useState(false);
-        const onDone = React.useCallback(async () => {
-            pressedDone = true;
-            setPressedDone(pressedDone);
-            let response: {} | UnmarshalledTx = {};
-            try {
-                response = await sdkContainer.queryShiftStatus();
-            } catch (error) {
-                _catchInteractionErr_(error, { description: "Error in Main.tsx: onDone > queryShiftStatus" });
-            }
-            if (uiContainer.state.gatewayPopupID) {
-                await sdkContainer.updateShift({ returned: true });
-                await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
-            }
-            uiContainer.resetTrade().catch((error) => _catchInteractionErr_(error, "Error in OpeningShift: onDone > resetTrade"));
-            pressedDone = false;
-            setPressedDone(pressedDone);
-        }, [uiContainer]);
+        const cancelOnClick = React.useCallback(() => cancelTransfer(false), [cancelTransfer]);
 
         React.useEffect(() => {
 
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-            const queryShiftID = queryParams.id;
-            uiContainer.handleShift(queryShiftID).catch(console.error);
+            const queryTransferID = queryParams.id;
+            uiContainer.handleTransfer(queryTransferID).catch(console.error);
 
             const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
@@ -120,12 +103,12 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                         switch (message.type) {
                             case GatewayMessageType.TransferDetails:
                                 acknowledgeMessage(message);
-                                const { paused: alreadyPaused, shift: transferParamsIn }: { paused: boolean, shift: SerializableTransferParams | ShiftInEvent | ShiftOutEvent } = (message as GatewayMessage<GatewayMessageType.TransferDetails>).payload;
+                                const { paused: alreadyPaused, transferDetails: transferParamsIn }: { paused: boolean, transferDetails: SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent } = (message as GatewayMessage<GatewayMessageType.TransferDetails>).payload;
                                 await (alreadyPaused ? pause() : resume());
-                                const shiftID = message.frameID;
+                                const transferID = message.frameID;
                                 const time = Date.now() / 1000;
 
-                                const randomID = Ox(strip0x(shiftID).repeat(4).slice(0, 64));
+                                const randomID = Ox(strip0x(transferID).repeat(4).slice(0, 64));
 
                                 let historyEvent: HistoryEvent | undefined;
                                 let transferParams: HistoryEvent["transferParams"];
@@ -137,35 +120,35 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 } else {
                                     historyEvent = undefined;
                                     transferParams = {
-                                        ...(transferParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)),
-                                        nonce: (transferParamsIn as (ShiftOutParams & ShiftInParams & SendTokenInterface)).nonce || randomID,
+                                        ...(transferParamsIn as (BurnAndReleaseParams & LockAndMintParams & SendTokenInterface)),
+                                        nonce: (transferParamsIn as (BurnAndReleaseParams & LockAndMintParams & SendTokenInterface)).nonce || randomID,
                                     };
                                 }
 
-                                let shiftDetails;
+                                let transferDetails;
 
                                 if (transferParams.sendToken === RenJS.Tokens.BTC.Btc2Eth ||
                                     transferParams.sendToken === RenJS.Tokens.ZEC.Zec2Eth ||
                                     transferParams.sendToken === RenJS.Tokens.BCH.Bch2Eth) {
-                                    shiftDetails = {
-                                        // Cast required by TS to differentiate ShiftIn and ShiftOut types.
+                                    transferDetails = {
+                                        // Cast required by TS to differentiate LockAndMint and BurnAndRelease types.
                                         eventType: EventType.LockAndMint as const,
                                         status: LockAndMintStatus.Committed,
                                         // tslint:disable-next-line: no-object-literal-type-assertion
-                                        transferParams: processShiftInParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as ShiftInParams) as ShiftInEvent["transferParams"],
+                                        transferParams: processLockAndMintParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as LockAndMintParams) as LockAndMintEvent["transferParams"],
                                     };
                                 } else {
-                                    shiftDetails = {
+                                    transferDetails = {
                                         eventType: EventType.BurnAndRelease as const,
                                         status: BurnAndReleaseStatus.Committed,
-                                        transferParams: processShiftOutParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as ShiftOutParams) as unknown as ShiftOutEvent["transferParams"],
+                                        transferParams: processBurnAndReleaseParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as BurnAndReleaseParams) as unknown as BurnAndReleaseEvent["transferParams"],
                                     };
                                 }
 
 
                                 historyEvent = {
-                                    ...shiftDetails,
-                                    id: shiftID,
+                                    ...transferDetails,
+                                    id: transferID,
                                     time,
                                     inTx: null,
                                     outTx: null,
@@ -176,7 +159,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     ...historyEvent,
                                 };
 
-                                await sdkContainer.updateShift(historyEvent, { sync: true });
+                                await sdkContainer.updateTransfer(historyEvent, { sync: true });
 
                                 break;
                             case GatewayMessageType.Pause:
@@ -186,7 +169,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 break;
                             case GatewayMessageType.Cancel:
                                 acknowledgeMessage(message);
-                                cancelShift(true).catch(console.error);
+                                cancelTransfer(true).catch(console.error);
                                 break;
                             case GatewayMessageType.Resume:
                                 acknowledgeMessage(message);
@@ -197,7 +180,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 await postMessageToClient(window, message.frameID, GatewayMessageType.GetTransfers, await getStorage(urlRenNetwork));
                                 break;
                             case GatewayMessageType.GetStatus:
-                                acknowledgeMessage(message, sdkContainer.getShiftStatus());
+                                acknowledgeMessage(message, sdkContainer.getTransferStatus());
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't
@@ -208,7 +191,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
             });
-            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {}).catch(console.error);
+            postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
         }, []);
 
         // const login = React.useCallback(async () => {
@@ -257,27 +240,27 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             sdkContainer.connect(urlRenNetwork).catch(console.error);
         }, []);
 
-        const { paused, renNetwork } = uiContainer.state;
-        const { shift } = sdkContainer.state;
+        const { paused } = uiContainer.state;
+        const { transfer } = sdkContainer.state;
 
         return <main className={paused ? "paused" : ""} onClick={paused ? resumeOnClick : undefined}>
             {/* {!paused ? <div className="banner"> */}
             {/* <span>Gateway {renNetwork === RenNetwork.Chaosnet || renNetwork === RenNetwork.Mainnet ? "by Ren Project" : <span className="warning"> {renNetwork}</span>}</span> */}
             {/* </div> : <></>} */}
             <div className="main">
-                {!paused ? <ColoredBanner token={shift && shift.transferParams.sendToken} /> : <></>}
-                {!paused && shift ?
-                    (shift.status === LockAndMintStatus.Committed || shift.status === BurnAndReleaseStatus.Committed) ?
+                {!paused ? <ColoredBanner token={transfer && transfer.transferParams.sendToken} /> : <></>}
+                {!paused && transfer ?
+                    (transfer.status === LockAndMintStatus.Committed || transfer.status === BurnAndReleaseStatus.Committed) ?
                         <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :
-                        (shift.status === LockAndMintStatus.ConfirmedOnEthereum || shift.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
+                        (transfer.status === LockAndMintStatus.ConfirmedOnEthereum || transfer.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
                             <></> :
                             <div role="button" className={`popup--x`} onClick={pauseOnClick} />
                     :
                     <></>
                 }
-                {shift ? <ErrorBoundary>< OpeningShift /></ErrorBoundary> : <></>}
+                {transfer ? <ErrorBoundary>< HandlingTransfer /></ErrorBoundary> : <></>}
                 {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
-                {/* {!paused && shift && sdkContainer.getNumberOfConfirmations() > 0 ? <ShiftProgress /> : <></>} */}
+                {/* {!paused && transfer && sdkContainer.getNumberOfConfirmations() > 0 ? <TransferProgress /> : <></>} */}
             </div>
             {/* {!paused && <Footer />} */}
         </main>;

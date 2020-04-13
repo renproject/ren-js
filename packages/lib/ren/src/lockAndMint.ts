@@ -4,9 +4,9 @@ import {
 } from "@renproject/interfaces";
 import { ResponseQueryMintTx } from "@renproject/rpc";
 import {
-    DEFAULT_SHIFT_FEE, extractError, fixSignature, forwardWeb3Events, generateAddress,
-    generateGHash, generateShiftInTxHash, getGatewayAddress, ignorePromiEventError, newPromiEvent,
-    Ox, parseRenContract, payloadToABI, payloadToShiftInABI, processLockAndMintParams, PromiEvent,
+    extractError, fixSignature, forwardWeb3Events, generateAddress, generateGHash,
+    generateMintTxHash, getGatewayAddress, ignorePromiEventError, newPromiEvent, Ox,
+    parseRenContract, payloadToABI, payloadToMintABI, processLockAndMintParams, PromiEvent,
     randomNonce, renTxHashToBase64, RenWeb3Events, resolveInToken, retrieveConfirmations,
     retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, toBase64, toBigNumber, Web3Events,
     withDefaultAccount,
@@ -122,7 +122,7 @@ export class LockAndMint {
             //         queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
             //         queryTxResponse.txStatus === TxStatus.TxStatusPending
             //     ) {
-            //         // Shift has already been submitted to RenVM - no need to
+            //         // Mint has already been submitted to RenVM - no need to
             //         // wait for deposit.
             //         return this;
             //     }
@@ -213,7 +213,7 @@ export class LockAndMint {
 
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network);
         const encodedGHash = toBase64(gHash);
-        return generateShiftInTxHash(resolveInToken(renContract), encodedGHash, utxo);
+        return generateMintTxHash(resolveInToken(renContract), encodedGHash, utxo);
     }
 
     public queryTx = async (specifyUTXO?: UTXOIndex) =>
@@ -249,7 +249,7 @@ export class LockAndMint {
                 // Last contract call
                 const { contractParams, sendTo, contractFn } = contractCalls[contractCalls.length - 1];
 
-                const fnABI = payloadToShiftInABI(contractFn, (contractParams || []));
+                const fnABI = payloadToMintABI(contractFn, (contractParams || []));
 
                 const encodedParameters = (new Web3("").eth.abi.encodeParameters(
                     (contractParams || []).map(i => i.type),
@@ -259,7 +259,7 @@ export class LockAndMint {
                 // Try to submit to RenVM. If that fails, see if they already
                 // know about the transaction.
                 try {
-                    renTxHash = await this.renVMNetwork.submitShiftIn(
+                    renTxHash = await this.renVMNetwork.submitMint(
                         resolveInToken(renContract),
                         sendTo,
                         nonce,
@@ -382,7 +382,7 @@ export class LockAndMint {
                 // register the event emitter to the transaction's
                 // confirmations, so that on("confirmation") works
                 // as expected. This code branch only occurs if a
-                // completed trade is passed to RenJS again, which
+                // completed transfer is passed to RenJS again, which
                 // should not usually happen.
 
                 // Emit confirmation now and in 1s, since a common use
@@ -419,14 +419,6 @@ export class LockAndMint {
                     // the contract
                     const status = await gatewayContract.methods.status(this.renVMResponse.autogen.sighash).call();
                     if (status) {
-                        const recentRegistrationEventsOld = await web3.eth.getPastLogs({
-                            address: gatewayAddress,
-                            fromBlock: "1",
-                            toBlock: "latest",
-                            // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
-                            // address.slice(2), null, null] as any,
-                            topics: [sha3("LogShiftIn(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
-                        });
                         const recentRegistrationEvents = await web3.eth.getPastLogs({
                             address: gatewayAddress,
                             fromBlock: "1",
@@ -435,10 +427,10 @@ export class LockAndMint {
                             // address.slice(2), null, null] as any,
                             topics: [sha3("LogMint(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
                         });
-                        if (!recentRegistrationEventsOld.length && !recentRegistrationEvents.length) {
-                            throw new Error(`Shift has been submitted but no log was found.`);
+                        if (!recentRegistrationEvents.length) {
+                            throw new Error(`Mint has been submitted but no log was found.`);
                         }
-                        const log = recentRegistrationEventsOld[0] || recentRegistrationEvents[0];
+                        const log = recentRegistrationEvents[0];
                         return await manualPromiEvent(log.transactionHash);
                     }
                 } catch (error) {
@@ -466,7 +458,7 @@ export class LockAndMint {
                     Ox(this.signature), // _sig: string
                 ] : (contractParams || []).map(value => value.value);
 
-                const ABI = last ? payloadToShiftInABI(contractFn, (contractParams || [])) : payloadToABI(contractFn, (contractParams || []));
+                const ABI = last ? payloadToMintABI(contractFn, (contractParams || [])) : payloadToABI(contractFn, (contractParams || []));
 
                 const contract = new web3.eth.Contract(ABI, sendTo);
 
@@ -549,7 +541,7 @@ export class LockAndMint {
                 ] : [...(contractParams || []).map(value => value.value)];
 
             const ABI = i === contractCalls.length - 1 ?
-                payloadToShiftInABI(contractFn, (contractParams || [])) :
+                payloadToMintABI(contractFn, (contractParams || [])) :
                 payloadToABI(contractFn, (contractParams || []));
 
             // tslint:disable-next-line: no-any

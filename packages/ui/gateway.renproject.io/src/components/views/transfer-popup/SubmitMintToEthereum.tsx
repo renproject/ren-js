@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { NetworkDetails, ShiftInEvent, Tx } from "@renproject/interfaces";
-import { InfoLabel, LabelLevel, Loading } from "@renproject/react-components";
+import { Chain, LockAndMintEvent, NetworkDetails, Tx } from "@renproject/interfaces";
+import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
 import styled from "styled-components";
@@ -43,12 +43,12 @@ const StyledLink = styled.a`
     `;
 
 export const SubmitMintToEthereum: React.StatelessComponent<{
-    shift: ShiftInEvent,
+    transfer: LockAndMintEvent,
     mini: boolean,
     txHash: Tx | null,
     networkDetails: NetworkDetails,
     submit: (retry?: boolean) => Promise<void>,
-}> = ({ shift, mini, txHash, networkDetails, submit }) => {
+}> = ({ transfer, mini, txHash, networkDetails, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
     const [showFullError, setShowFullError] = React.useState(false);
@@ -98,8 +98,8 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
     return <Popup mini={mini}>
         <div className="submit-to-ethereum">
             <div className="popup--body">
-                {shift.inTx ? <div className="submit-mint-to-ethereum--deposit">
-                    <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(shift.inTx, networkDetails)}>Tx ID: {txPreview(shift.inTx)}</StyledLink>
+                {transfer.inTx ? <div className="submit-mint-to-ethereum--deposit">
+                    <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>Tx ID: {txPreview(transfer.inTx)}</StyledLink>
                 </div> : <></>}
                 {error ? <div className="ethereum-error red">
                     Error submitting to Ethereum: {!showFullError && error.length > 100 ? <>{error.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
@@ -115,7 +115,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
             <div className="popup--body--actions">
                 {txHash && !error ?
                     <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(txHash, networkDetails)}>
-                        <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
+                        <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.chain === Chain.Ethereum ? txHash.hash : (txHash.utxo ? txHash.utxo.txHash : txHash.address)}</LabelledDiv>
                     </a> :
                     <div className="popup--buttons">
                         <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>

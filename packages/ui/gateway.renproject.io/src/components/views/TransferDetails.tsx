@@ -1,32 +1,14 @@
 import * as React from "react";
 
-import { ShiftInEvent, ShiftOutEvent } from "@renproject/interfaces";
-import styled from "styled-components";
+import { BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
 
 import infoIcon from "../../images/icons/info.svg";
 import { getURL } from "../controllers/Storage";
 import { Tooltip } from "../views/tooltip/Tooltip";
 
-const ParentContainer = styled.div`
-            display: flex;
-            align-content: center;
-            align-items: center;
-            `;
-
-const ParentInfo = styled.span`
-            font-size: 1.8rem;
-            margin: 0 5px;
-            & > img {
-                margin: 0 5px;
-            }
-                        .address {
-                font-size: 1.4rem;
-            }
-            `;
-
 export const TransferDetails: React.StatelessComponent<{
-    shift: ShiftInEvent | ShiftOutEvent,
-}> = ({ shift }) => {
+    transfer: LockAndMintEvent | BurnAndReleaseEvent,
+}> = ({ transfer }) => {
 
     // const title = window.parent.document.title;
     const url = getURL();

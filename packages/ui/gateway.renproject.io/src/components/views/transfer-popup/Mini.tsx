@@ -25,12 +25,12 @@ interface Props extends ConnectedProps<[SDKContainer]> {
  */
 export const ConnectedMini = connect<Props & ConnectedProps<[SDKContainer]>>([SDKContainer])(
     ({ message, containers: [sdkContainer] }) => {
-        const { shift } = sdkContainer.state;
-        if (!shift) {
-            throw new Error(`Unable to load shift details`);
+        const { transfer } = sdkContainer.state;
+        if (!transfer) {
+            throw new Error(`Unable to load transfer details`);
         }
 
-        const token = shift.transferParams.sendToken.slice(0, 3) as Token;
+        const token = transfer.transferParams.sendToken.slice(0, 3) as Token;
 
         return <Mini token={token} message={message} />;
     }

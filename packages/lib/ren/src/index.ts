@@ -85,7 +85,7 @@ export default class RenJS {
      * signature to the adapter address.
      *
      * @param params See [[LockAndMintParams]].
-     * @returns An instance of [[ShiftInObject]].
+     * @returns An instance of [[LockAndMint]].
      */
     public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): LockAndMint => {
         if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
@@ -101,7 +101,7 @@ export default class RenJS {
      * Submits a burn log to RenVM.
      *
      * @param params See [[BurnAndReleaseParams]].
-     * @returns An instance of [[ShiftOutObject]].
+     * @returns An instance of [[BurnAndRelease]].
      */
     public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): BurnAndRelease => {
         if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {

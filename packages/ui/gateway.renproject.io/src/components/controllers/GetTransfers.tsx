@@ -15,13 +15,13 @@ import { getStorage } from "./Storage";
  * App is the main visual component responsible for displaying different routes
  * and running background app loops
  */
-export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer]>>([UIContainer])(
+export const GetTransfers = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer]>>([UIContainer])(
     ({ containers: [uiContainer], location }) => {
 
         React.useEffect(() => {
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-            const queryShiftID = queryParams.id;
-            uiContainer.handleShift(queryShiftID).catch(console.error);
+            const queryTransferID = queryParams.id;
+            uiContainer.handleTransfer(queryTransferID).catch(console.error);
             const renNetwork: string = queryParams.network || DEFAULT_NETWORK;
             uiContainer.setState({ renNetwork }).catch(console.error);
 
@@ -44,7 +44,7 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
             });
-            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {}).catch(console.error);
+            postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
         }, [location.search, uiContainer]);
 
         return <></>;

@@ -92,7 +92,7 @@ export class Gateway {
     public readonly _getGateways = async () => new Promise<Map<string, HistoryEvent>>((resolve, reject) => {
         const container = this._getOrCreateGatewayContainer();
 
-        const endpoint = resolveEndpoint(this.endpoint, this.network, "get-trades", this.id);
+        const endpoint = resolveEndpoint(this.endpoint, this.network, "get-transfers", this.id);
         const popup = createElementFromHTML(RenIFrame(this.id, endpoint));
 
         if (popup) {
@@ -477,7 +477,7 @@ export default class GatewayJS {
     public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent) => {
         // tslint:disable-next-line: strict-type-predicates
         if ((params as LockAndMintEvent).eventType === EventType.LockAndMint) {
-            return this.recoverShift(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
+            return this.recoverTransfer(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
         }
 
         const sendToken = (params as LockAndMintParams).sendToken;
@@ -495,13 +495,12 @@ export default class GatewayJS {
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
-    public readonly recoverShift = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {
+    public readonly recoverTransfer = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {
         return new Gateway(this.network, this.endpoint)._open(params, web3Provider);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);
     public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(stringToNetwork(this.network), web3, token);
-    public readonly getShifterAddress = this.getGatewayAddress;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

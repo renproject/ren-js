@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { NetworkDetails, ShiftInEvent, UTXO } from "@renproject/interfaces";
+import { LockAndMintEvent, NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import BigNumber from "bignumber.js";
@@ -33,15 +33,15 @@ interface Props {
     mini: boolean;
     token: Token;
     depositAddress: string;
-    order: ShiftInEvent;
-    transferParams: ShiftInEvent["transferParams"];
-    utxos: OrderedMap<string, UTXO>;
+    order: LockAndMintEvent;
+    transferParams: LockAndMintEvent["transferParams"];
+    utxos: OrderedMap<string, UTXOWithChain>;
     networkDetails: NetworkDetails;
     confirmations: number;
     sdkRenVM: RenJS | null;
     onQRClick(): void;
-    waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
-    onDeposit(utxo: UTXO): void;
+    waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
+    onDeposit(utxo: UTXOWithChain): void;
 }
 
 
@@ -176,7 +176,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         const title = urlDomain(url);
 
         if (mini) {
-            const last = utxos.last<UTXO>();
+            const last = utxos.last<UTXOWithChain>();
             return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
         }
 

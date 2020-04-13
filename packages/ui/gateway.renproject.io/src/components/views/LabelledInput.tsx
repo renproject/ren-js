@@ -3,7 +3,7 @@ import * as React from "react";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import { ScanningDot } from "./shift-popup/ShowDepositAddress";
+import { ScanningDot } from "./transfer-popup/ShowDepositAddress";
 
 const OuterDiv = styled.div`
     position: relative;

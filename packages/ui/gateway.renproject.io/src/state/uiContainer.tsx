@@ -1,4 +1,4 @@
-import { UTXO } from "@renproject/interfaces";
+import { UTXOWithChain } from "@renproject/interfaces";
 import { OrderedMap } from "immutable";
 import { Container } from "unstated";
 
@@ -13,7 +13,7 @@ const initialState = {
     paused: false,
 
     // address: null as string | null,
-    utxos: OrderedMap<string, UTXO>(),
+    utxos: OrderedMap<string, UTXOWithChain>(),
 
     gatewayPopupID: null as string | null,
 };
@@ -26,11 +26,11 @@ export class UIContainer extends Container<typeof initialState> {
 
     public clearAddress = async (): Promise<void> => this.setState(state => ({ ...state, address: null }));
 
-    public handleShift = async (gatewayPopupID: string | null) => this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
+    public handleTransfer = async (gatewayPopupID: string | null) => this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
 
-    public resetTrade = async () => this.setState(state => ({ ...state, gatewayPopupID: null, submitting: false }));
+    public resetTransfer = async () => this.setState(state => ({ ...state, gatewayPopupID: null, submitting: false }));
 
-    public deposit = async (deposit: UTXO) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txid, deposit) }));
+    public deposit = async (deposit: UTXOWithChain) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txid, deposit) }));
 
     public setSubmitting = async (submitting: boolean) => this.setState(state => ({ ...state, submitting }));
 

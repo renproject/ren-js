@@ -125,11 +125,11 @@ export const renTxHashToBase64 = (renTxHash: Buffer | string) => {
     return renTxHash;
 };
 
-export const generateShiftInTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex) => {
+export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex) => {
     return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`));
 };
 
-export const generateShiftOutTxHash = (renContract: RenContract, encodedID: string) => {
+export const generateBurnTxHash = (renContract: RenContract, encodedID: string) => {
     return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}`));
 };
 
@@ -237,9 +237,6 @@ export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tok
  * Returns a random 32 byte hex string (prefixed with '0x').
  */
 export const randomNonce = () => randomBytes(32);
-
-// TODO: Fetch from contract
-export const DEFAULT_SHIFT_FEE = new BigNumber(10000);
 
 export const resolveInToken = (sendToken: LockAndMintParams["sendToken"]): RenContract => {
     switch (sendToken) {

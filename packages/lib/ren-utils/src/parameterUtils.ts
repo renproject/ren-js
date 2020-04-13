@@ -29,7 +29,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
 
     const renContract = parseRenContract(sendToken);
     if (renContract.to === Chain.Ethereum) {
-        // Shift in
+        // Mint
         return {
             ...restOfParams,
             suggestedAmount: sendAmount,
@@ -44,7 +44,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
             }],
         };
     } else {
-        // Shift out
+        // Burn
 
         if (!sendAmount) {
             throw new Error(`Send amount must be provided in order to send directly to an address.`);

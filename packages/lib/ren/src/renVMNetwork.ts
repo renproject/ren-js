@@ -207,7 +207,7 @@ export class RenVMNetwork {
         this.network = network;
     }
 
-    public submitShiftIn = async (
+    public submitMint = async (
         renContract: RenContract,
         to: string,
         nonce: string,
@@ -259,7 +259,7 @@ export class RenVMNetwork {
         return response.tx.hash;
     }
 
-    public submitShiftOut = async (renContract: RenContract, ref: string): Promise<string> => {
+    public submitBurn = async (renContract: RenContract, ref: string): Promise<string> => {
         const response = await this.network.sendMessage(RPCMethod.SubmitTx,
             {
                 tx: {

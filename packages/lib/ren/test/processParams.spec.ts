@@ -5,6 +5,7 @@ import Web3 from "web3";
 import {
     NetworkTestnet, processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
 } from "@renproject/utils";
+import { RenContract } from "@renproject/interfaces";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -18,18 +19,18 @@ describe("processParams", () => {
         web3 = new Web3(`https://kovan.infura.io/v3/${process.env.INFURA_KEY}`);
     });
 
-    it("Shift out", () => {
+    it("Burn", () => {
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
             ethTxHash: "ethTxHash",
         })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethTxHash: "ethTxHash" });
+            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethTxHash: "ethTxHash" }, "Burn 1");
 
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
             burnReference: 1,
         })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 });
+            .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 }, "Burn 2");
 
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
@@ -50,10 +51,10 @@ describe("processParams", () => {
                     contractParams: [{ name: "name", type: "uint", value: "1" }],
                     txConfig: { gas: 2 },
                 }],
-            });
+            }, "Burn 3");
 
         JSON.stringify(resolveSendCall(NetworkTestnet, {
-            sendToken: "BTC",
+            sendToken: RenContract.Eth2Btc,
             web3Provider: web3.currentProvider,
             sendTo: "sendTo",
             sendAmount: "0",
@@ -61,8 +62,8 @@ describe("processParams", () => {
             .should.equal(JSON.stringify({
                 sendToken: "BTC0Eth2Btc",
                 web3Provider: web3.currentProvider,
+                suggestedAmount: "0",
                 contractCalls: [
-                    async (_w3: Web3) => new Promise((resolve) => { resolve(); }),
                     {
                         sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
                         contractFn: "burn",
@@ -87,13 +88,12 @@ describe("processParams", () => {
                                 "name": "_amount",
                                 "value": "0",
                             },
-                        ],
-                        txConfig: { gas: 200000 },
+                        ]
                     }],
-            }));
+            }), "Burn 4");
     });
 
-    it("Shift in", () => {
+    it("Mint", () => {
         processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
             renTxHash: "renTxHash",
@@ -137,7 +137,7 @@ describe("processParams", () => {
             });
 
         resolveSendCall(NetworkTestnet, {
-            sendToken: "BTC",
+            sendToken: RenContract.Btc2Eth,
             renTxHash: "renTxHash",
             sendTo: "sendTo",
             sendAmount: "0.01",
@@ -146,15 +146,11 @@ describe("processParams", () => {
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
                 renTxHash: "renTxHash",
+                suggestedAmount: "0.01",
                 contractCalls: [{
-                    sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
+                    sendTo: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
                     contractFn: "mint",
                     contractParams: [
-                        {
-                            "name": "_gatewayRegistry",
-                            "type": "address",
-                            "value": "0xbA563a8510d86dE95F5a50007E180d6d4966ad12",
-                        },
                         {
                             "name": "_symbol",
                             "type": "string",

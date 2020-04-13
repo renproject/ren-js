@@ -3,7 +3,7 @@ import {
 } from "@renproject/interfaces";
 import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
-    extractBurnReference, extractError, forwardWeb3Events, generateShiftOutTxHash,
+    extractBurnReference, extractError, forwardWeb3Events, generateBurnTxHash,
     ignorePromiEventError, newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent,
     renTxHashToBase64, RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
@@ -165,7 +165,7 @@ export class BurnAndRelease {
             throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
         }
         const burnReference = new BigNumber(this.params.burnReference).toFixed();
-        return generateShiftOutTxHash(resolveOutToken(this.params.sendToken), burnReference);
+        return generateBurnTxHash(resolveOutToken(this.params.sendToken), burnReference);
     }
 
     public queryTx = async () =>

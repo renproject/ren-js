@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import { GatewayMessage, GatewayMessageType, HistoryEvent } from "@renproject/ren-js-common";
+import { GatewayMessage, GatewayMessageType, HistoryEvent } from "@renproject/interfaces";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
-import { acknowledgeMessage, postMessageToClient } from "../../lib/postMessage";
+import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
 import { connect, ConnectedProps } from "../../state/connect";
 import { UIContainer } from "../../state/uiContainer";
 import { getStorage } from "./Storage";
@@ -26,16 +26,16 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
             uiContainer.setState({ renNetwork }).catch(console.error);
 
             // tslint:disable-next-line: no-any
-            window.onmessage = (e: { data: GatewayMessage<any> }) => {
+            addMessageListener((e: { data: GatewayMessage<any> }) => {
                 if (e.data && e.data.from === "ren" && e.data.frameID === uiContainer.state.gatewayPopupID) {
                     (async () => {
                         switch (e.data.type) {
                             case GatewayMessageType.GetTrades:
                                 acknowledgeMessage(e.data);
                                 const storage: Map<string, HistoryEvent> = await getStorage(uiContainer.state.renNetwork || renNetwork);
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.Trades, storage);
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.Trades, storage).catch(console.error);
                                 // `GetTrades` remains for backwards compatibility
-                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, storage);
+                                postMessageToClient(window, e.data.frameID, GatewayMessageType.GetTrades, storage).catch(console.error);
                                 break;
                             default:
                                 // Acknowledge that we got the message. We don't
@@ -45,9 +45,9 @@ export const GetTrades = withRouter(connect<RouteComponentProps & ConnectedProps
                         }
                     })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
                 }
-            };
-            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {});
-        }, [location.search]);
+            });
+            postMessageToClient(window, queryShiftID, GatewayMessageType.Ready, {}).catch(console.error);
+        }, [location.search, uiContainer]);
 
         return <></>;
     }

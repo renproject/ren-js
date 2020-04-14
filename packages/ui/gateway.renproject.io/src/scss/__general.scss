@@ -28,8 +28,8 @@ body {
     main {
         height: 100vh;
         overflow-y: hidden;
-        padding-bottom: 30px;
-        padding-top: 45px;
+        // padding-bottom: 30px;
+        // padding-top: 45px;
     }
 
     .main {
@@ -226,6 +226,11 @@ body {
 
     a {
         color: $grey-12;
+    }
+
+    .link {
+        color: $blue-bright;
+        cursor: pointer;
     }
 
     .loading--small {

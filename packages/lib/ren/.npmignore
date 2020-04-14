@@ -1,0 +1,14 @@
+
+
+
+
+# npmignore - content above this line is automatically generated and modifications may be omitted
+# see npmjs.com/npmignore for more details.
+src/
+ts*.json
+typedoc.js
+webpack.config.js
+test/
+build/browser*
+build/*.map
+!build

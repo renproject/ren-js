@@ -1,12 +1,9 @@
-import { UTXO } from "@renproject/ren/build/main/lib/utils";
+import { UTXO } from "@renproject/interfaces";
 import { OrderedMap } from "immutable";
 import { Container } from "unstated";
-import Web3 from "web3";
-
-import { ETHEREUM_NODE } from "../lib/environmentVariables";
 
 const initialState = {
-    web3: new Web3(ETHEREUM_NODE),
+    // web3: new Web3(ETHEREUM_NODE),
 
     renNetwork: undefined as string | undefined,
     wrongNetwork: undefined as number | undefined,
@@ -15,7 +12,7 @@ const initialState = {
     loggedOut: null as string | null,
     paused: false,
 
-    address: null as string | null,
+    // address: null as string | null,
     utxos: OrderedMap<string, UTXO>(),
 
     gatewayPopupID: null as string | null,
@@ -24,7 +21,8 @@ const initialState = {
 export class UIContainer extends Container<typeof initialState> {
     public state = initialState;
 
-    public connect = async (web3: Web3, address: string | null): Promise<void> => this.setState(state => ({ ...state, web3, address, loggedOut: null }));
+    // public connect = async (web3: Web3, address: string | null): Promise<void> => this.setState(state => ({ ...state, web3, address, loggedOut: null }));
+    public connect = async (): Promise<void> => this.setState(state => ({ ...state, loggedOut: null }));
 
     public clearAddress = async (): Promise<void> => this.setState(state => ({ ...state, address: null }));
 
@@ -40,22 +38,21 @@ export class UIContainer extends Container<typeof initialState> {
 
     public pause = async () => this.setState(state => ({ ...state, paused: true }));
     public resume = async () => this.setState(state => ({ ...state, paused: false }));
+    // /**
+    //  * lookForLogout detects if the user has changed or logged out of their Web3
+    //  * wallet
+    //  */
+    // public lookForLogout = async () => {
+    //     const { address, web3 } = this.state;
 
-    /**
-     * lookForLogout detects if the user has changed or logged out of their Web3
-     * wallet
-     */
-    public lookForLogout = async () => {
-        const { address, web3 } = this.state;
+    //     if (!address || !web3) { return; }
 
-        if (!address || !web3) { return; }
+    //     const accounts = (await web3.eth.getAccounts())
+    //         .map((web3Address: string) => web3Address.toLowerCase());
 
-        const accounts = (await web3.eth.getAccounts())
-            .map((web3Address: string) => web3Address.toLowerCase());
-
-        if (!accounts.includes(address.toLowerCase())) {
-            await this.clearAddress();
-            await this.setLoggedOut(address);
-        }
-    }
+    //     if (!accounts.includes(address.toLowerCase())) {
+    //         await this.clearAddress();
+    //         await this.setLoggedOut(address);
+    //     }
+    // }
 }

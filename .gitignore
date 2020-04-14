@@ -1,1 +1,34 @@
 *.env
+
+node_modules
+
+lerna-debug.log
+yarn-error.log
+
+/.project
+/.settings/
+
+# Logs
+*.log
+
+# Coverage
+.nyc_output
+coverage
+reports
+
+# IDE specific
+.vscode
+.idea
+
+.DS_Store
+
+typedoc/
+
+*.env
+
+*.map
+build
+misc
+dist
+
+package-lock.json

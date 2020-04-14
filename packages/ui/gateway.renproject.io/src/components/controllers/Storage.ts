@@ -1,4 +1,4 @@
-import { HistoryEvent } from "@renproject/ren-js-common";
+import { HistoryEvent } from "@renproject/interfaces";
 import localForage from "localforage";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
@@ -51,6 +51,10 @@ export const updateStorageTrade = async (network: string, trade: HistoryEvent, d
     const domain = domainIn || getURL();
 
     const store = getStore(network, domain);
+
+    if (!trade.shiftParams.nonce) {
+        throw new Error(`Shift must have nonce`);
+    }
 
     if (!cancelled.has(trade.shiftParams.nonce)) {
         await store.setItem(trade.shiftParams.nonce, trade);

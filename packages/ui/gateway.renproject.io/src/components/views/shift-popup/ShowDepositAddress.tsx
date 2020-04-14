@@ -1,30 +1,22 @@
 import * as React from "react";
 
+import { ShiftInEvent, UTXO } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
-import { ShiftInEvent } from "@renproject/ren-js-common";
-import { UTXO } from "@renproject/ren/build/main/lib/utils";
-import { NetworkDetails } from "@renproject/ren/build/main/types/networks";
+import RenJS from "@renproject/ren";
+import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
+import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
-import infoIcon from "../../../images/icons/info.svg";
 import { ReactComponent as QR } from "../../../images/qr.svg";
-import { txUrl } from "../../../lib/txUrl";
-import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
-import { Token, Tokens } from "../../../state/generalTypes";
-import { numberOfConfirmations } from "../../../state/sdkContainer";
-import { LabelledDiv } from "../LabelledInput";
+import { Token } from "../../../state/generalTypes";
+import { getURL } from "../../controllers/Storage";
 import { Popup } from "../Popup";
-import { ProgressBar } from "../ProgressBar";
-import { Tooltip } from "../tooltip/Tooltip";
-
-const ScanningText = styled.span`
-            min-width: 170px;
-            line-height: 100%;
-        `;
+import { Mini } from "./Mini";
 
 export const ScanningDot = styled.span`
             height: 10px;
@@ -38,68 +30,56 @@ export const ScanningDot = styled.span`
             flex-shrink: 0;
         `;
 
-const ScanningDiv = styled.div`
-            font-size: 13.44px;
-            color: ${p => p.theme.lightGrey};
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 0;
-        `;
-
-const ScanningBanner: React.FC<{}> = props => {
-    return (
-        <ScanningDiv><ScanningDot /><ScanningText className="ellipsis">{props.children}</ScanningText></ScanningDiv>
-    );
-};
-
-const INTEROP_LINK = "https://docs.renproject.io/ren/renvm/universal-interop#performance-or-confirmation-as-a-service";
-
 interface Props {
     mini: boolean;
     token: Token;
     depositAddress: string;
     order: ShiftInEvent;
+    shiftParams: ShiftInEvent["shiftParams"];
     utxos: OrderedMap<string, UTXO>;
     networkDetails: NetworkDetails;
+    confirmations: number;
+    sdkRenVM: RenJS | null;
     onQRClick(): void;
     waitForDeposit(onDeposit: (utxo: UTXO) => void): Promise<void>;
     onDeposit(utxo: UTXO): void;
 }
 
 
-const ConfirmationsContainer = styled.div`
-        text-align: center;
-        `;
-const ConfirmationsHeader = styled.span`
-        font-size: 1.4rem;
-        margin-right: 5px;
-        color: #87888C;
-        `;
+const QRCodeContainer = styled.div`
+            background: #FFFFFF;
+            border: 1px solid #DBE0E8;
+            border-radius: 6px;
+            display: inline-flex;
+            padding: 10px;
 
-const ConfirmationsBlock = styled.div`
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 20px;
-        `;
+            size: 110px;
+            width: 132px;
+            height: 132px;
 
-const DepositLabel = styled.label`
-        position: absolute;
-        top: 0;
-        width: 180px;
-        text-align: center;
-        margin-left: calc(calc(100% - 180px) / 2);
-        font-size: 1.4rem;
-        color: ${p => p.theme.lightGrey};
-        background-color: white;
-        margin-top: -10px;
-        `;
+            >canvas {
+                height: 110px !important;
+                width: 110px !important;
+            }
+            `;
 
-const StyledInput = styled.input`
+const QRCodeOuter = styled.div`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            >span {
+                font-size: 1.4rem;
+                color: #3F3F48;
+                margin-top: 16px;
+            }
+`;
+
+const StyledLabel = styled.span`
         color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
         font-size: 14px !important;
         font-weight: 400 !important;
+        letter-spacing: 0.2px;
         `;
 
 const AddressControls = styled.div`
@@ -113,10 +93,14 @@ const AddressControls = styled.div`
                 padding: 0 5px;
                 height: 20px;
                 border-radius: 20px;
-                border: 1px solid ${p => p.theme.primaryColor};
-                background: rgba(0, 111, 232, 0.1);
+                // border: 1px solid ${p => p.theme.primaryColor};
+                // background: rgba(0, 111, 232, 0.1);
                 font-size: 1.0rem;
                 line-height: 13px;
+                position: absolute;
+                border: 0;
+                background: none;
+                right: 20px;
                 color: ${p => p.theme.primaryColor};
             }
 
@@ -130,12 +114,18 @@ const ContinueButton = styled.button`
         `;
 
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, token, order, utxos, onQRClick, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
+    ({ mini, token, order, utxos, sdkRenVM, shiftParams, confirmations, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
 
+        const [showQR, setShowQR] = React.useState(false);
         const [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
+
+        const onQRClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+            event.stopPropagation();
+            setShowQR(!showQR);
+        };
 
         const [timer, setTimer] = React.useState<NodeJS.Timeout | null>(null);
         const [failed, setFailed] = React.useState(null as Error | null);
@@ -171,98 +161,75 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
             );
         }, [showSpinner, timer]);
 
-        const tokenDetails = Tokens.get(token);
-        const showAddress = understood ?
-            <>
-                <ScanningBanner>Scanning for transaction</ScanningBanner>
-                <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
-                    <StyledInput
-                        type="text"
-                        name="address"
-                        disabled={true}
-                        value={depositAddress || ""}
-                        autoFocus={true}
-                        required={true}
-                        aria-required={true}
-                    />
-                    <DepositLabel>{tokenDetails && tokenDetails.name} Deposit Address</DepositLabel>
-                    <label className="copied-text">Copied</label>
-                    <AddressControls>
-                        <button onClick={onQRClick}><QR className="qr" /></button>
-                        <CopyToClipboard
-                            text={depositAddress || ""}
-                            onCopy={onClickAddress}
-                        >
-                            <button>{copied ? "Copied" : "Copy"}</button>
-                        </CopyToClipboard>
-                    </AddressControls>
-                </div>
-                {/* {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null} */}
-            </> :
-            <>
-                {failed ? <div className="red">{`${failed.message || failed}`}</div> : <></>}
-                <div className="popup--buttons">
-                    <ContinueButton className="button" disabled={depositAddress as string | null === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</ContinueButton>
-                </div>
-            </>;
+        const requiredAmount = shiftParams.requiredAmount ? new BigNumber(
+            BigNumber.isBigNumber(shiftParams.requiredAmount) ? shiftParams.requiredAmount : shiftParams.requiredAmount.toString()
+        ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
-        const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains. This will be improved for Mainnet via 3rd parties.`;
+        const suggestedAmount = shiftParams.suggestedAmount ? new BigNumber(
+            BigNumber.isBigNumber(shiftParams.suggestedAmount) ? shiftParams.suggestedAmount : shiftParams.suggestedAmount.toString()
+        ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
 
-        const showUTXOs = (
-            utxos.size > 0 ? <div className="show-utxos">
-                <ConfirmationsContainer>
-                    <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
-                    {/* tslint:disable-next-line: react-a11y-anchors */}
-                    <Tooltip width={250} contents={<span>{tooltipText} For more information, head <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</span>}><img alt={tooltipText} src={infoIcon} /></Tooltip>
-                </ConfirmationsContainer>
-                {utxos.map(utxo => {
-                    return <div key={utxo.utxo.txid}>
-                        {/* <div className="show-utxos--utxo">
-                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
-                    </div> */}
-                        <ConfirmationsBlock>
-                            <ProgressBar
-                                className="confirmation--progress"
-                                style={{ width: `${(order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : 2) <= 1 ? 50 : 100}%` }}
-                                items={[
-                                    ...range(order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : 2).map(i => ({})),
-                                    { label: "✓" }
-                                ]}
-                                progress={utxo.utxo.confirmations}
-                                pulse={true}
-                            />
-                            {/* {range(order ? 7 : 1).map(target =>
-                                <ProgressItem target={target + 1} progress={utxo.utxo.confirmations} />
-                            )} */}
-                            {/* <Loading className="loading--blue" /> */}
-                            {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {order ? numberOfConfirmations(order.shiftParams.sendToken, networkDetails) : "?"} confirmations</ConfirmationsCount> */}
-                        </ConfirmationsBlock>
-                        <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid }, networkDetails)}>
-                            <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction ID" width={105}>{utxo.utxo.txid}</LabelledDiv>
-                        </a>
-                    </div>;
-                }).valueSeq()}
-                {/* <details>
-                    <summary>Show deposit address</summary>
-                    {showAddress}
-                </details> */}
-            </div> : null
-        );
+        // const title = window.parent.document.title;
+        const url = getURL();
+
+        const urlDomain = (data: string) => {
+            const a = document.createElement("a");
+            a.href = data;
+            return a.hostname;
+        };
+
+        const title = urlDomain(url);
+
+        const amount = requiredAmount || suggestedAmount;
 
         if (mini) {
             const last = utxos.last<UTXO>();
-            return <Popup mini={mini}>
-                <div className="side-strip"><TokenIcon token={token} /></div>
-                <div className="popup--body--details">
-                    {last ? <>{last.utxo.confirmations} / {numberOfConfirmations(order.shiftParams.sendToken, networkDetails)} confirmations</> : <>Waiting for deposit</>}
-                </div>
-            </Popup>;
+            return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
         }
 
         return <Popup mini={mini}>
+            <div className="popup--body--details">
+                {showQR && depositAddress ?
+                    <QRCodeOuter>
+                        <QRCodeContainer>
+                            <QRCode value={`bitcoin:${depositAddress}${amount ? `?amount=${amount}` : ""}`} />
+                        </QRCodeContainer>
+                        <span>Deposit {amount ? amount : <></>} {token.toUpperCase()}</span>
+                    </QRCodeOuter>
+                    : <>
+                        <div className="popup--token--icon"><TokenIcon token={token} /></div>
+                        <div className="popup--body--title">
+                            Deposit {amount ? amount : <></>} {token.toUpperCase()}
+                        </div>
+                        {/* <div className="popup--title--to">{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet)" : ""} to</div> */}
+                        <div className="popup--title--to">to</div>
+                    </>}
+            </div>
             <div className="deposit-address">
                 <div className="popup--body--actions">
-                    {utxos.size > 0 ? showUTXOs : showAddress}
+                    {understood ?
+                        <>
+                            {/* <ScanningBanner>Scanning for transaction</ScanningBanner> */}
+                            <CopyToClipboard
+                                text={depositAddress || ""}
+                                onCopy={onClickAddress}
+                            >
+                                <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
+                                    <StyledLabel>{depositAddress || ""}</StyledLabel>
+                                    <label className="copied-text">Copied</label>
+                                    <AddressControls>
+                                        <button onClick={onQRClick}><QR className="qr" /></button>
+                                    </AddressControls>
+                                </div>
+                            </CopyToClipboard>
+                            {/* {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null} */}
+                        </> :
+                        <>
+                            {failed ? <div className="red">{`${failed.message || failed}`}</div> : <></>}
+                            <div className="popup--buttons">
+                                <ContinueButton className="button" disabled={depositAddress as string | null === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</ContinueButton>
+                            </div>
+                        </>}
                 </div>
             </div>
         </Popup>;

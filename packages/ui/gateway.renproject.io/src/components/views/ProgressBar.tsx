@@ -17,6 +17,7 @@ export const ProgressPulse = styled.div`
         `;
 
 
+
 export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: { name?: React.ReactChild, label?: string | number, target: number, progress: number, pulse?: boolean, tooltip?: string }) =>
     <div className={classNames(`ren-progress-bar--item`, progress >= target ? "ren-progress-bar--item--done" : "", progress + 1 === target ? "ren-progress-bar--item--current" : "")}>
         {pulse && progress + 1 === target ?
@@ -27,10 +28,13 @@ export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: 
     </div>;
 
 const width = (progress: number, itemsLength: number) => {
+    if (itemsLength === 1) {
+        return { percent: 0, px: 0 };
+    }
     // Progress bar's width is based on the progress percentage.
     const percent = Math.min(100 * (progress / (itemsLength - 1)), 100);
     // Remove 8px for the first circle, and 16px for each following circle.
-    const px = -8 - 16 * (Math.min(progress - 1, 0));
+    const px = -16 - 16 * (Math.min(progress - 1, 0));
     return { percent, px };
 };
 

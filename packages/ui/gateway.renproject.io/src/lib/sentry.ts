@@ -20,7 +20,6 @@ export const initializeSentry = () => {
 
         // Only throw errors generated from scripts at these URLs
         whitelistUrls: [
-            /.*republicprotocol.*/i,
             /.*renproject.*/i,
 
             // Local testing (localhost and IPv4 addresses)

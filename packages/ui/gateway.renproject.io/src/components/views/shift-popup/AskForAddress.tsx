@@ -1,10 +1,11 @@
 import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
+import { extractError } from "@renproject/utils";
 
 import { Token, Tokens } from "../../../state/generalTypes";
-import { OpeningShiftMini } from "../OpeningShiftMini";
 import { Popup } from "../Popup";
+import { ConnectedMini } from "./Mini";
 
 export const AskForAddress: React.StatelessComponent<{
     mini: boolean,
@@ -31,7 +32,7 @@ export const AskForAddress: React.StatelessComponent<{
             updateSubmitting(true);
             onAddress(address, token);
         } catch (error) {
-            updateError(String(error.message || error));
+            updateError(extractError(error));
             updateSubmitting(false);
         }
     };
@@ -41,7 +42,7 @@ export const AskForAddress: React.StatelessComponent<{
         updateAddress((event.target as HTMLInputElement).value);
     };
 
-    if (mini) { return <OpeningShiftMini />; }
+    if (mini) { return <ConnectedMini message={"Enter address"} />; }
 
     return <Popup mini={mini}>
         <div className="address-input">

@@ -48,7 +48,7 @@
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
         "prepare": "yarn build",
-        "npmignore": "npmignore",
+        "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore doc:html doc:publish",
         "link": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link"
     },

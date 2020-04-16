@@ -12,7 +12,7 @@ import { toBigNumber } from "./value";
  * This function checks if this is the case and makes the required changes to
  * the parameters;
  */
-export const resolveSendCall = (network: NetworkDetails, params: SendParams): LockAndMintParams | BurnAndReleaseParams => {
+export const resolveSendCall = (network: NetworkDetails, params: SendParams, lockAndMint?: boolean): LockAndMintParams | BurnAndReleaseParams => {
 
     const { sendTo, sendAmount, txConfig, ...restOfParams } = params;
 
@@ -23,7 +23,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams): Lo
         throw new Error(`"sendTo" parameter must be provided.`);
     }
 
-    const lockAndMint = String(sendTo).match(/^(0x)[0-9a-fA-Z]{40}$/);
+    lockAndMint = lockAndMint === undefined ? !!String(sendTo).match(/^(0x)[0-9a-fA-Z]{40}$/) : lockAndMint;
 
     const sendToken = lockAndMint ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
 

@@ -11,6 +11,7 @@ import {
 } from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
+import { Loading } from "@renproject/react-components";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
@@ -24,6 +25,8 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { HandlingTransfer } from "./HandlingTransfer";
 // import { TransferProgress } from "./ProgressBar";
 import { getStorage, removeStorageTransfer } from "./Storage";
+
+const { version } = require("../../../package.json");
 
 /**
  * App is the main visual component responsible for displaying different routes
@@ -259,7 +262,12 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     <></>
                 }
                 {transfer ? <ErrorBoundary>< HandlingTransfer /></ErrorBoundary> : <></>}
-                {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/ren-js" target="_blank" rel="noopener noreferrer">github.com/renproject/ren-js</a> for more information about GatewayJS.</span> : <></>}
+                {window === window.top ? <span className="not-in-iframe">
+                    <h1>GatewayJS</h1>
+                    <p>Version {version}</p>
+                    <p>See <a href="https://github.com/renproject/ren-js" target="_blank" rel="noopener noreferrer">github.com/renproject/ren-js</a> for more information about GatewayJS.</p>
+                </span> : <></>}
+                {!transfer && window !== window.top ? <Loading className="centered" /> : <></>}
                 {/* {!paused && transfer && sdkContainer.getNumberOfConfirmations() > 0 ? <TransferProgress /> : <></>} */}
             </div>
             {/* {!paused && <Footer />} */}

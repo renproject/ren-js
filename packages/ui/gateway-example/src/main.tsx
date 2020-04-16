@@ -24,7 +24,7 @@ declare global {
 const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string) => {
 
     const shiftInParams: SendParams = {
-        web3Provider: web3.currentProvider,
+        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
         sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
         sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
         sendTo: ethereumAddress,
@@ -82,17 +82,14 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     // }
 };
 
-const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, recipient: string) => {
-
-    const amount = GatewayJS.utils.value(0.000225, "btc").sats().toFixed();
-
+const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, amount: string, recipient: string) => {
     gatewayJS.burnAndRelease({
-        web3Provider: web3.currentProvider,
+        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
 
         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
         sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
         sendTo: recipient,
-        sendAmount: amount,
+        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
     }).result()
         .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
         .then(console.log)
@@ -171,7 +168,7 @@ export const GatewayExample = () => {
             if (isMint) {
                 await startShiftIn(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network);
             } else {
-                await startShiftOut(context.lib as unknown as Web3, gatewayJS, ethereumAddress);
+                await startShiftOut(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress);
             }
         } catch (error) {
             console.error(error);

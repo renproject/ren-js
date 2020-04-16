@@ -34,7 +34,8 @@
     "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
     "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
     "prepare": "yarn build",
-    "prepare-release": "run-s doc:html",
+    "npmignore": "npmignore -g ../../../.gitignore",
+    "prepare-release": "run-s npmignore doc:html",
     "link": "yarn link @renproject/interfaces @renproject/utils && yarn link"
   },
   "scripts-info": {

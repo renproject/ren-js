@@ -48,7 +48,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
-describe.skip("Cross chain transactions", function () {
+describe("Cross chain transactions", function () {
     // Disable test timeout.
     this.timeout(0);
 
@@ -103,7 +103,7 @@ describe.skip("Cross chain transactions", function () {
             contractParams: params,
             nonce: nonce || RenJS.utils.randomNonce(),
         });
-        const gatewayAddress = mint.addr();
+        const gatewayAddress = mint.gatewayAddress();
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
@@ -124,9 +124,9 @@ describe.skip("Cross chain transactions", function () {
 
         logger.info(`Submitting deposit to RenVM...`);
         const signature = await deposit.submit()
-            .on("renTxHash", (renTxHash: string) => {
-                logger.event(`Received renTxHash: ${renTxHash}`);
-                // deposit.renTxHash().should.equal(renTxHash);
+            .on("txHash", (txHash: string) => {
+                logger.event(`Received txHash: ${txHash}`);
+                // deposit.txHash().should.equal(txHash);
             })
             .on("status", (status) => { logger.event(`Received status: ${chalk.green(status)}`, { overwrite: true }); });
         logger.newLine();
@@ -162,10 +162,10 @@ describe.skip("Cross chain transactions", function () {
         logger.info("Submitting burn to RenVM...");
 
         await burnAndReleaseObject.submit()
-            .on("renTxHash", (renTxHash) => {
-                logger.event(`Received renTxHash: ${renTxHash}`);
-                logger.info(`burnAndReleaseObject.renTxHash(): ${burnAndReleaseObject.renTxHash()}`);
-                burnAndReleaseObject.renTxHash().should.equal(renTxHash);
+            .on("txHash", (txHash) => {
+                logger.event(`Received txHash: ${txHash}`);
+                logger.info(`burnAndReleaseObject.txHash(): ${burnAndReleaseObject.txHash()}`);
+                burnAndReleaseObject.txHash().should.equal(txHash);
             })
             .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
         logger.newLine();
@@ -377,7 +377,7 @@ describe.skip("Cross chain transactions", function () {
                 sendTo: (await web3.eth.getAccounts())[0],
             });
 
-            const gatewayAddress = mint.addr();
+            const gatewayAddress = mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
@@ -421,7 +421,7 @@ describe.skip("Cross chain transactions", function () {
                 sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             });
 
-            const gatewayAddress = mint.addr();
+            const gatewayAddress = mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
@@ -432,14 +432,14 @@ describe.skip("Cross chain transactions", function () {
         }
     });
 
-    it.skip("recover burn from renTxHash", async () => {
+    it.skip("recover burn from txHash", async () => {
         logger.consoleLine();
-        logger.info(`Starting burn test - recovering burn from renTxHash`);
+        logger.info(`Starting burn test - recovering burn from txHash`);
 
         const burnBase64 = new RenJS("devnet").burnAndRelease({
             web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "FBcH+vnMdybRYgaQB2Hm9rwg3MkgTcQFeh7j3/v10kI=",
+            txHash: "FBcH+vnMdybRYgaQB2Hm9rwg3MkgTcQFeh7j3/v10kI=",
         });
 
         const result64 = await burnBase64.submit();
@@ -447,7 +447,7 @@ describe.skip("Cross chain transactions", function () {
         const burnHex = new RenJS("devnet").burnAndRelease({
             web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "0x141707faf9cc7726d16206900761e6f6bc20dcc9204dc4057a1ee3dffbf5d242",
+            txHash: "0x141707faf9cc7726d16206900761e6f6bc20dcc9204dc4057a1ee3dffbf5d242",
         });
 
         const resultHex = await burnHex.submit();
@@ -455,14 +455,14 @@ describe.skip("Cross chain transactions", function () {
         result64.should.deep.equal(resultHex);
     });
 
-    it.skip("recover mint from renTxHash", async () => {
+    it.skip("recover mint from txHash", async () => {
         logger.consoleLine();
-        logger.info(`Starting mint test - recovering mint from renTxHash`);
+        logger.info(`Starting mint test - recovering mint from txHash`);
 
         const mintBase64 = new RenJS("devnet").lockAndMint({
             web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "2+jzYRh/e0KR3nmvu4/IMFs+U8zL1NnJULyStGaFaKM=",
+            txHash: "2+jzYRh/e0KR3nmvu4/IMFs+U8zL1NnJULyStGaFaKM=",
             contractCalls: [],
         });
 
@@ -471,7 +471,7 @@ describe.skip("Cross chain transactions", function () {
         const mintHex = new RenJS("devnet").lockAndMint({
             web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "0xdbe8f361187f7b4291de79afbb8fc8305b3e53cccbd4d9c950bc92b4668568a3",
+            txHash: "0xdbe8f361187f7b4291de79afbb8fc8305b3e53cccbd4d9c950bc92b4668568a3",
             contractCalls: [],
         });
 
@@ -510,7 +510,7 @@ describe.skip("Cross chain transactions", function () {
                 // nonce: nonce || RenJS.utils.randomNonce(),
             });
 
-            const gatewayAddress = mint.addr();
+            const gatewayAddress = mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);

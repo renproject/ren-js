@@ -1,11 +1,11 @@
+import { RenContract } from "@renproject/interfaces";
+import {
+    NetworkTestnet, processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
-import {
-    NetworkTestnet, processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
-} from "@renproject/utils";
-import { RenContract } from "@renproject/interfaces";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -22,9 +22,9 @@ describe("processParams", () => {
     it("Burn", () => {
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
-            ethTxHash: "ethTxHash",
+            ethereumTxHash: "ethereumTxHash",
         })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethTxHash: "ethTxHash" }, "Burn 1");
+            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" }, "Burn 1");
 
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
@@ -96,7 +96,7 @@ describe("processParams", () => {
     it("Mint", () => {
         processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
-            renTxHash: "renTxHash",
+            txHash: "txHash",
             contractCalls: [{
                 sendTo: "sendTo",
                 contractFn: "contractFn",
@@ -106,7 +106,7 @@ describe("processParams", () => {
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
-                renTxHash: "renTxHash",
+                txHash: "txHash",
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
@@ -117,7 +117,7 @@ describe("processParams", () => {
 
         processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
-            renTxHash: "renTxHash",
+            txHash: "txHash",
             contractCalls: [{
                 sendTo: "sendTo",
                 contractFn: "contractFn",
@@ -127,7 +127,7 @@ describe("processParams", () => {
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
-                renTxHash: "renTxHash",
+                txHash: "txHash",
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
@@ -138,14 +138,14 @@ describe("processParams", () => {
 
         resolveSendCall(NetworkTestnet, {
             sendToken: RenContract.Btc2Eth,
-            renTxHash: "renTxHash",
+            txHash: "txHash",
             sendTo: "sendTo",
             sendAmount: "0.01",
             txConfig: { gas: 2 },
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
-                renTxHash: "renTxHash",
+                txHash: "txHash",
                 suggestedAmount: "0.01",
                 contractCalls: [{
                     sendTo: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",

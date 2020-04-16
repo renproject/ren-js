@@ -2,7 +2,7 @@
 
 There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
 
-1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/gateway-js)): The simplest way to get started, providing a full user experience.
+1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/ren-js/tree/master/packages/lib/gateway)): The simplest way to get started, providing a full user experience.
 2. **RenJS** (this repository): A lower-level SDK which can be integrated into your existing user interface.
 
 See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.

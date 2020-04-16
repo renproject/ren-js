@@ -14,8 +14,7 @@ export const AskForAddress: React.StatelessComponent<{
     isTestnet: boolean,
     onAddress(address: string, token: Token): void;
 }> = ({ mini, token, message, isTestnet, onAddress }) => {
-    // tslint:disable-next-line: prefer-const
-    let [address, updateAddress] = React.useState("");
+    const [address, updateAddress] = React.useState("");
     const [error, updateError] = React.useState(null as string | null);
     const [submitting, updateSubmitting] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement | null>() as React.MutableRefObject<HTMLInputElement | null>;

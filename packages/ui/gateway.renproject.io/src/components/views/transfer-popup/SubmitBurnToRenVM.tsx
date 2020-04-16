@@ -49,10 +49,10 @@ const TransparentLoading = styled(Loading)`
 export const SubmitBurnToRenVM: React.StatelessComponent<{
     mini: boolean;
     token: Token;
-    renTxHash: string | null;
+    txHash: string | null;
     renVMStatus: TxStatus | null;
     submitDeposit: () => Promise<unknown>;
-}> = ({ mini, token, renVMStatus, renTxHash, submitDeposit }) => {
+}> = ({ mini, token, renVMStatus, txHash, submitDeposit }) => {
     const [error, setError] = React.useState(null as Error | null);
     const [submitting, setSubmitting] = React.useState(true);
 
@@ -76,11 +76,11 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
     React.useEffect(() => {
         if (!initialized) {
             setInitialized(true);
-            // if (renTxHash) {
+            // if (txHash) {
             onClick().catch(console.error);
             // }
         }
-    }, [initialized, renTxHash, onClick]);
+    }, [initialized, txHash, onClick]);
 
     if (mini) {
         return <Mini token={token} message={submitting ? "Submitting to RenVM" : "Submit to RenVM"} />;

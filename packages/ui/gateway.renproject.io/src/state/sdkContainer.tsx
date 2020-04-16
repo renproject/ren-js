@@ -111,7 +111,7 @@ export class SDKContainer extends Container<typeof initialState> {
             time: force && transferIn.hasOwnProperty("time") ? transferIn.time : min(existingTransfer.time, this.state.transfer && this.state.transfer.time, transferIn.time),
             inTx: force && transferIn.hasOwnProperty("inTx") ? transferIn.inTx : transferIn.inTx || (this.state.transfer && this.state.transfer.inTx) || existingTransfer.inTx,
             outTx: force && transferIn.hasOwnProperty("outTx") ? transferIn.outTx : transferIn.outTx || (this.state.transfer && this.state.transfer.outTx) || existingTransfer.outTx,
-            renTxHash: force && transferIn.hasOwnProperty("renTxHash") ? transferIn.renTxHash : transferIn.renTxHash || (this.state.transfer && this.state.transfer.renTxHash) || existingTransfer.renTxHash,
+            txHash: force && transferIn.hasOwnProperty("txHash") ? transferIn.txHash : transferIn.txHash || (this.state.transfer && this.state.transfer.txHash) || existingTransfer.txHash,
             renVMQuery: force && transferIn.hasOwnProperty("renVMQuery") ? transferIn.renVMQuery : transferIn.renVMQuery || (this.state.transfer && this.state.transfer.renVMQuery) || existingTransfer.renVMQuery,
             renVMStatus: force && transferIn.hasOwnProperty("renVMStatus") ? transferIn.renVMStatus : compareTxStatus(existingTransfer.renVMStatus, (this.state.transfer && this.state.transfer.renVMStatus), transferIn.renVMStatus),
             status: force && transferIn.hasOwnProperty("status") ? transferIn.status : compareTransferStatus(existingTransfer.status, (this.state.transfer && this.state.transfer.status), transferIn.status),
@@ -252,7 +252,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
     public submitBurnToRenVM = async (_resubmit = false) => {
         // if (resubmit) {
-        //     await this.updateTransfer({ status: BurnAndReleaseStatus.ConfirmedOnEthereum, renTxHash: null });
+        //     await this.updateTransfer({ status: BurnAndReleaseStatus.ConfirmedOnEthereum, txHash: null });
         // }
 
         const { sdkRenVM: renVM } = this.state;
@@ -278,11 +278,11 @@ export class SDKContainer extends Container<typeof initialState> {
             burnReference,
         }).readFromEthereum();
 
-        const renTxHash = burnAndReleaseObject.renTxHash();
+        const txHash = burnAndReleaseObject.txHash();
         this.updateTransfer({
-            renTxHash,
+            txHash,
             status: BurnAndReleaseStatus.SubmittedToRenVM,
-        }).catch((updateTransferError) => _catchBackgroundErr_(updateTransferError, "Error in sdkContainer: submitBurnToRenVM > renTxHash > updateTransfer"));
+        }).catch((updateTransferError) => _catchBackgroundErr_(updateTransferError, "Error in sdkContainer: submitBurnToRenVM > txHash > updateTransfer"));
 
         const response = await burnAndReleaseObject.submit()
             .on("status", (renVMStatus: TxStatus) => {
@@ -291,7 +291,7 @@ export class SDKContainer extends Container<typeof initialState> {
                 }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateTransfer"));
             });
 
-        await this.updateTransfer({ renVMQuery: response, renTxHash: response.hash });
+        await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
 
         // TODO: Fix returned types for burning
         const address = response.in.to;
@@ -334,7 +334,7 @@ export class SDKContainer extends Container<typeof initialState> {
     public generateAddress = (): string | undefined => {
         return this
             .lockAndMintObject()
-            .addr();
+            .gatewayAddress();
     }
 
     // Retrieves unspent deposits at the provided address
@@ -343,11 +343,11 @@ export class SDKContainer extends Container<typeof initialState> {
         if (!transfer) {
             throw new Error("Transfer not set");
         }
-        const onRenTxHash = (renTxHash: string) => {
+        const onTxHash = (txHash: string) => {
 
             const transferObject = this.state.transfer;
-            if (!transferObject || !transferObject.renTxHash || transferObject.renTxHash !== renTxHash) {
-                this.updateTransfer({ renTxHash })
+            if (!transferObject || !transferObject.txHash || transferObject.txHash !== txHash) {
+                this.updateTransfer({ txHash })
                     .catch(console.error);
             }
         };
@@ -374,7 +374,7 @@ export class SDKContainer extends Container<typeof initialState> {
         });
         const signaturePromise = transaction
             .submit()
-            .on("renTxHash", onRenTxHash)
+            .on("txHash", onTxHash)
             .on("status", onStatus);
 
         // If the number of confirmations being waited for are less than RenVM's
@@ -386,7 +386,7 @@ export class SDKContainer extends Container<typeof initialState> {
             while (true) {
                 try {
                     const response = await transaction.queryTx();
-                    await this.updateTransfer({ renVMQuery: response, renTxHash: response.hash });
+                    await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
                     break;
                 } catch (error) {
                     // Ignore error
@@ -399,7 +399,7 @@ export class SDKContainer extends Container<typeof initialState> {
         const signature = await signaturePromise;
         await this.updateTransfer({ status: LockAndMintStatus.ReturnedFromRenVM });
         const response = await signature.queryTx();
-        await this.updateTransfer({ renVMQuery: response, renTxHash: response.hash });
+        await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
     }
 
     public queryTransferStatus = async () => {
@@ -412,19 +412,19 @@ export class SDKContainer extends Container<typeof initialState> {
         if (!renVM) { throw new Error(`RenVM not initialized`); }
         if (!transfer) { throw new Error("Transfer not set"); }
 
-        const renTxHash = transfer.renTxHash;
-        if (!renTxHash) { throw new Error(`Invalid values required to query status`); }
+        const txHash = transfer.txHash;
+        if (!txHash) { throw new Error(`Invalid values required to query status`); }
 
         if (transfer.eventType === EventType.LockAndMint) {
             return renVM.lockAndMint({
                 sendToken: transfer.transferParams.sendToken,
-                renTxHash,
+                txHash,
                 contractCalls: [],
             }).queryTx();
         } else {
             return renVM.burnAndRelease({
                 sendToken: transfer.transferParams.sendToken,
-                renTxHash,
+                txHash,
             }).queryTx();
         }
     }

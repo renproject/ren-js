@@ -79,8 +79,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
             return a.hostname;
         };
 
-        const title = urlDomain(url);
-
+        // tslint:disable-next-line: prefer-const
         let [pressedDone, setPressedDone] = React.useState(false);
         const onDone = React.useCallback(async () => {
             pressedDone = true;
@@ -194,7 +193,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
         };
 
         const burnAndRelease = () => {
-            const { renTxHash, transferParams, renVMStatus } = transfer as BurnAndReleaseEvent;
+            const { txHash, transferParams, renVMStatus } = transfer as BurnAndReleaseEvent;
 
             const token = transfer.transferParams.sendToken.slice(0, 3) as Token;
 
@@ -235,7 +234,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         break;
                     case BurnAndReleaseStatus.ConfirmedOnEthereum:
                     case BurnAndReleaseStatus.SubmittedToRenVM:
-                        inner = <SubmitBurnToRenVM token={token} mini={paused} renVMStatus={renVMStatus} renTxHash={renTxHash} submitDeposit={sdkContainer.submitBurnToRenVM} />;
+                        inner = <SubmitBurnToRenVM token={token} mini={paused} renVMStatus={renVMStatus} txHash={txHash} submitDeposit={sdkContainer.submitBurnToRenVM} />;
                         break;
                     case BurnAndReleaseStatus.NoBurnFound:
                         onNoBurnFound().catch((error) => { _catchInteractionErr_(error, "Error in HandlingTransfer: burnAndRelease > onNoBurnFound"); });

@@ -4,6 +4,10 @@ import {
 } from "./types";
 import { UnmarshalledTx } from "./unmarshalled";
 
+/**
+ * The names of the messages sent between the Gateway iFrame and GatewayJS
+ * library.
+ */
 export enum GatewayMessageType {
     Pause = "pause",
     Resume = "resume",
@@ -26,6 +30,10 @@ export enum GatewayMessageType {
     Acknowledgement = "acknowledgement",
 }
 
+/**
+ * The payload type for the messages sent between the Gateway iFrame and
+ * GatewayJS library.
+ */
 export type GatewayMessagePayload<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.Pause ? {} :
     Type extends GatewayMessageType.Resume ? {} :
@@ -54,6 +62,10 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     // tslint:disable-next-line: no-any
     Type extends GatewayMessageType.Acknowledgement ? any : never;
 
+/**
+ * The response payload type for the replies sent between the Gateway iFrame and
+ * GatewayJS library.
+ */
 export type GatewayMessageResponse<Type extends GatewayMessageType> =
     // tslint:disable-next-line: no-any
     Type extends GatewayMessageType.GetStatus ? { status: LockAndMintStatus | BurnAndReleaseStatus, details: any | null } :

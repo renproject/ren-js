@@ -5,7 +5,7 @@ import { ResponseQueryBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardWeb3Events, generateBurnTxHash,
     ignorePromiEventError, newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent,
-    renTxHashToBase64, RenWeb3Events, resolveOutToken, Web3Events, withDefaultAccount,
+    RenWeb3Events, resolveOutToken, txHashToBase64, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -24,6 +24,17 @@ export class BurnAndRelease {
         this.params = processBurnAndReleaseParams(this.network, _params);
     }
 
+    /**
+     * createTransactions will create unsigned Ethereum transactions that can
+     * be signed at a later point in time. The last transaction should contain
+     * the burn that will be submitted to RenVM. Once signed and submitted,
+     * a new BurnAndRelease object should be initialized with the burn
+     * reference.
+     *
+     * @param {TransactionConfig} [txConfig] Optionally override default options
+     *        like gas.
+     * @returns {TransactionConfig[]}
+     */
     public createTransactions = (txConfig?: TransactionConfig): TransactionConfig[] => {
         const contractCalls = this.params.contractCalls || [];
 
@@ -59,19 +70,27 @@ export class BurnAndRelease {
         });
     }
 
+    /**
+     * Read a burn reference from an Ethereum transaction - or submit a
+     * transaction first if the transaction details have been provided.
+     *
+     * @param {TransactionConfig} [txConfig] Optionally override default options
+     *        like gas.
+     * @returns {(PromiEvent<BurnAndRelease, Web3Events & RenWeb3Events>)}
+     */
     public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<BurnAndRelease, Web3Events & RenWeb3Events> => {
 
         const promiEvent = newPromiEvent<BurnAndRelease, Web3Events & RenWeb3Events>();
 
         (async () => {
 
-            if (this.params.renTxHash) {
+            if (this.params.txHash) {
                 return this;
             }
 
             const { web3Provider, contractCalls } = this.params;
             let { burnReference } = this.params;
-            let ethTxHash = this.params.ethTxHash;
+            let ethereumTxHash = this.params.ethereumTxHash;
 
             // There are three parameter configs:
             // Situation (1): A `burnReference` is provided
@@ -121,7 +140,7 @@ export class BurnAndRelease {
                             forwardWeb3Events(tx, promiEvent);
                         }
 
-                        ethTxHash = await new Promise((resolve, reject) => tx
+                        ethereumTxHash = await new Promise((resolve, reject) => tx
                             .on("transactionHash", resolve)
                             .catch((error: Error) => {
                                 // tslint:disable-next-line: no-console
@@ -132,11 +151,11 @@ export class BurnAndRelease {
                     }
                 }
 
-                if (!ethTxHash) {
+                if (!ethereumTxHash) {
                     throw new Error("Must provide txHash or contract call details.");
                 }
 
-                burnReference = await extractBurnReference(web3, ethTxHash);
+                burnReference = await extractBurnReference(web3, ethereumTxHash);
             }
 
             this.params.burnReference = burnReference;
@@ -155,38 +174,51 @@ export class BurnAndRelease {
         return promiEvent;
     }
 
-    public renTxHash = () => {
-        const renTxHash = this.params.renTxHash;
-        if (renTxHash) {
-            return renTxHashToBase64(renTxHash);
+    /**
+     * txHash calculates the RenVM transaction hash for the burn. This is
+     * used to track the progress of the release in RenVM.
+     */
+    public txHash = (): string => {
+        const txHash = this.params.txHash;
+        if (txHash) {
+            return txHashToBase64(txHash);
         }
 
         if (!this.params.burnReference && this.params.burnReference !== 0) {
-            throw new Error("Must call `readFromEthereum` before calling `renTxHash`");
+            throw new Error("Must call `readFromEthereum` before calling `txHash`");
         }
         const burnReference = new BigNumber(this.params.burnReference).toFixed();
         return generateBurnTxHash(resolveOutToken(this.params.sendToken), burnReference);
     }
 
+    /**
+     * queryTx requests the status of the burn from RenVM.
+     */
     public queryTx = async () =>
-        unmarshalBurnTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(), "base64"))))
+        unmarshalBurnTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.txHash(), "base64"))))
 
-    public submit = (): PromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }> => {
-        const promiEvent = newPromiEvent<UnmarshalledBurnTx, { renTxHash: [string], status: [TxStatus] }>();
+    /**
+     * submit queries RenVM for the status of the burn until the funds are
+     * released.
+     *
+     * @returns {PromiEvent<UnmarshalledBurnTx, { txHash: [string], status: [TxStatus] }>}
+     */
+    public submit = (): PromiEvent<UnmarshalledBurnTx, { txHash: [string], status: [TxStatus] }> => {
+        const promiEvent = newPromiEvent<UnmarshalledBurnTx, { txHash: [string], status: [TxStatus] }>();
 
         (async () => {
             const { burnReference } = this.params;
-            if (!this.params.renTxHash && (!burnReference && burnReference !== 0)) {
+            if (!this.params.txHash && (!burnReference && burnReference !== 0)) {
                 throw new Error("Must call `readFromEthereum` before calling `submit`");
             }
 
-            const renTxHash = this.renTxHash();
+            const txHash = this.txHash();
 
-            // const renTxHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
-            promiEvent.emit("renTxHash", renTxHash);
+            // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
+            promiEvent.emit("txHash", txHash);
 
             const response = await this.renVMNetwork.waitForTX<ResponseQueryBurnTx>(
-                Ox(Buffer.from(renTxHash, "base64")),
+                Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
                 },

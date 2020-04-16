@@ -454,6 +454,13 @@ export default class GatewayJS {
         return gateways;
     }
 
+    /**
+     * Start a cross-chain transfer onto Ethereum.
+     *
+     * @param {(LockAndMintParams | LockAndMintParamsSimple | SendParams)} params An object specifying the details
+     *        required for the transfer.
+     * @returns {Gateway}
+     */
     public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): Gateway => {
         if ((params as SendParams).sendAmount) {
             params = resolveSendCall(this.network, params as SendParams);
@@ -464,6 +471,13 @@ export default class GatewayJS {
         return new Gateway(this.network, this.endpoint)._open(params);
     }
 
+    /**
+     * Start a cross-chain transfer away from Ethereum.
+     *
+     * @param {(BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams)} params An object specifying the details
+     *        required for the transfer.
+     * @returns {Gateway}
+     */
     public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): Gateway => {
         if ((params as SendParams).sendAmount) {
             params = resolveSendCall(this.network, params as SendParams);

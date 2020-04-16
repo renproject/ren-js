@@ -30,7 +30,7 @@ export class UIContainer extends Container<typeof initialState> {
 
     public resetTransfer = async () => this.setState(state => ({ ...state, gatewayPopupID: null, submitting: false }));
 
-    public deposit = async (deposit: UTXOWithChain) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txid, deposit) }));
+    public deposit = async (deposit: UTXOWithChain) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txHash, deposit) }));
 
     public setSubmitting = async (submitting: boolean) => this.setState(state => ({ ...state, submitting }));
 

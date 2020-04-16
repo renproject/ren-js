@@ -7,12 +7,10 @@ import {
     extractError, fixSignature, forwardWeb3Events, generateAddress, generateGHash,
     generateMintTxHash, getGatewayAddress, ignorePromiEventError, newPromiEvent, Ox,
     parseRenContract, payloadToABI, payloadToMintABI, processLockAndMintParams, PromiEvent,
-    randomNonce, renTxHashToBase64, RenWeb3Events, resolveInToken, retrieveConfirmations,
-    retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, toBase64, toBigNumber, Web3Events,
-    withDefaultAccount,
+    randomNonce, RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits, SECONDS,
+    signatureToString, sleep, strip0x, toBase64, txHashToBase64, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import BN from "bn.js";
 import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
@@ -23,8 +21,8 @@ import { RenVMNetwork, unmarshalMintTx } from "./renVMNetwork";
 
 export class LockAndMint {
     public utxo: UTXOIndex | undefined;
-    public gatewayAddress: string | undefined;
     public signature: string | undefined;
+    private readonly generatedGatewayAddress: string | undefined;
     private readonly network: NetworkDetails;
     private readonly renVMNetwork: RenVMNetwork;
     private readonly params: LockAndMintParams;
@@ -38,9 +36,9 @@ export class LockAndMint {
         this.params = processLockAndMintParams(this.network, _params);
         // this.web3 = this.params.web3Provider ? new Web3(this.params.web3Provider) : undefined;
 
-        const renTxHash = this.params.renTxHash;
+        const txHash = this.params.txHash;
 
-        if (!renTxHash) {
+        if (!txHash) {
             const { sendToken: renContract, contractCalls, nonce: maybeNonce } = this.params;
 
             if (!contractCalls || !contractCalls.length) {
@@ -60,18 +58,18 @@ export class LockAndMint {
             // TODO: Validate inputs
             const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network);
             const gatewayAddress = generateAddress(resolveInToken(renContract), gHash, this.network);
-            this.gatewayAddress = gatewayAddress;
+            this.generatedGatewayAddress = gatewayAddress;
         }
     }
 
-    public addr = () => this.gatewayAddress;
+    public gatewayAddress = () => this.generatedGatewayAddress;
 
     public wait = (confirmations: number, specifyUTXO?: UTXOIndex): PromiEvent<this, { "deposit": [UTXOWithChain] }> => {
         const promiEvent = newPromiEvent<this, { "deposit": [UTXOWithChain] }>();
 
         (async () => {
             // If the deposit has already been submitted, "wait" can be skipped.
-            if (this.params.renTxHash) {
+            if (this.params.txHash) {
                 return this;
             }
 
@@ -104,7 +102,7 @@ export class LockAndMint {
                 return this;
             }
 
-            if (!this.gatewayAddress) {
+            if (!this.generatedGatewayAddress) {
                 throw new Error("Unable to calculate gateway address.");
             }
 
@@ -157,7 +155,7 @@ export class LockAndMint {
                 }
 
                 try {
-                    const newDeposits = await retrieveDeposits(this.network, resolveInToken(renContract), this.gatewayAddress, 0);
+                    const newDeposits = await retrieveDeposits(this.network, resolveInToken(renContract), this.generatedGatewayAddress, 0);
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
@@ -183,29 +181,29 @@ export class LockAndMint {
         return promiEvent;
     }
 
-    public renTxHash = (specifyUTXO?: UTXOIndex) => {
-        const renTxHash = this.params.renTxHash;
-        if (renTxHash) {
-            return renTxHashToBase64(renTxHash);
+    public txHash = (specifyUTXO?: UTXOIndex) => {
+        const txHash = this.params.txHash;
+        if (txHash) {
+            return txHashToBase64(txHash);
         }
 
         const { contractCalls, sendToken: renContract, nonce } = this.params;
 
         const utxo = specifyUTXO || this.utxo;
         if (!utxo) {
-            throw new Error(`Unable to generate renTxHash without UTXO. Call 'wait' first.`);
+            throw new Error(`Unable to generate txHash without UTXO. Call 'wait' first.`);
         }
 
         if (!nonce) {
-            throw new Error(`Unable to generate renTxHash without nonce.`);
+            throw new Error(`Unable to generate txHash without nonce.`);
         }
 
         if (!contractCalls || !contractCalls.length) {
-            throw new Error(`Unable to generate renTxHash without contract call details.`);
+            throw new Error(`Unable to generate txHash without contract call details.`);
         }
 
         if (!renContract) {
-            throw new Error(`Unable to generate renTxHash without token being transferred.`);
+            throw new Error(`Unable to generate txHash without token being transferred.`);
         }
 
         // Last contract call
@@ -216,21 +214,32 @@ export class LockAndMint {
         return generateMintTxHash(resolveInToken(renContract), encodedGHash, utxo);
     }
 
-    public queryTx = async (specifyUTXO?: UTXOIndex) =>
-        unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.renTxHash(specifyUTXO), "base64"))))
+    /**
+     * queryTx requests the status of the mint from RenVM.
+     */
+    public queryTx = async (specifyUTXO?: UTXOIndex): Promise<UnmarshalledMintTx> =>
+        unmarshalMintTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.txHash(specifyUTXO), "base64"))))
 
-    public submit = (specifyUTXO?: UTXOIndex): PromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }> => {
-        const promiEvent = newPromiEvent<LockAndMint, { "renTxHash": [string], "status": [TxStatus] }>();
+    /**
+     * submit sends the mint details to RenVM and waits for the signature to be
+     * available.
+     *
+     * @param {UTXOIndex} [specifyUTXO] Optionally provide the lock transaction
+     *        instead of calling `wait`.
+     * @returns {PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>}
+     */
+    public submit = (specifyUTXO?: UTXOIndex): PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }> => {
+        const promiEvent = newPromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>();
 
         (async () => {
             const utxo = specifyUTXO || this.utxo;
-            let renTxHash = this.params.renTxHash ? renTxHashToBase64(this.params.renTxHash) : undefined;
+            let txHash = this.params.txHash ? txHashToBase64(this.params.txHash) : undefined;
             if (utxo) {
-                const utxoRenTxHash = this.renTxHash(utxo);
-                if (renTxHash && renTxHash !== utxoRenTxHash) {
-                    throw new Error(`Inconsistent RenVM transaction hash: got ${renTxHash} but expected ${utxoRenTxHash}`);
+                const utxoTxHash = this.txHash(utxo);
+                if (txHash && txHash !== utxoTxHash) {
+                    throw new Error(`Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`);
                 }
-                renTxHash = utxoRenTxHash;
+                txHash = utxoTxHash;
 
                 const { contractCalls, sendToken: renContract, nonce } = this.params;
 
@@ -259,7 +268,7 @@ export class LockAndMint {
                 // Try to submit to RenVM. If that fails, see if they already
                 // know about the transaction.
                 try {
-                    renTxHash = await this.renVMNetwork.submitMint(
+                    txHash = await this.renVMNetwork.submitMint(
                         resolveInToken(renContract),
                         sendTo,
                         nonce,
@@ -270,9 +279,9 @@ export class LockAndMint {
                         fnABI,
                         encodedParameters,
                     );
-                    if (renTxHash !== utxoRenTxHash) {
+                    if (txHash !== utxoTxHash) {
                         // tslint:disable-next-line: no-console
-                        console.warn(`Unexpected txHash returned from RenVM: expected ${utxoRenTxHash} but got ${renTxHash}`);
+                        console.warn(`Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`);
                     }
                 } catch (error) {
                     console.error(error);
@@ -280,7 +289,7 @@ export class LockAndMint {
                         // Check if the darknodes have already seen the transaction
                         const queryTxResponse = await this.queryTx(utxo);
                         if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
-                            throw new Error(`Transaction ${renTxHash} has not been submitted previously.`);
+                            throw new Error(`Transaction ${txHash} has not been submitted previously.`);
                         }
                     } catch (errorInner) {
                         // Ignore errorInner.
@@ -290,13 +299,13 @@ export class LockAndMint {
                     }
                 }
 
-                promiEvent.emit("renTxHash", renTxHash);
-            } else if (!renTxHash) {
+                promiEvent.emit("txHash", txHash);
+            } else if (!txHash) {
                 throw new Error(`Must call 'wait' or provide UTXO or RenVM transaction hash.`);
             }
 
             const rawResponse = await this.renVMNetwork.waitForTX<ResponseQueryMintTx>(
-                Ox(Buffer.from(renTxHash, "base64")),
+                Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
                 },
@@ -305,7 +314,7 @@ export class LockAndMint {
 
             const response = unmarshalMintTx(rawResponse);
 
-            // const utxoTxHash = Ox(Buffer.from(renTxHash, "base64"));
+            // const utxoTxHash = Ox(Buffer.from(txHash, "base64"));
             // const onStatus = (status: TxStatus) => { promiEvent.emit("status", status); };
             // const _cancelRequested = () => promiEvent._isCancelled();
 
@@ -344,7 +353,7 @@ export class LockAndMint {
             return this;
 
             // tslint:disable-next-line: no-use-before-declare
-            // return new Signature(this.network, this.params as LockAndMintParams, response, renTxHash);
+            // return new Signature(this.network, this.params as LockAndMintParams, response, txHash);
         })().then(promiEvent.resolve).catch(promiEvent.reject);
 
         return promiEvent;

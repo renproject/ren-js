@@ -30,9 +30,6 @@ const assertArgumentType = <ArgType>(
     return arg.value;
 };
 
-// 'ArgType extends RenVMArg<Name, infer Type, infer Value> ? RenVMArg<Name, Type, Value> : never'
-// 'ArgType extends RenVMArg<infer Name, infer Type, infer Value> ? RenVMArg<Name, Type, Value> : never'
-
 const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
     name: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
     type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,

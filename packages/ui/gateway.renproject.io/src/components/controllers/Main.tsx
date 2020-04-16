@@ -152,7 +152,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     time,
                                     inTx: null,
                                     outTx: null,
-                                    renTxHash: null,
+                                    txHash: null,
                                     renVMStatus: null,
                                     renVMQuery: null,
                                     returned: false,
@@ -259,7 +259,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     <></>
                 }
                 {transfer ? <ErrorBoundary>< HandlingTransfer /></ErrorBoundary> : <></>}
-                {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/gateway-js" target="_blank" rel="noopener noreferrer">github.com/renproject/gateway-js</a> for more information about GatewayJS.</span> : <></>}
+                {window === window.top ? <span className="not-in-iframe">See <a href="https://github.com/renproject/ren-js" target="_blank" rel="noopener noreferrer">github.com/renproject/ren-js</a> for more information about GatewayJS.</span> : <></>}
                 {/* {!paused && transfer && sdkContainer.getNumberOfConfirmations() > 0 ? <TransferProgress /> : <></>} */}
             </div>
             {/* {!paused && <Footer />} */}

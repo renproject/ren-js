@@ -1,11 +1,8 @@
 // tslint:disable: no-console react-this-binding-issue
 
-import { RenContract, RenNetwork, ShiftInParams } from "@renproject/interfaces";
-import {
-    DEFAULT_SHIFT_FEE, Ox, payloadToShiftInABI, randomNonce, strip0x, toBigNumber,
-} from "@renproject/utils";
+import { LockAndMintParams, RenContract, RenNetwork } from "@renproject/interfaces";
+import { Ox, payloadToMintABI, randomNonce, strip0x } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { HttpProvider } from "web3-providers";
 
 // tslint:disable-next-line: no-any
 type Web3 = any;
@@ -16,7 +13,7 @@ export const confirmationlessShifters = {
     [RenNetwork.Devnet]: "0xeaC1449abA83Fc6B6ed0442e5C86A485D8C43B75",
 };
 
-export const to0Conf = (web3: Web3, network: string | RenNetwork, params: ShiftInParams): ShiftInParams => {
+export const to0Conf = (web3: Web3, network: string | RenNetwork, params: LockAndMintParams): LockAndMintParams => {
 
     if (!params.contractCalls) {
         return params;
@@ -54,7 +51,7 @@ export const to0Conf = (web3: Web3, network: string | RenNetwork, params: ShiftI
         throw new Error(`Confirmationless shift requires the contract's first parameter to be called 'shifter' or '_shifter'`);
     }
 
-    const ABI = payloadToShiftInABI(contractFn, (contractParams || []));
+    const ABI = payloadToMintABI(contractFn, (contractParams || []));
 
     const contract = new web3.eth.Contract(ABI, sendTo);
 

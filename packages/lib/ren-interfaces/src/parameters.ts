@@ -21,17 +21,6 @@ export type EthUint = "uint" | "uint8" | "uint16" | "uint24" | "uint32" | "uint4
 export type EthByte = "bytes" | "bytes1" | "bytes2" | "bytes3" | "bytes4" | "bytes5" | "bytes6" | "bytes7" | "bytes8" | "bytes9" | "bytes10" | "bytes11" | "bytes12" | "bytes13" | "bytes14" | "bytes15" | "bytes16" | "bytes17" | "bytes18" | "bytes19" | "bytes20" | "bytes21" | "bytes22" | "bytes23" | "bytes24" | "bytes25" | "bytes26" | "bytes27" | "bytes28" | "bytes29" | "bytes30" | "bytes31" | "bytes32";
 export type EthType = "address" | "bool" | "string" | "var" | EthInt | EthUint | "byte" | EthByte;
 
-// export interface TransactionConfig {
-//     from?: string | number;
-//     to?: string;
-//     value?: number | string | BN;
-//     gas?: number | string;
-//     gasPrice?: number | string | BN;
-//     data?: string;
-//     nonce?: number;
-//     chainId?: number;
-// }
-
 export interface EthArg<name extends string, type extends EthType, valueType> {
     name: name;
     type: type;
@@ -41,65 +30,170 @@ export interface EthArg<name extends string, type extends EthType, valueType> {
 // tslint:disable-next-line: no-any
 export type EthArgs = Array<EthArg<string, EthType, any>>;
 
+/**
+ * The details required to create and/or submit a transaction to Ethereum.
+ */
 export interface ContractCall {
-    sendTo: string; // The address of the adapter smart contract
-    contractFn: string; // The name of the function to be called on the Adapter contract
-    contractParams?: EthArgs; // The parameters to be passed to the adapter contract
-    txConfig?: TransactionConfig; // Set transaction options:
+    /**
+     * The address of the adapter smart contract.
+     */
+    sendTo: string;
+
+    /**
+     * The name of the function to be called on the Adapter contract.
+     */
+    contractFn: string;
+
+    /**
+     * The parameters to be passed to the adapter contract.
+     */
+    contractParams?: EthArgs;
+
+    /**
+     * Set transaction options:.
+     */
+    txConfig?: TransactionConfig;
 }
 
+/**
+ * The parameters required for both minting and burning.
+ */
 export interface TransferParamsCommon {
     /**
-     * The token, including the origin and destination chains
+     * The token, including the origin and destination chains.
      */
     sendToken: RenContract | "BTC" | "ZEC" | "BCH";
 
+    /**
+     * A web3 provider must be provided if RenJS is submitting or reading
+     * transactions to/from Ethereum.
+     */
     web3Provider?: provider; // A Web3 provider
 
-    // Recover from a Ren transaction hash.
-    renTxHash?: string; // Provide the transaction hash returned from RenVM to continue a previous mint.
+    /**
+     * Provide the transaction hash returned from RenVM to continue a previous
+     * mint.
+     */
+    txHash?: string;
 
     /**
-     * An option to override the default nonce generated randomly
+     * An option to override the default nonce generated randomly.
      */
     nonce?: string;
 }
 
+/**
+ * The parameters for a cross-chain transfer onto Ethereum.
+ */
 export interface LockAndMintParams extends TransferParamsCommon {
     /**
      * The amount of `sendToken` that should be sent.
      */
     suggestedAmount?: NumberValue;
 
+    /**
+     * The number of confirmations to wait before submitting the signature
+     * to Ethereum. If this number is less than the default, the RenVM
+     * transaction is returned when those confirmations have passed, before
+     * the signature is available, and will not be submitted to Ethereum.
+     */
     confirmations?: number;
 
+    /**
+     * Details for submitting one or more Ethereum transactions. The last one
+     * will be augmented with the three required parameters for minting - the
+     * amount, nHash and RenVM signature.
+     */
     contractCalls?: ContractCall[];
 }
 
+/**
+ * A simpler format for providing the parameters required for a lock and mint.
+ */
 export interface LockAndMintParamsSimple extends TransferParamsCommon, ContractCall {
     /**
      * The amount of `sendToken` that should be sent.
      */
     suggestedAmount?: NumberValue;
 
+    /**
+     * The number of confirmations to wait before submitting the signature
+     * to Ethereum. If this number is less than the default, the RenVM
+     * transaction is returned when those confirmations have passed, before
+     * the signature is available, and will not be submitted to Ethereum.
+     */
     confirmations?: number;
 }
 
+/**
+ * BurnAndReleaseParams define the parameters for a cross-chain transfer away
+ * from Ethereum.
+ */
 export interface BurnAndReleaseParams extends TransferParamsCommon {
-    ethTxHash?: string; // The hash of the burn transaction on Ethereum
-    burnReference?: string | number; // The reference ID of the burn emitted in the contract log
+    /**
+     * The hash of the burn transaction on Ethereum.
+     */
+    ethereumTxHash?: string;
+
+    /**
+     * The reference ID of the burn emitted in the contract log.
+     */
+    burnReference?: string | number;
+
+    /**
+     * Details for submitting one or more Ethereum transactions. The last one
+     * should trigger a burn event in the relevant Gateway contract.
+     */
     contractCalls?: ContractCall[];
 }
 
+/**
+ * A simpler format for providing the parameters required for a burn and
+ * release.
+ */
 export interface BurnAndReleaseParamsSimple extends TransferParamsCommon, ContractCall {
-    ethTxHash?: string; // The hash of the burn transaction on Ethereum
-    burnReference?: string | number; // The reference ID of the burn emitted in the contract log
+    /**
+     * The hash of the burn transaction on Ethereum.
+     */
+    ethereumTxHash?: string;
+
+    /**
+     * The reference ID of the burn emitted in the contract log.
+     */
+    burnReference?: string | number;
 }
 
+/**
+ * The parameters for the `send` function - a common interface that aims to
+ * abstract away minting and burning into a single cross-chain transfer
+ * function.
+ */
 export interface SendParams extends TransferParamsCommon {
+    /**
+     * The receiving address. If this address is an Ethereum address, then the
+     * transfer will be a lock and mint - and will be a burn and release
+     * otherwise.
+     */
     sendTo: string;
+
+    /**
+     * The amount being transferred cross-chain. For sending to an Ethereum
+     * address, this is a suggested amount only. The transfer will continue
+     * even if a different amount is sent to the Gateway address.
+     */
     sendAmount: NumberValue;
-    txConfig?: TransactionConfig; // Set transaction options:
+
+    /**
+     * Set Ethereum transaction options, including the gasPrice.
+     */
+    txConfig?: TransactionConfig;
+
+    /**
+     * For minting, the number of confirmations to wait before submitting the
+     * signature to Ethereum. If this number is less than the default, the RenVM
+     * transaction is returned when those confirmations have passed, before
+     * the signature is available, and will not be submitted to Ethereum.
+     */
     confirmations?: number;
 }
 

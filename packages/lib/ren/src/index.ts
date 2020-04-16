@@ -41,7 +41,9 @@ const NetworkDetails = {
  * A second optional parameter lets you provide a RenVM RPC provider or a
  * lightnode URL.
  *
- * It then exposes two main functions: [[lockAndMint]] and [[burnAndRelease]].
+ * It then exposes two main functions:
+ * 1. [[lockAndMint]] - for transferring assets to Ethereum.
+ * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
  */
 export default class RenJS {
     // Expose constants so they can be accessed on the RenJS class

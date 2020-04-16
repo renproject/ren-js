@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { NetworkDetails, Tx } from "@renproject/interfaces";
+import { Chain, NetworkDetails, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
@@ -96,7 +96,7 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
         </div>
         <div className="deposit-address">
             <div className="popup--body--actions">
-                {txHash && !error ?
+                {txHash && txHash.chain === Chain.Ethereum && !error ?
                     <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(txHash, networkDetails)}>
                         <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
                     </a> :

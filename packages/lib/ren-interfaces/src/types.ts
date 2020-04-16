@@ -52,7 +52,7 @@ interface HistoryEventCommon {
     time: number; // Seconds since Unix epoch
     inTx: Tx | null;
     outTx: Tx | null;
-    renTxHash: string | null;
+    txHash: string | null;
     renVMStatus: TxStatus | null;
     returned: boolean;
 }

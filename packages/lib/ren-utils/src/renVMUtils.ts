@@ -113,24 +113,24 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
     return Ox(keccak256(encoded));
 };
 
-export const renTxHashToBase64 = (renTxHash: Buffer | string) => {
-    if (Buffer.isBuffer(renTxHash)) {
-        return renTxHash.toString("base64");
+export const txHashToBase64 = (txHash: Buffer | string) => {
+    if (Buffer.isBuffer(txHash)) {
+        return txHash.toString("base64");
     }
 
     // Check if it's hex-encoded
-    if (renTxHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)) {
-        return Buffer.from(strip0x(renTxHash), "hex").toString("base64");
+    if (txHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)) {
+        return Buffer.from(strip0x(txHash), "hex").toString("base64");
     }
-    return renTxHash;
+    return txHash;
 };
 
 export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex) => {
-    return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`));
+    return txHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`));
 };
 
 export const generateBurnTxHash = (renContract: RenContract, encodedID: string) => {
-    return renTxHashToBase64(keccak256(`txHash_${renContract}_${encodedID}`));
+    return txHashToBase64(keccak256(`txHash_${renContract}_${encodedID}`));
 };
 
 // export const generateNHash = (tx: Tx): string => {

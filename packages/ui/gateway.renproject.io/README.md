@@ -2,7 +2,7 @@
 
 `gateway.renproject.io` is the iframe opened by GatewayJS.
 
-The docs can be found in the [GatewayJS repository](https://github.com/renproject/gateway-js).
+The docs can be found in the [RenJS and GatewayJS repository](https://github.com/renproject/ren-js).
 
 ## Development
 

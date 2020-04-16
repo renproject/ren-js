@@ -2,16 +2,11 @@
 
 import * as React from "react";
 
-import { useEphemeralKey, useWeb3Network } from "@openzeppelin/network/lib/react";
 import GatewayJS from "@renproject/gateway";
 import { SendParams } from "@renproject/interfaces";
-import { DEFAULT_SHIFT_FEE, randomNonce, sleep } from "@renproject/utils";
-import BigNumber from "bignumber.js";
 import { parse } from "qs";
 import { HttpProvider } from "web3-providers";
 import Web3 from "web3";
-
-import { to0Conf } from "./lib";
 
 interface InjectedEthereum extends HttpProvider {
     enable: () => Promise<void>;
@@ -109,7 +104,7 @@ const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
     const previousGateways = await gatewayJS.getGateways();
     for (const trade of Array.from(previousGateways.values())) {
         gatewayJS
-            .recoverShift(web3.currentProvider, trade)
+            .recoverTransfer(web3.currentProvider, trade)
             .pause()
             .result()
             .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })

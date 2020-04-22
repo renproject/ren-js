@@ -35,7 +35,7 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: bool
         border-radius: 6px;
         background: white;
         position:fixed;
-        left: calc(50vw - calc(460px / 2));
+        left: calc(50vw - calc(${iframeWidth}px / 2));
         top: calc(50vh - calc(${iframeHeight}px / 2));
         // transform: translate(-50%, -50%);
         width:${iframeWidth}px;

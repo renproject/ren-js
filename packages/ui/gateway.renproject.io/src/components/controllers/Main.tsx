@@ -35,18 +35,17 @@ const { version } = require("../../../package.json");
 export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
     ({ containers: [uiContainer, sdkContainer], location }) => {
 
+        const reportError = React.useCallback(async (errorMessage: string) => {
+            if (uiContainer.state.gatewayPopupID) {
+                await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Error, { message: errorMessage });
+            }
+        }, [uiContainer]);
+
         const pause = React.useCallback(async (fromClient?: boolean) => {
             if (!fromClient) {
-                const sendMsg = async () => {
-                    if (uiContainer.state.gatewayPopupID) {
-                        await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Pause, {});
-                    }
-                };
-                // The client send a pause or resume reminder message every
-                // second, so there's a change that the user clicks pause or
-                // resume just as the client sends the reminder.
-                await sendMsg();
-                setTimeout(sendMsg, 100);
+                if (uiContainer.state.gatewayPopupID) {
+                    await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Pause, {});
+                }
             }
             return uiContainer.pause();
         }, [uiContainer]);
@@ -55,14 +54,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         const resume = React.useCallback(async (fromClient?: boolean) => {
             if (!fromClient) {
-                const sendMsg = async () => {
-                    if (uiContainer.state.gatewayPopupID) {
-                        await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Resume, {});
-                    }
-                };
-                // See above on pausing.
-                await sendMsg();
-                setTimeout(sendMsg, 100);
+                if (uiContainer.state.gatewayPopupID) {
+                    await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Resume, {});
+                }
             }
             return uiContainer.resume();
         }, [uiContainer]);
@@ -164,7 +158,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
 
-                                break;
+                            //     break;
                             case GatewayMessageType.Pause:
                                 acknowledgeMessage(message);
                                 pause(true).catch(console.error);
@@ -235,12 +229,25 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         //     }
         // }, [initialized, login, uiContainer]);
 
+        // If the transfer details haven't loaded after 10 seconds, show an
+        // error message and feedback button.
+        const feedbackButtonDelay = 10 * 1000;
+        const [delayPassed, setDelayPassed] = React.useState(false);
+        const [showFeedbackButton, setShowFeedbackButton] = React.useState(false);
+        const onErrorBoundaryCancel = React.useCallback(() => reportError("Unable to load transfer details."), [setShowFeedbackButton]);
+        React.useEffect(() => {
+            if (delayPassed) {
+                setShowFeedbackButton(true);
+            }
+        }, [delayPassed]);
+
         React.useEffect(() => {
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
             const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
             uiContainer.connect().catch(console.error);
             sdkContainer.connect(urlRenNetwork).catch(console.error);
+            setTimeout(() => { setDelayPassed(true); }, feedbackButtonDelay);
         }, []);
 
         const { paused } = uiContainer.state;
@@ -267,7 +274,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     <p>Version {version}</p>
                     <p>See <a href="https://github.com/renproject/ren-js" target="_blank" rel="noopener noreferrer">github.com/renproject/ren-js</a> for more information about GatewayJS.</p>
                 </span> : <></>}
-                {!transfer && window !== window.top ? <Loading className="centered" /> : <></>}
+                {!transfer && window !== window.top ? <>
+                    {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details." popup={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}
+                </> : <></>}
                 {/* {!paused && transfer && sdkContainer.getNumberOfConfirmations() > 0 ? <TransferProgress /> : <></>} */}
             </div>
             {/* {!paused && <Footer />} */}

@@ -79,6 +79,23 @@ const StyledLabel = styled.span`
         font-size: 14px !important;
         font-weight: 400 !important;
         letter-spacing: 0.2px;
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 3px;
+        `;
+
+const EllipsisSpan = styled.span`
+    font-size: 1px;
+    color: #00000000;
+    margin-top: 14px;
+
+    &:after {
+        content: "...";
+        font-size: 14px;
+        display: block;
+        margin-top: -14px;
+        color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
+    }
         `;
 
 const AddressControls = styled.div`
@@ -112,6 +129,7 @@ const ContinueButton = styled.button`
             background: ${p => `linear-gradient(90deg, ${p.theme.primaryColor} 0%, ${lighten(0.1, p.theme.primaryColor)} 180%)`};
         `;
 
+// Show Deposit Address
 export const ShowDepositAddress: React.StatelessComponent<Props> =
     ({ mini, token, order, utxos, sdkRenVM, transferParams, confirmations, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
@@ -208,7 +226,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                                 onCopy={onClickAddress}
                             >
                                 <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
-                                    <StyledLabel>{depositAddress || ""}</StyledLabel>
+                                    <StyledLabel>{depositAddress.slice(0, 20) || ""}{depositAddress.slice(20, depositAddress.length - 20) ? <EllipsisSpan>{depositAddress.slice(20, depositAddress.length - 20) || ""}</EllipsisSpan> : <></>}{depositAddress.slice(Math.max(20, depositAddress.length - 20)) || ""}</StyledLabel>
                                     <label className="copied-text">Copied</label>
                                     <AddressControls>
                                         <button onClick={onQRClick}><QR className="qr" /></button>

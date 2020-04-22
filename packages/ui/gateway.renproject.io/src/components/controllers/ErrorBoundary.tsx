@@ -1,6 +1,8 @@
 import * as Sentry from "@sentry/browser";
 import * as React from "react";
 
+import classNames from "classnames";
+
 import { _catchInteractionErr_ } from "../../lib/errors";
 
 const defaultState = { // Entries must be immutable
@@ -32,21 +34,24 @@ export class ErrorBoundary extends React.Component<Props, typeof defaultState> {
      */
     public render(): React.ReactNode {
         const { errorInfo, error } = this.state;
-        if (errorInfo) {
+        const { mini, manualError, popup, onCancel, className, ...divProps } = this.props;
+        if (error || this.props.manualError) {
             // Error path
             return (
-                <div className={this.props.popup ? "popup" : ""}>
-                    <h2>Something went wrong.</h2>
-                    <details style={{ whiteSpace: "pre-wrap" }}>
-                        {error && error.toString()}
-                        <br />
-                        {errorInfo.componentStack}
-                    </details>
-                    {this.props.popup ? <div className="popup--buttons">
-                        <button onClick={this.reportFeedback}>Report feedback</button>
-                        <button onClick={this.props.onCancel}>Close</button>
-                    </div> : null
-                    }
+                <div {...divProps} className={classNames(className, popup ? "popup" : "")}>
+                    <h2>{manualError ? manualError : <>Something went wrong.</>}</h2>
+                    {!mini ? <>
+                        {error || errorInfo ? <details style={{ whiteSpace: "pre-wrap" }}>
+                            {error && error.toString()}
+                            <br />
+                            {errorInfo && errorInfo.componentStack}
+                        </details> : <></>}
+                        {popup ? <div className="popup--buttons">
+                            <button onClick={this.reportFeedback}>Report feedback</button>
+                            <button onClick={onCancel}>Close</button>
+                        </div> : null
+                        }
+                    </> : <></>}
                 </div>
             );
         }
@@ -59,7 +64,11 @@ export class ErrorBoundary extends React.Component<Props, typeof defaultState> {
     }
 }
 
-interface Props {
+interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+    mini?: boolean;
+
+    manualError?: string;
+
     /**
      * Popup specifies whether or not the Error Boundary is being rendered in
      * the popup controller.

@@ -43,11 +43,8 @@ const getRequiredAddressAndName = (transferParams: LockAndMintEvent["transferPar
 export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
     ({ containers: [uiContainer, sdkContainer] }) => {
 
-        const [showQR, setShowQR] = React.useState(false);
         // tslint:disable-next-line: prefer-const
         let [returned, setReturned] = React.useState(false);
-
-        const toggleShowQR = React.useCallback(() => { setShowQR(!showQR); }, [showQR]);
 
         const onNoBurnFound = async () => {
             if (returned) {
@@ -105,8 +102,6 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
 
             const token = transferParams.sendToken.slice(0, 3) as Token;
 
-            let depositAddress;
-
             let inner = <></>;
             if (!sdkRenVM) {
                 inner = <LogIn correctNetwork={expectedNetwork || "correct"} token={token} paused={paused} wrongNetwork={wrongNetwork} />;
@@ -128,22 +123,17 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                             />;
                         } else {
                             try {
-                                depositAddress = sdkContainer.generateAddress() || "";
-
                                 // Show the deposit address and wait for a deposit
                                 inner = <ShowDepositAddress
                                     mini={paused}
-                                    order={transfer}
-                                    depositAddress={depositAddress}
+                                    generateAddress={sdkContainer.generateAddress}
                                     token={token}
                                     utxos={utxos}
                                     sdkRenVM={sdkRenVM}
                                     transferParams={transferParams}
                                     waitForDeposit={sdkContainer.waitForDeposits}
                                     confirmations={sdkContainer.getNumberOfConfirmations(transfer)}
-                                    onQRClick={toggleShowQR}
                                     onDeposit={uiContainer.deposit}
-                                    networkDetails={sdkRenVM.network}
                                 />;
                             } catch (error) {
                                 inner = <InvalidParameters mini={paused} token={token} />;
@@ -154,21 +144,13 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                     case LockAndMintStatus.Confirmed:
                     case LockAndMintStatus.SubmittedToRenVM:
                         try {
-                            depositAddress = sdkContainer.generateAddress() || "";
-
-
                             // Show the deposit address and wait for a deposit
                             inner = <DepositReceived
                                 mini={paused}
-                                order={transfer}
-                                depositAddress={depositAddress}
                                 token={token}
                                 utxos={utxos}
-                                sdkRenVM={sdkRenVM}
-                                transferParams={transferParams}
                                 waitForDeposit={sdkContainer.waitForDeposits}
                                 confirmations={sdkContainer.getNumberOfConfirmations(transfer)}
-                                onQRClick={toggleShowQR}
                                 onDeposit={uiContainer.deposit}
                                 networkDetails={sdkRenVM.network}
                             />;
@@ -196,6 +178,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
             const { txHash, transferParams, renVMStatus } = transfer as BurnAndReleaseEvent;
 
             const token = transfer.transferParams.sendToken.slice(0, 3) as Token;
+            const txCount = (transferParams.contractCalls || []).length;
 
             let inner = <></>;
 
@@ -218,7 +201,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
-                            inner = <SubmitBurnToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                            inner = <SubmitBurnToEthereum txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         }
                         // const submit = async (submitOrderID: string) => {
                         //     await sdkContainer.approveTokenTransfer(submitOrderID);
@@ -230,7 +213,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         break;
                     case BurnAndReleaseStatus.SubmittedToEthereum:
                         // Submit the burn to Ethereum
-                        inner = <SubmitBurnToEthereum networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                        inner = <SubmitBurnToEthereum txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} />;
                         break;
                     case BurnAndReleaseStatus.ConfirmedOnEthereum:
                     case BurnAndReleaseStatus.SubmittedToRenVM:

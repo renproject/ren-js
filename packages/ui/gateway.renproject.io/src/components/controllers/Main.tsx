@@ -158,7 +158,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
 
-                            //     break;
+                                break;
                             case GatewayMessageType.Pause:
                                 acknowledgeMessage(message);
                                 pause(true).catch(console.error);
@@ -272,7 +272,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 {window === window.top ? <span className="not-in-iframe">
                     <h1>GatewayJS</h1>
                     <p>Version {version}</p>
-                    <p>See <a href="https://github.com/renproject/ren-js" target="_blank" rel="noopener noreferrer">github.com/renproject/ren-js</a> for more information about GatewayJS.</p>
+                    <p>See <a target="_blank" rel="noopener noreferrer" href="https://github.com/renproject/ren-js">github.com/renproject/ren-js</a> for more information about GatewayJS.</p>
                 </span> : <></>}
                 {!transfer && window !== window.top ? <>
                     {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details." popup={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}

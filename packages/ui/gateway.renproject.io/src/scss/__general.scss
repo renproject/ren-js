@@ -266,7 +266,12 @@ body {
     }
 
     .blue {
-        color: var($primaryColor);
+        color: $blue-bright;
+    }
+
+    .blue-link {
+        color: $blue-bright;
+        font-style: italic;
     }
 
     .hint {

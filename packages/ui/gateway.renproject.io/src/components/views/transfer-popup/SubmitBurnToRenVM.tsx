@@ -87,7 +87,7 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
     }
 
     return <Popup mini={mini}>
-        <div className="submit-to-ethereum">
+        <div className="burn-popup submit-to-ethereum">
             <div className="popup--body">
                 {/* {token ? <TokenIcon className="token-icon" token={token} /> : null} */}
                 {submitting ? <>Status: {renderTxStatus(renVMStatus)}</> : <></>}

@@ -36,7 +36,7 @@ export const Footer: React.FC<{}> = props => {
                 <img alt="" role="presentation" src={smallLogo} style={{ width: "10px", marginRight: "5px" }} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
             </div>
             <div>
-                <Tooltip align="left" width={200} contents={<span>{bridgeInfo} Read more about RenVM and sMPC <a href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">here</a>.</span>}><img alt={bridgeInfo} src={infoIcon} /></Tooltip>
+                <Tooltip align="left" width={200} contents={<span>{bridgeInfo} Read more about RenVM and sMPC <a target="_blank" rel="noopener noreferrer" href="https://renproject.io/renvm">here</a>.</span>}><img alt={bridgeInfo} src={infoIcon} /></Tooltip>
             </div>
         </Container>
     );

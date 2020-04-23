@@ -331,7 +331,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
     // Takes a transferParams as bytes or an array of primitive types and returns
     // the deposit address
-    public generateAddress = (): string | undefined => {
+    public generateAddress = async (): Promise<string | undefined> => {
         return this
             .lockAndMintObject()
             .gatewayAddress();

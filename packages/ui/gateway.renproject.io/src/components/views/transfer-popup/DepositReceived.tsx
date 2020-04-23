@@ -33,14 +33,9 @@ export const ScanningDot = styled.span`
 interface Props {
     mini: boolean;
     token: Token;
-    depositAddress: string;
-    order: LockAndMintEvent;
-    transferParams: LockAndMintEvent["transferParams"];
     utxos: OrderedMap<string, UTXOWithChain>;
     networkDetails: NetworkDetails;
     confirmations: number;
-    sdkRenVM: RenJS | null;
-    onQRClick(): void;
     waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
     onDeposit(utxo: UTXOWithChain): void;
 }
@@ -163,7 +158,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
                 <div className="popup--body--actions">
                     {utxos.map(utxo => {
                         return <div key={utxo.utxo.txHash}>
-                            <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(utxo, networkDetails)}>
+                            <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(utxo, networkDetails)}>
                                 <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
                                     <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
                                 </div>

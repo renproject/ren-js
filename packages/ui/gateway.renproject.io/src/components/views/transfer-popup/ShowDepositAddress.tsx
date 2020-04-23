@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { LockAndMintEvent, NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
-import { TokenIcon } from "@renproject/react-components";
+import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -11,6 +11,7 @@ import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
 import { ReactComponent as QR } from "../../../images/qr.svg";
+import { _catchInteractionErr_ } from "../../../lib/errors";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token } from "../../../state/generalTypes";
 import { getURL } from "../../controllers/Storage";
@@ -28,21 +29,6 @@ export const ScanningDot = styled.span`
             line-height: 100%;
             flex-shrink: 0;
         `;
-
-interface Props {
-    mini: boolean;
-    token: Token;
-    depositAddress: string;
-    order: LockAndMintEvent;
-    transferParams: LockAndMintEvent["transferParams"];
-    utxos: OrderedMap<string, UTXOWithChain>;
-    networkDetails: NetworkDetails;
-    confirmations: number;
-    sdkRenVM: RenJS | null;
-    onQRClick(): void;
-    waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
-    onDeposit(utxo: UTXOWithChain): void;
-}
 
 
 const QRCodeContainer = styled.div`
@@ -129,15 +115,36 @@ const ContinueButton = styled.button`
             background: ${p => `linear-gradient(90deg, ${p.theme.primaryColor} 0%, ${lighten(0.1, p.theme.primaryColor)} 180%)`};
         `;
 
+interface Props {
+    mini: boolean;
+    token: Token;
+    generateAddress: () => Promise<string | undefined>;
+    transferParams: LockAndMintEvent["transferParams"];
+    utxos: OrderedMap<string, UTXOWithChain>;
+    confirmations: number;
+    sdkRenVM: RenJS | null;
+    waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
+    onDeposit(utxo: UTXOWithChain): void;
+}
+
 // Show Deposit Address
 export const ShowDepositAddress: React.StatelessComponent<Props> =
-    ({ mini, token, order, utxos, sdkRenVM, transferParams, confirmations, depositAddress, waitForDeposit, onDeposit, networkDetails }) => {
+    ({ mini, token, utxos, transferParams, confirmations, generateAddress, waitForDeposit, onDeposit }) => {
         // Defaults for demo
 
         const [showQR, setShowQR] = React.useState(false);
         const [understood, setUnderstood] = React.useState(false);
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
+
+        const [depositAddress, setDepositAddress] = React.useState<string | null>(null);
+
+        React.useEffect(() => {
+            (async () => {
+                const address = await generateAddress();
+                setDepositAddress(address || "");
+            })().catch(error => _catchInteractionErr_(error, "Error generating gateway address."));
+        }, []);
 
         const onQRClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
             event.stopPropagation();
@@ -226,7 +233,14 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                                 onCopy={onClickAddress}
                             >
                                 <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
-                                    <StyledLabel>{depositAddress.slice(0, 20) || ""}{depositAddress.slice(20, depositAddress.length - 20) ? <EllipsisSpan>{depositAddress.slice(20, depositAddress.length - 20) || ""}</EllipsisSpan> : <></>}{depositAddress.slice(Math.max(20, depositAddress.length - 20)) || ""}</StyledLabel>
+                                    <StyledLabel>{depositAddress ?
+                                        <>
+                                            {depositAddress.slice(0, 20) || ""}
+                                            {depositAddress.slice(20, depositAddress.length - 20) ? <EllipsisSpan>{depositAddress.slice(20, depositAddress.length - 20) || ""}</EllipsisSpan> : <></>}
+                                            {depositAddress.slice(Math.max(20, depositAddress.length - 20)) || ""}
+                                        </> :
+                                        <Loading />
+                                    }</StyledLabel>
                                     <label className="copied-text">Copied</label>
                                     <AddressControls>
                                         <button onClick={onQRClick}><QR className="qr" /></button>

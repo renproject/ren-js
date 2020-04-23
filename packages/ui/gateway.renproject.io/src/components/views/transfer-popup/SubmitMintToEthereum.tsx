@@ -105,7 +105,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
                     Error submitting to Ethereum: {!showFullError && error.length > 100 ? <>{error.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
                     {failedTransaction ? <>
                         <br />
-                        See the <a className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Stack Trace</a> for more details.
+                        See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
                         <br />
                     </> : null}
                 </div> : null}
@@ -114,7 +114,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
         <div className="deposit-address">
             <div className="popup--body--actions">
                 {txHash && !error ?
-                    <a className="no-underline" target="_blank" rel="noopener noreferrer" href={txUrl(txHash, networkDetails)}>
+                    <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(txHash, networkDetails)}>
                         <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.chain === Chain.Ethereum ? txHash.hash : (txHash.utxo ? txHash.utxo.txHash : txHash.address)}</LabelledDiv>
                     </a> :
                     <div className="popup--buttons">

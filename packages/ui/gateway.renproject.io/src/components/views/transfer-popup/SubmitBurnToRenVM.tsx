@@ -1,10 +1,11 @@
 import * as React from "react";
 
 import { TxStatus } from "@renproject/interfaces";
-import { Loading, TokenIcon } from "@renproject/react-components";
+import { Loading } from "@renproject/react-components";
 import styled from "styled-components";
 import { lighten } from "polished";
 
+import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Token } from "../../../state/generalTypes";
 import { Popup } from "../Popup";
@@ -89,14 +90,20 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
     return <Popup mini={mini}>
         <div className="burn-popup submit-to-ethereum">
             <div className="popup--body">
-                {/* {token ? <TokenIcon className="token-icon" token={token} /> : null} */}
-                {submitting ? <>Status: {renderTxStatus(renVMStatus)}</> : <></>}
-                {error ? <>
-                    <div className="submitting-to-renvm--body">
-                        <p style={{ marginTop: "20px", fontSize: "16px" }} className="red">Unable to submit to RenVM</p>
-                        <p style={{ lineBreak: "anywhere" }} className="red">{error.message || error}</p>
-                    </div>
-                </> : <></>}
+                <>
+                    <div className="popup--body--header"></div>
+                    <div className="popup--body--icon"><BurnIcon /></div>
+                </>
+                <div className="popup--body--message">
+                    {/* {token ? <TokenIcon className="token-icon" token={token} /> : null} */}
+                    {submitting ? <>Status: {renderTxStatus(renVMStatus)}</> : <></>}
+                    {error ? <>
+                        <div className="submitting-to-renvm--body">
+                            <p style={{ marginTop: "20px", fontSize: "16px" }} className="red">Unable to submit to RenVM</p>
+                            <p style={{ lineBreak: "anywhere" }} className="red">{error.message || error}</p>
+                        </div>
+                    </> : <></>}
+                </div>
             </div>
         </div>
         <div className="deposit-address">

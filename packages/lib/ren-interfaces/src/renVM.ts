@@ -109,17 +109,17 @@ export enum RenVMType {
 }
 
 export interface RenVMOutputUTXO {
-    txHash: RenVMParameterValue<RenVMType.TypeB32>;
-    vOut: RenVMParameterValue<RenVMType.TypeU32>;
-    scriptPubKey: RenVMParameterValue<RenVMType.TypeB>;
-    amount: RenVMParameterValue<RenVMType.TypeU64>;
+    txHash: RenVMValue<RenVMType.TypeB32>;
+    vOut: RenVMValue<RenVMType.TypeU32>;
+    scriptPubKey: RenVMValue<RenVMType.TypeB>;
+    amount: RenVMValue<RenVMType.TypeU64>;
 }
 
 export interface RenVMInputUTXO {
-    txHash: RenVMParameterValue<RenVMType.TypeB32>;
-    vOut: RenVMParameterValue<RenVMType.TypeU32>;
-    scriptPubKey?: RenVMParameterValue<RenVMType.TypeB>;
-    amount?: RenVMParameterValue<RenVMType.TypeU64>;
+    txHash: RenVMValue<RenVMType.TypeB32>;
+    vOut: RenVMValue<RenVMType.TypeU32>;
+    scriptPubKey?: RenVMValue<RenVMType.TypeB>;
+    amount?: RenVMValue<RenVMType.TypeU64>;
 }
 
 export type RenVMUTXO = RenVMOutputUTXO | RenVMInputUTXO;
@@ -129,12 +129,12 @@ export type HexString = string;
 export type DecimalString = string;
 
 export interface ExtEthCompatPayload {
-    abi: RenVMParameterValue<RenVMType.TypeB>;
-    value: RenVMParameterValue<RenVMType.TypeB>;
-    fn: RenVMParameterValue<RenVMType.TypeB>;
+    abi: RenVMValue<RenVMType.TypeB>;
+    value: RenVMValue<RenVMType.TypeB>;
+    fn: RenVMValue<RenVMType.TypeB>;
 }
 
-export type RenVMParameterValue<Type extends RenVMType> =
+export type RenVMValue<Type extends RenVMType> =
     Type extends RenVMType.TypeAddress ? string :
     Type extends RenVMType.TypeStr ? Base64String :
     Type extends RenVMType.TypeB32 ? Base64String :
@@ -164,7 +164,7 @@ export type RenVMParameterValue<Type extends RenVMType> =
     // tslint:disable-next-line: no-any
     any;
 
-export interface RenVMArg<Name extends string, Type extends RenVMType, Value extends RenVMParameterValue<Type> = RenVMParameterValue<Type>> {
+export interface RenVMArg<Name extends string, Type extends RenVMType, Value extends RenVMValue<Type> = RenVMValue<Type>> {
     name: Name;
     type: Type;
     value: Value;

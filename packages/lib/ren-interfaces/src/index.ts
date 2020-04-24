@@ -4,6 +4,7 @@ export * from "./general";
 export * from "./messages";
 export * from "./parameters";
 export * from "./renVM";
+export * from "./shard";
 export * from "./types";
 export * from "./unmarshalled";
 export * from "./utxo";

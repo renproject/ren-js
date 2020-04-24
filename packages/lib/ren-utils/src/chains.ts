@@ -7,22 +7,36 @@ import {
 import {
     Chain, NetworkDetails, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOWithChain,
 } from "@renproject/interfaces";
+import { ripemd160, sha256 } from "ethereumjs-util";
 
+import { Ox } from "./common";
 import { parseRenContract } from "./renVMUtils";
+
+// const hexOrBase64ToBuffer = (value: string | Buffer): Buffer =>
+//     typeof value === "string" ?
+//         value.slice(0, 2) === "0x" ?
+//             Buffer.from(strip0x(value), "hex") :
+//             Buffer.from(value, "base64") :
+//         Buffer.from(value);
+
+export const hash160 = (publicKey: Buffer): Buffer =>
+    ripemd160(
+        sha256(
+            publicKey),
+        false);
 
 /**
  * Generate Gateway address for a cross-chain transfer's origin chain.
  */
-export const generateAddress = (renContract: RenContract, gHash: string, network: NetworkDetails): string => {
+export const generateAddress = (renContract: RenContract, gHash: string, mpkh: Buffer, isTestnet: boolean): string => {
     const chain = parseRenContract(renContract).from;
-    const mpkh = network.contracts.renVM.mpkh;
     switch (chain) {
         case Chain.Bitcoin:
-            return createBTCAddress(network.isTestnet, mpkh, gHash);
+            return createBTCAddress(isTestnet, Ox(mpkh), gHash);
         case Chain.Zcash:
-            return createZECAddress(network.isTestnet, mpkh, gHash);
+            return createZECAddress(isTestnet, Ox(mpkh), gHash);
         case Chain.BitcoinCash:
-            return createBCHAddress(network.isTestnet, mpkh, gHash);
+            return createBCHAddress(isTestnet, Ox(mpkh), gHash);
         default:
             throw new Error(`Unable to generate deposit address for chain ${chain}`);
     }

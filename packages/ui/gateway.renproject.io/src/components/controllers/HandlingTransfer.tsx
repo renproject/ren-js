@@ -18,7 +18,7 @@ import { AskForAddress } from "../views/transfer-popup/AskForAddress";
 import { Complete } from "../views/transfer-popup/Complete";
 import { DepositReceived } from "../views/transfer-popup/DepositReceived";
 import { InvalidParameters } from "../views/transfer-popup/InvalidParameters";
-import { ShowDepositAddress } from "../views/transfer-popup/ShowDepositAddress";
+import { ShowGatewayAddress } from "../views/transfer-popup/ShowGatewayAddress";
 import { SubmitBurnToEthereum } from "../views/transfer-popup/SubmitBurnToEthereum";
 import { SubmitBurnToRenVM } from "../views/transfer-popup/SubmitBurnToRenVM";
 import { SubmitMintToEthereum } from "../views/transfer-popup/SubmitMintToEthereum";
@@ -124,7 +124,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         } else {
                             try {
                                 // Show the deposit address and wait for a deposit
-                                inner = <ShowDepositAddress
+                                inner = <ShowGatewayAddress
                                     mini={paused}
                                     generateAddress={sdkContainer.generateAddress}
                                     token={token}

@@ -63,7 +63,11 @@ export class LockAndMint {
         return { sendToken, contractCalls, nonce, ...restOfParams };
     }
 
-    public gatewayAddress = async () => {
+    public gatewayAddress = async (specifyGatewayAddress?: string) => {
+        if (specifyGatewayAddress) {
+            this.generatedGatewayAddress = specifyGatewayAddress;
+        }
+
         if (this.generatedGatewayAddress) {
             return this.generatedGatewayAddress;
         }

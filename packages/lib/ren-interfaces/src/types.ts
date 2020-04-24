@@ -67,6 +67,7 @@ export interface LockAndMintEvent extends HistoryEventCommon {
     status: LockAndMintStatus;
     transferParams: SerializableLockAndMintParams;
     renVMQuery: UnmarshalledMintTx | null;
+    gatewayAddress?: string;
 }
 
 export interface BurnAndReleaseEvent extends HistoryEventCommon {

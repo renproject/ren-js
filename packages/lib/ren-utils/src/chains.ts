@@ -47,16 +47,16 @@ export const generateAddress = (renContract: RenContract, gHash: string, mpkh: B
  * An optional `confirmations` parameter limits UTXOs to ones with at least that
  * amount of confirmations.
  */
-export const retrieveDeposits = async (_network: NetworkDetails, renContract: RenContract, depositAddress: string, confirmations = 0): Promise<UTXOWithChain[]> => {
+export const retrieveDeposits = async (_network: NetworkDetails, renContract: RenContract, address: string, confirmations = 0): Promise<UTXOWithChain[]> => {
     const chain = parseRenContract(renContract).from;
     switch (chain) {
         case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
+            return (await getBitcoinUTXOs(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
         case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
+            return (await getZcashUTXOs(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
         case Chain.BitcoinCash:
             // tslint:disable-next-line: no-unnecessary-type-assertion
-            return (await getBitcoinCashUTXOs(_network)(depositAddress, confirmations)).map((utxo: UTXO) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
+            return (await getBitcoinCashUTXOs(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
         default:
             throw new Error(`Unable to retrieve deposits for chain ${chain}`);
     }

@@ -319,7 +319,7 @@ export class SDKContainer extends Container<typeof initialState> {
     public lockAndMintObject = (): LockAndMint => {
         const { sdkRenVM: renVM } = this.state;
         if (!renVM) {
-            throw new Error("Invalid parameters passed to `generateAddress`");
+            throw new Error("Invalid parameters passed to `lockAndMintObject`");
         }
         const transfer = this.state.transfer;
         if (!transfer) {
@@ -332,9 +332,24 @@ export class SDKContainer extends Container<typeof initialState> {
     // Takes a transferParams as bytes or an array of primitive types and returns
     // the deposit address
     public generateAddress = async (): Promise<string | undefined> => {
-        return this
+        const transfer = this.state.transfer;
+
+        if (!transfer || transfer.eventType === EventType.BurnAndRelease) {
+            throw new Error("Invalid parameters passed to `generateAddress`");
+        }
+
+        if (transfer.gatewayAddress) {
+            return transfer.gatewayAddress;
+        }
+
+        const address = await this
             .lockAndMintObject()
             .gatewayAddress();
+
+        const update: Partial<LockAndMintEvent> = { gatewayAddress: address };
+        await this.updateTransfer(update);
+
+        return address;
     }
 
     // Retrieves unspent deposits at the provided address

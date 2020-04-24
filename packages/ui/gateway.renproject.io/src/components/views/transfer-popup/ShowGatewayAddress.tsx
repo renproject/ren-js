@@ -9,6 +9,7 @@ import { lighten } from "polished";
 import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
+import { extractError } from "@renproject/utils";
 
 import { ReactComponent as QR } from "../../../images/qr.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
@@ -128,7 +129,7 @@ interface Props {
 }
 
 // Show Deposit Address
-export const ShowDepositAddress: React.StatelessComponent<Props> =
+export const ShowGatewayAddress: React.StatelessComponent<Props> =
     ({ mini, token, utxos, transferParams, confirmations, generateAddress, waitForDeposit, onDeposit }) => {
         // Defaults for demo
 
@@ -137,14 +138,7 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
 
-        const [depositAddress, setDepositAddress] = React.useState<string | null>(null);
-
-        React.useEffect(() => {
-            (async () => {
-                const address = await generateAddress();
-                setDepositAddress(address || "");
-            })().catch(error => _catchInteractionErr_(error, "Error generating gateway address."));
-        }, []);
+        const [gatewayAddress, setGatewayAddress] = React.useState<string | null>(null);
 
         const onQRClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
             event.stopPropagation();
@@ -152,23 +146,27 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
         };
 
         const [timer, setTimer] = React.useState<NodeJS.Timeout | null>(null);
-        const [failed, setFailed] = React.useState(null as Error | null);
+        const [failed, setFailed] = React.useState<string | null>(null);
 
-        const showDepositAddress = React.useCallback(() => {
-
+        const revealGatewayAddress = React.useCallback(() => {
             setTimer(setTimeout(() => {
                 setShowSpinner(true);
             }, 5000) as any, // tslint:disable-line: no-any
             );
             setUnderstood(true);
-            waitForDeposit(onDeposit)
-                .catch((error) => {
-                    setFailed(error);
-                });
+
+            (async () => {
+                const address = await generateAddress();
+                setGatewayAddress(address || "");
+                await waitForDeposit(onDeposit);
+            })().catch(error => {
+                setFailed(extractError(error));
+                setUnderstood(false);
+            });
         }, [waitForDeposit, onDeposit]);
 
         React.useEffect(() => {
-            showDepositAddress();
+            revealGatewayAddress();
         }, []); // tslint:disable-line: react-hooks/exhaustive-deps
 
         const onClickAddress = React.useCallback(() => {
@@ -207,10 +205,10 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
 
         return <Popup mini={mini}>
             <div className="popup--body--details">
-                {showQR && depositAddress ?
+                {showQR && gatewayAddress ?
                     <QRCodeOuter>
                         <QRCodeContainer>
-                            <QRCode value={`bitcoin:${depositAddress}${amount ? `?amount=${amount}` : ""}`} />
+                            <QRCode value={`bitcoin:${gatewayAddress}${amount ? `?amount=${amount}` : ""}`} />
                         </QRCodeContainer>
                         <span>Deposit {amount ? amount : <></>} {token.toUpperCase()}</span>
                     </QRCodeOuter>
@@ -229,15 +227,15 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                         <>
                             {/* <ScanningBanner>Scanning for transaction</ScanningBanner> */}
                             <CopyToClipboard
-                                text={depositAddress || ""}
+                                text={gatewayAddress || ""}
                                 onCopy={onClickAddress}
                             >
                                 <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
-                                    <StyledLabel>{depositAddress ?
+                                    <StyledLabel>{gatewayAddress ?
                                         <>
-                                            {depositAddress.slice(0, 20) || ""}
-                                            {depositAddress.slice(20, depositAddress.length - 20) ? <EllipsisSpan>{depositAddress.slice(20, depositAddress.length - 20) || ""}</EllipsisSpan> : <></>}
-                                            {depositAddress.slice(Math.max(20, depositAddress.length - 20)) || ""}
+                                            {gatewayAddress.slice(0, 20) || ""}
+                                            {gatewayAddress.slice(20, gatewayAddress.length - 20) ? <EllipsisSpan>{gatewayAddress.slice(20, gatewayAddress.length - 20) || ""}</EllipsisSpan> : <></>}
+                                            {gatewayAddress.slice(Math.max(20, gatewayAddress.length - 20)) || ""}
                                         </> :
                                         <Loading />
                                     }</StyledLabel>
@@ -247,12 +245,12 @@ export const ShowDepositAddress: React.StatelessComponent<Props> =
                                     </AddressControls>
                                 </div>
                             </CopyToClipboard>
-                            {/* {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${depositAddress}?amount=${amount}`} /></div> : null} */}
+                            {/* {showQR ? <div className="qr-code"><QRCode value={`bitcoin:${gatewayAddress}?amount=${amount}`} /></div> : null} */}
                         </> :
                         <>
-                            {failed ? <div className="red">{`${failed.message || failed}`}</div> : <></>}
+                            {failed ? <div className="center red">{failed}</div> : <></>}
                             <div className="popup--buttons">
-                                <ContinueButton className="button" disabled={depositAddress as string | null === null || failed !== null} onClick={showDepositAddress}>{failed ? "Unable to generate address" : "Continue"}</ContinueButton>
+                                <ContinueButton className="button" onClick={revealGatewayAddress}>Reveal deposit address</ContinueButton>
                             </div>
                         </>}
                 </div>

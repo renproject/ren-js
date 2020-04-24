@@ -1,7 +1,7 @@
 import {
     BurnAndReleaseParams, NetworkDetails, TxStatus, UnmarshalledBurnTx,
 } from "@renproject/interfaces";
-import { ResponseQueryBurnTx } from "@renproject/rpc";
+import { RenVMProvider, ResponseQueryBurnTx, unmarshalBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardWeb3Events, generateBurnTxHash,
     ignorePromiEventError, newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent,
@@ -11,15 +11,13 @@ import BigNumber from "bignumber.js";
 import Web3 from "web3";
 import { TransactionConfig } from "web3-core";
 
-import { RenVMNetwork, unmarshalBurnTx } from "./renVMNetwork";
-
 export class BurnAndRelease {
     private readonly params: BurnAndReleaseParams;
-    private readonly renVMNetwork: RenVMNetwork;
+    private readonly renVM: RenVMProvider;
     private readonly network: NetworkDetails;
 
-    constructor(_renVMNetwork: RenVMNetwork, _network: NetworkDetails, _params: BurnAndReleaseParams) {
-        this.renVMNetwork = _renVMNetwork;
+    constructor(_renVM: RenVMProvider, _network: NetworkDetails, _params: BurnAndReleaseParams) {
+        this.renVM = _renVM;
         this.network = _network;
         this.params = processBurnAndReleaseParams(this.network, _params);
     }
@@ -195,7 +193,7 @@ export class BurnAndRelease {
      * queryTx requests the status of the burn from RenVM.
      */
     public queryTx = async () =>
-        unmarshalBurnTx(await this.renVMNetwork.queryTX(Ox(Buffer.from(this.txHash(), "base64"))))
+        unmarshalBurnTx(await this.renVM.queryMintOrBurn(Ox(Buffer.from(this.txHash(), "base64"))))
 
     /**
      * submit queries RenVM for the status of the burn until the funds are
@@ -217,7 +215,7 @@ export class BurnAndRelease {
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("txHash", txHash);
 
-            const response = await this.renVMNetwork.waitForTX<ResponseQueryBurnTx>(
+            const response = await this.renVM.waitForTX<ResponseQueryBurnTx>(
                 Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);

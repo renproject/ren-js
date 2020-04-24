@@ -14,7 +14,6 @@ import Web3 from "web3";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
-import { RenVMNetwork } from "./renVMNetwork";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -56,8 +55,7 @@ export default class RenJS {
 
     // Not static
     public readonly utils = utils;
-    public readonly renVM: RenVMNetwork;
-    public readonly lightnode: RenVMProvider;
+    public readonly renVM: RenVMProvider;
     public readonly network: NetworkDetails;
 
     /**
@@ -78,8 +76,7 @@ export default class RenJS {
             )
         ) as unknown as Provider<RenVMParams, RenVMResponses>;
 
-        this.lightnode = new RenVMProvider(rpcProvider);
-        this.renVM = new RenVMNetwork(this.lightnode);
+        this.renVM = new RenVMProvider(rpcProvider);
     }
 
     /**

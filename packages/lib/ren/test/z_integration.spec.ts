@@ -103,7 +103,7 @@ describe("Cross chain transactions", function () {
             contractParams: params,
             nonce: nonce || RenJS.utils.randomNonce(),
         });
-        const gatewayAddress = mint.gatewayAddress();
+        const gatewayAddress = await mint.gatewayAddress();
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
@@ -267,7 +267,7 @@ describe("Cross chain transactions", function () {
 
                 // const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const adapterContract = network.contracts.addresses.gateways.BasicAdapter.address;
-                const amount = Math.floor(0.00015 * (10 ** 8));
+                const amount = Math.floor(0.0003 * (10 ** 8));
                 const ethAddress = accounts[0];
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
                 const srcAddress = await account.address(testcase.token);
@@ -377,7 +377,7 @@ describe("Cross chain transactions", function () {
                 sendTo: (await web3.eth.getAccounts())[0],
             });
 
-            const gatewayAddress = mint.gatewayAddress();
+            const gatewayAddress = await mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
@@ -421,7 +421,7 @@ describe("Cross chain transactions", function () {
                 sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             });
 
-            const gatewayAddress = mint.gatewayAddress();
+            const gatewayAddress = await mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
@@ -510,7 +510,7 @@ describe("Cross chain transactions", function () {
                 // nonce: nonce || RenJS.utils.randomNonce(),
             });
 
-            const gatewayAddress = mint.gatewayAddress();
+            const gatewayAddress = await mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);

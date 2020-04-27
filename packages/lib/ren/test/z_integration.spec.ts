@@ -257,8 +257,8 @@ describe("Cross chain transactions", function () {
         const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, renToken: "BCH" }) };
 
         for (const testcaseFn of [
-            { ...caseBTC, it, },
-            { ...caseZEC, it, },
+            { ...caseBTC, it: process.env.CI ? it.skip : it, },
+            { ...caseZEC, it: process.env.CI ? it.skip : it, },
             { ...caseBCH, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code

@@ -29,6 +29,7 @@ jobs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
+        yarn global add lerna
         lerna bootstrap
     - name: Build
       run: |

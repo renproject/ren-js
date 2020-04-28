@@ -32,6 +32,9 @@
         "react-router-dom": "^5.1.2",
         "web3": "^2.0.0-alpha.1"
     },
+    "resolutions": {
+        "scrypt": "https://github.com/ren-forks/node-scrypt"
+    },
     "browserslist": [
         ">0.2%",
         "not dead",

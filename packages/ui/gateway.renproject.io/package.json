@@ -22,7 +22,7 @@
         "@renproject/interfaces": "file:../../lib/ren-interfaces",
         "@renproject/react-components": "file:../react-components",
         "@renproject/ren": "file:../../lib/ren",
-        "@renproject/utils": "file:../../lib/utils",
+        "@renproject/utils": "file:../../lib/ren-utils",
         "@sentry/browser": "^5.15.4",
         "@sentry/core": "^5.15.4",
         "@sentry/integrations": "^5.15.4",

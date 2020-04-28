@@ -2,9 +2,10 @@ import {
     AbiItem, Chain, RenVMArg, RenVMOutputUTXO, RenVMType, Tokens, UnmarshalledBurnTx,
     UnmarshalledMintTx,
 } from "@renproject/interfaces";
-import { ResponseQueryBurnTx, ResponseQueryMintTx } from "@renproject/rpc";
 import { assert, Ox, parseRenContract, utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+
+import { ResponseQueryBurnTx, ResponseQueryMintTx } from "./renVMTypes";
 
 const decodeString = (input: string) => Buffer.from(input, "base64").toString();
 const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));

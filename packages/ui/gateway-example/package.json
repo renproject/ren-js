@@ -10,7 +10,7 @@
         "eject": "react-scripts eject",
         "predeploy": "$npm_execpath run build",
         "deploy": "gh-pages -d build --repo git@github.com:renproject/gateway-staging.git",
-        "link": "yarn link @renproject/gateway @renproject/interfaces @renproject/utils"
+        "link": "yarn link @renproject/gateway @renproject/interfaces @renproject/utils @renproject/react-components"
     },
     "dependencies": {
         "@material-ui/core": "^4.9.10",

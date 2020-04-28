@@ -31,6 +31,7 @@ jobs:
       run: |
         yarn install --network-concurrency 1
         yarn lerna bootstrap
+        yarn run link
     - name: Build
       run: |
         yarn lerna run build

@@ -76,6 +76,7 @@
     "uuid": "^7.0.3"
   },
   "scripts": {
+    "link": "lerna run link",
     "build": "lerna run build --scope @renproject/*",
     "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
     "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example"

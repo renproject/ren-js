@@ -43,6 +43,12 @@ jobs:
                 path: ~/renjs
                 command: yarn install --network-concurrency 1
                 when: always
+
+            - run:
+                name: Lerna - bootstrap
+                path: ~/renjs
+                command: lerna bootstrap && yarn run link
+                when: always
             
             - run:
                 name: Lerna - build

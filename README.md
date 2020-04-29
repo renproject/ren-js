@@ -1,5 +1,7 @@
 # `🛠️ ren-js` and `gateway-js`
 
+![Version](https://img.shields.io/npm/v/@renproject/ren) [![CircleCI](https://img.shields.io/circleci/build/gh/renproject/ren-js)](https://circleci.com/gh/renproject/ren-js)
+
 There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
 
 1. **GatewayJS** ([`gateway-js` repository](./packages/lib/gateway)): The simplest way to get started, providing a full user experience.

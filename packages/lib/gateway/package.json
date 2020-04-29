@@ -19,10 +19,10 @@
   "scripts": {
     "describe": "npm-scripts-info",
     "build": "yarn build:main && yarn build:module",
-    "build-all": "run-s build:*",
+    "build-all": "yarn build:main && yarn build:module && yarn build:bundled",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
-    "build:browser": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
+    "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
     "fix": "run-s fix:*",
     "fix:tslint": "tslint --fix --project .",
     "test": "run-s build test:*",

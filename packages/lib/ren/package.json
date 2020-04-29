@@ -29,7 +29,8 @@
     "browser": "build/bundled/browser.js",
     "scripts": {
         "describe": "npm-scripts-info",
-        "build": "run-s build:*",
+        "build": "run-s build:main build:module",
+        "build-all": "run-s build:*",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "build:browser": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
@@ -49,7 +50,7 @@
         "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --name \"RenJS Types Documentation\" --readme ./DOCS.md",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
-        "prepare": "yarn build",
+        "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore doc:html doc:publish",
         "link": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link"

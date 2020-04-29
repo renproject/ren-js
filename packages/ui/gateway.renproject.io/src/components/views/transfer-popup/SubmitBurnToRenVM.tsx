@@ -2,8 +2,8 @@ import * as React from "react";
 
 import { TxStatus } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
-import styled from "styled-components";
 import { lighten } from "polished";
+import styled from "styled-components";
 
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";

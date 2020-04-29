@@ -41,6 +41,7 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.TransferDetails ? {
         transferDetails: SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent,
         paused: boolean,
+        cancelled: boolean,
     } :
     Type extends GatewayMessageType.GetTransfers ? {} :
     Type extends GatewayMessageType.Transfers ? Map<string, HistoryEvent> :

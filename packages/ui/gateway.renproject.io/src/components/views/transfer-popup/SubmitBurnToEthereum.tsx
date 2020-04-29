@@ -7,7 +7,6 @@ import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
 import styled from "styled-components";
-import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";

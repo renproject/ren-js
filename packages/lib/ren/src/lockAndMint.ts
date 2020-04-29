@@ -87,31 +87,33 @@ export class LockAndMint {
         return this.generatedGatewayAddress;
     }
 
-    public wait = (confirmations: number, specifyUTXO?: UTXOIndex): PromiEvent<this, { "deposit": [UTXOWithChain] }> => {
+    public wait = (confirmations: number, specifyDeposit?: UTXOIndex): PromiEvent<this, { "deposit": [UTXOWithChain] }> => {
         const promiEvent = newPromiEvent<this, { "deposit": [UTXOWithChain] }>();
 
         (async () => {
             // If the deposit has already been submitted, "wait" can be skipped.
-            if (this.params.txHash) {
+            if (this.params.txHash || this.utxo) {
                 return this;
             }
 
-            if (specifyUTXO) {
+            const specifiedDeposit = specifyDeposit || this.params.deposit;
+
+            if (specifiedDeposit) {
                 let previousUtxoConfirmations = -1;
                 // tslint:disable-next-line: no-constant-condition
                 while (true) {
                     const utxoConfirmations = await retrieveConfirmations(this.network, {
                         chain: parseRenContract(resolveInToken(this.params.sendToken)).from,
-                        hash: specifyUTXO.txHash
+                        hash: specifiedDeposit.txHash
                     });
                     if (utxoConfirmations > previousUtxoConfirmations) {
                         previousUtxoConfirmations = utxoConfirmations;
                         promiEvent.emit("deposit", {
                             chain: parseRenContract(resolveInToken(this.params.sendToken)).from as Chain.Bitcoin | Chain.BitcoinCash | Chain.Zcash,
                             utxo: {
-                                txHash: specifyUTXO.txHash,
+                                txHash: specifiedDeposit.txHash,
                                 amount: 0, // TODO: Get value
-                                vOut: specifyUTXO.vOut,
+                                vOut: specifiedDeposit.vOut,
                                 confirmations: utxoConfirmations,
                             }
                         });
@@ -121,7 +123,7 @@ export class LockAndMint {
                     }
                     await sleep(10);
                 }
-                this.utxo = specifyUTXO;
+                this.utxo = specifiedDeposit;
                 return this;
             }
 
@@ -204,7 +206,7 @@ export class LockAndMint {
         return promiEvent;
     }
 
-    public txHash = (specifyUTXO?: UTXOIndex) => {
+    public txHash = (specifyDeposit?: UTXOIndex) => {
         const txHash = this.params.txHash;
         if (txHash) {
             return txHashToBase64(txHash);
@@ -212,7 +214,7 @@ export class LockAndMint {
 
         const { contractCalls, sendToken: renContract, nonce } = this.params;
 
-        const utxo = specifyUTXO || this.utxo;
+        const utxo = specifyDeposit || this.params.deposit || this.utxo;
         if (!utxo) {
             throw new Error(`Unable to generate txHash without UTXO. Call 'wait' first.`);
         }
@@ -240,22 +242,22 @@ export class LockAndMint {
     /**
      * queryTx requests the status of the mint from RenVM.
      */
-    public queryTx = async (specifyUTXO?: UTXOIndex): Promise<UnmarshalledMintTx> =>
-        unmarshalMintTx(await this.renVM.queryMintOrBurn(Ox(Buffer.from(this.txHash(specifyUTXO), "base64"))))
+    public queryTx = async (specifyDeposit?: UTXOIndex): Promise<UnmarshalledMintTx> =>
+        unmarshalMintTx(await this.renVM.queryMintOrBurn(Ox(Buffer.from(this.txHash(specifyDeposit), "base64"))))
 
     /**
      * submit sends the mint details to RenVM and waits for the signature to be
      * available.
      *
-     * @param {UTXOIndex} [specifyUTXO] Optionally provide the lock transaction
+     * @param {UTXOIndex} [specifyDeposit] Optionally provide the lock transaction
      *        instead of calling `wait`.
      * @returns {PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>}
      */
-    public submit = (specifyUTXO?: UTXOIndex): PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }> => {
+    public submit = (specifyDeposit?: UTXOIndex): PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }> => {
         const promiEvent = newPromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>();
 
         (async () => {
-            const utxo = specifyUTXO || this.utxo;
+            const utxo = specifyDeposit || this.params.deposit || this.utxo;
             let txHash = this.params.txHash ? txHashToBase64(this.params.txHash) : undefined;
             if (utxo) {
                 const utxoTxHash = this.txHash(utxo);
@@ -383,9 +385,9 @@ export class LockAndMint {
     }
 
     // tslint:disable-next-line:no-any
-    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyUTXO?: UTXOIndex) => {
+    public waitAndSubmit = async (web3Provider: provider, confirmations: number, txConfig?: TransactionConfig, specifyDeposit?: UTXOIndex) => {
         await this.wait(confirmations);
-        const signature = await this.submit(specifyUTXO);
+        const signature = await this.submit(specifyDeposit);
         return signature.submitToEthereum(web3Provider, txConfig);
     }
 

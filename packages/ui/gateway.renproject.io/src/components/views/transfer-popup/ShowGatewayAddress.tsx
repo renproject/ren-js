@@ -1,21 +1,19 @@
 import * as React from "react";
 
-import { LockAndMintEvent, NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
+import { LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
 import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
+import { extractError } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
-import { extractError } from "@renproject/utils";
 
 import { ReactComponent as QR } from "../../../images/qr.svg";
-import { _catchInteractionErr_ } from "../../../lib/errors";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token } from "../../../state/generalTypes";
-import { getURL } from "../../controllers/Storage";
 import { Popup } from "../Popup";
 import { Mini } from "./Mini";
 
@@ -163,11 +161,12 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
                 setFailed(extractError(error));
                 setUnderstood(false);
             });
-        }, [waitForDeposit, onDeposit]);
+        }, [generateAddress, waitForDeposit, onDeposit]);
 
         React.useEffect(() => {
             revealGatewayAddress();
-        }, []); // tslint:disable-line: react-hooks/exhaustive-deps
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
 
         const onClickAddress = React.useCallback(() => {
             setCopied(true);
@@ -186,17 +185,6 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
         const amount = transferParams.suggestedAmount ? new BigNumber(
             BigNumber.isBigNumber(transferParams.suggestedAmount) ? transferParams.suggestedAmount : transferParams.suggestedAmount.toString()
         ).div(new BigNumber(10).exponentiatedBy(8)).toFixed() : undefined; // TODO: decimals
-
-        // const title = window.parent.document.title;
-        const url = getURL();
-
-        const urlDomain = (data: string) => {
-            const a = document.createElement("a");
-            a.href = data;
-            return a.hostname;
-        };
-
-        const title = urlDomain(url);
 
         if (mini) {
             const last = utxos.last<UTXOWithChain>();

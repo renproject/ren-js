@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import { LockAndMintEvent, NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
-import RenJS from "@renproject/ren";
+import { NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
 import { extractError } from "@renproject/utils";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
@@ -67,20 +66,11 @@ export const DepositReceived: React.StatelessComponent<Props> =
     ({ mini, token, utxos, confirmations, waitForDeposit, onDeposit, networkDetails }) => {
         // Defaults for demo
 
-        const [copied, setCopied] = React.useState(false);
-        const [showSpinner, setShowSpinner] = React.useState(false);
-
-        const [timer, setTimer] = React.useState<NodeJS.Timeout | null>(null);
         const [failed, setFailed] = React.useState(null as string | null);
         const [showFullError, setShowFullError] = React.useState(false);
         const toggleShowFullError = React.useCallback(() => { setShowFullError(!showFullError); }, [showFullError, setShowFullError]);
 
         const waitAndSubmitDeposit = React.useCallback(() => {
-
-            setTimer(setTimeout(() => {
-                setShowSpinner(true);
-            }, 5000) as any, // tslint:disable-line: no-any
-            );
             setShowFullError(false);
             waitForDeposit(onDeposit)
                 .catch((error) => {
@@ -91,21 +81,22 @@ export const DepositReceived: React.StatelessComponent<Props> =
 
         React.useEffect(() => {
             waitAndSubmitDeposit();
-        }, []); // tslint:disable-line: react-hooks/exhaustive-deps
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
 
-        const onClickAddress = React.useCallback(() => {
-            setCopied(true);
-            if (timer) {
-                clearTimeout(timer);
-            }
-            setTimer(setTimeout(() => {
-                setCopied(false);
-                if (!showSpinner) {
-                    setShowSpinner(true);
-                }
-            }, 5000) as any, // tslint:disable-line: no-any
-            );
-        }, [showSpinner, timer]);
+        // const onClickAddress = React.useCallback(() => {
+        //     setCopied(true);
+        //     if (timer) {
+        //         clearTimeout(timer);
+        //     }
+        //     setTimer(setTimeout(() => {
+        //         setCopied(false);
+        //         if (!showSpinner) {
+        //             setShowSpinner(true);
+        //         }
+        //     }, 5000) as any, // tslint:disable-line: no-any
+        //     );
+        // }, [showSpinner, timer]);
 
         const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains.`;
 
@@ -159,7 +150,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
                     {utxos.map(utxo => {
                         return <div key={utxo.utxo.txHash}>
                             <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(utxo, networkDetails)}>
-                                <div role="button" className={`address-input--copy ${copied ? "address-input--copied" : ""}`}>
+                                <div role="button" className={`address-input--copy`}>
                                     <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
                                 </div>
                             </a>

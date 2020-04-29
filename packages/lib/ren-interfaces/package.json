@@ -52,7 +52,7 @@
     },
     "dependencies": {
         "@renproject/contracts": "^0.5.1",
-        "@types/node": "^13.11.1",
+        "@types/node": "^13.13.4",
         "bignumber.js": "^9.0.0",
         "events": "^3.1.0"
     },

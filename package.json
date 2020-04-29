@@ -81,6 +81,8 @@
     "webpack-node-externals": "^1.7.2"
   },
   "resolutions": {
+    "bitcore-lib": "^8.17.1",
+    "bitcore-lib-cash": "^8.19.0",
     "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
   },
   "scripts": {

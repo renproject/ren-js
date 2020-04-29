@@ -4,7 +4,7 @@ import {
     BurnAndReleaseEvent, BurnAndReleaseStatus, GatewayMessageType, LockAndMintEvent,
     LockAndMintStatus, UnmarshalledTx,
 } from "@renproject/interfaces";
-import styled from "styled-components";
+import { sleep } from "@renproject/react-components";
 
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { postMessageToClient } from "../../lib/postMessage";
@@ -23,7 +23,6 @@ import { SubmitBurnToEthereum } from "../views/transfer-popup/SubmitBurnToEthere
 import { SubmitBurnToRenVM } from "../views/transfer-popup/SubmitBurnToRenVM";
 import { SubmitMintToEthereum } from "../views/transfer-popup/SubmitMintToEthereum";
 import { TransferDetails } from "../views/TransferDetails";
-import { getURL } from "./Storage";
 
 interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {
 }
@@ -43,15 +42,14 @@ const getRequiredAddressAndName = (transferParams: LockAndMintEvent["transferPar
 export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDKContainer]>>([UIContainer, SDKContainer])(
     ({ containers: [uiContainer, sdkContainer] }) => {
 
-        // tslint:disable-next-line: prefer-const
-        let [returned, setReturned] = React.useState(false);
+        const [returned, setReturned] = React.useState(false);
 
         const onNoBurnFound = async () => {
             if (returned) {
                 return;
             }
-            returned = true;
             setReturned(true);
+            await sleep(0);
             if (uiContainer.state.gatewayPopupID) {
                 await sdkContainer.updateTransfer({ returned: true });
                 await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Error, { message: `No token burn found in transaction.` });
@@ -67,20 +65,10 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
 
         const { paused, utxos, wrongNetwork, expectedNetwork } = uiContainer.state;
 
-        // const title = window.parent.document.title;
-        const url = getURL();
-
-        const urlDomain = (data: string) => {
-            const a = document.createElement("a");
-            a.href = data;
-            return a.hostname;
-        };
-
-        // tslint:disable-next-line: prefer-const
-        let [pressedDone, setPressedDone] = React.useState(false);
+        const [pressedDone, setPressedDone] = React.useState(false);
         const onDone = React.useCallback(async () => {
-            pressedDone = true;
-            setPressedDone(pressedDone);
+            await sleep(0);
+            setPressedDone(true);
             let response: {} | UnmarshalledTx = {};
             try {
                 response = await sdkContainer.queryTransferStatus();
@@ -91,10 +79,9 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                 await sdkContainer.updateTransfer({ returned: true });
                 await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
             }
-            uiContainer.resetTransfer().catch((error) => _catchInteractionErr_(error, "Error in HandlingTransfer: onDone > resetTransfer"));
-            pressedDone = false;
-            setPressedDone(pressedDone);
-        }, [uiContainer]);
+            uiContainer.resetTransfer().catch((error) => { _catchInteractionErr_(error, "Error in HandlingTransfer: onDone > resetTransfer"); });
+            setPressedDone(false);
+        }, [uiContainer, sdkContainer]);
 
         const lockAndMint = () => {
 
@@ -229,7 +216,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                 }
             }
 
-            const contractAddress = (transfer.transferParams.contractCalls && ((transfer.transferParams.contractCalls[transfer.transferParams.contractCalls.length - 1]).sendTo)) || "";
+            // const contractAddress = (transfer.transferParams.contractCalls && ((transfer.transferParams.contractCalls[transfer.transferParams.contractCalls.length - 1]).sendTo)) || "";
 
             return <>
                 {inner}

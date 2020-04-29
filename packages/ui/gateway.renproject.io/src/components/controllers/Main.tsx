@@ -5,13 +5,13 @@ import {
     GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintStatus,
     SendTokenInterface, SerializableTransferParams,
 } from "@renproject/interfaces";
+import { Loading } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import {
     Ox, processBurnAndReleaseParams, processLockAndMintParams, sleep, strip0x,
 } from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
-import { Loading } from "@renproject/react-components";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
@@ -100,7 +100,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                         switch (message.type) {
                             case GatewayMessageType.TransferDetails:
                                 acknowledgeMessage(message);
-                                const { paused: alreadyPaused, transferDetails: transferParamsIn }: { paused: boolean, transferDetails: SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent } = (message as GatewayMessage<GatewayMessageType.TransferDetails>).payload;
+                                const { cancelled: alreadyCancelled, paused: alreadyPaused, transferDetails: transferParamsIn }: { cancelled: boolean, paused: boolean, transferDetails: SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent } = (message as GatewayMessage<GatewayMessageType.TransferDetails>).payload;
                                 await (alreadyPaused ? pause() : resume());
                                 const transferID = message.frameID;
                                 const time = Date.now() / 1000;
@@ -142,7 +142,6 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     };
                                 }
 
-
                                 historyEvent = {
                                     ...transferDetails,
                                     id: transferID,
@@ -155,6 +154,14 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                     returned: false,
                                     ...historyEvent,
                                 };
+
+                                if (alreadyCancelled && historyEvent.transferParams.nonce) {
+                                    await removeStorageTransfer(urlRenNetwork, historyEvent.transferParams.nonce);
+                                }
+
+                                if (!historyEvent.transferParams.sendToken) {
+                                    reportError("No sendToken provided");
+                                }
 
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
 
@@ -185,10 +192,11 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 // the parent window to keep re-sending it.
                                 acknowledgeMessage(message);
                         }
-                    })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
+                    })().catch((error) => { _catchInteractionErr_(error, "Error in App: onMessage"); });
                 }
             });
             postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
         // const login = React.useCallback(async () => {
@@ -234,7 +242,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         const feedbackButtonDelay = 10 * 1000;
         const [delayPassed, setDelayPassed] = React.useState(false);
         const [showFeedbackButton, setShowFeedbackButton] = React.useState(false);
-        const onErrorBoundaryCancel = React.useCallback(() => reportError("Unable to load transfer details."), [setShowFeedbackButton]);
+        const onErrorBoundaryCancel = React.useCallback(() => reportError("Unable to load transfer details."), [reportError]);
         React.useEffect(() => {
             if (delayPassed) {
                 setShowFeedbackButton(true);
@@ -248,6 +256,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             uiContainer.connect().catch(console.error);
             sdkContainer.connect(urlRenNetwork).catch(console.error);
             setTimeout(() => { setDelayPassed(true); }, feedbackButtonDelay);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
         const { paused } = uiContainer.state;

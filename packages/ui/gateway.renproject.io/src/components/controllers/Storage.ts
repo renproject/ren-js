@@ -31,7 +31,10 @@ export const getStorage = async (network: string, domainIn?: string): Promise<Ma
     const storage = new Map<string, HistoryEvent>();
 
     for (const key of keys) {
-        storage.set(key, ((await store.getItem(key)) as HistoryEvent));
+        const item: HistoryEvent = await store.getItem(key);
+        if (item.transferParams) {
+            storage.set(key, item);
+        }
     }
 
     return storage;

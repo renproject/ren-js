@@ -41,7 +41,7 @@ export const GetTransfers = withRouter(connect<RouteComponentProps & ConnectedPr
                                 // the parent window to keep re-sending it.
                                 acknowledgeMessage(e.data);
                         }
-                    })().catch((error) => _catchInteractionErr_(error, "Error in App: onMessage"));
+                    })().catch((error) => { _catchInteractionErr_(error, "Error in App: onMessage"); });
                 }
             });
             postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);

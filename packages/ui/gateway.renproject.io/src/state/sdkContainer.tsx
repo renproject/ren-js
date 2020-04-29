@@ -134,7 +134,7 @@ export class SDKContainer extends Container<typeof initialState> {
         } catch (error) {
             console.error(error);
         }
-        await this.setState({ transfer: transfer });
+        await this.setState({ transfer });
     }
 
     public updateToAddress = async (address: string, token: Token) => {
@@ -282,13 +282,13 @@ export class SDKContainer extends Container<typeof initialState> {
         this.updateTransfer({
             txHash,
             status: BurnAndReleaseStatus.SubmittedToRenVM,
-        }).catch((updateTransferError) => _catchBackgroundErr_(updateTransferError, "Error in sdkContainer: submitBurnToRenVM > txHash > updateTransfer"));
+        }).catch((updateTransferError) => { _catchBackgroundErr_(updateTransferError, "Error in sdkContainer: submitBurnToRenVM > txHash > updateTransfer"); });
 
         const response = await burnAndReleaseObject.submit()
             .on("status", (renVMStatus: TxStatus) => {
                 this.updateTransfer({
                     renVMStatus,
-                }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateTransfer"));
+                }).catch((error) => { _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateTransfer"); });
             });
 
         await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
@@ -303,7 +303,7 @@ export class SDKContainer extends Container<typeof initialState> {
                     { chain: Chain.BitcoinCash, address } :
                     { chain: Chain.Bitcoin, address },
             status: BurnAndReleaseStatus.ReturnedFromRenVM,
-        }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateTransfer"));
+        }).catch((error) => { _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateTransfer"); });
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -400,8 +400,8 @@ export class SDKContainer extends Container<typeof initialState> {
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 try {
-                    const response = await transaction.queryTx();
-                    await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
+                    const renVMQuery = await transaction.queryTx();
+                    await this.updateTransfer({ renVMQuery, txHash: renVMQuery.hash });
                     break;
                 } catch (error) {
                     // Ignore error

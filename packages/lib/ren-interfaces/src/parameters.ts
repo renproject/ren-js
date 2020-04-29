@@ -3,6 +3,7 @@ import BN from "bn.js";
 import { TransactionConfig } from "web3-core";
 
 import { RenContract } from "./renVM";
+import { UTXOIndex } from "./utxo";
 
 export { TransactionConfig } from "web3-core";
 export type NumberValue = string | number | BigNumber | BN;
@@ -105,6 +106,13 @@ export interface LockAndMintParams extends TransferParamsCommon {
      * amount, nHash and RenVM signature.
      */
     contractCalls?: ContractCall[];
+
+    /**
+     * Specify which deposit should be send to RenVM instead of waiting for one
+     * to be observed. This deposit must have been sent to the gateway address
+     * of the transfer.
+     */
+    deposit?: UTXOIndex;
 }
 
 /**

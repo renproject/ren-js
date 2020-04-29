@@ -57,78 +57,84 @@ const getCoinbasePrice: PriceFeed = (token: string) =>
         .then(response => parseInt(response.data.data.amount, 10) || 0);
 
 
-const coinMarketCapID = (token: string): number => {
-    /*
-    In order to fetch the code of a currency, use:
+// const coinMarketCapID = (token: string): number => {
+//     /*
+//     In order to fetch the code of a currency, use:
 
-    ```js
-    let x;
-    Axios({
-        method: "GET",
-        url: "https://pro-api.coinmarketcap.com/v1/cryptocurrency/map",
-        data: {
-            "symbol": "BTC,ZEC,BCH"
-        },
-        headers: {
-            [`X-CMC` + `_PRO_API_KEY`]: "..."
-        },
-    }).then(r => { x = r.data.data; }).catch(console.error);
-    console.log(x.filter(row => ["BTC", "ZEC", BCH"].includes(row.symbol)))
-    ```
-    */
+//     ```js
+//     let x;
+//     Axios({
+//         method: "GET",
+//         url: "https://pro-api.coinmarketcap.com/v1/cryptocurrency/map",
+//         params: {
+//             "symbol": "BTC,ZEC,BCH"
+//         },
+//         headers: {
+//             [`X-CMC` + `_PRO_API_KEY`]: "..."
+//         },
+//     }).then(r => { x = r.data.data; }).catch(console.error);
+//     console.debug(x.filter(row => ["BTC", "ZEC", BCH"].includes(row.symbol)))
+//     ```
+//     */
 
-    switch (token) {
-        case "BTC":
-            return 1;
-        case "ZEC":
-            return 1437;
-        case "BCH":
-            return 1831;
-        default:
-            throw new Error(`Unknown token ${token}`);
+//     switch (token) {
+//         case "BTC":
+//             return 1;
+//         case "ZEC":
+//             return 1437;
+//         case "BCH":
+//             return 1831;
+//         default:
+//             throw new Error(`Unknown token ${token}`);
+//     }
+// };
+// const getCoinMarketCapPrice: PriceFeed = (token: string) =>
+//     Axios.request({
+//         url: "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest",
+//         method: "GET",
+//         params: {
+//             "start": `${coinMarketCapID(token)}`,
+//             "limit": "1",
+//             // "convert": "USD,BTC"
+//         },
+//         headers: {
+//             // Free-tier CMC API key.
+//             [`X-CMC` + `_PRO_API_KEY`]: `${24874700}-${1064}-447d-9daa-3fd514863f67`
+//         },
+//     }).then((response: { data: { data: Array<{ symbol: string, quote: { USD: { price: number } } }> } }) => { return response.data.data.filter(x => x.symbol === token)[0].quote.USD.price; });
+
+export const getTokenPrices = async (tokens: string[]): Promise<TokenPrices> => {
+    try {
+        return await tokens.map((token) => ({
+            token,
+            priceFeeds: [
+                getCoinGeckoPrice(token),
+                getCoinbasePrice(token),
+                // getCoinMarketCapPrice(token),
+            ],
+        }))
+            .reduce(async (pricesPromise, { token, priceFeeds }) => {
+                const prices = await pricesPromise;
+                const returnedAPIs = [];
+                for (const priceFeed of priceFeeds) {
+                    try {
+                        returnedAPIs.push(await priceFeed);
+                    } catch (error) {
+                        // tslint:disable-next-line: no-console
+                        console.error(error);
+                    }
+                }
+
+                return prices.set(token, returnedAPIs.length ?
+                    returnedAPIs.reduce((sum, price) => sum + price, 0) / returnedAPIs.length :
+                    0
+                );
+            }, Promise.resolve(OrderedMap<string, number>()));
+    } catch (error) {
+        console.error(error);
+        return OrderedMap<string, number>();
     }
 };
-const getCoinMarketCapPrice: PriceFeed = (token: string) =>
-    Axios({
-        method: "GET",
-        url: "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest",
-        // data: {
-        //     "start": `${coinMarketCapID(token)}`,
-        //     "limit": "1",
-        //     "convert": "USD,BTC"
-        // },
-        headers: {
-            // Free-tier CMC API key.
-            [`X-CMC` + `_PRO_API_KEY`]: `${24874700}-${1064}-447d-9daa-3fd514863f67`
-        },
-    }).then((response: { data: { data: Array<{ symbol: string, quote: { USD: { price: number } } }> } }) => { return response.data.data.filter(x => x.symbol === token)[0].quote.USD.price; });
-
-export const getTokenPrices = (tokens: string[]): Promise<TokenPrices> =>
-    tokens.map((token) => ({
-        token,
-        priceFeeds: [
-            getCoinGeckoPrice(token),
-            getCoinbasePrice(token),
-            getCoinMarketCapPrice(token),
-        ],
-    }))
-        .reduce(async (pricesPromise, { token, priceFeeds }) => {
-            const prices = await pricesPromise;
-            const returnedAPIs = [];
-            for (const priceFeed of priceFeeds) {
-                try {
-                    returnedAPIs.push(await priceFeed);
-                } catch (error) {
-                    // tslint:disable-next-line: no-console
-                    console.error(error);
-                }
-            }
-
-            return prices.set(token, returnedAPIs.length ?
-                returnedAPIs.reduce((sum, price) => sum + price, 0) / returnedAPIs.length :
-                0
-            );
-        }, Promise.resolve(OrderedMap<string, number>()));
 
 export type TokenPrices = OrderedMap<string, number>;
 

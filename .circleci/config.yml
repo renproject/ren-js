@@ -61,11 +61,6 @@ jobs:
                 command: yarn install --network-concurrency 1
                 when: always
 
-            - run:
-                name: Install Mocha reporters # just for CircleCI
-                command: yarn add mocha-multi-reporters mocha-junit-reporter
-                when: always
-
             - save_cache:
                 paths:
                     - node_modules

@@ -4522,9 +4522,9 @@ damerau-levenshtein@^1.0.4:
   resolved "https://registry.yarnpkg.com/damerau-levenshtein/-/damerau-levenshtein-1.0.5.tgz#780cf7144eb2e8dbd1c3bb83ae31100ccc31a414"
   integrity sha512-CBCRqFnpu715iPmw1KrdOrzRqbdFwQTwAWyyyYS42+iAgHCuXZ+/TdMgQkUENPomxEz9z1BEzuQU2Xw0kUuAgA==
 
-"darknode-sol@https://github.com/renproject/darknode-sol#2bfa2f880eeea47774a4802b7bb337b2e5c028d8":
+"darknode-sol@https://github.com/renproject/darknode-sol#f692da1b99a88d7691d80d6e28337a9dedfbe501":
   version "1.0.0"
-  resolved "https://github.com/renproject/darknode-sol#2bfa2f880eeea47774a4802b7bb337b2e5c028d8"
+  resolved "https://github.com/renproject/darknode-sol#f692da1b99a88d7691d80d6e28337a9dedfbe501"
   dependencies:
     "@openzeppelin/contracts" "^2.5.0"
     "@openzeppelin/contracts-ethereum-package" "^2.4.0"

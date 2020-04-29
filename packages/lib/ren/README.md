@@ -2,7 +2,7 @@
 
 There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
 
-1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/gateway-js)): The simplest way to get started, providing a full user experience.
+1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/ren-js/tree/master/packages/lib/gateway)): The simplest way to get started, providing a full user experience.
 2. **RenJS** (this repository): A lower-level SDK which can be integrated into your existing user interface.
 
 See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.
@@ -48,16 +48,16 @@ const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
 const amount = 0.001;
 
-const shiftIn = renJS.shiftIn({
+const lockAndMint = renJS.lockAndMint({
     sendToken: "BTC", // Bridge BTC to Ethereum
     sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
     sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
 });
 
-const gatewayAddress = shiftIn.addr();
+const gatewayAddress = lockAndMint.addr();
 console.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
 
-shiftIn.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
+lockAndMint.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
     .then(console.log)
     .catch(console.error);
 ```
@@ -70,14 +70,14 @@ const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
 const amount = 0.001;
 
-renJS.shiftOut({
+renJS.burnAndRelease({
     sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
     sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
     sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
     web3Provider: web3.currentProvider,
 })
     .readFromEthereum()
-    .then(tx => tx.submitToRenVM())
+    .then(tx => tx.submit())
     .then(console.log)
     .catch(console.error);
 ```

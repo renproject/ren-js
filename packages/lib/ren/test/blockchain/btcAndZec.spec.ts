@@ -54,7 +54,7 @@ describe("zec.ts", () => {
         [
             { network: NetworkMainnet, actual: "t1QuA61jBJTG7udadwpz4SF4o9kKDShqn4H", get hex() { return RenJS.utils.Ox(decode(this.actual)); } },
             { network: NetworkMainnet, expected: "t3ZZzcD5753UPmJC37BWrxxDjaLbq2Mqw6E", get hex() { return RenJS.utils.Ox(decode(this.expected)); } },
-            { network: RenJS.NetworkDetails.NetworkChaosnet, expected: "t3WWGCowA5cEDR8GHrVpV67BTUcqH6DxrAf", get hex() { return RenJS.utils.Ox(decode(this.expected)); } },
+            { network: RenJS.NetworkDetails.NetworkChaosnet, expected: "t3R5RvjtAcBaZXYmMVBsuueRL4oYK2sxbss", get hex() { return RenJS.utils.Ox(decode(this.expected)); } },
             { network: RenJS.NetworkDetails.NetworkTestnet, expected: "t2JAUJ5wvuvzeTsvNcSk73TkcSYxUeXnGuh", get hex() { return RenJS.utils.Ox(decode(this.expected)); } },
             { network: NetworkDevnet, expected: "t2FT4C1C8ujGpWe7iCsSgc72D2HH1y9TRmS", get hex() { return RenJS.utils.Ox(decode(this.expected)); } },
             { network: NetworkLocalnet, expected: "t2THvHHubXsesGV1NXuGDCtSRMcTHD8cch6", get hex() { return RenJS.utils.Ox(decode(this.expected)); } },
@@ -82,7 +82,7 @@ describe("bch.ts", () => {
     describe("createBCHAddress", async () => {
         [
             { network: NetworkMainnet, expected: "bitcoincash:pzjfh7u52490nrgkw8jryhkjnf462vvsjc00elh6h4", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
-            { network: RenJS.NetworkDetails.NetworkChaosnet, expected: "bitcoincash:pzp0aa0axmcnqhntqe40mhqwkz59hy4gsyszrstuel", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
+            { network: RenJS.NetworkDetails.NetworkChaosnet, expected: "bitcoincash:pprhgry6947my4gn4j53ht30n5ne9t2q0cg5hp72na", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
             { network: RenJS.NetworkDetails.NetworkTestnet, expected: "bchtest:pplk0msfzrwy920zlnvsjjtkwf7hv0hpzyc9vu8h7c", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
             { network: NetworkDevnet, expected: "bchtest:pps69qyfn8xx4w95xgyupkyy04wwjhgw4qlw8kx58p", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
             { network: NetworkLocalnet, expected: "bchtest:pr3cn2ncz0xm2kmk79n0zfwcafdcvg6dashfp5llk3", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },

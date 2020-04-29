@@ -31,7 +31,10 @@ export const getStorage = async (network: string, domainIn?: string): Promise<Ma
     const storage = new Map<string, HistoryEvent>();
 
     for (const key of keys) {
-        storage.set(key, ((await store.getItem(key)) as HistoryEvent));
+        const item: HistoryEvent = await store.getItem(key);
+        if (item.transferParams) {
+            storage.set(key, item);
+        }
     }
 
     return storage;
@@ -47,23 +50,23 @@ export const getStorageItem = async (network: string, nonce: string, domainIn?: 
 
 const cancelled = new Set<string>();
 
-export const updateStorageTrade = async (network: string, trade: HistoryEvent, domainIn?: string) => {
+export const updateStorageTransfer = async (network: string, historyEvent: HistoryEvent, domainIn?: string) => {
     const domain = domainIn || getURL();
 
     const store = getStore(network, domain);
 
-    if (!trade.shiftParams.nonce) {
-        throw new Error(`Shift must have nonce`);
+    if (!historyEvent.transferParams.nonce) {
+        throw new Error(`Transfer must have nonce`);
     }
 
-    if (!cancelled.has(trade.shiftParams.nonce)) {
-        await store.setItem(trade.shiftParams.nonce, trade);
+    if (!cancelled.has(historyEvent.transferParams.nonce)) {
+        await store.setItem(historyEvent.transferParams.nonce, historyEvent);
     }
 
     return;
 };
 
-export const removeStorageTrade = async (network: string, nonce: string, domainIn?: string) => {
+export const removeStorageTransfer = async (network: string, nonce: string, domainIn?: string) => {
     const domain = domainIn || getURL();
 
     const store = getStore(network, domain);

@@ -29,7 +29,8 @@ jobs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        lerna bootstrap
+        yarn install --network-concurrency 1
     - name: Build
       run: |
-        lerna run build
+        yarn run link
+        yarn lerna run build

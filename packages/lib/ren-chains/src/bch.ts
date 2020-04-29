@@ -1,10 +1,10 @@
-import { Ox, strip0x } from "@renproject/interfaces";
 import { isMainnetAddress, isTestnetAddress, toCashAddress } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
 
 import { anyAddressFrom, Tactics } from "./btc";
 import { createAddress } from "./common";
+import { Ox, strip0x } from "./hex";
 
 export const createBCHAddress = createAddress(Networks, Opcode, Script);
 

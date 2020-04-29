@@ -1,20 +1,19 @@
 import _BN from "bn.js";
 
 import {
-    Asset, Chain, RenContract, RenNetwork, SendParams, ShiftedToken, LockAndMintParams,
-    LockAndMintParamsSimple, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Tokens,
+    Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
+    LockAndMintParamsSimple, NetworkDetails, RenContract, RenNetwork, RenTokens, SendParams, Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, NetworkChaosnet, NetworkDetails, NetworkTestnet,
-    resolveSendCall, stringToNetwork, utils,
+    getGatewayAddress, getTokenAddress, NetworkChaosnet, NetworkTestnet, resolveSendCall,
+    stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
-import { ShifterNetwork } from "./shifterNetwork";
 
 const NetworkDetails = {
     NetworkChaosnet,
@@ -38,7 +37,12 @@ const NetworkDetails = {
  * new RenJS({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
  * ```
  *
- * It then exposes two main functions: [[shiftIn]] and [[shiftOut]].
+ * A second optional parameter lets you provide a RenVM RPC provider or a
+ * lightnode URL.
+ *
+ * It then exposes two main functions:
+ * 1. [[lockAndMint]] - for transferring assets to Ethereum.
+ * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
  */
 export default class RenJS {
     // Expose constants so they can be accessed on the RenJS class
@@ -47,12 +51,11 @@ export default class RenJS {
     public static Networks = RenNetwork;
     public static NetworkDetails = NetworkDetails;
     public static Chains = Chain;
-    public static utils = utils;
+    public static utils: typeof utils = utils;
 
     // Not static
-    public readonly utils = utils;
-    public readonly renVM: ShifterNetwork;
-    public readonly lightnode: RenVMProvider;
+    public readonly utils: typeof utils = utils;
+    public readonly renVM: RenVMProvider;
     public readonly network: NetworkDetails;
 
     /**
@@ -62,9 +65,18 @@ export default class RenJS {
      */
     constructor(network?: NetworkDetails | string | null | undefined, provider?: string | Provider) {
         this.network = stringToNetwork(network);
-        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ? provider : new MultiProvider<RenVMParams, RenVMResponses>(provider ? [provider] : this.network.nodeURLs)) as unknown as Provider<RenVMParams, RenVMResponses>;
-        this.lightnode = new RenVMProvider(rpcProvider);
-        this.renVM = new ShifterNetwork(this.lightnode);
+
+        // Use provided provider, provider URL or default lightnode URL.
+        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ?
+            provider :
+            new MultiProvider<RenVMParams, RenVMResponses>(
+                provider ?
+                    [provider] :
+                    this.network.nodeURLs
+            )
+        ) as unknown as Provider<RenVMParams, RenVMResponses>;
+
+        this.renVM = new RenVMProvider(rpcProvider);
     }
 
     /**
@@ -72,7 +84,7 @@ export default class RenJS {
      * signature to the adapter address.
      *
      * @param params See [[LockAndMintParams]].
-     * @returns An instance of [[ShiftInObject]].
+     * @returns An instance of [[LockAndMint]].
      */
     public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): LockAndMint => {
         if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
@@ -88,7 +100,7 @@ export default class RenJS {
      * Submits a burn log to RenVM.
      *
      * @param params See [[BurnAndReleaseParams]].
-     * @returns An instance of [[ShiftOutObject]].
+     * @returns An instance of [[BurnAndRelease]].
      */
     public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): BurnAndRelease => {
         if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
@@ -101,13 +113,8 @@ export default class RenJS {
         return new BurnAndRelease(this.renVM, this.network, params);
     }
 
-    public readonly getTokenAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
-    public readonly getGatewayAddress = (web3: Web3, token: ShiftedToken | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
-
-    // Backwards compatibility
-    public readonly shiftIn = this.lockAndMint;
-    public readonly shiftOut = this.burnAndRelease;
-    public readonly getShifterAddress = this.getGatewayAddress;
+    public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
+    public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
 }
 
 

@@ -1,15 +1,10 @@
-
-// Types
-export * from "./types/parameters";
-export * from "./types/general";
-export * from "./types/messages";
-export * from "./types/renVM";
-export * from "./types/types";
-export * from "./types/utxo";
-export * from "./types/unmarshalled";
-
-// Utils
-export * from "./utils/abi";
-export * from "./utils/promiEvent";
-export * from "./utils/utils";
-export * from "./utils/value";
+export * from "./abi";
+export * from "./errors";
+export * from "./general";
+export * from "./messages";
+export * from "./parameters";
+export * from "./renVM";
+export * from "./shard";
+export * from "./types";
+export * from "./unmarshalled";
+export * from "./utxo";

@@ -1,19 +1,18 @@
 import {
-    Asset, Chain, GatewayMessageType, HistoryEvent, RenContract, SerializableShiftOutParams,
-    ShiftInEvent, ShiftInParams, ShiftInStatus, ShiftOutEvent, ShiftOutParams, ShiftOutStatus,
-    sleep, Tx, TxStatus, UTXO,
+    Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
+    GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintStatus,
+    NetworkDetails, RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
-import { parseRenContract, resolveInToken } from "@renproject/utils";
-import { NetworkDetails } from "@renproject/utils/build/main/types/networks";
+import { parseRenContract, resolveInToken, sleep } from "@renproject/utils";
 import { Container } from "unstated";
 
-import { getStorageItem, updateStorageTrade } from "../components/controllers/Storage";
+import { getStorageItem, updateStorageTransfer } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
 import { _catchBackgroundErr_, _catchInteractionErr_, _ignoreErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
-import { compareShiftStatus, compareTxStatus, isFunction, isPromise } from "../lib/utils";
+import { compareTransferStatus, compareTxStatus, isFunction, isPromise } from "../lib/utils";
 import { Token } from "./generalTypes";
 import { UIContainer } from "./uiContainer";
 
@@ -23,7 +22,7 @@ const initialState = {
     sdkRenVM: null as null | RenJS,
     // sdkAddress: null as string | null,
     // sdkWeb3: null as Web3 | null,
-    shift: null as HistoryEvent | null,
+    transfer: null as HistoryEvent | null,
 };
 
 export const numberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: NetworkDetails | undefined) =>
@@ -35,8 +34,8 @@ export const numberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenCo
  * The SDKContainer is responsible for talking to the RenVM SDK. It stores the
  * associated state and exposes functions to interact with the SDK.
  *
- * The main two interactions are shifting in (trading BTC to DAI), and shifting
- * out (trading DAI to BTC).
+ * The main two interactions are minting (trading BTC to DAI), and burning
+ * (trading DAI to BTC).
  */
 export class SDKContainer extends Container<typeof initialState> {
     public state = initialState;
@@ -54,74 +53,47 @@ export class SDKContainer extends Container<typeof initialState> {
             sdkRenVM: new RenJS(network),
             // sdkAddress: address,
         });
-
-        // const shift = await this.fixShift(this.state.shift, web3);
-        // if (shift) {
-        //     await this.updateShift(shift, { sync: true });
-        // }
     }
 
-    // public fixShift = async (shift: HistoryEvent | null, web3: Web3) => {
-    //     if (shift && shift.shiftParams.contractCalls) {
-    //         for (let i = 0; i < shift.shiftParams.contractCalls.length; i++) {
-    //             const contractCall = shift.shiftParams.contractCalls[i];
-    //             if (isFunction(contractCall)) {
-    //                 try {
-    //                     shift.shiftParams.contractCalls[i] = await contractCall(web3.currentProvider);
-    //                 } catch (error) {
-    //                     _ignoreErr_(error);
-    //                 }
-    //             } else if (isPromise(contractCall)) {
-    //                 try {
-    //                     shift.shiftParams.contractCalls[i] = await contractCall;
-    //                 } catch (error) {
-    //                     _ignoreErr_(error);
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return shift;
-    // }
-
-    public getNumberOfConfirmations = (shift?: HistoryEvent) => {
-        shift = shift || this.state.shift || undefined;
-        if (!shift) {
-            throw new Error("Shift not set");
+    public getNumberOfConfirmations = (transfer?: HistoryEvent) => {
+        transfer = transfer || this.state.transfer || undefined;
+        if (!transfer) {
+            throw new Error("Transfer not set");
         }
         // tslint:disable-next-line: strict-type-predicates
-        const confirmations = shift.shiftIn && shift.shiftParams.confirmations !== null && shift.shiftParams.confirmations !== undefined ?
-            shift.shiftParams.confirmations :
-            numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+        const confirmations = transfer.eventType === EventType.LockAndMint && transfer.transferParams.confirmations !== null && transfer.transferParams.confirmations !== undefined ?
+            transfer.transferParams.confirmations :
+            numberOfConfirmations(transfer.transferParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
         return confirmations;
     }
 
-    public getShiftStatus = (shift?: HistoryEvent) => {
-        shift = shift || this.state.shift || undefined;
-        if (!shift) { throw new Error("Shift not set"); }
-        return { status: shift.status, details: null };
+    public getTransferStatus = (transfer?: HistoryEvent) => {
+        transfer = transfer || this.state.transfer || undefined;
+        if (!transfer) { throw new Error("Transfer not set"); }
+        return { status: transfer.status, details: null };
     }
 
-    public returnShift = async (shift?: HistoryEvent) => {
+    public returnTransfer = async (transfer?: HistoryEvent) => {
         if (!this.uiContainer.state.gatewayPopupID) {
-            throw new Error("Can't return without shift ID");
+            throw new Error("Can't return without transfer ID");
         }
 
-        await this.updateShift({ returned: true });
+        await this.updateTransfer({ returned: true });
 
-        const response = await this.queryShiftStatus();
+        const response = await this.queryTransferStatus();
 
         await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
     }
 
-    public updateShift = async (shiftIn: Partial<HistoryEvent>, options?: { sync?: boolean, force?: boolean }) => {
+    public updateTransfer = async (transferIn: Partial<HistoryEvent>, options?: { sync?: boolean, force?: boolean }) => {
         const renNetwork = this.uiContainer.state.renNetwork;
         if (!renNetwork) {
-            throw new Error(`Error trying to update shift in storage without network being defined.`);
+            throw new Error(`Error trying to update transfer in storage without network being defined.`);
         }
 
-        let existingShift: HistoryEvent | Partial<HistoryEvent> = {};
-        if (options && options.sync && shiftIn.shiftParams && shiftIn.shiftParams.nonce) {
-            existingShift = await getStorageItem(renNetwork, shiftIn.shiftParams.nonce) || {};
+        let existingTransfer: HistoryEvent | Partial<HistoryEvent> = {};
+        if (options && options.sync && transferIn.transferParams && transferIn.transferParams.nonce) {
+            existingTransfer = await getStorageItem(renNetwork, transferIn.transferParams.nonce) || {};
         }
 
         const min = (firstValue: (number | null | undefined), ...values: Array<number | null | undefined>): (number | null | undefined) => {
@@ -131,48 +103,48 @@ export class SDKContainer extends Container<typeof initialState> {
         const force = options && options.force;
 
         // tslint:disable-next-line: no-object-literal-type-assertion
-        const shift = {
-            ...existingShift,
-            ...this.state.shift,
-            ...shiftIn,
+        const transfer = {
+            ...existingTransfer,
+            ...this.state.transfer,
+            ...transferIn,
             // tslint:disable-next-line: no-any
-            time: force && shiftIn.hasOwnProperty("time") ? shiftIn.time : min(existingShift.time, this.state.shift && this.state.shift.time, shiftIn.time),
-            inTx: force && shiftIn.hasOwnProperty("inTx") ? shiftIn.inTx : shiftIn.inTx || (this.state.shift && this.state.shift.inTx) || existingShift.inTx,
-            outTx: force && shiftIn.hasOwnProperty("outTx") ? shiftIn.outTx : shiftIn.outTx || (this.state.shift && this.state.shift.outTx) || existingShift.outTx,
-            renTxHash: force && shiftIn.hasOwnProperty("renTxHash") ? shiftIn.renTxHash : shiftIn.renTxHash || (this.state.shift && this.state.shift.renTxHash) || existingShift.renTxHash,
-            renVMQuery: force && shiftIn.hasOwnProperty("renVMQuery") ? shiftIn.renVMQuery : shiftIn.renVMQuery || (this.state.shift && this.state.shift.renVMQuery) || existingShift.renVMQuery,
-            renVMStatus: force && shiftIn.hasOwnProperty("renVMStatus") ? shiftIn.renVMStatus : compareTxStatus(existingShift.renVMStatus, (this.state.shift && this.state.shift.renVMStatus), shiftIn.renVMStatus),
-            status: force && shiftIn.hasOwnProperty("status") ? shiftIn.status : compareShiftStatus(existingShift.status, (this.state.shift && this.state.shift.status), shiftIn.status),
+            time: force && transferIn.hasOwnProperty("time") ? transferIn.time : min(existingTransfer.time, this.state.transfer && this.state.transfer.time, transferIn.time),
+            inTx: force && transferIn.hasOwnProperty("inTx") ? transferIn.inTx : transferIn.inTx || (this.state.transfer && this.state.transfer.inTx) || existingTransfer.inTx,
+            outTx: force && transferIn.hasOwnProperty("outTx") ? transferIn.outTx : transferIn.outTx || (this.state.transfer && this.state.transfer.outTx) || existingTransfer.outTx,
+            txHash: force && transferIn.hasOwnProperty("txHash") ? transferIn.txHash : transferIn.txHash || (this.state.transfer && this.state.transfer.txHash) || existingTransfer.txHash,
+            renVMQuery: force && transferIn.hasOwnProperty("renVMQuery") ? transferIn.renVMQuery : transferIn.renVMQuery || (this.state.transfer && this.state.transfer.renVMQuery) || existingTransfer.renVMQuery,
+            renVMStatus: force && transferIn.hasOwnProperty("renVMStatus") ? transferIn.renVMStatus : compareTxStatus(existingTransfer.renVMStatus, (this.state.transfer && this.state.transfer.renVMStatus), transferIn.renVMStatus),
+            status: force && transferIn.hasOwnProperty("status") ? transferIn.status : compareTransferStatus(existingTransfer.status, (this.state.transfer && this.state.transfer.status), transferIn.status),
         } as HistoryEvent;
 
         // const web3 = this.state.sdkWeb3;
         // if (web3) {
-        //     shift = (await this.fixShift(shift, web3)) || shift;
+        //     transfer = (await this.fixTransfer(transfer, web3)) || transfer;
         // }
 
         if (
-            shift.status &&
-            (!this.state.shift || (this.state.shift.status !== shift.status)) &&
+            transfer.status &&
+            (!this.state.transfer || (this.state.transfer.status !== transfer.status)) &&
             this.uiContainer.state.gatewayPopupID
         ) {
-            await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getShiftStatus(shift));
+            await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getTransferStatus(transfer));
         }
         try {
-            await updateStorageTrade(renNetwork, shift);
+            await updateStorageTransfer(renNetwork, transfer);
         } catch (error) {
             console.error(error);
         }
-        await this.setState({ shift });
+        await this.setState({ transfer });
     }
 
     public updateToAddress = async (address: string, token: Token) => {
-        if (!this.state.shift) {
+        if (!this.state.transfer) {
             return;
         }
 
-        const sendToken = (this.state.shift.shiftParams as ShiftInParams | ShiftOutParams).sendToken;
+        const sendToken = (this.state.transfer.transferParams as LockAndMintParams | BurnAndReleaseParams).sendToken;
         const defaultToken = sendToken && (sendToken.slice(0, 3) as Token);
-        const contractCalls = this.state.shift.shiftParams.contractCalls ? Array.from(this.state.shift.shiftParams.contractCalls).map(contractCall => {
+        const contractCalls = this.state.transfer.transferParams.contractCalls ? Array.from(this.state.transfer.transferParams.contractCalls).map(contractCall => {
             return (isFunction(contractCall) || isPromise(contractCall)) ? contractCall : contractCall.contractParams && contractCall.contractParams.map(param => {
                 const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
                 try {
@@ -180,24 +152,24 @@ export class SDKContainer extends Container<typeof initialState> {
                         return { ...param, value: RenJS.Tokens[token].addressToHex(address) };
                     }
                 } catch (error) {
-                    _catchInteractionErr_(error, "...");
+                    _catchInteractionErr_(error, "Error in sdkContainer: updateToAddress, addressToHex");
                 }
                 return param;
             });
-        }) : this.state.shift.shiftParams.contractCalls;
+        }) : this.state.transfer.transferParams.contractCalls;
         if (contractCalls) {
             let partial: Partial<HistoryEvent>;
-            if (this.state.shift.shiftIn) {
-                partial = { shiftIn: this.state.shift.shiftIn, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftInEvent["shiftParams"] };
+            if (this.state.transfer.eventType === EventType.LockAndMint) {
+                partial = { eventType: this.state.transfer.eventType, transferParams: { ...this.state.transfer.transferParams, contractCalls } as unknown as LockAndMintEvent["transferParams"] };
             } else {
-                partial = { shiftIn: this.state.shift.shiftIn, shiftParams: { ...this.state.shift.shiftParams, contractCalls } as unknown as ShiftOutEvent["shiftParams"] };
+                partial = { eventType: this.state.transfer.eventType, transferParams: { ...this.state.transfer.transferParams, contractCalls } as unknown as BurnAndReleaseEvent["transferParams"] };
             }
-            await this.updateShift(partial);
+            await this.updateTransfer(partial);
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Shift out ///////////////////////////////////////////////////////////////
+    // Burn and release ////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
 
     public submitBurnToEthereum = async (retry = false) => {
@@ -206,43 +178,43 @@ export class SDKContainer extends Container<typeof initialState> {
         if (!renVM) {
             throw new Error(`Invalid values required for swap`);
         }
-        const shift = this.state.shift;
-        if (!shift) {
-            throw new Error("Shift not set");
+        const transfer = this.state.transfer;
+        if (!transfer) {
+            throw new Error("Transfer not set");
         }
-        if (shift.shiftIn) {
-            throw new Error(`Expected shift-out details but got shift-in`);
+        if (transfer.eventType === EventType.LockAndMint) {
+            throw new Error(`Expected burn details but got mint`);
         }
         const { gatewayPopupID } = this.uiContainer.state;
         if (!gatewayPopupID) {
             throw new Error(`No gateway popup ID.`);
         }
 
-        const params: SerializableShiftOutParams = shift.shiftParams;
+        const params: SerializableBurnAndReleaseParams = transfer.transferParams;
 
         if (retry) {
-            await this.updateShift({
+            await this.updateTransfer({
                 inTx: undefined,
             }, { force: true });
         }
 
         // if (retry) {
-        //     await this.approveTokenTransfer(shiftID);
+        //     await this.approveTokenTransfer(transferID);
         // }
 
         // If there's a previous transaction and `retry` isn't set, reuse tx.
-        let transactionHash = shift.inTx && !retry ? shift.inTx.hash : null;
+        let transactionHash = transfer.inTx && transfer.inTx.chain === Chain.Ethereum && !retry ? transfer.inTx.hash : null;
 
         if (!transactionHash) {
 
-            const transactionConfigs = renVM.shiftOut({
+            const transactionConfigs = renVM.burnAndRelease({
                 ...params
             }).createTransactions();
 
             for (let i = 0; i < transactionConfigs.length; i++) {
                 const transactionConfig = transactionConfigs[i];
 
-                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendEthereumTx, { transactionConfig });
                 if (sendTransactionError) {
                     throw new Error(sendTransactionError);
                 }
@@ -254,221 +226,236 @@ export class SDKContainer extends Container<typeof initialState> {
                 if (i === transactionConfigs.length - 1) {
                     transactionHash = txHash;
 
-                    await this.updateShift({
+                    await this.updateTransfer({
                         inTx: EthereumTx(transactionHash),
-                        status: ShiftOutStatus.SubmittedToEthereum,
+                        status: BurnAndReleaseStatus.SubmittedToEthereum,
                     });
                 }
 
-                const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash });
+                const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash });
                 if (error) {
                     throw new Error(error);
                 }
             }
         } else {
-            const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+            const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash: transactionHash });
             if (error) {
                 throw new Error(error);
             }
         }
 
-        await this.updateShift({
+        await this.updateTransfer({
             inTx: transactionHash ? EthereumTx(transactionHash) : null,
-            status: ShiftOutStatus.ConfirmedOnEthereum,
+            status: BurnAndReleaseStatus.ConfirmedOnEthereum,
         });
     }
 
     public submitBurnToRenVM = async (_resubmit = false) => {
         // if (resubmit) {
-        //     await this.updateShift({ status: ShiftOutStatus.ConfirmedOnEthereum, renTxHash: null });
+        //     await this.updateTransfer({ status: BurnAndReleaseStatus.ConfirmedOnEthereum, txHash: null });
         // }
 
         const { sdkRenVM: renVM } = this.state;
         // if (!web3) { throw new Error(`Web3 not initialized`); }
         if (!renVM) { throw new Error(`RenVM not initialized`); }
 
-        const shift = this.state.shift;
-        if (!shift) { throw new Error("Shift not set"); }
-        if (!shift.inTx || shift.inTx.chain !== Chain.Ethereum) { throw new Error(`Must submit burn to Ethereum before RenVM.`); }
+        const transfer = this.state.transfer;
+        if (!transfer) { throw new Error("Transfer not set"); }
+        if (!transfer.inTx || transfer.inTx.chain !== Chain.Ethereum) { throw new Error(`Must submit burn to Ethereum before RenVM.`); }
 
         const { gatewayPopupID } = this.uiContainer.state;
         if (!gatewayPopupID) {
             throw new Error(`No gateway popup ID.`);
         }
 
-        const { burnReference, error: getTransactionBurnError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionBurn, { txHash: shift.inTx.hash });
+        const { burnReference, error: getTransactionBurnError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxBurn, { txHash: transfer.inTx.hash });
         if (getTransactionBurnError) {
             throw new Error(getTransactionBurnError);
         }
 
-        const shiftOutObject = await renVM.shiftOut({
-            sendToken: shift.shiftParams.sendToken,
+        const burnAndReleaseObject = await renVM.burnAndRelease({
+            sendToken: transfer.transferParams.sendToken,
             burnReference,
         }).readFromEthereum();
 
-        const renTxHash = shiftOutObject.renTxHash();
-        this.updateShift({
-            renTxHash,
-            status: ShiftOutStatus.SubmittedToRenVM,
-        }).catch((updateShiftError) => _catchBackgroundErr_(updateShiftError, "Error in sdkContainer: submitBurnToRenVM > renTxHash > updateShift"));
+        const txHash = burnAndReleaseObject.txHash();
+        this.updateTransfer({
+            txHash,
+            status: BurnAndReleaseStatus.SubmittedToRenVM,
+        }).catch((updateTransferError) => { _catchBackgroundErr_(updateTransferError, "Error in sdkContainer: submitBurnToRenVM > txHash > updateTransfer"); });
 
-        const response = await shiftOutObject.submitToRenVM()
+        const response = await burnAndReleaseObject.submit()
             .on("status", (renVMStatus: TxStatus) => {
-                this.updateShift({
+                this.updateTransfer({
                     renVMStatus,
-                }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateShift"));
+                }).catch((error) => { _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateTransfer"); });
             });
 
-        await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
+        await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
 
         // TODO: Fix returned types for burning
         const address = response.in.to;
 
-        await this.updateShift({
-            outTx: shift.shiftParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
+        await this.updateTransfer({
+            outTx: transfer.transferParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
                 { chain: Chain.Zcash, address } :
-                shift.shiftParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
+                transfer.transferParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
                     { chain: Chain.BitcoinCash, address } :
                     { chain: Chain.Bitcoin, address },
-            status: ShiftOutStatus.ReturnedFromRenVM,
-        }).catch((error) => _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateShift"));
+            status: BurnAndReleaseStatus.ReturnedFromRenVM,
+        }).catch((error) => { _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateTransfer"); });
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Shift in ////////////////////////////////////////////////////////////////
+    // Lock and mint ///////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
 
-    // Shifting in involves the following steps:
+    // Minting involves the following steps:
     // 1. Generate a gateway address
     // 2. Wait for a deposit to the address
     // 3. Submit the deposit to RenVM and retrieve back a signature
     // 4. Submit the signature to Ethereum
 
-    public shiftInObject = (): LockAndMint => {
+    public lockAndMintObject = (): LockAndMint => {
         const { sdkRenVM: renVM } = this.state;
         if (!renVM) {
-            throw new Error("Invalid parameters passed to `generateAddress`");
+            throw new Error("Invalid parameters passed to `lockAndMintObject`");
         }
-        const shift = this.state.shift;
-        if (!shift) {
-            throw new Error("Shift not set");
+        const transfer = this.state.transfer;
+        if (!transfer) {
+            throw new Error("Transfer not set");
         }
 
-        return renVM.shiftIn(shift.shiftParams as ShiftInParams);
+        return renVM.lockAndMint(transfer.transferParams as LockAndMintParams);
     }
 
-    // Takes a shiftParams as bytes or an array of primitive types and returns
+    // Takes a transferParams as bytes or an array of primitive types and returns
     // the deposit address
-    public generateAddress = (): string | undefined => {
-        return this
-            .shiftInObject()
-            .addr();
+    public generateAddress = async (): Promise<string | undefined> => {
+        const transfer = this.state.transfer;
+
+        if (!transfer || transfer.eventType === EventType.BurnAndRelease) {
+            throw new Error("Invalid parameters passed to `generateAddress`");
+        }
+
+        if (transfer.gatewayAddress) {
+            return transfer.gatewayAddress;
+        }
+
+        const address = await this
+            .lockAndMintObject()
+            .gatewayAddress();
+
+        const update: Partial<LockAndMintEvent> = { gatewayAddress: address };
+        await this.updateTransfer(update);
+
+        return address;
     }
 
     // Retrieves unspent deposits at the provided address
-    public waitForDeposits = async (onDeposit: (utxo: UTXO) => void) => {
-        const shift = this.state.shift;
-        if (!shift) {
-            throw new Error("Shift not set");
+    public waitForDeposits = async (onDeposit: (utxo: UTXOWithChain) => void) => {
+        const transfer = this.state.transfer;
+        if (!transfer) {
+            throw new Error("Transfer not set");
         }
-        const onRenTxHash = (renTxHash: string) => {
+        const onTxHash = (txHash: string) => {
 
-            const shiftOnHash = this.state.shift;
-            if (!shiftOnHash || !shiftOnHash.renTxHash || shiftOnHash.renTxHash !== renTxHash) {
-                this.updateShift({ renTxHash })
+            const transferObject = this.state.transfer;
+            if (!transferObject || !transferObject.txHash || transferObject.txHash !== txHash) {
+                this.updateTransfer({ txHash })
                     .catch(console.error);
             }
         };
         const onStatus = (renVMStatus: TxStatus) => {
-            this.updateShift({
+            this.updateTransfer({
                 renVMStatus,
             }).catch(console.error);
         };
 
-        const specifyUTXO = shift.inTx && shift.inTx.chain !== Chain.Ethereum && shift.inTx.utxo ? {
-            txid: shift.inTx.utxo.txid,
-            output_no: shift.inTx.utxo.output_no
+        const specifyUTXO = transfer.inTx && transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo ? {
+            txHash: transfer.inTx.utxo.txHash,
+            vOut: transfer.inTx.utxo.vOut
         } : undefined;
 
         const transaction = await this
-            .shiftInObject()
-            .waitForDeposit(0, specifyUTXO);
+            .lockAndMintObject()
+            .wait(0, specifyUTXO);
         const promise = this
-            .shiftInObject()
-            .waitForDeposit(this.getNumberOfConfirmations(shift), specifyUTXO);
-        promise.on("deposit", (utxo: UTXO) => {
-            this.updateShift({ status: ShiftInStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waitForDeposits"); });
+            .lockAndMintObject()
+            .wait(this.getNumberOfConfirmations(transfer), specifyUTXO);
+        promise.on("deposit", (utxo: UTXOWithChain) => {
+            this.updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
             onDeposit(utxo);
         });
         const signaturePromise = transaction
-            .submitToRenVM()
-            .on("renTxHash", onRenTxHash)
+            .submit()
+            .on("txHash", onTxHash)
             .on("status", onStatus);
 
         // If the number of confirmations being waited for are less than RenVM's
         // default, check the transaction's status manually using queryTX.
-        const defaultNumberOfConfirmations = numberOfConfirmations(shift.shiftParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
-        if (this.getNumberOfConfirmations(shift) < defaultNumberOfConfirmations) {
+        const defaultNumberOfConfirmations = numberOfConfirmations(transfer.transferParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+        if (this.getNumberOfConfirmations(transfer) < defaultNumberOfConfirmations) {
 
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 try {
-                    const response = await transaction.queryTx();
-                    await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
+                    const renVMQuery = await transaction.queryTx();
+                    await this.updateTransfer({ renVMQuery, txHash: renVMQuery.hash });
                     break;
                 } catch (error) {
                     // Ignore error
                 }
             }
 
-            await this.returnShift();
+            await this.returnTransfer();
             return;
         }
         const signature = await signaturePromise;
-        await this.updateShift({ status: ShiftInStatus.ReturnedFromRenVM });
+        await this.updateTransfer({ status: LockAndMintStatus.ReturnedFromRenVM });
         const response = await signature.queryTx();
-        await this.updateShift({ renVMQuery: response, renTxHash: response.hash });
+        await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
     }
 
-    public queryShiftStatus = async () => {
-        const { sdkRenVM: renVM, shift } = this.state;
+    public queryTransferStatus = async () => {
+        const { sdkRenVM: renVM, transfer } = this.state;
 
-        if (shift && shift.renVMQuery && shift.renVMQuery.txStatus === TxStatus.TxStatusDone) {
-            return shift.renVMQuery;
+        if (transfer && transfer.renVMQuery && transfer.renVMQuery.txStatus === TxStatus.TxStatusDone) {
+            return transfer.renVMQuery;
         }
 
         if (!renVM) { throw new Error(`RenVM not initialized`); }
-        if (!shift) { throw new Error("Shift not set"); }
+        if (!transfer) { throw new Error("Transfer not set"); }
 
-        const renTxHash = shift.renTxHash;
-        if (!renTxHash) { throw new Error(`Invalid values required to query status`); }
+        const txHash = transfer.txHash;
+        if (!txHash) { throw new Error(`Invalid values required to query status`); }
 
-        if (shift.shiftIn) {
-            return renVM.shiftIn({
-                sendToken: shift.shiftParams.sendToken,
-                renTxHash,
+        if (transfer.eventType === EventType.LockAndMint) {
+            return renVM.lockAndMint({
+                sendToken: transfer.transferParams.sendToken,
+                txHash,
                 contractCalls: [],
             }).queryTx();
         } else {
-            return renVM.shiftOut({
-                sendToken: shift.shiftParams.sendToken,
-                renTxHash,
+            return renVM.burnAndRelease({
+                sendToken: transfer.transferParams.sendToken,
+                txHash,
             }).queryTx();
         }
     }
 
     public submitMintToEthereum = async (retry = false) => {
         const { gatewayPopupID } = this.uiContainer.state;
-        const shift = this.state.shift;
-        if (!shift) { throw new Error("Shift not set"); }
+        const transfer = this.state.transfer;
+        if (!transfer) { throw new Error("Transfer not set"); }
         if (!gatewayPopupID) {
             throw new Error(`No gateway popup ID.`);
         }
 
-        let transactionHash = shift.outTx && !retry ? shift.outTx.hash : null;
+        let transactionHash = transfer.outTx && transfer.outTx.chain === Chain.Ethereum && !retry ? transfer.outTx.hash : null;
 
         if (retry) {
-            await this.updateShift({
+            await this.updateTransfer({
                 inTx: undefined,
             }, { force: true });
         }
@@ -479,27 +466,24 @@ export class SDKContainer extends Container<typeof initialState> {
             await sleep(500);
 
             let transaction = this
-                .shiftInObject();
+                .lockAndMintObject();
 
             let signature: LockAndMint;
-            if (!shift.inTx || shift.inTx.chain === Chain.Ethereum || !shift.inTx.utxo || shift.inTx.utxo.output_no === undefined) {
+            if (!transfer.inTx || transfer.inTx.chain === Chain.Ethereum || !transfer.inTx.utxo || transfer.inTx.utxo.vOut === undefined) {
                 transaction = await transaction
-                    .waitForDeposit(0);
+                    .wait(0);
                 signature = await transaction
-                    .submitToRenVM();
+                    .submit();
             } else {
                 signature = await transaction
-                    .submitToRenVM({
-                        txid: shift.inTx.utxo.txid,
-                        output_no: shift.inTx.utxo.output_no
-                    });
+                    .submit(transfer.inTx.utxo);
             }
 
             const transactionConfigs = signature.createTransactions();
 
             for (let i = 0; i < transactionConfigs.length; i++) {
                 const transactionConfig = transactionConfigs[i];
-                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendTransaction, { transactionConfig });
+                const { txHash, error: sendTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.SendEthereumTx, { transactionConfig });
                 if (sendTransactionError) {
                     throw new Error(sendTransactionError);
                 }
@@ -518,9 +502,9 @@ export class SDKContainer extends Container<typeof initialState> {
             // const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent
             //     .on("transactionHash", resolveTx).catch(rejectTx));
 
-            // Update shift in store.
-            await this.updateShift({
-                status: ShiftInStatus.SubmittedToEthereum,
+            // Update lockAndMint in store.
+            await this.updateTransfer({
+                status: LockAndMintStatus.SubmittedToEthereum,
                 outTx: EthereumTx(transactionHash),
             });
 
@@ -536,15 +520,15 @@ export class SDKContainer extends Container<typeof initialState> {
         //     throw new Error(`Transaction ${transactionHash} was reverted.`);
         // }
 
-        const { error: getTransactionStatusError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetTransactionStatus, { txHash: transactionHash });
+        const { error: getTransactionStatusError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash: transactionHash });
         if (getTransactionStatusError) {
             throw new Error(getTransactionStatusError);
         }
 
-        // Update shift in store.
-        await this.updateShift({
+        // Update lockAndMint in store.
+        await this.updateTransfer({
             outTx: EthereumTx(transactionHash),
-            status: ShiftInStatus.ConfirmedOnEthereum,
+            status: LockAndMintStatus.ConfirmedOnEthereum,
         });
 
         return;

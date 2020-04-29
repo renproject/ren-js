@@ -300,6 +300,84 @@
         }
     }
 
+    .burn-popup {
+        @extend .popup--body--details;
+
+        // height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 0;
+
+        .popup--body {
+            padding-top: 0;
+            align-items: center;
+            display: flex;
+            flex-flow: column;
+            width: 100%;
+            padding-left: 0;
+            padding-right: 0;
+            height: 100%;
+        }
+
+        .popup--body--header {
+            background-color: #F3F3F7;
+            height: 46px;
+            width: 100%;
+        }
+
+        .popup--body--icon {
+            background-color: #F3F3F7;
+            margin-top: -28px;
+            border-radius: 50px;
+
+            width: 60px;
+            height: 60px;
+
+            svg {
+                width: 46px;
+                height: 60px;
+                margin-top: -7px;
+            }
+        }
+
+        .popup--body--message {
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            color: #707575;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+
+            >span {
+                padding: 0 65px;
+            }
+
+            >span.red {
+                padding: 0 20px;
+            }
+        }
+
+        button {
+            width: 100vw;
+        }
+    }
+
+    .CircularProgressbar {
+        height: 80px;
+        margin-top: -40px;
+        background: white;
+        width: 80px;
+    }
+
+    .submit-burn-progress {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
     .ethereum-error {
         text-align: center;
         width: 100%;

@@ -2,19 +2,12 @@
 
 import * as React from "react";
 
-import { useEphemeralKey, useWeb3Network } from "@openzeppelin/network/lib/react";
 import GatewayJS from "@renproject/gateway";
-import {
-    Ox, RenContract, RenNetwork, SendParams, ShiftInParams, ShiftInParamsSimple, strip0x,
-    toBigNumber, UnmarshalledMintTx,
-} from "@renproject/interfaces";
-import { DEFAULT_SHIFT_FEE, randomNonce, sleep } from "@renproject/utils";
-import BigNumber from "bignumber.js";
+import { SendParams } from "@renproject/interfaces";
+import { SelectMarket } from "@renproject/react-components";
 import { parse } from "qs";
-import { HttpProvider } from "web3-providers";
 import Web3 from "web3";
-
-import { to0Conf } from "./lib";
+import { HttpProvider } from "web3-providers";
 
 interface InjectedEthereum extends HttpProvider {
     enable: () => Promise<void>;
@@ -29,10 +22,11 @@ declare global {
 }
 
 
-const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string) => {
+const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string, token: Token) => {
 
     const shiftInParams: SendParams = {
-        sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
+        sendToken: GatewayJS.Tokens[token].Mint,
         sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
         sendTo: ethereumAddress,
     };
@@ -89,17 +83,14 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     // }
 };
 
-const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, recipient: string) => {
-
-    const amount = GatewayJS.utils.value(0.000225, "btc").sats().toFixed();
-
-    gatewayJS.shiftOut({
-        web3Provider: web3.currentProvider,
+const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, amount: string, recipient: string, token: Token) => {
+    gatewayJS.burnAndRelease({
+        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
 
         // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-        sendToken: GatewayJS.Tokens.BTC.Eth2Btc,
+        sendToken: GatewayJS.Tokens[token as "BTC" | "ZEC" | "BCH"].Burn,
         sendTo: recipient,
-        sendAmount: amount,
+        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
     }).result()
         .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
         .then(console.log)
@@ -111,7 +102,7 @@ const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
     const previousGateways = await gatewayJS.getGateways();
     for (const trade of Array.from(previousGateways.values())) {
         gatewayJS
-            .recoverShift(web3.currentProvider, trade)
+            .recoverTransfer(web3.currentProvider, trade)
             .pause()
             .result()
             .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
@@ -120,7 +111,15 @@ const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
     }
 };
 
-export const GatewayExample = () => {
+type Token = "BTC" | "ZEC" | "BCH";
+export const Tokens = new Map<Token, { symbol: Token; name: string }>()
+    .set("BTC", { symbol: "BTC", name: "Bitcoin" })
+    .set("ZEC", { symbol: "ZEC", name: "Zcash" })
+    .set("BCH", { symbol: "BCH", name: "Bitcoin Cash" });
+
+
+export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
+    const [top, setTop] = React.useState<Token>("BTC");
 
     React.useEffect(() => {
         if (window.ethereum) {
@@ -128,7 +127,7 @@ export const GatewayExample = () => {
         }
     });
 
-    const context = { lib: new Web3(window.web3!.currentProvider) };
+    const context = { lib: new Web3(web3.currentProvider) };
 
     // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
     //     gsn: { signKey: useEphemeralKey() }
@@ -143,6 +142,7 @@ export const GatewayExample = () => {
     const gatewayJS = React.useMemo(() => new GatewayJS(
         network,
         { endpoint: urlParameters.endpoint || undefined },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     ), []);
 
     React.useEffect(() => {
@@ -150,6 +150,7 @@ export const GatewayExample = () => {
 
             recoverTrades(context.lib as unknown as Web3, gatewayJS).catch(console.error);
         })().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const [ethereumAddress, setEthereumAddress] = React.useState("");
@@ -176,22 +177,46 @@ export const GatewayExample = () => {
         setErrorMessage(null);
         try {
             if (isMint) {
-                await startShiftIn(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network);
+                await startShiftIn(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network, top);
             } else {
-                await startShiftOut(context.lib as unknown as Web3, gatewayJS, ethereumAddress);
+                await startShiftOut(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, top);
             }
         } catch (error) {
             console.error(error);
             setErrorMessage(String(error.message || error.error || JSON.stringify(error)));
         }
-    }, [startShiftOut, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
+    }, [network, top, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
+
+    const onMarketChange = React.useCallback((token) => { setTop(token as Token); }, [setTop]);
 
     return <>
         <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>
-            <p className="box">Send Testnet BTC to an Ethereum address (Kovan).</p>
+            <p className="box">Send Testnet {top} to/from an Ethereum address (Kovan).</p>
+            <style>{`
+            .Select--currency__control {
+                border-radius: 4px !important;
+            }
+
+            .Select--currency__value-container {
+                height: 44px;
+            }
+
+            .Select--currency__single-value, .Select--currency__input {
+                margin-top: -5px;
+            }
+            `}</style>
+            <SelectMarket
+                top
+                thisToken={top}
+                otherToken={""}
+                allTokens={Tokens}
+                key={"top"}
+                onMarketChange={onMarketChange}
+                getMarket={() => { return undefined; }}
+            />
 
             <div className="send">
-                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder="Enter Ethereum (mint) or Bitcoin (burn) address" />
+                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder="Enter Kovan (mint) or Testnet Bitcoin (burn) address" />
             </div>
 
             <div className="send">

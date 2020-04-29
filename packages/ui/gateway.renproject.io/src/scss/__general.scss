@@ -266,7 +266,12 @@ body {
     }
 
     .blue {
-        color: var($primaryColor);
+        color: $blue-bright;
+    }
+
+    .blue-link {
+        color: $blue-bright;
+        font-style: italic;
     }
 
     .hint {
@@ -337,6 +342,20 @@ body {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+    }
+
+    .paused {
+        .centered {
+            width: 90%;
+            height: 100%;
+
+            h2 {
+                margin: 0;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+        }
     }
 
     .not-in-iframe {

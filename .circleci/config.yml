@@ -29,7 +29,7 @@ jobs:
             # Download and cache dependencies
             - restore_cache:
                 keys:
-                    - v1-dependencies-{{ checksum "yarn.lock" }}
+                    - v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
                     # fallback to using the latest cache if no exact match is found
                     - v1-dependencies-
 
@@ -43,11 +43,17 @@ jobs:
                 path: ~/renjs
                 command: yarn install --network-concurrency 1
                 when: always
+
+            - run:
+                name: Lerna - bootstrap
+                path: ~/renjs
+                command: yarn run link
+                when: always
             
             - run:
                 name: Lerna - build
                 path: ~/renjs
-                command: lerna run --scope @renproject/* build
+                command: yarn run build
                 when: always
 
             - run:
@@ -55,15 +61,10 @@ jobs:
                 command: yarn install --network-concurrency 1
                 when: always
 
-            - run:
-                name: Install Mocha reporters # just for CircleCI
-                command: yarn add mocha-multi-reporters mocha-junit-reporter
-                when: always
-
             - save_cache:
                 paths:
                     - node_modules
-                key: v1-dependencies-{{ checksum "yarn.lock" }}
+                key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
 
             - run: mkdir reports
 
@@ -90,7 +91,7 @@ jobs:
             - run:
                 name: Run TSLint
                 command: |
-                    yarn run lint:ts --format junit --out ./reports/eslint/eslint.xml
+                    yarn run lint --format junit --out ./reports/eslint/eslint.xml
                 when: always
 
             # Run coverage report for Code Climate

@@ -7,6 +7,7 @@
     "module": "commonjs",
     "declaration": true,
     "inlineSourceMap": true,
+    "removeComments": false,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "strict": true /* Enable all strict type-checking options. */,
     /* Strict Type-Checking Options */
@@ -33,7 +34,9 @@
       "es2017",
       "dom"
     ],
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "typeRoots": [
       "node_modules/@types",
       "src/types"

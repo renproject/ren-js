@@ -53,7 +53,7 @@ const styles = () => ({
 const Index = withStyles(styles)(() => {
 
     return <ThemeProvider theme={theme}><div className="test-background">
-        <GatewayExample />
+        {window.web3 ? <GatewayExample web3={window.web3} /> : <p>Please use a Web3 browser</p>}
     </div></ThemeProvider>;
 });
 

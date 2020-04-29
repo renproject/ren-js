@@ -1,4 +1,4 @@
-import { ShiftInStatus, ShiftOutStatus, TxStatus } from "@renproject/interfaces";
+import { BurnAndReleaseStatus, LockAndMintStatus, TxStatus } from "@renproject/interfaces";
 
 // tslint:disable-next-line: no-any
 export const isPromise = <T>(p: any): p is Promise<T> => {
@@ -42,25 +42,25 @@ export const compareTxStatus = (...statuses: Array<TxStatus | undefined | null>)
     ).status;
 };
 
-export const compareShiftStatus = (...statuses: Array<ShiftInStatus | ShiftOutStatus | undefined | null>): ShiftInStatus | ShiftOutStatus | undefined => {
+export const compareTransferStatus = (...statuses: Array<LockAndMintStatus | BurnAndReleaseStatus | undefined | null>): LockAndMintStatus | BurnAndReleaseStatus | undefined => {
     return maxBy(
-        (status: { status: ShiftInStatus | ShiftOutStatus | undefined, index: number }) => status.index,
+        (status: { status: LockAndMintStatus | BurnAndReleaseStatus | undefined, index: number }) => status.index,
         statuses.map(status => {
             switch (status) {
-                case ShiftInStatus.Committed: return { status, index: 0 };
-                case ShiftInStatus.Deposited: return { status, index: 1 };
-                case ShiftInStatus.Confirmed: return { status, index: 2 };
-                case ShiftInStatus.SubmittedToRenVM: return { status, index: 3 };
-                case ShiftInStatus.ReturnedFromRenVM: return { status, index: 4 };
-                case ShiftInStatus.SubmittedToEthereum: return { status, index: 5 };
-                case ShiftInStatus.ConfirmedOnEthereum: return { status, index: 6 };
+                case LockAndMintStatus.Committed: return { status, index: 0 };
+                case LockAndMintStatus.Deposited: return { status, index: 1 };
+                case LockAndMintStatus.Confirmed: return { status, index: 2 };
+                case LockAndMintStatus.SubmittedToRenVM: return { status, index: 3 };
+                case LockAndMintStatus.ReturnedFromRenVM: return { status, index: 4 };
+                case LockAndMintStatus.SubmittedToEthereum: return { status, index: 5 };
+                case LockAndMintStatus.ConfirmedOnEthereum: return { status, index: 6 };
 
-                case ShiftOutStatus.Committed: return { status, index: 0 };
-                case ShiftOutStatus.SubmittedToEthereum: return { status, index: 1 };
-                case ShiftOutStatus.ConfirmedOnEthereum: return { status, index: 2 };
-                case ShiftOutStatus.SubmittedToRenVM: return { status, index: 3 };
-                case ShiftOutStatus.ReturnedFromRenVM: return { status, index: 4 };
-                case ShiftOutStatus.NoBurnFound: return { status, index: 5 };
+                case BurnAndReleaseStatus.Committed: return { status, index: 0 };
+                case BurnAndReleaseStatus.SubmittedToEthereum: return { status, index: 1 };
+                case BurnAndReleaseStatus.ConfirmedOnEthereum: return { status, index: 2 };
+                case BurnAndReleaseStatus.SubmittedToRenVM: return { status, index: 3 };
+                case BurnAndReleaseStatus.ReturnedFromRenVM: return { status, index: 4 };
+                case BurnAndReleaseStatus.NoBurnFound: return { status, index: 5 };
 
                 default: return { status: undefined, index: -1 };
             }

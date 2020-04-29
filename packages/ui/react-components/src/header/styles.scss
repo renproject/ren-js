@@ -1,0 +1,189 @@
+@import '../styles/common';
+
+.header--menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 0;
+
+    justify-content: flex-end;
+
+    width: 200px;
+
+    @media(min-width: $min-md) {
+        width: 400px;
+    }
+
+    margin: 0;
+}
+
+.header {
+    padding: 10px 0;
+    margin-bottom: 20px;
+
+    * {
+        z-index: 15;
+    }
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+
+    flex-direction: row;
+    height: 80px;
+    align-items: center;
+}
+
+.header .container>a {
+    align-self: center;
+    text-decoration: none;
+}
+
+.header--logo {
+    position: relative;
+    height: 30px;
+
+    span {
+        font-weight: bold;
+        font-size: 7px;
+        text-transform: uppercase;
+
+        padding: 1px 3px;
+        display: flex;
+        align-items: center;
+
+        color: $blue-bright;
+        border: 1px solid $blue-bright;
+        border-radius: 1px;
+
+        position: absolute;
+        right: -35px;
+        top: 0;
+    }
+
+    svg {
+        height: 30px;
+
+        .ren-logo {
+            fill: #212122;
+        }
+    }
+}
+
+.header--counter-weight {
+    width: 200px;
+
+    @media(min-width: $min-md) {
+        width: 400px;
+    }
+}
+
+.header--toggle {
+
+    * {
+        opacity: 0.2;
+    }
+
+    &,
+    * {
+        // !important is set because the the input element's cursor won't
+        // change without it (even though there's no styles overwriting it)
+        cursor: not-allowed !important;
+    }
+
+    span {
+        margin-right: 20px;
+    }
+}
+
+.header--toggle--info {
+    opacity: 0.8;
+    display: none;
+    justify-content: center;
+    position: absolute;
+    left: 50%;
+    top: 30px;
+    width: 100px;
+    transform: translateX(-50%);
+    color: white;
+    background: linear-gradient(0deg, #00A8F5 -201.77%, $blue-bright 93.76%);
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.4);
+
+    &:after,
+    &:before {
+        bottom: calc(100% - 1px);
+        left: 50%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+    $arrow-size: 7px;
+
+    &:after {
+        border-color: rgba(255, 255, 255, 0);
+        border-bottom-color: $blue-bright;
+        border-width: $arrow-size;
+        margin-left: -$arrow-size;
+    }
+
+    &:before {
+        border-color: rgba(0, 0, 0, 0);
+        border-bottom-color: $blue-bright;
+        border-width: $arrow-size + 2px;
+        margin-left: -($arrow-size + 2px);
+    }
+}
+
+.header--toggle:hover {
+    .header--toggle--info {
+        display: flex;
+    }
+}
+
+.header--menu .header--logout {
+    @media(min-width: $min-sm) {
+        display: none;
+    }
+}
+
+.header--account {
+    display: flex;
+    flex-direction: row;
+}
+
+.header--account--right {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+.header--account--address {
+    color: $light-grey;
+}
+
+.header--account--type::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 10px;
+    -moz-border-radius: 3.5px;
+    -webkit-border-radius: 3.5px;
+    border-radius: 3.5px;
+    background-color: #F45532;
+}
+
+.header--account--connected.header--account--type::before {
+    background-color: #3CBC98;
+}

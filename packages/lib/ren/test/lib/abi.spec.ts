@@ -1,4 +1,4 @@
-import { payloadToABI, payloadToShiftInABI } from "@renproject/utils";
+import { payloadToABI, payloadToMintABI } from "@renproject/utils";
 import chai from "chai";
 
 chai.should();
@@ -19,7 +19,7 @@ describe("abi.ts", () => {
             .should.deep.eq(expectedABI);
     });
 
-    it("payloadToShiftInABI", async () => {
+    it("payloadToMintABI", async () => {
         const expectedABI = [{
             constant: false,
             inputs: [
@@ -36,7 +36,7 @@ describe("abi.ts", () => {
             type: "function",
         }];
 
-        payloadToShiftInABI("functionName", [{ name: "_spender", type: "address" }, { name: "_value", type: "uint256" }])
+        payloadToMintABI("functionName", [{ name: "_spender", type: "address" }, { name: "_value", type: "uint256" }])
             .should.deep.eq(expectedABI);
     });
 });

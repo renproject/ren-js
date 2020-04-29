@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ShiftInStatus, ShiftOutStatus } from "@renproject/interfaces";
+import { BurnAndReleaseStatus, LockAndMintStatus } from "@renproject/interfaces";
 
 import infoIcon from "../../images/icons/info.svg";
 import { connect, ConnectedProps } from "../../state/connect";
@@ -12,43 +12,43 @@ interface Props extends ConnectedProps<[SDKContainer]> {
 }
 
 export const ProgressItem = ({ name, label, target, progress, tooltip }: { name?: React.ReactChild, label?: string | number, target: number, progress: number, tooltip?: string }) =>
-    <div className={`shift-progress--item ${progress >= target ? "shift-progress--item--done" : ""}`}>
-        <div className="shift-progress--number">{label || target}</div>
-        {name ? <div className="shift-progress--label">{name} {tooltip ? <Tooltip contents={tooltip}><img alt={`Tooltip: ${tooltip}`} src={infoIcon} /></Tooltip> : null}</div> : <></>}
+    <div className={`transfer-progress--item ${progress >= target ? "transfer-progress--item--done" : ""}`}>
+        <div className="transfer-progress--number">{label || target}</div>
+        {name ? <div className="transfer-progress--label">{name} {tooltip ? <Tooltip contents={tooltip}><img alt={`Tooltip: ${tooltip}`} src={infoIcon} /></Tooltip> : null}</div> : <></>}
     </div>;
 
-const statusToProgress = (status: ShiftInStatus | ShiftOutStatus) => {
+const statusToProgress = (status: LockAndMintStatus | BurnAndReleaseStatus) => {
     switch (status) {
-        // Shift in
-        case ShiftInStatus.Committed: return 0;
-        case ShiftInStatus.Deposited: return 1;
-        case ShiftInStatus.Confirmed: return 1;
-        case ShiftInStatus.SubmittedToRenVM: return 1;
-        case ShiftInStatus.ReturnedFromRenVM: return 2;
-        case ShiftInStatus.SubmittedToEthereum: return 2;
-        case ShiftInStatus.ConfirmedOnEthereum: return 3;
+        // LockAndMint
+        case LockAndMintStatus.Committed: return 0;
+        case LockAndMintStatus.Deposited: return 1;
+        case LockAndMintStatus.Confirmed: return 1;
+        case LockAndMintStatus.SubmittedToRenVM: return 1;
+        case LockAndMintStatus.ReturnedFromRenVM: return 2;
+        case LockAndMintStatus.SubmittedToEthereum: return 2;
+        case LockAndMintStatus.ConfirmedOnEthereum: return 3;
 
-        // Shift out
-        case ShiftOutStatus.Committed: return 0;
-        case ShiftOutStatus.SubmittedToEthereum: return 0;
-        case ShiftOutStatus.ConfirmedOnEthereum: return 1;
-        case ShiftOutStatus.NoBurnFound: return 1;
-        case ShiftOutStatus.SubmittedToRenVM: return 1;
-        case ShiftOutStatus.ReturnedFromRenVM: return 2;
+        // BurnAndRelease
+        case BurnAndReleaseStatus.Committed: return 0;
+        case BurnAndReleaseStatus.SubmittedToEthereum: return 0;
+        case BurnAndReleaseStatus.ConfirmedOnEthereum: return 1;
+        case BurnAndReleaseStatus.NoBurnFound: return 1;
+        case BurnAndReleaseStatus.SubmittedToRenVM: return 1;
+        case BurnAndReleaseStatus.ReturnedFromRenVM: return 2;
     }
 };
 
-export const ShiftProgress = connect<Props & ConnectedProps<[SDKContainer]>>([SDKContainer])(
+export const TransferProgress = connect<Props & ConnectedProps<[SDKContainer]>>([SDKContainer])(
     ({ containers: [sdkContainer] }) => {
 
-        const { shift } = sdkContainer.state;
+        const { transfer } = sdkContainer.state;
 
-        const progress = shift ? statusToProgress(shift.status) : 0;
+        const progress = transfer ? statusToProgress(transfer.status) : 0;
 
-        return shift ?
-            shift.shiftParams.sendToken.slice(4, 7).toLowerCase() === "eth" ?
+        return transfer ?
+            transfer.transferParams.sendToken.slice(4, 7).toLowerCase() === "eth" ?
                 <ProgressBar
-                    className="shift-progress"
+                    className="transfer-progress"
                     items={[
                         { name: "Ethereum" },
                         { name: "RenVM" },
@@ -58,7 +58,7 @@ export const ShiftProgress = connect<Props & ConnectedProps<[SDKContainer]>>([SD
                 />
                 :
                 <ProgressBar
-                    className="shift-progress"
+                    className="transfer-progress"
                     items={[
                         { name: "Deposit" },
                         { name: "Confirmations", tooltip: "RenVM waits for 2 confirmations for BTC/BCH and 6 confirmations for ZEC" },

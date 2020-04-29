@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "0.9.1",
+    "version": "1.0.0-alpha.4",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -45,29 +45,26 @@
         "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "prepare": "yarn build",
-        "npmignore": "npmignore",
+        "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore doc:html",
         "link": "yarn link @renproject/utils @renproject/interfaces && yarn link"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.4.0",
+        "@renproject/contracts": "^0.5.1",
         "@renproject/interfaces": "file:../ren-interfaces",
         "@renproject/utils": "file:../ren-utils",
         "@types/bn.js": "^4.11.6",
         "@types/bs58": "^4.0.1",
         "@types/ethereumjs-util": "^6.1.0",
-        "@types/node": "^13.9.8",
+        "@types/node": "^13.13.4",
         "axios": "^0.19.2",
-        "bchaddrjs": "^0.4.7",
+        "bchaddrjs": "^0.4.8",
         "bignumber.js": "^9.0.0",
-        "bitcore-lib": "^8.16.2",
-        "bitcore-lib-cash": "^8.16.2",
-        "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bn.js": "^5.1.1",
         "bs58": "^4.0.1",
         "ethereumjs-util": "^6.2.0",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.1.14",
+        "send-crypto": "0.2.3",
         "sha3": "^2.1.2",
         "wallet-address-validator": "^0.2.4",
         "web3": "^2.0.0-alpha.1",
@@ -81,7 +78,7 @@
     },
     "resolutions": {
         "sha3": "^2.1.2",
-        "scrypt": "https://github.com/ren-forks/node-scrypt"
+        "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
     },
     "nyc": {
         "extension": [

@@ -1,4 +1,3 @@
-import { Ox, strip0x } from "@renproject/interfaces";
 import { Address, Networks, Opcode, Script } from "bitcore-lib-zcash";
 import Base58Check from "bitcore-lib-zcash/lib/encoding/base58check";
 import { encode } from "bs58";
@@ -7,6 +6,7 @@ import { validate } from "wallet-address-validator";
 
 import { anyAddressFrom, Tactics } from "./btc";
 import { createAddress } from "./common";
+import { Ox, strip0x } from "./hex";
 
 export const createZECAddress = createAddress(Networks, Opcode, Script);
 

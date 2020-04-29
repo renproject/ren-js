@@ -1,10 +1,11 @@
+import { RenContract } from "@renproject/interfaces";
+import {
+    NetworkTestnet, processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
-import {
-    NetworkTestnet, processLockAndMintParams, processBurnAndReleaseParams, resolveSendCall,
-} from "@renproject/utils";
 
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
@@ -18,18 +19,18 @@ describe("processParams", () => {
         web3 = new Web3(`https://kovan.infura.io/v3/${process.env.INFURA_KEY}`);
     });
 
-    it("Shift out", () => {
+    it("Burn", () => {
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
-            ethTxHash: "ethTxHash",
+            ethereumTxHash: "ethereumTxHash",
         })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethTxHash: "ethTxHash" });
+            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" }, "Burn 1");
 
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
             burnReference: 1,
         })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 });
+            .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 }, "Burn 2");
 
         processBurnAndReleaseParams(NetworkTestnet, {
             sendToken: "BTC",
@@ -50,10 +51,10 @@ describe("processParams", () => {
                     contractParams: [{ name: "name", type: "uint", value: "1" }],
                     txConfig: { gas: 2 },
                 }],
-            });
+            }, "Burn 3");
 
         JSON.stringify(resolveSendCall(NetworkTestnet, {
-            sendToken: "BTC",
+            sendToken: RenContract.Eth2Btc,
             web3Provider: web3.currentProvider,
             sendTo: "sendTo",
             sendAmount: "0",
@@ -61,42 +62,31 @@ describe("processParams", () => {
             .should.equal(JSON.stringify({
                 sendToken: "BTC0Eth2Btc",
                 web3Provider: web3.currentProvider,
+                suggestedAmount: "0",
                 contractCalls: [
-                    async (_w3: Web3) => new Promise((resolve) => { resolve(); }),
                     {
-                        sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
-                        contractFn: "shiftOut",
+                        sendTo: "0x55363c0dBf97Ff9C0e31dAfe0fC99d3e9ce50b8A",
+                        contractFn: "burn",
                         contractParams: [
-                            {
-                                "type": "address",
-                                "name": "_shifterRegistry",
-                                "value": "0xbA563a8510d86dE95F5a50007E180d6d4966ad12",
-                            },
-                            {
-                                "type": "string",
-                                "name": "_symbol",
-                                "value": "zBTC",
-                            },
                             {
                                 "type": "bytes",
                                 "name": "_to",
-                                "value": "0x73656e64546f",
+                                "value": "0x73656e64546f"
                             },
                             {
                                 "type": "uint256",
                                 "name": "_amount",
-                                "value": "0",
-                            },
+                                "value": "0"
+                            }
                         ],
-                        txConfig: { gas: 200000 },
                     }],
-            }));
+            }), "Burn 4");
     });
 
-    it("Shift in", () => {
+    it("Mint", () => {
         processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
-            renTxHash: "renTxHash",
+            txHash: "txHash",
             contractCalls: [{
                 sendTo: "sendTo",
                 contractFn: "contractFn",
@@ -106,7 +96,7 @@ describe("processParams", () => {
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
-                renTxHash: "renTxHash",
+                txHash: "txHash",
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
@@ -117,7 +107,7 @@ describe("processParams", () => {
 
         processLockAndMintParams(NetworkTestnet, {
             sendToken: "BTC",
-            renTxHash: "renTxHash",
+            txHash: "txHash",
             contractCalls: [{
                 sendTo: "sendTo",
                 contractFn: "contractFn",
@@ -127,7 +117,7 @@ describe("processParams", () => {
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
-                renTxHash: "renTxHash",
+                txHash: "txHash",
                 contractCalls: [{
                     sendTo: "sendTo",
                     contractFn: "contractFn",
@@ -137,28 +127,24 @@ describe("processParams", () => {
             });
 
         resolveSendCall(NetworkTestnet, {
-            sendToken: "BTC",
-            renTxHash: "renTxHash",
+            sendToken: RenContract.Btc2Eth,
+            txHash: "txHash",
             sendTo: "sendTo",
             sendAmount: "0.01",
             txConfig: { gas: 2 },
         })
             .should.deep.equal({
                 sendToken: "BTC0Btc2Eth",
-                renTxHash: "renTxHash",
+                txHash: "txHash",
+                suggestedAmount: "0.01",
                 contractCalls: [{
-                    sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
-                    contractFn: "shiftIn",
+                    sendTo: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
+                    contractFn: "mint",
                     contractParams: [
-                        {
-                            "name": "_shifterRegistry",
-                            "type": "address",
-                            "value": "0xbA563a8510d86dE95F5a50007E180d6d4966ad12",
-                        },
                         {
                             "name": "_symbol",
                             "type": "string",
-                            "value": "zBTC",
+                            "value": "BTC",
                         },
                         {
                             "name": "_address",

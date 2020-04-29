@@ -3,10 +3,8 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { EthArgs, Ox, RenContract, RenNetwork, Tokens } from "@renproject/interfaces";
-import {
-    NetworkDetails, parseRenContract, retryNTimes, sleep, stringToNetwork,
-} from "@renproject/utils";
+import { EthArgs, NetworkDetails, RenContract, RenNetwork, Tokens } from "@renproject/interfaces";
+import { Ox, parseRenContract, retryNTimes, sleep, stringToNetwork } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -50,7 +48,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
-describe("Shifting in and shifting out", function () {
+describe("Cross chain transactions", function () {
     // Disable test timeout.
     this.timeout(0);
 
@@ -59,6 +57,9 @@ describe("Shifting in and shifting out", function () {
     let network: NetworkDetails;
     let renJS: RenJS;
     let accounts: string[];
+
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    const longIt = (process.env.ALL_TESTS ? it : it.skip);
 
     before(async () => {
         const infuraURL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
@@ -76,19 +77,19 @@ describe("Shifting in and shifting out", function () {
     const mintTest = async (
         token: string,
         renVMToken: RenContract,
-        shifterAddress: string,
+        gatewayContract: string,
         adapterContract: string,
         amount: number,
         ethAddress: string,
         contractVersion: "0.0.3" | "1.0.0",
-        submit: (shift: LockAndMint) => Promise<void>,
+        submitMint: (mint: LockAndMint) => Promise<void>,
         nonce?: string,
     ): Promise<void> => {
         const params: EthArgs = [
             {
                 name: "_symbol",
                 type: "string",
-                value: contractVersion === "0.0.3" ? "z" + token : token,
+                value: token,
             },
             {
                 name: "_address",
@@ -96,38 +97,39 @@ describe("Shifting in and shifting out", function () {
                 value: ethAddress,
             }
         ];
-        const shift = renJS.shiftIn({
+        const mint = renJS.lockAndMint({
+            web3Provider: web3.currentProvider,
             sendToken: renVMToken,
             sendTo: adapterContract,
             // sendAmount: amount,
-            contractFn: contractVersion === "0.0.3" ? "shiftIn" : "mint",
+            contractFn: "mint",
             contractParams: params,
             nonce: nonce || RenJS.utils.randomNonce(),
         });
-        const gatewayAddress = shift.addr();
+        const gatewayAddress = await mint.gatewayAddress();
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
         await account.sendSats(gatewayAddress, amount, token);
 
-        await submit(shift);
+        await submitMint(mint);
     };
 
-    const submitIndividual = async (shift: LockAndMint): Promise<void> => {
+    const submitIndividual = async (mint: LockAndMint): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
         logger.info(`Waiting for ${confirmations} confirmations...`);
 
-        const deposit = await shift.waitForDeposit(confirmations)
+        const deposit = await mint.wait(confirmations)
             .on("deposit", (depositObject) => { logger.event(`Received a new deposit: ${JSON.stringify(depositObject)}`); });
 
         await sleepWithCountdown(5);
 
         logger.info(`Submitting deposit to RenVM...`);
-        const signature = await deposit.submitToRenVM()
-            .on("renTxHash", (renTxHash: string) => {
-                logger.event(`Received renTxHash: ${renTxHash}`);
-                // deposit.renTxHash().should.equal(renTxHash);
+        const signature = await deposit.submit()
+            .on("txHash", (txHash: string) => {
+                logger.event(`Received txHash: ${txHash}`);
+                // deposit.txHash().should.equal(txHash);
             })
             .on("status", (status) => { logger.event(`Received status: ${chalk.green(status)}`, { overwrite: true }); });
         logger.newLine();
@@ -143,15 +145,15 @@ describe("Shifting in and shifting out", function () {
         }
     };
 
-    const submitTogether = async (shift: LockAndMint): Promise<void> => {
+    const submitTogether = async (mint: LockAndMint): Promise<void> => {
         // Wait for deposit to be received and submit to Lightnode + Ethereum.
         const confirmations = 0;
-        await shift.waitAndSubmit(provider, confirmations);
+        await mint.waitAndSubmit(provider, confirmations);
     };
 
-    const submitToRenVM = async (shiftOutObject: BurnAndRelease) => {
+    const submit = async (burnAndReleaseObject: BurnAndRelease) => {
         try {
-            shiftOutObject = await shiftOutObject.readFromEthereum()
+            burnAndReleaseObject = await burnAndReleaseObject.readFromEthereum()
                 .on("eth_transactionHash", (txHash: string) => { logger.event(`Received txHash: ${txHash}`); });
         } catch (error) {
             logger.error(error);
@@ -162,11 +164,11 @@ describe("Shifting in and shifting out", function () {
 
         logger.info("Submitting burn to RenVM...");
 
-        await shiftOutObject.submitToRenVM()
-            .on("renTxHash", (renTxHash) => {
-                logger.event(`Received renTxHash: ${renTxHash}`);
-                logger.info(`shiftOutObject.renTxHash(): ${shiftOutObject.renTxHash()}`);
-                shiftOutObject.renTxHash().should.equal(renTxHash);
+        await burnAndReleaseObject.submit()
+            .on("txHash", (txHash) => {
+                logger.event(`Received txHash: ${txHash}`);
+                logger.info(`burnAndReleaseObject.txHash(): ${burnAndReleaseObject.txHash()}`);
+                burnAndReleaseObject.txHash().should.equal(txHash);
             })
             .on("status", (status) => { process.stdout.write(`\u001b[0K\r${chalk.blue("[EVENT]")} Received status: ${chalk.green(status)}\r`); });
         logger.newLine();
@@ -176,14 +178,14 @@ describe("Shifting in and shifting out", function () {
         token: string,
         sendToken: RenContract,
         erc20Contract: Contract,
-        shifterAddress: string,
+        gatewayContract: string,
         adapterContract: string,
         amount: number | BigNumber,
         ethAddress: string,
         srcAddress: string,
         contractVersion: "0.0.3" | "1.0.0",
     ) => {
-        // Approve contract to spend the shifted token.
+        // Approve contract to spend the token.
         const approvePayload: EthArgs = [
             {
                 name: "spender",
@@ -220,7 +222,7 @@ describe("Shifting in and shifting out", function () {
             {
                 name: "_symbol",
                 type: "string",
-                value: contractVersion === "0.0.3" ? "z" + token : token,
+                value: token,
             },
             {
                 name: "_to",
@@ -235,10 +237,9 @@ describe("Shifting in and shifting out", function () {
         ];
 
         logger.info("Reading burn from Ethereum.");
-
-        const shiftOutObject: BurnAndRelease = renJS.shiftOut({
+        const burnAndReleaseObject: BurnAndRelease = renJS.burnAndRelease({
             sendTo: adapterContract,
-            contractFn: contractVersion === "0.0.3" ? "shiftOut" : "burn",
+            contractFn: "burn",
             contractParams: payload,
             txConfig: { from: ethAddress, gas: 1000000 },
 
@@ -247,61 +248,48 @@ describe("Shifting in and shifting out", function () {
             // txHash: result.transactionHash,
         });
 
-        await submitToRenVM(shiftOutObject);
+        await submit(burnAndReleaseObject);
     };
 
     const removeVMFee = (value: BN): BN => value.sub(new BN(10000));
     const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
     describe("minting and burning", () => {
-        const caseBTC = { name: "BTC", fn: () => ({ token: "BTC", mintToken: Tokens.BTC.Mint, burnToken: Tokens.BTC.Burn, shiftedToken: "BTC" }) };
-        const caseZEC = { name: "ZEC", fn: () => ({ token: "ZEC", mintToken: Tokens.ZEC.Mint, burnToken: Tokens.ZEC.Burn, shiftedToken: "ZEC" }) };
-        const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, shiftedToken: "BCH" }) };
+        const caseBTC = { name: "BTC", fn: () => ({ token: "BTC", mintToken: Tokens.BTC.Mint, burnToken: Tokens.BTC.Burn, renToken: "BTC" }) };
+        const caseZEC = { name: "ZEC", fn: () => ({ token: "ZEC", mintToken: Tokens.ZEC.Mint, burnToken: Tokens.ZEC.Burn, renToken: "ZEC" }) };
+        const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, renToken: "BCH" }) };
 
         for (const testcaseFn of [
-            { ...caseBTC, it, },
-            { ...caseZEC, it, },
-            { ...caseBCH, it, },
+            { ...caseBTC, it: longIt, },
+            { ...caseZEC, it: longIt, },
+            { ...caseBCH, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
             testcaseFn.it(`should be able to mint and burn ${testcaseFn.name} to Ethereum`, async () => {
                 const testcase = testcaseFn.fn();
 
                 // const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-                const adapterContract = network.contracts.addresses.shifter.BasicAdapter.address;
-                const amount = Math.floor(0.00015 * (10 ** 8));
+                const adapterContract = network.contracts.addresses.gateways.BasicAdapter.address;
+                const amount = Math.floor(0.0003 * (10 ** 8));
                 const ethAddress = accounts[0];
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
                 const srcAddress = await account.address(testcase.token);
-                let registryABI;
-                let registryAddress;
-                let shifterAddress;
-                let shifterRegistry;
-                let shiftedTokenAddress;
-                if (network.contracts.version === "0.0.3") {
-                    registryABI = network.contracts.addresses.shifter.ShifterRegistry.abi;
-                    registryAddress = network.contracts.addresses.shifter.ShifterRegistry.address;
-                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
-                    shifterAddress = await shifterRegistry.methods.getShifterBySymbol("z" + testcase.shiftedToken).call();
-                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol("z" + testcase.shiftedToken).call();
-                } else {
-                    registryABI = network.contracts.addresses.shifter.GatewayRegistry.abi;
-                    registryAddress = network.contracts.addresses.shifter.GatewayRegistry.address;
-                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
-                    shifterAddress = await shifterRegistry.methods.getGatewayBySymbol(testcase.shiftedToken).call();
-                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
-                }
-                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, shiftedTokenAddress);
+                const registryABI = network.contracts.addresses.gateways.GatewayRegistry.abi;
+                const registryAddress = network.contracts.addresses.gateways.GatewayRegistry.address;
+                const gatewayRegistry = new web3.eth.Contract(registryABI, registryAddress);
+                const gatewayContract = await gatewayRegistry.methods.getGatewayBySymbol(testcase.renToken).call();
+                const renTokenAddress = await gatewayRegistry.methods.getTokenBySymbol(testcase.renToken).call();
+                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, renTokenAddress);
 
                 // Test minting.
                 logger.consoleLine();
                 logger.info("Starting mint test:");
-                const initialERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
+                const initialERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: renTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
                 const nonce = RenJS.utils.randomNonce();
                 await mintTest(
                     testcase.token,
                     testcase.mintToken,
-                    shifterAddress,
+                    gatewayContract,
                     adapterContract,
                     amount,
                     ethAddress,
@@ -310,15 +298,15 @@ describe("Shifting in and shifting out", function () {
                     nonce,
                 );
 
-                const finalERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
+                const finalERC20Balance = await retryNTimes(() => account.getBalanceInSats<BigNumber>({ type: "ERC20", address: renTokenAddress }, { address: ethAddress, bn: BigNumber }), 5);
 
                 // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
                 const balance = finalERC20Balance.minus(initialERC20Balance); // BN
                 balance.should.bignumber.at.least(removeVMFee(removeGasFee(new BN(amount), 10)));
                 balance.should.bignumber.at.most(new BN(amount));
 
-                // // Test burning.
-                const burnValue = finalERC20Balance;
+                // Test burning.
+                const burnValue = BigNumber.min(finalERC20Balance, amount);
                 // const burnValue = balance.toNumber();
                 // amount = 0.000225 * (10 ** 8);
                 // const burnValue = amount;
@@ -326,7 +314,7 @@ describe("Shifting in and shifting out", function () {
                 logger.consoleLine();
                 logger.info("Starting burn test:");
                 const initialBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
-                await burnTest(testcase.token, testcase.burnToken, erc20Contract, shifterAddress, adapterContract, burnValue, ethAddress, srcAddress, network.contracts.version);
+                await burnTest(testcase.token, testcase.burnToken, erc20Contract, gatewayContract, adapterContract, burnValue, ethAddress, srcAddress, network.contracts.version);
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
                 const finalBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
@@ -348,41 +336,28 @@ describe("Shifting in and shifting out", function () {
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const amount = 0.000225 * (10 ** 8);
                 const ethAddress = accounts[0];
-                let registryABI;
-                let registryAddress;
-                let shifterAddress;
-                let shifterRegistry;
-                let shiftedTokenAddress;
-                if (network.contracts.version === "0.0.3") {
-                    registryABI = network.contracts.addresses.shifter.ShifterRegistry.abi;
-                    registryAddress = network.contracts.addresses.shifter.ShifterRegistry.address;
-                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
-                    shifterAddress = await shifterRegistry.methods.getShifterBySymbol("z" + testcase.shiftedToken).call();
-                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol("z" + testcase.shiftedToken).call();
-                } else {
-                    registryABI = network.contracts.addresses.shifter.GatewayRegistry.abi;
-                    registryAddress = network.contracts.addresses.shifter.GatewayRegistry.address;
-                    shifterRegistry = new web3.eth.Contract(registryABI, registryAddress);
-                    shifterAddress = await shifterRegistry.methods.getGatewayBySymbol(testcase.shiftedToken).call();
-                    shiftedTokenAddress = await shifterRegistry.methods.getTokenBySymbol(testcase.shiftedToken).call();
-                }
+                const registryABI = network.contracts.addresses.gateways.GatewayRegistry.abi;
+                const registryAddress = network.contracts.addresses.gateways.GatewayRegistry.address;
+                const gatewayRegistry = new web3.eth.Contract(registryABI, registryAddress);
+                const gatewayContract = await gatewayRegistry.methods.getGatewayBySymbol(testcase.renToken).call();
+                const renTokenAddress = await gatewayRegistry.methods.getTokenBySymbol(testcase.renToken).call();
 
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
 
                 logger.consoleLine();
                 logger.info("Starting mint test:");
-                const initialERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
+                const initialERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: renTokenAddress }, { address: ethAddress, bn: BigNumber });
                 await mintTest(
                     testcase.token,
                     testcase.mintToken,
-                    shifterAddress,
+                    gatewayContract,
                     adapterContract,
                     amount,
                     ethAddress,
                     network.contracts.version,
                     submitTogether,
                 );
-                const finalERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: shiftedTokenAddress }, { address: ethAddress, bn: BigNumber });
+                const finalERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: renTokenAddress }, { address: ethAddress, bn: BigNumber });
 
                 // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
                 const balance = finalERC20Balance.minus(initialERC20Balance); // BN
@@ -392,29 +367,32 @@ describe("Shifting in and shifting out", function () {
         }
     });
 
-    it("simple interface - mint", async () => {
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("simple interface - mint", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const shift = renJS.shiftIn({
+            const mint = renJS.lockAndMint({
+                web3Provider: web3.currentProvider,
                 sendToken: token as "BTC" | "ZEC" | "BCH",
-                sendTo: "0xD5B5b26521665Cb37623DCA0E49c553b41dbF076", // (await web3.eth.getAccounts())[0],
+                sendTo: (await web3.eth.getAccounts())[0],
             });
 
-            const gatewayAddress = shift.addr();
+            const gatewayAddress = await mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
             await account.sendSats(gatewayAddress, amount, token);
 
-            await submitIndividual(shift);
+            await submitIndividual(mint);
         }
     });
 
-    it("simple interface - burn", async () => {
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("simple interface - burn", async () => {
         for (const contract of [RenJS.Tokens.BTC.Burn]) {
             logger.consoleLine();
             logger.info(`Starting burn test`);
@@ -424,108 +402,110 @@ describe("Shifting in and shifting out", function () {
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.00011, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const shift = renJS.shiftOut({
+            const burn = renJS.burnAndRelease({
                 web3Provider: provider,
                 sendToken: token as "BTC" | "ZEC" | "BCH",
                 sendAmount: amount,
                 sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6",
             });
 
-            await submitToRenVM(shift);
+            await submit(burn);
         }
     });
 
-    it.skip("recover trade", async () => {
+    it.skip("recover transfer", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
-            logger.info(`Starting mint test - recovering trade`);
+            logger.info(`Starting mint test - recovering transfer`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.000225, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const shift = new RenJS("testnet").shiftIn({
+            const mint = new RenJS("testnet").lockAndMint({
+                web3Provider: web3.currentProvider,
                 sendToken: token as "BTC" | "ZEC" | "BCH",
                 sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             });
 
-            const gatewayAddress = shift.addr();
+            const gatewayAddress = await mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
             await account.sendSats(gatewayAddress, amount, token);
 
-            await submitIndividual(shift);
-            await submitIndividual(shift);
+            await submitIndividual(mint);
+            await submitIndividual(mint);
         }
     });
 
-    it.skip("recover burn from renTxHash", async () => {
+    it.skip("recover burn from txHash", async () => {
         logger.consoleLine();
-        logger.info(`Starting burn test - recovering burn from renTxHash`);
+        logger.info(`Starting burn test - recovering burn from txHash`);
 
-        const shift64 = new RenJS("devnet").shiftOut({
+        const burnBase64 = new RenJS("devnet").burnAndRelease({
+            web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "FBcH+vnMdybRYgaQB2Hm9rwg3MkgTcQFeh7j3/v10kI=",
+            txHash: "FBcH+vnMdybRYgaQB2Hm9rwg3MkgTcQFeh7j3/v10kI=",
         });
 
-        const result64 = await shift64.submitToRenVM();
+        const result64 = await burnBase64.submit();
 
-        const shiftHex = new RenJS("devnet").shiftOut({
+        const burnHex = new RenJS("devnet").burnAndRelease({
+            web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "0x141707faf9cc7726d16206900761e6f6bc20dcc9204dc4057a1ee3dffbf5d242",
+            txHash: "0x141707faf9cc7726d16206900761e6f6bc20dcc9204dc4057a1ee3dffbf5d242",
         });
 
-        const resultHex = await shiftHex.submitToRenVM();
+        const resultHex = await burnHex.submit();
 
         result64.should.deep.equal(resultHex);
     });
 
-    it.skip("recover mint from renTxHash", async () => {
+    it.skip("recover mint from txHash", async () => {
         logger.consoleLine();
-        logger.info(`Starting mint test - recovering mint from renTxHash`);
+        logger.info(`Starting mint test - recovering mint from txHash`);
 
-        const shift64 = new RenJS("devnet").shiftIn({
+        const mintBase64 = new RenJS("devnet").lockAndMint({
+            web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "2+jzYRh/e0KR3nmvu4/IMFs+U8zL1NnJULyStGaFaKM=",
+            txHash: "2+jzYRh/e0KR3nmvu4/IMFs+U8zL1NnJULyStGaFaKM=",
             contractCalls: [],
         });
 
-        const result64 = await shift64.queryTx();
+        const resultBase64 = await mintBase64.queryTx();
 
-        const shiftHex = new RenJS("devnet").shiftIn({
+        const mintHex = new RenJS("devnet").lockAndMint({
+            web3Provider: web3.currentProvider,
             sendToken: "BTC",
-            renTxHash: "0xdbe8f361187f7b4291de79afbb8fc8305b3e53cccbd4d9c950bc92b4668568a3",
+            txHash: "0xdbe8f361187f7b4291de79afbb8fc8305b3e53cccbd4d9c950bc92b4668568a3",
             contractCalls: [],
         });
 
-        const resultHex = await shiftHex.queryTx();
+        const resultHex = await mintHex.queryTx();
 
-        result64.should.deep.equal(resultHex);
+        resultBase64.should.deep.equal(resultHex);
     });
 
-    it("confirmationless", async () => {
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("confirmationless", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
-            logger.info(`Starting mint test - recovering trade`);
+            logger.info(`Starting mint test - recovering transfer`);
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const contractVersion = network.contracts.version;
+            const adapterContract = network.contracts.addresses.gateways.BasicAdapter.address;
 
-            // const tokenAddress = await renJS.getTokenAddress(web3, contract);
-            // const shifterAddress = await renJS.getShifterAddress(web3, contract);
-
-            const adapterContract = network.contracts.addresses.shifter.BasicAdapter.address;
-
-            const shift = renJS.shiftIn({
+            const mint = renJS.lockAndMint({
+                web3Provider: web3.currentProvider,
                 sendToken: RenJS.Tokens.BTC.Btc2Eth,
                 sendTo: adapterContract,
                 // sendAmount: amount,
-                contractFn: contractVersion === "0.0.3" ? "shiftIn" : "mint",
+                contractFn: "mint",
                 contractParams: [
                     {
                         name: "_symbol",
                         type: "string",
-                        value: contractVersion === "0.0.3" ? "z" + token : token,
+                        value: token,
                     },
                     {
                         name: "_address",
@@ -536,13 +516,13 @@ describe("Shifting in and shifting out", function () {
                 // nonce: nonce || RenJS.utils.randomNonce(),
             });
 
-            const gatewayAddress = shift.addr();
+            const gatewayAddress = await mint.gatewayAddress();
 
             const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
             logger.info(`${token} balance: ${await account.balanceOf(token)} ${token} (${await account.address(token)})`);
             await account.sendSats(gatewayAddress, amount, token);
 
-            await submitIndividual(shift);
+            await submitIndividual(mint);
         }
     });
 });

@@ -1,63 +1,35 @@
-import { RenContract, RenVMArgs, TxStatus } from "@renproject/interfaces";
+import { RenContract, RenVMArgs, Shard, TxStatus } from "@renproject/interfaces";
 
 import {
     BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxResponseOutputs,
 } from "./transaction";
 
 export enum RPCMethod {
-    // QueryBlock returns a block identified by the block height.
-    QueryBlock = "ren_queryBlock",
-    // QueryBlocks returns recently committed blocks.
-    QueryBlocks = "ren_queryBlocks",
-
-    // SubmitTx submits a new transaction to the Darknode for acceptance
+    // MethodSubmitTx submits a new transaction to the Darknode for acceptance
     // into the transaction pool.
-    SubmitTx = "ren_submitTx",
-    // QueryTx returns the latest information about a transaction
+    MethodSubmitTx = "ren_submitTx",
+    // MethodQueryTx returns the latest information about a transaction
     // identified by a transaction hash.
-    QueryTx = "ren_queryTx",
+    MethodQueryTx = "ren_queryTx",
 
-    // QueryNumPeers returns the number of known peers.
-    QueryNumPeers = "ren_queryNumPeers",
-    // QueryPeers returns a random subset of known peers.
-    QueryPeers = "ren_queryPeers",
+    // MethodQueryBlock returns a block identified by the block height.
+    MethodQueryBlock = "ren_queryBlock",
+    // MethodQueryBlocks returns recently committed blocks.
+    MethodQueryBlocks = "ren_queryBlocks",
 
-    // QueryEpoch returns an epoch identified by an epoch hash.
-    QueryEpoch = "ren_queryEpoch",
+    // MethodQueryNumPeers returns the number of known peers.
+    MethodQueryNumPeers = "ren_queryNumPeers",
+    // MethodQueryPeers returns a random subset of known peers.
+    MethodQueryPeers = "ren_queryPeers",
 
-    // QueryStat returns status information about the Darknode. This
+    // MethodQueryShards returns information about the currently online/offline
+    // Shards.
+    MethodQueryShards = "ren_queryShards",
+
+    // MethodQueryStat returns status information about the Darknode. This
     // information cannot be verified.
-    QueryStat = "ren_queryStat",
+    MethodQueryStat = "ren_queryStat",
 }
-
-// tslint:disable-next-line: no-any
-// export const decodeArg = <Name extends string, Type extends RenVMType.ExtTypeBtcCompatUTXO, Value>(arg: Arg<Name, Type, Value>):
-//     Type extends RenVMType.ExtTypeBtcCompatUTXO ? Value :
-//     Type extends "u256" | "u64" | "u32" ? BigNumber :
-//     Type extends "b" | "b20" | "b32" ? Buffer :
-//     Value => {
-//     try {
-//         // ext_btcCompatUTXO
-//         if (arg.type === RenVMType.ExtTypeBtcCompatUTXO) {
-//             return arg.value;
-//         }
-
-//         // u32, u64, etc.
-//         if (arg.type.match(/u[0-9]+/)) {
-//             return new BigNumber(arg.value);
-//         }
-
-//         // b, b20, b32, etc.
-//         if (arg.type.match(/b[0-9]+/)) {
-//             return Ox(Buffer.from(arg.value as unknown as string, "base64"));
-//         }
-
-//         // Fallback
-//         return Ox(Buffer.from(arg.value as unknown as string, "base64"));
-//     } catch (error) {
-//         throw new Error(`Unable to unmarshal ${arg.name} of type ${arg.type} from RenVM: ${JSON.stringify(arg.value)} - ${error}`);
-//     }
-// };
 
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.
 export interface ParamsQueryBlock {
@@ -104,10 +76,9 @@ export interface ParamsQueryPeers {
     // No parameters.
 }
 
-// ParamsQueryEpoch defines the parameters of the MethodQueryEpoch.
-export interface ParamsQueryEpoch {
-    // EpochHash of the epoch that will be returned.
-    epochHash: string;
+// ParamsQueryShards defines the parameters of the MethodQueryShards.
+export interface ParamsQueryShards {
+    // No parameters.
 }
 
 // ParamsQueryStat defines the parameters of the MethodQueryStat.
@@ -187,6 +158,11 @@ export interface ResponseQueryPeers {
     peers: string[]; // Peers[]string`json:"peers"`
 }
 
+// ResponseQueryShards defines the response of the MethodQueryShards.
+export interface ResponseQueryShards {
+    shards: Shard[];
+}
+
 // ResponseQueryEpoch defines the response of the MethodQueryEpoch.
 export interface ResponseQueryEpoch {
     // TODO: Define response.
@@ -213,48 +189,48 @@ export interface ResponseQueryStat {
 }
 
 export type RenVMResponses = {
-    [RPCMethod.QueryBlock]: ResponseQueryBlock;
-    [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
-    [RPCMethod.SubmitTx]: ResponseSubmitTx;
-    [RPCMethod.QueryTx]: ResponseQueryTx;
-    [RPCMethod.QueryNumPeers]: ResponseQueryNumPeers;
-    [RPCMethod.QueryPeers]: ResponseQueryPeers;
-    [RPCMethod.QueryEpoch]: ResponseQueryEpoch;
-    [RPCMethod.QueryStat]: ResponseQueryStat;
+    [RPCMethod.MethodQueryBlock]: ResponseQueryBlock;
+    [RPCMethod.MethodQueryBlocks]: ResponseQueryBlocks;
+    [RPCMethod.MethodSubmitTx]: ResponseSubmitTx;
+    [RPCMethod.MethodQueryTx]: ResponseQueryTx;
+    [RPCMethod.MethodQueryNumPeers]: ResponseQueryNumPeers;
+    [RPCMethod.MethodQueryPeers]: ResponseQueryPeers;
+    [RPCMethod.MethodQueryShards]: ResponseQueryShards;
+    [RPCMethod.MethodQueryStat]: ResponseQueryStat;
 };
 
 export type RPCResponse<Method extends RPCMethod> =
-    Method extends RPCMethod.QueryBlock ? ResponseQueryBlock
-    : Method extends RPCMethod.QueryBlocks ? ResponseQueryBlocks
-    : Method extends RPCMethod.SubmitTx ? ResponseSubmitTx
-    : Method extends RPCMethod.QueryTx ? ResponseQueryTx
-    : Method extends RPCMethod.QueryNumPeers ? ResponseQueryNumPeers
-    : Method extends RPCMethod.QueryPeers ? ResponseQueryPeers
-    : Method extends RPCMethod.QueryEpoch ? ResponseQueryEpoch
-    : Method extends RPCMethod.QueryStat ? ResponseQueryStat
+    Method extends RPCMethod.MethodQueryBlock ? ResponseQueryBlock
+    : Method extends RPCMethod.MethodQueryBlocks ? ResponseQueryBlocks
+    : Method extends RPCMethod.MethodSubmitTx ? ResponseSubmitTx
+    : Method extends RPCMethod.MethodQueryTx ? ResponseQueryTx
+    : Method extends RPCMethod.MethodQueryNumPeers ? ResponseQueryNumPeers
+    : Method extends RPCMethod.MethodQueryPeers ? ResponseQueryPeers
+    : Method extends RPCMethod.MethodQueryShards ? ResponseQueryShards
+    : Method extends RPCMethod.MethodQueryStat ? ResponseQueryStat
     // tslint:disable-next-line: no-any
     : any;
 
 export type RenVMParams = {
-    [RPCMethod.QueryBlock]: ParamsQueryBlock;
-    [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
-    [RPCMethod.SubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
-    [RPCMethod.QueryTx]: ParamsQueryTx;
-    [RPCMethod.QueryNumPeers]: ParamsQueryNumPeers;
-    [RPCMethod.QueryPeers]: ParamsQueryPeers;
-    [RPCMethod.QueryEpoch]: ParamsQueryEpoch;
-    [RPCMethod.QueryStat]: ParamsQueryStat;
+    [RPCMethod.MethodQueryBlock]: ParamsQueryBlock;
+    [RPCMethod.MethodQueryBlocks]: ParamsQueryBlocks;
+    [RPCMethod.MethodSubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
+    [RPCMethod.MethodQueryTx]: ParamsQueryTx;
+    [RPCMethod.MethodQueryNumPeers]: ParamsQueryNumPeers;
+    [RPCMethod.MethodQueryPeers]: ParamsQueryPeers;
+    [RPCMethod.MethodQueryShards]: ParamsQueryShards;
+    [RPCMethod.MethodQueryStat]: ParamsQueryStat;
 };
 
 export type RPCParams<Method extends RPCMethod> =
-    Method extends RPCMethod.QueryBlock ? ParamsQueryBlock
-    : Method extends RPCMethod.QueryBlocks ? ParamsQueryBlocks
+    Method extends RPCMethod.MethodQueryBlock ? ParamsQueryBlock
+    : Method extends RPCMethod.MethodQueryBlocks ? ParamsQueryBlocks
     // tslint:disable-next-line: no-any
-    : Method extends RPCMethod.SubmitTx ? ParamsSubmitBurn | ParamsSubmitMint
-    : Method extends RPCMethod.QueryTx ? ParamsQueryTx
-    : Method extends RPCMethod.QueryNumPeers ? ParamsQueryNumPeers
-    : Method extends RPCMethod.QueryPeers ? ParamsQueryPeers
-    : Method extends RPCMethod.QueryEpoch ? ParamsQueryEpoch
-    : Method extends RPCMethod.QueryStat ? ParamsQueryStat
+    : Method extends RPCMethod.MethodSubmitTx ? ParamsSubmitBurn | ParamsSubmitMint
+    : Method extends RPCMethod.MethodQueryTx ? ParamsQueryTx
+    : Method extends RPCMethod.MethodQueryNumPeers ? ParamsQueryNumPeers
+    : Method extends RPCMethod.MethodQueryPeers ? ParamsQueryPeers
+    : Method extends RPCMethod.MethodQueryShards ? ParamsQueryShards
+    : Method extends RPCMethod.MethodQueryStat ? ParamsQueryStat
     // tslint:disable-next-line: no-any
     : any;

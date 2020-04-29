@@ -1,10 +1,10 @@
-import { Ox, strip0x } from "@renproject/interfaces";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { encode } from "bs58";
 import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
 import { createAddress } from "./common";
+import { Ox, strip0x } from "./hex";
 
 export const createBTCAddress = createAddress(Networks, Opcode, Script);
 

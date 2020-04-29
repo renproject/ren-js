@@ -8,43 +8,43 @@ import RenJS from "../src";
 chai.use((chaiBigNumber)(BigNumber));
 chai.should();
 
-describe("ShiftOut response is returned correctly", () => {
-    it("Chaosnet", async () => {
+describe("burnAndRelease response is returned correctly", () => {
+    it.skip("Chaosnet", async () => {
         const renJS = new RenJS(RenNetwork.Chaosnet);
 
-        (await renJS.shiftOut({ sendToken: "BTC", burnReference: 0x133 }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "BTC", burnReference: 0x133 }).submit())
             .in.to.should.equal("bc1q2cylsj8dvrhyd3lnvy8xz6lk604up0rk0ps72x");
 
-        (await renJS.shiftOut({ sendToken: "ZEC", burnReference: 0x5f }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "ZEC", burnReference: 0x5f }).submit())
             .in.to.should.equal("t1eB5xqXANzuBdpiWr8u4MSRcgKggXYydc3");
 
-        (await renJS.shiftOut({ sendToken: "BCH", burnReference: 0x54 }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "BCH", burnReference: 0x54 }).submit())
             .in.to.should.equal("bitcoincash:qqnm45rptzzpvg0dx04erm7mrnz27jvkevaf3ys3c5");
     });
 
-    it.skip("Testnet", async () => {
+    it("Testnet", async () => {
         const renJS = new RenJS(RenNetwork.Testnet);
 
-        (await renJS.shiftOut({ sendToken: "BTC", burnReference: 0x2dee }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "BTC", burnReference: 0x1 }).submit())
             .in.to.should.equal("n25GA3GvGdu9MRAE16WgPBn1UmAaQ1DEws");
 
-        (await renJS.shiftOut({ sendToken: "ZEC", burnReference: 0x37d6 }).submitToRenVM())
-            .in.to.should.equal("tmLbAj7EsEAR82LjSo87pSGeboEjpMmCFtv");
+        (await renJS.burnAndRelease({ sendToken: "ZEC", burnReference: 0x9c }).submit())
+            .in.to.should.equal("tmMsZTMQAakgna4B9wntQUppMgEaCk5Deuc");
 
-        (await renJS.shiftOut({ sendToken: "BCH", burnReference: 0xde1 }).submitToRenVM())
-            .in.to.should.equal("bchtest:qztw2wgjnu96f6vrrzw4j5sa9s0a60qwjcquagaf2r");
+        (await renJS.burnAndRelease({ sendToken: "BCH", burnReference: 0x87 }).submit())
+            .in.to.should.equal("bchtest:qp40jkchy4mc20waglts62h25fpxx0y9nq4z27s6zx");
     });
 
     it.skip("Devnet", async () => {
         const renJS = new RenJS(RenNetwork.Devnet);
 
-        (await renJS.shiftOut({ sendToken: "BTC", burnReference: 0x4e7d }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "BTC", burnReference: 0x2b }).submit())
             .in.to.should.equal("n25GA3GvGdu9MRAE16WgPBn1UmAaQ1DEws");
 
-        (await renJS.shiftOut({ sendToken: "ZEC", burnReference: 0x6871 }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "ZEC", burnReference: 0x7e5 }).submit())
             .in.to.should.equal("tmK29k59HSB8ztLUox2q15jrC9LZtuLsCNA");
 
-        (await renJS.shiftOut({ sendToken: "BCH", burnReference: 0x1935 }).submitToRenVM())
+        (await renJS.burnAndRelease({ sendToken: "BCH", burnReference: 0x9d }).submit())
             .in.to.should.equal("bchtest:qrsha0yuqedwjxzr577z4wkc9texcw73zgkvufhqwh");
 
     });

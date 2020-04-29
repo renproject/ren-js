@@ -30,7 +30,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         yarn install --network-concurrency 1
-        yarn run link
     - name: Build
       run: |
+        yarn run link
         yarn lerna run build

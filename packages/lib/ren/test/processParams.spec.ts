@@ -65,30 +65,20 @@ describe("processParams", () => {
                 suggestedAmount: "0",
                 contractCalls: [
                     {
-                        sendTo: "0x141E3A8E46a68fFA453177700732CA2764Bd8aD9",
+                        sendTo: "0x55363c0dBf97Ff9C0e31dAfe0fC99d3e9ce50b8A",
                         contractFn: "burn",
                         contractParams: [
                             {
-                                "type": "address",
-                                "name": "_gatewayRegistry",
-                                "value": "0xbA563a8510d86dE95F5a50007E180d6d4966ad12",
-                            },
-                            {
-                                "type": "string",
-                                "name": "_symbol",
-                                "value": "BTC",
-                            },
-                            {
                                 "type": "bytes",
                                 "name": "_to",
-                                "value": "0x73656e64546f",
+                                "value": "0x73656e64546f"
                             },
                             {
                                 "type": "uint256",
                                 "name": "_amount",
-                                "value": "0",
-                            },
-                        ]
+                                "value": "0"
+                            }
+                        ],
                     }],
             }), "Burn 4");
     });

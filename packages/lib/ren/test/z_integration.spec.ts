@@ -58,6 +58,9 @@ describe("Cross chain transactions", function () {
     let renJS: RenJS;
     let accounts: string[];
 
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    const longIt = (process.env.ALL_TESTS ? it : it.skip);
+
     before(async () => {
         const infuraURL = `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`;
         provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
@@ -257,8 +260,8 @@ describe("Cross chain transactions", function () {
         const caseBCH = { name: "BCH", fn: () => ({ token: "BCH", mintToken: Tokens.BCH.Mint, burnToken: Tokens.BCH.Burn, renToken: "BCH" }) };
 
         for (const testcaseFn of [
-            { ...caseBTC, it: process.env.CI ? it.skip : it, },
-            { ...caseZEC, it: process.env.CI ? it.skip : it, },
+            { ...caseBTC, it: longIt, },
+            { ...caseZEC, it: longIt, },
             { ...caseBCH, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code
@@ -364,7 +367,8 @@ describe("Cross chain transactions", function () {
         }
     });
 
-    it("simple interface - mint", async () => {
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("simple interface - mint", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test`);
@@ -387,7 +391,8 @@ describe("Cross chain transactions", function () {
         }
     });
 
-    it("simple interface - burn", async () => {
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("simple interface - burn", async () => {
         for (const contract of [RenJS.Tokens.BTC.Burn]) {
             logger.consoleLine();
             logger.info(`Starting burn test`);
@@ -480,7 +485,8 @@ describe("Cross chain transactions", function () {
         resultBase64.should.deep.equal(resultHex);
     });
 
-    it("confirmationless", async () => {
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("confirmationless", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering transfer`);

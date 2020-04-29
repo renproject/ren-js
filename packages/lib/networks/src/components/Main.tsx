@@ -13,7 +13,7 @@ interface Props extends RouteComponentProps {
     network: string;
 }
 
-export const publicNetwork = (_: unknown, network: string) => network === "chaosnet" || network === "testnet";
+export const publicNetwork = (_: unknown, network: string) => network === "mainnet" || network === "testnet";
 
 export const Main = withRouter(({ networks, network, history }: Props) => {
 

@@ -27,7 +27,7 @@ const networkID = 42;
 // > utils.toChecksumAddress(utils.pubToAddress("... public key ...", true).toString("hex"))
 
 export default Network({
-    version: "0.0.3",
+    version: "1.0.0",
     name: "testnet",
     chain: "kovan",
     label: "Testnet",

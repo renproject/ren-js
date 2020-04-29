@@ -85,7 +85,7 @@ export const retrieveConfirmations = async (_network: NetworkDetails, transactio
     }
 };
 
-interface AssetUtils {
+export interface AssetUtils {
     getUTXOs: ({ isTestnet }: {
         isTestnet: boolean;
     }) => (address: string, confirmations: number) => Promise<readonly SendCryptoUTXO[]>;

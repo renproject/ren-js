@@ -10,7 +10,7 @@ See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutoria
 ## Changelog
 
 * 1.0.0
-  * A Web3 provider is now required for GatewayJS. Transfer parameters should now include a `web3Provider` field. Migrate quickly using `web3Provider: GatewayJS.utils.useBrowserWeb3()`.
+  * A Web3 provider is now required for GatewayJS. Transfer parameters should now include a `web3Provider` field. Migrate quickly using `web3Provider: await GatewayJS.utils.useBrowserWeb3()`.
   * Resuming existing orders in GatewayJS must use `recoverTransfer`, providing the `HistoryEvent`, as well as a Web3 provider as a second parameter.
   * GatewayJS's storage structure has changed, requiring any incomplete trades to be reopened (instead of being resumed with `recoverTransfer`).
 
@@ -20,7 +20,7 @@ See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutoria
 * 0.9.0
   * `@renproject/gateway-js` has been renamed to `@renproject/gateway`.
   * GatewayJS now exposes `shiftIn`, `shiftOut` and `recoverShift` instead of just `open`.
-  * `@renproject/interfaces`, `@renproject/chains`, `@renproject/provider`, `@renproject/rpc` and `@renproject/utils` can now be imported seperately to access internal RenJS functions.
+  * `@renproject/interfaces`, `@renproject/chains`, `@renproject/provider`, `@renproject/rpc` and `@renproject/utils` can now be imported separately to access internal RenJS functions.
   * RenJS now accepts an optional second parameter, `provider`, for providing a custom JSON RPC handler.
 
 ## Local development

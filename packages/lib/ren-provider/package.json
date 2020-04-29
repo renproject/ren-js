@@ -81,7 +81,7 @@
     },
     "resolutions": {
         "sha3": "^2.1.2",
-        "scrypt": "https://github.com/ren-forks/node-scrypt"
+        "scrypt": "scrypt-js"
     },
     "nyc": {
         "extension": [

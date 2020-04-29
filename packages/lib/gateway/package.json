@@ -8,7 +8,7 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "browser": "build/bundled/browser.js",
+  "bundled": "build/bundled/browser.js",
   "repository": "https://github.com/renproject/gateway-js",
   "license": "MIT",
   "keywords": [
@@ -60,7 +60,7 @@
     "@renproject/interfaces": "file:../ren-interfaces",
     "@renproject/utils": "file:../ren-utils",
     "@types/bn.js": "^4.11.6",
-    "@types/node": "^13.11.1",
+    "@types/node": "^13.13.4",
     "web3": "^2.0.0-alpha.1"
   },
   "resolutions": {

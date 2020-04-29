@@ -212,6 +212,7 @@ export class Gateway {
                         this._sendMessage(GatewayMessageType.TransferDetails, {
                             transferDetails: transferParamsFixed,
                             paused: this.isPaused,
+                            cancelled: this.isCancelling,
                         }).catch(console.error);
                         break;
                     case GatewayMessageType.Status:

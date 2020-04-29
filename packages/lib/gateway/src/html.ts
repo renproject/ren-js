@@ -44,6 +44,13 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: bool
         transition: all 300ms;
     }
 
+    @media (max-width: ${iframeWidth}px) {
+        ._ren_iframeShadow {
+            width: calc(100vw - 10px);
+            left: 5px;
+        }
+    }
+
     ._ren_gateway-minified ._ren_iframeShadow {
         top: 10px;
         // right: 10px;

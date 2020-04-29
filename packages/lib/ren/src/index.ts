@@ -51,10 +51,10 @@ export default class RenJS {
     public static Networks = RenNetwork;
     public static NetworkDetails = NetworkDetails;
     public static Chains = Chain;
-    public static utils = utils;
+    public static utils: typeof utils = utils;
 
     // Not static
-    public readonly utils = utils;
+    public readonly utils: typeof utils = utils;
     public readonly renVM: RenVMProvider;
     public readonly network: NetworkDetails;
 

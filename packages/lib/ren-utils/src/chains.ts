@@ -111,7 +111,11 @@ export const bchUtils: AssetUtils = {
     addressFrom: bchAddressFrom,
 };
 
-export const Tokens = {
+export const Tokens: {
+    BTC: AssetUtils & typeof CommonTokens["BTC"],
+    ZEC: AssetUtils & typeof CommonTokens["ZEC"],
+    BCH: AssetUtils & typeof CommonTokens["BCH"],
+} = {
     // Bitcoin
     BTC: {
         ...CommonTokens.BTC,

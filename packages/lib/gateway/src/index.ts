@@ -422,7 +422,7 @@ export default class GatewayJS {
     public static readonly Chains = Chain;
     public static readonly LockAndMintStatus = LockAndMintStatus;
     public static readonly BurnAndReleaseStatus = BurnAndReleaseStatus;
-    public static readonly utils = { ...utils, useBrowserWeb3 };
+    public static readonly utils: ((typeof utils) & { useBrowserWeb3: typeof useBrowserWeb3 }) = { ...utils, useBrowserWeb3 };
 
     private readonly network: NetworkDetails;
     private readonly endpoint: string;

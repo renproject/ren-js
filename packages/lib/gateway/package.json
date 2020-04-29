@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "describe": "npm-scripts-info",
-    "build": "run-s build:main build:module",
+    "build": "yarn build:main && yarn build:module",
     "build-all": "run-s build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",

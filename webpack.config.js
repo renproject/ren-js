@@ -26,7 +26,7 @@ module.exports = [
         target: 'web',
         entry: ['babel-polyfill', './src/index.ts'],
         output: {
-            path: path.resolve(__dirname, 'build/browser'),
+            path: path.resolve(__dirname, 'build/bundled'),
             filename: 'browser.js',
             libraryTarget: 'var',
             library: 'RenVM', // This is the var name in browser
@@ -40,7 +40,7 @@ module.exports = [
     Object.assign({}, common, {
         target: 'node',
         output: {
-            path: path.resolve(__dirname, 'build/browser'),
+            path: path.resolve(__dirname, 'build/bundled'),
             filename: 'index.js',
             libraryTarget: 'commonjs2',
             // libraryExport: 'default'

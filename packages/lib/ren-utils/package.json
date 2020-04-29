@@ -67,7 +67,7 @@
         "bs58": "^4.0.1",
         "ethereumjs-util": "^6.2.0",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.2",
+        "send-crypto": "0.2.3",
         "sha3": "^2.1.2",
         "wallet-address-validator": "^0.2.4",
         "web3": "^2.0.0-alpha.1",

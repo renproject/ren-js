@@ -9,7 +9,7 @@ See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutoria
 
 ## Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md).
+See the [Releases](https://github.com/renproject/ren-js/releases) page.
 
 ## About
 

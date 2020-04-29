@@ -8,6 +8,7 @@ import {
     Chain, NetworkDetails, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOWithChain,
 } from "@renproject/interfaces";
 import { ripemd160, sha256 } from "ethereumjs-util";
+import { UTXO as SendCryptoUTXO } from "send-crypto";
 
 import { Ox } from "./common";
 import { parseRenContract } from "./renVMUtils";
@@ -84,19 +85,27 @@ export const retrieveConfirmations = async (_network: NetworkDetails, transactio
     }
 };
 
-export const btcUtils = {
+interface AssetUtils {
+    getUTXOs: ({ isTestnet }: {
+        isTestnet: boolean;
+    }) => (address: string, confirmations: number) => Promise<readonly SendCryptoUTXO[]>;
+    addressToHex: (address: string) => string;
+    addressFrom: (address: string) => string;
+}
+
+export const btcUtils: AssetUtils = {
     getUTXOs: getBitcoinUTXOs,
     addressToHex: btcAddressToHex,
     addressFrom: btcAddressFrom,
 };
 
-export const zecUtils = {
+export const zecUtils: AssetUtils = {
     getUTXOs: getZcashUTXOs,
     addressToHex: zecAddressToHex,
     addressFrom: zecAddressFrom,
 };
 
-export const bchUtils = {
+export const bchUtils: AssetUtils = {
     getUTXOs: getBitcoinCashUTXOs,
     addressToHex: bchAddressToHex,
     addressFrom: bchAddressFrom,

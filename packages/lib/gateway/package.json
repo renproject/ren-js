@@ -64,7 +64,7 @@
   },
   "resolutions": {
     "sha3": "^2.1.2",
-    "scrypt": "scrypt-js"
+    "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
   },
   "config": {
     "commitizen": {

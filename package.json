@@ -81,7 +81,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "resolutions": {
-    "scrypt": "scrypt-js"
+    "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
   },
   "scripts": {
     "link": "lerna run link",

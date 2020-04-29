@@ -118,7 +118,7 @@ export const Tokens = new Map<Token, { symbol: Token; name: string }>()
     .set("BCH", { symbol: "BCH", name: "Bitcoin Cash" });
 
 
-export const GatewayExample = () => {
+export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
     const [top, setTop] = React.useState<Token>("BTC");
 
     React.useEffect(() => {
@@ -127,7 +127,7 @@ export const GatewayExample = () => {
         }
     });
 
-    const context = { lib: new Web3(window.web3!.currentProvider) };
+    const context = { lib: new Web3(web3.currentProvider) };
 
     // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
     //     gsn: { signKey: useEphemeralKey() }
@@ -142,6 +142,7 @@ export const GatewayExample = () => {
     const gatewayJS = React.useMemo(() => new GatewayJS(
         network,
         { endpoint: urlParameters.endpoint || undefined },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     ), []);
 
     React.useEffect(() => {
@@ -149,6 +150,7 @@ export const GatewayExample = () => {
 
             recoverTrades(context.lib as unknown as Web3, gatewayJS).catch(console.error);
         })().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const [ethereumAddress, setEthereumAddress] = React.useState("");
@@ -183,7 +185,7 @@ export const GatewayExample = () => {
             console.error(error);
             setErrorMessage(String(error.message || error.error || JSON.stringify(error)));
         }
-    }, [startShiftOut, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
+    }, [network, top, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
 
     const onMarketChange = React.useCallback((token) => { setTop(token as Token); }, [setTop]);
 

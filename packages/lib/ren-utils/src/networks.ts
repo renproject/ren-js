@@ -1,9 +1,6 @@
 import { chaosnet, devnet, localnet, mainnet, testnet } from "@renproject/contracts";
 import { NetworkDetails, RenNetwork } from "@renproject/interfaces";
 
-// import { Networks as ZNetworks } from "bitcore-lib-zcash";
-
-
 // Configurations shared by Mainnet and Chaosnet
 const commonMainConfig = {
     ethNetwork: "mainnet",

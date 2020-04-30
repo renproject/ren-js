@@ -1,5 +1,4 @@
 import { AbiItem, EthArgs } from "@renproject/interfaces";
-import { crypto } from "bitcore-lib";
 import BN from "bn.js";
 
 /**
@@ -125,7 +124,9 @@ export const randomBytes = (bytes: number): string => {
     } catch (error) {
         // Ignore error
     }
-    return Ox(crypto.Random.getRandomBuffer(bytes));
+    // tslint:disable-next-line: no-shadowed-variable
+    const crypto = require("crypto");
+    return Ox(crypto.randomBytes(bytes));
 };
 
 export const assert = (assertion: boolean, sentence?: string): assertion is true => {

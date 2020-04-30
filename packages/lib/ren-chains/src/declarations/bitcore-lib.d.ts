@@ -1,3 +1,5 @@
+// tslint:disable
+
 // Type definitions for bitcore-lib 0.15
 // Project: https://github.com/bitpay/bitcore-lib
 // Definitions by: Lautaro Dragan <https://github.com/lautarodragan>

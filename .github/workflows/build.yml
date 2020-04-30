@@ -34,3 +34,9 @@ jobs:
       run: |
         yarn run link
         yarn lerna run build
+    - name: Lint
+      working-directory: 
+      uses: mooyoul/tslint-actions@v1.1.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        pattern: 'packages/*/*/src/**/*.ts{,x}'

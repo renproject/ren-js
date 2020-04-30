@@ -23,20 +23,6 @@ declare global {
 
 
 const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string, token: Token) => {
-
-    gatewayJS.open({
-        // Provider Web3 provider
-        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
-
-        // Send BTC to an Ethereum address
-        sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
-
-        // The recipient Ethereum address
-        sendTo: "0xD5B5b26521665Cb37623DCA0E49c553b41dbF076",
-    });
-
-    return;
-
     const shiftInParams: SendParams = {
         web3Provider: await GatewayJS.utils.useBrowserWeb3(),
         sendToken: GatewayJS.Tokens[token].Mint,

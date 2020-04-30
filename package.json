@@ -14,6 +14,7 @@
     "@types/expect": "^24.3.0",
     "@types/jest": "^25.2.1",
     "@types/mocha": "^7.0.2",
+    "@types/node": "^13.13.4",
     "@types/node-fetch": "^2.5.7",
     "@types/node-persist": "3.0.0",
     "@types/node-rsa": "1.0.0",
@@ -85,7 +86,8 @@
   "resolutions": {
     "bitcore-lib": "^8.17.1",
     "bitcore-lib-cash": "^8.19.0",
-    "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
+    "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz",
+    "@types/node": "^13.13.4"
   },
   "scripts": {
     "link": "lerna run link",

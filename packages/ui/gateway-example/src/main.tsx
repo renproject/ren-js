@@ -24,6 +24,19 @@ declare global {
 
 const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string, token: Token) => {
 
+    gatewayJS.open({
+        // Provider Web3 provider
+        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
+
+        // Send BTC to an Ethereum address
+        sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+
+        // The recipient Ethereum address
+        sendTo: "0xD5B5b26521665Cb37623DCA0E49c553b41dbF076",
+    });
+
+    return;
+
     const shiftInParams: SendParams = {
         web3Provider: await GatewayJS.utils.useBrowserWeb3(),
         sendToken: GatewayJS.Tokens[token].Mint,
@@ -137,6 +150,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
     const urlParameters = parse(window.location.search, { ignoreQueryPrefix: true });
 
     const network = urlParameters.network || "testnet";
+    const isTestnet = network === "testnet" || network === "devnet";
 
     // If the network is changed, `sendTo` should be changed too.
     const gatewayJS = React.useMemo(() => new GatewayJS(
@@ -156,6 +170,9 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
     const [ethereumAddress, setEthereumAddress] = React.useState("");
     const [amount, setAmount] = React.useState("");
 
+    const isPending = React.useMemo(() => {
+        return !ethereumAddress || ethereumAddress === "";
+    }, [ethereumAddress]);
     const isMint = React.useMemo(() => {
         return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
     }, [ethereumAddress]);
@@ -191,7 +208,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
 
     return <>
         <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>
-            <p className="box">Send Testnet {top} to/from an Ethereum address (Kovan).</p>
+            <p className="box">Send {isTestnet ? "Testnet" : ""} {top} to/from an Ethereum address{isTestnet ? <> (Kovan)</> : <></>}.</p>
             <style>{`
             .Select--currency__control {
                 border-radius: 4px !important;
@@ -216,7 +233,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
             />
 
             <div className="send">
-                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder="Enter Kovan (mint) or Testnet Bitcoin (burn) address" />
+                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder={`Enter ${isTestnet ? "Kovan" : "Ethereum"} (mint) or ${isTestnet ? "Testnet" : ""} Bitcoin (burn) address`} />
             </div>
 
             <div className="send">
@@ -224,11 +241,11 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
                     <input value={amount} onChange={(e) => { setAmount(e.target.value); }} placeholder="Amount" />
                     <div className="box">BTC</div>
                 </div>
-                <button disabled={txHash === null} type="submit" className={`blue ${!amount || /* !validAddress */ false ? "disabled" : ""}`}>{isMint ? "Mint" : "Burn"}</button>
+                <button disabled={txHash === null} type="submit" className={`blue ${!amount || /* !validAddress */ false ? "disabled" : ""}`}>{isPending ? "Mint or burn" : isMint ? "Mint" : "Burn"}</button>
             </div>
             {errorMessage ? <p className="box red">{errorMessage}</p> : <></>}
             {txHash === null ? <p>Submitting to Ethereum...</p> : <></>}
-            {typeof txHash === "string" ? <p>Submitted! <a href={`https://kovan.etherscan.io/tx/${txHash}`}>Etherscan</a></p> : <></>}
+            {typeof txHash === "string" ? <p>Submitted! <a href={`https://${isTestnet ? "kovan." : ""}etherscan.io/tx/${txHash}`}>Etherscan</a></p> : <></>}
         </form>
     </>;
 };

@@ -34,7 +34,7 @@
     "@fortawesome/free-brands-svg-icons": "^5.13.0",
     "@fortawesome/react-fontawesome": "^0.1.9",
     "@renproject/fonts": "^1.0.1",
-    "@types/react-select": "^3.0.11",
+    "@types/react-select": "^3.0.12",
     "immutable": "^4.0.0-rc.12",
     "moment": "^2.24.0",
     "react-element-to-jsx-string": "^14.3.1",

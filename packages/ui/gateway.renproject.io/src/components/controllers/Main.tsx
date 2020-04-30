@@ -13,6 +13,8 @@ import {
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
+import { ReactComponent as CancelIcon } from "../../images/exit-black.svg";
+import { ReactComponent as MinimizeIcon } from "../../images/icon-minimize.svg";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
@@ -270,10 +272,10 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 {!paused ? <ColoredBanner token={transfer && transfer.transferParams.sendToken} /> : <></>}
                 {!paused && transfer ?
                     (transfer.status === LockAndMintStatus.Committed || transfer.status === BurnAndReleaseStatus.Committed) ?
-                        <div role="button" className={`popup--cancel`} onClick={cancelOnClick}>Cancel</div> :
+                        <div role="button" className={`popup--cancel`} onClick={cancelOnClick}><CancelIcon /></div> :
                         (transfer.status === LockAndMintStatus.ConfirmedOnEthereum || transfer.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
                             <></> :
-                            <div role="button" className={`popup--x`} onClick={pauseOnClick} />
+                            <div role="button" className={`popup--cancel`} onClick={pauseOnClick}><MinimizeIcon /></div>
                     :
                     <></>
                 }

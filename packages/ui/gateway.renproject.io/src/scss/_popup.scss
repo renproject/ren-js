@@ -14,16 +14,24 @@
         padding: 10px 20px;
     }
 
-    .popup--x {
+    .popup--cancel {
         right: ((40px - 12px) / 2);
         top: ((40px - 12px) / 2);
         height: 12px;
         width: 12px;
         margin-top: 0;
-        mask-image: url("../images/exit-black.svg");
-        background-size: 100%;
-        background-color: #b0b0b0;
+        // content: "-";
         cursor: pointer;
+
+        svg {
+            height: 12px;
+            width: 12px;
+        }
+
+        svg,
+        svg>* {
+            fill: #707575;
+        }
 
         position: absolute;
         top: 15px;
@@ -32,25 +40,12 @@
         transition: background-color 5ms;
 
         &:hover {
-            background-color: #888;
+
+            svg,
+            svg>* {
+                fill: $foreground;
+            }
         }
-    }
-
-    .popup--cancel {
-        cursor: pointer;
-        text-transform: uppercase;
-        font-size: 1.2rem;
-        // font-weight: 100;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        padding: 5px;
-        z-index: 10;
-
-        position: absolute;
-        top: 12px;
-        right: 5px;
-        height: 20px;
 
         &.disabled {
             opacity: 0.6;

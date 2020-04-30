@@ -463,7 +463,7 @@ export default class GatewayJS {
      * @returns {Gateway}
      */
     public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): Gateway => {
-        if ((params as SendParams).sendAmount) {
+        if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
             params = resolveSendCall(this.network, params as SendParams);
         } else if ((params as LockAndMintParamsSimple).sendTo) {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
@@ -480,7 +480,7 @@ export default class GatewayJS {
      * @returns {Gateway}
      */
     public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): Gateway => {
-        if ((params as SendParams).sendAmount) {
+        if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
             params = resolveSendCall(this.network, params as SendParams);
         } else if ((params as LockAndMintParamsSimple).sendTo) {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;

@@ -109,7 +109,6 @@ export default class RenJS {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-
         return new BurnAndRelease(this.renVM, this.network, params);
     }
 

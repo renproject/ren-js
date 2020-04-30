@@ -293,6 +293,8 @@ export class LockAndMint {
                 // Try to submit to RenVM. If that fails, see if they already
                 // know about the transaction.
                 try {
+
+
                     txHash = await this.renVM.submitMint(
                         resolveInToken(renContract),
                         sendTo,

@@ -93,7 +93,8 @@
     "link": "lerna run link",
     "build": "lerna run build --scope @renproject/*",
     "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
-    "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example"
+    "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",
+    "lint": "tslint packages/*/*/src/**/*.ts{,x}"
   },
   "workspaces": [
     "packages/lib/*",

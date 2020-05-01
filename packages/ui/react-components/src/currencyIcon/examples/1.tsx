@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { CurrencyIcon, Currency } from "../CurrencyIcon";
+import { Currency, CurrencyIcon } from "../CurrencyIcon";
 
 export default () => <>
     <p><CurrencyIcon currency={Currency.AUD} /> AUD</p>

@@ -54,16 +54,16 @@ export const TokenValueInput = ({ title, hint, value, subtext, error, onValueCha
     const handleChange = React.useCallback((event: React.FormEvent<HTMLInputElement>) => {
         if (onValueChange) {
             const element = (event.target as HTMLInputElement);
-            const value = element.value;
-            onValueChange(value, { blur: false });
+            const newValue = element.value;
+            onValueChange(newValue, { blur: false });
         }
     }, [onValueChange]);
 
     const handleBlur = React.useCallback((event: React.FormEvent<HTMLInputElement>) => {
         if (onValueChange) {
             const element = (event.target as HTMLInputElement);
-            const value = element.value;
-            onValueChange(value, { blur: true });
+            const newValue = element.value;
+            onValueChange(newValue, { blur: true });
         }
     }, [onValueChange]);
 
@@ -100,4 +100,4 @@ export const TokenValueInput = ({ title, hint, value, subtext, error, onValueCha
             </p>
         </div>
     </div>;
-}
+};

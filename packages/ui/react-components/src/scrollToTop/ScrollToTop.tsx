@@ -15,7 +15,7 @@ export const ScrollToTop = () => {
             window.scroll({
                 top: 0,
                 left: 0,
-                behavior: 'smooth',
+                behavior: "smooth",
             });
         } catch (error) {
             // just a fallback for older browsers

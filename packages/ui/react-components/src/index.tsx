@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import { render } from "react-dom";
-import { HashRouter, Link, Route } from "react-router-dom";
 import reactElementToJSXString from "react-element-to-jsx-string";
+import { HashRouter, Link, Route } from "react-router-dom";
 
 import "./styles/examples.scss";
 
@@ -25,10 +25,10 @@ const examples = {
     selectMarket: [require("./selectMarket/examples/1").default],
     tokenValueInput: [require("./tokenValueInput/examples/1").default],
   }
-}
+};
 
-function Home() {
-  return Object.keys(examples).map(category =>
+const Home = () => {
+  return <>{Object.keys(examples).map(category =>
     <details open>
       <summary>{titled(category)}</summary>
       <div className="example-group">
@@ -43,37 +43,39 @@ function Home() {
                 </div>
               </div>
             </Link>
-          )
+          );
         })}
       </div>
     </details>
-  )
-}
+  )}</>;
+};
 
 declare global {
+  // tslint:disable-next-line: no-any
   const Prism: any;
 }
 
 const withSourceCode = (element: () => JSX.Element) => {
   const jsx = element();
+  const highlight = () => Prism.highlightAll();
   return () => <>
     {jsx}
-    <details className="example--source-code" onClick={() => Prism.highlightAll()}>
+    <details className="example--source-code" onClick={highlight}>
       <summary>Source code</summary>
       <pre><code className="language-jsx">
         {reactElementToJSXString(jsx)}
       </code></pre>
     </details>
   </>;
-}
+};
 
-function App() {
+const App = () => {
   return (
     <HashRouter>
       <div className="themed-app">
         <div className="examples theme-light">
           <Link to="/"><p className="home-button">Home</p></Link>
-          <Route path="/" exact render={Home} />
+          <Route path="/" exact component={Home} />
           {Object.keys(examples).map(category =>
             Object.keys(examples[category]).map(exampleGroup => <div key={exampleGroup}>
               {
@@ -88,7 +90,7 @@ function App() {
       </div>
     </HashRouter>
   );
-}
+};
 
 const rootElement = document.getElementById("root");
 render(<App />, rootElement);

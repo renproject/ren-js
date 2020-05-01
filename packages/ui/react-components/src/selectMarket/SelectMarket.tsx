@@ -44,13 +44,13 @@ export const SelectMarket = <Token extends string, MarketPair extends string>({ 
         return list;
     }, [allTokens]);
 
-    const listPairs = React.useCallback((thisToken: Token): OptionType[] => {
+    const listPairs = React.useCallback((listThisToken: Token): OptionType[] => {
 
         const availableList: OptionType[] = [];
         const unavailableList: OptionType[] = [];
 
         allTokens.forEach(({ symbol, name }, token) => {
-            const enabled = (getMarket(thisToken, token));
+            const enabled = (getMarket(listThisToken, token));
 
             const list = enabled ? availableList : unavailableList;
             list.push({

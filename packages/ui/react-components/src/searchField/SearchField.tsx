@@ -3,6 +3,13 @@ import * as React from "react";
 import { ReactComponent as Magnify } from "./magnify.svg";
 import "./styles.scss";
 
+interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+    value: string;
+    placeholder: string;
+    autoFocus?: boolean;
+    onSearchChange(input: string): void;
+}
+
 export const SearchField = ({ value, placeholder, autoFocus, onSearchChange, className, ...props }: Props) => {
 
     const handleInput = React.useCallback((event: React.FormEvent<HTMLInputElement>): void => {
@@ -21,14 +28,7 @@ export const SearchField = ({ value, placeholder, autoFocus, onSearchChange, cla
             autoFocus={autoFocus}
         />
     </div>;
-}
-
-interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-    value: string;
-    placeholder: string;
-    autoFocus?: boolean;
-    onSearchChange(input: string): void;
-}
+};
 
 export const escapeRegExp = (text: string) => {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");

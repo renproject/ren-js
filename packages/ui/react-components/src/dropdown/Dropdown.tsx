@@ -57,16 +57,16 @@ export class Dropdown extends React.Component<Props, State> {
         this.ref = ref;
     }
 
-    private readonly clickAway = (event: any) => {
+    private readonly clickAway = (event: MouseEvent) => {
         // tslint:disable-next-line: no-any
-        if ((this.ref && !this.ref.contains(event.target))) {
+        if ((this.ref && !this.ref.contains(event.target as Node | null))) {
             this.setState({ shown: false });
         }
         document.removeEventListener("mousedown", this.clickAway);
         // @ts-ignore
     }
 
-    private toggle = () => {
+    private readonly toggle = () => {
         const newShown = !this.state.shown;
         this.setState({ shown: newShown });
 
@@ -77,7 +77,7 @@ export class Dropdown extends React.Component<Props, State> {
         }
     }
 
-    private onClick = (e: React.MouseEvent<HTMLLIElement>): void => {
+    private readonly onClick = (e: React.MouseEvent<HTMLLIElement>): void => {
         const id = e.currentTarget.dataset ? e.currentTarget.dataset.id : undefined;
         if (id) {
             this.props.setValue(id);
@@ -86,7 +86,7 @@ export class Dropdown extends React.Component<Props, State> {
             this.setState({ shown: false });
         }
     }
-};
+}
 
 interface State {
     shown: boolean;

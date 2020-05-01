@@ -64,4 +64,4 @@ export default () => {
       getMarket={getMarket}
     />
   </div>;
-}
+};

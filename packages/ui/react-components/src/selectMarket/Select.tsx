@@ -1,8 +1,8 @@
 import * as React from "react";
 
+import { GroupProps } from "react-select/src/components/Group";
 import { OptionProps } from "react-select/src/components/Option";
 import { SingleValueProps } from "react-select/src/components/SingleValue";
-import { GroupProps } from "react-select/src/components/Group";
 
 import { TokenIcon } from "../tokenIcon/TokenIcon";
 
@@ -23,11 +23,12 @@ export const CustomValue = <X extends OptionType>(props: SingleValueProps<X>) =>
     const option = props.data;
     return (
         <div
-            css={getStyles('singleValue', props)}
+            css={getStyles("singleValue", props)}
+            // tslint:disable-next-line: no-any
             className={(cx as any)(
                 {
-                    'single-value': true,
-                    'single-value--is-disabled': isDisabled,
+                    "single-value": true,
+                    "single-value--is-disabled": isDisabled,
                 },
                 className,
             )}
@@ -56,13 +57,14 @@ export const CustomOption = <X extends OptionType>(props: OptionProps<X>) => {
     const option = props.data;
     return (
         <div
-            style={getStyles('option', props)}
+            style={getStyles("option", props)}
+            // tslint:disable-next-line: no-any
             className={[(cx as any)(
                 {
                     option: true,
-                    'option--is-disabled': isDisabled,
-                    'option--is-focused': isFocused,
-                    'option--is-selected': isSelected,
+                    "option--is-disabled": isDisabled,
+                    "option--is-focused": isFocused,
+                    "option--is-selected": isSelected,
                 },
                 className
             ), isSelected ? "Select--currency__option--selected" : ""].join(" ")}
@@ -89,10 +91,12 @@ export const CustomGroup = <X extends OptionType>(props: GroupProps<X>) => {
     const {
         headingProps,
         theme
+        // tslint:disable-next-line: no-any
     } = props as any;
     return (
         <div
-            style={getStyles('group', props)}
+            style={getStyles("group", props)}
+            // tslint:disable-next-line: no-any
             className={[(cx as any)({ group: true }, className), label === "Not Available" ? "Select--currency__group--disabled" : ""].join(" ")}
         >
             <Heading

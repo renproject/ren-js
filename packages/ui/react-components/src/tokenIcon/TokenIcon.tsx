@@ -62,6 +62,11 @@ const icons = {
   }
 };
 
+interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLImageElement>, HTMLImageElement> {
+  token: string;
+  white?: boolean;
+}
+
 export const TokenIcon = ({ token, white, className, ...props }: Props): JSX.Element =>
   React.createElement(
     icons[white ? "white" : "color"][token] || Info,
@@ -70,8 +75,3 @@ export const TokenIcon = ({ token, white, className, ...props }: Props): JSX.Ele
       className: ["token--icon", className ? className : ""].join(" "),
     }
   );
-
-interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLImageElement>, HTMLImageElement> {
-  token: string;
-  white?: boolean;
-}

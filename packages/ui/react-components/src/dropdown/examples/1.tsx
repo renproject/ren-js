@@ -19,7 +19,7 @@ const getCurrencyOptions = () => {
 const currencyOptions = getCurrencyOptions();
 
 export default () => {
-    const [quoteCurrency, setQuoteCurrency] = React.useState(Currency.AUD as string)
+    const [quoteCurrency, setQuoteCurrency] = React.useState(Currency.AUD as string);
 
     return <Dropdown
         selected={{
@@ -32,4 +32,4 @@ export default () => {
         options={currencyOptions}
         setValue={setQuoteCurrency}
     />;
-}
+};

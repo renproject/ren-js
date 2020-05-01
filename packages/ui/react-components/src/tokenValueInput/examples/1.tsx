@@ -68,7 +68,7 @@ export default () => {
         key={"top"}
         onMarketChange={setTop}
         getMarket={getMarket}
-    />
+    />;
     const bottomSelect = <SelectMarket
         bottom
         thisToken={bottom}
@@ -108,4 +108,4 @@ export default () => {
     return <div className="order--wrapper">
         {first}{toggle}{second}
     </div>;
-}
+};

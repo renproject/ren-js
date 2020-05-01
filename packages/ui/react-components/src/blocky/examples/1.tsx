@@ -2,17 +2,18 @@ import * as React from "react";
 
 import { Blocky } from "../Blocky";
 
-function randomAddress() {
-    var text = "0x";
-    var possible = "ABCDEFabcdef0123456789";
+const randomAddress = () => {
+    let text = "0x";
+    const possible = "ABCDEFabcdef0123456789";
 
-    for (var i = 0; i < 40; i++)
+    for (let i = 0; i < 40; i++)
+        // tslint:disable-next-line: insecure-random
         text += possible.charAt(Math.floor(Math.random() * possible.length));
 
     return text;
-}
+};
 
-const range = (n: number) => Array.from(Array(n).keys())
+const range = (n: number) => Array.from(Array(n).keys());
 
 export default () => {
 

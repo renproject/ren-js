@@ -31,6 +31,11 @@ export const currencies = [
     { currency: Currency.BTC, description: "Bitcoin (BTC)", },
 ];
 
+
+interface Props extends Partial<FAProps> {
+    currency: Currency;
+}
+
 export const CurrencyIcon = ({ currency, className, ...props }: Props) => {
     // Note: Typescript will warn if the switch statement is non-exhaustive
 
@@ -57,8 +62,4 @@ export const CurrencyIcon = ({ currency, className, ...props }: Props) => {
         case Currency.BTC:
             return <FontAwesomeIcon {...props} className={["currency-icon", className].join(" ")} icon={faBitcoin} />;
     }
-}
-
-interface Props extends Partial<FAProps> {
-    currency: Currency;
-}
+};

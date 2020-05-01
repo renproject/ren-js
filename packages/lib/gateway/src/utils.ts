@@ -1,5 +1,5 @@
 import {
-    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, NetworkDetails, RenNetwork,
+    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, NetworkDetails,
     SerializableTransferParams, TransferParams,
 } from "@renproject/interfaces";
 import { toFixed } from "@renproject/utils";
@@ -18,7 +18,7 @@ export const getElement = (id: string) => {
 
 export const createElementFromHTML = (htmlString: string) => {
     const div = document.createElement("div");
-    // tslint:disable-next-line: no-object-mutation
+    // tslint:disable-next-line: no-object-mutation no-inner-html
     div.innerHTML = htmlString.trim();
     return div.firstChild;
 };
@@ -73,6 +73,7 @@ export const prepareParamsForSendMessage = (transferParamsIn: TransferParams | L
                 }
             }
         }
+        // tslint:disable-next-line: no-console
     } catch (error) { console.error(error); }
 
     return transferParams;

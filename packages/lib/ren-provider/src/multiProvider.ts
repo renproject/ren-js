@@ -23,6 +23,7 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
     return [newList, errors];
 };
 
+// tslint:disable-next-line: no-any
 export class MultiProvider<Requests extends { [event: string]: any } = {}, Responses extends { [event: string]: any } = {}> implements Provider {
     public nodes: List<HttpProvider<Requests, Responses>>;
 

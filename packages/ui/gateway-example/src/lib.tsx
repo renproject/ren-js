@@ -23,7 +23,6 @@ export const to0Conf = (web3: Web3, network: string | RenNetwork, params: LockAn
         throw new Error(`Confirmationless is currently only supported for BTC.`);
     }
 
-    // TODO: Don't hard-code
     const confirmationlessShifter = confirmationlessShifters[network];
 
     if (!confirmationlessShifter) {
@@ -34,7 +33,7 @@ export const to0Conf = (web3: Web3, network: string | RenNetwork, params: LockAn
 
     // if (params.requiredAmount) {
     //     const requiredAmount = toBigNumber(params.requiredAmount.toString());
-    //     // TODO: Consider shift in fee.
+    //     // The shift in should also be considered.
     //     if (requiredAmount.lte(fee.plus(DEFAULT_SHIFT_FEE))) {
     //         throw new Error(`Required amount (${requiredAmount.toString()}) is less than confirmationlessFee (${fee.toString()}) and mint fee.`);
     //     }
@@ -73,7 +72,6 @@ export const to0Conf = (web3: Web3, network: string | RenNetwork, params: LockAn
     const [encodedFunctionCallBeforeNHash, encodedFunctionCallAfterNHash] = encodedFunctionCall.split(strip0x(nHashPlaceholder)).map(Ox);
 
     params.contractCalls[lastCallIndex] = {
-        // TODO: Don't hard-code
         sendTo: confirmationlessShifter,
         contractFn: "composeShiftIn",
         contractParams: [

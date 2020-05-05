@@ -3,7 +3,7 @@ import * as React from "react";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import { ScanningDot } from "./transfer-popup/ShowGatewayAddress";
+import { ScanningDot } from "./transfer-steps/ShowGatewayAddress";
 
 const OuterDiv = styled.div`
     position: relative;

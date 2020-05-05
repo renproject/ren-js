@@ -64,9 +64,9 @@ export const TooltipChildStyle = styled.span<{ width?: number, align?: string, d
 // tslint:disable-next-line: no-any
 export const TooltipContainerStyle = styled.span<{ child: JSX.Element }>`
     position: relative;
-    cursor: pointer;
-        &: hover ${TooltipChildStyle} {
+    /* cursor: pointer; */
+    &:hover ${TooltipChildStyle} {
         visibility: visible;
         opacity: 1;
     }
-    `;
+`;

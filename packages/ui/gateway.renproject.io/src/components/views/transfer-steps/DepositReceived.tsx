@@ -12,7 +12,7 @@ import { txPreview, txUrl } from "../../../lib/txUrl";
 import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token } from "../../../state/generalTypes";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 import { ProgressBar } from "../ProgressBar";
 import { Tooltip } from "../tooltip/Tooltip";
 import { Mini } from "./Mini";
@@ -105,9 +105,9 @@ export const DepositReceived: React.StatelessComponent<Props> =
             return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
         }
 
-        return <Popup mini={mini}>
-            <div className="popup--body--details deposit-received">
-                <div className="popup--body--actions">
+        return <Container mini={mini}>
+            <div className="container--body--details deposit-received">
+                <div className="container--body--actions">
                     {failed ?
                         <div className="ethereum-error red">
                             <p>Error waiting for deposit: {!showFullError && failed.length > 100 ? <>{failed.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : failed}</p>
@@ -146,7 +146,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
                 </div>
             </div>
             <div className="deposit-address">
-                <div className="popup--body--actions">
+                <div className="container--body--actions">
                     {utxos.map(utxo => {
                         return <div key={utxo.utxo.txHash}>
                             <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(utxo, networkDetails)}>
@@ -158,5 +158,5 @@ export const DepositReceived: React.StatelessComponent<Props> =
                     }).valueSeq()}
                 </div>
             </div>
-        </Popup>;
+        </Container>;
     };

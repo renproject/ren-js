@@ -9,17 +9,17 @@ import { ReactComponent as Metamask } from "../../images/metamask.svg";
 import { ReactComponent as Status } from "../../images/status.svg";
 import { ReactComponent as Trust } from "../../images/trust.svg";
 import { Token } from "../../state/generalTypes";
-import { Popup } from "../views/Popup";
+import { Container } from "./Container";
 
 export const LogIn = ({ token, paused, wrongNetwork, correctNetwork }: { token: Token, paused: boolean, wrongNetwork: number | undefined, correctNetwork: string }) => {
-    return <Popup mini={paused}>
+    return <Container mini={paused}>
         {paused ? <>
             <div className="side-strip"><TokenIcon token={token} /></div>
-            <div className="popup--body--details">
+            <div className="container--body--details">
                 Connect Web3
                             </div>
         </> : <>
-                <div className="popup--body popup--loading connect-web3">
+                <div className="container--body container--loading connect-web3">
                     <div className="connect-web3--browsers">
                         {/* tslint:disable: react-a11y-anchors */}
                         <a target="_blank" rel="noopener noreferrer" title="Metamask Web3 Browser" href="https://metamask.io/"><Metamask /></a>
@@ -33,5 +33,5 @@ export const LogIn = ({ token, paused, wrongNetwork, correctNetwork }: { token: 
                     {wrongNetwork ? <>Please switch to the {correctNetwork} Ethereum network.</> : <>Connect your Ethereum Web3 wallet to continue</>}
                 </div>
             </>}
-    </Popup>;
+    </Container>;
 };

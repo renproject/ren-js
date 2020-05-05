@@ -32,7 +32,7 @@ export const getStorage = async (network: string, domainIn?: string): Promise<Ma
 
     for (const key of keys) {
         const item: HistoryEvent = await store.getItem(key);
-        if (item.transferParams) {
+        if (!item.archived && item.transferParams) {
             storage.set(key, item);
         }
     }
@@ -66,13 +66,13 @@ export const updateStorageTransfer = async (network: string, historyEvent: Histo
     return;
 };
 
-export const removeStorageTransfer = async (network: string, nonce: string, domainIn?: string) => {
-    const domain = domainIn || getURL();
+// export const removeStorageTransfer = async (network: string, nonce: string, domainIn?: string) => {
+//     const domain = domainIn || getURL();
 
-    const store = getStore(network, domain);
+//     const store = getStore(network, domain);
 
-    cancelled.add(nonce);
-    await store.removeItem(nonce);
+//     cancelled.add(nonce);
+//     await store.removeItem(nonce);
 
-    return;
-};
+//     return;
+// };

@@ -11,7 +11,10 @@
 @import './addressInput';
 @import './coloredBanner';
 @import './paused';
-@import './popup';
+@import './container';
 @import './progress';
 @import './transferDetails';
 @import './_general';
+
+@import '../components/views/settingsPage/settingsPage';
+@import '../components/views/popup/popup';

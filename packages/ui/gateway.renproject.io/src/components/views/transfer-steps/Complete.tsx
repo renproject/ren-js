@@ -4,7 +4,7 @@ import { Chain, NetworkDetails, Tx } from "@renproject/interfaces";
 
 import { txUrl } from "../../../lib/txUrl";
 import { Token } from "../../../state/generalTypes";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 import { Mini } from "./Mini";
 
 const renderChain = (chain: Chain): string => {
@@ -33,14 +33,14 @@ export const Complete: React.StatelessComponent<{
 
     return mini ?
         <Mini token={token} message="Done" /> :
-        <Popup mini={false}>
+        <Container mini={false}>
             <div className="complete">
-                <div className="popup--body">
+                <div className="container--body">
                     <div className="circle-loader load-complete">
                         <div className="checkmark draw" />
                     </div>
                     <h4>Deposit received</h4>
-                    <div className="popup--buttons">
+                    <div className="container--buttons">
                         {inTx && outTx ? <>
                             <a target="_blank" rel="noopener noreferrer" href={txUrl(inTx, networkDetails)}>{renderChain(inTx.chain)} Transaction</a>
                             {" "}-{" "}
@@ -60,11 +60,11 @@ export const Complete: React.StatelessComponent<{
                 </div>
             </div>
             <div className="deposit-address complete--buttons">
-                <div className="popup--body--actions">
-                    <div className="popup--buttons">
+                <div className="container--body--actions">
+                    <div className="container--buttons">
                         <button className="button open--confirm" disabled={pressedDone} onClick={onDone}>Return</button>
                     </div>
                 </div>
             </div>
-        </Popup>;
+        </Container>;
 };

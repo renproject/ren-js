@@ -14,14 +14,14 @@ import { Token } from "../../state/generalTypes";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { LogIn } from "../views/LogIn";
-import { AskForAddress } from "../views/transfer-popup/AskForAddress";
-import { Complete } from "../views/transfer-popup/Complete";
-import { DepositReceived } from "../views/transfer-popup/DepositReceived";
-import { InvalidParameters } from "../views/transfer-popup/InvalidParameters";
-import { ShowGatewayAddress } from "../views/transfer-popup/ShowGatewayAddress";
-import { SubmitBurnToEthereum } from "../views/transfer-popup/SubmitBurnToEthereum";
-import { SubmitBurnToRenVM } from "../views/transfer-popup/SubmitBurnToRenVM";
-import { SubmitMintToEthereum } from "../views/transfer-popup/SubmitMintToEthereum";
+import { AskForAddress } from "../views/transfer-steps/AskForAddress";
+import { Complete } from "../views/transfer-steps/Complete";
+import { DepositReceived } from "../views/transfer-steps/DepositReceived";
+import { InvalidParameters } from "../views/transfer-steps/InvalidParameters";
+import { ShowGatewayAddress } from "../views/transfer-steps/ShowGatewayAddress";
+import { SubmitBurnToEthereum } from "../views/transfer-steps/SubmitBurnToEthereum";
+import { SubmitBurnToRenVM } from "../views/transfer-steps/SubmitBurnToRenVM";
+import { SubmitMintToEthereum } from "../views/transfer-steps/SubmitMintToEthereum";
 import { TransferDetails } from "../views/TransferDetails";
 
 interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {

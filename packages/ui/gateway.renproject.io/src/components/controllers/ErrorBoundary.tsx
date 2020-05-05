@@ -34,11 +34,11 @@ export class ErrorBoundary extends React.Component<Props, typeof defaultState> {
      */
     public render(): React.ReactNode {
         const { errorInfo, error } = this.state;
-        const { mini, manualError, popup, onCancel, className, ...divProps } = this.props;
+        const { mini, manualError, fullPage, onCancel, className, ...divProps } = this.props;
         if (error || this.props.manualError) {
             // Error path
             return (
-                <div {...divProps} className={classNames(className, popup ? "popup" : "")}>
+                <div {...divProps} className={classNames(className, fullPage ? "gateway-container" : "")}>
                     <h2>{manualError ? manualError : <>Something went wrong.</>}</h2>
                     {!mini ? <>
                         {error || errorInfo ? <details style={{ whiteSpace: "pre-wrap" }}>
@@ -46,7 +46,7 @@ export class ErrorBoundary extends React.Component<Props, typeof defaultState> {
                             <br />
                             {errorInfo && errorInfo.componentStack}
                         </details> : <></>}
-                        {popup ? <div className="popup--buttons">
+                        {fullPage ? <div className="container--buttons">
                             <button onClick={this.reportFeedback}>Report feedback</button>
                             <button onClick={onCancel}>Close</button>
                         </div> : null
@@ -70,13 +70,13 @@ interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElem
     manualError?: string;
 
     /**
-     * Popup specifies whether or not the Error Boundary is being rendered in
-     * the popup controller.
+     * fullPage specifies whether or not the Error Boundary is being rendered at
+     * the top level of the page.
      */
-    popup?: boolean;
+    fullPage?: boolean;
 
     /**
-     * If `popup` is true, then onCancel should also be provided.
+     * If `fullPage` is true, then onCancel should also be provided.
      */
     onCancel?(): void;
 }

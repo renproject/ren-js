@@ -10,6 +10,7 @@ const initialState = {
     expectedNetwork: undefined as string | undefined,
 
     loggedOut: null as string | null,
+    showingSettings: false,
     paused: false,
 
     // address: null as string | null,
@@ -36,6 +37,8 @@ export class UIContainer extends Container<typeof initialState> {
 
     public setLoggedOut = async (loggedOut?: string) => this.setState(state => ({ ...state, loggedOut: loggedOut || null }));
 
+    public hideSettings = async () => this.setState(state => ({ ...state, showingSettings: false }));
+    public toggleSettings = async () => this.setState(state => ({ ...state, showingSettings: !state.showingSettings }));
     public pause = async () => this.setState(state => ({ ...state, paused: true }));
     public resume = async () => this.setState(state => ({ ...state, paused: false }));
     // /**

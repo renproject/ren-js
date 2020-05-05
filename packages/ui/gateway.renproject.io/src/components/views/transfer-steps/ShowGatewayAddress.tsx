@@ -7,15 +7,15 @@ import { extractError } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
-import QRCode from "qrcode.react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
 
 import { ReactComponent as QR } from "../../../images/qr.svg";
 import { pulseAnimation } from "../../../scss/animations";
 import { Token } from "../../../state/generalTypes";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 import { Mini } from "./Mini";
+import { ShowQRCode } from "./ShowQRCode";
 
 export const ScanningDot = styled.span`
             height: 10px;
@@ -29,35 +29,6 @@ export const ScanningDot = styled.span`
             flex-shrink: 0;
         `;
 
-
-const QRCodeContainer = styled.div`
-            background: #FFFFFF;
-            border: 1px solid #DBE0E8;
-            border-radius: 6px;
-            display: inline-flex;
-            padding: 10px;
-
-            size: 110px;
-            width: 132px;
-            height: 132px;
-
-            >canvas {
-                height: 110px !important;
-                width: 110px !important;
-            }
-            `;
-
-const QRCodeOuter = styled.div`
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-
-            >span {
-                font-size: 1.4rem;
-                color: #3F3F48;
-                margin-top: 16px;
-            }
-`;
 
 const StyledLabel = styled.span`
         color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
@@ -191,26 +162,21 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
             return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
         }
 
-        return <Popup mini={mini}>
-            <div className="popup--body--details">
+        return <Container mini={mini}>
+            <div className="container--body--details">
                 {showQR && gatewayAddress ?
-                    <QRCodeOuter>
-                        <QRCodeContainer>
-                            <QRCode value={`bitcoin:${gatewayAddress}${amount ? `?amount=${amount}` : ""}`} />
-                        </QRCodeContainer>
-                        <span>Deposit {amount ? amount : <></>} {token.toUpperCase()}</span>
-                    </QRCodeOuter>
+                    <ShowQRCode address={gatewayAddress} token={token} amount={amount} />
                     : <>
-                        <div className="popup--token--icon"><TokenIcon token={token} /></div>
-                        <div className="popup--body--title">
+                        <div className="container--token--icon"><TokenIcon token={token} /></div>
+                        <div className="container--body--title">
                             Deposit {amount ? amount : <></>} {token.toUpperCase()}
                         </div>
-                        {/* <div className="popup--title--to">{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet)" : ""} to</div> */}
-                        <div className="popup--title--to">to</div>
+                        {/* <div className="container--title--to">{sdkRenVM && sdkRenVM.network.isTestnet ? "(testnet)" : ""} to</div> */}
+                        <div className="container--title--to">to</div>
                     </>}
             </div>
             <div className="deposit-address">
-                <div className="popup--body--actions">
+                <div className="container--body--actions">
                     {understood ?
                         <>
                             {/* <ScanningBanner>Scanning for transaction</ScanningBanner> */}
@@ -237,11 +203,11 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
                         </> :
                         <>
                             {failed ? <div className="center red">{failed}</div> : <></>}
-                            <div className="popup--buttons">
+                            <div className="container--buttons">
                                 <ContinueButton className="button" onClick={revealGatewayAddress}>Reveal deposit address</ContinueButton>
                             </div>
                         </>}
                 </div>
             </div>
-        </Popup>;
+        </Container>;
     };

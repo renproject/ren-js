@@ -22,11 +22,12 @@ import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { ColoredBanner } from "../views/ColoredBanner";
+import { SettingsPage } from "../views/settingsPage/SettingsPage";
 // import { Footer } from "../views/Footer";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { HandlingTransfer } from "./HandlingTransfer";
 // import { TransferProgress } from "./ProgressBar";
-import { getStorage, removeStorageTransfer } from "./Storage";
+import { getStorage } from "./Storage";
 
 const { version } = require("../../../package.json");
 
@@ -66,15 +67,14 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         const resumeOnClick = React.useCallback(() => resume(false), [resume]);
 
         const cancelTransfer = React.useCallback(async (fromClient?: boolean) => {
-            let retries = 0;
-            while (!sdkContainer.state.transfer || !uiContainer.state.renNetwork) {
-                // Make errors less frequent as retries increase (by checking if retries is a square).
-                if (Math.floor(Math.sqrt(retries)) ** 2 === retries) { console.error(`Waiting for transfer information to cancel transfer.`); }
-                retries++;
-                await sleep(100);
+            if (!sdkContainer.state.transfer || !uiContainer.state.renNetwork) {
+                _catchInteractionErr_(new Error("Missing transfer or network details for cancelTransfer"), "Error in Main.tsx > cancelTransfer");
+                return;
             }
+
             if (sdkContainer.state.transfer.transferParams.nonce) {
-                await removeStorageTransfer(uiContainer.state.renNetwork, sdkContainer.state.transfer.transferParams.nonce);
+                await sdkContainer.updateTransfer({ archived: true }, { force: true });
+                // await removeStorageTransfer(uiContainer.state.renNetwork, sdkContainer.state.transfer.transferParams.nonce);
                 // TODO: Handle no nonce.
             }
             if (!fromClient && uiContainer.state.gatewayPopupID) {
@@ -158,7 +158,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 };
 
                                 if (alreadyCancelled && historyEvent.transferParams.nonce) {
-                                    await removeStorageTransfer(urlRenNetwork, historyEvent.transferParams.nonce);
+                                    // await removeStorageTransfer(urlRenNetwork, historyEvent.transferParams.nonce);
+                                    await sdkContainer.updateTransfer({ archived: true }, { force: true });
                                 }
 
                                 if (!historyEvent.transferParams.sendToken) {
@@ -166,6 +167,11 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 }
 
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
+
+                                break;
+                            case GatewayMessageType.ToggleSettings:
+                                acknowledgeMessage(message);
+                                uiContainer.toggleSettings().catch(console.error);
 
                                 break;
                             case GatewayMessageType.Pause:
@@ -261,7 +267,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
-        const { paused } = uiContainer.state;
+        const { paused, showingSettings } = uiContainer.state;
         const { transfer } = sdkContainer.state;
 
         return <main className={paused ? "paused" : ""} onClick={paused ? resumeOnClick : undefined}>
@@ -272,21 +278,22 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 {!paused ? <ColoredBanner token={transfer && transfer.transferParams.sendToken} /> : <></>}
                 {!paused && transfer ?
                     (transfer.status === LockAndMintStatus.Committed || transfer.status === BurnAndReleaseStatus.Committed) ?
-                        <div role="button" className={`popup--cancel`} onClick={cancelOnClick}><CancelIcon /></div> :
+                        <div role="button" className={`container--cancel`} onClick={cancelOnClick}><CancelIcon /></div> :
                         (transfer.status === LockAndMintStatus.ConfirmedOnEthereum || transfer.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
                             <></> :
-                            <div role="button" className={`popup--cancel`} onClick={pauseOnClick}><MinimizeIcon /></div>
+                            <div role="button" className={`container--cancel`} onClick={pauseOnClick}><MinimizeIcon /></div>
                     :
                     <></>
                 }
                 {transfer ? <ErrorBoundary>< HandlingTransfer /></ErrorBoundary> : <></>}
+                <ErrorBoundary><SettingsPage hidden={!showingSettings || paused} hideSettings={uiContainer.hideSettings} hideTransfer={pauseOnClick} cancelTransfer={cancelTransfer} /></ErrorBoundary>
                 {window === window.top ? <span className="not-in-iframe">
                     <h1>GatewayJS</h1>
                     <p>Version {version}</p>
                     <p>See <a target="_blank" rel="noopener noreferrer" href="https://github.com/renproject/ren-js">github.com/renproject/ren-js</a> for more information about GatewayJS.</p>
                 </span> : <></>}
                 {!transfer && window !== window.top ? <>
-                    {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details." popup={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}
+                    {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details." fullPage={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}
                 </> : <></>}
                 {/* {!paused && transfer && sdkContainer.getNumberOfConfirmations() > 0 ? <TransferProgress /> : <></>} */}
             </div>

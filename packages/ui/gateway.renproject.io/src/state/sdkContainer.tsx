@@ -108,6 +108,7 @@ export class SDKContainer extends Container<typeof initialState> {
             ...this.state.transfer,
             ...transferIn,
             // tslint:disable-next-line: no-any
+            archived: force && transferIn.hasOwnProperty("archived") ? transferIn.archived : transferIn.archived || (this.state.transfer ? this.state.transfer.archived : existingTransfer.archived) || false,
             time: force && transferIn.hasOwnProperty("time") ? transferIn.time : min(existingTransfer.time, this.state.transfer && this.state.transfer.time, transferIn.time),
             inTx: force && transferIn.hasOwnProperty("inTx") ? transferIn.inTx : transferIn.inTx || (this.state.transfer && this.state.transfer.inTx) || existingTransfer.inTx,
             outTx: force && transferIn.hasOwnProperty("outTx") ? transferIn.outTx : transferIn.outTx || (this.state.transfer && this.state.transfer.outTx) || existingTransfer.outTx,

@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 import { pulseAnimation } from "../../../scss/animations";
 import { Token } from "../../../state/generalTypes";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 import { Mini } from "./Mini";
 
 export const ScanningDot = styled.span`
@@ -31,9 +31,9 @@ export const InvalidParameters: React.StatelessComponent<Props> =
             return <Mini token={token} message={"Invalid parameters"} />;
         }
 
-        return <Popup mini={mini}>
-            <div className="popup--body--details">
+        return <Container mini={mini}>
+            <div className="container--body--details">
                 Invalid Parameters
             </div>
-        </Popup>;
+        </Container>;
     };

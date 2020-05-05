@@ -1,18 +1,15 @@
-import "react-circular-progressbar/dist/styles.css";
-
 import * as React from "react";
 
-import { Chain, NetworkDetails, Tx } from "@renproject/interfaces";
+import { Chain, LockAndMintEvent, NetworkDetails, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
-import { txUrl } from "../../../lib/txUrl";
+import { txPreview, txUrl } from "../../../lib/txUrl";
+import { Container } from "../Container";
 import { LabelledDiv } from "../LabelledInput";
-import { Popup } from "../Popup";
 import { ConnectedMini } from "./Mini";
 
 const TransparentButton = styled.button`
@@ -32,13 +29,26 @@ const TransparentLoading = styled(Loading)`
         border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
     `;
 
-export const SubmitBurnToEthereum: React.StatelessComponent<{
+const StyledLink = styled.a`
+    display: block;
+    color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.2px;
+    height: 40px;
+    padding: 10px 0;
+    width: 100%;
+    `;
+
+export const SubmitMintToEthereum: React.StatelessComponent<{
+    transfer: LockAndMintEvent,
     mini: boolean,
     txHash: Tx | null,
     networkDetails: NetworkDetails,
-    txCount: number,
     submit: (retry?: boolean) => Promise<void>,
-}> = ({ mini, txHash, networkDetails, txCount, submit }) => {
+}> = ({ transfer, mini, txHash, networkDetails, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
     const [showFullError, setShowFullError] = React.useState(false);
@@ -85,62 +95,33 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
 
     if (mini) { return <ConnectedMini message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
 
-    return <Popup mini={mini}>
-        <div className="burn-popup submit-burn-to-ethereum">
-            <div className="popup--body">
-                <>
-                    <div className="popup--body--header"></div>
-                    <div className="popup--body--icon"><BurnIcon /></div>
-                </>
-                <div className="popup--body--message">
-                    {error ? <span className="red">
-                        Error submitting to Ethereum: {!showFullError && error.length > 70 ? <>{error.slice(0, 70)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
-                        {failedTransaction ? <>
-                            <br />
-                            See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
+    return <Container mini={mini}>
+        <div className="submit-to-ethereum">
+            <div className="container--body">
+                {transfer.inTx ? <div className="submit-mint-to-ethereum--deposit">
+                    <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>Tx ID: {txPreview(transfer.inTx)}</StyledLink>
+                </div> : <></>}
+                {error ? <div className="ethereum-error red">
+                    Error submitting to Ethereum: {!showFullError && error.length > 100 ? <>{error.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
+                    {failedTransaction ? <>
                         <br />
-                        </> : null}
-                    </span> : <span>
-                            To receive your BTC, submit a release transaction to the Ethereum network via MetaMask.
-                        </span>}
-                </div>
+                        See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
+                        <br />
+                    </> : null}
+                </div> : null}
             </div>
         </div>
-        {/* <div className="submit-burn-progress">
-            <CircularProgressbar
-                value={1}
-                maxValue={1}
-                text={""}
-                strokeWidth={2}
-                styles={buildStyles({
-                    // Whether to use rounded or flat corners on the ends - can use 'butt' or 'round'
-                    strokeLinecap: 'butt',
-
-                    // How long animation takes to go from one percentage to another, in seconds
-                    pathTransitionDuration: 0.5,
-
-                    // Can specify path transition in more detail, or remove it entirely
-                    // pathTransition: 'none',
-
-                    pathColor: `#006FE8`,
-                    trailColor: '#d6d6d6',
-                    backgroundColor: "#ffffff",
-                })}
-            />
-        </div> */}
         <div className="deposit-address">
-            <div className="popup--body--actions">
-                {txHash && txHash.chain === Chain.Ethereum && !error ?
+            <div className="container--body--actions">
+                {txHash && !error ?
                     <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(txHash, networkDetails)}>
-                        <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
+                        <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.chain === Chain.Ethereum ? txHash.hash : (txHash.utxo ? txHash.utxo.txHash : txHash.address)}</LabelledDiv>
                     </a> :
-                    <div className="popup--buttons">
-                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>
-                            {submitting ? <>Submitting to Ethereum<TransparentLoading alt={true} /></> : txCount > 1 ? <>{" "}Submit <b>{txCount}</b> transactions to Ethereum</> : <>Submit to Ethereum</>}
-                        </TransparentButton>
+                    <div className="container--buttons">
+                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
                     </div>
                 }
             </div>
         </div>
-    </Popup>;
+    </Container>;
 };

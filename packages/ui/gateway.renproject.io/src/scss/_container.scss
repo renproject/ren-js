@@ -1,5 +1,5 @@
 ._ren {
-    .popup {
+    .gateway-container {
         background-color: $background;
         border-radius: 6px;
         text-align: left;
@@ -9,12 +9,12 @@
         // overflow-y: auto;
     }
 
-    .popup--body {
+    .container--body {
         width: 100%;
         padding: 10px 20px;
     }
 
-    .popup--cancel {
+    .container--cancel {
         right: ((40px - 12px) / 2);
         top: ((40px - 12px) / 2);
         height: 12px;
@@ -52,7 +52,7 @@
         }
     }
 
-    .popup--buttons {
+    .container--buttons {
         display: flex;
 
         button {
@@ -62,7 +62,7 @@
         justify-content: center;
     }
 
-    .popup--loading {
+    .container--loading {
         width: 100%;
         height: 200px;
         display: flex;
@@ -187,12 +187,12 @@
         }
     }
 
-    .popup--body--actions {
+    .container--body--actions {
         padding: 0 20px;
         width: 100%;
     }
 
-    .popup--body--details {
+    .container--body--details {
         text-align: center;
         background-color: #fdfdfe;
         color: $foreground;
@@ -206,14 +206,14 @@
         // justify-content: center;
         align-items: center;
 
-        .popup--body--title {
+        .container--body--title {
             font-size: 2.6rem;
             // margin-bottom: 2px;
             line-height: 100%;
             margin-bottom: 10px;
         }
 
-        .popup--title--to {
+        .container--title--to {
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;
@@ -223,7 +223,7 @@
             color: #707575;
         }
 
-        .popup--body--values {
+        .container--body--values {
             font-size: 1.4rem;
 
             >span {
@@ -231,7 +231,7 @@
             }
         }
 
-        .popup--token--icon {
+        .container--token--icon {
             margin-bottom: 20px;
 
             .token--icon {
@@ -246,7 +246,7 @@
         }
     }
 
-    .popup--body--box {
+    .container--body--box {
         text-align: left;
         background: #eee;
         padding: 10px;
@@ -255,7 +255,7 @@
         margin-bottom: 10px;
     }
 
-    .popup--body--box--title {
+    .container--body--box--title {
         color: $foreground;
         font-size: 1.4rem;
         margin-bottom: 5px;
@@ -282,7 +282,7 @@
     }
 
     .submit-to-ethereum {
-        @extend .popup--body--details;
+        @extend .container--body--details;
 
         // height: 100%;
         display: flex;
@@ -295,8 +295,8 @@
         }
     }
 
-    .burn-popup {
-        @extend .popup--body--details;
+    .burn-container {
+        @extend .container--body--details;
 
         // height: 100%;
         display: flex;
@@ -304,7 +304,7 @@
         justify-content: flex-start;
         padding: 0;
 
-        .popup--body {
+        .container--body {
             padding-top: 0;
             align-items: center;
             display: flex;
@@ -315,13 +315,13 @@
             height: 100%;
         }
 
-        .popup--body--header {
+        .container--body--header {
             background-color: #F3F3F7;
             height: 46px;
             width: 100%;
         }
 
-        .popup--body--icon {
+        .container--body--icon {
             background-color: #F3F3F7;
             margin-top: -28px;
             border-radius: 50px;
@@ -336,7 +336,7 @@
             }
         }
 
-        .popup--body--message {
+        .container--body--message {
             font-weight: 500;
             font-size: 14px;
             line-height: 20px;
@@ -382,7 +382,7 @@
     }
 
     .complete--buttons {
-        .popup--buttons {
+        .container--buttons {
             display: flex;
             flex-flow: column;
 
@@ -421,7 +421,7 @@
     }
 
     .complete {
-        @extend .popup--body--details;
+        @extend .container--body--details;
         padding-top: 0px;
 
         display: flex;
@@ -444,11 +444,11 @@
 
         }
 
-        .popup--body {
+        .container--body {
             padding: 10px 30px;
         }
 
-        .popup--buttons a {
+        .container--buttons a {
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;

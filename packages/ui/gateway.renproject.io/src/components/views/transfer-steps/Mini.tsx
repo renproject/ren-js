@@ -5,15 +5,15 @@ import { TokenIcon } from "@renproject/react-components";
 import { connect, ConnectedProps } from "../../../state/connect";
 import { Token } from "../../../state/generalTypes";
 import { SDKContainer } from "../../../state/sdkContainer";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 
 export const Mini = ({ token, message }: { token: Token, message: string }) => {
-    return <Popup mini={true}>
+    return <Container mini={true}>
         <div className="side-strip"><TokenIcon token={token} /></div>
-        <div className="popup--body--details">
+        <div className="container--body--details">
             {message}
         </div>
-    </Popup>;
+    </Container>;
 };
 
 interface Props extends ConnectedProps<[SDKContainer]> {

@@ -12,7 +12,7 @@
         }
 
 
-        .popup--paused {
+        .container--paused {
             display: flex;
             align-items: center;
             justify-content: flex-start;
@@ -37,7 +37,7 @@
             }
         }
 
-        .popup--body--details {
+        .container--body--details {
             border-bottom: none;
             font-size: 1.6rem;
             font-weight: 200;

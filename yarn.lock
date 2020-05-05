@@ -1024,6 +1024,13 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
+"@babel/runtime@^7.9.2":
+  version "7.9.6"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.9.6.tgz#a9102eb5cadedf3f31d08a9ecf294af7827ea29f"
+  integrity sha512-64AF1xY3OAkFHqOb9s4jpgk1Mm5vDZ4L3acHvAml+53nO1XbXLuDodsVpO4OIUsmemlUHMxNdYMNJmsvOwLrvQ==
+  dependencies:
+    regenerator-runtime "^0.13.4"
+
 "@babel/template@^7.4.0", "@babel/template@^7.7.4", "@babel/template@^7.8.3", "@babel/template@^7.8.6":
   version "7.8.6"
   resolved "https://registry.yarnpkg.com/@babel/template/-/template-7.8.6.tgz#86b22af15f828dfb086474f964dcc3e39c43ce2b"
@@ -2563,10 +2570,10 @@
   integrity sha512-sLqWxCzC5/QHLhziXSCAksBxHfOnQlhPRVgPK0egEw+ktWvG75T2k+aYWVjVh9+WKeT3tlG3ZNbZQvZLmfuOIw==
 
 "@renproject/chains@file:packages/lib/ren-chains":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
     "@renproject/contracts" "^0.5.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-1.0.0-alpha.4-e000d5f7-9df1-4eeb-9068-79e5a182b82e-1588225922620/node_modules/@renproject/ren-interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-1.0.0-alpha.5-4ee02fe1-64ff-4103-bbbf-978c8cd7d0c9-1588562348824/node_modules/@renproject/ren-interfaces"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2601,16 +2608,16 @@
   integrity sha512-OWk811Ay63UdPxY5nEg4N99Goz6K9HLaeGfUN2q0uehhQ70hJDqDQq/vYl5rtE07mv7MYX7GYTpj5POlPbZNRg==
 
 "@renproject/gateway@file:packages/lib/gateway":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.0-alpha.4-e153ce8f-bb22-413e-b802-547f46e23437-1588225923015/node_modules/@renproject/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.0-alpha.4-e153ce8f-bb22-413e-b802-547f46e23437-1588225923015/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.0-alpha.5-edb61eb3-98f5-4349-a9e4-a4727022d21c-1588562349091/node_modules/@renproject/ren-interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.0-alpha.5-edb61eb3-98f5-4349-a9e4-a4727022d21c-1588562349091/node_modules/@renproject/ren-utils"
     "@types/bn.js" "^4.11.6"
     "@types/node" "^13.13.4"
     web3 "^2.0.0-alpha.1"
 
 "@renproject/interfaces@file:packages/lib/ren-interfaces":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
     "@renproject/contracts" "^0.5.1"
     "@types/node" "^13.13.4"
@@ -2618,11 +2625,11 @@
     events "^3.1.0"
 
 "@renproject/provider@file:packages/lib/ren-provider":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
     "@renproject/contracts" "^0.5.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.0-alpha.4-5b46a249-6d85-4c1c-bd39-e620aea16fae-1588225923024/node_modules/@renproject/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.0-alpha.4-5b46a249-6d85-4c1c-bd39-e620aea16fae-1588225923024/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.0-alpha.5-e60c82bb-9a14-4fc1-a40d-ca41030f7fcb-1588562349100/node_modules/@renproject/ren-interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.0-alpha.5-e60c82bb-9a14-4fc1-a40d-ca41030f7fcb-1588562349100/node_modules/@renproject/ren-utils"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2636,13 +2643,12 @@
     immutable "^4.0.0-rc.12"
     send-crypto "0.2.3"
     sha3 "^2.1.2"
-    wallet-address-validator "^0.2.4"
     web3 "^2.0.0-alpha.1"
     web3-core "^2.0.0-alpha.1"
     web3-eth-abi "^2.0.0-alpha.1"
 
 "@renproject/react-components@file:packages/ui/react-components":
-  version "0.10.0"
+  version "1.0.0-alpha.5"
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^1.2.28"
     "@fortawesome/free-brands-svg-icons" "^5.13.0"
@@ -2657,14 +2663,14 @@
     react-select "^3.1.0"
 
 "@renproject/ren@file:packages/lib/ren":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.4-6c6fa4bb-9d80-465c-9f5e-b5a755d9f6ea-1588225923054/node_modules/@renproject/ren-chains"
+    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.5-54262d25-31b9-40d6-9b89-21d4c7b64078-1588562349130/node_modules/@renproject/ren-chains"
     "@renproject/contracts" "^0.5.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.4-6c6fa4bb-9d80-465c-9f5e-b5a755d9f6ea-1588225923054/node_modules/@renproject/ren-interfaces"
-    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.4-6c6fa4bb-9d80-465c-9f5e-b5a755d9f6ea-1588225923054/node_modules/@renproject/ren-provider"
-    "@renproject/rpc" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.4-6c6fa4bb-9d80-465c-9f5e-b5a755d9f6ea-1588225923054/node_modules/@renproject/ren-rpc"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.4-6c6fa4bb-9d80-465c-9f5e-b5a755d9f6ea-1588225923054/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.5-54262d25-31b9-40d6-9b89-21d4c7b64078-1588562349130/node_modules/@renproject/ren-interfaces"
+    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.5-54262d25-31b9-40d6-9b89-21d4c7b64078-1588562349130/node_modules/@renproject/ren-provider"
+    "@renproject/rpc" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.5-54262d25-31b9-40d6-9b89-21d4c7b64078-1588562349130/node_modules/@renproject/ren-rpc"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.0-alpha.5-54262d25-31b9-40d6-9b89-21d4c7b64078-1588562349130/node_modules/@renproject/ren-utils"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2684,12 +2690,12 @@
     web3-eth-abi "^2.0.0-alpha.1"
 
 "@renproject/rpc@file:packages/lib/ren-rpc":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
     "@renproject/contracts" "^0.5.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.0-alpha.4-a869eb1d-bb95-4d84-8459-c8b2681911e8-1588225923062/node_modules/@renproject/ren-interfaces"
-    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.0-alpha.4-a869eb1d-bb95-4d84-8459-c8b2681911e8-1588225923062/node_modules/@renproject/ren-provider"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.0-alpha.4-a869eb1d-bb95-4d84-8459-c8b2681911e8-1588225923062/node_modules/@renproject/ren-utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.0-alpha.5-d51d31c1-b7f8-464c-866d-8f23bd218830-1588562349135/node_modules/@renproject/ren-interfaces"
+    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.0-alpha.5-d51d31c1-b7f8-464c-866d-8f23bd218830-1588562349135/node_modules/@renproject/ren-provider"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.0-alpha.5-d51d31c1-b7f8-464c-866d-8f23bd218830-1588562349135/node_modules/@renproject/ren-utils"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2703,17 +2709,16 @@
     immutable "^4.0.0-rc.12"
     send-crypto "0.2.3"
     sha3 "^2.1.2"
-    wallet-address-validator "^0.2.4"
     web3 "^2.0.0-alpha.1"
     web3-core "^2.0.0-alpha.1"
     web3-eth-abi "^2.0.0-alpha.1"
 
 "@renproject/utils@file:packages/lib/ren-utils":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.0-alpha.4-a95c6b1d-5820-4a67-b9e7-07d91c1116d8-1588225923018/node_modules/@renproject/ren-chains"
+    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.0-alpha.5-113ce5d4-adad-4730-a6fd-fc8286acc900-1588562349094/node_modules/@renproject/ren-chains"
     "@renproject/contracts" "^0.5.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.0-alpha.4-a95c6b1d-5820-4a67-b9e7-07d91c1116d8-1588225923018/node_modules/@renproject/ren-interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.0-alpha.5-113ce5d4-adad-4730-a6fd-fc8286acc900-1588562349094/node_modules/@renproject/ren-interfaces"
     "@types/bn.js" "^4.11.6"
     "@types/bs58" "^4.0.1"
     "@types/ethereumjs-util" "^6.1.0"
@@ -2721,16 +2726,12 @@
     axios "^0.19.2"
     bchaddrjs "^0.4.8"
     bignumber.js "^9.0.0"
-    bitcore-lib "^8.17.1"
-    bitcore-lib-cash "^8.19.0"
-    bitcore-lib-zcash zcash-hackworks/bitcore-lib-zcash
     bn.js "^5.1.1"
     bs58 "^4.0.1"
     ethereumjs-util "^6.2.0"
     immutable "^4.0.0-rc.12"
     send-crypto "0.2.3"
     sha3 "^2.1.2"
-    wallet-address-validator "^0.2.4"
     web3 "^2.0.0-alpha.1"
     web3-core "^2.0.0-alpha.1"
     web3-eth-abi "^2.0.0-alpha.1"
@@ -2789,65 +2790,65 @@
   dependencies:
     estree-walker "^1.0.1"
 
-"@sentry/browser@^5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-5.15.4.tgz#5a7e7bad088556665ed8e69bceb0e18784e4f6c7"
-  integrity sha512-l/auT1HtZM3KxjCGQHYO/K51ygnlcuOrM+7Ga8gUUbU9ZXDYw6jRi0+Af9aqXKmdDw1naNxr7OCSy6NBrLWVZw==
+"@sentry/browser@^5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-5.15.5.tgz#d9a51f1388581067b50d30ed9b1aed2cbb333a36"
+  integrity sha512-rqDvjk/EvogfdbZ4TiEpxM/lwpPKmq23z9YKEO4q81+1SwJNua53H60dOk9HpRU8nOJ1g84TMKT2Ov8H7sqDWA==
   dependencies:
-    "@sentry/core" "5.15.4"
-    "@sentry/types" "5.15.4"
-    "@sentry/utils" "5.15.4"
+    "@sentry/core" "5.15.5"
+    "@sentry/types" "5.15.5"
+    "@sentry/utils" "5.15.5"
     tslib "^1.9.3"
 
-"@sentry/core@5.15.4", "@sentry/core@^5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-5.15.4.tgz#08b617e093a636168be5aebad141d1f744217085"
-  integrity sha512-9KP4NM4SqfV5NixpvAymC7Nvp36Zj4dU2fowmxiq7OIbzTxGXDhwuN/t0Uh8xiqlkpkQqSECZ1OjSFXrBldetQ==
+"@sentry/core@5.15.5", "@sentry/core@^5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-5.15.5.tgz#40ea79bff5272d3fbbeeb4a98cdc59e1adbd2c92"
+  integrity sha512-enxBLv5eibBMqcWyr+vApqeix8uqkfn0iGsD3piKvoMXCgKsrfMwlb/qo9Ox0lKr71qIlZVt+9/A2vZohdgnlg==
   dependencies:
-    "@sentry/hub" "5.15.4"
-    "@sentry/minimal" "5.15.4"
-    "@sentry/types" "5.15.4"
-    "@sentry/utils" "5.15.4"
+    "@sentry/hub" "5.15.5"
+    "@sentry/minimal" "5.15.5"
+    "@sentry/types" "5.15.5"
+    "@sentry/utils" "5.15.5"
     tslib "^1.9.3"
 
-"@sentry/hub@5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/hub/-/hub-5.15.4.tgz#cb64473725a60eec63b0be58ed1143eaaf894bee"
-  integrity sha512-1XJ1SVqadkbUT4zLS0TVIVl99si7oHizLmghR8LMFl5wOkGEgehHSoOydQkIAX2C7sJmaF5TZ47ORBHgkqclUg==
+"@sentry/hub@5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/hub/-/hub-5.15.5.tgz#f5abbcdbe656a70e2ff02c02a5a4cffa0f125935"
+  integrity sha512-zX9o49PcNIVMA4BZHe//GkbQ4Jx+nVofqU/Il32/IbwKhcpPlhGX3c1sOVQo4uag3cqd/JuQsk+DML9TKkN0Lw==
   dependencies:
-    "@sentry/types" "5.15.4"
-    "@sentry/utils" "5.15.4"
+    "@sentry/types" "5.15.5"
+    "@sentry/utils" "5.15.5"
     tslib "^1.9.3"
 
-"@sentry/integrations@^5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/integrations/-/integrations-5.15.4.tgz#c650ee5589d8234de7795b3e8f71c5d54603a103"
-  integrity sha512-GaEVQf4R+WBJvTOGptOHIFSylnH1JAvBQZ7c45jGIDBp+upqzeI67KD+HoM4sSNT2Y2i8DLTJCWibe34knz5Kw==
+"@sentry/integrations@^5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/integrations/-/integrations-5.15.5.tgz#7f7bc488d838cd50e9ca50d5f933680632827826"
+  integrity sha512-s9N9altnGkDH+vNNUZu1dKuMVLAgJNYtgs6DMJTrZRswFl8gzZytYTZCdpzjBgTsqkLaGbRDIjQeE/yP3gnrqw==
   dependencies:
-    "@sentry/types" "5.15.4"
-    "@sentry/utils" "5.15.4"
+    "@sentry/types" "5.15.5"
+    "@sentry/utils" "5.15.5"
     tslib "^1.9.3"
 
-"@sentry/minimal@5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/minimal/-/minimal-5.15.4.tgz#113f01fefb86b7830994c3dfa7ad4889ba7b2003"
-  integrity sha512-GL4GZ3drS9ge+wmxkHBAMEwulaE7DMvAEfKQPDAjg2p3MfcCMhAYfuY4jJByAC9rg9OwBGGehz7UmhWMFjE0tw==
+"@sentry/minimal@5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/minimal/-/minimal-5.15.5.tgz#a0e4e071f01d9c4d808094ae7203f6c4cca9348a"
+  integrity sha512-zQkkJ1l9AjmU/Us5IrOTzu7bic4sTPKCatptXvLSTfyKW7N6K9MPIIFeSpZf9o1yM2sRYdK7GV08wS2eCT3JYw==
   dependencies:
-    "@sentry/hub" "5.15.4"
-    "@sentry/types" "5.15.4"
+    "@sentry/hub" "5.15.5"
+    "@sentry/types" "5.15.5"
     tslib "^1.9.3"
 
-"@sentry/types@5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/types/-/types-5.15.4.tgz#37f30e35b06e8e12ad1101f1beec3e9b88ca1aab"
-  integrity sha512-quPHPpeAuwID48HLPmqBiyXE3xEiZLZ5D3CEbU3c3YuvvAg8qmfOOTI6z4Z3Eedi7flvYpnx3n7N3dXIEz30Eg==
+"@sentry/types@5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/types/-/types-5.15.5.tgz#16c97e464cf09bbd1d2e8ce90d130e781709076e"
+  integrity sha512-F9A5W7ucgQLJUG4LXw1ZIy4iLevrYZzbeZ7GJ09aMlmXH9PqGThm1t5LSZlVpZvUfQ2rYA8NU6BdKJSt7B5LPw==
 
-"@sentry/utils@5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-5.15.4.tgz#02865ab3c9b745656cea0ab183767ec26c96f6e6"
-  integrity sha512-lO8SLBjrUDGADl0LOkd55R5oL510d/1SaI08/IBHZCxCUwI4TiYo5EPECq8mrj3XGfgCyq9osw33bymRlIDuSQ==
+"@sentry/utils@5.15.5":
+  version "5.15.5"
+  resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-5.15.5.tgz#dec1d4c79037c4da08b386f5d34409234dcbfb15"
+  integrity sha512-Nl9gl/MGnzSkuKeo3QaefoD/OJrFLB8HmwQ7HUbTXb6E7yyEzNKAQMHXGkwNAjbdYyYbd42iABP6Y5F/h39NtA==
   dependencies:
-    "@sentry/types" "5.15.4"
+    "@sentry/types" "5.15.5"
     tslib "^1.9.3"
 
 "@sindresorhus/df@^1.0.1":
@@ -3502,10 +3503,10 @@
   resolved "https://registry.yarnpkg.com/@types/recharts-scale/-/recharts-scale-1.0.0.tgz#348c9220d6d9062c44a9d585d686644a97f7e25d"
   integrity sha512-HR/PrCcxYb2YHviTqH7CMdL1TUhUZLTUKzfrkMhxm1HTa5mg/QtP8XMiuSPz6dZ6wecazAOu8aYZ5DqkNlgHHQ==
 
-"@types/recharts@^1.8.9":
-  version "1.8.9"
-  resolved "https://registry.yarnpkg.com/@types/recharts/-/recharts-1.8.9.tgz#2439f1138253500a1fadc1ae3534ce895a0dd0a3"
-  integrity sha512-J4sZYDfdbFf1aLzenOksdd2s8D/GWh8tftgaE3oMDkvgfOwba0d8DxP0hnE2+WzsSy4fSvHWqrKZv5r2hVH47A==
+"@types/recharts@^1.8.10":
+  version "1.8.10"
+  resolved "https://registry.yarnpkg.com/@types/recharts/-/recharts-1.8.10.tgz#46bfc0450b1d38e84642b8b22a290359e454f7f6"
+  integrity sha512-XHVagR/eJFTTeYGygNuZIiMhNpwGjjf5+8clc6ST27sReecEZN7YTRWlZVvMyN0sJRIhABTLnhoIU+5Gts9+yQ==
   dependencies:
     "@types/d3-shape" "*"
     "@types/react" "*"
@@ -3537,6 +3538,11 @@
   version "1.9.4"
   resolved "https://registry.yarnpkg.com/@types/underscore/-/underscore-1.9.4.tgz#22d1a3e6b494608e430221ec085fa0b7ccee7f33"
   integrity sha512-CjHWEMECc2/UxOZh0kpiz3lEyX2Px3rQS9HzD20lxMvx571ivOBQKeLnqEjxUY0BMgp6WJWo/pQLRBwMW5v4WQ==
+
+"@types/warning@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@types/warning/-/warning-3.0.0.tgz#0d2501268ad8f9962b740d387c4654f5f8e23e52"
+  integrity sha1-DSUBJorY+ZYrdA04fEZU9fjiPlI=
 
 "@types/web3-provider-engine@^14.0.0":
   version "14.0.0"
@@ -9731,13 +9737,13 @@ functional-red-black-tree@^1.0.1:
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
 "gateway-example@file:packages/ui/gateway-example":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
     "@material-ui/core" "^4.9.10"
     "@openzeppelin/network" "^0.4.2"
-    "@renproject/gateway" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.0-alpha.4-f6fded10-98ac-4d0f-b666-1a45c5f86804-1588225923068/lib/gateway"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.0-alpha.4-f6fded10-98ac-4d0f-b666-1a45c5f86804-1588225923068/lib/ren-interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.0-alpha.4-f6fded10-98ac-4d0f-b666-1a45c5f86804-1588225923068/lib/ren-utils"
+    "@renproject/gateway" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.0-alpha.5-dc3cfc3c-21c4-45f8-b501-0333dad98561-1588562349143/lib/gateway"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.0-alpha.5-dc3cfc3c-21c4-45f8-b501-0333dad98561-1588562349143/lib/ren-interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.0-alpha.5-dc3cfc3c-21c4-45f8-b501-0333dad98561-1588562349143/lib/ren-utils"
     "@types/classnames" "^2.2.10"
     "@types/node" "^13.13.4"
     "@types/qs" "^6.9.1"
@@ -9753,16 +9759,16 @@ functional-red-black-tree@^1.0.1:
     web3 "^2.0.0-alpha.1"
 
 "gateway.renproject.io@file:packages/ui/gateway.renproject.io":
-  version "1.0.0-alpha.4"
+  version "1.0.0-alpha.5"
   dependencies:
     "@renproject/fonts" "^1.0.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.4-6ae93882-3766-46d5-8fd7-6041ba94a4ca-1588225923110/lib/ren-interfaces"
-    "@renproject/react-components" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.4-6ae93882-3766-46d5-8fd7-6041ba94a4ca-1588225923110/node_modules/react-components"
-    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.4-6ae93882-3766-46d5-8fd7-6041ba94a4ca-1588225923110/lib/ren"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.4-6ae93882-3766-46d5-8fd7-6041ba94a4ca-1588225923110/lib/ren-utils"
-    "@sentry/browser" "^5.15.4"
-    "@sentry/core" "^5.15.4"
-    "@sentry/integrations" "^5.15.4"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.5-dbd120be-1959-4fd6-88c9-5376b1838fa0-1588562349189/lib/ren-interfaces"
+    "@renproject/react-components" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.5-dbd120be-1959-4fd6-88c9-5376b1838fa0-1588562349189/node_modules/react-components"
+    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.5-dbd120be-1959-4fd6-88c9-5376b1838fa0-1588562349189/lib/ren"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.0-alpha.5-dbd120be-1959-4fd6-88c9-5376b1838fa0-1588562349189/lib/ren-utils"
+    "@sentry/browser" "^5.15.5"
+    "@sentry/core" "^5.15.5"
+    "@sentry/integrations" "^5.15.5"
     "@types/bchaddrjs" "^0.4.0"
     "@types/bn.js" "^4.11.6"
     "@types/node" "^13.13.4"
@@ -9771,9 +9777,9 @@ functional-red-black-tree@^1.0.1:
     "@types/react" "^16.9.34"
     "@types/react-circular-progressbar" "^1.1.0"
     "@types/react-copy-to-clipboard" "^4.3.0"
-    "@types/react-dom" "^16.9.6"
-    "@types/react-router-dom" "^5.1.4"
-    "@types/recharts" "^1.8.9"
+    "@types/react-dom" "^16.9.7"
+    "@types/react-router-dom" "^5.1.5"
+    "@types/recharts" "^1.8.10"
     "@types/styled-components" "^5.1.0"
     axios "^0.19.2"
     bchaddrjs "^0.4.8"
@@ -9783,12 +9789,12 @@ functional-red-black-tree@^1.0.1:
     history "^4.10.1"
     immutable "^4.0.0-rc.12"
     localforage "^1.7.3"
-    moment "^2.24.0"
-    polished "^3.5.1"
+    moment "^2.25.1"
+    polished "^3.6.0"
     qrcode.react "^1.0.0"
-    qs "^6.9.3"
+    qs "^6.9.4"
     react "^16.13.1"
-    react-bootstrap "^1.0.0"
+    react-bootstrap "^1.0.1"
     react-circular-progressbar "^2.0.3"
     react-copy-to-clipboard "^5.0.2"
     react-dom "^16.13.1"
@@ -13729,6 +13735,11 @@ moment@^2.24.0:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
   integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
 
+moment@^2.25.1:
+  version "2.25.1"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.25.1.tgz#1cb546dca1eccdd607c9324747842200b683465d"
+  integrity sha512-nRKMf9wDS4Fkyd0C9LXh2FFXinD+iwbJ5p/lh3CHitW9kZbRbJ8hCruiadiIXZVbeAqKZzqcTvHnK3mRhFjb6w==
+
 mount-point@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/mount-point/-/mount-point-3.0.0.tgz#665cb9edebe80d110e658db56c31d0aef51a8f97"
@@ -15221,12 +15232,12 @@ pnp-webpack-plugin@1.6.4:
   dependencies:
     ts-pnp "^1.1.6"
 
-polished@^3.5.1:
-  version "3.5.1"
-  resolved "https://registry.yarnpkg.com/polished/-/polished-3.5.1.tgz#657b6faf4c2308f3e0b1951196803a5e5d67b122"
-  integrity sha512-GVbvskpBiDV5TknurGL6OyFfLHsCknxbU8w5iMppT8rW0tLEoQHrIRfrPNPqGXNj3HGhkjRvhmg59Fy7HSnCAw==
+polished@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/polished/-/polished-3.6.0.tgz#03eb2871c9bc4785d5199dd751cde7af6de42ff8"
+  integrity sha512-H7tsy9h5JVGXh7BdNzm/v/Q+zIasiwXnYflSmrLd+YpK+8dXKJTKl/kzCtB2kns2N5dyelRvjUtpOKK/nLCanA==
   dependencies:
-    "@babel/runtime" "^7.8.7"
+    "@babel/runtime" "^7.9.2"
 
 popper.js@^1.16.1-lts:
   version "1.16.1"
@@ -16268,6 +16279,11 @@ qs@^6.9.3:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.9.3.tgz#bfadcd296c2d549f1dffa560619132c977f5008e"
   integrity sha512-EbZYNarm6138UKKq46tdx08Yo/q9ZhFoAXAI1meAFd2GtbRDhbZY2WQSICskT0c5q99aFzLG1D4nvTk9tqfXIw==
 
+qs@^6.9.4:
+  version "6.9.4"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.9.4.tgz#9090b290d1f91728d3c22e54843ca44aea5ab687"
+  integrity sha512-A1kFqHekCTM7cz0udomYUoYNWjBebHm/5wzU/XqrBRBNWectVH0QIiN+NEcZ0Dte5hvzHwbr8+XQmguPhJ6WdQ==
+
 qs@~6.5.2:
   version "6.5.2"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
@@ -16389,10 +16405,10 @@ react-app-polyfill@^1.0.6:
     regenerator-runtime "^0.13.3"
     whatwg-fetch "^3.0.0"
 
-react-bootstrap@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-1.0.0.tgz#ed812810205e75b8e4a84b9514d79de090cdc627"
-  integrity sha512-Ep6ZNH6wL5m9bytOS6T9mjSz0YE1bEkc+uHItvenRcA3amr5ApkpKYzAWgdglhRPZHPvm+pnqs1z5IPwv/2UZw==
+react-bootstrap@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-1.0.1.tgz#044b51f34a9db8e17dbfb321a71267a8d6ad11b4"
+  integrity sha512-xMHwsvDN7sIv26P9wWiosWjITZije2dRCjEJHVfV2KFoSJY+8uv2zttEw0XMB7xviQcW3zuIGLJXuj8vf6lYEg==
   dependencies:
     "@babel/runtime" "^7.4.2"
     "@restart/context" "^2.1.4"
@@ -16403,7 +16419,7 @@ react-bootstrap@^1.0.0:
     invariant "^2.2.4"
     prop-types "^15.7.2"
     prop-types-extra "^1.1.0"
-    react-overlays "^3.0.1"
+    react-overlays "^3.1.2"
     react-transition-group "^4.0.0"
     uncontrollable "^7.0.0"
     warning "^4.0.3"
@@ -16513,14 +16529,15 @@ react-lifecycles-compat@^3.0.4:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
-react-overlays@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/react-overlays/-/react-overlays-3.0.1.tgz#0a007d8d8b97d8e85bb23b2fbe2fb336d82422db"
-  integrity sha512-QEt6I3Cjy06pe2FwY/tuWaXEzSVOuXfP8zsC6oWHJhMYpEJQgZV/TCwbCw5slMW6VcgwcWPc4HrBzN0yfxf5Xw==
+react-overlays@^3.1.2:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/react-overlays/-/react-overlays-3.1.3.tgz#e6ac2b43fd2179924491bd794508072399940128"
+  integrity sha512-FH82W0R9lFJm/YCTDeSvEKQxXyTaZmjMEQlAjRhgjQhknTkyMsft+X4Wep5l95QveqdxGVxl/P41WUOzTGJUcw==
   dependencies:
     "@babel/runtime" "^7.4.5"
     "@popperjs/core" "^2.0.0"
     "@restart/hooks" "^0.3.12"
+    "@types/warning" "^3.0.0"
     dom-helpers "^5.1.0"
     prop-types "^15.7.2"
     uncontrollable "^7.0.0"

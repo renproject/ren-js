@@ -8,7 +8,7 @@ import styled from "styled-components";
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Token } from "../../../state/generalTypes";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 import { Mini } from "./Mini";
 
 const renderTxStatus = (status: TxStatus | null) => {
@@ -87,14 +87,14 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
         return <Mini token={token} message={submitting ? "Submitting to RenVM" : "Submit to RenVM"} />;
     }
 
-    return <Popup mini={mini}>
-        <div className="burn-popup submit-to-ethereum">
-            <div className="popup--body">
+    return <Container mini={mini}>
+        <div className="burn-container submit-to-ethereum">
+            <div className="container--body">
                 <>
-                    <div className="popup--body--header"></div>
-                    <div className="popup--body--icon"><BurnIcon /></div>
+                    <div className="container--body--header"></div>
+                    <div className="container--body--icon"><BurnIcon /></div>
                 </>
-                <div className="popup--body--message">
+                <div className="container--body--message">
                     {/* {token ? <TokenIcon className="token-icon" token={token} /> : null} */}
                     {submitting ? <>Status: {renderTxStatus(renVMStatus)}</> : <></>}
                     {error ? <>
@@ -107,13 +107,13 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
             </div>
         </div>
         <div className="deposit-address">
-            <div className="popup--body--actions">
-                <div className="popup--buttons">
+            <div className="container--body--actions">
+                <div className="container--buttons">
                     <TransparentButton className="button open--confirm" disabled={submitting} onClick={onClick}>
                         {submitting ? <>Submitting to RenVM <TransparentLoading alt={true} /></> : <>Submit to RenVM</>}
                     </TransparentButton>
                 </div>
             </div>
         </div>
-    </Popup>;
+    </Container>;
 };

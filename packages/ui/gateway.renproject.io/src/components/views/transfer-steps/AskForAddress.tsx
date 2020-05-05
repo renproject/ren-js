@@ -4,7 +4,7 @@ import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 
 import { Token, Tokens } from "../../../state/generalTypes";
-import { Popup } from "../Popup";
+import { Container } from "../Container";
 import { ConnectedMini } from "./Mini";
 
 export const AskForAddress: React.StatelessComponent<{
@@ -43,13 +43,13 @@ export const AskForAddress: React.StatelessComponent<{
 
     if (mini) { return <ConnectedMini message={"Enter address"} />; }
 
-    return <Popup mini={mini}>
+    return <Container mini={mini}>
         <div className="address-input">
-            <div className="popup--body">
-                <div className="popup--body--box--title">
+            <div className="container--body">
+                <div className="container--body--box--title">
                     Enter <TokenIcon token={token} /> {token.toUpperCase()} address
                 </div>
-                <div className="popup--body--box">
+                <div className="container--body--box">
 
                     {message}
                 </div>
@@ -71,5 +71,5 @@ export const AskForAddress: React.StatelessComponent<{
                 </form>
             </div>
         </div>
-    </Popup>;
+    </Container>;
 };

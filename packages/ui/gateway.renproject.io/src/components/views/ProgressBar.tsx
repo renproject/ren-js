@@ -29,13 +29,17 @@ export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: 
 
 const width = (progress: number, itemsLength: number) => {
     if (itemsLength === 1) {
-        return { percent: 0, px: 0 };
+        return `0`; // { percent: 0, px: 0 };
     }
+
     // Progress bar's width is based on the progress percentage.
-    const percent = Math.min(100 * (progress / (itemsLength - 1)), 100);
+    // const percent = Math.min(100 * (progress / (itemsLength - 1)), 100);
     // Remove 8px for the first circle, and 16px for each following circle.
-    const px = -16 - 16 * (Math.min(progress - 1, 0));
-    return { percent, px };
+    // const px = -8 - 16 * (Math.min(progress - 1, 0));
+
+    return `calc(${Math.min(progress, itemsLength - 1)} * calc(calc(100% - 16px) / ${itemsLength - 1}))`;
+
+    // return { percent, px };
 };
 
 interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
@@ -45,11 +49,11 @@ interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElem
 }
 
 export const ProgressBar = ({ items, progress, pulse, className, ...props }: Props) => {
-    const { percent: bluePercent, px: bluePx } = width(progress, items.length);
-    const { percent: grayPercent, px: grayPx } = width(items.length - 1, items.length);
+    const blueBarWidth = width(progress, items.length);
+    const greyBarWidth = width(items.length - 1, items.length);
     return <div {...props} className={classNames("ren-progress-bar", className)}>
-        <div className="progress-bar--blue" style={{ width: `calc(${bluePercent}% + ${bluePx}px)` }} />
-        <div className="progress-bar--gray" style={{ width: `calc(${grayPercent}% + ${grayPx}px)` }} />
+        <div className="progress-bar--blue" style={{ width: blueBarWidth }} />
+        <div className="progress-bar--gray" style={{ width: greyBarWidth }} />
         <div className="progress-bar--items">
             {items.map((item, index) =>
                 <ProgressItem key={index} target={index + 1} progress={progress} name={item.name} label={item.label} tooltip={item.tooltip} pulse={pulse} />

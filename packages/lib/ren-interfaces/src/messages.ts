@@ -9,6 +9,7 @@ import { UnmarshalledTx } from "./unmarshalled";
  * library.
  */
 export enum GatewayMessageType {
+    ToggleSettings = "toggleSettings",
     Pause = "pause",
     Resume = "resume",
     Ready = "ready",
@@ -35,6 +36,7 @@ export enum GatewayMessageType {
  * GatewayJS library.
  */
 export type GatewayMessagePayload<Type extends GatewayMessageType> =
+    Type extends GatewayMessageType.ToggleSettings ? {} :
     Type extends GatewayMessageType.Pause ? {} :
     Type extends GatewayMessageType.Resume ? {} :
     Type extends GatewayMessageType.Ready ? {} :

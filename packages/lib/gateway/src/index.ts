@@ -196,6 +196,15 @@ export class Gateway {
                 };
             }
 
+            // Add handler to settings
+            const settings = this._getSettings();
+            if (settings) {
+                // tslint:disable-next-line: no-object-mutation no-any
+                (settings as any).onclick = () => {
+                    this._toggleSettings();
+                };
+            }
+
         })().catch(this.promiEvent.reject);
 
         return this;
@@ -381,6 +390,10 @@ export class Gateway {
         window.removeEventListener("message", listener);
     }
 
+    private readonly _toggleSettings = () => {
+        this._sendMessage(GatewayMessageType.ToggleSettings, {}).catch(console.error);
+    }
+
     private readonly _pause = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = true;
@@ -393,6 +406,7 @@ export class Gateway {
         try { this._getPopup().classList.remove("_ren_gateway-minified"); } catch (error) { console.error(error); }
     }
 
+    private readonly _getSettings = () => getElement(`_ren_settings-${this.id}`);
     private readonly _getOverlay = () => getElement(`_ren_overlay-${this.id}`);
     private readonly _getPopup = () => getElement(`_ren_gateway-${this.id}`);
     private readonly _getIFrame = () => getElement(`_ren_iframe-${this.id}`);

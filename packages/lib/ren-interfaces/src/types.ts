@@ -55,6 +55,7 @@ interface HistoryEventCommon {
     txHash: string | null;
     renVMStatus: TxStatus | null;
     returned: boolean;
+    archived?: boolean;
 }
 
 export enum EventType {

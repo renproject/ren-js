@@ -128,6 +128,7 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
                 const address = await generateAddress();
                 setGatewayAddress(address || "");
                 await waitForDeposit(onDeposit);
+
             })().catch(error => {
                 setFailed(extractError(error));
                 setUnderstood(false);

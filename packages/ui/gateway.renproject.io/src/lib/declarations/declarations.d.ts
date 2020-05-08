@@ -6,5 +6,4 @@ declare module "web3-provider-engine/subproviders/nonce-tracker";
 declare module "web3-provider-engine/util/create-payload";
 declare module "ethereumjs-wallet";
 declare module "ethereumjs-wallet/provider-engine";
-declare module "use-persisted-state";
 declare module "wallet-address-validator";

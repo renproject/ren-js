@@ -35,9 +35,9 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     // }
 
     const result = await gatewayJS.open(shiftInParams).result()
-        .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); });
+        .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); });
 
-    console.log(result);
+    console.debug(result);
 
     // if (shiftInParams.confirmations === 0) {
     //     if (!result || (Object.keys(result).length === 0 && result.constructor === Object)) {
@@ -91,8 +91,8 @@ const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, amount: string, r
         sendTo: recipient,
         sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
     }).result()
-        .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
-        .then(console.log)
+        .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); })
+        .then(console.debug)
         .catch(console.error);
 };
 
@@ -104,8 +104,8 @@ const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
             .recoverTransfer(web3.currentProvider, trade)
             .pause()
             .result()
-            .on("status", (status) => { console.log(`[GOT STATUS] ${status}`); })
-            .then(console.log)
+            .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); })
+            .then(console.debug)
             .catch(console.error);
     }
 };

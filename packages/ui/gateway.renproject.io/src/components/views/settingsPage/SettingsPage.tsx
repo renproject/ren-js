@@ -7,10 +7,9 @@ interface Props {
     hidden: boolean;
     hideSettings: () => void;
     cancelTransfer: () => void;
-    hideTransfer: () => void;
 }
 
-export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSettings, cancelTransfer, hideTransfer }) => {
+export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSettings, cancelTransfer }) => {
     const [cancelling, setCancelling] = useState(false);
 
     const promptDeleteTransfer = useCallback(() => {
@@ -20,11 +19,11 @@ export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSetti
     const deleteTransfer = useCallback(() => {
         cancelTransfer();
         setCancelling(false);
-    }, []);
+    }, [cancelTransfer, setCancelling]);
 
     const cancelDeletion = useCallback(() => {
         setCancelling(false);
-    }, []);
+    }, [setCancelling]);
 
     // If user closes settings from Cog icon while prompt is shown, hide prompt.
     useEffect(() => {
@@ -34,6 +33,7 @@ export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSetti
                 setCancelling(false);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hidden]);
 
     return <div className={classNames(`settings-page`, hidden ? "settings-page-hidden" : "")}>

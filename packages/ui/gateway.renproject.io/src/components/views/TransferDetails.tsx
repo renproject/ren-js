@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
+import { parseRenContract } from "@renproject/utils";
 
 import infoIcon from "../../images/icons/info.svg";
 import { getURL } from "../controllers/Storage";
@@ -21,6 +22,11 @@ export const TransferDetails: React.StatelessComponent<{
 
     const title = urlDomain(url);
 
+    const token = transfer.transferParams.sendToken;
+    const asset = React.useMemo(() => !token ? "null" :
+        token === "BTC" || token === "ZEC" || token === "BCH" ? token :
+            parseRenContract(token).asset, [token]);
+
     return <div className="transfer-details">
         <div className="transfer-details--row">
             <div className="transfer-details--left">Integrator <Tooltip align="right" width={300} contents={"To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
@@ -32,7 +38,7 @@ export const TransferDetails: React.StatelessComponent<{
         <div className="transfer-details--row">
             <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={"Fees charged by RenVM to cover transaction and operational fees."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
-                0.1%
+                0.1% + 0.00005 {asset.toUpperCase()}
             </div>
         </div>
     </div>;

@@ -10,7 +10,7 @@ import { Container } from "unstated";
 
 import { getStorageItem, updateStorageTransfer } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
-import { _catchBackgroundErr_, _catchInteractionErr_, _ignoreErr_ } from "../lib/errors";
+import { _catchBackgroundErr_, _catchInteractionErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
 import { compareTransferStatus, compareTxStatus, isFunction, isPromise } from "../lib/utils";
 import { Token } from "./generalTypes";
@@ -449,6 +449,9 @@ export class SDKContainer extends Container<typeof initialState> {
         const { gatewayPopupID } = this.uiContainer.state;
         const transfer = this.state.transfer;
         if (!transfer) { throw new Error("Transfer not set"); }
+        if (transfer.eventType !== EventType.LockAndMint) {
+            throw new Error(`Expected mint object, got ${transfer.eventType}`);
+        }
         if (!gatewayPopupID) {
             throw new Error(`No gateway popup ID.`);
         }
@@ -461,6 +464,22 @@ export class SDKContainer extends Container<typeof initialState> {
             }, { force: true });
         }
         // let receipt: TransactionReceipt;
+
+        if (!transactionHash && transfer.renVMQuery) {
+            const sigHash = transfer.renVMQuery.autogen.sighash;
+            const token = resolveInToken(transfer.transferParams.sendToken);
+            try {
+                const { txHash, error: findMinTransactionError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.FindMintTransaction, { sigHash, token });
+                if (txHash) {
+                    transactionHash = txHash;
+                }
+                if (findMinTransactionError) {
+                    console.error(findMinTransactionError);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
 
         if (!transactionHash) {
 

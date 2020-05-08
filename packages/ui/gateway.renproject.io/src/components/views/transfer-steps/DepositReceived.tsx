@@ -37,6 +37,10 @@ interface Props {
     confirmations: number;
     waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
     onDeposit(utxo: UTXOWithChain): void;
+    requestNotificationPermission(): Promise<{
+        error?: string | undefined;
+    } | null>;
+    showNotification(title: string, body: string): Promise<null>;
 }
 
 const ConfirmationsContainer = styled.div`
@@ -63,7 +67,7 @@ const StyledLabel = styled.span`
         `;
 
 export const DepositReceived: React.StatelessComponent<Props> =
-    ({ mini, token, utxos, confirmations, waitForDeposit, onDeposit, networkDetails }) => {
+    ({ mini, token, utxos, confirmations, waitForDeposit, onDeposit, networkDetails, requestNotificationPermission, showNotification }) => {
         // Defaults for demo
 
         const [failed, setFailed] = React.useState(null as string | null);
@@ -72,12 +76,28 @@ export const DepositReceived: React.StatelessComponent<Props> =
 
         const waitAndSubmitDeposit = React.useCallback(() => {
             setShowFullError(false);
-            waitForDeposit(onDeposit)
-                .catch((error) => {
+            (async () => {
+                try {
+                    requestNotificationPermission().catch(console.error);
+                    const beforeDeposit = (new Date()).getDate() / 1000;
+                    await waitForDeposit(onDeposit);
+                    const afterDeposit = (new Date()).getDate() / 1000;
+
+                    // Check if waiting for the deposit took longer than 30
+                    // seconds. This is to avoid showing a notification if the
+                    // user had the window closed when the TX was confirmed and
+                    // has just reopened the window.
+                    const secondsWaited = afterDeposit - beforeDeposit;
+                    if (secondsWaited >= 30) {
+                        // tslint:disable-next-line: insecure-random
+                        showNotification(`${token.toUpperCase()} Deposit Confirmed`, `Click to resume transfer`).catch(console.error);
+                    }
+                } catch (error) {
                     _catchInteractionErr_(error, "Error in DepositReceived: waitAndSubmitDeposit");
                     setFailed(extractError(error));
-                });
-        }, [waitForDeposit, onDeposit]);
+                }
+            })().catch(console.error);
+        }, [waitForDeposit, onDeposit, requestNotificationPermission, showNotification, token]);
 
         React.useEffect(() => {
             waitAndSubmitDeposit();

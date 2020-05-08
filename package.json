@@ -87,7 +87,8 @@
     "bitcore-lib": "^8.17.1",
     "bitcore-lib-cash": "^8.19.0",
     "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz",
-    "@types/node": "^13.13.4"
+    "@types/node": "^13.13.4",
+    "@types/react-router": "^5.1.7"
   },
   "scripts": {
     "link": "lerna run link",

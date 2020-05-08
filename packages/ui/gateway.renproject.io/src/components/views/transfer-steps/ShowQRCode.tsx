@@ -1,7 +1,7 @@
+import { toLegacyAddress } from "bchaddrjs";
 import QRCode from "qrcode.react";
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
-import { toLegacyAddress } from "bchaddrjs";
 
 import { ReactComponent as CogIcon } from "../../../images/icons/cog.svg";
 import { Token } from "../../../state/generalTypes";

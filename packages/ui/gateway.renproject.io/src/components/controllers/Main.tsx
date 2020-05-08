@@ -8,7 +8,7 @@ import {
 import { Loading } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import {
-    Ox, processBurnAndReleaseParams, processLockAndMintParams, sleep, strip0x,
+    Ox, processBurnAndReleaseParams, processLockAndMintParams, strip0x,
 } from "@renproject/utils";
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
@@ -163,7 +163,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 }
 
                                 if (!historyEvent.transferParams.sendToken) {
-                                    reportError("No sendToken provided");
+                                    reportError("No sendToken provided").catch(console.error);
                                 }
 
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
@@ -286,7 +286,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     <></>
                 }
                 {transfer ? <ErrorBoundary>< HandlingTransfer /></ErrorBoundary> : <></>}
-                <ErrorBoundary><SettingsPage hidden={!showingSettings || paused} hideSettings={uiContainer.hideSettings} hideTransfer={pauseOnClick} cancelTransfer={cancelTransfer} /></ErrorBoundary>
+                <ErrorBoundary><SettingsPage hidden={!showingSettings || paused} hideSettings={uiContainer.hideSettings} cancelTransfer={cancelTransfer} /></ErrorBoundary>
                 {window === window.top ? <span className="not-in-iframe">
                     <h1>GatewayJS</h1>
                     <p>Version {version}</p>

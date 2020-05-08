@@ -83,6 +83,14 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
             setPressedDone(false);
         }, [uiContainer, sdkContainer]);
 
+        const requestNotificationPermission = React.useCallback(async () => uiContainer.state.gatewayPopupID ? await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.RequestNotificationPermission, {}) : null, [uiContainer.state.gatewayPopupID]);
+        const showNotification = React.useCallback(async (title: string, body: string) => {
+            if (uiContainer.state.gatewayPopupID) {
+                return await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.ShowNotification, { title, body });
+            }
+            return null;
+        }, [uiContainer.state.gatewayPopupID]);
+
         const lockAndMint = () => {
 
             const transferParams = transfer.transferParams as LockAndMintEvent["transferParams"];
@@ -121,6 +129,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                                     waitForDeposit={sdkContainer.waitForDeposits}
                                     confirmations={sdkContainer.getNumberOfConfirmations(transfer)}
                                     onDeposit={uiContainer.deposit}
+
                                 />;
                             } catch (error) {
                                 inner = <InvalidParameters mini={paused} token={token} />;
@@ -131,6 +140,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                     case LockAndMintStatus.Confirmed:
                     case LockAndMintStatus.SubmittedToRenVM:
                         try {
+
                             // Show the deposit address and wait for a deposit
                             inner = <DepositReceived
                                 mini={paused}
@@ -140,6 +150,8 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                                 confirmations={sdkContainer.getNumberOfConfirmations(transfer)}
                                 onDeposit={uiContainer.deposit}
                                 networkDetails={sdkRenVM.network}
+                                requestNotificationPermission={requestNotificationPermission}
+                                showNotification={showNotification}
                             />;
                         } catch (error) {
                             inner = <InvalidParameters mini={paused} token={token} />;

@@ -13,8 +13,6 @@
         "link": "yarn link @renproject/gateway @renproject/interfaces @renproject/utils @renproject/react-components"
     },
     "dependencies": {
-        "@material-ui/core": "^4.9.10",
-        "@openzeppelin/network": "^0.4.2",
         "@renproject/gateway": "file:../../lib/gateway",
         "@renproject/interfaces": "file:../../lib/ren-interfaces",
         "@renproject/utils": "file:../../lib/ren-utils",

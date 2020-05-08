@@ -22,7 +22,7 @@ describe("burnAndRelease response is returned correctly", () => {
             .in.to.should.equal("bitcoincash:qqnm45rptzzpvg0dx04erm7mrnz27jvkevaf3ys3c5");
     });
 
-    it("Testnet", async () => {
+    it.skip("Testnet", async () => {
         const renJS = new RenJS(RenNetwork.Testnet);
 
         (await renJS.burnAndRelease({ sendToken: "BTC", burnReference: 0x1 }).submit())

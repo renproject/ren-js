@@ -1,4 +1,5 @@
 import { SerializableTransferParams, TransactionConfig } from "./parameters";
+import { RenContract } from "./renVM";
 import {
     BurnAndReleaseEvent, BurnAndReleaseStatus, HistoryEvent, LockAndMintEvent, LockAndMintStatus,
 } from "./types";
@@ -27,6 +28,10 @@ export enum GatewayMessageType {
     SendEthereumTx = "sendEthereumTx",
     GetEthereumTxStatus = "getEthereumTxStatus",
     GetEthereumTxBurn = "getEthereumTxBurn",
+    FindMintTransaction = "findMintTransaction",
+
+    RequestNotificationPermission = "requestNotificationPermission",
+    ShowNotification = "showNotification",
 
     Acknowledgement = "acknowledgement",
 }
@@ -61,6 +66,10 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.SendEthereumTx ? { transactionConfig: TransactionConfig } :
     Type extends GatewayMessageType.GetEthereumTxStatus ? { txHash: string } :
     Type extends GatewayMessageType.GetEthereumTxBurn ? { txHash: string } :
+    Type extends GatewayMessageType.FindMintTransaction ? { sigHash: string, token: RenContract } :
+
+    Type extends GatewayMessageType.RequestNotificationPermission ? {} :
+    Type extends GatewayMessageType.ShowNotification ? { title: string, body: string } :
 
     // tslint:disable-next-line: no-any
     Type extends GatewayMessageType.Acknowledgement ? any : never;
@@ -76,6 +85,8 @@ export type GatewayMessageResponse<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.SendEthereumTx ? { txHash?: string, error?: string } :
     Type extends GatewayMessageType.GetEthereumTxStatus ? { confirmations?: number, error?: string } :
     Type extends GatewayMessageType.GetEthereumTxBurn ? { burnReference?: string | number, error?: string } :
+    Type extends GatewayMessageType.FindMintTransaction ? { txHash?: string | undefined, error?: string } :
+    Type extends GatewayMessageType.RequestNotificationPermission ? { error?: string } :
     never;
 
 export interface GatewayMessage<Type extends GatewayMessageType> {

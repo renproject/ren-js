@@ -55,11 +55,11 @@ describe.skip("RenJS initialization and exports", () => {
             topics: [sha3("LogBurn(bytes,uint256,uint256,bytes)")] as string[],
         });
 
-        console.log(`Found ${burns.length} burns...`);
+        console.debug(`Found ${burns.length} burns...`);
 
         for (let i = 0; i < burns.length; i++) {
             const burn = burns[i];
-            console.log(`Processing ${i}/${burns.length} ${burn.transactionHash}`);
+            console.debug(`Processing ${i}/${burns.length} ${burn.transactionHash}`);
             const receipt = await waitForReceipt(web3, burn.transactionHash);
             if (receipt.logs.length !== 3) {
                 console.error(`Expected 3 logs but got ${receipt.logs.length}`);
@@ -75,10 +75,10 @@ describe.skip("RenJS initialization and exports", () => {
                 .minus(releaseDecoded._amount.toString());
 
             if (!sum.isZero()) {
-                console.log(burn.transactionHash);
-                console.log("transferDecoded", transferDecoded);
-                console.log("feeDecoded", feeDecoded);
-                console.log("releaseDecoded", releaseDecoded);
+                console.debug(burn.transactionHash);
+                console.debug("transferDecoded", transferDecoded);
+                console.debug("feeDecoded", feeDecoded);
+                console.debug("releaseDecoded", releaseDecoded);
                 throw new Error("Not zero!!!");
             }
         }
@@ -100,18 +100,18 @@ describe.skip("RenJS initialization and exports", () => {
             topics: [sha3("LogMint(address,uint256,uint256,bytes32)")] as string[],
         });
 
-        console.log(`Found ${mints.length} mints...`);
+        console.debug(`Found ${mints.length} mints...`);
 
         for (let i = 0; i < mints.length; i++) {
             const mint = mints[i];
-            console.log(`Processing ${i}/${mints.length} ${mint.transactionHash}`);
+            console.debug(`Processing ${i}/${mints.length} ${mint.transactionHash}`);
             const receipt = await waitForReceipt(web3, mint.transactionHash);
             if (receipt.logs.length !== 3) {
                 console.error(`Expected 3 logs but got ${receipt.logs.length}`);
                 continue;
             }
 
-            console.log(receipt);
+            console.debug(receipt);
 
             const [transfer, fee, mintLog] = receipt.logs;
             const transferDecoded = web3.eth.abi.decodeLog(transferABI, transfer.data, transfer.topics as string[]);
@@ -123,10 +123,10 @@ describe.skip("RenJS initialization and exports", () => {
                 .minus(releaseDecoded._amount.toString());
 
             if (!sum.isZero()) {
-                console.log(mint.transactionHash);
-                console.log("transferDecoded", transferDecoded);
-                console.log("feeDecoded", feeDecoded);
-                console.log("releaseDecoded", releaseDecoded);
+                console.debug(mint.transactionHash);
+                console.debug("transferDecoded", transferDecoded);
+                console.debug("feeDecoded", feeDecoded);
+                console.debug("releaseDecoded", releaseDecoded);
                 throw new Error("Not zero!!!");
             }
         }

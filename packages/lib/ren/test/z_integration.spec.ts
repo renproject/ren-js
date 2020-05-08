@@ -261,7 +261,7 @@ describe("Cross chain transactions", function () {
 
         for (const testcaseFn of [
             { ...caseBTC, it: longIt, },
-            { ...caseZEC, it: longIt, },
+            { ...caseZEC, it: it.skip, },
             { ...caseBCH, it: it.skip, },
         ]) {
             // tslint:disable-next-line: mocha-no-side-effect-code

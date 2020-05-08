@@ -2,16 +2,17 @@
 
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
-    BurnAndReleaseStatus, Chain, errors, EventType, GatewayMessage, GatewayMessagePayload,
+    BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
     GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
     LockAndMintParamsSimple, LockAndMintStatus, NetworkDetails, RenContract, RenNetwork, RenTokens,
     SendParams, Tokens, TransferParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, extractError, getGatewayAddress, getTokenAddress, newPromiEvent,
-    parseRenContract, PromiEvent, randomBytes, resolveSendCall, sleep, stringToNetwork, utils,
-    waitForReceipt, withDefaultAccount,
+    extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
+    getTokenAddress, newPromiEvent, parseRenContract, PromiEvent, randomBytes, resolveSendCall,
+    sleep, stringToNetwork, utils, waitForReceipt, withDefaultAccount,
 } from "@renproject/utils";
+import Push from "push.js";
 import Web3 from "web3";
 import { provider as Web3Provider } from "web3-providers";
 
@@ -196,13 +197,33 @@ export class Gateway {
                 };
             }
 
-            // Add handler to settings
-            const settings = this._getSettings();
-            if (settings) {
+            // Add handler to settings button
+            const settingsButton = this._getSettingsButton();
+            if (settingsButton) {
                 // tslint:disable-next-line: no-object-mutation no-any
-                (settings as any).onclick = () => {
+                (settingsButton as any).onclick = () => {
                     this._toggleSettings();
                 };
+            }
+
+            // Add handler to settings button
+            const notificationButton = this._getNotificationButton();
+            if (notificationButton) {
+                // tslint:disable-next-line: no-object-mutation no-any
+                (notificationButton as any).onclick = () => {
+                    try {
+                        if (!Push.Permission.has()) {
+                            Push.Permission.request();
+                        }
+                    } catch (error) {
+                        console.error(error);
+                    }
+                    notificationButton.classList.add("_ren_notifications-hidden");
+                };
+            }
+
+            if (Push.Permission.has()) {
+                notificationButton.classList.add("_ren_notifications-hidden");
             }
 
         })().catch(this.promiEvent.reject);
@@ -297,6 +318,22 @@ export class Gateway {
                             }
                         })().catch(console.error);
                         return;
+                    case GatewayMessageType.FindMintTransaction:
+                        (async () => {
+                            try {
+                                if (!this.web3) {
+                                    throw new Error(`No Web3 defined`);
+                                }
+                                const { sigHash, token } = e.data.payload as GatewayMessagePayload<GatewayMessageType.FindMintTransaction>;
+                                const txHash = await findTransactionBySigHash(this.network, this.web3, token, sigHash);
+
+                                this._acknowledgeMessage<GatewayMessageType.FindMintTransaction>(e.data as GatewayMessage<GatewayMessageType.FindMintTransaction>, { txHash }).catch(console.error);
+                            } catch (error) {
+                                console.error(error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
+                            }
+                        })().catch(console.error);
+                        return;
                     case GatewayMessageType.Error:
                         this._acknowledgeMessage(e.data).catch(console.error);
                         onClose();
@@ -306,6 +343,35 @@ export class Gateway {
                         this._acknowledgeMessage(e.data).catch(console.error);
                         onClose();
                         this.promiEvent.resolve(e.data.payload);
+                        return;
+                    case GatewayMessageType.RequestNotificationPermission:
+                        this._acknowledgeMessage(e.data, {}).catch(console.error);
+                        if (!Push.Permission.has()) {
+                            this._getNotificationButton().classList.add("_ren_notifications-blue");
+                        }
+                        return;
+                    case GatewayMessageType.ShowNotification:
+                        this._acknowledgeMessage(e.data).catch(console.error);
+                        const { title, body } = e.data.payload as GatewayMessagePayload<GatewayMessageType.ShowNotification>;
+                        try {
+                            if (Push.Permission.has()) {
+                                // tslint:disable-next-line: insecure-random
+                                const tag = String(Math.random());
+                                Push.create(title, {
+                                    body,
+                                    icon: "https://gateway.renproject.io/favicon.ico",
+                                    timeout: 4000,
+                                    tag,
+                                    onClick: () => {
+                                        window.focus();
+                                        Push.close(tag);
+                                        this.resume();
+                                    }
+                                }).catch(console.error);
+                            }
+                        } catch (error) {
+                            console.error(error);
+                        }
                         return;
                     default:
                         this._acknowledgeMessage(e.data).catch(console.error);
@@ -406,7 +472,8 @@ export class Gateway {
         try { this._getPopup().classList.remove("_ren_gateway-minified"); } catch (error) { console.error(error); }
     }
 
-    private readonly _getSettings = () => getElement(`_ren_settings-${this.id}`);
+    private readonly _getSettingsButton = () => getElement(`_ren_settings-${this.id}`);
+    private readonly _getNotificationButton = () => getElement(`_ren_notifications-${this.id}`);
     private readonly _getOverlay = () => getElement(`_ren_overlay-${this.id}`);
     private readonly _getPopup = () => getElement(`_ren_gateway-${this.id}`);
     private readonly _getIFrame = () => getElement(`_ren_iframe-${this.id}`);

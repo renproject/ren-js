@@ -4,8 +4,8 @@ import {
 } from "@renproject/interfaces";
 import { RenVMProvider, ResponseQueryMintTx, unmarshalMintTx } from "@renproject/rpc";
 import {
-    extractError, fixSignature, forwardWeb3Events, generateAddress, generateGHash,
-    generateMintTxHash, getGatewayAddress, ignorePromiEventError, newPromiEvent, Ox,
+    extractError, findTransactionBySigHash, fixSignature, forwardWeb3Events, generateAddress,
+    generateGHash, generateMintTxHash, ignorePromiEventError, manualPromiEvent, newPromiEvent, Ox,
     parseRenContract, payloadToABI, payloadToMintABI, processLockAndMintParams, PromiEvent,
     randomNonce, RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits, SECONDS,
     signatureToString, sleep, strip0x, toBase64, txHashToBase64, Web3Events, withDefaultAccount,
@@ -15,7 +15,6 @@ import { OrderedMap } from "immutable";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
-import { sha3 } from "web3-utils";
 
 export class LockAndMint {
     public utxo: UTXOIndex | undefined;
@@ -393,6 +392,25 @@ export class LockAndMint {
         return signature.submitToEthereum(web3Provider, txConfig);
     }
 
+    public findTransaction = async (web3Provider: provider): Promise<string | undefined> => {
+        const web3 = new Web3(web3Provider);
+        const { sendToken: renContract } = this.params;
+
+        if (this.thirdPartyTransaction) {
+            return this.thirdPartyTransaction;
+        }
+
+        if (!this.renVMResponse) {
+            throw new Error(`Unable to submit to Ethereum without RenVM response. Call 'submit' first.`);
+        }
+
+        // Check if the signature has already been submitted
+        if (renContract) {
+            return await findTransactionBySigHash(this.network, web3, resolveInToken(renContract), this.renVMResponse.autogen.sighash);
+        }
+        return;
+    }
+
     // tslint:disable-next-line: no-any
     public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
         // tslint:disable-next-line: no-any
@@ -402,78 +420,13 @@ export class LockAndMint {
 
             const web3 = new Web3(web3Provider);
 
-            const { sendToken: renContract } = this.params;
-
-            const manualPromiEvent = async (txHash: string) => {
-                const receipt = await web3.eth.getTransactionReceipt(txHash);
-                promiEvent.emit("transactionHash", txHash);
-
-                const emitConfirmation = async () => {
-                    const currentBlock = await web3.eth.getBlockNumber();
-                    // tslint:disable-next-line: no-any
-                    promiEvent.emit("confirmation", Math.max(0, currentBlock - receipt.blockNumber), receipt as any);
-                };
-
-                // The following section should be revised to properly
-                // register the event emitter to the transaction's
-                // confirmations, so that on("confirmation") works
-                // as expected. This code branch only occurs if a
-                // completed transfer is passed to RenJS again, which
-                // should not usually happen.
-
-                // Emit confirmation now and in 1s, since a common use
-                // case may be to have the following code, which doesn't
-                // work if we emit the txHash and confirmations
-                // with no time in between:
-                //
-                // ```js
-                // const txHash = await new Promise((resolve, reject) => lockAndMint.on("transactionHash", resolve).catch(reject));
-                // lockAndMint.on("confirmation", () => { /* do something */ });
-                // ```
-                await emitConfirmation();
-                setTimeout(emitConfirmation, 1000);
-                return receipt;
-            };
-
-            if (this.thirdPartyTransaction) {
-                return await manualPromiEvent(this.thirdPartyTransaction);
-            }
-
             if (!this.renVMResponse || !this.signature) {
                 throw new Error(`Unable to submit to Ethereum without signature. Call 'submit' first.`);
             }
 
-            // Check if the signature has already been submitted
-            if (renContract) {
-                try {
-                    const gatewayAddress = await getGatewayAddress(this.network, web3, resolveInToken(renContract));
-                    const gatewayContract = new web3.eth.Contract(
-                        this.network.contracts.addresses.gateways.BTCGateway.abi,
-                        gatewayAddress,
-                    );
-                    // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
-                    // the contract
-                    const status = await gatewayContract.methods.status(this.renVMResponse.autogen.sighash).call();
-                    if (status) {
-                        const recentRegistrationEvents = await web3.eth.getPastLogs({
-                            address: gatewayAddress,
-                            fromBlock: "1",
-                            toBlock: "latest",
-                            // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
-                            // address.slice(2), null, null] as any,
-                            topics: [sha3("LogMint(address,uint256,uint256,bytes32)"), null, null, this.renVMResponse.autogen.sighash] as string[],
-                        });
-                        if (!recentRegistrationEvents.length) {
-                            throw new Error(`Mint has been submitted but no log was found.`);
-                        }
-                        const log = recentRegistrationEvents[0];
-                        return await manualPromiEvent(log.transactionHash);
-                    }
-                } catch (error) {
-                    // tslint:disable-next-line: no-console
-                    console.error(error);
-                    // Continue with transaction
-                }
+            const existingTransaction = await this.findTransaction(web3Provider);
+            if (existingTransaction) {
+                return await manualPromiEvent(web3, existingTransaction, promiEvent);
             }
 
             const contractCalls = this.params.contractCalls || [];

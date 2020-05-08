@@ -2,10 +2,10 @@ import {
     Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, NetworkDetails, RenContract,
     RenTokens, UnmarshalledMintTx, UTXOIndex,
 } from "@renproject/interfaces";
-import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
 import Web3 from "web3";
+import { sha3 } from "web3-utils";
 
 import { NULL, Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
@@ -232,6 +232,38 @@ export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tok
     }
 };
 
+export const findTransactionBySigHash = async (network: NetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"), sigHash: string): Promise<string | undefined> => {
+    try {
+        const gatewayAddress = await getGatewayAddress(network, web3, tokenOrContract);
+        const gatewayContract = new web3.eth.Contract(
+            network.contracts.addresses.gateways.BTCGateway.abi,
+            gatewayAddress,
+        );
+        // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
+        // the contract
+        const status = await gatewayContract.methods.status(sigHash).call();
+        if (status) {
+            const recentRegistrationEvents = await web3.eth.getPastLogs({
+                address: gatewayAddress,
+                fromBlock: "1",
+                toBlock: "latest",
+                // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
+                // address.slice(2), null, null] as any,
+                topics: [sha3("LogMint(address,uint256,uint256,bytes32)"), null, null, sigHash] as string[],
+            });
+            if (!recentRegistrationEvents.length) {
+                throw new Error(`Mint has been submitted but no log was found.`);
+            }
+            const log = recentRegistrationEvents[0];
+            return log.transactionHash;
+        }
+    } catch (error) {
+        // tslint:disable-next-line: no-console
+        console.error(error);
+        // Continue with transaction
+    }
+    return;
+};
 
 /**
  * Returns a random 32 byte hex string (prefixed with '0x').

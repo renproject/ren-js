@@ -17,16 +17,14 @@ interface NetworkType<C extends Contract, A extends Addresses<C>> {
     version: "1.0.0";
     name: string;
     chain: string;
+    isTestnet: boolean;
     label: string;
     networkID: number;
     chainLabel: string;
     infura: string;
     etherscan: string;
-    renVM: {
-        mintAuthority: string;
-        mpkh: string;
-    };
+    lightnode: string;
     addresses: A;
 }
 
-export const Network = <C extends Contract, A extends Addresses<C>, N extends NetworkType<C, A>>(t: N) => t;
+export const CastNetwork = <C extends Contract, A extends Addresses<C>, N extends NetworkType<C, A>>(t: N) => t;

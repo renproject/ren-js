@@ -6,19 +6,25 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import { formatFn, FormatType, table } from "../lib/layouts";
 import { NetworkData } from "../lib/networks";
-import { Network } from "./Network";
+import chaosnet from "../networks/chaosnet";
+import devnet from "../networks/devnet";
+import localnet from "../networks/localnet";
+import mainnet from "../networks/mainnet";
+import testnet from "../networks/testnet";
+import { DisplayNetwork } from "./DisplayNetwork";
+
+export const networks = OrderedMap({ mainnet, chaosnet, testnet, devnet, localnet });
 
 interface Props extends RouteComponentProps {
-    networks: OrderedMap<string, NetworkData>;
-    network: string;
 }
 
 export const publicNetwork = (_: unknown, network: string) => network === "mainnet" || network === "testnet";
 
-export const Main = withRouter(({ networks, network, history }: Props) => {
+export const Main = withRouter(({ history, location }: Props) => {
 
     const [format, setFormat] = React.useState(FormatType.TABLE);
 
+    const network = location.pathname.replace("/", "") || "mainnet";
 
     const handleInput = (event: React.FormEvent<HTMLInputElement>): void => {
         const element = (event.target as HTMLInputElement);
@@ -72,7 +78,7 @@ export const Main = withRouter(({ networks, network, history }: Props) => {
                     </tr>
                 </tbody></table>
             </div>
-            {networkDetails ? <Network
+            {networkDetails ? <DisplayNetwork
                 // key={network}
                 format={formatFn.get(format) || table}
                 networkData={networkDetails}

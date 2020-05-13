@@ -2,7 +2,6 @@ html,
 body {
     padding: 0;
     margin: 0;
-    background-color: #f8f9fa;
 }
 
 pre {
@@ -14,8 +13,21 @@ a {
     text-decoration: none;
 }
 
+.Main {
+    background-color: #f8f9fa;
+
+    transition: background 300ms;
+    transition: color 300ms;
+
+    .network,
+    .layout {
+        transition: background 300ms;
+        transition: color 300ms;
+    }
+}
+
 .Main-chaosnet {
-    background: #2C3038;
+    background-color: #2C3038;
 
     .network {
         transition: all 300ms;
@@ -66,7 +78,7 @@ a {
     content: "";
     left: 0;
     right: 0;
-    transition: background 1000ms;
+    transition: background 300ms;
 }
 
 .outOfDate {

@@ -3,11 +3,13 @@
 import * as React from "react";
 
 import GatewayJS from "@renproject/gateway";
-import { SendParams } from "@renproject/interfaces";
+import { LockAndMintParams, LockAndMintParamsSimple, SendParams } from "@renproject/interfaces";
 import { SelectMarket } from "@renproject/react-components";
 import { parse } from "qs";
 import Web3 from "web3";
 import { HttpProvider } from "web3-providers";
+
+import { ReactComponent as MetaMaskLogo } from "./metamask.svg";
 
 interface InjectedEthereum extends HttpProvider {
     enable: () => Promise<void>;
@@ -23,6 +25,25 @@ declare global {
 
 
 const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string, token: Token) => {
+
+    // const shiftInParams: LockAndMintParamsSimple = {
+    //     sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+    //     suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
+    //     sendTo: await gatewayJS.getGatewayAddress(web3, "BTC"),
+    //     contractFn: "mint",
+    //     contractParams: [],
+    //     web3Provider: web3.currentProvider,
+    // };
+
+    // const shiftInParams: LockAndMintParamsSimple = {
+    //     sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+    //     suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
+    //     sendTo: "0x5342c1f87f2FaEE6D4666be2Da5f57d0e61Ad90f",
+    //     contractFn: "deposit",
+    //     contractParams: [],
+    //     web3Provider: web3.currentProvider,
+    // };
+
     const shiftInParams: SendParams = {
         web3Provider: await GatewayJS.utils.useBrowserWeb3(),
         sendToken: GatewayJS.Tokens[token].Mint,
@@ -127,6 +148,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
     });
 
     const context = { lib: new Web3(web3.currentProvider) };
+    const contextWeb3 = context.lib as unknown as Web3;
 
     // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
     //     gsn: { signKey: useEphemeralKey() }
@@ -148,7 +170,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
     React.useEffect(() => {
         (async () => {
 
-            recoverTrades(context.lib as unknown as Web3, gatewayJS).catch(console.error);
+            recoverTrades(contextWeb3, gatewayJS).catch(console.error);
         })().catch(console.error);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -180,9 +202,9 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
         setErrorMessage(null);
         try {
             if (isMint) {
-                await startShiftIn(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, setTxHash, network, top);
+                await startShiftIn(contextWeb3, gatewayJS, amount, ethereumAddress, setTxHash, network, top);
             } else {
-                await startShiftOut(context.lib as unknown as Web3, gatewayJS, amount, ethereumAddress, top);
+                await startShiftOut(contextWeb3, gatewayJS, amount, ethereumAddress, top);
             }
         } catch (error) {
             console.error(error);
@@ -191,6 +213,14 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
     }, [network, top, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
 
     const onMarketChange = React.useCallback((token) => { setTop(token as Token); }, [setTop]);
+
+    const useMetaMaskAccount = React.useCallback(async () => {
+        try {
+            setEthereumAddress((await contextWeb3.eth.getAccounts())[0]);
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
 
     return <>
         <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>
@@ -220,6 +250,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
 
             <div className="send">
                 <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder={`Enter ${isTestnet ? "Kovan" : "Ethereum"} (mint) or ${isTestnet ? "Testnet" : ""} Bitcoin (burn) address`} />
+                <div role="button" className="box" onClick={useMetaMaskAccount} style={{ cursor: "pointer" }}><MetaMaskLogo /></div>
             </div>
 
             <div className="send">

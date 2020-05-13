@@ -1,6 +1,5 @@
-import {
-    BurnAndReleaseParams, Chain, LockAndMintParams, NetworkDetails, SendParams,
-} from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { BurnAndReleaseParams, Chain, LockAndMintParams, SendParams } from "@renproject/interfaces";
 
 import { parseRenContract, resolveInToken, resolveOutToken, resolveSendTo } from "./renVMUtils";
 import { utils } from "./utils";
@@ -12,7 +11,7 @@ import { toBigNumber } from "./value";
  * This function checks if this is the case and makes the required changes to
  * the parameters;
  */
-export const resolveSendCall = (network: NetworkDetails, params: SendParams, lockAndMint?: boolean): LockAndMintParams | BurnAndReleaseParams => {
+export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, lockAndMint?: boolean): LockAndMintParams | BurnAndReleaseParams => {
 
     const { sendTo, sendAmount, txConfig, ...restOfParams } = params;
 
@@ -34,7 +33,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams, loc
             ...restOfParams,
             suggestedAmount: sendAmount,
             contractCalls: [{
-                sendTo: network.contracts.addresses.gateways.BasicAdapter.address,
+                sendTo: network.addresses.gateways.BasicAdapter.address,
                 contractFn: "mint",
                 contractParams: [
                     { type: "string", name: "_symbol", value: renContract.asset },
@@ -58,13 +57,13 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams, loc
         //     sendTo: tokenAddress,
         //     contractFn: "approve",
         //     contractParams: [
-        //         { type: "address" as const, name: "spender", value: network.contracts.addresses.gateways.BasicAdapter.address },
+        //         { type: "address" as const, name: "spender", value: network.addresses.gateways.BasicAdapter.address },
         //         { type: "uint256" as const, name: "amount", value: toBigNumber(sendAmount).toFixed() },
         //     ],
         //     txConfig,
         // };
 
-        const gateway: string = network.contracts.addresses.gateways[`${token.toUpperCase()}Gateway`]._address;
+        const gateway: string = network.addresses.gateways[`${token.toUpperCase()}Gateway`]._address;
 
         return {
             ...restOfParams,
@@ -86,7 +85,7 @@ export const resolveSendCall = (network: NetworkDetails, params: SendParams, loc
     }
 };
 
-export const processLockAndMintParams = (_network: NetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
+export const processLockAndMintParams = (_network: RenNetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
     const processors: Array<(params: LockAndMintParams) => LockAndMintParams> = [
         resolveSendTo<LockAndMintParams>({ isMint: true }),
         // resolveContractCall<LockAndMintParams>(_network),
@@ -95,7 +94,7 @@ export const processLockAndMintParams = (_network: NetworkDetails, _params: Lock
     return processors.reduce((params, processor) => processor(params), _params as LockAndMintParams);
 };
 
-export const processBurnAndReleaseParams = (_network: NetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
+export const processBurnAndReleaseParams = (_network: RenNetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
     const processors: Array<(params: BurnAndReleaseParams) => BurnAndReleaseParams> = [
         resolveSendTo<BurnAndReleaseParams>({ isMint: false }),
         // resolveContractCall<BurnAndReleaseParams>(_network),

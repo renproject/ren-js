@@ -1,4 +1,5 @@
-import { Chain, NetworkDetails } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { Chain } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { isMainnetAddress, isTestnetAddress } from "bchaddrjs";
 import { Map } from "immutable";
@@ -38,5 +39,5 @@ interface TokenDetails {
 }
 
 /// Initialize Web3 and contracts
-export const getERC20 = (web3: Web3, networkDetails: NetworkDetails, tokenAddress: string): ERC20Detailed =>
-    new (web3.eth.Contract)(networkDetails.contracts.addresses.erc.ERC20.abi, tokenAddress);
+export const getERC20 = (web3: Web3, networkDetails: RenNetworkDetails, tokenAddress: string): ERC20Detailed =>
+    new (web3.eth.Contract)(networkDetails.addresses.erc.ERC20.abi, tokenAddress);

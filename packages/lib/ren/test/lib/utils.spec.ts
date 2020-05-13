@@ -2,9 +2,9 @@
 
 import { EthArgs, Tokens } from "@renproject/interfaces";
 import {
-    BURN_TOPIC, generateAddress, generateGHash, generatePHash, NetworkChaosnet, NetworkDevnet,
-    NetworkLocalnet, NetworkTestnet, strip0x,
+    BURN_TOPIC, generateAddress, generateGHash, generatePHash, strip0x,
 } from "@renproject/utils";
+import { chaosnet, devnet, localnet, testnet } from "@renproject/contracts";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
@@ -44,10 +44,10 @@ describe("Utils", function () {
 
     const testcases = [
         // { name: "mainnet", network: NetworkMainnet, expectedHash: "", expectedAddress: "" },
-        { name: "chaosnet", network: NetworkChaosnet, expectedHash: "0x94e6111ba16ef879b33de88e4a8f98f11211721983dde525d9922e7ac33dc64a", expectedAddress: "36PoEz39mnYmWC3WGdiFyKAmCtRTTunzs3" },
-        { name: "testnet", network: NetworkTestnet, expectedHash: "0xd63c52983659035b6d092dfa5c1eee81b968caf8d97d90a3b58ed61dedcd59a3", expectedAddress: "2Mtc7uY9qrsfuP1WpPLzLNc9nR4DXvs5icg" },
-        { name: "devnet", network: NetworkDevnet, expectedHash: "0x4793980dbae1228bbd5df742b892a348006fd4dc3553e4b3afa94c4629b2ba7a", expectedAddress: "2NE1UpF7AatbiiuJDhruSCN3RfcDbdPnPyd" },
-        { name: "localnet", network: NetworkLocalnet, expectedHash: "0x685725b3d6d11d846be676b26f9357543e6d18044e6b09ca2b3af0f96e5e8d2b", expectedAddress: "2N3NC9ERzWj6sY49z6LZM1TLGj9bzvke8Ma" },
+        { name: "chaosnet", network: chaosnet, expectedHash: "0x94e6111ba16ef879b33de88e4a8f98f11211721983dde525d9922e7ac33dc64a", expectedAddress: "36PoEz39mnYmWC3WGdiFyKAmCtRTTunzs3" },
+        { name: "testnet", network: testnet, expectedHash: "0xd63c52983659035b6d092dfa5c1eee81b968caf8d97d90a3b58ed61dedcd59a3", expectedAddress: "2Mtc7uY9qrsfuP1WpPLzLNc9nR4DXvs5icg" },
+        { name: "devnet", network: devnet, expectedHash: "0x4793980dbae1228bbd5df742b892a348006fd4dc3553e4b3afa94c4629b2ba7a", expectedAddress: "2NE1UpF7AatbiiuJDhruSCN3RfcDbdPnPyd" },
+        { name: "localnet", network: localnet, expectedHash: "0x685725b3d6d11d846be676b26f9357543e6d18044e6b09ca2b3af0f96e5e8d2b", expectedAddress: "2N3NC9ERzWj6sY49z6LZM1TLGj9bzvke8Ma" },
     ];
 
     for (const testcase of testcases) {

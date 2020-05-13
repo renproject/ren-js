@@ -1,11 +1,12 @@
 // tslint:disable: no-console
 
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
     BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
     GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
-    LockAndMintParamsSimple, LockAndMintStatus, NetworkDetails, RenContract, RenNetwork, RenTokens,
-    SendParams, Tokens, TransferParams, UnmarshalledTx,
+    LockAndMintParamsSimple, LockAndMintStatus, RenContract, RenNetwork, RenTokens, SendParams,
+    Tokens, TransferParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
     extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
@@ -44,10 +45,10 @@ export class Gateway {
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
-    private readonly network: NetworkDetails;
+    private readonly network: RenNetworkDetails;
     private readonly endpoint: string;
 
-    constructor(network: NetworkDetails, endpoint: string) {
+    constructor(network: RenNetworkDetails, endpoint: string) {
         this.network = network;
         this.endpoint = endpoint;
         this.id = randomBytes(8);
@@ -506,7 +507,7 @@ export default class GatewayJS {
     public static readonly BurnAndReleaseStatus = BurnAndReleaseStatus;
     public static readonly utils: ((typeof utils) & { useBrowserWeb3: typeof useBrowserWeb3 }) = { ...utils, useBrowserWeb3 };
 
-    private readonly network: NetworkDetails;
+    private readonly network: RenNetworkDetails;
     private readonly endpoint: string;
     // tslint:disable-next-line: readonly-keyword
     constructor(network: RenNetwork | string, options?: { endpoint?: string }) {

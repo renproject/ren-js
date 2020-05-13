@@ -216,8 +216,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         //     // const πAddresses = web3.eth.getAccounts();
 
         //     // const networkID = await πNetworkID;
-        //     const expectedNetworkID = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.networkID;
-        //     const expectedNetwork = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.contracts.chainLabel;
+        //     const expectedNetworkID = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.networkID;
+        //     const expectedNetwork = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.chainLabel;
         //     if (networkID !== expectedNetworkID) {
         //         await uiContainer.setState({ wrongNetwork: networkID, expectedNetwork });
         //         return;

@@ -3,7 +3,8 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { EthArgs, NetworkDetails, RenContract, RenNetwork, Tokens } from "@renproject/interfaces";
+import { EthArgs, RenContract, RenNetwork, Tokens } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
 import { Ox, parseRenContract, retryNTimes, sleep, stringToNetwork } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -54,7 +55,7 @@ describe("Cross chain transactions", function () {
 
     let provider: HDWalletProvider;
     let web3: Web3;
-    let network: NetworkDetails;
+    let network: RenNetworkDetails;
     let renJS: RenJS;
     let accounts: string[];
 
@@ -269,17 +270,17 @@ describe("Cross chain transactions", function () {
                 const testcase = testcaseFn.fn();
 
                 // const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-                const adapterContract = network.contracts.addresses.gateways.BasicAdapter.address;
+                const adapterContract = network.addresses.gateways.BasicAdapter.address;
                 const amount = Math.floor(0.0003 * (10 ** 8));
                 const ethAddress = accounts[0];
-                const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
+                const account = new CryptoAccount(PRIVATE_KEY, { network: network.chain });
                 const srcAddress = await account.address(testcase.token);
-                const registryABI = network.contracts.addresses.gateways.GatewayRegistry.abi;
-                const registryAddress = network.contracts.addresses.gateways.GatewayRegistry.address;
+                const registryABI = network.addresses.gateways.GatewayRegistry.abi;
+                const registryAddress = network.addresses.gateways.GatewayRegistry.address;
                 const gatewayRegistry = new web3.eth.Contract(registryABI, registryAddress);
                 const gatewayContract = await gatewayRegistry.methods.getGatewayBySymbol(testcase.renToken).call();
                 const renTokenAddress = await gatewayRegistry.methods.getTokenBySymbol(testcase.renToken).call();
-                const erc20Contract = new web3.eth.Contract(network.contracts.addresses.erc.ERC20.abi, renTokenAddress);
+                const erc20Contract = new web3.eth.Contract(network.addresses.erc.ERC20.abi, renTokenAddress);
 
                 // Test minting.
                 logger.consoleLine();
@@ -293,7 +294,7 @@ describe("Cross chain transactions", function () {
                     adapterContract,
                     amount,
                     ethAddress,
-                    network.contracts.version,
+                    network.version,
                     submitIndividual,
                     nonce,
                 );
@@ -314,7 +315,7 @@ describe("Cross chain transactions", function () {
                 logger.consoleLine();
                 logger.info("Starting burn test:");
                 const initialBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
-                await burnTest(testcase.token, testcase.burnToken, erc20Contract, gatewayContract, adapterContract, burnValue, ethAddress, srcAddress, network.contracts.version);
+                await burnTest(testcase.token, testcase.burnToken, erc20Contract, gatewayContract, adapterContract, burnValue, ethAddress, srcAddress, network.version);
                 // tslint:disable-next-line: no-string-based-set-timeout
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
                 const finalBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
@@ -336,13 +337,13 @@ describe("Cross chain transactions", function () {
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const amount = 0.000225 * (10 ** 8);
                 const ethAddress = accounts[0];
-                const registryABI = network.contracts.addresses.gateways.GatewayRegistry.abi;
-                const registryAddress = network.contracts.addresses.gateways.GatewayRegistry.address;
+                const registryABI = network.addresses.gateways.GatewayRegistry.abi;
+                const registryAddress = network.addresses.gateways.GatewayRegistry.address;
                 const gatewayRegistry = new web3.eth.Contract(registryABI, registryAddress);
                 const gatewayContract = await gatewayRegistry.methods.getGatewayBySymbol(testcase.renToken).call();
                 const renTokenAddress = await gatewayRegistry.methods.getTokenBySymbol(testcase.renToken).call();
 
-                const account = new CryptoAccount(PRIVATE_KEY, { network: network.ethNetwork });
+                const account = new CryptoAccount(PRIVATE_KEY, { network: network.chain });
 
                 logger.consoleLine();
                 logger.info("Starting mint test:");
@@ -354,7 +355,7 @@ describe("Cross chain transactions", function () {
                     adapterContract,
                     amount,
                     ethAddress,
-                    network.contracts.version,
+                    network.version,
                     submitTogether,
                 );
                 const finalERC20Balance = await account.getBalanceInSats<BigNumber>({ type: "ERC20", address: renTokenAddress }, { address: ethAddress, bn: BigNumber });
@@ -493,7 +494,7 @@ describe("Cross chain transactions", function () {
             const { asset: token } = parseRenContract(contract);
             const amount = RenJS.utils.value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
-            const adapterContract = network.contracts.addresses.gateways.BasicAdapter.address;
+            const adapterContract = network.addresses.gateways.BasicAdapter.address;
 
             const mint = renJS.lockAndMint({
                 web3Provider: web3.currentProvider,

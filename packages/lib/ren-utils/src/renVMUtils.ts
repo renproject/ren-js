@@ -1,6 +1,7 @@
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, NetworkDetails, RenContract,
-    RenTokens, UnmarshalledMintTx, UTXOIndex,
+    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, RenContract, RenTokens,
+    UnmarshalledMintTx, UTXOIndex,
 } from "@renproject/interfaces";
 import BN from "bn.js";
 import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
@@ -28,10 +29,10 @@ export const generatePHash = (...zip: EthArgs | [EthArgs]): string => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
     const args = Array.isArray(zip) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
 
-    // If the payload is empty, use 0x0
-    if (args.length === 0) {
-        return NULL(32);
-    }
+    // // If the payload is empty, use 0x0
+    // if (args.length === 0) {
+    //     return NULL(32);
+    // }
 
     const [types, values] = unzip(args);
 
@@ -77,20 +78,20 @@ export const getTokenName = (tokenOrContract: RenTokens | RenContract | Asset | 
     }
 };
 
-export const syncGetTokenAddress = (renContract: RenContract, network: NetworkDetails): string => {
+export const syncGetTokenAddress = (renContract: RenContract, network: RenNetworkDetails): string => {
     switch (parseRenContract(renContract).asset) {
         case Asset.BTC:
-            return network.contracts.addresses.gateways.RenBTC._address;
+            return network.addresses.gateways.RenBTC._address;
         case Asset.ZEC:
-            return network.contracts.addresses.gateways.RenZEC._address;
+            return network.addresses.gateways.RenZEC._address;
         case Asset.BCH:
-            return network.contracts.addresses.gateways.RenBCH._address;
+            return network.addresses.gateways.RenBCH._address;
         default:
             throw new Error(`Invalid Ren Contract ${renContract}`);
     }
 };
 
-export const generateGHash = (payload: EthArgs, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: NetworkDetails): string => {
+export const generateGHash = (payload: EthArgs, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: RenNetworkDetails): string => {
     const token = syncGetTokenAddress(renContract, network);
     const pHash = generatePHash(payload);
 
@@ -102,7 +103,7 @@ export const generateGHash = (payload: EthArgs, /* amount: number | string, */ t
     return Ox(keccak256(encoded));
 };
 
-export const generateSighash = (pHash: string, amount: number | string, to: string, renContract: RenContract, nonceHash: string, network: NetworkDetails): string => {
+export const generateSighash = (pHash: string, amount: number | string, to: string, renContract: RenContract, nonceHash: string, network: RenNetworkDetails): string => {
     const token = syncGetTokenAddress(renContract, network);
 
     const encoded = rawEncode(
@@ -149,7 +150,7 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
 const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetails): Signature => {
+export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDetails): Signature => {
     if (!response.out) {
         throw new Error(`Expected transaction response to have signature`);
     }
@@ -173,35 +174,37 @@ export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetai
         v = switchV(v);
     }
 
-    // Currently, the wrong `v` value may be returned from RenVM. We recover the
-    // address to see if we need to switch `v`. This can be removed once RenVM
-    // has been updated.
-    const recovered = {
-        [v]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.autogen.sighash), "hex"),
-            v,
-            Buffer.from(strip0x(r), "hex"),
-            s.toArrayLike(Buffer, "be", 32),
-        )),
+    // TODO: Fix code below to check against proper mintAuthority
 
-        [switchV(v)]: pubToAddress(ecrecover(
-            Buffer.from(strip0x(response.autogen.sighash), "hex"),
-            switchV(v),
-            Buffer.from(strip0x(r), "hex"),
-            s.toArrayLike(Buffer, "be", 32),
-        )),
-    };
+    // // Currently, the wrong `v` value may be returned from RenVM. We recover the
+    // // address to see if we need to switch `v`. This can be removed once RenVM
+    // // has been updated.
+    // const recovered = {
+    //     [v]: pubToAddress(ecrecover(
+    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         v,
+    //         Buffer.from(strip0x(r), "hex"),
+    //         s.toArrayLike(Buffer, "be", 32),
+    //     )),
 
-    const expected = Buffer.from(strip0x(network.contracts.renVM.mintAuthority), "hex");
-    if (recovered[v].equals(expected)) {
-        // Do nothing
-    } else if (recovered[switchV(v)].equals(expected)) {
-        // tslint:disable-next-line: no-console
-        console.info("[info][ren-js] switching v value");
-        v = switchV(v);
-    } else {
-        throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
-    }
+    //     [switchV(v)]: pubToAddress(ecrecover(
+    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         switchV(v),
+    //         Buffer.from(strip0x(r), "hex"),
+    //         s.toArrayLike(Buffer, "be", 32),
+    //     )),
+    // };
+
+    // const expected = Buffer.from(strip0x(.network.renVM.mintAuthority), "hex");
+    // if (recovered[v].equals(expected)) {
+    //     // Do nothing
+    // } else if (recovered[switchV(v)].equals(expected)) {
+    //     // tslint:disable-next-line: no-console
+    //     console.info("[info][ren-js] switching v value");
+    //     v = switchV(v);
+    // } else {
+    //     throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
+    // }
 
     const signature: Signature = {
         r,
@@ -212,9 +215,9 @@ export const fixSignature = (response: UnmarshalledMintTx, network: NetworkDetai
     return signature;
 };
 
-export const getTokenAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+export const getTokenAddress = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
-        const registry = new web3.eth.Contract(network.contracts.addresses.gateways.GatewayRegistry.abi, network.contracts.addresses.gateways.GatewayRegistry.address);
+        const registry = new web3.eth.Contract(network.addresses.gateways.GatewayRegistry.abi, network.addresses.gateways.GatewayRegistry.address);
         return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();
     } catch (error) {
         (error || {}).error = `Error looking up ${tokenOrContract} token address: ${error.message}`;
@@ -222,9 +225,9 @@ export const getTokenAddress = async (network: NetworkDetails, web3: Web3, token
     }
 };
 
-export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+export const getGatewayAddress = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
     try {
-        const registry = new web3.eth.Contract(network.contracts.addresses.gateways.GatewayRegistry.abi, network.contracts.addresses.gateways.GatewayRegistry.address);
+        const registry = new web3.eth.Contract(network.addresses.gateways.GatewayRegistry.abi, network.addresses.gateways.GatewayRegistry.address);
         return await registry.methods.getGatewayBySymbol(getTokenName(tokenOrContract)).call();
     } catch (error) {
         (error || {}).error = `Error looking up ${tokenOrContract}Gateway address: ${error.message}`;
@@ -232,11 +235,11 @@ export const getGatewayAddress = async (network: NetworkDetails, web3: Web3, tok
     }
 };
 
-export const findTransactionBySigHash = async (network: NetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"), sigHash: string): Promise<string | undefined> => {
+export const findTransactionBySigHash = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"), sigHash: string): Promise<string | undefined> => {
     try {
         const gatewayAddress = await getGatewayAddress(network, web3, tokenOrContract);
         const gatewayContract = new web3.eth.Contract(
-            network.contracts.addresses.gateways.BTCGateway.abi,
+            network.addresses.gateways.BTCGateway.abi,
             gatewayAddress,
         );
         // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case

@@ -1,14 +1,14 @@
 import _BN from "bn.js";
 
+import { chaosnet, mainnet, RenNetworkDetails, testnet } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
-    LockAndMintParamsSimple, NetworkDetails, RenContract, RenNetwork, RenTokens, SendParams, Tokens,
+    LockAndMintParamsSimple, RenContract, RenNetwork, RenTokens, SendParams, Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, NetworkChaosnet, NetworkTestnet, resolveSendCall,
-    stringToNetwork, utils,
+    getGatewayAddress, getTokenAddress, resolveSendCall, stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
@@ -16,8 +16,9 @@ import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
 
 const NetworkDetails = {
-    NetworkChaosnet,
-    NetworkTestnet,
+    NetworkMainnet: mainnet,
+    NetworkChaosnet: chaosnet,
+    NetworkTestnet: testnet,
     stringToNetwork,
 };
 
@@ -56,14 +57,14 @@ export default class RenJS {
     // Not static
     public readonly utils: typeof utils = utils;
     public readonly renVM: RenVMProvider;
-    public readonly network: NetworkDetails;
+    public readonly network: RenNetworkDetails;
 
     /**
      * Takes a Network object that contains relevant addresses.
      * @param network One of "mainnet" (or empty), "testnet" or a custom
      *                Network object.
      */
-    constructor(network?: NetworkDetails | string | null | undefined, provider?: string | Provider) {
+    constructor(network?: RenNetworkDetails | string | null | undefined, provider?: string | Provider) {
         this.network = stringToNetwork(network);
 
         // Use provided provider, provider URL or default lightnode URL.
@@ -72,7 +73,7 @@ export default class RenJS {
             new MultiProvider<RenVMParams, RenVMResponses>(
                 provider ?
                     [provider] :
-                    this.network.nodeURLs
+                    [this.network.lightnode]
             )
         ) as unknown as Provider<RenVMParams, RenVMResponses>;
 

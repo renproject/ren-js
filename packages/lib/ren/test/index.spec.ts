@@ -1,5 +1,5 @@
 import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
-import { NetworkChaosnet, NetworkDevnet, NetworkMainnet, NetworkTestnet } from "@renproject/utils";
+import { chaosnet, devnet, mainnet, testnet } from "@renproject/contracts";
 import chai from "chai";
 import Web3 from "web3";
 
@@ -11,21 +11,25 @@ require("dotenv").config();
 
 describe("RenJS initialization and exports", () => {
     it("should be able to pass in different networks", async () => {
-        (() => new RenJS()).should.throw(/Mainnet is not supported yet/);
-        (() => new RenJS("mainnet")).should.throw(/Mainnet is not supported yet/);
+        new RenJS()
+            .should.be.an.instanceOf(RenJS);
+        new RenJS().network.name
+            .should.equal("mainnet");
+        new RenJS("mainnet")
+            .should.be.an.instanceOf(RenJS);
         new RenJS("chaosnet")
             .should.be.an.instanceOf(RenJS);
         new RenJS("testnet")
             .should.be.an.instanceOf(RenJS);
         new RenJS("devnet")
             .should.be.an.instanceOf(RenJS);
-        new RenJS(NetworkMainnet)
+        new RenJS(mainnet)
             .should.be.an.instanceOf(RenJS);
-        new RenJS(NetworkChaosnet)
+        new RenJS(chaosnet)
             .should.be.an.instanceOf(RenJS);
-        new RenJS(NetworkTestnet)
+        new RenJS(testnet)
             .should.be.an.instanceOf(RenJS);
-        new RenJS(NetworkDevnet)
+        new RenJS(devnet)
             .should.be.an.instanceOf(RenJS);
         (() => new RenJS("fake-network")).should.throw(/Unsupported network "fake-network"/);
     });
@@ -103,15 +107,15 @@ describe("RenJS initialization and exports", () => {
         it(`get token and gateway addresses for ${network}`, async () => {
             const renJS = new RenJS(network);
 
-            const infuraURL = `${renJS.network.contracts.infura}/v3/${process.env.INFURA_KEY}`;
+            const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
             const web3 = new Web3(infuraURL);
 
             for (const asset of ["BTC", "ZEC", "BCH"] as const) { // Without const, defaults to string[]
                 (await renJS.getTokenAddress(web3, asset))
-                    .should.equal(renJS.network.contracts.addresses.gateways[`Ren${asset}`]._address);
+                    .should.equal(renJS.network.addresses.gateways[`Ren${asset}`]._address);
 
                 (await renJS.getGatewayAddress(web3, asset))
-                    .should.equal(renJS.network.contracts.addresses.gateways[`${asset}Gateway`]._address);
+                    .should.equal(renJS.network.addresses.gateways[`${asset}Gateway`]._address);
             }
         });
     }

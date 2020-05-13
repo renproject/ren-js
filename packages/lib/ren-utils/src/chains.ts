@@ -4,8 +4,9 @@ import {
     getBitcoinConfirmations, getBitcoinUTXOs, getZcashConfirmations, getZcashUTXOs, zecAddressFrom,
     zecAddressToHex,
 } from "@renproject/chains";
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Chain, NetworkDetails, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOWithChain,
+    Chain, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOWithChain,
 } from "@renproject/interfaces";
 import { ripemd160, sha256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
@@ -48,7 +49,7 @@ export const generateAddress = (renContract: RenContract, gHash: string, mpkh: B
  * An optional `confirmations` parameter limits UTXOs to ones with at least that
  * amount of confirmations.
  */
-export const retrieveDeposits = async (_network: NetworkDetails, renContract: RenContract, address: string, confirmations = 0): Promise<UTXOWithChain[]> => {
+export const retrieveDeposits = async (_network: RenNetworkDetails, renContract: RenContract, address: string, confirmations = 0): Promise<UTXOWithChain[]> => {
     const chain = parseRenContract(renContract).from;
     switch (chain) {
         case Chain.Bitcoin:
@@ -66,7 +67,7 @@ export const retrieveDeposits = async (_network: NetworkDetails, renContract: Re
 /**
  * Returns the number of confirmations for the specified UTXO.
  */
-export const retrieveConfirmations = async (_network: NetworkDetails, transaction: Tx): Promise<number> => {
+export const retrieveConfirmations = async (_network: RenNetworkDetails, transaction: Tx): Promise<number> => {
     // tslint:disable-next-line: no-any
     const txid = transaction.chain === Chain.Ethereum ? 0 : transaction.utxo ? transaction.utxo.txHash : (transaction as any).hash;
     if (!txid) {

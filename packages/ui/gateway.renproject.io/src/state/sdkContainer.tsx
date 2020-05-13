@@ -1,7 +1,8 @@
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
     GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintStatus,
-    NetworkDetails, RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
+    RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
@@ -25,7 +26,7 @@ const initialState = {
     transfer: null as HistoryEvent | null,
 };
 
-export const numberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: NetworkDetails | undefined) =>
+export const numberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: RenNetworkDetails | undefined) =>
     (parseRenContract(resolveInToken(renContract)).asset === Asset.ZEC ? 6 : 2) /
     // Confirmations are halved on devnet
     (networkDetails && networkDetails.name === "devnet" ? 2 : 1);

@@ -1,6 +1,6 @@
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Chain, LockAndMintParams, NetworkDetails, TxStatus, UnmarshalledMintTx, UTXOIndex,
-    UTXOWithChain,
+    Chain, LockAndMintParams, TxStatus, UnmarshalledMintTx, UTXOIndex, UTXOWithChain,
 } from "@renproject/interfaces";
 import { RenVMProvider, ResponseQueryMintTx, unmarshalMintTx } from "@renproject/rpc";
 import {
@@ -20,14 +20,14 @@ export class LockAndMint {
     public utxo: UTXOIndex | undefined;
     public signature: string | undefined;
     private generatedGatewayAddress: string | undefined;
-    private readonly network: NetworkDetails;
+    private readonly network: RenNetworkDetails;
     private readonly renVM: RenVMProvider;
     private readonly params: LockAndMintParams;
     private renVMResponse: UnmarshalledMintTx | undefined;
 
     public thirdPartyTransaction: string | undefined;
 
-    constructor(_renVM: RenVMProvider, _network: NetworkDetails, _params: LockAndMintParams) {
+    constructor(_renVM: RenVMProvider, _network: RenNetworkDetails, _params: LockAndMintParams) {
         this.network = _network;
         this.renVM = _renVM;
         this.params = processLockAndMintParams(this.network, _params);

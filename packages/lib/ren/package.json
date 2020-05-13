@@ -58,7 +58,7 @@
     },
     "dependencies": {
         "@renproject/chains": "file:../ren-chains",
-        "@renproject/contracts": "^0.5.1",
+        "@renproject/contracts": "^0.6.0",
         "@renproject/interfaces": "file:../ren-interfaces",
         "@renproject/provider": "file:../ren-provider",
         "@renproject/rpc": "file:../ren-rpc",

@@ -1,6 +1,7 @@
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, NetworkDetails,
-    SerializableTransferParams, TransferParams,
+    BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, SerializableTransferParams,
+    TransferParams,
 } from "@renproject/interfaces";
 import { toFixed } from "@renproject/utils";
 
@@ -23,7 +24,7 @@ export const createElementFromHTML = (htmlString: string) => {
     return div.firstChild;
 };
 
-export const resolveEndpoint = (endpointIn: string, network: NetworkDetails, pathIn: string, transferID?: string) => {
+export const resolveEndpoint = (endpointIn: string, network: RenNetworkDetails, pathIn: string, transferID?: string) => {
     // Remove ending '/' from endpoint
     const endpoint = endpointIn.slice(endpointIn.length - 1) === "/" ? endpointIn.slice(0, endpointIn.length - 1) : endpointIn;
     // Remove starting '/' from path

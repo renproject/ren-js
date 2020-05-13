@@ -1,6 +1,5 @@
-import {
-    BurnAndReleaseParams, NetworkDetails, TxStatus, UnmarshalledBurnTx,
-} from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { BurnAndReleaseParams, TxStatus, UnmarshalledBurnTx } from "@renproject/interfaces";
 import { RenVMProvider, ResponseQueryBurnTx, unmarshalBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardWeb3Events, generateBurnTxHash,
@@ -14,9 +13,9 @@ import { TransactionConfig } from "web3-core";
 export class BurnAndRelease {
     private readonly params: BurnAndReleaseParams;
     private readonly renVM: RenVMProvider;
-    private readonly network: NetworkDetails;
+    private readonly network: RenNetworkDetails;
 
-    constructor(_renVM: RenVMProvider, _network: NetworkDetails, _params: BurnAndReleaseParams) {
+    constructor(_renVM: RenVMProvider, _network: RenNetworkDetails, _params: BurnAndReleaseParams) {
         this.renVM = _renVM;
         this.network = _network;
         this.params = processBurnAndReleaseParams(this.network, _params);

@@ -1,6 +1,5 @@
-import {
-    AbiItem, Asset, NetworkDetails, RenContract, RenVMType, TxStatus,
-} from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { AbiItem, Asset, RenContract, RenVMType, TxStatus } from "@renproject/interfaces";
 import { Provider } from "@renproject/provider";
 import {
     getTokenPrices, hash160, normalizeValue, parseRenContract, SECONDS, sleep, strip0x,
@@ -58,7 +57,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
         nonce: string,
         utxoTxHash: string,
         utxoVout: string,
-        network: NetworkDetails,
+        network: RenNetworkDetails,
         fn: string,
         fnABI: AbiItem[],
         encodedParameters: string,

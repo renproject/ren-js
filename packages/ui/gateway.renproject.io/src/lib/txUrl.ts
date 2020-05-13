@@ -1,11 +1,13 @@
-import { NetworkDetails, Tx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { Tx } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 
-export const txUrl = (tx: Tx | null, network: NetworkDetails): string => {
+export const txUrl = (tx: Tx | null, network: RenNetworkDetails): string => {
     if (!tx) { return ""; }
 
     if (tx.chain === RenJS.Chains.Ethereum) {
-        return `${network.contracts.etherscan}/tx/${tx.hash}`;
+        console.log("network", network);
+        return `${network.etherscan}/tx/${tx.hash}`;
     }
 
     const id = tx.utxo ? tx.utxo.txHash : (tx.address || "");

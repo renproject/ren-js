@@ -79,9 +79,6 @@ html {
 
         input {
             flex-grow: 2;
-        }
-
-        >.send>input {
             border-right: 0;
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
@@ -97,6 +94,11 @@ html {
         button {
             border-top-left-radius: 0;
             border-bottom-left-radius: 0;
+        }
+
+        svg {
+            width: 22px;
+            height: 22px;
         }
     }
 

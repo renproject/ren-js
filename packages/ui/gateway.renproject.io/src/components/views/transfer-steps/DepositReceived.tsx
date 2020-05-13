@@ -1,6 +1,7 @@
 import * as React from "react";
 
-import { NetworkDetails, UTXOWithChain } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { UTXOWithChain } from "@renproject/interfaces";
 import { extractError } from "@renproject/utils";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
@@ -33,7 +34,7 @@ interface Props {
     mini: boolean;
     token: Token;
     utxos: OrderedMap<string, UTXOWithChain>;
-    networkDetails: NetworkDetails;
+    networkDetails: RenNetworkDetails;
     confirmations: number;
     waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
     onDeposit(utxo: UTXOWithChain): void;
@@ -79,9 +80,9 @@ export const DepositReceived: React.StatelessComponent<Props> =
             (async () => {
                 try {
                     requestNotificationPermission().catch(console.error);
-                    const beforeDeposit = (new Date()).getDate() / 1000;
+                    const beforeDeposit = (new Date()).getTime() / 1000;
                     await waitForDeposit(onDeposit);
-                    const afterDeposit = (new Date()).getDate() / 1000;
+                    const afterDeposit = (new Date()).getTime() / 1000;
 
                     // Check if waiting for the deposit took longer than 30
                     // seconds. This is to avoid showing a notification if the

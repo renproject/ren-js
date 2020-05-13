@@ -1,6 +1,7 @@
 import * as React from "react";
 
-import { Chain, NetworkDetails, Tx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { Chain, Tx } from "@renproject/interfaces";
 
 import { txUrl } from "../../../lib/txUrl";
 import { Token } from "../../../state/generalTypes";
@@ -28,7 +29,7 @@ export const Complete: React.StatelessComponent<{
     outTx: Tx | null,
     mini: boolean,
     token: Token;
-    networkDetails: NetworkDetails,
+    networkDetails: RenNetworkDetails,
 }> = ({ onDone, pressedDone, mini, inTx, outTx, token, networkDetails }) => {
 
     return mini ?

@@ -2,7 +2,8 @@ import "react-circular-progressbar/dist/styles.css";
 
 import * as React from "react";
 
-import { Chain, NetworkDetails, Tx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { Chain, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
@@ -35,7 +36,7 @@ const TransparentLoading = styled(Loading)`
 export const SubmitBurnToEthereum: React.StatelessComponent<{
     mini: boolean,
     txHash: Tx | null,
-    networkDetails: NetworkDetails,
+    networkDetails: RenNetworkDetails,
     txCount: number,
     submit: (retry?: boolean) => Promise<void>,
 }> = ({ mini, txHash, networkDetails, txCount, submit }) => {
@@ -97,7 +98,7 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
                         Error submitting to Ethereum: {!showFullError && error.length > 70 ? <>{error.slice(0, 70)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
                         {failedTransaction ? <>
                             <br />
-                            See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
+                            See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
                         <br />
                         </> : null}
                     </span> : <span>

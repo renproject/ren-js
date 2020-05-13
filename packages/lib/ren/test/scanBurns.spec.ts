@@ -1,8 +1,8 @@
+import { waitForReceipt } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import chai from "chai";
 import Web3 from "web3";
 import { sha3 } from "web3-utils";
-import { waitForReceipt } from "@renproject/utils";
-import BigNumber from "bignumber.js";
 
 import RenJS from "../src/index";
 
@@ -42,7 +42,7 @@ describe.skip("RenJS initialization and exports", () => {
     it.skip("check burns", async function () {
         this.timeout(10000000000);
         const renJS = new RenJS("testnet");
-        const infuraURL = `${renJS.network.contracts.infura}/v3/${process.env.INFURA_KEY}`;
+        const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
 
         const web3 = new Web3(infuraURL);
 
@@ -87,7 +87,7 @@ describe.skip("RenJS initialization and exports", () => {
     it("check mints", async function () {
         this.timeout(10000000000);
         const renJS = new RenJS("testnet");
-        const infuraURL = `${renJS.network.contracts.infura}/v3/${process.env.INFURA_KEY}`;
+        const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
 
         const web3 = new Web3(infuraURL);
 

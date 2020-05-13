@@ -1,6 +1,7 @@
 import * as React from "react";
 
-import { Chain, LockAndMintEvent, NetworkDetails, Tx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/contracts";
+import { Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
@@ -46,7 +47,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
     transfer: LockAndMintEvent,
     mini: boolean,
     txHash: Tx | null,
-    networkDetails: NetworkDetails,
+    networkDetails: RenNetworkDetails,
     submit: (retry?: boolean) => Promise<void>,
 }> = ({ transfer, mini, txHash, networkDetails, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
@@ -105,7 +106,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
                     Error submitting to Ethereum: {!showFullError && error.length > 100 ? <>{error.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
                     {failedTransaction ? <>
                         <br />
-                        See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.contracts.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
+                        See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
                         <br />
                     </> : null}
                 </div> : null}

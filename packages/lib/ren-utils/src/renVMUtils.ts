@@ -29,11 +29,6 @@ export const generatePHash = (...zip: EthArgs | [EthArgs]): string => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
     const args = Array.isArray(zip) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
 
-    // // If the payload is empty, use 0x0
-    // if (args.length === 0) {
-    //     return NULL(32);
-    // }
-
     const [types, values] = unzip(args);
 
     return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
@@ -215,7 +210,7 @@ export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDe
     return signature;
 };
 
-export const getTokenAddress = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => {
+export const getTokenAddress = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")): Promise<string> => {
     try {
         const registry = new web3.eth.Contract(network.addresses.gateways.GatewayRegistry.abi, network.addresses.gateways.GatewayRegistry.address);
         return await registry.methods.getTokenBySymbol(getTokenName(tokenOrContract)).call();

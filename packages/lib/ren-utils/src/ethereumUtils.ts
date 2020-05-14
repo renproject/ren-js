@@ -63,6 +63,7 @@ export const extractBurnReference = async (web3: Web3, txHash: string): Promise<
     return burnReference;
 };
 
+export const defaultAccountError = "No accounts found in Web3 wallet.";
 export const withDefaultAccount = async (web3: Web3, config: TransactionConfig): Promise<TransactionConfig> => {
     if (!config.from) {
         if (web3.eth.defaultAccount) {
@@ -70,7 +71,7 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
         } else {
             const accounts = await web3.eth.getAccounts();
             if (accounts.length === 0) {
-                throw new Error("Must provide a 'from' address in the transaction config.");
+                throw new Error(defaultAccountError);
             }
             config.from = accounts[0];
         }

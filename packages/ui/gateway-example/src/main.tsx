@@ -3,8 +3,10 @@
 import * as React from "react";
 
 import GatewayJS from "@renproject/gateway";
-import { LockAndMintParams, LockAndMintParamsSimple, SendParams } from "@renproject/interfaces";
+import { LockAndMintParamsSimple, SendParams } from "@renproject/interfaces";
 import { SelectMarket } from "@renproject/react-components";
+import { stringToNetwork } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import { parse } from "qs";
 import Web3 from "web3";
 import { HttpProvider } from "web3-providers";
@@ -35,21 +37,21 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     //     web3Provider: web3.currentProvider,
     // };
 
-    // const shiftInParams: LockAndMintParamsSimple = {
-    //     sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
-    //     suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
-    //     sendTo: "0x5342c1f87f2FaEE6D4666be2Da5f57d0e61Ad90f",
-    //     contractFn: "deposit",
-    //     contractParams: [],
-    //     web3Provider: web3.currentProvider,
-    // };
-
-    const shiftInParams: SendParams = {
-        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
-        sendToken: GatewayJS.Tokens[token].Mint,
-        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
-        sendTo: ethereumAddress,
+    const shiftInParams: LockAndMintParamsSimple = {
+        sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+        suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
+        sendTo: "0xE2cAd8EF34E8db287e8daF0eDd169CC9f89E2797",
+        contractFn: "deposit",
+        contractParams: [],
+        web3Provider: web3.currentProvider,
     };
+
+    // const shiftInParams: SendParams = {
+    //     web3Provider: await GatewayJS.utils.useBrowserWeb3(),
+    //     sendToken: GatewayJS.Tokens[token].Mint,
+    //     sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+    //     sendTo: ethereumAddress,
+    // };
 
     // if (shiftInParams.confirmations === 0) {
     //     setTxHash(null);
@@ -138,8 +140,8 @@ export const Tokens = new Map<Token, { symbol: Token; name: string }>()
     .set("BCH", { symbol: "BCH", name: "Bitcoin Cash" });
 
 
-export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
-    const [top, setTop] = React.useState<Token>("BTC");
+export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
+    const [token, setToken] = React.useState<Token>("BTC");
 
     React.useEffect(() => {
         if (window.ethereum) {
@@ -147,7 +149,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
         }
     });
 
-    const context = { lib: new Web3(web3.currentProvider) };
+    const context = { lib: new Web3(injectedWeb3.currentProvider) };
     const contextWeb3 = context.lib as unknown as Web3;
 
     // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
@@ -199,20 +201,24 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
             setErrorMessage("Please enter a valid amount.");
             return;
         }
+        if (new BigNumber(amount).lte(0.00005)) {
+            setErrorMessage("Amount must be greater than 0.00005");
+            return;
+        }
         setErrorMessage(null);
         try {
             if (isMint) {
-                await startShiftIn(contextWeb3, gatewayJS, amount, ethereumAddress, setTxHash, network, top);
+                await startShiftIn(contextWeb3, gatewayJS, amount, ethereumAddress, setTxHash, network, token);
             } else {
-                await startShiftOut(contextWeb3, gatewayJS, amount, ethereumAddress, top);
+                await startShiftOut(contextWeb3, gatewayJS, amount, ethereumAddress, token);
             }
         } catch (error) {
             console.error(error);
             setErrorMessage(String(error.message || error.error || JSON.stringify(error)));
         }
-    }, [network, top, context.lib, gatewayJS, amount, ethereumAddress, isMint]);
+    }, [network, token, gatewayJS, amount, ethereumAddress, isMint, contextWeb3]);
 
-    const onMarketChange = React.useCallback((token) => { setTop(token as Token); }, [setTop]);
+    const onMarketChange = React.useCallback((token) => { setToken(token as Token); }, [setToken]);
 
     const useMetaMaskAccount = React.useCallback(async () => {
         try {
@@ -220,11 +226,27 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
         } catch (error) {
             console.error(error);
         }
-    }, []);
+    }, [contextWeb3, setEthereumAddress]);
+
+    const [gettingMaxValue, setGettingMaxValue] = React.useState(false);
+    const burnMaximumValue = React.useCallback(async () => {
+        setGettingMaxValue(true);
+        try {
+            const web3Address = (await contextWeb3.eth.getAccounts())[0];
+            const tokenAddress = await gatewayJS.getTokenAddress(contextWeb3, token);
+            const tokenContract = new contextWeb3.eth.Contract(stringToNetwork(network).addresses.erc.ERC20.abi, tokenAddress);
+            const decimals = await tokenContract.methods.decimals().call();
+            const balance = await tokenContract.methods.balanceOf(web3Address).call();
+            setAmount(new BigNumber(balance).div(new BigNumber(10).exponentiatedBy(new BigNumber(decimals).toNumber())).toFixed());
+        } catch (error) {
+            console.error(error);
+        }
+        setGettingMaxValue(false);
+    }, [contextWeb3, setAmount, gatewayJS, setGettingMaxValue, network, token]);
 
     return <>
         <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>
-            <p className="box">Send {isTestnet ? "Testnet" : ""} {top} to/from an Ethereum address{isTestnet ? <> (Kovan)</> : <></>}.</p>
+            <p className="box">Send {isTestnet ? "Testnet" : ""} {token} to/from an Ethereum address{isTestnet ? <> (Kovan)</> : <></>}.</p>
             <style>{`
             .Select--currency__control {
                 border-radius: 4px !important;
@@ -240,7 +262,7 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
             `}</style>
             <SelectMarket
                 top
-                thisToken={top}
+                thisToken={token}
                 otherToken={""}
                 allTokens={Tokens}
                 key={"top"}
@@ -250,12 +272,13 @@ export const GatewayExample = ({ web3 }: { web3: Web3 }) => {
 
             <div className="send">
                 <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder={`Enter ${isTestnet ? "Kovan" : "Ethereum"} (mint) or ${isTestnet ? "Testnet" : ""} Bitcoin (burn) address`} />
-                <div role="button" className="box" onClick={useMetaMaskAccount} style={{ cursor: "pointer" }}><MetaMaskLogo /></div>
+                <div role="button" className="box box-action" onClick={useMetaMaskAccount}><MetaMaskLogo /></div>
             </div>
 
             <div className="send">
                 <div className="send">
                     <input value={amount} onChange={(e) => { setAmount(e.target.value); }} placeholder="Amount" />
+                    {!isPending && !isMint ? <div role="button" className={`box box-action box-blue ${gettingMaxValue ? "disabled" : ""}`} onClick={gettingMaxValue ? undefined : burnMaximumValue}>max</div> : <></>}
                     <div className="box">BTC</div>
                 </div>
                 <button disabled={txHash === null} type="submit" className={`blue ${!amount || /* !validAddress */ false ? "disabled" : ""}`}>{isPending ? "Mint or burn" : isMint ? "Mint" : "Burn"}</button>

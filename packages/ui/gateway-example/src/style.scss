@@ -1,6 +1,14 @@
+$blue: #006fe8;
+
 html {
     background: #eee;
     min-height: 100vh;
+}
+
+.box-blue {
+    color: $blue;
+    font-family: monospace;
+    font-size: 12px;
 }
 
 .test-background {
@@ -56,9 +64,24 @@ html {
         border: 1px solid #ccc;
         border-radius: 2px;
         padding: 10px;
+        display: flex;
+        align-items: center;
 
         p:last-child {
             margin-bottom: 0;
+        }
+
+        &+.box {
+            padding-left: 0;
+        }
+    }
+
+    .box-action {
+        cursor: pointer;
+
+        &.disabled {
+            opacity: 0.6;
+            cursor: initial;
         }
     }
 
@@ -129,16 +152,16 @@ html {
         border: 1px solid #aaa;
 
         &.blue {
-            background: #006fe8;
+            background: $blue;
             color: white;
-            border: 1px solid darken($color: #006fe8, $amount: 10)
+            border: 1px solid darken($color: $blue, $amount: 10)
         }
 
 
         padding-top: 3px;
 
         &:not(.disabled):active {
-            background: #006fe8;
+            background: $blue;
             color: white;
             font-weight: 900;
         }

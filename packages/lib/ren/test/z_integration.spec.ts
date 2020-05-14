@@ -374,7 +374,7 @@ describe("Cross chain transactions", function () {
             logger.consoleLine();
             logger.info(`Starting mint test`);
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.01, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.000015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const mint = renJS.lockAndMint({
                 web3Provider: web3.currentProvider,
@@ -487,7 +487,7 @@ describe("Cross chain transactions", function () {
     });
 
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("confirmationless", async () => {
+    it.skip("confirmationless", async () => {
         for (const contract of [RenJS.Tokens.BTC.Mint]) {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering transfer`);
@@ -525,5 +525,28 @@ describe("Cross chain transactions", function () {
 
             await submitIndividual(mint);
         }
+    });
+
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    longIt("minting without parameters", async () => {
+        logger.consoleLine();
+        logger.info(`Starting mint test`);
+        const amount = RenJS.utils.value(0.00015, "btc")._smallest();
+
+        const mint = new RenJS("testnet").lockAndMint({
+            sendToken: RenJS.Tokens.BTC.Btc2Eth,
+            sendTo: "0xE2cAd8EF34E8db287e8daF0eDd169CC9f89E2797",
+            contractFn: "deposit",
+            contractParams: [],
+            web3Provider: web3.currentProvider,
+        });
+
+        const gatewayAddress = await mint.gatewayAddress();
+
+        const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
+        logger.info(`BTC balance: ${await account.balanceOf("btc")} ${"btc"} (${await account.address("btc")})`);
+        await account.sendSats(gatewayAddress, amount, "btc");
+
+        await submitIndividual(mint);
     });
 });

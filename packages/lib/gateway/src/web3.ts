@@ -4,12 +4,6 @@ import { errors } from "@renproject/interfaces";
 import Web3 from "web3";
 import { HttpProvider, provider as Web3Provider } from "web3-providers";
 
-export {
-    Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent,
-    LockAndMintStatus, BurnAndReleaseStatus, LockAndMintEvent, BurnAndReleaseEvent,
-} from "@renproject/interfaces";
-
-
 interface InjectedEthereum extends HttpProvider {
     enable: () => Promise<void>;
 }

@@ -207,44 +207,6 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
-        // const login = React.useCallback(async () => {
-        //     const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-        //     const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
-        //     uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
-
-        //     // const πNetworkID = web3.eth.net.getId();
-        //     // const πAddresses = web3.eth.getAccounts();
-
-        //     // const networkID = await πNetworkID;
-        //     const expectedNetworkID = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.networkID;
-        //     const expectedNetwork = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network.chainLabel;
-        //     if (networkID !== expectedNetworkID) {
-        //         await uiContainer.setState({ wrongNetwork: networkID, expectedNetwork });
-        //         return;
-        //     }
-        //     // const addresses = await πAddresses;
-        //     // const address = addresses.length > 0 ? addresses[0] : null;
-
-        //     await Promise.all([
-        //         uiContainer.connect(),
-        //         sdkContainer.connect(urlRenNetwork),
-        //     ]);
-
-        // }, []);
-
-        // useEffect replaces `componentDidMount` and `componentDidUpdate`.
-        // To limit it to running once, we use the initialized hook.
-        // const [initialized, setInitialized] = React.useState(false);
-        // React.useEffect(() => {
-        //     if (!initialized) {
-        //         setInitialized(true);
-
-        //         // Start loops to update prices and balances
-        //         // setInterval(() => uiContainer.lookForLogout(), 1 * 1000);
-        //         // login().catch((error) => { setInitialized(false); _catchInteractionErr_(error, "Error in App: login"); });
-        //     }
-        // }, [initialized, login, uiContainer]);
-
         // If the transfer details haven't loaded after 10 seconds, show an
         // error message and feedback button.
         const feedbackButtonDelay = 10 * 1000;

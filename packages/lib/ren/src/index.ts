@@ -1,6 +1,6 @@
 import _BN from "bn.js";
 
-import { chaosnet, mainnet, RenNetworkDetails, testnet } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
     LockAndMintParamsSimple, RenContract, RenNetwork, RenTokens, SendParams, Tokens,
@@ -8,19 +8,12 @@ import {
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, resolveSendCall, stringToNetwork, utils,
+    getGatewayAddress, getTokenAddress, NetworkDetails, resolveSendCall, stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
-
-const NetworkDetails = {
-    NetworkMainnet: mainnet,
-    NetworkChaosnet: chaosnet,
-    NetworkTestnet: testnet,
-    stringToNetwork,
-};
 
 /**
  * This is the main exported class.

@@ -25,11 +25,6 @@ import {
 import { validateString } from "./validate";
 import { useBrowserWeb3 } from "./web3";
 
-export {
-    Chain, RenNetwork as Network, RenNetwork, Tokens, HistoryEvent,
-    LockAndMintStatus, BurnAndReleaseStatus, LockAndMintEvent, BurnAndReleaseEvent,
-} from "@renproject/interfaces";
-
 export class Gateway {
 
     // tslint:disable: readonly-keyword

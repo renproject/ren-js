@@ -25,3 +25,22 @@ export const stringToNetwork = (network?: RenNetworkDetails | string | null | un
         return network;
     }
 };
+
+export interface NetworkDetails {
+    Mainnet: typeof mainnet;
+    Chaosnet: typeof chaosnet;
+    Testnet: typeof testnet;
+    Devnet: typeof devnet;
+    Localnet: typeof localnet;
+    stringToNetwork: typeof stringToNetwork;
+}
+
+export const NetworkDetails: NetworkDetails = {
+    Mainnet: mainnet,
+    Chaosnet: chaosnet,
+    Testnet: testnet,
+    Devnet: devnet,
+    Localnet: localnet,
+
+    stringToNetwork,
+};

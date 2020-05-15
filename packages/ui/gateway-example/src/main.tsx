@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import GatewayJS from "@renproject/gateway";
-import { LockAndMintParamsSimple, SendParams } from "@renproject/interfaces";
+import { SendParams } from "@renproject/interfaces";
 import { SelectMarket } from "@renproject/react-components";
 import { stringToNetwork } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -37,21 +37,21 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     //     web3Provider: web3.currentProvider,
     // };
 
-    const shiftInParams: LockAndMintParamsSimple = {
-        sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
-        suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
-        sendTo: "0xE2cAd8EF34E8db287e8daF0eDd169CC9f89E2797",
-        contractFn: "deposit",
-        contractParams: [],
-        web3Provider: web3.currentProvider,
-    };
-
-    // const shiftInParams: SendParams = {
-    //     web3Provider: await GatewayJS.utils.useBrowserWeb3(),
-    //     sendToken: GatewayJS.Tokens[token].Mint,
-    //     sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
-    //     sendTo: ethereumAddress,
+    // const shiftInParams: LockAndMintParamsSimple = {
+    //     sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+    //     suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
+    //     sendTo: "0xE2cAd8EF34E8db287e8daF0eDd169CC9f89E2797",
+    //     contractFn: "deposit",
+    //     contractParams: [],
+    //     web3Provider: web3.currentProvider,
     // };
+
+    const shiftInParams: SendParams = {
+        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
+        sendToken: GatewayJS.Tokens[token].Mint,
+        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+        sendTo: ethereumAddress,
+    };
 
     // if (shiftInParams.confirmations === 0) {
     //     setTxHash(null);

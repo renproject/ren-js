@@ -158,7 +158,7 @@ export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDe
 
     const r = response.out.r;
     let s = new BN(strip0x(response.out.s), "hex");
-    let v = ((parseInt(response.out.v || "0", 10) + 27) || 27);
+    let v = ((new BN(strip0x(response.out.v) || "0", "hex").toNumber() + 27) || 27);
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.

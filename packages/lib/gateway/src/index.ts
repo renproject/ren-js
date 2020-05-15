@@ -505,9 +505,11 @@ export default class GatewayJS {
     private readonly network: RenNetworkDetails;
     private readonly endpoint: string;
     // tslint:disable-next-line: readonly-keyword
-    constructor(network: RenNetwork | string, options?: { endpoint?: string }) {
-        const publicNetworks: readonly RenNetwork[] = [RenNetwork.Chaosnet, RenNetwork.Testnet];
-        validateString<RenNetwork>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(RenNetwork) as readonly RenNetwork[]);
+    constructor(network?: RenNetwork | string, options?: { endpoint?: string }) {
+        const publicNetworks: readonly RenNetwork[] = [RenNetwork.Mainnet, RenNetwork.Chaosnet, RenNetwork.Testnet];
+        if (typeof network === "string") {
+            validateString<RenNetwork>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(RenNetwork) as readonly RenNetwork[]);
+        }
         this.network = stringToNetwork(network);
         // NOTE: In a future release, all networks will use the production endpoint.
         this.endpoint = (options && (options.endpoint === "staging" ? GATEWAY_ENDPOINT_STAGING : options.endpoint)) || GATEWAY_ENDPOINT_PRODUCTION;

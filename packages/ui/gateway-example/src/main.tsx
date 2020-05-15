@@ -140,7 +140,7 @@ export const Tokens = new Map<Token, { symbol: Token; name: string }>()
     .set("BCH", { symbol: "BCH", name: "Bitcoin Cash" });
 
 
-export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
+export const GatewayExample = () => {
     const [token, setToken] = React.useState<Token>("BTC");
 
     React.useEffect(() => {
@@ -149,8 +149,8 @@ export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
         }
     });
 
-    const context = { lib: new Web3(injectedWeb3.currentProvider) };
-    const contextWeb3 = context.lib as unknown as Web3;
+    const context = { lib: window.web3 ? new Web3(window.web3.currentProvider) : undefined };
+    const contextWeb3 = context.lib as unknown as Web3 | undefined;
 
     // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
     //     gsn: { signKey: useEphemeralKey() }
@@ -169,8 +169,24 @@ export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ), []);
 
+    const [errorMessage, setErrorMessage] = React.useState(null as string | null);
+
     React.useEffect(() => {
         (async () => {
+
+            if (!contextWeb3) {
+                setErrorMessage("Please use a Web3 browser");
+                return;
+            }
+
+            const networkID = await contextWeb3.eth.net.getId();
+            if (isTestnet && networkID !== 42) {
+                setErrorMessage("Please change your Web3 wallet to Kovan");
+                return;
+            } else if (!isTestnet && networkID !== 1) {
+                setErrorMessage("Please change your Web3 wallet to Mainnet");
+                return;
+            }
 
             recoverTrades(contextWeb3, gatewayJS).catch(console.error);
         })().catch(console.error);
@@ -187,12 +203,14 @@ export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
         return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
     }, [ethereumAddress]);
 
-    const [errorMessage, setErrorMessage] = React.useState(null as string | null);
-
     const [txHash, setTxHash] = React.useState(undefined as undefined | null | string);
 
     const onSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!contextWeb3) {
+            setErrorMessage("Please use a Web3 browser");
+            return;
+        }
         // if (!validAddress) {
         //     setErrorMessage("Please enter a valid Ethereum address.");
         //     return;
@@ -218,9 +236,13 @@ export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
         }
     }, [network, token, gatewayJS, amount, ethereumAddress, isMint, contextWeb3]);
 
-    const onMarketChange = React.useCallback((token) => { setToken(token as Token); }, [setToken]);
+    const onMarketChange = React.useCallback((newToken) => { setToken(newToken as Token); }, [setToken]);
 
     const useMetaMaskAccount = React.useCallback(async () => {
+        if (!contextWeb3) {
+            setErrorMessage("Please use a Web3 browser");
+            return;
+        }
         try {
             setEthereumAddress((await contextWeb3.eth.getAccounts())[0]);
         } catch (error) {
@@ -230,6 +252,10 @@ export const GatewayExample = ({ web3: injectedWeb3 }: { web3: Web3 }) => {
 
     const [gettingMaxValue, setGettingMaxValue] = React.useState(false);
     const burnMaximumValue = React.useCallback(async () => {
+        if (!contextWeb3) {
+            setErrorMessage("Please use a Web3 browser");
+            return;
+        }
         setGettingMaxValue(true);
         try {
             const web3Address = (await contextWeb3.eth.getAccounts())[0];

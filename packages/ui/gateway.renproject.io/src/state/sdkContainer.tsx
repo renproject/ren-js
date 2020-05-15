@@ -32,7 +32,7 @@ export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" 
         case "mainnet":
             switch (asset) {
                 case Asset.BTC: return 6;
-                case Asset.ZEC: return 25;
+                case Asset.ZEC: return 24;
                 case Asset.BCH: return 15;
                 case Asset.ETH: return 30;
             }

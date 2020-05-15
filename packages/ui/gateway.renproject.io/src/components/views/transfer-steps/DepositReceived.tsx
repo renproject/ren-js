@@ -145,11 +145,11 @@ export const DepositReceived: React.StatelessComponent<Props> =
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
                     </div> */}
                                     {confirmations ? <ConfirmationsBlock>
-                                        {confirmations >= 15 ? <ProgressBar
+                                        {confirmations >= 10 ? <ProgressBar
                                             className="confirmation--progress"
                                             style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
                                             items={[
-                                                ...range(Math.floor(confirmations / 2)).map(i => ({ label: String(i * 2 + 1) })),
+                                                ...range(Math.ceil(confirmations / 2)).map(i => ({ label: String(i * 2 + 1) })),
                                                 { label: "✓" }
                                             ]}
                                             progress={utxo.utxo.confirmations / 2}

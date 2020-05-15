@@ -145,16 +145,25 @@ export const DepositReceived: React.StatelessComponent<Props> =
                         <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
                     </div> */}
                                     {confirmations ? <ConfirmationsBlock>
-                                        <ProgressBar
+                                        {confirmations >= 15 ? <ProgressBar
                                             className="confirmation--progress"
                                             style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
                                             items={[
-                                                ...range(confirmations).map(i => ({})),
+                                                ...range(Math.floor(confirmations / 2)).map(i => ({ label: String(i * 2 + 1) })),
                                                 { label: "✓" }
                                             ]}
-                                            progress={utxo.utxo.confirmations}
+                                            progress={utxo.utxo.confirmations / 2}
                                             pulse={true}
-                                        />
+                                        /> : <ProgressBar
+                                                className="confirmation--progress"
+                                                style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
+                                                items={[
+                                                    ...range(confirmations).map(_ => ({})),
+                                                    { label: "✓" }
+                                                ]}
+                                                progress={utxo.utxo.confirmations}
+                                                pulse={true}
+                                            />}
                                         {/* {range(order ? 7 : 1).map(target =>
                                 <ProgressItem target={target + 1} progress={utxo.utxo.confirmations} />
                             )} */}

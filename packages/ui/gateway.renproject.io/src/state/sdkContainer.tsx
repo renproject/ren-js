@@ -26,10 +26,45 @@ const initialState = {
     transfer: null as HistoryEvent | null,
 };
 
-export const numberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: RenNetworkDetails | undefined) =>
-    (parseRenContract(resolveInToken(renContract)).asset === Asset.ZEC ? 6 : 2) /
-    // Confirmations are halved on devnet
-    (networkDetails && networkDetails.name === "devnet" ? 2 : 1);
+export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: RenNetworkDetails): number => {
+    const asset = parseRenContract(resolveInToken(renContract)).asset;
+    switch (networkDetails.name) {
+        case "mainnet":
+            switch (asset) {
+                case Asset.BTC: return 6;
+                case Asset.ZEC: return 25;
+                case Asset.BCH: return 15;
+                case Asset.ETH: return 30;
+            }
+            break;
+        case "chaosnet":
+        case "testnet":
+            switch (asset) {
+                case Asset.BTC: return 2;
+                case Asset.ZEC: return 6;
+                case Asset.BCH: return 2;
+                case Asset.ETH: return 12;
+            }
+            break;
+        case "devnet":
+            switch (asset) {
+                case Asset.BTC: return 1;
+                case Asset.ZEC: return 3;
+                case Asset.BCH: return 1;
+                case Asset.ETH: return 6;
+            }
+            break;
+        case "localnet":
+            switch (asset) {
+                case Asset.BTC: return 0;
+                case Asset.ZEC: return 0;
+                case Asset.BCH: return 0;
+                case Asset.ETH: return 0;
+            }
+            break;
+    }
+    return 0;
+};
 
 /**
  * The SDKContainer is responsible for talking to the RenVM SDK. It stores the
@@ -58,13 +93,14 @@ export class SDKContainer extends Container<typeof initialState> {
 
     public getNumberOfConfirmations = (transfer?: HistoryEvent) => {
         transfer = transfer || this.state.transfer || undefined;
-        if (!transfer) {
+        const renVM = this.state.sdkRenVM;
+        if (!transfer || !renVM) {
             throw new Error("Transfer not set");
         }
         // tslint:disable-next-line: strict-type-predicates
         const confirmations = transfer.eventType === EventType.LockAndMint && transfer.transferParams.confirmations !== null && transfer.transferParams.confirmations !== undefined ?
             transfer.transferParams.confirmations :
-            numberOfConfirmations(transfer.transferParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
+            defaultNumberOfConfirmations(transfer.transferParams.sendToken, renVM.network);
         return confirmations;
     }
 
@@ -357,7 +393,8 @@ export class SDKContainer extends Container<typeof initialState> {
     // Retrieves unspent deposits at the provided address
     public waitForDeposits = async (onDeposit: (utxo: UTXOWithChain) => void) => {
         const transfer = this.state.transfer;
-        if (!transfer) {
+        const renVM = this.state.sdkRenVM;
+        if (!transfer || !renVM) {
             throw new Error("Transfer not set");
         }
         const onTxHash = (txHash: string) => {
@@ -396,8 +433,8 @@ export class SDKContainer extends Container<typeof initialState> {
 
         // If the number of confirmations being waited for are less than RenVM's
         // default, check the transaction's status manually using queryTX.
-        const defaultNumberOfConfirmations = numberOfConfirmations(transfer.transferParams.sendToken, this.state.sdkRenVM ? this.state.sdkRenVM.network : undefined);
-        if (this.getNumberOfConfirmations(transfer) < defaultNumberOfConfirmations) {
+        const defaultConfirmations = defaultNumberOfConfirmations(transfer.transferParams.sendToken, renVM.network);
+        if (this.getNumberOfConfirmations(transfer) < defaultConfirmations) {
 
             // tslint:disable-next-line: no-constant-condition
             while (true) {
@@ -490,6 +527,7 @@ export class SDKContainer extends Container<typeof initialState> {
                 .lockAndMintObject();
 
             let signature: LockAndMint;
+            // tslint:disable-next-line: strict-type-predicates
             if (!transfer.inTx || transfer.inTx.chain === Chain.Ethereum || !transfer.inTx.utxo || transfer.inTx.utxo.vOut === undefined) {
                 transaction = await transaction
                     .wait(0);

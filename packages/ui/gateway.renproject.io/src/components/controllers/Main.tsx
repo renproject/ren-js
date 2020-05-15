@@ -239,11 +239,11 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             <div className="main">
                 {!paused ? <ColoredBanner token={transfer && transfer.transferParams.sendToken} /> : <></>}
                 {!paused && transfer ?
-                    (transfer.status === LockAndMintStatus.Committed || transfer.status === BurnAndReleaseStatus.Committed) ?
-                        <div role="button" className={`container--cancel`} onClick={cancelOnClick}><CancelIcon /></div> :
-                        (transfer.status === LockAndMintStatus.ConfirmedOnEthereum || transfer.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
-                            <></> :
-                            <div role="button" className={`container--cancel`} onClick={pauseOnClick}><MinimizeIcon /></div>
+                    // (transfer.status === LockAndMintStatus.Committed || transfer.status === BurnAndReleaseStatus.Committed) ?
+                    // <div role="button" className={`container--cancel`} onClick={cancelOnClick}><CancelIcon /></div> :
+                    (transfer.status === LockAndMintStatus.ConfirmedOnEthereum || transfer.status === BurnAndReleaseStatus.ReturnedFromRenVM) ?
+                        <></> :
+                        <div role="button" className={`container--cancel`} onClick={pauseOnClick}><MinimizeIcon /></div>
                     :
                     <></>
                 }

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
+import { Asset, LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
 import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
@@ -12,7 +12,6 @@ import styled from "styled-components";
 
 import { ReactComponent as QR } from "../../../images/qr.svg";
 import { pulseAnimation } from "../../../scss/animations";
-import { Token } from "../../../state/generalTypes";
 import { Container } from "../Container";
 import { Mini } from "./Mini";
 import { ShowQRCode } from "./ShowQRCode";
@@ -87,7 +86,7 @@ const ContinueButton = styled.button`
 
 interface Props {
     mini: boolean;
-    token: Token;
+    token: Asset;
     generateAddress: () => Promise<string | undefined>;
     transferParams: LockAndMintEvent["transferParams"];
     utxos: OrderedMap<string, UTXOWithChain>;

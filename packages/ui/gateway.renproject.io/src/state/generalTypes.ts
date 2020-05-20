@@ -1,5 +1,5 @@
 import { RenNetworkDetails } from "@renproject/contracts";
-import { Chain } from "@renproject/interfaces";
+import { Asset, Chain } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { isMainnetAddress, isTestnetAddress } from "bchaddrjs";
 import { Map } from "immutable";
@@ -7,13 +7,6 @@ import { validate } from "wallet-address-validator";
 import Web3 from "web3";
 
 import { ERC20Detailed } from "../lib/contracts/ERC20Detailed";
-
-export enum Token {
-    BTC = "BTC",
-    ETH = "ETH",
-    ZEC = "ZEC",
-    BCH = "BCH",
-}
 
 // const ethValidator = (address: string, isTestnet: boolean) => validate(address, "eth", isTestnet ? "testnet" : "prod");
 const btcValidator = (address: string, isTestnet: boolean) => validate(address, "btc", isTestnet ? "testnet" : "prod");
@@ -26,10 +19,10 @@ const bchValidator = (address: string, isTestnet: boolean) => {
     }
 };
 
-export const Tokens = Map<Token, TokenDetails>()
-    .set(Token.BTC, { name: "Bitcoin", chain: RenJS.Chains.Bitcoin, validator: btcValidator })
-    .set(Token.ZEC, { name: "Zcash", chain: RenJS.Chains.Zcash, validator: zecValidator })
-    .set(Token.BCH, { name: "BitcoinCash", chain: RenJS.Chains.BitcoinCash, validator: bchValidator })
+export const Assets = Map<Asset, TokenDetails>()
+    .set(Asset.BTC, { name: "Bitcoin", chain: RenJS.Chains.Bitcoin, validator: btcValidator })
+    .set(Asset.ZEC, { name: "Zcash", chain: RenJS.Chains.Zcash, validator: zecValidator })
+    .set(Asset.BCH, { name: "BitcoinCash", chain: RenJS.Chains.BitcoinCash, validator: bchValidator })
     ;
 
 interface TokenDetails {

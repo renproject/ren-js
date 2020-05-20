@@ -1,12 +1,12 @@
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
-    GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintStatus,
-    RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
+    GatewayMessageType, HistoryEvent, isAsset, LockAndMintEvent, LockAndMintParams,
+    LockAndMintStatus, RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
-import { parseRenContract, resolveInToken, sleep } from "@renproject/utils";
+import { parseRenContract, resolveInToken, SECONDS, sleep } from "@renproject/utils";
 import { Container } from "unstated";
 
 import { getStorageItem, updateStorageTransfer } from "../components/controllers/Storage";
@@ -14,7 +14,6 @@ import { getStorageItem, updateStorageTransfer } from "../components/controllers
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
 import { compareTransferStatus, compareTxStatus, isFunction, isPromise } from "../lib/utils";
-import { Token } from "./generalTypes";
 import { UIContainer } from "./uiContainer";
 
 const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum });
@@ -26,8 +25,8 @@ const initialState = {
     transfer: null as HistoryEvent | null,
 };
 
-export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract, networkDetails: RenNetworkDetails): number => {
-    const asset = parseRenContract(resolveInToken(renContract)).asset;
+export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract | Asset, networkDetails: RenNetworkDetails): number => {
+    const asset = isAsset(renContract) ? renContract : parseRenContract(resolveInToken(renContract)).asset;
     switch (networkDetails.name) {
         case "mainnet":
             switch (asset) {
@@ -175,13 +174,13 @@ export class SDKContainer extends Container<typeof initialState> {
         await this.setState({ transfer });
     }
 
-    public updateToAddress = async (address: string, token: Token) => {
+    public updateToAddress = async (address: string, token: Asset) => {
         if (!this.state.transfer) {
             return;
         }
 
         const sendToken = (this.state.transfer.transferParams as LockAndMintParams | BurnAndReleaseParams).sendToken;
-        const defaultToken = sendToken && (sendToken.slice(0, 3) as Token);
+        const defaultToken = sendToken && (sendToken.slice(0, 3) as Asset);
         const contractCalls = this.state.transfer.transferParams.contractCalls ? Array.from(this.state.transfer.transferParams.contractCalls).map(contractCall => {
             return (isFunction(contractCall) || isPromise(contractCall)) ? contractCall : contractCall.contractParams && contractCall.contractParams.map(param => {
                 const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
@@ -275,12 +274,41 @@ export class SDKContainer extends Container<typeof initialState> {
                     throw new Error(error);
                 }
             }
-        } else {
-            const { error } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash: transactionHash });
-            if (error) {
-                throw new Error(error);
-            }
         }
+
+        // transactionHash should not be null, but lets TypeScript know that.
+        if (!transactionHash) {
+            throw new Error("Error setting transaction hash.");
+        }
+
+        let ethereumConfirmations = 0;
+        const confirmationsRequired = defaultNumberOfConfirmations(Asset.ETH, renVM.network);
+        while (ethereumConfirmations < confirmationsRequired) {
+            const { error, confirmations, reverted } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash: transactionHash });
+            if (error) {
+                if (error.match(/Transaction was reverted/)) {
+                    throw new Error(error);
+                }
+                // May be network error.
+                console.error(error);
+            }
+
+            // Backwards compatibility check - old versions of
+            // @renproject/gateway always return `0` for the number of
+            // confirmations, and don't return the `reverted` flag.
+            if ((reverted as boolean | undefined) === undefined) {
+                break;
+            }
+
+            if (confirmations) {
+                ethereumConfirmations = confirmations;
+                await this.updateTransfer({
+                    ethereumConfirmations: Math.max(ethereumConfirmations, transfer.ethereumConfirmations || 0),
+                });
+            }
+            await sleep(10 * SECONDS);
+        }
+
 
         await this.updateTransfer({
             inTx: transactionHash ? EthereumTx(transactionHash) : null,
@@ -398,7 +426,6 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Transfer not set");
         }
         const onTxHash = (txHash: string) => {
-
             const transferObject = this.state.transfer;
             if (!transferObject || !transferObject.txHash || transferObject.txHash !== txHash) {
                 this.updateTransfer({ txHash })

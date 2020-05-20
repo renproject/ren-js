@@ -1,13 +1,13 @@
 import * as React from "react";
 
 import { TokenIcon } from "@renproject/react-components";
+import { Asset } from "@renproject/interfaces";
 
 import { connect, ConnectedProps } from "../../../state/connect";
-import { Token } from "../../../state/generalTypes";
 import { SDKContainer } from "../../../state/sdkContainer";
 import { Container } from "../Container";
 
-export const Mini = ({ token, message }: { token: Token, message: string }) => {
+export const Mini = ({ token, message }: { token: Asset, message: string }) => {
     return <Container mini={true}>
         <div className="side-strip"><TokenIcon token={token} /></div>
         <div className="container--body--details">
@@ -30,7 +30,7 @@ export const ConnectedMini = connect<Props & ConnectedProps<[SDKContainer]>>([SD
             throw new Error(`Unable to load transfer details`);
         }
 
-        const token = transfer.transferParams.sendToken.slice(0, 3) as Token;
+        const token = transfer.transferParams.sendToken.slice(0, 3) as Asset;
 
         return <Mini token={token} message={message} />;
     }

@@ -27,6 +27,7 @@ export enum GatewayMessageType {
 
     SendEthereumTx = "sendEthereumTx",
     GetEthereumTxStatus = "getEthereumTxStatus",
+    SendEthereumTxConfirmations = "sendEthereumTxConfirmations",
     GetEthereumTxBurn = "getEthereumTxBurn",
     FindMintTransaction = "findMintTransaction",
 
@@ -65,6 +66,7 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
 
     Type extends GatewayMessageType.SendEthereumTx ? { transactionConfig: TransactionConfig } :
     Type extends GatewayMessageType.GetEthereumTxStatus ? { txHash: string } :
+    Type extends GatewayMessageType.SendEthereumTxConfirmations ? { txHash: string, confirmations: number } :
     Type extends GatewayMessageType.GetEthereumTxBurn ? { txHash: string } :
     Type extends GatewayMessageType.FindMintTransaction ? { sigHash: string, token: RenContract } :
 
@@ -83,7 +85,7 @@ export type GatewayMessageResponse<Type extends GatewayMessageType> =
     Type extends GatewayMessageType.GetStatus ? { status: LockAndMintStatus | BurnAndReleaseStatus, details: any | null } :
 
     Type extends GatewayMessageType.SendEthereumTx ? { txHash?: string, error?: string } :
-    Type extends GatewayMessageType.GetEthereumTxStatus ? { confirmations?: number, error?: string } :
+    Type extends GatewayMessageType.GetEthereumTxStatus ? { confirmations?: number, reverted: boolean; error?: string } :
     Type extends GatewayMessageType.GetEthereumTxBurn ? { burnReference?: string | number, error?: string } :
     Type extends GatewayMessageType.FindMintTransaction ? { txHash?: string | undefined, error?: string } :
     Type extends GatewayMessageType.RequestNotificationPermission ? { error?: string } :

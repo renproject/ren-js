@@ -6,6 +6,9 @@ export enum RenNetwork {
     Devnet = "devnet",
     Localnet = "localnet",
 }
+export const RenNetworks = [RenNetwork.Mainnet, RenNetwork.Chaosnet, RenNetwork.Testnet, RenNetwork.Devnet, RenNetwork.Localnet];
+export const isRenNetwork = (maybeRenNetwork: any): maybeRenNetwork is RenNetwork => // tslint:disable-line: no-any
+    RenNetworks.indexOf(maybeRenNetwork) !== -1;
 
 export enum Chain {
     Bitcoin = "Btc",
@@ -13,6 +16,9 @@ export enum Chain {
     Zcash = "Zec",
     BitcoinCash = "Bch",
 }
+export const Chains = [Chain.Bitcoin, Chain.Ethereum, Chain.Zcash, Chain.BitcoinCash];
+export const isChain = (maybeChain: any): maybeChain is Chain => // tslint:disable-line: no-any
+    Chains.indexOf(maybeChain) !== -1;
 
 export enum Asset {
     BTC = "BTC",
@@ -20,6 +26,9 @@ export enum Asset {
     ETH = "ETH",
     BCH = "BCH",
 }
+export const Assets = [Asset.BTC, Asset.ZEC, Asset.ETH, Asset.BCH];
+export const isAsset = (maybeAsset: any): maybeAsset is Asset => // tslint:disable-line: no-any
+    Assets.indexOf(maybeAsset) !== -1;
 
 export enum RenContract {
     Btc2Eth = "BTC0Btc2Eth",
@@ -29,6 +38,9 @@ export enum RenContract {
     Bch2Eth = "BCH0Bch2Eth",
     Eth2Bch = "BCH0Eth2Bch",
 }
+export const RenContracts = [RenContract.Btc2Eth, RenContract.Eth2Btc, RenContract.Zec2Eth, RenContract.Eth2Zec, RenContract.Bch2Eth, RenContract.Eth2Bch];
+export const isRenContract = (maybeRenContract: any): maybeRenContract is RenContract => // tslint:disable-line: no-any
+    RenContracts.indexOf(maybeRenContract) !== -1;
 
 export const Tokens = {
     // Bitcoin

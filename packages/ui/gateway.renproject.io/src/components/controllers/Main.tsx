@@ -1,9 +1,9 @@
 import * as React from "react";
 
 import {
-    BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, EventType, GatewayMessage,
-    GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams, LockAndMintStatus,
-    SendTokenInterface, SerializableTransferParams,
+    BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
+    GatewayMessage, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
+    LockAndMintStatus, SendTokenInterface, SerializableTransferParams,
 } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
@@ -13,7 +13,6 @@ import {
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { ReactComponent as CancelIcon } from "../../images/exit-black.svg";
 import { ReactComponent as MinimizeIcon } from "../../images/icon-minimize.svg";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
@@ -22,6 +21,7 @@ import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { ColoredBanner } from "../views/ColoredBanner";
+import { ExternalLink } from "../views/ExternalLink";
 import { SettingsPage } from "../views/settingsPage/SettingsPage";
 // import { Footer } from "../views/Footer";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -82,8 +82,6 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 await postMessageToClient(window, uiContainer.state.gatewayPopupID, GatewayMessageType.Cancel, {});
             }
         }, [uiContainer, sdkContainer]);
-
-        const cancelOnClick = React.useCallback(() => cancelTransfer(false), [cancelTransfer]);
 
         React.useEffect(() => {
 
@@ -194,6 +192,13 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                             case GatewayMessageType.GetStatus:
                                 acknowledgeMessage(message, sdkContainer.getTransferStatus());
                                 break;
+                            case GatewayMessageType.SendEthereumTxConfirmations:
+                                acknowledgeMessage(message);
+                                const { txHash, confirmations } = (message as GatewayMessage<GatewayMessageType.SendEthereumTxConfirmations>).payload;
+                                if (sdkContainer.state.transfer && sdkContainer.state.transfer.eventType === EventType.BurnAndRelease && sdkContainer.state.transfer.inTx && sdkContainer.state.transfer.inTx.chain === Chain.Ethereum && sdkContainer.state.transfer.inTx.hash === txHash) {
+                                    await sdkContainer.updateTransfer({ ethereumConfirmations: Math.max(confirmations, sdkContainer.state.transfer.ethereumConfirmations || 0) });
+                                }
+                                break;
                             default:
                                 // Acknowledge that we got the message. We don't
                                 // know how to handle it, but we don't want
@@ -252,7 +257,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                 {window === window.top ? <span className="not-in-iframe">
                     <h1>GatewayJS</h1>
                     <p>Version {version}</p>
-                    <p>See <a target="_blank" rel="noopener noreferrer" href="https://github.com/renproject/ren-js">github.com/renproject/ren-js</a> for more information about GatewayJS.</p>
+                    <p>See <ExternalLink href="https://github.com/renproject/ren-js">github.com/renproject/ren-js</ExternalLink> for more information about GatewayJS.</p>
                 </span> : <></>}
                 {!transfer && window !== window.top ? <>
                     {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details." fullPage={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}

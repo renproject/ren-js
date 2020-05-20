@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 import infoIcon from "../../images/icons/info.svg";
 import smallLogo from "../../images/logo-small-grey.png";
+import { ExternalLink } from "./ExternalLink";
 import { Tooltip } from "./tooltip/Tooltip";
 
 const FooterContainer = styled.div`
@@ -36,7 +37,7 @@ export const Footer: React.FC<{}> = props => {
                 <img alt="" role="presentation" src={smallLogo} style={{ width: "10px", marginRight: "5px" }} /><span>Powered by <RenVMLink href="https://renproject.io/renvm" target="_blank" rel="noopener noreferrer">RenVM</RenVMLink></span>
             </div>
             <div>
-                <Tooltip align="left" width={200} contents={<span>{bridgeInfo} Read more about RenVM and sMPC <a target="_blank" rel="noopener noreferrer" href="https://renproject.io/renvm">here</a>.</span>}><img alt={bridgeInfo} src={infoIcon} /></Tooltip>
+                <Tooltip align="left" width={200} contents={<span>{bridgeInfo} Read more about RenVM and sMPC <ExternalLink href="https://renproject.io/renvm">here</ExternalLink>.</span>}><img alt={bridgeInfo} src={infoIcon} /></Tooltip>
             </div>
         </FooterContainer>
     );

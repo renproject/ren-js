@@ -2,9 +2,9 @@ import { toLegacyAddress } from "bchaddrjs";
 import QRCode from "qrcode.react";
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
+import { Asset } from "@renproject/interfaces";
 
 import { ReactComponent as CogIcon } from "../../../images/icons/cog.svg";
-import { Token } from "../../../state/generalTypes";
 
 // const QRCodeTabs = styled.div`
 //     display: flex;
@@ -112,7 +112,7 @@ const useCheckbox = (defaultState: boolean): [boolean, (event: React.ChangeEvent
     return [state, onChange, setState];
 };
 
-export const ShowQRCode = ({ token, amount, address }: { token: Token, amount: string | undefined, address: string }) => {
+export const ShowQRCode = ({ token, amount, address }: { token: Asset, amount: string | undefined, address: string }) => {
     const [showSettings, toggleSettings] = useToggle(false);
     const [rawAddress, toggleRawAddress] = useCheckbox(false);
     const [legacyAddress, toggleLegacyAddress] = useCheckbox(false);
@@ -123,11 +123,11 @@ export const ShowQRCode = ({ token, amount, address }: { token: Token, amount: s
             {showSettings ? <QRCodeOptions>
                 <h4>QR Code Options</h4>
                 <label><input name="rawAddress" type="checkbox" onChange={toggleRawAddress} /> Raw address</label>
-                {token === Token.BCH ? <label><input name="legacyAddress" type="checkbox" onChange={toggleLegacyAddress} /> Legacy address</label> : <></>}
+                {token === Asset.BCH ? <label><input name="legacyAddress" type="checkbox" onChange={toggleLegacyAddress} /> Legacy address</label> : <></>}
             </QRCodeOptions> : <></>}
         </QRCodeOptionsOuter>
         <QRCodeContainer>
-            <QRCode value={`${rawAddress ? "" : (token === Token.BTC ? "bitcoin:" : token === Token.ZEC ? "zcash:" : token === Token.BCH && legacyAddress ? "bitcoincash:" : "")}${legacyAddress ? toLegacyAddress(address) : address}${amount && !rawAddress ? `?amount=${amount}` : ""}`} />
+            <QRCode value={`${rawAddress ? "" : (token === Asset.BTC ? "bitcoin:" : token === Asset.ZEC ? "zcash:" : token === Asset.BCH && legacyAddress ? "bitcoincash:" : "")}${legacyAddress ? toLegacyAddress(address) : address}${amount && !rawAddress ? `?amount=${amount}` : ""}`} />
         </QRCodeContainer>
         {/* <span>Deposit {amount ? amount : <></>} {token.toUpperCase()}</span> */}
     </QRCodeOuter>;

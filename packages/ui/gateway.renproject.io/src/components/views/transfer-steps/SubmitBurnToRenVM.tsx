@@ -1,13 +1,12 @@
 import * as React from "react";
 
-import { TxStatus } from "@renproject/interfaces";
+import { Asset, TxStatus } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { lighten } from "polished";
 import styled from "styled-components";
 
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
-import { Token } from "../../../state/generalTypes";
 import { Container } from "../Container";
 import { Mini } from "./Mini";
 
@@ -49,7 +48,7 @@ const TransparentLoading = styled(Loading)`
 
 export const SubmitBurnToRenVM: React.StatelessComponent<{
     mini: boolean;
-    token: Token;
+    token: Asset;
     txHash: string | null;
     renVMStatus: TxStatus | null;
     submitDeposit: () => Promise<unknown>;
@@ -66,9 +65,9 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
             } catch (error) {
                 setError(error);
                 _catchInteractionErr_(error, "Error in DepositReceived: submitDeposit");
+                setSubmitting(false);
             }
         }
-        setSubmitting(false);
     }, [submitDeposit]);
 
     // useEffect replaces `componentDidMount` and `componentDidUpdate`.

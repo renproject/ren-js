@@ -1,11 +1,11 @@
 import * as React from "react";
 
+import { Asset, Chain, Tx } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/contracts";
-import { Chain, Tx } from "@renproject/interfaces";
 
 import { txUrl } from "../../../lib/txUrl";
-import { Token } from "../../../state/generalTypes";
 import { Container } from "../Container";
+import { ExternalLink } from "../ExternalLink";
 import { Mini } from "./Mini";
 
 const renderChain = (chain: Chain): string => {
@@ -28,7 +28,7 @@ export const Complete: React.StatelessComponent<{
     inTx: Tx | null,
     outTx: Tx | null,
     mini: boolean,
-    token: Token;
+    token: Asset;
     networkDetails: RenNetworkDetails,
 }> = ({ onDone, pressedDone, mini, inTx, outTx, token, networkDetails }) => {
 
@@ -43,16 +43,16 @@ export const Complete: React.StatelessComponent<{
                     <h4>Deposit received</h4>
                     <div className="container--buttons">
                         {inTx && outTx ? <>
-                            <a target="_blank" rel="noopener noreferrer" href={txUrl(inTx, networkDetails)}>{renderChain(inTx.chain)} Transaction</a>
+                            <ExternalLink href={txUrl(inTx, networkDetails)}>{renderChain(inTx.chain)} Transaction</ExternalLink>
                             {" "}-{" "}
-                            <a target="_blank" rel="noopener noreferrer" href={txUrl(outTx, networkDetails)}>{renderChain(outTx.chain)} Transaction</a>
+                            <ExternalLink href={txUrl(outTx, networkDetails)}>{renderChain(outTx.chain)} Transaction</ExternalLink>
                         </> : <>
                                 {inTx ?
-                                    <a target="_blank" rel="noopener noreferrer" href={txUrl(inTx, networkDetails)}>View {renderChain(inTx.chain)} Transaction</a> :
+                                    <ExternalLink href={txUrl(inTx, networkDetails)}>View {renderChain(inTx.chain)} Transaction</ExternalLink> :
                                     <></>
                                 }
                                 {outTx ?
-                                    <>{inTx ? <>{" "}-{" "}</> : ""}<a target="_blank" rel="noopener noreferrer" href={txUrl(outTx, networkDetails)}>View {renderChain(outTx.chain)} Transaction</a></> :
+                                    <>{inTx ? <span style={{ margin: "0px 5px" }}>-</span> : ""}<ExternalLink href={txUrl(outTx, networkDetails)}>View {renderChain(outTx.chain)} Transaction</ExternalLink></> :
                                     <></>
                                 }
                             </>

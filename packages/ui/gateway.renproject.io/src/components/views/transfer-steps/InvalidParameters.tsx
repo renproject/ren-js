@@ -1,10 +1,10 @@
 import * as React from "react";
 
+import { Asset } from "@renproject/interfaces";
 import { lighten } from "polished";
 import styled from "styled-components";
 
 import { pulseAnimation } from "../../../scss/animations";
-import { Token } from "../../../state/generalTypes";
 import { Container } from "../Container";
 import { Mini } from "./Mini";
 
@@ -22,7 +22,7 @@ export const ScanningDot = styled.span`
 
 interface Props {
     mini: boolean;
-    token: Token;
+    token: Asset;
 }
 
 export const InvalidParameters: React.StatelessComponent<Props> =

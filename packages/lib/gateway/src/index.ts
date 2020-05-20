@@ -25,6 +25,8 @@ import {
 import { validateString } from "./validate";
 import { useBrowserWeb3 } from "./web3";
 
+const ON_CONFIRMATION_HANDLER_LIMIT = 30;
+
 export class Gateway {
 
     // tslint:disable: readonly-keyword
@@ -278,6 +280,17 @@ export class Gateway {
                                     promiEvent.on("transactionHash", resolve);
                                     promiEvent.catch(reject);
                                 });
+                                // It may be simpler to replace with
+                                // `promiEvent.on`, depending on wether or not
+                                // .on causes indefinite network requests or
+                                // if web3 fetches blocks anyways.
+                                const listenForConfirmations = () => promiEvent.once("confirmation", (confirmations) => {
+                                    this._sendMessage(GatewayMessageType.SendEthereumTxConfirmations, { txHash, confirmations }).catch(console.error);
+                                    if (confirmations < ON_CONFIRMATION_HANDLER_LIMIT) {
+                                        listenForConfirmations();
+                                    }
+                                });
+                                listenForConfirmations();
                                 this._acknowledgeMessage<GatewayMessageType.SendEthereumTx>(e.data as GatewayMessage<GatewayMessageType.SendEthereumTx>, { txHash }).catch(console.error);
                             } catch (error) {
                                 this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
@@ -291,10 +304,13 @@ export class Gateway {
                                     throw new Error(`No Web3 defined`);
                                 }
                                 const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetEthereumTxStatus>).txHash;
-                                await waitForReceipt(this.web3, txHash);
-                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxStatus>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxStatus>, { confirmations: 0 }).catch(console.error);
+                                const currentBlock = await this.web3.eth.getBlockNumber();
+                                const receipt = await waitForReceipt(this.web3, txHash);
+                                const confirmations = Math.max(currentBlock - receipt.blockNumber, 0);
+                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxStatus>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxStatus>, { confirmations, reverted: false }).catch(console.error);
                             } catch (error) {
-                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
+                                // TODO: Check if tx was reverted or getting receipt failed.
+                                this._acknowledgeMessage(e.data, { reverted: true, error: extractError(error) }).catch(console.error);
                             }
                         })().catch(console.error);
                         return;

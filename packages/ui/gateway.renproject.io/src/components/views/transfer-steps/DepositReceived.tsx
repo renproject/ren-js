@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { RenNetworkDetails } from "@renproject/contracts";
-import { UTXOWithChain } from "@renproject/interfaces";
+import { Asset, UTXOWithChain } from "@renproject/interfaces";
 import { extractError } from "@renproject/utils";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
@@ -12,8 +12,8 @@ import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
-import { Token } from "../../../state/generalTypes";
 import { Container } from "../Container";
+import { ExternalLink } from "../ExternalLink";
 import { ProgressBar } from "../ProgressBar";
 import { Tooltip } from "../tooltip/Tooltip";
 import { Mini } from "./Mini";
@@ -32,7 +32,7 @@ export const ScanningDot = styled.span`
 
 interface Props {
     mini: boolean;
-    token: Token;
+    token: Asset;
     utxos: OrderedMap<string, UTXOWithChain>;
     networkDetails: RenNetworkDetails;
     confirmations: number;
@@ -137,13 +137,13 @@ export const DepositReceived: React.StatelessComponent<Props> =
                             {confirmations ? <ConfirmationsContainer>
                                 <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
                                 {/* tslint:disable-next-line: react-a11y-anchors */}
-                                <Tooltip width={250} contents={<span>{tooltipText}</span>/* Read about confirmationless deposits <a className="blue" href={INTEROP_LINK} target="_blank" rel="noopener noreferrer">here</a>.</span>*/}><img alt={tooltipText} src={infoIcon} /></Tooltip>
+                                <Tooltip width={250} contents={<span>{tooltipText}</span>/* Read about confirmationless deposits <ExternalLink className="blue" href={INTEROP_LINK}>here</ExternalLink>.</span>*/}><img alt={tooltipText} src={infoIcon} /></Tooltip>
                             </ConfirmationsContainer> : <></>}
                             {utxos.map(utxo => {
                                 return <div key={utxo.utxo.txHash}>
                                     {/* <div className="show-utxos--utxo">
-                        <a href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })} target="_blank" rel="noopener noreferrer">TXID {hash}</a>
-                    </div> */}
+                                        <ExternalLink href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })}>TXID {hash}</ExternalLink>
+                                    </div> */}
                                     {confirmations ? <ConfirmationsBlock>
                                         {confirmations >= 10 ? <ProgressBar
                                             className="confirmation--progress"
@@ -179,11 +179,11 @@ export const DepositReceived: React.StatelessComponent<Props> =
                 <div className="container--body--actions">
                     {utxos.map(utxo => {
                         return <div key={utxo.utxo.txHash}>
-                            <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(utxo, networkDetails)}>
+                            <ExternalLink className="no-underline" href={txUrl(utxo, networkDetails)}>
                                 <div role="button" className={`address-input--copy`}>
                                     <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
                                 </div>
-                            </a>
+                            </ExternalLink>
                         </div>;
                     }).valueSeq()}
                 </div>

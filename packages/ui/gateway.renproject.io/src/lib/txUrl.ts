@@ -6,7 +6,6 @@ export const txUrl = (tx: Tx | null, network: RenNetworkDetails): string => {
     if (!tx) { return ""; }
 
     if (tx.chain === RenJS.Chains.Ethereum) {
-        console.log("network", network);
         return `${network.etherscan}/tx/${tx.hash}`;
     }
 

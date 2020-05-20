@@ -10,6 +10,7 @@ import styled from "styled-components";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import { Container } from "../Container";
+import { ExternalLink } from "../ExternalLink";
 import { LabelledDiv } from "../LabelledInput";
 import { ConnectedMini } from "./Mini";
 
@@ -106,7 +107,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
                     Error submitting to Ethereum: {!showFullError && error.length > 100 ? <>{error.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
                     {failedTransaction ? <>
                         <br />
-                        See the <a target="_blank" rel="noopener noreferrer" className="blue" href={`${networkDetails.etherscan}/tx/${failedTransaction}`}>Transaction Status</a> for more details.
+                        See the <ExternalLink className="blue" href={`${networkDetails.etherscan}/tx/${failedTransaction}`}>Transaction Status</ExternalLink> for more details.
                         <br />
                     </> : null}
                 </div> : null}
@@ -115,9 +116,9 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
         <div className="deposit-address">
             <div className="container--body--actions">
                 {txHash && !error ?
-                    <a target="_blank" rel="noopener noreferrer" className="no-underline" href={txUrl(txHash, networkDetails)}>
+                    <ExternalLink className="no-underline" href={txUrl(txHash, networkDetails)}>
                         <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.chain === Chain.Ethereum ? txHash.hash : (txHash.utxo ? txHash.utxo.txHash : txHash.address)}</LabelledDiv>
-                    </a> :
+                    </ExternalLink> :
                     <div className="container--buttons">
                         <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
                     </div>

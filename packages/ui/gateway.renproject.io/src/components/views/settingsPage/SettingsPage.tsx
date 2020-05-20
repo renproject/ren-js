@@ -40,7 +40,7 @@ export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSetti
         <div role="none" className="settings-overlay" onClick={hideSettings} />
         <div className="settings-bottom">
 
-            {/* <p>Powered by <a href="https://renproject.io/" target="_blank" rel="noopener noreferrer">RenVM</a>.</p> */}
+            {/* <p>Powered by <ExternalLink href="https://renproject.io/">RenVM</ExternalLink>.</p> */}
 
             <h2>Settings</h2>
 

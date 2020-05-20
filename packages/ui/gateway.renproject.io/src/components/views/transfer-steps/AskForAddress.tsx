@@ -1,25 +1,26 @@
 import * as React from "react";
 
+import { Asset } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 
-import { Token, Tokens } from "../../../state/generalTypes";
+import { Assets } from "../../../state/generalTypes";
 import { Container } from "../Container";
 import { ConnectedMini } from "./Mini";
 
 export const AskForAddress: React.StatelessComponent<{
     mini: boolean,
-    token: Token,
+    token: Asset,
     message: React.ReactNode,
     isTestnet: boolean,
-    onAddress(address: string, token: Token): void;
+    onAddress(address: string, token: Asset): void;
 }> = ({ mini, token, message, isTestnet, onAddress }) => {
     const [address, updateAddress] = React.useState("");
     const [error, updateError] = React.useState(null as string | null);
     const [submitting, updateSubmitting] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement | null>() as React.MutableRefObject<HTMLInputElement | null>;
 
-    const tokenDetails = Tokens.get(token);
+    const tokenDetails = Assets.get(token);
 
     const submit = (event?: React.FormEvent<HTMLFormElement>) => {
         if (event) { event.preventDefault(); }

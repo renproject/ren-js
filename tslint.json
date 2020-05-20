@@ -49,7 +49,12 @@
             "severity": "warning"
         },
         "no-console": {
-            "severity": "warning"
+            "severity": "error",
+            "options": [
+                "log",
+                "debug",
+                "info"
+            ]
         },
         "strict-type-predicates": {
             "severity": "warning"

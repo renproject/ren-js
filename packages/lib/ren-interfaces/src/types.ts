@@ -76,6 +76,7 @@ export interface BurnAndReleaseEvent extends HistoryEventCommon {
     status: BurnAndReleaseStatus;
     transferParams: SerializableBurnAndReleaseParams;
     renVMQuery: UnmarshalledBurnTx | null;
+    ethereumConfirmations?: number;
 }
 
 export type HistoryEvent = LockAndMintEvent | BurnAndReleaseEvent;

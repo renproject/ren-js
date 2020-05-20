@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import {
-    BurnAndReleaseEvent, BurnAndReleaseStatus, GatewayMessageType, LockAndMintEvent,
+    Asset, BurnAndReleaseEvent, BurnAndReleaseStatus, GatewayMessageType, LockAndMintEvent,
     LockAndMintStatus, UnmarshalledTx,
 } from "@renproject/interfaces";
 import { sleep } from "@renproject/react-components";
@@ -10,7 +10,6 @@ import { _catchInteractionErr_ } from "../../lib/errors";
 import { postMessageToClient } from "../../lib/postMessage";
 import { isFunction, isPromise } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
-import { Token } from "../../state/generalTypes";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { LogIn } from "../views/LogIn";
@@ -95,7 +94,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
 
             const transferParams = transfer.transferParams as LockAndMintEvent["transferParams"];
 
-            const token = transferParams.sendToken.slice(0, 3) as Token;
+            const token = transferParams.sendToken.slice(0, 3) as Asset;
 
             let inner = <></>;
             if (!sdkRenVM) {
@@ -107,7 +106,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         const requiredAddressAndName = getRequiredAddressAndName(transferParams);
                         if (requiredAddressAndName !== null) {
                             const [variableName, requiredAddress] = requiredAddressAndName;
-                            const requestedToken = requiredAddress[1] as Token || token;
+                            const requestedToken = requiredAddress[1] as Asset || token;
                             inner = <AskForAddress
                                 mini={paused}
                                 key={requestedToken}
@@ -176,7 +175,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
         const burnAndRelease = () => {
             const { txHash, transferParams, renVMStatus } = transfer as BurnAndReleaseEvent;
 
-            const token = transfer.transferParams.sendToken.slice(0, 3) as Token;
+            const token = transfer.transferParams.sendToken.slice(0, 3) as Asset;
             const txCount = (transferParams.contractCalls || []).length;
 
             let inner = <></>;
@@ -190,7 +189,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         const requiredAddressAndName = getRequiredAddressAndName(transferParams);
                         if (requiredAddressAndName) {
                             const [variableName, requiredAddress] = requiredAddressAndName;
-                            const requestedToken = requiredAddress[1] as Token || token;
+                            const requestedToken = requiredAddress[1] as Asset || token;
                             inner = <AskForAddress
                                 mini={paused}
                                 key={requestedToken}
@@ -200,7 +199,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
-                            inner = <SubmitBurnToEthereum txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                            inner = <SubmitBurnToEthereum token={token} txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} ethereumConfirmations={transfer.ethereumConfirmations} />;
                         }
                         // const submit = async (submitOrderID: string) => {
                         //     await sdkContainer.approveTokenTransfer(submitOrderID);
@@ -212,7 +211,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         break;
                     case BurnAndReleaseStatus.SubmittedToEthereum:
                         // Submit the burn to Ethereum
-                        inner = <SubmitBurnToEthereum txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} />;
+                        inner = <SubmitBurnToEthereum token={token} txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} ethereumConfirmations={transfer.ethereumConfirmations} />;
                         break;
                     case BurnAndReleaseStatus.ConfirmedOnEthereum:
                     case BurnAndReleaseStatus.SubmittedToRenVM:

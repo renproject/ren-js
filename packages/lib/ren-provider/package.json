@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "1.0.0-alpha.8",
+    "version": "1.0.0-alpha.9",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",

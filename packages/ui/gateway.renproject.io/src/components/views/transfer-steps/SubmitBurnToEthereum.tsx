@@ -12,13 +12,11 @@ import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
-import { txUrl } from "../../../lib/txUrl";
 import { defaultNumberOfConfirmations } from "../../../state/sdkContainer";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
 } from "../Container";
 import { ExternalLink } from "../ExternalLink";
-import { LabelledDiv } from "../LabelledInput";
 import { ErrorScreen } from "./ErrorScreen";
 import { ConnectedMini } from "./Mini";
 
@@ -51,12 +49,10 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
         error?: string | undefined;
     } | null>;
     showNotification(title: string, body: string): Promise<null>;
-}> = ({ mini, txHash, networkDetails, txCount, token, ethereumConfirmations, submit, requestNotificationPermission, showNotification }) => {
+}> = ({ mini, txHash, networkDetails, txCount, token, ethereumConfirmations, submit, showNotification }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
-    const [showFullError, setShowFullError] = React.useState(false);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
-    const toggleShowFullError = React.useCallback(() => { setShowFullError(!showFullError); }, [showFullError, setShowFullError]);
 
     const confirmationsRequired = defaultNumberOfConfirmations(Asset.ETH, networkDetails);
 
@@ -64,7 +60,6 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
         setError(null);
         setFailedTransaction(null);
         setSubmitting(true);
-        setShowFullError(false);
         try {
             const beforeDeposit = (new Date()).getTime() / 1000;
             await submit(error !== null);
@@ -96,7 +91,7 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
             }
             setError(extractError(shownError));
         }
-    }, [submit, error]);
+    }, [submit, error, confirmationsRequired, showNotification]);
 
     // useEffect replaces `componentDidMount` and `componentDidUpdate`.
     // To limit it to running once, we use the initialized hook.

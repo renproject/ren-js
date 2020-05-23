@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { ReactComponent as AlertIcon } from "../../../images/alert.svg";
-import { _catchInteractionErr_ } from "../../../lib/errors";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerDetails, ContainerHeader,
 } from "../Container";

@@ -2,13 +2,12 @@ import * as React from "react";
 
 import { RenNetworkDetails } from "@renproject/contracts";
 import { Asset, UTXOWithChain } from "@renproject/interfaces";
+import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import styled from "styled-components";
-import { TokenIcon } from "@renproject/react-components";
 
-import { ReactComponent as AlertIcon } from "../../../images/alert.svg";
 import infoIcon from "../../../images/icons/info.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
@@ -76,11 +75,8 @@ export const DepositReceived: React.StatelessComponent<Props> =
         // Defaults for demo
 
         const [failed, setFailed] = React.useState(null as string | null);
-        const [showFullError, setShowFullError] = React.useState(false);
-        const toggleShowFullError = React.useCallback(() => { setShowFullError(!showFullError); }, [showFullError, setShowFullError]);
 
         const waitAndSubmitDeposit = React.useCallback(() => {
-            setShowFullError(false);
             (async () => {
                 try {
                     requestNotificationPermission().catch(console.error);

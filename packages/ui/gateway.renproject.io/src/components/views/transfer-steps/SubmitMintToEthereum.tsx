@@ -7,7 +7,6 @@ import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import { ReactComponent as AlertIcon } from "../../../images/alert.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import {

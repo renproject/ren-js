@@ -3,7 +3,8 @@ export { Console } from "./console/Console";
 export {
     CurrencyIcon,
     Currency,
-    currencies
+    currencies,
+    textCurrencyIcon,
 } from "./currencyIcon/CurrencyIcon";
 export { InfoLabel, LabelLevel } from "./infoLabel/InfoLabel";
 export { Loading } from "./loading/Loading";

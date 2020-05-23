@@ -297,7 +297,7 @@ export const GatewayExample = () => {
             />
 
             <div className="send">
-                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder={`Enter ${isTestnet ? "Kovan" : "Ethereum"} (mint) or ${isTestnet ? "Testnet" : ""} Bitcoin (burn) address`} />
+                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder={`Enter ${isTestnet ? "Kovan" : "Ethereum"} (mint) or ${isTestnet ? "Testnet" : ""} ${(Tokens.get(token) || { name: token.toUpperCase() }).name} (burn) address`} />
                 <div role="button" className="box box-action" onClick={useMetaMaskAccount}><MetaMaskLogo /></div>
             </div>
 
@@ -305,7 +305,7 @@ export const GatewayExample = () => {
                 <div className="send">
                     <input value={amount} onChange={(e) => { setAmount(e.target.value); }} placeholder="Amount" />
                     {!isPending && !isMint ? <div role="button" className={`box box-action box-blue ${gettingMaxValue ? "disabled" : ""}`} onClick={gettingMaxValue ? undefined : burnMaximumValue}>max</div> : <></>}
-                    <div className="box">BTC</div>
+                    <div className="box">{token.toUpperCase()}</div>
                 </div>
                 <button disabled={txHash === null} type="submit" className={`blue ${!amount || /* !validAddress */ false ? "disabled" : ""}`}>{isPending ? "Mint or burn" : isMint ? "Mint" : "Burn"}</button>
             </div>

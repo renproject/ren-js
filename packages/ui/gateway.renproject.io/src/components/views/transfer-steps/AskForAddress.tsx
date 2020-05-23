@@ -5,7 +5,7 @@ import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 
 import { Assets } from "../../../state/generalTypes";
-import { Container } from "../Container";
+import { Container, ContainerBody } from "../Container";
 import { ConnectedMini } from "./Mini";
 
 export const AskForAddress: React.StatelessComponent<{
@@ -46,7 +46,7 @@ export const AskForAddress: React.StatelessComponent<{
 
     return <Container mini={mini}>
         <div className="address-input">
-            <div className="container--body">
+            <ContainerBody>
                 <div className="container--body--box--title">
                     Enter <TokenIcon token={token} /> {token.toUpperCase()} address
                 </div>
@@ -70,7 +70,7 @@ export const AskForAddress: React.StatelessComponent<{
                         <button className="button open--confirm" disabled={address === "" || submitting || error !== null} type="submit"><span>{error ? error : "Confirm"}</span></button>
                     </div>
                 </form>
-            </div>
+            </ContainerBody>
         </div>
     </Container>;
 };

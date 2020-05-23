@@ -1,17 +1,21 @@
 import * as React from "react";
 
 import { RenNetworkDetails } from "@renproject/contracts";
-import { Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
-import { Loading } from "@renproject/react-components";
+import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
+import { Loading, TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
 import styled from "styled-components";
 
+import { ReactComponent as AlertIcon } from "../../../images/alert.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
-import { Container } from "../Container";
+import {
+    Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
+} from "../Container";
 import { ExternalLink } from "../ExternalLink";
 import { LabelledDiv } from "../LabelledInput";
+import { ErrorScreen } from "./ErrorScreen";
 import { ConnectedMini } from "./Mini";
 
 const TransparentButton = styled.button`
@@ -49,19 +53,17 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
     mini: boolean,
     txHash: Tx | null,
     networkDetails: RenNetworkDetails,
+    token: Asset,
     submit: (retry?: boolean) => Promise<void>,
-}> = ({ transfer, mini, txHash, networkDetails, submit }) => {
+}> = ({ transfer, mini, txHash, networkDetails, token, submit }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
-    const [showFullError, setShowFullError] = React.useState(false);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
-    const toggleShowFullError = React.useCallback(() => { setShowFullError(!showFullError); }, [showFullError, setShowFullError]);
 
     const onSubmit = React.useCallback(async () => {
         setError(null);
         setFailedTransaction(null);
         setSubmitting(true);
-        setShowFullError(false);
         try {
             await submit(error !== null);
         } catch (error) {
@@ -97,33 +99,41 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
 
     if (mini) { return <ConnectedMini message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
 
-    return <Container mini={mini}>
+    if (error) {
+        return <ErrorScreen
+            errorTitle={<>Error submitting to Ethereum</>}
+            errorMessage={error}
+            retryMessage={<>Submit to Ethereum</>}
+            retry={onSubmit}
+        >
+            {failedTransaction ? <>
+                <p />
+                <p>See the <ExternalLink className="blue" href={`${networkDetails.etherscan}/tx/${failedTransaction}`}>Transaction Status</ExternalLink> for more details.</p>
+            </> : null}
+        </ErrorScreen>;
+    }
+
+    return <Container mini={false}>
         <div className="submit-to-ethereum">
-            <div className="container--body">
-                {transfer.inTx ? <div className="submit-mint-to-ethereum--deposit">
-                    <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>Tx ID: {txPreview(transfer.inTx)}</StyledLink>
-                </div> : <></>}
-                {error ? <div className="ethereum-error red">
-                    Error submitting to Ethereum: {!showFullError && error.length > 100 ? <>{error.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : error}
-                    {failedTransaction ? <>
-                        <br />
-                        See the <ExternalLink className="blue" href={`${networkDetails.etherscan}/tx/${failedTransaction}`}>Transaction Status</ExternalLink> for more details.
-                        <br />
-                    </> : null}
-                </div> : null}
-            </div>
+            <ContainerBody>
+                <ContainerHeader icon={<TokenIcon token={token} />} />
+                <div className="container--body--details">
+                    {transfer.inTx ? <div className="submit-mint-to-ethereum--deposit">
+                        <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>Tx ID: {txPreview(transfer.inTx)}</StyledLink>
+                        {/* <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>{transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo && transfer.inTx.utxo.amount > 0 ? <>Tx: {renderAmount(transfer.inTx)} - </> : <>Tx ID:</>} {txPreview(transfer.inTx)}</StyledLink> */}
+                    </div> : <></>}
+                </div>
+            </ContainerBody>
         </div>
-        <div className="deposit-address">
-            <div className="container--body--actions">
-                {txHash && !error ?
-                    <ExternalLink className="no-underline" href={txUrl(txHash, networkDetails)}>
-                        <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.chain === Chain.Ethereum ? txHash.hash : (txHash.utxo ? txHash.utxo.txHash : txHash.address)}</LabelledDiv>
-                    </ExternalLink> :
-                    <div className="container--buttons">
-                        <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
-                    </div>
-                }
-            </div>
-        </div>
+        <ContainerBottom>
+            {txHash ?
+                <ExternalLink className="no-underline" href={txUrl(txHash, networkDetails)}>
+                    <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.chain === Chain.Ethereum ? txHash.hash : (txHash.utxo ? txHash.utxo.txHash : txHash.address)}</LabelledDiv>
+                </ExternalLink> :
+                <ContainerButtons>
+                    <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>Submit to Ethereum {submitting ? <TransparentLoading alt={true} /> : ""}</TransparentButton>
+                </ContainerButtons>
+            }
+        </ContainerBottom>
     </Container>;
 };

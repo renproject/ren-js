@@ -5,12 +5,8 @@
         display: flex;
         flex-flow: column;
         justify-content: center;
+        height: 187px;
         // overflow-y: auto;
-    }
-
-    .container--body {
-        width: 100%;
-        padding: 10px 20px;
     }
 
     .container--cancel {
@@ -196,14 +192,17 @@
         background-color: #fdfdfe;
         color: $foreground;
         border-bottom: 1px solid #ccc;
-        padding-bottom: 15px;
-        height: 187px;
         padding: 0px 20px;
-        padding-top: 20px;
+        padding-bottom: 18px;
+        // margin-bottom: 18px;
+        flex-grow: 1;
         display: flex;
         flex-direction: column;
-        // justify-content: center;
+        justify-content: center;
         align-items: center;
+        width: 100%;
+
+        overflow: auto;
 
         .container--body--title {
             font-size: 2.6rem;
@@ -287,10 +286,71 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        padding: 30px 0;
+        // padding: 30px 0;
+        padding: 0;
 
         button {
             width: 100vw;
+        }
+    }
+
+    .container--body {
+        padding-top: 0;
+        align-items: center;
+        display: flex;
+        flex-flow: column;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        height: 100%;
+        padding-bottom: 0;
+    }
+
+
+    .container--body--header {
+        height: 73px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: column;
+
+        .container--body--header--banner {
+            background-color: #F3F3F7;
+            height: 46px;
+            width: 100%;
+        }
+    }
+
+    .container--body--icon {
+        background-color: #F3F3F7;
+        margin-top: -28px;
+        border-radius: 50px;
+        text-align: center;
+
+        width: 60px;
+        height: 60px;
+        min-height: 60px;
+
+        svg {
+            width: 50px;
+            height: 50px;
+            min-height: 50px;
+            max-width: 50px;
+            margin-top: 5px;
+        }
+    }
+
+    .container--body--alert {
+        .container--body--icon {
+            background-color: #E9EAF2;
+
+            svg {
+                width: 60px;
+                height: 60px;
+                max-width: 60px;
+                margin-top: -2px;
+            }
         }
     }
 
@@ -303,39 +363,19 @@
         justify-content: flex-start;
         padding: 0;
 
-        .container--body {
-            padding-top: 0;
-            align-items: center;
-            display: flex;
-            flex-flow: column;
-            width: 100%;
-            padding-left: 0;
-            padding-right: 0;
-            height: 100%;
-        }
-
-        .container--body--header {
-            background-color: #F3F3F7;
-            height: 46px;
-            width: 100%;
-        }
-
         .container--body--icon {
-            background-color: #F3F3F7;
-            margin-top: -28px;
-            border-radius: 50px;
-
-            width: 60px;
-            height: 60px;
-
             svg {
                 width: 46px;
                 height: 60px;
+                max-width: 46px;
                 margin-top: -7px;
             }
         }
 
         .container--body--message {
+
+            height: calc(187px - 46px - 60px);
+
             font-weight: 500;
             font-size: 14px;
             line-height: 20px;
@@ -408,12 +448,29 @@
         align-items: center;
     }
 
-    .ethereum-error {
+    .container--error {
+        @extend .no-scrollbar;
+
         text-align: center;
         width: 100%;
-        border-radius: 6px;
         padding: 10px;
         margin-bottom: 8px;
+        overflow: scroll;
+
+        display: flex;
+        flex-flow: column;
+
+        .container--error--title {
+            font-weight: 500;
+            font-size: 17px;
+            color: #3F3F48;
+        }
+
+        .container--error--body {
+            font-weight: normal;
+            font-size: 13px;
+            color: #707575;
+        }
     }
 
     .complete--buttons {
@@ -458,6 +515,7 @@
     .complete {
         @extend .container--body--details;
         padding-top: 0px;
+        padding: 0;
 
         display: flex;
         flex-flow: column;
@@ -480,10 +538,10 @@
         }
 
         .container--body {
-            padding: 10px 30px;
+            // padding: 10px 30px;
         }
 
-        .container--buttons a {
+        .container--links a {
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;
@@ -505,6 +563,7 @@
         $check-color: $brand-success;
 
         .circle-loader {
+            background: white;
             margin-bottom: 20px;
             border: 1px solid rgba(0, 0, 0, 0.2);
             border-left-color: $check-color;
@@ -583,5 +642,15 @@
                 opacity: 1;
             }
         }
+    }
+
+    .confirmation--progress--container {
+        width: 100%;
+        padding: 0 20px;
+    }
+
+    .deposit-received {
+        justify-content: flex-start;
+        padding-top: 15px;
     }
 }

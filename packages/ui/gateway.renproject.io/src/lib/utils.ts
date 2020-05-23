@@ -67,3 +67,9 @@ export const compareTransferStatus = (...statuses: Array<LockAndMintStatus | Bur
         }),
     ).status;
 };
+
+export const maxOrUndefined = (left: number | undefined, right: number | undefined) => {
+    return left === undefined ? right :
+        right === undefined ? left :
+            Math.max(left, right);
+};

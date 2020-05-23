@@ -6,6 +6,7 @@ import { parseRenContract } from "@renproject/utils";
 import infoIcon from "../../images/icons/info.svg";
 import { getURL } from "../controllers/Storage";
 import { Tooltip } from "../views/tooltip/Tooltip";
+import { ExternalLink } from "./ExternalLink";
 
 export const TransferDetails: React.StatelessComponent<{
     transfer: LockAndMintEvent | BurnAndReleaseEvent,
@@ -36,7 +37,7 @@ export const TransferDetails: React.StatelessComponent<{
             </div>
         </div>
         <div className="transfer-details--row">
-            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={"Fees charged by RenVM to cover transaction and operational fees."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
+            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>Your assets will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <ExternalLink href="https://renproject.io/renvm">here</ExternalLink>.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
                 0.1% + 0.00005 {asset.toUpperCase()}
             </div>

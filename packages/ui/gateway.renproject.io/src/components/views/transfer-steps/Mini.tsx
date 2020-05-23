@@ -11,7 +11,7 @@ export const Mini = ({ token, message }: { token: Asset, message: string }) => {
     return <Container mini={true}>
         <div className="side-strip"><TokenIcon token={token} /></div>
         <div className="container--body--details">
-            {message}
+            <span>{message}</span>
         </div>
     </Container>;
 };

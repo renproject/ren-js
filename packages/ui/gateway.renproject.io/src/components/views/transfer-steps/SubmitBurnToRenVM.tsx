@@ -7,7 +7,9 @@ import styled from "styled-components";
 
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
-import { Container } from "../Container";
+import {
+    Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
+} from "../Container";
 import { Mini } from "./Mini";
 
 const renderTxStatus = (status: TxStatus | null) => {
@@ -88,11 +90,8 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
 
     return <Container mini={mini}>
         <div className="burn-container submit-to-ethereum">
-            <div className="container--body">
-                <>
-                    <div className="container--body--header"></div>
-                    <div className="container--body--icon"><BurnIcon /></div>
-                </>
+            <ContainerBody>
+                <ContainerHeader icon={<BurnIcon />} />
                 <div className="container--body--message">
                     {/* {token ? <TokenIcon className="token-icon" token={token} /> : null} */}
                     {submitting ? <>Status: {renderTxStatus(renVMStatus)}</> : <></>}
@@ -103,16 +102,14 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
                         </div>
                     </> : <></>}
                 </div>
-            </div>
+            </ContainerBody>
         </div>
-        <div className="deposit-address">
-            <div className="container--body--actions">
-                <div className="container--buttons">
-                    <TransparentButton className="button open--confirm" disabled={submitting} onClick={onClick}>
-                        {submitting ? <>Submitting to RenVM <TransparentLoading alt={true} /></> : <>Submit to RenVM</>}
-                    </TransparentButton>
-                </div>
-            </div>
-        </div>
+        <ContainerBottom>
+            <ContainerButtons>
+                <TransparentButton className="button open--confirm" disabled={submitting} onClick={onClick}>
+                    {submitting ? <>Submitting to RenVM <TransparentLoading alt={true} /></> : <>Submit to RenVM</>}
+                </TransparentButton>
+            </ContainerButtons>
+        </ContainerBottom>
     </Container>;
 };

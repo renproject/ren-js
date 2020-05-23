@@ -6,16 +6,21 @@ import { extractError } from "@renproject/utils";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import styled from "styled-components";
+import { TokenIcon } from "@renproject/react-components";
 
+import { ReactComponent as AlertIcon } from "../../../images/alert.svg";
 import infoIcon from "../../../images/icons/info.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import { range } from "../../../lib/utils";
 import { pulseAnimation } from "../../../scss/animations";
-import { Container } from "../Container";
+import {
+    Container, ContainerBody, ContainerBottom, ContainerDetails, ContainerHeader,
+} from "../Container";
 import { ExternalLink } from "../ExternalLink";
 import { ProgressBar } from "../ProgressBar";
 import { Tooltip } from "../tooltip/Tooltip";
+import { ErrorScreen } from "./ErrorScreen";
 import { Mini } from "./Mini";
 
 export const ScanningDot = styled.span`
@@ -50,14 +55,13 @@ const ConfirmationsContainer = styled.div`
 const ConfirmationsHeader = styled.span`
         font-size: 1.4rem;
         margin-right: 5px;
-        color: #87888C;
+        color: #3F3F48;
         `;
 
 const ConfirmationsBlock = styled.div`
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 20px;
         `;
 
 const StyledLabel = styled.span`
@@ -119,74 +123,92 @@ export const DepositReceived: React.StatelessComponent<Props> =
         //     );
         // }, [showSpinner, timer]);
 
-        const tooltipText = `Waiting for confirmations. This can take up to twenty minutes due to confirmation times on various blockchains.`;
+        const tooltipText = `Waiting for ${confirmations} confirmations. This can take up to ${networkDetails.isTestnet ? "twenty minutes" : "an hour"} due to ${token.toUpperCase()} confirmation times.`;
+
+        const firstUTXO = utxos.first<UTXOWithChain>();
 
         if (mini) {
-            const last = utxos.last<UTXOWithChain>();
-            return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
+            return <Mini
+                token={token}
+                message={firstUTXO ?
+                    firstUTXO.utxo.confirmations >= confirmations ?
+                        "Deposit confirmed" :
+                        `${firstUTXO.utxo.confirmations} / ${confirmations} confirmations` :
+                    "Waiting for deposit"}
+            />;
+        }
+
+        // Currently, only the first UTXO is considered.
+        utxos = utxos.slice(0, 1);
+
+        if (failed) {
+            return <ErrorScreen
+                errorTitle={firstUTXO ?
+                    <>Error processing deposit <ExternalLink className="no-underline" href={txUrl(firstUTXO, networkDetails)}>{txPreview(firstUTXO, 10)}</ExternalLink></> :
+                    <>Error waiting for deposit</>
+                }
+                errorMessage={failed}
+                retryMessage={<>Retry</>}
+                retry={waitAndSubmitDeposit}
+            />;
         }
 
         return <Container mini={mini}>
-            <div className="container--body--details deposit-received">
-                <div className="container--body--actions">
-                    {failed ?
-                        <div className="ethereum-error red">
-                            <p>Error waiting for deposit: {!showFullError && failed.length > 100 ? <>{failed.slice(0, 100)}...{" "}<span role="button" className="link" onClick={toggleShowFullError}>See more</span></> : failed}</p>
-                            <button className="button" onClick={waitAndSubmitDeposit}>Retry</button>
-                        </div> : <>
-                            {confirmations ? <ConfirmationsContainer>
-                                <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
-                                {/* tslint:disable-next-line: react-a11y-anchors */}
-                                <Tooltip width={250} contents={<span>{tooltipText}</span>/* Read about confirmationless deposits <ExternalLink className="blue" href={INTEROP_LINK}>here</ExternalLink>.</span>*/}><img alt={tooltipText} src={infoIcon} /></Tooltip>
-                            </ConfirmationsContainer> : <></>}
-                            {utxos.map(utxo => {
-                                return <div key={utxo.utxo.txHash}>
-                                    {/* <div className="show-utxos--utxo">
+            <ContainerBody>
+                <ContainerHeader icon={<TokenIcon token={token} />} />
+                <ContainerDetails className="deposit-received">
+
+                    {confirmations ? <ConfirmationsContainer>
+                        <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
+                        {/* tslint:disable-next-line: react-a11y-anchors */}
+                        <Tooltip direction={"bottom"} width={250} contents={<span>{tooltipText}</span>/* Read about confirmationless deposits <ExternalLink className="blue" href={INTEROP_LINK}>here</ExternalLink>.</span>*/}><img alt={tooltipText} src={infoIcon} /></Tooltip>
+                    </ConfirmationsContainer> : <></>}
+                    {utxos.map(utxo => {
+                        return <div className="confirmation--progress--container" key={utxo.utxo.txHash}>
+                            {/* <div className="show-utxos--utxo">
                                         <ExternalLink href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })}>TXID {hash}</ExternalLink>
                                     </div> */}
-                                    {confirmations ? <ConfirmationsBlock>
-                                        {confirmations >= 10 ? <ProgressBar
-                                            className="confirmation--progress"
-                                            style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
-                                            items={[
-                                                ...range(Math.ceil(confirmations / 2)).map(i => ({ label: String(i * 2 + 1) })),
-                                                { label: "✓" }
-                                            ]}
-                                            progress={utxo.utxo.confirmations / 2}
-                                            pulse={true}
-                                        /> : <ProgressBar
-                                                className="confirmation--progress"
-                                                style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
-                                                items={[
-                                                    ...range(confirmations).map(_ => ({})),
-                                                    { label: "✓" }
-                                                ]}
-                                                progress={utxo.utxo.confirmations}
-                                                pulse={true}
-                                            />}
-                                        {/* {range(order ? 7 : 1).map(target =>
+                            {confirmations ? <ConfirmationsBlock>
+                                {confirmations >= 10 ? <ProgressBar
+                                    className="confirmation--progress"
+                                    style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
+                                    items={[
+                                        ...range(Math.ceil(confirmations / 2)).map(i => ({ label: String(i * 2 + 1) })),
+                                        { label: "✓" }
+                                    ]}
+                                    progress={utxo.utxo.confirmations / 2}
+                                    pulse={true}
+                                /> : <ProgressBar
+                                        className="confirmation--progress"
+                                        style={{ width: `${confirmations <= 1 ? 50 : 100}%` }}
+                                        items={[
+                                            ...range(confirmations).map(_ => ({})),
+                                            { label: "✓" }
+                                        ]}
+                                        progress={utxo.utxo.confirmations}
+                                        pulse={true}
+                                    />}
+                                {/* {range(order ? 7 : 1).map(target =>
                                 <ProgressItem target={target + 1} progress={utxo.utxo.confirmations} />
                             )} */}
-                                        {/* <Loading className="loading--blue" /> */}
-                                        {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {confirmations} confirmations</ConfirmationsCount> */}
-                                    </ConfirmationsBlock> : <></>}
-                                </div>;
-                            }).valueSeq()}
-                        </>}
-                </div>
-            </div>
-            <div className="deposit-address">
-                <div className="container--body--actions">
-                    {utxos.map(utxo => {
-                        return <div key={utxo.utxo.txHash}>
-                            <ExternalLink className="no-underline" href={txUrl(utxo, networkDetails)}>
-                                <div role="button" className={`address-input--copy`}>
-                                    <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
-                                </div>
-                            </ExternalLink>
+                                {/* <Loading className="loading--blue" /> */}
+                                {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {confirmations} confirmations</ConfirmationsCount> */}
+                            </ConfirmationsBlock> : <></>}
                         </div>;
                     }).valueSeq()}
-                </div>
-            </div>
+                </ContainerDetails>
+            </ContainerBody>
+            <ContainerBottom>
+                {utxos.map(utxo => {
+                    return <div key={utxo.utxo.txHash}>
+                        <ExternalLink className="no-underline" href={txUrl(utxo, networkDetails)}>
+                            <div role="button" className={`click-to-copy`}>
+                                <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
+                                {/* <StyledLabel>{utxo.utxo && utxo.utxo.amount > 0 ? <>Tx: {renderAmount(utxo)} - </> : <>Tx ID:</>} {txPreview(utxo)}</StyledLabel> */}
+                            </div>
+                        </ExternalLink>
+                    </div>;
+                }).valueSeq()}
+            </ContainerBottom>
         </Container>;
     };

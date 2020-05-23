@@ -5,7 +5,7 @@ import { lighten } from "polished";
 import styled from "styled-components";
 
 import { pulseAnimation } from "../../../scss/animations";
-import { Container } from "../Container";
+import { Container, ContainerDetails } from "../Container";
 import { Mini } from "./Mini";
 
 export const ScanningDot = styled.span`
@@ -32,8 +32,8 @@ export const InvalidParameters: React.StatelessComponent<Props> =
         }
 
         return <Container mini={mini}>
-            <div className="container--body--details">
+            <ContainerDetails>
                 Invalid Parameters
-            </div>
+            </ContainerDetails>
         </Container>;
     };

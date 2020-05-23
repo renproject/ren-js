@@ -6,6 +6,12 @@
         height: 100vh;
         cursor: pointer;
 
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .main {
             width: 100%;
             height: 100%;
@@ -31,16 +37,16 @@
             align-items: center;
 
             svg {
-                width: 30px !important;
-                height: 30px !important;
-                max-width: 30px !important;
+                $size: 30px;
+                width: $size !important;
+                height: $size !important;
+                max-width: $size !important;
             }
         }
 
         .container--body--details {
             border-bottom: none;
             font-size: 1.6rem;
-            font-weight: 200;
             height: 100%;
             min-height: unset;
             display: flex;
@@ -50,6 +56,12 @@
             padding-right: 5px;
             width: 100%;
             flex: 1;
+            font-weight: 500;
+            color: #002247;
+
+            span {
+                margin-top: 4px;
+            }
         }
     }
 }

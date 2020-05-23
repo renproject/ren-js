@@ -1,6 +1,30 @@
 import { RenNetworkDetails } from "@renproject/contracts";
-import { Tx } from "@renproject/interfaces";
+import { Chain, Tx } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
+import BigNumber from "bignumber.js";
+
+const getDecimals = (chain: Chain) => {
+    switch (chain) {
+        case Chain.Bitcoin: return 8;
+        case Chain.Zcash: return 8;
+        case Chain.BitcoinCash: return 8;
+        case Chain.Ethereum: return 8;
+    }
+};
+
+export const renderAmount = (tx: Tx) => {
+    if (tx.chain === Chain.Ethereum || !tx.utxo) { return ""; }
+    const decimals = getDecimals(tx.chain);
+    const value = new BigNumber(tx.utxo.amount).div(new BigNumber(10).exponentiatedBy(decimals));
+    const valueString = value.gte(1) ?
+        value.mod(0.001).isZero() ?
+            // No decimals past 0.001, trim and call toFixed(0) (which removes ending 0s)
+            value.decimalPlaces(3).toFixed() :
+            // Call toFixed(3) (doesn't remove ending 0s)
+            value.toFixed(3) :
+        value.toFixed();
+    return `${valueString} ${tx.chain.toUpperCase()}`;
+};
 
 export const txUrl = (tx: Tx | null, network: RenNetworkDetails): string => {
     if (!tx) { return ""; }

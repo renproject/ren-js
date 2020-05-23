@@ -36,6 +36,33 @@ interface Props extends Partial<FAProps> {
     currency: Currency;
 }
 
+export const textCurrencyIcon = (currency: Currency) => {
+    // Note: Typescript will warn if the switch statement is non-exhaustive
+
+    // tslint:disable-next-line: switch-default
+    switch (currency) {
+        case Currency.AUD:
+            return "$";
+        case Currency.CNY:
+            return "¥";
+        case Currency.GBP:
+            return "£";
+        case Currency.EUR:
+            return "€";
+        case Currency.JPY:
+            return "¥";
+        case Currency.KRW:
+            return "₩";
+        case Currency.RUB:
+            return "₽";
+        case Currency.USD:
+            return "$";
+        default:
+            return "";
+    }
+};
+
+
 export const CurrencyIcon = ({ currency, className, ...props }: Props) => {
     // Note: Typescript will warn if the switch statement is non-exhaustive
 

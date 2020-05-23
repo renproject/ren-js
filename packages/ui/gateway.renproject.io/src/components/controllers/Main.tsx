@@ -194,9 +194,10 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 break;
                             case GatewayMessageType.SendEthereumTxConfirmations:
                                 acknowledgeMessage(message);
-                                const { txHash, confirmations } = (message as GatewayMessage<GatewayMessageType.SendEthereumTxConfirmations>).payload;
+                                const { txHash, confirmations: ethereumConfirmations } = (message as GatewayMessage<GatewayMessageType.SendEthereumTxConfirmations>).payload;
+                                // Check that the txHash matches what's stored in the store.
                                 if (sdkContainer.state.transfer && sdkContainer.state.transfer.eventType === EventType.BurnAndRelease && sdkContainer.state.transfer.inTx && sdkContainer.state.transfer.inTx.chain === Chain.Ethereum && sdkContainer.state.transfer.inTx.hash === txHash) {
-                                    await sdkContainer.updateTransfer({ ethereumConfirmations: Math.max(confirmations, sdkContainer.state.transfer.ethereumConfirmations || 0) });
+                                    await sdkContainer.updateTransfer({ ethereumConfirmations });
                                 }
                                 break;
                             default:

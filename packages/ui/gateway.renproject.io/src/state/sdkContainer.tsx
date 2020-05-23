@@ -13,7 +13,9 @@ import { getStorageItem, updateStorageTransfer } from "../components/controllers
 // tslint:disable-next-line: ordered-imports
 import { _catchBackgroundErr_, _catchInteractionErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
-import { compareTransferStatus, compareTxStatus, isFunction, isPromise } from "../lib/utils";
+import {
+    compareTransferStatus, compareTxStatus, isFunction, isPromise, maxOrUndefined,
+} from "../lib/utils";
 import { UIContainer } from "./uiContainer";
 
 const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum });
@@ -152,6 +154,7 @@ export class SDKContainer extends Container<typeof initialState> {
             renVMQuery: force && transferIn.hasOwnProperty("renVMQuery") ? transferIn.renVMQuery : transferIn.renVMQuery || (this.state.transfer && this.state.transfer.renVMQuery) || existingTransfer.renVMQuery,
             renVMStatus: force && transferIn.hasOwnProperty("renVMStatus") ? transferIn.renVMStatus : compareTxStatus(existingTransfer.renVMStatus, (this.state.transfer && this.state.transfer.renVMStatus), transferIn.renVMStatus),
             status: force && transferIn.hasOwnProperty("status") ? transferIn.status : compareTransferStatus(existingTransfer.status, (this.state.transfer && this.state.transfer.status), transferIn.status),
+            ethereumConfirmations: force && transferIn.hasOwnProperty("ethereumConfirmations") ? (transferIn as Partial<BurnAndReleaseEvent>).ethereumConfirmations : maxOrUndefined((transferIn as Partial<BurnAndReleaseEvent>).ethereumConfirmations, (this.state.transfer ? (this.state.transfer as BurnAndReleaseEvent).ethereumConfirmations : undefined)),
         } as HistoryEvent;
 
         // const web3 = this.state.sdkWeb3;
@@ -302,8 +305,17 @@ export class SDKContainer extends Container<typeof initialState> {
 
             if (confirmations) {
                 ethereumConfirmations = confirmations;
+                const previousConfirmations =
+                    this.state.transfer &&
+                        this.state.transfer.eventType === EventType.BurnAndRelease &&
+                        this.state.transfer.ethereumConfirmations !== undefined ?
+                        this.state.transfer.ethereumConfirmations :
+                        0;
                 await this.updateTransfer({
-                    ethereumConfirmations: Math.max(ethereumConfirmations, transfer.ethereumConfirmations || 0),
+                    ethereumConfirmations: Math.max(
+                        ethereumConfirmations,
+                        previousConfirmations,
+                    )
                 });
             }
             await sleep(10 * SECONDS);

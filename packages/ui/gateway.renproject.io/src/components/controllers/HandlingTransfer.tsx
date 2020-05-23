@@ -158,7 +158,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         break;
                     case LockAndMintStatus.ReturnedFromRenVM:
                     case LockAndMintStatus.SubmittedToEthereum:
-                        inner = <SubmitMintToEthereum transfer={transfer} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.outTx} submit={sdkContainer.submitMintToEthereum} />;
+                        inner = <SubmitMintToEthereum transfer={transfer} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.outTx} submit={sdkContainer.submitMintToEthereum} token={token} />;
                         break;
                     case LockAndMintStatus.ConfirmedOnEthereum:
                         inner = <Complete onDone={onDone} pressedDone={pressedDone} token={token} networkDetails={sdkRenVM.network} mini={paused} inTx={transfer.inTx} outTx={transfer.outTx} />;
@@ -199,7 +199,17 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                                 onAddress={sdkContainer.updateToAddress}
                             />;
                         } else {
-                            inner = <SubmitBurnToEthereum token={token} txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} ethereumConfirmations={transfer.ethereumConfirmations} />;
+                            inner = <SubmitBurnToEthereum
+                                token={token}
+                                txCount={txCount}
+                                networkDetails={sdkRenVM.network}
+                                mini={paused}
+                                txHash={transfer.inTx}
+                                submit={sdkContainer.submitBurnToEthereum}
+                                ethereumConfirmations={transfer.ethereumConfirmations}
+                                requestNotificationPermission={requestNotificationPermission}
+                                showNotification={showNotification}
+                            />;
                         }
                         // const submit = async (submitOrderID: string) => {
                         //     await sdkContainer.approveTokenTransfer(submitOrderID);
@@ -211,7 +221,17 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
                         break;
                     case BurnAndReleaseStatus.SubmittedToEthereum:
                         // Submit the burn to Ethereum
-                        inner = <SubmitBurnToEthereum token={token} txCount={txCount} networkDetails={sdkRenVM.network} mini={paused} txHash={transfer.inTx} submit={sdkContainer.submitBurnToEthereum} ethereumConfirmations={transfer.ethereumConfirmations} />;
+                        inner = <SubmitBurnToEthereum
+                            token={token}
+                            txCount={txCount}
+                            networkDetails={sdkRenVM.network}
+                            mini={paused}
+                            txHash={transfer.inTx}
+                            submit={sdkContainer.submitBurnToEthereum}
+                            ethereumConfirmations={transfer.ethereumConfirmations}
+                            requestNotificationPermission={requestNotificationPermission}
+                            showNotification={showNotification}
+                        />;
                         break;
                     case BurnAndReleaseStatus.ConfirmedOnEthereum:
                     case BurnAndReleaseStatus.SubmittedToRenVM:

@@ -5,7 +5,7 @@ import {
     SendParams, SimpleLogger, Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
-import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
+import { RenVMParams, RenVMProvider, RenVMResponses, unmarshalFees } from "@renproject/rpc";
 import {
     getGatewayAddress, getTokenAddress, NetworkDetails, resolveSendCall, stringToNetwork, utils,
 } from "@renproject/utils";
@@ -87,7 +87,7 @@ export default class RenJS {
             )
         ) as unknown as Provider<RenVMParams, RenVMResponses>;
 
-        this.renVM = new RenVMProvider(rpcProvider);
+        this.renVM = new RenVMProvider(rpcProvider, this.logger);
     }
 
     /**
@@ -125,6 +125,8 @@ export default class RenJS {
 
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
     public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
+
+    public readonly getFees = () => this.renVM.queryFees().then(unmarshalFees);
 }
 
 

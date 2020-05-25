@@ -1,10 +1,10 @@
 // tslint:disable: no-console
 
+import { chaosnet, devnet, localnet, testnet } from "@renproject/contracts";
 import { EthArgs, Tokens } from "@renproject/interfaces";
 import {
     BURN_TOPIC, generateAddress, generateGHash, generatePHash, strip0x,
 } from "@renproject/utils";
-import { chaosnet, devnet, localnet, testnet } from "@renproject/contracts";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 

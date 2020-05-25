@@ -1,11 +1,11 @@
 import {
-    AbiItem, Chain, RenVMArg, RenVMOutputUTXO, RenVMType, Tokens, UnmarshalledBurnTx,
-    UnmarshalledMintTx,
+    AbiItem, Chain, Fees, RenVMArg, RenVMOutputUTXO, RenVMType, Tokens, UnmarshalledAssetFees,
+    UnmarshalledBurnTx, UnmarshalledFees, UnmarshalledMintTx,
 } from "@renproject/interfaces";
 import { assert, Ox, parseRenContract, utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
-import { ResponseQueryBurnTx, ResponseQueryMintTx } from "./renVMTypes";
+import { ResponseQueryBurnTx, ResponseQueryFees, ResponseQueryMintTx } from "./renVMTypes";
 
 const decodeString = (input: string) => Buffer.from(input, "base64").toString();
 const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
@@ -192,3 +192,22 @@ export const unmarshalTx = ((response: ResponseQueryMintTx | ResponseQueryBurnTx
         return unmarshalBurnTx(response as ResponseQueryBurnTx);
     }
 });
+
+const unmarshalAssetFees = (fees: Fees): UnmarshalledAssetFees => {
+    return {
+        lock: decodeNumber(fees.lock).toNumber(),
+        release: decodeNumber(fees.release).toNumber(),
+        ethereum: {
+            mint: decodeNumber(fees.ethereum.mint).toNumber(),
+            burn: decodeNumber(fees.ethereum.burn).toNumber(),
+        }
+    };
+};
+
+export const unmarshalFees = (response: ResponseQueryFees): UnmarshalledFees => {
+    return {
+        btc: unmarshalAssetFees(response.btc),
+        zec: unmarshalAssetFees(response.zec),
+        bch: unmarshalAssetFees(response.bch),
+    };
+};

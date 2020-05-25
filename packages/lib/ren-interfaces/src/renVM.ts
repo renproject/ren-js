@@ -163,3 +163,15 @@ export interface RenVMArg<Name extends string, Type extends RenVMType, Value ext
 
 // tslint:disable-next-line: no-any
 export type RenVMArgs = Array<RenVMArg<string, RenVMType>>;
+
+
+export interface MintAndBurnFees {
+    mint: RenVMValue<RenVMType.TypeU64>;
+    burn: RenVMValue<RenVMType.TypeU64>;
+}
+
+export interface Fees {
+    lock: RenVMValue<RenVMType.TypeU64>;
+    release: RenVMValue<RenVMType.TypeU64>;
+    ethereum: MintAndBurnFees;
+}

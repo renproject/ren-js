@@ -1,4 +1,4 @@
-import { RenContract, RenVMArgs, Shard, TxStatus } from "@renproject/interfaces";
+import { Fees, RenContract, RenVMArgs, Shard, TxStatus } from "@renproject/interfaces";
 
 import {
     BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxResponseOutputs,
@@ -30,6 +30,9 @@ export enum RPCMethod {
     // information cannot be verified.
     MethodQueryStat = "ren_queryStat",
 
+    // MethodQueryFees returns information about the current RenVM fees and
+    // underlying blockchain fees. This information cannot be verified.
+    MethodQueryFees = "ren_queryFees",
 }
 
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.
@@ -84,6 +87,11 @@ export interface ParamsQueryShards {
 
 // ParamsQueryStat defines the parameters of the MethodQueryStat.
 export interface ParamsQueryStat {
+    // No parameters.
+}
+
+// ParamsQueryFees defines the parameters of the MethodQueryFees.
+export interface ParamsQueryFees {
     // No parameters.
 }
 
@@ -189,6 +197,13 @@ export interface ResponseQueryStat {
     serviceUptime: number;
 }
 
+// ResponseQueryFees defines the response of the MethodQueryFees.
+export interface ResponseQueryFees {
+    btc: Fees;
+    zec: Fees;
+    bch: Fees;
+}
+
 export type RenVMResponses = {
     [RPCMethod.MethodQueryBlock]: ResponseQueryBlock;
     [RPCMethod.MethodQueryBlocks]: ResponseQueryBlocks;
@@ -198,6 +213,7 @@ export type RenVMResponses = {
     [RPCMethod.MethodQueryPeers]: ResponseQueryPeers;
     [RPCMethod.MethodQueryShards]: ResponseQueryShards;
     [RPCMethod.MethodQueryStat]: ResponseQueryStat;
+    [RPCMethod.MethodQueryFees]: ResponseQueryFees;
 };
 
 export type RPCResponse<Method extends RPCMethod> =
@@ -209,6 +225,7 @@ export type RPCResponse<Method extends RPCMethod> =
     : Method extends RPCMethod.MethodQueryPeers ? ResponseQueryPeers
     : Method extends RPCMethod.MethodQueryShards ? ResponseQueryShards
     : Method extends RPCMethod.MethodQueryStat ? ResponseQueryStat
+    : Method extends RPCMethod.MethodQueryFees ? ResponseQueryFees
     // tslint:disable-next-line: no-any
     : any;
 
@@ -221,6 +238,7 @@ export type RenVMParams = {
     [RPCMethod.MethodQueryPeers]: ParamsQueryPeers;
     [RPCMethod.MethodQueryShards]: ParamsQueryShards;
     [RPCMethod.MethodQueryStat]: ParamsQueryStat;
+    [RPCMethod.MethodQueryFees]: ParamsQueryFees;
 };
 
 export type RPCParams<Method extends RPCMethod> =
@@ -233,5 +251,6 @@ export type RPCParams<Method extends RPCMethod> =
     : Method extends RPCMethod.MethodQueryPeers ? ParamsQueryPeers
     : Method extends RPCMethod.MethodQueryShards ? ParamsQueryShards
     : Method extends RPCMethod.MethodQueryStat ? ParamsQueryStat
+    : Method extends RPCMethod.MethodQueryFees ? ParamsQueryFees
     // tslint:disable-next-line: no-any
     : any;

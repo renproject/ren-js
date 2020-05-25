@@ -43,3 +43,18 @@ export interface UnmarshalledBurnTx {
 }
 
 export type UnmarshalledTx = UnmarshalledMintTx | UnmarshalledBurnTx;
+
+export interface UnmarshalledAssetFees {
+    lock: number;
+    release: number;
+    ethereum: {
+        mint: number;
+        burn: number;
+    };
+}
+
+export interface UnmarshalledFees {
+    btc: UnmarshalledAssetFees;
+    zec: UnmarshalledAssetFees;
+    bch: UnmarshalledAssetFees;
+}

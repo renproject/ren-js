@@ -53,6 +53,9 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
     public queryStat = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryStat>(RPCMethod.MethodQueryStat, {}, retry)
 
+    public queryFees = async (retry?: number) =>
+        this.sendMessage<RPCMethod.MethodQueryFees>(RPCMethod.MethodQueryFees, {}, retry)
+
     public submitMint = async (
         renContract: RenContract,
         to: string,

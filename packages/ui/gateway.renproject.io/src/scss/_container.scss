@@ -204,14 +204,14 @@
 
         overflow: auto;
 
-        .container--body--title {
+        .show-gateway--title {
             font-size: 2.6rem;
             // margin-bottom: 2px;
             line-height: 100%;
             margin-bottom: 10px;
         }
 
-        .container--title--to {
+        .show-gateway--subtitle {
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;
@@ -541,7 +541,7 @@
             // padding: 10px 30px;
         }
 
-        .container--links a {
+        .complete--links a {
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;
@@ -562,7 +562,7 @@
         $check-thickness: 3px;
         $check-color: $brand-success;
 
-        .circle-loader {
+        .checkmark--outer {
             background: white;
             margin-bottom: 20px;
             border: 1px solid rgba(0, 0, 0, 0.2);
@@ -574,37 +574,28 @@
             border-radius: 50%;
             width: $loader-size;
             height: $loader-size;
-        }
-
-        .load-complete {
             -webkit-animation: none;
             animation: none;
             border-color: $check-color;
             transition: border 500ms ease-out;
         }
 
-        .checkmark {
-            // display: none;
+        .checkmark:after {
+            animation-duration: 800ms;
+            animation-timing-function: ease;
+            animation-name: checkmark;
+            transform: scaleX(-1) rotate(135deg);
 
-            &.draw:after {
-                animation-duration: 800ms;
-                animation-timing-function: ease;
-                animation-name: checkmark;
-                transform: scaleX(-1) rotate(135deg);
-            }
-
-            &:after {
-                opacity: 1;
-                height: $check-height;
-                width: $check-width;
-                transform-origin: left top;
-                border-right: $check-thickness solid $check-color;
-                border-top: $check-thickness solid $check-color;
-                content: '';
-                left: $check-left;
-                top: $check-height;
-                position: absolute;
-            }
+            opacity: 1;
+            height: $check-height;
+            width: $check-width;
+            transform-origin: left top;
+            border-right: $check-thickness solid $check-color;
+            border-top: $check-thickness solid $check-color;
+            content: '';
+            left: $check-left;
+            top: $check-height;
+            position: absolute;
         }
 
         @keyframes loader-spin {

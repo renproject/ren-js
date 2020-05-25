@@ -6,7 +6,7 @@ import { extractError } from "@renproject/utils";
 
 import { Assets } from "../../../state/generalTypes";
 import { Container, ContainerBody } from "../Container";
-import { ConnectedMini } from "./Mini";
+import { Mini } from "./Mini";
 
 export const AskForAddress: React.StatelessComponent<{
     mini: boolean,
@@ -42,9 +42,9 @@ export const AskForAddress: React.StatelessComponent<{
         updateAddress((event.target as HTMLInputElement).value);
     };
 
-    if (mini) { return <ConnectedMini message={"Enter address"} />; }
+    if (mini) { return <Mini token={token} message="Enter address" />; }
 
-    return <Container mini={mini}>
+    return <Container>
         <div className="address-input">
             <ContainerBody>
                 <div className="container--body--box--title">

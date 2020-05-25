@@ -149,7 +149,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
             />;
         }
 
-        return <Container mini={mini}>
+        return <Container>
             <ContainerBody>
                 <ContainerHeader icon={<TokenIcon token={token} />} />
                 <ContainerDetails className="deposit-received">

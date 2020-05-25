@@ -4,7 +4,7 @@ import { classNames } from "../../lib/className";
 
 type DivProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
 
-export const Container: React.StatelessComponent<{ mini: boolean; } & DivProps> = ({ mini, className, children, ...props }) =>
+export const Container: React.StatelessComponent<{ mini?: boolean; } & DivProps> = ({ mini, className, children, ...props }) =>
     <div {...props} className={classNames("gateway-container", mini ? "container--paused" : "", className)}>
         {children}
     </div>;

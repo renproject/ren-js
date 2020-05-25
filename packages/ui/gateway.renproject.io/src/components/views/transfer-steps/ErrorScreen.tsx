@@ -23,7 +23,7 @@ export const ErrorScreen: React.StatelessComponent<Props> =
             retry();
         };
 
-        return <Container mini={false}>
+        return <Container>
             <ContainerBody>
                 <ContainerHeader className="container--body--alert" icon={<AlertIcon />} />
                 <ContainerDetails>

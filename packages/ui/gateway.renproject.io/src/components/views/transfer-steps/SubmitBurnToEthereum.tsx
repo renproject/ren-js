@@ -7,8 +7,8 @@ import { Asset, Chain, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
-import styled from "styled-components";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
+import styled from "styled-components";
 
 import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
@@ -18,7 +18,7 @@ import {
 } from "../Container";
 import { ExternalLink } from "../ExternalLink";
 import { ErrorScreen } from "./ErrorScreen";
-import { ConnectedMini } from "./Mini";
+import { Mini } from "./Mini";
 
 const TransparentButton = styled.button`
         position: relative;
@@ -113,7 +113,7 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
     //     }
     // }, [requested, setRequested, ethereumConfirmations, requestNotificationPermission]);
 
-    if (mini) { return <ConnectedMini message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
+    if (mini) { return <Mini token={token} message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
 
     if (error) {
         return <ErrorScreen
@@ -129,7 +129,7 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
         </ErrorScreen>;
     }
 
-    return <Container mini={mini}>
+    return <Container>
         <div className="burn-container submit-burn-to-ethereum">
             <ContainerBody>
                 <ContainerHeader icon={<BurnIcon />} />

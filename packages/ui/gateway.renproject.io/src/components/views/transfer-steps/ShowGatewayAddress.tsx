@@ -182,17 +182,17 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
             return <Mini token={token} message={last ? `${last.utxo.confirmations} / ${confirmations} confirmations` : "Waiting for deposit"} />;
         }
 
-        return <Container mini={mini}>
+        return <Container>
             <ContainerBody>
                 {!showQR ? <ContainerHeader icon={<TokenIcon token={token} />} /> : null}
                 <ContainerDetails>
                     {showQR && legacyOrNewAddress ?
                         <ShowQRCode address={legacyOrNewAddress} token={token} amount={amount} showLegacyAddress={showLegacyAddress} setShowLegacyAddress={setShowLegacyAddress} />
                         : <>
-                            <div className="container--body--title">
+                            <div className="show-gateway--title">
                                 Deposit {amount ? amount : <></>} {token.toUpperCase()}
                             </div>
-                            <div className="container--title--to">in a single transaction to</div>
+                            <div className="show-gateway--subtitle">in a single transaction to</div>
                         </>}
                 </ContainerDetails>
             </ContainerBody>

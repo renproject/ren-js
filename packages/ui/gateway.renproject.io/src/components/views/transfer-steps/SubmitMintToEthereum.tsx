@@ -15,7 +15,7 @@ import {
 import { ExternalLink } from "../ExternalLink";
 import { LabelledDiv } from "../LabelledInput";
 import { ErrorScreen } from "./ErrorScreen";
-import { ConnectedMini } from "./Mini";
+import { Mini } from "./Mini";
 
 const TransparentButton = styled.button`
         position: relative;
@@ -96,7 +96,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
         }
     }, [initialized, txHash, onSubmit]);
 
-    if (mini) { return <ConnectedMini message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
+    if (mini) { return <Mini token={token} message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
 
     if (error) {
         return <ErrorScreen
@@ -112,7 +112,7 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
         </ErrorScreen>;
     }
 
-    return <Container mini={false}>
+    return <Container>
         <div className="submit-to-ethereum">
             <ContainerBody>
                 <ContainerHeader icon={<TokenIcon token={token} />} />

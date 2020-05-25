@@ -31,7 +31,7 @@ export const InvalidParameters: React.StatelessComponent<Props> =
             return <Mini token={token} message={"Invalid parameters"} />;
         }
 
-        return <Container mini={mini}>
+        return <Container>
             <ContainerDetails>
                 Invalid Parameters
             </ContainerDetails>

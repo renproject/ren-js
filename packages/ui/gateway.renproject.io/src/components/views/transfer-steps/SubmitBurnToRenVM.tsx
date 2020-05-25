@@ -88,7 +88,7 @@ export const SubmitBurnToRenVM: React.StatelessComponent<{
         return <Mini token={token} message={submitting ? "Submitting to RenVM" : "Submit to RenVM"} />;
     }
 
-    return <Container mini={mini}>
+    return <Container>
         <div className="burn-container submit-to-ethereum">
             <ContainerBody>
                 <ContainerHeader icon={<BurnIcon />} />

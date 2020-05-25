@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { Asset, Chain, Tx } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/contracts";
+import { Asset, Chain, Tx } from "@renproject/interfaces";
 
 import { txUrl } from "../../../lib/txUrl";
 import {
@@ -36,17 +36,17 @@ export const Complete: React.StatelessComponent<{
 
     return mini ?
         <Mini token={token} message="Done" /> :
-        <Container mini={false}>
+        <Container>
             <div className="complete">
                 <ContainerBody>
                     <ContainerHeader
-                        icon={<div className="circle-loader load-complete">
-                            <div className="checkmark draw" />
+                        icon={<div className="checkmark--outer">
+                            <div className="checkmark" />
                         </div>}
                     />
                     <ContainerDetails>
                         <h4>Deposit received</h4>
-                        <div className="container--links">
+                        <div className="complete--links">
                             {inTx && outTx ? <>
                                 <ExternalLink href={txUrl(inTx, networkDetails)}>{renderChain(inTx.chain)} Transaction</ExternalLink>
                                 {" "}-{" "}

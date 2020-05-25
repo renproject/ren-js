@@ -1,37 +1,10 @@
+import { Asset } from "@renproject/interfaces";
 import { toLegacyAddress } from "bchaddrjs";
 import QRCode from "qrcode.react";
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
-import { Asset } from "@renproject/interfaces";
 
 import { ReactComponent as CogIcon } from "../../../images/icons/cog.svg";
-
-// const QRCodeTabs = styled.div`
-//     display: flex;
-//     width: 100%;
-//     justify-content: flex-start;
-
-//     >div {
-//         border: 1px solid #DBE0E8;
-//         margin-bottom:-1px;
-//         background: white;
-//         z-index: 1;
-
-//         padding: 0 5px;
-
-//         &.selected {
-//             border-bottom: 1px solid white;
-//         }
-
-//         &:first-child {
-//             border-top-left-radius: 4px;
-//         }
-
-//         &:last-child {
-//             border-top-right-radius: 4px;
-//         }
-//     }
-// `;
 
 const QRCodeContainer = styled.div`
     background: #FFFFFF;
@@ -139,6 +112,5 @@ export const ShowQRCode: React.FC<Props> = ({ token, amount, address, showLegacy
         <QRCodeContainer>
             <QRCode value={`${rawAddress ? "" : (token === Asset.BTC ? "bitcoin:" : token === Asset.ZEC ? "zcash:" : token === Asset.BCH && showLegacyAddress ? "bitcoincash:" : "")}${showLegacyAddress ? toLegacyAddress(address) : address}${amount && !rawAddress ? `?amount=${amount}` : ""}`} />
         </QRCodeContainer>
-        {/* <span>Deposit {amount ? amount : <></>} {token.toUpperCase()}</span> */}
     </QRCodeOuter>;
 };

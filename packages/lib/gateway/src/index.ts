@@ -53,7 +53,7 @@ export class Gateway {
     private readonly logger: Logger;
 
     constructor(network: RenNetworkDetails, config: GatewayJSConfig) {
-        this.logger = (config && config.logger) || new SimpleLogger(config?.logLevel || LogLevel.Error);
+        this.logger = (config && config.logger) || new SimpleLogger((config && config.logLevel) || LogLevel.Error);
         this.network = network;
         if (!config.endpoint) {
             throw new Error("Must provide endpoint in Gateway config");

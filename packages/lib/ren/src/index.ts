@@ -74,7 +74,7 @@ export default class RenJS {
             config = providerOrConfig as RenJSConfig;
         }
 
-        this.logger = (config && config.logger) || new SimpleLogger(config?.logLevel || LogLevel.Error);
+        this.logger = (config && config.logger) || new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         // Use provided provider, provider URL or default lightnode URL.
         const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ?

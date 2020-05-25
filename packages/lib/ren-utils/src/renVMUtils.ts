@@ -1,10 +1,10 @@
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, RenContract, RenTokens,
+    Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, Logger, RenContract, RenTokens,
     UnmarshalledMintTx, UTXOIndex,
 } from "@renproject/interfaces";
-import BN from "bn.js";
-import { ecrecover, keccak256, pubToAddress } from "ethereumjs-util";
+import BigNumber from "bignumber.js";
+import { keccak256 } from "ethereumjs-util";
 import Web3 from "web3";
 import { sha3 } from "web3-utils";
 
@@ -25,13 +25,18 @@ import { rawEncode } from "./ethereumUtils";
  *
  * @param zip An array (or spread) of parameters with with types defined.
  */
-export const generatePHash = (...zip: EthArgs | [EthArgs]): string => {
+export const generatePHash = (zip: EthArgs, logger?: Logger): string => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = Array.isArray(zip) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
+    const args = Array.isArray(zip[0]) ? zip[0] as any as EthArgs : zip; // tslint:disable-line: no-any
 
     const [types, values] = unzip(args);
 
-    return Ox(keccak256(rawEncode(types, values))); // sha3 can accept a Buffer
+    const message = rawEncode(types, values);
+    const digest = Ox(keccak256(message));
+
+    if (logger) logger.debug(`pHash: ${digest}: keccak256(${message})`);
+
+    return digest; // sha3 can accept a Buffer
 };
 
 interface RenContractDetails {
@@ -86,19 +91,23 @@ export const syncGetTokenAddress = (renContract: RenContract, network: RenNetwor
     }
 };
 
-export const generateGHash = (payload: EthArgs, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: RenNetworkDetails): string => {
+export const generateGHash = (payload: EthArgs, /* amount: number | string, */ to: string, renContract: RenContract, nonce: string, network: RenNetworkDetails, logger?: Logger): string => {
     const token = syncGetTokenAddress(renContract, network);
-    const pHash = generatePHash(payload);
+    const pHash = generatePHash(payload, logger);
 
     const encoded = rawEncode(
         ["bytes32", /*"uint256",*/ "address", "address", "bytes32"],
         [Ox(pHash), /*amount,*/ Ox(token), Ox(to), Ox(nonce)],
     );
 
-    return Ox(keccak256(encoded));
+    const digest = Ox(keccak256(encoded));
+
+    if (logger) logger.debug(`gHash: ${digest}: keccak256(${encoded})`);
+
+    return digest;
 };
 
-export const generateSighash = (pHash: string, amount: number | string, to: string, renContract: RenContract, nonceHash: string, network: RenNetworkDetails): string => {
+export const generateSighash = (pHash: string, amount: number | string, to: string, renContract: RenContract, nonceHash: string, network: RenNetworkDetails, logger?: Logger): string => {
     const token = syncGetTokenAddress(renContract, network);
 
     const encoded = rawEncode(
@@ -106,7 +115,11 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
         [Ox(pHash), amount, token, to, nonceHash],
     );
 
-    return Ox(keccak256(encoded));
+    const digest = Ox(keccak256(encoded));
+
+    if (logger) logger.debug(`sigHash: ${digest}: keccak256(${encoded})`);
+
+    return digest;
 };
 
 export const txHashToBase64 = (txHash: Buffer | string) => {
@@ -121,12 +134,18 @@ export const txHashToBase64 = (txHash: Buffer | string) => {
     return txHash;
 };
 
-export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex) => {
-    return txHashToBase64(keccak256(`txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`));
+export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex, logger?: Logger) => {
+    const message = `txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`;
+    const digest = txHashToBase64(keccak256(message));
+    if (logger) logger.debug(`Mint txHash: ${digest}: keccak256(${message})`);
+    return digest;
 };
 
-export const generateBurnTxHash = (renContract: RenContract, encodedID: string) => {
-    return txHashToBase64(keccak256(`txHash_${renContract}_${encodedID}`));
+export const generateBurnTxHash = (renContract: RenContract, encodedID: string, logger?: Logger) => {
+    const message = `txHash_${renContract}_${encodedID}`;
+    const digest = txHashToBase64(keccak256(message));
+    if (logger) logger.debug(`Burn txHash: ${digest}: keccak256(${message})`);
+    return digest;
 };
 
 // export const generateNHash = (tx: Tx): string => {
@@ -144,27 +163,27 @@ export const signatureToString = <T extends Signature>(sig: T): string => Ox(`${
 
 const switchV = (v: number) => v === 27 ? 28 : 27; // 28 - (v - 27);
 
-const secp256k1n = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "hex");
-export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDetails): Signature => {
+const secp256k1n = new BigNumber("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16);
+export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDetails, logger?: Logger): Signature => {
     if (!response.out) {
         throw new Error(`Expected transaction response to have signature`);
     }
 
-    const expectedSighash = generateSighash(response.autogen.phash, response.autogen.amount, response.in.to, response.to, response.autogen.nhash, network);
+    const expectedSighash = generateSighash(response.autogen.phash, response.autogen.amount, response.in.to, response.to, response.autogen.nhash, network, logger);
     if (Ox(response.autogen.sighash) !== Ox(expectedSighash)) {
-        // tslint:disable-next-line: no-console
-        console.warn(`Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${response.autogen.sighash}`);
+        if (logger) logger.warn(`Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${response.autogen.sighash}`);
     }
 
     const r = response.out.r;
-    let s = new BN(strip0x(response.out.s), "hex");
-    let v = ((new BN(strip0x(response.out.v) || "0", "hex").toNumber() + 27) || 27);
+    let s = new BigNumber(strip0x(response.out.s), 16);
+    let v = ((new BigNumber(strip0x(response.out.v) || "0", 16).toNumber() + 27) || 27);
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
-    if (s.gt(secp256k1n.div(new BN(2)))) {
+    // secp256k1n/2 = 57896044618658097711785492504343953926418782139537452191302581570759080747168.5
+    if (s.gt(secp256k1n.div(2))) {
         // Take s = -s % secp256k1n
-        s = secp256k1n.sub(new BN(s));
+        s = secp256k1n.minus(s);
         // Switch v
         v = switchV(v);
     }
@@ -201,9 +220,11 @@ export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDe
     //     throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
     // }
 
+    const to32Bytes = (bn: BigNumber) => ("0".repeat(64) + bn.toString(16)).slice(-64);
+
     const signature: Signature = {
         r,
-        s: strip0x(s.toArrayLike(Buffer, "be", 32).toString("hex")),
+        s: to32Bytes(s),
         v,
     };
 
@@ -230,7 +251,7 @@ export const getGatewayAddress = async (network: RenNetworkDetails, web3: Web3, 
     }
 };
 
-export const findTransactionBySigHash = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"), sigHash: string): Promise<string | undefined> => {
+export const findTransactionBySigHash = async (network: RenNetworkDetails, web3: Web3, tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"), sigHash: string, logger?: Logger): Promise<string | undefined> => {
     try {
         const gatewayAddress = await getGatewayAddress(network, web3, tokenOrContract);
         const gatewayContract = new web3.eth.Contract(
@@ -257,7 +278,7 @@ export const findTransactionBySigHash = async (network: RenNetworkDetails, web3:
         }
     } catch (error) {
         // tslint:disable-next-line: no-console
-        console.error(error);
+        if (logger) logger.error(error);
         // Continue with transaction
     }
     return;

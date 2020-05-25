@@ -16,6 +16,9 @@ export const RenGatewayContainerHTML = () => `
 
 const iframeHeight = 288 + 6; // Main div + progress div
 const iframeWidth = 452;
+const minimizedHeight = 50;
+const minimizedWidth = 250;
+const minimizedSpacing = 10;
 
 const bellSvg = (id: string) => `
 <svg
@@ -79,12 +82,12 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: bool
     }
 
     ._ren_gateway-minified ._ren_iframeShadow {
-        top: 10px;
+        top: ${minimizedSpacing}px;
         // right: 10px;
-        left: calc(100% - 250px - 10px);
+        left: calc(100% - ${minimizedWidth}px - ${minimizedSpacing}px);
         // transform: translate(0%, 0%);
-        width:250px;
-        height:50px;
+        width: ${minimizedWidth}px;
+        height: ${minimizedHeight}px;
         box-shadow: 0 5px 10px 0 rgba(0,0,0,0.5);
         z-index: 999999;
         position: absolute;
@@ -106,28 +109,28 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: bool
 
     /* TODO: Use single CSS rule */
     ._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 1));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 1));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 2));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 2));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 3));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 3));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 4));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 4));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 5));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 5));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 6));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 6));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 7));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 7));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(10px + calc(60px * 8));
+        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 8));
     }
 
     ._ren_gateway-minified ._ren_overlay {

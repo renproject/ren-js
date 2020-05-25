@@ -1,5 +1,5 @@
 import { RenNetworkDetails } from "@renproject/contracts";
-import { AbiItem, Asset, RenContract, RenVMType, TxStatus } from "@renproject/interfaces";
+import { AbiItem, Asset, Logger, RenContract, RenVMType, TxStatus } from "@renproject/interfaces";
 import { Provider } from "@renproject/provider";
 import {
     getTokenPrices, hash160, normalizeValue, parseRenContract, SECONDS, sleep, strip0x,
@@ -20,8 +20,10 @@ export * from "./unmarshal";
 export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
     public readonly provider: Provider<RenVMParams, RenVMResponses>;
     sendMessage: RenVMProvider["provider"]["sendMessage"];
+    private readonly logger: Logger | undefined;
 
-    constructor(provider: Provider<RenVMParams, RenVMResponses>) {
+    constructor(provider: Provider<RenVMParams, RenVMResponses>, logger?: Logger) {
+        this.logger = logger;
         this.provider = provider;
         this.sendMessage = this.provider.sendMessage;
     }
@@ -152,7 +154,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
                     // ignore
                 } else {
                     // tslint:disable-next-line: no-console
-                    console.error(String(error));
+                    if (this.logger) { this.logger.error(String(error)); }
                     // TODO: throw unepected errors
                 }
             }
@@ -169,7 +171,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
      *        key should be fetched.
      * @returns The public key hash (20 bytes) as a string.
      */
-    public readonly selectPublicKey = async (renContract: RenContract): Promise<Buffer> => {
+    public readonly selectPublicKey = async (renContract: RenContract, logger?: Logger): Promise<Buffer> => {
 
         // Call the ren_queryShards RPC.
         const response = await this.queryShards(5);
@@ -183,7 +185,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
         const tokens = Set<string>().concat(
             ...primaryShards.map(shard => shard.gateways.map(gateway => gateway.asset))
         ).toArray();
-        const tokenPrices: TokenPrices = await getTokenPrices(tokens)
+        const tokenPrices: TokenPrices = await getTokenPrices(tokens, logger)
             .catch(() => OrderedMap());
         const token: Asset = parseRenContract(renContract).asset;
 

@@ -1,10 +1,11 @@
+import { Logger } from "@renproject/interfaces";
 import { extractError } from "@renproject/utils";
 import { List, OrderedSet } from "immutable";
 
 import { HttpProvider } from "./httpProvider";
 import { Provider } from "./jsonRPC";
 
-const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[List<a>, OrderedSet<string>]> => {
+const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a, logger?: Logger): Promise<[List<a>, OrderedSet<string>]> => {
     let errors = OrderedSet<string>();
     let newList = List<a>();
     for (const entryP of list.toArray()) {
@@ -15,7 +16,7 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
             if (!errors.has(errorString)) {
                 errors = errors.add(errorString);
                 // tslint:disable-next-line: no-console
-                console.error(errorString);
+                if (logger) logger.error(errorString);
             }
             newList = newList.push(defaultValue);
         }
@@ -26,8 +27,10 @@ const promiseAll = async <a>(list: List<Promise<a>>, defaultValue: a): Promise<[
 // tslint:disable-next-line: no-any
 export class MultiProvider<Requests extends { [event: string]: any } = {}, Responses extends { [event: string]: any } = {}> implements Provider {
     public nodes: List<HttpProvider<Requests, Responses>>;
+    private readonly logger: Logger | undefined;
 
-    constructor(nodeURLs: string[]) {
+    constructor(nodeURLs: string[], logger?: Logger) {
+        this.logger = logger;
         this.nodes = List(nodeURLs.map(nodeURL => new HttpProvider<Requests, Responses>(nodeURL)));
     }
 
@@ -42,17 +45,18 @@ export class MultiProvider<Requests extends { [event: string]: any } = {}, Respo
                 ),
             ).toList(),
             null,
+            this.logger,
         );
         responses = responses.filter((result) => result !== null);
 
         const first = responses.first(null);
         if (first === null) {
-            if (errors.size) {
-                throw new Error(errors.first());
-            } else {
-                throw new Error(`No response from RenVM while submitting message`);
-            }
+            const error = errors.first() ? new Error(errors.first()) : new Error(`No response from RenVM while submitting message`);
+            if (this.logger) this.logger.debug(method, request, error.message);
+            throw error;
         }
+
+        if (this.logger) this.logger.debug(method, request, first);
 
         return first;
     }

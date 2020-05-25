@@ -29,6 +29,7 @@ export enum RPCMethod {
     // MethodQueryStat returns status information about the Darknode. This
     // information cannot be verified.
     MethodQueryStat = "ren_queryStat",
+
 }
 
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.

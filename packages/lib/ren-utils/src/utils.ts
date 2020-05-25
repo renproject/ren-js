@@ -1,11 +1,7 @@
-import BNImport from "bn.js";
-
 import { bchUtils, btcUtils, zecUtils } from "./chains";
 import { Ox, strip0x } from "./common";
 import { randomNonce } from "./renVMUtils";
 import { value } from "./value";
-
-export const BN = BNImport;
 
 export const utils = {
     Ox,

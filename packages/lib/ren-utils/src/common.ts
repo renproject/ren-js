@@ -1,5 +1,4 @@
-import { AbiItem, EthArgs } from "@renproject/interfaces";
-import BN from "bn.js";
+import { AbiItem, BNInterface, EthArgs } from "@renproject/interfaces";
 
 /**
  * Represents 1 second for functions that accept a parameter in milliseconds.
@@ -14,7 +13,6 @@ export const sleep = async (ms: number): Promise<void> =>
     // tslint:disable-next-line: no-string-based-set-timeout
     new Promise<void>(resolve => setTimeout(resolve, ms));
 
-
 /**
  * Remove 0x prefix from a hex string. If the input doesn't have a 0x prefix,
  * it's returned unchanged.
@@ -27,7 +25,7 @@ export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice
  * is already prefixed, it's returned unchanged.
  * @param hex The hex value to be prefixed.
  */
-export const Ox = (hex: string | BN | Buffer) => {
+export const Ox = (hex: string | Buffer | BNInterface) => {
     const hexString = typeof hex === "string" ? hex : hex.toString("hex");
     return hexString.substring(0, 2) === "0x" ? hexString : `0x${hexString}`;
 };

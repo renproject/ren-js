@@ -1,3 +1,4 @@
+import { Logger } from "@renproject/interfaces";
 import Axios from "axios";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -103,7 +104,7 @@ const getCoinbasePrice: PriceFeed = (token: string) =>
 //         },
 //     }).then((response: { data: { data: Array<{ symbol: string, quote: { USD: { price: number } } }> } }) => { return response.data.data.filter(x => x.symbol === token)[0].quote.USD.price; });
 
-export const getTokenPrices = async (tokens: string[]): Promise<TokenPrices> => {
+export const getTokenPrices = async (tokens: string[], logger?: Logger): Promise<TokenPrices> => {
     try {
         return await tokens.map((token) => ({
             token,
@@ -121,7 +122,7 @@ export const getTokenPrices = async (tokens: string[]): Promise<TokenPrices> => 
                         returnedAPIs.push(await priceFeed);
                     } catch (error) {
                         // tslint:disable-next-line: no-console
-                        console.error(error);
+                        if (logger) logger.error(error);
                     }
                 }
 
@@ -131,7 +132,7 @@ export const getTokenPrices = async (tokens: string[]): Promise<TokenPrices> => 
                 );
             }, Promise.resolve(OrderedMap<string, number>()));
     } catch (error) {
-        console.error(error);
+        if (logger) logger.error(error);
         return OrderedMap<string, number>();
     }
 };

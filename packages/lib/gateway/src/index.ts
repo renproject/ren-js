@@ -5,8 +5,8 @@ import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
     BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
     GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
-    LockAndMintParamsSimple, LockAndMintStatus, RenContract, RenNetwork, RenTokens, SendParams,
-    Tokens, TransferParams, UnmarshalledTx,
+    LockAndMintParamsSimple, LockAndMintStatus, Logger, LogLevel, LogLevelString, RenContract,
+    RenNetwork, RenTokens, SendParams, SimpleLogger, Tokens, TransferParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
     extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
@@ -27,6 +27,12 @@ import { useBrowserWeb3 } from "./web3";
 
 const ON_CONFIRMATION_HANDLER_LIMIT = 30;
 
+export interface GatewayJSConfig {
+    endpoint?: string;
+    logLevel?: LogLevelString;
+    logger?: Logger;
+}
+
 export class Gateway {
 
     // tslint:disable: readonly-keyword
@@ -44,10 +50,15 @@ export class Gateway {
     private readonly id: string;
     private readonly network: RenNetworkDetails;
     private readonly endpoint: string;
+    private readonly logger: Logger;
 
-    constructor(network: RenNetworkDetails, endpoint: string) {
+    constructor(network: RenNetworkDetails, config: GatewayJSConfig) {
+        this.logger = (config && config.logger) || new SimpleLogger(config?.logLevel || LogLevel.Error);
         this.network = network;
-        this.endpoint = endpoint;
+        if (!config.endpoint) {
+            throw new Error("Must provide endpoint in Gateway config");
+        }
+        this.endpoint = config.endpoint;
         this.id = randomBytes(8);
     }
 
@@ -60,19 +71,19 @@ export class Gateway {
             // tslint:disable-next-line: no-object-mutation
             this.isOpen = false;
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
         }
     }
 
     public readonly pause = () => {
         this._pause();
-        this._sendMessage(GatewayMessageType.Pause, {}).catch(console.error);
+        this._sendMessage(GatewayMessageType.Pause, {}).catch(this.logger.error);
         return this;
     }
 
     public readonly resume = () => {
         this._resume();
-        this._sendMessage(GatewayMessageType.Resume, {}).catch(console.error);
+        this._sendMessage(GatewayMessageType.Resume, {}).catch(this.logger.error);
         return this;
     }
 
@@ -111,12 +122,12 @@ export class Gateway {
         // tslint:disable-next-line: no-any
         listener = (e: { readonly data: GatewayMessage<any> }) => {
             if (e.data && e.data.from === "ren" && e.data.frameID === this.id) {
-                this._acknowledgeMessage(e.data, {}, popup).catch(console.error);
+                this._acknowledgeMessage(e.data, {}, popup).catch(this.logger.error);
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
                         if (popup) {
-                            this._sendMessage(GatewayMessageType.GetTransfers, {}, popup).catch(console.error);
+                            this._sendMessage(GatewayMessageType.GetTransfers, {}, popup).catch(this.logger.error);
                         }
                         break;
                     case GatewayMessageType.Transfers:
@@ -214,7 +225,7 @@ export class Gateway {
                             Push.Permission.request();
                         }
                     } catch (error) {
-                        console.error(error);
+                        this.logger.error(error);
                     }
                     notificationButton.classList.add("_ren_notifications-hidden");
                 };
@@ -235,28 +246,28 @@ export class Gateway {
                 // alert(`I got a message: ${JSON.stringify(e.data)}`);
                 switch (e.data.type) {
                     case GatewayMessageType.Ready:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         const transferParamsFixed = prepareParamsForSendMessage(transferParams);
                         this._sendMessage(GatewayMessageType.TransferDetails, {
                             transferDetails: transferParamsFixed,
                             paused: this.isPaused,
                             cancelled: this.isCancelling,
-                        }).catch(console.error);
+                        }).catch(this.logger.error);
                         break;
                     case GatewayMessageType.Status:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         this.promiEvent.emit("status", e.data.payload.status, e.data.payload.details);
                         break;
                     case GatewayMessageType.Pause:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         this._pause();
                         break;
                     case GatewayMessageType.Resume:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         this._resume();
                         break;
                     case GatewayMessageType.Cancel:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         onClose();
                         if (this.isCancelling) {
                             // tslint:disable-next-line: no-object-mutation
@@ -285,17 +296,17 @@ export class Gateway {
                                 // .on causes indefinite network requests or
                                 // if web3 fetches blocks anyways.
                                 const listenForConfirmations = () => promiEvent.once("confirmation", (confirmations) => {
-                                    this._sendMessage(GatewayMessageType.SendEthereumTxConfirmations, { txHash, confirmations }).catch(console.error);
+                                    this._sendMessage(GatewayMessageType.SendEthereumTxConfirmations, { txHash, confirmations }).catch(this.logger.error);
                                     if (confirmations < ON_CONFIRMATION_HANDLER_LIMIT) {
                                         listenForConfirmations();
                                     }
                                 });
                                 listenForConfirmations();
-                                this._acknowledgeMessage<GatewayMessageType.SendEthereumTx>(e.data as GatewayMessage<GatewayMessageType.SendEthereumTx>, { txHash }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.SendEthereumTx>(e.data as GatewayMessage<GatewayMessageType.SendEthereumTx>, { txHash }).catch(this.logger.error);
                             } catch (error) {
-                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(this.logger.error);
                             }
-                        })().catch(console.error);
+                        })().catch(this.logger.error);
                         return;
                     case GatewayMessageType.GetEthereumTxStatus:
                         (async () => {
@@ -307,12 +318,12 @@ export class Gateway {
                                 const currentBlock = await this.web3.eth.getBlockNumber();
                                 const receipt = await waitForReceipt(this.web3, txHash);
                                 const confirmations = Math.max(currentBlock - receipt.blockNumber, 0);
-                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxStatus>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxStatus>, { confirmations, reverted: false }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxStatus>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxStatus>, { confirmations, reverted: false }).catch(this.logger.error);
                             } catch (error) {
                                 // TODO: Check if tx was reverted or getting receipt failed.
-                                this._acknowledgeMessage(e.data, { reverted: true, error: extractError(error) }).catch(console.error);
+                                this._acknowledgeMessage(e.data, { reverted: true, error: extractError(error) }).catch(this.logger.error);
                             }
-                        })().catch(console.error);
+                        })().catch(this.logger.error);
                         return;
                     case GatewayMessageType.GetEthereumTxBurn:
                         (async () => {
@@ -323,12 +334,12 @@ export class Gateway {
                                 const txHash = (e.data.payload as GatewayMessagePayload<GatewayMessageType.GetEthereumTxBurn>).txHash;
 
                                 const burnReference = await extractBurnReference(this.web3, txHash);
-                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxBurn>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxBurn>, { burnReference }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.GetEthereumTxBurn>(e.data as GatewayMessage<GatewayMessageType.GetEthereumTxBurn>, { burnReference }).catch(this.logger.error);
                             } catch (error) {
-                                console.error(error);
-                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
+                                this.logger.error(error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(this.logger.error);
                             }
-                        })().catch(console.error);
+                        })().catch(this.logger.error);
                         return;
                     case GatewayMessageType.FindMintTransaction:
                         (async () => {
@@ -337,33 +348,33 @@ export class Gateway {
                                     throw new Error(`No Web3 defined`);
                                 }
                                 const { sigHash, token } = e.data.payload as GatewayMessagePayload<GatewayMessageType.FindMintTransaction>;
-                                const txHash = await findTransactionBySigHash(this.network, this.web3, token, sigHash);
+                                const txHash = await findTransactionBySigHash(this.network, this.web3, token, sigHash, this.logger);
 
-                                this._acknowledgeMessage<GatewayMessageType.FindMintTransaction>(e.data as GatewayMessage<GatewayMessageType.FindMintTransaction>, { txHash }).catch(console.error);
+                                this._acknowledgeMessage<GatewayMessageType.FindMintTransaction>(e.data as GatewayMessage<GatewayMessageType.FindMintTransaction>, { txHash }).catch(this.logger.error);
                             } catch (error) {
-                                console.error(error);
-                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(console.error);
+                                this.logger.error(error);
+                                this._acknowledgeMessage(e.data, { error: extractError(error) }).catch(this.logger.error);
                             }
-                        })().catch(console.error);
+                        })().catch(this.logger.error);
                         return;
                     case GatewayMessageType.Error:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         onClose();
                         this.promiEvent.reject(new Error(e.data.payload.message || "Error thrown from Gateway iframe."));
                         return;
                     case GatewayMessageType.Done:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         onClose();
                         this.promiEvent.resolve(e.data.payload);
                         return;
                     case GatewayMessageType.RequestNotificationPermission:
-                        this._acknowledgeMessage(e.data, {}).catch(console.error);
+                        this._acknowledgeMessage(e.data, {}).catch(this.logger.error);
                         if (!Push.Permission.has()) {
                             this._getNotificationButton().classList.add("_ren_notifications-blue");
                         }
                         return;
                     case GatewayMessageType.ShowNotification:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                         const { title, body } = e.data.payload as GatewayMessagePayload<GatewayMessageType.ShowNotification>;
                         try {
                             if (Push.Permission.has()) {
@@ -379,14 +390,14 @@ export class Gateway {
                                         Push.close(tag);
                                         this.resume();
                                     }
-                                }).catch(console.error);
+                                }).catch(this.logger.error);
                             }
                         } catch (error) {
-                            console.error(error);
+                            this.logger.error(error);
                         }
                         return;
                     default:
-                        this._acknowledgeMessage(e.data).catch(console.error);
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
                 }
             }
         }
@@ -396,7 +407,13 @@ export class Gateway {
 
         // TODO: Allow response in acknowledgement.
 
-        const frame = iframeIn || this._getIFrame();
+        let frame;
+        try {
+            frame = iframeIn || this._getIFrame();
+        } catch (error) {
+            this.logger.error(error);
+            return;
+        }
 
         while (!frame) {
             await sleep(1 * 1000);
@@ -446,7 +463,13 @@ export class Gateway {
             return;
         }
 
-        const frame = iframeIn || this._getIFrame();
+        let frame;
+        try {
+            frame = iframeIn || this._getIFrame();
+        } catch (error) {
+            this.logger.error(error);
+            return;
+        }
 
         while (!frame) {
             await sleep(1 * 1000);
@@ -469,19 +492,19 @@ export class Gateway {
     }
 
     private readonly _toggleSettings = () => {
-        this._sendMessage(GatewayMessageType.ToggleSettings, {}).catch(console.error);
+        this._sendMessage(GatewayMessageType.ToggleSettings, {}).catch(this.logger.error);
     }
 
     private readonly _pause = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = true;
-        try { this._getPopup().classList.add("_ren_gateway-minified"); } catch (error) { console.error(error); }
+        try { this._getPopup().classList.add("_ren_gateway-minified"); } catch (error) { this.logger.error(error); }
     }
 
     private readonly _resume = () => {
         // tslint:disable-next-line: no-object-mutation
         this.isPaused = false;
-        try { this._getPopup().classList.remove("_ren_gateway-minified"); } catch (error) { console.error(error); }
+        try { this._getPopup().classList.remove("_ren_gateway-minified"); } catch (error) { this.logger.error(error); }
     }
 
     private readonly _getSettingsButton = () => getElement(`_ren_settings-${this.id}`);
@@ -519,23 +542,27 @@ export default class GatewayJS {
     public static readonly utils: ((typeof utils) & { useBrowserWeb3: typeof useBrowserWeb3 }) = { ...utils, useBrowserWeb3 };
 
     private readonly network: RenNetworkDetails;
-    private readonly endpoint: string;
+    private readonly config: GatewayJSConfig;
+
     // tslint:disable-next-line: readonly-keyword
-    constructor(network?: RenNetwork | string, options?: { endpoint?: string }) {
+    constructor(network?: RenNetwork | string, config?: GatewayJSConfig) {
         const publicNetworks: readonly RenNetwork[] = [RenNetwork.Mainnet, RenNetwork.Chaosnet, RenNetwork.Testnet];
         if (typeof network === "string") {
             validateString<RenNetwork>(network, `Invalid network. Expected one of ${publicNetworks.join(", ")}`, Object.values(RenNetwork) as readonly RenNetwork[]);
         }
         this.network = stringToNetwork(network);
         // NOTE: In a future release, all networks will use the production endpoint.
-        this.endpoint = (options && (options.endpoint === "staging" ? GATEWAY_ENDPOINT_STAGING : options.endpoint)) || GATEWAY_ENDPOINT_PRODUCTION;
+        this.config = {
+            ...config,
+            endpoint: (config && (config.endpoint === "staging" ? GATEWAY_ENDPOINT_STAGING : config.endpoint)) || GATEWAY_ENDPOINT_PRODUCTION,
+        };
     }
 
     /**
      * Returns a map containing previously opened gateways.
      */
     public readonly getGateways = async (options?: { all: boolean }): Promise<Map<string, HistoryEvent>> => {
-        const gateways = await new Gateway(this.network, this.endpoint)._getGateways();
+        const gateways = await new Gateway(this.network, this.config)._getGateways();
 
         // Delete gateways that have been returned
         if (!options || !options.all) {
@@ -564,7 +591,7 @@ export default class GatewayJS {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new Gateway(this.network, this.endpoint)._open(params);
+        return new Gateway(this.network, this.config)._open(params);
     }
 
     /**
@@ -581,7 +608,7 @@ export default class GatewayJS {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new Gateway(this.network, this.endpoint)._open(params);
+        return new Gateway(this.network, this.config)._open(params);
     }
 
     public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent) => {
@@ -602,11 +629,11 @@ export default class GatewayJS {
     }
 
     public readonly send = (params: SendParams): Gateway => {
-        return new Gateway(this.network, this.endpoint)._open(params);
+        return new Gateway(this.network, this.config)._open(params);
     }
 
     public readonly recoverTransfer = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {
-        return new Gateway(this.network, this.endpoint)._open(params, web3Provider);
+        return new Gateway(this.network, this.config)._open(params, web3Provider);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);

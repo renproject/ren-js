@@ -1,9 +1,8 @@
-import _BN from "bn.js";
-
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
-    LockAndMintParamsSimple, RenContract, RenNetwork, RenTokens, SendParams, Tokens,
+    LockAndMintParamsSimple, Logger, LogLevel, LogLevelString, RenContract, RenNetwork, RenTokens,
+    SendParams, SimpleLogger, Tokens,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses } from "@renproject/rpc";
@@ -14,6 +13,11 @@ import Web3 from "web3";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
+
+export interface RenJSConfig {
+    logLevel?: LogLevelString;
+    logger?: Logger;
+}
 
 /**
  * This is the main exported class.
@@ -52,13 +56,25 @@ export default class RenJS {
     public readonly renVM: RenVMProvider;
     public readonly network: RenNetworkDetails;
 
+    private readonly logger: Logger;
+
     /**
      * Takes a Network object that contains relevant addresses.
      * @param network One of "mainnet" (or empty), "testnet" or a custom
      *                Network object.
      */
-    constructor(network?: RenNetworkDetails | string | null | undefined, provider?: string | Provider) {
+    constructor(network?: RenNetworkDetails | string | null | undefined, providerOrConfig?: string | Provider | RenJSConfig) {
         this.network = stringToNetwork(network);
+
+        let provider: string | Provider | undefined;
+        let config: RenJSConfig | undefined;
+        if (providerOrConfig && (typeof providerOrConfig === "string" || (providerOrConfig as Provider).sendMessage)) {
+            provider = providerOrConfig as (string | Provider);
+        } else if (providerOrConfig) {
+            config = providerOrConfig as RenJSConfig;
+        }
+
+        this.logger = (config && config.logger) || new SimpleLogger(config?.logLevel || LogLevel.Error);
 
         // Use provided provider, provider URL or default lightnode URL.
         const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ?
@@ -66,7 +82,8 @@ export default class RenJS {
             new MultiProvider<RenVMParams, RenVMResponses>(
                 provider ?
                     [provider] :
-                    [this.network.lightnode]
+                    [this.network.lightnode],
+                this.logger,
             )
         ) as unknown as Provider<RenVMParams, RenVMResponses>;
 
@@ -87,7 +104,7 @@ export default class RenJS {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new LockAndMint(this.renVM, this.network, params);
+        return new LockAndMint(this.renVM, this.network, params, this.logger);
     }
 
     /**
@@ -103,7 +120,7 @@ export default class RenJS {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new BurnAndRelease(this.renVM, this.network, params);
+        return new BurnAndRelease(this.renVM, this.network, params, this.logger);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);

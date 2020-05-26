@@ -44,7 +44,7 @@ export class LockAndMint {
             this.validateParams();
         }
 
-        this.logger.debug("lockAndMint created", this.params);
+        this.logger.trace("lockAndMint created", this.params);
     }
 
     private readonly validateParams = () => {
@@ -83,11 +83,11 @@ export class LockAndMint {
         // TODO: Validate inputs
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
         const mpkh = await this.renVM.selectPublicKey(resolveInToken(this.params.sendToken), this.logger);
-        this.logger.debug(`Using mpkh ${mpkh.toString("hex")}`);
+        this.logger.trace(`Using mpkh ${mpkh.toString("hex")}`);
 
         const gatewayAddress = generateAddress(resolveInToken(renContract), gHash, mpkh, this.network.isTestnet);
         this.generatedGatewayAddress = gatewayAddress;
-        this.logger.debug(`Gateway address generated: ${this.generatedGatewayAddress}`);
+        this.logger.trace(`Gateway address generated: ${this.generatedGatewayAddress}`);
 
         return this.generatedGatewayAddress;
     }
@@ -123,7 +123,7 @@ export class LockAndMint {
                             }
                         };
                         promiEvent.emit("deposit", utxo);
-                        this.logger.debug("Deposit found", utxo);
+                        this.logger.trace("Deposit found", utxo);
                     }
                     if (utxoConfirmations >= confirmations) {
                         break;
@@ -131,7 +131,7 @@ export class LockAndMint {
                     await sleep(10);
                 }
                 this.utxo = specifiedDeposit;
-                this.logger.debug("Deposit provided to .wait", this.utxo);
+                this.logger.trace("Deposit provided to .wait", this.utxo);
                 return this;
             }
 
@@ -183,7 +183,7 @@ export class LockAndMint {
 
                     if (greatestTx && new BigNumber(greatestTx.utxo.amount).gte(minimum) && new BigNumber(greatestTx.utxo.amount).lte(maximum)) {
                         this.utxo = greatestTx.utxo;
-                        this.logger.debug("Deposit selected", this.utxo);
+                        this.logger.trace("Deposit selected", this.utxo);
                         break;
                     }
                 }
@@ -196,7 +196,7 @@ export class LockAndMint {
                         // tslint:disable-next-line: no-non-null-assertion
                         if (!deposits.has(deposit.utxo.txHash) || deposits.get(deposit.utxo.txHash)!.utxo.confirmations !== deposit.utxo.confirmations) {
                             promiEvent.emit("deposit", deposit);
-                            this.logger.debug("Deposit found", deposit);
+                            this.logger.trace("Deposit found", deposit);
                             newDeposit = true;
                         }
                         deposits = deposits.set(deposit.utxo.txHash, deposit);
@@ -216,9 +216,12 @@ export class LockAndMint {
     }
 
     public txHash = (specifyDeposit?: UTXOIndex) => {
+        if (this.logger) this.logger.info(`Calculating txHash...`);
+
         const txHash = this.params.txHash;
         if (txHash) {
-            if (this.logger) this.logger.debug(`Using txHash from parameters: ${txHash}`);
+            console.log(`Using txHash from parameters: ${txHash}`);
+            // if (this.logger) this.logger.info(`Using txHash from parameters: ${txHash}`);
             return txHashToBase64(txHash);
         }
 
@@ -246,6 +249,8 @@ export class LockAndMint {
 
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
         const encodedGHash = toBase64(gHash);
+        console.log(`Providing parameters to txHash: ${resolveInToken(renContract)}, ${encodedGHash}, ${utxo}`);
+        if (this.logger) this.logger.info(`Providing parameters to txHash: ${resolveInToken(renContract)}, ${encodedGHash}, ${utxo}`);
         return generateMintTxHash(resolveInToken(renContract), encodedGHash, utxo, this.logger);
     }
 
@@ -269,6 +274,7 @@ export class LockAndMint {
         (async () => {
             const utxo = specifyDeposit || this.params.deposit || this.utxo;
             let txHash = this.params.txHash ? txHashToBase64(this.params.txHash) : undefined;
+
             if (utxo) {
                 const utxoTxHash = this.txHash(utxo);
                 if (txHash && txHash !== utxoTxHash) {
@@ -330,13 +336,13 @@ export class LockAndMint {
                     } catch (errorInner) {
                         // Ignore errorInner.
                         this.logger.error(errorInner);
-                        this.logger.debug(error);
+                        this.logger.trace(error);
                         throw error;
                     }
                 }
 
                 promiEvent.emit("txHash", txHash);
-                this.logger.debug(`txHash: ${txHash}`);
+                this.logger.trace(`txHash: ${txHash}`);
             } else if (!txHash) {
                 throw new Error(`Must call 'wait' or provide UTXO or RenVM transaction hash.`);
             }
@@ -345,7 +351,7 @@ export class LockAndMint {
                 Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
-                    this.logger.debug(`Transaction status: ${status}`);
+                    this.logger.trace(`Transaction status: ${status}`);
                 },
                 () => promiEvent._isCancelled(),
             );
@@ -386,7 +392,7 @@ export class LockAndMint {
             this.renVMResponse = response;
             this.signature = signatureToString(fixSignature(this.renVMResponse, this.network, this.logger));
 
-            this.logger.debug(`Signature: ${this.signature}`);
+            this.logger.trace(`Signature: ${this.signature}`);
 
             return this;
 
@@ -438,7 +444,7 @@ export class LockAndMint {
 
             const existingTransaction = await this.findTransaction(web3Provider);
             if (existingTransaction) {
-                this.logger.debug(`Signature already submitted in Ethereum transaction ${existingTransaction}`);
+                this.logger.trace(`Signature already submitted in Ethereum transaction ${existingTransaction}`);
                 return await manualPromiEvent(web3, existingTransaction, promiEvent);
             }
 
@@ -474,7 +480,7 @@ export class LockAndMint {
                     ...txConfig,
                 });
 
-                this.logger.debug(`Calling "${contractFn}" on Ethereum contract ${sendTo}`, ...params, config);
+                this.logger.trace(`Calling "${contractFn}" on Ethereum contract ${sendTo}`, ...params, config);
 
                 tx = contract.methods[contractFn](
                     ...params,
@@ -493,7 +499,7 @@ export class LockAndMint {
                         reject(error);
                     })
                 );
-                this.logger.debug(`Sent Ethereum transaction ${ethereumTxHash}`);
+                this.logger.trace(`Sent Ethereum transaction ${ethereumTxHash}`);
             }
 
             if (tx === undefined) {
@@ -513,7 +519,7 @@ export class LockAndMint {
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
             try { if (ignorePromiEventError(error)) { this.logger.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
-            this.logger.debug(`Forwarding promiEvent error from .on("error") to .catch`, error);
+            this.logger.trace(`Forwarding promiEvent error from .on("error") to .catch`, error);
             promiEvent.reject(error);
         });
 
@@ -570,7 +576,7 @@ export class LockAndMint {
                 ...txConfig,
             };
 
-            this.logger.debug(`Created raw transaction calling "${contractFn}" on ${sendTo}`, rawTransaction);
+            this.logger.trace(`Created raw transaction calling "${contractFn}" on ${sendTo}`, rawTransaction);
 
             return rawTransaction;
         });

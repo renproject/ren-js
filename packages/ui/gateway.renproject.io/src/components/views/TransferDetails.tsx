@@ -39,7 +39,7 @@ export const TransferDetails: React.StatelessComponent<{
         <div className="transfer-details--row">
             <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>Your assets will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <ExternalLink href="https://renproject.io/renvm">here</ExternalLink>.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
-                0.1% + 0.00005 {asset.toUpperCase()}
+                0.1% + 0.00035 {asset.toUpperCase()}
             </div>
         </div>
     </div>;

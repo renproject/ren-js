@@ -136,15 +136,15 @@ export const txHashToBase64 = (txHash: Buffer | string) => {
 
 export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex, logger?: Logger) => {
     const message = `txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`;
-    const digest = txHashToBase64(keccak256(message));
-    if (logger) logger.debug(`Mint txHash: ${digest}: keccak256(${message})`);
+    const digest = txHashToBase64(keccak256(Buffer.from(message)));
+    if (logger) logger.info(`Mint txHash: ${digest}: keccak256(${message})`);
     return digest;
 };
 
 export const generateBurnTxHash = (renContract: RenContract, encodedID: string, logger?: Logger) => {
     const message = `txHash_${renContract}_${encodedID}`;
-    const digest = txHashToBase64(keccak256(message));
-    if (logger) logger.debug(`Burn txHash: ${digest}: keccak256(${message})`);
+    const digest = txHashToBase64(keccak256(Buffer.from(message)));
+    if (logger) logger.info(`Burn txHash: ${digest}: keccak256(${message})`);
     return digest;
 };
 

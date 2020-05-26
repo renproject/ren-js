@@ -7,7 +7,7 @@ import { SendParams } from "@renproject/interfaces";
 import { SelectMarket } from "@renproject/react-components";
 import { stringToNetwork } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { parse } from "qs";
+import QueryString, { parse } from "qs";
 import Web3 from "web3";
 import { HttpProvider } from "web3-providers";
 
@@ -139,6 +139,12 @@ export const Tokens = new Map<Token, { symbol: Token; name: string }>()
     .set("ZEC", { symbol: "ZEC", name: "Zcash" })
     .set("BCH", { symbol: "BCH", name: "Bitcoin Cash" });
 
+// tslint:disable-next-line: no-any
+const extractQuery = <T extends any>(query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined, fallback: T): string | T => {
+    if (Array.isArray(query)) return extractQuery(query[0], fallback);
+    if (typeof query !== "string") return fallback;
+    return query || fallback;
+};
 
 export const GatewayExample = () => {
     const [token, setToken] = React.useState<Token>("BTC");
@@ -159,13 +165,14 @@ export const GatewayExample = () => {
 
     const urlParameters = parse(window.location.search, { ignoreQueryPrefix: true });
 
-    const network = urlParameters.network || "testnet";
+    const network = extractQuery(urlParameters.network, "testnet");
+    const endpoint = extractQuery(urlParameters.endpoint, undefined);
     const isTestnet = network === "testnet" || network === "devnet";
 
     // If the network is changed, `sendTo` should be changed too.
     const gatewayJS = React.useMemo(() => new GatewayJS(
         network,
-        { endpoint: urlParameters.endpoint || undefined },
+        { endpoint },
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ), []);
 

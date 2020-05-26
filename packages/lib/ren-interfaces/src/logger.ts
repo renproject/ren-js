@@ -51,7 +51,11 @@ const toString = (value: any) => {
             return val;
         }, "    ");
     } catch (error) {
-        return String(value);
+        try {
+            return String(value);
+        } catch (error) {
+            return "";
+        }
     }
 };
 

@@ -51,10 +51,9 @@
         "node": ">=8.9"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.6.0",
         "@types/node": "^13.13.4",
         "bignumber.js": "^9.0.0",
-        "events": "^3.1.0"
+        "web3-core": "^2.0.0-alpha.1"
     },
     "config": {
         "commitizen": {

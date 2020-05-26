@@ -1,4 +1,5 @@
 import { BurnAndReleaseStatus, LockAndMintStatus, TxStatus } from "@renproject/interfaces";
+import QueryString from "qs";
 
 // tslint:disable-next-line: no-any
 export const isPromise = <T>(p: any): p is Promise<T> => {
@@ -72,4 +73,11 @@ export const maxOrUndefined = (left: number | undefined, right: number | undefin
     return left === undefined ? right :
         right === undefined ? left :
             Math.max(left, right);
+};
+
+// tslint:disable-next-line: no-any
+export const extractQuery = <T extends any>(query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined, fallback: T): string | T => {
+    if (Array.isArray(query)) return extractQuery(query[0], fallback);
+    if (typeof query !== "string") return fallback;
+    return query || fallback;
 };

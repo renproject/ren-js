@@ -7,6 +7,7 @@ import { RouteComponentProps, withRouter } from "react-router-dom";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
+import { extractQuery } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
 import { UIContainer } from "../../state/uiContainer";
 import { getStorage } from "./Storage";
@@ -20,9 +21,9 @@ export const GetTransfers = withRouter(connect<RouteComponentProps & ConnectedPr
 
         React.useEffect(() => {
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-            const queryTransferID = queryParams.id;
+            const queryTransferID = extractQuery(queryParams.id, null);
             uiContainer.handleTransfer(queryTransferID).catch(console.error);
-            const renNetwork: string = queryParams.network || DEFAULT_NETWORK;
+            const renNetwork = extractQuery(queryParams.network, DEFAULT_NETWORK);
             uiContainer.setState({ renNetwork }).catch(console.error);
 
             // tslint:disable-next-line: no-any
@@ -44,7 +45,9 @@ export const GetTransfers = withRouter(connect<RouteComponentProps & ConnectedPr
                     })().catch((error) => { _catchInteractionErr_(error, "Error in App: onMessage"); });
                 }
             });
-            postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
+            if (queryTransferID) {
+                postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
+            }
         }, [location.search, uiContainer]);
 
         return <></>;

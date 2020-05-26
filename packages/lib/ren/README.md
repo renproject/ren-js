@@ -13,14 +13,7 @@ See the [Releases](https://github.com/renproject/ren-js/releases) page.
 
 ## About
 
-RenJS is a Node.js and browser SDK for bridging BTC, BCH and ZEC to your project. See the following examples:
-
-* **Decentralized *dApp***:
-    * [ChaosDEX](https://github.com/renproject/chaosdex): A decentralized exchange that uses RenJS to enable depositing and withdrawing BTC, BCH and ZEC.
-* **Node.js server**:
-    * [Interoperability Examples](https://github.com/renproject/interoperability-examples): Examples on speeding up BTC deposits for users and providing gas
-* **Command-line application**:
-    * [ChaosDEX Trading Bot](https://github.com/renproject/chaosdex-trading-bot): A trading bot that automatically trades between BTC, BCH, ZEC and DAI (currently still SAI).
+RenJS is a Node.js and browser SDK for bridging BTC, BCH and ZEC to your Ethereum dApp.
 
 <br />
 <hr />

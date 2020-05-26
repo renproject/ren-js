@@ -218,6 +218,7 @@ export class LockAndMint {
     public txHash = (specifyDeposit?: UTXOIndex) => {
         const txHash = this.params.txHash;
         if (txHash) {
+            if (this.logger) this.logger.debug(`Using txHash from parameters: ${txHash}`);
             return txHashToBase64(txHash);
         }
 

@@ -3,7 +3,7 @@ import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { sleep } from "./common";
+import { sleep, strip0x } from "./common";
 
 export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
 
@@ -80,4 +80,5 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
 };
 
 // tslint:disable-next-line:no-any
-export const rawEncode = (types: Array<string | {}>, parameters: any[]) => (new AbiCoder()).encodeParameters(types, parameters);
+export const rawEncode = (types: Array<string | {}>, parameters: any[]): Buffer =>
+    Buffer.from(strip0x((new AbiCoder()).encodeParameters(types, parameters)), "hex");

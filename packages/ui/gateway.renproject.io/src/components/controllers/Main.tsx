@@ -17,6 +17,7 @@ import { ReactComponent as MinimizeIcon } from "../../images/icon-minimize.svg";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
+import { extractQuery } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
@@ -86,10 +87,10 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         React.useEffect(() => {
 
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-            const queryTransferID = queryParams.id;
+            const queryTransferID = extractQuery(queryParams.id, null);
             uiContainer.handleTransfer(queryTransferID).catch(console.error);
 
-            const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
+            const urlRenNetwork = extractQuery(queryParams.network, DEFAULT_NETWORK);
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
 
             // tslint:disable-next-line: no-any
@@ -209,7 +210,9 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     })().catch((error) => { _catchInteractionErr_(error, "Error in App: onMessage"); });
                 }
             });
-            postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
+            if (queryTransferID) {
+                postMessageToClient(window, queryTransferID, GatewayMessageType.Ready, {}).catch(console.error);
+            }
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
@@ -227,7 +230,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
         React.useEffect(() => {
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
-            const urlRenNetwork: string = queryParams.network || DEFAULT_NETWORK;
+            const urlRenNetwork = extractQuery(queryParams.network, DEFAULT_NETWORK);
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
             uiContainer.connect().catch(console.error);
             sdkContainer.connect(urlRenNetwork).catch(console.error);

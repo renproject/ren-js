@@ -221,7 +221,7 @@ export class LockAndMint {
         const txHash = this.params.txHash;
         if (txHash) {
             console.log(`Using txHash from parameters: ${txHash}`);
-            // if (this.logger) this.logger.info(`Using txHash from parameters: ${txHash}`);
+            if (this.logger) this.logger.trace(`Using txHash from parameters: ${txHash}`);
             return txHashToBase64(txHash);
         }
 
@@ -250,7 +250,7 @@ export class LockAndMint {
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
         const encodedGHash = toBase64(gHash);
         console.log(`Providing parameters to txHash: ${resolveInToken(renContract)}, ${encodedGHash}, ${utxo}`);
-        if (this.logger) this.logger.info(`Providing parameters to txHash: ${resolveInToken(renContract)}, ${encodedGHash}, ${utxo}`);
+        if (this.logger) this.logger.trace(`Providing parameters to txHash: ${resolveInToken(renContract)}, ${encodedGHash}, ${utxo}`);
         return generateMintTxHash(resolveInToken(renContract), encodedGHash, utxo, this.logger);
     }
 

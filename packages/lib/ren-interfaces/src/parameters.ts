@@ -190,6 +190,7 @@ export interface SendParams extends TransferParamsCommon {
      * even if a different amount is sent to the Gateway address.
      */
     sendAmount: NumberValue;
+    suggestedAmount?: NumberValue;
 
     /**
      * Set Ethereum transaction options, including the gasPrice.

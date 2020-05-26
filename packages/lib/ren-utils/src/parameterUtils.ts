@@ -13,7 +13,9 @@ import { toBigNumber } from "./value";
  */
 export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, lockAndMint?: boolean): LockAndMintParams | BurnAndReleaseParams => {
 
-    const { sendTo, sendAmount, txConfig, ...restOfParams } = params;
+    const { sendTo, sendAmount, suggestedAmount, txConfig, ...restOfParams } = params;
+
+    const amount = sendAmount || suggestedAmount;
 
     // The contract call hasn't been provided - but `sendTo` has. We overwrite
     // the contract call with a simple adapter call.
@@ -31,7 +33,7 @@ export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, 
         // Mint
         return {
             ...restOfParams,
-            suggestedAmount: sendAmount,
+            suggestedAmount: amount,
             contractCalls: [{
                 sendTo: network.addresses.gateways.BasicAdapter.address,
                 contractFn: "mint",
@@ -45,7 +47,7 @@ export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, 
     } else {
         // Burn
 
-        if (!sendAmount) {
+        if (!amount) {
             throw new Error(`Send amount must be provided in order to send directly to an address.`);
         }
 
@@ -58,7 +60,7 @@ export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, 
         //     contractFn: "approve",
         //     contractParams: [
         //         { type: "address" as const, name: "spender", value: network.addresses.gateways.BasicAdapter.address },
-        //         { type: "uint256" as const, name: "amount", value: toBigNumber(sendAmount).toFixed() },
+        //         { type: "uint256" as const, name: "amount", value: toBigNumber(amount).toFixed() },
         //     ],
         //     txConfig,
         // };
@@ -67,7 +69,7 @@ export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, 
 
         return {
             ...restOfParams,
-            suggestedAmount: sendAmount,
+            suggestedAmount: amount,
             contractCalls: [
                 // approve,
                 {
@@ -75,7 +77,7 @@ export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, 
                     contractFn: "burn",
                     contractParams: [
                         { type: "bytes" as const, name: "_to", value: addressToHex },
-                        { type: "uint256" as const, name: "_amount", value: toBigNumber(sendAmount).toFixed() },
+                        { type: "uint256" as const, name: "_amount", value: toBigNumber(amount).toFixed() },
                     ],
                     // txConfig: { gas: 200000, ...txConfig },
                     txConfig,

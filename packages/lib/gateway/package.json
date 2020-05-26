@@ -59,7 +59,7 @@
   "dependencies": {
     "@renproject/interfaces": "file:../ren-interfaces",
     "@renproject/utils": "file:../ren-utils",
-    "@types/node": "^13.13.4",
+    "@types/node": "^14.0.5",
     "push.js": "^1.0.12",
     "web3": "^2.0.0-alpha.1"
   },

@@ -6,7 +6,6 @@ import { parseRenContract } from "@renproject/utils";
 import infoIcon from "../../images/icons/info.svg";
 import { getURL } from "../controllers/Storage";
 import { Tooltip } from "../views/tooltip/Tooltip";
-import { ExternalLink } from "./ExternalLink";
 
 export const TransferDetails: React.StatelessComponent<{
     transfer: LockAndMintEvent | BurnAndReleaseEvent,
@@ -44,5 +43,3 @@ export const TransferDetails: React.StatelessComponent<{
         </div>
     </div>;
 };
-
-{/*  */ }

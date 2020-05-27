@@ -264,7 +264,7 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     <p>See <ExternalLink href="https://github.com/renproject/ren-js">github.com/renproject/ren-js</ExternalLink> for more information about GatewayJS.</p>
                 </span> : <></>}
                 {!transfer && window !== window.top ? <>
-                    {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details." fullPage={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}
+                    {showFeedbackButton ? <ErrorBoundary mini={paused} className="centered" manualError="Unable to load transfer details. Please disable browser shields, or enable browser cookies for the current site." fullPage={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}
                 </> : <></>}
                 {/* {!paused && transfer && sdkContainer.getNumberOfConfirmations() > 0 ? <TransferProgress /> : <></>} */}
             </div>

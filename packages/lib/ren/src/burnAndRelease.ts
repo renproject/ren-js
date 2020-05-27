@@ -22,7 +22,7 @@ export class BurnAndRelease {
         this.network = _network;
         this.params = processBurnAndReleaseParams(this.network, _params);
 
-        this.logger.trace("burnAndRelease created", this.params);
+        this.logger.debug("burnAndRelease created", this.params);
     }
 
     /**
@@ -68,7 +68,7 @@ export class BurnAndRelease {
 
                 ...txConfig,
             };
-            this.logger.trace(`Created raw transaction calling "${contractFn}" on ${sendTo}`, rawTransaction);
+            this.logger.debug(`Created raw transaction calling "${contractFn}" on ${sendTo}`, rawTransaction);
             return rawTransaction;
         });
     }
@@ -137,7 +137,7 @@ export class BurnAndRelease {
                             ...txConfig,
                         });
 
-                        this.logger.trace(`Calling "${contractFn}" on Ethereum contract ${sendTo}`, ...callParams, config);
+                        this.logger.debug(`Calling "${contractFn}" on Ethereum contract ${sendTo}`, ...callParams, config);
 
                         const tx = contract.methods[contractFn](
                             ...callParams,
@@ -154,7 +154,7 @@ export class BurnAndRelease {
                                 reject(error);
                             })
                         );
-                        this.logger.trace(`Sent Ethereum transaction ${ethereumTxHash}`);
+                        this.logger.debug(`Sent Ethereum transaction ${ethereumTxHash}`);
                     }
                 }
 
@@ -200,7 +200,7 @@ export class BurnAndRelease {
     /**
      * queryTx requests the status of the burn from RenVM.
      */
-    public queryTx = async () =>
+    public queryTx = async (): Promise<UnmarshalledBurnTx> =>
         unmarshalBurnTx(await this.renVM.queryMintOrBurn(Ox(Buffer.from(this.txHash(), "base64"))))
 
     /**
@@ -222,13 +222,13 @@ export class BurnAndRelease {
 
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("txHash", txHash);
-            this.logger.trace(`txHash: ${txHash}`);
+            this.logger.debug(`txHash: ${txHash}`);
 
             const response = await this.renVM.waitForTX<ResponseQueryBurnTx>(
                 Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
-                    this.logger.trace(`Transaction status: ${status}`);
+                    this.logger.debug(`Transaction status: ${status}`);
                 },
                 () => promiEvent._isCancelled(),
             );

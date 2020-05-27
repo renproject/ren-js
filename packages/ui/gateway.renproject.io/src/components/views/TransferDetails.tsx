@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
+import { Asset, BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
 import { parseRenContract } from "@renproject/utils";
 
 import infoIcon from "../../images/icons/info.svg";
@@ -24,8 +24,8 @@ export const TransferDetails: React.StatelessComponent<{
     const title = urlDomain(url);
 
     const token = transfer.transferParams.sendToken;
-    const asset = React.useMemo(() => !token ? "null" :
-        token === "BTC" || token === "ZEC" || token === "BCH" ? token :
+    const asset: Asset | "" = React.useMemo(() => !token ? "" :
+        token === "BTC" || token === "ZEC" || token === "BCH" ? (token as Asset) :
             parseRenContract(token).asset, [token]);
 
     return <div className="transfer-details">
@@ -37,10 +37,12 @@ export const TransferDetails: React.StatelessComponent<{
             </div>
         </div>
         <div className="transfer-details--row">
-            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>Your assets will be bridged to Ethereum in a completely trustless and decentralized way. Read more about RenVM and sMPC <ExternalLink href="https://renproject.io/renvm">here</ExternalLink>.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
+            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>A 10 BPS (0.1%) fee is applied per mint or release and is distributed to all active Darknodes. There is also a 35K {asset === Asset.ZEC ? "Zats" : "Sats"} fee for paying blockchain miners, this does not go to the Ren team</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
                 0.1% + 0.00035 {asset.toUpperCase()}
             </div>
         </div>
     </div>;
 };
+
+{/*  */ }

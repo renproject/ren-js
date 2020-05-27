@@ -5039,7 +5039,7 @@ bitcore-lib-zcash@zcash-hackworks/bitcore-lib-zcash:
     inherits "=2.0.1"
     lodash "=3.10.1"
 
-bitcore-lib@^8.17.1, bitcore-lib@^8.20.3:
+bitcore-lib@^8.20.3:
   version "8.20.3"
   resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-8.20.3.tgz#e167e2cec43ea1528eaa11aedf6e2d33a5e46c78"
   integrity sha512-+L6aSDkY+UKQ7ZyKj7rWaQ9RojGJ/3hNtT9Ob4hCwiEAR2JAeGOLonjtNtteGx5JwNnXS2h+FixDfP2lE9skKw==

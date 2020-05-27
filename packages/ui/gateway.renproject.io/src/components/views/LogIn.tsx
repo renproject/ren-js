@@ -8,7 +8,7 @@ import { ReactComponent as Imtoken } from "../../images/imtoken.svg";
 import { ReactComponent as Metamask } from "../../images/metamask.svg";
 import { ReactComponent as Status } from "../../images/status.svg";
 import { ReactComponent as Trust } from "../../images/trust.svg";
-import { Container, ContainerBody, ContainerDetails } from "./Container";
+import { Container, ContainerBody } from "./Container";
 import { ExternalLink } from "./ExternalLink";
 import { Mini } from "./transfer-steps/Mini";
 

@@ -34,7 +34,7 @@ export const generatePHash = (zip: EthArgs, logger?: Logger): string => {
     const message = rawEncode(types, values);
     const digest = Ox(keccak256(message));
 
-    if (logger) logger.trace(`pHash: ${digest}: keccak256(${message})`);
+    if (logger) logger.debug(`pHash: ${digest}: keccak256(${message})`);
 
     return digest; // sha3 can accept a Buffer
 };
@@ -102,7 +102,7 @@ export const generateGHash = (payload: EthArgs, /* amount: number | string, */ t
 
     const digest = Ox(keccak256(encoded));
 
-    if (logger) logger.trace(`gHash: ${digest}: keccak256(${encoded})`);
+    if (logger) logger.debug(`gHash: ${digest}: keccak256(${encoded})`);
 
     return digest;
 };
@@ -117,7 +117,7 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
 
     const digest = Ox(keccak256(encoded));
 
-    if (logger) logger.trace(`sigHash: ${digest}: keccak256(${encoded})`);
+    if (logger) logger.debug(`sigHash: ${digest}: keccak256(${encoded})`);
 
     return digest;
 };
@@ -137,16 +137,14 @@ export const txHashToBase64 = (txHash: Buffer | string) => {
 export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex, logger?: Logger) => {
     const message = `txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`;
     const digest = txHashToBase64(keccak256(Buffer.from(message)));
-    if (logger) logger.trace(`Mint txHash: ${digest}: keccak256(${message})`);
-    console.log(`[RenJS] Mint txHash: ${digest}: keccak256(${message})`);
+    if (logger) logger.debug(`Mint txHash: ${digest}: keccak256(${message})`);
     return digest;
 };
 
 export const generateBurnTxHash = (renContract: RenContract, encodedID: string, logger?: Logger) => {
     const message = `txHash_${renContract}_${encodedID}`;
     const digest = txHashToBase64(keccak256(Buffer.from(message)));
-    if (logger) logger.trace(`[RenJS] Burn txHash: ${digest}: keccak256(${message})`);
-    console.log(`[RenJS] Burn txHash: ${digest}: keccak256(${message})`);
+    if (logger) logger.debug(`[RenJS] Burn txHash: ${digest}: keccak256(${message})`);
     return digest;
 };
 

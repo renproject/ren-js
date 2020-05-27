@@ -85,7 +85,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "resolutions": {
-    "bitcore-lib": "^8.17.1",
+    "bitcore-lib": "^8.20.3",
     "bitcore-lib-cash": "^8.19.0",
     "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz",
     "@types/node": "^14.0.5",
@@ -112,7 +112,7 @@
     "@renproject/ren": "file:packages/lib/ren",
     "@renproject/rpc": "file:packages/lib/ren-rpc",
     "@renproject/utils": "file:packages/lib/ren-utils",
-    "bitcore-lib": "^8.17.1",
+    "bitcore-lib": "^8.20.3",
     "bitcore-lib-cash": "^8.19.0",
     "gateway-example": "file:packages/ui/gateway-example",
     "gateway.renproject.io": "file:packages/ui/gateway.renproject.io",

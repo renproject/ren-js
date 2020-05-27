@@ -2,7 +2,7 @@ import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
     LockAndMintParamsSimple, Logger, LogLevel, LogLevelString, RenContract, RenNetwork, RenTokens,
-    SendParams, SimpleLogger, Tokens,
+    SendParams, SimpleLogger, Tokens, UnmarshalledFees,
 } from "@renproject/interfaces";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses, unmarshalFees } from "@renproject/rpc";
@@ -126,7 +126,7 @@ export default class RenJS {
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
     public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
 
-    public readonly getFees = () => this.renVM.queryFees().then(unmarshalFees);
+    public readonly getFees = (): Promise<UnmarshalledFees> => this.renVM.queryFees().then(unmarshalFees);
 }
 
 

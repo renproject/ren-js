@@ -52,11 +52,11 @@ export class MultiProvider<Requests extends { [event: string]: any } = {}, Respo
         const first = responses.first(null);
         if (first === null) {
             const error = errors.first() ? new Error(errors.first()) : new Error(`No response from RenVM while submitting message`);
-            if (this.logger) this.logger.trace(method, request, error.message);
+            if (this.logger) this.logger.debug(method, request, error.message);
             throw error;
         }
 
-        if (this.logger) this.logger.trace(method, request, first);
+        if (this.logger) this.logger.debug(method, request, first);
 
         return first;
     }

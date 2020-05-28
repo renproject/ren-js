@@ -1,5 +1,8 @@
-import { BurnAndReleaseStatus, LockAndMintStatus, TxStatus } from "@renproject/interfaces";
+import {
+    Asset, BurnAndReleaseStatus, EventType, HistoryEvent, isAsset, LockAndMintStatus, TxStatus,
+} from "@renproject/interfaces";
 import QueryString from "qs";
+import { parseRenContract, resolveInToken, resolveOutToken } from "@renproject/utils";
 
 // tslint:disable-next-line: no-any
 export const isPromise = <T>(p: any): p is Promise<T> => {
@@ -80,4 +83,9 @@ export const extractQuery = <T extends any>(query: string | QueryString.ParsedQs
     if (Array.isArray(query)) return extractQuery(query[0], fallback);
     if (typeof query !== "string") return fallback;
     return query || fallback;
+};
+
+export const getAsset = (historyEvent: HistoryEvent): Asset => {
+    return isAsset(historyEvent.transferParams.sendToken) ?
+        historyEvent.transferParams.sendToken : parseRenContract((historyEvent.eventType === EventType.LockAndMint ? resolveInToken : resolveOutToken)(historyEvent.transferParams.sendToken)).asset;
 };

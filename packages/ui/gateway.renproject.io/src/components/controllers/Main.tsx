@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/browser";
 import * as React from "react";
 
 import {
@@ -17,7 +18,7 @@ import { ReactComponent as MinimizeIcon } from "../../images/icon-minimize.svg";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
-import { extractQuery } from "../../lib/utils";
+import { extractQuery, getAsset } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
@@ -125,6 +126,8 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
 
                                 let transferDetails;
 
+                                const network = (sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network;
+
                                 if (transferParams.sendToken === RenJS.Tokens.BTC.Btc2Eth ||
                                     transferParams.sendToken === RenJS.Tokens.ZEC.Zec2Eth ||
                                     transferParams.sendToken === RenJS.Tokens.BCH.Bch2Eth) {
@@ -133,13 +136,13 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                         eventType: EventType.LockAndMint as const,
                                         status: LockAndMintStatus.Committed,
                                         // tslint:disable-next-line: no-object-literal-type-assertion
-                                        transferParams: processLockAndMintParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as LockAndMintParams) as LockAndMintEvent["transferParams"],
+                                        transferParams: processLockAndMintParams(network, transferParams as LockAndMintParams) as LockAndMintEvent["transferParams"],
                                     };
                                 } else {
                                     transferDetails = {
                                         eventType: EventType.BurnAndRelease as const,
                                         status: BurnAndReleaseStatus.Committed,
-                                        transferParams: processBurnAndReleaseParams((sdkContainer.state.sdkRenVM || new RenJS(urlRenNetwork)).network, transferParams as BurnAndReleaseParams) as unknown as BurnAndReleaseEvent["transferParams"],
+                                        transferParams: processBurnAndReleaseParams(network, transferParams as BurnAndReleaseParams) as unknown as BurnAndReleaseEvent["transferParams"],
                                     };
                                 }
 
@@ -166,6 +169,19 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 }
 
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
+
+                                try {
+                                    Sentry.configureScope((scope) => {
+                                        // scope.setUser({ id: address });
+                                        scope.setExtra("transfer", historyEvent && historyEvent.transferParams);
+                                        if (historyEvent) {
+                                            scope.setTag("token", getAsset(historyEvent));
+                                            scope.setTag("network", network.name);
+                                        }
+                                    });
+                                } catch (error) {
+                                    // Ignore error
+                                }
 
                                 break;
                             case GatewayMessageType.ToggleSettings:

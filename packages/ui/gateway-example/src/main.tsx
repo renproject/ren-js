@@ -58,7 +58,12 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     // }
 
     const result = await gatewayJS.open(shiftInParams).result()
-        .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); });
+        .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); })
+        .on("transferUpdated", (transfer) => {
+            console.group(`[GOT TRANSFER]`);
+            console.debug(transfer);
+            console.groupEnd();
+        });
 
     console.debug(result);
 

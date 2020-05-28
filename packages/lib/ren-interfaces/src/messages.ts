@@ -21,6 +21,8 @@ export enum GatewayMessageType {
 
     Status = "status",
     GetStatus = "getStatus",
+    TransferUpdated = "transferUpdated",
+
     Cancel = "cancel",
     Error = "error",
     Done = "done",
@@ -58,6 +60,7 @@ export type GatewayMessagePayload<Type extends GatewayMessageType> =
         details: null;
     } :
     Type extends GatewayMessageType.GetStatus ? {} :
+    Type extends GatewayMessageType.TransferUpdated ? { transfer: HistoryEvent } :
     Type extends GatewayMessageType.Cancel ? {} :
     Type extends GatewayMessageType.Error ? {
         message: string;

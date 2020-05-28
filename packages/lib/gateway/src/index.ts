@@ -44,7 +44,7 @@ export class Gateway {
     // tslint:enable: readonly-keyword
 
     // tslint:disable-next-line: readonly-keyword readonly-array no-any
-    private readonly promiEvent: PromiEvent<UnmarshalledTx | {}, { status: [LockAndMintStatus | BurnAndReleaseStatus, any] }> = newPromiEvent();
+    private readonly promiEvent: PromiEvent<UnmarshalledTx | {}, { status: [LockAndMintStatus | BurnAndReleaseStatus, any], transferUpdated: [HistoryEvent] }> = newPromiEvent();
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
@@ -256,7 +256,15 @@ export class Gateway {
                         break;
                     case GatewayMessageType.Status:
                         this._acknowledgeMessage(e.data).catch(this.logger.error);
-                        this.promiEvent.emit("status", e.data.payload.status, e.data.payload.details);
+                        const { status, details } = (e.data as GatewayMessage<GatewayMessageType.Status>).payload;
+                        if (status) {
+                            this.promiEvent.emit("status", status, details);
+                        }
+                        break;
+                    case GatewayMessageType.TransferUpdated:
+                        this._acknowledgeMessage(e.data).catch(this.logger.error);
+                        const { transfer } = (e.data as GatewayMessage<GatewayMessageType.TransferUpdated>).payload;
+                        this.promiEvent.emit("transferUpdated", transfer);
                         break;
                     case GatewayMessageType.Pause:
                         this._acknowledgeMessage(e.data).catch(this.logger.error);

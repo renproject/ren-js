@@ -128,7 +128,7 @@ export class LockAndMint {
                     if (utxoConfirmations >= confirmations) {
                         break;
                     }
-                    await sleep(10);
+                    await sleep(10 * SECONDS);
                 }
                 this.utxo = specifiedDeposit;
                 this.logger.debug("Deposit provided to .wait", this.utxo);

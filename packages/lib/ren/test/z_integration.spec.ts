@@ -5,7 +5,9 @@
 
 import { RenNetworkDetails } from "@renproject/contracts";
 import { EthArgs, LogLevel, RenContract, Tokens } from "@renproject/interfaces";
-import { Ox, parseRenContract, retryNTimes, sleep, stringToNetwork } from "@renproject/utils";
+import {
+    Ox, parseRenContract, retryNTimes, SECONDS, sleep, stringToNetwork,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
@@ -37,7 +39,7 @@ const logger = {
 export const sleepWithCountdown = async (seconds: number) => {
     while (seconds) {
         process.stdout.write(`\u001b[0K\r${seconds}\r`);
-        await sleep(1000);
+        await sleep(1 * SECONDS);
         seconds -= 1;
     }
     process.stdout.write("\u001b[0K\r");

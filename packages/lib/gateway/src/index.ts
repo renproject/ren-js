@@ -11,7 +11,7 @@ import {
 import {
     extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
     getTokenAddress, newPromiEvent, parseRenContract, PromiEvent, randomBytes, resolveSendCall,
-    sleep, stringToNetwork, utils, waitForReceipt, withDefaultAccount,
+    SECONDS, sleep, stringToNetwork, utils, waitForReceipt, withDefaultAccount,
 } from "@renproject/utils";
 import Push from "push.js";
 import Web3 from "web3";
@@ -424,7 +424,7 @@ export class Gateway {
         }
 
         while (!frame) {
-            await sleep(1 * 1000);
+            await sleep(1 * SECONDS);
         }
 
         const messageID = randomBytes(8);
@@ -461,7 +461,7 @@ export class Gateway {
             const gatewayMessage: GatewayMessage<Type> = { from: "ren", frameID: this.id, type, payload, messageID };
             contentWindow.postMessage(gatewayMessage, "*");
             // Sleep for 1 second
-            await sleep(1 * 1000);
+            await sleep(1 * SECONDS);
         }
     })
 
@@ -480,7 +480,7 @@ export class Gateway {
         }
 
         while (!frame) {
-            await sleep(1 * 1000);
+            await sleep(1 * SECONDS);
         }
 
         const response: GatewayMessage<GatewayMessageType.Acknowledgement> = { from: "ren", type: GatewayMessageType.Acknowledgement, frameID: message.frameID, payload: payload || {}, messageID: message.messageID };

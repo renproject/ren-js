@@ -3,7 +3,7 @@ import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { sleep, strip0x } from "./common";
+import { SECONDS, sleep, strip0x } from "./common";
 
 export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
 
@@ -28,7 +28,7 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonc
         if (receipt && receipt.blockHash) {
             break;
         }
-        await sleep(3 * 1000);
+        await sleep(3 * SECONDS);
     }
 
     // Status might be undefined - so check against `false` explicitly.

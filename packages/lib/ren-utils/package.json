@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",

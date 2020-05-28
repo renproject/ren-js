@@ -170,6 +170,17 @@ export class SDKContainer extends Container<typeof initialState> {
             await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getTransferStatus(transfer));
         }
         try {
+            if (
+                JSON.stringify(this.state.transfer) !== JSON.stringify(transfer) &&
+                this.uiContainer.state.gatewayPopupID
+            ) {
+                await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.TransferUpdated, { transfer });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+
+        try {
             await updateStorageTransfer(renNetwork, transfer);
         } catch (error) {
             console.error(error);

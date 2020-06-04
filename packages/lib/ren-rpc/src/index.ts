@@ -9,8 +9,9 @@ import BigNumber from "bignumber.js";
 import { List, OrderedMap, Set } from "immutable";
 
 import {
-    ParamsQueryBlock, ParamsQueryBlocks, ParamsQueryTx, ParamsSubmitBurn, ParamsSubmitMint,
-    RenVMParams, RenVMResponses, ResponseQueryBurnTx, ResponseQueryMintTx, RPCMethod,
+    ParamsQueryBlock, ParamsQueryBlocks, ParamsQueryTx, ParamsQueryTxs, ParamsSubmitBurn,
+    ParamsSubmitMint, RenVMParams, RenVMResponses, ResponseQueryBurnTx, ResponseQueryMintTx,
+    RPCMethod,
 } from "./renVMTypes";
 
 export * from "./renVMTypes";
@@ -41,6 +42,9 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
     public queryTx = async (txHash: ParamsQueryTx["txHash"], retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryTx>(RPCMethod.MethodQueryTx, { txHash }, retry)
 
+    public queryTxs = async (tags: ParamsQueryTxs["tags"], page?: number, pageSize?: number, txStatus?: ParamsQueryTxs["txStatus"], retry?: number) =>
+        this.sendMessage<RPCMethod.MethodQueryTxs>(RPCMethod.MethodQueryTxs, { tags, page: (page || 0).toString(), pageSize: (pageSize || 0).toString(), txStatus }, retry)
+
     public queryNumPeers = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryNumPeers>(RPCMethod.MethodQueryNumPeers, {}, retry)
 
@@ -66,6 +70,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
         fn: string,
         fnABI: AbiItem[],
         encodedParameters: string,
+        tags: [string] | [],
     ): Promise<string> => {
         const token = syncGetTokenAddress(renContract, network);
         const response = await this.provider.sendMessage<RPCMethod.MethodSubmitTx>(RPCMethod.MethodSubmitTx,
@@ -102,13 +107,14 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
                             }
                         },
                     ],
-                }
+                },
+                tags,
             });
 
         return response.tx.hash;
     }
 
-    public submitBurn = async (renContract: RenContract, ref: string): Promise<string> => {
+    public submitBurn = async (renContract: RenContract, ref: string, tags: [string] | []): Promise<string> => {
         const response = await this.provider.sendMessage(RPCMethod.MethodSubmitTx,
             {
                 tx: {
@@ -116,7 +122,8 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
                     in: [
                         { name: "ref", type: RenVMType.TypeU64, value: ref },
                     ],
-                }
+                },
+                tags,
             });
 
         return response.tx.hash;

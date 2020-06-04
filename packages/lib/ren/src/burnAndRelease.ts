@@ -220,6 +220,15 @@ export class BurnAndRelease {
 
             const txHash = this.txHash();
 
+            if (this.params.tags && this.params.tags.length > 1) {
+                throw new Error("Providing multiple tags is not supported yet.");
+            }
+            const tags: [string] | [] = this.params.tags && this.params.tags.length ? [this.params.tags[0]] : [];
+
+            if (burnReference || burnReference === 0) {
+                await this.renVM.submitBurn(resolveOutToken(this.params.sendToken), new BigNumber(burnReference).toFixed(), tags);
+            }
+
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("txHash", txHash);
             this.logger.debug(`txHash: ${txHash}`);

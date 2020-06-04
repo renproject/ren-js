@@ -1,4 +1,6 @@
-import { Fees, RenContract, RenVMArgs, Shard, TxStatus } from "@renproject/interfaces";
+import {
+    Fees, RenContract, RenVMArgs, RenVMType, RenVMValue, Shard, TxStatus,
+} from "@renproject/interfaces";
 
 import {
     BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxResponseOutputs,
@@ -11,6 +13,9 @@ export enum RPCMethod {
     // MethodQueryTx returns the latest information about a transaction
     // identified by a transaction hash.
     MethodQueryTx = "ren_queryTx",
+    // MethodQueryTxs returns pages of transactions with optional filtering by
+    // status and tags.
+    MethodQueryTxs = "ren_queryTxs",
 
     // MethodQueryBlock returns a block identified by the block height.
     MethodQueryBlock = "ren_queryBlock",
@@ -33,6 +38,14 @@ export enum RPCMethod {
     // MethodQueryFees returns information about the current RenVM fees and
     // underlying blockchain fees. This information cannot be verified.
     MethodQueryFees = "ren_queryFees",
+}
+
+// ParamsQueryTxs defines the parameters of the MethodQueryTxs.
+export interface ParamsQueryTxs {
+    txStatus?: TxStatus;
+    page: RenVMValue<RenVMType.TypeU64>;
+    pageSize?: RenVMValue<RenVMType.TypeU64>;
+    tags: Array<RenVMValue<RenVMType.TypeB32>>;
 }
 
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.
@@ -59,6 +72,8 @@ interface ParamsSubmitTx<T extends RenVMArgs> {
         to: RenContract;
         in: T;
     };
+    // Tags that should be attached to the Tx.
+    tags: Array<RenVMValue<RenVMType.TypeB32>>;
 }
 
 export type ParamsSubmitMint = ParamsSubmitTx<MintArgsArray>;
@@ -119,7 +134,6 @@ export interface ResponseSubmitTx {
 }
 
 // ResponseQueryTx defines the response of the MethodQueryTx.
-
 export interface ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
@@ -131,6 +145,17 @@ export interface ResponseQueryTx {
     };
     // TxStatus string`json:"txStatus"`
     txStatus: TxStatus;
+}
+
+// ResponseQueryTxs defines the response of the MethodQueryTxs.
+export interface ResponseQueryTxs {
+    txs: Array<{
+        hash: string;
+        to: RenContract;
+        in: RenVMArgs;
+        autogen?: RenVMArgs;
+        out?: RenVMArgs;
+    }>;
 }
 
 export interface ResponseQueryMintTx extends ResponseQueryTx {
@@ -209,6 +234,7 @@ export type RenVMResponses = {
     [RPCMethod.MethodQueryBlocks]: ResponseQueryBlocks;
     [RPCMethod.MethodSubmitTx]: ResponseSubmitTx;
     [RPCMethod.MethodQueryTx]: ResponseQueryTx;
+    [RPCMethod.MethodQueryTxs]: ResponseQueryTxs;
     [RPCMethod.MethodQueryNumPeers]: ResponseQueryNumPeers;
     [RPCMethod.MethodQueryPeers]: ResponseQueryPeers;
     [RPCMethod.MethodQueryShards]: ResponseQueryShards;
@@ -221,6 +247,7 @@ export type RPCResponse<Method extends RPCMethod> =
     : Method extends RPCMethod.MethodQueryBlocks ? ResponseQueryBlocks
     : Method extends RPCMethod.MethodSubmitTx ? ResponseSubmitTx
     : Method extends RPCMethod.MethodQueryTx ? ResponseQueryTx
+    : Method extends RPCMethod.MethodQueryTxs ? ResponseQueryTxs
     : Method extends RPCMethod.MethodQueryNumPeers ? ResponseQueryNumPeers
     : Method extends RPCMethod.MethodQueryPeers ? ResponseQueryPeers
     : Method extends RPCMethod.MethodQueryShards ? ResponseQueryShards
@@ -234,6 +261,7 @@ export type RenVMParams = {
     [RPCMethod.MethodQueryBlocks]: ParamsQueryBlocks;
     [RPCMethod.MethodSubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
     [RPCMethod.MethodQueryTx]: ParamsQueryTx;
+    [RPCMethod.MethodQueryTxs]: ParamsQueryTxs;
     [RPCMethod.MethodQueryNumPeers]: ParamsQueryNumPeers;
     [RPCMethod.MethodQueryPeers]: ParamsQueryPeers;
     [RPCMethod.MethodQueryShards]: ParamsQueryShards;
@@ -247,6 +275,7 @@ export type RPCParams<Method extends RPCMethod> =
     // tslint:disable-next-line: no-any
     : Method extends RPCMethod.MethodSubmitTx ? ParamsSubmitBurn | ParamsSubmitMint
     : Method extends RPCMethod.MethodQueryTx ? ParamsQueryTx
+    : Method extends RPCMethod.MethodQueryTxs ? ParamsQueryTxs
     : Method extends RPCMethod.MethodQueryNumPeers ? ParamsQueryNumPeers
     : Method extends RPCMethod.MethodQueryPeers ? ParamsQueryPeers
     : Method extends RPCMethod.MethodQueryShards ? ParamsQueryShards

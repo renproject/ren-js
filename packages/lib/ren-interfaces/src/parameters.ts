@@ -81,6 +81,12 @@ export interface TransferParamsCommon {
      * An option to override the default nonce generated randomly.
      */
     nonce?: string;
+
+    /**
+     * Provide optional tags which can be used to look up transfers in the
+     * lightnodes.
+     */
+    tags?: [string]; // Currently, only one tag can be provided.
 }
 
 /**

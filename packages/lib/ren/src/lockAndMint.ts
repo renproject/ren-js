@@ -308,6 +308,10 @@ export class LockAndMint {
                 // know about the transaction.
                 try {
 
+                    if (this.params.tags && this.params.tags.length > 1) {
+                        throw new Error("Providing multiple tags is not supported yet.");
+                    }
+                    const tags: [string] | [] = this.params.tags && this.params.tags.length ? [this.params.tags[0]] : [];
 
                     txHash = await this.renVM.submitMint(
                         resolveInToken(renContract),
@@ -319,6 +323,7 @@ export class LockAndMint {
                         contractFn,
                         fnABI,
                         encodedParameters,
+                        tags,
                     );
                     if (txHash !== utxoTxHash) {
                         this.logger.warn(`Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`);

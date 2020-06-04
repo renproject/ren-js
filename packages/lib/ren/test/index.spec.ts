@@ -2,6 +2,7 @@ import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
 import { chaosnet, devnet, mainnet, testnet } from "@renproject/contracts";
 import chai from "chai";
 import Web3 from "web3";
+import { expect } from "earljs";
 
 import RenJS from "../src/index";
 
@@ -35,9 +36,9 @@ describe("RenJS initialization and exports", () => {
     });
 
     it("On uninitialized class", async () => {
-        RenJS.Networks.should.equal(RenNetwork);
-        RenJS.Tokens.should.equal(Tokens);
-        RenJS.Chains.should.equal(Chain);
+        expect(RenJS.Networks).toEqual(RenNetwork);
+        expect(RenJS.Tokens).toEqual(Tokens);
+        expect(RenJS.Chains).toEqual(Chain);
     });
 
     // it("Exposes BTC.addressToHex", () => {

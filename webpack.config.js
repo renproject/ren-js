@@ -15,9 +15,6 @@ let common = {
     plugins: [],
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
-        alias: {
-            scrypt: 'scrypt-js'
-        },
     }
 };
 

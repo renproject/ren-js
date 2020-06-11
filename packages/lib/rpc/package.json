@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/utils",
+    "name": "@renproject/rpc",
     "version": "1.0.2",
     "description": "Official Ren JavaScript client",
     "repository": {
@@ -47,22 +47,16 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link": "yarn link @renproject/chains @renproject/interfaces && yarn link"
+        "link": "yarn link @renproject/interfaces @renproject/provider @renproject/utils && yarn link"
     },
     "dependencies": {
-        "@renproject/chains": "file:../ren-chains",
         "@renproject/contracts": "^0.6.0",
-        "@renproject/interfaces": "file:../ren-interfaces",
+        "@renproject/interfaces": "file:../interfaces",
+        "@renproject/provider": "file:../provider",
+        "@renproject/utils": "file:../utils",
         "@types/node": "^14.0.5",
-        "axios": "^0.19.2",
         "bignumber.js": "^9.0.0",
-        "ethereumjs-util": "^7.0.1",
-        "events": "^3.1.0",
-        "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.3",
-        "web3": "^2.0.0-alpha.1",
-        "web3-core": "^2.0.0-alpha.1",
-        "web3-eth-abi": "^2.0.0-alpha.1"
+        "immutable": "^4.0.0-rc.12"
     },
     "config": {
         "commitizen": {
@@ -70,8 +64,7 @@
         }
     },
     "resolutions": {
-        "sha3": "^2.1.2",
-        "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
+        "sha3": "^2.1.2"
     },
     "nyc": {
         "extension": [

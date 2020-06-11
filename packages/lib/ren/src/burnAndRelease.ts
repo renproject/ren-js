@@ -22,7 +22,10 @@ export class BurnAndRelease {
         this.network = _network;
         this.params = processBurnAndReleaseParams(this.network, _params);
 
-        this.logger.debug("burnAndRelease created", this.params);
+        { // Debug log
+            const { web3Provider, ...restOfParams } = this.params;
+            this.logger.debug("burnAndRelease created", { web3: web3Provider ? "[Web3 provider]" : web3Provider, ...restOfParams });
+        }
     }
 
     /**

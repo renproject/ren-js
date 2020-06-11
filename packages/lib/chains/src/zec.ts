@@ -22,6 +22,9 @@ export const getZcashConfirmations = ({ isTestnet }: { isTestnet: boolean }) => 
     };
 };
 
+// ZCash shielded addresses (starting with 'z') aren't supported yet.
+// export const zecAddressToHex = (address: string) => Ox(Buffer.from(address));
+
 export const zecAddressToHex = (address: string) => {
     const addressBuffer = new Address(address).toBuffer();
     // Concatenate checksum

@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/rpc",
+    "name": "@renproject/provider",
     "version": "1.0.2",
     "description": "Official Ren JavaScript client",
     "repository": {
@@ -47,15 +47,13 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link": "yarn link @renproject/interfaces @renproject/provider @renproject/utils && yarn link"
+        "link": "yarn link @renproject/utils @renproject/interfaces && yarn link"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.6.0",
-        "@renproject/interfaces": "file:../ren-interfaces",
-        "@renproject/provider": "file:../ren-provider",
-        "@renproject/utils": "file:../ren-utils",
+        "@renproject/interfaces": "file:../interfaces",
+        "@renproject/utils": "file:../utils",
         "@types/node": "^14.0.5",
-        "bignumber.js": "^9.0.0",
+        "axios": "^0.19.2",
         "immutable": "^4.0.0-rc.12"
     },
     "config": {
@@ -64,8 +62,7 @@
         }
     },
     "resolutions": {
-        "sha3": "^2.1.2",
-        "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
+        "sha3": "^2.1.2"
     },
     "nyc": {
         "extension": [

@@ -57,19 +57,19 @@
         "link": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link"
     },
     "dependencies": {
-        "@renproject/chains": "file:../ren-chains",
+        "@renproject/chains": "file:../chains",
         "@renproject/contracts": "^0.6.0",
-        "@renproject/interfaces": "file:../ren-interfaces",
-        "@renproject/provider": "file:../ren-provider",
-        "@renproject/rpc": "file:../ren-rpc",
-        "@renproject/utils": "file:../ren-utils",
+        "@renproject/interfaces": "file:../interfaces",
+        "@renproject/provider": "file:../provider",
+        "@renproject/rpc": "file:../rpc",
+        "@renproject/utils": "file:../utils",
         "@types/bs58": "^4.0.1",
         "@types/node": "^14.0.5",
         "bignumber.js": "^9.0.0",
         "bs58": "^4.0.1",
         "ethereumjs-util": "^7.0.1",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.3",
+        "send-crypto": "0.2.10",
         "wallet-address-validator": "^0.2.4",
         "web3": "^2.0.0-alpha.1",
         "web3-core": "^2.0.0-alpha.1"
@@ -80,8 +80,7 @@
         }
     },
     "resolutions": {
-        "sha3": "^2.1.2",
-        "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
+        "sha3": "^2.1.2"
     },
     "nyc": {
         "extension": [

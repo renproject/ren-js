@@ -57,15 +57,14 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "@renproject/interfaces": "file:../ren-interfaces",
-    "@renproject/utils": "file:../ren-utils",
+    "@renproject/interfaces": "file:../interfaces",
+    "@renproject/utils": "file:../utils",
     "@types/node": "^14.0.5",
     "push.js": "^1.0.12",
     "web3": "^2.0.0-alpha.1"
   },
   "resolutions": {
-    "sha3": "^2.1.2",
-    "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
+    "sha3": "^2.1.2"
   },
   "config": {
     "commitizen": {

@@ -67,8 +67,8 @@ export class LockAndMint {
     }
 
     public gatewayAddress = async (specifyGatewayAddress?: string) => {
-        if (specifyGatewayAddress) {
-            this.generatedGatewayAddress = specifyGatewayAddress;
+        if (specifyGatewayAddress || this.params.gatewayAddress) {
+            this.generatedGatewayAddress = specifyGatewayAddress || this.params.gatewayAddress;
         }
 
         if (this.generatedGatewayAddress) {

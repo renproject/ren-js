@@ -36,7 +36,7 @@ export const TransferDetails: React.StatelessComponent<{
             </div>
         </div>
         <div className="transfer-details--row">
-            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>A 10 BPS (0.1%) fee is applied per mint or release and is distributed to all active Darknodes. There is also a 35K {asset === Asset.ZEC ? "Zats" : "Sats"} fee for paying blockchain miners, this does not go to the Ren team</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
+            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>A 10 BPS (0.1%) fee is applied per mint or release and is distributed to all active Darknodes. There is also a 35K {asset === Asset.ZEC ? "Zats" : "Sats"} fee for paying blockchain miners.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
             <div className="transfer-details--right">
                 0.1% + 0.00035 {asset.toUpperCase()}
             </div>

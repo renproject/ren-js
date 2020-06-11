@@ -34,7 +34,7 @@ export const generatePHash = (zip: EthArgs, logger?: Logger): string => {
     const message = rawEncode(types, values);
     const digest = Ox(keccak256(message));
 
-    if (logger) logger.debug(`pHash: ${digest}: keccak256(${message})`);
+    if (logger) logger.debug(`pHash: ${digest}: keccak256(${message.toString("hex")})`);
 
     return digest; // sha3 can accept a Buffer
 };
@@ -102,7 +102,7 @@ export const generateGHash = (payload: EthArgs, /* amount: number | string, */ t
 
     const digest = Ox(keccak256(encoded));
 
-    if (logger) logger.debug(`gHash: ${digest}: keccak256(${encoded})`);
+    if (logger) logger.debug(`gHash: ${digest}: keccak256(${encoded.toString("hex")})`);
 
     return digest;
 };
@@ -117,7 +117,7 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
 
     const digest = Ox(keccak256(encoded));
 
-    if (logger) logger.debug(`sigHash: ${digest}: keccak256(${encoded})`);
+    if (logger) logger.debug(`sigHash: ${digest}: keccak256(${encoded.toString("hex")})`);
 
     return digest;
 };

@@ -1,8 +1,8 @@
-import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
 import { chaosnet, devnet, mainnet, testnet } from "@renproject/contracts";
+import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
 import chai from "chai";
-import Web3 from "web3";
 import { expect } from "earljs";
+import Web3 from "web3";
 
 import RenJS from "../src/index";
 
@@ -70,7 +70,7 @@ describe("RenJS initialization and exports", () => {
         });
 
         // tslint:disable-next-line: await-promise
-        await new Promise((_, reject) => {
+        await expect(new Promise((_, reject) => {
 
             const wait = lockAndMint.wait(0);
 
@@ -79,7 +79,7 @@ describe("RenJS initialization and exports", () => {
             wait.then((result) => { reject(`Unexpected resolution from 'wait' with result ${result}`); })
                 .catch(reject);
 
-        }).should.be.rejectedWith(/wait cancelled/);
+        })).toBeRejected("wait cancelled");
     });
 
     it("cancel submit", async () => {
@@ -89,11 +89,11 @@ describe("RenJS initialization and exports", () => {
             // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
             sendToken: RenJS.Tokens.BTC.Eth2Btc,
 
-            burnReference: 0,
+            burnReference: 2,
         }).readFromEthereum();
 
         // tslint:disable-next-line: await-promise
-        await new Promise((_, reject) => {
+        await expect(new Promise((_, reject) => {
 
             const wait = burnAndRelease.submit();
 
@@ -101,7 +101,7 @@ describe("RenJS initialization and exports", () => {
 
             wait.catch(reject);
 
-        }).should.be.rejectedWith(/waitForTX cancelled/);
+        })).toBeRejected("waitForTX cancelled");
     });
 
     for (const network of ["devnet", "testnet", "chaosnet"]) {
@@ -112,11 +112,11 @@ describe("RenJS initialization and exports", () => {
             const web3 = new Web3(infuraURL);
 
             for (const asset of ["BTC", "ZEC", "BCH"] as const) { // Without const, defaults to string[]
-                (await renJS.getTokenAddress(web3, asset))
-                    .should.equal(renJS.network.addresses.gateways[`Ren${asset}`]._address);
+                expect(await renJS.getTokenAddress(web3, asset))
+                    .toEqual(renJS.network.addresses.gateways[`Ren${asset}`]._address);
 
-                (await renJS.getGatewayAddress(web3, asset))
-                    .should.equal(renJS.network.addresses.gateways[`${asset}Gateway`]._address);
+                expect(await renJS.getGatewayAddress(web3, asset))
+                    .toEqual(renJS.network.addresses.gateways[`${asset}Gateway`]._address);
             }
         });
     }

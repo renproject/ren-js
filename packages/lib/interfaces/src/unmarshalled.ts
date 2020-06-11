@@ -45,11 +45,11 @@ export interface UnmarshalledBurnTx {
 export type UnmarshalledTx = UnmarshalledMintTx | UnmarshalledBurnTx;
 
 export interface UnmarshalledAssetFees {
-    lock: number;
-    release: number;
+    lock: number;     // Chain transaction fees for locking (in sats)
+    release: number;  // Chain transaction fees for releasing (in sats)
     ethereum: {
-        mint: number;
-        burn: number;
+        mint: number; // Minting fee basis points (10 = 0.1%)
+        burn: number; // Burning fee basis points (10 = 0.1%)
     };
 }
 

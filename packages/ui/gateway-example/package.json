@@ -14,8 +14,8 @@
     },
     "dependencies": {
         "@renproject/gateway": "file:../../lib/gateway",
-        "@renproject/interfaces": "file:../../lib/ren-interfaces",
-        "@renproject/utils": "file:../../lib/ren-utils",
+        "@renproject/interfaces": "file:../../lib/interfaces",
+        "@renproject/utils": "file:../../lib/utils",
         "@types/classnames": "^2.2.10",
         "@types/node": "^13.13.4",
         "@types/qs": "^6.9.1",
@@ -30,9 +30,7 @@
         "react-router-dom": "^5.1.2",
         "web3": "^2.0.0-alpha.1"
     },
-    "resolutions": {
-        "scrypt": "https://registry.npmjs.org/scrypt-js/-/scrypt-js-3.0.0.tgz"
-    },
+    "resolutions": {},
     "browserslist": [
         ">0.2%",
         "not dead",

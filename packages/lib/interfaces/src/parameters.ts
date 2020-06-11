@@ -119,6 +119,14 @@ export interface LockAndMintParams extends TransferParamsCommon {
      * of the transfer.
      */
     deposit?: UTXOIndex;
+
+    /**
+     * Specify a gateway address. Gateway addresses are based on the RenVM shard
+     * selected to process the transfer. Currently there is only one RenVM
+     * shard, but once sharding is live, this parameter will ensure that the
+     * same address can be used to resume the transfer.
+     */
+    gatewayAddress?: string;
 }
 
 /**

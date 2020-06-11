@@ -435,7 +435,7 @@ export class SDKContainer extends Container<typeof initialState> {
             .lockAndMintObject()
             .gatewayAddress();
 
-        const update: Partial<LockAndMintEvent> = { gatewayAddress: address };
+        const update: Partial<LockAndMintEvent> = { gatewayAddress: address, transferParams: { ...transfer.transferParams, gatewayAddress: address } };
         await this.updateTransfer(update);
 
         return address;

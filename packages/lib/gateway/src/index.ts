@@ -33,6 +33,8 @@ export interface GatewayJSConfig {
     logger?: Logger;
 }
 
+export type GatewayResult = PromiEvent<UnmarshalledTx | {}, { status: [LockAndMintStatus | BurnAndReleaseStatus, any], transferUpdated: [HistoryEvent] }>;
+
 export class Gateway {
 
     // tslint:disable: readonly-keyword
@@ -44,7 +46,7 @@ export class Gateway {
     // tslint:enable: readonly-keyword
 
     // tslint:disable-next-line: readonly-keyword readonly-array no-any
-    private readonly promiEvent: PromiEvent<UnmarshalledTx | {}, { status: [LockAndMintStatus | BurnAndReleaseStatus, any], transferUpdated: [HistoryEvent] }> = newPromiEvent();
+    private readonly promiEvent: GatewayResult = newPromiEvent();
 
     // Each GatewayJS instance has a unique ID
     private readonly id: string;
@@ -146,7 +148,7 @@ export class Gateway {
         this._addListener(listener);
     })
 
-    public readonly result = () => this.promiEvent;
+    public readonly result: () => GatewayResult = () => this.promiEvent;
 
     public readonly _open = (transferParams: TransferParams | SendParams | LockAndMintEvent | BurnAndReleaseEvent, web3Provider?: Web3Provider): Gateway => {
 

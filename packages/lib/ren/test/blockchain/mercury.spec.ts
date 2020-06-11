@@ -54,7 +54,7 @@ describe("mercury.ts", () => {
         const utxos = await RenJS.utils.bch.getUTXOs(mainnet)("bitcoincash:qqt6g6wul02yakpt05amm0hey67lhh7wagrrqxcmys", 0);
         utxos.length.should.be.greaterThan(0);
         utxos[0].txHash.should.equal("2d05f0c9c3e1c226e63b5fac240137687544cf631cd616fd34fd188fc9020866");
-        utxos[0].amount.should.equal(4532403);
+        utxos[0].amount.should.equal(5000000000);
         utxos[0].confirmations.should.be.greaterThan(0);
     });
 

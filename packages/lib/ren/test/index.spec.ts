@@ -79,7 +79,7 @@ describe("RenJS initialization and exports", () => {
             wait.then((result) => { reject(`Unexpected resolution from 'wait' with result ${result}`); })
                 .catch(reject);
 
-        })).toBeRejected("wait cancelled");
+        })).toBeRejected("Wait cancelled.");
     });
 
     it("cancel submit", async () => {
@@ -89,7 +89,7 @@ describe("RenJS initialization and exports", () => {
             // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
             sendToken: RenJS.Tokens.BTC.Eth2Btc,
 
-            burnReference: 2,
+            burnReference: 0x47,
         }).readFromEthereum();
 
         // tslint:disable-next-line: await-promise

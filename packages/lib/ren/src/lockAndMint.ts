@@ -170,7 +170,7 @@ export class LockAndMint {
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 if (promiEvent._isCancelled()) {
-                    throw new Error("wait cancelled.");
+                    throw new Error("Wait cancelled.");
                 }
 
                 if (deposits.size > 0) {

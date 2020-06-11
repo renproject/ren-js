@@ -27,7 +27,6 @@
     "babel-loader": "^8.1.0",
     "babel-polyfill": "^6.26.0",
     "babel-runtime": "^6.26.0",
-    "bitgo-utxo-lib": "^1.8.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "ren-forks/chai-bignumber#afa6f46dcbef0b7e622dc27b9b3354fc67afafbc",

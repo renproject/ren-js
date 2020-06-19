@@ -9,26 +9,30 @@ There's two official Javascript SDKs for interacting with [RenVM](https://renpro
 
 See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.
 
-## Changelog
+### Changelog
 
-* 1.0.0
-  * A Web3 provider is now required for GatewayJS. Transfer parameters should now include a `web3Provider` field. Migrate quickly using `web3Provider: await GatewayJS.utils.useBrowserWeb3()`.
-  * Resuming existing orders in GatewayJS must use `recoverTransfer`, providing the `HistoryEvent`, as well as a Web3 provider as a second parameter.
-  * GatewayJS's storage structure has changed, requiring any incomplete trades to be reopened (instead of being resumed with `recoverTransfer`).
+See the [Releases page](https://github.com/renproject/ren-js/releases).
 
-* 0.10.0
-  * `shiftIn` and `shiftOut` have been renamed to `lockAndMint` and `burnAndRelease`
+### Local development
 
-* 0.9.0
-  * `@renproject/gateway-js` has been renamed to `@renproject/gateway`.
-  * GatewayJS now exposes `shiftIn`, `shiftOut` and `recoverShift` instead of just `open`.
-  * `@renproject/interfaces`, `@renproject/chains`, `@renproject/provider`, `@renproject/rpc` and `@renproject/utils` can now be imported separately to access internal RenJS functions.
-  * RenJS now accepts an optional second parameter, `provider`, for providing a custom JSON RPC handler.
-
-## Local development
+Build RenJS and GatewayJS:
 
 ```sh
 git clone git@github.com:renproject/ren-js.git && cd ren-js
 yarn && yarn run link
 yarn build
 ```
+
+Start gateway.renproject.io
+```sh
+cd packages/ui/gateway.renproject.io
+PORT=3344 yarn start
+```
+
+Start demo page
+```sh
+cd packages/ui/gateway-example
+PORT=3000 yarn start
+```
+
+Go to <http://localhost:3000/?network=testnet&endpoint=http://localhost:3344>.

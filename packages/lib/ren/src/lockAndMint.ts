@@ -329,7 +329,7 @@ export class LockAndMint {
                         this.logger.warn(`Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`);
                     }
                 } catch (error) {
-                    this.logger.error(error);
+                    // this.logger.error(error);
                     try {
                         // Check if the darknodes have already seen the transaction
                         const queryTxResponse = await this.queryTx(utxo);
@@ -338,7 +338,7 @@ export class LockAndMint {
                         }
                     } catch (errorInner) {
                         // Ignore errorInner.
-                        this.logger.error(errorInner);
+                        // this.logger.error(errorInner);
                         this.logger.debug(error);
                         throw error;
                     }

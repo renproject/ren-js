@@ -171,14 +171,26 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                                 await sdkContainer.updateTransfer(historyEvent, { sync: true });
 
                                 try {
+                                    // Until confidence is gained in the storage
+                                    // of transfers, the transfer details are
+                                    // stored in the error log as an additional
+                                    // backup.
+
                                     Sentry.configureScope((scope) => {
                                         // scope.setUser({ id: address });
-                                        scope.setExtra("transfer", historyEvent && historyEvent.transferParams);
+                                        scope.setExtra("transfer", historyEvent && JSON.stringify(historyEvent.transferParams));
                                         if (historyEvent) {
                                             scope.setTag("token", getAsset(historyEvent));
                                             scope.setTag("network", network.name);
                                         }
                                     });
+                                    if (historyEvent.eventType === EventType.LockAndMint) {
+                                        const lastContractCall = historyEvent.transferParams.contractCalls && historyEvent.transferParams.contractCalls[historyEvent.transferParams.contractCalls.length - 1];
+                                        Sentry.captureException(new Error(`Mint - ${historyEvent.transferParams.suggestedAmount && historyEvent.transferParams.suggestedAmount.toString()} ${historyEvent.transferParams.sendToken}, ${lastContractCall && lastContractCall.contractFn} - ${lastContractCall && lastContractCall.sendTo}`));
+                                    } else {
+                                        const lastContractCall = historyEvent.transferParams.contractCalls && historyEvent.transferParams.contractCalls[historyEvent.transferParams.contractCalls.length - 1];
+                                        Sentry.captureException(new Error(`Burn - ${historyEvent.transferParams.sendToken}, ${lastContractCall && lastContractCall.contractFn} - ${lastContractCall && lastContractCall.sendTo}`));
+                                    }
                                 } catch (error) {
                                     // Ignore error
                                 }

@@ -1,9 +1,10 @@
+import BlocknativeSdk from "bnc-sdk";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 
-import { SECONDS, sleep, strip0x } from "./common";
+import { Ox, SECONDS, sleep, strip0x } from "./common";
 
 export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
 
@@ -19,7 +20,21 @@ export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
  */
 export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/): Promise<TransactionReceipt> => {
 
-    // TODO: Handle transactions being overwritten.
+    let blocknative;
+
+    try {
+        // Initialize Blocknative SDK.
+        blocknative = new BlocknativeSdk({
+            dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
+            networkId: await web3.eth.net.getId(),
+        });
+
+        const { emitter } = blocknative.transaction(transactionHash);
+        emitter.on("txSpeedUp", state => { if (state.hash) { transactionHash = Ox(state.hash); } });
+
+    } catch (error) {
+        // Ignore blocknative error.
+    }
 
     // Wait for confirmation
     let receipt: TransactionReceipt | undefined;
@@ -29,6 +44,15 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonc
             break;
         }
         await sleep(3 * SECONDS);
+    }
+
+    try {
+        // Destroy blocknative SDK.
+        if (blocknative) {
+            blocknative.destroy();
+        }
+    } catch (error) {
+        // Ignore blocknative error.
     }
 
     // Status might be undefined - so check against `false` explicitly.

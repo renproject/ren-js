@@ -14,22 +14,21 @@ import {
 import { parse as parseLocation } from "qs";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { ReactComponent as MinimizeIcon } from "../../images/icon-minimize.svg";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
+import { getStorage } from "../../lib/storage";
 import { extractQuery, getAsset } from "../../lib/utils";
+import { ReactComponent as MinimizeIcon } from "../../scss/images/icon-minimize.svg";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { ColoredBanner } from "../views/ColoredBanner";
+// import { Footer } from "../views/Footer";
+import { ErrorBoundary } from "../views/ErrorBoundary";
 import { ExternalLink } from "../views/ExternalLink";
 import { SettingsPage } from "../views/settingsPage/SettingsPage";
-// import { Footer } from "../views/Footer";
-import { ErrorBoundary } from "./ErrorBoundary";
 import { HandlingTransfer } from "./HandlingTransfer";
-// import { TransferProgress } from "./ProgressBar";
-import { getStorage } from "./Storage";
 
 const { version } = require("../../../package.json");
 
@@ -260,7 +259,6 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
             const queryParams = parseLocation(location.search.replace(/^\?/, ""));
             const urlRenNetwork = extractQuery(queryParams.network, DEFAULT_NETWORK);
             uiContainer.setState({ renNetwork: urlRenNetwork }).catch(console.error);
-            uiContainer.connect().catch(console.error);
             sdkContainer.connect(urlRenNetwork).catch(console.error);
             setTimeout(() => { setDelayPassed(true); }, feedbackButtonDelay);
             // eslint-disable-next-line react-hooks/exhaustive-deps

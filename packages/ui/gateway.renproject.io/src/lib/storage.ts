@@ -1,7 +1,7 @@
 import { HistoryEvent } from "@renproject/interfaces";
 import localForage from "localforage";
 
-import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
+import { DEFAULT_NETWORK } from "./environmentVariables";
 
 const stores = new Map<string, LocalForage>();
 
@@ -65,14 +65,3 @@ export const updateStorageTransfer = async (network: string, historyEvent: Histo
 
     return;
 };
-
-// export const removeStorageTransfer = async (network: string, nonce: string, domainIn?: string) => {
-//     const domain = domainIn || getURL();
-
-//     const store = getStore(network, domain);
-
-//     cancelled.add(nonce);
-//     await store.removeItem(nonce);
-
-//     return;
-// };

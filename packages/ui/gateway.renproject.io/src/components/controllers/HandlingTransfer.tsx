@@ -8,32 +8,21 @@ import { sleep } from "@renproject/react-components";
 
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { postMessageToClient } from "../../lib/postMessage";
-import { isFunction, isPromise } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { LogIn } from "../views/LogIn";
-import { AskForAddress } from "../views/transfer-steps/AskForAddress";
-import { Complete } from "../views/transfer-steps/Complete";
-import { DepositReceived } from "../views/transfer-steps/DepositReceived";
-import { InvalidParameters } from "../views/transfer-steps/InvalidParameters";
-import { ShowGatewayAddress } from "../views/transfer-steps/ShowGatewayAddress";
-import { SubmitBurnToEthereum } from "../views/transfer-steps/SubmitBurnToEthereum";
-import { SubmitBurnToRenVM } from "../views/transfer-steps/SubmitBurnToRenVM";
-import { SubmitMintToEthereum } from "../views/transfer-steps/SubmitMintToEthereum";
 import { TransferDetails } from "../views/TransferDetails";
+import { Complete } from "./pages/Complete";
+import { DepositReceived } from "./pages/DepositReceived";
+import { InvalidParameters } from "./pages/InvalidParameters";
+import { ShowGatewayAddress } from "./pages/ShowGatewayAddress";
+import { SubmitBurnToEthereum } from "./pages/SubmitBurnToEthereum";
+import { SubmitBurnToRenVM } from "./pages/SubmitBurnToRenVM";
+import { SubmitMintToEthereum } from "./pages/SubmitMintToEthereum";
 
 interface Props extends ConnectedProps<[UIContainer, SDKContainer]> {
 }
-
-const getRequiredAddressAndName = (transferParams: LockAndMintEvent["transferParams"] | BurnAndReleaseEvent["transferParams"]) => transferParams.contractCalls ? Array.from(transferParams.contractCalls).reduce((accOuter, contractCall) => {
-    if (accOuter !== null || isFunction(contractCall) || isPromise(contractCall)) { return accOuter; }
-    return (contractCall.contractParams || []).reduce((acc, param) => {
-        if (acc !== null || !param || typeof param.value !== "string") { return acc; }
-        const match = param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/);
-        return match ? [param.name, match] : null;
-    }, null as [string, RegExpMatchArray] | null);
-}, null as [string, RegExpMatchArray] | null) as [string, RegExpMatchArray] | null : null;
 
 /**
  * HandlingTransfer is a visual component for allowing users to start new transfers
@@ -102,37 +91,22 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
             } else {
                 switch (transfer.status) {
                     case LockAndMintStatus.Committed:
-                        // tslint:disable-next-line: no-unnecessary-type-assertion
-                        const requiredAddressAndName = getRequiredAddressAndName(transferParams);
-                        if (requiredAddressAndName !== null) {
-                            const [variableName, requiredAddress] = requiredAddressAndName;
-                            const requestedToken = requiredAddress[1] as Asset || token;
-                            inner = <AskForAddress
+                        try {
+                            // Show the deposit address and wait for a deposit
+                            inner = <ShowGatewayAddress
                                 mini={paused}
-                                key={requestedToken}
-                                token={requestedToken}
-                                isTestnet={sdkRenVM.network.isTestnet}
-                                message={<>Your {requestedToken.toUpperCase()} address is required for <span className="url">{variableName}</span></>}
-                                onAddress={sdkContainer.updateToAddress}
-                            />;
-                        } else {
-                            try {
-                                // Show the deposit address and wait for a deposit
-                                inner = <ShowGatewayAddress
-                                    mini={paused}
-                                    generateAddress={sdkContainer.generateAddress}
-                                    token={token}
-                                    utxos={utxos}
-                                    sdkRenVM={sdkRenVM}
-                                    transferParams={transferParams}
-                                    waitForDeposit={sdkContainer.waitForDeposits}
-                                    confirmations={sdkContainer.getNumberOfConfirmations(transfer)}
-                                    onDeposit={uiContainer.deposit}
+                                generateAddress={sdkContainer.generateAddress}
+                                token={token}
+                                utxos={utxos}
+                                sdkRenVM={sdkRenVM}
+                                transferParams={transferParams}
+                                waitForDeposit={sdkContainer.waitForDeposits}
+                                confirmations={sdkContainer.getNumberOfConfirmations(transfer)}
+                                onDeposit={uiContainer.deposit}
 
-                                />;
-                            } catch (error) {
-                                inner = <InvalidParameters mini={paused} token={token} />;
-                            }
+                            />;
+                        } catch (error) {
+                            inner = <InvalidParameters mini={paused} token={token} />;
                         }
                         break;
                     case LockAndMintStatus.Deposited:
@@ -185,39 +159,17 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
             } else {
                 switch (transfer.status) {
                     case BurnAndReleaseStatus.Committed:
-                        // tslint:disable-next-line: no-unnecessary-type-assertion
-                        const requiredAddressAndName = getRequiredAddressAndName(transferParams);
-                        if (requiredAddressAndName) {
-                            const [variableName, requiredAddress] = requiredAddressAndName;
-                            const requestedToken = requiredAddress[1] as Asset || token;
-                            inner = <AskForAddress
-                                mini={paused}
-                                key={requestedToken}
-                                token={requestedToken}
-                                isTestnet={sdkRenVM.network.isTestnet}
-                                message={<>Your {requestedToken.toUpperCase()} address is required for <span className="url">{variableName}</span></>}
-                                onAddress={sdkContainer.updateToAddress}
-                            />;
-                        } else {
-                            inner = <SubmitBurnToEthereum
-                                token={token}
-                                txCount={txCount}
-                                networkDetails={sdkRenVM.network}
-                                mini={paused}
-                                txHash={transfer.inTx}
-                                submit={sdkContainer.submitBurnToEthereum}
-                                ethereumConfirmations={transfer.ethereumConfirmations}
-                                requestNotificationPermission={requestNotificationPermission}
-                                showNotification={showNotification}
-                            />;
-                        }
-                        // const submit = async (submitOrderID: string) => {
-                        //     await sdkContainer.approveTokenTransfer(submitOrderID);
-                        //     setERC20Approved(true);
-                        // };
-                        // if (isERC20(order.orderInputs.srcToken) && !ERC20Approved) {
-                        //     return <TokenAllowance token={order.orderInputs.srcToken} amount={order.orderInputs.srcAmount} submit={submit} transferParams={transferParams} />;
-                        // }
+                        inner = <SubmitBurnToEthereum
+                            token={token}
+                            txCount={txCount}
+                            networkDetails={sdkRenVM.network}
+                            mini={paused}
+                            txHash={transfer.inTx}
+                            submit={sdkContainer.submitBurnToEthereum}
+                            ethereumConfirmations={transfer.ethereumConfirmations}
+                            requestNotificationPermission={requestNotificationPermission}
+                            showNotification={showNotification}
+                        />;
                         break;
                     case BurnAndReleaseStatus.SubmittedToEthereum:
                         // Submit the burn to Ethereum

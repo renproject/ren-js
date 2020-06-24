@@ -8,31 +8,18 @@ import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import infoIcon from "../../../images/icons/info.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import { range } from "../../../lib/utils";
-import { pulseAnimation } from "../../../scss/animations";
+import infoIcon from "../../../scss/images/info.svg";
 import {
     Container, ContainerBody, ContainerBottom, ContainerDetails, ContainerHeader,
-} from "../Container";
-import { ExternalLink } from "../ExternalLink";
-import { ProgressBar } from "../ProgressBar";
-import { Tooltip } from "../tooltip/Tooltip";
-import { ErrorScreen } from "./ErrorScreen";
-import { Mini } from "./Mini";
-
-export const ScanningDot = styled.span`
-            height: 10px;
-            width: 10px;
-            background-color: ${p => lighten(0.1, p.theme.primaryColor)};
-            border-radius: 50%;
-            display: block;
-            margin-right: 10px;
-            animation: ${p => pulseAnimation("6px", p.theme.primaryColor)};
-            line-height: 100%;
-            flex-shrink: 0;
-        `;
+} from "../../views/Container";
+import { ErrorScreen } from "../../views/ErrorScreen";
+import { ExternalLink } from "../../views/ExternalLink";
+import { Mini } from "../../views/Mini";
+import { ProgressBar } from "../../views/ProgressBar";
+import { Tooltip } from "../../views/tooltip/Tooltip";
 
 interface Props {
     mini: boolean;
@@ -105,20 +92,6 @@ export const DepositReceived: React.StatelessComponent<Props> =
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
-        // const onClickAddress = React.useCallback(() => {
-        //     setCopied(true);
-        //     if (timer) {
-        //         clearTimeout(timer);
-        //     }
-        //     setTimer(setTimeout(() => {
-        //         setCopied(false);
-        //         if (!showSpinner) {
-        //             setShowSpinner(true);
-        //         }
-        //     }, 5000) as any, // tslint:disable-line: no-any
-        //     );
-        // }, [showSpinner, timer]);
-
         const tooltipText = `Waiting for ${confirmations} confirmations. This can take up to ${networkDetails.isTestnet ? "twenty minutes" : "an hour"} due to ${token.toUpperCase()} confirmation times.`;
 
         const firstUTXO = utxos.first<UTXOWithChain>();
@@ -156,14 +129,10 @@ export const DepositReceived: React.StatelessComponent<Props> =
 
                     {confirmations ? <ConfirmationsContainer>
                         <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
-                        {/* tslint:disable-next-line: react-a11y-anchors */}
-                        <Tooltip direction={"bottom"} width={250} contents={<span>{tooltipText}</span>/* Read about confirmationless deposits <ExternalLink className="blue" href={INTEROP_LINK}>here</ExternalLink>.</span>*/}><img alt={tooltipText} src={infoIcon} /></Tooltip>
+                        <Tooltip direction={"bottom"} width={250} contents={<span>{tooltipText}</span>}><img alt={tooltipText} src={infoIcon} /></Tooltip>
                     </ConfirmationsContainer> : <></>}
                     {utxos.map(utxo => {
                         return <div className="confirmation--progress--container" key={utxo.utxo.txHash}>
-                            {/* <div className="show-utxos--utxo">
-                                        <ExternalLink href={txUrl({ chain: utxo.chain, hash: utxo.utxo.txid })}>TXID {hash}</ExternalLink>
-                                    </div> */}
                             {confirmations ? <ConfirmationsBlock>
                                 {confirmations >= 10 ? <ProgressBar
                                     className="confirmation--progress"
@@ -184,11 +153,6 @@ export const DepositReceived: React.StatelessComponent<Props> =
                                         progress={utxo.utxo.confirmations}
                                         pulse={true}
                                     />}
-                                {/* {range(order ? 7 : 1).map(target =>
-                                <ProgressItem target={target + 1} progress={utxo.utxo.confirmations} />
-                            )} */}
-                                {/* <Loading className="loading--blue" /> */}
-                                {/* <ConfirmationsCount>{utxo.utxo.confirmations} / {confirmations} confirmations</ConfirmationsCount> */}
                             </ConfirmationsBlock> : <></>}
                         </div>;
                     }).valueSeq()}
@@ -200,7 +164,6 @@ export const DepositReceived: React.StatelessComponent<Props> =
                         <ExternalLink className="no-underline" href={txUrl(utxo, networkDetails)}>
                             <div role="button" className={`click-to-copy`}>
                                 <StyledLabel>Tx ID: {txPreview(utxo)}</StyledLabel>
-                                {/* <StyledLabel>{utxo.utxo && utxo.utxo.amount > 0 ? <>Tx: {renderAmount(utxo)} - </> : <>Tx ID:</>} {txPreview(utxo)}</StyledLabel> */}
                             </div>
                         </ExternalLink>
                     </div>;

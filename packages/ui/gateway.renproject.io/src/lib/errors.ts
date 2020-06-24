@@ -120,19 +120,6 @@ const _catchErr_ = <X extends Details>(error: any, details: X) => {
         // tslint:disable-next-line: no-console
         console.error(error);
 
-        // if (ENVIRONMENT !== "mainnet") {
-        //     if (typeof error === "string") {
-        //         // tslint:disable-next-line: no-parameter-reassignment
-        //         error = `[${ENVIRONMENT.toUpperCase()}] ${error}`;
-        //     } else {
-        //         try {
-        //             error.message = `[${ENVIRONMENT.toUpperCase()}] ${error.message || error}`;
-        //         } catch {
-        //             // Ignore: Unable to overwrite message (may be read-only)
-        //         }
-        //     }
-        // }
-
         // Check if we should ignore the error
         if (details.ignoreNetwork && isNetworkError(error)) {
             return;

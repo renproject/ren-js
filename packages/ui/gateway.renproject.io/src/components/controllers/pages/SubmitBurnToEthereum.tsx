@@ -10,15 +10,15 @@ import { lighten } from "polished";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import styled from "styled-components";
 
-import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
+import { ReactComponent as BurnIcon } from "../../../scss/images/burn.svg";
 import { defaultNumberOfConfirmations } from "../../../state/sdkContainer";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
-} from "../Container";
-import { ExternalLink } from "../ExternalLink";
-import { ErrorScreen } from "./ErrorScreen";
-import { Mini } from "./Mini";
+} from "../../views/Container";
+import { ErrorScreen } from "../../views/ErrorScreen";
+import { ExternalLink } from "../../views/ExternalLink";
+import { Mini } from "../../views/Mini";
 
 const TransparentButton = styled.button`
         position: relative;
@@ -93,8 +93,7 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
         }
     }, [submit, error, confirmationsRequired, showNotification]);
 
-    // useEffect replaces `componentDidMount` and `componentDidUpdate`.
-    // To limit it to running once, we use the initialized hook.
+    // Once txHash is available, call `onSubmit`.
     const [initialized, setInitialized] = React.useState(false);
     React.useEffect(() => {
         if (!initialized) {
@@ -104,14 +103,6 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
             }
         }
     }, [initialized, txHash, onSubmit]);
-
-    // const [requested, setRequested] = React.useState(false);
-    // React.useEffect(() => {
-    //     if (!requested && ethereumConfirmations !== undefined) {
-    //         requestNotificationPermission().catch(console.error);
-    //         setRequested(true);
-    //     }
-    // }, [requested, setRequested, ethereumConfirmations, requestNotificationPermission]);
 
     if (mini) { return <Mini token={token} message={submitting ? "Submitting to Ethereum" : "Submit to Ethereum"} />; }
 
@@ -170,16 +161,11 @@ export const SubmitBurnToEthereum: React.StatelessComponent<{
             </div>
         </div> :
             <ContainerBottom>
-                {/* {txHash && txHash.chain === Chain.Ethereum && !error ?
-                        <ExternalLink className="no-underline" href={txUrl(txHash, networkDetails)}>
-                            <LabelledDiv style={{ textAlign: "center", maxWidth: "unset" }} inputLabel="Transaction Hash" width={125} loading={true} >{txHash.hash}</LabelledDiv>
-                        </ExternalLink> : */}
                 <ContainerButtons>
                     <TransparentButton className="button open--confirm" disabled={submitting} onClick={onSubmit}>
                         {submitting ? <>Submitting to Ethereum<TransparentLoading alt={true} /></> : txCount > 1 ? <>{" "}Submit <b>{txCount}</b> transactions to Ethereum</> : <>Submit to Ethereum</>}
                     </TransparentButton>
                 </ContainerButtons>
-                {/* } */}
             </ContainerBottom>
         }
     </Container>;

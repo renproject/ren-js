@@ -11,11 +11,11 @@ import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
-} from "../Container";
-import { ExternalLink } from "../ExternalLink";
-import { LabelledDiv } from "../LabelledInput";
-import { ErrorScreen } from "./ErrorScreen";
-import { Mini } from "./Mini";
+} from "../../views/Container";
+import { ErrorScreen } from "../../views/ErrorScreen";
+import { ExternalLink } from "../../views/ExternalLink";
+import { LabelledDiv } from "../../views/LabelledInput";
+import { Mini } from "../../views/Mini";
 
 const TransparentButton = styled.button`
         position: relative;

@@ -4,33 +4,19 @@ import { Asset, LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
 import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
+import { toLegacyAddress } from "bchaddrjs";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
-import { toLegacyAddress } from "bchaddrjs";
 
-import { ReactComponent as QR } from "../../../images/qr.svg";
-import { pulseAnimation } from "../../../scss/animations";
+import { ReactComponent as QR } from "../../../scss/images/qr.svg";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerDetails, ContainerHeader,
-} from "../Container";
-import { Mini } from "./Mini";
-import { ShowQRCode } from "./ShowQRCode";
-
-export const ScanningDot = styled.span`
-            height: 10px;
-            width: 10px;
-            background-color: ${p => lighten(0.1, p.theme.primaryColor)};
-            border-radius: 50%;
-            display: block;
-            margin-right: 10px;
-            animation: ${p => pulseAnimation("6px", p.theme.primaryColor)};
-            line-height: 100%;
-            flex-shrink: 0;
-        `;
-
+} from "../../views/Container";
+import { Mini } from "../../views/Mini";
+import { ShowQRCode } from "../../views/ShowQRCode";
 
 const StyledLabel = styled.span`
         color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
@@ -124,7 +110,7 @@ export const ShowGatewayAddress: React.StatelessComponent<Props> =
         const [copied, setCopied] = React.useState(false);
         const [showSpinner, setShowSpinner] = React.useState(false);
         const [gatewayAddress, setGatewayAddress] = React.useState<string | null>(null);
-        // Show bech32 or legacy BCH addresses.
+        // Show BECH32 or legacy BCH addresses.
         const [showLegacyAddress, setShowLegacyAddress] = React.useState(false);
         const [timer, setTimer] = React.useState<NodeJS.Timeout | null>(null);
         const [failed, setFailed] = React.useState<string | null>(null);

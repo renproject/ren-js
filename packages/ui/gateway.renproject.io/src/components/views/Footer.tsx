@@ -2,8 +2,8 @@ import * as React from "react";
 
 import styled from "styled-components";
 
-import infoIcon from "../../images/icons/info.svg";
-import smallLogo from "../../images/logo-small-grey.png";
+import infoIcon from "../../scss/images/info.svg";
+import smallLogo from "../../scss/images/logo-small-grey.png";
 import { ExternalLink } from "./ExternalLink";
 import { Tooltip } from "./tooltip/Tooltip";
 

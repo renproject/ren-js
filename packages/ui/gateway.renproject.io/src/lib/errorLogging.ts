@@ -5,7 +5,12 @@ import { ExtraErrorData } from "@sentry/integrations";
 import { SENTRY_DSN, SENTRY_ENVIRONMENT, SOURCE_VERSION } from "./environmentVariables";
 import { pageLoadedAt } from "./errors";
 
-export const initializeSentry = () => {
+/**
+ * Configure error logging details.
+ * While GatewayJS is gaining stability, the Ren Project dev team receives
+ * details about errors that are caught in gateway.renproject.io.
+ */
+export const initializeErrorLogging = () => {
 
     // Initialize Sentry error logging
     Sentry.init({
@@ -21,19 +26,13 @@ export const initializeSentry = () => {
         // Only throw errors generated from scripts at these URLs
         whitelistUrls: [
             /.*renproject.*/i,
-
-            // Local testing (localhost and IPv4 addresses)
-            /.*localhost.*/i,
-            /.*(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).*/
         ],
 
         integrations: [new ExtraErrorData()],
     });
 
     Sentry.configureScope((scope) => {
-        scope.setExtra("loggedIn", false);
-
-        // We set this to false when logging to Sentry explicitly.
+        // We set this to true when logging to Sentry explicitly.
         scope.setExtra("caught", false);
 
         scope.setExtra("release", SOURCE_VERSION);

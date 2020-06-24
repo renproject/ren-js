@@ -1,29 +1,25 @@
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
-    GatewayMessageType, HistoryEvent, isAsset, LockAndMintEvent, LockAndMintParams,
-    LockAndMintStatus, RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
+    Asset, BurnAndReleaseEvent, BurnAndReleaseStatus, Chain, EventType, GatewayMessageType,
+    HistoryEvent, isAsset, LockAndMintEvent, LockAndMintParams, LockAndMintStatus, RenContract,
+    SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
 import { parseRenContract, resolveInToken, SECONDS, sleep } from "@renproject/utils";
 import { Container } from "unstated";
 
-import { getStorageItem, updateStorageTransfer } from "../components/controllers/Storage";
 // tslint:disable-next-line: ordered-imports
-import { _catchBackgroundErr_, _catchInteractionErr_ } from "../lib/errors";
+import { _catchBackgroundErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
-import {
-    compareTransferStatus, compareTxStatus, isFunction, isPromise, maxOrUndefined,
-} from "../lib/utils";
+import { getStorageItem, updateStorageTransfer } from "../lib/storage";
+import { compareTransferStatus, compareTxStatus, maxOrUndefined } from "../lib/utils";
 import { UIContainer } from "./uiContainer";
 
 const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum });
 
 const initialState = {
     sdkRenVM: null as null | RenJS,
-    // sdkAddress: null as string | null,
-    // sdkWeb3: null as Web3 | null,
     transfer: null as HistoryEvent | null,
 };
 
@@ -186,37 +182,6 @@ export class SDKContainer extends Container<typeof initialState> {
             console.error(error);
         }
         await this.setState({ transfer });
-    }
-
-    public updateToAddress = async (address: string, token: Asset) => {
-        if (!this.state.transfer) {
-            return;
-        }
-
-        const sendToken = (this.state.transfer.transferParams as LockAndMintParams | BurnAndReleaseParams).sendToken;
-        const defaultToken = sendToken && (sendToken.slice(0, 3) as Asset);
-        const contractCalls = this.state.transfer.transferParams.contractCalls ? Array.from(this.state.transfer.transferParams.contractCalls).map(contractCall => {
-            return (isFunction(contractCall) || isPromise(contractCall)) ? contractCall : contractCall.contractParams && contractCall.contractParams.map(param => {
-                const match = param && typeof param.value === "string" ? param.value.match(/^__renAskForAddress__([a-zA-Z0-9]+)?$/) : null;
-                try {
-                    if (match && (match[1] === token || (!match[1] && token === defaultToken))) {
-                        return { ...param, value: RenJS.Tokens[token].addressToHex(address) };
-                    }
-                } catch (error) {
-                    _catchInteractionErr_(error, "Error in sdkContainer: updateToAddress, addressToHex");
-                }
-                return param;
-            });
-        }) : this.state.transfer.transferParams.contractCalls;
-        if (contractCalls) {
-            let partial: Partial<HistoryEvent>;
-            if (this.state.transfer.eventType === EventType.LockAndMint) {
-                partial = { eventType: this.state.transfer.eventType, transferParams: { ...this.state.transfer.transferParams, contractCalls } as unknown as LockAndMintEvent["transferParams"] };
-            } else {
-                partial = { eventType: this.state.transfer.eventType, transferParams: { ...this.state.transfer.transferParams, contractCalls } as unknown as BurnAndReleaseEvent["transferParams"] };
-            }
-            await this.updateTransfer(partial);
-        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -642,23 +607,4 @@ export class SDKContainer extends Container<typeof initialState> {
 
         return;
     }
-
-    // private readonly getReceipt = async (web3: Web3, transactionHash: string) => {
-    //     // Wait for confirmation
-    //     let receipt;
-    //     while (!receipt || !receipt.blockHash) {
-    //         receipt = await web3.eth.getTransactionReceipt(transactionHash);
-    //         if (receipt && receipt.blockHash) {
-    //             break;
-    //         }
-    //         await sleep(3 * 1000);
-    //     }
-
-    //     // Status might be undefined - so check against `false` explicitly.
-    //     if (receipt.status === false) {
-    //         throw new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`);
-    //     }
-
-    //     return receipt;
-    // }
 }

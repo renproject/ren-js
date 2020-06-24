@@ -2,15 +2,15 @@ import * as React from "react";
 
 import { Asset } from "@renproject/interfaces";
 
-import { ReactComponent as Brave } from "../../images/brave.svg";
-import { ReactComponent as Coinbase } from "../../images/coinbase.svg";
-import { ReactComponent as Imtoken } from "../../images/imtoken.svg";
-import { ReactComponent as Metamask } from "../../images/metamask.svg";
-import { ReactComponent as Status } from "../../images/status.svg";
-import { ReactComponent as Trust } from "../../images/trust.svg";
+import { ReactComponent as Brave } from "../../scss/images/wallets/brave.svg";
+import { ReactComponent as Coinbase } from "../../scss/images/wallets/coinbase.svg";
+import { ReactComponent as Imtoken } from "../../scss/images/wallets/imtoken.svg";
+import { ReactComponent as Metamask } from "../../scss/images/wallets/metamask.svg";
+import { ReactComponent as Status } from "../../scss/images/wallets/status.svg";
+import { ReactComponent as Trust } from "../../scss/images/wallets/trust.svg";
 import { Container, ContainerBody } from "./Container";
 import { ExternalLink } from "./ExternalLink";
-import { Mini } from "./transfer-steps/Mini";
+import { Mini } from "./Mini";
 
 export const LogIn = ({ token, paused, wrongNetwork, correctNetwork }: { token: Asset, paused: boolean, wrongNetwork: number | undefined, correctNetwork: string }) => {
     if (paused) {

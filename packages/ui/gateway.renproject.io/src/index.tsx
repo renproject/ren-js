@@ -4,15 +4,15 @@ import * as ReactDOM from "react-dom";
 import { ThemeProvider } from "styled-components";
 import { Provider } from "unstated";
 
-import { App } from "./components/controllers/App";
-import { initializeSentry } from "./lib/sentry";
+import { AppRouter } from "./components/controllers/AppRouter";
+import { initializeErrorLogging } from "./lib/errorLogging";
 // Import css first so that styles are consistent across dev and build
 import "./scss/index.scss";
 import { theme } from "./scss/theme";
 import { SDKContainer } from "./state/sdkContainer";
 import { UIContainer } from "./state/uiContainer";
 
-initializeSentry();
+initializeErrorLogging();
 
 const uiContainer = new UIContainer();
 const sdkContainer = new SDKContainer(uiContainer);
@@ -21,7 +21,7 @@ ReactDOM.render(
     <div className="_ren">
         <Provider inject={[uiContainer, sdkContainer]}>
             <ThemeProvider theme={theme}>
-                <App />
+                <AppRouter />
             </ThemeProvider>
         </Provider>
     </div>,

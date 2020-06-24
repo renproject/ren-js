@@ -3,9 +3,9 @@ import * as React from "react";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import infoIcon from "../../images/icons/info.svg";
-import { classNames } from "../../lib/utils";
+import { classNames } from "../../lib/className";
 import { pulseAnimation } from "../../scss/animations";
+import infoIcon from "../../scss/images/info.svg";
 import { Tooltip } from "../views/tooltip/Tooltip";
 
 export const ProgressPulse = styled.div`
@@ -15,8 +15,6 @@ export const ProgressPulse = styled.div`
             display: block;
             animation: ${p => pulseAnimation("6px", p.theme.primaryColor)};
         `;
-
-
 
 export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: { name?: React.ReactChild, label?: string | number, target: number, progress: number, pulse?: boolean, tooltip?: string }) =>
     <div className={classNames(`ren-progress-bar--item`, progress >= target ? "ren-progress-bar--item--done" : "", Math.floor(progress + 1) === target ? "ren-progress-bar--item--current" : "")}>
@@ -38,8 +36,6 @@ const width = (progress: number, itemsLength: number) => {
     // const px = -8 - 16 * (Math.min(progress - 1, 0));
 
     return `calc(${Math.min(progress, itemsLength - 1)} * calc(calc(100% - 16px) / ${itemsLength - 1}))`;
-
-    // return { percent, px };
 };
 
 interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {

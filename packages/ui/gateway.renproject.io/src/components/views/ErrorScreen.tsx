@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { ReactComponent as AlertIcon } from "../../../images/alert.svg";
+import { ReactComponent as AlertIcon } from "../../scss/images/alert.svg";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerDetails, ContainerHeader,
-} from "../Container";
+} from "./Container";
 
 interface Props {
     errorTitle: React.ReactNode;

@@ -7,14 +7,14 @@ import { RouteComponentProps, withRouter } from "react-router-dom";
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { acknowledgeMessage, addMessageListener, postMessageToClient } from "../../lib/postMessage";
+import { getStorage } from "../../lib/storage";
 import { extractQuery } from "../../lib/utils";
 import { connect, ConnectedProps } from "../../state/connect";
 import { UIContainer } from "../../state/uiContainer";
-import { getStorage } from "./Storage";
 
 /**
- * App is the main visual component responsible for displaying different routes
- * and running background app loops
+ * GetTransfers doesn't render any components. It listens for a
+ * `GatewayMessageType.GetTransfers` message and returns the transfers stored.
  */
 export const GetTransfers = withRouter(connect<RouteComponentProps & ConnectedProps<[UIContainer]>>([UIContainer])(
     ({ containers: [uiContainer], location }) => {

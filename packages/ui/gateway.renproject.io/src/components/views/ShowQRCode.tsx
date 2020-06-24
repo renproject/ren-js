@@ -4,7 +4,7 @@ import QRCode from "qrcode.react";
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 
-import { ReactComponent as CogIcon } from "../../../images/icons/cog.svg";
+import { ReactComponent as CogIcon } from "../../scss/images/cog.svg";
 
 const QRCodeContainer = styled.div`
     background: #FFFFFF;

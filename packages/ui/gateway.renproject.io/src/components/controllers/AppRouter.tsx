@@ -7,7 +7,7 @@ import { Main } from "./Main";
 
 const NotFound = () => <div>404 Not Found</div>;
 
-export const App = () => {
+export const AppRouter = () => {
     return (
         <Router basename={process.env.PUBLIC_URL}>
             <Switch>

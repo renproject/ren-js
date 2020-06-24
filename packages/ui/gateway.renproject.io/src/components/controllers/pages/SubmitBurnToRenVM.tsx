@@ -5,12 +5,12 @@ import { Loading } from "@renproject/react-components";
 import { lighten } from "polished";
 import styled from "styled-components";
 
-import { ReactComponent as BurnIcon } from "../../../images/icons/burn.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
+import { ReactComponent as BurnIcon } from "../../../scss/images/burn.svg";
 import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
-} from "../Container";
-import { Mini } from "./Mini";
+} from "../../views/Container";
+import { Mini } from "../../views/Mini";
 
 const renderTxStatus = (status: TxStatus | null) => {
     switch (status) {

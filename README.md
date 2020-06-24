@@ -11,9 +11,9 @@ There's two official Javascript SDKs for interacting with [RenVM](https://renpro
 
 See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using GatewayJS and RenJS.
 
-## Changelog
+### Changelog
 
-See the [Releases Page](https://github.com/renproject/ren-js/releases).
+See the [Releases page](https://github.com/renproject/ren-js/releases).
 
 ## Local development
 
@@ -21,7 +21,7 @@ See the [Releases Page](https://github.com/renproject/ren-js/releases).
 
 <summary>Click to see local development instructions</summary>
 
-Setup:
+Build RenJS and GatewayJS:
 
 ```sh
 git clone git@github.com:renproject/ren-js.git && cd ren-js
@@ -29,16 +29,16 @@ yarn && yarn run link
 yarn build
 ```
 
-Testing:
-
+Start gateway.renproject.io
 ```sh
 cd packages/ui/gateway.renproject.io
 PORT=3344 REACT_APP_NETWORK="testnet" yarn start
 ```
 
+Start demo page
 ```sh
 cd packages/ui/gateway-example
-yarn start
+PORT=3000 yarn start
 ```
 
 Go to <http://localhost:3000/?network=testnet&endpoint=http://localhost:3344>.

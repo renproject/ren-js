@@ -1,6 +1,6 @@
 # `🛠️ ren-js` and `gateway-js`
 
-[![Version](https://img.shields.io/npm/v/@renproject/ren)](https://www.npmjs.com/package/@renproject/ren) [![CircleCI](https://img.shields.io/circleci/build/gh/renproject/ren-js)](https://circleci.com/gh/renproject/ren-js)
+[![Version](https://img.shields.io/npm/v/@renproject/ren)](https://www.npmjs.com/package/@renproject/ren)
 
 There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
 

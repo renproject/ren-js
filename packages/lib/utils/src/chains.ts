@@ -6,25 +6,21 @@ import {
 } from "@renproject/chains";
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Chain, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOWithChain,
+    Chain, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOIndex, UTXOWithChain,
 } from "@renproject/interfaces";
 import { ripemd160, sha256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 
-import { Ox } from "./common";
+import { Ox, SECONDS, sleep } from "./common";
 import { parseRenContract } from "./renVMUtils";
 
-// const hexOrBase64ToBuffer = (value: string | Buffer): Buffer =>
-//     typeof value === "string" ?
-//         value.slice(0, 2) === "0x" ?
-//             Buffer.from(strip0x(value), "hex") :
-//             Buffer.from(value, "base64") :
-//         Buffer.from(value);
-
+/**
+ * Hash160, used for bitcoin public keys.
+ */
 export const hash160 = (publicKey: Buffer): Buffer =>
     ripemd160(
-        sha256(
-            publicKey),
+        sha256(publicKey),
+        // Don't pad
         false);
 
 /**
@@ -134,4 +130,91 @@ export const Tokens: {
         ...CommonTokens.BCH,
         ...bchUtils
     },
+};
+
+export const waitForConfirmations = async (network: RenNetworkDetails, sendToken: RenContract, specifiedDeposit: UTXOIndex, confirmations: number, _recipient: string, onDeposit: (deposit: UTXOWithChain) => void): Promise<UTXOIndex> => {
+
+    /**
+     * Blocknative currently doesn't support `txSpeedUp` for btc, zec or bch
+     * transactions.
+     */
+
+    // let blocknative;
+    // try {
+    //     // Initialize Blocknative SDK.
+    //     blocknative = new BlocknativeSdk({
+    //         dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
+    //         system: "bitcoin",
+    //         networkId: network.isTestnet ? 2 : 1,
+    //     });
+
+    //     const { emitter } = blocknative.transaction(specifiedDeposit.txHash);
+
+    //     emitter.on("txSpeedUp", state => {
+    //         // Find outputs with the same recipient.
+    //         let newOut = (state as unknown as { outputs: Array<{ address: string, value: string }> }).outputs.map((x, i) => ({ ...x, i })).filter(out => out.address === recipient);
+    //         // If there are multiple, see if one of them has the same original vOut.
+    //         if (newOut.length && newOut.filter(out => out.i === specifiedDeposit.vOut).length) {
+    //             newOut = newOut.filter(out => out.i === specifiedDeposit.vOut);
+    //         }
+    //         if (state.txid && newOut.length) {
+    //             // Update transaction details.
+    //             specifiedDeposit = {
+    //                 txHash: state.txid,
+    //                 vOut: newOut[0].i,
+    //             };
+    //         }
+    //     });
+    // } catch (error) {
+    //     // Ignore blocknative error.
+    // }
+
+    let previousUtxoConfirmations = -1;
+    let errorCount = 0;
+    const errorCountLimit = 10;
+    // tslint:disable-next-line: no-constant-condition
+    while (true) {
+        try {
+            const utxoConfirmations = await retrieveConfirmations(network, {
+                chain: parseRenContract(sendToken).from,
+                hash: specifiedDeposit.txHash
+            });
+            if (utxoConfirmations > previousUtxoConfirmations) {
+                previousUtxoConfirmations = utxoConfirmations;
+                const utxo = {
+                    chain: parseRenContract(sendToken).from as Chain.Bitcoin | Chain.BitcoinCash | Chain.Zcash,
+                    utxo: {
+                        txHash: specifiedDeposit.txHash,
+                        amount: 0, // TODO: Get value
+                        vOut: specifiedDeposit.vOut,
+                        confirmations: utxoConfirmations,
+                    }
+                };
+                onDeposit(utxo);
+            }
+            if (utxoConfirmations >= confirmations) {
+                break;
+            }
+        } catch (error) {
+            if (errorCount < errorCountLimit) {
+                console.error(error);
+                errorCount += 1;
+            } else {
+                throw error;
+            }
+        }
+        await sleep(10 * SECONDS);
+    }
+
+    // try {
+    //     // Destroy blocknative SDK.
+    //     if (blocknative) {
+    //         blocknative.unsubscribe(specifiedDeposit.txHash);
+    //         blocknative.destroy();
+    //     }
+    // } catch (error) {
+    //     // Ignore blocknative error.
+    // }
+
+    return specifiedDeposit;
 };

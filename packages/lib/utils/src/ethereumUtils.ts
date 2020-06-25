@@ -49,6 +49,7 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonc
     try {
         // Destroy blocknative SDK.
         if (blocknative) {
+            blocknative.unsubscribe(transactionHash);
             blocknative.destroy();
         }
     } catch (error) {

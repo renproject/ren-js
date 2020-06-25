@@ -64,5 +64,8 @@
         "not dead",
         "not ie <= 11",
         "not op_mini all"
-    ]
+    ],
+    "devDependencies": {
+        "tslint": "^6.1.2"
+    }
 }

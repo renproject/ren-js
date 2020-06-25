@@ -1,14 +1,14 @@
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Chain, LockAndMintParams, Logger, TxStatus, UnmarshalledMintTx, UTXOIndex, UTXOWithChain,
+    LockAndMintParams, Logger, TxStatus, UnmarshalledMintTx, UTXOIndex, UTXOWithChain,
 } from "@renproject/interfaces";
 import { RenVMProvider, ResponseQueryMintTx, unmarshalMintTx } from "@renproject/rpc";
 import {
     extractError, findTransactionBySigHash, fixSignature, forwardWeb3Events, generateAddress,
     generateGHash, generateMintTxHash, ignorePromiEventError, manualPromiEvent, newPromiEvent, Ox,
-    parseRenContract, payloadToABI, payloadToMintABI, processLockAndMintParams, PromiEvent,
-    randomNonce, RenWeb3Events, resolveInToken, retrieveConfirmations, retrieveDeposits, SECONDS,
-    signatureToString, sleep, strip0x, toBase64, txHashToBase64, Web3Events, withDefaultAccount,
+    payloadToABI, payloadToMintABI, processLockAndMintParams, PromiEvent, randomNonce,
+    RenWeb3Events, resolveInToken, retrieveDeposits, SECONDS, signatureToString, sleep, strip0x,
+    toBase64, txHashToBase64, waitForConfirmations, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -101,35 +101,14 @@ export class LockAndMint {
                 return this;
             }
 
-            const specifiedDeposit = specifyDeposit || this.params.deposit;
+            let specifiedDeposit = specifyDeposit || this.params.deposit;
 
             if (specifiedDeposit) {
-                let previousUtxoConfirmations = -1;
-                // tslint:disable-next-line: no-constant-condition
-                while (true) {
-                    const utxoConfirmations = await retrieveConfirmations(this.network, {
-                        chain: parseRenContract(resolveInToken(this.params.sendToken)).from,
-                        hash: specifiedDeposit.txHash
-                    });
-                    if (utxoConfirmations > previousUtxoConfirmations) {
-                        previousUtxoConfirmations = utxoConfirmations;
-                        const utxo = {
-                            chain: parseRenContract(resolveInToken(this.params.sendToken)).from as Chain.Bitcoin | Chain.BitcoinCash | Chain.Zcash,
-                            utxo: {
-                                txHash: specifiedDeposit.txHash,
-                                amount: 0, // TODO: Get value
-                                vOut: specifiedDeposit.vOut,
-                                confirmations: utxoConfirmations,
-                            }
-                        };
-                        promiEvent.emit("deposit", utxo);
-                        this.logger.debug("Deposit found", utxo);
-                    }
-                    if (utxoConfirmations >= confirmations) {
-                        break;
-                    }
-                    await sleep(10 * SECONDS);
-                }
+                const onDeposit = (utxo: UTXOWithChain) => {
+                    promiEvent.emit("deposit", utxo);
+                    this.logger.debug("Deposit found", utxo);
+                };
+                specifiedDeposit = await waitForConfirmations(this.network, resolveInToken(this.params.sendToken), specifiedDeposit, confirmations, await this.gatewayAddress(), onDeposit);
                 this.utxo = specifiedDeposit;
                 this.logger.debug("Deposit provided to .wait", this.utxo);
                 return this;
@@ -145,27 +124,7 @@ export class LockAndMint {
                 throw new Error(`Must provide token to be transferred.`);
             }
 
-            // try {
-            //     // Check if the darknodes have already seen the transaction
-            //     const queryTxResponse = await this.queryTx();
-            //     if (
-            //         queryTxResponse.txStatus === TxStatus.TxStatusDone ||
-            //         queryTxResponse.txStatus === TxStatus.TxStatusExecuting ||
-            //         queryTxResponse.txStatus === TxStatus.TxStatusPending
-            //     ) {
-            //         // Mint has already been submitted to RenVM - no need to
-            //         // wait for deposit.
-            //         return this;
-            //     }
-            // } catch (error) {
-            //     this.logger.error(error);
-            //     // Ignore error
-            // }
-
             let deposits: OrderedMap<string, UTXOWithChain> = OrderedMap();
-            // const depositedAmount = (): number => {
-            //     return deposits.map(item => item.utxo.value).reduce((prev, next) => prev + next, 0);
-            // };
 
             // tslint:disable-next-line: no-constant-condition
             while (true) {
@@ -360,37 +319,6 @@ export class LockAndMint {
             );
 
             const response = unmarshalMintTx(rawResponse);
-
-            // const utxoTxHash = Ox(Buffer.from(txHash, "base64"));
-            // const onStatus = (status: TxStatus) => { promiEvent.emit("status", status); };
-            // const _cancelRequested = () => promiEvent._isCancelled();
-
-            // let result: UnmarshalledMintTx | undefined;
-            // let rawResponse;
-            // // tslint:disable-next-line: no-constant-condition
-            // while (true) {
-            //     if (_cancelRequested && _cancelRequested()) {
-            //         throw new Error(`waitForTX cancelled`);
-            //     }
-
-            //     try {
-            //         result = unmarshalMintTx(await this.renVMNetwork.queryTX<ResponseQueryMintTx>(utxoTxHash));
-            //         if (result && result.txStatus === TxStatus.TxStatusDone) {
-            //             rawResponse = result;
-            //             break;
-            //         } else if (onStatus && result && result.txStatus) {
-            //             onStatus(result.txStatus);
-            //         }
-            //     } catch (error) {
-            //         if (String((error || {}).message).match(/(not found)|(not available)/)) {
-            //             // ignore
-            //         } else {
-            //             this.logger.error(extractError(error));
-            //             // TODO: throw unexpected errors
-            //         }
-            //     }
-            //     await sleep(5 * SECONDS);
-            // }
 
             this.renVMResponse = response;
             this.signature = signatureToString(fixSignature(this.renVMResponse, this.network, this.logger));

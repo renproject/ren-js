@@ -38,9 +38,9 @@ export const txUrl = (tx: Tx | null, network: RenNetworkDetails): string => {
     const isAddress = tx.address && id === tx.address;
     switch (tx.chain) {
         case RenJS.Chains.Bitcoin:
-            return `https://chain.so/${isAddress ? "address" : "tx"}/BTC${network.isTestnet ? "TEST" : ""}/${RenJS.utils.strip0x(id)}`;
+            return `https://sochain.com/${isAddress ? "address" : "tx"}/BTC${network.isTestnet ? "TEST" : ""}/${RenJS.utils.strip0x(id)}`;
         case RenJS.Chains.Zcash:
-            return `https://chain.so/${isAddress ? "address" : "tx"}/ZEC${network.isTestnet ? "TEST" : ""}/${RenJS.utils.strip0x(id)}`;
+            return `https://sochain.com/${isAddress ? "address" : "tx"}/ZEC${network.isTestnet ? "TEST" : ""}/${RenJS.utils.strip0x(id)}`;
         case RenJS.Chains.BitcoinCash:
             return `https://explorer.bitcoin.com/${network.isTestnet ? "t" : ""}bch/${isAddress ? "address" : "tx"}/${RenJS.utils.strip0x(id)}`;
     }

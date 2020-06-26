@@ -168,7 +168,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
                     // TODO: throw unepected errors
                 }
             }
-            await sleep(5 * SECONDS);
+            await sleep(15 * SECONDS);
         }
         return rawResponse;
     }

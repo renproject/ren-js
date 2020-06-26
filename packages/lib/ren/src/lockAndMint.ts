@@ -80,14 +80,14 @@ export class LockAndMint {
         // Last contract call
         const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
-        // TODO: Validate inputs
+        // TODO: Validate inputs.
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
         const mpkh = await this.renVM.selectPublicKey(resolveInToken(this.params.sendToken), this.logger);
-        this.logger.debug(`Using mpkh ${mpkh.toString("hex")}`);
+        this.logger.debug("MPKH", mpkh.toString("hex"));
 
         const gatewayAddress = generateAddress(resolveInToken(renContract), gHash, mpkh, this.network.isTestnet);
         this.generatedGatewayAddress = gatewayAddress;
-        this.logger.debug(`Gateway address generated: ${this.generatedGatewayAddress}`);
+        this.logger.debug("Gateway Address", this.generatedGatewayAddress);
 
         return this.generatedGatewayAddress;
     }
@@ -106,11 +106,10 @@ export class LockAndMint {
             if (specifiedDeposit) {
                 const onDeposit = (utxo: UTXOWithChain) => {
                     promiEvent.emit("deposit", utxo);
-                    this.logger.debug("Deposit found", utxo);
+                    this.logger.debug("New Deposit", utxo);
                 };
                 specifiedDeposit = await waitForConfirmations(this.network, resolveInToken(this.params.sendToken), specifiedDeposit, confirmations, await this.gatewayAddress(), onDeposit);
                 this.utxo = specifiedDeposit;
-                this.logger.debug("Deposit provided to .wait", this.utxo);
                 return this;
             }
 
@@ -142,7 +141,7 @@ export class LockAndMint {
 
                     if (greatestTx && new BigNumber(greatestTx.utxo.amount).gte(minimum) && new BigNumber(greatestTx.utxo.amount).lte(maximum)) {
                         this.utxo = greatestTx.utxo;
-                        this.logger.debug("Deposit selected", this.utxo);
+                        this.logger.debug("Selected Deposit", this.utxo);
                         break;
                     }
                 }
@@ -155,7 +154,7 @@ export class LockAndMint {
                         // tslint:disable-next-line: no-non-null-assertion
                         if (!deposits.has(deposit.utxo.txHash) || deposits.get(deposit.utxo.txHash)!.utxo.confirmations !== deposit.utxo.confirmations) {
                             promiEvent.emit("deposit", deposit);
-                            this.logger.debug("Deposit found", deposit);
+                            this.logger.debug("New Deposit", deposit);
                             newDeposit = true;
                         }
                         deposits = deposits.set(deposit.utxo.txHash, deposit);
@@ -166,7 +165,7 @@ export class LockAndMint {
                     await sleep(1 * SECONDS);
                     continue;
                 }
-                await sleep(10 * SECONDS);
+                await sleep(15 * SECONDS);
             }
             return this;
         })().then(promiEvent.resolve).catch(promiEvent.reject);
@@ -179,7 +178,6 @@ export class LockAndMint {
 
         const txHash = this.params.txHash;
         if (txHash) {
-            if (this.logger) this.logger.debug(`Using txHash from parameters: ${txHash}`);
             return txHashToBase64(txHash);
         }
 
@@ -207,7 +205,7 @@ export class LockAndMint {
 
         const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
         const encodedGHash = toBase64(gHash);
-        if (this.logger) this.logger.debug(`Providing parameters to txHash: ${resolveInToken(renContract)}, ${encodedGHash}, ${utxo}`);
+        if (this.logger) this.logger.debug("txHash Parameters", resolveInToken(renContract), encodedGHash, utxo);
         return generateMintTxHash(resolveInToken(renContract), encodedGHash, utxo, this.logger);
     }
 
@@ -304,7 +302,7 @@ export class LockAndMint {
                 }
 
                 promiEvent.emit("txHash", txHash);
-                this.logger.debug(`txHash: ${txHash}`);
+                this.logger.debug("RenVM txHash", txHash);
             } else if (!txHash) {
                 throw new Error(`Must call 'wait' or provide UTXO or RenVM transaction hash.`);
             }
@@ -313,7 +311,7 @@ export class LockAndMint {
                 Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
-                    this.logger.debug(`Transaction status: ${status}`);
+                    this.logger.debug("Transaction Status", status);
                 },
                 () => promiEvent._isCancelled(),
             );
@@ -323,7 +321,7 @@ export class LockAndMint {
             this.renVMResponse = response;
             this.signature = signatureToString(fixSignature(this.renVMResponse, this.network, this.logger));
 
-            this.logger.debug(`Signature: ${this.signature}`);
+            this.logger.debug("Signature", this.signature);
 
             return this;
 
@@ -375,7 +373,7 @@ export class LockAndMint {
 
             const existingTransaction = await this.findTransaction(web3Provider);
             if (existingTransaction) {
-                this.logger.debug(`Signature already submitted in Ethereum transaction ${existingTransaction}`);
+                this.logger.debug("Signature found in Ethereum transaction", existingTransaction);
                 return await manualPromiEvent(web3, existingTransaction, promiEvent);
             }
 
@@ -389,7 +387,7 @@ export class LockAndMint {
 
                 const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
-                const params = last ? [
+                const callParams = last ? [
                     ...(contractParams || []).map(value => value.value),
                     Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
                     Ox(this.renVMResponse.autogen.nhash),
@@ -411,10 +409,10 @@ export class LockAndMint {
                     ...txConfig,
                 });
 
-                this.logger.debug(`Calling "${contractFn}" on Ethereum contract ${sendTo}`, ...params, config);
+                this.logger.debug("Calling Ethereum contract", contractFn, sendTo, ...callParams, config);
 
                 tx = contract.methods[contractFn](
-                    ...params,
+                    ...callParams,
                 ).send(config);
 
                 if (last) {
@@ -430,7 +428,7 @@ export class LockAndMint {
                         reject(error);
                     })
                 );
-                this.logger.debug(`Sent Ethereum transaction ${ethereumTxHash}`);
+                this.logger.debug("Ethereum txHash", ethereumTxHash);
             }
 
             if (tx === undefined) {
@@ -450,7 +448,7 @@ export class LockAndMint {
         // TODO: Look into why .catch isn't being called on tx
         promiEvent.on("error", (error) => {
             try { if (ignorePromiEventError(error)) { this.logger.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
-            this.logger.debug(`Forwarding promiEvent error from .on("error") to .catch`, error);
+            this.logger.debug("promiEvent.on('error') forwarded", error);
             promiEvent.reject(error);
         });
 
@@ -507,7 +505,7 @@ export class LockAndMint {
                 ...txConfig,
             };
 
-            this.logger.debug(`Created raw transaction calling "${contractFn}" on ${sendTo}`, rawTransaction);
+            this.logger.debug("Raw transaction created", contractFn, sendTo, rawTransaction);
 
             return rawTransaction;
         });

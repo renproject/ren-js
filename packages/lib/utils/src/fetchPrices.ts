@@ -3,6 +3,8 @@ import Axios from "axios";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 
+import { SECONDS } from "./common";
+
 const tokenDecimals = (token: string): number => {
     switch (token) {
         case "BTC":
@@ -47,14 +49,16 @@ const coinGeckoID = (token: string): string => {
 const coinGeckoParams = `localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
 const getCoinGeckoPrice: PriceFeed = (token: string) =>
     Axios
-        .get<{ market_data: { current_price: { usd: number } } }>(`${coinGeckoURL}/coins/${coinGeckoID(token)}?${coinGeckoParams}`)
+        // Fetch API endpoint with 5 second timeout.
+        .get<{ market_data: { current_price: { usd: number } } }>(`${coinGeckoURL}/coins/${coinGeckoID(token)}?${coinGeckoParams}`, { timeout: 5 * SECONDS })
         .then(response => response.data.market_data.current_price.usd || 0);
 
 // Coinbase price feed
 const coinbaseURL = (token: string) => `https://api.coinbase.com/v2/prices/${token.toUpperCase()}-USD/buy`;
 const getCoinbasePrice: PriceFeed = (token: string) =>
     Axios
-        .get<{ "data": { "base": string, "currency": "USD", "amount": string } }>(coinbaseURL(token))
+        // Fetch API endpoint with 5 second timeout.
+        .get<{ "data": { "base": string, "currency": "USD", "amount": string } }>(coinbaseURL(token), { timeout: 5 * SECONDS })
         .then(response => parseInt(response.data.data.amount, 10) || 0);
 
 

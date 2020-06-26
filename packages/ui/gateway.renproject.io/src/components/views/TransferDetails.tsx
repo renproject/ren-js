@@ -3,8 +3,8 @@ import * as React from "react";
 import { Asset, BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
 import { parseRenContract } from "@renproject/utils";
 
-import { getURL } from "../../lib/storage";
 import infoIcon from "../../scss/images/info.svg";
+import { getURL } from "../../state/transferContainer";
 import { Tooltip } from "../views/tooltip/Tooltip";
 
 export const TransferDetails: React.StatelessComponent<{

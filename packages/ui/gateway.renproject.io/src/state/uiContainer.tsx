@@ -1,34 +1,57 @@
 import { UTXOWithChain } from "@renproject/interfaces";
 import { OrderedMap } from "immutable";
-import { Container } from "unstated";
+import { useState } from "react";
+import { createContainer } from "unstated-next";
 
-const initialState = {
-    renNetwork: undefined as string | undefined,
-    wrongNetwork: undefined as number | undefined,
-    expectedNetwork: undefined as string | undefined,
+export const useUIContainer = () => {
+    const [submitting, setSubmitting] = useState(false);
+    const [renNetwork, setRenNetwork] = useState(undefined as string | undefined);
+    const [wrongNetwork, setWrongNetwork] = useState(undefined as number | undefined);
+    const [expectedNetwork, setExpectedNetwork] = useState(undefined as string | undefined);
 
-    showingSettings: false,
-    paused: false,
+    const [showingSettings, setShowingSettings] = useState(false);
+    const [paused, setPaused] = useState(false);
 
-    gatewayPopupID: null as string | null,
-    utxos: OrderedMap<string, UTXOWithChain>(),
-};
-
-export class UIContainer extends Container<typeof initialState> {
-    public state = initialState;
+    const [gatewayPopupID, setGatewayPopupID] = useState(null as string | null);
+    const [utxos, setUtxos] = useState(OrderedMap<string, UTXOWithChain>());
 
     // Transfer details
-    public handleTransfer = async (gatewayPopupID: string | null) => this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
-    public resetTransfer = async () => this.setState(state => ({ ...state, gatewayPopupID: null, submitting: false }));
-    public setSubmitting = async (submitting: boolean) => this.setState(state => ({ ...state, submitting }));
+    const handleTransfer = async (nextGatewayPopupID: string | null) => {
+        setGatewayPopupID(nextGatewayPopupID);
+        setSubmitting(false);
+    };
+    const resetTransfer = async () => {
+        setGatewayPopupID(null);
+        setSubmitting(false);
+    };
 
     // Settings
-    public hideSettings = async () => this.setState(state => ({ ...state, showingSettings: false }));
-    public toggleSettings = async () => this.setState(state => ({ ...state, showingSettings: !state.showingSettings }));
-
-    public deposit = async (deposit: UTXOWithChain) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txHash, deposit) }));
+    const hideSettings = async () => { setShowingSettings(false); };
+    const toggleSettings = async () => { setShowingSettings(state => !state); };
+    const deposit = async (newDeposit: UTXOWithChain) => { setUtxos(state => state.set(newDeposit.utxo.txHash, newDeposit)); };
 
     // Pause state
-    public pause = async () => this.setState(state => ({ ...state, paused: true }));
-    public resume = async () => this.setState(state => ({ ...state, paused: false }));
-}
+    const pause = async () => { setPaused(true); };
+    const resume = async () => { setPaused(false); };
+
+    return {
+        submitting, setSubmitting,
+        renNetwork, setRenNetwork,
+        wrongNetwork, setWrongNetwork,
+        expectedNetwork, setExpectedNetwork,
+        showingSettings,
+        paused,
+        gatewayPopupID,
+        utxos,
+
+        handleTransfer,
+        resetTransfer,
+        hideSettings,
+        toggleSettings,
+        deposit,
+        pause,
+        resume,
+    };
+};
+
+export const UIContainer = createContainer(useUIContainer);

@@ -8,7 +8,7 @@ import { keccak256 } from "ethereumjs-util";
 import Web3 from "web3";
 import { sha3 } from "web3-utils";
 
-import { NULL, Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
+import { Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
 
 // export const generateNHash = (tx: Tx): string => {
@@ -34,7 +34,7 @@ export const generatePHash = (zip: EthArgs, logger?: Logger): string => {
     const message = rawEncode(types, values);
     const digest = Ox(keccak256(message));
 
-    if (logger) logger.debug(`pHash: ${digest}: keccak256(${message.toString("hex")})`);
+    if (logger) logger.debug("pHash", digest, message.toString("hex"));
 
     return digest; // sha3 can accept a Buffer
 };
@@ -102,7 +102,7 @@ export const generateGHash = (payload: EthArgs, /* amount: number | string, */ t
 
     const digest = Ox(keccak256(encoded));
 
-    if (logger) logger.debug(`gHash: ${digest}: keccak256(${encoded.toString("hex")})`);
+    if (logger) logger.debug("gHash", digest, encoded.toString("hex"));
 
     return digest;
 };
@@ -117,7 +117,7 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
 
     const digest = Ox(keccak256(encoded));
 
-    if (logger) logger.debug(`sigHash: ${digest}: keccak256(${encoded.toString("hex")})`);
+    if (logger) logger.debug("sigHash", digest, encoded.toString("hex"));
 
     return digest;
 };
@@ -137,14 +137,14 @@ export const txHashToBase64 = (txHash: Buffer | string) => {
 export const generateMintTxHash = (renContract: RenContract, encodedID: string, utxo: UTXOIndex, logger?: Logger) => {
     const message = `txHash_${renContract}_${encodedID}_${toBase64(utxo.txHash)}_${utxo.vOut}`;
     const digest = txHashToBase64(keccak256(Buffer.from(message)));
-    if (logger) logger.debug(`Mint txHash: ${digest}: keccak256(${message})`);
+    if (logger) logger.debug("Mint txHash", digest, message);
     return digest;
 };
 
 export const generateBurnTxHash = (renContract: RenContract, encodedID: string, logger?: Logger) => {
     const message = `txHash_${renContract}_${encodedID}`;
     const digest = txHashToBase64(keccak256(Buffer.from(message)));
-    if (logger) logger.debug(`[RenJS] Burn txHash: ${digest}: keccak256(${message})`);
+    if (logger) logger.debug("Burn txHash", digest, message);
     return digest;
 };
 

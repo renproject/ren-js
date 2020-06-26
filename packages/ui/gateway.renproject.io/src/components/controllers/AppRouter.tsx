@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
 
-import { GetTransfers } from "./GetTransfers";
+import { MessageContainer } from "../../state/messageContainer";
 import { Main } from "./Main";
 
 const NotFound = () => <div>404 Not Found</div>;
@@ -10,11 +10,13 @@ const NotFound = () => <div>404 Not Found</div>;
 export const AppRouter = () => {
     return (
         <Router basename={process.env.PUBLIC_URL}>
-            <Switch>
-                <Route path="/" exact component={Main} />
-                <Route path="/get-transfers" exact component={GetTransfers} />
-                <Route component={NotFound} />
-            </Switch>
+            <MessageContainer.Provider>
+                <Switch>
+                    <Route path="/" exact component={Main} />
+                    <Route path="/get-transfers" exact /> {/* Don't render any visual components. */}
+                    <Route component={NotFound} />
+                </Switch>
+            </MessageContainer.Provider>
         </Router>
     );
 };

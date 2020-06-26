@@ -39,7 +39,10 @@ export class ErrorBoundary extends React.Component<Props, typeof defaultState> {
             // Error path
             return (
                 <div {...divProps} className={classNames(className, fullPage ? "gateway-container" : "")}>
-                    <h2>{manualError ? manualError : <>Something went wrong.</>}</h2>
+                    <h2>{manualError ?
+                        // tslint:disable-next-line: strict-type-predicates
+                        mini && typeof manualError === "string" ? <>{manualError.slice(0, 14)}...</> :
+                            manualError : <>Something went wrong.</>}</h2>
                     {!mini ? <>
                         {error || errorInfo ? <details style={{ whiteSpace: "pre-wrap" }}>
                             {error && error.toString()}

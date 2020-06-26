@@ -1,4 +1,4 @@
-import { extractError, retryNTimes } from "@renproject/utils";
+import { extractError, retryNTimes, SECONDS } from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
 
 import { JSONRPCResponse, Provider } from "./jsonRPC";
@@ -42,7 +42,10 @@ export class HttpProvider<Requests extends { [event: string]: any } = {}, Respon
                 () => axios.post<JSONRPCResponse<Responses[Method]>>(
                     this.nodeURL,
                     generatePayload(method, request),
-                    { timeout: 120000 }),
+                    // Use a 120 second timeout. This could be reduced, but
+                    // should be done based on the method, since some requests
+                    // may take a long time, especially on a slow connection.
+                    { timeout: 120 * SECONDS }),
                 retry,
             );
             if (response.status !== 200) {

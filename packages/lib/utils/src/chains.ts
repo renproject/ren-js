@@ -203,7 +203,7 @@ export const waitForConfirmations = async (network: RenNetworkDetails, sendToken
                 throw error;
             }
         }
-        await sleep(10 * SECONDS);
+        await sleep(15 * SECONDS);
     }
 
     // try {

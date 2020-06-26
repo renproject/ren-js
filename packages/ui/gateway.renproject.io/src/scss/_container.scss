@@ -47,6 +47,35 @@
         }
     }
 
+    .container--warning {
+        left: 6px;
+        top: ((40px - 16px) / 2);
+
+        background: #E3E3E7;
+        padding: 6px 10px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-top: 0;
+        position: absolute;
+        transition: background-color 5ms;
+
+        svg {
+            height: 18px;
+            width: 18px;
+            margin-left: 5px;
+        }
+
+        >span:not(:first-child) {
+            margin-left: 0;
+            text-transform: uppercase;
+            font-weight: 500;
+            font-size: 10px;
+        }
+    }
+
     .container--buttons {
         display: flex;
 

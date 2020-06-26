@@ -7,12 +7,13 @@ export const Tooltip: React.FC<{
   width?: number;
   direction?: "bottom" | "top";
   align?: "left" | "right";
-}> = ({ contents, width, direction, align, children }) => {
+  className?: string;
+}> = ({ contents, width, direction, align, className, children }) => {
   const child = <TooltipChildStyle width={width} direction={direction} align={align}>
     {contents}
   </TooltipChildStyle>;
 
-  return <TooltipContainerStyle child={child}>
+  return <TooltipContainerStyle className={className} child={child}>
     {child}
     {children}
   </TooltipContainerStyle>;

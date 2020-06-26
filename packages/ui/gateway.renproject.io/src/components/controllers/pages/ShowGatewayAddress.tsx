@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { Asset, LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
 import { Loading, TokenIcon } from "@renproject/react-components";
-import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
 import { toLegacyAddress } from "bchaddrjs";
 import BigNumber from "bignumber.js";
@@ -95,7 +94,6 @@ interface Props {
     transferParams: LockAndMintEvent["transferParams"];
     utxos: OrderedMap<string, UTXOWithChain>;
     confirmations: number;
-    sdkRenVM: RenJS | null;
     waitForDeposit(onDeposit: (utxo: UTXOWithChain) => void): Promise<void>;
     onDeposit(utxo: UTXOWithChain): void;
 }

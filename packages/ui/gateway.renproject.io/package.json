@@ -53,8 +53,7 @@
         "react-dom": "^16.13.1",
         "react-router-dom": "^5.1.2",
         "styled-components": "^5.1.0",
-        "unstated": "^2.1.1",
-        "unstated-persist": "^0.0.4",
+        "unstated-next": "^1.1.0",
         "wallet-address-validator": "^0.2.4",
         "web3": "^2.0.0-alpha.1"
     },

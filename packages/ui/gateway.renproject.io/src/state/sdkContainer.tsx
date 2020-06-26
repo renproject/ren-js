@@ -1,27 +1,23 @@
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Asset, BurnAndReleaseEvent, BurnAndReleaseStatus, Chain, EventType, GatewayMessageType,
-    HistoryEvent, isAsset, LockAndMintEvent, LockAndMintParams, LockAndMintStatus, RenContract,
+    Asset, BurnAndReleaseStatus, Chain, EventType, GatewayMessageType, HistoryEvent, isAsset,
+    LockAndMintEvent, LockAndMintParams, LockAndMintStatus, RenContract,
     SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
 import { parseRenContract, resolveInToken, SECONDS, sleep } from "@renproject/utils";
-import { Container } from "unstated";
+import { useState } from "react";
+import { createContainer } from "unstated-next";
 
+import { deepCompare } from "../lib/deepCompare";
 // tslint:disable-next-line: ordered-imports
 import { _catchBackgroundErr_ } from "../lib/errors";
 import { postMessageToClient } from "../lib/postMessage";
-import { getStorageItem, updateStorageTransfer } from "../lib/storage";
-import { compareTransferStatus, compareTxStatus, maxOrUndefined } from "../lib/utils";
+import { TransferContainer } from "./transferContainer";
 import { UIContainer } from "./uiContainer";
 
 const EthereumTx = (hash: string): Tx => ({ hash, chain: RenJS.Chains.Ethereum });
-
-const initialState = {
-    sdkRenVM: null as null | RenJS,
-    transfer: null as HistoryEvent | null,
-};
 
 export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract | Asset, networkDetails: RenNetworkDetails): number => {
     const asset = isAsset(renContract) ? renContract : parseRenContract(resolveInToken(renContract)).asset;
@@ -70,138 +66,141 @@ export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" 
  * The main two interactions are minting (trading BTC to DAI), and burning
  * (trading DAI to BTC).
  */
-export class SDKContainer extends Container<typeof initialState> {
-    public state = initialState;
-    private readonly uiContainer: UIContainer;
+const useSDKContainer = () => {
 
-    constructor(uiContainer: UIContainer) {
-        super();
-        this.uiContainer = uiContainer;
-    }
+    const transferContainer = TransferContainer.useContainer();
+    const uiContainer = UIContainer.useContainer();
 
-    public connect = async (network: string): Promise<void> => {
-        // public connect = async (web3: Web3, address: string | null, network: string): Promise<void> => {
-        await this.setState({
-            // sdkWeb3: web3,
-            sdkRenVM: new RenJS(network),
-            // sdkAddress: address,
-        });
-    }
+    const [renJS, setRenJS] = useState(null as null | RenJS);
+    const [transfer, setTransfer] = useState(null as HistoryEvent | null);
 
-    public getNumberOfConfirmations = (transfer?: HistoryEvent) => {
-        transfer = transfer || this.state.transfer || undefined;
-        const renVM = this.state.sdkRenVM;
+    const connect = async (network: string): Promise<void> => {
+        setRenJS(new RenJS(network));
+    };
+
+    const getNumberOfConfirmations = () => {
+        const renVM = renJS;
         if (!transfer || !renVM) {
             throw new Error("Transfer not set");
         }
-        // tslint:disable-next-line: strict-type-predicates
-        const confirmations = transfer.eventType === EventType.LockAndMint && transfer.transferParams.confirmations !== null && transfer.transferParams.confirmations !== undefined ?
+        const confirmations = transfer.eventType === EventType.LockAndMint &&
+            // tslint:disable-next-line: strict-type-predicates
+            transfer.transferParams.confirmations !== null &&
+            transfer.transferParams.confirmations !== undefined ?
             transfer.transferParams.confirmations :
             defaultNumberOfConfirmations(transfer.transferParams.sendToken, renVM.network);
         return confirmations;
-    }
+    };
 
-    public getTransferStatus = (transfer?: HistoryEvent) => {
-        transfer = transfer || this.state.transfer || undefined;
+    const getTransferStatus = () => {
         if (!transfer) { throw new Error("Transfer not set"); }
         return { status: transfer.status, details: null };
-    }
+    };
 
-    public returnTransfer = async (transfer?: HistoryEvent) => {
-        if (!this.uiContainer.state.gatewayPopupID) {
-            throw new Error("Can't return without transfer ID");
-        }
-
-        await this.updateTransfer({ returned: true });
-
-        const response = await this.queryTransferStatus();
-
-        await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Done, response);
-    }
-
-    public updateTransfer = async (transferIn: Partial<HistoryEvent>, options?: { sync?: boolean, force?: boolean }) => {
-        const renNetwork = this.uiContainer.state.renNetwork;
+    const updateTransfer = async (transferIn: Partial<HistoryEvent>) => {
+        const renNetwork = uiContainer.renNetwork;
         if (!renNetwork) {
             throw new Error(`Error trying to update transfer in storage without network being defined.`);
         }
-
-        let existingTransfer: HistoryEvent | Partial<HistoryEvent> = {};
-        if (options && options.sync && transferIn.transferParams && transferIn.transferParams.nonce) {
-            existingTransfer = await getStorageItem(renNetwork, transferIn.transferParams.nonce) || {};
+        if (!transferContainer.store) {
+            throw new Error(`Transfer storage not initialized.`);
         }
 
-        const min = (firstValue: (number | null | undefined), ...values: Array<number | null | undefined>): (number | null | undefined) => {
-            return values.reduce((acc, value) => (acc === null || acc === undefined || (value !== undefined && value !== null && value < acc) ? value : acc), firstValue);
-        };
+        setTransfer(currentTransfer => {
+            // tslint:disable-next-line: no-object-literal-type-assertion
+            const nextTransfer = {
+                ...currentTransfer,
+                ...transferIn
+            } as Partial<HistoryEvent>;
 
-        const force = options && options.force;
-
-        // tslint:disable-next-line: no-object-literal-type-assertion
-        const transfer = {
-            ...existingTransfer,
-            ...this.state.transfer,
-            ...transferIn,
-            // tslint:disable-next-line: no-any
-            archived: force && transferIn.hasOwnProperty("archived") ? transferIn.archived : transferIn.archived || (this.state.transfer ? this.state.transfer.archived : existingTransfer.archived) || false,
-            time: force && transferIn.hasOwnProperty("time") ? transferIn.time : min(existingTransfer.time, this.state.transfer && this.state.transfer.time, transferIn.time),
-            inTx: force && transferIn.hasOwnProperty("inTx") ? transferIn.inTx : transferIn.inTx || (this.state.transfer && this.state.transfer.inTx) || existingTransfer.inTx,
-            outTx: force && transferIn.hasOwnProperty("outTx") ? transferIn.outTx : transferIn.outTx || (this.state.transfer && this.state.transfer.outTx) || existingTransfer.outTx,
-            txHash: force && transferIn.hasOwnProperty("txHash") ? transferIn.txHash : transferIn.txHash || (this.state.transfer && this.state.transfer.txHash) || existingTransfer.txHash,
-            renVMQuery: force && transferIn.hasOwnProperty("renVMQuery") ? transferIn.renVMQuery : transferIn.renVMQuery || (this.state.transfer && this.state.transfer.renVMQuery) || existingTransfer.renVMQuery,
-            renVMStatus: force && transferIn.hasOwnProperty("renVMStatus") ? transferIn.renVMStatus : compareTxStatus(existingTransfer.renVMStatus, (this.state.transfer && this.state.transfer.renVMStatus), transferIn.renVMStatus),
-            status: force && transferIn.hasOwnProperty("status") ? transferIn.status : compareTransferStatus(existingTransfer.status, (this.state.transfer && this.state.transfer.status), transferIn.status),
-            ethereumConfirmations: force && transferIn.hasOwnProperty("ethereumConfirmations") ? (transferIn as Partial<BurnAndReleaseEvent>).ethereumConfirmations : maxOrUndefined((transferIn as Partial<BurnAndReleaseEvent>).ethereumConfirmations, (this.state.transfer ? (this.state.transfer as BurnAndReleaseEvent).ethereumConfirmations : undefined)),
-        } as HistoryEvent;
-
-        // const web3 = this.state.sdkWeb3;
-        // if (web3) {
-        //     transfer = (await this.fixTransfer(transfer, web3)) || transfer;
-        // }
-
-        if (
-            transfer.status &&
-            (!this.state.transfer || (this.state.transfer.status !== transfer.status)) &&
-            this.uiContainer.state.gatewayPopupID
-        ) {
-            await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.Status, this.getTransferStatus(transfer));
-        }
-        try {
             if (
-                JSON.stringify(this.state.transfer) !== JSON.stringify(transfer) &&
-                this.uiContainer.state.gatewayPopupID
+                nextTransfer.status &&
+                (!transfer || (transfer.status !== nextTransfer.status)) &&
+                uiContainer.gatewayPopupID
             ) {
-                await postMessageToClient(window, this.uiContainer.state.gatewayPopupID, GatewayMessageType.TransferUpdated, { transfer });
+                postMessageToClient(window, uiContainer.gatewayPopupID, GatewayMessageType.Status, { status: nextTransfer.status, details: null })
+                    .catch(console.error);
             }
-        } catch (error) {
-            console.error(error);
+
+
+            try {
+                if (
+                    !deepCompare(transfer, nextTransfer) &&
+                    uiContainer.gatewayPopupID
+                ) {
+                    postMessageToClient(window, uiContainer.gatewayPopupID, GatewayMessageType.TransferUpdated, { transfer: nextTransfer as HistoryEvent })
+                        .catch(console.error);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+
+            try {
+                if (transferContainer.store && nextTransfer.transferParams && nextTransfer.transferParams.nonce) {
+                    transferContainer.store.set(nextTransfer.transferParams.nonce, nextTransfer as HistoryEvent);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+
+            return nextTransfer as HistoryEvent;
+        });
+    };
+
+    const queryTransferStatus = async () => {
+        if (transfer && transfer.renVMQuery && transfer.renVMQuery.txStatus === TxStatus.TxStatusDone) {
+            return transfer.renVMQuery;
         }
 
-        try {
-            await updateStorageTransfer(renNetwork, transfer);
-        } catch (error) {
-            console.error(error);
+        if (!renJS) { throw new Error(`RenJS not initialized`); }
+        if (!transfer) { throw new Error("Transfer not set"); }
+
+        const txHash = transfer.txHash;
+        if (!txHash) { throw new Error(`Invalid values required to query status`); }
+
+        if (transfer.eventType === EventType.LockAndMint) {
+            return renJS.lockAndMint({
+                sendToken: transfer.transferParams.sendToken,
+                txHash,
+                contractCalls: [],
+            }).queryTx();
+        } else {
+            return renJS.burnAndRelease({
+                sendToken: transfer.transferParams.sendToken,
+                txHash,
+            }).queryTx();
         }
-        await this.setState({ transfer });
-    }
+    };
+
+    const returnTransfer = async () => {
+        if (!uiContainer.gatewayPopupID) {
+            throw new Error("Can't return without transfer ID");
+        }
+
+        await updateTransfer({ returned: true });
+
+        const response = await queryTransferStatus();
+
+        await sleep(100);
+        await postMessageToClient(window, uiContainer.gatewayPopupID, GatewayMessageType.Done, response);
+    };
 
     ////////////////////////////////////////////////////////////////////////////
     // Burn and release ////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
 
-    public submitBurnToEthereum = async (retry = false) => {
-        const { sdkRenVM: renVM } = this.state;
+    const submitBurnToEthereum = async (retry = false) => {
         // const { sdkAddress: address, sdkWeb3: web3, sdkRenVM: renVM } = this.state;
-        if (!renVM) {
+        if (!renJS) {
             throw new Error(`Invalid values required for swap`);
         }
-        const transfer = this.state.transfer;
         if (!transfer) {
             throw new Error("Transfer not set");
         }
         if (transfer.eventType === EventType.LockAndMint) {
             throw new Error(`Expected burn details but got mint`);
         }
-        const { gatewayPopupID } = this.uiContainer.state;
+        const gatewayPopupID = uiContainer.gatewayPopupID;
         if (!gatewayPopupID) {
             throw new Error(`No gateway popup ID.`);
         }
@@ -209,9 +208,9 @@ export class SDKContainer extends Container<typeof initialState> {
         const params: SerializableBurnAndReleaseParams = transfer.transferParams;
 
         if (retry) {
-            await this.updateTransfer({
+            await updateTransfer({
                 inTx: undefined,
-            }, { force: true });
+            });
         }
 
         // if (retry) {
@@ -223,7 +222,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (!transactionHash) {
 
-            const transactionConfigs = renVM.burnAndRelease({
+            const transactionConfigs = renJS.burnAndRelease({
                 ...params
             }).createTransactions();
 
@@ -242,7 +241,7 @@ export class SDKContainer extends Container<typeof initialState> {
                 if (i === transactionConfigs.length - 1) {
                     transactionHash = txHash;
 
-                    await this.updateTransfer({
+                    await updateTransfer({
                         inTx: EthereumTx(transactionHash),
                         status: BurnAndReleaseStatus.SubmittedToEthereum,
                     });
@@ -261,7 +260,7 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
         let ethereumConfirmations = 0;
-        const confirmationsRequired = defaultNumberOfConfirmations(Asset.ETH, renVM.network);
+        const confirmationsRequired = defaultNumberOfConfirmations(Asset.ETH, renJS.network);
         while (ethereumConfirmations < confirmationsRequired) {
             const { error, confirmations, reverted } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash: transactionHash });
             if (error) {
@@ -282,12 +281,12 @@ export class SDKContainer extends Container<typeof initialState> {
             if (confirmations) {
                 ethereumConfirmations = confirmations;
                 const previousConfirmations =
-                    this.state.transfer &&
-                        this.state.transfer.eventType === EventType.BurnAndRelease &&
-                        this.state.transfer.ethereumConfirmations !== undefined ?
-                        this.state.transfer.ethereumConfirmations :
+                    transfer &&
+                        transfer.eventType === EventType.BurnAndRelease &&
+                        transfer.ethereumConfirmations !== undefined ?
+                        transfer.ethereumConfirmations :
                         0;
-                await this.updateTransfer({
+                await updateTransfer({
                     ethereumConfirmations: Math.max(
                         ethereumConfirmations,
                         previousConfirmations,
@@ -298,26 +297,24 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
 
-        await this.updateTransfer({
+        await updateTransfer({
             inTx: transactionHash ? EthereumTx(transactionHash) : null,
             status: BurnAndReleaseStatus.ConfirmedOnEthereum,
         });
-    }
+    };
 
-    public submitBurnToRenVM = async (_resubmit = false) => {
+    const submitBurnToRenVM = async (_resubmit = false) => {
         // if (resubmit) {
-        //     await this.updateTransfer({ status: BurnAndReleaseStatus.ConfirmedOnEthereum, txHash: null });
+        //     await updateTransfer({ status: BurnAndReleaseStatus.ConfirmedOnEthereum, txHash: null });
         // }
 
-        const { sdkRenVM: renVM } = this.state;
         // if (!web3) { throw new Error(`Web3 not initialized`); }
-        if (!renVM) { throw new Error(`RenVM not initialized`); }
+        if (!renJS) { throw new Error(`RenVM not initialized`); }
 
-        const transfer = this.state.transfer;
         if (!transfer) { throw new Error("Transfer not set"); }
         if (!transfer.inTx || transfer.inTx.chain !== Chain.Ethereum) { throw new Error(`Must submit burn to Ethereum before RenVM.`); }
 
-        const { gatewayPopupID } = this.uiContainer.state;
+        const gatewayPopupID = uiContainer.gatewayPopupID;
         if (!gatewayPopupID) {
             throw new Error(`No gateway popup ID.`);
         }
@@ -327,30 +324,30 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error(getTransactionBurnError);
         }
 
-        const burnAndReleaseObject = await renVM.burnAndRelease({
+        const burnAndReleaseObject = await renJS.burnAndRelease({
             sendToken: transfer.transferParams.sendToken,
             burnReference,
         }).readFromEthereum();
 
         const txHash = burnAndReleaseObject.txHash();
-        this.updateTransfer({
+        updateTransfer({
             txHash,
             status: BurnAndReleaseStatus.SubmittedToRenVM,
         }).catch((updateTransferError) => { _catchBackgroundErr_(updateTransferError, "Error in sdkContainer: submitBurnToRenVM > txHash > updateTransfer"); });
 
         const response = await burnAndReleaseObject.submit()
             .on("status", (renVMStatus: TxStatus) => {
-                this.updateTransfer({
+                updateTransfer({
                     renVMStatus,
                 }).catch((error) => { _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > onStatus > updateTransfer"); });
             });
 
-        await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
+        await updateTransfer({ renVMQuery: response, txHash: response.hash });
 
         // TODO: Fix returned types for burning
         const address = response.in.to;
 
-        await this.updateTransfer({
+        await updateTransfer({
             outTx: transfer.transferParams.sendToken === RenJS.Tokens.ZEC.Eth2Zec ?
                 { chain: Chain.Zcash, address } :
                 transfer.transferParams.sendToken === RenJS.Tokens.BCH.Eth2Bch ?
@@ -358,7 +355,7 @@ export class SDKContainer extends Container<typeof initialState> {
                     { chain: Chain.Bitcoin, address },
             status: BurnAndReleaseStatus.ReturnedFromRenVM,
         }).catch((error) => { _catchBackgroundErr_(error, "Error in sdkContainer: submitBurnToRenVM > updateTransfer"); });
-    }
+    };
 
     ////////////////////////////////////////////////////////////////////////////
     // Lock and mint ///////////////////////////////////////////////////////////
@@ -370,24 +367,20 @@ export class SDKContainer extends Container<typeof initialState> {
     // 3. Submit the deposit to RenVM and retrieve back a signature
     // 4. Submit the signature to Ethereum
 
-    public lockAndMintObject = (): LockAndMint => {
-        const { sdkRenVM: renVM } = this.state;
-        if (!renVM) {
+    const lockAndMintObject = (): LockAndMint => {
+        if (!renJS) {
             throw new Error("Invalid parameters passed to `lockAndMintObject`");
         }
-        const transfer = this.state.transfer;
         if (!transfer) {
             throw new Error("Transfer not set");
         }
 
-        return renVM.lockAndMint(transfer.transferParams as LockAndMintParams);
-    }
+        return renJS.lockAndMint(transfer.transferParams as LockAndMintParams);
+    };
 
     // Takes a transferParams as bytes or an array of primitive types and returns
     // the deposit address
-    public generateAddress = async (): Promise<string | undefined> => {
-        const transfer = this.state.transfer;
-
+    const generateAddress = async (): Promise<string | undefined> => {
         if (!transfer || transfer.eventType === EventType.BurnAndRelease) {
             throw new Error("Invalid parameters passed to `generateAddress`");
         }
@@ -396,32 +389,29 @@ export class SDKContainer extends Container<typeof initialState> {
             return transfer.gatewayAddress;
         }
 
-        const address = await this
-            .lockAndMintObject()
+        const address = await lockAndMintObject()
             .gatewayAddress();
 
         const update: Partial<LockAndMintEvent> = { gatewayAddress: address, transferParams: { ...transfer.transferParams, gatewayAddress: address } };
-        await this.updateTransfer(update);
+        await updateTransfer(update);
 
         return address;
-    }
+    };
 
     // Retrieves unspent deposits at the provided address
-    public waitForDeposits = async (onDeposit: (utxo: UTXOWithChain) => void) => {
-        const transfer = this.state.transfer;
-        const renVM = this.state.sdkRenVM;
-        if (!transfer || !renVM) {
+    const waitForDeposits = async (onDeposit: (utxo: UTXOWithChain) => void) => {
+        if (!transfer || !renJS) {
             throw new Error("Transfer not set");
         }
         const onTxHash = (txHash: string) => {
-            const transferObject = this.state.transfer;
+            const transferObject = transfer;
             if (!transferObject || !transferObject.txHash || transferObject.txHash !== txHash) {
-                this.updateTransfer({ txHash })
+                updateTransfer({ txHash })
                     .catch(console.error);
             }
         };
         const onStatus = (renVMStatus: TxStatus) => {
-            this.updateTransfer({
+            updateTransfer({
                 renVMStatus,
             }).catch(console.error);
         };
@@ -431,14 +421,12 @@ export class SDKContainer extends Container<typeof initialState> {
             vOut: transfer.inTx.utxo.vOut
         } : undefined;
 
-        const transaction = await this
-            .lockAndMintObject()
+        const transaction = await lockAndMintObject()
             .wait(0, specifyUTXO);
-        const promise = this
-            .lockAndMintObject()
-            .wait(this.getNumberOfConfirmations(transfer), specifyUTXO);
+        const promise = lockAndMintObject()
+            .wait(getNumberOfConfirmations(), specifyUTXO);
         promise.on("deposit", (utxo: UTXOWithChain) => {
-            this.updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
+            updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
             onDeposit(utxo);
         });
         const signaturePromise = transaction
@@ -448,59 +436,31 @@ export class SDKContainer extends Container<typeof initialState> {
 
         // If the number of confirmations being waited for are less than RenVM's
         // default, check the transaction's status manually using queryTX.
-        const defaultConfirmations = defaultNumberOfConfirmations(transfer.transferParams.sendToken, renVM.network);
-        if (this.getNumberOfConfirmations(transfer) < defaultConfirmations) {
+        const defaultConfirmations = defaultNumberOfConfirmations(transfer.transferParams.sendToken, renJS.network);
+        if (getNumberOfConfirmations() < defaultConfirmations) {
 
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 try {
                     const renVMQuery = await transaction.queryTx();
-                    await this.updateTransfer({ renVMQuery, txHash: renVMQuery.hash });
+                    await updateTransfer({ renVMQuery, txHash: renVMQuery.hash });
                     break;
                 } catch (error) {
                     // Ignore error
                 }
             }
 
-            await this.returnTransfer();
+            await returnTransfer();
             return;
         }
         const signature = await signaturePromise;
-        await this.updateTransfer({ status: LockAndMintStatus.ReturnedFromRenVM });
+        await updateTransfer({ status: LockAndMintStatus.ReturnedFromRenVM });
         const response = await signature.queryTx();
-        await this.updateTransfer({ renVMQuery: response, txHash: response.hash });
-    }
+        await updateTransfer({ renVMQuery: response, txHash: response.hash });
+    };
 
-    public queryTransferStatus = async () => {
-        const { sdkRenVM: renVM, transfer } = this.state;
-
-        if (transfer && transfer.renVMQuery && transfer.renVMQuery.txStatus === TxStatus.TxStatusDone) {
-            return transfer.renVMQuery;
-        }
-
-        if (!renVM) { throw new Error(`RenVM not initialized`); }
-        if (!transfer) { throw new Error("Transfer not set"); }
-
-        const txHash = transfer.txHash;
-        if (!txHash) { throw new Error(`Invalid values required to query status`); }
-
-        if (transfer.eventType === EventType.LockAndMint) {
-            return renVM.lockAndMint({
-                sendToken: transfer.transferParams.sendToken,
-                txHash,
-                contractCalls: [],
-            }).queryTx();
-        } else {
-            return renVM.burnAndRelease({
-                sendToken: transfer.transferParams.sendToken,
-                txHash,
-            }).queryTx();
-        }
-    }
-
-    public submitMintToEthereum = async (retry = false) => {
-        const { gatewayPopupID } = this.uiContainer.state;
-        const transfer = this.state.transfer;
+    const submitMintToEthereum = async (retry = false) => {
+        const gatewayPopupID = uiContainer.gatewayPopupID;
         if (!transfer) { throw new Error("Transfer not set"); }
         if (transfer.eventType !== EventType.LockAndMint) {
             throw new Error(`Expected mint object, got ${transfer.eventType}`);
@@ -512,9 +472,9 @@ export class SDKContainer extends Container<typeof initialState> {
         let transactionHash = transfer.outTx && transfer.outTx.chain === Chain.Ethereum && !retry ? transfer.outTx.hash : null;
 
         if (retry) {
-            await this.updateTransfer({
+            await updateTransfer({
                 inTx: undefined,
-            }, { force: true });
+            });
         }
         // let receipt: TransactionReceipt;
 
@@ -538,8 +498,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
             await sleep(500);
 
-            let transaction = this
-                .lockAndMintObject();
+            let transaction = lockAndMintObject();
 
             let signature: LockAndMint;
             // tslint:disable-next-line: strict-type-predicates
@@ -573,26 +532,12 @@ export class SDKContainer extends Container<typeof initialState> {
 
             transactionHash = transactionHash || "";
 
-            // const txHash = await new Promise<string>((resolveTx, rejectTx) => promiEvent
-            //     .on("transactionHash", resolveTx).catch(rejectTx));
-
             // Update lockAndMint in store.
-            await this.updateTransfer({
+            await updateTransfer({
                 status: LockAndMintStatus.SubmittedToEthereum,
                 outTx: EthereumTx(transactionHash),
             });
-
-            // tslint:disable-next-line: no-any
-            // promiEvent.once("confirmation", (_confirmations: number, newReceipt: any) => { resolve([newReceipt, txHash]); });
-            // });
-            // } else {
-            // receipt = (await this.getReceipt(web3, transactionHash)) as TransactionReceipt;
         }
-
-        // // tslint:disable-next-line: no-any
-        // if ((receipt as any).status === 0 || receipt.status === false || (receipt as any).status === "0x0") {
-        //     throw new Error(`Transaction ${transactionHash} was reverted.`);
-        // }
 
         const { error: getTransactionStatusError } = await postMessageToClient(window, gatewayPopupID, GatewayMessageType.GetEthereumTxStatus, { txHash: transactionHash });
         if (getTransactionStatusError) {
@@ -600,11 +545,30 @@ export class SDKContainer extends Container<typeof initialState> {
         }
 
         // Update lockAndMint in store.
-        await this.updateTransfer({
+        await updateTransfer({
             outTx: EthereumTx(transactionHash),
             status: LockAndMintStatus.ConfirmedOnEthereum,
         });
 
         return;
-    }
-}
+    };
+
+    return {
+        renJS,
+        transfer,
+        connect,
+        getNumberOfConfirmations,
+        getTransferStatus,
+        returnTransfer,
+        updateTransfer,
+        submitBurnToEthereum,
+        submitBurnToRenVM,
+        lockAndMintObject,
+        generateAddress,
+        waitForDeposits,
+        queryTransferStatus,
+        submitMintToEthereum,
+    };
+};
+
+export const SDKContainer = createContainer(useSDKContainer);

@@ -71,7 +71,7 @@ export class BurnAndRelease {
 
                 ...txConfig,
             };
-            this.logger.debug(`Created raw transaction calling "${contractFn}" on ${sendTo}`, rawTransaction);
+            this.logger.debug("Raw transaction created", contractFn, sendTo, rawTransaction);
             return rawTransaction;
         });
     }
@@ -140,7 +140,7 @@ export class BurnAndRelease {
                             ...txConfig,
                         });
 
-                        this.logger.debug(`Calling "${contractFn}" on Ethereum contract ${sendTo}`, ...callParams, config);
+                        this.logger.debug("Calling Ethereum contract", contractFn, sendTo, ...callParams, config);
 
                         const tx = contract.methods[contractFn](
                             ...callParams,
@@ -157,7 +157,7 @@ export class BurnAndRelease {
                                 reject(error);
                             })
                         );
-                        this.logger.debug(`Sent Ethereum transaction ${ethereumTxHash}`);
+                        this.logger.debug("Ethereum txHash", ethereumTxHash);
                     }
                 }
 
@@ -234,13 +234,13 @@ export class BurnAndRelease {
 
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("txHash", txHash);
-            this.logger.debug(`txHash: ${txHash}`);
+            this.logger.debug("txHash", txHash);
 
             const response = await this.renVM.waitForTX<ResponseQueryBurnTx>(
                 Ox(Buffer.from(txHash, "base64")),
                 (status) => {
                     promiEvent.emit("status", status);
-                    this.logger.debug(`Transaction status: ${status}`);
+                    this.logger.debug("Transaction Status", status);
                 },
                 () => promiEvent._isCancelled(),
             );

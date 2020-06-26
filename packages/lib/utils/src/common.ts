@@ -80,11 +80,7 @@ export const extractError = (error: any): string => {
 
 export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number): Promise<T> => {
     let returnError;
-    // tslint:disable-next-line: no-constant-condition
     for (let i = 0; retries === -1 || i < retries; i++) {
-        // if (i > 0) {
-        //     console.debug(`Retrying...`);
-        // }
         try {
             return await fnCall();
         } catch (error) {

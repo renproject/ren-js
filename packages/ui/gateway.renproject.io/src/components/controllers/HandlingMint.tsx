@@ -9,7 +9,6 @@ import { LogIn } from "../views/LogIn";
 import { TransferDetails } from "../views/TransferDetails";
 import { Complete } from "./pages/Complete";
 import { DepositReceived } from "./pages/DepositReceived";
-import { InvalidParameters } from "./pages/InvalidParameters";
 import { ShowGatewayAddress } from "./pages/ShowGatewayAddress";
 import { SubmitMintToEthereum } from "./pages/SubmitMintToEthereum";
 
@@ -51,44 +50,34 @@ export const HandlingMint: React.FC<Props> = ({ onDone, pressedDone, showNotific
     let inner;
     switch (transfer.status) {
         case LockAndMintStatus.Committed:
-            // TODO: Refactor to not use try-catch.
-            try {
-                // Show the deposit address and wait for a deposit
-                inner = <ShowGatewayAddress
-                    mini={paused}
-                    generateAddress={generateAddress}
-                    token={token}
-                    utxos={utxos}
-                    transferParams={transfer.transferParams}
-                    waitForDeposit={waitForDeposits}
-                    confirmations={getNumberOfConfirmations()}
-                    onDeposit={deposit}
+            // Show the deposit address and wait for a deposit
+            inner = <ShowGatewayAddress
+                mini={paused}
+                generateAddress={generateAddress}
+                token={token}
+                utxos={utxos}
+                transferParams={transfer.transferParams}
+                waitForDeposit={waitForDeposits}
+                confirmations={getNumberOfConfirmations()}
+                onDeposit={deposit}
 
-                />;
-            } catch (error) {
-                inner = <InvalidParameters mini={paused} token={token} />;
-            }
+            />;
             break;
         case LockAndMintStatus.Deposited:
         case LockAndMintStatus.Confirmed:
         case LockAndMintStatus.SubmittedToRenVM:
-            try {
-
-                // Show the deposit address and wait for a deposit
-                inner = <DepositReceived
-                    mini={paused}
-                    token={token}
-                    utxos={utxos}
-                    waitForDeposit={waitForDeposits}
-                    confirmations={getNumberOfConfirmations()}
-                    onDeposit={deposit}
-                    networkDetails={renJS.network}
-                    requestNotificationPermission={requestNotificationPermission}
-                    showNotification={showNotification}
-                />;
-            } catch (error) {
-                inner = <InvalidParameters mini={paused} token={token} />;
-            }
+            // Show the deposit address and wait for a deposit
+            inner = <DepositReceived
+                mini={paused}
+                token={token}
+                utxos={utxos}
+                waitForDeposit={waitForDeposits}
+                confirmations={getNumberOfConfirmations()}
+                onDeposit={deposit}
+                networkDetails={renJS.network}
+                requestNotificationPermission={requestNotificationPermission}
+                showNotification={showNotification}
+            />;
             break;
         case LockAndMintStatus.ReturnedFromRenVM:
         case LockAndMintStatus.SubmittedToEthereum:

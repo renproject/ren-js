@@ -77,20 +77,7 @@ export const HandlingBurn: React.FC<Props> = ({ onDone, pressedDone, showNotific
 
     switch (transfer.status) {
         case BurnAndReleaseStatus.Committed:
-            inner = <SubmitBurnToEthereum
-                token={token}
-                txCount={txCount}
-                networkDetails={renJS.network}
-                mini={paused}
-                txHash={transfer.inTx}
-                submit={submitBurnToEthereum}
-                ethereumConfirmations={transfer.ethereumConfirmations}
-                requestNotificationPermission={requestNotificationPermission}
-                showNotification={showNotification}
-            />;
-            break;
         case BurnAndReleaseStatus.SubmittedToEthereum:
-            // Submit the burn to Ethereum
             inner = <SubmitBurnToEthereum
                 token={token}
                 txCount={txCount}

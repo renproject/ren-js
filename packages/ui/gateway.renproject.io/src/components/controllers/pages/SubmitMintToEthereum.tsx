@@ -1,38 +1,21 @@
-import * as React from "react";
-
 import { RenNetworkDetails } from "@renproject/contracts";
 import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
-import { Loading, TokenIcon } from "@renproject/react-components";
+import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
+import React from "react";
 import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { txPreview, txUrl } from "../../../lib/txUrl";
 import {
-    Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
+    Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerDetails, ContainerHeader,
 } from "../../views/Container";
 import { ErrorScreen } from "../../views/ErrorScreen";
 import { ExternalLink } from "../../views/ExternalLink";
 import { LabelledDiv } from "../../views/LabelledInput";
 import { Mini } from "../../views/Mini";
-
-const TransparentButton = styled.button`
-        position: relative;
-        opacity: 1;
-        &:disabled {
-            color: rgba(255, 255, 255, 1.0);
-            background-color: ${p => lighten(0.5, p.theme.primaryColor)};
-            opacity: 1 !important;
-        }
-    `;
-const TransparentLoading = styled(Loading)`
-        position: absolute;
-        margin-left: 20px;
-        margin-top: 3px;
-        display: inline-block;
-        border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
-    `;
+import { TransparentButton, TransparentLoading } from "../../views/Styled";
 
 const StyledLink = styled.a`
     display: block;
@@ -47,14 +30,18 @@ const StyledLink = styled.a`
     width: 100%;
     `;
 
-export const SubmitMintToEthereum: React.StatelessComponent<{
-    transfer: LockAndMintEvent,
-    mini: boolean,
-    txHash: Tx | null,
-    networkDetails: RenNetworkDetails,
-    token: Asset,
-    submit: (retry?: boolean) => Promise<void>,
-}> = ({ transfer, mini, txHash, networkDetails, token, submit }) => {
+interface Props {
+    transfer: LockAndMintEvent;
+    mini: boolean;
+    txHash: Tx | null;
+    networkDetails: RenNetworkDetails;
+    token: Asset;
+    submit: (retry?: boolean) => Promise<void>;
+}
+
+export const SubmitMintToEthereum: React.FC<Props> = ({
+    transfer, mini, txHash, networkDetails, token, submit,
+}) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
@@ -116,12 +103,12 @@ export const SubmitMintToEthereum: React.StatelessComponent<{
         <div className="submit-to-ethereum">
             <ContainerBody>
                 <ContainerHeader icon={<TokenIcon token={token} />} />
-                <div className="container--body--details">
+                <ContainerDetails>
                     {transfer.inTx ? <div className="submit-mint-to-ethereum--deposit">
                         <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>Tx ID: {txPreview(transfer.inTx)}</StyledLink>
                         {/* <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>{transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo && transfer.inTx.utxo.amount > 0 ? <>Tx: {renderAmount(transfer.inTx)} - </> : <>Tx ID:</>} {txPreview(transfer.inTx)}</StyledLink> */}
                     </div> : <></>}
-                </div>
+                </ContainerDetails>
             </ContainerBody>
         </div>
         <ContainerBottom>

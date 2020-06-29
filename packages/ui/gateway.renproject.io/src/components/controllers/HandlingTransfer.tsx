@@ -1,12 +1,12 @@
-import * as React from "react";
-
 import { GatewayMessageType, UnmarshalledTx } from "@renproject/interfaces";
 import { Loading, sleep } from "@renproject/react-components";
+import React from "react";
 
 import { _catchInteractionErr_ } from "../../lib/errors";
 import { postMessageToClient } from "../../lib/postMessage";
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
+import { ErrorBoundary } from "../views/ErrorBoundary";
 import { TransferDetails } from "../views/TransferDetails";
 import { HandlingBurn } from "./HandlingBurn";
 import { HandlingMint } from "./HandlingMint";
@@ -58,9 +58,21 @@ export const HandlingTransfer: React.FC = () => {
 
     return <>
         {isBurn ?
-            <HandlingBurn pressedDone={pressedDone} onDone={onDone} showNotification={showNotification} requestNotificationPermission={requestNotificationPermission} /> :
-            <HandlingMint pressedDone={pressedDone} onDone={onDone} showNotification={showNotification} requestNotificationPermission={requestNotificationPermission} />
+            <HandlingBurn
+                pressedDone={pressedDone}
+                onDone={onDone}
+                showNotification={showNotification}
+                requestNotificationPermission={requestNotificationPermission}
+            /> :
+            <HandlingMint
+                pressedDone={pressedDone}
+                onDone={onDone}
+                showNotification={showNotification}
+                requestNotificationPermission={requestNotificationPermission}
+            />
         }
-        {!paused ? <TransferDetails transfer={transfer} /> : <></>}
+        {!paused ? <ErrorBoundary><TransferDetails
+            transfer={transfer}
+        /></ErrorBoundary> : <></>}
     </>;
 };

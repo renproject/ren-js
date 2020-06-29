@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/browser";
-import * as React from "react";
 
 import classNames from "classnames";
+import React from "react";
 
 import { _catchInteractionErr_ } from "../../lib/errors";
 

@@ -1,12 +1,11 @@
 import "react-circular-progressbar/dist/styles.css";
 
-import * as React from "react";
-
 import { RenNetworkDetails } from "@renproject/contracts";
 import { Asset, Chain, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";
+import React from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import styled from "styled-components";
 
@@ -19,37 +18,26 @@ import {
 import { ErrorScreen } from "../../views/ErrorScreen";
 import { ExternalLink } from "../../views/ExternalLink";
 import { Mini } from "../../views/Mini";
+import { TransparentButton, TransparentLoading } from "../../views/Styled";
 
-const TransparentButton = styled.button`
-        position: relative;
-        opacity: 1;
-        &:disabled {
-            color: rgba(255, 255, 255, 1.0);
-            background-color: ${p => lighten(0.5, p.theme.primaryColor)};
-            opacity: 1 !important;
-        }
-    `;
-const TransparentLoading = styled(Loading)`
-        position: absolute;
-        margin-left: 20px;
-        margin-top: 3px;
-        display: inline-block;
-        border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
-    `;
-
-export const SubmitBurnToEthereum: React.StatelessComponent<{
-    mini: boolean,
-    txHash: Tx | null,
-    networkDetails: RenNetworkDetails,
-    txCount: number,
-    token: Asset,
-    ethereumConfirmations: number | undefined,
-    submit: (retry?: boolean) => Promise<void>,
+interface Props {
+    mini: boolean;
+    txHash: Tx | null;
+    networkDetails: RenNetworkDetails;
+    txCount: number;
+    token: Asset;
+    ethereumConfirmations: number | undefined;
+    submit: (retry?: boolean) => Promise<void>;
     requestNotificationPermission(): Promise<{
         error?: string | undefined;
     } | null>;
     showNotification(title: string, body: string): Promise<null>;
-}> = ({ mini, txHash, networkDetails, txCount, token, ethereumConfirmations, submit, showNotification }) => {
+}
+
+export const SubmitBurnToEthereum: React.FC<Props> = ({
+    mini, txHash, networkDetails, txCount, token, ethereumConfirmations, submit,
+    showNotification
+}) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);

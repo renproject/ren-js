@@ -1,45 +1,76 @@
-import * as React from "react";
-
 import { Asset, BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
 import { parseRenContract } from "@renproject/utils";
+import React from "react";
+import styled from "styled-components";
 
 import infoIcon from "../../scss/images/info.svg";
 import { getURL } from "../../state/transferContainer";
 import { Tooltip } from "../views/tooltip/Tooltip";
 
-export const TransferDetails: React.StatelessComponent<{
-    transfer: LockAndMintEvent | BurnAndReleaseEvent,
-}> = ({ transfer }) => {
+interface Props {
+    transfer: LockAndMintEvent | BurnAndReleaseEvent;
+}
 
-    // const title = window.parent.document.title;
+const TransferDetailsOuter = styled.div`
+    overflow: -moz-scrollbars-none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        /* remove scrollbar space */
+        display: none;
+        width: 0px;
+        height: 0px;
+    }
+
+    height: 100px;
+    width: 100vw;
+    padding: 20px 30px;
+    padding-top: 35px;
+
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 14px;
+    color: #707575;
+
+    box-shadow: inset 0px 1px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const TransferDetailsRow = styled.div`
+    display: flex;
+    flex-flow: row;
+    justify-content: space-between;
+    padding: 4px 0;
+`;
+
+const TransferDetailsLeft = styled.div`
+`;
+
+const TransferDetailsRight = styled.div`
+    text-align: right;
+`;
+
+export const TransferDetails: React.FC<Props> = ({ transfer }) => {
     const url = getURL();
-
-    const urlDomain = (data: string) => {
-        const a = document.createElement("a");
-        a.href = data;
-        return a.hostname;
-    };
-
-    const title = urlDomain(url);
+    const title = (new URL(url)).hostname;
 
     const token = transfer.transferParams.sendToken;
     const asset: Asset | "" = React.useMemo(() => !token ? "" :
-        token === "BTC" || token === "ZEC" || token === "BCH" ? (token as Asset) :
+        token === Asset.BTC || token === Asset.ZEC || token === Asset.BCH ? (token as Asset) :
             parseRenContract(token).asset, [token]);
 
-    return <div className="transfer-details">
-        <div className="transfer-details--row">
-            <div className="transfer-details--left">Integrator <Tooltip align="right" width={300} contents={"To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
-            <div className="transfer-details--right">
+    return <TransferDetailsOuter>
+        <TransferDetailsRow>
+            <TransferDetailsLeft>Integrator <Tooltip align="right" width={300} contents={"To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></TransferDetailsLeft>
+            <TransferDetailsRight>
                 <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{" "}{title}{" "}
                 <Tooltip align="left" width={300} contents={<pre>{url}</pre>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip>
-            </div>
-        </div>
-        <div className="transfer-details--row">
-            <div className="transfer-details--left">RenVM Network Fees <Tooltip align="right" width={300} contents={<>A 10 BPS (0.1%) fee is applied per mint or release and is distributed to all active Darknodes. There is also a 35K {asset === Asset.ZEC ? "Zats" : "Sats"} fee for paying blockchain miners.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></div>
-            <div className="transfer-details--right">
+            </TransferDetailsRight>
+        </TransferDetailsRow>
+        <TransferDetailsRow>
+            <TransferDetailsLeft>RenVM Network Fees <Tooltip align="right" width={300} contents={<>A 10 BPS (0.1%) fee is applied per mint or release and is distributed to all active Darknodes. There is also a 35K {asset === Asset.ZEC ? "Zats" : "Sats"} fee for paying blockchain miners.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></TransferDetailsLeft>
+            <TransferDetailsRight>
                 0.1% + 0.00035 {asset.toUpperCase()}
-            </div>
-        </div>
-    </div>;
+            </TransferDetailsRight>
+        </TransferDetailsRow>
+    </TransferDetailsOuter>;
 };

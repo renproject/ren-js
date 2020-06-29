@@ -1,8 +1,7 @@
-import * as React from "react";
-
 import { Asset, TxStatus } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { lighten } from "polished";
+import React from "react";
 import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
@@ -11,6 +10,7 @@ import {
     Container, ContainerBody, ContainerBottom, ContainerButtons, ContainerHeader,
 } from "../../views/Container";
 import { Mini } from "../../views/Mini";
+import { TransparentButton, TransparentLoading } from "../../views/Styled";
 
 const renderTxStatus = (status: TxStatus | null) => {
     switch (status) {
@@ -31,30 +31,15 @@ const renderTxStatus = (status: TxStatus | null) => {
     }
 };
 
-const TransparentButton = styled.button`
-        position: relative;
-        opacity: 1;
-        &:disabled {
-            color: rgba(255, 255, 255, 1.0);
-            background-color: ${p => lighten(0.5, p.theme.primaryColor)};
-            opacity: 1 !important;
-        }
-    `;
-const TransparentLoading = styled(Loading)`
-        position: absolute;
-        margin-left: 20px;
-        margin-top: 3px;
-        display: inline-block;
-        border-color: rgba(255, 255, 255, 0.5) transparent rgba(255, 255, 255, 0.5) transparent;
-    `;
-
-export const SubmitBurnToRenVM: React.StatelessComponent<{
+interface Props {
     mini: boolean;
     token: Asset;
     txHash: string | null;
     renVMStatus: TxStatus | null;
     submitDeposit: () => Promise<unknown>;
-}> = ({ mini, token, renVMStatus, txHash, submitDeposit }) => {
+}
+
+export const SubmitBurnToRenVM: React.FC<Props> = ({ mini, token, renVMStatus, txHash, submitDeposit }) => {
     const [error, setError] = React.useState(null as Error | null);
     const [submitting, setSubmitting] = React.useState(true);
 

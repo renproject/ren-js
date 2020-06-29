@@ -1,5 +1,4 @@
-import * as React from "react";
-
+import React from "react";
 import styled from "styled-components";
 
 import infoIcon from "../../scss/images/info.svg";
@@ -28,7 +27,7 @@ const RenVMLink = styled.a`
     text-decoration: underline;
     `;
 
-export const Footer: React.FC<{}> = props => {
+export const Footer: React.FC = () => {
     const bridgeInfo = `Your tokens will be bridged to Ethereum in a completely trustless and decentralized way.`;
 
     return (

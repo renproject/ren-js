@@ -1,7 +1,6 @@
-import * as React from "react";
-
 import { RenNetworkDetails } from "@renproject/contracts";
 import { Asset, Tx } from "@renproject/interfaces";
+import React from "react";
 
 import { txUrl } from "../../../lib/txUrl";
 import { renderChain } from "../../../lib/utils";
@@ -11,32 +10,18 @@ import {
 import { ExternalLink } from "../../views/ExternalLink";
 import { Mini } from "../../views/Mini";
 
-export const Complete: React.StatelessComponent<{
-    onDone: () => Promise<void>,
+interface Props {
+    onDone: () => Promise<void>;
     pressedDone: boolean;
-    inTx: Tx | null,
-    outTx: Tx | null,
-    mini: boolean,
+    inTx: Tx | null;
+    outTx: Tx | null;
+    mini: boolean;
     token: Asset;
-    networkDetails: RenNetworkDetails,
-}> = ({ onDone, pressedDone, mini, inTx, outTx, token, networkDetails }) => {
+    networkDetails: RenNetworkDetails;
+}
 
-    const txs = inTx && outTx ? <>
-        <ExternalLink href={txUrl(inTx, networkDetails)}>{renderChain(inTx.chain)} Transaction</ExternalLink>
-        {" "}-{" "}
-        <ExternalLink href={txUrl(outTx, networkDetails)}>{renderChain(outTx.chain)} Transaction</ExternalLink>
-    </> : <>
-            {inTx ?
-                <ExternalLink href={txUrl(inTx, networkDetails)}>View {renderChain(inTx.chain)} Transaction</ExternalLink> :
-                <></>
-            }
-            {outTx ?
-                <>{inTx ? <span style={{ margin: "0px 5px" }}>-</span> : ""}<ExternalLink href={txUrl(outTx, networkDetails)}>View {renderChain(outTx.chain)} Transaction</ExternalLink></> :
-                <></>
-            }
-        </>;
-
-    return mini ?
+export const Complete: React.FC<Props> = ({ onDone, pressedDone, mini, inTx, outTx, token, networkDetails }) => (
+    mini ?
         <Mini token={token} message="Done" /> :
         <Container>
             <div className="complete">
@@ -45,7 +30,20 @@ export const Complete: React.StatelessComponent<{
                     <ContainerDetails>
                         <h4>Deposit received</h4>
                         <div className="complete--links">
-                            {txs}
+                            {inTx && outTx ? <>
+                                <ExternalLink href={txUrl(inTx, networkDetails)}>{renderChain(inTx.chain)} Transaction</ExternalLink>
+                                {" "}-{" "}
+                                <ExternalLink href={txUrl(outTx, networkDetails)}>{renderChain(outTx.chain)} Transaction</ExternalLink>
+                            </> : <>
+                                    {inTx ?
+                                        <ExternalLink href={txUrl(inTx, networkDetails)}>View {renderChain(inTx.chain)} Transaction</ExternalLink> :
+                                        <></>
+                                    }
+                                    {outTx ?
+                                        <>{inTx ? <span style={{ margin: "0px 5px" }}>-</span> : ""}<ExternalLink href={txUrl(outTx, networkDetails)}>View {renderChain(outTx.chain)} Transaction</ExternalLink></> :
+                                        <></>
+                                    }
+                                </>}
                         </div>
                     </ContainerDetails>
                 </ContainerBody>
@@ -55,5 +53,5 @@ export const Complete: React.StatelessComponent<{
                     <button className="button open--confirm" disabled={pressedDone} onClick={onDone}>Return</button>
                 </ContainerButtons>
             </ContainerBottom>
-        </Container>;
-};
+        </Container>
+);

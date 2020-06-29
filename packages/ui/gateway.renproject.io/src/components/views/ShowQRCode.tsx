@@ -93,7 +93,9 @@ interface Props {
     setShowLegacyAddress: (b: boolean) => void;
 }
 
-export const ShowQRCode: React.FC<Props> = ({ token, amount, address, showLegacyAddress, setShowLegacyAddress }) => {
+export const ShowQRCode: React.FC<Props> = ({
+    token, amount, address, showLegacyAddress, setShowLegacyAddress,
+}) => {
     const [showSettings, toggleSettings] = useToggle(false);
     const [rawAddress, toggleRawAddress] = useCheckbox(false);
     // const [legacyAddress, toggleLegacyAddress] = useCheckbox(false);

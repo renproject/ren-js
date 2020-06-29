@@ -1,8 +1,8 @@
-import * as React from "react";
-
 import { BurnAndReleaseStatus, LockAndMintStatus } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
+import classNames from "classnames";
 import { parse as parseLocation } from "qs";
+import React from "react";
 import { useLocation } from "react-router";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
@@ -57,8 +57,8 @@ export const Main: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return <main className={paused ? "paused" : ""} onClick={paused ? resumeOnClick : undefined}>
-        <div className="main">
+    return (
+        <main className={classNames("_ren", "main", paused ? "paused" : "")} onClick={paused ? resumeOnClick : undefined}>
             {/* Banner indicating the asset being transferred. */}
             {!paused ?
                 <ErrorBoundary><ColoredBanner token={transfer && transfer.transferParams.sendToken} /></ErrorBoundary> :
@@ -94,13 +94,16 @@ export const Main: React.FC = () => {
 
             {/* If there's no transfer, show a loading screen for  the first 10 seconds and an error screen after that. */}
             {!transfer && window !== window.top ? <>
-                {showFeedbackButton ? <ErrorBoundary onClick={paused ? resumeOnClick : undefined} mini={paused} className="centered" manualError="Unable to load transfer details. Please disable browser shields, or enable browser cookies for the current site." fullPage={true} onCancel={onErrorBoundaryCancel} /> : <Loading className="centered" />}
+                {showFeedbackButton ?
+                    <ErrorBoundary onClick={paused ? resumeOnClick : undefined} mini={paused} className="centered" manualError="Unable to load transfer details. Please disable browser shields, or enable browser cookies for the current site." fullPage={true} onCancel={onErrorBoundaryCancel} /> :
+                    <Loading className="centered" />
+                }
             </> : <></>}
 
             {/* Settings page. */}
             <ErrorBoundary>
                 <SettingsPage hidden={!showingSettings || paused} hideSettings={hideSettings} cancelTransfer={cancelTransfer} />
             </ErrorBoundary>
-        </div>
-    </main>;
+        </main>
+    );
 };

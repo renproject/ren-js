@@ -1,6 +1,5 @@
-import * as React from "react";
-
 import { lighten } from "polished";
+import React from "react";
 import styled from "styled-components";
 
 import { ScanningDot } from "./ScanningDot";

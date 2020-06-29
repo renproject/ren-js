@@ -1,12 +1,10 @@
-import * as React from "react";
-
 import { Asset, LockAndMintStatus } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
+import React from "react";
 
 import { SDKContainer } from "../../state/sdkContainer";
 import { UIContainer } from "../../state/uiContainer";
 import { LogIn } from "../views/LogIn";
-import { TransferDetails } from "../views/TransferDetails";
 import { Complete } from "./pages/Complete";
 import { DepositReceived } from "./pages/DepositReceived";
 import { ShowGatewayAddress } from "./pages/ShowGatewayAddress";
@@ -24,7 +22,9 @@ interface Props {
 /**
  * HandlingMint displays the various steps of a lock-and-mint.
  */
-export const HandlingMint: React.FC<Props> = ({ onDone, pressedDone, showNotification, requestNotificationPermission }) => {
+export const HandlingMint: React.FC<Props> = ({
+    onDone, pressedDone, showNotification, requestNotificationPermission,
+}) => {
     const {
         paused, utxos, wrongNetwork, expectedNetwork,
         deposit,
@@ -42,16 +42,18 @@ export const HandlingMint: React.FC<Props> = ({ onDone, pressedDone, showNotific
     const token = transfer.transferParams.sendToken.slice(0, 3) as Asset;
 
     if (!renJS || wrongNetwork) {
-        return <>
-            <LogIn correctNetwork={expectedNetwork || "correct"} token={token} paused={paused} wrongNetwork={wrongNetwork} />
-        </>;
+        return <LogIn
+            correctNetwork={expectedNetwork || "correct"}
+            token={token}
+            paused={paused}
+            wrongNetwork={wrongNetwork}
+        />;
     }
 
-    let inner;
     switch (transfer.status) {
         case LockAndMintStatus.Committed:
             // Show the deposit address and wait for a deposit
-            inner = <ShowGatewayAddress
+            return <ShowGatewayAddress
                 mini={paused}
                 generateAddress={generateAddress}
                 token={token}
@@ -62,12 +64,11 @@ export const HandlingMint: React.FC<Props> = ({ onDone, pressedDone, showNotific
                 onDeposit={deposit}
 
             />;
-            break;
         case LockAndMintStatus.Deposited:
         case LockAndMintStatus.Confirmed:
         case LockAndMintStatus.SubmittedToRenVM:
             // Show the deposit address and wait for a deposit
-            inner = <DepositReceived
+            return <DepositReceived
                 mini={paused}
                 token={token}
                 utxos={utxos}
@@ -78,18 +79,26 @@ export const HandlingMint: React.FC<Props> = ({ onDone, pressedDone, showNotific
                 requestNotificationPermission={requestNotificationPermission}
                 showNotification={showNotification}
             />;
-            break;
         case LockAndMintStatus.ReturnedFromRenVM:
         case LockAndMintStatus.SubmittedToEthereum:
-            inner = <SubmitMintToEthereum transfer={transfer} networkDetails={renJS.network} mini={paused} txHash={transfer.outTx} submit={submitMintToEthereum} token={token} />;
-            break;
+            return <SubmitMintToEthereum
+                transfer={transfer}
+                networkDetails={renJS.network}
+                mini={paused}
+                txHash={transfer.outTx}
+                submit={submitMintToEthereum}
+                token={token}
+            />;
         case LockAndMintStatus.ConfirmedOnEthereum:
-            inner = <Complete onDone={onDone} pressedDone={pressedDone} token={token} networkDetails={renJS.network} mini={paused} inTx={transfer.inTx} outTx={transfer.outTx} />;
-            break;
+            return <Complete
+                onDone={onDone}
+                pressedDone={pressedDone}
+                token={token}
+                networkDetails={renJS.network}
+                mini={paused}
+                inTx={transfer.inTx}
+                outTx={transfer.outTx}
+            />;
     }
-
-    return <>
-        {inner}
-        {!paused ? <TransferDetails transfer={transfer} /> : <></>}
-    </>;
+    return <></>;
 };

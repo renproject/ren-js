@@ -579,7 +579,7 @@ export class SDKContainer extends Container<typeof initialState> {
             // tslint:disable-next-line: strict-type-predicates
             if (!transfer.inTx || transfer.inTx.chain === Chain.Ethereum || !transfer.inTx.utxo || transfer.inTx.utxo.vOut === undefined) {
                 await this.updateTransfer({
-                    status: LockAndMintStatus.Confirmed,
+                    status: LockAndMintStatus.Committed,
                 }, { force: true });
                 return;
             }

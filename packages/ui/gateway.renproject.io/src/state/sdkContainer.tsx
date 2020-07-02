@@ -426,8 +426,11 @@ const useSDKContainer = () => {
         const promise = lockAndMintObject()
             .wait(getNumberOfConfirmations(), specifyUTXO);
         promise.on("deposit", (utxo: UTXOWithChain) => {
-            updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
-            onDeposit(utxo);
+            // tslint:disable-next-line: strict-type-predicates
+            if (utxo.utxo && utxo.utxo.vOut !== undefined) {
+                updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
+                onDeposit(utxo);
+            }
         });
         const signaturePromise = transaction
             .submit()
@@ -473,7 +476,7 @@ const useSDKContainer = () => {
 
         if (retry) {
             await updateTransfer({
-                inTx: undefined,
+                outTx: undefined,
             });
         }
         // let receipt: TransactionReceipt;
@@ -498,19 +501,16 @@ const useSDKContainer = () => {
 
             await sleep(500);
 
-            let transaction = lockAndMintObject();
-
-            let signature: LockAndMint;
             // tslint:disable-next-line: strict-type-predicates
             if (!transfer.inTx || transfer.inTx.chain === Chain.Ethereum || !transfer.inTx.utxo || transfer.inTx.utxo.vOut === undefined) {
-                transaction = await transaction
-                    .wait(0);
-                signature = await transaction
-                    .submit();
-            } else {
-                signature = await transaction
-                    .submit(transfer.inTx.utxo);
+                await updateTransfer({
+                    status: LockAndMintStatus.Committed,
+                });
+                return;
             }
+
+            const signature = await lockAndMintObject()
+                .submit(transfer.inTx.utxo);
 
             const transactionConfigs = signature.createTransactions();
 

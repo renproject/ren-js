@@ -473,8 +473,11 @@ export class SDKContainer extends Container<typeof initialState> {
             .lockAndMintObject()
             .wait(this.getNumberOfConfirmations(transfer), specifyUTXO);
         promise.on("deposit", (utxo: UTXOWithChain) => {
-            this.updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
-            onDeposit(utxo);
+            // tslint:disable-next-line: strict-type-predicates
+            if (utxo.utxo && utxo.utxo.vOut !== undefined) {
+                this.updateTransfer({ status: LockAndMintStatus.Deposited, inTx: utxo }).catch(error => { _catchBackgroundErr_(error, "Error in sdkContainer.tsx > waits"); });
+                onDeposit(utxo);
+            }
         });
         const signaturePromise = transaction
             .submit()
@@ -548,7 +551,7 @@ export class SDKContainer extends Container<typeof initialState> {
 
         if (retry) {
             await this.updateTransfer({
-                inTx: undefined,
+                outTx: undefined,
             }, { force: true });
         }
         // let receipt: TransactionReceipt;
@@ -573,20 +576,17 @@ export class SDKContainer extends Container<typeof initialState> {
 
             await sleep(500);
 
-            let transaction = this
-                .lockAndMintObject();
-
-            let signature: LockAndMint;
             // tslint:disable-next-line: strict-type-predicates
             if (!transfer.inTx || transfer.inTx.chain === Chain.Ethereum || !transfer.inTx.utxo || transfer.inTx.utxo.vOut === undefined) {
-                transaction = await transaction
-                    .wait(0);
-                signature = await transaction
-                    .submit();
-            } else {
-                signature = await transaction
-                    .submit(transfer.inTx.utxo);
+                await this.updateTransfer({
+                    status: LockAndMintStatus.Confirmed,
+                }, { force: true });
+                return;
             }
+
+            const signature = await this
+                .lockAndMintObject()
+                .submit(transfer.inTx.utxo);
 
             const transactionConfigs = signature.createTransactions();
 

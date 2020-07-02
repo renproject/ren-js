@@ -18,7 +18,7 @@ export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
  * @/param nonce The nonce of the transaction, to detect if it has been
  *        overwritten.
  */
-export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/): Promise<TransactionReceipt> => {
+export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/) => new Promise<TransactionReceipt>(async (resolve, reject) => {
 
     let blocknative;
 
@@ -31,6 +31,7 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonc
 
         const { emitter } = blocknative.transaction(transactionHash);
         emitter.on("txSpeedUp", state => { if (state.hash) { transactionHash = Ox(state.hash); } });
+        emitter.on("txCancel", () => { reject(new Error("Ethereum transaction was cancelled.")); });
 
     } catch (error) {
         // Ignore blocknative error.
@@ -57,11 +58,13 @@ export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonc
 
     // Status might be undefined - so check against `false` explicitly.
     if (receipt.status === false) {
-        throw new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`);
+        reject(new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`));
+        return;
     }
 
-    return receipt;
-};
+    resolve(receipt);
+    return;
+});
 
 export const extractBurnReference = async (web3: Web3, txHash: string): Promise<number | string> => {
 

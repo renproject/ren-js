@@ -128,7 +128,7 @@ export const DepositReceived: React.StatelessComponent<Props> =
                 token={token}
                 message={firstUTXO ?
                     firstUTXO.utxo.confirmations >= confirmations ?
-                        "Deposit confirmed" :
+                        "Submitting to RenVM" :
                         `${firstUTXO.utxo.confirmations} / ${confirmations} confirmations` :
                     "Waiting for deposit"}
             />;

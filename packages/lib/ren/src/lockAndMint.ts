@@ -178,7 +178,7 @@ export class LockAndMint {
                     const greatestTx = deposits.filter(utxo => utxo.utxo.confirmations >= confirmations).sort((a, b) => a.utxo.amount > b.utxo.amount ? -1 : 1).first<UTXOWithChain>(undefined);
 
                     // Handle required minimum and maximum amount
-                    const minimum = new BigNumber(35001);
+                    const minimum = new BigNumber(16001);
                     const maximum = new BigNumber(Infinity);
 
                     if (greatestTx && new BigNumber(greatestTx.utxo.amount).gte(minimum) && new BigNumber(greatestTx.utxo.amount).lte(maximum)) {

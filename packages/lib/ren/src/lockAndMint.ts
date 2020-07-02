@@ -44,7 +44,10 @@ export class LockAndMint {
             this.validateParams();
         }
 
-        this.logger.debug("lockAndMint created", this.params);
+        { // Debug log
+            const { web3Provider, ...restOfParams } = this.params;
+            this.logger.debug("lockAndMint created", { web3: web3Provider ? "[Web3 provider]" : web3Provider, ...restOfParams });
+        }
     }
 
     private readonly validateParams = () => {
@@ -339,7 +342,11 @@ export class LockAndMint {
         return signature.submitToEthereum(web3Provider, txConfig);
     }
 
-    public findTransaction = async (web3Provider: provider): Promise<string | undefined> => {
+    public findTransaction = async (web3Provider?: provider): Promise<string | undefined> => {
+        web3Provider = web3Provider || this.params.web3Provider;
+        if (!web3Provider) {
+            throw new Error(`Unable to find transaction without web3Provider.`);
+        }
         const web3 = new Web3(web3Provider);
         const { sendToken: renContract } = this.params;
 
@@ -348,7 +355,7 @@ export class LockAndMint {
         }
 
         if (!this.renVMResponse) {
-            throw new Error(`Unable to submit to Ethereum without RenVM response. Call 'submit' first.`);
+            throw new Error(`Unable to find transaction without RenVM response. Call 'submit' first.`);
         }
 
         // Check if the signature has already been submitted
@@ -359,7 +366,12 @@ export class LockAndMint {
     }
 
     // tslint:disable-next-line: no-any
-    public submitToEthereum = (web3Provider: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
+    public submitToEthereum = (web3Provider?: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
+        web3Provider = web3Provider || this.params.web3Provider;
+        if (!web3Provider) {
+            throw new Error(`Unable to submit to Ethereum without web3Provider.`);
+        }
+
         // tslint:disable-next-line: no-any
         const promiEvent = newPromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>();
 

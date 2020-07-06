@@ -69,15 +69,13 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
         const resumeOnClick = React.useCallback(() => resume(false), [resume]);
 
         const cancelTransfer = React.useCallback(async (fromClient?: boolean) => {
-            if (!sdkContainer.state.transfer || !uiContainer.state.renNetwork) {
+            if (!sdkContainer.state.transfer) {
                 _catchInteractionErr_(new Error("Missing transfer or network details for cancelTransfer"), "Error in Main.tsx > cancelTransfer");
                 return;
             }
 
             if (sdkContainer.state.transfer.transferParams.nonce) {
                 await sdkContainer.updateTransfer({ archived: true }, { force: true });
-                // await removeStorageTransfer(uiContainer.state.renNetwork, sdkContainer.state.transfer.transferParams.nonce);
-                // TODO: Handle no nonce.
             }
             if (!fromClient && uiContainer.state.gatewayPopupID) {
                 await sdkContainer.updateTransfer({ returned: true });
@@ -285,7 +283,17 @@ export const Main = withRouter(connect<RouteComponentProps & ConnectedProps<[UIC
                     <></>
                 }
                 {transfer ? <ErrorBoundary>< HandlingTransfer /></ErrorBoundary> : <></>}
-                <ErrorBoundary><SettingsPage hidden={!showingSettings || paused} hideSettings={uiContainer.hideSettings} cancelTransfer={cancelTransfer} /></ErrorBoundary>
+                <ErrorBoundary>
+                    <SettingsPage
+                        version={version}
+                        asset={transfer && getAsset(transfer)}
+                        hidden={!showingSettings || paused}
+                        hideSettings={uiContainer.hideSettings}
+                        cancelTransfer={cancelTransfer}
+                        clearMintTransaction={sdkContainer.canClearMintTransaction() ? sdkContainer.clearMintTransaction : undefined}
+                        clearLockTransaction={sdkContainer.canClearLockTransaction() ? sdkContainer.clearLockTransaction : undefined}
+                    />
+                </ErrorBoundary>
                 {window === window.top ? <span className="not-in-iframe">
                     <h1>GatewayJS</h1>
                     <p>Version {version}</p>

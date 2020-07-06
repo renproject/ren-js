@@ -1,16 +1,28 @@
 import classNames from "classnames";
 import React, { useCallback, useEffect, useState } from "react";
+import { Asset } from "@renproject/interfaces";
 
+import infoIcon from "../../../images/icons/info.svg";
+import { _catchInteractionErr_ } from "../../../lib/errors";
 import { Popup } from "../popup/Popup";
+import { Tooltip } from "../tooltip/Tooltip";
 
 interface Props {
+    version: string | undefined;
+    asset: Asset | null;
     hidden: boolean;
     hideSettings: () => void;
     cancelTransfer: () => void;
+    clearMintTransaction: (() => Promise<void>) | undefined;
+    clearLockTransaction: (() => Promise<void>) | undefined;
 }
 
-export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSettings, cancelTransfer }) => {
+export const SettingsPage: React.FunctionComponent<Props> = ({
+    version, asset, hidden, hideSettings, cancelTransfer, clearMintTransaction, clearLockTransaction,
+}) => {
     const [cancelling, setCancelling] = useState(false);
+    const [clearingMintTransaction, setClearingMintTransaction] = useState(false);
+    const [clearingLockTransaction, setClearingLockTransaction] = useState(false);
 
     const promptDeleteTransfer = useCallback(() => {
         setCancelling(true);
@@ -36,6 +48,39 @@ export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSetti
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hidden]);
 
+    const handleClearMintTransaction = useCallback(async () => {
+        if (!clearMintTransaction) {
+            return;
+        }
+
+        setClearingMintTransaction(true);
+        try {
+            await clearMintTransaction();
+            hideSettings();
+        } catch (error) {
+            _catchInteractionErr_(error, "Error clearing mint transaction");
+        }
+        setClearingMintTransaction(false);
+    }, [clearMintTransaction, setClearingMintTransaction]);
+
+    const handleClearLockTransaction = useCallback(async () => {
+        if (!clearLockTransaction) {
+            return;
+        }
+
+        setClearingLockTransaction(true);
+        try {
+            await clearLockTransaction();
+            hideSettings();
+        } catch (error) {
+            _catchInteractionErr_(error, "Error clearing lock transaction");
+        }
+        setClearingLockTransaction(false);
+    }, [clearLockTransaction, setClearingLockTransaction]);
+
+    const clearLockTooltip = "Only use this if you have replaced the transaction with a higher fee (RBF).";
+    const clearMintTooltip = "Only use this if you have cancelled your Ethereum transaction in your wallet.";
+
     return <div className={classNames(`settings-page`, hidden ? "settings-page-hidden" : "")}>
         <div role="none" className="settings-overlay" onClick={hideSettings} />
         <div className="settings-bottom">
@@ -43,9 +88,18 @@ export const SettingsPage: React.FunctionComponent<Props> = ({ hidden, hideSetti
             {/* <p>Powered by <ExternalLink href="https://renproject.io/">RenVM</ExternalLink>.</p> */}
 
             <h2>Settings</h2>
+            {version ? <span>GatewayJS Version {version}</span> : <></>}
 
             <div className="settings-options">
                 {/* <button disabled={hidden} onClick={hideTransfer}><span>Hide transfer</span></button> */}
+                {clearLockTransaction ?
+                    <button disabled={hidden || clearingLockTransaction} onClick={handleClearLockTransaction} className="button-red"><span><Tooltip direction={"top"} width={250} contents={<span>{clearLockTooltip}</span>}>Clear {asset ? asset.toUpperCase() : ""} transaction <img alt={clearLockTooltip} src={infoIcon} /></Tooltip></span></button> :
+                    <></>
+                }
+                {clearMintTransaction ?
+                    <button disabled={hidden || clearingMintTransaction} onClick={handleClearMintTransaction} className="button-red"><span><Tooltip direction={"top"} width={250} contents={<span>{clearMintTooltip}</span>}>Clear Ethereum transaction <img alt={clearMintTooltip} src={infoIcon} /></Tooltip></span></button> :
+                    <></>
+                }
                 <button disabled={hidden} onClick={promptDeleteTransfer} className="button-red"><span>Delete transfer</span></button>
             </div>
 

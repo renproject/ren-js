@@ -415,7 +415,10 @@ export class SDKContainer extends Container<typeof initialState> {
             throw new Error("Transfer not set");
         }
 
-        return renVM.lockAndMint(transfer.transferParams as LockAndMintParams);
+        const params = transfer.transferParams as LockAndMintParams;
+        const inTx = transfer.inTx && transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo ? transfer.inTx.utxo : undefined;
+
+        return renVM.lockAndMint({ ...params, deposit: params.deposit || inTx });
     }
 
     // Takes a transferParams as bytes or an array of primitive types and returns
@@ -661,4 +664,50 @@ export class SDKContainer extends Container<typeof initialState> {
 
     //     return receipt;
     // }
+
+    public canClearMintTransaction = () => {
+        const { transfer } = this.state;
+        return transfer && transfer.eventType === EventType.LockAndMint && transfer.status === LockAndMintStatus.SubmittedToEthereum && transfer.outTx;
+    }
+
+    /**
+     * Clear a pending mint transaction. This can only be done for mints.
+     * If the transaction does eventually go through, it will be detected.
+     */
+    public clearMintTransaction = async () => {
+        // Check that the mint tx can/should be cleared.
+        if (!this.canClearMintTransaction()) {
+            return;
+        }
+
+        // Clear mint tx.
+        await this.updateTransfer({
+            status: LockAndMintStatus.ReturnedFromRenVM,
+            outTx: undefined,
+            txHash: undefined,
+        }, { force: true, sync: true });
+    }
+
+    public canClearLockTransaction = () => {
+        const { transfer } = this.state;
+        return transfer &&
+            transfer.eventType === EventType.LockAndMint &&
+            transfer.status === LockAndMintStatus.Deposited &&
+            transfer.inTx && transfer.inTx.chain !== Chain.Ethereum &&
+            // Check that tx has 0 confirmations
+            (!transfer.inTx.utxo || transfer.inTx.utxo.confirmations === 0);
+    }
+
+    public clearLockTransaction = async () => {
+        // Check that the lock tx can/should be cleared.
+        if (!this.canClearLockTransaction()) {
+            return;
+        }
+
+        // Clear lock tx.
+        await this.updateTransfer({
+            status: LockAndMintStatus.Committed,
+            inTx: undefined,
+        }, { force: true });
+    }
 }

@@ -375,7 +375,10 @@ const useSDKContainer = () => {
             throw new Error("Transfer not set");
         }
 
-        return renJS.lockAndMint(transfer.transferParams as LockAndMintParams);
+        const params = transfer.transferParams as LockAndMintParams;
+        const inTx = transfer.inTx && transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo ? transfer.inTx.utxo : undefined;
+
+        return renJS.lockAndMint({ ...params, deposit: params.deposit || inTx });
     };
 
     // Takes a transferParams as bytes or an array of primitive types and returns
@@ -553,6 +556,50 @@ const useSDKContainer = () => {
         return;
     };
 
+    const canClearMintTransaction = () => {
+        return transfer && transfer.eventType === EventType.LockAndMint && transfer.status === LockAndMintStatus.SubmittedToEthereum && transfer.outTx;
+    };
+
+    /**
+     * Clear a pending mint transaction. This can only be done for mints.
+     * If the transaction does eventually go through, it will be detected.
+     */
+    const clearMintTransaction = async () => {
+        // Check that the mint tx can/should be cleared.
+        if (!canClearMintTransaction()) {
+            return;
+        }
+
+        // Clear mint tx.
+        await updateTransfer({
+            status: LockAndMintStatus.ReturnedFromRenVM,
+            outTx: undefined,
+            txHash: undefined,
+        });
+    };
+
+    const canClearLockTransaction = () => {
+        return transfer &&
+            transfer.eventType === EventType.LockAndMint &&
+            transfer.status === LockAndMintStatus.Deposited &&
+            transfer.inTx && transfer.inTx.chain !== Chain.Ethereum &&
+            // Check that tx has 0 confirmations
+            (!transfer.inTx.utxo || transfer.inTx.utxo.confirmations === 0);
+    };
+
+    const clearLockTransaction = async () => {
+        // Check that the lock tx can/should be cleared.
+        if (!canClearLockTransaction()) {
+            return;
+        }
+
+        // Clear lock tx.
+        await updateTransfer({
+            status: LockAndMintStatus.Committed,
+            inTx: undefined,
+        });
+    };
+
     return {
         renJS,
         transfer,
@@ -568,6 +615,10 @@ const useSDKContainer = () => {
         waitForDeposits,
         queryTransferStatus,
         submitMintToEthereum,
+        canClearMintTransaction,
+        clearMintTransaction,
+        canClearLockTransaction,
+        clearLockTransaction,
     };
 };
 

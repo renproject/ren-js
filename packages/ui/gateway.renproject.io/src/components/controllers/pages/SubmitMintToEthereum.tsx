@@ -46,6 +46,15 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     const [error, setError] = React.useState(null as string | null);
     const [failedTransaction, setFailedTransaction] = React.useState(null as string | null);
 
+    // Monitor if the txHash has been cleared.
+    const [previousTxHash, setPreviousTxHash] = React.useState<Tx | null>(null);
+    React.useEffect(() => {
+        if (txHash !== previousTxHash && previousTxHash && !txHash) {
+            setSubmitting(false);
+        }
+        setPreviousTxHash(txHash);
+    }, [previousTxHash, setPreviousTxHash, txHash]);
+
     const onSubmit = React.useCallback(async () => {
         setError(null);
         setFailedTransaction(null);

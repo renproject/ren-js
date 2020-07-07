@@ -6,7 +6,7 @@ import React from "react";
 import { useLocation } from "react-router";
 
 import { DEFAULT_NETWORK } from "../../lib/environmentVariables";
-import { extractQuery } from "../../lib/utils";
+import { extractQuery, getAsset } from "../../lib/utils";
 import { ReactComponent as AlertIcon } from "../../scss/images/alert.svg";
 import { ReactComponent as MinimizeIcon } from "../../scss/images/icon-minimize.svg";
 import { MessageContainer } from "../../state/messageContainer";
@@ -20,6 +20,8 @@ import { Tooltip } from "../views/tooltip/Tooltip";
 import { HandlingTransfer } from "./HandlingTransfer";
 import { NotIframe } from "./NotIframe";
 
+const { version } = require("../../../package.json");
+
 /**
  * App is the main visual component responsible for displaying different routes
  * and running background app loops
@@ -30,7 +32,7 @@ export const Main: React.FC = () => {
 
     const { noLocalStorage } = TransferContainer.useContainer();
     const { paused, showingSettings, setRenNetwork, hideSettings } = UIContainer.useContainer();
-    const { transfer, connect } = SDKContainer.useContainer();
+    const { transfer, connect, canClearMintTransaction, clearMintTransaction, canClearLockTransaction, clearLockTransaction } = SDKContainer.useContainer();
     const { pause, resume, reportError, cancelTransfer } = MessageContainer.useContainer();
 
     const pauseOnClick = React.useCallback(() => pause(false), [pause]);
@@ -102,7 +104,15 @@ export const Main: React.FC = () => {
 
             {/* Settings page. */}
             <ErrorBoundary>
-                <SettingsPage hidden={!showingSettings || paused} hideSettings={hideSettings} cancelTransfer={cancelTransfer} />
+                <SettingsPage
+                    version={version}
+                    asset={transfer && getAsset(transfer)}
+                    hidden={!showingSettings || paused}
+                    hideSettings={hideSettings}
+                    cancelTransfer={cancelTransfer}
+                    clearMintTransaction={canClearMintTransaction() ? clearMintTransaction : undefined}
+                    clearLockTransaction={canClearLockTransaction() ? clearLockTransaction : undefined}
+                />
             </ErrorBoundary>
         </main>
     );

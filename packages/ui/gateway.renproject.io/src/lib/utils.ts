@@ -1,8 +1,8 @@
 import {
     Asset, BurnAndReleaseStatus, EventType, HistoryEvent, isAsset, LockAndMintStatus, TxStatus,
 } from "@renproject/interfaces";
-import QueryString from "qs";
 import { parseRenContract, resolveInToken, resolveOutToken } from "@renproject/utils";
+import QueryString from "qs";
 
 // tslint:disable-next-line: no-any
 export const isPromise = <T>(p: any): p is Promise<T> => {

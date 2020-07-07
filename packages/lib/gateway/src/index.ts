@@ -33,6 +33,7 @@ export interface GatewayJSConfig {
     logger?: Logger;
 }
 
+// tslint:disable-next-line: no-any
 export type GatewayResult = PromiEvent<UnmarshalledTx | {}, { status: [LockAndMintStatus | BurnAndReleaseStatus, any], transferUpdated: [HistoryEvent] }>;
 
 export class Gateway {

@@ -1,6 +1,6 @@
+import { Asset } from "@renproject/interfaces";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useState } from "react";
-import { Asset } from "@renproject/interfaces";
 
 import infoIcon from "../../../images/icons/info.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";

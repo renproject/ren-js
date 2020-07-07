@@ -4,12 +4,12 @@ import { Asset, LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
 import { Loading, TokenIcon } from "@renproject/react-components";
 import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
+import { toLegacyAddress } from "bchaddrjs";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
 import { lighten } from "polished";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
-import { toLegacyAddress } from "bchaddrjs";
 
 import { ReactComponent as QR } from "../../../images/qr.svg";
 import { pulseAnimation } from "../../../scss/animations";

@@ -96,7 +96,7 @@ export const generateGHash = (payload: EthArgs, /* amount: number | string, */ t
     const pHash = generatePHash(payload, logger);
 
     const encoded = rawEncode(
-        ["bytes32", /*"uint256",*/ "address", "address", "bytes32"],
+        ["bytes32", /*"uint256",*/ "address", "bytes32", "bytes32"],
         [Ox(pHash), /*amount,*/ Ox(token), Ox(to), Ox(nonce)],
     );
 
@@ -111,7 +111,7 @@ export const generateSighash = (pHash: string, amount: number | string, to: stri
     const token = syncGetTokenAddress(renContract, network);
 
     const encoded = rawEncode(
-        ["bytes32", "uint256", "address", "address", "bytes32"],
+        ["bytes32", "uint256", "address", "bytes32", "bytes32"],
         [Ox(pHash), amount, token, to, nonceHash],
     );
 
@@ -176,7 +176,7 @@ export const fixSignature = (response: UnmarshalledMintTx, network: RenNetworkDe
 
     const r = response.out.r;
     let s = new BigNumber(strip0x(response.out.s), 16);
-    let v = ((new BigNumber(strip0x(response.out.v) || "0", 16).toNumber() + 27) || 27);
+    let v = (((new BigNumber(strip0x(response.out.v) || "0", 16).toNumber()) || 0) % 27) + 27;
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.

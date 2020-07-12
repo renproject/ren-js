@@ -63,7 +63,7 @@ export const TransferDetails: React.FC<Props> = ({ transfer }) => {
             <TransferDetailsLeft>Integrator <Tooltip align="right" width={300} contents={"To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></TransferDetailsLeft>
             <TransferDetailsRight>
                 <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} />{" "}{title}{" "}
-                <Tooltip align="left" width={300} contents={<pre>{url}</pre>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip>
+                <Tooltip align="left" width={300} contents={url}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip>
             </TransferDetailsRight>
         </TransferDetailsRow>
         <TransferDetailsRow>

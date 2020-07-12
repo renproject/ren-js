@@ -17,6 +17,15 @@ import { LabelledDiv } from "../../views/LabelledInput";
 import { Mini } from "../../views/Mini";
 import { TransparentButton, TransparentLoading } from "../../views/Styled";
 
+const Title = styled.span`
+font-weight: 500;
+font-size: 20px;
+line-height: 23px;
+text-align: center;
+color: #3F3F48;
+opacity: 0.9;
+`;
+
 const StyledLink = styled.a`
     display: block;
     color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
@@ -80,8 +89,6 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
         }
     }, [submit, error]);
 
-    // useEffect replaces `componentDidMount` and `componentDidUpdate`.
-    // To limit it to running once, we use the initialized hook.
     const [initialized, setInitialized] = React.useState(false);
     React.useEffect(() => {
         if (!initialized) {
@@ -108,14 +115,17 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
         </ErrorScreen>;
     }
 
+    const amount = transfer.inTx && transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo && transfer.inTx.utxo.amount ?
+        transfer.inTx.utxo.amount : undefined;
+
     return <Container>
         <div className="submit-to-ethereum">
             <ContainerBody>
                 <ContainerHeader icon={<TokenIcon token={token} />} />
                 <ContainerDetails>
+                    <Title>{amount ? <>{amount}{" "}</> : null}{token.toUpperCase()} received</Title>
                     {transfer.inTx ? <div className="submit-mint-to-ethereum--deposit">
                         <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>Tx ID: {txPreview(transfer.inTx)}</StyledLink>
-                        {/* <StyledLink target="_blank" rel="noopener noreferrer" href={txUrl(transfer.inTx, networkDetails)}>{transfer.inTx.chain !== Chain.Ethereum && transfer.inTx.utxo && transfer.inTx.utxo.amount > 0 ? <>Tx: {renderAmount(transfer.inTx)} - </> : <>Tx ID:</>} {txPreview(transfer.inTx)}</StyledLink> */}
                     </div> : <></>}
                 </ContainerDetails>
             </ContainerBody>

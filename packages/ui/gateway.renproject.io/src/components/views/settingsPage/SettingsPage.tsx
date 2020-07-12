@@ -2,8 +2,8 @@ import { Asset } from "@renproject/interfaces";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useState } from "react";
 
-import infoIcon from "../../../images/icons/info.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
+import infoIcon from "../../../scss/images/info.svg";
 import { Popup } from "../popup/Popup";
 import { Tooltip } from "../tooltip/Tooltip";
 

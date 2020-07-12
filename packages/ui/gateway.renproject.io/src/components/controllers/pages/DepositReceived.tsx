@@ -37,7 +37,8 @@ interface Props {
 const ConfirmationsContainer = styled.div`
         text-align: center;
         `;
-const ConfirmationsHeader = styled.span`
+
+const Title = styled.span`
         font-size: 1.4rem;
         margin-right: 5px;
         color: #3F3F48;
@@ -129,7 +130,7 @@ export const DepositReceived: React.FC<Props> = (
             <ContainerDetails className="deposit-received">
 
                 {confirmations ? <ConfirmationsContainer>
-                    <ConfirmationsHeader>Confirmations</ConfirmationsHeader>
+                    <Title>Confirmations</Title>
                     <Tooltip direction={"bottom"} width={250} contents={<span>{tooltipText}</span>}><img alt={tooltipText} src={infoIcon} /></Tooltip>
                 </ConfirmationsContainer> : <></>}
                 {utxos.map(utxo => {

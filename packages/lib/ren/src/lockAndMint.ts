@@ -19,11 +19,11 @@ import { provider } from "web3-providers";
 export class LockAndMint {
     public utxo: UTXOIndex | undefined;
     public signature: string | undefined;
+    public queryTxResult: UnmarshalledMintTx | undefined;
     private generatedGatewayAddress: string | undefined;
     private readonly network: RenNetworkDetails;
     private readonly renVM: RenVMProvider;
     private readonly params: LockAndMintParams;
-    private renVMResponse: UnmarshalledMintTx | undefined;
     private readonly logger: Logger;
 
     public thirdPartyTransaction: string | undefined;
@@ -215,8 +215,11 @@ export class LockAndMint {
     /**
      * queryTx requests the status of the mint from RenVM.
      */
-    public queryTx = async (specifyDeposit?: UTXOIndex): Promise<UnmarshalledMintTx> =>
-        unmarshalMintTx(await this.renVM.queryMintOrBurn(Ox(Buffer.from(this.txHash(specifyDeposit), "base64"))))
+    public queryTx = async (specifyDeposit?: UTXOIndex): Promise<UnmarshalledMintTx> => {
+        const queryTxResult = unmarshalMintTx(await this.renVM.queryMintOrBurn(Ox(Buffer.from(this.txHash(specifyDeposit), "base64"))));
+        this.queryTxResult = queryTxResult;
+        return queryTxResult;
+    }
 
     /**
      * submit sends the mint details to RenVM and waits for the signature to be
@@ -321,8 +324,8 @@ export class LockAndMint {
 
             const response = unmarshalMintTx(rawResponse);
 
-            this.renVMResponse = response;
-            this.signature = signatureToString(fixSignature(this.renVMResponse, this.network, this.logger));
+            this.queryTxResult = response;
+            this.signature = signatureToString(fixSignature(this.queryTxResult, this.network, this.logger));
 
             this.logger.debug("Signature", this.signature);
 
@@ -354,13 +357,13 @@ export class LockAndMint {
             return this.thirdPartyTransaction;
         }
 
-        if (!this.renVMResponse) {
+        if (!this.queryTxResult) {
             throw new Error(`Unable to find transaction without RenVM response. Call 'submit' first.`);
         }
 
         // Check if the signature has already been submitted
         if (renContract) {
-            return await findTransactionBySigHash(this.network, web3, resolveInToken(renContract), this.renVMResponse.autogen.sighash, this.logger);
+            return await findTransactionBySigHash(this.network, web3, resolveInToken(renContract), this.queryTxResult.autogen.sighash, this.logger);
         }
         return;
     }
@@ -379,7 +382,7 @@ export class LockAndMint {
 
             const web3 = new Web3(web3Provider);
 
-            if (!this.renVMResponse || !this.signature) {
+            if (!this.queryTxResult || !this.signature) {
                 throw new Error(`Unable to submit to Ethereum without signature. Call 'submit' first.`);
             }
 
@@ -401,8 +404,8 @@ export class LockAndMint {
 
                 const callParams = last ? [
                     ...(contractParams || []).map(value => value.value),
-                    Ox(new BigNumber(this.renVMResponse.autogen.amount).toString(16)), // _amount: BigNumber
-                    Ox(this.renVMResponse.autogen.nhash),
+                    Ox(new BigNumber(this.queryTxResult.autogen.amount).toString(16)), // _amount: BigNumber
+                    Ox(this.queryTxResult.autogen.nhash),
                     // Ox(this.renVMResponse.args.n), // _nHash: string
                     Ox(this.signature), // _sig: string
                 ] : (contractParams || []).map(value => value.value);
@@ -471,7 +474,7 @@ export class LockAndMint {
      * Alternative to `submitToEthereum` that doesn't need a web3 instance
      */
     public createTransactions = (txConfig?: TransactionConfig): TransactionConfig[] => {
-        const renVMResponse = this.renVMResponse;
+        const renVMResponse = this.queryTxResult;
         const signature = this.signature;
         const contractCalls = this.params.contractCalls || [];
 

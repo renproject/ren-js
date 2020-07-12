@@ -1,6 +1,6 @@
 import { Loading } from "@renproject/react-components";
-import styled from "styled-components";
 import { lighten } from "polished";
+import styled from "styled-components";
 
 export const TransparentLoading = styled(Loading)`
         position: absolute;

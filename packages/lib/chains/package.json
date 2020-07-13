@@ -47,7 +47,8 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link": "yarn link @renproject/interfaces && yarn link"
+        "link": "yarn link @renproject/interfaces && yarn link",
+        "unlink": "yarn unlink"
     },
     "dependencies": {
         "@renproject/interfaces": "file:../interfaces",

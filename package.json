@@ -1,10 +1,6 @@
 {
-  "name": "@renproject/ren",
-  "version": "0.0.0",
+  "name": "root",
   "private": true,
-  "main": "build/main/index.js",
-  "typings": "build/main/index.d.ts",
-  "module": "build/module/index.js",
   "devDependencies": {
     "@bitjson/npm-scripts-info": "^1.0.0",
     "@bitjson/typedoc": "^0.15.0-0",
@@ -101,8 +97,7 @@
     "build": "lerna run build --scope @renproject/*",
     "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
     "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",
-    "lint": "tslint packages/*/*/src/**/*.ts{,x}",
-    "postinstall": "yarn link && yarn build && ln -s packages/lib/ren/build ./build"
+    "lint": "tslint packages/*/*/src/**/*.ts{,x}"
   },
   "workspaces": [
     "packages/lib/*",

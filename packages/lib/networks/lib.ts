@@ -4,11 +4,11 @@ import localnetJSON from "./src/networks/localnet";
 import mainnetJSON from "./src/networks/mainnet";
 import testnetJSON from "./src/networks/testnet";
 
-export const mainnet = mainnetJSON;
-export const chaosnet = chaosnetJSON;
-export const testnet = testnetJSON;
-export const devnet = devnetJSON;
-export const localnet = localnetJSON;
+export const renMainnet = mainnetJSON;
+export const renChaosnet = chaosnetJSON;
+export const renTestnet = testnetJSON;
+export const renDevnet = devnetJSON;
+export const renLocalnet = localnetJSON;
 
 export enum RenNetwork {
     Mainnet = "mainnet",
@@ -19,11 +19,11 @@ export enum RenNetwork {
 }
 
 export const RenNetworks = {
-    [RenNetwork.Mainnet]: mainnet,
-    [RenNetwork.Chaosnet]: chaosnet,
-    [RenNetwork.Testnet]: testnet,
-    [RenNetwork.Devnet]: devnet,
-    [RenNetwork.Localnet]: localnet,
+    [RenNetwork.Mainnet]: renMainnet,
+    [RenNetwork.Chaosnet]: renChaosnet,
+    [RenNetwork.Testnet]: renTestnet,
+    [RenNetwork.Devnet]: renDevnet,
+    [RenNetwork.Localnet]: renLocalnet,
 };
 
-export type RenNetworkDetails = typeof mainnet | typeof chaosnet | typeof testnet | typeof devnet | typeof localnet;
+export type RenNetworkDetails = typeof renMainnet | typeof renChaosnet | typeof renTestnet | typeof renDevnet | typeof renLocalnet;

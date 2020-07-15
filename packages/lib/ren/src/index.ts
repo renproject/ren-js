@@ -20,7 +20,7 @@ export interface RenJSConfig {
 }
 
 /**
- * This is the main exported class.
+ * This is the main exported class from `@renproject/ren`.
  *
  * ```typescript
  * import RenJS from "@renproject/ren";
@@ -32,23 +32,43 @@ export interface RenJSConfig {
  * ```typescript
  * new RenJS(); // Same as `new RenJS("mainnet");`
  * new RenJS("testnet");
- * new RenJS({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
+ *
+ * import { renMainnet } from "@renproject/networks";
+ * new RenJS({ ...renMainnet, lightnodeURL: "custom lightnode URL" });
  * ```
  *
  * A second optional parameter lets you provide a RenVM RPC provider or a
- * lightnode URL.
+ * lightnode URL. See the [[constructor]] for more details.
  *
  * It then exposes two main functions:
  * 1. [[lockAndMint]] - for transferring assets to Ethereum.
  * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
  */
 export default class RenJS {
-    // Expose constants so they can be accessed on the RenJS class
-    // e.g. `RenJS.Tokens`
+
+    /**
+     * `Tokens` exposes the tokens that can be passed in to the lockAndMint and
+     * burnAndRelease methods.
+     */
     public static Tokens = Tokens;
+
+    /**
+     * `Networks` exposes the network options that can be passed in to the RenJS
+     * constructor. `Networks.Mainnet` resolves to the string `"mainnet"`.
+     */
     public static Networks = RenNetwork;
+
+    /**
+     * `NetworkDetails` exposes the network details for each network.
+     * `NetworkDetails.Mainnet` resolves to `require("@renproject/networks").renMainnet`.
+     */
     public static NetworkDetails = NetworkDetails;
+
     public static Chains = Chain;
+
+    /**
+     * `utils` exposes helper functions, including helpers for BTC, BCH and ZEC.
+     */
     public static utils: typeof utils = utils;
 
     // Not static
@@ -59,9 +79,9 @@ export default class RenJS {
     private readonly logger: Logger;
 
     /**
-     * Takes a Network object that contains relevant addresses.
-     * @param network One of "mainnet" (or empty), "testnet" or a custom
-     *                Network object.
+     * Accepts the name of a network, or a network object.
+     * @param network Provide the name of a network - `"mainnet"` or `"testnet"` - or a network object.
+     * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
      */
     constructor(network?: RenNetworkDetails | string | null | undefined, providerOrConfig?: string | Provider | RenJSConfig) {
         this.network = stringToNetwork(network);
@@ -91,11 +111,34 @@ export default class RenJS {
     }
 
     /**
-     * Submits the commitment and transaction to RenVM, and then submits the
-     * signature to the adapter address.
+     * `lockAndMint` initiates the process of bridging an asset from its native
+     * chain to a host chain.
+     *
+     * Example initialization:
+     *
+     * ```js
+     * const lockAndMint = renJS.lockAndMint({
+     *     // Bridge BTC from Bitcoin to Ethereum
+     *     sendToken: RenJS.Tokens.BTC.Btc2Eth,
+     *
+     *     // Unique value to generate unique deposit address.
+     *     nonce: RenJS.utils.randomNonce(),
+     *
+     *     // Contract to be called for Ethereum
+     *     contractCalls: [{
+     *         sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
+     *         contractFn: "deposit",
+     *         contractParams: [{
+     *             name: "_msg",
+     *             type: "bytes",
+     *             value: web3.utils.fromAscii(`Depositing BTC`),
+     *         }],
+     *         txConfig: { gas: 500000 }
+     *     }],
+     * });
+     * ```
      *
      * @param params See [[LockAndMintParams]].
-     * @returns An instance of [[LockAndMint]].
      */
     public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): LockAndMint => {
         if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {

@@ -51,7 +51,7 @@
     "unlink": "yarn unlink"
   },
   "dependencies": {
-    "darknode-sol": "https://github.com/renproject/darknode-sol#f692da1b99a88d7691d80d6e28337a9dedfbe501"
+    "@renproject/sol": "^1.0.0"
   },
   "config": {
     "commitizen": {

@@ -1,6 +1,5 @@
 // tslint:disable: no-console
 
-import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
     BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
@@ -8,6 +7,7 @@ import {
     LockAndMintParamsSimple, LockAndMintStatus, Logger, LogLevel, LogLevelString, RenContract,
     RenNetwork, RenTokens, SendParams, SimpleLogger, Tokens, TransferParams, UnmarshalledTx,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import {
     extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
     getTokenAddress, newPromiEvent, parseRenContract, PromiEvent, randomBytes, resolveSendCall,

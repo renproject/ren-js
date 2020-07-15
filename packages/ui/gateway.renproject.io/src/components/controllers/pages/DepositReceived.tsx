@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, UTXOWithChain } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";

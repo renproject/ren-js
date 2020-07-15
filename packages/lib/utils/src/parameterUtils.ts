@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { BurnAndReleaseParams, Chain, LockAndMintParams, SendParams } from "@renproject/interfaces";
 
 import { parseRenContract, resolveInToken, resolveOutToken, resolveSendTo } from "./renVMUtils";

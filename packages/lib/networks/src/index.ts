@@ -1,8 +1,8 @@
-import chaosnetJSON from "./src/networks/chaosnet";
-import devnetJSON from "./src/networks/devnet";
-import localnetJSON from "./src/networks/localnet";
-import mainnetJSON from "./src/networks/mainnet";
-import testnetJSON from "./src/networks/testnet";
+import chaosnetJSON from "./networks/chaosnet";
+import devnetJSON from "./networks/devnet";
+import localnetJSON from "./networks/localnet";
+import mainnetJSON from "./networks/mainnet";
+import testnetJSON from "./networks/testnet";
 
 export const renMainnet = mainnetJSON;
 export const renChaosnet = chaosnetJSON;

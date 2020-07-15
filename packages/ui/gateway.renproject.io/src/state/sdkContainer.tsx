@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import {
     Asset, BurnAndReleaseStatus, Chain, EventType, GatewayMessageType, HistoryEvent, isAsset,
     LockAndMintEvent, LockAndMintParams, LockAndMintStatus, RenContract,

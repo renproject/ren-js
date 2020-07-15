@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, Tx } from "@renproject/interfaces";
 import React from "react";
 

@@ -1,6 +1,6 @@
 import "react-circular-progressbar/dist/styles.css";
 
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, Chain, Tx } from "@renproject/interfaces";
 import { Loading } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";

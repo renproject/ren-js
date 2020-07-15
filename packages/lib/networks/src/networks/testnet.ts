@@ -19,7 +19,7 @@ import RenZEC from "darknode-sol/build/testnet/RenZEC.json";
 import ZECGateway from "darknode-sol/build/testnet/ZECGateway.json";
 import { AbiItem } from "web3-utils";
 
-import { CastNetwork } from "./network";
+import { CastNetwork, Contract } from "./network";
 
 const networkID = 42;
 
@@ -42,81 +42,81 @@ export default CastNetwork({
             Protocol: {
                 address: ProtocolProxy.networks[networkID].address,
                 abi: ProtocolLogic.abi as AbiItem[],
-                artifact: ProtocolProxy,
+                artifact: ProtocolProxy as Contract,
             },
             DarknodeSlasher: {
                 address: DarknodeSlasher.networks[networkID].address,
                 abi: DarknodeSlasher.abi as AbiItem[],
-                artifact: DarknodeSlasher,
+                artifact: DarknodeSlasher as Contract,
             },
             DarknodeRegistry: {
                 address: DarknodeRegistryProxy.networks[networkID].address,
                 abi: DarknodeRegistryLogic.abi as AbiItem[],
-                artifact: DarknodeRegistryLogic,
+                artifact: DarknodeRegistryLogic as Contract,
                 block: 17625998,
             },
             DarknodeRegistryStore: {
                 address: DarknodeRegistryStore.networks[networkID].address,
                 abi: DarknodeRegistryStore.abi as AbiItem[],
-                artifact: DarknodeRegistryStore,
+                artifact: DarknodeRegistryStore as Contract,
             },
             DarknodePayment: {
                 address: DarknodePayment.networks[networkID].address,
                 abi: DarknodePayment.abi as AbiItem[],
-                artifact: DarknodePayment,
+                artifact: DarknodePayment as Contract,
             },
             DarknodePaymentStore: {
                 address: DarknodePaymentStore.networks[networkID].address,
                 abi: DarknodePaymentStore.abi as AbiItem[],
-                artifact: DarknodePaymentStore,
+                artifact: DarknodePaymentStore as Contract,
             },
         },
         gateways: {
             GatewayRegistry: {
                 address: GatewayRegistry.networks[networkID].address,
                 abi: GatewayRegistry.abi as AbiItem[],
-                artifact: GatewayRegistry,
+                artifact: GatewayRegistry as Contract,
             },
             RenBTC: {
                 _address: RenBTC.networks[networkID].address,
                 abi: RenBTC.abi as AbiItem[],
-                artifact: RenBTC,
+                artifact: RenBTC as Contract,
                 description: "gatewayRegistry.getTokenBySymbol(\"BTC\")",
             },
             BTCGateway: {
                 _address: BTCGateway.networks[networkID].address,
                 abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic,
+                artifact: GatewayLogic as Contract,
                 description: "gatewayRegistry.getGatewayBySymbol(\"BTC\")",
             },
             RenZEC: {
                 _address: RenZEC.networks[networkID].address,
                 abi: RenZEC.abi as AbiItem[],
-                artifact: RenZEC,
+                artifact: RenZEC as Contract,
                 description: "gatewayRegistry.getTokenBySymbol(\"ZEC\")",
             },
             ZECGateway: {
                 _address: ZECGateway.networks[networkID].address,
                 abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic,
+                artifact: GatewayLogic as Contract,
                 description: "gatewayRegistry.getGatewayBySymbol(\"ZEC\")",
             },
             RenBCH: {
                 _address: RenBCH.networks[networkID].address,
                 abi: RenBCH.abi as AbiItem[],
-                artifact: RenBCH,
+                artifact: RenBCH as Contract,
                 description: "gatewayRegistry.getTokenBySymbol(\"BCH\")",
             },
             BCHGateway: {
                 _address: BCHGateway.networks[networkID].address,
                 abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic,
+                artifact: GatewayLogic as Contract,
                 description: "gatewayRegistry.getGatewayBySymbol(\"BCH\")",
             },
             BasicAdapter: {
                 address: BasicAdapter.networks[networkID].address,
                 abi: BasicAdapter.abi as AbiItem[],
-                artifact: BasicAdapter,
+                artifact: BasicAdapter as Contract,
             },
         },
         tokens: {
@@ -127,25 +127,25 @@ export default CastNetwork({
             BTC: {
                 address: RenBTC.networks[networkID].address,
                 abi: RenBTC.abi as AbiItem[],
-                artifact: RenBTC,
+                artifact: RenBTC as Contract,
                 decimals: 8
             },
             ZEC: {
                 address: RenZEC.networks[networkID].address,
                 abi: RenZEC.abi as AbiItem[],
-                artifact: RenZEC,
+                artifact: RenZEC as Contract,
                 decimals: 8
             },
             BCH: {
                 address: RenBCH.networks[networkID].address,
                 abi: RenBCH.abi as AbiItem[],
-                artifact: RenBCH,
+                artifact: RenBCH as Contract,
                 decimals: 8
             },
             REN: {
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
-                artifact: RenToken,
+                artifact: RenToken as Contract,
                 decimals: 18
             },
             ETH: {
@@ -156,7 +156,7 @@ export default CastNetwork({
         erc: {
             ERC20: {
                 abi: ERC20.abi as AbiItem[],
-                artifact: ERC20,
+                artifact: ERC20 as Contract,
             },
         },
     }

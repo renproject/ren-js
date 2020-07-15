@@ -1,4 +1,4 @@
-import { testnet } from "@renproject/contracts";
+import { testnet } from "@renproject/networks";
 import { RenContract } from "@renproject/interfaces";
 import {
     processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,

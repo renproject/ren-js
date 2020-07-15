@@ -1,5 +1,5 @@
-import { chaosnet, devnet, mainnet, testnet } from "@renproject/contracts";
 import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
+import { renChaosnet, renDevnet, renMainnet, renTestnet } from "@renproject/networks";
 import chai from "chai";
 import { expect } from "earljs";
 import Web3 from "web3";
@@ -24,13 +24,13 @@ describe("RenJS initialization and exports", () => {
             .should.be.an.instanceOf(RenJS);
         new RenJS("devnet")
             .should.be.an.instanceOf(RenJS);
-        new RenJS(mainnet)
+        new RenJS(renMainnet)
             .should.be.an.instanceOf(RenJS);
-        new RenJS(chaosnet)
+        new RenJS(renChaosnet)
             .should.be.an.instanceOf(RenJS);
-        new RenJS(testnet)
+        new RenJS(renTestnet)
             .should.be.an.instanceOf(RenJS);
-        new RenJS(devnet)
+        new RenJS(renDevnet)
             .should.be.an.instanceOf(RenJS);
         (() => new RenJS("fake-network")).should.throw(/Unsupported network "fake-network"/);
     });

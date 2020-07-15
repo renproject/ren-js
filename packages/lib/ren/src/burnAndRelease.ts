@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { BurnAndReleaseParams, Logger, TxStatus, UnmarshalledBurnTx } from "@renproject/interfaces";
 import { RenVMProvider, ResponseQueryBurnTx, unmarshalBurnTx } from "@renproject/rpc";
 import {

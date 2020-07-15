@@ -1,4 +1,4 @@
-import { devnet, localnet, mainnet } from "@renproject/contracts";
+import { devnet, localnet, mainnet } from "@renproject/networks";
 import chai from "chai";
 
 import RenJS from "../src/index";

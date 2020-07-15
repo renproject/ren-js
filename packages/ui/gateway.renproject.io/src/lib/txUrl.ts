@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { Chain, Tx } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import BigNumber from "bignumber.js";

@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import { AbiItem, Asset, Logger, RenContract, RenVMType, TxStatus } from "@renproject/interfaces";
 import { Provider } from "@renproject/provider";
 import {

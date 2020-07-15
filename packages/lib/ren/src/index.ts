@@ -1,4 +1,4 @@
-import { RenNetworkDetails } from "@renproject/contracts";
+import { RenNetworkDetails } from "@renproject/networks";
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
     LockAndMintParamsSimple, Logger, LogLevel, LogLevelString, RenContract, RenNetwork, RenTokens,

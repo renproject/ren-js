@@ -7,9 +7,9 @@ An index of smart contract addresses used by Ren, available as website and an np
 ## `npm` usage
 
 ```js
-import { mainnet, chaosnet, testnet, devnet } from "@renproject/contracts";
+import { renMainnet, renChaosnet, renTestnet, renDevnet } from "@renproject/networks";
 
-console.log(mainnet.addresses.tokens["REN"].address);
+console.log(renMainnet.addresses.tokens["REN"].address);
 ```
 
 ## Deploying

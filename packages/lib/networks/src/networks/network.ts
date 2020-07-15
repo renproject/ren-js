@@ -1,6 +1,6 @@
 import { AbiItem } from "web3-utils";
 
-interface Contract {
+export interface Contract {
     address?: string;
     abi?: AbiItem[];
     block?: number;

@@ -107,6 +107,7 @@
     "@renproject/gateway": "file:packages/lib/gateway",
     "@renproject/interfaces": "file:packages/lib/interfaces",
     "@renproject/provider": "file:packages/lib/provider",
+    "@renproject/networks": "file:packages/lib/networks",
     "@renproject/react-components": "file:packages/ui/react-components",
     "@renproject/ren": "file:packages/lib/ren",
     "@renproject/rpc": "file:packages/lib/rpc",

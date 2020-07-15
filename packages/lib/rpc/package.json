@@ -47,11 +47,11 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link": "yarn link @renproject/interfaces @renproject/provider @renproject/utils && yarn link",
+        "link": "yarn link @renproject/interfaces @renproject/provider @renproject/utils @renproject/networks && yarn link",
         "unlink": "yarn unlink"
     },
     "dependencies": {
-        "@renproject/contracts": "^0.6.0",
+        "@renproject/networks": "file:../networks",
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/provider": "file:../provider",
         "@renproject/utils": "file:../utils",

@@ -1,9 +1,9 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
     LockAndMintParamsSimple, Logger, LogLevel, LogLevelString, RenContract, RenNetwork, RenTokens,
     SendParams, SimpleLogger, Tokens, UnmarshalledFees,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses, unmarshalFees } from "@renproject/rpc";
 import {

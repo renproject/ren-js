@@ -6,7 +6,7 @@ declare module "web3-provider-engine/subproviders/nonce-tracker";
 declare module "web3-provider-engine/util/create-payload";
 declare module "wallet-address-validator";
 
-declare module '*.scss' {
+declare module "*.scss" {
     const content: { [className: string]: string };
     export = content;
 }

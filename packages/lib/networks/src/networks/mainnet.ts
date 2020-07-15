@@ -28,7 +28,7 @@ const networkID = 1;
 
 export default CastNetwork({
     version: "1.0.0",
-    name: "mainnet",
+    name: "mainnet" as "mainnet",
     chain: "main",
     isTestnet: false,
     label: "Mainnet",

@@ -1,5 +1,5 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import { BurnAndReleaseParams, Logger, TxStatus, UnmarshalledBurnTx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { RenVMProvider, ResponseQueryBurnTx, unmarshalBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardWeb3Events, generateBurnTxHash,

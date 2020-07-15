@@ -1,5 +1,5 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import { AbiItem, Asset, Logger, RenContract, RenVMType, TxStatus } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { Provider } from "@renproject/provider";
 import {
     getTokenPrices, hash160, normalizeValue, parseRenContract, SECONDS, sleep, strip0x,

@@ -1,8 +1,8 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     BurnAndReleaseEvent, LockAndMintEvent, LockAndMintParams, SerializableTransferParams,
     TransferParams,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { toFixed } from "@renproject/utils";
 
 // For now, the endpoints are network specific.

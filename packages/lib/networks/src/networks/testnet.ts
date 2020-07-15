@@ -28,7 +28,7 @@ const networkID = 42;
 
 export default CastNetwork({
     version: "1.0.0",
-    name: "testnet",
+    name: "testnet" as "testnet",
     chain: "kovan",
     isTestnet: true,
     label: "Testnet",

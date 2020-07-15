@@ -1,7 +1,7 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     LockAndMintParams, Logger, TxStatus, UnmarshalledMintTx, UTXOIndex, UTXOWithChain,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { RenVMProvider, ResponseQueryMintTx, unmarshalMintTx } from "@renproject/rpc";
 import {
     extractError, findTransactionBySigHash, fixSignature, forwardWeb3Events, generateAddress,

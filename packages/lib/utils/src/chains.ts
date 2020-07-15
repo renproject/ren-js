@@ -4,10 +4,10 @@ import {
     getBitcoinConfirmations, getBitcoinUTXOs, getZcashConfirmations, getZcashUTXOs, zecAddressFrom,
     zecAddressToHex,
 } from "@renproject/chains";
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     Chain, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOIndex, UTXOWithChain,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { ripemd160, sha256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 

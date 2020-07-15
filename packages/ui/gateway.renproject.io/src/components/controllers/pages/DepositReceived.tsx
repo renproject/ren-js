@@ -1,5 +1,5 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, UTXOWithChain } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { OrderedMap } from "immutable";

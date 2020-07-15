@@ -1,5 +1,5 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import { lighten } from "polished";

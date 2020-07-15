@@ -1,8 +1,8 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, Logger, RenContract, RenTokens,
     UnmarshalledMintTx, UTXOIndex,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import BigNumber from "bignumber.js";
 import { keccak256 } from "ethereumjs-util";
 import Web3 from "web3";

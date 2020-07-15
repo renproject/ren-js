@@ -1,9 +1,9 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     Asset, BurnAndReleaseStatus, Chain, EventType, GatewayMessageType, HistoryEvent, isAsset,
     LockAndMintEvent, LockAndMintParams, LockAndMintStatus, RenContract,
     SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
 } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
 import { parseRenContract, resolveInToken, SECONDS, sleep } from "@renproject/utils";

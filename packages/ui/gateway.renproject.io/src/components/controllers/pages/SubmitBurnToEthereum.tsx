@@ -1,13 +1,10 @@
 import "react-circular-progressbar/dist/styles.css";
 
-import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, Chain, Tx } from "@renproject/interfaces";
-import { Loading } from "@renproject/react-components";
+import { RenNetworkDetails } from "@renproject/networks";
 import { extractError } from "@renproject/utils";
-import { lighten } from "polished";
 import React from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
-import styled from "styled-components";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import { ReactComponent as BurnIcon } from "../../../scss/images/burn.svg";
@@ -28,6 +25,7 @@ interface Props {
     token: Asset;
     ethereumConfirmations: number | undefined;
     submit: (retry?: boolean) => Promise<void>;
+    // tslint:disable-next-line: react-unused-props-and-state
     requestNotificationPermission(): Promise<{
         error?: string | undefined;
     } | null>;

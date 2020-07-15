@@ -1,5 +1,5 @@
-import { testnet } from "@renproject/networks";
 import { RenContract } from "@renproject/interfaces";
+import { renTestnet } from "@renproject/networks";
 import {
     processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
 } from "@renproject/utils";
@@ -21,19 +21,19 @@ describe("processParams", () => {
     });
 
     it("Burn", () => {
-        processBurnAndReleaseParams(testnet, {
+        processBurnAndReleaseParams(renTestnet, {
             sendToken: "BTC",
             ethereumTxHash: "ethereumTxHash",
         })
             .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" }, "Burn 1");
 
-        processBurnAndReleaseParams(testnet, {
+        processBurnAndReleaseParams(renTestnet, {
             sendToken: "BTC",
             burnReference: 1,
         })
             .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 }, "Burn 2");
 
-        processBurnAndReleaseParams(testnet, {
+        processBurnAndReleaseParams(renTestnet, {
             sendToken: "BTC",
             web3Provider: {},
             contractCalls: [{
@@ -54,7 +54,7 @@ describe("processParams", () => {
                 }],
             }, "Burn 3");
 
-        JSON.stringify(resolveSendCall(testnet, {
+        JSON.stringify(resolveSendCall(renTestnet, {
             sendToken: RenContract.Eth2Btc,
             web3Provider: web3.currentProvider,
             sendTo: "sendTo",
@@ -85,7 +85,7 @@ describe("processParams", () => {
     });
 
     it("Mint", () => {
-        processLockAndMintParams(testnet, {
+        processLockAndMintParams(renTestnet, {
             sendToken: "BTC",
             txHash: "txHash",
             contractCalls: [{
@@ -106,7 +106,7 @@ describe("processParams", () => {
                 }],
             });
 
-        processLockAndMintParams(testnet, {
+        processLockAndMintParams(renTestnet, {
             sendToken: "BTC",
             txHash: "txHash",
             contractCalls: [{
@@ -127,7 +127,7 @@ describe("processParams", () => {
                 }],
             });
 
-        resolveSendCall(testnet, {
+        resolveSendCall(renTestnet, {
             sendToken: RenContract.Btc2Eth,
             txHash: "txHash",
             sendTo: "sendTo",

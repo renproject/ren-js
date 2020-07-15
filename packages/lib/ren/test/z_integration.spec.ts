@@ -3,8 +3,8 @@
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import { RenNetworkDetails } from "@renproject/networks";
 import { EthArgs, LogLevel, RenContract, Tokens } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import {
     Ox, parseRenContract, retryNTimes, SECONDS, sleep, stringToNetwork,
 } from "@renproject/utils";

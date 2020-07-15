@@ -1,5 +1,5 @@
-import { RenNetworkDetails } from "@renproject/networks";
 import { Asset, Tx } from "@renproject/interfaces";
+import { RenNetworkDetails } from "@renproject/networks";
 import React from "react";
 
 import { txUrl } from "../../../lib/txUrl";

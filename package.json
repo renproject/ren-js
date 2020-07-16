@@ -106,8 +106,8 @@
     "@renproject/chains": "file:packages/lib/chains",
     "@renproject/gateway": "file:packages/lib/gateway",
     "@renproject/interfaces": "file:packages/lib/interfaces",
-    "@renproject/provider": "file:packages/lib/provider",
     "@renproject/networks": "file:packages/lib/networks",
+    "@renproject/provider": "file:packages/lib/provider",
     "@renproject/react-components": "file:packages/ui/react-components",
     "@renproject/ren": "file:packages/lib/ren",
     "@renproject/rpc": "file:packages/lib/rpc",
@@ -116,5 +116,10 @@
     "bitcore-lib-cash": "^8.20.5",
     "gateway-example": "file:packages/ui/gateway-example",
     "gateway.renproject.io": "file:packages/ui/gateway.renproject.io"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }

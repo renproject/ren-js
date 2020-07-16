@@ -1,7 +1,6 @@
 {
     "name": "@renproject/chains",
     "version": "1.0.3",
-    "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -24,10 +23,10 @@
         "build:module": "tsc -p tsconfig.module.json",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build test:* lint",
+        "test": "run-s build lint test:*",
         "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
-        "watch": "yarn build:main -- -w",
+        "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
@@ -52,29 +51,17 @@
         "bs58": "^4.0.1",
         "wallet-address-validator": "^0.2.4"
     },
-    "config": {
-        "commitizen": {
-            "path": "cz-conventional-changelog"
-        }
-    },
     "resolutions": {
         "sha3": "^2.1.2"
     },
     "nyc": {
-        "extension": [
-            ".ts",
-            ".tsx"
-        ],
+        "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [
-            "**/*.d.ts"
-        ],
-        "reporter": [
-            "text",
-            "html"
+            "**/*.d.ts",
+            "**/*.spec.js"
         ],
         "include": [
             "src"
         ]
-    },
-    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc"
+    }
 }

@@ -1,7 +1,7 @@
 {
     "name": "@renproject/ren",
     "version": "1.0.6",
-    "description": "Official Ren JavaScript client",
+    "description": "Official Ren JavaScript SDK for bridging BTC, BCH and ZEC to Ethereum",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -10,13 +10,15 @@
         "access": "public"
     },
     "keywords": [
-        "ren",
         "ren-js",
+        "ren",
         "renvm",
         "ren project",
         "cryptocurrencies",
         "blockchain",
-        "interoperability"
+        "ethereum",
+        "bitcoin",
+        "defi"
     ],
     "author": "Ren",
     "license": "MIT",
@@ -26,11 +28,10 @@
     "main": "build/main/index.js",
     "typings": "build/main/index.d.ts",
     "module": "build/module/index.js",
-    "bundled": "build/bundled/browser.js",
     "scripts": {
         "describe": "npm-scripts-info",
         "build": "yarn build:main && yarn build:module",
-        "build-all": "yarn build:main && yarn build:module && yarn build:bundled",
+        "build-all": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
@@ -39,9 +40,8 @@
         "test": "run-s build test:unit lint",
         "test-all": "ALL_TESTS=true run-s build test:unit lint",
         "lint": "tslint --project ./ -t stylish --quiet",
-        "#test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
-        "watch": "yarn build:main -- -w",
+        "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
@@ -75,29 +75,17 @@
         "web3": "^2.0.0-alpha.1",
         "web3-core": "^2.0.0-alpha.1"
     },
-    "config": {
-        "commitizen": {
-            "path": "cz-conventional-changelog"
-        }
-    },
     "resolutions": {
         "sha3": "^2.1.2"
     },
     "nyc": {
-        "extension": [
-            ".ts",
-            ".tsx"
-        ],
+        "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [
-            "**/*.d.ts"
-        ],
-        "reporter": [
-            "text",
-            "html"
+            "**/*.d.ts",
+            "**/*.spec.js"
         ],
         "include": [
             "src"
         ]
-    },
-    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc"
+    }
 }

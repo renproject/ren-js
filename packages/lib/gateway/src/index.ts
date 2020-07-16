@@ -1,17 +1,16 @@
 // tslint:disable: no-console
 
 import {
-    Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
-    BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
-    GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
-    LockAndMintParamsSimple, LockAndMintStatus, Logger, LogLevel, LogLevelString, RenContract,
-    RenNetwork, RenTokens, SendParams, SimpleLogger, Tokens, TransferParams, UnmarshalledTx,
+    Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
+    GatewayMessage, GatewayMessagePayload, GatewayMessageResponse, GatewayMessageType, HistoryEvent,
+    LockAndMintEvent, LockAndMintParams, LockAndMintStatus, Logger, LogLevel, LogLevelString,
+    RenContract, RenNetwork, RenTokens, SimpleLogger, Tokens, TransferParams, UnmarshalledTx,
 } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/networks";
 import {
     extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
-    getTokenAddress, newPromiEvent, parseRenContract, PromiEvent, randomBytes, resolveSendCall,
-    SECONDS, sleep, stringToNetwork, utils, waitForReceipt, withDefaultAccount,
+    getTokenAddress, newPromiEvent, parseRenContract, PromiEvent, randomBytes, SECONDS, sleep,
+    stringToNetwork, utils, waitForReceipt, withDefaultAccount,
 } from "@renproject/utils";
 import Push from "push.js";
 import Web3 from "web3";
@@ -151,7 +150,7 @@ export class Gateway {
 
     public readonly result: () => GatewayResult = () => this.promiEvent;
 
-    public readonly _open = (transferParams: TransferParams | SendParams | LockAndMintEvent | BurnAndReleaseEvent, web3Provider?: Web3Provider): Gateway => {
+    public readonly _open = (transferParams: TransferParams | LockAndMintEvent | BurnAndReleaseEvent, web3Provider?: Web3Provider): Gateway => {
 
         (async () => {
 
@@ -163,11 +162,6 @@ export class Gateway {
             }
 
             // tslint:disable-next-line: no-object-mutation
-
-            if ((transferParams as SendParams).sendAmount) {
-                // tslint:disable-next-line: no-parameter-reassignment
-                transferParams = resolveSendCall(stringToNetwork(this.network), transferParams as SendParams);
-            }
 
             // Check that GatewayJS isn't already open
             let existingPopup;
@@ -591,38 +585,24 @@ export default class GatewayJS {
     /**
      * Start a cross-chain transfer onto Ethereum.
      *
-     * @param {(LockAndMintParams | LockAndMintParamsSimple | SendParams)} params An object specifying the details
+     * @param {(LockAndMintParams | LockAndMintParamsSimple)} params An object specifying the details
      *        required for the transfer.
      * @returns {Gateway}
      */
-    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): Gateway => {
-        if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
-            params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as LockAndMintParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
-            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
-        }
-        return new Gateway(this.network, this.config)._open(params);
-    }
+    public readonly lockAndMint = (params: LockAndMintParams): Gateway =>
+        new Gateway(this.network, this.config)._open(params)
 
     /**
      * Start a cross-chain transfer away from Ethereum.
      *
-     * @param {(BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams)} params An object specifying the details
+     * @param {(BurnAndReleaseParams | BurnAndReleaseParamsSimple)} params An object specifying the details
      *        required for the transfer.
      * @returns {Gateway}
      */
-    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): Gateway => {
-        if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
-            params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as LockAndMintParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
-            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
-        }
-        return new Gateway(this.network, this.config)._open(params);
-    }
+    public readonly burnAndRelease = (params: BurnAndReleaseParams): Gateway =>
+        new Gateway(this.network, this.config)._open(params)
 
-    public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent) => {
+    readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintEvent | BurnAndReleaseEvent) => {
         // tslint:disable-next-line: strict-type-predicates
         if ((params as LockAndMintEvent).eventType === EventType.LockAndMint) {
             return this.recoverTransfer(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
@@ -637,10 +617,6 @@ export default class GatewayJS {
         } else {
             return this.burnAndRelease(params as BurnAndReleaseParams);
         }
-    }
-
-    public readonly send = (params: SendParams): Gateway => {
-        return new Gateway(this.network, this.config)._open(params);
     }
 
     public readonly recoverTransfer = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {

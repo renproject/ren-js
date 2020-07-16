@@ -1,13 +1,12 @@
 import {
-    Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
-    LockAndMintParamsSimple, Logger, LogLevel, LogLevelString, RenContract, RenNetwork, RenTokens,
-    SendParams, SimpleLogger, Tokens, UnmarshalledFees,
+    Asset, BurnAndReleaseParams, Chain, LockAndMintParams, Logger, LogLevel, LogLevelString,
+    RenContract, RenNetwork, RenTokens, SimpleLogger, Tokens, UnmarshalledFees,
 } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/networks";
 import { MultiProvider, Provider } from "@renproject/provider";
 import { RenVMParams, RenVMProvider, RenVMResponses, unmarshalFees } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, NetworkDetails, resolveSendCall, stringToNetwork, utils,
+    getGatewayAddress, getTokenAddress, NetworkDetails, stringToNetwork, utils,
 } from "@renproject/utils";
 import Web3 from "web3";
 
@@ -149,15 +148,8 @@ export default class RenJS {
      *
      * @param params See [[LockAndMintParams]].
      */
-    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): LockAndMint => {
-        if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
-            params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as LockAndMintParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
-            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
-        }
-        return new LockAndMint(this.renVM, this.network, params, this.logger);
-    }
+    public readonly lockAndMint = (params: LockAndMintParams): LockAndMint =>
+        new LockAndMint(this.renVM, this.network, params, this.logger)
 
     /**
      * Submits a burn log to RenVM.
@@ -165,15 +157,8 @@ export default class RenJS {
      * @param params See [[BurnAndReleaseParams]].
      * @returns An instance of [[BurnAndRelease]].
      */
-    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): BurnAndRelease => {
-        if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
-            params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as LockAndMintParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
-            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
-        }
-        return new BurnAndRelease(this.renVM, this.network, params, this.logger);
-    }
+    public readonly burnAndRelease = (params: BurnAndReleaseParams): BurnAndRelease =>
+        new BurnAndRelease(this.renVM, this.network, params, this.logger)
 
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
     public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);

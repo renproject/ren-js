@@ -38,14 +38,11 @@ const gateway = await renJS.lock({
 
 console.log(`Please deposit ${gateway.asset} to ${gateway.address}`);
 
-gateway.on("deposit", deposit => {
-
+gateway.on("deposit", async deposit => {
     console.log(`Received deposit of ${deposit.value} ${deposit.asset}`);
 
-    deposit.on("confirmation", /* do something */);
-
-    // Triggered when signature is available from RenVM.
-    deposit.on("signature", deposit.mint());
+    await deposit.signed();
+    await deposit.mint();
 });
 
 ```

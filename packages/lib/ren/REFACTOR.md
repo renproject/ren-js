@@ -14,9 +14,6 @@ This includes:
 
 ```ts
 
-// tslint:disable
-// @ts-nocheck
-
 import RenJS from "@renproject/ren";
 import { Bitcoin, Ethereum } from "@renproject/chains";
 import Web3 from "web3";
@@ -24,7 +21,7 @@ import Web3 from "web3";
 const renJS = new RenJS(); // can also inject provider and storage
 const web3 = new Web3("infura url");
 
-const gateway = await renJS.mint({
+const gateway = await renJS.lock({
     asset: "BTC",
     from: Bitcoin(), // can inject APIs.
     to: Ethereum(web3),

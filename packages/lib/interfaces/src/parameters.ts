@@ -130,24 +130,6 @@ export interface LockAndMintParams extends TransferParamsCommon {
 }
 
 /**
- * A simpler format for providing the parameters required for a lock and mint.
- */
-export interface LockAndMintParamsSimple extends TransferParamsCommon, ContractCall {
-    /**
-     * The amount of `sendToken` that should be sent.
-     */
-    suggestedAmount?: NumberValue;
-
-    /**
-     * The number of confirmations to wait before submitting the signature
-     * to Ethereum. If this number is less than the default, the RenVM
-     * transaction is returned when those confirmations have passed, before
-     * the signature is available, and will not be submitted to Ethereum.
-     */
-    confirmations?: number;
-}
-
-/**
  * BurnAndReleaseParams define the parameters for a cross-chain transfer away
  * from Ethereum.
  */
@@ -167,57 +149,6 @@ export interface BurnAndReleaseParams extends TransferParamsCommon {
      * should trigger a burn event in the relevant Gateway contract.
      */
     contractCalls?: ContractCall[];
-}
-
-/**
- * A simpler format for providing the parameters required for a burn and
- * release.
- */
-export interface BurnAndReleaseParamsSimple extends TransferParamsCommon, ContractCall {
-    /**
-     * The hash of the burn transaction on Ethereum.
-     */
-    ethereumTxHash?: string;
-
-    /**
-     * The reference ID of the burn emitted in the contract log.
-     */
-    burnReference?: string | number;
-}
-
-/**
- * The parameters for the `send` function - a common interface that aims to
- * abstract away minting and burning into a single cross-chain transfer
- * function.
- */
-export interface SendParams extends TransferParamsCommon {
-    /**
-     * The receiving address. If this address is an Ethereum address, then the
-     * transfer will be a lock and mint - and will be a burn and release
-     * otherwise.
-     */
-    sendTo: string;
-
-    /**
-     * The amount being transferred cross-chain. For sending to an Ethereum
-     * address, this is a suggested amount only. The transfer will continue
-     * even if a different amount is sent to the Gateway address.
-     */
-    sendAmount: NumberValue;
-    suggestedAmount?: NumberValue;
-
-    /**
-     * Set Ethereum transaction options, including the gasPrice.
-     */
-    txConfig?: TransactionConfig;
-
-    /**
-     * For minting, the number of confirmations to wait before submitting the
-     * signature to Ethereum. If this number is less than the default, the RenVM
-     * transaction is returned when those confirmations have passed, before
-     * the signature is available, and will not be submitted to Ethereum.
-     */
-    confirmations?: number;
 }
 
 export type SerializableBurnAndReleaseParams = Exclude<BurnAndReleaseParams, "web3Provider">;

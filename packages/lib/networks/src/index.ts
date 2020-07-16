@@ -1,14 +1,14 @@
-import chaosnetJSON from "./networks/chaosnet";
-import devnetJSON from "./networks/devnet";
-import localnetJSON from "./networks/localnet";
-import mainnetJSON from "./networks/mainnet";
-import testnetJSON from "./networks/testnet";
+import { renChaosnet } from "./networks/chaosnet";
+import { renDevnet } from "./networks/devnet";
+import { renLocalnet } from "./networks/localnet";
+import { renMainnet } from "./networks/mainnet";
+import { renTestnet } from "./networks/testnet";
 
-export const renMainnet = mainnetJSON;
-export const renChaosnet = chaosnetJSON;
-export const renTestnet = testnetJSON;
-export const renDevnet = devnetJSON;
-export const renLocalnet = localnetJSON;
+export { renChaosnet } from "./networks/chaosnet";
+export { renDevnet } from "./networks/devnet";
+export { renLocalnet } from "./networks/localnet";
+export { renMainnet } from "./networks/mainnet";
+export { renTestnet } from "./networks/testnet";
 
 export enum RenNetwork {
     Mainnet = "mainnet",

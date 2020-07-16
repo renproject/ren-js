@@ -9,17 +9,8 @@
     "publishConfig": {
         "access": "public"
     },
-    "keywords": [
-        "ren",
-        "ren-js",
-        "renvm",
-        "ren project",
-        "cryptocurrencies",
-        "blockchain",
-        "interoperability"
-    ],
     "author": "Ren",
-    "license": "GPL-3.0",
+    "license": "MIT",
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },

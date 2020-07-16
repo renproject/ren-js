@@ -5,7 +5,9 @@ import {
 import { RenNetworkDetails } from "@renproject/networks";
 import { toFixed } from "@renproject/utils";
 
-// For now, the endpoints are network specific.
+// Production and staging URLs for the GatewayJS iFrame interface.
+// Due to a phased migration, the following URLs don't make much sense at the
+// moment. A future update will fix these.
 export const GATEWAY_ENDPOINT_STAGING = "https://gateway-staging.renproject.io/";
 export const GATEWAY_ENDPOINT_PRODUCTION = "https://renproject.github.io/gateway-staging.renproject.io/";
 

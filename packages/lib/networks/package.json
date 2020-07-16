@@ -19,7 +19,7 @@
     "interoperability"
   ],
   "author": "Ren",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/renproject/ren-js/issues"
   },

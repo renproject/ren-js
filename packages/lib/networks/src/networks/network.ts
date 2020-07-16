@@ -13,7 +13,7 @@ interface Addresses<C extends Contract> {
     };
 }
 
-interface NetworkType<C extends Contract, A extends Addresses<C>> {
+export interface NetworkType<C extends Contract, A extends Addresses<C>> {
     version: "1.0.0";
     name: "mainnet" | "chaosnet" | "testnet" | "devnet" | "localnet";
     chain: "main" | "kovan";

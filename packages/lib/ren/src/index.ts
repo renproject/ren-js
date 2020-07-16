@@ -47,7 +47,7 @@ export interface RenJSConfig {
 export default class RenJS {
 
     /**
-     * `Tokens` exposes the tokens that can be passed in to the lockAndMint and
+     * [STATIC] `Tokens` exposes the tokens that can be passed in to the lockAndMint and
      * burnAndRelease methods.
      */
     public static Tokens = Tokens;
@@ -67,13 +67,22 @@ export default class RenJS {
     public static Chains = Chain;
 
     /**
-     * `utils` exposes helper functions, including helpers for BTC, BCH and ZEC.
+     * `utils` exposes helper functions, including helpers for BTC, BCH and ZEC. See [[utils]].
      */
     public static utils: typeof utils = utils;
 
     // Not static
     public readonly utils: typeof utils = utils;
+
+    /**
+     * RenVM provider exposing `sendMessage` and other helper functions for
+     * interacting with RenVM. See [[RenVMProvider]].
+     */
     public readonly renVM: RenVMProvider;
+
+    /**
+     * Network object containing details about smart contracts. See [[RenNetworkDetails]].
+     */
     public readonly network: RenNetworkDetails;
 
     private readonly logger: Logger;

@@ -66,7 +66,7 @@ export default class RenJS {
     public static Chains = Chain;
 
     /**
-     * `utils` exposes helper functions, including helpers for BTC, BCH and ZEC. See [[utils]].
+     * `utils` exposes helper functions, See [[utils]].
      */
     public static utils: typeof utils = utils;
 
@@ -159,9 +159,6 @@ export default class RenJS {
      */
     public readonly burnAndRelease = (params: BurnAndReleaseParams): BurnAndRelease =>
         new BurnAndRelease(this.renVM, this.network, params, this.logger)
-
-    public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
-    public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
 
     public readonly getFees = (): Promise<UnmarshalledFees> => this.renVM.queryFees().then(unmarshalFees);
 }

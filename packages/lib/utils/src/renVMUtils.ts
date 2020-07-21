@@ -1,6 +1,6 @@
 import {
     Asset, BurnAndReleaseParams, Chain, EthArgs, LockAndMintParams, Logger, RenContract, RenTokens,
-    UnmarshalledMintTx, UTXOIndex,
+    TransferParamsCommon, UnmarshalledMintTx, UTXOIndex,
 } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/networks";
 import BigNumber from "bignumber.js";
@@ -289,33 +289,15 @@ export const findTransactionBySigHash = async (network: RenNetworkDetails, web3:
  */
 export const randomNonce = () => randomBytes(32);
 
-export const resolveInToken = (sendToken: LockAndMintParams["sendToken"]): RenContract => {
-    switch (sendToken) {
-        case "BTC":
-            return RenContract.Btc2Eth;
-        case "BCH":
-            return RenContract.Bch2Eth;
-        case "ZEC":
-            return RenContract.Zec2Eth;
-        default:
-            return sendToken;
-    }
+export const resolveInToken = ({ asset, from, to }: { asset: TransferParamsCommon["asset"], from: TransferParamsCommon["from"], to: TransferParamsCommon["to"] }): RenContract => {
+    return `${asset}0${from.name}2${to.name}` as RenContract;
 };
 
-export const resolveOutToken = (sendToken: LockAndMintParams["sendToken"]): RenContract => {
-    switch (sendToken) {
-        case "BTC":
-            return RenContract.Eth2Btc;
-        case "BCH":
-            return RenContract.Eth2Bch;
-        case "ZEC":
-            return RenContract.Eth2Zec;
-        default:
-            return sendToken;
-    }
+export const resolveOutToken = ({ asset, from, to }: { asset: TransferParamsCommon["asset"], from: TransferParamsCommon["from"], to: TransferParamsCommon["to"] }): RenContract => {
+    return `${asset}0${from.name}2${to.name}` as RenContract;
 };
 
-export const resolveSendTo = <T extends LockAndMintParams | BurnAndReleaseParams>({ isMint }: { isMint: boolean }) => (params: T): typeof params => {
-    params.sendToken = isMint ? resolveInToken(params.sendToken) : resolveOutToken(params.sendToken);
-    return params;
-};
+// export const resolveSendTo = <T extends LockAndMintParams | BurnAndReleaseParams>({ isMint }: { isMint: boolean }) => (params: T): typeof params => {
+//     params.sendToken = isMint ? resolveInToken(params) : resolveOutToken(params);
+//     return params;
+// };

@@ -56,7 +56,7 @@ const fixBigNumber = <Value extends { [keys: string]: any }>(value: Value, key: 
 export const prepareParamsForSendMessage = (transferParamsIn: TransferParams | LockAndMintEvent | BurnAndReleaseEvent): SerializableTransferParams | LockAndMintEvent | BurnAndReleaseEvent => {
     // Certain types can't be sent via sendMessage - e.g. BigNumbers.
 
-    const { web3Provider, ...transferParamsFiltered } = transferParamsIn as TransferParams;
+    const transferParamsFiltered = transferParamsIn as TransferParams;
     const transferParams = transferParamsFiltered as SerializableTransferParams;
 
     // tslint:disable-next-line: no-unnecessary-type-assertion

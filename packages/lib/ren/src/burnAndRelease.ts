@@ -3,8 +3,8 @@ import { RenNetworkDetails } from "@renproject/networks";
 import { RenVMProvider, ResponseQueryBurnTx, unmarshalBurnTx } from "@renproject/rpc";
 import {
     extractBurnReference, extractError, forwardWeb3Events, generateBurnTxHash,
-    ignorePromiEventError, newPromiEvent, Ox, payloadToABI, processBurnAndReleaseParams, PromiEvent,
-    RenWeb3Events, resolveOutToken, txHashToBase64, Web3Events, withDefaultAccount,
+    ignorePromiEventError, newPromiEvent, Ox, payloadToABI, PromiEvent, RenWeb3Events,
+    resolveOutToken, txHashToBase64, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
@@ -20,11 +20,11 @@ export class BurnAndRelease {
         this.logger = _logger;
         this.renVM = _renVM;
         this.network = _network;
-        this.params = processBurnAndReleaseParams(this.network, _params);
+        this.params = _params; // processBurnAndReleaseParams(this.network, _params);
 
         { // Debug log
-            const { web3Provider, ...restOfParams } = this.params;
-            this.logger.debug("burnAndRelease created", { web3: web3Provider ? "[Web3 provider]" : web3Provider, ...restOfParams });
+            const { ...restOfParams } = this.params;
+            this.logger.debug("burnAndRelease created", restOfParams);
         }
     }
 
@@ -84,7 +84,7 @@ export class BurnAndRelease {
      *        like gas.
      * @returns {(PromiEvent<BurnAndRelease, Web3Events & RenWeb3Events>)}
      */
-    public readFromEthereum = (txConfig?: TransactionConfig): PromiEvent<BurnAndRelease, Web3Events & RenWeb3Events> => {
+    public readFromEthereum = (_txConfig?: TransactionConfig): PromiEvent<BurnAndRelease, Web3Events & RenWeb3Events> => {
 
         const promiEvent = newPromiEvent<BurnAndRelease, Web3Events & RenWeb3Events>();
 
@@ -94,9 +94,9 @@ export class BurnAndRelease {
                 return this;
             }
 
-            const { web3Provider, contractCalls } = this.params;
-            let { burnReference } = this.params;
-            let ethereumTxHash = this.params.ethereumTxHash;
+            // const { contractCalls } = this.params;
+            const { burnReference } = this.params;
+            // let ethereumTxHash = this.params.ethereumTxHash;
 
             // There are three parameter configs:
             // Situation (1): A `burnReference` is provided
@@ -106,66 +106,66 @@ export class BurnAndRelease {
             // For (1), we don't have to do anything.
             if (!burnReference && burnReference !== 0) {
 
-                if (!web3Provider) {
-                    throw new Error("Must provide burn reference ID or web3 provider.");
-                }
+                // if (!web3Provider) {
+                //     throw new Error("Must provide burn reference ID or web3 provider.");
+                // }
 
-                const web3 = new Web3(web3Provider);
+                // const web3 = new Web3(web3Provider);
 
-                // Handle situation (2)
-                // Make a call to the provided contract and Pass on the
-                // transaction hash.
-                if (contractCalls) {
+                // // Handle situation (2)
+                // // Make a call to the provided contract and Pass on the
+                // // transaction hash.
+                // if (contractCalls) {
 
-                    for (let i = 0; i < contractCalls.length; i++) {
-                        const contractCall = contractCalls[i];
-                        const last = i === contractCalls.length - 1;
+                //     for (let i = 0; i < contractCalls.length; i++) {
+                //         const contractCall = contractCalls[i];
+                //         const last = i === contractCalls.length - 1;
 
-                        const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
+                //         const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
 
-                        const callParams = [
-                            ...(contractParams || []).map(value => value.value),
-                        ];
+                //         const callParams = [
+                //             ...(contractParams || []).map(value => value.value),
+                //         ];
 
-                        const ABI = payloadToABI(contractFn, contractParams);
-                        const contract = new web3.eth.Contract(ABI, sendTo);
+                //         const ABI = payloadToABI(contractFn, contractParams);
+                //         const contract = new web3.eth.Contract(ABI, sendTo);
 
-                        const config = await withDefaultAccount(web3, {
-                            ...txConfigParam,
-                            ...{
-                                value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
-                                gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
-                            },
+                //         const config = await withDefaultAccount(web3, {
+                //             ...txConfigParam,
+                //             ...{
+                //                 value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
+                //                 gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
+                //             },
 
-                            ...txConfig,
-                        });
+                //             ...txConfig,
+                //         });
 
-                        this.logger.debug("Calling Ethereum contract", contractFn, sendTo, ...callParams, config);
+                //         this.logger.debug("Calling Ethereum contract", contractFn, sendTo, ...callParams, config);
 
-                        const tx = contract.methods[contractFn](
-                            ...callParams,
-                        ).send(config);
+                //         const tx = contract.methods[contractFn](
+                //             ...callParams,
+                //         ).send(config);
 
-                        if (last) {
-                            forwardWeb3Events(tx, promiEvent);
-                        }
+                //         if (last) {
+                //             forwardWeb3Events(tx, promiEvent);
+                //         }
 
-                        ethereumTxHash = await new Promise((resolve, reject) => tx
-                            .on("transactionHash", resolve)
-                            .catch((error: Error) => {
-                                try { if (ignorePromiEventError(error)) { this.logger.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
-                                reject(error);
-                            })
-                        );
-                        this.logger.debug("Ethereum txHash", ethereumTxHash);
-                    }
-                }
+                //         ethereumTxHash = await new Promise((resolve, reject) => tx
+                //             .on("transactionHash", resolve)
+                //             .catch((error: Error) => {
+                //                 try { if (ignorePromiEventError(error)) { this.logger.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
+                //                 reject(error);
+                //             })
+                //         );
+                //         this.logger.debug("Ethereum txHash", ethereumTxHash);
+                //     }
+                // }
 
-                if (!ethereumTxHash) {
-                    throw new Error("Must provide txHash or contract call details.");
-                }
+                // if (!ethereumTxHash) {
+                //     throw new Error("Must provide txHash or contract call details.");
+                // }
 
-                burnReference = await extractBurnReference(web3, ethereumTxHash);
+                // burnReference = await extractBurnReference(web3, ethereumTxHash);
             }
 
             this.params.burnReference = burnReference;
@@ -197,7 +197,7 @@ export class BurnAndRelease {
             throw new Error("Must call `readFromEthereum` before calling `txHash`");
         }
         const burnReference = new BigNumber(this.params.burnReference).toFixed();
-        return generateBurnTxHash(resolveOutToken(this.params.sendToken), burnReference, this.logger);
+        return generateBurnTxHash(resolveOutToken(this.params), burnReference, this.logger);
     }
 
     /**
@@ -229,7 +229,7 @@ export class BurnAndRelease {
             const tags: [string] | [] = this.params.tags && this.params.tags.length ? [this.params.tags[0]] : [];
 
             if (burnReference || burnReference === 0) {
-                await this.renVM.submitBurn(resolveOutToken(this.params.sendToken), new BigNumber(burnReference).toFixed(), tags);
+                await this.renVM.submitBurn(resolveOutToken(this.params), new BigNumber(burnReference).toFixed(), tags);
             }
 
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);

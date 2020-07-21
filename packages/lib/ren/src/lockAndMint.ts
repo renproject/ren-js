@@ -6,9 +6,9 @@ import { RenVMProvider, ResponseQueryMintTx, unmarshalMintTx } from "@renproject
 import {
     extractError, findTransactionBySigHash, fixSignature, forwardWeb3Events, generateAddress,
     generateGHash, generateMintTxHash, ignorePromiEventError, manualPromiEvent, newPromiEvent, Ox,
-    payloadToABI, payloadToMintABI, processLockAndMintParams, PromiEvent, randomNonce,
-    RenWeb3Events, resolveInToken, retrieveDeposits, SECONDS, signatureToString, sleep, strip0x,
-    toBase64, txHashToBase64, waitForConfirmations, Web3Events, withDefaultAccount,
+    payloadToABI, payloadToMintABI, PromiEvent, randomNonce, RenWeb3Events, resolveInToken,
+    retrieveDeposits, SECONDS, signatureToString, sleep, strip0x, toBase64, txHashToBase64,
+    waitForConfirmations, Web3Events, withDefaultAccount,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
@@ -32,7 +32,7 @@ export class LockAndMint {
         this.logger = _logger;
         this.network = _network;
         this.renVM = _renVM;
-        this.params = processLockAndMintParams(this.network, _params);
+        this.params = _params; // processLockAndMintParams(this.network, _params);
         // this.web3 = this.params.web3Provider ? new Web3(this.params.web3Provider) : undefined;
 
         const txHash = this.params.txHash;
@@ -45,8 +45,8 @@ export class LockAndMint {
         }
 
         { // Debug log
-            const { web3Provider, ...restOfParams } = this.params;
-            this.logger.debug("lockAndMint created", { web3: web3Provider ? "[Web3 provider]" : web3Provider, ...restOfParams });
+            const { ...restOfParams } = this.params;
+            this.logger.debug("lockAndMint created", restOfParams);
         }
     }
 
@@ -54,19 +54,15 @@ export class LockAndMint {
         const params = this.params;
 
         // tslint:disable-next-line: prefer-const
-        let { sendToken, contractCalls, nonce, ...restOfParams } = params;
+        let { contractCalls, nonce, ...restOfParams } = params;
 
         if (!contractCalls || !contractCalls.length) {
             throw new Error(`Must provide Ren transaction hash or contract call details.`);
         }
 
-        if (!sendToken) {
-            throw new Error(`Must provide Ren transaction hash or token to be transferred.`);
-        }
-
         nonce = nonce || randomNonce();
 
-        return { sendToken, contractCalls, nonce, ...restOfParams };
+        return { contractCalls, nonce, ...restOfParams };
     }
 
     public gatewayAddress = async (specifyGatewayAddress?: string) => {
@@ -78,17 +74,17 @@ export class LockAndMint {
             return this.generatedGatewayAddress;
         }
 
-        const { nonce, sendToken: renContract, contractCalls } = this.validateParams();
+        const { nonce, contractCalls } = this.validateParams();
 
         // Last contract call
         const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
         // TODO: Validate inputs.
-        const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
-        const mpkh = await this.renVM.selectPublicKey(resolveInToken(this.params.sendToken), this.logger);
+        const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(this.params), nonce, this.network, this.logger);
+        const mpkh = await this.renVM.selectPublicKey(resolveInToken(this.params), this.logger);
         this.logger.debug("MPKH", mpkh.toString("hex"));
 
-        const gatewayAddress = generateAddress(resolveInToken(renContract), gHash, mpkh, this.network.isTestnet);
+        const gatewayAddress = generateAddress(resolveInToken(this.params), gHash, mpkh, this.network.isTestnet);
         this.generatedGatewayAddress = gatewayAddress;
         this.logger.debug("Gateway Address", this.generatedGatewayAddress);
 
@@ -111,19 +107,13 @@ export class LockAndMint {
                     promiEvent.emit("deposit", utxo);
                     this.logger.debug("New Deposit", utxo);
                 };
-                specifiedDeposit = await waitForConfirmations(this.network, resolveInToken(this.params.sendToken), specifiedDeposit, confirmations, await this.gatewayAddress(), onDeposit);
+                specifiedDeposit = await waitForConfirmations(this.network, this.params.from, specifiedDeposit, confirmations, await this.gatewayAddress(), onDeposit);
                 this.utxo = specifiedDeposit;
                 return this;
             }
 
             if (!await this.gatewayAddress()) {
                 throw new Error("Unable to calculate gateway address.");
-            }
-
-            const { sendToken: renContract } = this.params;
-
-            if (!renContract) {
-                throw new Error(`Must provide token to be transferred.`);
             }
 
             let deposits: OrderedMap<string, UTXOWithChain> = OrderedMap();
@@ -150,7 +140,7 @@ export class LockAndMint {
                 }
 
                 try {
-                    const newDeposits = await retrieveDeposits(this.network, resolveInToken(renContract), await this.gatewayAddress(), 0);
+                    const newDeposits = await retrieveDeposits(this.network, this.params.from, await this.gatewayAddress(), 0);
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
@@ -184,7 +174,7 @@ export class LockAndMint {
             return txHashToBase64(txHash);
         }
 
-        const { contractCalls, sendToken: renContract, nonce } = this.params;
+        const { contractCalls, nonce } = this.params;
 
         const utxo = specifyDeposit || this.params.deposit || this.utxo;
         if (!utxo) {
@@ -199,17 +189,13 @@ export class LockAndMint {
             throw new Error(`Unable to generate txHash without contract call details.`);
         }
 
-        if (!renContract) {
-            throw new Error(`Unable to generate txHash without token being transferred.`);
-        }
-
         // Last contract call
         const { contractParams, sendTo } = contractCalls[contractCalls.length - 1];
 
-        const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(renContract), nonce, this.network, this.logger);
+        const gHash = generateGHash(contractParams || [], strip0x(sendTo), resolveInToken(this.params), nonce, this.network, this.logger);
         const encodedGHash = toBase64(gHash);
-        if (this.logger) this.logger.debug("txHash Parameters", resolveInToken(renContract), encodedGHash, utxo);
-        return generateMintTxHash(resolveInToken(renContract), encodedGHash, utxo, this.logger);
+        if (this.logger) this.logger.debug("txHash Parameters", resolveInToken(this.params), encodedGHash, utxo);
+        return generateMintTxHash(resolveInToken(this.params), encodedGHash, utxo, this.logger);
     }
 
     /**
@@ -243,7 +229,7 @@ export class LockAndMint {
                 }
                 txHash = utxoTxHash;
 
-                const { contractCalls, sendToken: renContract, nonce } = this.params;
+                const { contractCalls, nonce } = this.params;
 
                 if (!nonce) {
                     throw new Error("Unable to submit to RenVM without nonce.");
@@ -251,10 +237,6 @@ export class LockAndMint {
 
                 if (!contractCalls || !contractCalls.length) {
                     throw new Error(`Unable to submit to RenVM without contract call details.`);
-                }
-
-                if (!renContract) {
-                    throw new Error(`Unable to submit to RenVM without token being transferred.`);
                 }
 
                 // Last contract call
@@ -277,7 +259,7 @@ export class LockAndMint {
                     const tags: [string] | [] = this.params.tags && this.params.tags.length ? [this.params.tags[0]] : [];
 
                     txHash = await this.renVM.submitMint(
-                        resolveInToken(renContract),
+                        resolveInToken(this.params),
                         sendTo,
                         nonce,
                         utxo.txHash,
@@ -346,12 +328,10 @@ export class LockAndMint {
     }
 
     public findTransaction = async (web3Provider?: provider): Promise<string | undefined> => {
-        web3Provider = web3Provider || this.params.web3Provider;
         if (!web3Provider) {
             throw new Error(`Unable to find transaction without web3Provider.`);
         }
         const web3 = new Web3(web3Provider);
-        const { sendToken: renContract } = this.params;
 
         if (this.thirdPartyTransaction) {
             return this.thirdPartyTransaction;
@@ -362,15 +342,11 @@ export class LockAndMint {
         }
 
         // Check if the signature has already been submitted
-        if (renContract) {
-            return await findTransactionBySigHash(this.network, web3, resolveInToken(renContract), this.queryTxResult.autogen.sighash, this.logger);
-        }
-        return;
+        return await findTransactionBySigHash(this.network, web3, resolveInToken(this.params), this.queryTxResult.autogen.sighash, this.logger);
     }
 
     // tslint:disable-next-line: no-any
     public submitToEthereum = (web3Provider?: provider, txConfig?: TransactionConfig): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
-        web3Provider = web3Provider || this.params.web3Provider;
         if (!web3Provider) {
             throw new Error(`Unable to submit to Ethereum without web3Provider.`);
         }

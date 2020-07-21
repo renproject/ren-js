@@ -224,9 +224,7 @@ export interface ResponseQueryStat {
 
 // ResponseQueryFees defines the response of the MethodQueryFees.
 export interface ResponseQueryFees {
-    btc: Fees;
-    zec: Fees;
-    bch: Fees;
+    [token: string]: Fees;
 }
 
 export type RenVMResponses = {

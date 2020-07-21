@@ -2,7 +2,7 @@ import {
     AbiItem, Chain, Fees, RenVMArg, RenVMOutputUTXO, RenVMType, Tokens, UnmarshalledAssetFees,
     UnmarshalledBurnTx, UnmarshalledFees, UnmarshalledMintTx,
 } from "@renproject/interfaces";
-import { assert, Ox, parseRenContract, utils } from "@renproject/utils";
+import { assert, Ox, parseRenContract } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 import { ResponseQueryBurnTx, ResponseQueryFees, ResponseQueryMintTx } from "./renVMTypes";
@@ -171,11 +171,12 @@ export const unmarshalBurnTx = (response: ResponseQueryBurnTx): UnmarshalledBurn
         amount = assertAndDecodeNumber<typeof amountArg>("amount", RenVMType.TypeU64, amountArg).toFixed();
     }
 
-    const to = response.tx.to === Tokens.ZEC.Eth2Zec ?
-        utils.zec.addressFrom(toRaw) :
-        response.tx.to === Tokens.BCH.Eth2Bch ?
-            utils.bch.addressFrom(toRaw) :
-            utils.btc.addressFrom(toRaw);
+    const to = toRaw;
+    // response.tx.to === Tokens.ZEC.Eth2Zec ?
+    //     utils.zec.addressFrom(toRaw) :
+    //     response.tx.to === Tokens.BCH.Eth2Bch ?
+    //         utils.bch.addressFrom(toRaw) :
+    //         utils.btc.addressFrom(toRaw);
 
     return {
         hash: decodeBytes(response.tx.hash),

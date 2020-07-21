@@ -13,7 +13,7 @@ See the [Releases](https://github.com/renproject/ren-js/releases) page.
 
 ## About
 
-RenJS is a Node.js and browser SDK for bridging BTC, BCH and ZEC to your Ethereum dApp.
+RenJS is a Node.js and browser SDK for bridging crypto assets cross-chain.
 
 <br />
 <hr />
@@ -95,9 +95,9 @@ yarn run watch
 
 You'll need to:
 
-1. Generate a mnemonic and send ETH (kovan for testnet) (path: `m/44'/60'/0'/0/`)
-2. Generate a private key and send BTC and ZEC (tBTC and TAZ for testnet)
-3. Generate an Infura API key
+1. Generate a mnemonic and send ETH (kovan for testnet) (path: `m/44'/60'/0'/0/`).
+2. Generate a private key and send testnet crypto funds.
+3. Generate an Infura API key.
 
 Create a `.env` file which contains the following exported variables:
 

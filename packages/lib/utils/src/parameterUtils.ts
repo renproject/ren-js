@@ -1,9 +1,11 @@
-import { BurnAndReleaseParams, LockAndMintParams } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
+export const x = 0;
 
-import { parseRenContract, resolveInToken, resolveOutToken, resolveSendTo } from "./renVMUtils";
-import { utils } from "./utils";
-import { toBigNumber } from "./value";
+// import { BurnAndReleaseParams, LockAndMintParams } from "@renproject/interfaces";
+// import { RenNetworkDetails } from "@renproject/networks";
+
+// import { parseRenContract, resolveInToken, resolveOutToken } from "./renVMUtils";
+// import { utils } from "./utils";
+// import { toBigNumber } from "./value";
 
 // /**
 //  * `resolveSendCall` simplifies the arguments required by RenJS by allowing
@@ -87,20 +89,20 @@ import { toBigNumber } from "./value";
 //     }
 // };
 
-export const processLockAndMintParams = (_network: RenNetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
-    const processors: Array<(params: LockAndMintParams) => LockAndMintParams> = [
-        resolveSendTo<LockAndMintParams>({ isMint: true }),
-        // resolveContractCall<LockAndMintParams>(_network),
-    ];
+// export const processLockAndMintParams = (_network: RenNetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
+//     const processors: Array<(params: LockAndMintParams) => LockAndMintParams> = [
+//         resolveSendTo<LockAndMintParams>({ isMint: true }),
+//         // resolveContractCall<LockAndMintParams>(_network),
+//     ];
 
-    return processors.reduce((params, processor) => processor(params), _params as LockAndMintParams);
-};
+//     return processors.reduce((params, processor) => processor(params), _params as LockAndMintParams);
+// };
 
-export const processBurnAndReleaseParams = (_network: RenNetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
-    const processors: Array<(params: BurnAndReleaseParams) => BurnAndReleaseParams> = [
-        resolveSendTo<BurnAndReleaseParams>({ isMint: false }),
-        // resolveContractCall<BurnAndReleaseParams>(_network),
-    ];
+// export const processBurnAndReleaseParams = (_network: RenNetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
+//     const processors: Array<(params: BurnAndReleaseParams) => BurnAndReleaseParams> = [
+//         resolveSendTo<BurnAndReleaseParams>({ isMint: false }),
+//         // resolveContractCall<BurnAndReleaseParams>(_network),
+//     ];
 
-    return processors.reduce((params, processor) => processor(params), _params as BurnAndReleaseParams);
-};
+//     return processors.reduce((params, processor) => processor(params), _params as BurnAndReleaseParams);
+// };

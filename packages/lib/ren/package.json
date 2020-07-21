@@ -1,7 +1,7 @@
 {
     "name": "@renproject/ren",
     "version": "1.0.6",
-    "description": "Official Ren JavaScript SDK for bridging BTC, BCH and ZEC to Ethereum",
+    "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -54,8 +54,8 @@
         "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html doc:publish",
-        "link": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils @renproject/networks && yarn link",
-        "unlink": "yarn unlink"
+        "link-all": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils @renproject/networks && yarn link",
+        "unlink-all": "yarn unlink-all"
     },
     "dependencies": {
         "@renproject/chains": "file:../chains",

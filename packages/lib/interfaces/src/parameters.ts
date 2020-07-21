@@ -1,18 +1,14 @@
 import BigNumber from "bignumber.js";
 import { TransactionConfig } from "web3-core";
 
-import { RenContract } from "./renVM";
-import { UTXOIndex } from "./utxo";
+import { HostChain, OriginChain } from "./chain";
+import { Asset } from "./renVM";
 
 export { TransactionConfig } from "web3-core";
 export type BNInterface = { toString(x?: "hex"): string };
 export type NumberValue = string | number | BigNumber | BNInterface;
 
-export enum RenTokens {
-    BTC = "BTC",
-    ZEC = "ZEC",
-    BCH = "BCH",
-}
+export type RenTokens = string;
 
 // tslint:disable-next-line: no-any
 export type provider = any;
@@ -60,16 +56,10 @@ export interface ContractCall {
  * The parameters required for both minting and burning.
  */
 export interface TransferParamsCommon {
-    /**
-     * The token, including the origin and destination chains.
-     */
-    sendToken: RenContract | "BTC" | "ZEC" | "BCH";
-
-    /**
-     * A web3 provider must be provided if RenJS is submitting or reading
-     * transactions to/from Ethereum.
-     */
-    web3Provider?: provider; // A Web3 provider
+    asset: Asset;
+    // tslint:disable-next-line: no-any
+    from: OriginChain<any>;
+    to: HostChain;
 
     /**
      * Provide the transaction hash returned from RenVM to continue a previous
@@ -118,7 +108,7 @@ export interface LockAndMintParams extends TransferParamsCommon {
      * to be observed. This deposit must have been sent to the gateway address
      * of the transfer.
      */
-    deposit?: UTXOIndex;
+    // deposit?: UTXOIndex;
 
     /**
      * Specify a gateway address. Gateway addresses are based on the RenVM shard

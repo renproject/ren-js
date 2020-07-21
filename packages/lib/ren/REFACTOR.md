@@ -12,21 +12,65 @@ This includes:
 
 ## Interface
 
+### Minting
+
 ```ts
 
 import RenJS from "@renproject/ren";
 import { Bitcoin, Ethereum } from "@renproject/chains";
 import Web3 from "web3";
 
-const renJS = new RenJS(); // can also inject provider and storage
+const renJS = new RenJS(); // can inject provider and storage
 const web3 = new Web3("infura url");
 
 const gateway = await renJS.lock({
     asset: "BTC",
-    from: Bitcoin(), // can inject APIs.
-    to: Ethereum(web3),
-    recipient: "0x1234...",
-    payload: Ethereum.ContractCall({
+    from: Bitcoin(), // can inject apis
+    to: Ethereum(web3).Contract({
+        address: "0x1234...",
+        fn: "functionName",
+        params: [{
+            name: "paramName",
+            type: "bytes",
+            value: "bob",
+        }, {
+            name: "paramName2",
+            type: "bytes",
+            inPayload: false,
+        }]
+    }),
+    // to: Ethereum(web3).Account({
+    //     address: "0x1234...",
+    // }),
+});
+
+console.log(`Please deposit ${gateway.asset} to ${gateway.address}`);
+
+gateway.on("deposit", async deposit => {
+    console.log(`Received deposit of ${deposit.value} ${deposit.asset}`);
+    deposit.on("confirmation", () => console.log(`${deposit.confirmations}/6 confirmations`));
+
+    await deposit.signed();
+    await deposit.mint({ paramName2: "delayed parameter value" });
+});
+
+```
+
+### Burning
+
+```ts
+
+import RenJS from "@renproject/ren";
+import { Bitcoin, Ethereum } from "@renproject/chains";
+import Web3 from "web3";
+
+const renJS = new RenJS(); // can inject provider and storage
+const web3 = new Web3("infura url");
+
+const gateway = await renJS.burn({
+    asset: "BTC",
+    from: Ethereum(web3).Contract({
+        address: "0x1234...",
         fn: "functionName",
         params: [{
             name: "paramName",
@@ -34,15 +78,9 @@ const gateway = await renJS.lock({
             value: "bob",
         }]
     }),
+    to: Bitcoin().Address("8m..."),
 });
 
-console.log(`Please deposit ${gateway.asset} to ${gateway.address}`);
-
-gateway.on("deposit", async deposit => {
-    console.log(`Received deposit of ${deposit.value} ${deposit.asset}`);
-
-    await deposit.signed();
-    await deposit.mint();
-});
+await gateway.release();
 
 ```

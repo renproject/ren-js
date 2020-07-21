@@ -1,6 +1,8 @@
+import { OriginChain } from "@renproject/interfaces";
 import { Address, Networks, Opcode, Script } from "bitcore-lib-zcash";
 import Base58Check from "bitcore-lib-zcash/lib/encoding/base58check";
 import { encode } from "bs58";
+import { UTXO as SendCryptoUTXO } from "send-crypto";
 import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
 import { validate } from "wallet-address-validator";
 
@@ -46,3 +48,34 @@ const zecTactics: Tactics = {
 };
 
 export const zecAddressFrom = anyAddressFrom(isZECAddress, zecTactics);
+
+export class Zcash implements OriginChain<SendCryptoUTXO> {
+    public name = "Zec";
+    public network: string | undefined;
+
+    // Supported assets
+    supportsAsset = (asset: string) => asset === "ZEC";
+    assetDecimals = (asset: string) => {
+        if (asset === "ZEC") {
+            return 8;
+        }
+        throw new Error(`Unsupported token ${asset}`);
+    }
+
+    public getDeposits = getZcashUTXOs;
+    public addressToHex = zecAddressToHex;
+    public addressFrom = zecAddressFrom;
+    public getConfirmations = getZcashConfirmations;
+    public createAddress = createZECAddress;
+
+    constructor(network?: string) {
+        if (!(this instanceof Zcash)) return new Zcash(network);
+
+        this.network = network;
+    }
+
+    public initialize = (network: string) => {
+        // Prioritize the network passed in to the constructor.
+        this.network = this.network || network;
+    }
+}

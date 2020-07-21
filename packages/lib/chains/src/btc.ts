@@ -1,5 +1,7 @@
+import { OriginChain } from "@renproject/interfaces";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { encode } from "bs58";
+import { UTXO as SendCryptoUTXO } from "send-crypto";
 import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
@@ -19,19 +21,6 @@ export const getBitcoinConfirmations = ({ isTestnet }: { isTestnet: boolean }) =
         return getConfirmations(isTestnet, txHash);
     };
 };
-
-// export const btcAddressToHex = (address: string) => {
-//     const addressBuffer = new Address(address).toBuffer();
-//     // Concatenate checksum
-//     return Ox(Buffer.concat([addressBuffer, Base58Check.checksum(addressBuffer)]));
-// };
-
-// export const btcAddressFrom = (address: string, encoding: "hex" | "base64") => {
-//     // tslint:disable-next-line: no-any
-//     return (Address as any)
-//         .fromBuffer(Buffer.from(encoding === "hex" ? strip0x(address) : address, encoding).slice(0, -4))
-//         .toString();
-// };
 
 export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
 
@@ -73,3 +62,25 @@ export const anyAddressFrom =
         };
 
 export const btcAddressFrom = anyAddressFrom(isBTCAddress, btcTactics);
+
+export class Bitcoin implements OriginChain<SendCryptoUTXO> {
+    public name = "Btc";
+    public network: string | undefined;
+
+    public getDeposits = getBitcoinUTXOs;
+    public addressToHex = btcAddressToHex;
+    public addressFrom = btcAddressFrom;
+    public getConfirmations = getBitcoinConfirmations;
+    public createAddress = createBTCAddress;
+
+    constructor(network?: string) {
+        if (!(this instanceof Bitcoin)) return new Bitcoin(network);
+
+        this.network = network;
+    }
+
+    public initialize = (network: string) => {
+        // Prioritize the network passed in to the constructor.
+        this.network = this.network || network;
+    }
+}

@@ -37,8 +37,8 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link": "yarn link",
-        "unlink": "yarn unlink"
+        "link-all": "yarn link",
+        "unlink-all": "yarn unlink-all"
     },
     "scripts-info": {
         "info": "Display information about the package scripts",

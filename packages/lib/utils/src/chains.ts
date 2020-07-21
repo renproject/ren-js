@@ -1,18 +1,8 @@
-import {
-    bchAddressFrom, bchAddressToHex, btcAddressFrom, btcAddressToHex, createBCHAddress,
-    createBTCAddress, createZECAddress, getBitcoinCashConfirmations, getBitcoinCashUTXOs,
-    getBitcoinConfirmations, getBitcoinUTXOs, getZcashConfirmations, getZcashUTXOs, zecAddressFrom,
-    zecAddressToHex,
-} from "@renproject/chains";
-import {
-    Chain, RenContract, Tokens as CommonTokens, Tx, UTXO, UTXOIndex, UTXOWithChain,
-} from "@renproject/interfaces";
+import { Chain, OriginChain, Tx, UTXO, UTXOIndex, UTXOWithChain } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/networks";
 import { ripemd160, sha256 } from "ethereumjs-util";
-import { UTXO as SendCryptoUTXO } from "send-crypto";
 
 import { Ox, SECONDS, sleep } from "./common";
-import { parseRenContract } from "./renVMUtils";
 
 /**
  * Hash160, used for bitcoin public keys.
@@ -26,18 +16,8 @@ export const hash160 = (publicKey: Buffer): Buffer =>
 /**
  * Generate Gateway address for a cross-chain transfer's origin chain.
  */
-export const generateAddress = (renContract: RenContract, gHash: string, mpkh: Buffer, isTestnet: boolean): string => {
-    const chain = parseRenContract(renContract).from;
-    switch (chain) {
-        case Chain.Bitcoin:
-            return createBTCAddress(isTestnet, Ox(mpkh), gHash);
-        case Chain.Zcash:
-            return createZECAddress(isTestnet, Ox(mpkh), gHash);
-        case Chain.BitcoinCash:
-            return createBCHAddress(isTestnet, Ox(mpkh), gHash);
-        default:
-            throw new Error(`Unable to generate deposit address for chain ${chain}`);
-    }
+export const generateAddress = (chain: OriginChain<any>, gHash: string, mpkh: Buffer, isTestnet: boolean): string => {
+    return chain.createAddress(isTestnet, Ox(mpkh), gHash);
 };
 
 /**
@@ -45,98 +25,26 @@ export const generateAddress = (renContract: RenContract, gHash: string, mpkh: B
  * An optional `confirmations` parameter limits UTXOs to ones with at least that
  * amount of confirmations.
  */
-export const retrieveDeposits = async (_network: RenNetworkDetails, renContract: RenContract, address: string, confirmations = 0): Promise<UTXOWithChain[]> => {
-    const chain = parseRenContract(renContract).from;
-    switch (chain) {
-        case Chain.Bitcoin:
-            return (await getBitcoinUTXOs(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
-        case Chain.Zcash:
-            return (await getZcashUTXOs(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Zcash as Chain.Zcash, utxo }));
-        case Chain.BitcoinCash:
-            // tslint:disable-next-line: no-unnecessary-type-assertion
-            return (await getBitcoinCashUTXOs(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.BitcoinCash as Chain.BitcoinCash, utxo }));
-        default:
-            throw new Error(`Unable to retrieve deposits for chain ${chain}`);
-    }
+export const retrieveDeposits = async (_network: RenNetworkDetails, chain: OriginChain<any>, address: string, confirmations = 0): Promise<UTXOWithChain[]> => {
+    return (await chain.getDeposits(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
 };
 
 /**
  * Returns the number of confirmations for the specified UTXO.
  */
-export const retrieveConfirmations = async (_network: RenNetworkDetails, transaction: Tx): Promise<number> => {
+export const retrieveConfirmations = async (_network: RenNetworkDetails, chain: OriginChain<any>, transaction: Tx): Promise<number> => {
     // tslint:disable-next-line: no-any
     const txid = transaction.chain === Chain.Ethereum ? 0 : transaction.utxo ? transaction.utxo.txHash : (transaction as any).hash;
     if (!txid) {
         return 0;
     }
-    switch (transaction.chain) {
-        case Chain.Bitcoin:
-            return (await getBitcoinConfirmations(_network)(txid));
-        case Chain.Zcash:
-            return (await getZcashConfirmations(_network)(txid));
-        case Chain.BitcoinCash:
-            // tslint:disable-next-line: no-unnecessary-type-assertion
-            return (await getBitcoinCashConfirmations(_network)(txid));
-        default:
-            throw new Error(`Unable to retrieve deposits for chain ${transaction.chain}`);
-    }
+    return (await chain.getConfirmations(_network)(txid));
 };
 
-export interface AssetUtils {
-    getUTXOs: ({ isTestnet }: {
-        isTestnet: boolean;
-    }) => (address: string, confirmations: number) => Promise<readonly SendCryptoUTXO[]>;
-    addressToHex: (address: string) => string;
-    addressFrom: (address: string) => string;
-}
-
-export const btcUtils: AssetUtils = {
-    getUTXOs: getBitcoinUTXOs,
-    addressToHex: btcAddressToHex,
-    addressFrom: btcAddressFrom,
-};
-
-export const zecUtils: AssetUtils = {
-    getUTXOs: getZcashUTXOs,
-    addressToHex: zecAddressToHex,
-    addressFrom: zecAddressFrom,
-};
-
-export const bchUtils: AssetUtils = {
-    getUTXOs: getBitcoinCashUTXOs,
-    addressToHex: bchAddressToHex,
-    addressFrom: bchAddressFrom,
-};
-
-export const Tokens: {
-    BTC: AssetUtils & typeof CommonTokens["BTC"],
-    ZEC: AssetUtils & typeof CommonTokens["ZEC"],
-    BCH: AssetUtils & typeof CommonTokens["BCH"],
-} = {
-    // Bitcoin
-    BTC: {
-        ...CommonTokens.BTC,
-        ...btcUtils,
-    },
-
-    // Zcash
-    ZEC: {
-        ...CommonTokens.ZEC,
-        ...zecUtils,
-    },
-
-    // Bitcoin Cash
-    BCH: {
-        ...CommonTokens.BCH,
-        ...bchUtils
-    },
-};
-
-export const waitForConfirmations = async (network: RenNetworkDetails, sendToken: RenContract, specifiedDeposit: UTXOIndex, confirmations: number, _recipient: string, onDeposit: (deposit: UTXOWithChain) => void): Promise<UTXOIndex> => {
+export const waitForConfirmations = async (network: RenNetworkDetails, chain: OriginChain<any>, specifiedDeposit: UTXOIndex, confirmations: number, _recipient: string, onDeposit: (deposit: UTXOWithChain) => void): Promise<UTXOIndex> => {
 
     /**
-     * Blocknative currently doesn't support `txSpeedUp` for btc, zec or bch
-     * transactions.
+     * Blocknative currently doesn't support `txSpeedUp` for chains other than Ethereum.
      */
 
     // let blocknative;
@@ -175,14 +83,14 @@ export const waitForConfirmations = async (network: RenNetworkDetails, sendToken
     // tslint:disable-next-line: no-constant-condition
     while (true) {
         try {
-            const utxoConfirmations = await retrieveConfirmations(network, {
-                chain: parseRenContract(sendToken).from,
+            const utxoConfirmations = await retrieveConfirmations(network, chain, {
+                chain: chain.name as Chain,
                 hash: specifiedDeposit.txHash
             });
             if (utxoConfirmations > previousUtxoConfirmations) {
                 previousUtxoConfirmations = utxoConfirmations;
                 const utxo = {
-                    chain: parseRenContract(sendToken).from as Chain.Bitcoin | Chain.BitcoinCash | Chain.Zcash,
+                    chain: chain.name,
                     utxo: {
                         txHash: specifiedDeposit.txHash,
                         amount: 0, // TODO: Get value

@@ -1,7 +1,7 @@
 {
     "name": "@renproject/gateway",
     "version": "1.0.6",
-    "description": "Official Ren JavaScript widget for bridging BTC, BCH and ZEC to Ethereum",
+    "description": "Official Ren JavaScript widget for bridging cryptocurrency assets cross-chain",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -52,8 +52,8 @@
         "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link": "yarn link @renproject/interfaces @renproject/utils @renproject/networks && yarn link",
-        "unlink": "yarn unlink"
+        "link-all": "yarn link @renproject/interfaces @renproject/utils @renproject/networks && yarn link",
+        "unlink-all": "yarn unlink-all"
     },
     "scripts-info": {
         "info": "Display information about the package scripts",

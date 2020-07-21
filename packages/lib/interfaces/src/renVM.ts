@@ -10,66 +10,11 @@ export const RenNetworks = [RenNetwork.Mainnet, RenNetwork.Chaosnet, RenNetwork.
 export const isRenNetwork = (maybeRenNetwork: any): maybeRenNetwork is RenNetwork => // tslint:disable-line: no-any
     RenNetworks.indexOf(maybeRenNetwork) !== -1;
 
-export enum Chain {
-    Bitcoin = "Btc",
-    Ethereum = "Eth",
-    Zcash = "Zec",
-    BitcoinCash = "Bch",
-}
-export const Chains = [Chain.Bitcoin, Chain.Ethereum, Chain.Zcash, Chain.BitcoinCash];
-export const isChain = (maybeChain: any): maybeChain is Chain => // tslint:disable-line: no-any
-    Chains.indexOf(maybeChain) !== -1;
+export type Chain = string;
 
-export enum Asset {
-    BTC = "BTC",
-    ZEC = "ZEC",
-    ETH = "ETH",
-    BCH = "BCH",
-}
-export const Assets = [Asset.BTC, Asset.ZEC, Asset.ETH, Asset.BCH];
-export const isAsset = (maybeAsset: any): maybeAsset is Asset => // tslint:disable-line: no-any
-    Assets.indexOf(maybeAsset) !== -1;
+export type Asset = string;
 
-export enum RenContract {
-    Btc2Eth = "BTC0Btc2Eth",
-    Eth2Btc = "BTC0Eth2Btc",
-    Zec2Eth = "ZEC0Zec2Eth",
-    Eth2Zec = "ZEC0Eth2Zec",
-    Bch2Eth = "BCH0Bch2Eth",
-    Eth2Bch = "BCH0Eth2Bch",
-}
-export const RenContracts = [RenContract.Btc2Eth, RenContract.Eth2Btc, RenContract.Zec2Eth, RenContract.Eth2Zec, RenContract.Bch2Eth, RenContract.Eth2Bch];
-export const isRenContract = (maybeRenContract: any): maybeRenContract is RenContract => // tslint:disable-line: no-any
-    RenContracts.indexOf(maybeRenContract) !== -1;
-
-export const Tokens = {
-    // Bitcoin
-    BTC: {
-        Mint: RenContract.Btc2Eth,
-        Btc2Eth: RenContract.Btc2Eth,
-
-        Burn: RenContract.Eth2Btc,
-        Eth2Btc: RenContract.Eth2Btc,
-    },
-
-    // Zcash
-    ZEC: {
-        Mint: RenContract.Zec2Eth,
-        Zec2Eth: RenContract.Zec2Eth,
-
-        Burn: RenContract.Eth2Zec,
-        Eth2Zec: RenContract.Eth2Zec,
-    },
-
-    // Bitcoin Cash
-    BCH: {
-        Mint: RenContract.Bch2Eth,
-        Bch2Eth: RenContract.Bch2Eth,
-
-        Burn: RenContract.Eth2Bch,
-        Eth2Bch: RenContract.Eth2Bch,
-    },
-};
+export type RenContract = string;
 
 export enum RenVMType {
     TypeAddress = "address",

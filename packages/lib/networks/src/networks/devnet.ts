@@ -1,6 +1,4 @@
 import BasicAdapter from "@renproject/sol/build/devnet/BasicAdapter.json";
-import BCHGateway from "@renproject/sol/build/devnet/BCHGateway.json";
-import BTCGateway from "@renproject/sol/build/devnet/BTCGateway.json";
 import DarknodePayment from "@renproject/sol/build/devnet/DarknodePayment.json";
 import DarknodePaymentStore from "@renproject/sol/build/devnet/DarknodePaymentStore.json";
 import DarknodeRegistryLogic from "@renproject/sol/build/devnet/DarknodeRegistryLogicV1.json";
@@ -11,11 +9,8 @@ import GatewayLogic from "@renproject/sol/build/devnet/GatewayLogicV1.json";
 import GatewayRegistry from "@renproject/sol/build/devnet/GatewayRegistry.json";
 import ProtocolLogic from "@renproject/sol/build/devnet/ProtocolLogicV1.json";
 import ProtocolProxy from "@renproject/sol/build/devnet/ProtocolProxy.json";
-import RenBCH from "@renproject/sol/build/devnet/RenBCH.json";
-import RenBTC from "@renproject/sol/build/devnet/RenBTC.json";
 import RenToken from "@renproject/sol/build/devnet/RenToken.json";
-import RenZEC from "@renproject/sol/build/devnet/RenZEC.json";
-import ZECGateway from "@renproject/sol/build/devnet/ZECGateway.json";
+import RenERC20 from "@renproject/sol/build/devnet/RenERC20LogicV1.json";
 import ERC20 from "@renproject/sol/build/erc/ERC20.json";
 import { AbiItem } from "web3-utils";
 
@@ -77,41 +72,13 @@ export const renDevnet = CastNetwork({
                 abi: GatewayRegistry.abi as AbiItem[],
                 artifact: GatewayRegistry as Contract,
             },
-            RenBTC: {
-                _address: RenBTC.networks[networkID].address,
-                abi: RenBTC.abi as AbiItem[],
-                artifact: RenBTC as Contract,
-                description: "gatewayRegistry.getTokenBySymbol(\"BTC\")",
+            RenERC20: {
+                abi: RenERC20.abi as AbiItem[],
+                artifact: RenERC20 as Contract,
             },
-            BTCGateway: {
-                _address: BTCGateway.networks[networkID].address,
+            Gateway: {
                 abi: GatewayLogic.abi as AbiItem[],
                 artifact: GatewayLogic as Contract,
-                description: "gatewayRegistry.getGatewayBySymbol(\"BTC\")",
-            },
-            RenZEC: {
-                _address: RenZEC.networks[networkID].address,
-                abi: RenZEC.abi as AbiItem[],
-                artifact: RenZEC as Contract,
-                description: "gatewayRegistry.getTokenBySymbol(\"ZEC\")",
-            },
-            ZECGateway: {
-                _address: ZECGateway.networks[networkID].address,
-                abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic as Contract,
-                description: "gatewayRegistry.getGatewayBySymbol(\"ZEC\")",
-            },
-            RenBCH: {
-                _address: RenBCH.networks[networkID].address,
-                abi: RenBCH.abi as AbiItem[],
-                artifact: RenBCH as Contract,
-                description: "gatewayRegistry.getTokenBySymbol(\"BCH\")",
-            },
-            BCHGateway: {
-                _address: BCHGateway.networks[networkID].address,
-                abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic as Contract,
-                description: "gatewayRegistry.getGatewayBySymbol(\"BCH\")",
             },
             BasicAdapter: {
                 address: BasicAdapter.networks[networkID].address,
@@ -123,24 +90,6 @@ export const renDevnet = CastNetwork({
             DAI: {
                 address: "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
                 decimals: 18
-            },
-            BTC: {
-                address: RenBTC.networks[networkID].address,
-                abi: RenBTC.abi as AbiItem[],
-                artifact: RenBTC as Contract,
-                decimals: 8
-            },
-            ZEC: {
-                address: RenZEC.networks[networkID].address,
-                abi: RenZEC.abi as AbiItem[],
-                artifact: RenZEC as Contract,
-                decimals: 8
-            },
-            BCH: {
-                address: RenBCH.networks[networkID].address,
-                abi: RenBCH.abi as AbiItem[],
-                artifact: RenBCH as Contract,
-                decimals: 8
             },
             REN: {
                 address: RenToken.networks[networkID].address,

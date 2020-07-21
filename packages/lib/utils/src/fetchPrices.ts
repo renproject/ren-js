@@ -5,25 +5,6 @@ import { OrderedMap } from "immutable";
 
 import { SECONDS } from "./common";
 
-const tokenDecimals = (token: string): number => {
-    switch (token) {
-        case "BTC":
-            return 8;
-        case "ZEC":
-            return 8;
-        case "BCH":
-            return 8;
-        case "DAI":
-            return 18;
-        case "ETH":
-            return 18;
-        case "REN":
-            return 18;
-        default:
-            throw new Error(`Unknown token ${token}`);
-    }
-};
-
 type PriceFeed = (token: string) => Promise<number>;
 
 // CoinGecko price feed

@@ -33,7 +33,7 @@
     "chalk": "^4.1.0",
     "codecov": "^3.7.0",
     "cross-env": "^7.0.2",
-    "cz-lerna-changelog": "^2.0.3",
+    "cz-conventional-changelog": "^3.2.0",
     "dotenv": "^8.2.0",
     "earljs": "^0.0.13",
     "ethereumjs-util": "^7.0.3",
@@ -91,8 +91,8 @@
     "**/**/lodash": "^4.17.12"
   },
   "scripts": {
-    "link": "lerna run link",
-    "unlink": "lerna run unlink",
+    "link-all": "lerna run link-all",
+    "unlink-all": "lerna run unlink-all",
     "build": "lerna run build --scope @renproject/*",
     "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
     "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",
@@ -119,7 +119,7 @@
   },
   "config": {
     "commitizen": {
-      "path": "cz-lerna-changelog"
+      "path": "cz-conventional-changelog"
     }
   }
 }

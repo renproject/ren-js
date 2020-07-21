@@ -13,7 +13,7 @@ See the [Releases](https://github.com/renproject/ren-js/releases) page.
 
 ## About
 
-GatewayJS is an SDK for bridging BTC, BCH and ZEC to your Ethereum-based dApp. GatewayJS lets your users deposit and withdraw cryptocurrencies into your smart contracts through the following widget:
+GatewayJS is an SDK for bridging cryptocurrency assets cross-chain. GatewayJS lets your users deposit and withdraw cryptocurrencies into your smart contracts through the following widget:
 
 ![GatewayJS screenshot](./screenshot.png)
 
@@ -74,7 +74,7 @@ yarn run build
 You'll need to:
 
 1. Generate a mnemonic and send ETH (kovan for testnet) (path: `m/44'/60'/0'/0/`)
-2. Generate a private key and send BTC and ZEC (tBTC and TAZ for testnet)
+2. Generate a private key and send relevant crypto assets
 3. Generate an Infura API key
 
 Create a `.env` file which contains the following exported variables:

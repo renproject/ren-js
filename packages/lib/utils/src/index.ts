@@ -9,5 +9,4 @@ export * from "./parameterUtils";
 export * from "./promiEvent";
 export * from "./renVMUtils";
 export * from "./utils";
-export * from "./value";
 export * from "./web3PromiEvent";

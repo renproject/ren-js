@@ -54,7 +54,5 @@ export interface UnmarshalledAssetFees {
 }
 
 export interface UnmarshalledFees {
-    btc: UnmarshalledAssetFees;
-    zec: UnmarshalledAssetFees;
-    bch: UnmarshalledAssetFees;
+    [asset: string]: UnmarshalledAssetFees;
 }

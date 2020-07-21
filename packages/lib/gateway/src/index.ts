@@ -156,7 +156,7 @@ export class Gateway {
 
             // Provider can be null if the developer is handling transactions
             // outside of GatewayJS.
-            const provider: Web3Provider = web3Provider || (transferParams as TransferParams).web3Provider;
+            const provider: Web3Provider = web3Provider || null;
             if (provider !== null) {
                 this.web3 = new Web3(provider);
             }
@@ -602,29 +602,8 @@ export default class GatewayJS {
     public readonly burnAndRelease = (params: BurnAndReleaseParams): Gateway =>
         new Gateway(this.network, this.config)._open(params)
 
-    readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintEvent | BurnAndReleaseEvent) => {
-        // tslint:disable-next-line: strict-type-predicates
-        if ((params as LockAndMintEvent).eventType === EventType.LockAndMint) {
-            return this.recoverTransfer(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
-        }
-
-        const sendToken = (params as LockAndMintParams).sendToken;
-        if (sendToken === "BTC" || sendToken === "ZEC" || sendToken === "BCH") {
-            throw new Error(`Ambiguous token ${sendToken} - call "lockAndMint" or "burnAndRelease" instead of "open"`);
-        }
-        if (parseRenContract(sendToken).to === Chain.Ethereum) {
-            return this.lockAndMint(params as LockAndMintParams);
-        } else {
-            return this.burnAndRelease(params as BurnAndReleaseParams);
-        }
-    }
-
-    public readonly recoverTransfer = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {
-        return new Gateway(this.network, this.config)._open(params, web3Provider);
-    }
-
-    public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);
-    public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(stringToNetwork(this.network), web3, token);
+    public readonly open = (params: LockAndMintParams | BurnAndReleaseParams) =>
+        new Gateway(this.network, this.config)._open(params)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

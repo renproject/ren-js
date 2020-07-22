@@ -61,7 +61,7 @@ export const SettingsPage: React.FunctionComponent<Props> = ({
             _catchInteractionErr_(error, "Error clearing mint transaction");
         }
         setClearingMintTransaction(false);
-    }, [clearMintTransaction, setClearingMintTransaction]);
+    }, [clearMintTransaction, setClearingMintTransaction, hideSettings]);
 
     const handleClearLockTransaction = useCallback(async () => {
         if (!clearLockTransaction) {
@@ -76,7 +76,7 @@ export const SettingsPage: React.FunctionComponent<Props> = ({
             _catchInteractionErr_(error, "Error clearing lock transaction");
         }
         setClearingLockTransaction(false);
-    }, [clearLockTransaction, setClearingLockTransaction]);
+    }, [clearLockTransaction, setClearingLockTransaction, hideSettings]);
 
     const clearLockTooltip = "Only use this if you have replaced the transaction with a higher fee (RBF).";
     const clearMintTooltip = "Only use this if you have cancelled your Ethereum transaction in your wallet.";

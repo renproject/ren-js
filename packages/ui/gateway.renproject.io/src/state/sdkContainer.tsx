@@ -2,7 +2,8 @@ import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseStatus, Chain, EventType,
     GatewayMessageType, HistoryEvent, isAsset, LockAndMintEvent, LockAndMintParams,
-    LockAndMintStatus, RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus, UTXOWithChain,
+    LockAndMintStatus, RenContract, SerializableBurnAndReleaseParams, Tx, TxStatus,
+    UnmarshalledFees, UTXOWithChain,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
@@ -25,6 +26,7 @@ const initialState = {
     // sdkAddress: null as string | null,
     // sdkWeb3: null as Web3 | null,
     transfer: null as HistoryEvent | null,
+    fees: null as UnmarshalledFees | null,
 };
 
 export const defaultNumberOfConfirmations = (renContract: "BTC" | "ZEC" | "BCH" | RenContract | Asset, networkDetails: RenNetworkDetails): number => {
@@ -85,11 +87,10 @@ export class SDKContainer extends Container<typeof initialState> {
 
     public connect = async (network: string): Promise<void> => {
         // public connect = async (web3: Web3, address: string | null, network: string): Promise<void> => {
-        await this.setState({
-            // sdkWeb3: web3,
-            sdkRenVM: new RenJS(network),
-            // sdkAddress: address,
-        });
+        const sdkRenVM = new RenJS(network);
+        await this.setState({ sdkRenVM });
+
+        sdkRenVM.getFees().then(fees => this.setState({ fees }).catch(console.error)).catch(console.error);
     }
 
     public getNumberOfConfirmations = (transfer?: HistoryEvent) => {

@@ -56,7 +56,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
             uiContainer.resetTransfer().catch((error) => { _catchInteractionErr_(error, "Error in HandlingTransfer: onNoBurnFound > resetTransfer"); });
         };
 
-        const { sdkRenVM, transfer } = sdkContainer.state;
+        const { sdkRenVM, transfer, fees } = sdkContainer.state;
 
         if (!transfer) {
             throw new Error(`Unable to load transfer details`);
@@ -168,7 +168,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
 
             return <>
                 {inner}
-                {!paused ? <TransferDetails transfer={transfer} /> : <></>}
+                {!paused ? <TransferDetails fees={fees} transfer={transfer} /> : <></>}
             </>;
         };
 
@@ -251,7 +251,7 @@ export const HandlingTransfer = connect<Props & ConnectedProps<[UIContainer, SDK
 
             return <>
                 {inner}
-                {!paused ? <TransferDetails transfer={transfer} /> : <></>}
+                {!paused ? <TransferDetails fees={fees} transfer={transfer} /> : <></>}
             </>;
         };
 

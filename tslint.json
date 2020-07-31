@@ -1,11 +1,6 @@
 {
-    "extends": [
-        "tslint:recommended",
-        "tslint-microsoft-contrib/latest"
-    ],
-    "rulesDirectory": [
-        "node_modules/tslint-microsoft-contrib"
-    ],
+    "extends": ["tslint:recommended", "tslint-microsoft-contrib/latest"],
+    "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "linterOptions": {
         "exclude": [
             "src/contracts/ABIs/*.json",
@@ -45,23 +40,17 @@
         "function-name": false,
         "no-single-line-block-comment": false,
         "no-unnecessary-type-assertion": false,
-        "no-suspicious-comment": {
-            "severity": "warning"
-        },
+        "no-suspicious-comment": false,
         "no-console": {
             "severity": "error",
-            "options": [
-                "log",
-                "debug",
-                "info"
-            ]
+            "options": ["log", "debug", "info"]
         },
         "strict-type-predicates": {
             "severity": "warning"
         },
         "ordered-imports": true,
         "no-object-literal-type-assertion": true,
-        "semicolon": true,
+        "semicolon": [true, "always", "ignore-bound-class-methods"],
         "eofline": true,
         "no-non-null-assertion": true,
         "no-floating-promises": true,
@@ -83,16 +72,8 @@
                 "ignore-pattern": "^_"
             }
         ],
-        "quotemark": [
-            true,
-            "double",
-            "jsx-double"
-        ],
-        "indent": [
-            true,
-            "spaces",
-            4
-        ],
+        "quotemark": [true, "double", "jsx-double"],
+        "indent": [true, "spaces", 4],
         "variable-name": [
             true,
             "ban-keywords",
@@ -114,19 +95,9 @@
                 "esSpecCompliant": true
             }
         ],
-        "increment-decrement": [
-            true,
-            "allow-post"
-        ],
-        "align": [
-            true,
-            "parameters",
-            "statements"
-        ],
-        "array-type": [
-            true,
-            "array-simple"
-        ],
+        "increment-decrement": [true, "allow-post"],
+        "align": [true, "parameters", "statements"],
+        "array-type": [true, "array-simple"],
         "no-unsafe-any": false,
         "max-line-length": false,
         "max-func-body-length": false,

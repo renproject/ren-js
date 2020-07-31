@@ -37,12 +37,13 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link-all": "yarn link @renproject/interfaces @renproject/utils && yarn link",
-        "unlink-all": "yarn unlink-all"
+        "link:all": "yarn link @renproject/interfaces @renproject/utils @renproject/networks && yarn link",
+        "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
         "@renproject/utils": "file:../utils",
         "@renproject/interfaces": "file:../interfaces",
+        "@renproject/networks": "file:../networks",
         "@types/bs58": "^4.0.1",
         "@types/node": "^14.0.5",
         "bchaddrjs": "^0.4.8",

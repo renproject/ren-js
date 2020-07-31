@@ -3,7 +3,6 @@ export * from "./chain";
 export * from "./errors";
 export * from "./general";
 export * from "./logger";
-export * from "./messages";
 export * from "./parameters";
 export * from "./renVM";
 export * from "./shard";

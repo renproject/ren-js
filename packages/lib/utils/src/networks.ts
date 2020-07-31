@@ -1,46 +1,23 @@
-import {
-    renChaosnet, renDevnet, renLocalnet, renMainnet, RenNetworkDetails, renTestnet,
-} from "@renproject/networks";
+import { RenNetwork } from "@renproject/interfaces";
 
-export const stringToNetwork = (network?: RenNetworkDetails | string | null | undefined): RenNetworkDetails => {
+export const stringToNetwork = (
+    network?: RenNetwork | string | null | undefined
+): RenNetwork => {
     if (typeof network === "string") {
         switch (network.toLowerCase()) {
             case "":
             case "mainnet":
-                return renMainnet;
+                return RenNetwork.Mainnet;
             case "chaosnet":
-                return renChaosnet;
+                return RenNetwork.Chaosnet;
             case "testnet":
-                return renTestnet;
+                return RenNetwork.Testnet;
             case "devnet":
-                return renDevnet;
-            // case "localnet":
-            //     return renLocalnet;
-            default:
-                throw new Error(`Unsupported network "${network}"`);
+                return RenNetwork.Devnet;
         }
+        // tslint:disable-next-line: strict-type-predicates
     } else if (network === undefined || network === null) {
-        return renMainnet;
-    } else {
-        return network;
+        return RenNetwork.Mainnet;
     }
-};
-
-export interface NetworkDetails {
-    Mainnet: typeof renMainnet;
-    Chaosnet: typeof renChaosnet;
-    Testnet: typeof renTestnet;
-    Devnet: typeof renDevnet;
-    Localnet: typeof renLocalnet;
-    stringToNetwork: typeof stringToNetwork;
-}
-
-export const NetworkDetails: NetworkDetails = {
-    Mainnet: renMainnet,
-    Chaosnet: renChaosnet,
-    Testnet: renTestnet,
-    Devnet: renDevnet,
-    Localnet: renLocalnet,
-
-    stringToNetwork,
+    throw new Error(`Unsupported network "${network}"`);
 };

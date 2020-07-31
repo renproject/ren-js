@@ -54,12 +54,11 @@
         "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html doc:publish",
-        "link-all": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils @renproject/networks && yarn link",
-        "unlink-all": "yarn unlink-all"
+        "link:all": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
+        "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
         "@renproject/chains": "file:../chains",
-        "@renproject/networks": "file:../networks",
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/provider": "file:../provider",
         "@renproject/rpc": "file:../rpc",

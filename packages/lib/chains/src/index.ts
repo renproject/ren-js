@@ -1,3 +1,3 @@
-export * from "./btc";
-export * from "./bch";
-export * from "./zec";
+export * from "./bitcoin";
+export * from "./bitcoincash";
+export * from "./zcash";

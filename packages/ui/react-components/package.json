@@ -27,8 +27,8 @@
     "prepare": "$npm_execpath run build",
     "predeploy": "$npm_execpath run demo:build",
     "deploy": "gh-pages -d build",
-    "link": "yarn link",
-    "unlink": "yarn unlink"
+    "link:all": "yarn link",
+    "unlink:all": "(yarn unlink || true)"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.28",

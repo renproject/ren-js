@@ -1,3 +1,5 @@
+import { RenNetwork } from "@renproject/interfaces";
+
 import { renChaosnet } from "./networks/chaosnet";
 import { renDevnet } from "./networks/devnet";
 import { renLocalnet } from "./networks/localnet";
@@ -10,15 +12,7 @@ export { renLocalnet } from "./networks/localnet";
 export { renMainnet } from "./networks/mainnet";
 export { renTestnet } from "./networks/testnet";
 
-export enum RenNetwork {
-    Mainnet = "mainnet",
-    Chaosnet = "chaosnet",
-    Testnet = "testnet",
-    Devnet = "devnet",
-    Localnet = "localnet",
-}
-
-export const RenNetworks = {
+export const RenNetworkDetailsMap = {
     [RenNetwork.Mainnet]: renMainnet,
     [RenNetwork.Chaosnet]: renChaosnet,
     [RenNetwork.Testnet]: renTestnet,
@@ -26,4 +20,9 @@ export const RenNetworks = {
     [RenNetwork.Localnet]: renLocalnet,
 };
 
-export type RenNetworkDetails = typeof renMainnet | typeof renChaosnet | typeof renTestnet | typeof renDevnet | typeof renLocalnet;
+export type RenNetworkDetails =
+    | typeof renMainnet
+    | typeof renChaosnet
+    | typeof renTestnet
+    | typeof renDevnet
+    | typeof renLocalnet;

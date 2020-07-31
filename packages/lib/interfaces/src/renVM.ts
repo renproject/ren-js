@@ -1,4 +1,3 @@
-
 export enum RenNetwork {
     Mainnet = "mainnet",
     Chaosnet = "chaosnet",
@@ -6,9 +5,26 @@ export enum RenNetwork {
     Devnet = "devnet",
     Localnet = "localnet",
 }
-export const RenNetworks = [RenNetwork.Mainnet, RenNetwork.Chaosnet, RenNetwork.Testnet, RenNetwork.Devnet, RenNetwork.Localnet];
-export const isRenNetwork = (maybeRenNetwork: any): maybeRenNetwork is RenNetwork => // tslint:disable-line: no-any
-    RenNetworks.indexOf(maybeRenNetwork) !== -1;
+
+export type RenNetworkString =
+    | "mainnet"
+    | "chaosnet"
+    | "testnet"
+    | "devnet"
+    | "localnet";
+
+export const RenNetworks = [
+    RenNetwork.Mainnet,
+    RenNetwork.Chaosnet,
+    RenNetwork.Testnet,
+    RenNetwork.Devnet,
+    RenNetwork.Localnet,
+];
+export const isRenNetwork = (
+    maybeRenNetwork: any
+): maybeRenNetwork is RenNetwork => RenNetworks.indexOf(maybeRenNetwork) !== -1; // tslint:disable-line: no-any
+export const isTestnet = (renNetwork: RenNetwork) =>
+    renNetwork !== RenNetwork.Mainnet && renNetwork !== RenNetwork.Chaosnet;
 
 export type Chain = string;
 
@@ -70,37 +86,61 @@ export interface ExtEthCompatPayload {
     fn: RenVMValue<RenVMType.TypeB>;
 }
 
-export type RenVMValue<Type extends RenVMType> =
-    Type extends RenVMType.TypeAddress ? string :
-    Type extends RenVMType.TypeStr ? Base64String :
-    Type extends RenVMType.TypeB32 ? Base64String :
-    Type extends RenVMType.TypeB ? Base64String :
-    Type extends RenVMType.TypeI8 ? DecimalString :
-    Type extends RenVMType.TypeI16 ? DecimalString :
-    Type extends RenVMType.TypeI32 ? DecimalString :
-    Type extends RenVMType.TypeI64 ? DecimalString :
-    Type extends RenVMType.TypeI128 ? DecimalString :
-    Type extends RenVMType.TypeI256 ? DecimalString :
-    Type extends RenVMType.TypeU8 ? DecimalString :
-    Type extends RenVMType.TypeU16 ? DecimalString :
-    Type extends RenVMType.TypeU32 ? DecimalString :
-    Type extends RenVMType.TypeU64 ? DecimalString :
-    Type extends RenVMType.TypeU128 ? DecimalString :
-    Type extends RenVMType.TypeU256 ? DecimalString :
-    // tslint:disable-next-line: no-any
-    Type extends RenVMType.TypeRecord ? any :
-    // tslint:disable-next-line: no-any
-    Type extends RenVMType.TypeList ? any[] :
-    Type extends RenVMType.ExtTypeEthCompatAddress ? HexString :
-    Type extends RenVMType.ExtTypeBtcCompatUTXO ? RenVMUTXO :
-    Type extends RenVMType.ExtTypeBtcCompatUTXOs ? RenVMUTXO[] :
-    // tslint:disable-next-line: no-any
-    Type extends RenVMType.ExtTypeEthCompatTx ? any :
-    Type extends RenVMType.ExtEthCompatPayload ? ExtEthCompatPayload :
-    // tslint:disable-next-line: no-any
-    any;
+export type RenVMValue<
+    Type extends RenVMType
+> = Type extends RenVMType.TypeAddress
+    ? string
+    : Type extends RenVMType.TypeStr
+    ? Base64String
+    : Type extends RenVMType.TypeB32
+    ? Base64String
+    : Type extends RenVMType.TypeB
+    ? Base64String
+    : Type extends RenVMType.TypeI8
+    ? DecimalString
+    : Type extends RenVMType.TypeI16
+    ? DecimalString
+    : Type extends RenVMType.TypeI32
+    ? DecimalString
+    : Type extends RenVMType.TypeI64
+    ? DecimalString
+    : Type extends RenVMType.TypeI128
+    ? DecimalString
+    : Type extends RenVMType.TypeI256
+    ? DecimalString
+    : Type extends RenVMType.TypeU8
+    ? DecimalString
+    : Type extends RenVMType.TypeU16
+    ? DecimalString
+    : Type extends RenVMType.TypeU32
+    ? DecimalString
+    : Type extends RenVMType.TypeU64
+    ? DecimalString
+    : Type extends RenVMType.TypeU128
+    ? DecimalString
+    : Type extends RenVMType.TypeU256
+    ? DecimalString // tslint:disable-next-line: no-any
+    : Type extends RenVMType.TypeRecord
+    ? any // tslint:disable-next-line: no-any
+    : Type extends RenVMType.TypeList
+    ? any[]
+    : Type extends RenVMType.ExtTypeEthCompatAddress
+    ? HexString
+    : Type extends RenVMType.ExtTypeBtcCompatUTXO
+    ? RenVMUTXO
+    : Type extends RenVMType.ExtTypeBtcCompatUTXOs
+    ? RenVMUTXO[] // tslint:disable-next-line: no-any
+    : Type extends RenVMType.ExtTypeEthCompatTx
+    ? any
+    : Type extends RenVMType.ExtEthCompatPayload
+    ? ExtEthCompatPayload // tslint:disable-next-line: no-any
+    : any;
 
-export interface RenVMArg<Name extends string, Type extends RenVMType, Value extends RenVMValue<Type> = RenVMValue<Type>> {
+export interface RenVMArg<
+    Name extends string,
+    Type extends RenVMType,
+    Value extends RenVMValue<Type> = RenVMValue<Type>
+> {
     name: Name;
     type: Type;
     value: Value;
@@ -109,14 +149,18 @@ export interface RenVMArg<Name extends string, Type extends RenVMType, Value ext
 // tslint:disable-next-line: no-any
 export type RenVMArgs = Array<RenVMArg<string, RenVMType>>;
 
-
 export interface MintAndBurnFees {
     mint: RenVMValue<RenVMType.TypeU64>;
     burn: RenVMValue<RenVMType.TypeU64>;
 }
 
-export interface Fees {
+interface MintFees {
+    [chain: string]: MintAndBurnFees;
+}
+
+interface LockFees {
     lock: RenVMValue<RenVMType.TypeU64>;
     release: RenVMValue<RenVMType.TypeU64>;
-    ethereum: MintAndBurnFees;
 }
+
+export type Fees = LockFees & MintFees;

@@ -53,7 +53,7 @@ export const renLocalnet = CastNetwork({
                 address: DarknodeRegistryProxy.networks[networkID].address,
                 abi: DarknodeRegistryLogic.abi as AbiItem[],
                 artifact: DarknodeRegistryLogic as Contract,
-                block: 11974083
+                block: 11974083,
             },
             DarknodeRegistryStore: {
                 address: DarknodeRegistryStore.networks[networkID].address,
@@ -77,41 +77,13 @@ export const renLocalnet = CastNetwork({
                 abi: GatewayRegistry.abi as AbiItem[],
                 artifact: GatewayRegistry as Contract,
             },
-            RenBTC: {
-                _address: RenBTC.networks[networkID].address,
+            RenERC20: {
                 abi: RenBTC.abi as AbiItem[],
                 artifact: RenBTC as Contract,
-                description: "gatewayRegistry.getTokenBySymbol(\"BTC\")",
             },
-            BTCGateway: {
-                _address: BTCGateway.networks[networkID].address,
+            Gateway: {
                 abi: GatewayLogic.abi as AbiItem[],
                 artifact: GatewayLogic as Contract,
-                description: "gatewayRegistry.getGatewayBySymbol(\"BTC\")",
-            },
-            RenZEC: {
-                _address: RenZEC.networks[networkID].address,
-                abi: RenZEC.abi as AbiItem[],
-                artifact: RenZEC as Contract,
-                description: "gatewayRegistry.getTokenBySymbol(\"ZEC\")",
-            },
-            ZECGateway: {
-                _address: ZECGateway.networks[networkID].address,
-                abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic as Contract,
-                description: "gatewayRegistry.getGatewayBySymbol(\"ZEC\")",
-            },
-            RenBCH: {
-                _address: RenBCH.networks[networkID].address,
-                abi: RenBCH.abi as AbiItem[],
-                artifact: RenBCH as Contract,
-                description: "gatewayRegistry.getTokenBySymbol(\"BCH\")",
-            },
-            BCHGateway: {
-                _address: BCHGateway.networks[networkID].address,
-                abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic as Contract,
-                description: "gatewayRegistry.getGatewayBySymbol(\"BCH\")",
             },
             BasicAdapter: {
                 address: BasicAdapter.networks[networkID].address,
@@ -122,35 +94,35 @@ export const renLocalnet = CastNetwork({
         tokens: {
             DAI: {
                 address: "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
-                decimals: 18
+                decimals: 18,
             },
             BTC: {
                 address: RenBTC.networks[networkID].address,
                 abi: RenBTC.abi as AbiItem[],
                 artifact: RenBTC as Contract,
-                decimals: 8
+                decimals: 8,
             },
             ZEC: {
                 address: RenZEC.networks[networkID].address,
                 abi: RenZEC.abi as AbiItem[],
                 artifact: RenZEC as Contract,
-                decimals: 8
+                decimals: 8,
             },
             BCH: {
                 address: RenBCH.networks[networkID].address,
                 abi: RenBCH.abi as AbiItem[],
                 artifact: RenBCH as Contract,
-                decimals: 8
+                decimals: 8,
             },
             REN: {
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 artifact: RenToken as Contract,
-                decimals: 18
+                decimals: 18,
             },
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                decimals: 18
+                decimals: 18,
             },
         },
         erc: {
@@ -158,6 +130,6 @@ export const renLocalnet = CastNetwork({
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20 as Contract,
             },
-        }
-    }
+        },
+    },
 });

@@ -1,8 +1,7 @@
-import { Chain, OriginChain, Tx, UTXO, UTXOIndex, UTXOWithChain } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
+import { Chain, LockChain } from "@renproject/interfaces";
 import { ripemd160, sha256 } from "ethereumjs-util";
 
-import { Ox, SECONDS, sleep } from "./common";
+import { SECONDS, sleep } from "./common";
 
 /**
  * Hash160, used for bitcoin public keys.
@@ -11,38 +10,38 @@ export const hash160 = (publicKey: Buffer): Buffer =>
     ripemd160(
         sha256(publicKey),
         // Don't pad
-        false);
+        false
+    );
 
-/**
- * Generate Gateway address for a cross-chain transfer's origin chain.
- */
-export const generateAddress = (chain: OriginChain<any>, gHash: string, mpkh: Buffer, isTestnet: boolean): string => {
-    return chain.createAddress(isTestnet, Ox(mpkh), gHash);
-};
+// /**
+//  * Generate Gateway address for a cross-chain transfer's origin chain.
+//  */
+// export const createGatewayAddress = async (asset: string, chain: LockChain, gHash: string, mpkh: Buffer, isTestnet: boolean): Promise<string> => {
+//     return chain.createGatewayAddress(asset, mpkh, gHash);
+// };
 
-/**
- * Retrieves unspent deposits at the provided address.
- * An optional `confirmations` parameter limits UTXOs to ones with at least that
- * amount of confirmations.
- */
-export const retrieveDeposits = async (_network: RenNetworkDetails, chain: OriginChain<any>, address: string, confirmations = 0): Promise<UTXOWithChain[]> => {
-    return (await chain.getDeposits(_network)(address, confirmations)).map((utxo: UTXO) => ({ chain: Chain.Bitcoin as Chain.Bitcoin, utxo }));
-};
+// /**
+//  * Retrieves unspent deposits at the provided address.
+//  * An optional `confirmations` parameter limits UTXOs to ones with at least that
+//  * amount of confirmations.
+//  */
+// export const retrieveDeposits = async (asset: string, chain: LockChain, address: string): Promise<Array<{}>> => {
+//     return (await chain.getDeposits(asset, address));
+// };
 
-/**
- * Returns the number of confirmations for the specified UTXO.
- */
-export const retrieveConfirmations = async (_network: RenNetworkDetails, chain: OriginChain<any>, transaction: Tx): Promise<number> => {
-    // tslint:disable-next-line: no-any
-    const txid = transaction.chain === Chain.Ethereum ? 0 : transaction.utxo ? transaction.utxo.txHash : (transaction as any).hash;
-    if (!txid) {
-        return 0;
-    }
-    return (await chain.getConfirmations(_network)(txid));
-};
+// /**
+//  * Returns the number of confirmations for the specified UTXO.
+//  */
+// export const retrieveConfirmations = async <T>(asset: string, chain: LockChain<T>, transaction: T): Promise<number> => {
+//     return (await chain.isFinalized(asset, transaction);
+// };
 
-export const waitForConfirmations = async (network: RenNetworkDetails, chain: OriginChain<any>, specifiedDeposit: UTXOIndex, confirmations: number, _recipient: string, onDeposit: (deposit: UTXOWithChain) => void): Promise<UTXOIndex> => {
-
+export const waitForConfirmations = async (
+    chain: LockChain,
+    specifiedDeposit: {},
+    _recipient: string,
+    onDeposit: (deposit: {}) => void
+): Promise<{}> => {
     /**
      * Blocknative currently doesn't support `txSpeedUp` for chains other than Ethereum.
      */
@@ -83,24 +82,14 @@ export const waitForConfirmations = async (network: RenNetworkDetails, chain: Or
     // tslint:disable-next-line: no-constant-condition
     while (true) {
         try {
-            const utxoConfirmations = await retrieveConfirmations(network, chain, {
-                chain: chain.name as Chain,
-                hash: specifiedDeposit.txHash
-            });
-            if (utxoConfirmations > previousUtxoConfirmations) {
-                previousUtxoConfirmations = utxoConfirmations;
-                const utxo = {
-                    chain: chain.name,
-                    utxo: {
-                        txHash: specifiedDeposit.txHash,
-                        amount: 0, // TODO: Get value
-                        vOut: specifiedDeposit.vOut,
-                        confirmations: utxoConfirmations,
-                    }
-                };
-                onDeposit(utxo);
+            const { current, target } = await chain.transactionConfidence(
+                specifiedDeposit
+            );
+            if (current > previousUtxoConfirmations) {
+                previousUtxoConfirmations = current;
+                onDeposit(specifiedDeposit);
             }
-            if (utxoConfirmations >= confirmations) {
+            if (current >= target) {
                 break;
             }
         } catch (error) {

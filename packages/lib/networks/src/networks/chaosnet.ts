@@ -72,7 +72,7 @@ export const renChaosnet = CastNetwork({
                 abi: GatewayRegistry.abi as AbiItem[],
                 artifact: GatewayRegistry as Contract,
             },
-            RenBTC: {
+            RenERC20: {
                 abi: RenERC20.abi as AbiItem[],
                 artifact: RenERC20 as Contract,
             },
@@ -95,11 +95,11 @@ export const renChaosnet = CastNetwork({
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 artifact: RenToken as Contract,
-                decimals: 18
+                decimals: 18,
             },
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                decimals: 18
+                decimals: 18,
             },
         },
         erc: {
@@ -107,6 +107,6 @@ export const renChaosnet = CastNetwork({
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20 as Contract,
             },
-        }
-    }
+        },
+    },
 });

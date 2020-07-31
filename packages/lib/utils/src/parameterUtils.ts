@@ -1,7 +1,6 @@
 export const x = 0;
 
 // import { BurnAndReleaseParams, LockAndMintParams } from "@renproject/interfaces";
-// import { RenNetworkDetails } from "@renproject/networks";
 
 // import { parseRenContract, resolveInToken, resolveOutToken } from "./renVMUtils";
 // import { utils } from "./utils";
@@ -13,7 +12,7 @@ export const x = 0;
 //  * This function checks if this is the case and makes the required changes to
 //  * the parameters;
 //  */
-// export const resolveSendCall = (network: RenNetworkDetails, params: SendParams, lockAndMint?: boolean): LockAndMintParams | BurnAndReleaseParams => {
+// export const resolveSendCall = (network: RenNetwork, params: SendParams, lockAndMint?: boolean): LockAndMintParams | BurnAndReleaseParams => {
 
 //     const { sendTo, sendAmount, suggestedAmount, txConfig, ...restOfParams } = params;
 
@@ -89,7 +88,7 @@ export const x = 0;
 //     }
 // };
 
-// export const processLockAndMintParams = (_network: RenNetworkDetails, _params: LockAndMintParams): LockAndMintParams => {
+// export const processLockAndMintParams = (_network: RenNetwork, _params: LockAndMintParams): LockAndMintParams => {
 //     const processors: Array<(params: LockAndMintParams) => LockAndMintParams> = [
 //         resolveSendTo<LockAndMintParams>({ isMint: true }),
 //         // resolveContractCall<LockAndMintParams>(_network),
@@ -98,7 +97,7 @@ export const x = 0;
 //     return processors.reduce((params, processor) => processor(params), _params as LockAndMintParams);
 // };
 
-// export const processBurnAndReleaseParams = (_network: RenNetworkDetails, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
+// export const processBurnAndReleaseParams = (_network: RenNetwork, _params: BurnAndReleaseParams): BurnAndReleaseParams => {
 //     const processors: Array<(params: BurnAndReleaseParams) => BurnAndReleaseParams> = [
 //         resolveSendTo<BurnAndReleaseParams>({ isMint: false }),
 //         // resolveContractCall<BurnAndReleaseParams>(_network),

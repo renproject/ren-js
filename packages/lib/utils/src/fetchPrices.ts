@@ -7,6 +7,19 @@ import { SECONDS } from "./common";
 
 type PriceFeed = (token: string) => Promise<number>;
 
+const tokenDecimals = (token: string): number => {
+    switch (token) {
+        case "BTC":
+            return 8;
+        case "ZEC":
+            return 8;
+        case "BCH":
+            return 8;
+        default:
+            throw new Error(`Unknown token ${token}`);
+    }
+};
+
 // CoinGecko price feed
 const coinGeckoURL = `https://api.coingecko.com/api/v3`;
 const coinGeckoID = (token: string): string => {

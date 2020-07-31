@@ -1,13 +1,27 @@
 import {
-    Asset, BurnAndReleaseParams, Chain, LockAndMintParams, Logger, LogLevel, LogLevelString,
-    RenContract, RenNetwork, RenTokens, SimpleLogger, Tokens, UnmarshalledFees,
+    Asset,
+    BurnAndReleaseParams,
+    Chain,
+    LockAndMintParams,
+    Logger,
+    LogLevel,
+    LogLevelString,
+    RenContract,
+    RenNetwork,
+    RenNetworkString,
+    RenTokens,
+    SimpleLogger,
+    UnmarshalledFees,
 } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
 import { MultiProvider, Provider } from "@renproject/provider";
-import { RenVMParams, RenVMProvider, RenVMResponses, unmarshalFees } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, NetworkDetails, stringToNetwork, utils,
-} from "@renproject/utils";
+    defaultProvider,
+    RenVMParams,
+    RenVMProvider,
+    RenVMResponses,
+    unmarshalFees,
+} from "@renproject/rpc";
+import { stringToNetwork, utils } from "@renproject/utils";
 import Web3 from "web3";
 
 import { BurnAndRelease } from "./burnAndRelease";
@@ -31,9 +45,6 @@ export interface RenJSConfig {
  * ```typescript
  * new RenJS(); // Same as `new RenJS("mainnet");`
  * new RenJS("testnet");
- *
- * import { renMainnet } from "@renproject/networks";
- * new RenJS({ ...renMainnet, lightnodeURL: "custom lightnode URL" });
  * ```
  *
  * A second optional parameter lets you provide a RenVM RPC provider or a
@@ -44,26 +55,17 @@ export interface RenJSConfig {
  * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
  */
 export default class RenJS {
-
-    /**
-     * [STATIC] `Tokens` exposes the tokens that can be passed in to the lockAndMint and
-     * burnAndRelease methods.
-     */
-    public static Tokens = Tokens;
+    // /**
+    //  * [STATIC] `Tokens` exposes the tokens that can be passed in to the lockAndMint and
+    //  * burnAndRelease methods.
+    //  */
+    // public static Tokens = Tokens;
 
     /**
      * `Networks` exposes the network options that can be passed in to the RenJS
      * constructor. `Networks.Mainnet` resolves to the string `"mainnet"`.
      */
     public static Networks = RenNetwork;
-
-    /**
-     * `NetworkDetails` exposes the network details for each network.
-     * `NetworkDetails.Mainnet` resolves to `require("@renproject/networks").renMainnet`.
-     */
-    public static NetworkDetails = NetworkDetails;
-
-    public static Chains = Chain;
 
     /**
      * `utils` exposes helper functions, See [[utils]].
@@ -79,11 +81,6 @@ export default class RenJS {
      */
     public readonly renVM: RenVMProvider;
 
-    /**
-     * Network object containing details about smart contracts. See [[RenNetworkDetails]].
-     */
-    public readonly network: RenNetworkDetails;
-
     private readonly logger: Logger;
 
     /**
@@ -91,31 +88,38 @@ export default class RenJS {
      * @param network Provide the name of a network - `"mainnet"` or `"testnet"` - or a network object.
      * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
      */
-    constructor(network?: RenNetworkDetails | string | null | undefined, providerOrConfig?: string | Provider | RenJSConfig) {
-        this.network = stringToNetwork(network);
+    constructor(
+        provider?:
+            | RenNetwork
+            | RenNetworkString
+            | RenVMProvider
+            | null
+            | undefined,
+        config?: RenJSConfig
+    ) {
+        // const provider: string | Provider | undefined;
+        // let config: RenJSConfig | undefined;
+        // if (
+        //     providerOrConfig &&
+        //     (typeof providerOrConfig === "string" ||
+        //         (providerOrConfig as Provider).sendMessage)
+        // ) {
+        //     provider = providerOrConfig as string | Provider;
+        // } else if (providerOrConfig) {
+        //     config = providerOrConfig as RenJSConfig;
+        // }
 
-        let provider: string | Provider | undefined;
-        let config: RenJSConfig | undefined;
-        if (providerOrConfig && (typeof providerOrConfig === "string" || (providerOrConfig as Provider).sendMessage)) {
-            provider = providerOrConfig as (string | Provider);
-        } else if (providerOrConfig) {
-            config = providerOrConfig as RenJSConfig;
-        }
-
-        this.logger = (config && config.logger) || new SimpleLogger((config && config.logLevel) || LogLevel.Error);
+        this.logger =
+            (config && config.logger) ||
+            new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         // Use provided provider, provider URL or default lightnode URL.
-        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ?
-            provider :
-            new MultiProvider<RenVMParams, RenVMResponses>(
-                provider ?
-                    [provider] :
-                    [this.network.lightnode],
-                this.logger,
-            )
-        ) as unknown as Provider<RenVMParams, RenVMResponses>;
+        const rpcProvider =
+            provider && typeof provider !== "string"
+                ? provider
+                : defaultProvider(provider || RenNetwork.Mainnet, this.logger);
 
-        this.renVM = new RenVMProvider(rpcProvider, this.logger);
+        this.renVM = rpcProvider;
     }
 
     /**
@@ -126,8 +130,9 @@ export default class RenJS {
      *
      * ```js
      * const lockAndMint = renJS.lockAndMint({
-     *     // Bridge BTC from Bitcoin to Ethereum
-     *     sendToken: RenJS.Tokens.BTC.Btc2Eth,
+     *     asset: "BTC",
+     *     from: Bitcoin(),
+     *     to: Ethereum(web3Provider),
      *
      *     // Unique value to generate unique deposit address.
      *     nonce: RenJS.utils.randomNonce(),
@@ -149,7 +154,7 @@ export default class RenJS {
      * @param params See [[LockAndMintParams]].
      */
     public readonly lockAndMint = (params: LockAndMintParams): LockAndMint =>
-        new LockAndMint(this.renVM, this.network, params, this.logger)
+        new LockAndMint(this.renVM, params, this.logger);
 
     /**
      * Submits a burn log to RenVM.
@@ -157,12 +162,13 @@ export default class RenJS {
      * @param params See [[BurnAndReleaseParams]].
      * @returns An instance of [[BurnAndRelease]].
      */
-    public readonly burnAndRelease = (params: BurnAndReleaseParams): BurnAndRelease =>
-        new BurnAndRelease(this.renVM, this.network, params, this.logger)
+    public readonly burnAndRelease = (
+        params: BurnAndReleaseParams
+    ): BurnAndRelease => new BurnAndRelease(this.renVM, params, this.logger);
 
-    public readonly getFees = (): Promise<UnmarshalledFees> => this.renVM.queryFees().then(unmarshalFees);
+    public readonly getFees = (): Promise<UnmarshalledFees> =>
+        this.renVM.queryFees().then(unmarshalFees);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // EXPORTS                                                                    //
@@ -177,16 +183,30 @@ export default class RenJS {
 // AMD
 try {
     // @ts-ignore
-    if (typeof define === "function" && define.amd) { define(() => RenJS); }
-} catch (error) { /* ignore */ }
+    if (typeof define === "function" && define.amd) {
+        // @ts-ignore
+        define(() => RenJS);
+    }
+} catch (error) {
+    /* ignore */
+}
 
 // Node.js and other environments that support module.exports.
-try { // @ts-ignore
-    if (typeof module !== "undefined" && module.exports) { module.exports = RenJS; }
-} catch (error) { /* ignore */ }
+try {
+    // @ts-ignore
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = RenJS;
+    }
+} catch (error) {
+    /* ignore */
+}
 
 // Browser.
 try {
     // @ts-ignore
-    if (typeof window !== "undefined" && window) { (window as any).RenJS = RenJS; }
-} catch (error) { /* ignore */ }
+    if (typeof window !== "undefined" && window) {
+        (window as any).RenJS = RenJS;
+    }
+} catch (error) {
+    /* ignore */
+}

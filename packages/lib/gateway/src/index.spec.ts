@@ -12,5 +12,5 @@ import GatewayJS from "./index";
 //         returnedError = error;
 //     }
 
-//     t.is(returnedError.message, "Invalid network. Expected one of chaosnet, testnet");
+//     t.is(returnedError.message, "Invalid network. Expected one of mainnet, testnet");
 // });

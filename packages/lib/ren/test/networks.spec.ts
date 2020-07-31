@@ -1,4 +1,3 @@
-import { renDevnet, renLocalnet, renMainnet } from "@renproject/networks";
 import chai from "chai";
 
 import RenJS from "../src/index";
@@ -7,8 +6,10 @@ chai.should();
 
 describe("RenJS networks", () => {
     it("On uninitialized class", async () => {
-        for (const network of [RenJS.NetworkDetails.Testnet, RenJS.NetworkDetails.Chaosnet, renDevnet, renLocalnet, renMainnet]) {
-            (typeof network.name).should.equal("string");
+        for (const network of Object.keys(RenJS.Networks)) {
+            (typeof RenJS.Networks[network]).should.equal("string");
+            // `RenJS.Networks.Mainnet` should equal `"mainnet"`
+            RenJS.Networks[network].should.equal(network.toLowerCase());
         }
     });
 });

@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { TransactionConfig } from "web3-core";
 
-import { HostChain, OriginChain } from "./chain";
+import { LockChain, MintChain } from "./chain";
 import { Asset } from "./renVM";
 
 export { TransactionConfig } from "web3-core";
@@ -58,8 +58,8 @@ export interface ContractCall {
 export interface TransferParamsCommon {
     asset: Asset;
     // tslint:disable-next-line: no-any
-    from: OriginChain<any>;
-    to: HostChain;
+    from: LockChain;
+    to: MintChain;
 
     /**
      * Provide the transaction hash returned from RenVM to continue a previous

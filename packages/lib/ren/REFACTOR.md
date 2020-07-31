@@ -15,7 +15,6 @@ This includes:
 ### Minting
 
 ```ts
-
 import RenJS from "@renproject/ren";
 import { Bitcoin, Ethereum } from "@renproject/chains";
 import Web3 from "web3";

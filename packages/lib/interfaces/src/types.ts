@@ -1,7 +1,11 @@
-import { SerializableBurnAndReleaseParams, SerializableLockAndMintParams } from "./parameters";
+import {
+    SerializableBurnAndReleaseParams,
+    SerializableLockAndMintParams,
+} from "./parameters";
 import { RenContract } from "./renVM";
 import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./unmarshalled";
-import { Tx } from "./utxo";
+
+// import { Tx } from "./utxo";
 
 export enum LockAndMintStatus {
     Committed = "mint_committed",
@@ -9,17 +13,25 @@ export enum LockAndMintStatus {
     Confirmed = "mint_confirmed",
     SubmittedToRenVM = "mint_submittedToRenVM",
     ReturnedFromRenVM = "mint_returnedFromRenVM",
+    SubmittedToLockChain = "mint_submittedToLockChain",
+    ConfirmedOnLockChain = "mint_confirmedOnLockChain",
+
+    // Backwards compatibility
     SubmittedToEthereum = "mint_submittedToEthereum",
     ConfirmedOnEthereum = "mint_confirmedOnEthereum",
 }
 
 export enum BurnAndReleaseStatus {
     Committed = "burn_committed",
-    SubmittedToEthereum = "burn_submittedToEthereum",
-    ConfirmedOnEthereum = "burn_confirmedOnEthereum",
+    SubmittedToLockChain = "burn_submittedToLockChain",
+    ConfirmedOnLockChain = "burn_confirmedOnLockChain",
     SubmittedToRenVM = "burn_submittedToRenVM",
     ReturnedFromRenVM = "burn_returnedFromRenVM",
     NoBurnFound = "burn_noBurnFound",
+
+    // Backwards compatibility
+    SubmittedToEthereum = "burn_submittedToEthereum",
+    ConfirmedOnEthereum = "burn_confirmedOnEthereum",
 }
 
 export enum TxStatus {
@@ -50,8 +62,8 @@ export interface SendTokenInterface {
 interface HistoryEventCommon {
     id: string;
     time: number; // Seconds since Unix epoch
-    inTx: Tx | null;
-    outTx: Tx | null;
+    inTx: {} | null;
+    outTx: {} | null;
     txHash: string | null;
     renVMStatus: TxStatus | null;
     returned: boolean;
@@ -76,6 +88,8 @@ export interface BurnAndReleaseEvent extends HistoryEventCommon {
     status: BurnAndReleaseStatus;
     transferParams: SerializableBurnAndReleaseParams;
     renVMQuery: UnmarshalledBurnTx | null;
+
+    // backwards compatibility
     ethereumConfirmations?: number;
 }
 

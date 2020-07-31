@@ -15,7 +15,7 @@
         "eject": "react-scripts eject",
         "predeploy": "$npm_execpath run build",
         "deploy": "gh-pages -d build --repo git@github.com:renproject/gateway-staging.renproject.io.git",
-        "link": "yarn link @renproject/interfaces @renproject/react-components @renproject/utils @renproject/networks @renproject/ren"
+        "link:all": "yarn link @renproject/interfaces @renproject/react-components @renproject/utils @renproject/networks @renproject/ren"
     },
     "dependencies": {
         "@renproject/fonts": "^1.0.1",

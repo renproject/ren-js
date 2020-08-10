@@ -1,9 +1,18 @@
 // tslint:disable: no-console
 
-import { chaosnet, devnet, localnet, testnet } from "@renproject/contracts";
+import {
+    renChaosnet,
+    renDevnet,
+    renLocalnet,
+    renTestnet,
+} from "@renproject/contracts";
 import { EthArgs, Tokens } from "@renproject/interfaces";
 import {
-    BURN_TOPIC, generateAddress, generateGHash, generatePHash, strip0x,
+    BURN_TOPIC,
+    generateAddress,
+    generateGHash,
+    generatePHash,
+    strip0x,
 } from "@renproject/utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
@@ -22,53 +31,89 @@ describe("Utils", function () {
     this.timeout(0);
 
     it("generatePHash", () => {
-        const expectedPHash = "0x65749241113ce04d4242ca414a5ba67c27eea1e74a5540367a1726770700bae2";
-        const payload: EthArgs = [{
-            name: "_gateway",
-            type: "address",
-            value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
-        },
-        {
-            name: "_address",
-            type: "address",
-            value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B"
-        }];
+        const expectedPHash =
+            "0x65749241113ce04d4242ca414a5ba67c27eea1e74a5540367a1726770700bae2";
+        const payload: EthArgs = [
+            {
+                name: "_gateway",
+                type: "address",
+                value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f",
+            },
+            {
+                name: "_address",
+                type: "address",
+                value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
+            },
+        ];
 
         generatePHash(payload).should.equal(expectedPHash);
     });
 
     it("Burn Topic hash", () => {
-        BURN_TOPIC
-            .should.equal("0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e");
+        BURN_TOPIC.should.equal(
+            "0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e",
+        );
     });
 
     const testcases = [
         // { name: "mainnet", network: NetworkMainnet, expectedHash: "", expectedAddress: "" },
-        { name: "chaosnet", network: chaosnet, expectedHash: "0x94e6111ba16ef879b33de88e4a8f98f11211721983dde525d9922e7ac33dc64a", expectedAddress: "36PoEz39mnYmWC3WGdiFyKAmCtRTTunzs3" },
-        { name: "testnet", network: testnet, expectedHash: "0xd63c52983659035b6d092dfa5c1eee81b968caf8d97d90a3b58ed61dedcd59a3", expectedAddress: "2Mtc7uY9qrsfuP1WpPLzLNc9nR4DXvs5icg" },
-        { name: "devnet", network: devnet, expectedHash: "0x4793980dbae1228bbd5df742b892a348006fd4dc3553e4b3afa94c4629b2ba7a", expectedAddress: "2NE1UpF7AatbiiuJDhruSCN3RfcDbdPnPyd" },
-        { name: "localnet", network: localnet, expectedHash: "0x685725b3d6d11d846be676b26f9357543e6d18044e6b09ca2b3af0f96e5e8d2b", expectedAddress: "2N3NC9ERzWj6sY49z6LZM1TLGj9bzvke8Ma" },
+        {
+            name: "chaosnet",
+            network: renChaosnet,
+            expectedHash:
+                "0x94e6111ba16ef879b33de88e4a8f98f11211721983dde525d9922e7ac33dc64a",
+            expectedAddress: "36PoEz39mnYmWC3WGdiFyKAmCtRTTunzs3",
+        },
+        {
+            name: "testnet",
+            network: renTestnet,
+            expectedHash:
+                "0xd63c52983659035b6d092dfa5c1eee81b968caf8d97d90a3b58ed61dedcd59a3",
+            expectedAddress: "2Mtc7uY9qrsfuP1WpPLzLNc9nR4DXvs5icg",
+        },
+        {
+            name: "devnet",
+            network: renDevnet,
+            expectedHash:
+                "0x4793980dbae1228bbd5df742b892a348006fd4dc3553e4b3afa94c4629b2ba7a",
+            expectedAddress: "2NE1UpF7AatbiiuJDhruSCN3RfcDbdPnPyd",
+        },
+        {
+            name: "localnet",
+            network: renLocalnet,
+            expectedHash:
+                "0x685725b3d6d11d846be676b26f9357543e6d18044e6b09ca2b3af0f96e5e8d2b",
+            expectedAddress: "2N3NC9ERzWj6sY49z6LZM1TLGj9bzvke8Ma",
+        },
     ];
 
     for (const testcase of testcases) {
         it(`generateGHash for ${testcase.name}`, () => {
-            const payload: EthArgs = [{
-                name: "_gateway",
-                type: "address",
-                value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f"
-            },
-            {
-                name: "_address",
-                type: "address",
-                value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B"
-            }];
+            const payload: EthArgs = [
+                {
+                    name: "_gateway",
+                    type: "address",
+                    value: "0x8a0E8dfC2389726DF1c0bAB874dd2C9A6031b28f",
+                },
+                {
+                    name: "_address",
+                    type: "address",
+                    value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
+                },
+            ];
 
             const amount = 22500;
             const to = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-            const nonce = "0x3205f743e45858d2a797a88d867264ab9d3b310fc0853056cdd92d9b1b4bd1d5";
+            const nonce =
+                "0x3205f743e45858d2a797a88d867264ab9d3b310fc0853056cdd92d9b1b4bd1d5";
 
-            generateGHash(payload, /*amount,*/ strip0x(to), Tokens.BTC.Btc2Eth, nonce, testcase.network)
-                .should.equal(testcase.expectedHash);
+            generateGHash(
+                payload,
+                /*amount,*/ strip0x(to),
+                Tokens.BTC.Btc2Eth,
+                nonce,
+                testcase.network,
+            ).should.equal(testcase.expectedHash);
         });
 
         it(`generateAddress ${testcase.name}`, () => {
@@ -79,8 +124,11 @@ describe("Utils", function () {
 
     it(`queryTX`, async () => {
         // tslint:disable-next-line: await-promise
-        await new RenJS(NETWORK).renVM.queryMintOrBurn("0")
-            .should.be.rejectedWith(/tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/);
+        await new RenJS(NETWORK).renVM
+            .queryMintOrBurn("0")
+            .should.be.rejectedWith(
+                /tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/,
+            );
     });
 
     // it.skip("fixSignature", () => {

@@ -6,7 +6,12 @@
 import { RenNetworkDetails } from "@renproject/contracts";
 import { EthArgs, LogLevel, RenContract, Tokens } from "@renproject/interfaces";
 import {
-    Ox, parseRenContract, retryNTimes, SECONDS, sleep, stringToNetwork,
+    Ox,
+    parseRenContract,
+    retryNTimes,
+    SECONDS,
+    sleep,
+    stringToNetwork,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -254,8 +259,8 @@ describe("Cross chain transactions", function () {
         await submit(burnAndReleaseObject);
     };
 
-    const removeVMFee = (value: BN): BN => value.sub(new BN(16000));
-    const removeGasFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
+    const removeTxFee = (value: BN): BN => value.sub(new BN(7000));
+    const removeDarknodeFee = (value: BN, bips: number): BN => value.sub(value.mul(new BN(bips)).div(new BN(10000)));
 
     describe("minting and burning", () => {
         const caseBTC = { name: "BTC", fn: () => ({ token: "BTC", mintToken: Tokens.BTC.Mint, burnToken: Tokens.BTC.Burn, renToken: "BTC" }) };
@@ -273,7 +278,7 @@ describe("Cross chain transactions", function () {
 
                 // const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
                 const adapterContract = network.addresses.gateways.BasicAdapter.address;
-                const amount = Math.floor(0.00035001 * (10 ** 8));
+                const amount = Math.floor(0.0008001 * (10 ** 8));
                 const ethAddress = accounts[0];
                 const account = new CryptoAccount(PRIVATE_KEY, { network: network.chain });
                 const srcAddress = await account.address(testcase.token);
@@ -305,13 +310,13 @@ describe("Cross chain transactions", function () {
 
                 // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
                 const balance = finalERC20Balance.minus(initialERC20Balance); // BN
-                balance.should.bignumber.at.least(removeVMFee(removeGasFee(new BN(amount), 10)));
+                balance.should.bignumber.at.least(removeDarknodeFee(removeTxFee(new BN(amount)), 10));
                 balance.should.bignumber.at.most(new BN(amount));
 
                 // Test burning.
                 const burnValue = BigNumber.min(finalERC20Balance, amount);
                 // const burnValue = balance.toNumber();
-                // amount = 0.00040001 * (10 ** 8);
+                // amount = 0.00080001 * (10 ** 8);
                 // const burnValue = amount;
 
                 logger.consoleLine();
@@ -322,8 +327,8 @@ describe("Cross chain transactions", function () {
                 await new Promise((resolve) => { setTimeout(resolve, 10 * 1000); });
                 const finalBalance = await retryNTimes(() => account.getBalanceInSats<BigNumber>(testcase.token, { address: srcAddress, bn: BigNumber }), 5);
 
-                // finalBalance.sub(initialBalance).should.bignumber.at.least(removeVMFee(removeGasFee(new BN(burnValue), 10)));
-                // finalBalance.sub(initialBalance).should.bignumber.at.most(removeVMFee(new BN(burnValue)));
+                // finalBalance.sub(initialBalance).should.bignumber.at.least(removeDarknodeFee(removeTxFee(new BN(burnValue)), 10));
+                // finalBalance.sub(initialBalance).should.bignumber.at.most(removeTxFee(new BN(burnValue)));
                 finalBalance.minus(initialBalance).should.be.bignumber.at.most(burnValue);
             });
         }
@@ -337,7 +342,7 @@ describe("Cross chain transactions", function () {
                 const testcase = testcaseFn.fn();
 
                 const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
-                const amount = 0.00040001 * (10 ** 8);
+                const amount = 0.00080001 * (10 ** 8);
                 const ethAddress = accounts[0];
                 const registryABI = network.addresses.gateways.GatewayRegistry.abi;
                 const registryAddress = network.addresses.gateways.GatewayRegistry.address;
@@ -364,7 +369,7 @@ describe("Cross chain transactions", function () {
 
                 // Check the minted amount is at least (amount - renVM fee - 10 bips) and at most (amount - renVM fee).
                 const balance = finalERC20Balance.minus(initialERC20Balance); // BN
-                // balance.should.bignumber.at.least(removeVMFee(removeGasFee(new BN(amount), 10)));
+                // balance.should.bignumber.at.least(removeDarknodeFee(removeTxFee(new BN(amount)), 10));
                 balance.should.bignumber.at.most(amount);
             });
         }
@@ -403,7 +408,7 @@ describe("Cross chain transactions", function () {
             // TODO: Check balance of token before attempting to mint.
 
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.00040001, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.00080001, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const burn = renJS.burnAndRelease({
                 web3Provider: provider,
@@ -421,7 +426,7 @@ describe("Cross chain transactions", function () {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering transfer`);
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.00040001, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.00080001, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const mint = new RenJS("testnet").lockAndMint({
                 web3Provider: web3.currentProvider,
@@ -494,7 +499,7 @@ describe("Cross chain transactions", function () {
             logger.consoleLine();
             logger.info(`Starting mint test - recovering transfer`);
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.0008, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const adapterContract = network.addresses.gateways.BasicAdapter.address;
 
@@ -533,7 +538,7 @@ describe("Cross chain transactions", function () {
     longIt("minting without parameters", async () => {
         logger.consoleLine();
         logger.info(`Starting mint test`);
-        const amount = RenJS.utils.value(0.00015, "btc")._smallest();
+        const amount = RenJS.utils.value(0.0008, "btc")._smallest();
 
         const mint = new RenJS("testnet").lockAndMint({
             sendToken: RenJS.Tokens.BTC.Btc2Eth,

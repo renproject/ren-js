@@ -1,4 +1,9 @@
-import { chaosnet, devnet, mainnet, testnet } from "@renproject/contracts";
+import {
+    renChaosnet,
+    renDevnet,
+    renMainnet,
+    renTestnet,
+} from "@renproject/contracts";
 import { Chain, RenNetwork, Tokens } from "@renproject/interfaces";
 import chai from "chai";
 import { expect } from "earljs";
@@ -12,27 +17,19 @@ require("dotenv").config();
 
 describe("RenJS initialization and exports", () => {
     it("should be able to pass in different networks", async () => {
-        new RenJS()
-            .should.be.an.instanceOf(RenJS);
-        new RenJS().network.name
-            .should.equal("mainnet");
-        new RenJS("mainnet")
-            .should.be.an.instanceOf(RenJS);
-        new RenJS("chaosnet")
-            .should.be.an.instanceOf(RenJS);
-        new RenJS("testnet")
-            .should.be.an.instanceOf(RenJS);
-        new RenJS("devnet")
-            .should.be.an.instanceOf(RenJS);
-        new RenJS(mainnet)
-            .should.be.an.instanceOf(RenJS);
-        new RenJS(chaosnet)
-            .should.be.an.instanceOf(RenJS);
-        new RenJS(testnet)
-            .should.be.an.instanceOf(RenJS);
-        new RenJS(devnet)
-            .should.be.an.instanceOf(RenJS);
-        (() => new RenJS("fake-network")).should.throw(/Unsupported network "fake-network"/);
+        new RenJS().should.be.an.instanceOf(RenJS);
+        new RenJS().network.name.should.equal("mainnet");
+        new RenJS("mainnet").should.be.an.instanceOf(RenJS);
+        new RenJS("chaosnet").should.be.an.instanceOf(RenJS);
+        new RenJS("testnet").should.be.an.instanceOf(RenJS);
+        new RenJS("devnet").should.be.an.instanceOf(RenJS);
+        new RenJS(renMainnet).should.be.an.instanceOf(RenJS);
+        new RenJS(renChaosnet).should.be.an.instanceOf(RenJS);
+        new RenJS(renTestnet).should.be.an.instanceOf(RenJS);
+        new RenJS(renDevnet).should.be.an.instanceOf(RenJS);
+        (() => new RenJS("fake-network")).should.throw(
+            /Unsupported network "fake-network"/,
+        );
     });
 
     it("On uninitialized class", async () => {
@@ -55,53 +52,60 @@ describe("RenJS initialization and exports", () => {
             sendToken: RenJS.Tokens.BTC.Btc2Eth,
 
             // Amount of BTC we are sending (in Satoshis)
-            suggestedAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
+            suggestedAmount: Math.floor(amount * 10 ** 8), // Convert to Satoshis
 
-            contractCalls: [{
-                // The contract we want to interact with
-                sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
+            contractCalls: [
+                {
+                    // The contract we want to interact with
+                    sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
 
-                // The name of the function we want to call
-                contractFn: "deposit",
+                    // The name of the function we want to call
+                    contractFn: "deposit",
 
-                // Arguments expected for calling `deposit`
-                contractParams: [],
-            }],
+                    // Arguments expected for calling `deposit`
+                    contractParams: [],
+                },
+            ],
         });
 
         // tslint:disable-next-line: await-promise
-        await expect(new Promise((_, reject) => {
+        await expect(
+            new Promise((_, reject) => {
+                const wait = lockAndMint.wait(0);
 
-            const wait = lockAndMint.wait(0);
+                wait._cancel();
 
-            wait._cancel();
-
-            wait.then((result) => { reject(`Unexpected resolution from 'wait' with result ${result}`); })
-                .catch(reject);
-
-        })).toBeRejected("Wait cancelled.");
+                wait.then((result) => {
+                    reject(
+                        `Unexpected resolution from 'wait' with result ${result}`,
+                    );
+                }).catch(reject);
+            }),
+        ).toBeRejected("Wait cancelled.");
     });
 
     it("cancel submit", async () => {
         const renJS = new RenJS("testnet");
 
-        const burnAndRelease = await renJS.burnAndRelease({
-            // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
-            sendToken: RenJS.Tokens.BTC.Eth2Btc,
+        const burnAndRelease = await renJS
+            .burnAndRelease({
+                // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
+                sendToken: RenJS.Tokens.BTC.Eth2Btc,
 
-            burnReference: 0x47,
-        }).readFromEthereum();
+                burnReference: 0x483,
+            })
+            .readFromEthereum();
 
         // tslint:disable-next-line: await-promise
-        await expect(new Promise((_, reject) => {
+        await expect(
+            new Promise((_, reject) => {
+                const wait = burnAndRelease.submit();
 
-            const wait = burnAndRelease.submit();
+                wait._cancel();
 
-            wait._cancel();
-
-            wait.catch(reject);
-
-        })).toBeRejected("waitForTX cancelled");
+                wait.catch(reject);
+            }),
+        ).toBeRejected("waitForTX cancelled");
     });
 
     for (const network of ["devnet", "testnet", "chaosnet"]) {
@@ -111,12 +115,16 @@ describe("RenJS initialization and exports", () => {
             const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
             const web3 = new Web3(infuraURL);
 
-            for (const asset of ["BTC", "ZEC", "BCH"] as const) { // Without const, defaults to string[]
-                expect(await renJS.getTokenAddress(web3, asset))
-                    .toEqual(renJS.network.addresses.gateways[`Ren${asset}`]._address);
+            for (const asset of ["BTC", "ZEC", "BCH"] as const) {
+                // Without const, defaults to string[]
+                expect(await renJS.getTokenAddress(web3, asset)).toEqual(
+                    renJS.network.addresses.gateways[`Ren${asset}`]._address,
+                );
 
-                expect(await renJS.getGatewayAddress(web3, asset))
-                    .toEqual(renJS.network.addresses.gateways[`${asset}Gateway`]._address);
+                expect(await renJS.getGatewayAddress(web3, asset)).toEqual(
+                    renJS.network.addresses.gateways[`${asset}Gateway`]
+                        ._address,
+                );
             }
         });
     }

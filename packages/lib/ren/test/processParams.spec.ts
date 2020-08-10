@@ -1,14 +1,16 @@
-import { testnet } from "@renproject/contracts";
+import { renTestnet } from "@renproject/contracts";
 import { RenContract } from "@renproject/interfaces";
 import {
-    processBurnAndReleaseParams, processLockAndMintParams, resolveSendCall,
+    processBurnAndReleaseParams,
+    processLockAndMintParams,
+    resolveSendCall,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
 
-chai.use((chaiBigNumber)(BigNumber));
+chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
 require("dotenv").config();
@@ -21,46 +23,62 @@ describe("processParams", () => {
     });
 
     it("Burn", () => {
-        processBurnAndReleaseParams(testnet, {
+        processBurnAndReleaseParams(renTestnet, {
             sendToken: "BTC",
             ethereumTxHash: "ethereumTxHash",
-        })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" }, "Burn 1");
+        }).should.deep.equal(
+            { sendToken: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" },
+            "Burn 1",
+        );
 
-        processBurnAndReleaseParams(testnet, {
+        processBurnAndReleaseParams(renTestnet, {
             sendToken: "BTC",
             burnReference: 1,
-        })
-            .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 }, "Burn 2");
+        }).should.deep.equal(
+            { sendToken: "BTC0Eth2Btc", burnReference: 1 },
+            "Burn 2",
+        );
 
-        processBurnAndReleaseParams(testnet, {
+        processBurnAndReleaseParams(renTestnet, {
             sendToken: "BTC",
             web3Provider: {},
-            contractCalls: [{
-                sendTo: "sendTo",
-                contractFn: "contractFn",
-                contractParams: [{ name: "name", type: "uint", value: "1" }],
-                txConfig: { gas: 2 },
-            }],
-        })
-            .should.deep.equal({
-                sendToken: "BTC0Eth2Btc",
-                web3Provider: {},
-                contractCalls: [{
+            contractCalls: [
+                {
                     sendTo: "sendTo",
                     contractFn: "contractFn",
-                    contractParams: [{ name: "name", type: "uint", value: "1" }],
+                    contractParams: [
+                        { name: "name", type: "uint", value: "1" },
+                    ],
                     txConfig: { gas: 2 },
-                }],
-            }, "Burn 3");
+                },
+            ],
+        }).should.deep.equal(
+            {
+                sendToken: "BTC0Eth2Btc",
+                web3Provider: {},
+                contractCalls: [
+                    {
+                        sendTo: "sendTo",
+                        contractFn: "contractFn",
+                        contractParams: [
+                            { name: "name", type: "uint", value: "1" },
+                        ],
+                        txConfig: { gas: 2 },
+                    },
+                ],
+            },
+            "Burn 3",
+        );
 
-        JSON.stringify(resolveSendCall(testnet, {
-            sendToken: RenContract.Eth2Btc,
-            web3Provider: web3.currentProvider,
-            sendTo: "sendTo",
-            sendAmount: "0",
-        }))
-            .should.equal(JSON.stringify({
+        JSON.stringify(
+            resolveSendCall(renTestnet, {
+                sendToken: RenContract.Eth2Btc,
+                web3Provider: web3.currentProvider,
+                sendTo: "sendTo",
+                sendAmount: "0",
+            }),
+        ).should.equal(
+            JSON.stringify({
                 sendToken: "BTC0Eth2Btc",
                 web3Provider: web3.currentProvider,
                 suggestedAmount: "0",
@@ -70,91 +88,109 @@ describe("processParams", () => {
                         contractFn: "burn",
                         contractParams: [
                             {
-                                "type": "bytes",
-                                "name": "_to",
-                                "value": "0x73656e64546f"
+                                type: "bytes",
+                                name: "_to",
+                                value: "0x73656e64546f",
                             },
                             {
-                                "type": "uint256",
-                                "name": "_amount",
-                                "value": "0"
-                            }
+                                type: "uint256",
+                                name: "_amount",
+                                value: "0",
+                            },
                         ],
-                    }],
-            }), "Burn 4");
+                    },
+                ],
+            }),
+            "Burn 4",
+        );
     });
 
     it("Mint", () => {
-        processLockAndMintParams(testnet, {
+        processLockAndMintParams(renTestnet, {
             sendToken: "BTC",
             txHash: "txHash",
-            contractCalls: [{
-                sendTo: "sendTo",
-                contractFn: "contractFn",
-                contractParams: [{ name: "name", type: "address", value: "1" }],
-                txConfig: { gas: 2 },
-            }],
-        })
-            .should.deep.equal({
-                sendToken: "BTC0Btc2Eth",
-                txHash: "txHash",
-                contractCalls: [{
+            contractCalls: [
+                {
                     sendTo: "sendTo",
                     contractFn: "contractFn",
-                    contractParams: [{ name: "name", type: "address", value: "1" }],
+                    contractParams: [
+                        { name: "name", type: "address", value: "1" },
+                    ],
                     txConfig: { gas: 2 },
-                }],
-            });
+                },
+            ],
+        }).should.deep.equal({
+            sendToken: "BTC0Btc2Eth",
+            txHash: "txHash",
+            contractCalls: [
+                {
+                    sendTo: "sendTo",
+                    contractFn: "contractFn",
+                    contractParams: [
+                        { name: "name", type: "address", value: "1" },
+                    ],
+                    txConfig: { gas: 2 },
+                },
+            ],
+        });
 
-        processLockAndMintParams(testnet, {
+        processLockAndMintParams(renTestnet, {
             sendToken: "BTC",
             txHash: "txHash",
-            contractCalls: [{
-                sendTo: "sendTo",
-                contractFn: "contractFn",
-                contractParams: [{ name: "name", type: "address", value: "1" }],
-                txConfig: { gas: 2 },
-            }],
-        })
-            .should.deep.equal({
-                sendToken: "BTC0Btc2Eth",
-                txHash: "txHash",
-                contractCalls: [{
+            contractCalls: [
+                {
                     sendTo: "sendTo",
                     contractFn: "contractFn",
-                    contractParams: [{ name: "name", type: "address", value: "1" }],
+                    contractParams: [
+                        { name: "name", type: "address", value: "1" },
+                    ],
                     txConfig: { gas: 2 },
-                }],
-            });
+                },
+            ],
+        }).should.deep.equal({
+            sendToken: "BTC0Btc2Eth",
+            txHash: "txHash",
+            contractCalls: [
+                {
+                    sendTo: "sendTo",
+                    contractFn: "contractFn",
+                    contractParams: [
+                        { name: "name", type: "address", value: "1" },
+                    ],
+                    txConfig: { gas: 2 },
+                },
+            ],
+        });
 
-        resolveSendCall(testnet, {
+        resolveSendCall(renTestnet, {
             sendToken: RenContract.Btc2Eth,
             txHash: "txHash",
             sendTo: "sendTo",
             sendAmount: "0.01",
             txConfig: { gas: 2 },
-        })
-            .should.deep.equal({
-                sendToken: "BTC0Btc2Eth",
-                txHash: "txHash",
-                suggestedAmount: "0.01",
-                contractCalls: [{
+        }).should.deep.equal({
+            sendToken: "BTC0Btc2Eth",
+            txHash: "txHash",
+            suggestedAmount: "0.01",
+            contractCalls: [
+                {
                     sendTo: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
                     contractFn: "mint",
                     contractParams: [
                         {
-                            "name": "_symbol",
-                            "type": "string",
-                            "value": "BTC",
+                            name: "_symbol",
+                            type: "string",
+                            value: "BTC",
                         },
                         {
-                            "name": "_address",
-                            "type": "address",
-                            "value": "sendTo",
+                            name: "_address",
+                            type: "address",
+                            value: "sendTo",
                         },
                     ],
                     txConfig: { gas: 2 },
-                }],
-            });
+                },
+            ],
+        });
     });
 });

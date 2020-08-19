@@ -1,9 +1,8 @@
-import * as React from "react";
-
 import { lighten } from "polished";
+import React from "react";
 import styled from "styled-components";
 
-import { ScanningDot } from "./transfer-steps/ShowGatewayAddress";
+import { ScanningDot } from "./ScanningDot";
 
 const OuterDiv = styled.div`
     position: relative;

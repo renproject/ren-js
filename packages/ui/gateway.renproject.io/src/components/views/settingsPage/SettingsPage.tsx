@@ -1,11 +1,12 @@
-import { Asset } from "@renproject/interfaces";
+import { Asset, HistoryEvent } from "@renproject/interfaces";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useState } from "react";
 
-import infoIcon from "../../../images/icons/info.svg";
 import { _catchInteractionErr_ } from "../../../lib/errors";
+import infoIcon from "../../../scss/images/info.svg";
 import { Popup } from "../popup/Popup";
 import { Tooltip } from "../tooltip/Tooltip";
+import { ExternalLink } from "../ExternalLink";
 
 interface Props {
     version: string | undefined;
@@ -15,10 +16,11 @@ interface Props {
     cancelTransfer: () => void;
     clearMintTransaction: (() => Promise<void>) | undefined;
     clearLockTransaction: (() => Promise<void>) | undefined;
+    transfer: HistoryEvent | null;
 }
 
 export const SettingsPage: React.FunctionComponent<Props> = ({
-    version, asset, hidden, hideSettings, cancelTransfer, clearMintTransaction, clearLockTransaction,
+    version, asset, hidden, hideSettings, cancelTransfer, clearMintTransaction, clearLockTransaction, transfer,
 }) => {
     const [cancelling, setCancelling] = useState(false);
     const [clearingMintTransaction, setClearingMintTransaction] = useState(false);
@@ -61,7 +63,7 @@ export const SettingsPage: React.FunctionComponent<Props> = ({
             _catchInteractionErr_(error, "Error clearing mint transaction");
         }
         setClearingMintTransaction(false);
-    }, [clearMintTransaction, setClearingMintTransaction, hideSettings]);
+    }, [clearMintTransaction, setClearingMintTransaction]);
 
     const handleClearLockTransaction = useCallback(async () => {
         if (!clearLockTransaction) {
@@ -76,10 +78,19 @@ export const SettingsPage: React.FunctionComponent<Props> = ({
             _catchInteractionErr_(error, "Error clearing lock transaction");
         }
         setClearingLockTransaction(false);
-    }, [clearLockTransaction, setClearingLockTransaction, hideSettings]);
+    }, [clearLockTransaction, setClearingLockTransaction]);
 
     const clearLockTooltip = "Only use this if you have replaced the transaction with a higher fee (RBF).";
     const clearMintTooltip = "Only use this if you have cancelled your Ethereum transaction in your wallet.";
+
+    const onReportIssue = useCallback(() => {
+        _catchInteractionErr_(new Error("Reporting issue"), {
+            shownToUser: "Yes",
+            description: "'Report issue' clicked",
+            transfer,
+            hash: transfer && transfer.txHash,
+        });
+    }, []);
 
     return <div className={classNames(`settings-page`, hidden ? "settings-page-hidden" : "")}>
         <div role="none" className="settings-overlay" onClick={hideSettings} />
@@ -91,6 +102,8 @@ export const SettingsPage: React.FunctionComponent<Props> = ({
             {version ? <span>GatewayJS Version {version}</span> : <></>}
 
             <div className="settings-options">
+                <ExternalLink onClick={onReportIssue} href={"https://renprotocol.typeform.com/to/YdmFyB"} className="button-red"><span>Report issue →</span></ExternalLink>
+
                 {/* <button disabled={hidden} onClick={hideTransfer}><span>Hide transfer</span></button> */}
                 {clearLockTransaction ?
                     <button disabled={hidden || clearingLockTransaction} onClick={handleClearLockTransaction} className="button-red"><span><Tooltip direction={"top"} width={250} contents={<span>{clearLockTooltip}</span>}>Clear {asset ? asset.toUpperCase() : ""} transaction <img alt={clearLockTooltip} src={infoIcon} /></Tooltip></span></button> :

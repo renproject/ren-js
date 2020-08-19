@@ -6,7 +6,6 @@
         flex-flow: column;
         justify-content: center;
         height: 187px;
-        // overflow-y: auto;
     }
 
     .container--cancel {
@@ -15,7 +14,6 @@
         height: 12px;
         width: 12px;
         margin-top: 0;
-        // content: "-";
         cursor: pointer;
 
         svg {
@@ -47,11 +45,45 @@
         }
     }
 
+    .container--warning {
+        left: 6px;
+        top: ((40px - 16px) / 2);
+
+        background: #E3E3E7;
+        padding: 6px 10px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-top: 0;
+        position: absolute;
+        transition: background-color 5ms;
+
+        svg {
+            height: 18px;
+            width: 18px;
+            margin-left: 5px;
+        }
+
+        >span:first-child {
+            margin-left: -47.5px;
+            width: 200px;
+        }
+
+        >span:not(:first-child) {
+            margin-left: 0;
+            text-transform: uppercase;
+            font-weight: 500;
+            font-size: 10px;
+        }
+    }
+
     .container--buttons {
         display: flex;
 
         button {
-            height: 40px;
+            height: 50px;
         }
 
         justify-content: center;
@@ -92,109 +124,12 @@
         }
     }
 
-    .address {
-        @extend .monospace;
-
-        >span {
-            background-color: $background;
-            color: $background;
-            font-size: 0px;
-            border-bottom: 2px dotted transparentize($color: $grey-12, $amount: 0.5);
-            line-height: 100%;
-
-            &:after {
-                content: "...";
-                line-height: 100%;
-            }
-        }
-    }
-
-    .logged-out {
-        padding: 20px;
-        font-size: 1.4rem;
-        text-align: center;
-
-        h2 {
-            font-size: 2.0rem;
-        }
-
-        .logged-out--account {
-            max-width: 100%;
-            overflow-x: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .logged-out--accounts {
-            display: flex;
-            flex-flow: column;
-            justify-content: center;
-            align-items: center;
-            margin-top: 30px;
-        }
-
-        .logged-out--account+.logged-out--account {
-            margin-top: 10px;
-        }
-
-        .logged-out--account {
-            box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
-            background-color: $background;
-            margin: 0;
-            padding: 0;
-            border: none;
-            color: inherit;
-            padding-right: 10px;
-            font-size: 1.6rem;
-            overflow-x: hidden;
-            text-overflow: ellipsis;
-            background: none;
-            transition: box-shadow 0.2s ease;
-
-            &:hover {
-                box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-            }
-
-            &:active {
-                transition: box-shadow 0s ease;
-                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-            }
-
-            span {
-                @extend .monospace;
-                overflow-x: hidden;
-                text-overflow: ellipsis;
-            }
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            .blocky {
-                width: 40px;
-                height: 40px;
-            }
-
-            .blocky--outer {
-                width: 40px;
-                height: 40px;
-                margin-right: 10px;
-            }
-        }
-    }
-
-    .container--body--actions {
-        padding: 0 20px;
-        width: 100%;
-    }
-
     .container--body--details {
         text-align: center;
         background-color: #fdfdfe;
         color: $foreground;
-        border-bottom: 1px solid #ccc;
         padding: 0px 20px;
         padding-bottom: 18px;
-        // margin-bottom: 18px;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
@@ -206,7 +141,6 @@
 
         .show-gateway--title {
             font-size: 2.6rem;
-            // margin-bottom: 2px;
             line-height: 100%;
             margin-bottom: 10px;
         }
@@ -215,9 +149,6 @@
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;
-
-            /* identical to box height */
-
             color: #707575;
         }
 
@@ -244,26 +175,10 @@
         }
     }
 
-    .container--body--box {
-        text-align: left;
-        background: #eee;
-        padding: 10px;
-        border-radius: 3px;
-        color: #555;
-        margin-bottom: 10px;
-    }
-
-    .container--body--box--title {
-        color: $foreground;
-        font-size: 1.4rem;
-        margin-bottom: 5px;
-    }
-
     .open--confirm {
         @extend .button;
-        background: linear-gradient(180.19deg, $blue-light -125.02%, var($primaryColor) 98.68%);
+        background: #006FE8; // linear-gradient(180.19deg, $primary-light -125.02%, $primary 98.68%);
         border-radius: 6px !important;
-        // margin-bottom: -10px;
         height: 40px;
     }
 
@@ -282,11 +197,9 @@
     .submit-to-ethereum {
         @extend .container--body--details;
 
-        // height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        // padding: 30px 0;
         padding: 0;
 
         button {
@@ -357,7 +270,6 @@
     .burn-container {
         @extend .container--body--details;
 
-        // height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -434,7 +346,7 @@
             white-space: nowrap;
 
             a {
-                color: $blue-bright;
+                color: $primary;
             }
         }
 
@@ -486,7 +398,7 @@
 
                 button {
                     background: white;
-                    color: $blue-bright;
+                    color: $primary;
                     font-size: 1.4rem;
                 }
 
@@ -537,16 +449,10 @@
 
         }
 
-        .container--body {
-            // padding: 10px 30px;
-        }
-
         .complete--links a {
             font-weight: 500;
             font-size: 14px;
             line-height: 16px;
-
-            /* identical to box height */
             text-align: center;
 
             color: #006FE8;

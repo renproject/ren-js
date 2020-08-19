@@ -1,55 +1,10 @@
 ._ren {
 
-    .address-input {
+    .container--bottom {
         padding: 0;
-        // width: 100%;
 
         >*+* {
             margin-top: 15px;
-        }
-
-        .origin {
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            padding: 10px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            >*+* {
-                margin-left: 5px;
-            }
-
-            img {
-                width: 20px;
-                height: 20px;
-            }
-        }
-
-        input[type="text"] {
-            width: 100%; // calc(100% - 16px); // padding
-            background: $background;
-            color: $foreground;
-            max-width: 340px;
-            overflow-x: hidden;
-            text-overflow: ellipsis;
-
-            box-sizing: border-box;
-            height: 50px;
-            font-weight: 200;
-            border-radius: 100px;
-
-            &::placeholder {
-                font-weight: 500; // used to be 600
-                font-size: 1.4rem;
-                line-height: 16px;
-
-                display: flex;
-                align-items: center;
-
-                color: $background;
-            }
         }
 
         .qr-code {
@@ -70,83 +25,12 @@
             color: $foreground;
         }
 
-        .form-group {
-            position: relative;
-            display: flex;
-
-            input {
-                @extend .monospace;
-                border: 1px solid #ddd;
-            }
-
-            button {
-                width: 50px;
-            }
-
-            input,
-            button {
-                border-radius: 0 !important;
-
-                &:first-child {
-                    border-top-left-radius: 6px !important;
-                    border-bottom-left-radius: 6px !important;
-                }
-
-                &:last-child {
-                    border-top-right-radius: 6px !important;
-                    border-bottom-right-radius: 6px !important;
-                }
-            }
-        }
-
-        .form-control {
-            transition: all 200ms;
-        }
-
-        .form-control-placeholder {
-            position: absolute;
-            top: 10px;
-            padding: 0 5px;
-            margin-left: 20px;
-            transition: all 200ms;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .form-control:focus+.form-control-placeholder,
-        .form-control:valid+.form-control-placeholder {
-            font-size: 75%;
-            transform: translate3d(0, -15px, 0);
-            opacity: 1;
-            background: $background;
-            color: var($primaryColor);
-        }
-
-        .form-control:valid+.form-control-placeholder {
-            color: $grey-12;
-        }
-
-        .form-control:focus:valid+.form-control-placeholder {
-            color: var($primaryColor);
-        }
-
-        .form-control:focus {
-            border: 1px solid var($primaryColor);
-        }
-    }
-
-    .container--bottom {
-        @extend .address-input;
-
-        // margin-top: -25px;
-
         width: 100%;
         display: flex;
         flex-flow: column;
         height: 0;
         justify-content: center;
         padding: 0 20px;
-        // justify-content: flex-end;
 
         .container--buttons {
             margin-top: 0px;
@@ -155,8 +39,6 @@
         input {
             font-weight: 500;
             font-size: 1.2rem;
-
-            // color: $foreground !important;
             transition: all 500ms;
         }
 
@@ -200,7 +82,7 @@
             transform: translate3d(0, -5px, 0);
             opacity: 1;
             background: $background;
-            color: var($primaryColor);
+            color: $primary;
         }
 
         .click-to-copy--copied.copied-text {
@@ -208,73 +90,11 @@
         }
 
         .input:focus:valid+.copied-text {
-            color: var($primaryColor);
+            color: $primary;
         }
 
         .input:focus {
-            border: 1px solid var($primaryColor);
-        }
-
-        .spinner {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            margin-top: 20px;
-
-            .loading {
-                opacity: 0.2;
-            }
-
-            span {
-                margin: 0;
-                margin-right: 10px;
-
-                font-weight: 500; // used to be 600
-                font-size: 1.4rem;
-
-                color: $grey-12;
-            }
-
-            &.spinner--hidden {
-                opacity: 0;
-            }
-        }
-    }
-
-    .loading--blue {
-        &:after {
-            height: 25px !important;
-            width: 25px !important;
-            border-color: var($primaryColor) rgba(var($primaryColor), 0.5) rgba(var($primaryColor), 0.5) rgba(var($primaryColor), 0.5) !important;
-        }
-    }
-
-    .show-utxos {
-        >span {
-            padding: 0;
-        }
-
-        .show-utxos--utxo {
-            border: 1px solid $grey-10;
-            box-shadow: 0px 1px 2px rgba(0, 27, 58, 0.05);
-            border-radius: 100px;
-            height: 38px;
-            font-weight: 200;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-
-            a {
-                @extend .monospace;
-                color: $foreground;
-                font-weight: 600;
-                letter-spacing: 1px;
-            }
-
-            >span {
-                margin-top: 0;
-            }
+            border: 1px solid $primary;
         }
     }
 

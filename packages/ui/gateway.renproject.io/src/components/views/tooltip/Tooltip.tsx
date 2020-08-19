@@ -1,18 +1,21 @@
-import * as React from "react";
+import React from "react";
 
 import { TooltipChildStyle, TooltipContainerStyle } from "./TooltipStyles";
 
-export const Tooltip: React.FC<{
+interface Props {
   contents?: React.ReactNode;
   width?: number;
   direction?: "bottom" | "top";
   align?: "left" | "right";
-}> = ({ contents, width, direction, align, children }) => {
+  className?: string;
+}
+
+export const Tooltip: React.FC<Props> = ({ contents, width, direction, align, className, children }) => {
   const child = <TooltipChildStyle width={width} direction={direction} align={align}>
     {contents}
   </TooltipChildStyle>;
 
-  return <TooltipContainerStyle child={child}>
+  return <TooltipContainerStyle className={className} child={child}>
     {child}
     {children}
   </TooltipContainerStyle>;

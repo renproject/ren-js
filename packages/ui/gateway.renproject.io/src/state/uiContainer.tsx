@@ -1,61 +1,57 @@
 import { UTXOWithChain } from "@renproject/interfaces";
 import { OrderedMap } from "immutable";
-import { Container } from "unstated";
+import { useState } from "react";
+import { createContainer } from "unstated-next";
 
-const initialState = {
-    // web3: new Web3(ETHEREUM_NODE),
+export const useUIContainer = () => {
+    const [submitting, setSubmitting] = useState(false);
+    const [renNetwork, setRenNetwork] = useState(undefined as string | undefined);
+    const [wrongNetwork, setWrongNetwork] = useState(undefined as number | undefined);
+    const [expectedNetwork, setExpectedNetwork] = useState(undefined as string | undefined);
 
-    renNetwork: undefined as string | undefined,
-    wrongNetwork: undefined as number | undefined,
-    expectedNetwork: undefined as string | undefined,
+    const [showingSettings, setShowingSettings] = useState(false);
+    const [paused, setPaused] = useState(false);
 
-    loggedOut: null as string | null,
-    showingSettings: false,
-    paused: false,
+    const [gatewayPopupID, setGatewayPopupID] = useState(null as string | null);
+    const [utxos, setUtxos] = useState(OrderedMap<string, UTXOWithChain>());
 
-    // address: null as string | null,
-    utxos: OrderedMap<string, UTXOWithChain>(),
+    // Transfer details
+    const handleTransfer = async (nextGatewayPopupID: string | null) => {
+        setGatewayPopupID(nextGatewayPopupID);
+        setSubmitting(false);
+    };
+    const resetTransfer = async () => {
+        setGatewayPopupID(null);
+        setSubmitting(false);
+    };
 
-    gatewayPopupID: null as string | null,
+    // Settings
+    const hideSettings = async () => { setShowingSettings(false); };
+    const toggleSettings = async () => { setShowingSettings(state => !state); };
+    const deposit = async (newDeposit: UTXOWithChain) => { setUtxos(state => state.set(newDeposit.utxo.txHash, newDeposit)); };
+
+    // Pause state
+    const pause = async () => { setPaused(true); };
+    const resume = async () => { setPaused(false); };
+
+    return {
+        submitting, setSubmitting,
+        renNetwork, setRenNetwork,
+        wrongNetwork, setWrongNetwork,
+        expectedNetwork, setExpectedNetwork,
+        showingSettings,
+        paused,
+        gatewayPopupID,
+        utxos,
+
+        handleTransfer,
+        resetTransfer,
+        hideSettings,
+        toggleSettings,
+        deposit,
+        pause,
+        resume,
+    };
 };
 
-export class UIContainer extends Container<typeof initialState> {
-    public state = initialState;
-
-    // public connect = async (web3: Web3, address: string | null): Promise<void> => this.setState(state => ({ ...state, web3, address, loggedOut: null }));
-    public connect = async (): Promise<void> => this.setState(state => ({ ...state, loggedOut: null }));
-
-    public clearAddress = async (): Promise<void> => this.setState(state => ({ ...state, address: null }));
-
-    public handleTransfer = async (gatewayPopupID: string | null) => this.setState(state => ({ ...state, submitting: false, gatewayPopupID }));
-
-    public resetTransfer = async () => this.setState(state => ({ ...state, gatewayPopupID: null, submitting: false }));
-
-    public deposit = async (deposit: UTXOWithChain) => this.setState(state => ({ ...state, utxos: this.state.utxos.set(deposit.utxo.txHash, deposit) }));
-
-    public setSubmitting = async (submitting: boolean) => this.setState(state => ({ ...state, submitting }));
-
-    public setLoggedOut = async (loggedOut?: string) => this.setState(state => ({ ...state, loggedOut: loggedOut || null }));
-
-    public hideSettings = async () => this.setState(state => ({ ...state, showingSettings: false }));
-    public toggleSettings = async () => this.setState(state => ({ ...state, showingSettings: !state.showingSettings }));
-    public pause = async () => this.setState(state => ({ ...state, paused: true }));
-    public resume = async () => this.setState(state => ({ ...state, paused: false }));
-    // /**
-    //  * lookForLogout detects if the user has changed or logged out of their Web3
-    //  * wallet
-    //  */
-    // public lookForLogout = async () => {
-    //     const { address, web3 } = this.state;
-
-    //     if (!address || !web3) { return; }
-
-    //     const accounts = (await web3.eth.getAccounts())
-    //         .map((web3Address: string) => web3Address.toLowerCase());
-
-    //     if (!accounts.includes(address.toLowerCase())) {
-    //         await this.clearAddress();
-    //         await this.setLoggedOut(address);
-    //     }
-    // }
-}
+export const UIContainer = createContainer(useUIContainer);

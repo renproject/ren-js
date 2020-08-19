@@ -2618,7 +2618,7 @@
 "@renproject/chains@file:packages/lib/chains":
   version "1.0.3"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-1.0.3-d5d942c8-9eb9-402d-8d4f-749d7b97e9bb-1597099408879/node_modules/@renproject/interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-1.0.3-a05990d3-8451-45b9-bfb6-1a9dd13b1fd4-1597617026218/node_modules/@renproject/interfaces"
     "@types/bs58" "^4.0.1"
     "@types/node" "^14.0.5"
     bchaddrjs "^0.4.8"
@@ -2641,10 +2641,10 @@
   integrity sha512-OWk811Ay63UdPxY5nEg4N99Goz6K9HLaeGfUN2q0uehhQ70hJDqDQq/vYl5rtE07mv7MYX7GYTpj5POlPbZNRg==
 
 "@renproject/gateway@file:packages/lib/gateway":
-  version "1.0.6"
+  version "1.0.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.6-f5a60951-17ec-4529-9141-7bfb93112519-1597099408920/node_modules/@renproject/interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.6-f5a60951-17ec-4529-9141-7bfb93112519-1597099408920/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.7-3faf80da-525c-452a-8e45-2b8fd25057a9-1597617026282/node_modules/@renproject/interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.7-3faf80da-525c-452a-8e45-2b8fd25057a9-1597617026282/node_modules/@renproject/utils"
     "@types/node" "^14.0.5"
     push.js "^1.0.12"
     web3 "^2.0.0-alpha.1"
@@ -2657,10 +2657,10 @@
     web3-core "^2.0.0-alpha.1"
 
 "@renproject/provider@file:packages/lib/provider":
-  version "1.0.6"
+  version "1.0.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.6-e3a6db0e-d8ba-4bc0-9501-75df71ec0d52-1597099417435/node_modules/@renproject/interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.6-e3a6db0e-d8ba-4bc0-9501-75df71ec0d52-1597099417435/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.7-2b424f61-7ce5-48b4-a562-45d91917d5d0-1597617031663/node_modules/@renproject/interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-provider-1.0.7-2b424f61-7ce5-48b4-a562-45d91917d5d0-1597617031663/node_modules/@renproject/utils"
     "@types/node" "^14.0.5"
     axios "^0.19.2"
     immutable "^4.0.0-rc.12"
@@ -2681,14 +2681,14 @@
     react-select "^3.1.0"
 
 "@renproject/ren@file:packages/lib/ren":
-  version "1.0.6"
+  version "1.0.7"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.6-f1dcf60a-948d-4322-b92e-0762604bc0df-1597099417471/node_modules/@renproject/chains"
+    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.7-17ed4e89-13dd-473a-b7fa-5f89ca7df836-1597617031692/node_modules/@renproject/chains"
     "@renproject/contracts" "^0.6.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.6-f1dcf60a-948d-4322-b92e-0762604bc0df-1597099417471/node_modules/@renproject/interfaces"
-    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.6-f1dcf60a-948d-4322-b92e-0762604bc0df-1597099417471/node_modules/@renproject/provider"
-    "@renproject/rpc" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.6-f1dcf60a-948d-4322-b92e-0762604bc0df-1597099417471/node_modules/@renproject/rpc"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.6-f1dcf60a-948d-4322-b92e-0762604bc0df-1597099417471/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.7-17ed4e89-13dd-473a-b7fa-5f89ca7df836-1597617031692/node_modules/@renproject/interfaces"
+    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.7-17ed4e89-13dd-473a-b7fa-5f89ca7df836-1597617031692/node_modules/@renproject/provider"
+    "@renproject/rpc" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.7-17ed4e89-13dd-473a-b7fa-5f89ca7df836-1597617031692/node_modules/@renproject/rpc"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-1.0.7-17ed4e89-13dd-473a-b7fa-5f89ca7df836-1597617031692/node_modules/@renproject/utils"
     "@types/bs58" "^4.0.1"
     "@types/node" "^14.0.5"
     bignumber.js "^9.0.0"
@@ -2701,12 +2701,12 @@
     web3-core "^2.0.0-alpha.1"
 
 "@renproject/rpc@file:packages/lib/rpc":
-  version "1.0.6"
+  version "1.0.7"
   dependencies:
     "@renproject/contracts" "^0.6.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.6-35bc9277-1810-454f-b1f6-52ffa072be0d-1597099417475/node_modules/@renproject/interfaces"
-    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.6-35bc9277-1810-454f-b1f6-52ffa072be0d-1597099417475/node_modules/@renproject/provider"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.6-35bc9277-1810-454f-b1f6-52ffa072be0d-1597099417475/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.7-44374935-0699-4032-8d9b-0ac272bd738d-1597617031697/node_modules/@renproject/interfaces"
+    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.7-44374935-0699-4032-8d9b-0ac272bd738d-1597617031697/node_modules/@renproject/provider"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-1.0.7-44374935-0699-4032-8d9b-0ac272bd738d-1597617031697/node_modules/@renproject/utils"
     "@types/node" "^14.0.5"
     bignumber.js "^9.0.0"
     immutable "^4.0.0-rc.12"
@@ -2721,11 +2721,11 @@
     "@openzeppelin/upgrades" "^2.7.2"
 
 "@renproject/utils@file:packages/lib/utils":
-  version "1.0.6"
+  version "1.0.7"
   dependencies:
-    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.6-b82b14d5-ebbd-43cc-8e69-940b2555c339-1597099408952/node_modules/@renproject/chains"
+    "@renproject/chains" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.7-9cf79fb2-93e5-4ac6-a757-792d59de1aa4-1597617026322/node_modules/@renproject/chains"
     "@renproject/contracts" "^0.6.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.6-b82b14d5-ebbd-43cc-8e69-940b2555c339-1597099408952/node_modules/@renproject/interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-1.0.7-9cf79fb2-93e5-4ac6-a757-792d59de1aa4-1597617026322/node_modules/@renproject/interfaces"
     "@types/node" "^14.0.5"
     axios "^0.19.2"
     bignumber.js "^9.0.0"
@@ -4715,9 +4715,9 @@ bitcore-lib@^8.20.3, bitcore-lib@^8.20.4:
     inherits "=2.0.1"
     lodash "=4.17.15"
 
-"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e":
+"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e":
   version "1.9.0"
-  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e"
+  resolved "https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"
@@ -6373,11 +6373,6 @@ create-hmac@^1.1.0, create-hmac@^1.1.3, create-hmac@^1.1.4, create-hmac@^1.1.7:
     ripemd160 "^2.0.0"
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
-
-create-react-context@^0.1.5:
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/create-react-context/-/create-react-context-0.1.6.tgz#0f425931d907741127acc6e31acb4f9015dd9fdc"
-  integrity sha512-eCnYYEUEc5i32LHwpE/W7NlddOB9oHwsPaWtWzYtflNkkwa3IfindIcoXdVWs12zCbwaMCavKNu84EXogVIWHw==
 
 cross-env@^7.0.2:
   version "7.0.2"
@@ -8793,11 +8788,11 @@ functional-red-black-tree@^1.0.1:
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
 "gateway-example@file:packages/ui/gateway-example":
-  version "1.0.6"
+  version "1.0.7"
   dependencies:
-    "@renproject/gateway" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.6-e4e6963e-38ca-430f-b800-c23b47a9eeff-1597099417479/lib/gateway"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.6-e4e6963e-38ca-430f-b800-c23b47a9eeff-1597099417479/lib/interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.6-e4e6963e-38ca-430f-b800-c23b47a9eeff-1597099417479/lib/utils"
+    "@renproject/gateway" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.7-39071771-a28b-4857-8715-4c3b89854677-1597617031701/lib/gateway"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.7-39071771-a28b-4857-8715-4c3b89854677-1597617031701/lib/interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-example-1.0.7-39071771-a28b-4857-8715-4c3b89854677-1597617031701/lib/utils"
     "@types/classnames" "^2.2.10"
     "@types/node" "^13.13.4"
     "@types/qs" "^6.9.1"
@@ -8816,10 +8811,10 @@ functional-red-black-tree@^1.0.1:
   version "1.0.6"
   dependencies:
     "@renproject/fonts" "^1.0.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-1fe6fde5-355b-458f-9f8c-10e49b843263-1597099417489/lib/interfaces"
-    "@renproject/react-components" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-1fe6fde5-355b-458f-9f8c-10e49b843263-1597099417489/node_modules/react-components"
-    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-1fe6fde5-355b-458f-9f8c-10e49b843263-1597099417489/lib/ren"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-1fe6fde5-355b-458f-9f8c-10e49b843263-1597099417489/lib/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-42842fbf-95c3-41aa-9a34-a35c4a187df3-1597617031709/lib/interfaces"
+    "@renproject/react-components" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-42842fbf-95c3-41aa-9a34-a35c4a187df3-1597617031709/node_modules/react-components"
+    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-42842fbf-95c3-41aa-9a34-a35c4a187df3-1597617031709/lib/ren"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-1.0.6-42842fbf-95c3-41aa-9a34-a35c4a187df3-1597617031709/lib/utils"
     "@sentry/browser" "^5.15.5"
     "@sentry/core" "^5.15.5"
     "@sentry/integrations" "^5.15.5"
@@ -8850,8 +8845,7 @@ functional-red-black-tree@^1.0.1:
     react-dom "^16.13.1"
     react-router-dom "^5.1.2"
     styled-components "^5.1.0"
-    unstated "^2.1.1"
-    unstated-persist "^0.0.4"
+    unstated-next "^1.1.0"
     wallet-address-validator "^0.2.4"
     web3 "^2.0.0-alpha.1"
 
@@ -17726,11 +17720,6 @@ thunky@^1.0.2:
   resolved "https://registry.yarnpkg.com/thunky/-/thunky-1.1.0.tgz#5abaf714a9405db0504732bbccd2cedd9ef9537d"
   integrity sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==
 
-tickedoff@>=1.0.0:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/tickedoff/-/tickedoff-1.0.2.tgz#7f56ece47c56162032a04ed4c2e0c10ac7c4003d"
-  integrity sha512-iml/591Hkkcs1Llex6WcjQZo0H76gF7El4Brp1hWRHrUEjWXivrWTCeRj/FugI09ovG3pm3MZnRih7ucW6znSw==
-
 timed-out@^4.0.0, timed-out@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/timed-out/-/timed-out-4.0.1.tgz#f32eacac5a175bea25d7fab565ab3ed8741ef56f"
@@ -18394,20 +18383,10 @@ unset-value@^1.0.0:
     has-value "^0.3.1"
     isobject "^3.0.0"
 
-unstated-persist@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/unstated-persist/-/unstated-persist-0.0.4.tgz#efd2216fdd2944518be5217338896d2844331116"
-  integrity sha512-KMW3cnWlu+v5fZgyeRm4QWjp4uM33Ny/bXWZQRIftSJaN0oCqG02X4G9r/ttPQtx/WxIZzRK8+S5FDdC/fkDuQ==
-  dependencies:
-    tickedoff ">=1.0.0"
-    unstated ">=2.0.0"
-
-unstated@>=2.0.0, unstated@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/unstated/-/unstated-2.1.1.tgz#36b124dfb2e7a12d39d0bb9c46dfb6e51276e3a2"
-  integrity sha512-fORlTWMZxq7NuMJDxyIrrYIZKN7wEWYQ9SiaJfIRcSpsowr6Ph/JIfK2tgtXLW614JfPG/t5q9eEIhXRCf55xg==
-  dependencies:
-    create-react-context "^0.1.5"
+unstated-next@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/unstated-next/-/unstated-next-1.1.0.tgz#7bb4911a12fdf3cc8ad3eb11a0b315e4a8685ea8"
+  integrity sha512-AAn47ZncPvgBGOvMcn8tSRxsrqwf2VdAPxLASTuLJvZt4rhKfDvUkmYZLGfclImSfTVMv7tF4ynaVxin0JjDCA==
 
 upath@^1.1.1, upath@^1.2.0:
   version "1.2.0"

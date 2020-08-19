@@ -1,14 +1,85 @@
-import * as React from "react";
-
 import { lighten } from "polished";
+import React from "react";
 import styled from "styled-components";
 
-import infoIcon from "../../images/icons/info.svg";
-import { classNames } from "../../lib/utils";
 import { pulseAnimation } from "../../scss/animations";
+import infoIcon from "../../scss/images/info.svg";
 import { Tooltip } from "../views/tooltip/Tooltip";
 
-export const ProgressPulse = styled.div`
+const RenProgressBar = styled.div`
+    height: 100%;
+    height: 54px;
+`;
+
+const ProgressBarItems = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 1.2rem;
+    color: rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    height: 100%;
+    height: 54px;
+`;
+
+const ProgressBarBar = styled.div`
+    height: 1px;
+    position: relative;
+    z-index: 0;
+    left: 8px;
+`;
+
+const ProgressBarBlue = styled(ProgressBarBar)`
+    background: linear-gradient(-90deg, #00A8F5 0%, #006FE8 100%);
+    top: 22px;
+    z-index: 1;
+`;
+
+const ProgressBarGray = styled(ProgressBarBar)`
+    background: #707575;
+    top: 21px;
+`;
+
+const RenProgressBarLabel = styled.div`
+    width: 0px;
+    height: 18px;
+`;
+
+const RenProgressBarLabelInner = styled.div`
+    width: 100px;
+    text-align: center;
+    margin-left: -50px;
+`;
+
+const RenProgressBarItem = styled.div`
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+
+    &:last-child::before {
+        width: 0;
+    }
+`;
+
+const RenProgressBarNumber = styled.div<{ isDone: boolean, isTarget: boolean }>`
+    height: 16px;
+    width: 16px;
+    border-radius: 100%;
+    text-align: center;
+    font-size: 9px;
+    margin: 10px 0;
+    margin-bottom: 6px;
+    padding-top: 1px;
+    color: ${props => (props.isDone || props.isTarget) ? "white" : "#87888C"};
+    border: 1px solid ${props => (props.isDone || props.isTarget) ? "#006fe8" : "#707575"};;
+    z-index: 2;
+    background: ${props => (props.isDone || props.isTarget) ? "#006fe8" : "white"};
+`;
+
+export const ProgressPulse = styled(RenProgressBarNumber)`
             background-color: white !important;
             color: ${p => lighten(0.1, p.theme.primaryColor)} !important;
             border-radius: 50%;
@@ -16,16 +87,17 @@ export const ProgressPulse = styled.div`
             animation: ${p => pulseAnimation("6px", p.theme.primaryColor)};
         `;
 
-
-
-export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: { name?: React.ReactChild, label?: string | number, target: number, progress: number, pulse?: boolean, tooltip?: string }) =>
-    <div className={classNames(`ren-progress-bar--item`, progress >= target ? "ren-progress-bar--item--done" : "", Math.floor(progress + 1) === target ? "ren-progress-bar--item--current" : "")}>
-        {pulse && Math.floor(progress + 1) === target ?
-            <ProgressPulse className="ren-progress-bar--number">{label || (target)}</ProgressPulse> :
-            <div className="ren-progress-bar--number">{label || (target)}</div>
+export const ProgressItem = ({ name, label, target, progress, pulse, tooltip }: { name?: React.ReactChild, label?: string | number, target: number, progress: number, pulse?: boolean, tooltip?: string }) => {
+    const isDone = progress >= target;
+    const isTarget = Math.floor(progress + 1) === target;
+    return (<RenProgressBarItem>
+        {pulse && isTarget ?
+            <ProgressPulse isDone={isDone} isTarget={isTarget}>{label || (target)}</ProgressPulse> :
+            <RenProgressBarNumber isDone={isDone} isTarget={isTarget}>{label || (target)}</RenProgressBarNumber>
         }
-        <div className="ren-progress-bar--label"><div className="ren-progress-bar--label--inner">{name} {tooltip ? <Tooltip contents={tooltip}><img alt={`Tooltip: ${tooltip}`} src={infoIcon} /></Tooltip> : null}</div></div>
-    </div>;
+        <RenProgressBarLabel><RenProgressBarLabelInner>{name} {tooltip ? <Tooltip contents={tooltip}><img alt={`Tooltip: ${tooltip}`} src={infoIcon} /></Tooltip> : null}</RenProgressBarLabelInner></RenProgressBarLabel>
+    </RenProgressBarItem>);
+};
 
 const width = (progress: number, itemsLength: number) => {
     if (itemsLength === 1) {
@@ -38,8 +110,6 @@ const width = (progress: number, itemsLength: number) => {
     // const px = -8 - 16 * (Math.min(progress - 1, 0));
 
     return `calc(${Math.min(progress, itemsLength - 1)} * calc(calc(100% - 16px) / ${itemsLength - 1}))`;
-
-    // return { percent, px };
 };
 
 interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
@@ -48,16 +118,16 @@ interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElem
     pulse?: boolean;
 }
 
-export const ProgressBar = ({ items, progress, pulse, className, ...props }: Props) => {
+export const ProgressBar = ({ items, progress, pulse, className, ref, ...props }: Props) => {
     const blueBarWidth = width(progress, items.length);
     const greyBarWidth = width(items.length - 1, items.length);
-    return <div {...props} className={classNames("ren-progress-bar", className)}>
-        <div className="progress-bar--blue" style={{ width: blueBarWidth }} />
-        <div className="progress-bar--gray" style={{ width: greyBarWidth }} />
-        <div className="progress-bar--items">
+    return <RenProgressBar ref={ref as ((instance: HTMLDivElement | null) => void) | React.RefObject<HTMLDivElement> | null | undefined} {...props} className={className}>
+        <ProgressBarBlue style={{ width: blueBarWidth }} />
+        <ProgressBarGray style={{ width: greyBarWidth }} />
+        <ProgressBarItems>
             {items.map((item, index) =>
                 <ProgressItem key={index} target={index + 1} progress={progress} name={item.name} label={item.label} tooltip={item.tooltip} pulse={pulse} />
             )}
-        </div>
-    </div>;
+        </ProgressBarItems>
+    </RenProgressBar>;
 };

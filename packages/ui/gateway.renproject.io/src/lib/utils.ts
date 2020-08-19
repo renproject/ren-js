@@ -1,27 +1,14 @@
 import {
-    Asset, BurnAndReleaseStatus, EventType, HistoryEvent, isAsset, LockAndMintStatus, TxStatus,
+    Asset, BurnAndReleaseStatus, Chain, EventType, HistoryEvent, isAsset, LockAndMintStatus,
+    TxStatus,
 } from "@renproject/interfaces";
 import { parseRenContract, resolveInToken, resolveOutToken } from "@renproject/utils";
 import QueryString from "qs";
-
-// tslint:disable-next-line: no-any
-export const isPromise = <T>(p: any): p is Promise<T> => {
-    return p.hasOwnProperty("then");
-};
-
-// tslint:disable-next-line: no-any ban-types
-export const isFunction = (p: any): p is Function => {
-    return typeof p === "function";
-};
 
 export const range = (left: number, right?: number) => {
     const start = right === undefined ? 0 : left;
     const end = right === undefined ? left : right;
     return Array.from(new Array(end - start)).map((_, i) => i + start);
-};
-
-export const classNames = (...args: Array<string | undefined>) => {
-    return args.filter(arg => arg !== undefined).join(" ");
 };
 
 const maxBy = <T>(fn: (t: T) => number, rest: T[]): T => {
@@ -88,4 +75,18 @@ export const extractQuery = <T extends any>(query: string | QueryString.ParsedQs
 export const getAsset = (historyEvent: HistoryEvent): Asset => {
     return isAsset(historyEvent.transferParams.sendToken) ?
         historyEvent.transferParams.sendToken : parseRenContract((historyEvent.eventType === EventType.LockAndMint ? resolveInToken : resolveOutToken)(historyEvent.transferParams.sendToken)).asset;
+};
+
+export const renderChain = (chain: Chain): string => {
+    switch (chain) {
+        case Chain.Bitcoin:
+            return "Bitcoin";
+        case Chain.Ethereum:
+            return "Ethereum";
+        case Chain.Zcash:
+            return "Zcash";
+        case Chain.BitcoinCash:
+            return "Bitcoin Cash";
+    }
+    return chain;
 };

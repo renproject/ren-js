@@ -1,0 +1,137 @@
+.settings-page {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    transition: all 300ms;
+    transition: height 0ms;
+    bottom: 0;
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-end;
+    z-index: 10;
+
+    &.settings-page-hidden {
+        border-top: 0px solid #333;
+        pointer-events: none;
+
+        .settings-bottom {
+            height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .settings-overlay {
+            background: #00000000;
+        }
+    }
+}
+
+.settings-overlay {
+    flex-grow: 2;
+    width: 100%;
+    background: #00000044;
+    transition: background 400ms;
+    position: absolute;
+    height: 100vh;
+}
+
+.settings-bottom {
+    z-index: 1;
+    box-shadow: 0 -10px 10px rgba(0, 0, 0, 0.3);
+
+    $padding: 0vw;
+    height: 240px;
+    width: calc(100vw - calc(#{$padding} * 2));
+    margin-left: $padding;
+    margin-bottom: $padding;
+    background: white;
+    border-radius: 0px;
+
+    padding: 20px;
+
+    transition: all 400ms;
+
+    overflow: hidden;
+
+
+    display: flex;
+    flex-flow: column;
+
+    a {
+        color: $primary;
+    }
+
+    .settings-options {
+
+        display: flex;
+        flex-flow: column;
+        justify-content: flex-end;
+        flex: 1;
+
+        >button,
+        >a {
+            @extend .button;
+            border-radius: 4px;
+            width: 100%;
+            // height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            background: #eee;
+            color: black;
+
+            &:active {
+                background: darken(#eee, 4%);
+            }
+
+            &.button-red {
+                background: $red;
+                color: white;
+
+                &:active {
+                    background: darken($red, 4%);
+                }
+            }
+
+            &+button {
+                margin-top: 5px;
+            }
+        }
+    }
+
+    .settings-prompt-deletion {
+        padding: 20px;
+        font-size: 14px;
+        text-align: center;
+        border-radius: 4px;
+        min-width: 300px;
+
+        .settings-prompt-deletion-buttons {
+            display: flex;
+
+            >button {
+                @extend .button;
+                border-radius: 4px;
+                background: $grey-12;
+
+                &:active {
+                    background: darken($grey-12, 4%);
+                }
+
+                &.settings-confirm-deletion {
+                    background: $red;
+
+                    &:active {
+                        background: darken($red, 4%);
+                    }
+                }
+
+                &+button {
+                    margin-left: 10px;
+                }
+            }
+        }
+    }
+}

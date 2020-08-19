@@ -1,6 +1,6 @@
 {
     "name": "gateway.renproject.io",
-    "version": "1.0.7",
+    "version": "1.0.6",
     "private": true,
     "homepage": "https://renproject.github.io/gateway-staging.renproject.io/",
     "scripts": {
@@ -15,7 +15,7 @@
         "eject": "react-scripts eject",
         "predeploy": "$npm_execpath run build",
         "deploy": "gh-pages -d build --repo git@github.com:renproject/gateway-staging.renproject.io.git",
-        "link": "yarn link @renproject/interfaces @renproject/react-components @renproject/utils @renproject/ren"
+        "link:all": "yarn link @renproject/interfaces @renproject/react-components @renproject/utils @renproject/networks @renproject/ren"
     },
     "dependencies": {
         "@renproject/fonts": "^1.0.1",
@@ -53,8 +53,7 @@
         "react-dom": "^16.13.1",
         "react-router-dom": "^5.1.2",
         "styled-components": "^5.1.0",
-        "unstated": "^2.1.1",
-        "unstated-persist": "^0.0.4",
+        "unstated-next": "^1.1.0",
         "wallet-address-validator": "^0.2.4",
         "web3": "^2.0.0-alpha.1"
     },
@@ -64,5 +63,8 @@
         "not dead",
         "not ie <= 11",
         "not op_mini all"
-    ]
+    ],
+    "devDependencies": {
+        "tslint": "^6.1.2"
+    }
 }

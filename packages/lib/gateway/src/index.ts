@@ -2,16 +2,51 @@
 
 import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Asset, BurnAndReleaseEvent, BurnAndReleaseParams, BurnAndReleaseParamsSimple,
-    BurnAndReleaseStatus, Chain, EventType, GatewayMessage, GatewayMessagePayload,
-    GatewayMessageResponse, GatewayMessageType, HistoryEvent, LockAndMintEvent, LockAndMintParams,
-    LockAndMintParamsSimple, LockAndMintStatus, Logger, LogLevel, LogLevelString, RenContract,
-    RenNetwork, RenTokens, SendParams, SimpleLogger, Tokens, TransferParams, UnmarshalledTx,
+    Asset,
+    BurnAndReleaseEvent,
+    BurnAndReleaseParams,
+    BurnAndReleaseParamsSimple,
+    BurnAndReleaseStatus,
+    Chain,
+    EventType,
+    GatewayMessage,
+    GatewayMessagePayload,
+    GatewayMessageResponse,
+    GatewayMessageType,
+    HistoryEvent,
+    LockAndMintEvent,
+    LockAndMintParams,
+    LockAndMintParamsSimple,
+    LockAndMintStatus,
+    Logger,
+    LogLevel,
+    LogLevelString,
+    RenContract,
+    RenNetwork,
+    RenTokens,
+    SendParams,
+    SimpleLogger,
+    Tokens,
+    TransferParams,
+    UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference, extractError, findTransactionBySigHash, getGatewayAddress,
-    getTokenAddress, newPromiEvent, parseRenContract, PromiEvent, randomBytes, resolveSendCall,
-    SECONDS, sleep, stringToNetwork, utils, waitForReceipt, withDefaultAccount,
+    extractBurnReference,
+    extractError,
+    findTransactionBySigHash,
+    getGatewayAddress,
+    getTokenAddress,
+    newPromiEvent,
+    parseRenContract,
+    PromiEvent,
+    randomBytes,
+    resolveSendCall,
+    SECONDS,
+    sleep,
+    stringToNetwork,
+    utils,
+    waitForReceipt,
+    withDefaultAccount,
 } from "@renproject/utils";
 import Push from "push.js";
 import Web3 from "web3";
@@ -19,8 +54,12 @@ import { provider as Web3Provider } from "web3-providers";
 
 import { RenElementHTML, RenGatewayContainerHTML, RenIFrame } from "./html";
 import {
-    createElementFromHTML, GATEWAY_ENDPOINT_PRODUCTION, GATEWAY_ENDPOINT_STAGING, getElement,
-    prepareParamsForSendMessage, resolveEndpoint,
+    createElementFromHTML,
+    GATEWAY_ENDPOINT_PRODUCTION,
+    GATEWAY_ENDPOINT_STAGING,
+    getElement,
+    prepareParamsForSendMessage,
+    resolveEndpoint,
 } from "./utils";
 import { validateString } from "./validate";
 import { useBrowserWeb3 } from "./web3";

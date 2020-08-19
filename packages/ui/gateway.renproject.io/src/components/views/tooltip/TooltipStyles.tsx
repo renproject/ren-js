@@ -38,6 +38,17 @@ const right = (width: number) => css`
 `;
 
 export const TooltipChildStyle = styled.span<{ width?: number, align?: string, direction?: string }>`
+        overflow: scroll;
+        overflow: -moz-scrollbars-none;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            /* remove scrollbar space */
+            display: none;
+            width: 0px;
+            height: 0px;
+        }
+
         text-align: center;
         visibility: hidden;
         background-color: #333;

@@ -314,6 +314,7 @@
     $graphSize: 100px;
 
     .CircularProgressbar {
+        border-radius: 100%;
         height: $graphSize;
         margin-top: -($graphSize / 2);
         background: white;

@@ -47,8 +47,8 @@ const lockAndMint = renJS.lockAndMint({
     sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
 });
 
-const gatewayAddress = lockAndMint.addr();
-console.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
+lockAndMint.gatewayAddress()
+    .then(gatewayAddress => console.log(`Deposit ${amount} BTC to ${gatewayAddress}`));
 
 lockAndMint.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
     .then(console.log)

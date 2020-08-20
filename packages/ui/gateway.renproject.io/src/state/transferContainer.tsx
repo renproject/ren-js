@@ -40,7 +40,7 @@ export class LocalStorageProvider<V = HistoryEvent>
         this.store = store;
     }
 
-    get = (k: string) => this.store.getItem<V>(k);
+    get = async (k: string) => (await this.store.getItem<V>(k)) || undefined;
     set = async (k: string, v: V) => this.store.setItem(k, v);
     keys = () => this.store.keys();
 }

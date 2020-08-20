@@ -94,14 +94,14 @@ export class Gateway {
     private readonly endpoint: string;
     private readonly logger: Logger;
 
-    constructor(network: RenNetworkDetails, config: GatewayJSConfig) {
+    constructor(network: RenNetworkDetails, config: GatewayJSConfig, uniqueID?: string) {
         this.logger = (config && config.logger) || new SimpleLogger((config && config.logLevel) || LogLevel.Error);
         this.network = network;
         if (!config.endpoint) {
             throw new Error("Must provide endpoint in Gateway config");
         }
         this.endpoint = config.endpoint;
-        this.id = randomBytes(8);
+        this.id = uniqueID || randomBytes(8);
     }
 
     public readonly close = () => {
@@ -634,14 +634,14 @@ export default class GatewayJS {
      *        required for the transfer.
      * @returns {Gateway}
      */
-    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): Gateway => {
+    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams, uniqueID?: string): Gateway => {
         if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
             params = resolveSendCall(this.network, params as SendParams);
         } else if ((params as LockAndMintParamsSimple).sendTo) {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new Gateway(this.network, this.config)._open(params);
+        return new Gateway(this.network, this.config, uniqueID)._open(params);
     }
 
     /**
@@ -651,17 +651,17 @@ export default class GatewayJS {
      *        required for the transfer.
      * @returns {Gateway}
      */
-    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): Gateway => {
+    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams, uniqueID?: string): Gateway => {
         if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
             params = resolveSendCall(this.network, params as SendParams);
         } else if ((params as LockAndMintParamsSimple).sendTo) {
             const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
             params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
         }
-        return new Gateway(this.network, this.config)._open(params);
+        return new Gateway(this.network, this.config, uniqueID)._open(params);
     }
 
-    public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent) => {
+    public readonly open = (params: LockAndMintParams | BurnAndReleaseParams | LockAndMintParamsSimple | BurnAndReleaseParamsSimple | SendParams | LockAndMintEvent | BurnAndReleaseEvent, uniqueID?: string) => {
         // tslint:disable-next-line: strict-type-predicates
         if ((params as LockAndMintEvent).eventType === EventType.LockAndMint) {
             return this.recoverTransfer(undefined as unknown as Web3Provider, params as LockAndMintEvent | BurnAndReleaseEvent);
@@ -672,18 +672,18 @@ export default class GatewayJS {
             throw new Error(`Ambiguous token ${sendToken} - call "lockAndMint" or "burnAndRelease" instead of "open"`);
         }
         if (parseRenContract(sendToken).to === Chain.Ethereum) {
-            return this.lockAndMint(params as LockAndMintParams);
+            return this.lockAndMint(params as LockAndMintParams, uniqueID);
         } else {
-            return this.burnAndRelease(params as BurnAndReleaseParams);
+            return this.burnAndRelease(params as BurnAndReleaseParams, uniqueID);
         }
     }
 
-    public readonly send = (params: SendParams): Gateway => {
-        return new Gateway(this.network, this.config)._open(params);
+    public readonly send = (params: SendParams, uniqueID?: string): Gateway => {
+        return new Gateway(this.network, this.config, uniqueID)._open(params);
     }
 
-    public readonly recoverTransfer = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent): Gateway => {
-        return new Gateway(this.network, this.config)._open(params, web3Provider);
+    public readonly recoverTransfer = (web3Provider: Web3Provider, params: LockAndMintEvent | BurnAndReleaseEvent, uniqueID?: string): Gateway => {
+        return new Gateway(this.network, this.config, uniqueID || params.id)._open(params, web3Provider);
     }
 
     public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(stringToNetwork(this.network), web3, token);

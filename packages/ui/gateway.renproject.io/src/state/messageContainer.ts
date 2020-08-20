@@ -130,7 +130,9 @@ export const useMessageContainer = () => {
                     const transferID = message.frameID;
                     const time = Date.now() / 1000;
 
-                    const randomID = Ox(strip0x(transferID).repeat(4).slice(0, 64));
+                    const transferIDHex = message.frameID.match(/^(0x)?[A-Fa-f0-9]+$/) ? strip0x(message.frameID) : Buffer.from(message.frameID).toString("hex");
+
+                    const randomID = Ox(transferIDHex.repeat(4).slice(0, 64));
 
                     let historyEvent: HistoryEvent | undefined;
                     let transferParams: HistoryEvent["transferParams"];

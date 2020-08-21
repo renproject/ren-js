@@ -18,56 +18,76 @@ export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
  * @/param nonce The nonce of the transaction, to detect if it has been
  *        overwritten.
  */
-export const waitForReceipt = async (web3: Web3, transactionHash: string/*, nonce?: number*/) => new Promise<TransactionReceipt>(async (resolve, reject) => {
+export const waitForReceipt = async (
+    web3: Web3,
+    transactionHash: string,
+    blocknative?: BlocknativeSdk,
+) =>
+    new Promise<TransactionReceipt>(async (resolve, reject) => {
+        let blocknativeInitialized = false;
 
-    let blocknative;
+        try {
+            if (!blocknative) {
+                // Initialize Blocknative SDK.
+                blocknative = new BlocknativeSdk({
+                    dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
+                    networkId: await web3.eth.net.getId(),
+                });
+                blocknativeInitialized = true;
+            }
 
-    try {
-        // Initialize Blocknative SDK.
-        blocknative = new BlocknativeSdk({
-            dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
-            networkId: await web3.eth.net.getId(),
-        });
-
-        const { emitter } = blocknative.transaction(transactionHash);
-        emitter.on("txSpeedUp", state => { if (state.hash) { transactionHash = Ox(state.hash); } });
-        emitter.on("txCancel", () => { reject(new Error("Ethereum transaction was cancelled.")); });
-
-    } catch (error) {
-        // Ignore blocknative error.
-    }
-
-    // Wait for confirmation
-    let receipt: TransactionReceipt | undefined;
-    while (!receipt || !receipt.blockHash) {
-        receipt = (await web3.eth.getTransactionReceipt(transactionHash)) as TransactionReceipt;
-        if (receipt && receipt.blockHash) {
-            break;
+            const { emitter } = blocknative.transaction(transactionHash);
+            emitter.on("txSpeedUp", (state) => {
+                if (state.hash) {
+                    transactionHash = Ox(state.hash);
+                }
+            });
+            emitter.on("txCancel", () => {
+                reject(new Error("Ethereum transaction was cancelled."));
+            });
+        } catch (error) {
+            // Ignore blocknative error.
         }
-        await sleep(3 * SECONDS);
-    }
 
-    try {
-        // Destroy blocknative SDK.
-        if (blocknative) {
-            blocknative.destroy();
+        // Wait for confirmation
+        let receipt: TransactionReceipt | undefined;
+        while (!receipt || !receipt.blockHash) {
+            receipt = (await web3.eth.getTransactionReceipt(
+                transactionHash,
+            )) as TransactionReceipt;
+            if (receipt && receipt.blockHash) {
+                break;
+            }
+            await sleep(3 * SECONDS);
         }
-    } catch (error) {
-        // Ignore blocknative error.
-    }
 
-    // Status might be undefined - so check against `false` explicitly.
-    if (receipt.status === false) {
-        reject(new Error(`Transaction was reverted. { "transactionHash": "${transactionHash}" }`));
+        try {
+            // Destroy blocknative SDK.
+            if (blocknative && blocknativeInitialized) {
+                blocknative.destroy();
+            }
+        } catch (error) {
+            // Ignore blocknative error.
+        }
+
+        // Status might be undefined - so check against `false` explicitly.
+        if (receipt.status === false) {
+            reject(
+                new Error(
+                    `Transaction was reverted. { "transactionHash": "${transactionHash}" }`,
+                ),
+            );
+            return;
+        }
+
+        resolve(receipt);
         return;
-    }
+    });
 
-    resolve(receipt);
-    return;
-});
-
-export const extractBurnReference = async (web3: Web3, txHash: string): Promise<number | string> => {
-
+export const extractBurnReference = async (
+    web3: Web3,
+    txHash: string,
+): Promise<number | string> => {
     const receipt = await waitForReceipt(web3, txHash);
 
     if (!receipt.logs) {
@@ -91,7 +111,10 @@ export const extractBurnReference = async (web3: Web3, txHash: string): Promise<
 };
 
 export const defaultAccountError = "No accounts found in Web3 wallet.";
-export const withDefaultAccount = async (web3: Web3, config: TransactionConfig): Promise<TransactionConfig> => {
+export const withDefaultAccount = async (
+    web3: Web3,
+    config: TransactionConfig,
+): Promise<TransactionConfig> => {
     if (!config.from) {
         if (web3.eth.defaultAccount) {
             config.from = web3.eth.defaultAccount;
@@ -107,5 +130,11 @@ export const withDefaultAccount = async (web3: Web3, config: TransactionConfig):
 };
 
 // tslint:disable-next-line:no-any
-export const rawEncode = (types: Array<string | {}>, parameters: any[]): Buffer =>
-    Buffer.from(strip0x((new AbiCoder()).encodeParameters(types, parameters)), "hex");
+export const rawEncode = (
+    types: Array<string | {}>,
+    parameters: any[],
+): Buffer =>
+    Buffer.from(
+        strip0x(new AbiCoder().encodeParameters(types, parameters)),
+        "hex",
+    );

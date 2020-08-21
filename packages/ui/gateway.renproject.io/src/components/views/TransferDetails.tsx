@@ -1,19 +1,18 @@
 import {
     Asset,
     BurnAndReleaseEvent,
+    EventType,
     LockAndMintEvent,
+    UnmarshalledFees,
 } from "@renproject/interfaces";
 import { parseRenContract } from "@renproject/utils";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import BigNumber from "bignumber.js";
 
 import infoIcon from "../../scss/images/info.svg";
 import { getURL } from "../../state/transferContainer";
 import { Tooltip } from "../views/tooltip/Tooltip";
-
-interface Props {
-    transfer: LockAndMintEvent | BurnAndReleaseEvent;
-}
 
 const TransferDetailsOuter = styled.div`
     overflow: -moz-scrollbars-none;
@@ -53,7 +52,12 @@ const TransferDetailsRight = styled.div`
     color: #3f3f48;
 `;
 
-export const TransferDetails: React.FC<Props> = ({ transfer }) => {
+interface Props {
+    transfer: LockAndMintEvent | BurnAndReleaseEvent;
+    fees: UnmarshalledFees | null;
+}
+
+export const TransferDetails: React.FC<Props> = ({ transfer, fees }) => {
     const [title, setTitle] = useState("Unable to load integrator details");
     const url = getURL();
 
@@ -77,6 +81,35 @@ export const TransferDetails: React.FC<Props> = ({ transfer }) => {
                 : parseRenContract(token).asset,
         [token],
     );
+
+    let feeString: React.ReactNode = "";
+    try {
+        const transferFee =
+            fees &&
+            fees[asset.toLowerCase() as "btc" | "bch" | "zec"][
+                transfer.eventType === EventType.LockAndMint
+                    ? "lock"
+                    : "release"
+            ];
+        const darknodeFee =
+            fees &&
+            fees[asset.toLowerCase() as "btc" | "bch" | "zec"].ethereum[
+                transfer.eventType === EventType.LockAndMint ? "mint" : "burn"
+            ];
+        feeString = (
+            <>
+                {darknodeFee ? (darknodeFee / 10000) * 100 : "..."}% +{" "}
+                {transferFee
+                    ? new BigNumber(transferFee)
+                          .div(new BigNumber(10).exponentiatedBy(8))
+                          .toFixed()
+                    : "..."}{" "}
+                {asset.toUpperCase()}
+            </>
+        );
+    } catch (error) {
+        console.error(error);
+    }
 
     return (
         <TransferDetailsOuter>
@@ -128,9 +161,7 @@ export const TransferDetails: React.FC<Props> = ({ transfer }) => {
                         <img alt={`Tooltip: ${url}`} src={infoIcon} />
                     </Tooltip>
                 </TransferDetailsLeft>
-                <TransferDetailsRight>
-                    0.1% + 0.00016 {asset.toUpperCase()}
-                </TransferDetailsRight>
+                <TransferDetailsRight>{feeString}</TransferDetailsRight>
             </TransferDetailsRow>
         </TransferDetailsOuter>
     );

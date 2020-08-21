@@ -40,8 +40,10 @@ export const HandlingMint: React.FC<Props> = ({
         transfer,
         generateAddress,
         getNumberOfConfirmations,
+        fetchMintSignature,
         submitMintToEthereum,
         waitForDeposits,
+        findPreviousMintTransaction,
     } = SDKContainer.useContainer();
 
     if (!transfer) {
@@ -104,6 +106,8 @@ export const HandlingMint: React.FC<Props> = ({
                     networkDetails={renJS.network}
                     mini={paused}
                     txHash={transfer.outTx}
+                    onLoad={findPreviousMintTransaction}
+                    onLoadAsync={fetchMintSignature}
                     submit={submitMintToEthereum}
                     token={token}
                 />

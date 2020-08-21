@@ -42,6 +42,8 @@ interface Props {
     networkDetails: RenNetworkDetails;
     token: Asset;
     submit: (retry?: boolean) => Promise<void>;
+    onLoad: () => Promise<void>;
+    onLoadAsync: () => Promise<void>;
 }
 
 export const SubmitMintToEthereum: React.FC<Props> = ({
@@ -51,6 +53,8 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     networkDetails,
     token,
     submit,
+    onLoad,
+    onLoadAsync,
 }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
@@ -102,14 +106,30 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     }, [submit, error]);
 
     const [initialized, setInitialized] = React.useState(false);
+    const [ready, setReady] = React.useState(false);
     React.useEffect(() => {
         if (!initialized) {
             setInitialized(true);
             if (txHash) {
                 onSubmit().catch(console.error);
+            } else {
+                onLoad()
+                    .then(() => {
+                        setReady(true);
+                    })
+                    .catch((err) => {
+                        setReady(true);
+                        console.error(err);
+                    });
+                onLoadAsync().catch(console.error);
+
+                // If onLoad doesn't complete within 1 minute, set ready anyway.
+                setTimeout(() => {
+                    setReady(true);
+                }, 60 * 1000);
             }
         }
-    }, [initialized, txHash, onSubmit]);
+    }, [initialized, txHash, onSubmit, onLoad, onLoadAsync, ready, setReady]);
 
     if (mini) {
         return (
@@ -150,8 +170,13 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     }
 
     const amount =
-        transfer && transfer.renVMQuery
-            ? new BigNumber(transfer.renVMQuery.autogen.amount)
+        transfer &&
+        transfer.inTx &&
+        transfer.inTx.chain !== Chain.Ethereum &&
+        transfer.inTx.utxo &&
+        // If amount is zero - it may because RenJS isn't fetching the full UTXO details.
+        transfer.inTx.utxo.amount
+            ? new BigNumber(transfer.inTx.utxo.amount)
             : undefined;
 
     const amountReadable = amount
@@ -214,15 +239,13 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
                     <ContainerButtons>
                         <TransparentButton
                             className="button open--confirm"
-                            disabled={submitting}
+                            disabled={submitting || !ready}
                             onClick={onSubmit}
                         >
-                            Submit to Ethereum{" "}
-                            {submitting ? (
+                            {ready ? <>Submit to Ethereum </> : null}
+                            {submitting || !ready ? (
                                 <TransparentLoading alt={true} />
-                            ) : (
-                                ""
-                            )}
+                            ) : null}
                         </TransparentButton>
                     </ContainerButtons>
                 )}

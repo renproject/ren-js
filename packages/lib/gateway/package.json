@@ -60,6 +60,7 @@
     "@renproject/interfaces": "file:../interfaces",
     "@renproject/utils": "file:../utils",
     "@types/node": "^14.0.5",
+    "bnc-sdk": "^2.1.5",
     "push.js": "^1.0.12",
     "web3": "^2.0.0-alpha.1"
   },

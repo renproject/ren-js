@@ -381,7 +381,7 @@ describe("Cross chain transactions", function () {
             logger.consoleLine();
             logger.info(`Starting mint test`);
             const { asset: token } = parseRenContract(contract);
-            const amount = RenJS.utils.value(0.000015, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
+            const amount = RenJS.utils.value(0.0008, token.toLowerCase() as "btc" | "bch" | "zec")._smallest();
 
             const mint = renJS.lockAndMint({
                 web3Provider: web3.currentProvider,

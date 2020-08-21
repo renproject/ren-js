@@ -1,5 +1,10 @@
 import { RenNetworkDetails } from "@renproject/contracts";
-import { Asset, LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
+import {
+    Asset,
+    Chain,
+    LockAndMintEvent,
+    UTXOWithChain,
+} from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -169,8 +174,11 @@ export const DepositReceived: React.FC<Props> = ({
     }
 
     const amount =
-        transfer && transfer.renVMQuery
-            ? new BigNumber(transfer.renVMQuery.autogen.amount)
+        transfer &&
+        transfer.inTx &&
+        transfer.inTx.chain !== Chain.Ethereum &&
+        transfer.inTx.utxo
+            ? new BigNumber(transfer.inTx.utxo.amount)
             : undefined;
 
     const amountReadable = amount

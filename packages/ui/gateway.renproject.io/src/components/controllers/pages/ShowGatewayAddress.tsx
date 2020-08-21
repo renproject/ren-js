@@ -67,43 +67,39 @@ const EllipsisSpan = styled.span`
     }
 `;
 
-const AddressControls = styled.div`
-            display: flex;
-            align-items: center;
-            /* margin-right: 13px; */
-            width: 58px !important;
-            flex: 1;
-            max-width: 58px;
-            justify-content: center;
-            padding-right: 5px;
-            height: 100%;
-            border-left: 1px solid #dbe0e8;
-            
-            button {
-                padding: 0;
-                min-width: 37px;
-                padding: 0 5px;
-                height: 20px;
-                border-radius: 20px;
-                // border: 1px solid ${(p) => p.theme.primaryColor};
-                // background: rgba(0, 111, 232, 0.1);
-                font-size: 1.0rem;
-                line-height: 13px;
-                /* position: absolute; */
-                border: 0;
-                background: none;
-                /* right: 20px; */
-                color: ${(p) => p.theme.primaryColor};
+const AddressControls = styled.button`
+    display: flex;
+    align-items: center;
+    /* margin-right: 13px; */
+    width: 58px !important;
+    flex: 1;
+    max-width: 58px;
+    justify-content: center;
+    height: 100% !important;
+    border: none !important;
+    border-left: 1px solid #dbe0e8 !important;
+    padding: 0;
+    padding-right: 5px;
+    background: none;
+    min-width: unset !important;
+    border-top-right-radius: 50px;
+    border-bottom-right-radius: 50px;
 
-                &:hover, &:active {
-                    box-shadow: none !important;
-                }
-            }
+    &:hover,
+    &:active {
+        margin-top: 0 !important;
+        box-shadow: none !important;
+        background: #f9f9f9;
+    }
 
-            button + button {
-                margin-left: 5px;
-            }
-        `;
+    &:active {
+        background: #f5f5f5;
+    }
+
+    button + button {
+        margin-left: 5px;
+    }
+`;
 
 const ContinueButton = styled.button`
     background: ${(p) =>
@@ -308,13 +304,8 @@ export const ShowGatewayAddress: React.FC<Props> = ({
                                         <label className="copied-text">
                                             Copied
                                         </label>
-                                        <AddressControls>
-                                            <button onClick={onQRClick}>
-                                                <QR
-                                                    height={16}
-                                                    className="qr"
-                                                />
-                                            </button>
+                                        <AddressControls onClick={onQRClick}>
+                                            <QR height={16} className="qr" />
                                         </AddressControls>
                                     </>
                                 ) : (

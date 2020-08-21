@@ -20,11 +20,10 @@ body {
 
 html,
 body {
-    background: #FCFCFD;
+    background: #fcfcfd;
 }
 
 ._ren {
-
     height: 100vh;
     overflow-y: hidden;
 
@@ -114,7 +113,8 @@ body {
     }
 
     button:not(:disabled):active {
-        background-color: $background;
+        // background-color: $background;
+        margin-top: 2px;
     }
 
     button .loading:after {
@@ -175,7 +175,6 @@ body {
     label {
         user-select: none;
     }
-
 
     details {
         text-align: left;
@@ -278,7 +277,7 @@ body {
 
     .not-in-iframe {
         @extend .centered;
-        font-size: 2.0rem;
+        font-size: 2rem;
         color: $foreground;
 
         a {

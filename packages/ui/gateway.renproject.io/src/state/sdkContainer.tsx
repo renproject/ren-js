@@ -592,6 +592,15 @@ const useSDKContainer = () => {
                 : undefined;
 
         const transaction = await lockAndMintObject().wait(0, specifyUTXO);
+        try {
+            const renVMQuery = await transaction.queryTx();
+            await updateTransfer({
+                renVMQuery,
+                txHash: renVMQuery.hash,
+            });
+        } catch (error) {
+            console.error(error);
+        }
         const promise = lockAndMintObject().wait(
             getNumberOfConfirmations(),
             specifyUTXO,

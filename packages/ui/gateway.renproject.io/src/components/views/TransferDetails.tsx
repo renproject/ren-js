@@ -1,4 +1,8 @@
-import { Asset, BurnAndReleaseEvent, LockAndMintEvent } from "@renproject/interfaces";
+import {
+    Asset,
+    BurnAndReleaseEvent,
+    LockAndMintEvent,
+} from "@renproject/interfaces";
 import { parseRenContract } from "@renproject/utils";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
@@ -42,44 +46,92 @@ const TransferDetailsRow = styled.div`
     padding: 4px 0;
 `;
 
-const TransferDetailsLeft = styled.div`
-`;
+const TransferDetailsLeft = styled.div``;
 
 const TransferDetailsRight = styled.div`
     text-align: right;
+    color: #3f3f48;
 `;
 
 export const TransferDetails: React.FC<Props> = ({ transfer }) => {
-
     const [title, setTitle] = useState("Unable to load integrator details");
     const url = getURL();
 
     useEffect(() => {
         try {
-            setTitle((new URL(url)).hostname);
+            setTitle(new URL(url).hostname);
         } catch (error) {
             console.error(error);
         }
     }, [url]);
 
     const token = transfer.transferParams.sendToken;
-    const asset: Asset | "" = React.useMemo(() => !token ? "" :
-        token === Asset.BTC || token === Asset.ZEC || token === Asset.BCH ? (token as Asset) :
-            parseRenContract(token).asset, [token]);
+    const asset: Asset | "" = React.useMemo(
+        () =>
+            !token
+                ? ""
+                : token === Asset.BTC ||
+                  token === Asset.ZEC ||
+                  token === Asset.BCH
+                ? (token as Asset)
+                : parseRenContract(token).asset,
+        [token],
+    );
 
-    return <TransferDetailsOuter>
-        <TransferDetailsRow>
-            <TransferDetailsLeft>Integrator <Tooltip align="right" width={300} contents={"To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></TransferDetailsLeft>
-            <TransferDetailsRight>
-                {url ? <img alt="" role="presentation" src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`} /> : null}{" "}{title}{" "}
-                {url ? <Tooltip align="left" width={300} contents={url}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip> : null}
-            </TransferDetailsRight>
-        </TransferDetailsRow>
-        <TransferDetailsRow>
-            <TransferDetailsLeft>RenVM Network Fees <Tooltip align="right" width={300} contents={<>A 10 BPS (0.1%) fee is applied per mint or release and is distributed to all active Darknodes. There is also a 16K {asset === Asset.ZEC ? "Zats" : "Sats"} fee for paying blockchain miners.</>}><img alt={`Tooltip: ${url}`} src={infoIcon} /></Tooltip></TransferDetailsLeft>
-            <TransferDetailsRight>
-                0.1% + 0.00016 {asset.toUpperCase()}
-            </TransferDetailsRight>
-        </TransferDetailsRow>
-    </TransferDetailsOuter>;
+    return (
+        <TransferDetailsOuter>
+            <TransferDetailsRow>
+                <TransferDetailsLeft>
+                    Integrator{" "}
+                    <Tooltip
+                        align="right"
+                        width={300}
+                        contents={
+                            "To avoid loss of funds, verify the Integrator URL and only interact with integrators that you trust."
+                        }
+                    >
+                        <img alt={`Tooltip: ${url}`} src={infoIcon} />
+                    </Tooltip>
+                </TransferDetailsLeft>
+                <TransferDetailsRight>
+                    {url ? (
+                        <img
+                            alt=""
+                            role="presentation"
+                            src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`}
+                        />
+                    ) : null}{" "}
+                    {title}{" "}
+                    {url ? (
+                        <Tooltip align="left" width={300} contents={url}>
+                            <img alt={`Tooltip: ${url}`} src={infoIcon} />
+                        </Tooltip>
+                    ) : null}
+                </TransferDetailsRight>
+            </TransferDetailsRow>
+            <TransferDetailsRow>
+                <TransferDetailsLeft>
+                    RenVM Network Fees{" "}
+                    <Tooltip
+                        align="right"
+                        width={300}
+                        contents={
+                            <>
+                                A 10 BPS (0.1%) fee is applied per mint or
+                                release and is distributed to all active
+                                Darknodes. There is also a 16K{" "}
+                                {asset === Asset.ZEC ? "Zats" : "Sats"} fee for
+                                paying blockchain miners.
+                            </>
+                        }
+                    >
+                        <img alt={`Tooltip: ${url}`} src={infoIcon} />
+                    </Tooltip>
+                </TransferDetailsLeft>
+                <TransferDetailsRight>
+                    0.1% + 0.00016 {asset.toUpperCase()}
+                </TransferDetailsRight>
+            </TransferDetailsRow>
+        </TransferDetailsOuter>
+    );
 };

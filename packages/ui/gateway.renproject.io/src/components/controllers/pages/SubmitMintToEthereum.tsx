@@ -1,8 +1,8 @@
-import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/contracts";
+import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
-import { lighten } from "polished";
+import BigNumber from "bignumber.js";
 import React from "react";
 import styled from "styled-components";
 
@@ -22,18 +22,9 @@ import { LabelledDiv } from "../../views/LabelledInput";
 import { Mini } from "../../views/Mini";
 import { TransparentButton, TransparentLoading } from "../../views/Styled";
 
-const Title = styled.span`
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 23px;
-    text-align: center;
-    color: #3f3f48;
-    opacity: 0.9;
-`;
-
 const StyledLink = styled.a`
     display: block;
-    color: ${(p) => lighten(0.1, p.theme.primaryColor)} !important;
+    color: #515159;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 14px !important;
@@ -159,12 +150,15 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     }
 
     const amount =
-        transfer.inTx &&
-        transfer.inTx.chain !== Chain.Ethereum &&
-        transfer.inTx.utxo &&
-        transfer.inTx.utxo.amount
-            ? transfer.inTx.utxo.amount
+        transfer && transfer.renVMQuery
+            ? new BigNumber(transfer.renVMQuery.autogen.amount)
             : undefined;
+
+    const amountReadable = amount
+        ? new BigNumber(amount)
+              .div(new BigNumber(10).exponentiatedBy(8)) // TODO: decimals
+              .toFixed()
+        : undefined;
 
     return (
         <Container>
@@ -179,7 +173,16 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
                                     rel="noopener noreferrer"
                                     href={txUrl(transfer.inTx, networkDetails)}
                                 >
-                                    Tx ID: {txPreview(transfer.inTx)}
+                                    {amountReadable ? (
+                                        <>{amountReadable}</>
+                                    ) : (
+                                        "Received"
+                                    )}{" "}
+                                    {token.toUpperCase()}
+                                    {" - "}
+                                    <span className="blue">
+                                        {txPreview(transfer.inTx)}
+                                    </span>
                                 </StyledLink>
                             </div>
                         ) : (

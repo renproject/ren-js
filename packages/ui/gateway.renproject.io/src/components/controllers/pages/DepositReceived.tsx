@@ -1,9 +1,9 @@
-import { Asset, UTXOWithChain } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/contracts";
+import { Asset, LockAndMintEvent, UTXOWithChain } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import { OrderedMap } from "immutable";
-import { lighten } from "polished";
 import React from "react";
 import styled from "styled-components";
 
@@ -26,6 +26,7 @@ import { Tooltip } from "../../views/tooltip/Tooltip";
 
 interface Props {
     mini: boolean;
+    transfer: LockAndMintEvent;
     token: Asset;
     utxos: OrderedMap<string, UTXOWithChain>;
     networkDetails: RenNetworkDetails;
@@ -55,7 +56,7 @@ const ConfirmationsBlock = styled.div`
 `;
 
 const StyledLabel = styled.span`
-    color: ${(p) => lighten(0.1, p.theme.primaryColor)} !important;
+    color: #515159;
     font-size: 14px !important;
     font-weight: 400 !important;
     letter-spacing: 0.2px;
@@ -63,6 +64,7 @@ const StyledLabel = styled.span`
 
 export const DepositReceived: React.FC<Props> = ({
     mini,
+    transfer,
     token,
     utxos,
     confirmations,
@@ -165,6 +167,17 @@ export const DepositReceived: React.FC<Props> = ({
             />
         );
     }
+
+    const amount =
+        transfer && transfer.renVMQuery
+            ? new BigNumber(transfer.renVMQuery.autogen.amount)
+            : undefined;
+
+    const amountReadable = amount
+        ? new BigNumber(amount)
+              .div(new BigNumber(10).exponentiatedBy(8)) // TODO: decimals
+              .toFixed()
+        : undefined;
 
     return (
         <Container>
@@ -269,7 +282,16 @@ export const DepositReceived: React.FC<Props> = ({
                                         className={`click-to-copy`}
                                     >
                                         <StyledLabel>
-                                            Tx ID: {txPreview(utxo)}
+                                            {amountReadable ? (
+                                                <>{amountReadable}</>
+                                            ) : (
+                                                "Received"
+                                            )}{" "}
+                                            {token.toUpperCase()}
+                                            {" - "}
+                                            <span className="blue">
+                                                {txPreview(utxo)}
+                                            </span>
                                         </StyledLabel>
                                     </div>
                                 </ExternalLink>

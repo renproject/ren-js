@@ -62,6 +62,19 @@
         color: $primary;
     }
 
+    .settings-bottom-title {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .settings-bottom-id {
+        display: flex;
+
+        div+div {
+            margin-left: 5px;
+        }
+    }
+
     .settings-options {
 
         display: flex;
@@ -86,9 +99,17 @@
                 background: darken(#eee, 4%);
             }
 
+            &.button {
+                background: #fff;
+                // color: white;
+                border: 1px solid #aaa;
+            }
+
             &.button-red {
                 background: $red;
                 color: white;
+
+                border-color: $red;
 
                 &:active {
                     background: darken($red, 4%);

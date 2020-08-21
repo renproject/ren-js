@@ -6,9 +6,9 @@ import {
     UnmarshalledFees,
 } from "@renproject/interfaces";
 import { parseRenContract } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import BigNumber from "bignumber.js";
 
 import infoIcon from "../../scss/images/info.svg";
 import { getURL } from "../../state/transferContainer";

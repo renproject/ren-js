@@ -21,7 +21,7 @@ export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
 export const waitForReceipt = async (
     web3: Web3,
     transactionHash: string,
-    blocknative?: BlocknativeSdk,
+    blocknative?: BlocknativeSdk
 ) =>
     new Promise<TransactionReceipt>(async (resolve, reject) => {
         let blocknativeInitialized = false;
@@ -53,7 +53,7 @@ export const waitForReceipt = async (
         let receipt: TransactionReceipt | undefined;
         while (!receipt || !receipt.blockHash) {
             receipt = (await web3.eth.getTransactionReceipt(
-                transactionHash,
+                transactionHash
             )) as TransactionReceipt;
             if (receipt && receipt.blockHash) {
                 break;
@@ -74,8 +74,8 @@ export const waitForReceipt = async (
         if (receipt.status === false) {
             reject(
                 new Error(
-                    `Transaction was reverted. { "transactionHash": "${transactionHash}" }`,
-                ),
+                    `Transaction was reverted. { "transactionHash": "${transactionHash}" }`
+                )
             );
             return;
         }
@@ -86,7 +86,7 @@ export const waitForReceipt = async (
 
 export const extractBurnReference = async (
     web3: Web3,
-    txHash: string,
+    txHash: string
 ): Promise<number | string> => {
     const receipt = await waitForReceipt(web3, txHash);
 
@@ -113,7 +113,7 @@ export const extractBurnReference = async (
 export const defaultAccountError = "No accounts found in Web3 wallet.";
 export const withDefaultAccount = async (
     web3: Web3,
-    config: TransactionConfig,
+    config: TransactionConfig
 ): Promise<TransactionConfig> => {
     if (!config.from) {
         if (web3.eth.defaultAccount) {
@@ -129,12 +129,12 @@ export const withDefaultAccount = async (
     return config;
 };
 
-// tslint:disable-next-line:no-any
 export const rawEncode = (
     types: Array<string | {}>,
-    parameters: any[],
+    // tslint:disable-next-line:no-any
+    parameters: any[]
 ): Buffer =>
     Buffer.from(
         strip0x(new AbiCoder().encodeParameters(types, parameters)),
-        "hex",
+        "hex"
     );

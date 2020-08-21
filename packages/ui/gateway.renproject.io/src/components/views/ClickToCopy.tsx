@@ -1,7 +1,7 @@
+import { darken } from "polished";
 import React from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import styled from "styled-components";
-import { darken } from "polished";
 
 const BlueHover = styled.span`
     cursor: pointer;

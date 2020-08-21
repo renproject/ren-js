@@ -77,6 +77,7 @@ export interface GatewayJSConfig {
 export type GatewayResult = PromiEvent<
     UnmarshalledTx | {},
     {
+        // tslint:disable-next-line: no-any
         status: [LockAndMintStatus | BurnAndReleaseStatus, any];
         transferUpdated: [HistoryEvent];
     }
@@ -128,7 +129,7 @@ export class Gateway {
         } catch (error) {
             this.logger.error(error);
         }
-    }
+    };
 
     public readonly pause = () => {
         this._pause();
@@ -136,7 +137,7 @@ export class Gateway {
             this.logger.error
         );
         return this;
-    }
+    };
 
     public readonly resume = () => {
         this._resume();
@@ -144,21 +145,21 @@ export class Gateway {
             this.logger.error
         );
         return this;
-    }
+    };
 
     public readonly cancel = async () => {
         // tslint:disable-next-line: no-object-mutation
         this.isCancelling = true;
         await this._sendMessage(GatewayMessageType.Cancel, {});
         return this;
-    }
+    };
 
     public readonly getStatus = async () => {
         return this._sendMessage(GatewayMessageType.GetStatus, {});
-    }
+    };
 
-    // tslint:disable-next-line: promise-must-complete
     public readonly _getGateways = async () =>
+        // tslint:disable-next-line: promise-must-complete
         new Promise<Map<string, HistoryEvent>>((resolve, reject) => {
             const container = this._getOrCreateGatewayContainer();
 
@@ -219,7 +220,7 @@ export class Gateway {
             };
 
             this._addListener(listener);
-        })
+        });
 
     public readonly result: () => GatewayResult = () => this.promiEvent;
 
@@ -344,7 +345,7 @@ export class Gateway {
         })().catch(this.promiEvent.reject);
 
         return this;
-    }
+    };
 
     private readonly _eventListener = (
         transferParams:
@@ -622,14 +623,14 @@ export class Gateway {
                     this._acknowledgeMessage(e.data).catch(this.logger.error);
             }
         }
-    }
+    };
 
-    // tslint:disable-next-line: no-any
     private readonly _sendMessage = async <Type extends GatewayMessageType>(
         type: Type,
         payload: GatewayMessagePayload<Type>,
         iframeIn?: ChildNode
     ) =>
+        // tslint:disable-next-line: no-any
         new Promise<any>(async (resolve) => {
             // TODO: Allow response in acknowledgement.
 
@@ -694,7 +695,7 @@ export class Gateway {
                 // Sleep for 1 second
                 await sleep(1 * SECONDS);
             }
-        })
+        });
 
     // tslint:disable-next-line: no-any
     private readonly _acknowledgeMessage = async <
@@ -730,27 +731,27 @@ export class Gateway {
         // tslint:disable-next-line: no-any
         const contentWindow = (frame as any).contentWindow;
         contentWindow.postMessage(response, "*");
-    }
+    };
 
-    // tslint:disable-next-line: no-any
     private readonly _addListener = (
+        // tslint:disable-next-line: no-any
         listener: (e: { readonly data: GatewayMessage<any> }) => void
     ) => {
         window.addEventListener("message", listener);
-    }
+    };
 
-    // tslint:disable-next-line: no-any
     private readonly _removeListener = (
+        // tslint:disable-next-line: no-any
         listener: (e: { readonly data: GatewayMessage<any> }) => void
     ) => {
         window.removeEventListener("message", listener);
-    }
+    };
 
     private readonly _toggleSettings = () => {
         this._sendMessage(GatewayMessageType.ToggleSettings, {}).catch(
             this.logger.error
         );
-    }
+    };
 
     private readonly _pause = () => {
         // tslint:disable-next-line: no-object-mutation
@@ -760,7 +761,7 @@ export class Gateway {
         } catch (error) {
             this.logger.error(error);
         }
-    }
+    };
 
     private readonly _resume = () => {
         // tslint:disable-next-line: no-object-mutation
@@ -770,12 +771,12 @@ export class Gateway {
         } catch (error) {
             this.logger.error(error);
         }
-    }
+    };
 
     private readonly _getSettingsButton = () =>
-        getElement(`_ren_settings-${this.id}`)
+        getElement(`_ren_settings-${this.id}`);
     private readonly _getNotificationButton = () =>
-        getElement(`_ren_notifications-${this.id}`)
+        getElement(`_ren_notifications-${this.id}`);
     private readonly _getOverlay = () => getElement(`_ren_overlay-${this.id}`);
     private readonly _getPopup = () => getElement(`_ren_gateway-${this.id}`);
     private readonly _getIFrame = () => getElement(`_ren_iframe-${this.id}`);
@@ -798,7 +799,7 @@ export class Gateway {
         }
 
         return getElement(`_ren_gatewayContainer`);
-    }
+    };
 }
 
 export default class GatewayJS {
@@ -863,7 +864,7 @@ export default class GatewayJS {
         }
 
         return gateways;
-    }
+    };
 
     /**
      * Start a cross-chain transfer onto Ethereum.
@@ -897,7 +898,7 @@ export default class GatewayJS {
             };
         }
         return new Gateway(this.network, this.config, uniqueID)._open(params);
-    }
+    };
 
     /**
      * Start a cross-chain transfer away from Ethereum.
@@ -931,7 +932,7 @@ export default class GatewayJS {
             };
         }
         return new Gateway(this.network, this.config, uniqueID)._open(params);
-    }
+    };
 
     public readonly open = (
         params:
@@ -966,11 +967,11 @@ export default class GatewayJS {
                 uniqueID
             );
         }
-    }
+    };
 
     public readonly send = (params: SendParams, uniqueID?: string): Gateway => {
         return new Gateway(this.network, this.config, uniqueID)._open(params);
-    }
+    };
 
     public readonly recoverTransfer = (
         web3Provider: Web3Provider,
@@ -982,16 +983,16 @@ export default class GatewayJS {
             this.config,
             uniqueID || params.id
         )._open(params, web3Provider);
-    }
+    };
 
     public readonly getTokenAddress = (
         web3: Web3,
         token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
-    ) => getTokenAddress(stringToNetwork(this.network), web3, token)
+    ) => getTokenAddress(stringToNetwork(this.network), web3, token);
     public readonly getGatewayAddress = (
         web3: Web3,
         token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
-    ) => getGatewayAddress(stringToNetwork(this.network), web3, token)
+    ) => getGatewayAddress(stringToNetwork(this.network), web3, token);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

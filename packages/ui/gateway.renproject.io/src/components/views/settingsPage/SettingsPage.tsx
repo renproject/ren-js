@@ -1,7 +1,7 @@
 import { Asset, HistoryEvent } from "@renproject/interfaces";
+import { strip0x } from "@renproject/utils";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useState } from "react";
-import { strip0x } from "@renproject/utils";
 
 import { _catchInteractionErr_ } from "../../../lib/errors";
 import infoIcon from "../../../scss/images/info.svg";

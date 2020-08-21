@@ -66,7 +66,7 @@ export class LockAndMint {
         _renVM: RenVMProvider,
         _network: RenNetworkDetails,
         _params: LockAndMintParams,
-        _logger: Logger,
+        _logger: Logger
     ) {
         this.logger = _logger;
         this.network = _network;
@@ -94,13 +94,13 @@ export class LockAndMint {
 
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
-                `Must provide Ren transaction hash or contract call details.`,
+                `Must provide Ren transaction hash or contract call details.`
             );
         }
 
         if (!sendToken) {
             throw new Error(
-                `Must provide Ren transaction hash or token to be transferred.`,
+                `Must provide Ren transaction hash or token to be transferred.`
             );
         }
 
@@ -137,11 +137,11 @@ export class LockAndMint {
             resolveInToken(renContract),
             nonce,
             this.network,
-            this.logger,
+            this.logger
         );
         const mpkh = await this.renVM.selectPublicKey(
             resolveInToken(this.params.sendToken),
-            this.logger,
+            this.logger
         );
         this.logger.debug(`Using mpkh ${mpkh.toString("hex")}`);
 
@@ -149,11 +149,11 @@ export class LockAndMint {
             resolveInToken(renContract),
             gHash,
             mpkh,
-            this.network.isTestnet,
+            this.network.isTestnet
         );
         this.generatedGatewayAddress = gatewayAddress;
         this.logger.debug(
-            `Gateway address generated: ${this.generatedGatewayAddress}`,
+            `Gateway address generated: ${this.generatedGatewayAddress}`
         );
 
         return this.generatedGatewayAddress;
@@ -161,7 +161,7 @@ export class LockAndMint {
 
     public wait = (
         confirmations: number,
-        specifyDeposit?: UTXOIndex,
+        specifyDeposit?: UTXOIndex
     ): PromiEvent<this, { deposit: [UTXOWithChain] }> => {
         const promiEvent = newPromiEvent<this, { deposit: [UTXOWithChain] }>();
 
@@ -178,18 +178,18 @@ export class LockAndMint {
                 // tslint:disable-next-line: no-constant-condition
                 while (true) {
                     const chain = parseRenContract(
-                        resolveInToken(this.params.sendToken),
+                        resolveInToken(this.params.sendToken)
                     ).from;
                     const fetchedUTXO = await retrieveUTXO(
                         this.network,
                         chain,
-                        specifiedDeposit,
+                        specifiedDeposit
                     );
                     if (fetchedUTXO.confirmations > previousUtxoConfirmations) {
                         previousUtxoConfirmations = fetchedUTXO.confirmations;
                         const utxo = {
                             chain: parseRenContract(
-                                resolveInToken(this.params.sendToken),
+                                resolveInToken(this.params.sendToken)
                             ).from as
                                 | Chain.Bitcoin
                                 | Chain.BitcoinCash
@@ -252,7 +252,7 @@ export class LockAndMint {
                     // Sort deposits
                     const greatestTx = deposits
                         .filter(
-                            (utxo) => utxo.utxo.confirmations >= confirmations,
+                            (utxo) => utxo.utxo.confirmations >= confirmations
                         )
                         .sort((a, b) =>
                             a.utxo.amount === b.utxo.amount
@@ -261,7 +261,7 @@ export class LockAndMint {
                                     : 1
                                 : a.utxo.amount > b.utxo.amount
                                 ? -1
-                                : 1,
+                                : 1
                         )
                         .first<UTXOWithChain>(undefined);
 
@@ -285,14 +285,14 @@ export class LockAndMint {
                         this.network,
                         resolveInToken(renContract),
                         await this.gatewayAddress(),
-                        0,
+                        0
                     );
 
                     let newDeposit = false;
                     for (const deposit of newDeposits) {
-                        // tslint:disable-next-line: no-non-null-assertion
                         if (
                             !deposits.has(deposit.utxo.txHash) ||
+                            // tslint:disable-next-line: no-non-null-assertion
                             deposits.get(deposit.utxo.txHash)!.utxo
                                 .confirmations !== deposit.utxo.confirmations
                         ) {
@@ -335,7 +335,7 @@ export class LockAndMint {
         const utxo = specifyDeposit || this.params.deposit || this.utxo;
         if (!utxo) {
             throw new Error(
-                `Unable to generate txHash without UTXO. Call 'wait' first.`,
+                `Unable to generate txHash without UTXO. Call 'wait' first.`
             );
         }
 
@@ -345,13 +345,13 @@ export class LockAndMint {
 
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
-                `Unable to generate txHash without contract call details.`,
+                `Unable to generate txHash without contract call details.`
             );
         }
 
         if (!renContract) {
             throw new Error(
-                `Unable to generate txHash without token being transferred.`,
+                `Unable to generate txHash without token being transferred.`
             );
         }
 
@@ -366,20 +366,20 @@ export class LockAndMint {
             resolveInToken(renContract),
             nonce,
             this.network,
-            this.logger,
+            this.logger
         );
         const encodedGHash = toBase64(gHash);
         if (this.logger)
             this.logger.debug(
                 `Providing parameters to txHash: ${resolveInToken(
-                    renContract,
-                )}, ${encodedGHash}, ${utxo}`,
+                    renContract
+                )}, ${encodedGHash}, ${utxo}`
             );
         return generateMintTxHash(
             resolveInToken(renContract),
             encodedGHash,
             utxo,
-            this.logger,
+            this.logger
         );
     };
 
@@ -387,12 +387,12 @@ export class LockAndMint {
      * queryTx requests the status of the mint from RenVM.
      */
     public queryTx = async (
-        specifyDeposit?: UTXOIndex,
+        specifyDeposit?: UTXOIndex
     ): Promise<UnmarshalledMintTx> =>
         unmarshalMintTx(
             await this.renVM.queryMintOrBurn(
-                Ox(Buffer.from(this.txHash(specifyDeposit), "base64")),
-            ),
+                Ox(Buffer.from(this.txHash(specifyDeposit), "base64"))
+            )
         );
 
     /**
@@ -404,7 +404,7 @@ export class LockAndMint {
      * @returns {PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>}
      */
     public submit = (
-        specifyDeposit?: UTXOIndex,
+        specifyDeposit?: UTXOIndex
     ): PromiEvent<LockAndMint, { txHash: [string]; status: [TxStatus] }> => {
         const promiEvent = newPromiEvent<
             LockAndMint,
@@ -421,7 +421,7 @@ export class LockAndMint {
                 const utxoTxHash = this.txHash(utxo);
                 if (txHash && txHash !== utxoTxHash) {
                     throw new Error(
-                        `Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`,
+                        `Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`
                     );
                 }
                 txHash = utxoTxHash;
@@ -438,13 +438,13 @@ export class LockAndMint {
 
                 if (!contractCalls || !contractCalls.length) {
                     throw new Error(
-                        `Unable to submit to RenVM without contract call details.`,
+                        `Unable to submit to RenVM without contract call details.`
                     );
                 }
 
                 if (!renContract) {
                     throw new Error(
-                        `Unable to submit to RenVM without token being transferred.`,
+                        `Unable to submit to RenVM without token being transferred.`
                     );
                 }
 
@@ -455,12 +455,12 @@ export class LockAndMint {
 
                 const fnABI = payloadToMintABI(
                     contractFn,
-                    contractParams || [],
+                    contractParams || []
                 );
 
                 const encodedParameters = new Web3("").eth.abi.encodeParameters(
                     (contractParams || []).map((i) => i.type),
-                    (contractParams || []).map((i) => i.value),
+                    (contractParams || []).map((i) => i.value)
                 );
 
                 // Try to submit to RenVM. If that fails, see if they already
@@ -468,7 +468,7 @@ export class LockAndMint {
                 try {
                     if (this.params.tags && this.params.tags.length > 1) {
                         throw new Error(
-                            "Providing multiple tags is not supported yet.",
+                            "Providing multiple tags is not supported yet."
                         );
                     }
                     const tags: [string] | [] =
@@ -486,11 +486,11 @@ export class LockAndMint {
                         contractFn,
                         fnABI,
                         encodedParameters,
-                        tags,
+                        tags
                     );
                     if (txHash !== utxoTxHash) {
                         this.logger.warn(
-                            `Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`,
+                            `Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`
                         );
                     }
                 } catch (error) {
@@ -500,7 +500,7 @@ export class LockAndMint {
                         const queryTxResponse = await this.queryTx(utxo);
                         if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
                             throw new Error(
-                                `Transaction ${txHash} has not been submitted previously.`,
+                                `Transaction ${txHash} has not been submitted previously.`
                             );
                         }
                     } catch (errorInner) {
@@ -515,7 +515,7 @@ export class LockAndMint {
                 this.logger.debug(`txHash: ${txHash}`);
             } else if (!txHash) {
                 throw new Error(
-                    `Must call 'wait' or provide UTXO or RenVM transaction hash.`,
+                    `Must call 'wait' or provide UTXO or RenVM transaction hash.`
                 );
             }
 
@@ -525,7 +525,7 @@ export class LockAndMint {
                     promiEvent.emit("status", status);
                     this.logger.debug(`Transaction status: ${status}`);
                 },
-                () => promiEvent._isCancelled(),
+                () => promiEvent._isCancelled()
             );
 
             const response = unmarshalMintTx(rawResponse);
@@ -563,7 +563,7 @@ export class LockAndMint {
 
             this.renVMResponse = response;
             this.signature = signatureToString(
-                fixSignature(this.renVMResponse, this.network, this.logger),
+                fixSignature(this.renVMResponse, this.network, this.logger)
             );
 
             this.logger.debug(`Signature: ${this.signature}`);
@@ -584,7 +584,7 @@ export class LockAndMint {
         web3Provider: provider,
         confirmations: number,
         txConfig?: TransactionConfig,
-        specifyDeposit?: UTXOIndex,
+        specifyDeposit?: UTXOIndex
     ) => {
         await this.wait(confirmations);
         const signature = await this.submit(specifyDeposit);
@@ -592,7 +592,7 @@ export class LockAndMint {
     };
 
     public findTransaction = async (
-        web3Provider: provider,
+        web3Provider: provider
     ): Promise<string | undefined> => {
         const web3 = new Web3(web3Provider);
         const { sendToken: renContract } = this.params;
@@ -603,7 +603,7 @@ export class LockAndMint {
 
         if (!this.renVMResponse) {
             throw new Error(
-                `Unable to submit to Ethereum without RenVM response. Call 'submit' first.`,
+                `Unable to submit to Ethereum without RenVM response. Call 'submit' first.`
             );
         }
 
@@ -614,7 +614,7 @@ export class LockAndMint {
                 web3,
                 resolveInToken(renContract),
                 this.renVMResponse.autogen.sighash,
-                this.logger,
+                this.logger
             );
         }
         return;
@@ -623,7 +623,7 @@ export class LockAndMint {
     // tslint:disable-next-line: no-any
     public submitToEthereum = (
         web3Provider: provider,
-        txConfig?: TransactionConfig,
+        txConfig?: TransactionConfig
     ): PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events> => {
         // tslint:disable-next-line: no-any
         const promiEvent = newPromiEvent<
@@ -636,21 +636,21 @@ export class LockAndMint {
 
             if (!this.renVMResponse || !this.signature) {
                 throw new Error(
-                    `Unable to submit to Ethereum without signature. Call 'submit' first.`,
+                    `Unable to submit to Ethereum without signature. Call 'submit' first.`
                 );
             }
 
             const existingTransaction = await this.findTransaction(
-                web3Provider,
+                web3Provider
             );
             if (existingTransaction) {
                 this.logger.debug(
-                    `Signature already submitted in Ethereum transaction ${existingTransaction}`,
+                    `Signature already submitted in Ethereum transaction ${existingTransaction}`
                 );
                 return await manualPromiEvent(
                     web3,
                     existingTransaction,
-                    promiEvent,
+                    promiEvent
                 );
             }
 
@@ -674,8 +674,8 @@ export class LockAndMint {
                           ...(contractParams || []).map((value) => value.value),
                           Ox(
                               new BigNumber(
-                                  this.renVMResponse.autogen.amount,
-                              ).toString(16),
+                                  this.renVMResponse.autogen.amount
+                              ).toString(16)
                           ), // _amount: BigNumber
                           Ox(this.renVMResponse.autogen.nhash),
                           // Ox(this.renVMResponse.args.n), // _nHash: string
@@ -708,7 +708,7 @@ export class LockAndMint {
                 this.logger.debug(
                     `Calling "${contractFn}" on Ethereum contract ${sendTo}`,
                     ...params,
-                    config,
+                    config
                 );
 
                 tx = contract.methods[contractFn](...params).send(config);
@@ -718,8 +718,8 @@ export class LockAndMint {
                     forwardWeb3Events(tx!, promiEvent);
                 }
 
-                // tslint:disable-next-line: no-non-null-assertion
                 const ethereumTxHash = await new Promise((resolve, reject) =>
+                    // tslint:disable-next-line: no-non-null-assertion
                     tx!.on("transactionHash", resolve).catch((error: Error) => {
                         try {
                             if (ignorePromiEventError(error)) {
@@ -730,10 +730,10 @@ export class LockAndMint {
                             /* Ignore _error */
                         }
                         reject(error);
-                    }),
+                    })
                 );
                 this.logger.debug(
-                    `Sent Ethereum transaction ${ethereumTxHash}`,
+                    `Sent Ethereum transaction ${ethereumTxHash}`
                 );
             }
 
@@ -741,18 +741,18 @@ export class LockAndMint {
                 throw new Error(`Must provide contract call.`);
             }
 
-            // tslint:disable-next-line: no-non-null-assertion
             return await new Promise<TransactionReceipt>(
                 (innerResolve, reject) =>
+                    // tslint:disable-next-line: no-non-null-assertion
                     tx!
                         .once(
                             "confirmation",
                             (
                                 _confirmations: number,
-                                receipt: TransactionReceipt,
+                                receipt: TransactionReceipt
                             ) => {
                                 innerResolve(receipt);
-                            },
+                            }
                         )
                         .catch((error: Error) => {
                             try {
@@ -764,7 +764,7 @@ export class LockAndMint {
                                 /* Ignore _error */
                             }
                             reject(error);
-                        }),
+                        })
             );
         })()
             .then((receipt) => {
@@ -784,7 +784,7 @@ export class LockAndMint {
             }
             this.logger.debug(
                 `Forwarding promiEvent error from .on("error") to .catch`,
-                error,
+                error
             );
             promiEvent.reject(error);
         });
@@ -796,7 +796,7 @@ export class LockAndMint {
      * Alternative to `submitToEthereum` that doesn't need a web3 instance
      */
     public createTransactions = (
-        txConfig?: TransactionConfig,
+        txConfig?: TransactionConfig
     ): TransactionConfig[] => {
         const renVMResponse = this.renVMResponse;
         const signature = this.signature;
@@ -804,7 +804,7 @@ export class LockAndMint {
 
         if (!renVMResponse || !signature) {
             throw new Error(
-                `Unable to create transaction without signature. Call 'submit' first.`,
+                `Unable to create transaction without signature. Call 'submit' first.`
             );
         }
 
@@ -822,8 +822,8 @@ export class LockAndMint {
                           ...(contractParams || []).map((value) => value.value),
                           Ox(
                               new BigNumber(
-                                  renVMResponse.autogen.amount,
-                              ).toString(16),
+                                  renVMResponse.autogen.amount
+                              ).toString(16)
                           ), // _amount: BigNumber
                           Ox(renVMResponse.autogen.nhash),
                           // Ox(generateNHash(renVMResponse)), // _nHash: string
@@ -863,7 +863,7 @@ export class LockAndMint {
 
             this.logger.debug(
                 `Created raw transaction calling "${contractFn}" on ${sendTo}`,
-                rawTransaction,
+                rawTransaction
             );
 
             return rawTransaction;

@@ -1,3 +1,4 @@
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset,
     BurnAndReleaseStatus,
@@ -16,7 +17,6 @@ import {
     UnmarshalledFees,
     UTXOWithChain,
 } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/contracts";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
 import {
@@ -117,9 +117,9 @@ const useSDKContainer = () => {
     const [fees, setFees] = useState(null as UnmarshalledFees | null);
 
     const connect = async (network: string): Promise<void> => {
-        const renJS = new RenJS(network);
-        setRenJS(renJS);
-        renJS.getFees().then(setFees).catch(console.error);
+        const newRenJS = new RenJS(network);
+        setRenJS(newRenJS);
+        newRenJS.getFees().then(setFees).catch(console.error);
     };
 
     const getNumberOfConfirmations = () => {

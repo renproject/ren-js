@@ -1,14 +1,14 @@
-import { RenVMType, RenVMValue } from "./renVM";
+import { RenVMType, RenVMValue } from "./value";
 
-export type Hash = RenVMValue<RenVMType.TypeB32>;
-export type Signatory = RenVMValue<RenVMType.TypeB32>;
+export type Hash = RenVMValue<RenVMType.B32>;
+export type Signatory = RenVMValue<RenVMType.B32>;
 
 export interface Gateway {
     pubKey: string;
     asset: string;
     origin: string;
     hosts: string[];
-    locked: RenVMValue<RenVMType.TypeU256>;
+    locked: RenVMValue<RenVMType.U256>;
 }
 
 // A Shard is a group of Darknodes that are managing Gateways for each Asset

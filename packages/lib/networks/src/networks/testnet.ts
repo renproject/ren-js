@@ -10,8 +10,8 @@ import GatewayLogic from "@renproject/sol/build/testnet/GatewayLogicV1.json";
 import GatewayRegistry from "@renproject/sol/build/testnet/GatewayRegistry.json";
 import ProtocolLogic from "@renproject/sol/build/testnet/ProtocolLogicV1.json";
 import ProtocolProxy from "@renproject/sol/build/testnet/ProtocolProxy.json";
-import RenToken from "@renproject/sol/build/testnet/RenToken.json";
 import RenERC20 from "@renproject/sol/build/testnet/RenERC20LogicV1.json";
+import RenToken from "@renproject/sol/build/testnet/RenToken.json";
 import { AbiItem } from "web3-utils";
 
 import { CastNetwork, Contract } from "./network";
@@ -31,7 +31,6 @@ export const renTestnet = CastNetwork({
     networkID,
     infura: "https://kovan.infura.io",
     etherscan: "https://kovan.etherscan.io",
-    lightnode: "https://lightnode-testnet.herokuapp.com",
     addresses: {
         ren: {
             Protocol: {
@@ -95,11 +94,11 @@ export const renTestnet = CastNetwork({
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 artifact: RenToken as Contract,
-                decimals: 18
+                decimals: 18,
             },
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                decimals: 18
+                decimals: 18,
             },
         },
         erc: {
@@ -108,5 +107,5 @@ export const renTestnet = CastNetwork({
                 artifact: ERC20 as Contract,
             },
         },
-    }
+    },
 });

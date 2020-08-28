@@ -1,8 +1,7 @@
-import { RenContract } from "@renproject/interfaces";
-import { Ox } from "@renproject/utils";
+import { hash160, Ox } from "@renproject/utils";
 import chai from "chai";
 
-import { RenVMProvider } from "../build/main";
+import { RenVMProvider } from "../build/main/v1";
 
 chai.should();
 
@@ -12,8 +11,11 @@ describe("RenVMProvider", () => {
     it("selectPublicKey", async () => {
         const response = require("./selectPublicKey.json");
 
-        const renVMProvider = new RenVMProvider({ sendMessage: () => response } as any); // tslint:disable-line: no-any
-        Ox((await renVMProvider.selectPublicKey(RenContract.Btc2Eth)))
-            .should.equal("0xe771b00d9f6d7125af80281ad778123ba468f1f2");
+        const renVMProvider = new RenVMProvider("testnet", {
+            sendMessage: () => response,
+        } as any); // tslint:disable-line: no-any
+        Ox(
+            hash160(await renVMProvider.selectPublicKey("BTC0Btc2Eth"))
+        ).should.equal("0xe771b00d9f6d7125af80281ad778123ba468f1f2");
     });
 });

@@ -22,7 +22,7 @@ import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import chalk from "chalk";
-import { BN } from "ethereumjs-util";
+import BN from "bn.js";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
@@ -166,7 +166,7 @@ describe("Cross chain transactions", function () {
     //     logger.info(`Submitting signature to Ethereum...`);
     //     try {
     //         await signature
-    //             .submitToEthereum(provider, { gas: 1000000 })
+    //             .mint(provider, { gas: 1000000 })
     //             .on("eth_transactionHash", (txHash: string) => {
     //                 logger.event(`Received txHash: ${txHash}`);
     //             });

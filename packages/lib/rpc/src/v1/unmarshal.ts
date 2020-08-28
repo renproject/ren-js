@@ -1,22 +1,20 @@
 import {
     AbiItem,
-    Fees,
-    RenVMArg,
-    RenVMOutputUTXO,
-    RenVMType,
-    UnmarshalledAssetFees,
-    UnmarshalledBurnTx,
-    UnmarshalledFees,
-    UnmarshalledMintTx,
+    BurnTransaction,
+    Logger,
+    MintTransaction,
+    RenVMAssetFees,
+    RenVMFees,
 } from "@renproject/interfaces";
-import { assert, Ox, parseRenContract } from "@renproject/utils";
+import { assert, fixSignature, Ox, signatureToBuffer } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 import {
     ResponseQueryBurnTx,
     ResponseQueryFees,
     ResponseQueryMintTx,
-} from "./renVMTypes";
+} from "./methods";
+import { Fees, RenVMArg, RenVMOutputUTXO, RenVMType } from "./value";
 
 const decodeString = (input: string) => Buffer.from(input, "base64").toString();
 const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
@@ -155,8 +153,9 @@ const onError = <P>(getP: () => P, defaultP: P) => {
 };
 
 export const unmarshalMintTx = (
-    response: ResponseQueryMintTx
-): UnmarshalledMintTx => {
+    response: ResponseQueryMintTx,
+    logger?: Logger
+): MintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     // TODO: Check that response is mint response.
@@ -184,7 +183,7 @@ export const unmarshalMintTx = (
     );
     const n = assertAndDecodeBytes<In[3]>(
         "n",
-        RenVMType.TypeB32,
+        RenVMType.B32,
         findField<In[3]>("n", response)
     );
 
@@ -197,22 +196,22 @@ export const unmarshalMintTx = (
     type Autogen = ResponseQueryMintTx["tx"]["autogen"];
     const phash = assertAndDecodeBytes<Autogen[0]>(
         "phash",
-        RenVMType.TypeB32,
+        RenVMType.B32,
         findField<Autogen[0]>("phash", response)
     );
     const ghash = assertAndDecodeBytes<Autogen[1]>(
         "ghash",
-        RenVMType.TypeB32,
+        RenVMType.B32,
         findField<Autogen[1]>("ghash", response)
     );
     const nhash = assertAndDecodeBytes<Autogen[2]>(
         "nhash",
-        RenVMType.TypeB32,
+        RenVMType.B32,
         findField<Autogen[2]>("nhash", response)
     );
     const amount = assertAndDecodeNumber<Autogen[3]>(
         "amount",
-        RenVMType.TypeU256,
+        RenVMType.U256,
         findField<Autogen[3]>("amount", response)
     ).toFixed();
     const utxoRaw = assertArgumentType<Autogen[4]>(
@@ -226,7 +225,7 @@ export const unmarshalMintTx = (
     );
     const sighash = assertAndDecodeBytes<Autogen[5]>(
         "sighash",
-        RenVMType.TypeB32,
+        RenVMType.B32,
         findField<Autogen[5]>("sighash", response)
     );
 
@@ -240,7 +239,14 @@ export const unmarshalMintTx = (
     };
 
     type Out = ResponseQueryMintTx["tx"]["out"] & {};
-    let out: UnmarshalledMintTx["out"];
+    const out: MintTransaction["out"] = {
+        sighash,
+        ghash,
+        nhash,
+        phash,
+        amount,
+    };
+
     if (response.tx.out) {
         const [rArg, sArg, vArg] = [
             findField<Out[0]>("r", response),
@@ -248,24 +254,40 @@ export const unmarshalMintTx = (
             findField<Out[2]>("v", response),
         ];
         const r =
-            rArg.type === RenVMType.TypeB
-                ? assertAndDecodeBytes<Out["0"]>("r", RenVMType.TypeB, rArg)
-                : assertAndDecodeBytes<Out["0"]>("r", RenVMType.TypeB32, rArg);
+            rArg.type === RenVMType.B
+                ? assertAndDecodeBytes<Out["0"]>("r", RenVMType.B, rArg)
+                : assertAndDecodeBytes<Out["0"]>("r", RenVMType.B32, rArg);
         const s =
-            sArg.type === RenVMType.TypeB
-                ? assertAndDecodeBytes<Out["1"]>("s", RenVMType.TypeB, sArg)
-                : assertAndDecodeBytes<Out["1"]>("s", RenVMType.TypeB32, sArg);
+            sArg.type === RenVMType.B
+                ? assertAndDecodeBytes<Out["1"]>("s", RenVMType.B, sArg)
+                : assertAndDecodeBytes<Out["1"]>("s", RenVMType.B32, sArg);
         const v =
-            vArg.type === RenVMType.TypeB
-                ? assertAndDecodeBytes<Out["2"]>("v", RenVMType.TypeB, vArg)
+            vArg.type === RenVMType.B
+                ? assertAndDecodeBytes<Out["2"]>("v", RenVMType.B, vArg)
                 : Ox(
                       assertAndDecodeNumber<Out["2"]>(
                           "v",
-                          RenVMType.TypeU8,
+                          RenVMType.U8,
                           vArg
                       ).toString(16)
                   );
-        out = { r, s, v };
+
+        const signature = signatureToBuffer(
+            fixSignature(
+                r,
+                s,
+                v,
+                sighash,
+                phash,
+                amount,
+                to,
+                token,
+                nhash,
+                logger
+            )
+        );
+
+        out.signature = signature; // r, s, v
     }
 
     return {
@@ -273,14 +295,13 @@ export const unmarshalMintTx = (
         txStatus: response.txStatus,
         to: response.tx.to,
         in: { p, token, to, n, utxo },
-        autogen: { sighash, ghash, nhash, phash, amount },
         out,
     };
 };
 
 export const unmarshalBurnTx = (
     response: ResponseQueryBurnTx
-): UnmarshalledBurnTx => {
+): BurnTransaction => {
     // TODO: Check that result is burn response.
     // assert(
     //     parseRenContract(response.tx.to).from === Chain.Ethereum,
@@ -290,25 +311,21 @@ export const unmarshalBurnTx = (
     const [refArg, toArg, amountArg] = response.tx.in;
     const ref = assertAndDecodeNumber<typeof refArg>(
         "ref",
-        RenVMType.TypeU64,
+        RenVMType.U64,
         refArg
     ).toFixed();
-    const toRaw = assertArgumentType<typeof toArg>(
-        "to",
-        RenVMType.TypeB,
-        toArg
-    );
+    const toRaw = assertArgumentType<typeof toArg>("to", RenVMType.B, toArg);
     let amount;
     try {
         amount = assertAndDecodeNumber<typeof amountArg>(
             "amount",
-            RenVMType.TypeU256,
+            RenVMType.U256,
             amountArg
         ).toFixed();
     } catch (error) {
         amount = assertAndDecodeNumber<typeof amountArg>(
             "amount",
-            RenVMType.TypeU64,
+            RenVMType.U64,
             amountArg
         ).toFixed();
     }
@@ -328,31 +345,27 @@ export const unmarshalBurnTx = (
     };
 };
 
-export const unmarshalTx = (
-    _response: ResponseQueryMintTx | ResponseQueryBurnTx
-): UnmarshalledMintTx | UnmarshalledBurnTx => {
-    throw Error("unimplemented");
-    // if (parseRenContract(response.tx.to).to === Chain.Ethereum) {
-    //     return unmarshalMintTx(response as ResponseQueryMintTx);
-    // } else {
-    //     return unmarshalBurnTx(response as ResponseQueryBurnTx);
-    // }
+const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
+    const { lock, release, ...tokens } = fees;
+
+    // TODO: Fix type errors.
+    return ({
+        lock: decodeNumber(lock).toNumber(),
+        release: decodeNumber(release).toNumber(),
+        ...Object.keys(tokens).reduce(
+            (acc, token) => ({
+                ...acc,
+                [token]: {
+                    mint: decodeNumber(fees[token].mint).toNumber(),
+                    burn: decodeNumber(fees[token].burn).toNumber(),
+                },
+            }),
+            {}
+        ),
+    } as unknown) as RenVMAssetFees;
 };
 
-const unmarshalAssetFees = (fees: Fees): UnmarshalledAssetFees => {
-    return {
-        lock: decodeNumber(fees.lock).toNumber(),
-        release: decodeNumber(fees.release).toNumber(),
-        ethereum: {
-            mint: decodeNumber(fees.ethereum.mint).toNumber(),
-            burn: decodeNumber(fees.ethereum.burn).toNumber(),
-        },
-    };
-};
-
-export const unmarshalFees = (
-    response: ResponseQueryFees
-): UnmarshalledFees => {
+export const unmarshalFees = (response: ResponseQueryFees): RenVMFees => {
     return {
         btc: unmarshalAssetFees(response.btc),
         zec: unmarshalAssetFees(response.zec),

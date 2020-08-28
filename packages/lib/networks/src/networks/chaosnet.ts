@@ -31,7 +31,6 @@ export const renChaosnet = CastNetwork({
     networkID,
     infura: "https://mainnet.infura.io",
     etherscan: "https://etherscan.io",
-    lightnode: "https://lightnode-chaosnet-new.herokuapp.com",
     addresses: {
         ren: {
             Protocol: {

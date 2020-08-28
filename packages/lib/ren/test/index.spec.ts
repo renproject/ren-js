@@ -1,6 +1,7 @@
 import { Chain, RenNetwork } from "@renproject/interfaces";
 import chai from "chai";
 import { expect } from "earljs";
+import { describe, it } from "mocha";
 import Web3 from "web3";
 
 import RenJS from "../src/index";
@@ -17,10 +18,6 @@ describe("RenJS initialization and exports", () => {
         new RenJS("chaosnet").should.be.an.instanceOf(RenJS);
         new RenJS("testnet").should.be.an.instanceOf(RenJS);
         new RenJS("devnet").should.be.an.instanceOf(RenJS);
-        // new RenJS(renMainnet).should.be.an.instanceOf(RenJS);
-        // new RenJS(renChaosnet).should.be.an.instanceOf(RenJS);
-        // new RenJS(renTestnet).should.be.an.instanceOf(RenJS);
-        // new RenJS(renDevnet).should.be.an.instanceOf(RenJS);
 
         // @ts-expect-error
         (() => new RenJS("fake-network")).should.throw(

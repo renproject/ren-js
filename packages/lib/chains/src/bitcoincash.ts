@@ -1,4 +1,5 @@
-import { LockChain } from "@renproject/interfaces";
+import { Asset, LockChain } from "@renproject/interfaces";
+import { hash160 } from "@renproject/utils";
 import { isMainnetAddress, isTestnetAddress, toCashAddress } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
@@ -7,8 +8,9 @@ import {
     getUTXOs,
 } from "send-crypto/build/main/handlers/BCH/BCHHandler";
 
-import { anyAddressFrom, Bitcoin, BitcoinNetwork, Tactics } from "./bitcoin";
-import { createAddress } from "./common";
+import { anyAddressFrom, BitcoinChain, Tactics } from "./bitcoin";
+import { Callable } from "./class";
+import { createAddress, pubKeyScript } from "./common";
 import { Ox, strip0x } from "./hexUtils";
 import { createZECAddress } from "./zcash";
 
@@ -55,9 +57,34 @@ const bchTactics: Tactics = {
 
 export const bchAddressFrom = anyAddressFrom(isBCHAddress, bchTactics);
 
-export class BitcoinCash extends Bitcoin implements LockChain<SendCryptoUTXO> {
+type Address = string;
+
+export class BitcoinCashChain extends BitcoinChain
+    implements LockChain<SendCryptoUTXO> {
     public name = "Bch";
     // private network: BitcoinNetwork | undefined;
+
+    getGatewayAddress = (
+        asset: Asset,
+        publicKey: Buffer,
+        gHash: Buffer
+    ): Promise<Address> | Address => {
+        this.assetAssetSupported(asset);
+        return createAddress(Networks, Opcode, Script)(
+            this.chainNetwork === "testnet",
+            hash160(publicKey).toString("hex"),
+            gHash.toString("hex")
+        );
+    };
+
+    getPubKeyScript = (asset: Asset, publicKey: Buffer, gHash: Buffer) => {
+        this.assetAssetSupported(asset);
+        return pubKeyScript(Networks, Opcode, Script)(
+            this.chainNetwork === "testnet",
+            hash160(publicKey).toString("hex"),
+            gHash.toString("hex")
+        );
+    };
 
     // public getDeposits = getBitcoinCashUTXOs;
     // public addressToHex = bchAddressToHex;
@@ -65,3 +92,5 @@ export class BitcoinCash extends Bitcoin implements LockChain<SendCryptoUTXO> {
     // public getConfirmations = getBitcoinCashConfirmations;
     // public createAddress = createZECAddress;
 }
+
+export const BitcoinCash = Callable(BitcoinCashChain);

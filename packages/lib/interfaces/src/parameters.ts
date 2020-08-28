@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import { TransactionConfig } from "web3-core";
 
 import { LockChain, MintChain } from "./chain";
-import { Asset } from "./renVM";
+import { Asset } from "./networks";
 
 export { TransactionConfig } from "web3-core";
 export type BNInterface = { toString(x?: "hex"): string };

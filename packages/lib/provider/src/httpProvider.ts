@@ -11,7 +11,10 @@ const generatePayload = (method: string, params?: unknown) => ({
 });
 
 // tslint:disable-next-line: no-any
-export class HttpProvider<Requests extends { [event: string]: any } = {}, Responses extends { [event: string]: any } = {}> implements Provider {
+export class HttpProvider<
+    Requests extends { [event: string]: any } = {},
+    Responses extends { [event: string]: any } = {}
+> implements Provider {
     public readonly nodeURL: string;
 
     constructor(ipOrMultiaddress: string) {
@@ -27,7 +30,9 @@ export class HttpProvider<Requests extends { [event: string]: any } = {}, Respon
             }
         } else {
             if (ipOrMultiaddress.indexOf("://") === -1) {
-                throw new Error(`Invalid node URL without protocol: ${ipOrMultiaddress}.`);
+                throw new Error(
+                    `Invalid node URL without protocol: ${ipOrMultiaddress}.`
+                );
             }
             this.nodeURL = ipOrMultiaddress;
         }
@@ -36,20 +41,29 @@ export class HttpProvider<Requests extends { [event: string]: any } = {}, Respon
         }
     }
 
-    public async sendMessage<Method extends string>(method: Method, request: Requests[Method], retry = 5): Promise<Responses[Method]> {
+    public async sendMessage<Method extends string>(
+        method: Method,
+        request: Requests[Method],
+        retry = 5
+    ): Promise<Responses[Method]> {
         try {
             const response = await retryNTimes(
-                () => axios.post<JSONRPCResponse<Responses[Method]>>(
-                    this.nodeURL,
-                    generatePayload(method, request),
-                    // Use a 120 second timeout. This could be reduced, but
-                    // should be done based on the method, since some requests
-                    // may take a long time, especially on a slow connection.
-                    { timeout: 120 * SECONDS }),
-                retry,
+                () =>
+                    axios.post<JSONRPCResponse<Responses[Method]>>(
+                        this.nodeURL,
+                        generatePayload(method, request),
+                        // Use a 120 second timeout. This could be reduced, but
+                        // should be done based on the method, since some requests
+                        // may take a long time, especially on a slow connection.
+                        { timeout: 120 * SECONDS }
+                    ),
+                retry
             );
             if (response.status !== 200) {
-                throw this.responseError("Unexpected status code returned from node", response);
+                throw this.responseError(
+                    "Unexpected status code returned from node",
+                    response
+                );
             }
             if (response.data.error) {
                 throw new Error(response.data.error);
@@ -60,7 +74,9 @@ export class HttpProvider<Requests extends { [event: string]: any } = {}, Respon
             return response.data.result;
         } catch (error) {
             if (error.response) {
-                error.message = `Node returned status ${error.response.status} with reason: ${extractError(error)}`;
+                error.message = `Node returned status ${
+                    error.response.status
+                } with reason: ${extractError(error)}`;
             }
             throw error;
         }

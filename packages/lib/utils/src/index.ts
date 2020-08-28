@@ -1,4 +1,3 @@
-
 export * from "./abi";
 export * from "./chains";
 export * from "./common";
@@ -9,4 +8,3 @@ export * from "./parameterUtils";
 export * from "./promiEvent";
 export * from "./renVMUtils";
 export * from "./utils";
-export * from "./web3PromiEvent";

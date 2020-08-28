@@ -1,10 +1,9 @@
-import {
-    Fees, RenContract, RenVMArgs, RenVMType, RenVMValue, Shard, TxStatus,
-} from "@renproject/interfaces";
+import { RenContract, TxStatus } from "@renproject/interfaces";
 
-import {
-    BurnArgsArray, MintArgsArray, TxAutogen, TxBurnReturnedInputs, TxResponseOutputs,
-} from "./transaction";
+import { TypedPackValue } from "./pack";
+import { Shard } from "./shard";
+import { BurnTransactionInput, MintTransactionInput } from "./transaction";
+import { Fees, RenVMType, RenVMValue } from "./value";
 
 export enum RPCMethod {
     // MethodSubmitTx submits a new transaction to the Darknode for acceptance
@@ -43,9 +42,9 @@ export enum RPCMethod {
 // ParamsQueryTxs defines the parameters of the MethodQueryTxs.
 export interface ParamsQueryTxs {
     txStatus?: TxStatus;
-    page: RenVMValue<RenVMType.TypeU64>;
-    pageSize?: RenVMValue<RenVMType.TypeU64>;
-    tags: Array<RenVMValue<RenVMType.TypeB32>>;
+    page: RenVMValue<RenVMType.U64>;
+    pageSize?: RenVMValue<RenVMType.U64>;
+    tags: Array<RenVMValue<RenVMType.B32>>;
 }
 
 // ParamsQueryBlock defines the parameters of the MethodQueryBlock.
@@ -66,18 +65,17 @@ export interface ParamsQueryBlocks {
 }
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
-interface ParamsSubmitTx<T extends RenVMArgs> {
+interface ParamsSubmitTx<
+    T extends MintTransactionInput | BurnTransactionInput
+> {
     // Tx being submitted.
-    tx: {
-        to: RenContract;
-        in: T;
-    };
+    tx: T;
     // Tags that should be attached to the Tx.
-    tags: Array<RenVMValue<RenVMType.TypeB32>>;
+    // tags: Array<RenVMValue<RenVMType.B32>>;
 }
 
-export type ParamsSubmitMint = ParamsSubmitTx<MintArgsArray>;
-export type ParamsSubmitBurn = ParamsSubmitTx<BurnArgsArray>;
+export type ParamsSubmitMint = ParamsSubmitTx<MintTransactionInput>;
+export type ParamsSubmitBurn = ParamsSubmitTx<BurnTransactionInput>;
 
 // ParamsQueryTx defines the parameters of the MethodQueryTx.
 export interface ParamsQueryTx {
@@ -129,7 +127,7 @@ export interface ResponseSubmitTx {
     tx: {
         hash: string;
         to: RenContract;
-        args: MintArgsArray;
+        in: TypedPackValue;
     };
 }
 
@@ -139,9 +137,8 @@ export interface ResponseQueryTx {
     tx: {
         hash: string;
         to: RenContract;
-        in: RenVMArgs;
-        autogen?: RenVMArgs;
-        out?: RenVMArgs;
+        in: TypedPackValue;
+        out?: TypedPackValue;
     };
     // TxStatus string`json:"txStatus"`
     txStatus: TxStatus;
@@ -152,9 +149,8 @@ export interface ResponseQueryTxs {
     txs: Array<{
         hash: string;
         to: RenContract;
-        in: RenVMArgs;
-        autogen?: RenVMArgs;
-        out?: RenVMArgs;
+        in: TypedPackValue;
+        out?: TypedPackValue;
     }>;
 }
 
@@ -163,9 +159,8 @@ export interface ResponseQueryMintTx extends ResponseQueryTx {
     tx: {
         hash: string;
         to: RenContract;
-        in: MintArgsArray;
-        autogen: TxAutogen;
-        out?: TxResponseOutputs;
+        in: TypedPackValue;
+        out?: TypedPackValue;
     };
     // TxStatus string`json:"txStatus"`
     txStatus: TxStatus;
@@ -176,7 +171,7 @@ export interface ResponseQueryBurnTx extends ResponseQueryTx {
     tx: {
         hash: string;
         to: RenContract;
-        in: TxBurnReturnedInputs;
+        in: TypedPackValue;
     };
     // TxStatus string`json:"txStatus"`
     txStatus: TxStatus;
@@ -240,18 +235,28 @@ export type RenVMResponses = {
     [RPCMethod.MethodQueryFees]: ResponseQueryFees;
 };
 
-export type RPCResponse<Method extends RPCMethod> =
-    Method extends RPCMethod.MethodQueryBlock ? ResponseQueryBlock
-    : Method extends RPCMethod.MethodQueryBlocks ? ResponseQueryBlocks
-    : Method extends RPCMethod.MethodSubmitTx ? ResponseSubmitTx
-    : Method extends RPCMethod.MethodQueryTx ? ResponseQueryTx
-    : Method extends RPCMethod.MethodQueryTxs ? ResponseQueryTxs
-    : Method extends RPCMethod.MethodQueryNumPeers ? ResponseQueryNumPeers
-    : Method extends RPCMethod.MethodQueryPeers ? ResponseQueryPeers
-    : Method extends RPCMethod.MethodQueryShards ? ResponseQueryShards
-    : Method extends RPCMethod.MethodQueryStat ? ResponseQueryStat
-    : Method extends RPCMethod.MethodQueryFees ? ResponseQueryFees
-    // tslint:disable-next-line: no-any
+export type RPCResponse<
+    Method extends RPCMethod
+> = Method extends RPCMethod.MethodQueryBlock
+    ? ResponseQueryBlock
+    : Method extends RPCMethod.MethodQueryBlocks
+    ? ResponseQueryBlocks
+    : Method extends RPCMethod.MethodSubmitTx
+    ? ResponseSubmitTx
+    : Method extends RPCMethod.MethodQueryTx
+    ? ResponseQueryTx
+    : Method extends RPCMethod.MethodQueryTxs
+    ? ResponseQueryTxs
+    : Method extends RPCMethod.MethodQueryNumPeers
+    ? ResponseQueryNumPeers
+    : Method extends RPCMethod.MethodQueryPeers
+    ? ResponseQueryPeers
+    : Method extends RPCMethod.MethodQueryShards
+    ? ResponseQueryShards
+    : Method extends RPCMethod.MethodQueryStat
+    ? ResponseQueryStat
+    : Method extends RPCMethod.MethodQueryFees
+    ? ResponseQueryFees // tslint:disable-next-line: no-any
     : any;
 
 export type RenVMParams = {
@@ -267,17 +272,26 @@ export type RenVMParams = {
     [RPCMethod.MethodQueryFees]: ParamsQueryFees;
 };
 
-export type RPCParams<Method extends RPCMethod> =
-    Method extends RPCMethod.MethodQueryBlock ? ParamsQueryBlock
-    : Method extends RPCMethod.MethodQueryBlocks ? ParamsQueryBlocks
-    // tslint:disable-next-line: no-any
-    : Method extends RPCMethod.MethodSubmitTx ? ParamsSubmitBurn | ParamsSubmitMint
-    : Method extends RPCMethod.MethodQueryTx ? ParamsQueryTx
-    : Method extends RPCMethod.MethodQueryTxs ? ParamsQueryTxs
-    : Method extends RPCMethod.MethodQueryNumPeers ? ParamsQueryNumPeers
-    : Method extends RPCMethod.MethodQueryPeers ? ParamsQueryPeers
-    : Method extends RPCMethod.MethodQueryShards ? ParamsQueryShards
-    : Method extends RPCMethod.MethodQueryStat ? ParamsQueryStat
-    : Method extends RPCMethod.MethodQueryFees ? ParamsQueryFees
-    // tslint:disable-next-line: no-any
+export type RPCParams<
+    Method extends RPCMethod
+> = Method extends RPCMethod.MethodQueryBlock
+    ? ParamsQueryBlock
+    : Method extends RPCMethod.MethodQueryBlocks
+    ? ParamsQueryBlocks // tslint:disable-next-line: no-any
+    : Method extends RPCMethod.MethodSubmitTx
+    ? ParamsSubmitBurn | ParamsSubmitMint
+    : Method extends RPCMethod.MethodQueryTx
+    ? ParamsQueryTx
+    : Method extends RPCMethod.MethodQueryTxs
+    ? ParamsQueryTxs
+    : Method extends RPCMethod.MethodQueryNumPeers
+    ? ParamsQueryNumPeers
+    : Method extends RPCMethod.MethodQueryPeers
+    ? ParamsQueryPeers
+    : Method extends RPCMethod.MethodQueryShards
+    ? ParamsQueryShards
+    : Method extends RPCMethod.MethodQueryStat
+    ? ParamsQueryStat
+    : Method extends RPCMethod.MethodQueryFees
+    ? ParamsQueryFees // tslint:disable-next-line: no-any
     : any;

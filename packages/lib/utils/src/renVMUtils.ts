@@ -1,11 +1,11 @@
 import {
-  Asset,
-  Chain,
-  EthArgs,
-  Logger,
-  RenContract,
-  TransferParamsCommon,
-  UnmarshalledMintTx,
+    Asset,
+    Chain,
+    EthArgs,
+    Logger,
+    MintTransaction,
+    RenContract,
+    TransferParamsCommon,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import { keccak256 } from "ethereumjs-util";
@@ -27,16 +27,16 @@ import { rawEncode } from "./ethereumUtils";
  *
  * @param zip An array (or spread) of parameters with with types defined.
  */
-export const generatePHash = (zip: EthArgs, logger?: Logger): string => {
+export const generatePHash = (zip: EthArgs, logger?: Logger): Buffer => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
     const args = Array.isArray(zip[0]) ? ((zip[0] as any) as EthArgs) : zip; // tslint:disable-line: no-any
 
     const [types, values] = unzip(args);
 
     const message = rawEncode(types, values);
-    const digest = Ox(keccak256(message));
+    const digest = keccak256(message);
 
-    if (logger) logger.debug("pHash", digest, message.toString("hex"));
+    if (logger) logger.debug("pHash", Ox(digest), message.toString("hex"));
 
     return digest; // sha3 can accept a Buffer
 };
@@ -79,16 +79,17 @@ export const generateGHash = (
     nonce: string,
     logger?: Logger
 ): Buffer => {
-    const pHash = generatePHash(payload, logger);
+    const pHash = Ox(generatePHash(payload, logger));
 
     const encoded = rawEncode(
-        ["bytes32", /*"uint256",*/ "address", "bytes32", "bytes32"],
+        ["bytes32", /*"uint256",*/ "address", "address", "bytes32"],
         [Ox(pHash), /*amount,*/ Ox(token), Ox(to), Ox(nonce)]
     );
 
     const digest = keccak256(encoded);
 
-    if (logger) logger.debug("gHash", digest, encoded.toString("hex"));
+    if (logger)
+        logger.debug("gHash", digest.toString("hex"), encoded.toString("hex"));
 
     return digest;
 };
@@ -97,13 +98,13 @@ export const generateSighash = (
     pHash: string,
     amount: number | string,
     to: string,
-    token: string,
+    tokenIdentifier: string,
     nonceHash: string,
     logger?: Logger
 ): string => {
     const encoded = rawEncode(
-        ["bytes32", "uint256", "address", "bytes32", "bytes32"],
-        [Ox(pHash), amount, token, to, nonceHash]
+        ["bytes32", "uint256", "address", "address", "bytes32"],
+        [Ox(pHash), amount, tokenIdentifier, to, nonceHash]
     );
 
     const digest = Ox(keccak256(encoded));
@@ -163,6 +164,9 @@ interface Signature {
     v: number;
 }
 
+export const signatureToBuffer = <T extends Signature>(sig: T): Buffer =>
+    Buffer.from(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`, "hex");
+
 export const signatureToString = <T extends Signature>(sig: T): string =>
     Ox(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
 
@@ -173,43 +177,44 @@ const secp256k1n = new BigNumber(
     16
 );
 export const fixSignature = (
-    response: UnmarshalledMintTx,
+    r: string,
+    s: string,
+    v: string,
+    sighash: string,
+    phash: string,
+    amount: string,
+    to: string,
+    token: string,
+    nhash: string,
     logger?: Logger
 ): Signature => {
-    if (!response.out) {
-        throw new Error(`Expected transaction response to have signature`);
-    }
-
     const expectedSighash = generateSighash(
-        response.autogen.phash,
-        response.autogen.amount,
-        response.in.token,
-        response.to,
-        response.autogen.nhash,
+        phash,
+        amount,
+        to,
+        token,
+        nhash,
         logger
     );
-    if (Ox(response.autogen.sighash) !== Ox(expectedSighash)) {
+    if (Ox(sighash) !== Ox(expectedSighash)) {
         if (logger)
             logger.warn(
-                `Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${response.autogen.sighash}`
+                `Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${sighash}`
             );
     }
 
-    const r = response.out.r;
-    let s = new BigNumber(strip0x(response.out.s), 16);
-    let v =
-        ((new BigNumber(strip0x(response.out.v) || "0", 16).toNumber() || 0) %
-            27) +
-        27;
+    let sBN = new BigNumber(strip0x(s), 16);
+    let vFixed =
+        ((new BigNumber(strip0x(v) || "0", 16).toNumber() || 0) % 27) + 27;
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
     // secp256k1n/2 = 57896044618658097711785492504343953926418782139537452191302581570759080747168.5
-    if (s.gt(secp256k1n.div(2))) {
+    if (sBN.gt(secp256k1n.div(2))) {
         // Take s = -s % secp256k1n
-        s = secp256k1n.minus(s);
+        sBN = secp256k1n.minus(sBN);
         // Switch v
-        v = switchV(v);
+        vFixed = switchV(vFixed);
     }
 
     // TODO: Fix code below to check against proper mintAuthority
@@ -249,8 +254,8 @@ export const fixSignature = (
 
     const signature: Signature = {
         r,
-        s: to32Bytes(s),
-        v,
+        s: to32Bytes(sBN),
+        v: vFixed,
     };
 
     return signature;

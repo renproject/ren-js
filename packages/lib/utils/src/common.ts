@@ -11,14 +11,20 @@ export const SECONDS = 1000;
  */
 export const sleep = async (ms: number): Promise<void> =>
     // tslint:disable-next-line: no-string-based-set-timeout
-    new Promise<void>(resolve => setTimeout(resolve, ms));
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * Remove 0x prefix from a hex string. If the input doesn't have a 0x prefix,
  * it's returned unchanged.
  * @param hex The hex value to be prefixed.
  */
-export const strip0x = (hex: string) => hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
+export const strip0x = (hex: string) => {
+    // tslint:disable-next-line: strict-type-predicates
+    if (typeof hex !== "string") {
+        throw new Error(`Expected string to be passed in to 'strip0x'`);
+    }
+    return hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
+};
 
 /**
  * Add a 0x prefix to a hex value, converting to a string first. If the input
@@ -36,20 +42,31 @@ export const Ox = (hex: string | Buffer | BNInterface) => {
  */
 export const NULL = (bytes: number) => Ox("00".repeat(bytes));
 
-export const unzip = (zip: EthArgs) => [zip.map(param => param.type), zip.map(param => param.value)];
+export const unzip = (zip: EthArgs) => [
+    zip.map((param) => param.type),
+    zip.map((param) => param.value),
+];
 
 /**
  * Convert a hex string or Buffer to base64.
  */
 export const toBase64 = (input: string | Buffer) =>
-    (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex")).toString("base64");
+    (Buffer.isBuffer(input)
+        ? input
+        : Buffer.from(strip0x(input), "hex")
+    ).toString("base64");
 
-export const ignorePromiEventError = (error: any): boolean => { // tslint:disable-line: no-any
+export const ignorePromiEventError = (error: any): boolean => {
+    // tslint:disable-line: no-any
     try {
-        return (error && error.message && (
-            error.message.match(/Invalid block number/) ||
-            error.message.match(/Timeout exceeded during the transaction confirmation process./)
-        ));
+        return (
+            error &&
+            error.message &&
+            (error.message.match(/Invalid block number/) ||
+                error.message.match(
+                    /Timeout exceeded during the transaction confirmation process./
+                ))
+        );
     } catch (error) {
         return false;
     }
@@ -58,11 +75,21 @@ export const ignorePromiEventError = (error: any): boolean => { // tslint:disabl
 // tslint:disable-next-line: no-any
 export const extractError = (error: any): string => {
     if (typeof error === "object") {
-        if (error.response) { return extractError(error.response); }
-        if (error.data) { return extractError(error.data); }
-        if (error.error) { return extractError(error.error); }
-        if (error.message) { return extractError(error.message); }
-        if (error.statusText) { return extractError(error.statusText); }
+        if (error.response) {
+            return extractError(error.response);
+        }
+        if (error.data) {
+            return extractError(error.data);
+        }
+        if (error.error) {
+            return extractError(error.error);
+        }
+        if (error.message) {
+            return extractError(error.message);
+        }
+        if (error.statusText) {
+            return extractError(error.statusText);
+        }
     }
     try {
         if (typeof error === "string") {
@@ -78,7 +105,10 @@ export const extractError = (error: any): string => {
     return String(error);
 };
 
-export const retryNTimes = async <T>(fnCall: () => Promise<T>, retries: number): Promise<T> => {
+export const retryNTimes = async <T>(
+    fnCall: () => Promise<T>,
+    retries: number
+): Promise<T> => {
     let returnError;
     for (let i = 0; retries === -1 || i < retries; i++) {
         try {
@@ -111,7 +141,9 @@ export const randomBytes = (bytes: number): string => {
             window.crypto.getRandomValues(uints);
             let str = "";
             for (const uint of uints) {
-                str += "0".repeat(8 - uint.toString(16).length) + uint.toString(16);
+                str +=
+                    "0".repeat(8 - uint.toString(16).length) +
+                    uint.toString(16);
             }
             return Ox(str);
         }
@@ -123,13 +155,15 @@ export const randomBytes = (bytes: number): string => {
     return Ox(crypto.randomBytes(bytes));
 };
 
-export const assert = (assertion: boolean, sentence?: string): assertion is true => {
+export const assert = (
+    assertion: boolean,
+    sentence?: string
+): assertion is true => {
     if (!assertion) {
         throw new Error(`Failed assertion${sentence ? `: ${sentence}` : ""}`);
     }
     return true;
 };
-
 
 /**
  * Converts an Ethereum ABI and values to the parameters expected by RenJS
@@ -139,19 +173,38 @@ export const assert = (assertion: boolean, sentence?: string): assertion is true
  * @param args The values of the parameters - one per function input.
  */
 // tslint:disable-next-line: no-any
-export const abiToParams = <ABI extends AbiItem>(options: { fnABI: ABI } | { contractABI: ABI[], fnName: string }, ...args: Array<{}>): EthArgs => {
-    const { fnABI, contractABI, fnName } = options as { fnABI?: ABI, contractABI?: ABI[], fnName?: string };
+export const abiToParams = <ABI extends AbiItem>(
+    options: { fnABI: ABI } | { contractABI: ABI[]; fnName: string },
+    ...args: Array<{}>
+): EthArgs => {
+    const { fnABI, contractABI, fnName } = options as {
+        fnABI?: ABI;
+        contractABI?: ABI[];
+        fnName?: string;
+    };
 
-    const abi = fnABI || (contractABI ? contractABI.filter(x => x.type === "function" && x.name === fnName)[0] : undefined);
+    const abi =
+        fnABI ||
+        (contractABI
+            ? contractABI.filter(
+                  (x) => x.type === "function" && x.name === fnName
+              )[0]
+            : undefined);
 
     if (!abi) {
-        throw new Error(fnName ? `Unable to find ABI for function ${fnName}.` : `Invalid ABI passed in.`);
+        throw new Error(
+            fnName
+                ? `Unable to find ABI for function ${fnName}.`
+                : `Invalid ABI passed in.`
+        );
     }
 
     const inputs = abi.inputs || [];
 
     if (inputs.length !== args.length) {
-        throw new Error(`Mismatched parameter count. Expected ${inputs.length} but got ${args.length} inputs.`);
+        throw new Error(
+            `Mismatched parameter count. Expected ${inputs.length} but got ${args.length} inputs.`
+        );
     }
 
     return inputs.map((input, i) => ({

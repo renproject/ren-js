@@ -1,9 +1,9 @@
+import { RenContract } from "./networks";
 import {
     SerializableBurnAndReleaseParams,
     SerializableLockAndMintParams,
 } from "./parameters";
-import { RenContract } from "./renVM";
-import { UnmarshalledBurnTx, UnmarshalledMintTx } from "./unmarshalled";
+import { BurnTransaction, MintTransaction } from "./transaction";
 
 // import { Tx } from "./utxo";
 
@@ -79,7 +79,7 @@ export interface LockAndMintEvent extends HistoryEventCommon {
     eventType: EventType.LockAndMint;
     status: LockAndMintStatus;
     transferParams: SerializableLockAndMintParams;
-    renVMQuery: UnmarshalledMintTx | null;
+    renVMQuery: MintTransaction | null;
     gatewayAddress?: string;
 }
 
@@ -87,10 +87,7 @@ export interface BurnAndReleaseEvent extends HistoryEventCommon {
     eventType: EventType.BurnAndRelease;
     status: BurnAndReleaseStatus;
     transferParams: SerializableBurnAndReleaseParams;
-    renVMQuery: UnmarshalledBurnTx | null;
-
-    // backwards compatibility
-    ethereumConfirmations?: number;
+    renVMQuery: BurnTransaction | null;
 }
 
 export type HistoryEvent = LockAndMintEvent | BurnAndReleaseEvent;

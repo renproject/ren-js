@@ -1,28 +1,15 @@
 import {
-    Asset,
     BurnAndReleaseParams,
-    Chain,
     LockAndMintParams,
     Logger,
     LogLevel,
     LogLevelString,
-    RenContract,
     RenNetwork,
     RenNetworkString,
-    RenTokens,
     SimpleLogger,
-    UnmarshalledFees,
 } from "@renproject/interfaces";
-import { MultiProvider, Provider } from "@renproject/provider";
-import {
-    defaultProvider,
-    RenVMParams,
-    RenVMProvider,
-    RenVMResponses,
-    unmarshalFees,
-} from "@renproject/rpc";
-import { stringToNetwork, utils } from "@renproject/utils";
-import Web3 from "web3";
+import { RenVMProvider } from "@renproject/rpc/build/main/v1";
+import { utils } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
@@ -117,7 +104,11 @@ export default class RenJS {
         const rpcProvider =
             provider && typeof provider !== "string"
                 ? provider
-                : defaultProvider(provider || RenNetwork.Mainnet, this.logger);
+                : new RenVMProvider(
+                      provider || RenNetwork.Mainnet,
+                      undefined,
+                      this.logger
+                  );
 
         this.renVM = rpcProvider;
     }
@@ -153,8 +144,13 @@ export default class RenJS {
      *
      * @param params See [[LockAndMintParams]].
      */
-    public readonly lockAndMint = (params: LockAndMintParams): LockAndMint =>
-        new LockAndMint(this.renVM, params, this.logger);
+    public readonly lockAndMint = async (
+        params: LockAndMintParams
+    ): Promise<LockAndMint> => {
+        const lockAndMint = new LockAndMint(this.renVM, params, this.logger);
+        await lockAndMint.initialize();
+        return lockAndMint;
+    };
 
     /**
      * Submits a burn log to RenVM.
@@ -166,8 +162,7 @@ export default class RenJS {
         params: BurnAndReleaseParams
     ): BurnAndRelease => new BurnAndRelease(this.renVM, params, this.logger);
 
-    public readonly getFees = (): Promise<UnmarshalledFees> =>
-        this.renVM.queryFees().then(unmarshalFees);
+    public readonly getFees = async () => this.renVM.getFees();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

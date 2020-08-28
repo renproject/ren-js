@@ -1,16 +1,15 @@
 import {
-    SerializableTransferParams,
-    TransactionConfig,
-} from "@renproject/interfaces/src/parameters";
-import { RenContract } from "@renproject/interfaces/src/renVM";
-import {
     BurnAndReleaseEvent,
     BurnAndReleaseStatus,
+    BurnTransaction,
     HistoryEvent,
     LockAndMintEvent,
     LockAndMintStatus,
-} from "@renproject/interfaces/src/types";
-import { UnmarshalledTx } from "@renproject/interfaces/src/unmarshalled";
+    MintTransaction,
+    RenContract,
+    SerializableTransferParams,
+    TransactionConfig,
+} from "@renproject/interfaces";
 
 /**
  * The names of the messages sent between the Gateway iFrame and GatewayJS
@@ -89,7 +88,7 @@ export type GatewayMessagePayload<
           message: string;
       }
     : Type extends GatewayMessageType.Done
-    ? {} | UnmarshalledTx
+    ? {} | (MintTransaction | BurnTransaction)
     : Type extends GatewayMessageType.SendEthereumTx
     ? { transactionConfig: TransactionConfig }
     : Type extends GatewayMessageType.GetEthereumTxStatus
@@ -103,9 +102,8 @@ export type GatewayMessagePayload<
     : Type extends GatewayMessageType.RequestNotificationPermission
     ? {}
     : Type extends GatewayMessageType.ShowNotification
-    ? { title: string; body: string }
-    : // tslint:disable-next-line: no-any
-    Type extends GatewayMessageType.Acknowledgement
+    ? { title: string; body: string } // tslint:disable-next-line: no-any
+    : Type extends GatewayMessageType.Acknowledgement
     ? any
     : never;
 

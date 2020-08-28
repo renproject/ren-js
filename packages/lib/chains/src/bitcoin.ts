@@ -1,7 +1,8 @@
-import { LockChain, RenNetwork } from "@renproject/interfaces";
-import { toBase64 } from "@renproject/utils";
+import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
+import { hash160, rawEncode, toBase64 } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { encode } from "bs58";
+import { keccak256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import {
     getConfirmations,
@@ -9,10 +10,9 @@ import {
 } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
-import { createAddress } from "./common";
+import { Callable } from "./class";
+import { createAddress, pubKeyScript } from "./common";
 import { Ox, strip0x } from "./hexUtils";
-
-export const createBTCAddress = createAddress(Networks, Opcode, Script);
 
 export const getBitcoinConfirmations = ({
     isTestnet,
@@ -87,15 +87,17 @@ const resolveBitcoinNetwork = (renNetwork: RenNetwork): BitcoinNetwork => {
     throw new Error(`Unrecognized network ${renNetwork}`);
 };
 
-export class Bitcoin implements LockChain<Transaction, Asset, Address> {
-    public name = "Bitcoin";
-    private network: BitcoinNetwork | undefined;
-    private renNetwork: RenNetwork | undefined;
+export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
+    public static call: (network?: BitcoinNetwork) => BitcoinChain;
+
+    public name = "Btc";
+    public renNetwork: RenNetwork | undefined;
+    public chainNetwork: BitcoinNetwork | undefined;
 
     constructor(network?: BitcoinNetwork) {
-        if (!(this instanceof Bitcoin)) return new Bitcoin(network);
+        if (!(this instanceof BitcoinChain)) return new BitcoinChain(network);
 
-        this.network = network;
+        this.chainNetwork = network;
     }
 
     /**
@@ -104,13 +106,20 @@ export class Bitcoin implements LockChain<Transaction, Asset, Address> {
     public initialize = (renNetwork: RenNetwork) => {
         this.renNetwork = renNetwork;
         // Prioritize the network passed in to the constructor.
-        this.network = this.network || resolveBitcoinNetwork(renNetwork);
+        this.chainNetwork =
+            this.chainNetwork || resolveBitcoinNetwork(renNetwork);
     };
 
     /**
      * See [[OriginChain.supportsAsset]].
      */
     supportsAsset = (asset: Asset): boolean => asset === BTC;
+
+    public readonly assetAssetSupported = (asset: Asset) => {
+        if (!this.supportsAsset(asset)) {
+            throw new Error(`Unsupported asset ${asset}`);
+        }
+    };
 
     /**
      * See [[OriginChain.assetDecimals]].
@@ -129,14 +138,12 @@ export class Bitcoin implements LockChain<Transaction, Asset, Address> {
         asset: Asset,
         address: Address
     ): Promise<Transaction[]> => {
-        if (this.network === "regtest") {
-            throw new Error(`Unable to fetch deposits on ${this.network}`);
+        if (this.chainNetwork === "regtest") {
+            throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
-        if (!this.supportsAsset(asset)) {
-            throw new Error(`Unsupported asset ${asset}`);
-        }
+        this.assetAssetSupported(asset);
         return (
-            await getUTXOs(this.network === "testnet", {
+            await getUTXOs(this.chainNetwork === "testnet", {
                 address,
                 confirmations: 0,
             })
@@ -147,62 +154,119 @@ export class Bitcoin implements LockChain<Transaction, Asset, Address> {
      * See [[OriginChain.transactionConfidence]].
      */
     transactionConfidence = (
-        _transaction: Transaction
+        transaction: Transaction
     ):
         | Promise<{ current: number; target: number }>
         | { current: number; target: number } => {
-        throw new Error("unimplemented");
-        // getBitcoinConfirmations;
+        return {
+            current: transaction.confirmations,
+            target: this.chainNetwork === "mainnet" ? 6 : 2,
+        };
     };
 
     /**
      * See [[OriginChain.getGatewayAddress]].
      */
     getGatewayAddress = (
-        _asset: Asset,
-        _publicKey: Buffer,
-        _gHash: Buffer
+        asset: Asset,
+        publicKey: Buffer,
+        gHash: Buffer
     ): Promise<Address> | Address => {
-        throw new Error("unimplemented");
-        // createBTCAddress;
+        this.assetAssetSupported(asset);
+        return createAddress(Networks, Opcode, Script)(
+            this.chainNetwork === "testnet",
+            hash160(publicKey).toString("hex"),
+            gHash.toString("hex")
+        );
+    };
+
+    getPubKeyScript = (asset: Asset, publicKey: Buffer, gHash: Buffer) => {
+        this.assetAssetSupported(asset);
+        return pubKeyScript(Networks, Opcode, Script)(
+            this.chainNetwork === "testnet",
+            hash160(publicKey).toString("hex"),
+            gHash.toString("hex")
+        );
     };
 
     /**
      * See [[OriginChain.encodeAddress]].
      */
-    encodeAddress? = (_address: Address): Buffer => {
-        throw new Error("unimplemented");
+    encodeAddress = (address: Address): Buffer => {
+        return Buffer.from(address);
     };
 
     /**
      * See [[OriginChain.decodeAddress]].
      */
-    decodeAddress = (_encodedAddress: Buffer): Address => {
-        throw new Error("unimplemented");
+    decodeAddress = (encodedAddress: Buffer): Address => {
+        return encodedAddress.toString();
     };
 
     /**
      * See [[OriginChain.addressExplorerLink]].
      */
-    addressExplorerLink = (_address: Address): string => {
-        throw new Error("unimplemented");
+    addressExplorerLink = (address: Address): string => {
+        // TODO
+        return address;
     };
 
     /**
      * See [[OriginChain.transactionExplorerLink]].
      */
-    transactionExplorerLink = (_transaction: Transaction): string => {
-        throw new Error("unimplemented");
+    transactionID = (transaction: Transaction) => transaction.txHash;
+
+    transactionExplorerLink = (transaction: Transaction): string => {
+        return transaction.txHash;
     };
 
     transactionHashString = (transaction: Transaction): string => {
         return `${toBase64(transaction.txHash)}_${transaction.vOut}`;
     };
 
-    transactionRPCFormat = (transaction: Transaction) => {
+    transactionRPCFormat = (
+        transaction: Transaction,
+        pubKeyScript: Buffer,
+        v2?: boolean
+    ) => {
+        if (v2) {
+            return {
+                outpoint: {
+                    hash: toBase64(transaction.txHash),
+                    index: transaction.vOut.toFixed(),
+                },
+                pubKeyScript: toBase64(pubKeyScript),
+                value: transaction.amount.toString(),
+            };
+        }
+
         return {
             txHash: toBase64(transaction.txHash),
             vOut: transaction.vOut.toFixed(),
         };
     };
+
+    generateNHash = (
+        nonce: string,
+        deposit: Transaction,
+        logger?: Logger
+    ): Buffer => {
+        const encoded = rawEncode(
+            ["bytes32", "bytes32", "uint32"],
+            [Ox(nonce), Ox(deposit.txHash), deposit.vOut]
+        );
+
+        const digest = keccak256(encoded);
+
+        if (logger)
+            logger.debug(
+                "nHash",
+                digest.toString("hex"),
+                encoded.toString("hex")
+            );
+
+        return digest;
+    };
 }
+
+export const Bitcoin = Callable(BitcoinChain);

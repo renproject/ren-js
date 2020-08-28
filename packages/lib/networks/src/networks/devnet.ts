@@ -31,7 +31,6 @@ export const renDevnet = CastNetwork({
     networkID,
     infura: "https://kovan.infura.io",
     etherscan: "https://kovan.etherscan.io",
-    lightnode: "https://lightnode-devnet.herokuapp.com",
     addresses: {
         ren: {
             Protocol: {
@@ -89,17 +88,17 @@ export const renDevnet = CastNetwork({
         tokens: {
             DAI: {
                 address: "0xc4375b7de8af5a38a93548eb8453a498222c4ff2",
-                decimals: 18
+                decimals: 18,
             },
             REN: {
                 address: RenToken.networks[networkID].address,
                 abi: RenToken.abi as AbiItem[],
                 artifact: RenToken as Contract,
-                decimals: 18
+                decimals: 18,
             },
             ETH: {
                 address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                decimals: 18
+                decimals: 18,
             },
         },
         erc: {
@@ -107,6 +106,6 @@ export const renDevnet = CastNetwork({
                 abi: ERC20.abi as AbiItem[],
                 artifact: ERC20 as Contract,
             },
-        }
-    }
+        },
+    },
 });

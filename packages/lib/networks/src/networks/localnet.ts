@@ -36,7 +36,6 @@ export const renLocalnet = CastNetwork({
     networkID,
     infura: "https://kovan.infura.io",
     etherscan: "https://kovan.etherscan.io",
-    lightnode: "http://localhost:7328",
     addresses: {
         ren: {
             Protocol: {

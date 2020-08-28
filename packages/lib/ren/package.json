@@ -54,11 +54,12 @@
         "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html doc:publish",
-        "link:all": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
+        "link:all": "yarn link @renproject/chains @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
         "@renproject/chains": "file:../chains",
+        "@renproject/networks": "file:../networks",
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/provider": "file:../provider",
         "@renproject/rpc": "file:../rpc",
@@ -67,12 +68,9 @@
         "@types/node": "^14.0.5",
         "bignumber.js": "^9.0.0",
         "bs58": "^4.0.1",
-        "ethereumjs-util": "^7.0.1",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.10",
-        "wallet-address-validator": "^0.2.4",
-        "web3": "^2.0.0-alpha.1",
-        "web3-core": "^2.0.0-alpha.1"
+        "send-crypto": "0.2.14",
+        "wallet-address-validator": "^0.2.4"
     },
     "resolutions": {
         "sha3": "^2.1.2"

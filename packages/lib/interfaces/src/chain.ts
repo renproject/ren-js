@@ -1,5 +1,9 @@
-import { RenTokens } from "./parameters";
-import { RenNetwork } from "./renVM";
+import { EventEmitter } from "events";
+
+import { Logger } from "./logger";
+import { RenNetwork } from "./networks";
+import { ContractCall, RenTokens } from "./parameters";
+import { MintTransaction } from "./transaction";
 
 type SyncOrPromise<T> = Promise<T> | T;
 
@@ -25,6 +29,11 @@ export interface LockChain<
      * bitcoin.name = "Bitcoin";
      */
     name: string;
+
+    /**
+     * Should be set by `constructor` and `initialize`.
+     */
+    renNetwork?: RenNetwork;
 
     // Class Initialization
 
@@ -109,6 +118,12 @@ export interface LockChain<
         gHash: Buffer
     ) => SyncOrPromise<Address>;
 
+    getPubKeyScript: (
+        asset: Asset,
+        publicKey: Buffer,
+        gHash: Buffer
+    ) => SyncOrPromise<Buffer>;
+
     // Encoding
 
     /**
@@ -139,12 +154,23 @@ export interface LockChain<
      * `transactionExplorerLink` should return a URL that can be shown to a user
      * to access more information about a transaction.
      */
+    transactionID: (transaction: Transaction) => string;
+
     transactionExplorerLink?: (transaction: Transaction) => string;
 
     transactionHashString: (transaction: Transaction) => string;
 
-    // tslint:disable-next-line: no-any
-    transactionRPCFormat: (deposit: Transaction) => any;
+    transactionRPCFormat: (
+        transaction: Transaction,
+        pubKeyScript: Buffer,
+        v2?: boolean
+    ) => any; // tslint:disable-line: no-any
+
+    generateNHash: (
+        nonce: string,
+        deposit: Transaction,
+        logger?: Logger
+    ) => Buffer;
 }
 
 /**
@@ -161,6 +187,11 @@ export interface MintChain<Transaction = {}, Asset extends string = string> {
      * @dev Should match the key used in `ren_queryFees`.
      */
     name: string;
+
+    /**
+     * Should be set by `constructor` and `initialize`.
+     */
+    renNetwork?: RenNetwork;
 
     // Class Initialization
 
@@ -195,10 +226,19 @@ export interface MintChain<Transaction = {}, Asset extends string = string> {
 
     resolveTokenGatewayContract: (token: RenTokens) => Promise<string>;
 
-    submitMint: (asset: Asset, signature: string) => SyncOrPromise<Transaction>;
-
-    findTransactionBySigHash: (
+    /**
+     * `submitMint` should take the completed mint transaction from RenVM and
+     * submit its signature to the mint chain to finalize the mint.
+     */
+    submitMint: (
         asset: Asset,
-        sigHash: string
-    ) => SyncOrPromise<Transaction | null>;
+        contractCalls: ContractCall[],
+        mintTx: MintTransaction,
+        eventEmitter: EventEmitter
+    ) => SyncOrPromise<Transaction>;
+
+    findTransaction: (
+        asset: Asset,
+        mintTx: MintTransaction
+    ) => SyncOrPromise<Transaction | undefined>;
 }

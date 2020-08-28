@@ -5,6 +5,7 @@ import {
     BurnAndReleaseEvent,
     BurnAndReleaseParams,
     BurnAndReleaseStatus,
+    BurnTransaction,
     Chain,
     EventType,
     HistoryEvent,
@@ -14,15 +15,14 @@ import {
     Logger,
     LogLevel,
     LogLevelString,
+    MintTransaction,
     RenContract,
     RenNetwork,
     RenTokens,
     SimpleLogger,
     TransferParams,
-    UnmarshalledTx,
 } from "@renproject/interfaces";
 import {
-    extractBurnReference,
     extractError,
     newPromiEvent,
     parseRenContract,
@@ -32,8 +32,6 @@ import {
     sleep,
     stringToNetwork,
     utils,
-    waitForReceipt,
-    withDefaultAccount,
 } from "@renproject/utils";
 import Push from "push.js";
 import Web3 from "web3";
@@ -67,7 +65,7 @@ export interface GatewayJSConfig {
 
 // tslint:disable-next-line: no-any
 export type GatewayResult = PromiEvent<
-    UnmarshalledTx | {},
+    MintTransaction | BurnTransaction | {},
     {
         status: [LockAndMintStatus | BurnAndReleaseStatus, any];
         transferUpdated: [HistoryEvent];
@@ -378,50 +376,51 @@ export class Gateway {
                             if (!this.web3) {
                                 throw new Error(`No Web3 defined`);
                             }
-                            const txConfig = await withDefaultAccount(
-                                this.web3,
-                                (e.data.payload as GatewayMessagePayload<
-                                    GatewayMessageType.SendEthereumTx
-                                >).transactionConfig
-                            );
-                            const promiEvent = this.web3.eth.sendTransaction(
-                                txConfig
-                            );
-                            const txHash = await new Promise<string>(
-                                (resolve, reject) => {
-                                    promiEvent.on("transactionHash", resolve);
-                                    promiEvent.catch(reject);
-                                }
-                            );
-                            // It may be simpler to replace with
-                            // `promiEvent.on`, depending on wether or not
-                            // .on causes indefinite network requests or
-                            // if web3 fetches blocks anyways.
-                            const listenForConfirmations = () =>
-                                promiEvent.once(
-                                    "confirmation",
-                                    (confirmations) => {
-                                        this._sendMessage(
-                                            GatewayMessageType.SendEthereumTxConfirmations,
-                                            { txHash, confirmations }
-                                        ).catch(this.logger.error);
-                                        if (
-                                            confirmations <
-                                            ON_CONFIRMATION_HANDLER_LIMIT
-                                        ) {
-                                            listenForConfirmations();
-                                        }
-                                    }
-                                );
-                            listenForConfirmations();
-                            this._acknowledgeMessage<
-                                GatewayMessageType.SendEthereumTx
-                            >(
-                                e.data as GatewayMessage<
-                                    GatewayMessageType.SendEthereumTx
-                                >,
-                                { txHash }
-                            ).catch(this.logger.error);
+                            throw new Error("unimplemented");
+                            // const txConfig = await withDefaultAccount(
+                            //     this.web3,
+                            //     (e.data.payload as GatewayMessagePayload<
+                            //         GatewayMessageType.SendEthereumTx
+                            //     >).transactionConfig
+                            // );
+                            // const promiEvent = this.web3.eth.sendTransaction(
+                            //     txConfig
+                            // );
+                            // const txHash = await new Promise<string>(
+                            //     (resolve, reject) => {
+                            //         promiEvent.on("transactionHash", resolve);
+                            //         promiEvent.catch(reject);
+                            //     }
+                            // );
+                            // // It may be simpler to replace with
+                            // // `promiEvent.on`, depending on wether or not
+                            // // .on causes indefinite network requests or
+                            // // if web3 fetches blocks anyways.
+                            // const listenForConfirmations = () =>
+                            //     promiEvent.once(
+                            //         "confirmation",
+                            //         (confirmations) => {
+                            //             this._sendMessage(
+                            //                 GatewayMessageType.SendEthereumTxConfirmations,
+                            //                 { txHash, confirmations }
+                            //             ).catch(this.logger.error);
+                            //             if (
+                            //                 confirmations <
+                            //                 ON_CONFIRMATION_HANDLER_LIMIT
+                            //             ) {
+                            //                 listenForConfirmations();
+                            //             }
+                            //         }
+                            //     );
+                            // listenForConfirmations();
+                            // this._acknowledgeMessage<
+                            //     GatewayMessageType.SendEthereumTx
+                            // >(
+                            //     e.data as GatewayMessage<
+                            //         GatewayMessageType.SendEthereumTx
+                            //     >,
+                            //     { txHash }
+                            // ).catch(this.logger.error);
                         } catch (error) {
                             this._acknowledgeMessage(e.data, {
                                 error: extractError(error),
@@ -440,22 +439,23 @@ export class Gateway {
                                 GatewayMessageType.GetEthereumTxStatus
                             >).txHash;
                             const currentBlock = await this.web3.eth.getBlockNumber();
-                            const receipt = await waitForReceipt(
-                                this.web3,
-                                txHash
-                            );
-                            const confirmations = Math.max(
-                                currentBlock - receipt.blockNumber,
-                                0
-                            );
-                            this._acknowledgeMessage<
-                                GatewayMessageType.GetEthereumTxStatus
-                            >(
-                                e.data as GatewayMessage<
-                                    GatewayMessageType.GetEthereumTxStatus
-                                >,
-                                { confirmations, reverted: false }
-                            ).catch(this.logger.error);
+                            throw new Error("unimplemented");
+                            // const receipt = await waitForReceipt(
+                            //     this.web3,
+                            //     txHash
+                            // );
+                            // const confirmations = Math.max(
+                            //     currentBlock - receipt.blockNumber,
+                            //     0
+                            // );
+                            // this._acknowledgeMessage<
+                            //     GatewayMessageType.GetEthereumTxStatus
+                            // >(
+                            //     e.data as GatewayMessage<
+                            //         GatewayMessageType.GetEthereumTxStatus
+                            //     >,
+                            //     { confirmations, reverted: false }
+                            // ).catch(this.logger.error);
                         } catch (error) {
                             // TODO: Check if tx was reverted or getting receipt failed.
                             this._acknowledgeMessage(e.data, {
@@ -476,18 +476,20 @@ export class Gateway {
                                 GatewayMessageType.GetEthereumTxBurn
                             >).txHash;
 
-                            const burnReference = await extractBurnReference(
-                                this.web3,
-                                txHash
-                            );
-                            this._acknowledgeMessage<
-                                GatewayMessageType.GetEthereumTxBurn
-                            >(
-                                e.data as GatewayMessage<
-                                    GatewayMessageType.GetEthereumTxBurn
-                                >,
-                                { burnReference }
-                            ).catch(this.logger.error);
+                            throw new Error("unimplemented");
+
+                            // const burnReference = await extractBurnReference(
+                            //     this.web3,
+                            //     txHash
+                            // );
+                            // this._acknowledgeMessage<
+                            //     GatewayMessageType.GetEthereumTxBurn
+                            // >(
+                            //     e.data as GatewayMessage<
+                            //         GatewayMessageType.GetEthereumTxBurn
+                            //     >,
+                            //     { burnReference }
+                            // ).catch(this.logger.error);
                         } catch (error) {
                             this.logger.error(error);
                             this._acknowledgeMessage(e.data, {

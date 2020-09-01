@@ -111,8 +111,8 @@
     "@renproject/ren": "file:packages/lib/ren",
     "@renproject/rpc": "file:packages/lib/rpc",
     "@renproject/utils": "file:packages/lib/utils",
-    "bitcore-lib": "^8.20.3",
-    "bitcore-lib-cash": "^8.19.0",
+    "bitcore-lib": "^8.22.2",
+    "bitcore-lib-cash": "^8.22.2",
     "gateway-example": "file:packages/ui/gateway-example",
     "gateway.renproject.io": "file:packages/ui/gateway.renproject.io"
   }

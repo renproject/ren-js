@@ -1,10 +1,13 @@
 // tslint:disable: no-any
 
-import { AbiItem, Logger, RenContract, TxStatus } from "@renproject/interfaces";
 import {
+    AbiItem,
     BurnTransaction,
+    Logger,
     MintTransaction,
-} from "@renproject/interfaces/build/main/unmarshalled";
+    RenContract,
+    TxStatus,
+} from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 
 export interface AbstractRenVMProvider {

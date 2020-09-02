@@ -1,17 +1,15 @@
 import {
     AbiItem,
     Asset,
+    BurnTransaction,
     Chain,
     Logger,
+    MintTransaction,
     RenContract,
     RenNetwork,
     RenNetworkString,
     TxStatus,
 } from "@renproject/interfaces";
-import {
-    BurnTransaction,
-    MintTransaction,
-} from "@renproject/interfaces/build/main/unmarshalled";
 import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
     getTokenPrices,
@@ -20,11 +18,8 @@ import {
     parseRenContract,
     SECONDS,
     sleep,
-    strip0x,
-    toBase64,
     TokenPrices,
     toURLBase64,
-    txHashToBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { List, OrderedMap, Set } from "immutable";

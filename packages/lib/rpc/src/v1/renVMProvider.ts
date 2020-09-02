@@ -1,16 +1,14 @@
 import {
     AbiItem,
     Asset,
+    BurnTransaction,
     Logger,
+    MintTransaction,
     RenContract,
     RenNetwork,
     RenNetworkString,
     TxStatus,
 } from "@renproject/interfaces";
-import {
-    BurnTransaction,
-    MintTransaction,
-} from "@renproject/interfaces/build/main/unmarshalled";
 import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
     generateMintTxHash,

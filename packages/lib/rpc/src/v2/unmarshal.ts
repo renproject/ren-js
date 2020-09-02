@@ -14,7 +14,7 @@ import {
     ResponseQueryFees,
     ResponseQueryMintTx,
 } from "./methods";
-import { unmarshalPackValue, unmarshalTypedPackValue } from "./pack";
+import { unmarshalPackValue, unmarshalTypedPackValue } from "./pack/pack";
 import { Fees, RenVMOutputUTXO, RenVMType } from "./value";
 
 const decodeString = (input: string) => Buffer.from(input, "base64").toString();

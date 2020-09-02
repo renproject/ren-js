@@ -28,7 +28,7 @@ import { TransactionConfig, TransactionReceipt } from "web3-core";
 import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256, sha3 } from "web3-utils";
 
-import { Callable } from "./class";
+import { Callable } from "../class";
 
 export type Web3Events = {
     transactionHash: [string];
@@ -210,10 +210,10 @@ export const manualPromiEvent = async (
 
     const emitConfirmation = async () => {
         const currentBlock = await web3.eth.getBlockNumber();
-        // tslint:disable-next-line: no-any
         promiEvent.emit(
             "confirmation",
             Math.max(0, currentBlock - receipt.blockNumber),
+            // tslint:disable-next-line: no-any
             receipt as any
         );
     };
@@ -427,8 +427,8 @@ export const submitToEthereum = async (
         throw new Error(`Must provide contract call.`);
     }
 
-    // tslint:disable-next-line: no-non-null-assertion
     return await new Promise<Transaction>((innerResolve, reject) =>
+        // tslint:disable-next-line: no-non-null-assertion
         tx!
             .once(
                 "confirmation",
@@ -452,8 +452,8 @@ export const submitToEthereum = async (
     );
 };
 
-type Transaction = string;
-type Asset = "eth";
+export type Transaction = string;
+export type Asset = "eth";
 
 export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
     switch (network) {
@@ -468,57 +468,63 @@ export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
     throw new Error(`Unsupported network ${network}`);
 };
 
-export class EthereumChain implements MintChain<Transaction, Asset> {
+export class EthereumBaseChain implements MintChain<Transaction, Asset> {
     public name = "Eth";
     public renNetwork: RenNetwork | undefined;
 
-    private readonly web3: Web3 | undefined;
-    private renNetworkDetails: RenNetworkDetails | undefined;
+    public readonly web3: Web3 | undefined;
+    public renNetworkDetails: RenNetworkDetails | undefined;
 
     public readonly getTokenContractAddress = async (
-        web3: Web3,
         token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
     ) => {
-        if (!this.renNetworkDetails) {
+        if (!this.web3 || !this.renNetworkDetails) {
             throw new Error(`Ethereum object not initialized`);
         }
-        return getTokenAddress(this.renNetworkDetails, web3, token);
+        return getTokenAddress(this.renNetworkDetails, this.web3, token);
     };
     public readonly getGatewayContractAddress = async (
-        web3: Web3,
         token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
     ) => {
-        if (!this.renNetworkDetails) {
+        if (!this.web3 || !this.renNetworkDetails) {
             throw new Error(`Ethereum object not initialized`);
         }
-        return getGatewayAddress(this.renNetworkDetails, web3, token);
+        return getGatewayAddress(this.renNetworkDetails, this.web3, token);
     };
 
     constructor(
         web3Provider: provider,
         renNetwork?: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails
+        renNetworkDetails?: RenNetworkDetails,
+        thisClass?: typeof EthereumBaseChain
     ) {
-        if (!(this instanceof EthereumChain))
-            return new EthereumChain(web3Provider, renNetwork);
+        if (!(this instanceof EthereumBaseChain)) {
+            return new (thisClass || EthereumBaseChain)(
+                web3Provider,
+                renNetwork
+            );
+        }
 
         this.web3 = new Web3(web3Provider);
 
         if (renNetwork) {
-            this.renNetwork = renNetwork;
-            this.renNetworkDetails =
-                renNetworkDetails || RenNetworkDetailsMap[renNetwork];
+            this.initialize(renNetwork, renNetworkDetails);
         }
     }
 
     /**
      * See [LockChain.initialize].
      */
-    initialize = (renNetwork: RenNetwork): void => {
+    initialize = (
+        renNetwork: RenNetwork,
+        renNetworkDetails?: RenNetworkDetails
+    ) => {
         if (!this.renNetwork) {
             this.renNetwork = renNetwork;
-            this.renNetworkDetails = RenNetworkDetailsMap[renNetwork];
+            this.renNetworkDetails =
+                renNetworkDetails || RenNetworkDetailsMap[renNetwork];
         }
+        return this;
     };
 
     // Supported assets
@@ -610,6 +616,174 @@ export class EthereumChain implements MintChain<Transaction, Asset> {
         }
         return getTokenAddress(this.renNetworkDetails, this.web3, token);
     };
+
+    /**
+     * Read a burn reference from an Ethereum transaction - or submit a
+     * transaction first if the transaction details have been provided.
+     *
+     * @param {TransactionConfig} [txConfig] Optionally override default options
+     *        like gas.
+     * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
+     */
+    findBurnTransaction = async (
+        params: {
+            ethereumTxHash?: Transaction;
+            contractCalls?: ContractCall[];
+            burnReference?: string | number | undefined;
+        },
+        eventEmitter: EventEmitter,
+        logger: Logger,
+        // tslint:disable-next-line: no-any
+        txConfig?: any
+    ): Promise<string | number> => {
+        const { contractCalls } = params;
+        let { ethereumTxHash, burnReference } = params;
+
+        // There are three parameter configs:
+        // Situation (1): A `burnReference` is provided
+        // Situation (2): Contract call details are provided
+        // Situation (3): A txHash is provided
+
+        // For (1), we don't have to do anything.
+        if (!burnReference && burnReference !== 0) {
+            if (!this.renNetworkDetails || !this.web3) {
+                throw new Error(`Ethereum object not initialized`);
+            }
+            // Handle situation (2)
+            // Make a call to the provided contract and Pass on the
+            // transaction hash.
+            if (contractCalls) {
+                for (let i = 0; i < contractCalls.length; i++) {
+                    const contractCall = contractCalls[i];
+                    const last = i === contractCalls.length - 1;
+                    const {
+                        contractParams,
+                        contractFn,
+                        sendTo,
+                        txConfig: txConfigParam,
+                    } = contractCall;
+                    const callParams = [
+                        ...(contractParams || []).map((value) => value.value),
+                    ];
+                    const ABI = payloadToABI(contractFn, contractParams);
+                    const contract = new this.web3.eth.Contract(ABI, sendTo);
+                    const config = await withDefaultAccount(this.web3, {
+                        ...txConfigParam,
+                        ...{
+                            value:
+                                txConfigParam && txConfigParam.value
+                                    ? txConfigParam.value.toString()
+                                    : undefined,
+                            gasPrice:
+                                txConfigParam && txConfigParam.gasPrice
+                                    ? txConfigParam.gasPrice.toString()
+                                    : undefined,
+                        },
+                        ...txConfig,
+                    });
+                    logger.debug(
+                        "Calling Ethereum contract",
+                        contractFn,
+                        sendTo,
+                        ...callParams,
+                        config
+                    );
+                    const tx = contract.methods[contractFn](...callParams).send(
+                        config
+                    );
+                    if (last) {
+                        forwardWeb3Events(tx, eventEmitter);
+                    }
+                    ethereumTxHash = await new Promise((resolve, reject) =>
+                        tx
+                            .on("transactionHash", resolve)
+                            .catch((error: Error) => {
+                                try {
+                                    if (ignorePromiEventError(error)) {
+                                        logger.error(extractError(error));
+                                        return;
+                                    }
+                                } catch (_error) {
+                                    /* Ignore _error */
+                                }
+                                reject(error);
+                            })
+                    );
+                    logger.debug("Ethereum txHash", ethereumTxHash);
+                }
+            }
+            if (!ethereumTxHash) {
+                throw new Error(
+                    "Must provide txHash or contract call details."
+                );
+            }
+            burnReference = await extractBurnReference(
+                this.web3,
+                ethereumTxHash
+            );
+        }
+
+        return burnReference;
+    };
 }
 
-export const Ethereum = Callable(EthereumChain);
+// /**
+//  * createTransactions will create unsigned Ethereum transactions that can
+//  * be signed at a later point in time. The last transaction should contain
+//  * the burn that will be submitted to RenVM. Once signed and submitted,
+//  * a new BurnAndRelease object should be initialized with the burn
+//  * reference.
+//  *
+//  * @param {TransactionConfig} [txConfig] Optionally override default options
+//  *        like gas.
+//  * @returns {TransactionConfig[]}
+//  */
+// public createTransactions = (txConfig?: any): any[] => {
+//     const contractCalls = this.params.contractCalls || [];
+
+//     return contractCalls.map((contractCall) => {
+//         const {
+//             contractParams,
+//             contractFn,
+//             sendTo,
+//             txConfig: txConfigParam,
+//         } = contractCall;
+
+//         const params = [
+//             ...(contractParams || []).map((value) => value.value),
+//         ];
+
+//         const ABI = payloadToABI(contractFn, contractParams || []);
+//         // tslint:disable-next-line: no-any
+//         const web3: Web3 = new (Web3 as any)();
+//         const contract = new web3.eth.Contract(ABI);
+
+//         const data = contract.methods[contractFn](...params).encodeABI();
+
+//         const rawTransaction = {
+//             to: sendTo,
+//             data,
+
+//             ...txConfigParam,
+//             ...{
+//                 value:
+//                     txConfigParam && txConfigParam.value
+//                         ? txConfigParam.value.toString()
+//                         : undefined,
+//                 gasPrice:
+//                     txConfigParam && txConfigParam.gasPrice
+//                         ? txConfigParam.gasPrice.toString()
+//                         : undefined,
+//             },
+
+//             ...txConfig,
+//         };
+//         this.logger.debug(
+//             "Raw transaction created",
+//             contractFn,
+//             sendTo,
+//             rawTransaction
+//         );
+//         return rawTransaction;
+//     });
+// };

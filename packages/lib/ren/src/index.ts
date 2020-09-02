@@ -8,6 +8,7 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
+import { AbstractRenVMProvider } from "@renproject/rpc";
 import { RenVMProvider } from "@renproject/rpc/build/main/v1";
 import { utils } from "@renproject/utils";
 
@@ -64,9 +65,9 @@ export default class RenJS {
 
     /**
      * RenVM provider exposing `sendMessage` and other helper functions for
-     * interacting with RenVM. See [[RenVMProvider]].
+     * interacting with RenVM. See [[AbstractRenVMProvider]].
      */
-    public readonly renVM: RenVMProvider;
+    public readonly renVM: AbstractRenVMProvider;
 
     private readonly logger: Logger;
 
@@ -79,7 +80,7 @@ export default class RenJS {
         provider?:
             | RenNetwork
             | RenNetworkString
-            | RenVMProvider
+            | AbstractRenVMProvider
             | null
             | undefined,
         config?: RenJSConfig
@@ -110,7 +111,9 @@ export default class RenJS {
                       this.logger
                   );
 
-        this.renVM = rpcProvider;
+        // FIXME
+        // tslint:disable-next-line: no-any
+        this.renVM = rpcProvider as any;
     }
 
     /**
@@ -158,9 +161,17 @@ export default class RenJS {
      * @param params See [[BurnAndReleaseParams]].
      * @returns An instance of [[BurnAndRelease]].
      */
-    public readonly burnAndRelease = (
+    public readonly burnAndRelease = async (
         params: BurnAndReleaseParams
-    ): BurnAndRelease => new BurnAndRelease(this.renVM, params, this.logger);
+    ): Promise<BurnAndRelease> => {
+        const burnAndRelease = new BurnAndRelease(
+            this.renVM,
+            params,
+            this.logger
+        );
+        await burnAndRelease.initialize();
+        return burnAndRelease;
+    };
 
     public readonly getFees = async () => this.renVM.getFees();
 }

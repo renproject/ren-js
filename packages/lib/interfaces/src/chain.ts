@@ -4,8 +4,9 @@ import { Logger } from "./logger";
 import { RenNetwork } from "./networks";
 import { ContractCall, RenTokens } from "./parameters";
 import { MintTransaction } from "./transaction";
+import { EventType } from "./types";
 
-type SyncOrPromise<T> = Promise<T> | T;
+export type SyncOrPromise<T> = Promise<T> | T;
 
 /**
  * LockChain is a chain with one or more native assets that can be locked in a
@@ -49,7 +50,7 @@ export interface LockChain<
      * chain - whereas the default `testnet` configuration would use testnet
      * Bitcoin and Ethereum's Kovan testnet.
      */
-    initialize: (network: RenNetwork) => SyncOrPromise<void>;
+    initialize: (network: RenNetwork) => SyncOrPromise<this>;
 
     // Supported assets
 
@@ -167,10 +168,12 @@ export interface LockChain<
     ) => any; // tslint:disable-line: no-any
 
     generateNHash: (
-        nonce: string,
+        nonce: Buffer,
         deposit: Transaction,
         logger?: Logger
     ) => Buffer;
+
+    burnPayload?: () => SyncOrPromise<string | undefined>;
 }
 
 /**
@@ -198,7 +201,7 @@ export interface MintChain<Transaction = {}, Asset extends string = string> {
     /**
      * See [LockChain.initialize].
      */
-    initialize: (network: RenNetwork) => SyncOrPromise<void>;
+    initialize: (network: RenNetwork) => SyncOrPromise<this>;
 
     // Supported assets
 
@@ -241,4 +244,30 @@ export interface MintChain<Transaction = {}, Asset extends string = string> {
         asset: Asset,
         mintTx: MintTransaction
     ) => SyncOrPromise<Transaction | undefined>;
+
+    /**
+     * Read a burn reference from an Ethereum transaction - or submit a
+     * transaction first if the transaction details have been provided.
+     *
+     * @param {TransactionConfig} [txConfig] Optionally override default options
+     *        like gas.
+     * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
+     */
+    findBurnTransaction: (
+        params: {
+            ethereumTxHash?: Transaction;
+            contractCalls?: ContractCall[];
+            burnReference?: string | number | undefined;
+        },
+        eventEmitter: EventEmitter,
+        logger: Logger,
+        // tslint:disable-next-line: no-any
+        txConfig?: any
+    ) => SyncOrPromise<string | number>;
+
+    contractCalls?: (
+        eventType: EventType,
+        asset: Asset,
+        burnPayload?: string
+    ) => SyncOrPromise<ContractCall[] | undefined>;
 }

@@ -1,5 +1,12 @@
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import { hash160, rawEncode, toBase64 } from "@renproject/utils";
+import {
+    fromBase64,
+    fromHex,
+    hash160,
+    rawEncode,
+    toBase64,
+    toURLBase64,
+} from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { encode } from "bs58";
 import { keccak256 } from "ethereumjs-util";
@@ -10,21 +17,24 @@ import {
 } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
-import { Callable } from "./class";
-import { createAddress, pubKeyScript } from "./common";
-import { Ox, strip0x } from "./hexUtils";
+import { Callable } from "../class";
+import {
+    createAddress,
+    pubKeyScript as calculatePubKeyScript,
+} from "../common";
+import { Ox } from "../hexUtils";
 
-export const getBitcoinConfirmations = ({
-    isTestnet,
-}: {
-    isTestnet: boolean;
-}) => {
-    return async (txHash: string) => {
-        return getConfirmations(isTestnet, txHash);
-    };
-};
+// export const getBitcoinConfirmations = ({
+//     isTestnet,
+// }: {
+//     isTestnet: boolean;
+// }) => {
+//     return async (txHash: string) => {
+//         return getConfirmations(isTestnet, txHash);
+//     };
+// };
 
-export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
+// export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
 
 const isBTCAddress = (address: string) =>
     validate(address, "btc", "testnet") || validate(address, "btc", "prod");
@@ -37,8 +47,8 @@ export interface Tactics {
 const btcTactics: Tactics = {
     decoders: [
         (address: string) => Buffer.from(address),
-        (address: string) => Buffer.from(address, "base64"),
-        (address: string) => Buffer.from(strip0x(address), "hex"),
+        (address: string) => fromBase64(address),
+        (address: string) => fromHex(address),
     ],
     encoders: [
         (buffer: Buffer) => encode(buffer), // base58
@@ -67,9 +77,9 @@ export const anyAddressFrom = (
 
 export const btcAddressFrom = anyAddressFrom(isBTCAddress, btcTactics);
 
-type Address = string;
-type Transaction = SendCryptoUTXO;
-type Asset = string;
+export type Address = string;
+export type Transaction = SendCryptoUTXO;
+export type Asset = string;
 export type BitcoinNetwork = "mainnet" | "testnet" | "regtest";
 
 const BTC = "BTC";
@@ -87,15 +97,15 @@ const resolveBitcoinNetwork = (renNetwork: RenNetwork): BitcoinNetwork => {
     throw new Error(`Unrecognized network ${renNetwork}`);
 };
 
-export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
-    public static call: (network?: BitcoinNetwork) => BitcoinChain;
-
+export class BitcoinBaseChain
+    implements LockChain<Transaction, Asset, Address> {
     public name = "Btc";
     public renNetwork: RenNetwork | undefined;
     public chainNetwork: BitcoinNetwork | undefined;
 
-    constructor(network?: BitcoinNetwork) {
-        if (!(this instanceof BitcoinChain)) return new BitcoinChain(network);
+    constructor(network?: BitcoinNetwork, thisClass?: typeof BitcoinBaseChain) {
+        if (!(this instanceof BitcoinBaseChain))
+            return new (thisClass || BitcoinBaseChain)(network);
 
         this.chainNetwork = network;
     }
@@ -108,6 +118,7 @@ export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
         // Prioritize the network passed in to the constructor.
         this.chainNetwork =
             this.chainNetwork || resolveBitcoinNetwork(renNetwork);
+        return this;
     };
 
     /**
@@ -182,7 +193,7 @@ export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
 
     getPubKeyScript = (asset: Asset, publicKey: Buffer, gHash: Buffer) => {
         this.assetAssetSupported(asset);
-        return pubKeyScript(Networks, Opcode, Script)(
+        return calculatePubKeyScript(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
             hash160(publicKey).toString("hex"),
             gHash.toString("hex")
@@ -232,10 +243,10 @@ export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
         if (v2) {
             return {
                 outpoint: {
-                    hash: toBase64(transaction.txHash),
+                    hash: toURLBase64(transaction.txHash),
                     index: transaction.vOut.toFixed(),
                 },
-                pubKeyScript: toBase64(pubKeyScript),
+                pubKeyScript: toURLBase64(pubKeyScript),
                 value: transaction.amount.toString(),
             };
         }
@@ -247,7 +258,7 @@ export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
     };
 
     generateNHash = (
-        nonce: string,
+        nonce: Buffer,
         deposit: Transaction,
         logger?: Logger
     ): Buffer => {
@@ -268,5 +279,3 @@ export class BitcoinChain implements LockChain<Transaction, Asset, Address> {
         return digest;
     };
 }
-
-export const Bitcoin = Callable(BitcoinChain);

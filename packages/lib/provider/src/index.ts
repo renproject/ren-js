@@ -1,3 +1,4 @@
 export * from "./httpProvider";
-export * from "./multiProvider";
+export * from "./parallelHttpProvider";
 export * from "./jsonRPC";
+export * from "./overwriteProvider";

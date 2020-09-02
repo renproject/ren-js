@@ -1,0 +1,78 @@
+import { HttpProvider } from "./httpProvider";
+import { Provider } from "./jsonRPC";
+
+// TODO: Look into errors caused by `extending` HttpProvider.
+
+export class OverwriteProvider<
+    // tslint:disable-next-line: no-any
+    Requests extends { [event: string]: any } = {},
+    // tslint:disable-next-line: no-any
+    Responses extends { [event: string]: any } = {}
+> implements Provider {
+    // public readonly overrides: Map<string, Responses[keyof Responses]>;
+    private readonly httpProvider: HttpProvider<Requests, Responses>;
+
+    constructor(
+        ipOrMultiaddress: string,
+        _overrides: { [method: string]: Responses[keyof Responses] }
+    ) {
+        this.httpProvider = new HttpProvider<Requests, Responses>(
+            ipOrMultiaddress
+        );
+    }
+
+    public async sendMessage<Method extends string>(
+        method: Method,
+        request: Requests[Method],
+        retry = 5
+    ): Promise<Responses[Method]> {
+        const overrides = ({
+            ren_queryShards: {
+                shards: [
+                    {
+                        darknodesRootHash:
+                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        gateways: [
+                            {
+                                asset: "BTC",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "Bitcoin",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
+                            },
+                            {
+                                asset: "ZEC",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "Zcash",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
+                            },
+                            {
+                                asset: "BCH",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "BitcoinCash",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
+                            },
+                        ],
+                        gatewaysRootHash:
+                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        primary: true,
+                        pubKey: "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
+                    },
+                ],
+            },
+            // tslint:disable-next-line: no-any
+        } as any) as { [method: string]: Responses[keyof Responses] };
+        return (overrides[method]
+            ? overrides[method]
+            : await this.httpProvider.sendMessage(
+                  method,
+                  request,
+                  retry
+              )) as Responses[Method];
+    }
+}

@@ -1,31 +1,36 @@
 import {
     BurnAndReleaseParams,
     BurnTransaction,
+    EventType,
     Logger,
+    RenNetwork,
     TxStatus,
 } from "@renproject/interfaces";
-import { RenVMProvider } from "@renproject/rpc/build/main/v1";
+import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
     extractError,
+    fromBase64,
     generateBurnTxHash,
     ignorePromiEventError,
     newPromiEvent,
-    Ox,
     PromiEvent,
     resolveOutToken,
     txHashToBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+import { EventEmitter } from "events";
 
 export class BurnAndRelease {
     public queryTxResult: BurnTransaction | undefined;
 
+    public renNetwork: RenNetwork | undefined;
+
     private readonly params: BurnAndReleaseParams;
-    private readonly renVM: RenVMProvider;
+    private readonly renVM: AbstractRenVMProvider;
     private readonly logger: Logger;
 
     constructor(
-        _renVM: RenVMProvider,
+        _renVM: AbstractRenVMProvider,
         _params: BurnAndReleaseParams,
         _logger: Logger
     ) {
@@ -40,66 +45,29 @@ export class BurnAndRelease {
         }
     }
 
-    // /**
-    //  * createTransactions will create unsigned Ethereum transactions that can
-    //  * be signed at a later point in time. The last transaction should contain
-    //  * the burn that will be submitted to RenVM. Once signed and submitted,
-    //  * a new BurnAndRelease object should be initialized with the burn
-    //  * reference.
-    //  *
-    //  * @param {TransactionConfig} [txConfig] Optionally override default options
-    //  *        like gas.
-    //  * @returns {TransactionConfig[]}
-    //  */
-    // public createTransactions = (txConfig?: any): any[] => {
-    //     const contractCalls = this.params.contractCalls || [];
+    public readonly initialize = async () => {
+        this.renNetwork =
+            this.renNetwork || ((await this.renVM.getNetwork()) as RenNetwork);
 
-    //     return contractCalls.map((contractCall) => {
-    //         const {
-    //             contractParams,
-    //             contractFn,
-    //             sendTo,
-    //             txConfig: txConfigParam,
-    //         } = contractCall;
+        if (!this.params.from.renNetwork) {
+            this.params.from.initialize(this.renNetwork);
+        }
+        if (!this.params.to.renNetwork) {
+            this.params.to.initialize(this.renNetwork);
+        }
 
-    //         const params = [
-    //             ...(contractParams || []).map((value) => value.value),
-    //         ];
+        const burnPayload =
+            this.params.to.burnPayload && (await this.params.to.burnPayload());
 
-    //         const ABI = payloadToABI(contractFn, contractParams || []);
-    //         // tslint:disable-next-line: no-any
-    //         const web3: Web3 = new (Web3 as any)();
-    //         const contract = new web3.eth.Contract(ABI);
-
-    //         const data = contract.methods[contractFn](...params).encodeABI();
-
-    //         const rawTransaction = {
-    //             to: sendTo,
-    //             data,
-
-    //             ...txConfigParam,
-    //             ...{
-    //                 value:
-    //                     txConfigParam && txConfigParam.value
-    //                         ? txConfigParam.value.toString()
-    //                         : undefined,
-    //                 gasPrice:
-    //                     txConfigParam && txConfigParam.gasPrice
-    //                         ? txConfigParam.gasPrice.toString()
-    //                         : undefined,
-    //             },
-
-    //             ...txConfig,
-    //         };
-    //         this.logger.debug(
-    //             "Raw transaction created",
-    //             contractFn,
-    //             sendTo,
-    //             rawTransaction
-    //         );
-    //         return rawTransaction;
-    //     });
-    // };
+        this.params.contractCalls =
+            this.params.contractCalls ||
+            (this.params.from.contractCalls &&
+                (await this.params.from.contractCalls(
+                    EventType.BurnAndRelease,
+                    this.params.asset,
+                    burnPayload
+                )));
+    };
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
@@ -109,11 +77,14 @@ export class BurnAndRelease {
      *        like gas.
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
-    public readFromEthereum = (
-        _txConfig?: any
+    public burn = (
+        // tslint:disable-next-line: no-any
+        txConfig?: any
+        // tslint:disable-next-line: no-any
     ): PromiEvent<BurnAndRelease, { [event: string]: any }> => {
         const promiEvent = newPromiEvent<
             BurnAndRelease,
+            // tslint:disable-next-line: no-any
             { [event: string]: any }
         >();
 
@@ -122,66 +93,12 @@ export class BurnAndRelease {
                 return this;
             }
 
-            // const { contractCalls } = this.params;
-            const { burnReference } = this.params;
-            // let ethereumTxHash = this.params.ethereumTxHash;
-
-            // There are three parameter configs:
-            // Situation (1): A `burnReference` is provided
-            // Situation (2): Contract call details are provided
-            // Situation (3): A txHash is provided
-
-            // For (1), we don't have to do anything.
-            if (!burnReference && burnReference !== 0) {
-                // if (!web3Provider) {
-                //     throw new Error("Must provide burn reference ID or web3 provider.");
-                // }
-                // const web3 = new Web3(web3Provider);
-                // // Handle situation (2)
-                // // Make a call to the provided contract and Pass on the
-                // // transaction hash.
-                // if (contractCalls) {
-                //     for (let i = 0; i < contractCalls.length; i++) {
-                //         const contractCall = contractCalls[i];
-                //         const last = i === contractCalls.length - 1;
-                //         const { contractParams, contractFn, sendTo, txConfig: txConfigParam } = contractCall;
-                //         const callParams = [
-                //             ...(contractParams || []).map(value => value.value),
-                //         ];
-                //         const ABI = payloadToABI(contractFn, contractParams);
-                //         const contract = new web3.eth.Contract(ABI, sendTo);
-                //         const config = await withDefaultAccount(web3, {
-                //             ...txConfigParam,
-                //             ...{
-                //                 value: txConfigParam && txConfigParam.value ? txConfigParam.value.toString() : undefined,
-                //                 gasPrice: txConfigParam && txConfigParam.gasPrice ? txConfigParam.gasPrice.toString() : undefined,
-                //             },
-                //             ...txConfig,
-                //         });
-                //         this.logger.debug("Calling Ethereum contract", contractFn, sendTo, ...callParams, config);
-                //         const tx = contract.methods[contractFn](
-                //             ...callParams,
-                //         ).send(config);
-                //         if (last) {
-                //             forwardWeb3Events(tx, promiEvent);
-                //         }
-                //         ethereumTxHash = await new Promise((resolve, reject) => tx
-                //             .on("transactionHash", resolve)
-                //             .catch((error: Error) => {
-                //                 try { if (ignorePromiEventError(error)) { this.logger.error(extractError(error)); return; } } catch (_error) { /* Ignore _error */ }
-                //                 reject(error);
-                //             })
-                //         );
-                //         this.logger.debug("Ethereum txHash", ethereumTxHash);
-                //     }
-                // }
-                // if (!ethereumTxHash) {
-                //     throw new Error("Must provide txHash or contract call details.");
-                // }
-                // burnReference = await extractBurnReference(web3, ethereumTxHash);
-            }
-
-            this.params.burnReference = burnReference;
+            this.params.burnReference = await this.params.from.findBurnTransaction(
+                this.params,
+                (promiEvent as unknown) as EventEmitter,
+                this.logger,
+                txConfig
+            );
 
             return this;
         })()
@@ -215,9 +132,7 @@ export class BurnAndRelease {
         }
 
         if (!this.params.burnReference && this.params.burnReference !== 0) {
-            throw new Error(
-                "Must call `readFromEthereum` before calling `txHash`"
-            );
+            throw new Error("Must call `burn` before calling `txHash`");
         }
         const burnReference = new BigNumber(
             this.params.burnReference
@@ -234,7 +149,7 @@ export class BurnAndRelease {
      */
     public queryTx = async (): Promise<BurnTransaction> => {
         this.queryTxResult = (await this.renVM.queryMintOrBurn(
-            Ox(Buffer.from(this.txHash(), "base64"))
+            fromBase64(this.txHash())
         )) as BurnTransaction;
         return this.queryTxResult;
     };
@@ -245,7 +160,7 @@ export class BurnAndRelease {
      *
      * @returns {PromiEvent<BurnTransaction, { txHash: [string], status: [TxStatus] }>}
      */
-    public submit = (): PromiEvent<
+    public release = (): PromiEvent<
         BurnTransaction,
         { txHash: [string]; status: [TxStatus] }
     > => {
@@ -257,9 +172,7 @@ export class BurnAndRelease {
         (async () => {
             const { burnReference } = this.params;
             if (!this.params.txHash && !burnReference && burnReference !== 0) {
-                throw new Error(
-                    "Must call `readFromEthereum` before calling `submit`"
-                );
+                throw new Error("Must call `burn` before calling `release`");
             }
 
             const txHash = this.txHash();
@@ -274,20 +187,15 @@ export class BurnAndRelease {
                     ? [this.params.tags[0]]
                     : [];
 
-            // renContract: RenContract,
-            // _amount: BigNumber,
-            // _token: Buffer,
-            // _to: Buffer,
-            // ref: Buffer,
-            // tags: [string] | []
-
             if (burnReference || burnReference === 0) {
-                throw new Error("unimplemented");
-                // await this.renVM.submitBurn(
-                //     resolveOutToken(this.params),
-                //     new BigNumber(burnReference).toFixed(),
-                //     tags
-                // );
+                await this.renVM.submitBurn(
+                    resolveOutToken(this.params),
+                    new BigNumber(0),
+                    "",
+                    "",
+                    new BigNumber(burnReference),
+                    tags
+                );
             }
 
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
@@ -295,7 +203,7 @@ export class BurnAndRelease {
             this.logger.debug("txHash", txHash);
 
             return await this.renVM.waitForTX<BurnTransaction>(
-                Ox(Buffer.from(txHash, "base64")),
+                Buffer.from(txHash, "base64"),
                 (status) => {
                     promiEvent.emit("status", status);
                     this.logger.debug("Transaction Status", status);

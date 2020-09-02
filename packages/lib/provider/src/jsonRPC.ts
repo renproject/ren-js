@@ -15,9 +15,10 @@ export type JSONRPCResponse<T> =
           id: number;
       };
 
-// tslint:disable-next-line: no-any
 export interface Provider<
+    // tslint:disable-next-line: no-any
     Requests extends { [event: string]: any } = {},
+    // tslint:disable-next-line: no-any
     Responses extends { [event: string]: any } = {}
 > {
     sendMessage<Method extends keyof Requests>(

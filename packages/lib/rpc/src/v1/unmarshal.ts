@@ -52,8 +52,8 @@ const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
         : never
 ): string => {
     try {
-        // tslint:disable-next-line: no-any
         return decodeBytes(
+            // tslint:disable-next-line: no-any
             assertArgumentType<ArgType>(name as any, type as any, arg as any)
         );
     } catch (error) {
@@ -74,8 +74,8 @@ const assertAndDecodeNumber = <ArgType>(
         : never
 ): BigNumber => {
     try {
-        // tslint:disable-next-line: no-any
         return decodeNumber(
+            // tslint:disable-next-line: no-any
             assertArgumentType<ArgType>(name as any, type as any, arg as any)
         );
     } catch (error) {
@@ -96,8 +96,8 @@ const assertAndDecodeAddress = <ArgType extends RenVMArg<string, RenVMType>>(
         : never
 ): string => {
     try {
-        // tslint:disable-next-line: no-any
         return Ox(
+            // tslint:disable-next-line: no-any
             assertArgumentType<ArgType>(name as any, type as any, arg as any)
         );
     } catch (error) {

@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { expect } from "earljs";
 import { describe, it } from "mocha";
 
-import { unmarshalPackValue } from "../src/v2/pack";
+import { unmarshalPackValue } from "../src/v2/pack/pack";
 import { burnParamsType, mintParamsType } from "../src/v2/transaction";
 
 require("dotenv").config();

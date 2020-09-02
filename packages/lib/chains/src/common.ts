@@ -1,10 +1,9 @@
+import { fromHex } from "@renproject/utils";
 import {
     Networks as BNetworks,
     Opcode as BOpcode,
     Script as bScript,
 } from "bitcore-lib";
-
-import { strip0x } from "./hexUtils";
 
 export const UTXOGatewayScript = (
     opcode: typeof BOpcode,
@@ -13,11 +12,11 @@ export const UTXOGatewayScript = (
     gHash: string
 ) => {
     return new script()
-        .add(Buffer.from(strip0x(gHash), "hex"))
+        .add(fromHex(gHash))
         .add(opcode.OP_DROP)
         .add(opcode.OP_DUP)
         .add(opcode.OP_HASH160)
-        .add(Buffer.from(strip0x(gGubKey), "hex"))
+        .add(fromHex(gGubKey))
         .add(opcode.OP_EQUALVERIFY)
         .add(opcode.OP_CHECKSIG)
         .toScriptHashOut();

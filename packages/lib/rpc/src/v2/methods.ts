@@ -1,6 +1,6 @@
 import { RenContract, TxStatus } from "@renproject/interfaces";
 
-import { TypedPackValue } from "./pack";
+import { TypedPackValue } from "./pack/pack";
 import { Shard } from "./shard";
 import { BurnTransactionInput, MintTransactionInput } from "./transaction";
 import { Fees, RenVMType, RenVMValue } from "./value";

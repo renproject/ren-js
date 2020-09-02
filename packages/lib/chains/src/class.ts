@@ -1,5 +1,7 @@
+// tslint:disable: no-any only-arrow-functions
+
 // Let's assume "class X {}". X itself can be called with "new" keyword, thus it extends this type
-type Constructor = new (...args: Array<any>) => any;
+type Constructor = new (...args: any[]) => any;
 
 // Extracts argument types from class constructor
 type ConstructorArgs<
@@ -9,9 +11,7 @@ type ConstructorArgs<
 // Extracts class instance type from class constructor
 type ConstructorClass<
     TConstructor extends Constructor
-> = TConstructor extends new (...args: Array<any>) => infer TClass
-    ? TClass
-    : never;
+> = TConstructor extends new (...args: any[]) => infer TClass ? TClass : never;
 
 // This is what we want: to be able to create new class instances either with or without "new" keyword
 export type CallableConstructor<

@@ -11,8 +11,9 @@ import {
     BurnTransaction,
     MintTransaction,
 } from "@renproject/interfaces/build/main/unmarshalled";
-import { MultiProvider, Provider } from "@renproject/provider";
+import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
+    generateMintTxHash,
     getTokenPrices,
     normalizeValue,
     parseRenContract,
@@ -58,6 +59,8 @@ export const resolveRpcURL = (network: RenNetwork | string) => {
 export type RenVMProviderInterface = Provider<RenVMParams, RenVMResponses>;
 
 export class RenVMProvider implements RenVMProviderInterface {
+    public version = 1;
+
     private readonly network: RenNetwork;
 
     public readonly provider: Provider<RenVMParams, RenVMResponses>;
@@ -72,10 +75,10 @@ export class RenVMProvider implements RenVMProviderInterface {
         if (!provider) {
             const rpcUrl = resolveRpcURL(network);
             try {
-                provider = new MultiProvider<RenVMParams, RenVMResponses>(
-                    [rpcUrl],
-                    logger
-                ) as Provider<RenVMParams, RenVMResponses>;
+                provider = new ParallelHttpProvider<
+                    RenVMParams,
+                    RenVMResponses
+                >([rpcUrl], logger) as Provider<RenVMParams, RenVMResponses>;
             } catch (error) {
                 if (String(error && error.message).match(/Invalid node URL/)) {
                     throw new Error(
@@ -186,6 +189,28 @@ export class RenVMProvider implements RenVMProviderInterface {
 
     public getFees = async () => unmarshalFees(await this.queryFees());
 
+    public mintTxHash = (
+        renContract: RenContract,
+        gHash: Buffer,
+        _gPubKey: Buffer,
+        _nHash: Buffer,
+        _nonce: Buffer,
+        // tslint:disable-next-line: no-any
+        _output: any,
+        _payload: Buffer,
+        _pHash: Buffer,
+        _to: Buffer,
+        _token: Buffer,
+        outputHashFormat: string
+    ): string => {
+        return generateMintTxHash(
+            renContract,
+            toBase64(gHash),
+            outputHashFormat,
+            this.logger
+        );
+    };
+
     public submitMint = async (
         renContract: RenContract,
         _gHash: Buffer,
@@ -196,8 +221,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         output: any,
         payload: Buffer,
         _pHash: Buffer,
-        to: Buffer,
-        token: Buffer,
+        to: string,
+        token: string,
         fn: string,
         fnABI: AbiItem[],
         tags: [string] | []
@@ -226,13 +251,13 @@ export class RenVMProvider implements RenVMProviderInterface {
                     {
                         name: "token" as const,
                         type: RenVMType.ExtTypeEthCompatAddress,
-                        value: token.toString("hex"),
+                        value: strip0x(token),
                     },
                     // The address on the Ethereum blockchain to which BTC will be transferred
                     {
                         name: "to" as const,
                         type: RenVMType.ExtTypeEthCompatAddress,
-                        value: to.toString("hex"),
+                        value: strip0x(to),
                     },
                     // The nonce is used to randomize the gateway
                     {
@@ -258,9 +283,9 @@ export class RenVMProvider implements RenVMProviderInterface {
     public submitBurn = async (
         renContract: RenContract,
         _amount: BigNumber,
-        _token: Buffer,
-        _to: Buffer,
-        ref: Buffer,
+        _token: string,
+        _to: string,
+        ref: BigNumber,
         tags: [string] | []
     ): Promise<string> => {
         const response = await this.provider.sendMessage(
@@ -272,10 +297,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                         {
                             name: "ref",
                             type: RenVMType.U64,
-                            value: new BigNumber(
-                                ref.toString("hex"),
-                                16
-                            ).toString(),
+                            value: ref.decimalPlaces(0).toFixed(),
                         },
                     ],
                 },
@@ -289,7 +311,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     public readonly queryMintOrBurn = async <
         T extends MintTransaction | BurnTransaction
     >(
-        utxoTxHash: string
+        utxoTxHash: Buffer
     ): Promise<T> => {
         const response = await this.provider.sendMessage(
             RPCMethod.MethodQueryTx,
@@ -309,7 +331,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     public readonly waitForTX = async <
         T extends MintTransaction | BurnTransaction
     >(
-        utxoTxHash: string,
+        utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean
     ): Promise<T> => {

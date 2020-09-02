@@ -1,7 +1,9 @@
 import {
     Asset,
+    BurnAndReleaseParams,
     Chain,
     EthArgs,
+    LockAndMintParams,
     Logger,
     MintTransaction,
     RenContract,
@@ -10,7 +12,7 @@ import {
 import BigNumber from "bignumber.js";
 import { keccak256 } from "ethereumjs-util";
 
-import { Ox, randomBytes, strip0x, unzip } from "./common";
+import { Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
 
 // export const generateNHash = (tx: Tx): string => {
@@ -73,7 +75,6 @@ export const parseRenContract = (
 
 export const generateGHash = (
     payload: EthArgs,
-    /* amount: number | string, */
     to: string,
     token: string,
     nonce: string,
@@ -82,8 +83,8 @@ export const generateGHash = (
     const pHash = Ox(generatePHash(payload, logger));
 
     const encoded = rawEncode(
-        ["bytes32", /*"uint256",*/ "address", "address", "bytes32"],
-        [Ox(pHash), /*amount,*/ Ox(token), Ox(to), Ox(nonce)]
+        ["bytes32", "address", "address", "bytes32"],
+        [Ox(pHash), Ox(token), Ox(to), Ox(nonce)]
     );
 
     const digest = keccak256(encoded);
@@ -115,13 +116,13 @@ export const generateSighash = (
 };
 
 export const txHashToBase64 = (txHash: Buffer | string) => {
-    if (Buffer.isBuffer(txHash)) {
-        return txHash.toString("base64");
-    }
-
-    // Check if it's hex-encoded
-    if (txHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)) {
-        return Buffer.from(strip0x(txHash), "hex").toString("base64");
+    if (
+        // Buffer
+        Buffer.isBuffer(txHash) ||
+        // Hex
+        txHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)
+    ) {
+        return toBase64(txHash);
     }
     return txHash;
 };
@@ -148,15 +149,6 @@ export const generateBurnTxHash = (
     if (logger) logger.debug("Burn txHash", digest, message);
     return digest;
 };
-
-// export const generateNHash = (tx: Tx): string => {
-//     const encoded = rawEncode(
-//         ["bytes32", "bytes32"],
-//         [Ox(tx.hash), Ox(tx.args.n)],
-//     );
-
-//     return Ox(keccak256(encoded));
-// };
 
 interface Signature {
     r: string;
@@ -271,9 +263,9 @@ export const resolveInToken = ({
     from,
     to,
 }: {
-    asset: TransferParamsCommon["asset"];
-    from: TransferParamsCommon["from"];
-    to: TransferParamsCommon["to"];
+    asset: LockAndMintParams["asset"];
+    from: LockAndMintParams["from"];
+    to: LockAndMintParams["to"];
 }): RenContract => {
     return `${asset}0${from.name}2${to.name}` as RenContract;
 };
@@ -283,9 +275,9 @@ export const resolveOutToken = ({
     from,
     to,
 }: {
-    asset: TransferParamsCommon["asset"];
-    from: TransferParamsCommon["from"];
-    to: TransferParamsCommon["to"];
+    asset: BurnAndReleaseParams["asset"];
+    from: BurnAndReleaseParams["from"];
+    to: BurnAndReleaseParams["to"];
 }): RenContract => {
     return `${asset}0${from.name}2${to.name}` as RenContract;
 };

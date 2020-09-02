@@ -1,13 +1,15 @@
 import {
+    EventType,
     LockAndMintParams,
     Logger,
     MintTransaction,
     RenNetwork,
     TxStatus,
 } from "@renproject/interfaces";
-import { RenVMProvider } from "@renproject/rpc/build/main/v1";
+import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
     extractError,
+    fromHex,
     generateGHash,
     generateMintTxHash,
     generatePHash,
@@ -38,7 +40,7 @@ export class LockAndMint extends EventEmitter {
     private deposits: OrderedMap<string, LockAndMintDeposit> = OrderedMap();
 
     public gatewayAddress: string | undefined;
-    private readonly renVM: RenVMProvider;
+    private readonly renVM: AbstractRenVMProvider;
     private readonly params: LockAndMintParams;
     private readonly logger: Logger;
     private mpkh: Buffer | undefined;
@@ -46,7 +48,7 @@ export class LockAndMint extends EventEmitter {
     private pHash: Buffer | undefined;
 
     constructor(
-        _renVM: RenVMProvider,
+        _renVM: AbstractRenVMProvider,
         _params: LockAndMintParams,
         _logger: Logger
     ) {
@@ -62,7 +64,7 @@ export class LockAndMint extends EventEmitter {
         this.params.nonce = nonce;
 
         if (!txHash) {
-            this.validateParams();
+            this.params.nonce = nonce || randomNonce();
         }
 
         {
@@ -83,6 +85,14 @@ export class LockAndMint extends EventEmitter {
             this.params.to.initialize(this.renNetwork);
         }
 
+        this.params.contractCalls =
+            this.params.contractCalls ||
+            (this.params.to.contractCalls &&
+                (await this.params.to.contractCalls(
+                    EventType.LockAndMint,
+                    this.params.asset
+                )));
+
         try {
             this.gatewayAddress = await this.generateGatewayAddress();
         } catch (error) {
@@ -90,21 +100,6 @@ export class LockAndMint extends EventEmitter {
         }
 
         this.wait().catch(console.error);
-    };
-
-    private readonly validateParams = () => {
-        const params = this.params;
-
-        // tslint:disable-next-line: prefer-const
-        let { contractCalls, nonce, ...restOfParams } = params;
-
-        if (!contractCalls || !contractCalls.length) {
-            throw new Error(`Must provide contract call details.`);
-        }
-
-        nonce = nonce || randomNonce();
-
-        return { contractCalls, nonce, ...restOfParams };
     };
 
     private readonly generateGatewayAddress = async (
@@ -119,7 +114,17 @@ export class LockAndMint extends EventEmitter {
             return this.gatewayAddress;
         }
 
-        const { nonce, contractCalls } = this.validateParams();
+        const { nonce, contractCalls } = this.params;
+
+        if (!nonce) {
+            throw new Error(
+                `Must call 'initialize' before calling 'generateGatewayAddress'`
+            );
+        }
+
+        if (!contractCalls) {
+            throw new Error(`Must provide contract call details`);
+        }
 
         // Last contract call
         const { contractParams, sendTo } = contractCalls[
@@ -261,7 +266,7 @@ export class LockAndMintDeposit {
     public deposit: {};
     public queryTxResult: MintTransaction | undefined;
     // private gatewayAddress: string | undefined;
-    private readonly renVM: RenVMProvider;
+    private readonly renVM: AbstractRenVMProvider;
     private readonly params: LockAndMintParams;
     private readonly logger: Logger;
     private readonly mpkh: Buffer;
@@ -271,7 +276,7 @@ export class LockAndMintDeposit {
     public thirdPartyTransaction: {} | undefined;
 
     constructor(
-        renVM: RenVMProvider,
+        renVM: AbstractRenVMProvider,
         params: LockAndMintParams,
         logger: Logger,
         deposit: {},
@@ -364,19 +369,82 @@ export class LockAndMintDeposit {
         );
 
         const encodedGHash = toBase64(gHash);
-        if (this.logger)
+        if (this.logger) {
             this.logger.debug(
                 "txHash Parameters",
                 resolveInToken(this.params),
                 encodedGHash,
                 deposit
             );
-        return generateMintTxHash(
-            resolveInToken(this.params),
-            encodedGHash,
-            this.params.from.transactionHashString(deposit),
-            this.logger
+        }
+
+        if (!nonce) {
+            throw new Error("Unable to submit to RenVM without nonce.");
+        }
+
+        if (!contractCalls || !contractCalls.length) {
+            throw new Error(
+                `Unable to submit to RenVM without contract call details.`
+            );
+        }
+
+        const encodedParameters = new AbiCoder().encodeParameters(
+            (contractParams || []).map((i) => i.type),
+            (contractParams || []).map((i) => i.value)
         );
+
+        // Try to submit to RenVM. If that fails, see if they already
+        // know about the transaction.
+        if (this.params.tags && this.params.tags.length > 1) {
+            throw new Error("Providing multiple tags is not supported yet.");
+        }
+        const tags: [string] | [] =
+            this.params.tags && this.params.tags.length
+                ? [this.params.tags[0]]
+                : [];
+
+        const tokenIdentifier = await this.params.to.resolveTokenGatewayContract(
+            parseRenContract(resolveInToken(this.params)).asset
+        );
+
+        const nHash = this.params.from.generateNHash(
+            fromHex(nonce),
+            this.deposit
+        );
+
+        const pubKeyScript = await this.params.from.getPubKeyScript(
+            this.params.asset,
+            this.mpkh,
+            this.gHash
+        );
+
+        const outputHashFormat = this.params.from.transactionHashString(
+            deposit
+        );
+
+        return this.renVM.mintTxHash(
+            resolveInToken(this.params),
+            this.gHash,
+            this.mpkh,
+            nHash,
+            fromHex(nonce),
+            this.params.from.transactionRPCFormat(
+                deposit,
+                pubKeyScript,
+                this.renVM.version >= 2 // v2
+            ),
+            fromHex(encodedParameters),
+            this.pHash,
+            sendTo,
+            tokenIdentifier,
+            outputHashFormat
+        );
+        // return generateMintTxHash(
+        //     resolveInToken(this.params),
+        //     encodedGHash,
+        //     this.params.from.transactionHashString(deposit),
+        //     this.logger
+        // );
     };
 
     /**
@@ -384,7 +452,7 @@ export class LockAndMintDeposit {
      */
     public queryTx = async (): Promise<MintTransaction> => {
         this.queryTxResult = (await this.renVM.queryMintOrBurn(
-            Ox(Buffer.from(await this.txHash(), "base64"))
+            Buffer.from(await this.txHash(), "base64")
         )) as MintTransaction;
         return this.queryTxResult;
     };
@@ -468,7 +536,7 @@ export class LockAndMintDeposit {
                     );
 
                     const nHash = this.params.from.generateNHash(
-                        nonce,
+                        fromHex(nonce),
                         this.deposit
                     );
 
@@ -483,16 +551,16 @@ export class LockAndMintDeposit {
                         this.gHash,
                         this.mpkh,
                         nHash,
-                        Buffer.from(strip0x(nonce), "hex"),
+                        fromHex(nonce),
                         this.params.from.transactionRPCFormat(
                             deposit,
                             pubKeyScript,
-                            true // v2
+                            this.renVM.version >= 2 // v2
                         ),
-                        Buffer.from(strip0x(encodedParameters), "hex"),
+                        fromHex(encodedParameters),
                         this.pHash,
-                        Buffer.from(strip0x(sendTo), "hex"),
-                        Buffer.from(strip0x(tokenIdentifier), "hex"),
+                        Ox(sendTo),
+                        Ox(tokenIdentifier),
                         contractFn,
                         fnABI,
                         tags
@@ -529,7 +597,7 @@ export class LockAndMintDeposit {
             }
 
             const response = await this.renVM.waitForTX<MintTransaction>(
-                Ox(Buffer.from(txHash, "base64")),
+                Buffer.from(txHash, "base64"),
                 (status) => {
                     promiEvent.emit("status", status);
                     this.logger.debug("Transaction Status", status);

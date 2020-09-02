@@ -21,6 +21,7 @@ export const RenNetworks = [
     RenNetwork.Localnet,
 ];
 export const isRenNetwork = (
+    // tslint:disable-next-line: no-any
     maybeRenNetwork: any
 ): maybeRenNetwork is RenNetwork => RenNetworks.indexOf(maybeRenNetwork) !== -1; // tslint:disable-line: no-any
 export const isTestnet = (renNetwork: RenNetwork) =>

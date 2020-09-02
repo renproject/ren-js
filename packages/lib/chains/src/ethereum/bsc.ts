@@ -1,8 +1,7 @@
-import { renBscTestnet } from "@renproject/networks";
 import { provider, RenNetwork } from "@renproject/interfaces";
-import Web3 from "web3";
+import { renBscTestnet } from "@renproject/networks";
 
-import { Callable } from "./class";
+import { Callable } from "../class";
 import { EthereumChain } from "./ethereum";
 
 export class BinanceSmartChain extends EthereumChain {

@@ -1,7 +1,16 @@
-import { PackPrimitive, PackStruct, PackType } from "./pack";
+import { sha256 } from "ethereumjs-util";
+
+import { marshalString, marshalTypedPackValue } from "./pack/marshal";
+import {
+    PackPrimitive,
+    PackStructType,
+    PackTypeDefinition,
+    TypedPackValue,
+} from "./pack/pack";
 import { RenVMType, RenVMValue } from "./value";
 
 export interface TransactionInput<Input> {
+    hash: string;
     version: string; // "",
     selector: string; // "BTC/fromEthereum",
     in: Input;
@@ -20,7 +29,7 @@ export interface RPCValue<Types, Values> {
 
 export type EmptyRPCStruct = RPCValue<{ struct: [] }, {}>;
 
-export const burnParamsType: PackStruct = {
+export const burnParamsType: PackStructType = {
     struct: [
         {
             amount: PackPrimitive.U256,
@@ -51,7 +60,7 @@ export type BurnParams = RPCValue<
 
 export type BurnTransactionInput = TransactionInput<BurnParams>;
 
-export const mintParamsType: PackStruct = {
+export const mintParamsType: PackStructType = {
     struct: [
         {
             output: {
@@ -60,7 +69,7 @@ export const mintParamsType: PackStruct = {
                         outpoint: {
                             struct: [
                                 {
-                                    hash: PackPrimitive.Bytes32,
+                                    hash: PackPrimitive.Bytes,
                                 },
                                 {
                                     index: PackPrimitive.U32,
@@ -69,7 +78,7 @@ export const mintParamsType: PackStruct = {
                         },
                     },
                     {
-                        value: PackPrimitive.U64,
+                        value: PackPrimitive.U256,
                     },
                     {
                         pubKeyScript: PackPrimitive.Bytes,
@@ -115,11 +124,11 @@ export type MintParams = RPCValue<
         nonce: RenVMValue<RenVMType.B32>; // "vPIiF6apzdJ4Rr8IMpT2uywo8LbuHOcaEXQ21ydXFBA",
         output: {
             outpoint: {
-                hash: RenVMValue<RenVMType.B32>; // "_yJG1tKIALMrvaSes9BB4dYx5eCN8OK5V_PEM4N3R10",
+                hash: RenVMValue<RenVMType.B>; // "_yJG1tKIALMrvaSes9BB4dYx5eCN8OK5V_PEM4N3R10",
                 index: RenVMValue<RenVMType.U32>; // "2288363171"
             };
             pubKeyScript: RenVMValue<RenVMType.B>; // "8SsHPc0wCbrItrmmFOsebOtGwd8YOSDTFyaGT7UZHRVGCtEjv0_N17kNJ5RqF8nxzbddbqELUOjxZe3n_llGksd7sEMbQg",
-            value: RenVMValue<RenVMType.U64>; // "503863382662879832"
+            value: RenVMValue<RenVMType.U256>; // "503863382662879832"
         };
         payload: RenVMValue<RenVMType.B>; // "I_9MVtYiO4NlH7lwIx8",
         phash: RenVMValue<RenVMType.B32>; // "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ",
@@ -129,3 +138,17 @@ export type MintParams = RPCValue<
 >;
 
 export type MintTransactionInput = TransactionInput<MintParams>;
+
+export const hashTransaction = (
+    version: string,
+    selector: string,
+    packValue: TypedPackValue
+) => {
+    return sha256(
+        Buffer.concat([
+            marshalString(version),
+            marshalString(selector),
+            marshalTypedPackValue(packValue),
+        ])
+    );
+};

@@ -41,12 +41,13 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/utils": "file:../utils",
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/networks": "file:../networks",
+        "@renproject/utils": "file:../utils",
         "@types/bs58": "^4.0.1",
         "@types/node": "^14.0.5",
         "bchaddrjs": "^0.4.8",
+        "bignumber.js": "^9.0.0",
         "bitcore-lib": "^8.20.3",
         "bitcore-lib-cash": "^8.20.3",
         "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",

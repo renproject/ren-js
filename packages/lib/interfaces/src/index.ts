@@ -1,6 +1,7 @@
 export * from "./abi";
 export * from "./chain";
 export * from "./errors";
+export * from "./ethArgs";
 export * from "./general";
 export * from "./logger";
 export * from "./networks";

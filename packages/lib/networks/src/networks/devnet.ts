@@ -9,8 +9,8 @@ import GatewayLogic from "@renproject/sol/build/devnet/GatewayLogicV1.json";
 import GatewayRegistry from "@renproject/sol/build/devnet/GatewayRegistry.json";
 import ProtocolLogic from "@renproject/sol/build/devnet/ProtocolLogicV1.json";
 import ProtocolProxy from "@renproject/sol/build/devnet/ProtocolProxy.json";
-import RenToken from "@renproject/sol/build/devnet/RenToken.json";
 import RenERC20 from "@renproject/sol/build/devnet/RenERC20LogicV1.json";
+import RenToken from "@renproject/sol/build/devnet/RenToken.json";
 import ERC20 from "@renproject/sol/build/erc/ERC20.json";
 import { AbiItem } from "web3-utils";
 

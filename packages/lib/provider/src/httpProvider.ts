@@ -10,9 +10,10 @@ const generatePayload = (method: string, params?: unknown) => ({
     params,
 });
 
-// tslint:disable-next-line: no-any
 export class HttpProvider<
+    // tslint:disable-next-line: no-any
     Requests extends { [event: string]: any } = {},
+    // tslint:disable-next-line: no-any
     Responses extends { [event: string]: any } = {}
 > implements Provider {
     public readonly nodeURL: string;
@@ -46,6 +47,10 @@ export class HttpProvider<
         request: Requests[Method],
         retry = 5
     ): Promise<Responses[Method]> {
+        // Print request:
+        // console.log(
+        //     JSON.stringify(generatePayload(method, request), null, "    ")
+        // );
         try {
             const response = await retryNTimes(
                 () =>

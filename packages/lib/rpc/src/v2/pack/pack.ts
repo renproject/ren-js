@@ -16,19 +16,25 @@ export enum PackPrimitive {
     Bytes65 = "bytes65",
 }
 
-export interface PackStruct {
-    struct: Array<{ [name: string]: PackType }>;
+export interface PackStructType {
+    struct: Array<{ [name: string]: PackTypeDefinition }>;
 }
 
 // Not implemented.
-export type PackList = never;
+export type PackListType = never;
 
-export type PackNil = "nil";
+export type PackNilType = "nil";
 
-export type PackType = PackPrimitive | PackStruct | PackList | PackNil;
+export type PackType = PackPrimitive | PackNilType | "list" | "struct";
+
+export type PackTypeDefinition =
+    | PackPrimitive
+    | PackStructType
+    | PackListType
+    | PackNilType;
 
 export interface TypedPackValue {
-    t: PackType;
+    t: PackTypeDefinition;
     v: any;
 }
 
@@ -56,7 +62,7 @@ export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
     }
 };
 
-export const unmarshalPackStruct = (type: PackStruct, value: any) => {
+export const unmarshalPackStruct = (type: PackStructType, value: any) => {
     const struct = {};
 
     for (const member of type.struct) {
@@ -75,7 +81,7 @@ export const unmarshalPackStruct = (type: PackStruct, value: any) => {
     return struct;
 };
 
-export const unmarshalPackValue = (type: PackType, value: any) => {
+export const unmarshalPackValue = (type: PackTypeDefinition, value: any) => {
     if (typeof type === "object") {
         return unmarshalPackStruct(type, value);
         // tslint:disable: strict-type-predicates

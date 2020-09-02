@@ -36,6 +36,38 @@ export const Ox = (hex: string | Buffer | BNInterface) => {
     return hexString.substring(0, 2) === "0x" ? hexString : `0x${hexString}`;
 };
 
+export const pad0x = (hex: string | Buffer | BNInterface) => {
+    let hexString = strip0x(
+        typeof hex === "string" ? hex : hex.toString("hex")
+    );
+    // If length is odd, add leading 0.
+    if (hexString.length % 2) {
+        hexString = "0" + hexString;
+    }
+    return Ox(hexString);
+};
+
+export const fromHex = (hex: string) => Buffer.from(strip0x(hex), "hex");
+export const fromBase64 = (hex: string) => Buffer.from(strip0x(hex), "base64");
+
+/**
+ * Convert a hex string or Buffer to base64.
+ */
+export const toBase64 = (input: string | Buffer) =>
+    (Buffer.isBuffer(input)
+        ? input
+        : Buffer.from(strip0x(input), "hex")
+    ).toString("base64");
+
+// Unpadded alternate base64 encoding defined in RFC 4648, commonly used in
+// URLs.
+export const toURLBase64 = (input: string | Buffer) =>
+    (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex"))
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/\=+$/, "");
+
 /**
  * Returns a hex string filled with zeroes (prefixed with '0x').
  * @param bytes The number of bytes.
@@ -47,17 +79,8 @@ export const unzip = (zip: EthArgs) => [
     zip.map((param) => param.value),
 ];
 
-/**
- * Convert a hex string or Buffer to base64.
- */
-export const toBase64 = (input: string | Buffer) =>
-    (Buffer.isBuffer(input)
-        ? input
-        : Buffer.from(strip0x(input), "hex")
-    ).toString("base64");
-
+// tslint:disable-next-line: no-any
 export const ignorePromiEventError = (error: any): boolean => {
-    // tslint:disable-line: no-any
     try {
         return (
             error &&

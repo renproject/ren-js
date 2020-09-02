@@ -99,8 +99,7 @@
         "lint": "tslint packages/*/*/src/**/*.ts{,x}"
     },
     "workspaces": [
-        "packages/lib/*",
-        "packages/ui/*"
+        "packages/lib/*"
     ],
     "dependencies": {
         "@renproject/chains": "file:packages/lib/chains",

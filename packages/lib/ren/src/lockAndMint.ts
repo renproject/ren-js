@@ -409,7 +409,8 @@ export class LockAndMintDeposit {
 
         const nHash = this.params.from.generateNHash(
             fromHex(nonce),
-            this.deposit
+            this.deposit,
+            this.renVM.version >= 2
         );
 
         const pubKeyScript = await this.params.from.getPubKeyScript(
@@ -537,7 +538,8 @@ export class LockAndMintDeposit {
 
                     const nHash = this.params.from.generateNHash(
                         fromHex(nonce),
-                        this.deposit
+                        this.deposit,
+                        this.renVM.version >= 2
                     );
 
                     const pubKeyScript = await this.params.from.getPubKeyScript(

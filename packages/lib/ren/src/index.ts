@@ -8,8 +8,7 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider } from "@renproject/rpc";
-import { RenVMProvider } from "@renproject/rpc/build/main/v1";
+import { AbstractRenVMProvider, v1 } from "@renproject/rpc";
 import { utils } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
@@ -105,7 +104,7 @@ export default class RenJS {
         const rpcProvider =
             provider && typeof provider !== "string"
                 ? provider
-                : new RenVMProvider(
+                : new v1.RenVMProvider(
                       provider || RenNetwork.Mainnet,
                       undefined,
                       this.logger

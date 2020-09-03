@@ -14,6 +14,12 @@ import { Ox } from "@renproject/utils";
 import chai from "chai";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import {
+    RenVMParams,
+    RenVMProvider,
+    RenVMProviderInterface,
+    RenVMResponses,
+} from "@renproject/rpc/build/main/v2";
 
 import RenJS from "../../src/index";
 
@@ -37,55 +43,56 @@ describe("Refactor", () => {
         const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        // const renVMProvider = new RenVMProvider(
-        //     "testnet",
-        //     new OverwriteProvider<RenVMParams, RenVMResponses>(
-        //         "https://lightnode-new-testnet.herokuapp.com/",
-        //         {
-        //             ren_queryShards: {
-        //                 shards: [
-        //                     {
-        //                         darknodesRootHash:
-        //                             "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        //                         gateways: [
-        //                             {
-        //                                 asset: "BTC",
-        //                                 hosts: ["Ethereum"],
-        //                                 locked: "0",
-        //                                 origin: "Bitcoin",
-        //                                 pubKey:
-        //                                     "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
-        //                             },
-        //                             {
-        //                                 asset: "ZEC",
-        //                                 hosts: ["Ethereum"],
-        //                                 locked: "0",
-        //                                 origin: "Zcash",
-        //                                 pubKey:
-        //                                     "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
-        //                             },
-        //                             {
-        //                                 asset: "BCH",
-        //                                 hosts: ["Ethereum"],
-        //                                 locked: "0",
-        //                                 origin: "BitcoinCash",
-        //                                 pubKey:
-        //                                     "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
-        //                             },
-        //                         ],
-        //                         gatewaysRootHash:
-        //                             "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        //                         primary: true,
-        //                         pubKey:
-        //                             "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
-        //                     },
-        //                 ],
-        //             },
-        //         }
-        //     ) as RenVMProviderInterface
-        // ) as AbstractRenVMProvider;
+        const renVMProvider = new RenVMProvider(
+            "testnet",
+            new OverwriteProvider<RenVMParams, RenVMResponses>(
+                "https://lightnode-new-testnet.herokuapp.com/",
+                {
+                    ren_queryShards: {
+                        shards: [
+                            {
+                                darknodesRootHash:
+                                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                gateways: [
+                                    {
+                                        asset: "BTC",
+                                        hosts: ["Ethereum"],
+                                        locked: "0",
+                                        origin: "Bitcoin",
+                                        pubKey:
+                                            "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                                    },
+                                    {
+                                        asset: "ZEC",
+                                        hosts: ["Ethereum"],
+                                        locked: "0",
+                                        origin: "Zcash",
+                                        pubKey:
+                                            "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                                    },
+                                    {
+                                        asset: "BCH",
+                                        hosts: ["Ethereum"],
+                                        locked: "0",
+                                        origin: "BitcoinCash",
+                                        pubKey:
+                                            "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                                    },
+                                ],
+                                gatewaysRootHash:
+                                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                primary: true,
+                                pubKey:
+                                    "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                            },
+                        ],
+                    },
+                }
+            ) as RenVMProviderInterface
+        ) as AbstractRenVMProvider;
 
-        const renJS = new RenJS("testnet"); // renVMProvider);
+        const renJS = new RenJS(renVMProvider);
+        // const renJS = new RenJS("testnet")
 
         // Use 0.0001 more than fee.
         let suggestedAmount;

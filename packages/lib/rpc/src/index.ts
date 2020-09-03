@@ -1,4 +1,9 @@
-export * as v1 from "./v1/index";
-export * as v2 from "./v2/index";
+// export * as v1 caused issues with some installations.
+
+import * as v1import from "./v1/index";
+import * as v2import from "./v2/index";
+
+export const v1 = v1import;
+export const v2 = v2import;
 
 export { AbstractRenVMProvider } from "./interface";

@@ -243,7 +243,9 @@ export class BitcoinBaseChain
         if (v2) {
             return {
                 outpoint: {
-                    hash: toURLBase64(transaction.txHash),
+                    hash: toURLBase64(
+                        Buffer.from(transaction.txHash, "hex").reverse()
+                    ),
                     index: transaction.vOut.toFixed(),
                 },
                 pubKeyScript: toURLBase64(pubKeyScript),
@@ -260,10 +262,11 @@ export class BitcoinBaseChain
     generateNHash = (
         nonce: Buffer,
         deposit: Transaction,
+        v2?: boolean,
         logger?: Logger
     ): Buffer => {
         const encoded = rawEncode(
-            ["bytes32", "bytes32", "uint32"],
+            ["bytes32", v2 ? "bytes" : "bytes32", "uint32"],
             [Ox(nonce), Ox(deposit.txHash), deposit.vOut]
         );
 

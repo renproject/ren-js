@@ -35,7 +35,7 @@ describe("Refactor", () => {
         // Use 0.0001 more than fee.
         const fees = await renJS.getFees();
         const suggestedAmount = new BigNumber(
-            Math.floor(fees[asset.toLowerCase()].lock + 0.0001 * 1e8)
+            Math.floor(fees[asset.toLowerCase()].burn + 0.0001 * 1e8)
         )
             .decimalPlaces(0)
             .toFixed();
@@ -104,7 +104,7 @@ describe("Refactor", () => {
         // Use 0.0001 more than fee.
         const fees = await renJS.getFees();
         const suggestedAmount = new BigNumber(
-            Math.floor(fees[asset.toLowerCase()].lock + 0.0001 * 1e8)
+            Math.floor(fees[asset.toLowerCase()].burn + 0.0001 * 1e8)
         )
             .decimalPlaces(0)
             .toFixed();

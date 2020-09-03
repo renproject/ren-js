@@ -170,6 +170,7 @@ export interface LockChain<
     generateNHash: (
         nonce: Buffer,
         deposit: Transaction,
+        v2?: boolean,
         logger?: Logger
     ) => Buffer;
 

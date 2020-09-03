@@ -48,9 +48,12 @@ export class HttpProvider<
         retry = 5
     ): Promise<Responses[Method]> {
         // Print request:
-        // console.log(
-        //     JSON.stringify(generatePayload(method, request), null, "    ")
-        // );
+        if (false as boolean) {
+            // tslint:disable-next-line: no-console
+            console.log(
+                JSON.stringify(generatePayload(method, request), null, "    ")
+            );
+        }
         try {
             const response = await retryNTimes(
                 () =>

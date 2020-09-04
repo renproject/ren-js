@@ -283,6 +283,7 @@ export const unmarshalMintTx = (
                 to,
                 token,
                 nhash,
+                false,
                 logger
             )
         );

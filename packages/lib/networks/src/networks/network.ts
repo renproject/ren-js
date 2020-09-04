@@ -8,9 +8,7 @@ export interface Contract {
 }
 
 interface Addresses<C extends Contract> {
-    [category: string]: {
-        [contract: string]: C;
-    };
+    [contract: string]: C;
 }
 
 export interface NetworkType<C extends Contract, A extends Addresses<C>> {
@@ -21,8 +19,9 @@ export interface NetworkType<C extends Contract, A extends Addresses<C>> {
         | "testnet"
         | "devnet"
         | "localnet"
-        | "bscTestnet";
-    chain: "main" | "kovan" | "bscTestnet";
+        | "bscTestnet"
+        | "rinkeby";
+    chain: "main" | "kovan" | "bscTestnet" | "rinkeby";
     isTestnet: boolean;
     label: string;
     networkID: number;

@@ -1,17 +1,7 @@
 import BasicAdapter from "@renproject/sol/build/chaosnet/BasicAdapter.json";
-import DarknodePayment from "@renproject/sol/build/chaosnet/DarknodePayment.json";
-import DarknodePaymentStore from "@renproject/sol/build/chaosnet/DarknodePaymentStore.json";
-import DarknodeRegistryLogic from "@renproject/sol/build/chaosnet/DarknodeRegistryLogicV1.json";
-import DarknodeRegistryProxy from "@renproject/sol/build/chaosnet/DarknodeRegistryProxy.json";
-import DarknodeRegistryStore from "@renproject/sol/build/chaosnet/DarknodeRegistryStore.json";
-import DarknodeSlasher from "@renproject/sol/build/chaosnet/DarknodeSlasher.json";
 import GatewayLogic from "@renproject/sol/build/chaosnet/GatewayLogicV1.json";
 import GatewayRegistry from "@renproject/sol/build/chaosnet/GatewayRegistry.json";
-import ProtocolLogic from "@renproject/sol/build/chaosnet/ProtocolLogicV1.json";
-import ProtocolProxy from "@renproject/sol/build/chaosnet/ProtocolProxy.json";
 import RenERC20 from "@renproject/sol/build/chaosnet/RenERC20LogicV1.json";
-import RenToken from "@renproject/sol/build/chaosnet/RenToken.json";
-import ERC20 from "@renproject/sol/build/erc/ERC20.json";
 import { AbiItem } from "web3-utils";
 
 import { CastNetwork, Contract } from "./network";
@@ -32,80 +22,23 @@ export const renChaosnet = CastNetwork({
     infura: "https://mainnet.infura.io",
     etherscan: "https://etherscan.io",
     addresses: {
-        ren: {
-            Protocol: {
-                address: ProtocolProxy.networks[networkID].address,
-                abi: ProtocolLogic.abi as AbiItem[],
-                artifact: ProtocolProxy as Contract,
-            },
-            DarknodeSlasher: {
-                address: DarknodeSlasher.networks[networkID].address,
-                abi: DarknodeSlasher.abi as AbiItem[],
-                artifact: DarknodeSlasher as Contract,
-            },
-            DarknodeRegistry: {
-                address: DarknodeRegistryProxy.networks[networkID].address,
-                abi: DarknodeRegistryLogic.abi as AbiItem[],
-                artifact: DarknodeRegistryLogic as Contract,
-                block: 9828748,
-            },
-            DarknodeRegistryStore: {
-                address: DarknodeRegistryStore.networks[networkID].address,
-                abi: DarknodeRegistryStore.abi as AbiItem[],
-                artifact: DarknodeRegistryStore as Contract,
-            },
-            DarknodePayment: {
-                address: DarknodePayment.networks[networkID].address,
-                abi: DarknodePayment.abi as AbiItem[],
-                artifact: DarknodePayment as Contract,
-            },
-            DarknodePaymentStore: {
-                address: DarknodePaymentStore.networks[networkID].address,
-                abi: DarknodePaymentStore.abi as AbiItem[],
-                artifact: DarknodePaymentStore as Contract,
-            },
+        GatewayRegistry: {
+            address: GatewayRegistry.networks[networkID].address,
+            abi: GatewayRegistry.abi as AbiItem[],
+            artifact: GatewayRegistry as Contract,
         },
-        gateways: {
-            GatewayRegistry: {
-                address: GatewayRegistry.networks[networkID].address,
-                abi: GatewayRegistry.abi as AbiItem[],
-                artifact: GatewayRegistry as Contract,
-            },
-            RenERC20: {
-                abi: RenERC20.abi as AbiItem[],
-                artifact: RenERC20 as Contract,
-            },
-            Gateway: {
-                abi: GatewayLogic.abi as AbiItem[],
-                artifact: GatewayLogic as Contract,
-            },
-            BasicAdapter: {
-                address: BasicAdapter.networks[networkID].address,
-                abi: BasicAdapter.abi as AbiItem[],
-                artifact: BasicAdapter as Contract,
-            },
+        RenERC20: {
+            abi: RenERC20.abi as AbiItem[],
+            artifact: RenERC20 as Contract,
         },
-        tokens: {
-            DAI: {
-                address: "0x6b175474e89094c44da98b954eedeac495271d0f",
-                decimals: 18,
-            },
-            REN: {
-                address: RenToken.networks[networkID].address,
-                abi: RenToken.abi as AbiItem[],
-                artifact: RenToken as Contract,
-                decimals: 18,
-            },
-            ETH: {
-                address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                decimals: 18,
-            },
+        Gateway: {
+            abi: GatewayLogic.abi as AbiItem[],
+            artifact: GatewayLogic as Contract,
         },
-        erc: {
-            ERC20: {
-                abi: ERC20.abi as AbiItem[],
-                artifact: ERC20 as Contract,
-            },
+        BasicAdapter: {
+            address: BasicAdapter.networks[networkID].address,
+            abi: BasicAdapter.abi as AbiItem[],
+            artifact: BasicAdapter as Contract,
         },
     },
 });

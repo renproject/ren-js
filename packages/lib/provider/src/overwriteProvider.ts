@@ -10,15 +10,13 @@ export class OverwriteProvider<
     Responses extends { [event: string]: any } = {}
 > implements Provider {
     // public readonly overrides: Map<string, Responses[keyof Responses]>;
-    private readonly httpProvider: HttpProvider<Requests, Responses>;
+    private readonly provider: Provider<Requests, Responses>;
 
     constructor(
-        ipOrMultiaddress: string,
+        provider: Provider<Requests, Responses>,
         _overrides: { [method: string]: Responses[keyof Responses] }
     ) {
-        this.httpProvider = new HttpProvider<Requests, Responses>(
-            ipOrMultiaddress
-        );
+        this.provider = provider;
     }
 
     public async sendMessage<Method extends string>(
@@ -69,7 +67,7 @@ export class OverwriteProvider<
         } as any) as { [method: string]: Responses[keyof Responses] };
         return (overrides[method]
             ? overrides[method]
-            : await this.httpProvider.sendMessage(
+            : await this.provider.sendMessage(
                   method,
                   request,
                   retry

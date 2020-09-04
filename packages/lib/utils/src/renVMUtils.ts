@@ -10,7 +10,7 @@ import {
     TransferParamsCommon,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
-import { keccak256 } from "ethereumjs-util";
+import { BN, keccak256 } from "ethereumjs-util";
 
 import { Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
@@ -78,12 +78,18 @@ export const generateGHash = (
     to: string,
     token: string,
     nonce: string,
+    v2?: boolean,
     logger?: Logger
 ): Buffer => {
     const pHash = Ox(generatePHash(payload, logger));
 
     const encoded = rawEncode(
-        ["bytes32", "address", "address", "bytes32"],
+        [
+            "bytes32",
+            v2 ? "bytes" : "address",
+            v2 ? "bytes" : "address",
+            "bytes32",
+        ],
         [Ox(pHash), Ox(token), Ox(to), Ox(nonce)]
     );
 
@@ -101,10 +107,17 @@ export const generateSighash = (
     to: string,
     tokenIdentifier: string,
     nonceHash: string,
+    v2?: boolean,
     logger?: Logger
 ): string => {
     const encoded = rawEncode(
-        ["bytes32", "uint256", "address", "address", "bytes32"],
+        [
+            "bytes32",
+            "uint256",
+            v2 ? "string" : "address",
+            v2 ? "string" : "address",
+            "bytes32",
+        ],
         [Ox(pHash), amount, tokenIdentifier, to, nonceHash]
     );
 
@@ -178,6 +191,7 @@ export const fixSignature = (
     to: string,
     token: string,
     nhash: string,
+    v2?: boolean,
     logger?: Logger
 ): Signature => {
     const expectedSighash = generateSighash(
@@ -186,6 +200,7 @@ export const fixSignature = (
         to,
         token,
         nhash,
+        v2,
         logger
     );
     if (Ox(sighash) !== Ox(expectedSighash)) {
@@ -246,6 +261,69 @@ export const fixSignature = (
 
     const signature: Signature = {
         r,
+        s: to32Bytes(sBN),
+        v: vFixed,
+    };
+
+    return signature;
+};
+
+export const fixSignatureSimple = (
+    r: Buffer,
+    s: Buffer,
+    v: string
+): Signature => {
+    let sBN = new BigNumber(s.toString("hex"), 16);
+    let vFixed =
+        ((new BigNumber(strip0x(v) || "0", 16).toNumber() || 0) % 27) + 27;
+
+    // For a given key, there are two valid signatures for each signed message.
+    // We always take the one with the lower `s`.
+    // secp256k1n/2 = 57896044618658097711785492504343953926418782139537452191302581570759080747168.5
+    if (sBN.gt(secp256k1n.div(2))) {
+        // Take s = -s % secp256k1n
+        sBN = secp256k1n.minus(sBN);
+        // Switch v
+        vFixed = switchV(vFixed);
+    }
+
+    // TODO: Fix code below to check against proper mintAuthority
+
+    // // Currently, the wrong `v` value may be returned from RenVM. We recover the
+    // // address to see if we need to switch `v`. This can be removed once RenVM
+    // // has been updated.
+    // const recovered = {
+    //     [v]: pubToAddress(ecrecover(
+    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         v,
+    //         Buffer.from(strip0x(r), "hex"),
+    //         s.toArrayLike(Buffer, "be", 32),
+    //     )),
+
+    //     [switchV(v)]: pubToAddress(ecrecover(
+    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         switchV(v),
+    //         Buffer.from(strip0x(r), "hex"),
+    //         s.toArrayLike(Buffer, "be", 32),
+    //     )),
+    // };
+
+    // const expected = Buffer.from(strip0x(.network.renVM.mintAuthority), "hex");
+    // if (recovered[v].equals(expected)) {
+    //     // Do nothing
+    // } else if (recovered[switchV(v)].equals(expected)) {
+    //     // tslint:disable-next-line: no-console
+    //     console.info("[info][ren-js] switching v value");
+    //     v = switchV(v);
+    // } else {
+    //     throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
+    // }
+
+    const to32Bytes = (bn: BigNumber) =>
+        ("0".repeat(64) + bn.toString(16)).slice(-64);
+
+    const signature: Signature = {
+        r: to32Bytes(new BigNumber(r.toString("hex"), 16)),
         s: to32Bytes(sBN),
         v: vFixed,
     };

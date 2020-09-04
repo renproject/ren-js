@@ -119,7 +119,7 @@ export const waitForReceipt = async (
             if (receipt && receipt.blockHash) {
                 break;
             }
-            await sleep(3 * SECONDS);
+            await sleep(15 * SECONDS);
         }
 
         try {
@@ -263,8 +263,8 @@ export const getTokenAddress = async (
 ): Promise<string> => {
     try {
         const registry = new web3.eth.Contract(
-            network.addresses.gateways.GatewayRegistry.abi,
-            network.addresses.gateways.GatewayRegistry.address
+            network.addresses.GatewayRegistry.abi,
+            network.addresses.GatewayRegistry.address
         );
         return await registry.methods
             .getTokenBySymbol(getTokenName(tokenOrContract))
@@ -284,8 +284,8 @@ export const getGatewayAddress = async (
 ) => {
     try {
         const registry = new web3.eth.Contract(
-            network.addresses.gateways.GatewayRegistry.abi,
-            network.addresses.gateways.GatewayRegistry.address
+            network.addresses.GatewayRegistry.abi,
+            network.addresses.GatewayRegistry.address
         );
         return await registry.methods
             .getGatewayBySymbol(getTokenName(tokenOrContract))
@@ -311,7 +311,7 @@ export const findTransactionBySigHash = async (
             tokenOrContract
         );
         const gatewayContract = new web3.eth.Contract(
-            network.addresses.gateways.Gateway.abi,
+            network.addresses.Gateway.abi,
             gatewayAddress
         );
         // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
@@ -507,22 +507,23 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
 
         this.web3 = new Web3(web3Provider);
 
+        this.renNetworkDetails =
+            renNetworkDetails ||
+            (renNetwork ? RenNetworkDetailsMap[renNetwork] : undefined);
+
         if (renNetwork) {
-            this.initialize(renNetwork, renNetworkDetails);
+            this.initialize(renNetwork);
         }
     }
 
     /**
      * See [LockChain.initialize].
      */
-    initialize = (
-        renNetwork: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails
-    ) => {
+    initialize = (renNetwork: RenNetwork) => {
         if (!this.renNetwork) {
             this.renNetwork = renNetwork;
             this.renNetworkDetails =
-                renNetworkDetails || RenNetworkDetailsMap[renNetwork];
+                this.renNetworkDetails || RenNetworkDetailsMap[renNetwork];
         }
         return this;
     };

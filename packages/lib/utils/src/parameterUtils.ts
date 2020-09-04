@@ -36,7 +36,7 @@ export const x = 0;
 //             ...restOfParams,
 //             suggestedAmount: amount,
 //             contractCalls: [{
-//                 sendTo: network.addresses.gateways.BasicAdapter.address,
+//                 sendTo: network.addresses.BasicAdapter.address,
 //                 contractFn: "mint",
 //                 contractParams: [
 //                     { type: "string", name: "_symbol", value: renContract.asset },
@@ -60,13 +60,13 @@ export const x = 0;
 //         //     sendTo: tokenAddress,
 //         //     contractFn: "approve",
 //         //     contractParams: [
-//         //         { type: "address" as const, name: "spender", value: network.addresses.gateways.BasicAdapter.address },
+//         //         { type: "address" as const, name: "spender", value: network.addresses.BasicAdapter.address },
 //         //         { type: "uint256" as const, name: "amount", value: toBigNumber(amount).toFixed() },
 //         //     ],
 //         //     txConfig,
 //         // };
 
-//         const gateway: string = network.addresses.gateways[`${token.toUpperCase()}Gateway`]._address;
+//         const gateway: string = network.addresses[`${token.toUpperCase()}Gateway`]._address;
 
 //         return {
 //             ...restOfParams,

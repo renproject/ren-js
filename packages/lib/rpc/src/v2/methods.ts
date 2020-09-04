@@ -135,8 +135,9 @@ export interface ResponseSubmitTx {
 export interface ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
+        version: "1";
         hash: string;
-        to: RenContract;
+        selector: RenContract;
         in: TypedPackValue;
         out?: TypedPackValue;
     };
@@ -155,26 +156,26 @@ export interface ResponseQueryTxs {
 }
 
 export interface ResponseQueryMintTx extends ResponseQueryTx {
-    // Tx       abi.Tx`json:"tx"`
-    tx: {
-        hash: string;
-        to: RenContract;
-        in: TypedPackValue;
-        out?: TypedPackValue;
-    };
-    // TxStatus string`json:"txStatus"`
-    txStatus: TxStatus;
+    // // Tx       abi.Tx`json:"tx"`
+    // tx: {
+    //     hash: string;
+    //     to: RenContract;
+    //     in: TypedPackValue;
+    //     out?: TypedPackValue;
+    // };
+    // // TxStatus string`json:"txStatus"`
+    // txStatus: TxStatus;
 }
 
 export interface ResponseQueryBurnTx extends ResponseQueryTx {
-    // Tx       abi.Tx`json:"tx"`
-    tx: {
-        hash: string;
-        to: RenContract;
-        in: TypedPackValue;
-    };
-    // TxStatus string`json:"txStatus"`
-    txStatus: TxStatus;
+    // // Tx       abi.Tx`json:"tx"`
+    // tx: {
+    //     hash: string;
+    //     to: RenContract;
+    //     in: TypedPackValue;
+    // };
+    // // TxStatus string`json:"txStatus"`
+    // txStatus: TxStatus;
 }
 
 // ResponseQueryNumPeers defines the response of the MethodQueryNumPeers.

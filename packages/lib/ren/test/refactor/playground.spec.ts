@@ -1,25 +1,20 @@
 // tslint:disable: no-console
 
-import { BinanceSmartChain, Bitcoin, Ethereum } from "@renproject/chains";
-import { renBscTestnet, renTestnet } from "@renproject/networks";
-import { OverwriteProvider, Provider } from "@renproject/provider";
+import { Bitcoin, Ethereum } from "@renproject/chains";
+import { renRinkeby } from "@renproject/networks";
+import { HttpProvider, OverwriteProvider } from "@renproject/provider";
 import { AbstractRenVMProvider } from "@renproject/rpc";
-// import {
-//     RenVMParams,
-//     RenVMProvider,
-//     RenVMProviderInterface,
-//     RenVMResponses,
-// } from "@renproject/rpc/build/main/v2";
-import { Ox } from "@renproject/utils";
-import chai from "chai";
-import CryptoAccount from "send-crypto";
-import HDWalletProvider from "truffle-hdwallet-provider";
 import {
     RenVMParams,
     RenVMProvider,
     RenVMProviderInterface,
     RenVMResponses,
 } from "@renproject/rpc/build/main/v2";
+import { extractError, Ox } from "@renproject/utils";
+import chai from "chai";
+import { blue, cyan, green, magenta, red, yellow } from "chalk";
+import CryptoAccount from "send-crypto";
+import HDWalletProvider from "truffle-hdwallet-provider";
 
 import RenJS from "../../src/index";
 
@@ -30,8 +25,10 @@ require("dotenv").config();
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
+const colors = [green, magenta, yellow, cyan, blue, red];
+
 describe("Refactor", () => {
-    it("mint to contract", async function () {
+    it("playground", async function () {
         this.timeout(100000000000);
 
         const asset = "BTC";
@@ -40,11 +37,15 @@ describe("Refactor", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
+        const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
+            "http://34.239.188.210:18515"
+        );
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-            "https://lightnode-new-testnet.herokuapp.com/",
+            // "https://lightnode-new-testnet.herokuapp.com/",
+            httpProvider,
             {
                 ren_queryShards: {
                     shards: [
@@ -87,13 +88,12 @@ describe("Refactor", () => {
                 },
             }
         ) as RenVMProviderInterface;
-
         const renVMProvider = new RenVMProvider(
             "testnet",
             rpcProvider
         ) as AbstractRenVMProvider;
 
-        const renJS = new RenJS(renVMProvider);
+        const renJS = new RenJS(renVMProvider); // , { logLevel: "trace" });
         // const renJS = new RenJS("testnet")
 
         // Use 0.0001 more than fee.
@@ -104,62 +104,73 @@ describe("Refactor", () => {
                 fees[asset.toLowerCase()].lock + 0.0001 * 1e8
             );
         } catch (error) {
-            console.error(error);
+            console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = 0.0008 * 1e8;
         }
 
         const lockAndMint = await renJS.lockAndMint({
-            // Amount of BTC we are sending (in Satoshis)
-            suggestedAmount,
-
-            asset,
+            asset: "BTC",
             from: Bitcoin(),
-            to: Ethereum(provider).Contract({
-                // The contract we want to interact with
-                // sendTo: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
-                sendTo: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
-
-                // The name of the function we want to call
-                contractFn: "mint",
-
-                // Arguments expected for calling `deposit`
-                contractParams: [
-                    { type: "string", name: "_symbol", value: "BTC" },
-                    {
-                        type: "address",
-                        name: "_address",
-                        value: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
-                    },
-                ],
+            to: Ethereum(provider, undefined, renRinkeby).Account({
+                address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
-            nonce: Ox("00".repeat(32)),
+            nonce: Ox("20".repeat(32)),
         });
 
-        console.info("gateway address:", lockAndMint.gatewayAddress);
+        console.info(
+            `Deposit ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
+        );
 
         console.log(
-            `${asset} balance: ${await account.balanceOf(
-                asset
-            )} ${asset} (${await account.address(asset)})`
+            `${blue("[faucet]")} ${blue(asset)} balance is ${blue(
+                await account.balanceOf(asset)
+            )} ${blue(asset)} (${blue(await account.address(asset))})`
         );
 
         await new Promise((resolve, reject) => {
+            let i = 0;
+
             lockAndMint.on("deposit", async (deposit) => {
-                console.info(
-                    "received deposit: ",
-                    deposit.deposit,
-                    await deposit.txHash()
+                const hash = await deposit.txHash();
+
+                const color = colors[i];
+                i += 1;
+
+                const info = (...args) => {
+                    console.log(color(`[${hash.slice(0, 6)}]`), ...args);
+                };
+
+                info(
+                    `Received ${
+                        // tslint:disable-next-line: no-any
+                        (deposit.deposit as any).amount / 1e8
+                    } ${asset}`
                 );
 
-                await deposit.confirmed().on("confirmation", console.log);
-                await deposit.signed().on("status", console.log);
-                await deposit.mint().on("transactionHash", console.log);
+                info("confirming");
+                await deposit
+                    .confirmed()
+                    .on("confirmation", (confs, target) => {
+                        info(`${confs}/${target} confirmations`);
+                    });
+                info("waiting for signature");
+                await deposit.signed().on("status", (status) => {
+                    info(`status: ${status}`);
+                });
+                info("minting on Ethereum");
+                await deposit.mint().on("transactionHash", (txHash) => {
+                    info(`txHash: ${txHash}`);
+                });
 
                 resolve();
             });
 
-            console.log(`Sending ${suggestedAmount / 1e8} ${asset}`);
+            console.log(
+                `${blue("[faucet]")} Sending ${blue(
+                    suggestedAmount / 1e8
+                )} ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
+            );
             account
                 .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
                 .catch(reject);

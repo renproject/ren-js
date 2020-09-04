@@ -18,6 +18,7 @@ import {
     parseRenContract,
     SECONDS,
     sleep,
+    strip0x,
     TokenPrices,
     toURLBase64,
 } from "@renproject/utils";
@@ -233,8 +234,8 @@ export class RenVMProvider implements RenVMProviderInterface {
                 output,
                 payload: toURLBase64(payload),
                 phash: toURLBase64(pHash),
-                to,
-                token,
+                to: strip0x(to),
+                token: strip0x(token),
             },
         };
         return {
@@ -350,20 +351,21 @@ export class RenVMProvider implements RenVMProviderInterface {
     public readonly queryMintOrBurn = async <
         T extends MintTransaction | BurnTransaction
     >(
-        utxoTxHash: Buffer
+        renVMTxHash: Buffer
     ): Promise<T> => {
-        const response = await this.provider.sendMessage(
-            RPCMethod.MethodQueryTx,
-            {
-                txHash: toURLBase64(utxoTxHash),
+        try {
+            const response = await this.queryTx(toURLBase64(renVMTxHash));
+            // Unmarshal transaction.
+            // TODO: Improve mint/burn detection
+            const isMint = response.tx.selector.match(/\/to/);
+            if (isMint) {
+                return unmarshalMintTx(response as ResponseQueryMintTx) as T;
+            } else {
+                return unmarshalBurnTx(response as ResponseQueryBurnTx) as T;
             }
-        );
-        // Unmarshal transaction.
-        const { asset, from } = parseRenContract(response.tx.to);
-        if (asset.toUpperCase() === from.toUpperCase()) {
-            return unmarshalMintTx(response as ResponseQueryMintTx) as T;
-        } else {
-            return unmarshalBurnTx(response as ResponseQueryBurnTx) as T;
+        } catch (error) {
+            console.error(error);
+            throw error;
         }
     };
 

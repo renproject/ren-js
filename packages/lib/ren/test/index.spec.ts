@@ -111,11 +111,11 @@ describe("RenJS initialization and exports", () => {
     //         for (const asset of ["BTC", "ZEC", "BCH"] as const) {
     //             // Without const, defaults to string[]
     //             expect(await renJS.getTokenAddress(web3, asset)).toEqual(
-    //                 renJS.network.addresses.gateways[`Ren${asset}`]._address
+    //                 renJS.network.addresses[`Ren${asset}`]._address
     //             );
 
     //             expect(await renJS.getGatewayAddress(web3, asset)).toEqual(
-    //                 renJS.network.addresses.gateways[`${asset}Gateway`]._address
+    //                 renJS.network.addresses[`${asset}Gateway`]._address
     //             );
     //         }
     //     });

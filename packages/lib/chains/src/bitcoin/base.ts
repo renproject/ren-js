@@ -13,6 +13,7 @@ import { keccak256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import {
     getConfirmations,
+    getUTXO,
     getUTXOs,
 } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
@@ -164,14 +165,17 @@ export class BitcoinBaseChain
     /**
      * See [[OriginChain.transactionConfidence]].
      */
-    transactionConfidence = (
+    transactionConfidence = async (
         transaction: Transaction
-    ):
-        | Promise<{ current: number; target: number }>
-        | { current: number; target: number } => {
+    ): Promise<{ current: number; target: number }> => {
+        transaction = await getUTXO(
+            this.chainNetwork === "testnet",
+            transaction.txHash,
+            transaction.vOut
+        );
         return {
             current: transaction.confirmations,
-            target: this.chainNetwork === "mainnet" ? 6 : 2,
+            target: this.chainNetwork === "mainnet" ? 6 : 1,
         };
     };
 
@@ -267,7 +271,11 @@ export class BitcoinBaseChain
     ): Buffer => {
         const encoded = rawEncode(
             ["bytes32", v2 ? "bytes" : "bytes32", "uint32"],
-            [Ox(nonce), Ox(deposit.txHash), deposit.vOut]
+            [
+                Ox(nonce),
+                Ox(Buffer.from(deposit.txHash, "hex").reverse()),
+                deposit.vOut,
+            ]
         );
 
         const digest = keccak256(encoded);

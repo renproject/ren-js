@@ -46,7 +46,7 @@ export class EthereumChain
         value,
         address,
     }: {
-        value: BigNumber | string | number;
+        value?: BigNumber | string | number;
         address?: string;
     }): this => {
         this.getContractCalls = async (
@@ -66,8 +66,8 @@ export class EthereumChain
                 }
                 return [
                     {
-                        sendTo: this.renNetworkDetails.addresses.gateways
-                            .BasicAdapter.address,
+                        sendTo: this.renNetworkDetails.addresses.BasicAdapter
+                            .address,
                         contractFn: "mint",
                         contractParams: [
                             {

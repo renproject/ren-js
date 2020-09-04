@@ -333,7 +333,7 @@ describe("Cross chain transactions", function () {
     //                 const testcase = testcaseFn.fn();
     //                 // const adapterContract = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
     //                 const adapterContract =
-    //                     network.addresses.gateways.BasicAdapter.address;
+    //                     network.addresses.BasicAdapter.address;
     //                 const amount = Math.floor(0.00035001 * 10 ** 8);
     //                 const ethAddress = accounts[0];
     //                 const account = new CryptoAccount(PRIVATE_KEY, {
@@ -341,9 +341,9 @@ describe("Cross chain transactions", function () {
     //                 });
     //                 const srcAddress = await account.address(testcase.token);
     //                 const registryABI =
-    //                     network.addresses.gateways.GatewayRegistry.abi;
+    //                     network.addresses.GatewayRegistry.abi;
     //                 const registryAddress =
-    //                     network.addresses.gateways.GatewayRegistry.address;
+    //                     network.addresses.GatewayRegistry.address;
     //                 const gatewayRegistry = new web3.eth.Contract(
     //                     registryABI,
     //                     registryAddress
@@ -457,9 +457,9 @@ describe("Cross chain transactions", function () {
     //                 const amount = 0.00040001 * 10 ** 8;
     //                 const ethAddress = accounts[0];
     //                 const registryABI =
-    //                     network.addresses.gateways.GatewayRegistry.abi;
+    //                     network.addresses.GatewayRegistry.abi;
     //                 const registryAddress =
-    //                     network.addresses.gateways.GatewayRegistry.address;
+    //                     network.addresses.GatewayRegistry.address;
     //                 const gatewayRegistry = new web3.eth.Contract(
     //                     registryABI,
     //                     registryAddress
@@ -628,7 +628,7 @@ describe("Cross chain transactions", function () {
     //             .value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
     //         const adapterContract =
-    //             network.addresses.gateways.BasicAdapter.address;
+    //             network.addresses.BasicAdapter.address;
     //         const mint = renJS.lockAndMint({
     //             web3Provider: web3.currentProvider,
     //             sendToken: RenJS.Tokens.BTC.Btc2Eth,

@@ -1,12 +1,14 @@
 import {
-    AbiItem,
     BurnTransaction,
-    Logger,
     MintTransaction,
     RenVMAssetFees,
     RenVMFees,
 } from "@renproject/interfaces";
-import { assert, fixSignature, Ox, signatureToBuffer } from "@renproject/utils";
+import {
+    assert,
+    fixSignatureSimple,
+    signatureToBuffer,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 import {
@@ -14,11 +16,9 @@ import {
     ResponseQueryFees,
     ResponseQueryMintTx,
 } from "./methods";
-import { unmarshalPackValue, unmarshalTypedPackValue } from "./pack/pack";
-import { Fees, RenVMOutputUTXO, RenVMType } from "./value";
+import { unmarshalTypedPackValue } from "./pack/pack";
+import { Fees } from "./value";
 
-const decodeString = (input: string) => Buffer.from(input, "base64").toString();
-const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
 const decodeNumber = (input: string) => new BigNumber(input);
 
 export const unmarshalMintTx = (
@@ -26,35 +26,46 @@ export const unmarshalMintTx = (
 ): MintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
-    // TODO: Check that response is mint response.
-    // assert(
-    //     parseRenContract(response.tx.to).to === "Eth",
-    //     `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.to})`
-    // );
+    assert(
+        response.tx.selector.match(/\/to/) !== null,
+        `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.selector})`
+    );
+
+    let out;
+
+    const inValue = unmarshalTypedPackValue(response.tx.in);
+
+    if (response.tx.out) {
+        out = unmarshalTypedPackValue(response.tx.out);
+        const [r, s, v] = [
+            out.sig.slice(0, 32),
+            out.sig.slice(32, 64),
+            (out.sig[64] % 27).toString(),
+        ];
+        out.signature = signatureToBuffer(fixSignatureSimple(r, s, v));
+        out.nhash = inValue.nhash;
+    }
 
     return {
-        hash: decodeBytes(response.tx.hash),
+        hash: response.tx.hash,
         txStatus: response.txStatus,
-        to: response.tx.to,
-        in: unmarshalTypedPackValue(response.tx.in),
-        out: response.tx.out
-            ? unmarshalTypedPackValue(response.tx.out)
-            : undefined,
+        to: response.tx.selector,
+        in: inValue,
+        out,
     };
 };
 
 export const unmarshalBurnTx = (
     response: ResponseQueryBurnTx
 ): BurnTransaction => {
-    // TODO: Check that result is burn response.
-    // assert(
-    //     parseRenContract(response.tx.to).from === Chain.Ethereum,
-    //     `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.to})`
-    // );
+    assert(
+        response.tx.selector.match(/\/from/) !== null,
+        `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`
+    );
 
     return {
-        hash: decodeBytes(response.tx.hash),
-        to: response.tx.to,
+        hash: response.tx.hash,
+        to: response.tx.selector,
         in: unmarshalTypedPackValue(response.tx.in),
         txStatus: response.txStatus,
     };

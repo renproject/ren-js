@@ -147,6 +147,7 @@ export class LockAndMint extends EventEmitter {
             strip0x(sendTo),
             tokenGatewayContract,
             nonce,
+            this.renVM.version >= 1,
             this.logger
         );
         this.mpkh = await this.renVM.selectPublicKey(
@@ -166,15 +167,46 @@ export class LockAndMint extends EventEmitter {
         return this.gatewayAddress;
     };
 
-    public wait = async () => {
+    public processDeposit = async (deposit: {}) => {
         if (!this.pHash || !this.gHash || !this.mpkh || !this.gatewayAddress) {
             throw new Error(
                 "Gateway address must be generated before calling 'wait'."
             );
         }
 
-        // let deposits: OrderedMap<string, {}> = OrderedMap();
-        // let confidences: OrderedMap<string, number> = OrderedMap();
+        // tslint:disable-next-line: no-non-null-assertion
+        const depositID = this.params.from.transactionID(deposit);
+        const existingDeposit = this.deposits.get(depositID);
+
+        // If the confidence has increased.
+        if (
+            !existingDeposit
+            // || (existingConfidenceRatio !== undefined &&
+            // confidenceRatio > existingConfidenceRatio)
+        ) {
+            // tslint:disable-next-line: no-use-before-declare
+            const depositItem = new LockAndMintDeposit(
+                this.renVM,
+                this.params,
+                this.logger,
+                deposit,
+                this.mpkh,
+                this.gHash,
+                this.pHash
+            );
+            this.emit("deposit", depositItem);
+            // this.deposits.set(deposit);
+            this.logger.debug("New Deposit", deposit);
+            this.deposits = this.deposits.set(depositID, depositItem);
+        }
+    };
+
+    public wait = async () => {
+        if (!this.pHash || !this.gHash || !this.mpkh || !this.gatewayAddress) {
+            throw new Error(
+                "Gateway address must be generated before calling 'wait'."
+            );
+        }
 
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -189,55 +221,11 @@ export class LockAndMint extends EventEmitter {
                     this.gatewayAddress
                 );
 
-                let newDeposit = false;
                 for (const deposit of newDeposits) {
-                    // tslint:disable-next-line: no-non-null-assertion
-                    const depositID = this.params.from.transactionID(deposit);
-                    const existingDeposit = this.deposits.get(depositID);
-
-                    // const confidence = await this.params.from.transactionConfidence(
-                    //     deposit
-                    // );
-                    // const confidenceRatio =
-                    //     confidence.target === 0
-                    //         ? 1
-                    //         : confidence.current / confidence.target;
-                    // const existingConfidenceRatio = confidences.get(depositID);
-
-                    // If the confidence has increased.
-                    if (
-                        !existingDeposit
-                        // || (existingConfidenceRatio !== undefined &&
-                        // confidenceRatio > existingConfidenceRatio)
-                    ) {
-                        // tslint:disable-next-line: no-use-before-declare
-                        const depositItem = new LockAndMintDeposit(
-                            this.renVM,
-                            this.params,
-                            this.logger,
-                            deposit,
-                            this.mpkh,
-                            this.gHash,
-                            this.pHash
-                        );
-                        this.emit("deposit", depositItem);
-                        // this.deposits.set(deposit);
-                        this.logger.debug("New Deposit", deposit);
-                        newDeposit = true;
-                        this.deposits = this.deposits.set(
-                            depositID,
-                            depositItem
-                        );
-                    }
-                    // confidences = confidences.set(depositID, confidenceRatio);
-                }
-                if (newDeposit) {
-                    continue;
+                    await this.processDeposit(deposit);
                 }
             } catch (error) {
                 this.logger.error(extractError(error));
-                await sleep(1 * SECONDS);
-                continue;
             }
             await sleep(15 * SECONDS);
         }
@@ -252,7 +240,7 @@ export class LockAndMint extends EventEmitter {
     ): this => {
         // Emit previous deposit events.
         if (event === "deposit") {
-            this.deposits.valueSeq().map((deposit) => {
+            this.deposits.map((deposit) => {
                 listener(deposit);
             });
         }
@@ -365,6 +353,7 @@ export class LockAndMintDeposit {
             strip0x(sendTo),
             tokenGatewayContract,
             nonce,
+            this.renVM.version >= 1,
             this.logger
         );
 
@@ -458,6 +447,137 @@ export class LockAndMintDeposit {
         return this.queryTxResult;
     };
 
+    public submit = async (): Promise<string> => {
+        const deposit = this.deposit;
+        let txHash = this.params.txHash
+            ? txHashToBase64(this.params.txHash)
+            : undefined;
+
+        const utxoTxHash = await this.txHash();
+        if (txHash && txHash !== utxoTxHash) {
+            throw new Error(
+                `Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`
+            );
+        }
+        txHash = utxoTxHash;
+
+        const { contractCalls, nonce } = this.params;
+
+        if (!nonce) {
+            throw new Error("Unable to submit to RenVM without nonce.");
+        }
+
+        if (!contractCalls || !contractCalls.length) {
+            throw new Error(
+                `Unable to submit to RenVM without contract call details.`
+            );
+        }
+
+        // Last contract call
+        const { contractParams, sendTo, contractFn } = contractCalls[
+            contractCalls.length - 1
+        ];
+
+        const fnABI = payloadToMintABI(contractFn, contractParams || []);
+
+        const encodedParameters = new AbiCoder().encodeParameters(
+            (contractParams || []).map((i) => i.type),
+            (contractParams || []).map((i) => i.value)
+        );
+
+        if (this.params.tags && this.params.tags.length > 1) {
+            throw new Error("Providing multiple tags is not supported yet.");
+        }
+        const tags: [string] | [] =
+            this.params.tags && this.params.tags.length
+                ? [this.params.tags[0]]
+                : [];
+
+        const tokenIdentifier = await this.params.to.resolveTokenGatewayContract(
+            parseRenContract(resolveInToken(this.params)).asset
+        );
+
+        const nHash = this.params.from.generateNHash(
+            fromHex(nonce),
+            this.deposit,
+            this.renVM.version >= 2
+        );
+
+        const pubKeyScript = await this.params.from.getPubKeyScript(
+            this.params.asset,
+            this.mpkh,
+            this.gHash
+        );
+
+        txHash = await this.renVM.submitMint(
+            resolveInToken(this.params),
+            this.gHash,
+            this.mpkh,
+            nHash,
+            fromHex(nonce),
+            this.params.from.transactionRPCFormat(
+                deposit,
+                pubKeyScript,
+                this.renVM.version >= 2 // v2
+            ),
+            fromHex(encodedParameters),
+            this.pHash,
+            Ox(sendTo),
+            Ox(tokenIdentifier),
+            contractFn,
+            fnABI,
+            tags
+        );
+        return txHash;
+    };
+
+    public confirmed = (): PromiEvent<
+        LockAndMintDeposit,
+        { confirmation: [number, number] }
+    > => {
+        const promiEvent = newPromiEvent<
+            LockAndMintDeposit,
+            { confirmation: [number, number] }
+        >();
+
+        (async () => {
+            this.submit().catch((_error) => {
+                /* ignore error */
+            });
+
+            let currentConfidenceRatio = 0;
+            // tslint:disable-next-line: no-constant-condition
+            while (true) {
+                try {
+                    const confidence = await this.params.from.transactionConfidence(
+                        this.deposit
+                    );
+                    const confidenceRatio =
+                        confidence.current / confidence.target;
+                    if (confidenceRatio > currentConfidenceRatio) {
+                        currentConfidenceRatio = confidenceRatio;
+                        promiEvent.emit(
+                            "confirmation",
+                            confidence.current,
+                            confidence.target
+                        );
+                    }
+                    if (confidenceRatio >= 1) {
+                        break;
+                    }
+                } catch (error) {
+                    this.logger.error(extractError(error));
+                }
+                await sleep(15 * SECONDS);
+            }
+            return this;
+        })()
+            .then(promiEvent.resolve)
+            .catch(promiEvent.reject);
+
+        return promiEvent;
+    };
+
     /**
      * submit sends the mint details to RenVM and waits for the signature to be
      * available.
@@ -466,7 +586,7 @@ export class LockAndMintDeposit {
      *        instead of calling `wait`.
      * @returns {PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>}
      */
-    public submit = (): PromiEvent<
+    public signed = (): PromiEvent<
         LockAndMintDeposit,
         { txHash: [string]; status: [TxStatus] }
     > => {
@@ -476,127 +596,51 @@ export class LockAndMintDeposit {
         >();
 
         (async () => {
-            // Initialize chains.
+            // const deposit = this.deposit;
+            // let txHash = this.params.txHash
+            //     ? txHashToBase64(this.params.txHash)
+            //     : undefined;
 
-            const deposit = this.deposit;
-            let txHash = this.params.txHash
-                ? txHashToBase64(this.params.txHash)
-                : undefined;
+            const utxoTxHash = await this.txHash();
+            // if (txHash && txHash !== utxoTxHash) {
+            //     throw new Error(
+            //         `Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`
+            //     );
+            // }
+            // txHash = utxoTxHash;
 
-            if (deposit) {
-                const utxoTxHash = await this.txHash();
-                if (txHash && txHash !== utxoTxHash) {
-                    throw new Error(
-                        `Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`
+            let txHash: string;
+
+            // Try to submit to RenVM. If that fails, see if they already
+            // know about the transaction.
+            try {
+                txHash = await this.submit();
+                if (txHash !== utxoTxHash) {
+                    this.logger.warn(
+                        `Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`
                     );
                 }
-                txHash = utxoTxHash;
-
-                const { contractCalls, nonce } = this.params;
-
-                if (!nonce) {
-                    throw new Error("Unable to submit to RenVM without nonce.");
-                }
-
-                if (!contractCalls || !contractCalls.length) {
-                    throw new Error(
-                        `Unable to submit to RenVM without contract call details.`
-                    );
-                }
-
-                // Last contract call
-                const { contractParams, sendTo, contractFn } = contractCalls[
-                    contractCalls.length - 1
-                ];
-
-                const fnABI = payloadToMintABI(
-                    contractFn,
-                    contractParams || []
-                );
-
-                const encodedParameters = new AbiCoder().encodeParameters(
-                    (contractParams || []).map((i) => i.type),
-                    (contractParams || []).map((i) => i.value)
-                );
-
-                // Try to submit to RenVM. If that fails, see if they already
-                // know about the transaction.
+            } catch (error) {
+                // this.logger.error(error);
                 try {
-                    if (this.params.tags && this.params.tags.length > 1) {
+                    // Check if the darknodes have already seen the transaction
+                    const queryTxResponse = await this.queryTx();
+                    if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
                         throw new Error(
-                            "Providing multiple tags is not supported yet."
+                            `Transaction ${utxoTxHash} has not been submitted previously.`
                         );
                     }
-                    const tags: [string] | [] =
-                        this.params.tags && this.params.tags.length
-                            ? [this.params.tags[0]]
-                            : [];
-
-                    const tokenIdentifier = await this.params.to.resolveTokenGatewayContract(
-                        parseRenContract(resolveInToken(this.params)).asset
-                    );
-
-                    const nHash = this.params.from.generateNHash(
-                        fromHex(nonce),
-                        this.deposit,
-                        this.renVM.version >= 2
-                    );
-
-                    const pubKeyScript = await this.params.from.getPubKeyScript(
-                        this.params.asset,
-                        this.mpkh,
-                        this.gHash
-                    );
-
-                    txHash = await this.renVM.submitMint(
-                        resolveInToken(this.params),
-                        this.gHash,
-                        this.mpkh,
-                        nHash,
-                        fromHex(nonce),
-                        this.params.from.transactionRPCFormat(
-                            deposit,
-                            pubKeyScript,
-                            this.renVM.version >= 2 // v2
-                        ),
-                        fromHex(encodedParameters),
-                        this.pHash,
-                        Ox(sendTo),
-                        Ox(tokenIdentifier),
-                        contractFn,
-                        fnABI,
-                        tags
-                    );
-                    if (txHash !== utxoTxHash) {
-                        this.logger.warn(
-                            `Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`
-                        );
-                    }
-                } catch (error) {
-                    // this.logger.error(error);
-                    try {
-                        // Check if the darknodes have already seen the transaction
-                        const queryTxResponse = await this.queryTx();
-                        if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
-                            throw new Error(
-                                `Transaction ${txHash} has not been submitted previously.`
-                            );
-                        }
-                    } catch (errorInner) {
-                        // Ignore errorInner.
-                        // this.logger.error(errorInner);
-                        this.logger.debug(error);
-                        throw error;
-                    }
+                    txHash = queryTxResponse.hash;
+                } catch (errorInner) {
+                    // Ignore errorInner.
+                    this.logger.debug(errorInner);
+                    // this.logger.debug(error);
+                    throw error;
                 }
-
-                promiEvent.emit("txHash", txHash);
-                this.logger.debug("RenVM txHash", txHash);
-            } else if (!txHash) {
-                throw new Error(
-                    `Must call 'wait' or provide UTXO or RenVM transaction hash.`
-                );
             }
+
+            promiEvent.emit("txHash", txHash);
+            this.logger.debug("RenVM txHash", txHash);
 
             const response = await this.renVM.waitForTX<MintTransaction>(
                 Buffer.from(txHash, "base64"),
@@ -615,9 +659,6 @@ export class LockAndMintDeposit {
             );
 
             return this;
-
-            // tslint:disable-next-line: no-use-before-declare
-            // return new Signature(this.network, this.params as LockAndMintParams, response, txHash);
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
@@ -663,7 +704,7 @@ export class LockAndMintDeposit {
                 );
             }
 
-            const asset = parseRenContract(this.queryTxResult.to).asset;
+            const asset = this.params.asset; // parseRenContract(this.queryTxResult.to).asset;
 
             return this.params.to.submitMint(
                 asset,

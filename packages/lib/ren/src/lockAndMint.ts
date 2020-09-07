@@ -147,7 +147,7 @@ export class LockAndMint extends EventEmitter {
             strip0x(sendTo),
             tokenGatewayContract,
             nonce,
-            this.renVM.version >= 1,
+            this.renVM.version >= 2,
             this.logger
         );
         this.mpkh = await this.renVM.selectPublicKey(
@@ -353,7 +353,7 @@ export class LockAndMintDeposit {
             strip0x(sendTo),
             tokenGatewayContract,
             nonce,
-            this.renVM.version >= 1,
+            this.renVM.version >= 2,
             this.logger
         );
 

@@ -158,6 +158,22 @@ const useSDKContainer = () => {
             throw new Error(`Transfer storage not initialized.`);
         }
 
+        // Remove dust transactions.
+        try {
+            if (
+                transferIn &&
+                transferIn.inTx &&
+                transferIn.inTx.chain !== Chain.Ethereum &&
+                transferIn.inTx.utxo &&
+                transferIn.inTx.utxo.amount &&
+                transferIn.inTx.utxo.amount <= 547
+            ) {
+                transferIn.inTx = undefined;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+
         setTransfer((currentTransfer) => {
             // tslint:disable-next-line: no-object-literal-type-assertion
             const nextTransfer = {
@@ -604,6 +620,22 @@ const useSDKContainer = () => {
                   }
                 : undefined;
 
+        const token = transfer.transferParams.sendToken;
+        const asset: Asset | "" = !token
+            ? ""
+            : token === Asset.BTC || token === Asset.ZEC || token === Asset.BCH
+            ? (token as Asset)
+            : parseRenContract(token).asset;
+
+        let minimumDeposit = 547 + 1;
+        try {
+            minimumDeposit = fees
+                ? fees[asset.toLowerCase() as "btc" | "bch" | "zec"].lock + 1
+                : minimumDeposit;
+        } catch (error) {
+            console.error(error);
+        }
+
         const transaction = await lockAndMintObject().wait(0, specifyUTXO);
         try {
             const renVMQuery = await transaction.queryTx();
@@ -618,20 +650,46 @@ const useSDKContainer = () => {
             getNumberOfConfirmations(),
             specifyUTXO,
         );
+        let deposit: Tx | null = transfer.inTx;
+
         promise.on("deposit", (utxo: UTXOWithChain) => {
-            // tslint:disable-next-line: strict-type-predicates
-            if (utxo.utxo && utxo.utxo.vOut !== undefined) {
-                updateTransfer({
-                    status: LockAndMintStatus.Deposited,
-                    inTx: utxo,
-                }).catch((error) => {
-                    _catchBackgroundErr_(
-                        error,
-                        "Error in sdkContainer.tsx > waits",
-                    );
-                });
-                onDeposit(utxo);
+            if (deposit) {
+                if (
+                    deposit.chain !== Chain.Ethereum &&
+                    deposit.utxo &&
+                    // If txHash and amount are both different, reject second deposit.
+                    deposit.utxo.amount !== utxo.utxo.amount &&
+                    deposit.utxo.txHash !== utxo.utxo.txHash
+                ) {
+                    console.warn("Multiple deposits received.");
+                    return;
+                }
             }
+
+            // tslint:disable-next-line: strict-type-predicates
+            if (!utxo.utxo || utxo.utxo.vOut === undefined) {
+                console.warn("Invalid transaction format.");
+                return;
+            }
+
+            if (utxo.utxo.amount < minimumDeposit) {
+                console.warn(
+                    `Received deposit smaller than minimum (${utxo.utxo.amount}) < ${minimumDeposit})`,
+                );
+                return;
+            }
+
+            updateTransfer({
+                status: LockAndMintStatus.Deposited,
+                inTx: utxo,
+            }).catch((error) => {
+                _catchBackgroundErr_(
+                    error,
+                    "Error in sdkContainer.tsx > waits",
+                );
+            });
+            onDeposit(utxo);
+            deposit = utxo;
         });
         const signaturePromise = transaction
             .submit()

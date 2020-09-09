@@ -53,10 +53,10 @@ import { provider } from "web3-providers";
 export class LockAndMint {
     public utxo: UTXOIndex | undefined;
     public signature: string | undefined;
+    public readonly network: RenNetworkDetails;
+    public readonly renVM: RenVMProvider;
+    public readonly params: LockAndMintParams;
     private generatedGatewayAddress: string | undefined;
-    private readonly network: RenNetworkDetails;
-    private readonly renVM: RenVMProvider;
-    private readonly params: LockAndMintParams;
     private renVMResponse: UnmarshalledMintTx | undefined;
     private readonly logger: Logger;
 
@@ -453,10 +453,21 @@ export class LockAndMint {
                     contractCalls.length - 1
                 ];
 
-                const fnABI = payloadToMintABI(
+                const fnABIFull = payloadToMintABI(
                     contractFn,
                     contractParams || []
                 );
+
+                // Format inputs to only have name and type.
+                const fnABI = fnABIFull.map((abiItem) => ({
+                    ...abiItem,
+                    inputs: abiItem.inputs
+                        ? abiItem.inputs.map((abiInput) => ({
+                              name: abiInput.name,
+                              type: abiInput.type,
+                          }))
+                        : abiItem.inputs,
+                }));
 
                 const encodedParameters = new Web3("").eth.abi.encodeParameters(
                     (contractParams || []).map((i) => i.type),

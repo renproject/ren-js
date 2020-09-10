@@ -11,6 +11,7 @@ import {
 } from "@renproject/interfaces";
 import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
+    assertType,
     fromBase64,
     generateMintTxHash,
     getTokenPrices,
@@ -201,13 +202,16 @@ export class RenVMProvider implements RenVMProviderInterface {
         _to: Buffer,
         _token: Buffer,
         outputHashFormat: string
-    ): Buffer =>
-        generateMintTxHash(
+    ): Buffer => {
+        assertType("Buffer", { gHash });
+        assertType("string", { outputHashFormat });
+        return generateMintTxHash(
             renContract,
             toBase64(gHash),
             outputHashFormat,
             this.logger
         );
+    };
 
     public submitMint = async (
         renContract: RenContract,
@@ -225,6 +229,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         fnABI: AbiItem[],
         tags: [string] | []
     ): Promise<Buffer> => {
+        assertType("Buffer", { nonce, payload });
+        assertType("string", { to, token, fn });
         const response = await this.provider.sendMessage<
             RPCMethod.MethodSubmitTx
         >(RPCMethod.MethodSubmitTx, {
@@ -328,6 +334,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean
     ): Promise<T> => {
+        assertType("Buffer", { utxoTxHash });
         let rawResponse;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -356,7 +363,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                     if (this.logger) {
                         this.logger.error(String(error));
                     }
-                    // TODO: throw unepected errors
+                    // TODO: throw unexpected errors
                 }
             }
             await sleep(15 * SECONDS);

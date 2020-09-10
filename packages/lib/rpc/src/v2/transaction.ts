@@ -1,17 +1,13 @@
+import { assertType } from "@renproject/utils";
 import { sha256 } from "ethereumjs-util";
 
 import { marshalString, marshalTypedPackValue } from "./pack/marshal";
-import {
-    PackPrimitive,
-    PackStructType,
-    PackTypeDefinition,
-    TypedPackValue,
-} from "./pack/pack";
+import { PackPrimitive, PackStructType, TypedPackValue } from "./pack/pack";
 import { RenVMType, RenVMValue } from "./value";
 
 export interface TransactionInput<Input> {
     hash: string;
-    version: string; // "",
+    version: string;
     selector: string; // "BTC/fromEthereum",
     in: Input;
 }
@@ -144,6 +140,7 @@ export const hashTransaction = (
     selector: string,
     packValue: TypedPackValue
 ) => {
+    assertType("string", { version, selector });
     return sha256(
         Buffer.concat([
             marshalString(version),

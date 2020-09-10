@@ -1,6 +1,6 @@
 import chai from "chai";
 
-import { value } from "../src/index";
+import { value } from "../src/value";
 
 chai.should();
 
@@ -8,7 +8,6 @@ require("dotenv").config();
 
 describe("value", () => {
     it("should be able to pass in different networks", async () => {
-
         // tslint:disable-next-line: no-any
         const equal = (l: any, r: any) => l.should.equal(r);
 
@@ -37,7 +36,12 @@ describe("value", () => {
         equal(value("1", "wei").wei().toFixed(), "1");
         equal(value("0.1", "eth").eth().toFixed(), "0.1");
         // Test unit resolution
-        equal(value("0.1", "eth").to("ethereum" as "eth").toFixed(), "0.1");
+        equal(
+            value("0.1", "eth")
+                .to("ethereum" as "eth")
+                .toFixed(),
+            "0.1"
+        );
         equal(value("0.1", "eth").to("eth").toFixed(), "0.1");
     });
 });

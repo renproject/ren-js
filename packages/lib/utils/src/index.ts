@@ -1,4 +1,5 @@
 export * from "./abi";
+export * from "./assert";
 export * from "./chains";
 export * from "./common";
 export * from "./ethereumUtils";

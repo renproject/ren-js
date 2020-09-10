@@ -116,12 +116,26 @@ describe("Refactor", () => {
 
         const lockAndMint = await renJS.lockAndMint({
             // Amount of BTC we are sending (in Satoshis)
-            suggestedAmount,
+            suggestedAmount: 80000,
 
             asset,
             from: Bitcoin(),
-            to: Ethereum(provider).Account({
-                address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
+            to: Ethereum(provider).Contract({
+                sendTo: "0x7BfBB055d4a07468a6D09E498608B41201F19Bd8",
+                contractFn: "mint",
+                contractParams: [
+                    {
+                        name: "_symbol",
+                        type: "string",
+                        value: "BTC",
+                    },
+                    {
+                        name: "_address",
+                        type: "address",
+                        value: "0xEA8b2fF0d7f546AFAeAE1771306736357dEFa434",
+                    },
+                ],
+                // address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
             nonce: Ox("00".repeat(32)),

@@ -1,11 +1,11 @@
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
 import {
+    assertType,
     fromBase64,
     fromHex,
     hash160,
     Ox,
     rawEncode,
-    strip0x,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
@@ -14,32 +14,23 @@ import { encode } from "bs58";
 import { keccak256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import {
-    getConfirmations,
     getUTXO,
     getUTXOs,
 } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
-import { Callable } from "../class";
 import {
     createAddress,
     pubKeyScript as calculatePubKeyScript,
 } from "../common";
 
-// export const getBitcoinConfirmations = ({
-//     isTestnet,
-// }: {
-//     isTestnet: boolean;
-// }) => {
-//     return async (txHash: string) => {
-//         return getConfirmations(isTestnet, txHash);
-//     };
-// };
+const isBTCAddress = (address: string) => {
+    assertType("string", { address });
 
-// export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
-
-const isBTCAddress = (address: string) =>
-    validate(address, "btc", "testnet") || validate(address, "btc", "prod");
+    return (
+        validate(address, "btc", "testnet") || validate(address, "btc", "prod")
+    );
+};
 
 export interface Tactics {
     decoders: Array<(address: string) => Buffer>;
@@ -62,6 +53,9 @@ export const anyAddressFrom = (
     isAnyAddress: (address: string) => boolean,
     { encoders, decoders }: Tactics
 ) => (address: string) => {
+    // Type validation
+    assertType("string", { address });
+
     for (const encoder of encoders) {
         for (const decoder of decoders) {
             try {
@@ -197,8 +191,8 @@ export class BitcoinBaseChain
         this.assetAssetSupported(asset);
         return createAddress(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            Ox(hash160(publicKey)),
-            Ox(gHash)
+            hash160(publicKey),
+            gHash
         );
     };
 
@@ -206,8 +200,8 @@ export class BitcoinBaseChain
         this.assetAssetSupported(asset);
         return calculatePubKeyScript(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            Ox(hash160(publicKey)),
-            Ox(gHash)
+            hash160(publicKey),
+            gHash
         );
     };
 
@@ -276,7 +270,7 @@ export class BitcoinBaseChain
     ): Buffer => {
         const encoded = rawEncode(
             ["bytes32", v2 ? "bytes" : "bytes32", "uint32"],
-            [Ox(nonce), Ox(fromHex(deposit.txHash).reverse()), deposit.vOut]
+            [nonce, fromHex(deposit.txHash).reverse(), deposit.vOut]
         );
 
         const digest = keccak256(encoded);

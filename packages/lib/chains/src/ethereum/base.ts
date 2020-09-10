@@ -10,6 +10,7 @@ import {
 } from "@renproject/interfaces";
 import { RenNetworkDetails, RenNetworkDetailsMap } from "@renproject/networks";
 import {
+    assertType,
     extractError,
     ignorePromiEventError,
     Ox,
@@ -25,10 +26,7 @@ import BlocknativeSdk from "bnc-sdk";
 import { EventEmitter } from "events";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
-import { AbiCoder } from "web3-eth-abi";
 import { keccak256 as web3Keccak256, sha3 } from "web3-utils";
-
-import { Callable } from "../class";
 
 export type Web3Events = {
     transactionHash: [string];
@@ -78,16 +76,18 @@ export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
  * seconds until it is.
  *
  * @param web3 A web3 instance.
- * @param transactionHash The hash of the transaction being read.
+ * @param txHash The hash of the transaction being read.
  *
  * @/param nonce The nonce of the transaction, to detect if it has been
  *        overwritten.
  */
 export const waitForReceipt = async (
     web3: Web3,
-    transactionHash: string /*, nonce?: number*/
+    txHash: string /*, nonce?: number*/
 ) =>
     new Promise<TransactionReceipt>(async (resolve, reject) => {
+        assertType("string", { txHash });
+
         let blocknative;
 
         try {
@@ -97,10 +97,10 @@ export const waitForReceipt = async (
                 networkId: await web3.eth.net.getId(),
             });
 
-            const { emitter } = blocknative.transaction(transactionHash);
+            const { emitter } = blocknative.transaction(txHash);
             emitter.on("txSpeedUp", (state) => {
                 if (state.hash) {
-                    transactionHash = Ox(state.hash);
+                    txHash = Ox(state.hash);
                 }
             });
             emitter.on("txCancel", () => {
@@ -114,7 +114,7 @@ export const waitForReceipt = async (
         let receipt: TransactionReceipt | undefined;
         while (!receipt || !receipt.blockHash) {
             receipt = (await web3.eth.getTransactionReceipt(
-                transactionHash
+                txHash
             )) as TransactionReceipt;
             if (receipt && receipt.blockHash) {
                 break;
@@ -125,7 +125,7 @@ export const waitForReceipt = async (
         try {
             // Destroy blocknative SDK.
             if (blocknative) {
-                blocknative.unsubscribe(transactionHash);
+                blocknative.unsubscribe(txHash);
                 blocknative.destroy();
             }
         } catch (error) {
@@ -136,7 +136,7 @@ export const waitForReceipt = async (
         if (receipt.status === false) {
             reject(
                 new Error(
-                    `Transaction was reverted. { "transactionHash": "${transactionHash}" }`
+                    `Transaction was reverted. { "transactionHash": "${txHash}" }`
                 )
             );
             return;
@@ -150,6 +150,8 @@ export const extractBurnReference = async (
     web3: Web3,
     txHash: string
 ): Promise<number | string> => {
+    assertType("string", { txHash });
+
     const receipt = await waitForReceipt(web3, txHash);
 
     if (!receipt.logs) {
@@ -205,6 +207,8 @@ export const manualPromiEvent = async (
     txHash: string,
     promiEvent: PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>
 ) => {
+    assertType("string", { txHash });
+
     const receipt = await web3.eth.getTransactionReceipt(txHash);
     promiEvent.emit("transactionHash", txHash);
 

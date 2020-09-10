@@ -1,5 +1,5 @@
 import { Asset, LockChain } from "@renproject/interfaces";
-import { hash160, Ox } from "@renproject/utils";
+import { hash160 } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import { getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
@@ -68,8 +68,8 @@ export class BitcoinCashChain
         this.assetAssetSupported(asset);
         return createAddress(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            Ox(hash160(publicKey)),
-            Ox(gHash)
+            hash160(publicKey),
+            gHash
         );
     };
 
@@ -77,8 +77,8 @@ export class BitcoinCashChain
         this.assetAssetSupported(asset);
         return pubKeyScript(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            Ox(hash160(publicKey)),
-            Ox(gHash)
+            hash160(publicKey),
+            gHash
         );
     };
 

@@ -5,14 +5,13 @@ import {
     EthArgs,
     LockAndMintParams,
     Logger,
-    MintTransaction,
     RenContract,
-    TransferParamsCommon,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
-import { BN, keccak256 } from "ethereumjs-util";
+import { keccak256 } from "ethereumjs-util";
 
-import { fromHex, Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
+import { assertType } from "./assert";
+import { fromHex, Ox, randomBytes, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
 
 // export const generateNHash = (tx: Tx): Buffer => {
@@ -76,12 +75,16 @@ export const parseRenContract = (
 export const generateGHash = (
     payload: EthArgs,
     to: string,
-    token: string,
+    tokenIdentifier: string,
     nonce: Buffer,
     v2?: boolean,
     logger?: Logger
 ): Buffer => {
-    const pHash = Ox(generatePHash(payload, logger));
+    // Type validation
+    assertType("Buffer", { nonce });
+    assertType("string", { to, token: tokenIdentifier });
+
+    const pHash = generatePHash(payload, logger);
 
     const encoded = rawEncode(
         [
@@ -90,7 +93,7 @@ export const generateGHash = (
             v2 ? "bytes" : "address",
             "bytes32",
         ],
-        [Ox(pHash), Ox(token), Ox(to), Ox(nonce)]
+        [pHash, Ox(tokenIdentifier), Ox(to), nonce]
     );
 
     const digest = keccak256(encoded);
@@ -111,6 +114,10 @@ export const generateSighash = (
     v2?: boolean,
     logger?: Logger
 ): Buffer => {
+    // Type validation
+    assertType("string", { to, tokenIdentifier });
+    assertType("Buffer", { pHash, nonceHash });
+
     const encoded = rawEncode(
         [
             "bytes32",
@@ -119,7 +126,7 @@ export const generateSighash = (
             v2 ? "string" : "address",
             "bytes32",
         ],
-        [Ox(pHash), amount, tokenIdentifier, to, Ox(nonceHash)]
+        [pHash, amount, Ox(tokenIdentifier), Ox(to), nonceHash]
     );
 
     const digest = keccak256(encoded);
@@ -130,6 +137,9 @@ export const generateSighash = (
 };
 
 export const renVMHashToBase64 = (txHash: string) => {
+    // Type validation
+    assertType("string", { txHash });
+
     // Hex
     if (txHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)) {
         return toBase64(fromHex(txHash));
@@ -144,6 +154,9 @@ export const generateMintTxHash = (
     deposit: string,
     logger?: Logger
 ): Buffer => {
+    // Type validation
+    assertType("string", { encodedID, deposit });
+
     const message = `txHash_${renContract}_${encodedID}_${deposit}`;
     const digest = keccak256(Buffer.from(message));
     if (logger) logger.debug("Mint txHash", toBase64(digest), message);
@@ -155,6 +168,9 @@ export const generateBurnTxHash = (
     encodedID: string,
     logger?: Logger
 ): Buffer => {
+    // Type validation
+    assertType("string", { encodedID });
+
     const message = `txHash_${renContract}_${encodedID}`;
     const digest = keccak256(Buffer.from(message));
     if (logger) logger.debug("Burn txHash", toBase64(digest), message);
@@ -162,18 +178,25 @@ export const generateBurnTxHash = (
 };
 
 interface Signature {
-    r: string;
-    s: string;
+    r: Buffer;
+    s: Buffer;
     v: number;
 }
 
 export const signatureToBuffer = <T extends Signature>(sig: T): Buffer =>
-    fromHex(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
+    Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]);
 
 export const signatureToString = <T extends Signature>(sig: T): string =>
-    Ox(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
+    Ox(
+        `${Ox(sig.r, { prefix: "" })}${Ox(sig.s, {
+            prefix: "",
+        })}${sig.v.toString(16)}`
+    );
 
 const switchV = (v: number) => (v === 27 ? 28 : 27); // 28 - (v - 27);
+
+const to32Bytes = (bn: BigNumber): Buffer =>
+    fromHex(("0".repeat(64) + bn.toString(16)).slice(-64));
 
 const secp256k1n = new BigNumber(
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
@@ -183,34 +206,37 @@ export const fixSignature = (
     r: Buffer,
     s: Buffer,
     v: number,
-    sighash: Buffer,
-    phash: Buffer,
+    sigHash: Buffer,
+    pHash: Buffer,
     amount: string,
     to: string,
-    token: string,
-    nhash: Buffer,
+    tokenIdentifier: string,
+    nHash: Buffer,
     v2?: boolean,
     logger?: Logger
 ): Signature => {
+    // Type validation
+    assertType("string", { amount, to, tokenIdentifier });
+    assertType("Buffer", { r, s, sigHash, pHash, nHash });
+
     const expectedSighash = generateSighash(
-        phash,
+        pHash,
         amount,
         to,
-        token,
-        nhash,
+        tokenIdentifier,
+        nHash,
         v2,
         logger
     );
-    if (Ox(sighash) !== Ox(expectedSighash)) {
+    if (Ox(sigHash) !== Ox(expectedSighash)) {
         if (logger) {
             logger.warn(
-                `Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${sighash}`
+                `Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${sigHash}`
             );
         }
     }
 
-    const rBN = new BigNumber(strip0x(Ox(r)), 16);
-    let sBN = new BigNumber(strip0x(Ox(s)), 16);
+    let sBN = new BigNumber(Ox(s, { prefix: "" }), 16);
     let vFixed = ((v || 0) % 27) + 27;
 
     // For a given key, there are two valid signatures for each signed message.
@@ -255,11 +281,8 @@ export const fixSignature = (
     //     throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
     // }
 
-    const to32Bytes = (bn: BigNumber) =>
-        ("0".repeat(64) + bn.toString(16)).slice(-64);
-
     const signature: Signature = {
-        r: to32Bytes(rBN),
+        r,
         s: to32Bytes(sBN),
         v: vFixed,
     };
@@ -272,6 +295,7 @@ export const fixSignatureSimple = (
     s: Buffer,
     v: number
 ): Signature => {
+    assertType("Buffer", { r, s });
     let sBN = new BigNumber(Ox(s), 16);
     let vFixed = ((v || 0) % 27) + 27;
 
@@ -317,11 +341,8 @@ export const fixSignatureSimple = (
     //     throw new Error(`Invalid signature - unable to recover mint authority from signature (Expected ${Ox(expected)}, got ${Ox(recovered[v])})`);
     // }
 
-    const to32Bytes = (bn: BigNumber) =>
-        ("0".repeat(64) + bn.toString(16)).slice(-64);
-
     const signature: Signature = {
-        r: to32Bytes(new BigNumber(Ox(r), 16)),
+        r,
         s: to32Bytes(sBN),
         v: vFixed,
     };

@@ -97,7 +97,7 @@ export class EthereumChain
                     throw new Error(`Must provide burn recipient address`);
                 }
 
-                const addressToHex = Ox(Buffer.from(burnPayload));
+                const addressToBuffer = Buffer.from(burnPayload);
 
                 const gateway = await this.getGatewayContractAddress(asset);
 
@@ -109,7 +109,7 @@ export class EthereumChain
                             {
                                 type: "bytes" as const,
                                 name: "_to",
-                                value: addressToHex,
+                                value: Ox(addressToBuffer),
                             },
                             {
                                 type: "uint256" as const,
@@ -144,8 +144,8 @@ export class EthereumChain
                 if (!burnPayload) {
                     throw new Error(`Must provide burn payload`);
                 }
-                const addressToHex = Ox(Buffer.from(burnPayload));
-                return [contractCall(addressToHex, asset)];
+                const addressToBuffer = Buffer.from(burnPayload);
+                return [contractCall(Ox(addressToBuffer), asset)];
             } else {
                 return [contractCall];
             }

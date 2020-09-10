@@ -1,4 +1,3 @@
-import { HttpProvider } from "./httpProvider";
 import { Provider } from "./jsonRPC";
 
 // TODO: Look into errors caused by `extending` HttpProvider.

@@ -1,4 +1,5 @@
 import { LockChain } from "@renproject/interfaces";
+import { assertType } from "@renproject/utils";
 
 import { Callable } from "../class";
 import {
@@ -19,6 +20,9 @@ export class BitcoinChain
     }
 
     Address = (address: string): this => {
+        // Type validation
+        assertType("string", { address });
+
         this.getBurnPayload = () => address;
         return this;
     };

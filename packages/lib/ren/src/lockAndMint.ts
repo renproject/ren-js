@@ -8,6 +8,7 @@ import {
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
+    assertType,
     extractError,
     fromBase64,
     fromHex,
@@ -24,7 +25,6 @@ import {
     resolveInToken,
     SECONDS,
     sleep,
-    strip0x,
     toBase64,
 } from "@renproject/utils";
 import { EventEmitter } from "events";
@@ -148,7 +148,7 @@ export class LockAndMint extends EventEmitter {
         // TODO: Validate inputs.
         this.gHash = generateGHash(
             contractParams || [],
-            strip0x(sendTo),
+            sendTo,
             tokenGatewayContract,
             fromHex(nonce),
             this.renVM.version >= 2,
@@ -279,6 +279,7 @@ export class LockAndMintDeposit {
         gHash: Buffer,
         pHash: Buffer
     ) {
+        assertType("Buffer", { mpkh, gHash });
         this.renVM = renVM;
         this.params = params; // processLockAndMintParams(this.network, _params);
         this.logger = logger;
@@ -287,15 +288,21 @@ export class LockAndMintDeposit {
         this.gHash = gHash;
         this.pHash = pHash;
 
-        const txHash = this.params.txHash;
+        const { txHash, contractCalls, nonce } = this.params;
 
         if (!this.params.nonce) {
             throw new Error(`No nonce passed in to LockAndMintDeposit`);
         }
 
-        if (!txHash) {
-            this.validateParams();
+        if (!txHash && (!contractCalls || !contractCalls.length)) {
+            throw new Error(
+                `Must provide Ren transaction hash or contract call details.`
+            );
         }
+
+        this.params.nonce = nonce || randomNonce();
+
+        this.validateParams();
 
         {
             // Debug log
@@ -305,20 +312,33 @@ export class LockAndMintDeposit {
     }
 
     private readonly validateParams = () => {
-        const params = this.params;
-
-        // tslint:disable-next-line: prefer-const
-        let { contractCalls, nonce, ...restOfParams } = params;
-
-        if (!contractCalls || !contractCalls.length) {
-            throw new Error(
-                `Must provide Ren transaction hash or contract call details.`
-            );
+        const {
+            from,
+            to,
+            // suggestedAmount,
+            confirmations,
+            contractCalls,
+            gatewayAddress,
+            asset,
+            txHash,
+            nonce,
+            tags,
+        } = this.params;
+        assertType("object", { from, to });
+        assertType("string", { asset });
+        assertType("object[] | undefined", { contractCalls });
+        assertType("string[] | undefined", { tags });
+        assertType("number | undefined", { confirmations });
+        assertType("string | undefined", { txHash, gatewayAddress });
+        assertType("Buffer | string | undefined", { nonce });
+        if (contractCalls) {
+            contractCalls.map((contractCall) => {
+                assertType("string", {
+                    sendTo: contractCall.sendTo,
+                    contractFn: contractCall.contractFn,
+                });
+            });
         }
-
-        nonce = nonce || randomNonce();
-
-        return { contractCalls, nonce, ...restOfParams };
     };
 
     public txHash = async (): Promise<string> => {
@@ -357,7 +377,7 @@ export class LockAndMintDeposit {
         // TODO: Validate inputs.
         const gHash = generateGHash(
             contractParams || [],
-            strip0x(sendTo),
+            sendTo,
             tokenGatewayContract,
             fromHex(nonce),
             this.renVM.version >= 2,

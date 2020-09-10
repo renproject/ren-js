@@ -1,10 +1,9 @@
 import { AbiCoder } from "web3-eth-abi";
 
-import { fromHex, strip0x } from "./common";
+import { fromHex } from "./common";
 
 export const rawEncode = (
     types: Array<string | {}>,
     // tslint:disable-next-line:no-any
     parameters: any[]
-): Buffer =>
-    fromHex(strip0x(new AbiCoder().encodeParameters(types, parameters)));
+): Buffer => fromHex(new AbiCoder().encodeParameters(types, parameters));

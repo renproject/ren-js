@@ -1,5 +1,7 @@
 import { AbiItem, BNInterface, EthArgs } from "@renproject/interfaces";
 
+import { assertType } from "./assert";
+
 /**
  * Represents 1 second for functions that accept a parameter in milliseconds.
  */
@@ -19,10 +21,9 @@ export const sleep = async (ms: number): Promise<void> =>
  * @param hex The hex value to be prefixed.
  */
 export const strip0x = (hex: string) => {
-    // tslint:disable-next-line: strict-type-predicates
-    if (typeof hex !== "string") {
-        throw new Error(`Expected string to be passed in to 'strip0x'`);
-    }
+    // Type validation
+    assertType("string", { hex });
+
     return hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
 };
 
@@ -31,20 +32,36 @@ export const strip0x = (hex: string) => {
  * is already prefixed, it's returned unchanged.
  * @param hex The hex value to be prefixed.
  */
-export const Ox = (hex: string | Buffer | BNInterface) => {
+export const Ox = (
+    hex: Buffer | BNInterface | string,
+    { prefix } = { prefix: "0x" }
+) => {
     const hexString = typeof hex === "string" ? hex : hex.toString("hex");
-    return hexString.substring(0, 2) === "0x" ? hexString : `0x${hexString}`;
+    return hexString.substring(0, 2) === prefix
+        ? hexString
+        : `${prefix}${hexString}`;
 };
 
-export const fromHex = (hex: string | Buffer): Buffer =>
-    Buffer.isBuffer(hex) ? hex : Buffer.from(strip0x(hex), "hex");
-export const fromBase64 = (base64: string | Buffer): Buffer =>
-    Buffer.isBuffer(base64) ? base64 : Buffer.from(strip0x(base64), "base64");
-export const toBase64 = (input: Buffer) => input.toString("base64");
+export const fromHex = (hex: Buffer | string): Buffer => {
+    assertType<Buffer | string>("Buffer | string", { hex });
+    return Buffer.isBuffer(hex) ? hex : Buffer.from(strip0x(hex), "hex");
+};
 
-export const pad0x = (hex: string | Buffer | BNInterface) => {
+export const fromBase64 = (base64: Buffer | string): Buffer => {
+    assertType<Buffer | string>("Buffer | string", { base64 });
+    return Buffer.isBuffer(base64)
+        ? base64
+        : Buffer.from(strip0x(base64), "base64");
+};
+
+export const toBase64 = (input: Buffer) => {
+    assertType("Buffer", { input });
+    return input.toString("base64");
+};
+
+export const pad0x = (hex: Buffer | BNInterface | string) => {
     // Normalize:
-    let hexString = strip0x(Ox(hex));
+    let hexString = Ox(hex, { prefix: "" });
     // If length is odd, add leading 0.
     if (hexString.length % 2) {
         hexString = "0" + hexString;
@@ -54,12 +71,15 @@ export const pad0x = (hex: string | Buffer | BNInterface) => {
 
 // Unpadded alternate base64 encoding defined in RFC 4648, commonly used in
 // URLs.
-export const toURLBase64 = (input: string | Buffer) =>
-    (Buffer.isBuffer(input) ? input : fromHex(input))
+export const toURLBase64 = (input: Buffer | string) => {
+    assertType<Buffer | string>("Buffer | string", { input });
+
+    return (Buffer.isBuffer(input) ? input : fromHex(input))
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
         .replace(/\=+$/, "");
+};
 
 /**
  * Returns a hex string filled with zeroes (prefixed with '0x').
@@ -161,7 +181,7 @@ export const randomBytes = (bytes: number): Buffer => {
                     "0".repeat(8 - uint.toString(16).length) +
                     uint.toString(16);
             }
-            return Buffer.from(strip0x(str), "hex");
+            return fromHex(str);
         }
     } catch (error) {
         // Ignore error
@@ -169,16 +189,6 @@ export const randomBytes = (bytes: number): Buffer => {
     // tslint:disable-next-line: no-shadowed-variable
     const crypto = require("crypto");
     return crypto.randomBytes(bytes);
-};
-
-export const assert = (
-    assertion: boolean,
-    sentence?: string
-): assertion is true => {
-    if (!assertion) {
-        throw new Error(`Failed assertion${sentence ? `: ${sentence}` : ""}`);
-    }
-    return true;
 };
 
 /**

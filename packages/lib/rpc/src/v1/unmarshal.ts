@@ -12,7 +12,6 @@ import {
     fromBase64,
     Ox,
     signatureToBuffer,
-    strip0x,
     toBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -238,10 +237,10 @@ export const unmarshalMintTx = (
     );
 
     const utxo = {
-        txHash: strip0x(Ox(decodeBytes(utxoRaw.txHash))),
+        txHash: Ox(decodeBytes(utxoRaw.txHash), { prefix: "" }),
         vOut: parseInt(utxoRaw.vOut, 10),
         scriptPubKey: utxoRaw.scriptPubKey
-            ? strip0x(Ox(decodeBytes(utxoRaw.scriptPubKey)))
+            ? Ox(decodeBytes(utxoRaw.scriptPubKey), { prefix: "" })
             : "",
         amount: decodeNumber(utxoRaw.amount).toFixed(),
     };

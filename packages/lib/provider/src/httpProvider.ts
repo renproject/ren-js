@@ -1,4 +1,9 @@
-import { extractError, retryNTimes, SECONDS } from "@renproject/utils";
+import {
+    assertType,
+    extractError,
+    retryNTimes,
+    SECONDS,
+} from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
 
 import { JSONRPCResponse, Provider } from "./jsonRPC";
@@ -19,6 +24,9 @@ export class HttpProvider<
     public readonly nodeURL: string;
 
     constructor(ipOrMultiaddress: string) {
+        // Type validation
+        assertType("string", { ipOrMultiaddress });
+
         if (ipOrMultiaddress.charAt(0) === "/") {
             try {
                 const [, , ip, , port, ,] = ipOrMultiaddress.split("/"); // tslint:disable-line: whitespace

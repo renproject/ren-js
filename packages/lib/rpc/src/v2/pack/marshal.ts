@@ -1,7 +1,7 @@
 // tslint:disable: no-use-before-declare
 
-import BN from "bn.js";
 import { fromBase64 } from "@renproject/utils";
+import BN from "bn.js";
 
 import {
     PackPrimitive,

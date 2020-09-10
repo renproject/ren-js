@@ -1,4 +1,4 @@
-import { Chain, LockChain } from "@renproject/interfaces";
+import { LockChain } from "@renproject/interfaces";
 import { ripemd160, sha256 } from "ethereumjs-util";
 
 import { SECONDS, sleep } from "./common";

@@ -1,5 +1,6 @@
 // tslint:disable: no-console
 
+import { BURN_TOPIC } from "@renproject/chains";
 import { EthArgs, RenNetwork } from "@renproject/interfaces";
 import {
     renChaosnet,
@@ -7,12 +8,7 @@ import {
     renLocalnet,
     renTestnet,
 } from "@renproject/networks";
-import {
-    BURN_TOPIC,
-    generateGHash,
-    generatePHash,
-    strip0x,
-} from "@renproject/utils";
+import { generatePHash } from "@renproject/utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
@@ -101,7 +97,7 @@ describe("Utils", function () {
             // const amount = 22500;
             // const to = "0xC99Ab5d1d0fbf99912dbf0DA1ADC69d4a3a1e9Eb";
             // const nonce = "0x3205f743e45858d2a797a88d867264ab9d3b310fc0853056cdd92d9b1b4bd1d5";
-            // generateGHash(payload, /*amount,*/ strip0x(to), Tokens.BTC.Btc2Eth, nonce, testcase.network)
+            // generateGHash(payload, to, Tokens.BTC.Btc2Eth, nonce, testcase.network)
             //     .should.equal(testcase.expectedHash);
         });
 
@@ -114,7 +110,7 @@ describe("Utils", function () {
     it(`queryTX`, async () => {
         // tslint:disable-next-line: await-promise
         await new RenJS(NETWORK as RenNetwork).renVM
-            .queryMintOrBurn("0")
+            .queryMintOrBurn(Buffer.from([0]))
             .should.be.rejectedWith(
                 /tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/
             );

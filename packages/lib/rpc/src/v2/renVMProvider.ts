@@ -12,6 +12,7 @@ import {
 } from "@renproject/interfaces";
 import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
+    assertType,
     fromBase64,
     fromHex,
     getTokenPrices,
@@ -225,6 +226,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         to: string,
         token: string
     ): MintTransactionInput => {
+        assertType("Buffer", { gHash, gPubKey, nHash, nonce, payload, pHash });
+        assertType("string", { to, token });
         const selector = resolveV2Contract(renContract);
         const version = "1";
         const txIn = {
@@ -263,6 +266,15 @@ export class RenVMProvider implements RenVMProviderInterface {
         token: string,
         _outputHashString: string
     ): Buffer => {
+        assertType("Buffer", {
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            payload,
+            pHash,
+        });
+        assertType("string", { to, token });
         return fromBase64(
             this.buildMintTransaction(
                 renContract,
@@ -295,6 +307,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         _fnABI: AbiItem[],
         _tags: [string] | []
     ): Promise<Buffer> => {
+        assertType("Buffer", { gHash, gPubKey, nHash, nonce, payload, pHash });
+        assertType("string", { to, token });
         const response = await this.provider.sendMessage<
             RPCMethod.MethodSubmitTx
         >(RPCMethod.MethodSubmitTx, {
@@ -324,6 +338,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         ref: BigNumber,
         _tags: [string] | []
     ): Promise<Buffer> => {
+        assertType("string", { token, to });
         const selector = resolveV2Contract(renContract);
         const version = "1";
         const txIn = {
@@ -379,6 +394,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean
     ): Promise<T> => {
+        assertType("Buffer", { utxoTxHash });
         let rawResponse;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -407,7 +423,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                     if (this.logger) {
                         this.logger.error(String(error));
                     }
-                    // TODO: throw unepected errors
+                    // TODO: throw unexpected errors
                 }
             }
             await sleep(15 * SECONDS);

@@ -1,4 +1,3 @@
-import { fromHex } from "@renproject/utils";
 import {
     Networks as BNetworks,
     Opcode as BOpcode,
@@ -8,15 +7,15 @@ import {
 export const UTXOGatewayScript = (
     opcode: typeof BOpcode,
     script: typeof bScript,
-    gGubKey: string,
-    gHash: string
+    gGubKey: Buffer,
+    gHash: Buffer
 ) => {
     return new script()
-        .add(fromHex(gHash))
+        .add(gHash)
         .add(opcode.OP_DROP)
         .add(opcode.OP_DUP)
         .add(opcode.OP_HASH160)
-        .add(fromHex(gGubKey))
+        .add(gGubKey)
         .add(opcode.OP_EQUALVERIFY)
         .add(opcode.OP_CHECKSIG)
         .toScriptHashOut();
@@ -26,7 +25,7 @@ export const createAddress = (
     networks: typeof BNetworks,
     opcode: typeof BOpcode,
     script: typeof bScript
-) => (isTestnet: boolean, gPubKey: string, gHash: string): string => {
+) => (isTestnet: boolean, gPubKey: Buffer, gHash: Buffer): string => {
     return UTXOGatewayScript(opcode, script, gPubKey, gHash)
         .toAddress(isTestnet ? networks.testnet : networks.mainnet)
         .toString();
@@ -37,8 +36,8 @@ export const UTXOGatewayPubKeyScript = (
     opcode: typeof BOpcode,
     script: typeof bScript,
     isTestnet: boolean,
-    gPubKey: string,
-    gHash: string
+    gPubKey: Buffer,
+    gHash: Buffer
 ) => {
     const gatewayScript = UTXOGatewayScript(opcode, script, gPubKey, gHash)
         .toAddress(isTestnet ? networks.testnet : networks.mainnet)
@@ -66,7 +65,7 @@ export const pubKeyScript = (
     networks: typeof BNetworks,
     opcode: typeof BOpcode,
     script: typeof bScript
-) => (isTestnet: boolean, gPubKey: string, gHash: string) => {
+) => (isTestnet: boolean, gPubKey: Buffer, gHash: Buffer) => {
     return UTXOGatewayPubKeyScript(
         networks,
         opcode,

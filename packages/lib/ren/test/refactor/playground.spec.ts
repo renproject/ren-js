@@ -1,6 +1,7 @@
 // tslint:disable: no-console
 
 import { Bitcoin, Ethereum } from "@renproject/chains";
+import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 import { renRinkeby } from "@renproject/networks";
 import { HttpProvider, OverwriteProvider } from "@renproject/provider";
 import { AbstractRenVMProvider } from "@renproject/rpc";
@@ -15,7 +16,6 @@ import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
-import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 
 import RenJS from "../../src/index";
 
@@ -172,14 +172,14 @@ describe("Refactor", () => {
                 resolve();
             });
 
-            // console.log(
-            //     `${blue("[faucet]")} Sending ${blue(
-            //         suggestedAmount / 1e8
-            //     )} ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
-            // );
-            // account
-            //     .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
-            //     .catch(reject);
+            console.log(
+                `${blue("[faucet]")} Sending ${blue(
+                    suggestedAmount / 1e8
+                )} ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
+            );
+            account
+                .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
+                .catch(reject);
         });
     });
 });

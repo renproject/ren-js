@@ -18,15 +18,9 @@
         "listEmittedFiles": false,
         "listFiles": false,
         "pretty": true,
-        "lib": [
-            "es2017",
-            "dom"
-        ],
+        "lib": ["es2017", "dom"],
         "types": [],
-        "typeRoots": [
-            "node_modules/@types",
-            "src/types"
-        ],
+        "typeRoots": ["node_modules/@types", "src/types"],
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,
         "noImplicitThis": true,
@@ -37,11 +31,7 @@
         "alwaysStrict": true,
         "strictFunctionTypes": true
     },
-    "include": [
-        "src/**/*.ts",
-    ],
-    "exclude": [
-        "node_modules/**"
-    ],
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules/**"],
     "compileOnSave": false
 }

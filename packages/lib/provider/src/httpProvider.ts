@@ -48,6 +48,10 @@ export class HttpProvider<
         retry = 5
     ): Promise<Responses[Method]> {
         // Print request:
+        // console.log(
+        //     "[request]",
+        //     JSON.stringify(generatePayload(method, request), null, "    ")
+        // );
         try {
             const response = await retryNTimes(
                 () =>
@@ -73,6 +77,10 @@ export class HttpProvider<
             if (response.data.result === undefined) {
                 throw new Error(`Empty result returned from node`);
             }
+            // console.log(
+            //     "[response]",
+            //     JSON.stringify(response.data.result, null, "    ")
+            // );
             return response.data.result;
         } catch (error) {
             if (error.response) {

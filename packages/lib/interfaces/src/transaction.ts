@@ -1,9 +1,9 @@
 import { AbiItem } from "./abi";
 import { RenContract } from "./networks";
-import { TxStatus } from "./types";
+import { Base64String, TxStatus } from "./types";
 
 export interface RenTransaction<Input, Output> {
-    hash: string; // Buffer;
+    hash: Base64String;
     txStatus: TxStatus;
     to: RenContract;
     in: Input;
@@ -15,12 +15,12 @@ export type MintTransaction = RenTransaction<
     {
         p: {
             abi: AbiItem[];
-            value: string;
+            value: Buffer;
             fn: string;
         };
         token: string;
         to: string;
-        n: string; // Buffer;
+        n: Buffer;
         utxo: {
             txHash: string;
             vOut: number;
@@ -30,11 +30,11 @@ export type MintTransaction = RenTransaction<
     },
     // Output
     {
-        phash: string; // Buffer;
+        phash: Buffer;
         amount: string;
-        ghash: string; // Buffer;
-        nhash: string; // Buffer;
-        sighash: string; // Buffer;
+        ghash: Buffer;
+        nhash: Buffer;
+        sighash: Buffer;
         signature?: Buffer;
     }
 >;
@@ -43,7 +43,7 @@ export type BurnTransaction = RenTransaction<
     // Input
     {
         ref: string;
-        to: string; // Buffer;
+        to: string;
         amount: string;
     },
     // Output

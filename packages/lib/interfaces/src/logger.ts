@@ -59,6 +59,8 @@ const toString = (value: any) => {
     }
 };
 
+type Prefix = (level: LogLevel) => string;
+
 /**
  * SimpleLogger is a implementation of the Logger interface that also supports
  * setting the log level.
@@ -69,18 +71,30 @@ const toString = (value: any) => {
 export class SimpleLogger {
     public level: LogLevel;
 
-    constructor(level: LogLevelString = LogLevel.Warn) {
+    public logPrefix: Prefix = () => "";
+    public debugPrefix: Prefix = (level: LogLevel) => `[RenJS][${level.toUpperCase()}] `;
+
+    constructor(level: LogLevelString = LogLevel.Warn, logPrefix?: Prefix | string, debugPrefix?: Prefix | string) {
         this.level = level as LogLevel;
+        if (logPrefix) {
+            const logPrefixFn = typeof logPrefix === "string" ? () => logPrefix : logPrefix;
+            this.logPrefix = logPrefixFn;
+            this.debugPrefix = logPrefixFn;
+        }
+        if (debugPrefix) {
+            const debugPrefixFn = typeof debugPrefix === "string" ? () => debugPrefix : debugPrefix;
+            this.debugPrefix = debugPrefixFn;
+        }
     }
 
     public trace = (message?: any, ...optionalParams: any[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Trace)) {
             if (optionalParams.length) {
-                console.group(this.prefix(LogLevel.Trace) + toString(message));
+                console.group(this.debugPrefix(LogLevel.Trace) + toString(message));
                 console.trace(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
-                console.trace(this.prefix(LogLevel.Trace) + toString(message), ...optionalParams.map(toString));
+                console.trace(this.debugPrefix(LogLevel.Trace) + toString(message), ...optionalParams.map(toString));
             }
         }
     }
@@ -88,30 +102,36 @@ export class SimpleLogger {
     public debug = (message?: any, ...optionalParams: any[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Debug)) {
             if (optionalParams.length) {
-                console.group(this.prefix(LogLevel.Debug) + toString(message));
+                console.group(this.debugPrefix(LogLevel.Debug) + toString(message));
                 console.debug(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
-                console.debug(this.prefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
+                console.debug(this.debugPrefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
             }
         }
     }
 
     public info = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Info)) { console.info(toString(message), ...optionalParams.map(toString)); }
+        if (levelValue(this.level) >= levelValue(LogLevel.Info)) {
+            console.info(this.logPrefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
+        }
     }
 
     public log = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Log)) { console.log(toString(message), ...optionalParams.map(toString)); }
+        if (levelValue(this.level) >= levelValue(LogLevel.Log)) {
+            console.log(this.logPrefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
+        }
     }
 
     public warn = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Warn)) { console.warn(toString(message), ...optionalParams.map(toString)); }
+        if (levelValue(this.level) >= levelValue(LogLevel.Warn)) {
+            console.warn(this.logPrefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
+        }
     }
 
     public error = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Error)) { console.error(toString(message), ...optionalParams.map(toString)); }
+        if (levelValue(this.level) >= levelValue(LogLevel.Error)) {
+            console.error(this.logPrefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
+        }
     }
-
-    private readonly prefix = (level: LogLevel) => `[RenJS][${level.toUpperCase()}] `;
 }

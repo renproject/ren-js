@@ -12,16 +12,16 @@ import {
 import BigNumber from "bignumber.js";
 import { BN, keccak256 } from "ethereumjs-util";
 
-import { Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
+import { fromHex, Ox, randomBytes, strip0x, toBase64, unzip } from "./common";
 import { rawEncode } from "./ethereumUtils";
 
-// export const generateNHash = (tx: Tx): string => {
+// export const generateNHash = (tx: Tx): Buffer => {
 //     const encoded = rawEncode(
 //         ["bytes32", "bytes32"],
 //         [Ox(tx.hash), Ox(tx.args.n)],
 //     );
 
-//     return Ox(keccak256(encoded));
+//     return keccak256(encoded);
 // };
 
 /**
@@ -38,7 +38,7 @@ export const generatePHash = (zip: EthArgs, logger?: Logger): Buffer => {
     const message = rawEncode(types, values);
     const digest = keccak256(message);
 
-    if (logger) logger.debug("pHash", Ox(digest), message.toString("hex"));
+    if (logger) logger.debug("pHash", toBase64(digest), Ox(message));
 
     return digest; // sha3 can accept a Buffer
 };
@@ -77,7 +77,7 @@ export const generateGHash = (
     payload: EthArgs,
     to: string,
     token: string,
-    nonce: string,
+    nonce: Buffer,
     v2?: boolean,
     logger?: Logger
 ): Buffer => {
@@ -95,21 +95,22 @@ export const generateGHash = (
 
     const digest = keccak256(encoded);
 
-    if (logger)
-        logger.debug("gHash", digest.toString("hex"), encoded.toString("hex"));
+    if (logger) {
+        logger.debug("gHash", toBase64(digest), Ox(encoded));
+    }
 
     return digest;
 };
 
 export const generateSighash = (
-    pHash: string,
+    pHash: Buffer,
     amount: number | string,
     to: string,
     tokenIdentifier: string,
-    nonceHash: string,
+    nonceHash: Buffer,
     v2?: boolean,
     logger?: Logger
-): string => {
+): Buffer => {
     const encoded = rawEncode(
         [
             "bytes32",
@@ -118,25 +119,22 @@ export const generateSighash = (
             v2 ? "string" : "address",
             "bytes32",
         ],
-        [Ox(pHash), amount, tokenIdentifier, to, nonceHash]
+        [Ox(pHash), amount, tokenIdentifier, to, Ox(nonceHash)]
     );
 
-    const digest = Ox(keccak256(encoded));
+    const digest = keccak256(encoded);
 
-    if (logger) logger.debug("sigHash", digest, encoded.toString("hex"));
+    if (logger) logger.debug("sigHash", toBase64(digest), Ox(encoded));
 
     return digest;
 };
 
-export const txHashToBase64 = (txHash: Buffer | string) => {
-    if (
-        // Buffer
-        Buffer.isBuffer(txHash) ||
-        // Hex
-        txHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)
-    ) {
-        return toBase64(txHash);
+export const renVMHashToBase64 = (txHash: string) => {
+    // Hex
+    if (txHash.match(/^(0x)?[0-9a-fA-Z]{64}$/)) {
+        return toBase64(fromHex(txHash));
     }
+    // Already base64
     return txHash;
 };
 
@@ -145,10 +143,10 @@ export const generateMintTxHash = (
     encodedID: string,
     deposit: string,
     logger?: Logger
-) => {
+): Buffer => {
     const message = `txHash_${renContract}_${encodedID}_${deposit}`;
-    const digest = txHashToBase64(keccak256(Buffer.from(message)));
-    if (logger) logger.debug("Mint txHash", digest, message);
+    const digest = keccak256(Buffer.from(message));
+    if (logger) logger.debug("Mint txHash", toBase64(digest), message);
     return digest;
 };
 
@@ -156,10 +154,10 @@ export const generateBurnTxHash = (
     renContract: RenContract,
     encodedID: string,
     logger?: Logger
-) => {
+): Buffer => {
     const message = `txHash_${renContract}_${encodedID}`;
-    const digest = txHashToBase64(keccak256(Buffer.from(message)));
-    if (logger) logger.debug("Burn txHash", digest, message);
+    const digest = keccak256(Buffer.from(message));
+    if (logger) logger.debug("Burn txHash", toBase64(digest), message);
     return digest;
 };
 
@@ -170,7 +168,7 @@ interface Signature {
 }
 
 export const signatureToBuffer = <T extends Signature>(sig: T): Buffer =>
-    Buffer.from(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`, "hex");
+    fromHex(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
 
 export const signatureToString = <T extends Signature>(sig: T): string =>
     Ox(`${strip0x(sig.r)}${sig.s}${sig.v.toString(16)}`);
@@ -182,15 +180,15 @@ const secp256k1n = new BigNumber(
     16
 );
 export const fixSignature = (
-    r: string,
-    s: string,
-    v: string,
-    sighash: string,
-    phash: string,
+    r: Buffer,
+    s: Buffer,
+    v: number,
+    sighash: Buffer,
+    phash: Buffer,
     amount: string,
     to: string,
     token: string,
-    nhash: string,
+    nhash: Buffer,
     v2?: boolean,
     logger?: Logger
 ): Signature => {
@@ -204,15 +202,16 @@ export const fixSignature = (
         logger
     );
     if (Ox(sighash) !== Ox(expectedSighash)) {
-        if (logger)
+        if (logger) {
             logger.warn(
                 `Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${sighash}`
             );
+        }
     }
 
-    let sBN = new BigNumber(strip0x(s), 16);
-    let vFixed =
-        ((new BigNumber(strip0x(v) || "0", 16).toNumber() || 0) % 27) + 27;
+    const rBN = new BigNumber(strip0x(Ox(r)), 16);
+    let sBN = new BigNumber(strip0x(Ox(s)), 16);
+    let vFixed = ((v || 0) % 27) + 27;
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
@@ -231,21 +230,21 @@ export const fixSignature = (
     // // has been updated.
     // const recovered = {
     //     [v]: pubToAddress(ecrecover(
-    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         fromHex(response.autogen.sighash)),
     //         v,
-    //         Buffer.from(strip0x(r), "hex"),
+    //         fromHex(r),
     //         s.toArrayLike(Buffer, "be", 32),
     //     )),
 
     //     [switchV(v)]: pubToAddress(ecrecover(
-    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         fromHex(response.autogen.sighash),
     //         switchV(v),
-    //         Buffer.from(strip0x(r), "hex"),
+    //         fromHex(r),
     //         s.toArrayLike(Buffer, "be", 32),
     //     )),
     // };
 
-    // const expected = Buffer.from(strip0x(.network.renVM.mintAuthority), "hex");
+    // const expected = fromHex(.network.renVM.mintAuthority);
     // if (recovered[v].equals(expected)) {
     //     // Do nothing
     // } else if (recovered[switchV(v)].equals(expected)) {
@@ -260,7 +259,7 @@ export const fixSignature = (
         ("0".repeat(64) + bn.toString(16)).slice(-64);
 
     const signature: Signature = {
-        r,
+        r: to32Bytes(rBN),
         s: to32Bytes(sBN),
         v: vFixed,
     };
@@ -271,11 +270,10 @@ export const fixSignature = (
 export const fixSignatureSimple = (
     r: Buffer,
     s: Buffer,
-    v: string
+    v: number
 ): Signature => {
-    let sBN = new BigNumber(s.toString("hex"), 16);
-    let vFixed =
-        ((new BigNumber(strip0x(v) || "0", 16).toNumber() || 0) % 27) + 27;
+    let sBN = new BigNumber(Ox(s), 16);
+    let vFixed = ((v || 0) % 27) + 27;
 
     // For a given key, there are two valid signatures for each signed message.
     // We always take the one with the lower `s`.
@@ -294,21 +292,21 @@ export const fixSignatureSimple = (
     // // has been updated.
     // const recovered = {
     //     [v]: pubToAddress(ecrecover(
-    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         fromHex(response.autogen.sighash),
     //         v,
-    //         Buffer.from(strip0x(r), "hex"),
+    //         fromHex(r),
     //         s.toArrayLike(Buffer, "be", 32),
     //     )),
 
     //     [switchV(v)]: pubToAddress(ecrecover(
-    //         Buffer.from(strip0x(response.autogen.sighash), "hex"),
+    //         fromHex(response.autogen.sighash),
     //         switchV(v),
-    //         Buffer.from(strip0x(r), "hex"),
+    //         fromHex(r),
     //         s.toArrayLike(Buffer, "be", 32),
     //     )),
     // };
 
-    // const expected = Buffer.from(strip0x(.network.renVM.mintAuthority), "hex");
+    // const expected = fromHex(.network.renVM.mintAuthority);
     // if (recovered[v].equals(expected)) {
     //     // Do nothing
     // } else if (recovered[switchV(v)].equals(expected)) {
@@ -323,7 +321,7 @@ export const fixSignatureSimple = (
         ("0".repeat(64) + bn.toString(16)).slice(-64);
 
     const signature: Signature = {
-        r: to32Bytes(new BigNumber(r.toString("hex"), 16)),
+        r: to32Bytes(new BigNumber(Ox(r), 16)),
         s: to32Bytes(sBN),
         v: vFixed,
     };

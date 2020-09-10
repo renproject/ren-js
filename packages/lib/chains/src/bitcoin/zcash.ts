@@ -1,5 +1,5 @@
 import { Asset, LockChain } from "@renproject/interfaces";
-import { hash160 } from "@renproject/utils";
+import { hash160, Ox } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib-zcash";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import { getUTXOs } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
@@ -44,8 +44,8 @@ import { BitcoinChain } from "./bitcoin";
 // const zecTactics: Tactics = {
 //     decoders: [
 //         (address: string) => Buffer.from(address),
-//         (address: string) => Buffer.from(address, "base64"),
-//         (address: string) => Buffer.from(strip0x(address), "hex"),
+//         (address: string) => fromBase64(address),
+//         (address: string) => fromHex(address),
 //     ],
 //     encoders: [
 //         (buffer: Buffer) => buffer.toString(),
@@ -79,8 +79,8 @@ export class ZcashChain
         this.assetAssetSupported(asset);
         return createAddress(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            hash160(publicKey).toString("hex"),
-            gHash.toString("hex")
+            Ox(hash160(publicKey)),
+            Ox(gHash)
         );
     };
 
@@ -88,8 +88,8 @@ export class ZcashChain
         this.assetAssetSupported(asset);
         return pubKeyScript(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            hash160(publicKey).toString("hex"),
-            gHash.toString("hex")
+            Ox(hash160(publicKey)),
+            Ox(gHash)
         );
     };
 

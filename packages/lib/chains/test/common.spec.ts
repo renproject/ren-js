@@ -1,6 +1,6 @@
 // tslint:disable: no-console
 
-import { hash160 } from "@renproject/utils";
+import { fromBase64, fromHex, hash160, Ox } from "@renproject/utils";
 import {
     Networks as BNetworks,
     Opcode as BOpcode,
@@ -37,9 +37,8 @@ describe("Common", () => {
     ]) {
         for (const isTestnet of [true, false]) {
             it(asset, async () => {
-                const gHash = Buffer.from(
-                    "cQ+CJ8bOP4RMopOCNDvbQ020Eu8KRpYykurZyKNFM1I=",
-                    "base64"
+                const gHash = fromBase64(
+                    "cQ+CJ8bOP4RMopOCNDvbQ020Eu8KRpYykurZyKNFM1I="
                 );
 
                 // const selector = "BTC0Btc2Eth";
@@ -47,31 +46,30 @@ describe("Common", () => {
                 //     selector
                 // );
 
-                const publicKey = Buffer.from(
-                    "030dd65f7db2920bb229912e3f4213dd150e5f972c9b73e9be714d844561ac355c",
-                    "hex"
+                const publicKey = fromHex(
+                    "030dd65f7db2920bb229912e3f4213dd150e5f972c9b73e9be714d844561ac355c"
                 );
 
                 const v1Address = v1.createAddress(Networks, Opcode, Script)(
                     isTestnet,
-                    hash160(publicKey).toString("hex"),
-                    gHash.toString("hex")
+                    Ox(hash160(publicKey)),
+                    Ox(gHash)
                 );
                 const v1Script = v1.pubKeyScript(Networks, Opcode, Script)(
                     isTestnet,
-                    hash160(publicKey).toString("hex"),
-                    gHash.toString("hex")
+                    Ox(hash160(publicKey)),
+                    Ox(gHash)
                 );
 
                 const v2Address = v2.createAddress(Networks, Opcode, Script)(
                     isTestnet,
-                    hash160(publicKey).toString("hex"),
-                    gHash.toString("hex")
+                    Ox(hash160(publicKey)),
+                    Ox(gHash)
                 );
                 const v2Script = v2.pubKeyScript(Networks, Opcode, Script)(
                     isTestnet,
-                    hash160(publicKey).toString("hex"),
-                    gHash.toString("hex")
+                    Ox(hash160(publicKey)),
+                    Ox(gHash)
                 );
 
                 expect(v1Address).toEqual(v2Address);

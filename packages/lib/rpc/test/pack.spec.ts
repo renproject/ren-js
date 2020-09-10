@@ -3,6 +3,7 @@
 import BigNumber from "bignumber.js";
 import { expect } from "earljs";
 import { describe, it } from "mocha";
+import { fromBase64 } from "@renproject/utils";
 
 import { unmarshalPackValue } from "../src/v2/pack/pack";
 import { burnParamsType, mintParamsType } from "../src/v2/transaction";
@@ -26,7 +27,7 @@ describe("Pack", () => {
         });
         expect(result).toEqual({
             amount: new BigNumber(amount),
-            nonce: Buffer.from(nonce, "base64"),
+            nonce: fromBase64(nonce),
             to: Buffer.from(to),
             token: Buffer.from(token),
         });
@@ -66,20 +67,20 @@ describe("Pack", () => {
             token,
         });
         expect(result).toEqual({
-            ghash: Buffer.from(ghash, "base64"),
-            gpubkey: Buffer.from(gpubkey, "base64"),
-            nhash: Buffer.from(nhash, "base64"),
-            nonce: Buffer.from(nonce, "base64"),
+            ghash: fromBase64(ghash),
+            gpubkey: fromBase64(gpubkey),
+            nhash: fromBase64(nhash),
+            nonce: fromBase64(nonce),
             output: {
                 outpoint: {
-                    hash: Buffer.from(hash, "base64"),
+                    hash: fromBase64(hash),
                     index: new BigNumber(index),
                 },
-                pubKeyScript: Buffer.from(pubKeyScript, "base64"),
+                pubKeyScript: fromBase64(pubKeyScript),
                 value: new BigNumber(value),
             },
-            payload: Buffer.from(payload, "base64"),
-            phash: Buffer.from(phash, "base64"),
+            payload: fromBase64(payload),
+            phash: fromBase64(phash),
             to: Buffer.from(to),
             token: Buffer.from(token),
         });

@@ -6,8 +6,6 @@ export const V2 = undefined;
 //     Script as bScript,
 // } from "bitcore-lib";
 
-// import { strip0x } from "./hexUtils";
-
 // export const UTXOGatewayScript = (
 //     networks: typeof BNetworks,
 //     opcode: typeof BOpcode,
@@ -17,11 +15,11 @@ export const V2 = undefined;
 //     gHash: string
 // ) => {
 //     return new script()
-//         .add(Buffer.from(strip0x(gHash), "hex"))
+//         .add(fromHex(gHash)
 //         .add(opcode.OP_DROP)
 //         .add(opcode.OP_DUP)
 //         .add(opcode.OP_HASH160)
-//         .add(Buffer.from(strip0x(gPubKey), "hex"))
+//         .add(fromHex(gPubKey)
 //         .add(opcode.OP_EQUALVERIFY)
 //         .add(opcode.OP_CHECKSIG)
 //         .toScriptHashOut()

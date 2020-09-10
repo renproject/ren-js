@@ -37,13 +37,15 @@ export const unmarshalMintTx = (
 
     if (response.tx.out) {
         out = unmarshalTypedPackValue(response.tx.out);
-        const [r, s, v] = [
-            out.sig.slice(0, 32),
-            out.sig.slice(32, 64),
-            (out.sig[64] % 27).toString(),
-        ];
-        out.signature = signatureToBuffer(fixSignatureSimple(r, s, v));
-        out.nhash = inValue.nhash;
+        if (out.sig) {
+            const [r, s, v] = [
+                out.sig.slice(0, 32),
+                out.sig.slice(32, 64),
+                out.sig[64] % 27,
+            ];
+            out.signature = signatureToBuffer(fixSignatureSimple(r, s, v));
+            out.nhash = inValue.nhash;
+        }
     }
 
     return {

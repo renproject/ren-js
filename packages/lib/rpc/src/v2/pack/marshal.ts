@@ -1,6 +1,7 @@
 // tslint:disable: no-use-before-declare
 
 import BN from "bn.js";
+import { fromBase64 } from "@renproject/utils";
 
 import {
     PackPrimitive,
@@ -150,7 +151,7 @@ export const marshalPackPrimitive = (
                 Buffer.isBuffer(value)
                     ? Buffer.from(value)
                     : // Supports base64 url format
-                      Buffer.from(value, "base64")
+                      fromBase64(value)
             );
         }
         case PackPrimitive.Bytes32:
@@ -158,7 +159,7 @@ export const marshalPackPrimitive = (
             return Buffer.isBuffer(value)
                 ? Buffer.from(value)
                 : // Supports base64 url format
-                  Buffer.from(value, "base64");
+                  fromBase64(value);
     }
 };
 

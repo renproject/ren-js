@@ -6,7 +6,15 @@ import {
     RenVMAssetFees,
     RenVMFees,
 } from "@renproject/interfaces";
-import { assert, fixSignature, Ox, signatureToBuffer } from "@renproject/utils";
+import {
+    assert,
+    fixSignature,
+    fromBase64,
+    Ox,
+    signatureToBuffer,
+    strip0x,
+    toBase64,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 import {
@@ -16,8 +24,8 @@ import {
 } from "./methods";
 import { Fees, RenVMArg, RenVMOutputUTXO, RenVMType } from "./value";
 
-const decodeString = (input: string) => Buffer.from(input, "base64").toString();
-const decodeBytes = (input: string) => Ox(Buffer.from(input, "base64"));
+const decodeString = (input: string) => fromBase64(input).toString();
+const decodeBytes = (input: string) => fromBase64(input);
 const decodeNumber = (input: string) => new BigNumber(input);
 
 /**
@@ -50,7 +58,7 @@ const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
             ? RenVMArg<Name, Type, Value>
             : never
         : never
-): string => {
+): Buffer => {
     try {
         return decodeBytes(
             // tslint:disable-next-line: no-any
@@ -230,10 +238,10 @@ export const unmarshalMintTx = (
     );
 
     const utxo = {
-        txHash: decodeBytes(utxoRaw.txHash),
+        txHash: strip0x(Ox(decodeBytes(utxoRaw.txHash))),
         vOut: parseInt(utxoRaw.vOut, 10),
         scriptPubKey: utxoRaw.scriptPubKey
-            ? decodeBytes(utxoRaw.scriptPubKey)
+            ? strip0x(Ox(decodeBytes(utxoRaw.scriptPubKey)))
             : "",
         amount: decodeNumber(utxoRaw.amount).toFixed(),
     };
@@ -253,24 +261,22 @@ export const unmarshalMintTx = (
             findField<Out[1]>("s", response),
             findField<Out[2]>("v", response),
         ];
-        const r =
+        const r: Buffer =
             rArg.type === RenVMType.B
                 ? assertAndDecodeBytes<Out["0"]>("r", RenVMType.B, rArg)
                 : assertAndDecodeBytes<Out["0"]>("r", RenVMType.B32, rArg);
-        const s =
+        const s: Buffer =
             sArg.type === RenVMType.B
                 ? assertAndDecodeBytes<Out["1"]>("s", RenVMType.B, sArg)
                 : assertAndDecodeBytes<Out["1"]>("s", RenVMType.B32, sArg);
-        const v =
+        const v: number =
             vArg.type === RenVMType.B
-                ? assertAndDecodeBytes<Out["2"]>("v", RenVMType.B, vArg)
-                : Ox(
-                      assertAndDecodeNumber<Out["2"]>(
-                          "v",
-                          RenVMType.U8,
-                          vArg
-                      ).toString(16)
-                  );
+                ? assertAndDecodeBytes<Out["2"]>("v", RenVMType.B, vArg)[0]
+                : assertAndDecodeNumber<Out["2"]>(
+                      "v",
+                      RenVMType.U8,
+                      vArg
+                  ).toNumber();
 
         const signature = signatureToBuffer(
             fixSignature(
@@ -292,7 +298,7 @@ export const unmarshalMintTx = (
     }
 
     return {
-        hash: decodeBytes(response.tx.hash),
+        hash: toBase64(decodeBytes(response.tx.hash)),
         txStatus: response.txStatus,
         to: response.tx.to,
         in: { p, token, to, n, utxo },
@@ -339,7 +345,7 @@ export const unmarshalBurnTx = (
     //         utils.btc.addressFrom(toRaw);
 
     return {
-        hash: decodeBytes(response.tx.hash),
+        hash: toBase64(decodeBytes(response.tx.hash)),
         to: response.tx.to,
         in: { ref, to, amount },
         txStatus: response.txStatus,

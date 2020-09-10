@@ -15,6 +15,7 @@ import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 
 import RenJS from "../../src/index";
 
@@ -41,6 +42,7 @@ describe("Refactor", () => {
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
+            // tslint:disable-next-line: no-http-string
             "http://34.239.188.210:18515"
         );
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
@@ -93,7 +95,8 @@ describe("Refactor", () => {
             rpcProvider
         ) as AbstractRenVMProvider;
 
-        const renJS = new RenJS(renVMProvider); // , { logLevel: "trace" });
+        const logLevel = LogLevel.Log;
+        const renJS = new RenJS(renVMProvider, { logLevel });
         // const renJS = new RenJS("testnet")
 
         // Use 0.0001 more than fee.
@@ -115,7 +118,7 @@ describe("Refactor", () => {
                 address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
-            nonce: Ox("20".repeat(32)),
+            nonce: Ox("10".repeat(32)),
         });
 
         console.info(
@@ -137,28 +140,31 @@ describe("Refactor", () => {
                 const color = colors[i];
                 i += 1;
 
-                const info = (...args) => {
-                    console.log(color(`[${hash.slice(0, 6)}]`), ...args);
-                };
+                deposit.logger = new SimpleLogger(
+                    logLevel,
+                    color(`[${hash.slice(0, 6)}] `)
+                );
+
+                const info = deposit.logger.log;
 
                 info(
                     `Received ${
                         // tslint:disable-next-line: no-any
                         (deposit.deposit as any).amount / 1e8
-                    } ${asset}`
+                    } ${asset}`,
+                    deposit.deposit
                 );
 
-                info("confirming");
                 await deposit
                     .confirmed()
                     .on("confirmation", (confs, target) => {
                         info(`${confs}/${target} confirmations`);
                     });
-                info("waiting for signature");
+
                 await deposit.signed().on("status", (status) => {
                     info(`status: ${status}`);
                 });
-                info("minting on Ethereum");
+
                 await deposit.mint().on("transactionHash", (txHash) => {
                     info(`txHash: ${txHash}`);
                 });
@@ -166,14 +172,14 @@ describe("Refactor", () => {
                 resolve();
             });
 
-            console.log(
-                `${blue("[faucet]")} Sending ${blue(
-                    suggestedAmount / 1e8
-                )} ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
-            );
-            account
-                .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
-                .catch(reject);
+            // console.log(
+            //     `${blue("[faucet]")} Sending ${blue(
+            //         suggestedAmount / 1e8
+            //     )} ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
+            // );
+            // account
+            //     .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
+            //     .catch(reject);
         });
     });
 });

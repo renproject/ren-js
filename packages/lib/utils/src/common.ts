@@ -36,10 +36,15 @@ export const Ox = (hex: string | Buffer | BNInterface) => {
     return hexString.substring(0, 2) === "0x" ? hexString : `0x${hexString}`;
 };
 
+export const fromHex = (hex: string | Buffer): Buffer =>
+    Buffer.isBuffer(hex) ? hex : Buffer.from(strip0x(hex), "hex");
+export const fromBase64 = (base64: string | Buffer): Buffer =>
+    Buffer.isBuffer(base64) ? base64 : Buffer.from(strip0x(base64), "base64");
+export const toBase64 = (input: Buffer) => input.toString("base64");
+
 export const pad0x = (hex: string | Buffer | BNInterface) => {
-    let hexString = strip0x(
-        typeof hex === "string" ? hex : hex.toString("hex")
-    );
+    // Normalize:
+    let hexString = strip0x(Ox(hex));
     // If length is odd, add leading 0.
     if (hexString.length % 2) {
         hexString = "0" + hexString;
@@ -47,22 +52,10 @@ export const pad0x = (hex: string | Buffer | BNInterface) => {
     return Ox(hexString);
 };
 
-export const fromHex = (hex: string) => Buffer.from(strip0x(hex), "hex");
-export const fromBase64 = (hex: string) => Buffer.from(strip0x(hex), "base64");
-
-/**
- * Convert a hex string or Buffer to base64.
- */
-export const toBase64 = (input: string | Buffer) =>
-    (Buffer.isBuffer(input)
-        ? input
-        : Buffer.from(strip0x(input), "hex")
-    ).toString("base64");
-
 // Unpadded alternate base64 encoding defined in RFC 4648, commonly used in
 // URLs.
 export const toURLBase64 = (input: string | Buffer) =>
-    (Buffer.isBuffer(input) ? input : Buffer.from(strip0x(input), "hex"))
+    (Buffer.isBuffer(input) ? input : fromHex(input))
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
@@ -155,7 +148,7 @@ export const retryNTimes = async <T>(
  * Generates a random hex string (prefixed with '0x').
  * @param bytes The number of bytes to generate.
  */
-export const randomBytes = (bytes: number): string => {
+export const randomBytes = (bytes: number): Buffer => {
     try {
         // @ts-ignore
         if (window) {
@@ -168,14 +161,14 @@ export const randomBytes = (bytes: number): string => {
                     "0".repeat(8 - uint.toString(16).length) +
                     uint.toString(16);
             }
-            return Ox(str);
+            return Buffer.from(strip0x(str), "hex");
         }
     } catch (error) {
         // Ignore error
     }
     // tslint:disable-next-line: no-shadowed-variable
     const crypto = require("crypto");
-    return Ox(crypto.randomBytes(bytes));
+    return crypto.randomBytes(bytes);
 };
 
 export const assert = (

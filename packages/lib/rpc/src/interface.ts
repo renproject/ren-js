@@ -30,7 +30,7 @@ export interface AbstractRenVMProvider {
         fn: string,
         fnABI: AbiItem[],
         tags: [string] | []
-    ) => Promise<string>;
+    ) => Promise<Buffer>;
 
     submitBurn: (
         renContract: RenContract,
@@ -39,7 +39,7 @@ export interface AbstractRenVMProvider {
         to: string,
         ref: BigNumber,
         tags: [string] | []
-    ) => Promise<string>;
+    ) => Promise<Buffer>;
 
     queryMintOrBurn: <T extends MintTransaction | BurnTransaction>(
         utxoTxHash: Buffer
@@ -81,5 +81,5 @@ export interface AbstractRenVMProvider {
         to: string,
         token: string,
         outputHashFormat: string
-    ) => string;
+    ) => Buffer;
 }

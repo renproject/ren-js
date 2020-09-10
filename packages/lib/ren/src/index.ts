@@ -148,11 +148,8 @@ export default class RenJS {
      */
     public readonly lockAndMint = async (
         params: LockAndMintParams
-    ): Promise<LockAndMint> => {
-        const lockAndMint = new LockAndMint(this.renVM, params, this.logger);
-        await lockAndMint.initialize();
-        return lockAndMint;
-    };
+    ): Promise<LockAndMint> =>
+        new LockAndMint(this.renVM, params, this.logger).initialize();
 
     /**
      * Submits a burn log to RenVM.
@@ -162,15 +159,8 @@ export default class RenJS {
      */
     public readonly burnAndRelease = async (
         params: BurnAndReleaseParams
-    ): Promise<BurnAndRelease> => {
-        const burnAndRelease = new BurnAndRelease(
-            this.renVM,
-            params,
-            this.logger
-        );
-        await burnAndRelease.initialize();
-        return burnAndRelease;
-    };
+    ): Promise<BurnAndRelease> =>
+        new BurnAndRelease(this.renVM, params, this.logger).initialize();
 
     public readonly getFees = async () => this.renVM.getFees();
 }

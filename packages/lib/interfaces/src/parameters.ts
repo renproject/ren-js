@@ -54,7 +54,7 @@ export interface TransferParamsCommon {
     /**
      * An option to override the default nonce generated randomly.
      */
-    nonce?: string;
+    nonce?: Buffer | string;
 
     /**
      * Provide optional tags which can be used to look up transfers in the

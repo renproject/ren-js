@@ -5,7 +5,8 @@ import {
 } from "./parameters";
 import { BurnTransaction, MintTransaction } from "./transaction";
 
-// import { Tx } from "./utxo";
+export type Base64String = string;
+export type HexString = string;
 
 export enum LockAndMintStatus {
     Committed = "mint_committed",

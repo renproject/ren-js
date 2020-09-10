@@ -14,8 +14,9 @@ import {
     ignorePromiEventError,
     newPromiEvent,
     PromiEvent,
+    renVMHashToBase64,
     resolveOutToken,
-    txHashToBase64,
+    toBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
@@ -41,11 +42,11 @@ export class BurnAndRelease {
         {
             // Debug log
             const { ...restOfParams } = this.params;
-            this.logger.debug("burnAndRelease created", restOfParams);
+            this.logger.debug("burnAndRelease created:", restOfParams);
         }
     }
 
-    public readonly initialize = async () => {
+    public readonly initialize = async (): Promise<this> => {
         this.renNetwork =
             this.renNetwork || ((await this.renVM.getNetwork()) as RenNetwork);
 
@@ -67,6 +68,8 @@ export class BurnAndRelease {
                     this.params.asset,
                     burnPayload
                 )));
+
+        return this;
     };
 
     /**
@@ -128,7 +131,7 @@ export class BurnAndRelease {
     public txHash = (): string => {
         const txHash = this.params.txHash;
         if (txHash) {
-            return txHashToBase64(txHash);
+            return renVMHashToBase64(txHash);
         }
 
         if (!this.params.burnReference && this.params.burnReference !== 0) {
@@ -137,10 +140,12 @@ export class BurnAndRelease {
         const burnReference = new BigNumber(
             this.params.burnReference
         ).toFixed();
-        return generateBurnTxHash(
-            resolveOutToken(this.params),
-            burnReference,
-            this.logger
+        return toBase64(
+            generateBurnTxHash(
+                resolveOutToken(this.params),
+                burnReference,
+                this.logger
+            )
         );
     };
 
@@ -188,7 +193,7 @@ export class BurnAndRelease {
                     : [];
 
             if (burnReference || burnReference === 0) {
-                await this.renVM.submitBurn(
+                const returnedTxHash = await this.renVM.submitBurn(
                     resolveOutToken(this.params),
                     new BigNumber(0),
                     "",
@@ -196,17 +201,24 @@ export class BurnAndRelease {
                     new BigNumber(burnReference),
                     tags
                 );
+                if (txHash && toBase64(returnedTxHash) !== txHash) {
+                    this.logger.warn(
+                        `Unexpected txHash returned from RenVM. Received: ${toBase64(
+                            returnedTxHash
+                        )}, expected: ${txHash}`
+                    );
+                }
             }
 
             // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
             promiEvent.emit("txHash", txHash);
-            this.logger.debug("txHash", txHash);
+            this.logger.debug("txHash:", txHash);
 
             return await this.renVM.waitForTX<BurnTransaction>(
-                Buffer.from(txHash, "base64"),
+                fromBase64(txHash),
                 (status) => {
                     promiEvent.emit("status", status);
-                    this.logger.debug("Transaction Status", status);
+                    this.logger.debug("transaction status:", status);
                 },
                 () => promiEvent._isCancelled()
             );

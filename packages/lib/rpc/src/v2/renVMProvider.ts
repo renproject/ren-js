@@ -12,6 +12,8 @@ import {
 } from "@renproject/interfaces";
 import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
+    fromBase64,
+    fromHex,
     getTokenPrices,
     normalizeValue,
     pad0x,
@@ -19,6 +21,7 @@ import {
     SECONDS,
     sleep,
     strip0x,
+    toBase64,
     TokenPrices,
     toURLBase64,
 } from "@renproject/utils";
@@ -259,19 +262,21 @@ export class RenVMProvider implements RenVMProviderInterface {
         to: string,
         token: string,
         _outputHashString: string
-    ): string => {
-        return this.buildMintTransaction(
-            renContract,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            payload,
-            pHash,
-            to,
-            token
-        ).hash;
+    ): Buffer => {
+        return fromBase64(
+            this.buildMintTransaction(
+                renContract,
+                gHash,
+                gPubKey,
+                nHash,
+                nonce,
+                output,
+                payload,
+                pHash,
+                to,
+                token
+            ).hash
+        );
     };
 
     public submitMint = async (
@@ -289,7 +294,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         _fn: string,
         _fnABI: AbiItem[],
         _tags: [string] | []
-    ): Promise<string> => {
+    ): Promise<Buffer> => {
         const response = await this.provider.sendMessage<
             RPCMethod.MethodSubmitTx
         >(RPCMethod.MethodSubmitTx, {
@@ -308,7 +313,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             // tags,
         });
 
-        return response.tx.hash;
+        return fromBase64(response.tx.hash);
     };
 
     public submitBurn = async (
@@ -318,7 +323,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         to: string,
         ref: BigNumber,
         _tags: [string] | []
-    ): Promise<string> => {
+    ): Promise<Buffer> => {
         const selector = resolveV2Contract(renContract);
         const version = "1";
         const txIn = {
@@ -327,9 +332,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                 amount: amount.toFixed(),
                 token,
                 to,
-                nonce: Buffer.from(pad0x(ref.toString(16)), "hex").toString(
-                    "base64"
-                ),
+                nonce: toBase64(fromHex(pad0x(ref.toString(16)))),
             },
         };
         const response = await this.provider.sendMessage(
@@ -345,7 +348,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             }
         );
 
-        return response.tx.hash;
+        return fromBase64(response.tx.hash);
     };
 
     public readonly queryMintOrBurn = async <
@@ -484,7 +487,7 @@ export class RenVMProvider implements RenVMProviderInterface {
 
         // Use this gateway pubKey to build the gateway address.
         // return hash160(
-        return Buffer.from(tokenGateway.pubKey, "base64");
+        return fromBase64(tokenGateway.pubKey);
         // );
     };
 

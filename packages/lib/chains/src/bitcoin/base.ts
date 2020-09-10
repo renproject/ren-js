@@ -3,7 +3,9 @@ import {
     fromBase64,
     fromHex,
     hash160,
+    Ox,
     rawEncode,
+    strip0x,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
@@ -23,7 +25,6 @@ import {
     createAddress,
     pubKeyScript as calculatePubKeyScript,
 } from "../common";
-import { Ox } from "../hexUtils";
 
 // export const getBitcoinConfirmations = ({
 //     isTestnet,
@@ -105,8 +106,9 @@ export class BitcoinBaseChain
     public chainNetwork: BitcoinNetwork | undefined;
 
     constructor(network?: BitcoinNetwork, thisClass?: typeof BitcoinBaseChain) {
-        if (!(this instanceof BitcoinBaseChain))
+        if (!(this instanceof BitcoinBaseChain)) {
             return new (thisClass || BitcoinBaseChain)(network);
+        }
 
         this.chainNetwork = network;
     }
@@ -155,11 +157,16 @@ export class BitcoinBaseChain
         }
         this.assetAssetSupported(asset);
         return (
-            await getUTXOs(this.chainNetwork === "testnet", {
-                address,
-                confirmations: 0,
-            })
-        ).map((utxo) => utxo);
+            (
+                await getUTXOs(this.chainNetwork === "testnet", {
+                    address,
+                    confirmations: 0,
+                })
+            )
+                // Convert from readonly array to array:
+                .map((utxo) => utxo)
+        );
+        // .filter((utxo) => utxo.amount > 70000);
     };
 
     /**
@@ -190,8 +197,8 @@ export class BitcoinBaseChain
         this.assetAssetSupported(asset);
         return createAddress(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            hash160(publicKey).toString("hex"),
-            gHash.toString("hex")
+            Ox(hash160(publicKey)),
+            Ox(gHash)
         );
     };
 
@@ -199,8 +206,8 @@ export class BitcoinBaseChain
         this.assetAssetSupported(asset);
         return calculatePubKeyScript(Networks, Opcode, Script)(
             this.chainNetwork === "testnet",
-            hash160(publicKey).toString("hex"),
-            gHash.toString("hex")
+            Ox(hash160(publicKey)),
+            Ox(gHash)
         );
     };
 
@@ -236,7 +243,7 @@ export class BitcoinBaseChain
     };
 
     transactionHashString = (transaction: Transaction): string => {
-        return `${toBase64(transaction.txHash)}_${transaction.vOut}`;
+        return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
     };
 
     transactionRPCFormat = (
@@ -247,9 +254,7 @@ export class BitcoinBaseChain
         if (v2) {
             return {
                 outpoint: {
-                    hash: toURLBase64(
-                        Buffer.from(transaction.txHash, "hex").reverse()
-                    ),
+                    hash: toURLBase64(fromHex(transaction.txHash).reverse()),
                     index: transaction.vOut.toFixed(),
                 },
                 pubKeyScript: toURLBase64(pubKeyScript),
@@ -258,7 +263,7 @@ export class BitcoinBaseChain
         }
 
         return {
-            txHash: toBase64(transaction.txHash),
+            txHash: toBase64(fromHex(transaction.txHash)),
             vOut: transaction.vOut.toFixed(),
         };
     };
@@ -271,21 +276,14 @@ export class BitcoinBaseChain
     ): Buffer => {
         const encoded = rawEncode(
             ["bytes32", v2 ? "bytes" : "bytes32", "uint32"],
-            [
-                Ox(nonce),
-                Ox(Buffer.from(deposit.txHash, "hex").reverse()),
-                deposit.vOut,
-            ]
+            [Ox(nonce), Ox(fromHex(deposit.txHash).reverse()), deposit.vOut]
         );
 
         const digest = keccak256(encoded);
 
-        if (logger)
-            logger.debug(
-                "nHash",
-                digest.toString("hex"),
-                encoded.toString("hex")
-            );
+        if (logger) {
+            logger.debug("nHash", toBase64(digest), Ox(encoded));
+        }
 
         return digest;
     };

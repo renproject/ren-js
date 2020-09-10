@@ -3,6 +3,7 @@
 import BigNumber from "bignumber.js";
 import { expect } from "earljs";
 import { describe, it } from "mocha";
+import { Ox } from "@renproject/utils";
 
 import { marshalTypedPackValue } from "../src/v2/pack/marshal";
 import {
@@ -41,8 +42,6 @@ describe("Pack", () => {
         // const data = `0000000130000000104254432f66726f6d457468657265756d` + expected;
         // const hash = "c4e423c339ffb1c1bd37b6493a4f209391fb498466bb257fc565ba904804af5a";
 
-        expect(marshalTypedPackValue(packValue).toString("hex")).toEqual(
-            expected
-        );
+        expect(Ox(marshalTypedPackValue(packValue))).toEqual(expected);
     });
 });

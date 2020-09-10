@@ -11,6 +11,7 @@ import {
 } from "@renproject/interfaces";
 import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
+    fromBase64,
     generateMintTxHash,
     getTokenPrices,
     normalizeValue,
@@ -200,14 +201,13 @@ export class RenVMProvider implements RenVMProviderInterface {
         _to: Buffer,
         _token: Buffer,
         outputHashFormat: string
-    ): string => {
-        return generateMintTxHash(
+    ): Buffer =>
+        generateMintTxHash(
             renContract,
             toBase64(gHash),
             outputHashFormat,
             this.logger
         );
-    };
 
     public submitMint = async (
         renContract: RenContract,
@@ -224,7 +224,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         fn: string,
         fnABI: AbiItem[],
         tags: [string] | []
-    ): Promise<string> => {
+    ): Promise<Buffer> => {
         const response = await this.provider.sendMessage<
             RPCMethod.MethodSubmitTx
         >(RPCMethod.MethodSubmitTx, {
@@ -275,7 +275,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             tags,
         });
 
-        return response.tx.hash;
+        return fromBase64(response.tx.hash);
     };
 
     public submitBurn = async (
@@ -285,7 +285,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         _to: string,
         ref: BigNumber,
         tags: [string] | []
-    ): Promise<string> => {
+    ): Promise<Buffer> => {
         const response = await this.provider.sendMessage(
             RPCMethod.MethodSubmitTx,
             {
@@ -303,7 +303,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             }
         );
 
-        return response.tx.hash;
+        return fromBase64(response.tx.hash);
     };
 
     public readonly queryMintOrBurn = async <
@@ -311,12 +311,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     >(
         utxoTxHash: Buffer
     ): Promise<T> => {
-        const response = await this.provider.sendMessage(
-            RPCMethod.MethodQueryTx,
-            {
-                txHash: toBase64(utxoTxHash),
-            }
-        );
+        const response = await this.queryTx(toBase64(utxoTxHash));
         // Unmarshal transaction.
         const { asset, from } = parseRenContract(response.tx.to);
         if (asset.toUpperCase() === from.toUpperCase()) {
@@ -441,7 +436,7 @@ export class RenVMProvider implements RenVMProviderInterface {
 
         // Use this gateway pubKey to build the gateway address.
         // return hash160(
-        return Buffer.from(tokenGateway.pubKey, "base64");
+        return fromBase64(tokenGateway.pubKey);
         // );
     };
 

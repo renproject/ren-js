@@ -302,7 +302,7 @@ export const findTransactionBySigHash = async (
     network: RenNetworkDetails,
     web3: Web3,
     tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"),
-    sigHash: string
+    sigHash: Buffer
 ): Promise<string | undefined> => {
     try {
         const gatewayAddress = await getGatewayAddress(
@@ -316,7 +316,7 @@ export const findTransactionBySigHash = async (
         );
         // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
         // the contract
-        const status = await gatewayContract.methods.status(sigHash).call();
+        const status = await gatewayContract.methods.status(Ox(sigHash)).call();
         if (status) {
             const recentRegistrationEvents = await web3.eth.getPastLogs({
                 address: gatewayAddress,

@@ -1,5 +1,6 @@
 // tslint:disable: no-use-before-declare no-any
 
+import { fromBase64 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 export enum PackPrimitive {
@@ -58,7 +59,7 @@ export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
         case PackPrimitive.Bytes:
         case PackPrimitive.Bytes32:
         case PackPrimitive.Bytes65:
-            return Buffer.from(value, "base64");
+            return fromBase64(value);
     }
 };
 

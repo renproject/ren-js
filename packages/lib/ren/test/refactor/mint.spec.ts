@@ -10,7 +10,7 @@ import { AbstractRenVMProvider } from "@renproject/rpc";
 //     RenVMProviderInterface,
 //     RenVMResponses,
 // } from "@renproject/rpc/build/main/v2";
-import { Ox } from "@renproject/utils";
+import { Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
@@ -20,12 +20,16 @@ import {
     RenVMProviderInterface,
     RenVMResponses,
 } from "@renproject/rpc/build/main/v2";
+import { blue, cyan, green, magenta, red, yellow } from "chalk";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 
 import RenJS from "../../src/index";
 
 chai.should();
 
 require("dotenv").config();
+
+const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
@@ -43,58 +47,60 @@ describe("Refactor", () => {
         const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-            "https://lightnode-new-testnet.herokuapp.com/",
-            {
-                ren_queryShards: {
-                    shards: [
-                        {
-                            darknodesRootHash:
-                                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            gateways: [
-                                {
-                                    asset: "BTC",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "Bitcoin",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                                {
-                                    asset: "ZEC",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "Zcash",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                                {
-                                    asset: "BCH",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "BitcoinCash",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                            ],
-                            gatewaysRootHash:
-                                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            primary: true,
-                            pubKey:
-                                "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                        },
-                    ],
-                },
-            }
-        ) as RenVMProviderInterface;
+        // const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
+        //     "https://lightnode-new-testnet.herokuapp.com/",
+        //     {
+        //         ren_queryShards: {
+        //             shards: [
+        //                 {
+        //                     darknodesRootHash:
+        //                         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        //                     gateways: [
+        //                         {
+        //                             asset: "BTC",
+        //                             hosts: ["Ethereum"],
+        //                             locked: "0",
+        //                             origin: "Bitcoin",
+        //                             pubKey:
+        //                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+        //                         },
+        //                         {
+        //                             asset: "ZEC",
+        //                             hosts: ["Ethereum"],
+        //                             locked: "0",
+        //                             origin: "Zcash",
+        //                             pubKey:
+        //                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+        //                         },
+        //                         {
+        //                             asset: "BCH",
+        //                             hosts: ["Ethereum"],
+        //                             locked: "0",
+        //                             origin: "BitcoinCash",
+        //                             pubKey:
+        //                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+        //                         },
+        //                     ],
+        //                     gatewaysRootHash:
+        //                         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        //                     primary: true,
+        //                     pubKey:
+        //                         "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+        //                 },
+        //             ],
+        //         },
+        //     }
+        // ) as RenVMProviderInterface;
 
-        const renVMProvider = new RenVMProvider(
-            "testnet",
-            rpcProvider
-        ) as AbstractRenVMProvider;
+        // const renVMProvider = new RenVMProvider(
+        //     "testnet",
+        //     rpcProvider
+        // ) as AbstractRenVMProvider;
 
-        const renJS = new RenJS(renVMProvider);
-        // const renJS = new RenJS("testnet")
+        const logLevel: LogLevel = LogLevel.Trace;
+
+        // const renJS = new RenJS(renVMProvider, { logLevel });
+        const renJS = new RenJS("testnet", { logLevel });
 
         // Use 0.0001 more than fee.
         let suggestedAmount;
@@ -114,23 +120,8 @@ describe("Refactor", () => {
 
             asset,
             from: Bitcoin(),
-            to: Ethereum(provider).Contract({
-                // The contract we want to interact with
-                // sendTo: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
-                sendTo: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
-
-                // The name of the function we want to call
-                contractFn: "mint",
-
-                // Arguments expected for calling `deposit`
-                contractParams: [
-                    { type: "string", name: "_symbol", value: "BTC" },
-                    {
-                        type: "address",
-                        name: "_address",
-                        value: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
-                    },
-                ],
+            to: Ethereum(provider).Account({
+                address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
             nonce: Ox("00".repeat(32)),
@@ -144,25 +135,79 @@ describe("Refactor", () => {
             )} ${asset} (${await account.address(asset)})`
         );
 
+        // await lockAndMint.processTransaction({
+        //     txHash:
+        //         "a356f6f886624d7ea3ea00cdf270b1936c48732fb9a113b6f021914c044c150e",
+        //     amount: 80000,
+        //     vOut: 0,
+        //     confirmations: 0,
+        // });
+
         await new Promise((resolve, reject) => {
+            let i = 0;
+
             lockAndMint.on("deposit", async (deposit) => {
-                console.info(
-                    "received deposit: ",
-                    deposit.deposit,
-                    await deposit.txHash()
+                const hash = await deposit.txHash();
+
+                const color = colors[i];
+                i += 1;
+
+                deposit.logger = new SimpleLogger(
+                    logLevel,
+                    color(`[${hash.slice(0, 6)}] `)
                 );
 
-                await deposit.confirmed().on("confirmation", console.log);
-                await deposit.signed().on("status", console.log);
-                await deposit.mint().on("transactionHash", console.log);
+                const info = deposit.logger.log;
+
+                info(
+                    `Received ${
+                        // tslint:disable-next-line: no-any
+                        (deposit.deposit as any).amount / 1e8
+                    } ${asset}`,
+                    deposit.deposit
+                );
+
+                info(`Calling .confirmed`);
+                await deposit
+                    .confirmed()
+                    .on("confirmation", (confs, target) => {
+                        info(`${confs}/${target} confirmations`);
+                    });
+
+                info(`Calling .signed`);
+                await deposit.signed().on("status", (status) => {
+                    info(`status: ${status}`);
+                });
+
+                info(`Calling .mint`);
+                await deposit.mint().on("transactionHash", (txHash) => {
+                    info(`txHash: ${txHash}`);
+                });
 
                 resolve();
             });
 
-            console.log(`Sending ${suggestedAmount / 1e8} ${asset}`);
-            account
-                .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
-                .catch(reject);
+            sleep(10 * SECONDS)
+                .then(() => {
+                    // If there's been no deposits, send one.
+                    if (i === 0) {
+                        console.log(
+                            `${blue("[faucet]")} Sending ${blue(
+                                suggestedAmount / 1e8
+                            )} ${blue(asset)} to ${blue(
+                                lockAndMint.gatewayAddress
+                            )}`
+                        );
+                        account
+                            .sendSats(
+                                lockAndMint.gatewayAddress,
+                                suggestedAmount,
+                                asset
+                            )
+                            .catch(reject);
+                    }
+                })
+                .catch(console.error);
         });
     });
 });

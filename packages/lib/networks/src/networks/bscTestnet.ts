@@ -26,16 +26,16 @@ export const renBscTestnet = CastNetwork({
         },
         RenERC20: {
             abi: RenERC20.abi as AbiItem[],
-            artifact: RenERC20 as Contract,
+            artifact: (RenERC20 as unknown) as Contract,
         },
         Gateway: {
             abi: GatewayLogic.abi as AbiItem[],
-            artifact: GatewayLogic as Contract,
+            artifact: (GatewayLogic as unknown) as Contract,
         },
         BasicAdapter: {
             address: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
             abi: BasicAdapter.abi as AbiItem[],
-            artifact: BasicAdapter as Contract,
+            artifact: (BasicAdapter as unknown) as Contract,
         },
     },
 });

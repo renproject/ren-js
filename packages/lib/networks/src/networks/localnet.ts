@@ -25,20 +25,20 @@ export const renLocalnet = CastNetwork({
         GatewayRegistry: {
             address: GatewayRegistry.networks[networkID].address,
             abi: GatewayRegistry.abi as AbiItem[],
-            artifact: GatewayRegistry as Contract,
+            artifact: (GatewayRegistry as unknown) as Contract,
         },
         RenERC20: {
             abi: RenBTC.abi as AbiItem[],
-            artifact: RenBTC as Contract,
+            artifact: (RenBTC as unknown) as Contract,
         },
         Gateway: {
             abi: GatewayLogic.abi as AbiItem[],
-            artifact: GatewayLogic as Contract,
+            artifact: (GatewayLogic as unknown) as Contract,
         },
         BasicAdapter: {
             address: BasicAdapter.networks[networkID].address,
             abi: BasicAdapter.abi as AbiItem[],
-            artifact: BasicAdapter as Contract,
+            artifact: (BasicAdapter as unknown) as Contract,
         },
     },
 });

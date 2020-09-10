@@ -3,7 +3,11 @@
 import { Bitcoin, Ethereum } from "@renproject/chains";
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 import { renRinkeby } from "@renproject/networks";
-import { HttpProvider, OverwriteProvider } from "@renproject/provider";
+import {
+    HttpProvider,
+    OverwriteProvider,
+    Provider,
+} from "@renproject/provider";
 import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
     RenVMParams,
@@ -44,11 +48,12 @@ describe("Refactor", () => {
         const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
             // tslint:disable-next-line: no-http-string
             "http://34.239.188.210:18515"
-        );
+        ) as Provider<RenVMParams, RenVMResponses>;
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
             // "https://lightnode-new-testnet.herokuapp.com/",
             httpProvider,
             {
+                // tslint:disable-next-line: no-object-literal-type-assertion
                 ren_queryShards: {
                     shards: [
                         {
@@ -87,7 +92,7 @@ describe("Refactor", () => {
                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
                         },
                     ],
-                },
+                } as RenVMResponses["ren_queryShards"],
             }
         ) as RenVMProviderInterface;
         const renVMProvider = new RenVMProvider(

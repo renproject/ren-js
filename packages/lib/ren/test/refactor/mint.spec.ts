@@ -1,27 +1,13 @@
 // tslint:disable: no-console
 
-import { BinanceSmartChain, Bitcoin, Ethereum } from "@renproject/chains";
-import { renBscTestnet, renTestnet } from "@renproject/networks";
-import { OverwriteProvider, Provider } from "@renproject/provider";
-import { AbstractRenVMProvider } from "@renproject/rpc";
-// import {
-//     RenVMParams,
-//     RenVMProvider,
-//     RenVMProviderInterface,
-//     RenVMResponses,
-// } from "@renproject/rpc/build/main/v2";
+import { Bitcoin, Ethereum } from "@renproject/chains";
+import { LogLevel, SimpleLogger } from "@renproject/interfaces";
+import { renTestnet } from "@renproject/networks";
 import { Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
+import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
-import {
-    RenVMParams,
-    RenVMProvider,
-    RenVMProviderInterface,
-    RenVMResponses,
-} from "@renproject/rpc/build/main/v2";
-import { blue, cyan, green, magenta, red, yellow } from "chalk";
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 
 import RenJS from "../../src/index";
 
@@ -47,57 +33,7 @@ describe("Refactor", () => {
         const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        // const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-        //     "https://lightnode-new-testnet.herokuapp.com/",
-        //     {
-        //         ren_queryShards: {
-        //             shards: [
-        //                 {
-        //                     darknodesRootHash:
-        //                         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        //                     gateways: [
-        //                         {
-        //                             asset: "BTC",
-        //                             hosts: ["Ethereum"],
-        //                             locked: "0",
-        //                             origin: "Bitcoin",
-        //                             pubKey:
-        //                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-        //                         },
-        //                         {
-        //                             asset: "ZEC",
-        //                             hosts: ["Ethereum"],
-        //                             locked: "0",
-        //                             origin: "Zcash",
-        //                             pubKey:
-        //                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-        //                         },
-        //                         {
-        //                             asset: "BCH",
-        //                             hosts: ["Ethereum"],
-        //                             locked: "0",
-        //                             origin: "BitcoinCash",
-        //                             pubKey:
-        //                                 "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-        //                         },
-        //                     ],
-        //                     gatewaysRootHash:
-        //                         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        //                     primary: true,
-        //                     pubKey:
-        //                         "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-        //                 },
-        //             ],
-        //         },
-        //     }
-        // ) as RenVMProviderInterface;
-
-        // const renVMProvider = new RenVMProvider(
-        //     "testnet",
-        //     rpcProvider
-        // ) as AbstractRenVMProvider;
-
-        const logLevel: LogLevel = LogLevel.Trace;
+        const logLevel: LogLevel = LogLevel.Log;
 
         // const renJS = new RenJS(renVMProvider, { logLevel });
         const renJS = new RenJS("testnet", { logLevel });
@@ -120,22 +56,8 @@ describe("Refactor", () => {
 
             asset,
             from: Bitcoin(),
-            to: Ethereum(provider).Contract({
-                sendTo: "0x7BfBB055d4a07468a6D09E498608B41201F19Bd8",
-                contractFn: "mint",
-                contractParams: [
-                    {
-                        name: "_symbol",
-                        type: "string",
-                        value: "BTC",
-                    },
-                    {
-                        name: "_address",
-                        type: "address",
-                        value: "0xEA8b2fF0d7f546AFAeAE1771306736357dEFa434",
-                    },
-                ],
-                // address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
+            to: Ethereum(provider).Account({
+                address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
             nonce: Ox("00".repeat(32)),

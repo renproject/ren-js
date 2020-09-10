@@ -8,6 +8,7 @@ import {
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
+    assertObject,
     assertType,
     extractError,
     fromBase64,
@@ -312,27 +313,24 @@ export class LockAndMintDeposit {
     }
 
     private readonly validateParams = () => {
-        const {
-            from,
-            to,
-            // suggestedAmount,
-            confirmations,
-            contractCalls,
-            gatewayAddress,
-            asset,
-            txHash,
-            nonce,
-            tags,
-        } = this.params;
-        assertType("object", { from, to });
-        assertType("string", { asset });
-        assertType("object[] | undefined", { contractCalls });
-        assertType("string[] | undefined", { tags });
-        assertType("number | undefined", { confirmations });
-        assertType("string | undefined", { txHash, gatewayAddress });
-        assertType("Buffer | string | undefined", { nonce });
-        if (contractCalls) {
-            contractCalls.map((contractCall) => {
+        assertObject(
+            {
+                from: "object",
+                to: "object",
+                suggestedAmount: "number | string | object | undefined",
+                confirmations: "number | undefined",
+                contractCalls: "any[]",
+                gatewayAddress: "string | undefined",
+                asset: "string",
+                txHash: "string | undefined",
+                nonce: "Buffer | string | undefined",
+                tags: "string[] | undefined",
+            },
+            { params: this.params }
+        );
+
+        if (this.params.contractCalls) {
+            this.params.contractCalls.map((contractCall) => {
                 assertType("string", {
                     sendTo: contractCall.sendTo,
                     contractFn: contractCall.contractFn,

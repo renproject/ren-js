@@ -25,20 +25,20 @@ export const renTestnet = CastNetwork({
         GatewayRegistry: {
             address: GatewayRegistry.networks[networkID].address,
             abi: GatewayRegistry.abi as AbiItem[],
-            artifact: GatewayRegistry as Contract,
+            artifact: (GatewayRegistry as unknown) as Contract,
         },
         RenERC20: {
             abi: RenERC20.abi as AbiItem[],
-            artifact: RenERC20 as Contract,
+            artifact: (RenERC20 as unknown) as Contract,
         },
         Gateway: {
             abi: GatewayLogic.abi as AbiItem[],
-            artifact: GatewayLogic as Contract,
+            artifact: (GatewayLogic as unknown) as Contract,
         },
         BasicAdapter: {
             address: BasicAdapter.networks[networkID].address,
             abi: BasicAdapter.abi as AbiItem[],
-            artifact: BasicAdapter as Contract,
+            artifact: (BasicAdapter as unknown) as Contract,
         },
     },
 });

@@ -1,7 +1,7 @@
 import chai from "chai";
 import { expect } from "earljs";
 
-import { assertType } from "../src/assert";
+import { assertObject, assertType } from "../src/assert";
 
 chai.should();
 require("dotenv").config();
@@ -103,6 +103,84 @@ describe("assert", () => {
         ).toThrow(
             expect.error(
                 "Expected a to be of type 'string | number[]', instead got 'any[]'."
+            )
+        );
+    });
+
+    it("objects", () => {
+        expect(
+            assertObject(
+                {
+                    first: "number",
+                    second: "string",
+                },
+                {
+                    a: {
+                        first: 1,
+                        second: "1",
+                    },
+                }
+            )
+        ).toEqual(true);
+
+        expect(
+            assertObject(
+                {
+                    first: {
+                        innerFirst: "number",
+                    },
+                    second: "string",
+                },
+                {
+                    a: {
+                        first: {
+                            innerFirst: 1,
+                        },
+                        second: "1",
+                    },
+                }
+            )
+        ).toEqual(true);
+
+        expect(() =>
+            assertObject(
+                {
+                    first: {
+                        innerFirst: "number",
+                    },
+                    second: "string",
+                },
+                {
+                    a: {
+                        first: {
+                            innerFirst: "1",
+                        },
+                        second: "1",
+                    },
+                }
+            )
+        ).toThrow(
+            expect.error(
+                "Expected a[\"first\"][\"innerFirst\"] to be of type 'number', instead got 'string'."
+            )
+        );
+
+        expect(() =>
+            assertObject(
+                {
+                    first: "number",
+                    second: "string",
+                },
+                {
+                    a: {
+                        first: "1",
+                        second: "1",
+                    },
+                }
+            )
+        ).toThrow(
+            expect.error(
+                "Expected a[\"first\"] to be of type 'number', instead got 'string'."
             )
         );
     });

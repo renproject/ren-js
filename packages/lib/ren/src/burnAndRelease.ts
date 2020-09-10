@@ -8,6 +8,8 @@ import {
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
+    assertObject,
+    assertType,
     extractError,
     fromBase64,
     generateBurnTxHash,
@@ -39,12 +41,40 @@ export class BurnAndRelease {
         this.renVM = _renVM;
         this.params = _params; // processBurnAndReleaseParams(this.network, _params);
 
+        this.validateParams();
+
         {
             // Debug log
             const { ...restOfParams } = this.params;
             this.logger.debug("burnAndRelease created:", restOfParams);
         }
     }
+
+    private readonly validateParams = () => {
+        assertObject(
+            {
+                from: "object",
+                to: "object",
+                ethereumTxHash: "string | undefined",
+                burnReference: "string | number | undefined",
+                contractCalls: "any[] | undefined",
+                asset: "string",
+                txHash: "string | undefined",
+                nonce: "Buffer | string | undefined",
+                tags: "string[] | undefined",
+            },
+            { params: this.params }
+        );
+
+        if (this.params.contractCalls) {
+            this.params.contractCalls.map((contractCall) => {
+                assertType("string", {
+                    sendTo: contractCall.sendTo,
+                    contractFn: contractCall.contractFn,
+                });
+            });
+        }
+    };
 
     public readonly initialize = async (): Promise<this> => {
         this.renNetwork =

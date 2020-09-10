@@ -1,4 +1,4 @@
-// tslint:disable: no-any
+// tslint:disable: no-any no-use-before-declare
 
 export const assert = (
     assertion: boolean,
@@ -8,6 +8,57 @@ export const assert = (
         throw new Error(`Failed assertion${sentence ? `: ${sentence}` : ""}`);
     }
     return true;
+};
+
+/**
+ * The following is a set of rudimentary type validation functions.
+ *
+ * The main function is `assertType`, which accepts a type and a dictionary of
+ * values.
+ *
+ * The type must be a string that matches the following pattern:
+ *
+ * ```
+ * TYPE:
+ *   | TYPE '|' TYPE
+ *   | Array<TYPE>
+ *   | TYPE[]
+ *   | PRIMITIVE_TYPE
+ *
+ * PRIMITIVE_TYPE:
+ *   | "string"
+ *   | "number"
+ *   | "bigint"
+ *   | "boolean"
+ *   | "symbol"
+ *   | "undefined"
+ *   | "object"
+ *   | "function"
+ *   | "null"
+ *   | "any"
+ *   | "Buffer"
+ * ```
+ *
+ * Types are matched by a regex so '|' can't be used at multiple levels, e.g.
+ * `string | Array<string | number>`.
+ */
+export const assertType = <T = any>(
+    type: string,
+    objects: {
+        [value: string]: T;
+    }
+): objects is { [value: string]: T } => {
+    if (isArrayType(type)) {
+        return assertArray(
+            type,
+            (objects as unknown) as { [value: string]: T[] }
+        );
+    }
+    if (isUnionType(type)) {
+        return assertTypeUnion(type, objects);
+    }
+
+    return assertTypeCheck(is(type as PrimitiveTypeName), objects, type);
 };
 
 type PrimitiveTypeName =
@@ -100,27 +151,6 @@ export const assertPrimitiveType = <T extends PrimitiveTypeName>(
 ): objects is { [value: string]: PrimitiveType<T> } =>
     assertTypeCheck(is(type), objects, type);
 
-export const assertType = <T = any>(
-    type: string,
-    objects: {
-        [value: string]: T;
-    }
-): objects is { [value: string]: T } => {
-    if (isArrayType(type)) {
-        // tslint:disable-next-line: no-use-before-declare
-        return assertArray(
-            type,
-            (objects as unknown) as { [value: string]: T[] }
-        );
-    }
-    if (isUnionType(type)) {
-        // tslint:disable-next-line: no-use-before-declare
-        return assertTypeUnion(type, objects);
-    }
-
-    return assertTypeCheck(is(type as PrimitiveTypeName), objects, type);
-};
-
 export const assertClass = <T extends new (...args: any) => any>(
     classType: T,
     objects: {
@@ -155,7 +185,6 @@ export const assertTypeUnion = <T = any>(
                 }
                 if (isArrayType(type)) {
                     try {
-                        // tslint:disable-next-line: no-use-before-declare
                         assertArray(type, { [key]: v });
                         return true;
                     } catch (error) {
@@ -188,7 +217,37 @@ export const assertArray = <T = any>(
         assertTypeCheck((v: any) => Array.isArray(v), { value }, "any[]");
 
         for (let i = 0; i < value.length; i++) {
-            assertTypeUnion(type, { [`${key}[${i}]`]: value[i] });
+            assertType(type, { [`${key}[${i}]`]: value[i] });
+        }
+    }
+    return true;
+};
+
+type ObjectDefinition = { [key: string]: string | ObjectDefinition };
+
+export const assertObject = <T extends { [key: string]: any }>(
+    fieldTypes: ObjectDefinition,
+    objects: {
+        [value: string]: T;
+    }
+): boolean => {
+    for (const key of Object.keys(objects)) {
+        const value = objects[key];
+
+        for (const field of Object.keys(fieldTypes)) {
+            if (typeof fieldTypes[field] === "object") {
+                assertObject(fieldTypes[field] as ObjectDefinition, {
+                    [`${key}["${field}"]`]: value[field],
+                });
+            } else if (typeof fieldTypes[field] === "string") {
+                assertType(fieldTypes[field] as string, {
+                    [`${key}["${field}"]`]: value[field],
+                });
+            } else {
+                throw new Error(
+                    `Invalid object type definition ${typeof fieldTypes[field]}`
+                );
+            }
         }
     }
     return true;

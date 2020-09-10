@@ -23,20 +23,20 @@ export const renRinkeby = CastNetwork({
         GatewayRegistry: {
             address: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
             abi: GatewayRegistry.abi as AbiItem[],
-            artifact: GatewayRegistry as Contract,
+            artifact: (GatewayRegistry as unknown) as Contract,
         },
         RenERC20: {
             abi: RenERC20.abi as AbiItem[],
-            artifact: RenERC20 as Contract,
+            artifact: (RenERC20 as unknown) as Contract,
         },
         Gateway: {
             abi: GatewayLogic.abi as AbiItem[],
-            artifact: GatewayLogic as Contract,
+            artifact: (GatewayLogic as unknown) as Contract,
         },
         BasicAdapter: {
             address: "0xC8DD18A151FafFCab1B822108e49b4aE3bFff477",
             abi: BasicAdapter.abi as AbiItem[],
-            artifact: BasicAdapter as Contract,
+            artifact: (BasicAdapter as unknown) as Contract,
         },
     },
 });

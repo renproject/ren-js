@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "target": "ES2017",
+        "lib": [
+            "esnext"
+        ],
+        "outDir": "build/main",
+        "rootDir": "src",
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "declaration": true,
+        "inlineSourceMap": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "src/**/flycheck*"
+    ]
+}

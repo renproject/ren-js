@@ -103,7 +103,6 @@
     ],
     "dependencies": {
         "@renproject/chains": "file:packages/lib/chains",
-        "@renproject/gateway": "file:packages/lib/gateway",
         "@renproject/interfaces": "file:packages/lib/interfaces",
         "@renproject/networks": "file:packages/lib/networks",
         "@renproject/provider": "file:packages/lib/provider",
@@ -111,6 +110,7 @@
         "@renproject/ren": "file:packages/lib/ren",
         "@renproject/rpc": "file:packages/lib/rpc",
         "@renproject/utils": "file:packages/lib/utils",
+        "@renproject/xstate": "file:packages/lib/xstate",
         "bitcore-lib": "^8.22.0",
         "bitcore-lib-cash": "^8.22.0",
         "gateway-example": "file:packages/ui/gateway-example",

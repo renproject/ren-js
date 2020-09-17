@@ -3,6 +3,8 @@ import {
     BurnTransaction,
     EventType,
     Logger,
+    newPromiEvent,
+    PromiEvent,
     RenNetwork,
     TxStatus,
 } from "@renproject/interfaces";
@@ -14,8 +16,6 @@ import {
     fromBase64,
     generateBurnTxHash,
     ignorePromiEventError,
-    newPromiEvent,
-    PromiEvent,
     renVMHashToBase64,
     resolveOutToken,
     toBase64,

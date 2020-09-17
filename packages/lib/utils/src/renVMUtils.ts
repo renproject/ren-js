@@ -2,6 +2,7 @@ import {
     Asset,
     BurnAndReleaseParams,
     Chain,
+    DepositCommon,
     EthArgs,
     LockAndMintParams,
     Logger,
@@ -89,11 +90,11 @@ export const generateGHash = (
     const encoded = rawEncode(
         [
             "bytes32",
-            v2 ? "bytes" : "address",
+            v2 ? "bytes32" : "address",
             v2 ? "bytes" : "address",
             "bytes32",
         ],
-        [pHash, Ox(tokenIdentifier), Ox(to), nonce]
+        [pHash, tokenIdentifier, to, nonce]
     );
 
     const digest = keccak256(encoded);
@@ -231,7 +232,7 @@ export const fixSignature = (
     if (Ox(sigHash) !== Ox(expectedSighash)) {
         if (logger) {
             logger.warn(
-                `Warning: RenVM returned invalid signature hash. Expected ${expectedSighash} but for ${sigHash}`
+                `Warning: unexpected signature hash returned from RenVM. Expected ${expectedSighash}, got ${sigHash}.`
             );
         }
     }
@@ -355,14 +356,17 @@ export const fixSignatureSimple = (
  */
 export const randomNonce = () => randomBytes(32);
 
-export const resolveInToken = ({
+export const resolveInToken = <
+    Transaction = {},
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
+>({
     asset,
     from,
     to,
 }: {
-    asset: LockAndMintParams["asset"];
-    from: LockAndMintParams["from"];
-    to: LockAndMintParams["to"];
+    asset: LockAndMintParams<Transaction, Deposit>["asset"];
+    from: LockAndMintParams<Transaction, Deposit>["from"];
+    to: LockAndMintParams<Transaction, Deposit>["to"];
 }): RenContract => {
     return `${asset}0${from.name}2${to.name}` as RenContract;
 };

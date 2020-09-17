@@ -1,6 +1,6 @@
 // tslint:disable: no-console
 
-import { Bitcoin, Ethereum } from "@renproject/chains";
+import { Bitcoin, Dogecoin, Ethereum } from "@renproject/chains";
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 import { renRinkeby } from "@renproject/networks";
 import {
@@ -14,8 +14,8 @@ import {
     RenVMProvider,
     RenVMProviderInterface,
     RenVMResponses,
-} from "@renproject/rpc/build/main/v2";
-import { extractError, Ox } from "@renproject/utils";
+} from "@renproject/rpc/src/v2";
+import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
@@ -36,7 +36,10 @@ describe("Refactor", () => {
     it("playground", async function () {
         this.timeout(100000000000);
 
-        const asset = "BTC";
+        const from = Dogecoin();
+        const asset = from._asset;
+        const faucetSupported =
+            ["BTC", "ZEC", "BCH", "ETH"].indexOf(asset) >= 0;
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
 
@@ -47,6 +50,7 @@ describe("Refactor", () => {
 
         const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
             // tslint:disable-next-line: no-http-string
+            // "https://lightnode-new-testnet.herokuapp.com/",
             "http://34.239.188.210:18515"
         ) as Provider<RenVMParams, RenVMResponses>;
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
@@ -84,6 +88,14 @@ describe("Refactor", () => {
                                     pubKey:
                                         "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
                                 },
+                                {
+                                    asset: "DOGE",
+                                    hosts: ["Ethereum"],
+                                    locked: "0",
+                                    origin: "Doge",
+                                    pubKey:
+                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                                },
                             ],
                             gatewaysRootHash:
                                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -117,24 +129,26 @@ describe("Refactor", () => {
         }
 
         const lockAndMint = await renJS.lockAndMint({
-            asset: "BTC",
-            from: Bitcoin(),
+            asset,
+            from,
             to: Ethereum(provider, undefined, renRinkeby).Account({
                 address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
-            nonce: Ox("10".repeat(32)),
+            nonce: Ox("20".repeat(32)),
         });
 
         console.info(
             `Deposit ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
         );
 
-        console.log(
-            `${blue("[faucet]")} ${blue(asset)} balance is ${blue(
-                await account.balanceOf(asset)
-            )} ${blue(asset)} (${blue(await account.address(asset))})`
-        );
+        if (faucetSupported) {
+            console.log(
+                `${blue("[faucet]")} ${blue(asset)} balance is ${blue(
+                    await account.balanceOf(asset)
+                )} ${blue(asset)} (${blue(await account.address(asset))})`
+            );
+        }
 
         await new Promise((resolve, reject) => {
             let i = 0;
@@ -160,16 +174,19 @@ describe("Refactor", () => {
                     deposit.deposit
                 );
 
+                info(`Calling .confirmed`);
                 await deposit
                     .confirmed()
                     .on("confirmation", (confs, target) => {
                         info(`${confs}/${target} confirmations`);
                     });
 
+                info(`Calling .signed`);
                 await deposit.signed().on("status", (status) => {
                     info(`status: ${status}`);
                 });
 
+                info(`Calling .mint`);
                 await deposit.mint().on("transactionHash", (txHash) => {
                     info(`txHash: ${txHash}`);
                 });
@@ -177,14 +194,27 @@ describe("Refactor", () => {
                 resolve();
             });
 
-            console.log(
-                `${blue("[faucet]")} Sending ${blue(
-                    suggestedAmount / 1e8
-                )} ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
-            );
-            account
-                .sendSats(lockAndMint.gatewayAddress, suggestedAmount, asset)
-                .catch(reject);
+            sleep(10 * SECONDS)
+                .then(() => {
+                    // If there's been no deposits, send one.
+                    if (faucetSupported && i === 0) {
+                        console.log(
+                            `${blue("[faucet]")} Sending ${blue(
+                                suggestedAmount / 1e8
+                            )} ${blue(asset)} to ${blue(
+                                lockAndMint.gatewayAddress
+                            )}`
+                        );
+                        account
+                            .sendSats(
+                                lockAndMint.gatewayAddress,
+                                suggestedAmount,
+                                asset
+                            )
+                            .catch(reject);
+                    }
+                })
+                .catch(console.error);
         });
     });
 });

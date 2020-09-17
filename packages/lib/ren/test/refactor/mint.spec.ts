@@ -51,17 +51,27 @@ describe("Refactor", () => {
         }
 
         const lockAndMint = await renJS.lockAndMint({
-            // Amount of BTC we are sending (in Satoshis)
-            suggestedAmount: 80000,
-
             asset,
             from: Bitcoin(),
             to: Ethereum(provider).Account({
                 address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
-
-            nonce: Ox("00".repeat(32)),
+            nonce:
+                "0x27de009e7ed49dc8b1a7ac0a6fcbd6c173df72068674cbb8aa2679d3c9529c4d",
         });
+
+        // const lockAndMint = await renJS.lockAndMint({
+        //     // Amount of BTC we are sending (in Satoshis)
+        //     suggestedAmount: 80000,
+
+        //     asset,
+        //     from: Bitcoin(),
+        //     to: Ethereum(provider).Account({
+        //         address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
+        //     }),
+
+        //     nonce: Ox("20".repeat(32)),
+        // });
 
         console.info("gateway address:", lockAndMint.gatewayAddress);
 
@@ -71,12 +81,15 @@ describe("Refactor", () => {
             )} ${asset} (${await account.address(asset)})`
         );
 
-        // await lockAndMint.processTransaction({
-        //     txHash:
-        //         "a356f6f886624d7ea3ea00cdf270b1936c48732fb9a113b6f021914c044c150e",
-        //     amount: 80000,
-        //     vOut: 0,
-        //     confirmations: 0,
+        // await lockAndMint.processDeposit({
+        //     transaction: {
+        //         txHash:
+        //             "aab2bdb228c073408dbc86591b2fa4023ef86ad3b988523439a83621725c6eca",
+        //         amount: 30000,
+        //         vOut: 0,
+        //         confirmations: 445,
+        //     },
+        //     amount: "30000",
         // });
 
         await new Promise((resolve, reject) => {

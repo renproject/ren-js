@@ -1,7 +1,6 @@
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
 import {
     assertType,
-    fromBase64,
     fromHex,
     hash160,
     Ox,
@@ -10,7 +9,7 @@ import {
     toURLBase64,
 } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib";
-import { encode } from "bs58";
+import base58 from "bs58";
 import { keccak256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import {
@@ -19,66 +18,16 @@ import {
 } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
-import {
-    createAddress,
-    pubKeyScript as calculatePubKeyScript,
-} from "../common";
-
-const isBTCAddress = (address: string) => {
-    assertType("string", { address });
-
-    return (
-        validate(address, "btc", "testnet") || validate(address, "btc", "prod")
-    );
-};
-
-export interface Tactics {
-    decoders: Array<(address: string) => Buffer>;
-    encoders: Array<(buffer: Buffer) => string>;
-}
-
-const btcTactics: Tactics = {
-    decoders: [
-        (address: string) => Buffer.from(address),
-        (address: string) => fromBase64(address),
-        (address: string) => fromHex(address),
-    ],
-    encoders: [
-        (buffer: Buffer) => encode(buffer), // base58
-        (buffer: Buffer) => buffer.toString(),
-    ],
-};
-
-export const anyAddressFrom = (
-    isAnyAddress: (address: string) => boolean,
-    { encoders, decoders }: Tactics
-) => (address: string) => {
-    // Type validation
-    assertType("string", { address });
-
-    for (const encoder of encoders) {
-        for (const decoder of decoders) {
-            try {
-                const encoded = encoder(decoder(address));
-                if (isAnyAddress(encoded)) {
-                    return encoded;
-                }
-            } catch (error) {
-                // Ignore errors
-            }
-        }
-    }
-    return address;
-};
-
-export const btcAddressFrom = anyAddressFrom(isBTCAddress, btcTactics);
+import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
 
 export type Address = string;
 export type Transaction = SendCryptoUTXO;
+export type Deposit = {
+    transaction: Transaction;
+    amount: string;
+};
 export type Asset = string;
 export type BitcoinNetwork = "mainnet" | "testnet" | "regtest";
-
-const BTC = "BTC";
 
 const resolveBitcoinNetwork = (renNetwork: RenNetwork): BitcoinNetwork => {
     switch (renNetwork) {
@@ -93,13 +42,42 @@ const resolveBitcoinNetwork = (renNetwork: RenNetwork): BitcoinNetwork => {
     throw new Error(`Unrecognized network ${renNetwork}`);
 };
 
+const transactionToDeposit = (transaction: Transaction) => ({
+    transaction,
+    amount: transaction.amount.toString(),
+});
+
 export class BitcoinBaseChain
-    implements LockChain<Transaction, Asset, Address> {
+    implements LockChain<Transaction, Deposit, Asset, Address> {
     public name = "Btc";
     public renNetwork: RenNetwork | undefined;
     public chainNetwork: BitcoinNetwork | undefined;
 
-    constructor(network?: BitcoinNetwork, thisClass?: typeof BitcoinBaseChain) {
+    public _asset = "BTC";
+    public _getUTXO = getUTXO;
+    public _getUTXOs = getUTXOs;
+    public _p2shPrefix: { mainnet: Buffer; testnet: Buffer } = {
+        mainnet: Buffer.from([0x05]),
+        testnet: Buffer.from([0xc4]),
+    };
+    public _createAddress = createAddress(
+        Networks,
+        Opcode,
+        Script,
+        base58.encode
+    );
+    public _calculatePubKeyScript = calculatePubKeyScript(
+        Networks,
+        Opcode,
+        Script
+    );
+    public _addressIsValid = (address: string, network: BitcoinNetwork) =>
+        validate(address, this._asset.toLowerCase(), network);
+
+    constructor(
+        network?: BitcoinNetwork,
+        thisClass: typeof BitcoinBaseChain = BitcoinBaseChain
+    ) {
         if (!(this instanceof BitcoinBaseChain)) {
             return new (thisClass || BitcoinBaseChain)(network);
         }
@@ -121,7 +99,7 @@ export class BitcoinBaseChain
     /**
      * See [[OriginChain.supportsAsset]].
      */
-    supportsAsset = (asset: Asset): boolean => asset === BTC;
+    supportsAsset = (asset: Asset): boolean => asset === this._asset;
 
     public readonly assetAssetSupported = (asset: Asset) => {
         if (!this.supportsAsset(asset)) {
@@ -133,7 +111,7 @@ export class BitcoinBaseChain
      * See [[OriginChain.assetDecimals]].
      */
     assetDecimals = (asset: Asset): number => {
-        if (asset === BTC) {
+        if (asset === this._asset) {
             return 8;
         }
         throw new Error(`Unsupported asset ${asset}`);
@@ -145,21 +123,20 @@ export class BitcoinBaseChain
     getDeposits = async (
         asset: Asset,
         address: Address
-    ): Promise<Transaction[]> => {
+    ): Promise<Deposit[]> => {
+        if (!this.chainNetwork) {
+            throw new Error(`${name} object not initialized`);
+        }
         if (this.chainNetwork === "regtest") {
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
         this.assetAssetSupported(asset);
         return (
-            (
-                await getUTXOs(this.chainNetwork === "testnet", {
-                    address,
-                    confirmations: 0,
-                })
-            )
-                // Convert from readonly array to array:
-                .map((utxo) => utxo)
-        );
+            await this._getUTXOs(this.chainNetwork === "testnet", {
+                address,
+                confirmations: 0,
+            })
+        ).map(transactionToDeposit);
         // .filter((utxo) => utxo.amount > 70000);
     };
 
@@ -169,14 +146,17 @@ export class BitcoinBaseChain
     transactionConfidence = async (
         transaction: Transaction
     ): Promise<{ current: number; target: number }> => {
-        transaction = await getUTXO(
+        if (!this.chainNetwork) {
+            throw new Error(`${name} object not initialized`);
+        }
+        transaction = await this._getUTXO(
             this.chainNetwork === "testnet",
             transaction.txHash,
             transaction.vOut
         );
         return {
             current: transaction.confirmations,
-            target: this.chainNetwork === "mainnet" ? 6 : 2,
+            target: this.chainNetwork === "mainnet" ? 6 : 0,
         };
     };
 
@@ -188,18 +168,27 @@ export class BitcoinBaseChain
         publicKey: Buffer,
         gHash: Buffer
     ): Promise<Address> | Address => {
+        if (!this.chainNetwork) {
+            throw new Error(`${name} object not initialized`);
+        }
         this.assetAssetSupported(asset);
-        return createAddress(Networks, Opcode, Script)(
-            this.chainNetwork === "testnet",
+        const isTestnet = this.chainNetwork === "testnet";
+        return this._createAddress(
+            isTestnet,
             hash160(publicKey),
-            gHash
+            gHash,
+            this._p2shPrefix[isTestnet ? "testnet" : "mainnet"]
         );
     };
 
     getPubKeyScript = (asset: Asset, publicKey: Buffer, gHash: Buffer) => {
+        if (!this.chainNetwork) {
+            throw new Error(`${name} object not initialized`);
+        }
         this.assetAssetSupported(asset);
-        return calculatePubKeyScript(Networks, Opcode, Script)(
-            this.chainNetwork === "testnet",
+        const isTestnet = this.chainNetwork === "testnet";
+        return this._calculatePubKeyScript(
+            isTestnet,
             hash160(publicKey),
             gHash
         );
@@ -220,6 +209,17 @@ export class BitcoinBaseChain
     };
 
     /**
+     * See [[OriginChain.addressIsValid]].
+     */
+    addressIsValid = (address: Address): boolean => {
+        if (!this.chainNetwork) {
+            throw new Error(`${name} object not initialized`);
+        }
+        assertType("string", { address });
+        return this._addressIsValid(address, this.chainNetwork);
+    };
+
+    /**
      * See [[OriginChain.addressExplorerLink]].
      */
     addressExplorerLink = (address: Address): string => {
@@ -236,12 +236,12 @@ export class BitcoinBaseChain
         return transaction.txHash;
     };
 
-    transactionHashString = (transaction: Transaction): string => {
+    depositV1HashString = ({ transaction }: Deposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
     };
 
-    transactionRPCFormat = (
-        transaction: Transaction,
+    depositRPCFormat = (
+        { transaction }: Deposit,
         pubKeyScript: Buffer,
         v2?: boolean
     ) => {
@@ -264,13 +264,13 @@ export class BitcoinBaseChain
 
     generateNHash = (
         nonce: Buffer,
-        deposit: Transaction,
+        { transaction }: Deposit,
         v2?: boolean,
         logger?: Logger
     ): Buffer => {
         const encoded = rawEncode(
             ["bytes32", v2 ? "bytes" : "bytes32", "uint32"],
-            [nonce, fromHex(deposit.txHash).reverse(), deposit.vOut]
+            [nonce, fromHex(transaction.txHash).reverse(), transaction.vOut]
         );
 
         const digest = keccak256(encoded);

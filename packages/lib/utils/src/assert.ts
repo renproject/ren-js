@@ -1,5 +1,7 @@
 // tslint:disable: no-any no-use-before-declare
 
+import BigNumber from "bignumber.js";
+
 export const assert = (
     assertion: boolean,
     sentence?: string
@@ -37,6 +39,7 @@ export const assert = (
  *   | "null"
  *   | "any"
  *   | "Buffer"
+ *   | "BigNumber"
  * ```
  *
  * Types are matched by a regex so '|' can't be used at multiple levels, e.g.
@@ -72,6 +75,7 @@ type PrimitiveTypeName =
     | "function"
     | "null"
     | "any"
+    | "BigNumber"
     | "Buffer";
 type PrimitiveType<TypeName> = TypeName extends "string"
     ? string
@@ -94,11 +98,19 @@ type PrimitiveType<TypeName> = TypeName extends "string"
     : TypeName extends "any"
     ? any
     : TypeName extends "Buffer"
+    ? BigNumber
+    : TypeName extends "Buffer"
     ? Buffer
     : never;
 
 const typeOf = (v: any): PrimitiveTypeName =>
-    v === null ? "null" : Buffer.isBuffer(v) ? "Buffer" : typeof v;
+    v === null
+        ? "null"
+        : BigNumber.isBigNumber(v)
+        ? "BigNumber"
+        : Buffer.isBuffer(v)
+        ? "Buffer"
+        : typeof v;
 
 export const assertTypeCheck = <T = any>(
     type: (t: any, key: string) => boolean,
@@ -130,15 +142,30 @@ const isUnionType = (unionType: string): string[] | false => {
 };
 
 const isArrayType = (arrayType: string): string | false => {
-    const arrayMatch = arrayType.match(/^Array<(.*)>$/);
-    const bracketMatch = arrayType.match(/^([^ ]*)\[\]$/);
-    let type: string;
-    if (arrayMatch) {
-        [, type] = arrayMatch;
-        return type;
-    } else if (bracketMatch) {
-        [, type] = bracketMatch;
-        return type;
+    // Check with simple string operations to avoid running slow RegExs if there
+    // isn't a match.
+
+    const isArray =
+        arrayType.slice(0, 6) === "Array<" && arrayType.slice(-1) === ">";
+
+    if (isArray) {
+        const arrayMatch = arrayType.match(/^Array<(.*)>$/);
+        if (arrayMatch) {
+            let type: string;
+            [, type] = arrayMatch;
+            return type;
+        }
+    }
+
+    const isBracketArray =
+        arrayType.indexOf(" ") === -1 && arrayType.slice(-2) === "[]";
+    if (isBracketArray) {
+        const bracketMatch = arrayType.match(/^([^ ]*)\[\]$/);
+        if (bracketMatch) {
+            let type: string;
+            [, type] = bracketMatch;
+            return type;
+        }
     }
     return false;
 };

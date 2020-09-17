@@ -54,7 +54,7 @@ export class EthereumChain
             asset: Asset,
             burnPayload?: string
         ) => {
-            if (!this.renNetwork || !this.renNetworkDetails) {
+            if (!this.renNetwork || !this.renNetworkDetails || !this.web3) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'`
                 );
@@ -64,6 +64,12 @@ export class EthereumChain
                 if (!address) {
                     throw new Error(`Must provide Ethereum recipient address`);
                 }
+
+                // Resolve .ens name
+                if (address.match(/.*\.ens/)) {
+                    address = await this.web3.eth.ens.getAddress(address);
+                }
+
                 return [
                     {
                         sendTo: this.renNetworkDetails.addresses.BasicAdapter

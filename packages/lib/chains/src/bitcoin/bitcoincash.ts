@@ -1,105 +1,39 @@
-import { Asset, LockChain } from "@renproject/interfaces";
-import { hash160 } from "@renproject/utils";
+import { toCashAddress } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
-import { UTXO as SendCryptoUTXO } from "send-crypto";
-import { getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
+import base58 from "bs58";
+import {
+    getUTXO,
+    getUTXOs,
+} from "send-crypto/build/main/handlers/BCH/BCHHandler";
+import { validate } from "wallet-address-validator";
 
 import { Callable } from "../class";
-import { createAddress, pubKeyScript } from "../common";
-import { Transaction } from "./base";
+import { BitcoinBaseChain, BitcoinNetwork } from "./base";
 import { BitcoinChain } from "./bitcoin";
+import { createAddress, pubKeyScript } from "./script";
 
-export const createBCHAddress = createAddress(Networks, Opcode, Script);
-
-// export const getBitcoinCashUTXOs = ({ isTestnet }: { isTestnet: boolean }) => {
-//     return async (address: string, confirmations: number) => {
-//         return getUTXOs(isTestnet, { address, confirmations });
-//     };
-// };
-
-// export const getBitcoinCashConfirmations = ({
-//     isTestnet,
-// }: {
-//     isTestnet: boolean;
-// }) => {
-//     return async (txHash: string) => {
-//         return getConfirmations(isTestnet, txHash);
-//     };
-// };
-
-// export const bchAddressToHex = (address: string) => Ox(Buffer.from(address));
-
-// const isBCHAddress = (address: string, options?: { isTestnet?: boolean }) => {
-//     try {
-//         return options
-//             ? options.isTestnet
-//                 ? isTestnetAddress(address)
-//                 : isMainnetAddress(address)
-//             : isTestnetAddress(address) || isMainnetAddress(address);
-//     } catch (error) {
-//         return false;
-//     }
-// };
-
-// const bchTactics: Tactics = {
-//     decoders: [
-//         (address: string) => Buffer.from(address),
-//         (address: string) => fromBase64(address),
-//         (address: string) => fromHex(address),
-//     ],
-//     encoders: [(buffer: Buffer) => toCashAddress(buffer.toString())],
-// };
-
-// export const bchAddressFrom = anyAddressFrom(isBCHAddress, bchTactics);
-
-type Address = string;
-
-export class BitcoinCashChain
-    extends BitcoinChain
-    implements LockChain<SendCryptoUTXO> {
+export class BitcoinCashChain extends BitcoinChain {
     public name = "Bch";
-    // private network: BitcoinNetwork | undefined;
 
-    getGatewayAddress = (
-        asset: Asset,
-        publicKey: Buffer,
-        gHash: Buffer
-    ): Promise<Address> | Address => {
-        this.assetAssetSupported(asset);
-        return createAddress(Networks, Opcode, Script)(
-            this.chainNetwork === "testnet",
-            hash160(publicKey),
-            gHash
-        );
-    };
+    public _asset = "BCH";
+    public _getUTXO = getUTXO;
+    public _getUTXOs = getUTXOs;
+    public _createAddress = createAddress(
+        Networks,
+        Opcode,
+        Script,
+        (bytes: Buffer) => toCashAddress(base58.encode(bytes))
+    );
+    public _calculatePubKeyScript = pubKeyScript(Networks, Opcode, Script);
+    public _addressIsValid = (address: string, network: BitcoinNetwork) =>
+        validate(address, this._asset.toLowerCase(), network);
 
-    getPubKeyScript = (asset: Asset, publicKey: Buffer, gHash: Buffer) => {
-        this.assetAssetSupported(asset);
-        return pubKeyScript(Networks, Opcode, Script)(
-            this.chainNetwork === "testnet",
-            hash160(publicKey),
-            gHash
-        );
-    };
-
-    /**
-     * See [[OriginChain.getDeposits]].
-     */
-    getDeposits = async (
-        asset: Asset,
-        address: Address
-    ): Promise<Transaction[]> => {
-        if (this.chainNetwork === "regtest") {
-            throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
-        }
-        this.assetAssetSupported(asset);
-        return (
-            await getUTXOs(this.chainNetwork === "testnet", {
-                address,
-                confirmations: 0,
-            })
-        ).map((utxo) => utxo);
-    };
+    constructor(
+        network?: BitcoinNetwork,
+        thisClass: typeof BitcoinBaseChain = BitcoinCashChain
+    ) {
+        super(network, thisClass);
+    }
 }
 
 export const BitcoinCash = Callable(BitcoinCashChain);

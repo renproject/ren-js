@@ -47,10 +47,14 @@ const lockAndMint = renJS.lockAndMint({
     sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
 });
 
-lockAndMint.gatewayAddress()
-    .then(gatewayAddress => console.log(`Deposit ${amount} BTC to ${gatewayAddress}`));
+lockAndMint
+    .gatewayAddress()
+    .then((gatewayAddress) =>
+        console.log(`Deposit ${amount} BTC to ${gatewayAddress}`)
+    );
 
-lockAndMint.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
+lockAndMint
+    .waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
     .then(console.log)
     .catch(console.error);
 ```
@@ -63,14 +67,15 @@ const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
 const amount = 0.001;
 
-renJS.burnAndRelease({
-    sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
-    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
-    sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
-    web3Provider: web3.currentProvider,
-})
+renJS
+    .burnAndRelease({
+        sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
+        sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
+        sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
+        web3Provider: web3.currentProvider,
+    })
     .readFromEthereum()
-    .then(tx => tx.submit())
+    .then((tx) => tx.submit())
     .then(console.log)
     .catch(console.error);
 ```
@@ -103,7 +108,7 @@ Create a `.env` file which contains the following exported variables:
 
 ```sh
 export MNEMONIC="your mnemonic here"
-export TESTNET_BITCOIN_KEY="your bitcoin private key (encoded in WIF)"
+export TESTNET_PRIVATE_KEY="your bitcoin private key (encoded in WIF)"
 export INFURA_KEY="your infura key (for it's v3 endpoint)"
 export NETWORK="mainnet or testnet"
 ```

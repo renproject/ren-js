@@ -1,7 +1,7 @@
 import { hash160, Ox } from "@renproject/utils";
 import chai from "chai";
 
-import { RenVMProvider } from "../build/main/v1";
+import { RenVMProvider } from "../src/v1";
 
 chai.should();
 

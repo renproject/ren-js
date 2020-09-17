@@ -1,47 +1,70 @@
-import chai from "chai";
+import { expect } from "earljs";
 
 import { value } from "../src/value";
-
-chai.should();
 
 require("dotenv").config();
 
 describe("value", () => {
     it("should be able to pass in different networks", async () => {
         // tslint:disable-next-line: no-any
-        const equal = (l: any, r: any) => l.should.equal(r);
+        const equal = (l: any, r: any) => {
+            expect(l).toexpect(r);
+        };
 
         // BTC
-        equal(value("0.0001", "btc").sats().toFixed(), "10000");
-        equal(value("0.0001", "btc").btc().toFixed(), "0.0001");
-        equal(value("0.0001", "btc")._smallest().toFixed(), "10000");
-        equal(value("0.0001", "btc")._readable().toFixed(), "0.0001");
+        expect(value("0.0001", "btc").sats().toFixed()).toEqual("10000");
+        expect(value("0.0001", "btc").btc().toFixed()).toEqual("0.0001");
+        expect(value("0.0001", "btc")._smallest().toFixed()).toEqual("10000");
+        expect(value("0.0001", "btc")._readable().toFixed()).toEqual("0.0001");
 
         // BCH
-        equal(value("0.0001", "bch").sats().toFixed(), "10000");
-        equal(value("0.0001", "bch").bch().toFixed(), "0.0001");
+        expect(value("0.0001", "bch").sats().toFixed()).toEqual("10000");
+        expect(value("0.0001", "bch").bch().toFixed()).toEqual("0.0001");
+        expect(value("0.0001", "bch")._smallest().toFixed()).toEqual("10000");
+        expect(value("0.0001", "bch")._readable().toFixed()).toEqual("0.0001");
 
         // From sats
-        equal(value("10000", "sats").btc().toFixed(), "0.0001");
-        equal(value("10000", "sats").bch().toFixed(), "0.0001");
-        equal(value("10000", "sats").sats().toFixed(), "10000");
+        expect(value("10000", "sats").btc().toFixed()).toEqual("0.0001");
+        expect(value("10000", "sats").bch().toFixed()).toEqual("0.0001");
+        expect(value("10000", "sats").sats().toFixed()).toEqual("10000");
+        expect(value("10000", "sats")._smallest().toFixed()).toEqual("10000");
+        expect(value("10000", "sats")._readable().toFixed()).toEqual("0.0001");
 
         // ZEC
-        equal(value("0.0001", "zec").zats().toFixed(), "10000");
-        equal(value("0.0001", "zec").zec().toFixed(), "0.0001");
+        expect(value("0.0001", "zec").zats().toFixed()).toEqual("10000");
+        expect(value("0.0001", "zec").zec().toFixed()).toEqual("0.0001");
+        expect(value("0.0001", "zec")._smallest().toFixed()).toEqual("10000");
+        expect(value("0.0001", "zec")._readable().toFixed()).toEqual("0.0001");
 
         // From eth
-        equal(value("10000", "wei").eth().toFixed(), "0.00000000000001");
-        equal(value("0.00000000000001", "eth").wei().toFixed(), "10000");
-        equal(value("1", "wei").wei().toFixed(), "1");
-        equal(value("0.1", "eth").eth().toFixed(), "0.1");
+        expect(value("10000", "wei").eth().toFixed()).toEqual(
+            "0.00000000000001"
+        );
+        expect(value("0.00000000000001", "eth").wei().toFixed()).toEqual(
+            "10000"
+        );
+        expect(value("10000", "wei")._readable().toFixed()).toEqual(
+            "0.00000000000001"
+        );
+        expect(value("0.00000000000001", "eth")._smallest().toFixed()).toEqual(
+            "10000"
+        );
+        expect(value("1", "wei").wei().toFixed()).toEqual("1");
+        expect(value("0.1", "eth").eth().toFixed()).toEqual("0.1");
         // Test unit resolution
-        equal(
+        expect(
             value("0.1", "eth")
                 .to("ethereum" as "eth")
-                .toFixed(),
-            "0.1"
-        );
-        equal(value("0.1", "eth").to("eth").toFixed(), "0.1");
+                .toFixed()
+        ).toEqual("0.1");
+        expect(value("0.1", "eth").to("eth").toFixed()).toEqual("0.1");
+
+        // Invalid unit
+        expect(() =>
+            // tslint:disable-next-line: no-any
+            value("0.0001", "fake" as any)
+                ._readable()
+                .toFixed()
+        ).toThrow(expect.error(`Unknown unit "fake"`));
     });
 });

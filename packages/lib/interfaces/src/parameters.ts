@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { TransactionConfig } from "web3-core";
 
-import { LockChain, MintChain } from "./chain";
+import { DepositCommon, LockChain, MintChain } from "./chain";
 import { EthArgs } from "./ethArgs";
 import { Asset } from "./networks";
 
@@ -66,8 +66,11 @@ export interface TransferParamsCommon {
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */
-export interface LockAndMintParams extends TransferParamsCommon {
-    from: LockChain;
+export interface LockAndMintParams<
+    Transaction = {},
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
+> extends TransferParamsCommon {
+    from: LockChain<Transaction, Deposit>;
     to: MintChain;
 
     /**

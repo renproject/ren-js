@@ -94,9 +94,9 @@ const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
 };
 
 export const unmarshalFees = (response: ResponseQueryFees): RenVMFees => {
-    return {
-        btc: unmarshalAssetFees(response.btc),
-        zec: unmarshalAssetFees(response.zec),
-        bch: unmarshalAssetFees(response.bch),
-    };
+    const fees = {};
+    for (const key of Object.keys(response)) {
+        fees[key] = unmarshalAssetFees(response[key]);
+    }
+    return fees;
 };

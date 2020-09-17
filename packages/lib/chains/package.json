@@ -13,9 +13,10 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "build/main/index.js",
-    "typings": "build/main/index.d.ts",
-    "module": "build/module/index.js",
+    "COMMENT": "TODO: Update before publishing.",
+    "main": "./src/index.ts",
+    "typings": "./src/index.ts",
+    "module": "./src/index.ts",
     "scripts": {
         "describe": "npm-scripts-info",
         "build": "yarn build:main && yarn build:module",
@@ -50,6 +51,7 @@
         "bignumber.js": "^9.0.0",
         "bitcore-lib": "^8.20.3",
         "bitcore-lib-cash": "^8.20.3",
+        "bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
         "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bs58": "^4.0.1",
         "wallet-address-validator": "^0.2.4"

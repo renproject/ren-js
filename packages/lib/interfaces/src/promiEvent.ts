@@ -26,7 +26,10 @@
 
 import { EventEmitter } from "events";
 
-export class InternalPromiEvent<T, EventTypes extends { [event: string]: any[] } = {}> {
+export class InternalPromiEvent<
+    T,
+    EventTypes extends { [event: string]: any[] } = {}
+> {
     public readonly [Symbol.toStringTag]: "Promise";
     public readonly promise: Promise<T>;
     // @ts-ignore no initializer because of proxyHandler
@@ -37,13 +40,22 @@ export class InternalPromiEvent<T, EventTypes extends { [event: string]: any[] }
     private _cancelled: boolean;
 
     // @ts-ignore no initializer because of proxyHandler
-    public readonly emit: <Event extends keyof EventTypes>(event: Event, ...args: EventTypes[Event]) => boolean; // EventEmitter["emit"]
+    public readonly emit: <Event extends keyof EventTypes>(
+        event: Event,
+        ...args: EventTypes[Event]
+    ) => boolean; // EventEmitter["emit"]
     // @ts-ignore no initializer because of proxyHandler
     public readonly removeListener: EventEmitter["removeListener"];
     // @ts-ignore no initializer because of proxyHandler
-    public readonly on: <Event extends keyof EventTypes>(event: Event, callback: (...values: EventTypes[Event]) => void | Promise<void>) => this;
+    public readonly on: <Event extends keyof EventTypes>(
+        event: Event,
+        callback: (...values: EventTypes[Event]) => void | Promise<void>
+    ) => this;
     // @ts-ignore no initializer because of proxyHandler
-    public readonly once: <Event extends keyof EventTypes>(event: Event, callback: (...values: EventTypes[Event]) => void | Promise<void>) => this;
+    public readonly once: <Event extends keyof EventTypes>(
+        event: Event,
+        callback: (...values: EventTypes[Event]) => void | Promise<void>
+    ) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly _cancel: () => void;
     // @ts-ignore no initializer because of proxyHandler
@@ -70,7 +82,7 @@ export class InternalPromiEvent<T, EventTypes extends { [event: string]: any[] }
         this.eventEmitter = new EventEmitter();
 
         return new Proxy(this, {
-            get: this.proxyHandler
+            get: this.proxyHandler,
         });
     }
 
@@ -92,7 +104,9 @@ export class InternalPromiEvent<T, EventTypes extends { [event: string]: any[] }
 
         if (name === "_cancel") {
             // tslint:disable-next-line: no-object-mutation
-            return () => { this._cancelled = true; };
+            return () => {
+                this._cancelled = true;
+            };
         }
 
         if (name === "_isCancelled") {
@@ -108,5 +122,11 @@ export class InternalPromiEvent<T, EventTypes extends { [event: string]: any[] }
 }
 
 // Tell Typescript that InternalPromiEvent<T> implements Promise<T>.
-export type PromiEvent<T, EventTypes extends { [event: string]: any[] } = {}> = InternalPromiEvent<T, EventTypes> & Promise<T>;
-export const newPromiEvent = <T, EventTypes extends { [event: string]: any[] } = {}>() => new InternalPromiEvent<T, EventTypes>() as PromiEvent<T, EventTypes>;
+export type PromiEvent<
+    T,
+    EventTypes extends { [event: string]: any[] } = {}
+> = InternalPromiEvent<T, EventTypes> & Promise<T>;
+export const newPromiEvent = <
+    T,
+    EventTypes extends { [event: string]: any[] } = {}
+>() => new InternalPromiEvent<T, EventTypes>() as PromiEvent<T, EventTypes>;

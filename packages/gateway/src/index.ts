@@ -16,6 +16,8 @@ import {
     LogLevel,
     LogLevelString,
     MintTransaction,
+    newPromiEvent,
+    PromiEvent,
     RenContract,
     RenNetwork,
     RenTokens,
@@ -24,9 +26,7 @@ import {
 } from "@renproject/interfaces";
 import {
     extractError,
-    newPromiEvent,
     parseRenContract,
-    PromiEvent,
     randomBytes,
     SECONDS,
     sleep,

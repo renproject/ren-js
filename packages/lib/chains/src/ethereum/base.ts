@@ -3,6 +3,7 @@ import {
     Logger,
     MintChain,
     MintTransaction,
+    PromiEvent,
     provider,
     RenContract,
     RenNetwork,
@@ -17,12 +18,12 @@ import {
     parseRenContract,
     payloadToABI,
     payloadToMintABI,
-    PromiEvent,
     SECONDS,
     sleep,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BlocknativeSdk from "bnc-sdk";
+import { isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
 import Web3 from "web3";
 import { TransactionConfig, TransactionReceipt } from "web3-core";
@@ -253,6 +254,8 @@ export const getTokenName = (
             return "ZEC";
         case "BCH":
             return "BCH";
+        case "DOGE":
+            return "DOGE";
         case "ETH":
             throw new Error(`Unexpected token ${tokenOrContract}`);
         default:
@@ -458,6 +461,7 @@ export const submitToEthereum = async (
 
 export type Transaction = string;
 export type Asset = "eth";
+export type Address = string;
 
 export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
     switch (network) {
@@ -472,7 +476,8 @@ export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
     throw new Error(`Unsupported network ${network}`);
 };
 
-export class EthereumBaseChain implements MintChain<Transaction, Asset> {
+export class EthereumBaseChain
+    implements MintChain<Transaction, Asset, Address> {
     public name = "Eth";
     public renNetwork: RenNetwork | undefined;
 
@@ -483,7 +488,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
         token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
     ) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`Ethereum object not initialized`);
+            throw new Error(`${name} object not initialized`);
         }
         return getTokenAddress(this.renNetworkDetails, this.web3, token);
     };
@@ -491,7 +496,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
         token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
     ) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`Ethereum object not initialized`);
+            throw new Error(`${name} object not initialized`);
         }
         return getGatewayAddress(this.renNetworkDetails, this.web3, token);
     };
@@ -563,6 +568,55 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
         throw new Error(`Unsupported asset ${asset}`);
     };
 
+    addressIsValid = (address: Address): boolean => {
+        if (address.match(/^0x[a-fA-F0-9]{40}$/)) {
+            return isValidChecksumAddress(address);
+        }
+        // TODO: Support ENS domains.
+        return false;
+    };
+
+    addressExplorerLink = (address: Address): string => {
+        if (!this.renNetworkDetails) {
+            throw new Error(`${name} object not initialized`);
+        }
+        return `${this.renNetworkDetails.etherscan}/address/${address}`;
+    };
+
+    transactionID = (transaction: Transaction): string => {
+        return transaction;
+    };
+
+    transactionExplorerLink = (transaction: Transaction): string => {
+        if (!this.renNetworkDetails) {
+            throw new Error(`${name} object not initialized`);
+        }
+        return `${this.renNetworkDetails.etherscan}/tx/${transaction}`;
+    };
+
+    transactionConfidence = async (
+        transaction: Transaction
+    ): Promise<{ current: number; target: number }> => {
+        if (!this.web3 || !this.renNetworkDetails) {
+            throw new Error(`${name} object not initialized`);
+        }
+        const currentBlock = new BigNumber(
+            (await this.web3.eth.getBlockNumber()).toString()
+        );
+        const receipt = await this.web3.eth.getTransactionReceipt(transaction);
+        let current = 0;
+        if (receipt.blockNumber) {
+            const transactionBlock = new BigNumber(
+                receipt.blockNumber.toString()
+            );
+            current = currentBlock.minus(transactionBlock).plus(1).toNumber();
+        }
+        return {
+            current,
+            target: this.renNetworkDetails.isTestnet ? 15 : 30,
+        };
+    };
+
     submitMint = async (
         asset: Asset,
         contractCalls: ContractCall[],
@@ -574,7 +628,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
         }
 
         if (!this.web3) {
-            throw new Error(`Ethereum object not initialized`);
+            throw new Error(`${name} object not initialized`);
         }
 
         const existingTransaction = await this.findTransaction(asset, mintTx);
@@ -600,7 +654,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
         mintTx: MintTransaction
     ): Promise<Transaction | undefined> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`Ethereum object not initialized`);
+            throw new Error(`${name} object not initialized`);
         }
         if (!mintTx.out) {
             throw new Error(
@@ -617,9 +671,11 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
 
     resolveTokenGatewayContract = async (token: RenTokens): Promise<string> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`Ethereum object not initialized`);
+            throw new Error(`${name} object not initialized`);
         }
-        return getTokenAddress(this.renNetworkDetails, this.web3, token);
+        return Ox(
+            await getTokenAddress(this.renNetworkDetails, this.web3, token)
+        );
     };
 
     /**
@@ -652,7 +708,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Asset> {
         // For (1), we don't have to do anything.
         if (!burnReference && burnReference !== 0) {
             if (!this.renNetworkDetails || !this.web3) {
-                throw new Error(`Ethereum object not initialized`);
+                throw new Error(`${name} object not initialized`);
             }
             // Handle situation (2)
             // Make a call to the provided contract and Pass on the

@@ -356,7 +356,8 @@ export const fixSignatureSimple = (
 export const randomNonce = () => randomBytes(32);
 
 export const resolveInToken = <
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
 >({
     asset,

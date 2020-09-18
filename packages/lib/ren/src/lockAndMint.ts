@@ -38,7 +38,8 @@ import { OrderedMap } from "immutable";
 import { AbiCoder } from "web3-eth-abi";
 
 export class LockAndMint<
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
 > extends EventEmitter {
     public queryTxResult: MintTransaction | undefined;
@@ -280,7 +281,8 @@ export class LockAndMint<
 }
 
 export class LockAndMintDeposit<
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
 > {
     public deposit: Deposit;

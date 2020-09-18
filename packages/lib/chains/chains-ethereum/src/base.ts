@@ -460,7 +460,7 @@ export const submitToEthereum = async (
 };
 
 export type Transaction = string;
-export type Asset = "eth";
+export type Asset = string;
 export type Address = string;
 
 export const renNetworkToEthereumNetwork = (network: RenNetwork) => {

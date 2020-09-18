@@ -16,7 +16,8 @@ export type TransactionListener<
 > = PromiEvent<T, { txHash: [string]; confirmation: [number, number] } & E>;
 
 export interface ChainCommon<
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Asset extends string = string,
     Address extends string = string
 > {
@@ -111,7 +112,8 @@ export interface ChainCommon<
     ) => SyncOrPromise<{ current: number; target: number }>;
 }
 
-export type DepositCommon<Transaction = {}> = {
+// tslint:disable-next-line: no-any
+export type DepositCommon<Transaction = any> = {
     transaction: Transaction;
     amount: string;
 };
@@ -127,7 +129,8 @@ export type DepositCommon<Transaction = {}> = {
  * BitcoinCash implementations for examples of this.
  */
 export interface LockChain<
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,
     Address extends string = string
@@ -209,7 +212,8 @@ export interface LockChain<
  * interface. New MintChains should not be implemented using this interface.
  */
 export interface MintChain<
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Asset extends string = string,
     Address extends string = string
 > extends ChainCommon<Transaction, Asset, Address> {

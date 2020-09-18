@@ -64,7 +64,8 @@ export interface TransferParamsCommon {
  * The parameters for a cross-chain transfer onto Ethereum.
  */
 export interface LockAndMintParams<
-    Transaction = {},
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
 > extends TransferParamsCommon {
     from: LockChain<Transaction, Deposit>;

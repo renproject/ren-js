@@ -335,7 +335,6 @@ export const fixSignatureSimple = (
     // if (recovered[v].equals(expected)) {
     //     // Do nothing
     // } else if (recovered[switchV(v)].equals(expected)) {
-    //     // tslint:disable-next-line: no-console
     //     console.info("[info][ren-js] switching v value");
     //     v = switchV(v);
     // } else {

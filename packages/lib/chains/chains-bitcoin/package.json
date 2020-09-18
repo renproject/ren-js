@@ -1,6 +1,6 @@
 {
-    "name": "@renproject/interfaces",
-    "version": "2.0.0-alpha.5",
+    "name": "@renproject/chains-bitcoin",
+    "version": "2.0.0-alpha.6",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -23,8 +23,8 @@
         "build:module": "tsc -p tsconfig.module.json",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build:main lint test:*",
-        "lint": "tslint --project .",
+        "test": "run-s build:main test:* lint",
+        "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -35,31 +35,29 @@
         "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "prepare": "yarn build",
-        "npmignore": "npmignore -g ../../../.gitignore",
+        "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link",
+        "link:all": "yarn link @renproject/interfaces @renproject/utils @renproject/networks && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
-    "scripts-info": {
-        "info": "Display information about the package scripts",
-        "build": "Rebuild the project",
-        "fix": "Try to automatically fix any linting problems",
-        "test": "Lint and unit test the project",
-        "watch": "Watch and rebuild the project on save, then rerun relevant tests",
-        "cov": "Rebuild, run tests, then create and open the coverage report",
-        "doc": "Generate HTML API documentation and open it in a browser",
-        "doc:json": "Generate API documentation in typedoc JSON format",
-        "version": "Bump package.json version, update CHANGELOG.md, tag release",
-        "reset": "Delete all untracked files and reset the repo to the last commit",
-        "prepare-release": "One-step: clean, build, test, publish docs, and prep a release"
-    },
-    "engines": {
-        "node": ">=8.9"
-    },
     "dependencies": {
+        "@renproject/interfaces": "file:../../interfaces",
+        "@renproject/networks": "file:../../networks",
+        "@renproject/utils": "file:../../utils",
+        "@types/bs58": "^4.0.1",
         "@types/node": "^14.11.1",
+        "bchaddrjs": "^0.4.9",
         "bignumber.js": "^9.0.0",
-        "web3-core": "^2.0.0-alpha.1"
+        "bitcore-lib": "^8.22.2",
+        "bitcore-lib-cash": "^8.22.2",
+        "bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
+        "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
+        "bs58": "^4.0.1",
+        "send-crypto": "0.2.16",
+        "wallet-address-validator": "^0.2.4"
+    },
+    "resolutions": {
+        "sha3": "^2.1.2"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

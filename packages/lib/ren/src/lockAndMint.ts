@@ -10,11 +10,10 @@ import {
     TxStatus,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider } from "@renproject/rpc";
-// TODO: Update before publishing.
 import {
     hashSelector,
     resolveV2Contract,
-} from "@renproject/rpc/src/v2/renVMProvider";
+} from "@renproject/rpc/build/main/v2/renVMProvider";
 import {
     assertObject,
     assertType,

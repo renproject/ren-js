@@ -11,9 +11,6 @@ export type NumberValue = string | number | BigNumber | BNInterface;
 
 export type RenTokens = string;
 
-// tslint:disable-next-line: no-any
-export type provider = any;
-
 /**
  * The details required to create and/or submit a transaction to Ethereum.
  */

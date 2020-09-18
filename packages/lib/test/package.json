@@ -1,48 +1,14 @@
 {
-    "name": "@renproject/ren",
-    "version": "2.0.0-alpha.6",
-    "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/renproject/ren-js.git"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "keywords": [
-        "ren-js",
-        "ren",
-        "renvm",
-        "ren project",
-        "cryptocurrencies",
-        "blockchain",
-        "ethereum",
-        "bitcoin",
-        "defi"
-    ],
-    "author": "Ren",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/renproject/ren-js/issues"
-    },
-    "main": "./build/main/index.js",
-    "typings": "./build/main/index.d.ts",
-    "module": "./build/module/index.js",
+    "name": "test",
     "scripts": {
         "describe": "npm-scripts-info",
-        "build": "yarn build:main && yarn build:module",
-        "build-all": "yarn build:main && yarn build:module",
-        "build:main": "tsc -p tsconfig.json",
-        "build:module": "tsc -p tsconfig.module.json",
-        "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build:main test:unit lint",
-        "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
+        "test": "run-s test:unit lint",
+        "test-all": "ALL_TESTS=true run-s test:unit lint",
         "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
-        "watch": "run-s build:main && run-s \"build:main -- -w\"",
-        "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
+        "cov": "run-s test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
@@ -53,11 +19,13 @@
         "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
         "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
+        "prepare-release": "run-s npmignore doc:html",
+        "link:all": "yarn link @renproject/chains @renproject/ren @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
+        "@renproject/chains": "file:../chains/chains",
+        "@renproject/ren": "file:../ren",
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/networks": "file:../networks",
         "@renproject/provider": "file:../provider",
@@ -66,10 +34,7 @@
         "@types/node": "^14.11.1",
         "bignumber.js": "^9.0.0",
         "immutable": "^4.0.0-rc.12",
-        "web3-eth-abi": "^2.0.0-alpha.1"
-    },
-    "peerDependencies": {
-        "@renproject/ren": "file:../ren"
+        "send-crypto": "0.2.16"
     },
     "resolutions": {
         "sha3": "^2.1.2"

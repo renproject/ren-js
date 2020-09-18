@@ -1,5 +1,6 @@
 {
     "name": "test",
+    "version": "2.0.0-alpha.6",
     "scripts": {
         "describe": "npm-scripts-info",
         "fix": "run-s fix:*",

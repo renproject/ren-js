@@ -32,7 +32,7 @@ export interface GatewayMachineSchema {
 
 const findClaimableDeposit = ({ depositMachines }: GatewayMachineContext) => {
     if (!depositMachines) return;
-    for (let key in depositMachines ?? {}) {
+    for (let key in depositMachines || {}) {
         const machine = depositMachines[key];
         if (machine.state.value === "accepted") {
             return machine.state.context.deposit;
@@ -60,7 +60,10 @@ export const mintMachine = Machine<
         initial: "restoring",
         states: {
             restoring: {
-                entry: send("RESTORE"),
+                entry: [
+                    send("RESTORE"),
+                    assign({ depositMachines: (_ctx, _evt) => ({}) }),
+                ],
                 on: {
                     RESTORE: [
                         {
@@ -167,7 +170,7 @@ export const mintMachine = Machine<
             requestingSignature: {
                 on: {
                     SIGN: {
-                        target: "listener",
+                        target: "listening",
                         actions: send("CLAIM", {
                             to: (ctx, evt) => {
                                 if (!ctx.depositMachines) return "";
@@ -196,7 +199,7 @@ export const mintMachine = Machine<
                 findClaimableDeposit(ctx) ? true : false,
             isCompleted: ({ tx }, evt) =>
                 evt.data.sourceTxAmount >= tx.targetAmount,
-            isExpired: ({ tx }) => (tx.expiryTime ?? 0) < new Date().getTime(),
+            isExpired: ({ tx }) => (tx.expiryTime || 0) < new Date().getTime(),
             isCreated: ({ tx }) => (tx.gatewayAddress ? true : false),
         },
     }

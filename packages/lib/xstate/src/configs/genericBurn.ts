@@ -3,7 +3,7 @@ import { LockChain, MintChain } from "@renproject/interfaces";
 import { Bitcoin, Ethereum } from "@renproject/chains";
 import { RenNetwork } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
-import { GatewaySession, TransactionAwaitable } from "../types/transaction";
+import { GatewaySession } from "../types/transaction";
 import { Sender, MachineOptions, Receiver } from "xstate";
 
 export const burnChainMap: BurnMachineContext["fromChainMap"] = {
@@ -75,7 +75,6 @@ const txCreator = async (
                 sourceTxConfs: 0,
                 sourceTxAmount: Number(suggestedAmount),
                 rawSourceTx: {},
-                awaiting: TransactionAwaitable.SRC_SETTLE,
             },
         },
     };

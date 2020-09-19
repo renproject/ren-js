@@ -1,4 +1,4 @@
-import { Machine, assign, send, Actor, sendParent } from "xstate";
+import { Machine, actions, assign, send, Actor, sendParent } from "xstate";
 import RenJS from "@renproject/ren";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
@@ -25,6 +25,7 @@ export interface DepositMachineContext {
 export interface DepositMachineSchema {
     states: {
         restoringDeposit: {}; // We are waiting for ren-js to find the deposit
+        errorRestoring: {};
         restoredDeposit: {}; // renjs has found the deposit for the transaction
         srcSettling: {}; // we are waiting for the source chain to confirm the transaction
         srcConfirmed: {}; // source chain has confirmed the transaction
@@ -61,12 +62,14 @@ export const depositMachine = Machine<
         id: "RenVMDepositTransaction",
         initial: "restoringDeposit",
         states: {
+            errorRestoring: {},
             restoringDeposit: {
                 entry: ["listenerAction"],
                 on: {
                     LISTENING: {
                         actions: send(
                             (context) => {
+                                // If we don't have a raw tx, we can't restore
                                 if (context.deposit.rawSourceTx) {
                                     return {
                                         type: "RESTORE",
@@ -151,6 +154,8 @@ export const depositMachine = Machine<
                                     deposit: (context, evt) => ({
                                         ...context.deposit,
                                         sourceTxConfs: evt.data.sourceTxConfs,
+                                        sourceTxConfTarget:
+                                            evt.data.sourceTxConfTarget,
                                     }),
                                 }),
                                 sendParent((ctx, evt) => ({
@@ -258,10 +263,11 @@ export const depositMachine = Machine<
     },
     {
         guards: {
-            isSrcSettling: ({ deposit }) => deposit.awaiting === "src-settle",
+            isSrcSettling: ({ deposit: { sourceTxConfs } }) =>
+                (sourceTxConfs || 0) < 1,
             isSrcConfirmed: () => false,
             isSrcSettled: ({ deposit: { sourceTxConfs } }) =>
-                (sourceTxConfs ?? 0) > 1,
+                (sourceTxConfs || 0) > 1,
             isAccepted: ({ deposit: { renSignature } }) =>
                 renSignature ? true : false,
             isDestSettling: ({ deposit: { destTxHash } }) =>
@@ -269,7 +275,7 @@ export const depositMachine = Machine<
             isDestSettled: ({
                 deposit: { destTxConfs },
                 tx: { destConfsTarget },
-            }) => (destTxConfs ?? 0) > (destConfsTarget || 1),
+            }) => (destTxConfs || 0) > (destConfsTarget || 1),
         },
     }
 );

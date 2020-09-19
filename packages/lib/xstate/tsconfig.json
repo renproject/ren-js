@@ -1,7 +1,9 @@
 {
     "compilerOptions": {
-        "target": "ES2017",
+        "target": "ES2016",
         "lib": [
+            "DOM",
+            "es2017",
             "esnext"
         ],
         "outDir": "build/main",
@@ -15,7 +17,6 @@
         "module": "CommonJS",
         "moduleResolution": "node",
         "declaration": true,
-        "inlineSourceMap": true,
         "resolveJsonModule": true,
         "isolatedModules": true
     },

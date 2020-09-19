@@ -19,15 +19,11 @@ import {
     DepositMachineEvent,
 } from "../machines/deposit";
 import { GatewayMachineContext } from "../machines/mint";
-import {
-    GatewaySession,
-    GatewayTransaction,
-    TransactionAwaitable,
-} from "../types/transaction";
+import { GatewaySession, GatewayTransaction } from "../types/transaction";
 
 const findClaimableDeposit = ({ depositMachines }: GatewayMachineContext) => {
     if (!depositMachines) return;
-    for (let key in depositMachines ?? {}) {
+    for (let key in depositMachines || {}) {
         const machine = depositMachines[key];
         if (machine.state.value === "accepted") {
             return machine.state.context.deposit;
@@ -62,19 +58,14 @@ export const lockChainMap = {
 };
 
 export const renLockAndMint = async (context: GatewayMachineContext) => {
-    const { nonce, destNetwork, sourceNetwork, sourceAsset } = context.tx;
+    const {
+        nonce,
+        destNetwork,
+        suggestedAmount,
+        sourceNetwork,
+        sourceAsset,
+    } = context.tx;
     const { sdk, fromChainMap, toChainMap } = context;
-
-    let suggestedAmount;
-    try {
-        const fees = await sdk.getFees();
-        suggestedAmount = Math.floor(
-            fees[sourceAsset.toLowerCase()].lock + 0.0001 * 1e8
-        );
-    } catch (error) {
-        console.error(error);
-        suggestedAmount = 0.0008 * 1e8;
-    }
 
     const mint = await sdk.lockAndMint({
         asset: sourceAsset.toUpperCase(),
@@ -91,6 +82,19 @@ export const renLockAndMint = async (context: GatewayMachineContext) => {
 const txCreator = async (context: GatewayMachineContext) => {
     const nonce = RenJS.utils.randomNonce();
     context.tx.nonce = nonce.toString("hex");
+
+    const { targetAmount, sourceAsset } = context.tx;
+
+    try {
+        const fees = await context.sdk.getFees();
+        context.tx.suggestedAmount = Math.floor(
+            fees[sourceAsset.toLowerCase()].lock +
+                (Number(targetAmount) || 0.0001) * 1e8
+        );
+    } catch (error) {
+        console.error(error);
+        context.tx.suggestedAmount = 0.0008 * 1e8;
+    }
     const minter = await renLockAndMint(context);
     const gatewayAddress = minter?.gatewayAddress;
     const newTx: GatewaySession = {
@@ -127,7 +131,6 @@ const depositListener = (
             // If we don't have a sourceTxHash, we haven't seen a deposit yet
             const rawSourceTx: any = deposit.deposit;
             const depositState: GatewayTransaction = persistedTx || {
-                awaiting: TransactionAwaitable.SRC_SETTLE,
                 sourceTxHash: txHash,
                 sourceTxAmount: rawSourceTx.amount,
                 sourceTxVOut: rawSourceTx.vOut,
@@ -175,7 +178,10 @@ const depositListener = (
                     workingDeposit
                         ?.signed()
                         .on("status", (state) => console.log(state))
-                        .then(() => callback("SIGNED"));
+                        .then(() => callback("SIGNED"))
+                        .catch((e) =>
+                            callback({ type: "SIGN_ERROR", data: e })
+                        );
                     break;
                 case "MINT":
                     workingDeposit
@@ -189,7 +195,9 @@ const depositListener = (
                                 data: submittedTx,
                             });
                         })
-                        .then(console.log);
+                        .catch((e) =>
+                            callback({ type: "SUBMIT_ERROR", data: e })
+                        );
                     break;
             }
         });
@@ -200,8 +208,6 @@ const depositListener = (
         callback("LISTENING");
     });
     return () => {
-        console.log("cleaning up listener", listener, minterRef);
-        console.log("current listeners", minterRef?.listeners("deposit"));
         if (listener) {
             minterRef?.removeAllListeners();
             // minterRef?.off("deposit", listener);
@@ -247,6 +253,7 @@ const listenerAction = assign<GatewayMachineContext>({
             actorName = `${deposit.sourceTxHash}DepositListener`;
         }
         if (c.depositListenerRef && !deposit) {
+            console.warn("listener already exists");
             return c.depositListenerRef;
         }
         const cb = depositListener(c);
@@ -286,18 +293,15 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                                 actions: {
                                     listenerAction: listenerAction as any,
                                 },
-                            })
+                            }),
+                        {
+                            sync: true,
+                            name: `${evt.data.sourceTxHash}DepositMachine`,
+                        }
                     ) as Actor<any>;
                     return machines;
                 }
                 for (let i of Object.entries(context.tx.transactions)) {
-                    // don't spawn completed deposits
-                    if (
-                        (i[1].destTxConfs ?? 0) >=
-                        (context.tx.destConfsTarget || Number.POSITIVE_INFINITY)
-                    ) {
-                        continue;
-                    }
                     const machineContext = {
                         ...context,
                         deposit: i[1],
@@ -310,7 +314,11 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                                 destConfListener,
                             },
                             actions: { listenerAction: listenerAction as any },
-                        })
+                        }),
+                        {
+                            sync: true,
+                            name: `${machineContext.deposit.sourceTxHash}DepositMachine`,
+                        }
                     ) as Actor<any>;
                 }
                 return machines;

@@ -114,7 +114,7 @@ export const burnMachine = Machine<
                 getFirstTx(ctx.tx)?.sourceTxHash ? true : false,
             isSrcConfirmed: (ctx, _evt) =>
                 getFirstTx(ctx.tx)?.sourceTxConfs >=
-                (getFirstTx(ctx.tx)?.sourceTxConfTarget ??
+                (getFirstTx(ctx.tx)?.sourceTxConfTarget ||
                     Number.POSITIVE_INFINITY),
         },
     }

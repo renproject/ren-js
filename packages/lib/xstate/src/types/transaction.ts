@@ -1,15 +1,6 @@
 import { RenNetwork } from "@renproject/interfaces";
 
-export enum TransactionAwaitable {
-    SRC_SETTLE = "src-settle", // Deposit detected, but unconfirmed
-    REN_INIT = "ren-init", // Not currently used - for state between deposit confirmed but not submitted to renvm
-    REN_SETTLE = "ren-settle", // Submitted to renVM, awaiting signature
-    DEST_INIT = "dest-init", // Awaiting submission to destination chain
-    DEST_SETTLE = "dest-settle", // Awaiting confirmation on destination chain
-}
-
 export interface GatewayTransaction {
-    awaiting: TransactionAwaitable;
     destTxConfs?: number;
     destTxConfTarget?: number;
     destTxVOut?: string | number;
@@ -24,15 +15,7 @@ export interface GatewayTransaction {
     rawSourceTx: any;
 }
 
-// When minting,
-// One gateway should not, but could, have multiple valid transactions
-// One gateway could have transactions that get replaced
-// The question is whether we want gateway "sessions", where multiple source txs
-// get correlated with the gateway that spawned them, or if we want to instantiate
-// new transactions for each deposit that is detected
-// It also raises the question if gateways should be "sealeable",
-// returning any funds sent to them if they have completed their transaction
-export interface GatewaySession {
+export interface GatewaySession<CustomParams = void> {
     id: string;
     type: "mint" | "burn";
     network: RenNetwork | "testnet" | "mainnet";
@@ -53,6 +36,7 @@ export interface GatewaySession {
     gatewayAddress?: string;
     expiryTime: number; // unix time when address will no longer accept deposits
     transactions: { [key in string]: GatewayTransaction };
+    customParams?: CustomParams; // can be provided for extra transaction data
 
     // manual timestamps
     createdAt?: number;

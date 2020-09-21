@@ -1,8 +1,8 @@
-import chai from "chai";
+import * as chai from "chai";
 import { renTestnet } from "@renproject/networks";
 import RenJS from "@renproject/ren";
 import { interpret } from "xstate";
-import { mintMachine, config as mintConfig } from "../src";
+import { mintMachine, mintConfig } from "../src";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import {
     Bitcoin,
@@ -20,28 +20,17 @@ console.log(MNEMONIC, PRIVATE_KEY);
 
 require("dotenv").config();
 
-chai.should();
-describe("MintMachine", () => {
-    it("listen for deposits for a valid machine", async function () {
-        this.timeout(100000000000);
+const expect = chai.expect;
+
+describe("MintMachine", function () {
+    this.timeout(0);
+    it("true", () => {
+        expect(true).to.eq(true);
+    });
+    it("listen for deposits for a valid machine", function (done) {
+        this.timeout(0);
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
-
-        const mintTransaction: GatewaySession = {
-            id: "a unique identifier",
-            type: "mint",
-            network: "testnet",
-            sourceAsset: "btc",
-            sourceNetwork: "bitcoin",
-            destAddress: "address to mint to",
-            destAsset: "renBTC",
-            destNetwork: "ethereum",
-            destConfsTarget: 6,
-            targetAmount: 1,
-            userAddress: "address that will sign the transaction",
-            expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
-            transactions: {},
-        };
 
         // A mapping of how to construct parameters for host chains,
         // based on the destination network
@@ -77,6 +66,22 @@ describe("MintMachine", () => {
             ethereum: provider,
         };
 
+        const mintTransaction: GatewaySession = {
+            id: "auniqueidforthetx",
+            type: "mint",
+            network: "testnet",
+            sourceAsset: "btc",
+            sourceNetwork: "bitcoin",
+            destAddress: provider.addresses[0], //"address to mint to",
+            destAsset: "renBTC",
+            destNetwork: "ethereum",
+            destConfsTarget: 6,
+            targetAmount: 1,
+            userAddress: provider.addresses[0],
+            expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
+            transactions: {},
+        };
+
         const machine = mintMachine.withConfig(mintConfig).withContext({
             tx: mintTransaction,
             sdk: new RenJS("testnet"),
@@ -88,26 +93,44 @@ describe("MintMachine", () => {
         // Interpret the machine, and add a listener for whenever a transition occurs.
         // The machine will detect which state the transaction should be in,
         // and perform the neccessary next actions
-        const service = interpret(machine).onTransition((state) => {
-            if (state.context.tx.suggestedAmount) {
-                const suggestedAmount = state.context.tx.suggestedAmount;
-                account
-                    .sendSats(
-                        state.context.tx.gatewayAddress,
-                        suggestedAmount,
-                        state.context.tx.sourceAsset
-                    )
-                    .catch(console.error);
-            }
-            console.log(state.value);
-            if (state.value === "requestingSignature") {
-                // implement logic to determine whether deposit is valid and should be signed
-                // then call
-                service.send("SIGN");
-            }
-        });
+        const p = new Promise((resolve, reject) => {
+            const service = interpret(machine)
+                .onTransition((state) => {
+                    if (state.context.tx.suggestedAmount) {
+                        const suggestedAmount =
+                            state.context.tx.suggestedAmount;
+                        // account
+                        //     .sendSats(
+                        //         state.context.tx.gatewayAddress,
+                        //         suggestedAmount,
+                        //         state.context.tx.sourceAsset
+                        //     )
+                        //     .catch(reject);
+                    }
+                    console.log("value", state.value);
+                    if (state.value === "requestingSignature") {
+                        // implement logic to determine whether deposit is valid and should be signed
+                        // then call
+                        resolve();
+                        // service.send("SIGN");
+                    }
+                })
+                .onEvent(console.log)
+                .onStop(() => console.log("stopped?"));
 
-        // Start the service
-        service.start();
+            // Start the service
+            service.start();
+            service.onStop(() => console.log("outhersop"));
+        });
+        const r = p;
+        console.log("r", r);
+        return p.then((d) => {
+            console.log('"done"');
+            expect(p).to.throw();
+            done();
+        });
+    });
+    it("false", () => {
+        expect(true).to.eq(false);
     });
 });

@@ -4,10 +4,10 @@ This implements RenVM transaction lifecycles in xstate statemachines to allow de
 The aim is to provide a declarative interface, that can accept serializable "transaction" objects, that will reactively process the appropriate stages in the transaction lifecycle.
 
 ## Differences between renjs and @renproject/xstate
-|                           | renjs | @renproject/xstate  |
-| reactive                  | ❌    | ✓               |
-| serializable transactions | ❌    | ✓               |
-| finite, explicit states   | ❌    | ✓               |
+|                           | renjs | @renproject/xstate |
+| reactive                  | ❌    | ✓                  |
+| serializable transactions | ❌    | ✓                  |
+| finite, explicit states   | ❌    | ✓                  |
 
 ## Concepts
 In order to make full use of this library, it is valuable to understand the [concepts behind xstate](https://xstate.js.org/docs/about/concepts.html#finite-state-machines)

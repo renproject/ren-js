@@ -1,0 +1,53 @@
+{
+    "name": "test",
+    "version": "2.0.0-alpha.6",
+    "scripts": {
+        "describe": "npm-scripts-info",
+        "fix": "run-s fix:*",
+        "fix:tslint": "tslint --fix --project .",
+        "test": "run-s test:unit lint",
+        "test-all": "ALL_TESTS=true run-s test:unit lint",
+        "lint": "tslint --project ./ -t stylish --quiet",
+        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "cov": "run-s test:unit cov:html && open-cli coverage/index.html",
+        "cov:html": "nyc report --reporter=html",
+        "cov:send": "nyc report --reporter=lcov && codecov",
+        "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
+        "doc": "run-s doc:html && open-cli build/docs/index.html",
+        "doc:html-succint": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
+        "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --name \"RenJS Types Documentation\" --readme ./DOCS.md",
+        "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
+        "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
+        "prepare": "yarn build-all",
+        "npmignore": "npmignore -g ../../../.gitignore",
+        "prepare-release": "run-s npmignore doc:html",
+        "link:all": "yarn link @renproject/chains @renproject/ren @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
+        "unlink:all": "(yarn unlink || true)"
+    },
+    "dependencies": {
+        "@renproject/chains": "file:../chains/chains",
+        "@renproject/ren": "file:../ren",
+        "@renproject/interfaces": "file:../interfaces",
+        "@renproject/networks": "file:../networks",
+        "@renproject/provider": "file:../provider",
+        "@renproject/rpc": "file:../rpc",
+        "@renproject/utils": "file:../utils",
+        "@types/node": "^14.11.1",
+        "bignumber.js": "^9.0.0",
+        "immutable": "^4.0.0-rc.12",
+        "send-crypto": "0.2.16"
+    },
+    "resolutions": {
+        "sha3": "^2.1.2"
+    },
+    "nyc": {
+        "extends": "@istanbuljs/nyc-config-typescript",
+        "exclude": [
+            "**/*.d.ts",
+            "**/*.spec.js"
+        ],
+        "include": [
+            "src"
+        ]
+    }
+}

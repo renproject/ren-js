@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren",
-    "version": "2.0.0-alpha.6",
+    "version": "2.0.0-alpha.7",
     "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
     "repository": {
         "type": "git",
@@ -25,9 +25,9 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "build/main/index.js",
-    "typings": "build/main/index.d.ts",
-    "module": "build/module/index.js",
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
         "build": "yarn build:main && yarn build:module",
@@ -37,12 +37,12 @@
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build test:unit lint",
-        "test-all": "ALL_TESTS=true run-s build test:unit lint",
+        "test": "run-s build:main test:unit lint",
+        "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
         "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
-        "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
+        "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
@@ -54,23 +54,22 @@
         "prepare": "yarn build-all",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/chains @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
+        "link:all": "yarn link @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/chains": "file:../chains",
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/networks": "file:../networks",
         "@renproject/provider": "file:../provider",
         "@renproject/rpc": "file:../rpc",
         "@renproject/utils": "file:../utils",
-        "@types/bs58": "^4.0.1",
-        "@types/node": "^14.0.5",
+        "@types/node": "^14.11.1",
         "bignumber.js": "^9.0.0",
-        "bs58": "^4.0.1",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.14",
-        "wallet-address-validator": "^0.2.4"
+        "web3-eth-abi": "^2.0.0-alpha.1"
+    },
+    "peerDependencies": {
+        "@renproject/ren": "file:../ren"
     },
     "resolutions": {
         "sha3": "^2.1.2"

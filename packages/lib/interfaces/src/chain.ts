@@ -3,28 +3,26 @@ import { EventEmitter } from "events";
 import { Logger } from "./logger";
 import { RenNetwork } from "./networks";
 import { ContractCall, RenTokens } from "./parameters";
+import { PromiEvent } from "./promiEvent";
 import { MintTransaction } from "./transaction";
 import { EventType } from "./types";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
-/**
- * LockChain is a chain with one or more native assets that can be locked in a
- * key controlled by RenVM to be moved onto a MintChain, and then released when
- * they are burnt from the MintChain.
- *
- * LockChains can extend other chain implementations using JavaScript's class
- * inheritance. For example, if a LockChain is a Bitcoin fork, it can extend the
- * Bitcoin LockChain and overwrite methods as necessary. See the ZCash and
- * BitcoinCash implementations for examples of this.
- */
-export interface LockChain<
-    Transaction = {},
+export type TransactionListener<
+    T,
+    // tslint:disable-next-line: no-any
+    E extends { [key: string]: any[] }
+> = PromiEvent<T, { txHash: [string]; confirmation: [number, number] } & E>;
+
+export interface ChainCommon<
+    // tslint:disable-next-line: no-any
+    Transaction = any,
     Asset extends string = string,
     Address extends string = string
 > {
     /**
-     * The name of the LockChain.
+     * The name of the Chain.
      *
      * @example
      * bitcoin.name = "Bitcoin";
@@ -32,7 +30,7 @@ export interface LockChain<
     name: string;
 
     /**
-     * Should be set by `constructor` and `initialize`.
+     * Should be set by `constructor` or `initialize`.
      */
     renNetwork?: RenNetwork;
 
@@ -40,11 +38,11 @@ export interface LockChain<
 
     /**
      * `initialize` allows RenJS to pass in parameters after the user has
-     * initialized the LockChain. This allows the user to pass in network
+     * initialized the Chain. This allows the user to pass in network
      * parameters such as the network only once.
      *
-     * If the LockChain's constructor has an optional network parameter and the
-     * user has explicitly initialized it, the LockChain should ignore the
+     * If the Chain's constructor has an optional network parameter and the
+     * user has explicitly initialized it, the Chain should ignore the
      * network passed in to `initialize`. This is to allow different network
      * combinations, such as working with testnet Bitcoin and a local Ethereum
      * chain - whereas the default `testnet` configuration would use testnet
@@ -56,7 +54,7 @@ export interface LockChain<
 
     /**
      * `supportsAsset` should return true if the asset is native to the
-     * LockChain.
+     * Chain.
      *
      * @example
      * bitcoin.supportsAsset = asset => asset === "BTC";
@@ -76,18 +74,27 @@ export interface LockChain<
      */
     assetDecimals: (asset: Asset) => SyncOrPromise<number>;
 
-    // Deposits
+    // Address and transaction helpers
+
+    addressIsValid: (address: Address) => boolean;
 
     /**
-     * `getDeposits` should return all previous deposits that have been made to
-     * the address, confirmed or unconfirmed.
-     *
-     * TODO: Add pagination.
+     * `addressExplorerLink` should return a URL that can be shown to a user
+     * to access more information about an address.
      */
-    getDeposits: (
-        asset: Asset,
-        address: Address
-    ) => SyncOrPromise<Transaction[]>;
+    addressExplorerLink?: (address: Address) => string;
+
+    /**
+     * `transactionID` should return a string that uniquely represents the
+     * transaction.
+     */
+    transactionID: (transaction: Transaction) => string;
+
+    /**
+     * `transactionExplorerLink` should return a URL that can be shown to a user
+     * to access more information about a transaction.
+     */
+    transactionExplorerLink?: (transaction: Transaction) => string;
 
     /**
      * `transactionConfidence` should return a target and a current
@@ -103,8 +110,63 @@ export interface LockChain<
     transactionConfidence: (
         transaction: Transaction
     ) => SyncOrPromise<{ current: number; target: number }>;
+}
 
-    // Address
+// tslint:disable-next-line: no-any
+export type DepositCommon<Transaction = any> = {
+    transaction: Transaction;
+    amount: string;
+};
+
+/**
+ * LockChain is a chain with one or more native assets that can be locked in a
+ * key controlled by RenVM to be moved onto a MintChain, and then released when
+ * they are burnt from the MintChain.
+ *
+ * LockChains can extend other chain implementations using JavaScript's class
+ * inheritance. For example, if a LockChain is a Bitcoin fork, it can extend the
+ * Bitcoin LockChain and overwrite methods as necessary. See the ZCash and
+ * BitcoinCash implementations for examples of this.
+ */
+export interface LockChain<
+    // tslint:disable-next-line: no-any
+    Transaction = any,
+    LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    Asset extends string = string,
+    Address extends string = string
+> extends ChainCommon<Transaction, Asset, Address> {
+    // Deposits
+
+    /**
+     * `getDeposits` should return all previous deposits that have been made to
+     * the address, confirmed or unconfirmed.
+     *
+     * TODO: Add pagination.
+     */
+    getDeposits: (
+        asset: Asset,
+        address: Address
+    ) => SyncOrPromise<LockDeposit[]>;
+
+    // Encoding
+
+    /**
+     * `encodeAddress` should return a bytes representation of the provided
+     * address. The default implementation is `address => Buffer.from(address)`.
+     *
+     * @dev Must be compatible with the matching RenVM multichain LockChain.
+     */
+    encodeAddress?: (address: Address) => Buffer;
+
+    /**
+     * `decodeAddress` should return the address represented by the provided
+     * bytes. The default implementation is `buffer => buffer.toString()`.
+     *
+     * @dev Must be compatible with the matching RenVM multichain LockChain.
+     */
+    decodeAddress?: (encodedAddress: Buffer) => Address;
+
+    // RenVM specific utils
 
     /**
      * `getGatewayAddress` should return the deposit address expected by RenVM
@@ -125,51 +187,19 @@ export interface LockChain<
         gHash: Buffer
     ) => SyncOrPromise<Buffer>;
 
-    // Encoding
+    // Only chains supported by the legacy transaction format (BTC, ZEC & BCH)
+    // need to support this. For now, other chains can return an empty string.
+    depositV1HashString: (deposit: LockDeposit) => string;
 
-    /**
-     * `encodeAddress` should return a bytes representation of the provided
-     * address. The default implementation is `address => Buffer.from(address)`.
-     *
-     * @dev Must be compatible with the matching RenVM multichain LockChain.
-     */
-    encodeAddress?: (address: Address) => Buffer;
-
-    /**
-     * `decodeAddress` should return the address represented by the provided
-     * bytes. The default implementation is `buffer => buffer.toString()`.
-     *
-     * @dev Must be compatible with the matching RenVM multichain LockChain.
-     */
-    decodeAddress?: (encodedAddress: Buffer) => Address;
-
-    // UI utilities
-
-    /**
-     * `addressExplorerLink` should return a URL that can be shown to a user
-     * to access more information about an address.
-     */
-    addressExplorerLink?: (address: Address) => string;
-
-    /**
-     * `transactionExplorerLink` should return a URL that can be shown to a user
-     * to access more information about a transaction.
-     */
-    transactionID: (transaction: Transaction) => string;
-
-    transactionExplorerLink?: (transaction: Transaction) => string;
-
-    transactionHashString: (transaction: Transaction) => string;
-
-    transactionRPCFormat: (
-        transaction: Transaction,
+    depositRPCFormat: (
+        deposit: LockDeposit,
         pubKeyScript: Buffer,
         v2?: boolean
     ) => any; // tslint:disable-line: no-any
 
     generateNHash: (
         nonce: Buffer,
-        deposit: Transaction,
+        deposit: LockDeposit,
         v2?: boolean,
         logger?: Logger
     ) => Buffer;
@@ -181,53 +211,12 @@ export interface LockChain<
  * WARNING: This interface will be updated to match the Go multichain package's
  * interface. New MintChains should not be implemented using this interface.
  */
-export interface MintChain<Transaction = {}, Asset extends string = string> {
-    /**
-     * The name of the MintChain.
-     *
-     * @example
-     * ethereum.name = "ethereum";
-     *
-     * @dev Should match the key used in `ren_queryFees`.
-     */
-    name: string;
-
-    /**
-     * Should be set by `constructor` and `initialize`.
-     */
-    renNetwork?: RenNetwork;
-
-    // Class Initialization
-
-    /**
-     * See [LockChain.initialize].
-     */
-    initialize: (network: RenNetwork) => SyncOrPromise<this>;
-
-    // Supported assets
-
-    /**
-     * `supportsAsset` should return true if the asset is native to the
-     * MintChain.
-     *
-     * @example
-     * ethereum.supportsAsset = asset => asset === "ETH";
-     */
-    supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
-
-    /**
-     * `assetDecimals` should return the number of decimals of the asset.
-     *
-     * If the asset is not supported, an error should be thrown.
-     *
-     * @example
-     * ethereum.assetDecimals = asset => {
-     *     if (asset === "ETH") { return 18; }
-     *     throw new Error(`Unsupported asset ${asset}`);
-     * }
-     */
-    assetDecimals: (asset: Asset) => SyncOrPromise<number>;
-
+export interface MintChain<
+    // tslint:disable-next-line: no-any
+    Transaction = any,
+    Asset extends string = string,
+    Address extends string = string
+> extends ChainCommon<Transaction, Asset, Address> {
     resolveTokenGatewayContract: (token: RenTokens) => Promise<string>;
 
     /**

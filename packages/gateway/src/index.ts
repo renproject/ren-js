@@ -16,6 +16,8 @@ import {
     LogLevel,
     LogLevelString,
     MintTransaction,
+    newPromiEvent,
+    PromiEvent,
     RenContract,
     RenNetwork,
     RenTokens,
@@ -24,9 +26,8 @@ import {
 } from "@renproject/interfaces";
 import {
     extractError,
-    newPromiEvent,
+    Ox,
     parseRenContract,
-    PromiEvent,
     randomBytes,
     SECONDS,
     sleep,
@@ -99,7 +100,7 @@ export class Gateway {
             throw new Error("Must provide endpoint in Gateway config");
         }
         this.endpoint = config.endpoint;
-        this.id = randomBytes(8);
+        this.id = Ox(randomBytes(8));
     }
 
     public readonly close = () => {
@@ -611,7 +612,7 @@ export class Gateway {
                 await sleep(1 * SECONDS);
             }
 
-            const messageID = randomBytes(8);
+            const messageID = Ox(randomBytes(8));
 
             // tslint:disable-next-line: no-any
             let listener: (e: { readonly data: GatewayMessage<any> }) => void;

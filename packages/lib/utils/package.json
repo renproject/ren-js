@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "2.0.0-alpha.6",
+    "version": "2.0.0-alpha.7",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -13,9 +13,9 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "build/main/index.js",
-    "typings": "build/main/index.d.ts",
-    "module": "build/module/index.js",
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
         "build": "yarn build:main && yarn build:module",
@@ -23,11 +23,11 @@
         "build:module": "tsc -p tsconfig.module.json",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build test:* lint",
+        "test": "run-s build:main test:* lint",
         "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
-        "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
+        "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
@@ -42,16 +42,12 @@
     },
     "dependencies": {
         "@renproject/interfaces": "file:../interfaces",
-        "@types/node": "^14.0.5",
-        "axios": "^0.19.2",
+        "@types/node": "^14.11.1",
+        "axios": "^0.20.0",
         "bignumber.js": "^9.0.0",
-        "bnc-sdk": "^2.1.4",
-        "ethereumjs-util": "^7.0.1",
-        "events": "^3.1.0",
+        "ethereumjs-util": "^7.0.5",
+        "events": "^3.2.0",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.14",
-        "web3": "^2.0.0-alpha.1",
-        "web3-core": "^2.0.0-alpha.1",
         "web3-eth-abi": "^2.0.0-alpha.1"
     },
     "resolutions": {

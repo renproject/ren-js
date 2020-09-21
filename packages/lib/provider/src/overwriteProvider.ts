@@ -47,6 +47,14 @@ export class OverwriteProvider<
                                     "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
                             },
                             {
+                                asset: "DOGE",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "Dogecoin",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
+                            },
+                            {
                                 asset: "BCH",
                                 hosts: ["Ethereum"],
                                 locked: "0",

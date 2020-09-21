@@ -44,17 +44,23 @@ const coinGeckoParams = `localization=false&tickers=false&market_data=true&commu
 const getCoinGeckoPrice: PriceFeed = (token: string) =>
     Axios
         // Fetch API endpoint with 5 second timeout.
-        .get<{ market_data: { current_price: { usd: number } } }>(`${coinGeckoURL}/coins/${coinGeckoID(token)}?${coinGeckoParams}`, { timeout: 5 * SECONDS })
-        .then(response => response.data.market_data.current_price.usd || 0);
+        .get<{ market_data: { current_price: { usd: number } } }>(
+            `${coinGeckoURL}/coins/${coinGeckoID(token)}?${coinGeckoParams}`,
+            { timeout: 5 * SECONDS }
+        )
+        .then((response) => response.data.market_data.current_price.usd || 0);
 
 // Coinbase price feed
-const coinbaseURL = (token: string) => `https://api.coinbase.com/v2/prices/${token.toUpperCase()}-USD/buy`;
+const coinbaseURL = (token: string) =>
+    `https://api.coinbase.com/v2/prices/${token.toUpperCase()}-USD/buy`;
 const getCoinbasePrice: PriceFeed = (token: string) =>
     Axios
         // Fetch API endpoint with 5 second timeout.
-        .get<{ "data": { "base": string, "currency": "USD", "amount": string } }>(coinbaseURL(token), { timeout: 5 * SECONDS })
-        .then(response => parseInt(response.data.data.amount, 10) || 0);
-
+        .get<{ data: { base: string; currency: "USD"; amount: string } }>(
+            coinbaseURL(token),
+            { timeout: 5 * SECONDS }
+        )
+        .then((response) => parseInt(response.data.data.amount, 10) || 0);
 
 // const coinMarketCapID = (token: string): number => {
 //     /*
@@ -102,16 +108,20 @@ const getCoinbasePrice: PriceFeed = (token: string) =>
 //         },
 //     }).then((response: { data: { data: Array<{ symbol: string, quote: { USD: { price: number } } }> } }) => { return response.data.data.filter(x => x.symbol === token)[0].quote.USD.price; });
 
-export const getTokenPrices = async (tokens: string[], logger?: Logger): Promise<TokenPrices> => {
+export const getTokenPrices = async (
+    tokens: string[],
+    logger?: Logger
+): Promise<TokenPrices> => {
     try {
-        return await tokens.map((token) => ({
-            token,
-            priceFeeds: [
-                getCoinGeckoPrice(token),
-                getCoinbasePrice(token),
-                // getCoinMarketCapPrice(token),
-            ],
-        }))
+        return await tokens
+            .map((token) => ({
+                token,
+                priceFeeds: [
+                    getCoinGeckoPrice(token),
+                    getCoinbasePrice(token),
+                    // getCoinMarketCapPrice(token),
+                ],
+            }))
             .reduce(async (pricesPromise, { token, priceFeeds }) => {
                 const prices = await pricesPromise;
                 const returnedAPIs = [];
@@ -124,9 +134,12 @@ export const getTokenPrices = async (tokens: string[], logger?: Logger): Promise
                     }
                 }
 
-                return prices.set(token, returnedAPIs.length ?
-                    returnedAPIs.reduce((sum, price) => sum + price, 0) / returnedAPIs.length :
-                    0
+                return prices.set(
+                    token,
+                    returnedAPIs.length
+                        ? returnedAPIs.reduce((sum, price) => sum + price, 0) /
+                              returnedAPIs.length
+                        : 0
                 );
             }, Promise.resolve(OrderedMap<string, number>()));
     } catch (error) {
@@ -137,8 +150,19 @@ export const getTokenPrices = async (tokens: string[], logger?: Logger): Promise
 
 export type TokenPrices = OrderedMap<string, number>;
 
-export const normalizeValue = (prices: TokenPrices, token: string, value: string | number | BigNumber): BigNumber => {
-    const shiftedValue = new BigNumber(value).div(new BigNumber(10).exponentiatedBy(tokenDecimals(token)));
-    const timesPrice = shiftedValue.times(prices.get(token, 0));
-    return timesPrice;
+export const normalizeValue = (
+    prices: TokenPrices,
+    token: string,
+    value: string | number | BigNumber
+): BigNumber => {
+    try {
+        const shiftedValue = new BigNumber(value).div(
+            new BigNumber(10).exponentiatedBy(tokenDecimals(token))
+        );
+        const timesPrice = shiftedValue.times(prices.get(token, 0));
+        return timesPrice;
+    } catch (error) {
+        // Ignore error
+        return new BigNumber(0);
+    }
 };

@@ -28,6 +28,7 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { List, OrderedMap, Set } from "immutable";
+import { sha256 } from "ethereumjs-util";
 
 import {
     ParamsQueryBlock,
@@ -79,6 +80,14 @@ export const resolveV2Contract = (contract: RenContract) => {
         asset.toUpperCase() === from.toUpperCase() ? "to" : "from";
     return `${asset.toUpperCase()}/${direction}${toChain}`;
 };
+
+export const hashSelector = (selector: string): Buffer =>
+    sha256(
+        Buffer.concat([
+            Buffer.from([0, 0, 0, selector.length]),
+            Buffer.from(selector),
+        ])
+    );
 
 export type RenVMProviderInterface = Provider<RenVMParams, RenVMResponses>;
 

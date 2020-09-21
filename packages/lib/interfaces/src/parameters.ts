@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { TransactionConfig } from "web3-core";
 
-import { LockChain, MintChain } from "./chain";
+import { DepositCommon, LockChain, MintChain } from "./chain";
 import { EthArgs } from "./ethArgs";
 import { Asset } from "./networks";
 
@@ -10,9 +10,6 @@ export type BNInterface = { toString(x?: "hex"): string };
 export type NumberValue = string | number | BigNumber | BNInterface;
 
 export type RenTokens = string;
-
-// tslint:disable-next-line: no-any
-export type provider = any;
 
 /**
  * The details required to create and/or submit a transaction to Ethereum.
@@ -66,8 +63,12 @@ export interface TransferParamsCommon {
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */
-export interface LockAndMintParams extends TransferParamsCommon {
-    from: LockChain;
+export interface LockAndMintParams<
+    // tslint:disable-next-line: no-any
+    Transaction = any,
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
+> extends TransferParamsCommon {
+    from: LockChain<Transaction, Deposit>;
     to: MintChain;
 
     /**

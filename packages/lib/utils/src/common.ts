@@ -1,4 +1,4 @@
-import { AbiItem, BNInterface, EthArgs } from "@renproject/interfaces";
+import { AbiItem, EthArgs } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 
@@ -32,10 +32,7 @@ export const strip0x = (hex: string) => {
  * is already prefixed, it's returned unchanged.
  * @param hex The hex value to be prefixed.
  */
-export const Ox = (
-    hex: Buffer | BNInterface | string,
-    { prefix } = { prefix: "0x" }
-) => {
+export const Ox = (hex: Buffer | string, { prefix } = { prefix: "0x" }) => {
     const hexString = typeof hex === "string" ? hex : hex.toString("hex");
     return hexString.substring(0, 2) === prefix
         ? hexString
@@ -59,7 +56,7 @@ export const toBase64 = (input: Buffer) => {
     return input.toString("base64");
 };
 
-export const pad0x = (hex: Buffer | BNInterface | string) => {
+export const pad0x = (hex: Buffer | string) => {
     // Normalize:
     let hexString = Ox(hex, { prefix: "" });
     // If length is odd, add leading 0.

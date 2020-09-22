@@ -1290,112 +1290,113 @@
     "@ethersproject/properties" ">=5.0.0-beta.131"
     "@ethersproject/strings" ">=5.0.0-beta.130"
 
-"@ethersproject/address@>=5.0.0-beta.128", "@ethersproject/address@^5.0.4":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@ethersproject/address/-/address-5.0.4.tgz#8669bcbd02f4b64f4cede0a10e84df6d964ec9d3"
-  integrity sha512-CIjAeG6zNehbpJTi0sgwUvaH2ZICiAV9XkCBaFy5tjuEVFpQNeqd6f+B7RowcNO7Eut+QbhcQ5CVLkmP5zhL9A==
+"@ethersproject/address@>=5.0.0-beta.128", "@ethersproject/address@>=5.0.0-beta.134":
+  version "5.0.0-beta.135"
+  resolved "https://registry.yarnpkg.com/@ethersproject/address/-/address-5.0.0-beta.135.tgz#8d4697c81dc27758b05e7eb7507c254f2ef0e5dc"
+  integrity sha512-y9r/ajYBCDVM1ZD6kKgTRHBOxgURcQ24qTolw3oGyK373XHNrcY9ufDgZ5KR8h0OvLvczb4SGzYhahYvBnyZwA==
   dependencies:
-    "@ethersproject/bignumber" "^5.0.7"
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/keccak256" "^5.0.3"
-    "@ethersproject/logger" "^5.0.5"
-    "@ethersproject/rlp" "^5.0.3"
+    "@ethersproject/bignumber" ">=5.0.0-beta.138"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/keccak256" ">=5.0.0-beta.131"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
+    "@ethersproject/rlp" ">=5.0.0-beta.132"
     bn.js "^4.4.0"
 
-"@ethersproject/bignumber@>=5.0.0-beta.130", "@ethersproject/bignumber@^5.0.7":
-  version "5.0.7"
-  resolved "https://registry.yarnpkg.com/@ethersproject/bignumber/-/bignumber-5.0.7.tgz#720b3e3df3e125a99669ee869478106d0afe7b76"
-  integrity sha512-wwKgDJ+KA7IpgJwc8Fc0AjKIRuDskKA2cque29/+SgII9/1K/38JpqVNPKIovkLwTC2DDofIyzHcxeaKpMFouQ==
+"@ethersproject/bignumber@>=5.0.0-beta.130", "@ethersproject/bignumber@>=5.0.0-beta.138":
+  version "5.0.0-beta.139"
+  resolved "https://registry.yarnpkg.com/@ethersproject/bignumber/-/bignumber-5.0.0-beta.139.tgz#12a4fa5a76ee90f77932326311caf04e1de1cae0"
+  integrity sha512-h1C1okCmPK3UVWwMGUbuCZykplJmD/TdknPQQHJWL/chK5MqBhyQ5o1Cay7mHXKCBnjWrR9BtwjfkAh76pYtFA==
   dependencies:
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/logger" "^5.0.5"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
+    "@ethersproject/properties" ">=5.0.0-beta.140"
     bn.js "^4.4.0"
 
-"@ethersproject/bytes@>=5.0.0-beta.129", "@ethersproject/bytes@^5.0.4":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@ethersproject/bytes/-/bytes-5.0.4.tgz#328d9d929a3e970964ecf5d62e12568a187189f1"
-  integrity sha512-9R6A6l9JN8x1U4s1dJCR+9h3MZTT3xQofr/Xx8wbDvj6NnY4CbBB0o8ZgHXvR74yV90pY2EzCekpkMBJnRzkSw==
+"@ethersproject/bytes@>=5.0.0-beta.129", "@ethersproject/bytes@>=5.0.0-beta.137":
+  version "5.0.0-beta.138"
+  resolved "https://registry.yarnpkg.com/@ethersproject/bytes/-/bytes-5.0.0-beta.138.tgz#86e1f6c4016443f2b5236627fa656e7c56077a56"
+  integrity sha512-q4vaIthv89RJQ0V6gdzh1xuluJE1uYbnfzBUYTegicaXX6jRTCjDDhyiQhyEnNi7pKrGtuOrR3v3+7WtAR8Imw==
   dependencies:
-    "@ethersproject/logger" "^5.0.5"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
 
-"@ethersproject/constants@>=5.0.0-beta.128", "@ethersproject/constants@^5.0.4":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@ethersproject/constants/-/constants-5.0.4.tgz#9ddaa5f3c738a94e5adc4b3f71b36206fa5cdf88"
-  integrity sha512-Df32lcXDHPgZRPgp1dgmByNbNe4Ki1QoXR+wU61on5nggQGTqWR1Bb7pp9VtI5Go9kyE/JflFc4Te6o9MvYt8A==
+"@ethersproject/constants@>=5.0.0-beta.128", "@ethersproject/constants@>=5.0.0-beta.133":
+  version "5.0.0-beta.134"
+  resolved "https://registry.yarnpkg.com/@ethersproject/constants/-/constants-5.0.0-beta.134.tgz#b81c42373a00cb21604a94aa8642454fb35bb764"
+  integrity sha512-tKKL7F3ozL+XgZ4+McNmp12rnPxKf+InKr36asVVAiVLa0WxnNsO9m/+0LkW5dMFbqn2i2VJtBwKfl1OE6GInA==
   dependencies:
-    "@ethersproject/bignumber" "^5.0.7"
+    "@ethersproject/bignumber" ">=5.0.0-beta.138"
 
 "@ethersproject/hash@>=5.0.0-beta.128":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@ethersproject/hash/-/hash-5.0.4.tgz#385642786405d236f3d2f1acdfaf250ab519cdac"
-  integrity sha512-VCs/bFBU8AQFhHcT1cQH6x7a4zjulR6fJmAOcPxUgrN7bxOQ7QkpBKF+YCDJhFtkLdaljIsr/r831TuWU4Ysfg==
+  version "5.0.0-beta.134"
+  resolved "https://registry.yarnpkg.com/@ethersproject/hash/-/hash-5.0.0-beta.134.tgz#e1fdb69b42f5d31c343bcbf183043853b9b8e9dd"
+  integrity sha512-yvHyu+9Mgi4jn41DakA8tgHwngsSlTEyLBavP08GN3oS6fTiqflEMa4AXUFndztpcvk7UdGlowCOp6UupbmRVQ==
   dependencies:
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/keccak256" "^5.0.3"
-    "@ethersproject/logger" "^5.0.5"
-    "@ethersproject/strings" "^5.0.4"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/keccak256" ">=5.0.0-beta.131"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
+    "@ethersproject/strings" ">=5.0.0-beta.136"
 
-"@ethersproject/keccak256@>=5.0.0-beta.127", "@ethersproject/keccak256@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@ethersproject/keccak256/-/keccak256-5.0.3.tgz#f094a8fca3bb913c044593c4f382be424292e588"
-  integrity sha512-VhW3mgZMBZlETV6AyOmjNeNG+Pg68igiKkPpat8/FZl0CKnfgQ+KZQZ/ee1vT+X0IUM8/djqnei6btmtbA27Ug==
+"@ethersproject/keccak256@>=5.0.0-beta.127", "@ethersproject/keccak256@>=5.0.0-beta.131":
+  version "5.0.0-beta.132"
+  resolved "https://registry.yarnpkg.com/@ethersproject/keccak256/-/keccak256-5.0.0-beta.132.tgz#38c128194a88aba690b6aca43cae57df420408d7"
+  integrity sha512-YpkwYGV4nu1QM7Q+mhYKO1bCk/sbiV7AAU/HnHwZhDiwJZSDRwfjiFkAJQpvTbsAR02Ek9LhFEBg4OfLTEhJLg==
   dependencies:
-    "@ethersproject/bytes" "^5.0.4"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
     js-sha3 "0.5.7"
 
-"@ethersproject/logger@>=5.0.0-beta.129", "@ethersproject/logger@^5.0.5":
-  version "5.0.5"
-  resolved "https://registry.yarnpkg.com/@ethersproject/logger/-/logger-5.0.5.tgz#e3ba3d0bcf9f5be4da5f043b1e328eb98b80002f"
-  integrity sha512-gJj72WGzQhUtCk6kfvI8elTaPOQyMvrMghp/nbz0ivTo39fZ7IjypFh/ySDeUSdBNplAwhzWKKejQhdpyefg/w==
+"@ethersproject/logger@>=5.0.0-beta.129", "@ethersproject/logger@>=5.0.0-beta.137":
+  version "5.0.0-beta.137"
+  resolved "https://registry.yarnpkg.com/@ethersproject/logger/-/logger-5.0.0-beta.137.tgz#781582b8b04d0ced01e9c1608c9887d31d95b8ee"
+  integrity sha512-H36iMhWOY+tco1+o2NZUdQT8Gc6Y9795RSPgvluatvjvyt3X6mHtWXes4F8Rc5N/95px++a/ODYVSkSmlr68+A==
 
-"@ethersproject/properties@>=5.0.0-beta.131", "@ethersproject/properties@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@ethersproject/properties/-/properties-5.0.3.tgz#991aef39a5f87d4645cee76cec4df868bfb08be6"
-  integrity sha512-wLCSrbywkQgTO6tIF9ZdKsH9AIxPEqAJF/z5xcPkz1DK4mMAZgAXRNw1MrKYhyb+7CqNHbj3vxenNKFavGY/IA==
+"@ethersproject/properties@>=5.0.0-beta.131", "@ethersproject/properties@>=5.0.0-beta.140":
+  version "5.0.0-beta.143"
+  resolved "https://registry.yarnpkg.com/@ethersproject/properties/-/properties-5.0.0-beta.143.tgz#604ba072ee91e386e1bfab70413c34165fa9c913"
+  integrity sha512-Stagr55S1G8g7edhv5kkHoVaaebYzwlutzYv7hWT2Ad+LPLIT7mkFf88DX8i0eWLQ8hBaSbCfKrc7uS6K7MdEw==
   dependencies:
-    "@ethersproject/logger" "^5.0.5"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
 
-"@ethersproject/rlp@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@ethersproject/rlp/-/rlp-5.0.3.tgz#841a5edfdf725f92155fe74424f5510c9043c13a"
-  integrity sha512-Hz4yyA/ilGafASAqtTlLWkA/YqwhQmhbDAq2LSIp1AJNx+wtbKWFAKSckpeZ+WG/xZmT+fw5OFKK7a5IZ4DR5g==
+"@ethersproject/rlp@>=5.0.0-beta.132":
+  version "5.0.0-beta.133"
+  resolved "https://registry.yarnpkg.com/@ethersproject/rlp/-/rlp-5.0.0-beta.133.tgz#e51b2e8d51fd70a5872f85f11741193a6b118110"
+  integrity sha512-4zwGZov221uYuz6oXqAf2i5dk3ven7mSNkPRYvS2xdAlUn1Qy8GFUswyRuLaGzpWUGNlKIWCEnvomP5L/CtMPQ==
   dependencies:
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/logger" "^5.0.5"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
 
-"@ethersproject/signing-key@^5.0.4":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@ethersproject/signing-key/-/signing-key-5.0.4.tgz#a5334ce8a52d4e9736dc8fb6ecc384704ecf8783"
-  integrity sha512-I6pJoga1IvhtjYK5yXzCjs4ZpxrVbt9ZRAlpEw0SW9UuV020YfJH5EIVEGR2evdRceS3nAQIggqbsXSkP8Y1Dg==
+"@ethersproject/signing-key@>=5.0.0-beta.135":
+  version "5.0.0-beta.136"
+  resolved "https://registry.yarnpkg.com/@ethersproject/signing-key/-/signing-key-5.0.0-beta.136.tgz#e24c93aeba25b8631673e490ce8ba519a3f90186"
+  integrity sha512-iFIpafhDoxziOsnQaq39Hzdedji3cnuJymBHuLbO/elKZBEFrAoxPNE5YroxXdug634gncy5xDYDzmsIZ9y7mg==
   dependencies:
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/logger" "^5.0.5"
-    "@ethersproject/properties" "^5.0.3"
-    elliptic "6.5.3"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
+    "@ethersproject/properties" ">=5.0.0-beta.140"
+    elliptic "6.5.2"
 
-"@ethersproject/strings@>=5.0.0-beta.130", "@ethersproject/strings@^5.0.4":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@ethersproject/strings/-/strings-5.0.4.tgz#67cda604eee3ffcc004cb9f3bd03516e1c7b09a0"
-  integrity sha512-azXFHaNkDXzefhr4LVVzzDMFwj3kH9EOKlATu51HjxabQafuUyVLPFgmxRFmCynnAi0Bmmp7nr+qK1pVDgRDLQ==
+"@ethersproject/strings@>=5.0.0-beta.130", "@ethersproject/strings@>=5.0.0-beta.136":
+  version "5.0.0-beta.137"
+  resolved "https://registry.yarnpkg.com/@ethersproject/strings/-/strings-5.0.0-beta.137.tgz#1e9730a701e7a44c3f1b4e1c7e134665cdd51d7b"
+  integrity sha512-Z1xKXjoBWM5DOlc8HvjpOKO1zZ8kf4nLpf4C8zZjz+GNhaH03z74tXNNpdLf4UV6otMcHcJtO+X5ATE4TCn9Iw==
   dependencies:
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/constants" "^5.0.4"
-    "@ethersproject/logger" "^5.0.5"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/constants" ">=5.0.0-beta.133"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
 
 "@ethersproject/transactions@^5.0.0-beta.135":
-  version "5.0.5"
-  resolved "https://registry.yarnpkg.com/@ethersproject/transactions/-/transactions-5.0.5.tgz#9a966f9ef4817b1752265d4efee0f1e9fd6aeaad"
-  integrity sha512-1Ga/QmbcB74DItggP8/DK1tggu4ErEvwTkIwIlUXUcvIAuRNXXE7kgQhlp+w1xA/SAQFhv56SqCoyqPiiLCvVA==
+  version "5.0.0-beta.136"
+  resolved "https://registry.yarnpkg.com/@ethersproject/transactions/-/transactions-5.0.0-beta.136.tgz#1c9d4521cec075b6324dc77e746a356829dc6f87"
+  integrity sha512-IActPKqttlerqexp0+3bVHiFAfQ5/kjaQ+kSwjM8+vdOjvncBQWLF5NHorpu2ikQM6ub1daPwTWZn1JJeKvhkA==
   dependencies:
-    "@ethersproject/address" "^5.0.4"
-    "@ethersproject/bignumber" "^5.0.7"
-    "@ethersproject/bytes" "^5.0.4"
-    "@ethersproject/constants" "^5.0.4"
-    "@ethersproject/keccak256" "^5.0.3"
-    "@ethersproject/logger" "^5.0.5"
-    "@ethersproject/properties" "^5.0.3"
-    "@ethersproject/rlp" "^5.0.3"
-    "@ethersproject/signing-key" "^5.0.4"
+    "@ethersproject/address" ">=5.0.0-beta.134"
+    "@ethersproject/bignumber" ">=5.0.0-beta.138"
+    "@ethersproject/bytes" ">=5.0.0-beta.137"
+    "@ethersproject/constants" ">=5.0.0-beta.133"
+    "@ethersproject/keccak256" ">=5.0.0-beta.131"
+    "@ethersproject/logger" ">=5.0.0-beta.137"
+    "@ethersproject/properties" ">=5.0.0-beta.140"
+    "@ethersproject/rlp" ">=5.0.0-beta.132"
+    "@ethersproject/signing-key" ">=5.0.0-beta.135"
 
 "@evocateur/libnpmaccess@^3.1.2":
   version "3.1.2"
@@ -2576,11 +2577,11 @@
     web3-utils "1.2.2"
 
 "@renproject/chains-bitcoin@file:packages/lib/chains/chains-bitcoin":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-bitcoin-2.0.0-alpha.6-5e8772cf-3c35-4329-b3b4-09ea34db62ae-1600394464758/node_modules/interfaces"
-    "@renproject/networks" "file:../../../.cache/yarn/v6/npm-@renproject-chains-bitcoin-2.0.0-alpha.6-5e8772cf-3c35-4329-b3b4-09ea34db62ae-1600394464758/node_modules/networks"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-chains-bitcoin-2.0.0-alpha.6-5e8772cf-3c35-4329-b3b4-09ea34db62ae-1600394464758/node_modules/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-bitcoin-2.0.0-alpha.7-ed255465-16c3-4172-b314-2db59fcaeb5f-1600751170308/node_modules/interfaces"
+    "@renproject/networks" "file:../../../.cache/yarn/v6/npm-@renproject-chains-bitcoin-2.0.0-alpha.7-ed255465-16c3-4172-b314-2db59fcaeb5f-1600751170308/node_modules/networks"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-chains-bitcoin-2.0.0-alpha.7-ed255465-16c3-4172-b314-2db59fcaeb5f-1600751170308/node_modules/utils"
     "@types/bs58" "^4.0.1"
     "@types/node" "^14.11.1"
     bchaddrjs "^0.4.9"
@@ -2594,11 +2595,11 @@
     wallet-address-validator "^0.2.4"
 
 "@renproject/chains-ethereum@file:packages/lib/chains/chains-ethereum":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-ethereum-2.0.0-alpha.6-ecdc125c-a7ed-40b5-9b99-6c3386b6ebe8-1600394464765/node_modules/interfaces"
-    "@renproject/networks" "file:../../../.cache/yarn/v6/npm-@renproject-chains-ethereum-2.0.0-alpha.6-ecdc125c-a7ed-40b5-9b99-6c3386b6ebe8-1600394464765/node_modules/networks"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-chains-ethereum-2.0.0-alpha.6-ecdc125c-a7ed-40b5-9b99-6c3386b6ebe8-1600394464765/node_modules/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-chains-ethereum-2.0.0-alpha.7-3a4ed7b7-91a1-4fbc-a4ca-aff91041abae-1600751170306/node_modules/interfaces"
+    "@renproject/networks" "file:../../../.cache/yarn/v6/npm-@renproject-chains-ethereum-2.0.0-alpha.7-3a4ed7b7-91a1-4fbc-a4ca-aff91041abae-1600751170306/node_modules/networks"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-chains-ethereum-2.0.0-alpha.7-3a4ed7b7-91a1-4fbc-a4ca-aff91041abae-1600751170306/node_modules/utils"
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     bnc-sdk "^2.1.5"
@@ -2616,34 +2617,25 @@
   resolved "https://registry.yarnpkg.com/@renproject/fonts/-/fonts-1.0.1.tgz#5eb052638eec862760044b4367f062f8a890c5b8"
   integrity sha512-OWk811Ay63UdPxY5nEg4N99Goz6K9HLaeGfUN2q0uehhQ70hJDqDQq/vYl5rtE07mv7MYX7GYTpj5POlPbZNRg==
 
-"@renproject/gateway@file:packages/lib/gateway":
-  version "1.0.6"
-  dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.6-ba874834-ff5d-4324-ac6e-5f0f9e010026-1600394461027/node_modules/@renproject/interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-gateway-1.0.6-ba874834-ff5d-4324-ac6e-5f0f9e010026-1600394461027/node_modules/@renproject/utils"
-    "@types/node" "^14.0.5"
-    push.js "^1.0.12"
-    web3 "^2.0.0-alpha.1"
-
 "@renproject/interfaces@file:packages/lib/interfaces":
-  version "2.0.0-alpha.5"
+  version "2.0.0-alpha.7"
   dependencies:
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     web3-core "^2.0.0-alpha.1"
 
 "@renproject/networks@file:packages/lib/networks":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-networks-2.0.0-alpha.6-abd1c5cd-b5ad-4df3-9af3-69e3c9f50b5c-1600394461105/node_modules/@renproject/interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-networks-2.0.0-alpha.7-ae142d05-8b7d-45be-9ac1-2355e9b0ad29-1600751166629/node_modules/@renproject/interfaces"
     "@renproject/sol" "^1.0.1"
     web3-utils "^2.0.0-alpha.1"
 
 "@renproject/provider@file:packages/lib/provider":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-provider-2.0.0-alpha.6-0e623d05-71e7-42bf-96ad-75b2dfe3f9c0-1600394461196/node_modules/@renproject/interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-provider-2.0.0-alpha.6-0e623d05-71e7-42bf-96ad-75b2dfe3f9c0-1600394461196/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-provider-2.0.0-alpha.7-59f969fb-5342-423d-9d2e-e459d3465f61-1600751166831/node_modules/@renproject/interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-provider-2.0.0-alpha.7-59f969fb-5342-423d-9d2e-e459d3465f61-1600751166831/node_modules/@renproject/utils"
     "@types/node" "^14.11.1"
     axios "^0.20.0"
     immutable "^4.0.0-rc.12"
@@ -2664,24 +2656,24 @@
     react-select "^3.1.0"
 
 "@renproject/ren@file:packages/lib/ren":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.6-41aff978-d94e-4f45-ba5c-b511f479b1a7-1600394461220/node_modules/@renproject/interfaces"
-    "@renproject/networks" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.6-41aff978-d94e-4f45-ba5c-b511f479b1a7-1600394461220/node_modules/@renproject/networks"
-    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.6-41aff978-d94e-4f45-ba5c-b511f479b1a7-1600394461220/node_modules/@renproject/provider"
-    "@renproject/rpc" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.6-41aff978-d94e-4f45-ba5c-b511f479b1a7-1600394461220/node_modules/@renproject/rpc"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.6-41aff978-d94e-4f45-ba5c-b511f479b1a7-1600394461220/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.7-4ca578ef-0589-4281-a425-b7f2dc9e4146-1600751166924/node_modules/@renproject/interfaces"
+    "@renproject/networks" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.7-4ca578ef-0589-4281-a425-b7f2dc9e4146-1600751166924/node_modules/@renproject/networks"
+    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.7-4ca578ef-0589-4281-a425-b7f2dc9e4146-1600751166924/node_modules/@renproject/provider"
+    "@renproject/rpc" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.7-4ca578ef-0589-4281-a425-b7f2dc9e4146-1600751166924/node_modules/@renproject/rpc"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-ren-2.0.0-alpha.7-4ca578ef-0589-4281-a425-b7f2dc9e4146-1600751166924/node_modules/@renproject/utils"
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     immutable "^4.0.0-rc.12"
     web3-eth-abi "^2.0.0-alpha.1"
 
 "@renproject/rpc@file:packages/lib/rpc":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-2.0.0-alpha.6-33f6a215-8754-46d0-bd30-76572ffb9381-1600394461222/node_modules/@renproject/interfaces"
-    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-2.0.0-alpha.6-33f6a215-8754-46d0-bd30-76572ffb9381-1600394461222/node_modules/@renproject/provider"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-2.0.0-alpha.6-33f6a215-8754-46d0-bd30-76572ffb9381-1600394461222/node_modules/@renproject/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-2.0.0-alpha.7-49a2468f-c7f2-4d8b-be3b-5d99ca8455a7-1600751166929/node_modules/@renproject/interfaces"
+    "@renproject/provider" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-2.0.0-alpha.7-49a2468f-c7f2-4d8b-be3b-5d99ca8455a7-1600751166929/node_modules/@renproject/provider"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-@renproject-rpc-2.0.0-alpha.7-49a2468f-c7f2-4d8b-be3b-5d99ca8455a7-1600751166929/node_modules/@renproject/utils"
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     immutable "^4.0.0-rc.12"
@@ -2696,9 +2688,9 @@
     "@openzeppelin/upgrades" "^2.7.2"
 
 "@renproject/utils@file:packages/lib/utils":
-  version "2.0.0-alpha.6"
+  version "2.0.0-alpha.7"
   dependencies:
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-2.0.0-alpha.6-fa1a798c-5b0f-4491-b8bc-0d3a37175b53-1600394461098/node_modules/@renproject/interfaces"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-@renproject-utils-2.0.0-alpha.7-94a93e40-351e-4114-98b3-4b19b021e158-1600751166834/node_modules/@renproject/interfaces"
     "@types/node" "^14.11.1"
     axios "^0.20.0"
     bignumber.js "^9.0.0"
@@ -2706,6 +2698,12 @@
     events "^3.2.0"
     immutable "^4.0.0-rc.12"
     web3-eth-abi "^2.0.0-alpha.1"
+
+"@renproject/xstate@file:packages/lib/xstate":
+  version "2.0.0-alpha.6"
+  dependencies:
+    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-@renproject-xstate-2.0.0-alpha.6-172fd29a-f45f-4836-b7c6-eb697d37826e-1600751166933/node_modules/@renproject/ren"
+    bignumber.js "^9.0.0"
 
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
@@ -3292,7 +3290,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@>= 8", "@types/node@^10.12.18", "@types/node@^10.3.2", "@types/node@^12.12.6", "@types/node@^12.6.1", "@types/node@^13.13.4", "@types/node@^14.0.27", "@types/node@^14.0.5", "@types/node@^14.11.1":
+"@types/node@*", "@types/node@>= 8", "@types/node@^10.12.18", "@types/node@^10.3.2", "@types/node@^12.12.6", "@types/node@^12.6.1", "@types/node@^13.13.4", "@types/node@^14.0.27", "@types/node@^14.11.1":
   version "14.0.27"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.0.27.tgz#a151873af5a5e851b51b3b065c9e63390a9e0eb1"
   integrity sha512-kVrqXhbclHNHGu9ztnAwSncIgJv/FaxmzXJvGXNdcCpV1b8u1/Mi6z6m0vwy0LzKeXFTPLH0NzwmoJ3fNCIq0g==
@@ -4892,9 +4890,9 @@ bitcore-lib@^8.22.2:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e":
+"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e":
   version "1.9.0"
-  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e"
+  resolved "https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"
@@ -5254,7 +5252,7 @@ buffer@^4.3.0:
     ieee754 "^1.1.4"
     isarray "^1.0.0"
 
-buffer@^5.0.5, buffer@^5.2.1, buffer@^5.5.0, buffer@^5.6.0:
+buffer@^5.0.5, buffer@^5.2.1, buffer@^5.5.0:
   version "5.6.0"
   resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.6.0.tgz#a31749dc7d81d84db08abf937b6b8c4033f62786"
   integrity sha512-/gDYp/UtU0eA1ys8bOs9J6a+E/KWIY+DZ+Q2WESNUA0jFRsJOc0SNUO6xJ5SGA1xueg3NL65W6s+NY5l9cunuw==
@@ -7519,19 +7517,6 @@ elliptic@6.5.2, elliptic@^6.0.0, elliptic@^6.4.0, elliptic@^6.5.2:
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.0"
 
-elliptic@6.5.3, elliptic@^6.5.3:
-  version "6.5.3"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.3.tgz#cb59eb2efdaf73a0bd78ccd7015a62ad6e0f93d6"
-  integrity sha512-IMqzv5wNQf+E6aHeIqATs0tOLeOTwj1QKbRcS3jBbYkl5oLAserA8yJTT7/VyHUYG91PRmPyeQDObKLPpeS4dw==
-  dependencies:
-    bn.js "^4.4.0"
-    brorand "^1.0.1"
-    hash.js "^1.0.0"
-    hmac-drbg "^1.0.0"
-    inherits "^2.0.1"
-    minimalistic-assert "^1.0.0"
-    minimalistic-crypto-utils "^1.0.0"
-
 elliptic@=3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-3.0.3.tgz#865c9b420bfbe55006b9f969f97a0d2c44966595"
@@ -7546,6 +7531,19 @@ elliptic@=6.4.0:
   version "6.4.0"
   resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.4.0.tgz#cac9af8762c85836187003c8dfe193e5e2eae5df"
   integrity sha1-ysmvh2LIWDYYcAPI3+GT5eLq5d8=
+  dependencies:
+    bn.js "^4.4.0"
+    brorand "^1.0.1"
+    hash.js "^1.0.0"
+    hmac-drbg "^1.0.0"
+    inherits "^2.0.1"
+    minimalistic-assert "^1.0.0"
+    minimalistic-crypto-utils "^1.0.0"
+
+elliptic@^6.5.3:
+  version "6.5.3"
+  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.3.tgz#cb59eb2efdaf73a0bd78ccd7015a62ad6e0f93d6"
+  integrity sha512-IMqzv5wNQf+E6aHeIqATs0tOLeOTwj1QKbRcS3jBbYkl5oLAserA8yJTT7/VyHUYG91PRmPyeQDObKLPpeS4dw==
   dependencies:
     bn.js "^4.4.0"
     brorand "^1.0.1"
@@ -8937,9 +8935,8 @@ functional-red-black-tree@^1.0.1:
 "gateway-example@file:packages/ui/gateway-example":
   version "2.0.0-alpha.0"
   dependencies:
-    "@renproject/gateway" "file:../../../.cache/yarn/v6/npm-gateway-example-2.0.0-alpha.0-4ccca6d9-d621-49fe-8178-9a29d2aac15d-1600394461225/lib/gateway"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-example-2.0.0-alpha.0-4ccca6d9-d621-49fe-8178-9a29d2aac15d-1600394461225/lib/interfaces"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-example-2.0.0-alpha.0-4ccca6d9-d621-49fe-8178-9a29d2aac15d-1600394461225/lib/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-example-2.0.0-alpha.0-42ab6afa-5f00-4655-9f71-24b2263ed698-1600751166940/lib/interfaces"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-example-2.0.0-alpha.0-42ab6afa-5f00-4655-9f71-24b2263ed698-1600751166940/lib/utils"
     "@types/classnames" "^2.2.10"
     "@types/node" "^13.13.4"
     "@types/qs" "^6.9.1"
@@ -8958,10 +8955,10 @@ functional-red-black-tree@^1.0.1:
   version "2.0.0-alpha.0"
   dependencies:
     "@renproject/fonts" "^1.0.1"
-    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-01cd89e1-1328-4c3f-b45b-cba4707b0d6a-1600394461233/lib/interfaces"
-    "@renproject/react-components" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-01cd89e1-1328-4c3f-b45b-cba4707b0d6a-1600394461233/node_modules/react-components"
-    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-01cd89e1-1328-4c3f-b45b-cba4707b0d6a-1600394461233/lib/ren"
-    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-01cd89e1-1328-4c3f-b45b-cba4707b0d6a-1600394461233/lib/utils"
+    "@renproject/interfaces" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-36ec75ae-4008-4544-ab46-dee4958a6d93-1600751166969/lib/interfaces"
+    "@renproject/react-components" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-36ec75ae-4008-4544-ab46-dee4958a6d93-1600751166969/node_modules/react-components"
+    "@renproject/ren" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-36ec75ae-4008-4544-ab46-dee4958a6d93-1600751166969/lib/ren"
+    "@renproject/utils" "file:../../../.cache/yarn/v6/npm-gateway-renproject-io-2.0.0-alpha.0-36ec75ae-4008-4544-ab46-dee4958a6d93-1600751166969/lib/utils"
     "@sentry/browser" "^5.15.5"
     "@sentry/core" "^5.15.5"
     "@sentry/integrations" "^5.15.5"
@@ -9611,10 +9608,10 @@ hex-color-regex@^1.1.0:
   resolved "https://registry.yarnpkg.com/hex-color-regex/-/hex-color-regex-1.1.0.tgz#4c06fccb4602fe2602b3c93df82d7e7dbf1a8a8e"
   integrity sha512-l9sfDFsuqtOqKDsQdqrMRk0U85RZc0RtOR9yPI7mRVOa4FsR/BVnZ0shmQRM96Ji99kYZP/7hn1cedc1+ApsTQ==
 
-highlight.js@^10.0.0:
-  version "10.0.3"
-  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.0.3.tgz#5effcc58420f113f279a0badb8ac50c4be06e63b"
-  integrity sha512-9FG7SSzv9yOY5CGGxfI6NDm7xLYtMOjKtPBxw7Zff3t5UcRcUNTGEeS8lNjhceL34KeetLMoGMFTGoaa83HwyQ==
+highlight.js@^10.2.0:
+  version "10.2.0"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.2.0.tgz#367151bcf813adebc54822f1cb51d2e1e599619f"
+  integrity sha512-OryzPiqqNCfO/wtFo619W+nPYALM6u7iCQkum4bqRmmlcTikOkmlL06i009QelynBPAlNByTQU6cBB2cOBQtCw==
 
 highlight.js@^9.13.1:
   version "9.18.1"
@@ -12575,17 +12572,17 @@ multicodec@^0.5.5:
     varint "^5.0.0"
 
 multicodec@^1.0.0:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/multicodec/-/multicodec-1.0.4.tgz#46ac064657c40380c28367c90304d8ed175a714f"
-  integrity sha512-NDd7FeS3QamVtbgfvu5h7fd1IlbaC4EQ0/pgU4zqE2vdHCmBGsUa0TiM8/TdSeG6BMPC92OOCf8F1ocE/Wkrrg==
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/multicodec/-/multicodec-1.0.1.tgz#4e2812d726b9f7c7d615d3ebc5787d36a08680f9"
+  integrity sha512-yrrU/K8zHyAH2B0slNVeq3AiwluflHpgQ3TAzwNJcuO2AoPyXgBT2EDkdbP1D8B/yFOY+S2hDYmFlI1vhVFkQw==
   dependencies:
-    buffer "^5.6.0"
+    buffer "^5.5.0"
     varint "^5.0.0"
 
 multihashes@^0.4.15, multihashes@~0.4.15:
-  version "0.4.21"
-  resolved "https://registry.yarnpkg.com/multihashes/-/multihashes-0.4.21.tgz#dc02d525579f334a7909ade8a122dabb58ccfcb5"
-  integrity sha512-uVSvmeCWf36pU2nB4/1kzYZjsXD9vofZKpgudqkceYY5g2aZZXJ5r9lxuzoRLl1OAp28XljXsEJ/X/85ZsKmKw==
+  version "0.4.19"
+  resolved "https://registry.yarnpkg.com/multihashes/-/multihashes-0.4.19.tgz#d7493cf028e48747122f350908ea13d12d204813"
+  integrity sha512-ej74GAfA20imjj00RO5h34aY3pGUFyzn9FJZFWwdeUHlHTkKmv90FrNpvYT4jYf1XXCy5O/5EjVnxTaESgOM6A==
   dependencies:
     buffer "^5.5.0"
     multibase "^0.7.0"
@@ -14860,11 +14857,6 @@ punycode@^2.1.0, punycode@^2.1.1:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-push.js@^1.0.12:
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/push.js/-/push.js-1.0.12.tgz#5703a03f5d286cd46d58564cb27bc079898d26b1"
-  integrity sha512-Mo/zkrPD58hcbMvC/9WveUPGz0PJ4T5UwQJP6DnMYbyxe7b1xM/9qqmJTMmDcprbZjCtLzf9wWtek7gA8O9QBw==
-
 pushdata-bitcoin@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/pushdata-bitcoin/-/pushdata-bitcoin-1.0.1.tgz#15931d3cd967ade52206f523aa7331aef7d43af7"
@@ -15888,9 +15880,9 @@ rollup-pluginutils@^2.8.1, rollup-pluginutils@^2.8.2:
     estree-walker "^0.6.1"
 
 rollup@^2.27.1:
-  version "2.27.1"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.27.1.tgz#372744e1d36eba0fd942d997600c2fc2ca266305"
-  integrity sha512-GiWHQvnmMgBktSpY/1+nrGpwPsTw4b9P28og2uedfeq4JZ16rzAmnQ5Pm/E0/BEmDNia1ZbY7+qu3nBgNa19Hg==
+  version "2.28.1"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.28.1.tgz#ceedca3cdb013c2fa8f22f958a29c203368159ea"
+  integrity sha512-DOtVoqOZt3+FjPJWLU8hDIvBjUylc9s6IZvy76XklxzcLvAQLtVAG/bbhsMhcWnYxC0TKKcf1QQ/tg29zeID0Q==
   optionalDependencies:
     fsevents "~2.1.2"
 
@@ -17646,9 +17638,9 @@ ts-essentials@^6.0.5:
   integrity sha512-RSAKlpu+E0DCGY8FsbG92EveRLw2Y+UgK3ksX01w1VaHeG01dKkYo/KtAV4q0qPT6nPbLfyerb2YPVSediP+8g==
 
 ts-loader@^8.0.3:
-  version "8.0.3"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-8.0.3.tgz#56858f4296edf1ed55e01f8520552984d3f0911c"
-  integrity sha512-wsqfnVdB7xQiqhqbz2ZPLGHLPZbHVV5Qn/MNFZkCFxRU1miDyxKORucDGxKtsQJ63Rfza0udiUxWF5nHY6bpdQ==
+  version "8.0.4"
+  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-8.0.4.tgz#02b9c91fbcfdb3114d8b1e98a3829265270eee7a"
+  integrity sha512-5u8KF1SW8eCUb/Ff7At81e3wznPmT/27fvaGRO9CziVy+6NlPVRvrzSox4OwU0/e6OflOUB32Err4VquysCSAQ==
   dependencies:
     chalk "^2.3.0"
     enhanced-resolve "^4.0.0"
@@ -17894,10 +17886,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typedoc-default-themes@^0.11.1:
-  version "0.11.3"
-  resolved "https://registry.yarnpkg.com/typedoc-default-themes/-/typedoc-default-themes-0.11.3.tgz#702df91d2db06d8d3499ab0bde456bf774ca914f"
-  integrity sha512-SwyN188QGNA2iFS5mdWYTGzohKqJ1PWAXVmGolKnVc2NnpX234FEPF2nUvEg+O9jjwAu7ZSVZ5UrZri0raJOjQ==
+typedoc-default-themes@^0.11.4:
+  version "0.11.4"
+  resolved "https://registry.yarnpkg.com/typedoc-default-themes/-/typedoc-default-themes-0.11.4.tgz#1bc55b7c8d1132844616ff6f570e1e2cd0eb7343"
+  integrity sha512-Y4Lf+qIb9NTydrexlazAM46SSLrmrQRqWiD52593g53SsmUFioAsMWt8m834J6qsp+7wHRjxCXSZeiiW5cMUdw==
 
 typedoc-default-themes@^0.6.0-0:
   version "0.6.3"
@@ -17910,13 +17902,13 @@ typedoc-default-themes@^0.6.0-0:
     underscore "^1.9.1"
 
 typedoc@^0.19.1:
-  version "0.19.1"
-  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.19.1.tgz#1c92608fc4944c6e2223cf3a43b603272b4ac94d"
-  integrity sha512-EqZpRJQUnkwHA1yBhaDExEXUZIiWKddkrDXhRcfUzpnu6pizxNmVTw5IZ3mu682Noa4zQCniE0YNjaAwHQodrA==
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.19.2.tgz#842a63a581f4920f76b0346bb80eb2a49afc2c28"
+  integrity sha512-oDEg1BLEzi1qvgdQXc658EYgJ5qJLVSeZ0hQ57Eq4JXy6Vj2VX4RVo18qYxRWz75ifAaYuYNBUCnbhjd37TfOg==
   dependencies:
     fs-extra "^9.0.1"
     handlebars "^4.7.6"
-    highlight.js "^10.0.0"
+    highlight.js "^10.2.0"
     lodash "^4.17.20"
     lunr "^2.3.9"
     marked "^1.1.1"
@@ -17924,7 +17916,7 @@ typedoc@^0.19.1:
     progress "^2.0.3"
     semver "^7.3.2"
     shelljs "^0.8.4"
-    typedoc-default-themes "^0.11.1"
+    typedoc-default-themes "^0.11.4"
 
 typeforce@^1.11.3:
   version "1.18.0"
@@ -17942,9 +17934,9 @@ typescript@^3.8.3:
   integrity sha512-hSAifV3k+i6lEoCJ2k6R2Z/rp/H3+8sdmcn5NrS3/3kE7+RyZXm9aqvxWqjEXHAd8b0pShatpcdMTvEdvAJltQ==
 
 typescript@^4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.0.2.tgz#7ea7c88777c723c681e33bf7988be5d008d05ac2"
-  integrity sha512-e4ERvRV2wb+rRZ/IQeb3jm2VxBsirQLpQhdxplZ2MEzGvDkkMmPglecnNDfSUBivMjP93vRbngYYDQqQ/78bcQ==
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.0.3.tgz#153bbd468ef07725c1df9c77e8b453f8d36abba5"
+  integrity sha512-tEu6DGxGgRJPb/mVPIZ48e69xCn2yRmCgYmDugAVwmJ6o+0u1RI18eO7E7WBTLYLaEVVOhwQmcdhQHweux/WPg==
 
 uglify-js@^3.1.4:
   version "3.9.4"

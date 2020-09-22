@@ -33,7 +33,7 @@
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "test": "run-s build test:unit",
-        "test:unit": "../../../node_modules/ts-mocha/bin/ts-mocha --sort -v --allow-uncaught --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
+        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
     },
     "dependencies": {
         "@renproject/ren": "file:../ren",

@@ -77,8 +77,11 @@ export const renLockAndMint = async (context: GatewayMachineContext) => {
 
 // Format a transaction and get the gateway address
 const txCreator = async (context: GatewayMachineContext) => {
-    const nonce = RenJS.utils.randomNonce();
-    context.tx.nonce = nonce.toString("hex");
+    // TX may be in a state where the gateway address was provided,
+    // but no deposit was picked up
+    if (!context.tx.nonce) {
+        context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
+    }
 
     const { targetAmount, sourceAsset } = context.tx;
 

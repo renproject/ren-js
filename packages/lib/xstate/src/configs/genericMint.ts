@@ -1,11 +1,3 @@
-import {
-    BinanceSmartChain,
-    Bitcoin,
-    BitcoinCash,
-    Ethereum,
-    Zcash,
-} from "@renproject/chains";
-import { MintChain } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import {
     LockAndMint,
@@ -31,7 +23,11 @@ const findClaimableDeposit = ({ depositMachines }: GatewayMachineContext) => {
     }
 };
 
-export const mintChainMap: {
+/*
+  Sample mintChainMap / lockChainMap implementations
+  We don't implement these to prevent mandating specific chains
+
+const mintChainMap: {
     [key in string]: (c: GatewayMachineContext) => MintChain<any>;
 } = {
     binanceSmartChain: (context: GatewayMachineContext) => {
@@ -51,11 +47,12 @@ export const mintChainMap: {
     },
 };
 
-export const lockChainMap = {
+const lockChainMap = {
     bitcoin: () => Bitcoin(),
     zcash: () => Zcash(),
     bitcoinCash: () => BitcoinCash(),
 };
+*/
 
 export const renLockAndMint = async (context: GatewayMachineContext) => {
     const {
@@ -153,7 +150,7 @@ const depositListener = (
         receive((event) => {
             switch (event.type) {
                 case "RESTORE":
-                    minter.processTransaction(event.data).then().catch();
+                    minter.processDeposit(event.data).then().catch();
                     break;
                 case "SETTLE":
                     workingDeposit

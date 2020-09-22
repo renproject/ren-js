@@ -1,12 +1,13 @@
 import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
-import { LockChain, MintChain } from "@renproject/interfaces";
-import { Bitcoin, Ethereum } from "@renproject/chains";
-import { RenNetwork } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import { GatewaySession } from "../types/transaction";
 import { Sender, MachineOptions, Receiver } from "xstate";
 
-export const burnChainMap: BurnMachineContext["fromChainMap"] = {
+/*
+Sample burnChainMap / releaseChainMap implementations
+We don't implement these to prevent mandating specific chains
+
+const burnChainMap: BurnMachineContext["fromChainMap"] = {
     ethereum: (context): MintChain<any> => {
         return Ethereum(context.providers.ethereum, RenNetwork.Testnet).Account(
             {
@@ -17,11 +18,12 @@ export const burnChainMap: BurnMachineContext["fromChainMap"] = {
     },
 };
 
-export const releaseChainMap: BurnMachineContext["toChainMap"] = {
+const releaseChainMap: BurnMachineContext["toChainMap"] = {
     bitcoin: (context): LockChain => {
         return Bitcoin().Address(context.tx.destAddress) as any;
     },
 };
+*/
 
 const burnAndRelease = async (context: BurnMachineContext) => {
     const txHash = Object.keys(context.tx.transactions)[0];

@@ -12,8 +12,8 @@ export class OverwriteProvider<
     private readonly provider: Provider<Requests, Responses>;
 
     constructor(
-        provider: Provider<Requests, Responses>,
-        _overrides: { [method: string]: Responses[keyof Responses] }
+        provider: Provider<Requests, Responses>
+        // _overrides: { [method: string]: Responses[keyof Responses] }
     ) {
         this.provider = provider;
     }
@@ -61,6 +61,14 @@ export class OverwriteProvider<
                                 origin: "BitcoinCash",
                                 pubKey:
                                     "Akwn5WEMcB2Ff/E0ZOoVks9uZRvG/eFD99AysymOc5fm",
+                            },
+                            {
+                                asset: "FIL",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "Filecoin",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
                             },
                         ],
                         gatewaysRootHash:

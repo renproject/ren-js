@@ -19,7 +19,7 @@ export interface ChainCommon<
     // tslint:disable-next-line: no-any
     Transaction = any,
     Asset extends string = string,
-    Address extends string = string
+    Address = string
 > {
     /**
      * The name of the Chain.
@@ -133,7 +133,7 @@ export interface LockChain<
     Transaction = any,
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,
-    Address extends string = string
+    Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
     // Deposits
 
@@ -215,7 +215,7 @@ export interface MintChain<
     // tslint:disable-next-line: no-any
     Transaction = any,
     Asset extends string = string,
-    Address extends string = string
+    Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
     resolveTokenGatewayContract: (token: RenTokens) => Promise<string>;
 

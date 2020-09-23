@@ -1,1 +1,1 @@
-# `@renproject/chains`
+# `@renproject/chains-ethereum`

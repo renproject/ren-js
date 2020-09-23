@@ -44,6 +44,11 @@ import {
     RPCMethod,
 } from "./methods";
 import {
+    PackStructType,
+    PackTypeDefinition,
+    TypedPackValue,
+} from "./pack/pack";
+import {
     burnParamsType,
     hashTransaction,
     mintParamsType,
@@ -229,7 +234,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: any,
+        output: TypedPackValue,
         payload: Buffer,
         pHash: Buffer,
         to: string,
@@ -240,24 +245,25 @@ export class RenVMProvider implements RenVMProviderInterface {
         const selector = resolveV2Contract(renContract);
         const version = "1";
         const txIn = {
-            t: mintParamsType,
+            t: mintParamsType(output.t as PackStructType),
             v: {
                 ghash: toURLBase64(gHash),
                 gpubkey: toURLBase64(gPubKey),
                 nhash: toURLBase64(nHash),
                 nonce: toURLBase64(nonce),
-                output,
                 payload: toURLBase64(payload),
                 phash: toURLBase64(pHash),
                 to: strip0x(to),
                 token: strip0x(token),
+                ...output.v,
             },
         };
         return {
             hash: toURLBase64(hashTransaction(version, selector, txIn)),
             selector,
             version,
-            in: txIn,
+            // TODO: Fix types
+            in: (txIn as unknown) as MintTransactionInput["in"],
         };
     };
 
@@ -268,7 +274,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: any,
+        output: TypedPackValue,
         payload: Buffer,
         pHash: Buffer,
         to: string,
@@ -307,7 +313,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: any,
+        output: TypedPackValue,
         payload: Buffer,
         pHash: Buffer,
         to: string,

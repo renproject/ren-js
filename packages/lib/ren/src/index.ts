@@ -1,5 +1,6 @@
 import {
     BurnAndReleaseParams,
+    DepositCommon,
     LockAndMintParams,
     Logger,
     LogLevel,
@@ -146,10 +147,20 @@ export default class RenJS {
      *
      * @param params See [[LockAndMintParams]].
      */
-    public readonly lockAndMint = async (
-        params: LockAndMintParams
-    ): Promise<LockAndMint> =>
-        new LockAndMint(this.renVM, params, this.logger).initialize();
+    public readonly lockAndMint = async <
+        // tslint:disable-next-line: no-any
+        Transaction = any,
+        Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+        Asset extends string = string,
+        Address = string
+    >(
+        params: LockAndMintParams<Transaction, Deposit, Asset, Address>
+    ): Promise<LockAndMint<Transaction, Deposit, Asset, Address>> =>
+        new LockAndMint<Transaction, Deposit, Asset, Address>(
+            this.renVM,
+            params,
+            this.logger
+        ).initialize();
 
     /**
      * Submits a burn log to RenVM.

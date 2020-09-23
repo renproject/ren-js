@@ -9,11 +9,7 @@ import {
     RenNetwork,
     TxStatus,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider } from "@renproject/rpc";
-import {
-    hashSelector,
-    resolveV2Contract,
-} from "@renproject/rpc/build/main/v2/renVMProvider";
+import { AbstractRenVMProvider, v2 } from "@renproject/rpc";
 import {
     assertObject,
     assertType,
@@ -40,7 +36,9 @@ import { AbiCoder } from "web3-eth-abi";
 export class LockAndMint<
     // tslint:disable-next-line: no-any
     Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    Asset extends string = string,
+    Address = string
 > extends EventEmitter {
     public queryTxResult: MintTransaction | undefined;
 
@@ -49,20 +47,20 @@ export class LockAndMint<
     // Deposits represents the lock deposits that have been so far.
     private deposits: OrderedMap<
         string,
-        LockAndMintDeposit<Transaction, Deposit>
+        LockAndMintDeposit<Transaction, Deposit, Asset, Address>
     > = OrderedMap();
 
     public logger: Logger;
-    public gatewayAddress: string | undefined;
+    public gatewayAddress: Address | undefined;
     public renVM: AbstractRenVMProvider;
-    public params: LockAndMintParams<Transaction, Deposit>;
+    public params: LockAndMintParams<Transaction, Deposit, Asset, Address>;
     private mpkh: Buffer | undefined;
     private gHash: Buffer | undefined;
     private pHash: Buffer | undefined;
 
     constructor(
         _renVM: AbstractRenVMProvider,
-        _params: LockAndMintParams<Transaction, Deposit>,
+        _params: LockAndMintParams<Transaction, Deposit, Asset, Address>,
         _logger: Logger
     ) {
         super();
@@ -90,7 +88,7 @@ export class LockAndMint<
     }
 
     public readonly initialize = async (): Promise<
-        LockAndMint<Transaction, Deposit>
+        LockAndMint<Transaction, Deposit, Asset, Address>
     > => {
         this.renNetwork =
             this.renNetwork || ((await this.renVM.getNetwork()) as RenNetwork);
@@ -116,14 +114,15 @@ export class LockAndMint<
             throw error;
         }
 
+        // Will fetch deposits as long as there's at least one deposit.
         this.wait().catch(console.error);
 
         return this;
     };
 
     private readonly generateGatewayAddress = async (
-        specifyGatewayAddress?: string
-    ): Promise<string> => {
+        specifyGatewayAddress?: Address
+    ): Promise<Address> => {
         if (specifyGatewayAddress || this.params.gatewayAddress) {
             this.gatewayAddress =
                 specifyGatewayAddress || this.params.gatewayAddress;
@@ -157,8 +156,8 @@ export class LockAndMint<
         const tokenGatewayContract =
             this.renVM.version >= 2
                 ? Ox(
-                      hashSelector(
-                          resolveV2Contract(resolveInToken(this.params))
+                      v2.hashSelector(
+                          v2.resolveV2Contract(resolveInToken(this.params))
                       )
                   )
                 : await this.params.to.resolveTokenGatewayContract(
@@ -196,7 +195,7 @@ export class LockAndMint<
 
     public processDeposit = async (
         deposit: Deposit
-    ): Promise<LockAndMintDeposit<Transaction, Deposit>> => {
+    ): Promise<LockAndMintDeposit<Transaction, Deposit, Asset, Address>> => {
         if (!this.pHash || !this.gHash || !this.mpkh || !this.gatewayAddress) {
             throw new Error(
                 "Gateway address must be generated before calling 'wait'."
@@ -214,7 +213,12 @@ export class LockAndMint<
             // confidenceRatio > existingConfidenceRatio)
         ) {
             // tslint:disable-next-line: no-use-before-declare
-            depositObject = new LockAndMintDeposit<Transaction, Deposit>(
+            depositObject = new LockAndMintDeposit<
+                Transaction,
+                Deposit,
+                Asset,
+                Address
+            >(
                 this.renVM,
                 this.params,
                 this.logger,
@@ -240,10 +244,15 @@ export class LockAndMint<
 
         // tslint:disable-next-line: no-constant-condition
         while (true) {
-            // TODO: Handle cancelling.
-            // if (this._isCancelled()) {
-            //     throw new Error("Wait cancelled.");
-            // }
+            try {
+                // If there are no listeners, continue.
+                if (this.listenerCount("deposit") === 0) {
+                    await sleep(1 * SECONDS);
+                    continue;
+                }
+            } catch (error) {
+                this.logger.error(extractError(error));
+            }
 
             try {
                 const newDeposits = await this.params.from.getDeposits(
@@ -257,15 +266,22 @@ export class LockAndMint<
             } catch (error) {
                 this.logger.error(extractError(error));
             }
+
             await sleep(15 * SECONDS);
         }
     };
 
-    public on = <Event extends "deposit">(
+    public addListener = <Event extends "deposit">(
         event: Event,
-        // tslint:disable-next-line: no-any
         listener: Event extends "deposit"
-            ? (deposit: LockAndMintDeposit<Transaction, Deposit>) => void // tslint:disable-next-line: no-any
+            ? (
+                  deposit: LockAndMintDeposit<
+                      Transaction,
+                      Deposit,
+                      Asset,
+                      Address
+                  >
+              ) => void // tslint:disable-next-line: no-any
             : never
     ): this => {
         // Emit previous deposit events.
@@ -278,26 +294,42 @@ export class LockAndMint<
         super.on(event, listener);
         return this;
     };
+
+    public on = <Event extends "deposit">(
+        event: Event,
+        listener: Event extends "deposit"
+            ? (
+                  deposit: LockAndMintDeposit<
+                      Transaction,
+                      Deposit,
+                      Asset,
+                      Address
+                  >
+              ) => void // tslint:disable-next-line: no-any
+            : never
+    ): this => this.addListener(event, listener);
 }
 
 export class LockAndMintDeposit<
     // tslint:disable-next-line: no-any
     Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    Asset extends string = string,
+    Address = string
 > {
     public deposit: Deposit;
     public queryTxResult: MintTransaction | undefined;
     public logger: Logger;
     // private gatewayAddress: string | undefined;
     public renVM: AbstractRenVMProvider;
-    public params: LockAndMintParams<Transaction, Deposit>;
+    public params: LockAndMintParams<Transaction, Deposit, Asset, Address>;
     private readonly mpkh: Buffer;
     private readonly gHash: Buffer;
     private readonly pHash: Buffer;
 
     constructor(
         renVM: AbstractRenVMProvider,
-        params: LockAndMintParams<Transaction, Deposit>,
+        params: LockAndMintParams<Transaction, Deposit, Asset, Address>,
         logger: Logger,
         deposit: Deposit,
         mpkh: Buffer,
@@ -396,8 +428,8 @@ export class LockAndMintDeposit<
         const tokenGatewayContract =
             this.renVM.version >= 2
                 ? Ox(
-                      hashSelector(
-                          resolveV2Contract(resolveInToken(this.params))
+                      v2.hashSelector(
+                          v2.resolveV2Contract(resolveInToken(this.params))
                       )
                   )
                 : await this.params.to.resolveTokenGatewayContract(
@@ -455,7 +487,10 @@ export class LockAndMintDeposit<
             this.gHash
         );
 
-        const outputHashFormat = this.params.from.depositV1HashString(deposit);
+        const outputHashFormat =
+            this.renVM.version >= 2
+                ? ""
+                : this.params.from.depositV1HashString(deposit);
 
         return toBase64(
             this.renVM.mintTxHash(
@@ -580,11 +615,11 @@ export class LockAndMintDeposit<
     };
 
     public confirmed = (): PromiEvent<
-        LockAndMintDeposit<Transaction, Deposit>,
+        LockAndMintDeposit<Transaction, Deposit, Asset, Address>,
         { confirmation: [number, number] }
     > => {
         const promiEvent = newPromiEvent<
-            LockAndMintDeposit<Transaction, Deposit>,
+            LockAndMintDeposit<Transaction, Deposit, Asset, Address>,
             { confirmation: [number, number] }
         >();
 
@@ -642,11 +677,11 @@ export class LockAndMintDeposit<
      * @returns {PromiEvent<LockAndMint, { "txHash": [string], "status": [TxStatus] }>}
      */
     public signed = (): PromiEvent<
-        LockAndMintDeposit<Transaction, Deposit>,
+        LockAndMintDeposit<Transaction, Deposit, Asset, Address>,
         { txHash: [string]; status: [TxStatus] }
     > => {
         const promiEvent = newPromiEvent<
-            LockAndMintDeposit<Transaction, Deposit>,
+            LockAndMintDeposit<Transaction, Deposit, Asset, Address>,
             { txHash: [string]; status: [TxStatus] }
         >();
 

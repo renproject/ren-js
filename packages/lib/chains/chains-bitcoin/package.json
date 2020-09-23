@@ -13,9 +13,9 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "./build/main/index.js",
-    "typings": "./build/main/index.d.ts",
-    "module": "./build/module/index.js",
+    "main": "./src/index.ts",
+    "typings": "./src/index.ts",
+    "module": "./src/index.ts",
     "scripts": {
         "describe": "npm-scripts-info",
         "build": "yarn build:main && yarn build:module",
@@ -25,7 +25,7 @@
         "fix:tslint": "tslint --fix --project .",
         "test": "run-s build:main test:* lint",
         "lint": "tslint --project ./ -t stylish --quiet",
-        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "test:unit": "nyc ../../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
@@ -37,12 +37,13 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/interfaces @renproject/utils @renproject/networks && yarn link",
+        "link:all": "yarn link @renproject/interfaces @renproject/utils @renproject/rpc @renproject/networks && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
         "@renproject/interfaces": "file:../../interfaces",
         "@renproject/networks": "file:../../networks",
+        "@renproject/rpc": "file:../../rpc",
         "@renproject/utils": "file:../../utils",
         "@types/bs58": "^4.0.1",
         "@types/node": "^14.11.1",

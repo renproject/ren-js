@@ -1,20 +1,20 @@
 import { EventEmitter } from "events";
 import { RenNetwork } from "@renproject/interfaces";
 
-interface ConnectorUpdate<ChainProvider, ChainAccount> {
+export interface ConnectorUpdate<ChainProvider, ChainAccount> {
     provider: ChainProvider;
     renNetwork: RenNetwork;
     account?: ChainAccount;
 }
 
-export interface ConnectorInterface<ChainProvider, ChainId, ChainAccount> {
+export interface ConnectorInterface<ChainProvider, ChainAccount> {
     supportsTestnet: boolean;
     activate: () => Promise<ConnectorUpdate<ChainProvider, ChainAccount>>;
 
     getProvider: () => Promise<ChainProvider>;
     getAccount: () => Promise<ChainAccount>;
-    getChainId: () => Promise<ChainId>;
-    deactivate: () => void;
+    getRenNetwork: () => Promise<RenNetwork>;
+    deactivate: (reason?: string) => Promise<void>;
     emitter: ConnectorEmitter<ChainProvider, ChainAccount>;
 }
 
@@ -42,10 +42,10 @@ export class ConnectorEmitter<CP, CA> extends EventEmitter {
         this.emit(Events.ERROR, error);
     }
 
-    emitDeactivate(): void {
+    emitDeactivate(reason?: string): void {
         if (this.debug) {
             console.log(`'${Events.DEACTIVATE}'`);
         }
-        this.emit(Events.DEACTIVATE);
+        this.emit(Events.DEACTIVATE, reason);
     }
 }

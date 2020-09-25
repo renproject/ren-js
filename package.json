@@ -100,15 +100,16 @@
     },
     "workspaces": [
         "packages/lib/*",
-        "packages/lib/chains/*"
+        "packages/lib/chains/*",
+        "packages/lib/multiwallet/*"
     ],
     "dependencies": {
         "@renproject/chains": "file:packages/lib/chains",
-        "@renproject/gateway": "file:packages/lib/gateway",
         "@renproject/interfaces": "file:packages/lib/interfaces",
         "@renproject/networks": "file:packages/lib/networks",
         "@renproject/provider": "file:packages/lib/provider",
         "@renproject/react-components": "file:packages/ui/react-components",
+
         "@renproject/ren": "file:packages/lib/ren",
         "@renproject/rpc": "file:packages/lib/rpc",
         "@renproject/utils": "file:packages/lib/utils",

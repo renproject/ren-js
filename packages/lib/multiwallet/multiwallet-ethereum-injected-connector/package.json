@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/multiwallet-ethereum-base-connector",
+    "name": "@renproject/multiwallet-ethereum-injected-connector",
     "version": "2.0.0-alpha.7",
     "repository": {
         "type": "git",
@@ -41,10 +41,10 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "file:../../interfaces",
-        "@renproject/chains-ethereum": "file:../../chains/chains-ethereum",
-        "@renproject/multiwallet-base-connector": "file:../multiwallet-base-connector"
-
+        "@renproject/chains-ethereum": "2.0.0-alpha.7",
+        "@renproject/multiwallet-base-connector": "2.0.0-alpha.7",
+        "@renproject/interfaces": "2.0.0-alpha.7",
+        "@renproject/multiwallet-abstract-ethereum-connector": "2.0.0-alpha.7"
     },
     "resolutions": {
         "sha3": "^2.1.2"

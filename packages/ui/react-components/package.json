@@ -48,6 +48,9 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },
+  "devDependencies": {
+    "node-sass": "^4.14.1"
+  },
   "files": [
     "dist",
     "src/styles"

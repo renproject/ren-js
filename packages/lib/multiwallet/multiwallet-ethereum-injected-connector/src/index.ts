@@ -4,25 +4,57 @@ export interface EthereumConnectorOptions {
     debug: boolean;
 }
 
+const isResults = <T>(x: { results: T } | T): x is { results: T } =>
+    (x as { results: T }).results !== undefined;
+
+const resultOrRaw = <T>(x: { results: T } | T) => {
+    if (isResults(x)) {
+        return x.results;
+    }
+    return x;
+};
+
 export class EthereumInjectedConnector extends AbstractEthereumConnector {
     supportsTestnet = true;
     constructor(options: EthereumConnectorOptions) {
         super(options);
     }
     handleUpdate = () =>
-        this.getStatus().then(this.emitter.emitUpdate).catch(this.deactivate);
+        this.getStatus()
+            .then((...args) => this.emitter.emitUpdate(...args))
+            .catch((...args) => this.deactivate(...args));
 
     activate = async () => {
         // No good typings for injected providers exist...
-        const provider: any = window.ethereum;
+        const provider: any = await this.getProvider();
         if (!provider) {
             throw Error("Missing Provider");
         }
-        await provider.enable();
-        window.ethereum.on("close", this.deactivate);
-        window.ethereum.on("networkChanged", this.handleUpdate);
-        window.ethereum.on("accountsChanged", this.handleUpdate);
-        window.ethereum.on("chainChanged", this.handleUpdate);
+        if (provider.isMetamask) {
+            // This behaviour is being deprecated so don't rely on it
+            provider.autoRefreshOnNetworkChange = false;
+        }
+
+        let account;
+        try {
+            account = resultOrRaw(
+                await provider.request({ method: "eth_requestAccounts" })
+            )[0];
+        } catch (error) {
+            if ((error as any).code === 4001) {
+                this.emitter.emitError(new Error("User rejected request"));
+            }
+            console.log(error);
+        }
+
+        // if unsuccessful, try enable
+        if (!account) {
+            account = resultOrRaw(await provider.enable())[0];
+        }
+        provider.on("close", this.deactivate);
+        provider.on("networkChanged", this.handleUpdate);
+        provider.on("accountsChanged", this.handleUpdate);
+        provider.on("chainChanged", this.handleUpdate);
         return this.getStatus();
     };
 
@@ -31,10 +63,11 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
     };
 
     deactivate = async (reason?: string) => {
-        window.ethereum.removeListener("close", this.deactivate);
-        window.ethereum.removeListener("networkChanged", this.handleUpdate);
-        window.ethereum.removeListener("accountsChanged", this.handleUpdate);
-        window.ethereum.removeListener("chainChanged", this.handleUpdate);
+        const provider: any = await this.getProvider();
+        provider.removeListener("close", this.deactivate);
+        provider.removeListener("networkChanged", this.handleUpdate);
+        provider.removeListener("accountsChanged", this.handleUpdate);
+        provider.removeListener("chainChanged", this.handleUpdate);
         return this.emitter.emitDeactivate(reason);
     };
 }

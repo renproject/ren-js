@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/multiwallet-abstract-ethereum-connector",
+    "name": "@renproject/multiwallet-binancesmartchain-injected-connector",
     "version": "2.0.0-alpha.7",
     "repository": {
         "type": "git",
@@ -36,15 +36,13 @@
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum && yarn link",
-        "unlink:all": "(yarn unlink || true)"
+        "prepare-release": "run-s npmignore build doc:html"
     },
     "dependencies": {
-        "@renproject/interfaces": "2.0.0-alpha.7",
         "@renproject/chains-ethereum": "2.0.0-alpha.7",
-        "@renproject/multiwallet-base-connector": "2.0.0-alpha.7"
-
+        "@renproject/multiwallet-base-connector": "2.0.0-alpha.7",
+        "@renproject/interfaces": "2.0.0-alpha.7",
+        "@renproject/multiwallet-abstract-ethereum-connector": "2.0.0-alpha.7"
     },
     "resolutions": {
         "sha3": "^2.1.2"

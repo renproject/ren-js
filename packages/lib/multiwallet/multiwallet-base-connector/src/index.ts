@@ -18,7 +18,7 @@ export interface ConnectorInterface<ChainProvider, ChainAccount> {
     emitter: ConnectorEmitter<ChainProvider, ChainAccount>;
 }
 
-export enum Events {
+export enum ConnectorEvents {
     UPDATE = "CONNECTOR_UPDATE",
     ERROR = "CONNECTOR_ERROR",
     DEACTIVATE = "CONNECTOR_DEACTIVATE",
@@ -30,22 +30,22 @@ export class ConnectorEmitter<CP, CA> extends EventEmitter {
     }
     emitUpdate(update: ConnectorUpdate<CP, CA>): void {
         if (this.debug) {
-            console.log(`'${Events.UPDATE}'`, update);
+            console.log(`'${ConnectorEvents.UPDATE}'`, update);
         }
-        this.emit(Events.UPDATE, update);
+        this.emit(ConnectorEvents.UPDATE, update);
     }
 
     emitError(error: Error): void {
         if (this.debug) {
-            console.log(`'${Events.ERROR}'`, error);
+            console.log(`'${ConnectorEvents.ERROR}'`, error);
         }
-        this.emit(Events.ERROR, error);
+        this.emit(ConnectorEvents.ERROR, error);
     }
 
     emitDeactivate(reason?: string): void {
         if (this.debug) {
-            console.log(`'${Events.DEACTIVATE}'`);
+            console.log(`'${ConnectorEvents.DEACTIVATE}'`);
         }
-        this.emit(Events.DEACTIVATE, reason);
+        this.emit(ConnectorEvents.DEACTIVATE, reason);
     }
 }

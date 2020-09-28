@@ -3,10 +3,20 @@ import {
     ConnectorUpdate,
     ConnectorInterface,
 } from "@renproject/multiwallet-base-connector";
-import { provider } from "web3-providers";
+import { provider, HttpProvider } from "web3-providers";
 import { Address } from "@renproject/chains-ethereum";
 import Web3 from "web3";
 import { RenNetwork } from "@renproject/interfaces";
+
+const isResults = <T>(x: { results: T } | T): x is { results: T } =>
+    (x as { results: T }).results !== undefined;
+
+const resultOrRaw = <T>(x: { results: T } | T) => {
+    if (isResults(x)) {
+        return x.results;
+    }
+    return x;
+};
 
 export const ethNetworkToRenNetwork = (id: number): RenNetwork => {
     return {
@@ -16,38 +26,63 @@ export const ethNetworkToRenNetwork = (id: number): RenNetwork => {
 };
 
 export interface EthereumConnectorOptions {
-    debug: boolean;
+    debug?: boolean;
+    // Map chain ids to ren network versions
+    networkIdMapper?: typeof ethNetworkToRenNetwork;
 }
 
+type SaneProvider = Exclude<provider, string | null | HttpProvider>;
+
 export abstract class AbstractEthereumConnector
-    implements ConnectorInterface<provider, Address> {
+    implements ConnectorInterface<SaneProvider, Address> {
     supportsTestnet = true;
+    networkIdMapper = ethNetworkToRenNetwork;
     emitter;
-    constructor({ debug = false }: EthereumConnectorOptions) {
-        this.emitter = new ConnectorEmitter<provider, Address>(debug);
+    library?: Web3;
+    constructor({
+        debug = false,
+        networkIdMapper = ethNetworkToRenNetwork,
+    }: EthereumConnectorOptions) {
+        this.networkIdMapper = networkIdMapper;
+        this.emitter = new ConnectorEmitter<SaneProvider, Address>(debug);
     }
-    abstract activate: ConnectorInterface<provider, Address>["activate"];
-    abstract getProvider: ConnectorInterface<provider, Address>["getProvider"];
-    abstract deactivate: ConnectorInterface<provider, Address>["deactivate"];
+    abstract activate: ConnectorInterface<SaneProvider, Address>["activate"];
+    abstract getProvider: ConnectorInterface<
+        SaneProvider,
+        Address
+    >["getProvider"];
+    abstract deactivate: ConnectorInterface<
+        SaneProvider,
+        Address
+    >["deactivate"];
     // Get the complete connector status in one call
-    async getStatus(): Promise<ConnectorUpdate<provider, Address>> {
+    async getStatus(): Promise<ConnectorUpdate<SaneProvider, Address>> {
+        debugger;
         return {
             account: await this.getAccount(),
             renNetwork: await this.getRenNetwork(),
             provider: await this.getProvider(),
         };
     }
+
     // Get default web3 account
     async getAccount() {
-        const w3 = new Web3(await this.getProvider());
-        if (!w3.defaultAccount) {
+        const account = resultOrRaw(
+            await ((await this.getProvider()) as any).request({
+                method: "eth_requestAccounts",
+            })
+        )[0];
+        if (!account) {
             throw new Error("Not activated");
         }
-        return w3.defaultAccount;
+        return account;
     }
     // Cast current ethereum network to Ren network version or throw
     async getRenNetwork() {
-        const w3 = new Web3(await this.getProvider());
-        return ethNetworkToRenNetwork(await w3.eth.net.getId());
+        return this.networkIdMapper(
+            resultOrRaw((await this.getProvider()) as any).request({
+                method: "eth_chainId",
+            })
+        );
     }
 }

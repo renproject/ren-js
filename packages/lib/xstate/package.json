@@ -1,6 +1,6 @@
 {
     "name": "@renproject/xstate",
-    "version": "2.1.0-alpha.3",
+    "version": "2.1.0-alpha.4",
     "description": "XState Statemachines for tracking transactions reactively",
     "repository": {
         "type": "git",

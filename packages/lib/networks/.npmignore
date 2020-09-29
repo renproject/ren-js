@@ -32,3 +32,5 @@ misc
 dist
 
 package-lock.json
+
+!build

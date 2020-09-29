@@ -65,8 +65,6 @@
     "@types/react-dom": "^16.9.8",
     "babel-loader": "^8.1.0",
     "husky": "^4.3.0",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
     "react-is": "^16.13.1",
     "size-limit": "^4.6.0",
     "tsdx": "^0.14.0",

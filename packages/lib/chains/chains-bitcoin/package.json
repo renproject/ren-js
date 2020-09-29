@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.1.0-alpha.4",
+    "version": "2.1.0-alpha.5",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

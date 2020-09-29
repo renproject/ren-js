@@ -1,7 +1,7 @@
 {
     "npmClient": "yarn",
     "useWorkspaces": true,
-    "version": "2.1.0-alpha.2",
+    "version": "2.1.0-alpha.3",
     "packages": [
         "./packages/lib/*",
         "./packages/ui/multiwallet-ui",

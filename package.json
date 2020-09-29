@@ -104,7 +104,8 @@
         "lint": "tslint packages/*/*/src/**/*.ts{,x}"
     },
     "workspaces": [
-        "packages/ui/*",
+        "packages/ui/multiwallet-ui",
+        "packages/ui/react-components",
         "packages/lib/*",
         "packages/lib/chains/*",
         "packages/lib/multiwallet/*"

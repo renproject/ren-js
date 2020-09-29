@@ -114,11 +114,7 @@ export function ConnectorWatcher<P, A>({
   return null;
 }
 
-export const MultiwalletProvider = <P, A>({
-  children,
-}: {
-  children: React.Component;
-}) => {
+export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
   const Provider = context.Provider;
   const [enabledChains, setEnabledChains] = useState<
     MultiwalletInterface<P, A>['enabledChains']

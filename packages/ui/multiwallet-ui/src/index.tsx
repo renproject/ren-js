@@ -13,6 +13,8 @@ import CloseIcon from '@material-ui/icons/Close';
 import { ConnectorInterface } from '@renproject/multiwallet-base-connector';
 import { useMultiwallet } from './MultiwalletProvider';
 
+export * from './MultiwalletProvider';
+
 export interface ConnectorConfig<P, A> {
   name: string;
   logo: string;

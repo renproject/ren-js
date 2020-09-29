@@ -1,4 +1,5 @@
 import { AbstractEthereumConnector } from "@renproject/multiwallet-abstract-ethereum-connector";
+import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 
 export interface EthereumConnectorOptions {
     debug: boolean;
@@ -24,7 +25,7 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
             .then((...args) => this.emitter.emitUpdate(...args))
             .catch((...args) => this.deactivate(...args));
 
-    activate = async () => {
+    activate: ConnectorInterface<any, any>["activate"] = async () => {
         // No good typings for injected providers exist...
         const provider: any = await this.getProvider();
         if (!provider) {

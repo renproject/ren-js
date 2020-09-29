@@ -1,5 +1,16 @@
 {
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "version": "2.0.0-alpha.7"
+    "version": "2.0.0-alpha.7",
+    "packages": [
+        "./packages/lib/*",
+        "./packages/ui/multiwallet-ui",
+        "./packages/ui/react-components"
+    ],
+"command": {
+    "publish": {
+        "registry": "https://npm.pkg.github.com"
+    }
+}
+
 }

@@ -1,7 +1,7 @@
 {
   "name": "@renproject/multiwallet-ui",
   "author": "renproject",
-  "version": "2.1.0-alpha.0",
+  "version": "2.1.0-alpha.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

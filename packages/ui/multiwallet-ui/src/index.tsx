@@ -2,7 +2,6 @@ import React, { HTMLAttributes } from 'react';
 import {
   Box,
   ButtonBase,
-  Container,
   IconButton,
   makeStyles,
   Modal,
@@ -36,6 +35,7 @@ export interface WalletPickerProps<P, A>
 const useWalletPickerStyles = makeStyles({
   root: {
     maxWidth: 400,
+    minWidth: 380,
   },
   header: {
     display: 'flex',
@@ -86,9 +86,15 @@ export const WalletPickerModal = <P, A>({
   options,
 }: WalletPickerModalProps<P, A>) => (
   <Modal open={open || false}>
-    <Container style={{ height: '100vh' }}>
+    <Box
+      height="100vh"
+      width="100%"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
       <WalletPicker {...options} close={close} />
-    </Container>
+    </Box>
   </Modal>
 );
 

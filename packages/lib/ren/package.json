@@ -30,8 +30,8 @@
     "module": "./src/index.ts",
     "scripts": {
         "describe": "npm-scripts-info",
+        "clean": "yarn rimraf ./build",
         "build": "yarn build:main && yarn build:module",
-        "build-all": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
@@ -51,7 +51,7 @@
         "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --name \"RenJS Types Documentation\" --readme ./DOCS.md",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
-        "prepare": "yarn build-all",
+        "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
         "link:all": "yarn link @renproject/networks @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link",

@@ -55,6 +55,7 @@
         "react-docgen-typescript-webpack-plugin": "^1.1.0",
         "react-dom": "^16.13.1",
         "react-scripts": "^3.4.3",
+        "rimraf": "^3.0.2",
         "rollup": "^2.27.1",
         "rollup-plugin-babel": "^4.4.0",
         "rollup-plugin-commonjs": "^10.1.0",
@@ -95,6 +96,7 @@
     "scripts": {
         "link:all": "lerna run link:all",
         "unlink:all": "lerna run unlink:all",
+        "clean": "lerna run clean --scope @renproject/*",
         "build": "lerna run build --scope @renproject/*",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
         "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",

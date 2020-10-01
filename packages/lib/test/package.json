@@ -35,7 +35,7 @@
         "@types/node": "^14.11.1",
         "bignumber.js": "^9.0.0",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.16"
+        "send-crypto": "0.2.18"
     },
     "resolutions": {
         "sha3": "^2.1.2"

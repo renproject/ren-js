@@ -2,38 +2,34 @@ import { Callable } from "@renproject/utils";
 import { toCashAddress } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import base58 from "bs58";
-import {
-    getUTXO,
-    getUTXOs,
-} from "send-crypto/build/main/handlers/BCH/BCHHandler";
+import { BCHHandler } from "send-crypto/build/main/handlers/BCH/BCHHandler";
 import { validate } from "wallet-address-validator";
 
-import { Address, BitcoinBaseChain, BitcoinNetwork } from "./base";
-import { BitcoinChain } from "./bitcoin";
+import { Address, BitcoinNetwork } from "./base";
+import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
 
-export class BitcoinCashChain extends BitcoinChain {
-    public name = "Bch";
+export class BitcoinCashClass extends BitcoinClass {
+    public readonly name = "Bch";
 
-    public _asset = "BCH";
-    public _getUTXO = getUTXO;
-    public _getUTXOs = getUTXOs;
-    public _createAddress = createAddress(
-        Networks,
-        Opcode,
-        Script,
-        (bytes: Buffer) => toCashAddress(base58.encode(bytes))
-    );
-    public _calculatePubKeyScript = pubKeyScript(Networks, Opcode, Script);
-    public _addressIsValid = (address: Address, network: BitcoinNetwork) =>
-        validate(address, this._asset.toLowerCase(), network);
-
-    constructor(
-        network?: BitcoinNetwork,
-        thisClass: typeof BitcoinBaseChain = BitcoinCashChain
-    ) {
-        super(network, thisClass);
-    }
+    public readonly asset = "BCH";
+    public readonly utils = {
+        // ...super.utils,
+        p2shPrefix: super.utils.p2shPrefix,
+        getUTXO: BCHHandler.getUTXO,
+        getUTXOs: BCHHandler.getUTXOs,
+        getTransactions: BCHHandler.getTransactions,
+        createAddress: createAddress(
+            Networks,
+            Opcode,
+            Script,
+            (bytes: Buffer) => toCashAddress(base58.encode(bytes))
+        ),
+        calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
+        addressIsValid: (address: Address, network: BitcoinNetwork) =>
+            validate(address, this.asset.toLowerCase(), network),
+    };
 }
 
-export const BitcoinCash = Callable(BitcoinCashChain);
+export type BitcoinCash = BitcoinCashClass;
+export const BitcoinCash = Callable(BitcoinCashClass);

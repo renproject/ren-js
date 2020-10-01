@@ -15,6 +15,22 @@ export type TransactionListener<
     E extends { [key: string]: any[] }
 > = PromiEvent<T, { txHash: [string]; confirmation: [number, number] } & E>;
 
+/**
+ * # Adding chains
+ * Once a chain has been added to the [multichain repo](https://github.com/renproject/multichain) and accepted by the
+ * darknodes, a handler can be written for RenJS.
+ *
+ * The expected interface can be found in `../interfaces/src/chain.ts`. There are two types of chains - lock chains and
+ * mint chains, each requiring a different handler interface. Lock chain handlers are for chains where funds are locked
+ * up under RenVM's control - e.g. Bitcoin or Zcash. A mint chain handler is for the chain where the wrapped tokens are
+ * created - e.g. Ethereum.
+ *
+ * If a chain is a fork of another supported chain, it's recommended that the handler extends the forked chain's
+ * handler.
+ *
+ * If a chain has multiple assets (e.g. ETH and ERC20s), it's recommended that a single handler is written that supports
+ * all the relevant assets.
+ */
 export interface ChainCommon<
     // tslint:disable-next-line: no-any
     Transaction = any,
@@ -51,15 +67,6 @@ export interface ChainCommon<
     initialize: (network: RenNetwork) => SyncOrPromise<this>;
 
     // Supported assets
-
-    /**
-     * `supportsAsset` should return true if the asset is native to the
-     * Chain.
-     *
-     * @example
-     * bitcoin.supportsAsset = asset => asset === "BTC";
-     */
-    supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
@@ -135,6 +142,13 @@ export interface LockChain<
     Asset extends string = string,
     Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
+    // Assets
+
+    /**
+     * `assetIsNative` should return true if the asset is native to the Chain.
+     */
+    assetIsNative: (asset: Asset) => SyncOrPromise<boolean>;
+
     // Deposits
 
     /**
@@ -145,7 +159,10 @@ export interface LockChain<
      */
     getDeposits: (
         asset: Asset,
-        address: Address
+        address: Address,
+        // Indicates whether the deposits are being fetched for the first time.
+        // Allows the chain to only fetch new deposits in successive requests.
+        firstCheck?: boolean
     ) => SyncOrPromise<LockDeposit[]>;
 
     // Encoding
@@ -217,6 +234,15 @@ export interface MintChain<
     Asset extends string = string,
     Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
+    // /**
+    //  * `supportsAsset` should return true if the the asset can be minted onto
+    //  * this chain.
+    //  *
+    //  * @example
+    //  * ethereum.supportsAsset = asset => asset === "BTC" ||;
+    //  */
+    // supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
+
     resolveTokenGatewayContract: (token: RenTokens) => Promise<string>;
 
     /**

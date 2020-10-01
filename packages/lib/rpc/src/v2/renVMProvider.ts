@@ -3,7 +3,11 @@ import {
     Asset,
     BurnTransaction,
     Chain,
+    DepositCommon,
+    LockAndMintParams,
+    LockChain,
     Logger,
+    MintChain,
     MintTransaction,
     RenContract,
     RenNetwork,
@@ -70,20 +74,28 @@ export const resolveRpcURL = (network: RenNetwork | string) => {
     return network;
 };
 
-export const resolveV2Chain = (chain: Chain) => {
-    switch (chain) {
-        case "Eth":
-            return "Ethereum";
+export const resolveV2Contract = ({
+    asset,
+    from,
+    to,
+}: {
+    asset: string;
+    from: LockChain | MintChain;
+    to: LockChain | MintChain;
+}): string => {
+    if (
+        (from as LockChain).assetIsNative &&
+        (from as LockChain).assetIsNative(asset)
+    ) {
+        return `${asset}/to${to.name}`;
     }
-    throw new Error(`Unknown chain ${chain}`);
-};
-
-export const resolveV2Contract = (contract: RenContract) => {
-    const { asset, from, to } = parseRenContract(contract);
-    const toChain = resolveV2Chain(to);
-    const direction =
-        asset.toUpperCase() === from.toUpperCase() ? "to" : "from";
-    return `${asset.toUpperCase()}/${direction}${toChain}`;
+    if (
+        (to as LockChain).assetIsNative &&
+        (to as LockChain).assetIsNative(asset)
+    ) {
+        return `${asset}/from${from.name}`;
+    }
+    return `${asset}/from$${from.name}To${to.name}`;
 };
 
 export const hashSelector = (selector: string): Buffer =>
@@ -228,7 +240,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     public getFees = async () => unmarshalFees(await this.queryFees());
 
     public buildMintTransaction = (
-        renContract: RenContract,
+        renContractOrSelector: string,
         gHash: Buffer,
         gPubKey: Buffer,
         nHash: Buffer,
@@ -242,7 +254,6 @@ export class RenVMProvider implements RenVMProviderInterface {
     ): MintTransactionInput => {
         assertType("Buffer", { gHash, gPubKey, nHash, nonce, payload, pHash });
         assertType("string", { to, token });
-        const selector = resolveV2Contract(renContract);
         const version = "1";
         const txIn = {
             t: mintParamsType(output.t as PackStructType),
@@ -259,8 +270,10 @@ export class RenVMProvider implements RenVMProviderInterface {
             },
         };
         return {
-            hash: toURLBase64(hashTransaction(version, selector, txIn)),
-            selector,
+            hash: toURLBase64(
+                hashTransaction(version, renContractOrSelector, txIn)
+            ),
+            selector: renContractOrSelector,
             version,
             // TODO: Fix types
             in: (txIn as unknown) as MintTransactionInput["in"],
@@ -268,7 +281,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     };
 
     public mintTxHash = (
-        renContract: RenContract,
+        renContractOrSelector: string,
         gHash: Buffer,
         gPubKey: Buffer,
         nHash: Buffer,
@@ -292,7 +305,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         assertType("string", { to, token });
         return fromBase64(
             this.buildMintTransaction(
-                renContract,
+                renContractOrSelector,
                 gHash,
                 gPubKey,
                 nHash,
@@ -307,7 +320,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     };
 
     public submitMint = async (
-        renContract: RenContract,
+        renContractOrSelector: string,
         gHash: Buffer,
         gPubKey: Buffer,
         nHash: Buffer,
@@ -328,7 +341,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             RPCMethod.MethodSubmitTx
         >(RPCMethod.MethodSubmitTx, {
             tx: this.buildMintTransaction(
-                renContract,
+                renContractOrSelector,
                 gHash,
                 gPubKey,
                 nHash,
@@ -346,7 +359,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     };
 
     public submitBurn = async (
-        renContract: RenContract,
+        renContractOrSelector: string,
         amount: BigNumber,
         token: string,
         to: string,
@@ -354,7 +367,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         _tags: [string] | []
     ): Promise<Buffer> => {
         assertType("string", { token, to });
-        const selector = resolveV2Contract(renContract);
+        // const selector = resolveV2Contract(renContract);
         const version = "1";
         const txIn = {
             t: burnParamsType,
@@ -369,8 +382,10 @@ export class RenVMProvider implements RenVMProviderInterface {
             RPCMethod.MethodSubmitTx,
             {
                 tx: {
-                    hash: toURLBase64(hashTransaction(version, selector, txIn)),
-                    selector,
+                    hash: toURLBase64(
+                        hashTransaction(version, renContractOrSelector, txIn)
+                    ),
+                    selector: renContractOrSelector,
                     version,
                     in: txIn,
                 },

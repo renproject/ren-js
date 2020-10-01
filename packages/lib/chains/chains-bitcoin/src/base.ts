@@ -1,4 +1,5 @@
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
+import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 import {
     assertType,
     fromHex,
@@ -12,12 +13,8 @@ import { Networks, Opcode, Script } from "bitcore-lib";
 import base58 from "bs58";
 import { keccak256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
-import {
-    getUTXO,
-    getUTXOs,
-} from "send-crypto/build/main/handlers/BTC/BTCHandler";
+import { BTCHandler } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
-import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 
 import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
 
@@ -54,35 +51,24 @@ export class BitcoinBaseChain
     public renNetwork: RenNetwork | undefined;
     public chainNetwork: BitcoinNetwork | undefined;
 
-    public _asset = "BTC";
-    public _getUTXO = getUTXO;
-    public _getUTXOs = getUTXOs;
-    public _p2shPrefix: { mainnet: Buffer; testnet: Buffer } = {
-        mainnet: Buffer.from([0x05]),
-        testnet: Buffer.from([0xc4]),
+    public asset = "BTC";
+    public utils = {
+        getUTXO: BTCHandler.getUTXO,
+        getUTXOs: BTCHandler.getUTXOs,
+        getTransactions: BTCHandler.getTransactions as
+            | typeof BTCHandler.getTransactions
+            | null,
+        p2shPrefix: {
+            mainnet: Buffer.from([0x05]),
+            testnet: Buffer.from([0xc4]),
+        },
+        createAddress: createAddress(Networks, Opcode, Script, base58.encode),
+        calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
+        addressIsValid: (address: Address, network: BitcoinNetwork) =>
+            validate(address, this.asset.toLowerCase(), network),
     };
-    public _createAddress = createAddress(
-        Networks,
-        Opcode,
-        Script,
-        base58.encode
-    );
-    public _calculatePubKeyScript = calculatePubKeyScript(
-        Networks,
-        Opcode,
-        Script
-    );
-    public _addressIsValid = (address: Address, network: BitcoinNetwork) =>
-        validate(address, this._asset.toLowerCase(), network);
 
-    constructor(
-        network?: BitcoinNetwork,
-        thisClass: typeof BitcoinBaseChain = BitcoinBaseChain
-    ) {
-        if (!(this instanceof BitcoinBaseChain)) {
-            return new (thisClass || BitcoinBaseChain)(network);
-        }
-
+    constructor(network?: BitcoinNetwork) {
         this.chainNetwork = network;
     }
 
@@ -98,12 +84,12 @@ export class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.supportsAsset]].
+     * See [[OriginChain.assetIsNative]].
      */
-    supportsAsset = (asset: Asset): boolean => asset === this._asset;
+    assetIsNative = (asset: Asset): boolean => asset === this.asset;
 
     public readonly assetAssetSupported = (asset: Asset) => {
-        if (!this.supportsAsset(asset)) {
+        if (!this.assetIsNative(asset)) {
             throw new Error(`Unsupported asset ${asset}`);
         }
     };
@@ -112,7 +98,7 @@ export class BitcoinBaseChain
      * See [[OriginChain.assetDecimals]].
      */
     assetDecimals = (asset: Asset): number => {
-        if (asset === this._asset) {
+        if (asset === this.asset) {
             return 8;
         }
         throw new Error(`Unsupported asset ${asset}`);
@@ -123,7 +109,8 @@ export class BitcoinBaseChain
      */
     getDeposits = async (
         asset: Asset,
-        address: Address
+        address: Address,
+        firstCheck = false
     ): Promise<Deposit[]> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -132,8 +119,20 @@ export class BitcoinBaseChain
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
         this.assetAssetSupported(asset);
+        if (firstCheck && this.utils.getTransactions) {
+            return (
+                await this.utils.getTransactions(
+                    this.chainNetwork === "testnet",
+                    {
+                        address,
+                        confirmations: 0,
+                    }
+                )
+            ).map(transactionToDeposit);
+        }
+
         return (
-            await this._getUTXOs(this.chainNetwork === "testnet", {
+            await this.utils.getUTXOs(this.chainNetwork === "testnet", {
                 address,
                 confirmations: 0,
             })
@@ -150,7 +149,7 @@ export class BitcoinBaseChain
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
-        transaction = await this._getUTXO(
+        transaction = await this.utils.getUTXO(
             this.chainNetwork === "testnet",
             transaction.txHash,
             transaction.vOut
@@ -174,11 +173,11 @@ export class BitcoinBaseChain
         }
         this.assetAssetSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
-        return this._createAddress(
+        return this.utils.createAddress(
             isTestnet,
             hash160(publicKey),
             gHash,
-            this._p2shPrefix[isTestnet ? "testnet" : "mainnet"]
+            this.utils.p2shPrefix[isTestnet ? "testnet" : "mainnet"]
         );
     };
 
@@ -188,7 +187,7 @@ export class BitcoinBaseChain
         }
         this.assetAssetSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
-        return this._calculatePubKeyScript(
+        return this.utils.calculatePubKeyScript(
             isTestnet,
             hash160(publicKey),
             gHash
@@ -217,7 +216,7 @@ export class BitcoinBaseChain
             throw new Error(`${name} object not initialized`);
         }
         assertType("string", { address });
-        return this._addressIsValid(address, this.chainNetwork);
+        return this.utils.addressIsValid(address, this.chainNetwork);
     };
 
     /**
@@ -250,6 +249,9 @@ export class BitcoinBaseChain
             return {
                 t: {
                     struct: [
+                        {
+                            nonce: PackPrimitive.Bytes32,
+                        },
                         {
                             output: {
                                 struct: [

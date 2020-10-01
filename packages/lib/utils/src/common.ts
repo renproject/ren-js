@@ -107,7 +107,7 @@ export const ignorePromiEventError = (error: any): boolean => {
 
 // tslint:disable-next-line: no-any
 export const extractError = (error: any): string => {
-    if (typeof error === "object") {
+    if (error && typeof error === "object") {
         if (error.response) {
             return extractError(error.response);
         }
@@ -116,6 +116,12 @@ export const extractError = (error: any): string => {
         }
         if (error.error) {
             return extractError(error.error);
+        }
+        if (error.context) {
+            return extractError(error.context);
+        }
+        if (error.context) {
+            return extractError(error.context);
         }
         if (error.message) {
             return extractError(error.message);

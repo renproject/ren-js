@@ -469,7 +469,7 @@ export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
 
 export class EthereumBaseChain
     implements MintChain<Transaction, Asset, Address> {
-    public name = "Eth";
+    public name = "Ethereum";
     public renNetwork: RenNetwork | undefined;
 
     public readonly web3: Web3 | undefined;
@@ -495,16 +495,8 @@ export class EthereumBaseChain
     constructor(
         web3Provider: provider,
         renNetwork?: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails,
-        thisClass?: typeof EthereumBaseChain
+        renNetworkDetails?: RenNetworkDetails
     ) {
-        if (!(this instanceof EthereumBaseChain)) {
-            return new (thisClass || EthereumBaseChain)(
-                web3Provider,
-                renNetwork
-            );
-        }
-
         this.web3 = new Web3(web3Provider);
 
         this.renNetworkDetails =
@@ -530,16 +522,16 @@ export class EthereumBaseChain
 
     // Supported assets
 
-    /**
-     * `supportsAsset` should return true if the asset is native to the
-     * MintChain.
-     *
-     * @example
-     * ethereum.supportsAsset = asset => asset === "ETH";
-     */
-    supportsAsset = (asset: Asset): boolean => {
-        return asset === "eth";
-    };
+    // /**
+    //  * `supportsAsset` should return true if the asset is native to the
+    //  * MintChain.
+    //  *
+    //  * @example
+    //  * ethereum.supportsAsset = asset => asset === "ETH";
+    //  */
+    // supportsAsset = (asset: Asset): boolean => {
+    //     return asset === "eth";
+    // };
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.

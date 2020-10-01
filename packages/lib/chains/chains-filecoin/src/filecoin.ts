@@ -34,7 +34,7 @@ export type FilDeposit = {
 export type FilAsset = string;
 export type FilecoinNetwork = "mainnet" | "testnet" | "devnet";
 
-export const NETWORK_NOT_SUPPORTED = `Filecoin is not supported by the current RenVM network.`;
+const NETWORK_NOT_SUPPORTED = `Filecoin is not supported by the current RenVM network.`;
 
 const resolveFilecoinNetwork = (renNetwork: RenNetwork): FilecoinNetwork => {
     switch (renNetwork) {
@@ -54,7 +54,7 @@ const transactionToDeposit = (transaction: FilTransaction) => ({
     amount: transaction.amount,
 });
 
-export class FilecoinChain
+export class FilecoinClass
     implements LockChain<FilTransaction, FilDeposit, FilAsset, FilAddress> {
     public name = "Fil";
     public renNetwork: RenNetwork | undefined;
@@ -64,14 +64,7 @@ export class FilecoinChain
     public _addressIsValid = (address: FilAddress, _network: FilecoinNetwork) =>
         validateAddressString(address.address);
 
-    constructor(
-        network?: FilecoinNetwork,
-        thisClass: typeof FilecoinChain = FilecoinChain
-    ) {
-        if (!(this instanceof FilecoinChain)) {
-            return new (thisClass || FilecoinChain)(network);
-        }
-
+    constructor(network?: FilecoinNetwork) {
         this.chainNetwork = network;
     }
 
@@ -87,12 +80,12 @@ export class FilecoinChain
     };
 
     /**
-     * See [[OriginChain.supportsAsset]].
+     * See [[OriginChain.assetIsNative]].
      */
-    supportsAsset = (asset: FilAsset): boolean => asset === this._asset;
+    assetIsNative = (asset: FilAsset): boolean => asset === this._asset;
 
     public readonly assetAssetSupported = (asset: FilAsset) => {
-        if (!this.supportsAsset(asset)) {
+        if (!this.assetIsNative(asset)) {
             throw new Error(`Unsupported asset ${asset}`);
         }
     };
@@ -284,7 +277,8 @@ export class FilecoinChain
 
         const encoded = rawEncode(
             ["bytes32", "bytes", "uint32"],
-            [nonce, fromHex(transaction.cid).reverse(), 0]
+            // [nonce, fromHex(transaction.cid).reverse(), 0]
+            [nonce, Buffer.from(base32.decode(transaction.cid.slice(1))), 0]
         );
 
         const digest = keccak256(encoded);
@@ -312,4 +306,5 @@ export class FilecoinChain
 }
 
 // @dev Removes any static fields.
-export const Filecoin = Callable(FilecoinChain);
+export type Filecoin = FilecoinClass;
+export const Filecoin = Callable(FilecoinClass);

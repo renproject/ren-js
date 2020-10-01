@@ -1,6 +1,6 @@
 // tslint:disable: no-console
 
-import { Dogecoin, Ethereum, Filecoin } from "@renproject/chains";
+import { Dogecoin, Ethereum, Filecoin, Terra } from "@renproject/chains";
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 import { renRinkeby } from "@renproject/networks";
 import {
@@ -35,11 +35,11 @@ describe("Plaground", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    it.only("mint", async function () {
+    it("mint", async function () {
         this.timeout(100000000000);
 
-        const from = Filecoin();
-        const asset = from._asset;
+        const from = Terra();
+        const asset = "LUNA";
         const faucetSupported =
             ["BTC", "ZEC", "BCH", "ETH"].indexOf(asset) >= 0;
 
@@ -51,9 +51,9 @@ describe("Plaground", () => {
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
+            "https://lightnode-new-testnet.herokuapp.com/",
             // tslint:disable-next-line: no-http-string
-            "http://34.239.188.210:18515",
+            // "http://34.239.188.210:18515",
             { verbose: true }
         ) as Provider<RenVMParams, RenVMResponses>;
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
@@ -85,10 +85,11 @@ describe("Plaground", () => {
             asset,
             from,
             to: Ethereum(provider, undefined, renRinkeby).Account({
+                // address: "0x797522fb74d42bb9fbf6b76dea24d01a538d5d61",
                 address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
 
-            nonce: Ox("20".repeat(32)),
+            nonce: Ox("00".repeat(32)),
         });
 
         console.info(
@@ -114,19 +115,19 @@ describe("Plaground", () => {
                 const color = colors[i];
                 i += 1;
 
-                deposit.logger = new SimpleLogger(
+                deposit._logger = new SimpleLogger(
                     logLevel,
                     color(`[${hash.slice(0, 6)}] `)
                 );
 
-                const info = deposit.logger.log;
+                const info = deposit._logger.log;
 
                 info(
                     `Received ${
                         // tslint:disable-next-line: no-any
-                        (deposit.deposit as any).amount / 1e8
+                        (deposit.depositDetails as any).amount / 1e8
                     } ${asset}`,
-                    deposit.deposit
+                    deposit.depositDetails
                 );
 
                 info(`Calling .confirmed`);

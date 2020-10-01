@@ -61,9 +61,6 @@ export const mintParamsType = (
 ): PackStructType => ({
     struct: [
         {
-            txid: PackPrimitive.Bytes,
-        },
-        {
             payload: PackPrimitive.Bytes,
         },
         {

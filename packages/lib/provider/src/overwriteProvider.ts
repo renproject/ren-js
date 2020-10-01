@@ -70,6 +70,14 @@ export class OverwriteProvider<
                                 pubKey:
                                     "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
                             },
+                            {
+                                asset: "LUNA",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "Terra",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                            },
                         ],
                         gatewaysRootHash:
                             "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",

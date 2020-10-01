@@ -13,7 +13,6 @@
         "link:all": "yarn link @renproject/gateway @renproject/interfaces @renproject/utils @renproject/react-components"
     },
     "dependencies": {
-        "@renproject/gateway": "file:../../lib/gateway",
         "@renproject/interfaces": "file:../../lib/interfaces",
         "@renproject/utils": "file:../../lib/utils",
         "@types/classnames": "^2.2.10",

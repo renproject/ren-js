@@ -1,9 +1,5 @@
 {
     "npmClient": "yarn",
     "useWorkspaces": true,
-    "version": "2.0.0-alpha.8",
-    "packages": [
-        "./packages/lib/*",
-        "./packages/ui/react-components"
-    ]
+    "version": "2.0.0-alpha.8"
 }

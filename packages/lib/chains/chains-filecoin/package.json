@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-filecoin",
-    "version": "2.0.0-alpha.7",
+    "version": "2.0.0-alpha.8",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,7 +43,7 @@
     },
     "dependencies": {
         "@openworklabs/filecoin-address": "^0.0.10",
-        "@renproject/interfaces": "^2.0.0-alpha.7",
+        "@renproject/interfaces": "^2.0.0-alpha.8",
         "@renproject/networks": "^2.0.0-alpha.7",
         "@renproject/rpc": "^2.0.0-alpha.7",
         "@renproject/utils": "^2.0.0-alpha.7",

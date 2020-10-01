@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.1.0-alpha.5",
+    "version": "2.0.0-alpha.8",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,7 +42,7 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.7",
+        "@renproject/interfaces": "^2.0.0-alpha.8",
         "@renproject/networks": "^2.0.0-alpha.7",
         "@renproject/rpc": "^2.0.0-alpha.7",
         "@renproject/utils": "^2.0.0-alpha.7",

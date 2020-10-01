@@ -247,19 +247,10 @@ export const manualPromiEvent = async (
 export const getTokenName = (
     tokenOrContract: RenTokens | RenContract
 ): RenTokens => {
-    switch (tokenOrContract) {
-        case "BTC":
-            return "BTC";
-        case "ZEC":
-            return "ZEC";
-        case "BCH":
-            return "BCH";
-        case "DOGE":
-            return "DOGE";
-        case "ETH":
-            throw new Error(`Unexpected token ${tokenOrContract}`);
-        default:
-            return getTokenName(parseRenContract(tokenOrContract).asset);
+    try {
+        return getTokenName(parseRenContract(tokenOrContract).asset);
+    } catch (error) {
+        return tokenOrContract;
     }
 };
 

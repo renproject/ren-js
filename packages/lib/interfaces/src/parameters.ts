@@ -3,7 +3,6 @@ import { TransactionConfig } from "web3-core";
 
 import { DepositCommon, LockChain, MintChain } from "./chain";
 import { EthArgs } from "./ethArgs";
-import { Asset } from "./networks";
 
 export { TransactionConfig } from "web3-core";
 export type BNInterface = { toString(x?: "hex"): string };
@@ -39,7 +38,7 @@ export interface ContractCall {
 /**
  * The parameters required for both minting and burning.
  */
-export interface TransferParamsCommon {
+export interface TransferParamsCommon<Asset extends string> {
     asset: Asset;
 
     /**
@@ -66,9 +65,11 @@ export interface TransferParamsCommon {
 export interface LockAndMintParams<
     // tslint:disable-next-line: no-any
     Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
-> extends TransferParamsCommon {
-    from: LockChain<Transaction, Deposit>;
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    Asset extends string = string,
+    Address = string
+> extends TransferParamsCommon<Asset> {
+    from: LockChain<Transaction, Deposit, Asset, Address>;
     to: MintChain;
 
     /**
@@ -104,16 +105,22 @@ export interface LockAndMintParams<
      * shard, but once sharding is live, this parameter will ensure that the
      * same address can be used to resume the transfer.
      */
-    gatewayAddress?: string;
+    gatewayAddress?: Address;
 }
 
 /**
  * BurnAndReleaseParams define the parameters for a cross-chain transfer away
  * from Ethereum.
  */
-export interface BurnAndReleaseParams extends TransferParamsCommon {
+export interface BurnAndReleaseParams<
+    // tslint:disable-next-line: no-any
+    Transaction = any,
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    Asset extends string = string,
+    Address = string
+> extends TransferParamsCommon<Asset> {
     from: MintChain;
-    to: LockChain;
+    to: LockChain<Transaction, Deposit, Asset, Address>;
 
     /**
      * The hash of the burn transaction on Ethereum.

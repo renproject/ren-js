@@ -1,6 +1,6 @@
 // tslint:disable: no-console
 
-import { Dogecoin, Ethereum } from "@renproject/chains";
+import { Dogecoin, Ethereum, Filecoin } from "@renproject/chains";
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 import { renRinkeby } from "@renproject/networks";
 import {
@@ -35,10 +35,10 @@ describe("Plaground", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("mint", async function () {
+    it.only("mint", async function () {
         this.timeout(100000000000);
 
-        const from = Dogecoin();
+        const from = Filecoin();
         const asset = from._asset;
         const faucetSupported =
             ["BTC", "ZEC", "BCH", "ETH"].indexOf(asset) >= 0;
@@ -53,61 +53,12 @@ describe("Plaground", () => {
         const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
             // "https://lightnode-new-testnet.herokuapp.com/",
             // tslint:disable-next-line: no-http-string
-            "http://34.239.188.210:18515"
+            "http://34.239.188.210:18515",
+            { verbose: true }
         ) as Provider<RenVMParams, RenVMResponses>;
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
             // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider,
-            {
-                // tslint:disable-next-line: no-object-literal-type-assertion
-                ren_queryShards: {
-                    shards: [
-                        {
-                            darknodesRootHash:
-                                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            gateways: [
-                                {
-                                    asset: "BTC",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "Bitcoin",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                                {
-                                    asset: "ZEC",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "Zcash",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                                {
-                                    asset: "BCH",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "BitcoinCash",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                                {
-                                    asset: "DOGE",
-                                    hosts: ["Ethereum"],
-                                    locked: "0",
-                                    origin: "Doge",
-                                    pubKey:
-                                        "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                                },
-                            ],
-                            gatewaysRootHash:
-                                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            primary: true,
-                            pubKey:
-                                "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
-                        },
-                    ],
-                } as RenVMResponses["ren_queryShards"],
-            }
+            httpProvider
         ) as RenVMProviderInterface;
         const renVMProvider = new RenVMProvider(
             "testnet",
@@ -141,7 +92,9 @@ describe("Plaground", () => {
         });
 
         console.info(
-            `Deposit ${blue(asset)} to ${blue(lockAndMint.gatewayAddress)}`
+            `Deposit ${blue(asset)} to ${blue(
+                JSON.stringify(lockAndMint.gatewayAddress, null, "    ")
+            )}`
         );
 
         if (faucetSupported) {
@@ -199,7 +152,11 @@ describe("Plaground", () => {
             sleep(10 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
-                    if (faucetSupported && i === 0) {
+                    if (
+                        faucetSupported &&
+                        typeof lockAndMint.gatewayAddress === "string" &&
+                        i === 0
+                    ) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
                                 suggestedAmount / 1e8

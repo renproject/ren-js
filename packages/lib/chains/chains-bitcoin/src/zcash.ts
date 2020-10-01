@@ -7,7 +7,7 @@ import {
 } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
 import { validate } from "wallet-address-validator";
 
-import { BitcoinBaseChain, BitcoinNetwork } from "./base";
+import { Address, BitcoinBaseChain, BitcoinNetwork } from "./base";
 import { BitcoinChain } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
 
@@ -28,7 +28,7 @@ export class ZcashChain extends BitcoinChain {
         base58.encode
     );
     public _calculatePubKeyScript = pubKeyScript(Networks, Opcode, Script);
-    public _addressIsValid = (address: string, network: BitcoinNetwork) =>
+    public _addressIsValid = (address: Address, network: BitcoinNetwork) =>
         validate(address, "zec", network);
 
     constructor(

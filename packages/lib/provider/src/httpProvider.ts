@@ -22,8 +22,13 @@ export class HttpProvider<
     Responses extends { [event: string]: any } = {}
 > implements Provider {
     public readonly nodeURL: string;
+    public readonly verbose: boolean = false;
 
-    constructor(ipOrMultiaddress: string) {
+    constructor(
+        ipOrMultiaddress: string,
+        { verbose }: { verbose?: boolean } = { verbose: false }
+    ) {
+        this.verbose = verbose || false;
         // Type validation
         assertType("string", { ipOrMultiaddress });
 
@@ -53,13 +58,16 @@ export class HttpProvider<
     public async sendMessage<Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 5
+        retry = 5,
+        timeout = 120 * SECONDS
     ): Promise<Responses[Method]> {
         // Print request:
-        // console.log(
-        //     "[request]",
-        //     JSON.stringify(generatePayload(method, request), null, "    ")
-        // );
+        if (this.verbose) {
+            console.log(
+                "[request]",
+                JSON.stringify(generatePayload(method, request), null, "    ")
+            );
+        }
         try {
             const response = await retryNTimes(
                 () =>
@@ -69,7 +77,7 @@ export class HttpProvider<
                         // Use a 120 second timeout. This could be reduced, but
                         // should be done based on the method, since some requests
                         // may take a long time, especially on a slow connection.
-                        { timeout: 120 * SECONDS }
+                        { timeout }
                     ),
                 retry
             );
@@ -85,10 +93,12 @@ export class HttpProvider<
             if (response.data.result === undefined) {
                 throw new Error(`Empty result returned from node`);
             }
-            // console.log(
-            //     "[response]",
-            //     JSON.stringify(response.data.result, null, "    ")
-            // );
+            if (this.verbose) {
+                console.log(
+                    "[response]",
+                    JSON.stringify(response.data.result, null, "    ")
+                );
+            }
             return response.data.result;
         } catch (error) {
             if (error.response) {

@@ -17,6 +17,7 @@ import {
     getUTXOs,
 } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
+import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 
 import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
 
@@ -71,7 +72,7 @@ export class BitcoinBaseChain
         Opcode,
         Script
     );
-    public _addressIsValid = (address: string, network: BitcoinNetwork) =>
+    public _addressIsValid = (address: Address, network: BitcoinNetwork) =>
         validate(address, this._asset.toLowerCase(), network);
 
     constructor(
@@ -247,12 +248,46 @@ export class BitcoinBaseChain
     ) => {
         if (v2) {
             return {
-                outpoint: {
-                    hash: toURLBase64(fromHex(transaction.txHash).reverse()),
-                    index: transaction.vOut.toFixed(),
+                t: {
+                    struct: [
+                        {
+                            output: {
+                                struct: [
+                                    {
+                                        outpoint: {
+                                            struct: [
+                                                {
+                                                    hash: PackPrimitive.Bytes,
+                                                },
+                                                {
+                                                    index: PackPrimitive.U32,
+                                                },
+                                            ],
+                                        },
+                                    },
+                                    {
+                                        value: PackPrimitive.U256,
+                                    },
+                                    {
+                                        pubKeyScript: PackPrimitive.Bytes,
+                                    },
+                                ],
+                            },
+                        },
+                    ],
                 },
-                pubKeyScript: toURLBase64(pubKeyScript),
-                value: transaction.amount.toString(),
+                v: {
+                    output: {
+                        outpoint: {
+                            hash: toURLBase64(
+                                fromHex(transaction.txHash).reverse()
+                            ),
+                            index: transaction.vOut.toFixed(),
+                        },
+                        pubKeyScript: toURLBase64(pubKeyScript),
+                        value: transaction.amount.toString(),
+                    },
+                },
             };
         }
 

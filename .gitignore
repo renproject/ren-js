@@ -26,7 +26,6 @@ typedoc/
 
 *.env
 
-*.map
 build
 misc
 dist

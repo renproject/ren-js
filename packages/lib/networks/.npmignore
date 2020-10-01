@@ -26,7 +26,6 @@ typedoc/
 
 *.env
 
-*.map
 build
 misc
 dist
@@ -42,5 +41,4 @@ typedoc.js
 webpack.config.js
 test/
 build/browser*
-build/*.map
 !build

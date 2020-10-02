@@ -358,15 +358,18 @@ export const randomNonce = () => randomBytes(32);
 export const resolveInToken = <
     // tslint:disable-next-line: no-any
     Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    // tslint:disable-next-line: no-shadowed-variable
+    Asset extends string = string,
+    Address = string
 >({
     asset,
     from,
     to,
 }: {
-    asset: LockAndMintParams<Transaction, Deposit>["asset"];
-    from: LockAndMintParams<Transaction, Deposit>["from"];
-    to: LockAndMintParams<Transaction, Deposit>["to"];
+    asset: LockAndMintParams<Transaction, Deposit, Asset, Address>["asset"];
+    from: LockAndMintParams<Transaction, Deposit, Asset, Address>["from"];
+    to: LockAndMintParams<Transaction, Deposit, Asset, Address>["to"];
 }): RenContract => {
     return `${asset}0${from.name}2${to.name}` as RenContract;
 };

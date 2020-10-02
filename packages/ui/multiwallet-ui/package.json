@@ -15,6 +15,7 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
+    "clean": "yarn rimraf ./dist",
     "test": "tsdx test --passWithNoTests",
     "lint": "tsdx lint",
     "prepare": "tsdx build",

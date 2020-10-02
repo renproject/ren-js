@@ -5,6 +5,7 @@
         "@bitjson/npm-scripts-info": "^1.0.0",
         "@bitjson/typedoc": "^0.15.0-0",
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
+        "@rollup/pluginutils": "^4.0.0",
         "@svgr/rollup": "^5.4.0",
         "@types/bn.js": "^4.11.6",
         "@types/chai": "^4.2.12",
@@ -54,6 +55,7 @@
         "react-docgen-typescript-webpack-plugin": "^1.1.0",
         "react-dom": "^16.13.1",
         "react-scripts": "^3.4.3",
+        "rimraf": "^3.0.2",
         "rollup": "^2.27.1",
         "rollup-plugin-babel": "^4.4.0",
         "rollup-plugin-commonjs": "^10.1.0",
@@ -69,6 +71,7 @@
         "ts-loader": "^8.0.3",
         "ts-mocha": "^7.0.0",
         "ts-unused-exports": "^6.2.4",
+        "tsdx": "^0.14.0",
         "tslint": "^6.1.3",
         "tslint-config-prettier": "1.18.0",
         "tslint-config-standard": "9.0.0",
@@ -93,29 +96,20 @@
     "scripts": {
         "link:all": "lerna run link:all",
         "unlink:all": "lerna run unlink:all",
+        "clean": "lerna run clean --scope @renproject/*",
         "build": "lerna run build --scope @renproject/*",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
         "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",
         "lint": "tslint packages/*/*/src/**/*.ts{,x}"
     },
     "workspaces": [
+        "packages/ui/react-components",
         "packages/lib/*",
         "packages/lib/chains/*"
     ],
     "dependencies": {
-        "@renproject/chains": "file:packages/lib/chains",
-        "@renproject/gateway": "file:packages/lib/gateway",
-        "@renproject/interfaces": "file:packages/lib/interfaces",
-        "@renproject/networks": "file:packages/lib/networks",
-        "@renproject/provider": "file:packages/lib/provider",
-        "@renproject/react-components": "file:packages/ui/react-components",
-        "@renproject/ren": "file:packages/lib/ren",
-        "@renproject/rpc": "file:packages/lib/rpc",
-        "@renproject/utils": "file:packages/lib/utils",
         "bitcore-lib": "^8.22.2",
-        "bitcore-lib-cash": "^8.22.2",
-        "gateway-example": "file:packages/ui/gateway-example",
-        "gateway.renproject.io": "file:packages/ui/gateway.renproject.io"
+        "bitcore-lib-cash": "^8.22.2"
     },
     "config": {
         "commitizen": {

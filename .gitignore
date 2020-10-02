@@ -26,9 +26,9 @@ typedoc/
 
 *.env
 
-*.map
 build
 misc
 dist
 
 package-lock.json
+.npmrc

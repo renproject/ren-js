@@ -20,7 +20,7 @@ interface MultiwalletConnector<P, A> {
   // name: string;
 }
 
-interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
+export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
   // A map of desired chains to their desired connectors
   enabledChains: {
     [key in string]: MultiwalletConnector<PossibleProviders, PossibleAccounts>;

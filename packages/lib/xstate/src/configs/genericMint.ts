@@ -1,8 +1,4 @@
 import RenJS from "@renproject/ren";
-import {
-    LockAndMint,
-    LockAndMintDeposit,
-} from "@renproject/ren/build/main/lockAndMint";
 import Web3 from "web3";
 import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 import {
@@ -110,94 +106,98 @@ const txCreator = async (context: GatewayMachineContext) => {
 const depositListener = (
     context: GatewayMachineContext | DepositMachineContext
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
-    let minterRef: LockAndMint | null = null;
-    let listener: null | ((deposit: LockAndMintDeposit) => void) = null;
+    let cleanup = () => {};
     renLockAndMint(context).then(async (minter) => {
-        minterRef = minter;
-        listener = async (deposit: LockAndMintDeposit) => {
-            const txHash = await deposit.txHash();
-            const persistedTx = context.tx.transactions[txHash];
-            // Prevent deposit machine tx listeners from interacting with other deposits
-            const targetDeposit = (context as DepositMachineContext).deposit;
-            if (targetDeposit) {
-                if (targetDeposit.sourceTxHash !== txHash) {
-                    console.error("wrong deposit");
-                    return;
-                } else {
-                    workingDeposit = deposit;
+        cleanup = () => minter.removeAllListeners();
+
+        minter.on(
+            "deposit",
+
+            async (deposit) => {
+                const txHash = await deposit.txHash();
+                const persistedTx = context.tx.transactions[txHash];
+                // Prevent deposit machine tx listeners from interacting with other deposits
+                const targetDeposit = (context as DepositMachineContext)
+                    .deposit;
+                if (targetDeposit) {
+                    if (targetDeposit.sourceTxHash !== txHash) {
+                        console.error("wrong deposit");
+                        return;
+                    }
                 }
-            }
 
-            // If we don't have a sourceTxHash, we haven't seen a deposit yet
-            const rawSourceTx: any = deposit.deposit;
-            const depositState: GatewayTransaction = persistedTx || {
-                sourceTxHash: txHash,
-                sourceTxAmount: rawSourceTx.amount,
-                sourceTxVOut: rawSourceTx.vOut,
-                rawSourceTx,
-            };
+                // If we don't have a sourceTxHash, we haven't seen a deposit yet
+                const rawSourceTx: any = deposit.deposit;
+                const depositState: GatewayTransaction = persistedTx || {
+                    sourceTxHash: txHash,
+                    sourceTxAmount: rawSourceTx.amount,
+                    sourceTxVOut: rawSourceTx.vOut,
+                    rawSourceTx,
+                };
 
-            if (!persistedTx) {
-                callback({
-                    type: "DEPOSIT",
-                    data: { ...depositState },
+                if (!persistedTx) {
+                    callback({
+                        type: "DEPOSIT",
+                        data: { ...depositState },
+                    });
+                } else {
+                    callback("DETECTED");
+                }
+                receive((event) => {
+                    switch (event.type) {
+                        case "SETTLE":
+                            deposit
+                                .confirmed()
+                                .on("confirmation", (confs, targetConfs) => {
+                                    const confirmedTx = {
+                                        sourceTxConfs: confs,
+                                        sourceTxConfTarget: targetConfs,
+                                    };
+                                    callback({
+                                        type: "CONFIRMATION",
+                                        data: confirmedTx,
+                                    });
+                                })
+                                .then(() => {
+                                    callback({
+                                        type: "CONFIRMED",
+                                    });
+                                });
+                            break;
+                        case "SIGN":
+                            deposit
+                                ?.signed()
+                                .on("status", (state) => console.log(state))
+                                .then(() => callback("SIGNED"))
+                                .catch((e) =>
+                                    callback({ type: "SIGN_ERROR", data: e })
+                                );
+                            break;
+                        case "MINT":
+                            deposit
+                                ?.mint()
+                                .on("transactionHash", (txHash) => {
+                                    const submittedTx = {
+                                        destTxHash: txHash,
+                                    };
+                                    callback({
+                                        type: "SUBMITTED",
+                                        data: submittedTx,
+                                    });
+                                })
+                                .catch((e) =>
+                                    callback({ type: "SUBMIT_ERROR", data: e })
+                                );
+                            break;
+                    }
                 });
-            } else {
-                callback("DETECTED");
             }
-        };
-
-        let workingDeposit: LockAndMintDeposit | null = null;
-        minter.on("deposit", listener);
+        );
 
         receive((event) => {
             switch (event.type) {
                 case "RESTORE":
                     minter.processDeposit(event.data).then().catch();
-                    break;
-                case "SETTLE":
-                    workingDeposit
-                        ?.confirmed()
-                        .on("confirmation", (confs, targetConfs) => {
-                            const confirmedTx = {
-                                sourceTxConfs: confs,
-                                sourceTxConfTarget: targetConfs,
-                            };
-                            callback({
-                                type: "CONFIRMATION",
-                                data: confirmedTx,
-                            });
-                        })
-                        .then(() => {
-                            callback({
-                                type: "CONFIRMED",
-                            });
-                        });
-                    break;
-                case "SIGN":
-                    workingDeposit
-                        ?.signed()
-                        .on("status", (state) => console.log(state))
-                        .then(() => callback("SIGNED"))
-                        .catch((e) =>
-                            callback({ type: "SIGN_ERROR", data: e })
-                        );
-                    break;
-                case "MINT":
-                    workingDeposit
-                        ?.mint()
-                        .on("transactionHash", (txHash) => {
-                            const submittedTx = {
-                                destTxHash: txHash,
-                            };
-                            callback({
-                                type: "SUBMITTED",
-                                data: submittedTx,
-                            });
-                        })
-                        .catch((e) =>
-                            callback({ type: "SUBMIT_ERROR", data: e })
-                        );
                     break;
             }
         });
@@ -208,10 +208,7 @@ const depositListener = (
         callback("LISTENING");
     });
     return () => {
-        if (listener) {
-            minterRef?.removeAllListeners();
-            // minterRef?.off("deposit", listener);
-        }
+        cleanup();
     };
 };
 

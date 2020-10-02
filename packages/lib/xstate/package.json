@@ -32,17 +32,19 @@
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
+        "clean": "yarn rimraf ./build",
         "test": "run-s build test:unit",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
     },
     "dependencies": {
-        "@renproject/ren": "file:../ren",
         "bignumber.js": "^9.0.0"
     },
     "devDependencies": {
+        "@renproject/ren": "^2.0.0-alpha.7",
         "xstate": "^4.13.0"
     },
     "peerDependencies": {
+        "@renproject/ren": "^2.0.0-alpha.7",
         "xstate": "^4.13.0"
     }
 }

@@ -4,7 +4,7 @@ import { TransactionConfig } from "web3-core";
 import { DepositCommon, LockChain, MintChain } from "./chain";
 import { EthArgs } from "./ethArgs";
 
-export { TransactionConfig } from "web3-core";
+export type { TransactionConfig } from "web3-core";
 export type BNInterface = { toString(x?: "hex"): string };
 export type NumberValue = string | number | BigNumber | BNInterface;
 

@@ -5,6 +5,7 @@
     "homepage": "https://renproject.github.io/gateway-staging",
     "scripts": {
         "start": "react-scripts start",
+        "clean": "yarn rimraf ./build",
         "build": "NODE_OPTIONS=--max_old_space_size=4096 REACT_APP_SOURCE_VERSION=$SOURCE_VERSION react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",

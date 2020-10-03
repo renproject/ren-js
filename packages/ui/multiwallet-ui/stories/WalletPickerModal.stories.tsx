@@ -1,7 +1,6 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
 import { WalletPickerModal, WalletPickerModalProps } from '../src';
-import { EthereumInjectedConnector } from '../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index';
 
 const meta: Meta<typeof WalletPickerModal> = {
   title: 'WalletPickerModal',
@@ -38,7 +37,7 @@ const props: WalletPickerModalProps<any, any> = {
         ethereum: [
           {
             name: 'metamask',
-            connector: new EthereumInjectedConnector({ debug: true }),
+            connector: {} as any,
             logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
           },
         ],

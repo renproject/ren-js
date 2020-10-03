@@ -57,6 +57,7 @@ export function ConnectorWatcher<P, A>({
     },
     [update, chain, connector]
   );
+
   const handleError = useCallback(
     (error) => {
       update({
@@ -66,6 +67,7 @@ export function ConnectorWatcher<P, A>({
         provider: undefined,
         status: 'disconnected',
       });
+      connector.emitter.removeAllListeners();
     },
     [update, chain, connector]
   );
@@ -79,6 +81,7 @@ export function ConnectorWatcher<P, A>({
         provider: undefined,
         status: 'disconnected',
       });
+      connector.emitter.removeAllListeners();
     },
     [update, chain, connector]
   );
@@ -109,6 +112,9 @@ export function ConnectorWatcher<P, A>({
           error: e,
         })
       );
+    return () => {
+      connector.emitter.removeAllListeners();
+    };
   }, [connector, update, chain, handleDeactivate, handleError, handleUpdate]);
 
   return null;
@@ -132,6 +138,13 @@ export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
   const activateConnector = useCallback(
     async (chain, connector) => {
       const oldConnector = enabledChains[chain];
+      // Don't re-connect if the same connector is already connecting or connected
+      if (
+        oldConnector?.connector === connector &&
+        oldConnector?.status !== 'disconnected'
+      ) {
+        return;
+      }
       if (oldConnector) {
         if (oldConnector.status !== 'disconnected') {
           await oldConnector.connector.deactivate();

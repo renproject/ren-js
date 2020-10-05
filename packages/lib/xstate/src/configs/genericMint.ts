@@ -110,89 +110,86 @@ const depositListener = (
     renLockAndMint(context).then(async (minter) => {
         cleanup = () => minter.removeAllListeners();
 
-        minter.on(
-            "deposit",
+        minter.on("deposit", async (deposit) => {
+            const txHash = await deposit.txHash();
+            const persistedTx = context.tx.transactions[txHash];
 
-            async (deposit) => {
-                const txHash = await deposit.txHash();
-                const persistedTx = context.tx.transactions[txHash];
-                // Prevent deposit machine tx listeners from interacting with other deposits
-                const targetDeposit = (context as DepositMachineContext)
-                    .deposit;
-                if (targetDeposit) {
-                    if (targetDeposit.sourceTxHash !== txHash) {
-                        console.error("wrong deposit");
-                        return;
-                    }
+            // Prevent deposit machine tx listeners from interacting with other deposits
+            const targetDeposit = (context as DepositMachineContext).deposit;
+            if (targetDeposit) {
+                if (targetDeposit.sourceTxHash !== txHash) {
+                    console.error("wrong deposit");
+                    return;
                 }
-
-                // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                const rawSourceTx: any = deposit.deposit;
-                const depositState: GatewayTransaction = persistedTx || {
-                    sourceTxHash: txHash,
-                    sourceTxAmount: rawSourceTx.amount,
-                    sourceTxVOut: rawSourceTx.vOut,
-                    rawSourceTx,
-                };
-
-                if (!persistedTx) {
-                    callback({
-                        type: "DEPOSIT",
-                        data: { ...depositState },
-                    });
-                } else {
-                    callback("DETECTED");
-                }
-                receive((event) => {
-                    switch (event.type) {
-                        case "SETTLE":
-                            deposit
-                                .confirmed()
-                                .on("confirmation", (confs, targetConfs) => {
-                                    const confirmedTx = {
-                                        sourceTxConfs: confs,
-                                        sourceTxConfTarget: targetConfs,
-                                    };
-                                    callback({
-                                        type: "CONFIRMATION",
-                                        data: confirmedTx,
-                                    });
-                                })
-                                .then(() => {
-                                    callback({
-                                        type: "CONFIRMED",
-                                    });
-                                });
-                            break;
-                        case "SIGN":
-                            deposit
-                                ?.signed()
-                                .on("status", (state) => console.log(state))
-                                .then(() => callback("SIGNED"))
-                                .catch((e) =>
-                                    callback({ type: "SIGN_ERROR", data: e })
-                                );
-                            break;
-                        case "MINT":
-                            deposit
-                                ?.mint()
-                                .on("transactionHash", (txHash) => {
-                                    const submittedTx = {
-                                        destTxHash: txHash,
-                                    };
-                                    callback({
-                                        type: "SUBMITTED",
-                                        data: submittedTx,
-                                    });
-                                })
-                                .catch((e) =>
-                                    callback({ type: "SUBMIT_ERROR", data: e })
-                                );
-                            break;
-                    }
-                });
             }
-        );
+
+            // If we don't have a sourceTxHash, we haven't seen a deposit yet
+            const rawSourceTx: any = deposit.deposit;
+            const depositState: GatewayTransaction = persistedTx || {
+                sourceTxHash: txHash,
+                sourceTxAmount: rawSourceTx.amount,
+                sourceTxVOut: rawSourceTx.vOut,
+                rawSourceTx,
+            };
+
+            if (!persistedTx) {
+                callback({
+                    type: "DEPOSIT",
+                    data: { ...depositState },
+                });
+            } else {
+                callback("DETECTED");
+            }
+
+            receive((event) => {
+                switch (event.type) {
+                    case "SETTLE":
+                        deposit
+                            .confirmed()
+                            .on("confirmation", (confs, targetConfs) => {
+                                const confirmedTx = {
+                                    sourceTxConfs: confs,
+                                    sourceTxConfTarget: targetConfs,
+                                };
+                                callback({
+                                    type: "CONFIRMATION",
+                                    data: confirmedTx,
+                                });
+                            })
+                            .then(() => {
+                                callback({
+                                    type: "CONFIRMED",
+                                });
+                            });
+                        break;
+                    case "SIGN":
+                        deposit
+                            ?.signed()
+                            .on("status", (state) => console.log(state))
+                            .then(() => callback("SIGNED"))
+                            .catch((e) =>
+                                callback({ type: "SIGN_ERROR", data: e })
+                            );
+                        break;
+                    case "MINT":
+                        deposit
+                            ?.mint()
+                            .on("transactionHash", (txHash) => {
+                                const submittedTx = {
+                                    destTxHash: txHash,
+                                };
+                                callback({
+                                    type: "SUBMITTED",
+                                    data: submittedTx,
+                                });
+                            })
+                            .catch((e) =>
+                                callback({ type: "SUBMIT_ERROR", data: e })
+                            );
+                        break;
+                }
+            });
+        });
 
         receive((event) => {
             switch (event.type) {
@@ -212,7 +209,10 @@ const depositListener = (
     };
 };
 
-const destConfListener = (context: DepositMachineContext) => (
+// Check for confirmations on the destination chain.
+// FIXME: this should be handled at the RenJS level, but it does not currently
+// expose a general purpose way to check confirmations on the destination
+export const destConfListener = (context: DepositMachineContext) => (
     callback: Sender<DepositMachineEvent>
 ) => {
     const web3: Web3 = new Web3(context.providers[context.tx.destNetwork]);
@@ -239,6 +239,8 @@ const destConfListener = (context: DepositMachineContext) => (
     return () => clearInterval(interval);
 };
 
+// Spawn an actor that will listen for either all deposits to a gatewayAddress,
+// or to a single deposit if present in the context
 const listenerAction = assign<GatewayMachineContext>({
     depositListenerRef: (
         c: GatewayMachineContext | DepositMachineContext,
@@ -258,65 +260,67 @@ const listenerAction = assign<GatewayMachineContext>({
     },
 });
 
+const spawnDepositMachine = (
+    machineContext: DepositMachineContext,
+    name: string
+) =>
+    spawn(
+        depositMachine
+            .withContext(machineContext as DepositMachineContext)
+            .withConfig({
+                services: {
+                    destConfListener,
+                },
+                actions: {
+                    listenerAction: listenerAction as any,
+                },
+            }),
+        {
+            sync: true,
+            name,
+        }
+    ) as Actor<any>;
+
 export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
     services: {
         txCreator,
         depositListener,
     },
     actions: {
-        depositMachineSpawner: assign({
+        spawnDepositMachine: assign({
             depositMachines: (context, evt) => {
                 const machines = context.depositMachines || {};
-                if (evt.type === "DEPOSIT") {
-                    if (machines[evt.data.sourceTxHash]) {
-                        return machines;
-                    }
-                    const machineContext = {
-                        ...context,
-                        deposit: evt.data,
-                    };
-
-                    // We don't want child machines to have references to siblings
-                    delete (machineContext as any).depositMachines;
-                    machines[evt.data.sourceTxHash] = spawn(
-                        depositMachine
-                            .withContext(
-                                machineContext as DepositMachineContext
-                            )
-                            .withConfig({
-                                services: {
-                                    destConfListener,
-                                },
-                                actions: {
-                                    listenerAction: listenerAction as any,
-                                },
-                            }),
-                        {
-                            sync: true,
-                            name: `${evt.data.sourceTxHash}DepositMachine`,
-                        }
-                    ) as Actor<any>;
+                if (machines[evt.data?.sourceTxHash] || !evt.data) {
                     return machines;
                 }
-                for (let i of Object.entries(context.tx.transactions)) {
+                const machineContext = {
+                    ...context,
+                    deposit: evt.data,
+                };
+
+                // We don't want child machines to have references to siblings
+                delete (machineContext as any).depositMachines;
+                machines[evt.data.sourceTxHash] = spawnDepositMachine(
+                    machineContext,
+                    `${evt.data.sourceTxHash}DepositMachine`
+                );
+                return machines;
+            },
+        }),
+        depositMachineSpawner: assign({
+            depositMachines: (context, _) => {
+                const machines = context.depositMachines || {};
+                for (let i of Object.entries(context.tx.transactions || {})) {
                     const machineContext = {
                         ...context,
                         deposit: i[1],
                     };
                     // We don't want child machines to have references to siblings
                     delete (machineContext as any).depositMachines;
-                    machines[i[0]] = spawn(
-                        depositMachine.withContext(machineContext).withConfig({
-                            services: {
-                                destConfListener,
-                            },
-                            actions: { listenerAction: listenerAction as any },
-                        }),
-                        {
-                            sync: true,
-                            name: `${machineContext.deposit.sourceTxHash}DepositMachine`,
-                        }
-                    ) as Actor<any>;
+                    machines[i[0]] = spawnDepositMachine(
+                        machineContext,
+                        `${machineContext.deposit.sourceTxHash}DepositMachine`
+                    );
                 }
                 return machines;
             },
@@ -327,7 +331,7 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
         isRequestingSignature: (ctx) =>
             findClaimableDeposit(ctx) ? true : false,
         isCompleted: ({ tx }, evt) =>
-            evt.data.sourceTxAmount >= tx.targetAmount,
+            evt.data?.sourceTxAmount >= tx.targetAmount,
         hasExpired: ({ tx }) => tx.expiryTime < new Date().getTime(),
         isCreated: ({ tx }) => (tx.gatewayAddress ? true : false),
     },

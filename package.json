@@ -25,6 +25,7 @@
         "@types/react-router-dom": "^5.1.5",
         "@types/underscore": "^1.10.23",
         "@types/web3": "^1.2.2",
+        "@xstate/test": "^0.4.1",
         "babel-core": "^6.26.3",
         "babel-loader": "^8.1.0",
         "babel-polyfill": "^6.26.0",

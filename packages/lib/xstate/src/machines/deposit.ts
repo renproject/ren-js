@@ -153,9 +153,10 @@ export const depositMachine = Machine<
                                 assign({
                                     deposit: (context, evt) => ({
                                         ...context.deposit,
-                                        sourceTxConfs: evt.data.sourceTxConfs,
+                                        sourceTxConfs:
+                                            evt.data?.sourceTxConfs || 0,
                                         sourceTxConfTarget:
-                                            evt.data.sourceTxConfTarget,
+                                            evt.data?.sourceTxConfTarget || 1,
                                     }),
                                 }),
                                 sendParent((ctx, evt) => ({

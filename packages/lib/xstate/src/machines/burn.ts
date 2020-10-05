@@ -23,7 +23,6 @@ export interface BurnMachineSchema {
         createError: {};
         srcSettling: {};
         srcConfirmed: {};
-        accepted: {};
         destSettling: {};
         destConfirmed: {};
     };
@@ -38,7 +37,8 @@ export type BurnMachineEvent =
     | { type: "RELEASE_ERROR"; data: any }
     | { type: "BURN_ERROR"; data: any }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
-    | { type: "CONFIRMED"; data: GatewayTransaction };
+    | { type: "CONFIRMED"; data: GatewayTransaction }
+    | { type: "RELEASED" };
 
 export const burnMachine = Machine<
     BurnMachineContext,
@@ -89,12 +89,15 @@ export const burnMachine = Machine<
                     CONFIRMATION: {
                         // update src confs
                         actions: assign({
-                            tx: (ctx, evt) => ({
-                                ...ctx.tx,
-                                transactions: {
-                                    [evt.data.sourceTxHash]: evt.data,
-                                },
-                            }),
+                            tx: (ctx, evt) =>
+                                evt.data
+                                    ? {
+                                          ...ctx.tx,
+                                          transactions: {
+                                              [evt.data.sourceTxHash]: evt.data,
+                                          },
+                                      }
+                                    : ctx.tx,
                         }),
                     },
                     CONFIRMED: {
@@ -102,9 +105,16 @@ export const burnMachine = Machine<
                     },
                 },
             },
-            srcConfirmed: {},
-            accepted: {},
-            destSettling: {},
+            srcConfirmed: {
+                on: {
+                    RELEASED: "destSettling",
+                },
+            },
+            destSettling: {
+                on: {
+                    CONFIRMED: "destConfirmed",
+                },
+            },
             destConfirmed: {},
         },
     },

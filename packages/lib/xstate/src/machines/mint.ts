@@ -3,6 +3,7 @@ import RenJS from "@renproject/ren";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
 import { depositMachine } from "./deposit";
+import { assert } from "@renproject/utils";
 
 export interface GatewayMachineContext {
     tx: GatewaySession; // The session arguments used for instantiating a mint gateway
@@ -22,7 +23,7 @@ export interface GatewayMachineContext {
 export interface GatewayMachineSchema {
     states: {
         restoring: {};
-        created: {};
+        creating: {};
         srcInitializeError: {};
         listening: {};
         requestingSignature: {};
@@ -64,25 +65,34 @@ export const mintMachine = Machine<
                     send("RESTORE"),
                     assign({ depositMachines: (_ctx, _evt) => ({}) }),
                 ],
+                meta: { test: async () => {} },
                 on: {
                     RESTORE: [
+                        {
+                            target: "completed",
+                            cond: "isExpired",
+                        },
                         {
                             target: "listening",
                             actions: "depositMachineSpawner",
                             cond: "isCreated",
                         },
                         {
-                            target: "completed",
-                            cond: "isExpired",
-                        },
-                        {
-                            target: "created",
+                            target: "creating",
                         },
                     ],
                 },
             },
 
-            created: {
+            creating: {
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            !state.context.tx.gatewayAddress ? true : false,
+                            "Gateway address should not be initialized"
+                        );
+                    },
+                },
                 invoke: {
                     src: "txCreator",
                     onDone: {
@@ -107,9 +117,25 @@ export const mintMachine = Machine<
                 },
             },
 
-            srcInitializeError: {},
+            srcInitializeError: {
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.tx.error ? true : false,
+                            "Error must exist"
+                        );
+                    },
+                },
+            },
             listening: {
-                // entry: "listenerAction",
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.tx.gatewayAddress ? true : false,
+                            "GatewayAddress must exist"
+                        );
+                    },
+                },
                 invoke: {
                     src: "depositListener",
                 },
@@ -124,10 +150,10 @@ export const mintMachine = Machine<
                             cond: "isRequestingSignature",
                             actions: assign({
                                 signatureRequest: (_context, evt) => {
-                                    return evt.data.sourceTxHash;
+                                    return evt.data?.sourceTxHash;
                                 },
                                 tx: (context, evt) => {
-                                    if (evt.data.sourceTxHash) {
+                                    if (evt.data?.sourceTxHash) {
                                         context.tx.transactions[
                                             evt.data.sourceTxHash
                                         ] = evt.data;
@@ -140,7 +166,7 @@ export const mintMachine = Machine<
                         {
                             actions: assign({
                                 tx: (context, evt) => {
-                                    if (evt.data.sourceTxHash) {
+                                    if (evt.data?.sourceTxHash) {
                                         context.tx.transactions[
                                             evt.data.sourceTxHash
                                         ] = evt.data;
@@ -154,7 +180,7 @@ export const mintMachine = Machine<
                         actions: [
                             assign({
                                 tx: (context, evt) => {
-                                    if (evt.data.sourceTxHash) {
+                                    if (evt.data?.sourceTxHash) {
                                         context.tx.transactions[
                                             evt.data.sourceTxHash
                                         ] = evt.data;
@@ -162,7 +188,7 @@ export const mintMachine = Machine<
                                     return context.tx;
                                 },
                             }),
-                            "depositMachineSpawner",
+                            "spawnDepositMachine",
                         ],
                     },
                 },
@@ -181,24 +207,36 @@ export const mintMachine = Machine<
                         }),
                     },
                 },
+                meta: {
+                    test: (_: any, state: any) => {
+                        if (
+                            Object.keys(state.context.tx.transactions || {})
+                                .length === 0
+                        ) {
+                            throw Error(
+                                "A deposit must exist for a signature to be requested"
+                            );
+                        }
+                    },
+                },
             },
-            completed: {},
+            completed: {
+                meta: {
+                    test: (_: any, state: any) => {
+                        if (state.context.depositListenerRef) {
+                            throw Error(
+                                "Deposit listener has not been cleaned up"
+                            );
+                        }
+                    },
+                },
+            },
         },
     },
     {
-        actions: {
-            listenerAction: () => {},
-        },
-        services: {
-            create: async () => {
-                return {};
-            },
-        },
         guards: {
             isRequestingSignature: (ctx) =>
                 findClaimableDeposit(ctx) ? true : false,
-            isCompleted: ({ tx }, evt) =>
-                evt.data.sourceTxAmount >= tx.targetAmount,
             isExpired: ({ tx }) => (tx.expiryTime || 0) < new Date().getTime(),
             isCreated: ({ tx }) => (tx.gatewayAddress ? true : false),
         },

@@ -4,6 +4,7 @@ import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
 import { depositMachine } from "./deposit";
 import { assert } from "@renproject/utils";
+import { log } from "xstate/lib/actions";
 
 export interface GatewayMachineContext {
     tx: GatewaySession; // The session arguments used for instantiating a mint gateway
@@ -103,16 +104,18 @@ export const mintMachine = Machine<
                     },
                     onError: {
                         target: "srcInitializeError",
-                        actions: assign({
-                            tx: (context, evt) => {
-                                console.error(evt);
-                                const newTx = {
-                                    ...context.tx,
-                                    error: evt.data || true,
-                                };
-                                return newTx;
-                            },
-                        }),
+                        actions: [
+                            assign({
+                                tx: (context, evt) => {
+                                    const newTx = {
+                                        ...context.tx,
+                                        error: evt.data || true,
+                                    };
+                                    return newTx;
+                                },
+                            }),
+                            log((_ctx, evt) => evt.data),
+                        ],
                     },
                 },
             },

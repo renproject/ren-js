@@ -90,6 +90,14 @@ const depositModel = createModel(
         } as any)
 ).withEvents({
     DETECTED: {},
+    RESTORE: {},
+    RESTORED: {},
+    CONFIRMATION: {},
+    CONFIRMED: {},
+    REJECT: {},
+    SIGNED: {},
+    CLAIM: {},
+    SUBMITTED: {},
 });
 
 describe("DepositMachine", function () {
@@ -122,6 +130,8 @@ const burnModel = createModel(
 ).withEvents({
     RESTORE: {},
     CONFIRMATION: {},
+    CONFIRMED: {},
+    RELEASED: {},
 });
 
 describe("BurnMachine", function () {

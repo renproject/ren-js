@@ -6,6 +6,7 @@ import {
   makeStyles,
   Modal,
   Paper,
+  PaperProps,
   Typography,
 } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
@@ -33,6 +34,9 @@ export interface WalletPickerProps<P, A>
   config: WalletPickerConfig<P, A>;
   connecting?: boolean;
   connected?: boolean;
+  connectingClasses?: PaperProps['classes'];
+  walletClasses?: WalletEntryProps<P, A>['classes'];
+  pickerClasses?: ReturnType<typeof useWalletPickerStyles>;
   DefaultInfo?: React.FC<{ acknowledge: () => void; close: () => void }>;
 }
 
@@ -66,9 +70,14 @@ export const WalletPicker = <P, A>({
   close,
   connecting,
   connected,
+  connectingClasses,
+  walletClasses,
+  pickerClasses,
   DefaultInfo,
 }: WalletPickerProps<P, A>) => {
-  const classes = useWalletPickerStyles();
+  const defaultClasses = useWalletPickerStyles();
+  const classes = { ...defaultClasses, ...pickerClasses };
+
   const connectors = config.chains[chain];
 
   if (connected) {
@@ -86,28 +95,32 @@ export const WalletPicker = <P, A>({
 
   return (
     <Paper className={classes.root}>
-      {Info || (connecting && <Connecting chain={chain} />) || (
-        <>
-          <Box pl={2} className={classes.header} flexDirection="row">
-            <Typography>Connect a wallet</Typography>
-            <IconButton onClick={close} aria-label="close">
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <Box p={2} className={classes.body}>
-            <Typography>{chain}</Typography>
-            {connectors.map((x) => (
-              <Wallet
-                key={x.name}
-                {...x}
-                close={close}
-                chain={chain}
-                setInfo={setInfo}
-              />
-            ))}
-          </Box>
-        </>
-      )}
+      {Info ||
+        (connecting && (
+          <Connecting classes={connectingClasses} chain={chain} />
+        )) || (
+          <>
+            <Box pl={2} className={classes.header} flexDirection="row">
+              <Typography>Connect a wallet</Typography>
+              <IconButton onClick={close} aria-label="close">
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <Box p={2} className={classes.body}>
+              <Typography>{chain}</Typography>
+              {connectors.map((x) => (
+                <WalletEntry
+                  key={x.name}
+                  {...x}
+                  classes={walletClasses}
+                  close={close}
+                  chain={chain}
+                  setInfo={setInfo}
+                />
+              ))}
+            </Box>
+          </>
+        )}
     </Paper>
   );
 };
@@ -146,35 +159,40 @@ export const WalletPickerModal = <P, A>({
   );
 };
 
-const useWalletStyles = makeStyles({
-  fill: {
+const useWalletEntryStyles = makeStyles((t) => ({
+  button: {
     width: '100%',
-  },
-  grow: {
-    flexGrow: 1,
+    display: 'flex',
+    padding: t.spacing(2),
   },
   body: {
+    padding: t.spacing(2),
+    flexGrow: 1,
     display: 'flex',
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     textTransform: 'capitalize',
   },
-});
+}));
 
-const Wallet = <P, A>({
+interface WalletEntryProps<P, A> extends ConnectorConfig<P, A> {
+  chain: string;
+  classes?: ReturnType<typeof useWalletEntryStyles>;
+  close: () => void;
+  setInfo: (i: any) => void;
+}
+
+const WalletEntry = <P, A>({
   name,
   chain,
   logo,
   connector,
   info: Info,
+  classes,
   close,
   setInfo,
-}: ConnectorConfig<P, A> & {
-  chain: string;
-  close: () => void;
-  setInfo: (i: any) => void;
-}) => {
+}: WalletEntryProps<P, A> & {}) => {
   const { activateConnector } = useMultiwallet<P, A>();
 
   const buildInfo = useCallback(() => {
@@ -187,37 +205,43 @@ const Wallet = <P, A>({
     ));
   }, [setInfo, activateConnector, close, Info, chain, connector]);
 
-  const classes = useWalletStyles();
+  const defaultClasses = useWalletEntryStyles();
+  const combinedClasses = { ...defaultClasses, ...classes };
   return (
-    <Box pt={1} display="flex">
-      <ButtonBase
-        className={classes.grow}
-        onClick={() => {
-          if (Info) {
-            buildInfo();
-          } else {
-            activateConnector(chain, connector);
-          }
-        }}
-      >
-        <Paper className={classes.grow}>
-          <Box className={classes.body} p={2}>
-            <Typography>{name}</Typography>{' '}
-            <img alt={`${name} logo`} src={logo} />
-          </Box>
-        </Paper>
-      </ButtonBase>
-    </Box>
+    <ButtonBase
+      className={combinedClasses.button}
+      onClick={() => {
+        if (Info) {
+          buildInfo();
+        } else {
+          activateConnector(chain, connector);
+        }
+      }}
+    >
+      <Paper className={combinedClasses.body}>
+        <Typography>{name}</Typography> <img alt={`${name} logo`} src={logo} />
+      </Paper>
+    </ButtonBase>
   );
 };
 
+const useConnectingStyles = makeStyles((t) => ({
+  root: {
+    display: 'flex',
+    padding: t.spacing(2),
+    justifyContent: 'center',
+  },
+}));
+
 // Element to show when a selected chain is connecting
-const Connecting: React.FC<{ chain: string }> = ({ chain }) => {
+const Connecting: React.FC<{
+  chain: string;
+  classes?: PaperProps['classes'];
+}> = ({ chain, classes }) => {
+  const defaultClasses = useConnectingStyles();
   return (
-    <Paper>
-      <Box p={2} display="flex" justifyContent="center">
-        <Typography>Connecting to {chain}</Typography>
-      </Box>
+    <Paper classes={classes || defaultClasses}>
+      <Typography>Connecting to {chain}</Typography>
     </Paper>
   );
 };

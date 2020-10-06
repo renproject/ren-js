@@ -1,6 +1,7 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
 import { WalletPicker, WalletPickerProps } from '../src';
+import { makeStyles } from '@material-ui/core';
 
 const meta: Meta<typeof WalletPicker> = {
   title: 'Welcome',
@@ -76,3 +77,57 @@ const defaultInfoProps: WalletPickerProps<any, any> = {
 };
 
 DefaultInfo.args = defaultInfoProps;
+
+const usePickerStyles = makeStyles({
+  root: {
+    maxWidth: 500,
+    minWidth: 380,
+  },
+  header: {
+    backgroundColor: '#343434',
+    color: '#fafafa',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+});
+
+const useWalletStyles = makeStyles((t) => ({
+  body: {
+    padding: t.spacing(2),
+    flexGrow: 1,
+    borderRadius: t.spacing(2),
+    backgroundColor: '#444444',
+  },
+}));
+
+const StyledTemplate: Story<any> = (args) => {
+  const pickerClasses = usePickerStyles();
+  const walletClasses = useWalletStyles();
+  return (
+    <WalletPicker
+      walletClasses={walletClasses}
+      pickerClasses={pickerClasses}
+      {...args}
+    />
+  );
+};
+
+export const ClassExtension = StyledTemplate.bind({});
+
+const classExtensionProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+
+  config: {
+    chains: {
+      ethereum: [
+        {
+          name: 'metamask',
+          logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+          connector: {} as any,
+        },
+      ],
+    },
+  },
+};
+
+ClassExtension.args = classExtensionProps;

@@ -4,6 +4,7 @@ import {
   Default as Multiwallet,
   DefaultInfo,
   Connecting,
+  ClassExtension,
 } from '../stories/WalletPicker.stories';
 import { Default as MultiwalletModal } from '../stories/WalletPickerModal.stories';
 
@@ -23,6 +24,12 @@ describe('Multiwallet', () => {
   it('renders default info', () => {
     const div = document.createElement('div');
     ReactDOM.render(<DefaultInfo {...DefaultInfo.args} />, div);
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('renders extended classes', () => {
+    const div = document.createElement('div');
+    ReactDOM.render(<ClassExtension {...ClassExtension.args} />, div);
     ReactDOM.unmountComponentAtNode(div);
   });
 });

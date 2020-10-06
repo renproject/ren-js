@@ -52,7 +52,6 @@ const TestManualActivate: React.FC<{
   const { activateConnector, enabledChains } = useMultiwallet();
   const enabledChain = enabledChains[chain];
   const activate = React.useCallback(() => {
-    console.log('clicked');
     activateConnector(chain, connector);
   }, [activateConnector, chain, connector]);
 

@@ -4,13 +4,13 @@ import {
     assertType,
     Callable,
     fromHex,
+    keccak256,
     Ox,
     rawEncode,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
 import { Key } from "@terra-money/terra.js";
-import { keccak256 } from "ethereumjs-util";
 
 import {
     resolveTerraNetwork,

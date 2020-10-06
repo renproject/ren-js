@@ -9,11 +9,11 @@ import {
     RenContract,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
-import { keccak256 } from "ethereumjs-util";
 
 import { assertType } from "./assert";
 import { fromHex, Ox, randomBytes, toBase64, unzip } from "./common";
-import { rawEncode } from "./ethereumUtils";
+import { keccak256 } from "./keccak256";
+import { rawEncode } from "./rawEncode";
 
 // export const generateNHash = (tx: Tx): Buffer => {
 //     const encoded = rawEncode(

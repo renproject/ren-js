@@ -41,15 +41,20 @@ const txCreator = async (
 ): Promise<GatewaySession> => {
     const asset = context.tx.sourceAsset;
 
-    const fees = await context.sdk.getFees();
-    const suggestedAmount = new BigNumber(
-        Math.floor(
-            fees[asset.toLowerCase()].release +
-                Number(context.tx.targetAmount) * 1e8
-        )
-    )
-        .decimalPlaces(0)
+    let suggestedAmount = new BigNumber(Number(context.tx.targetAmount) * 1e8)
+        .decimalPlaces(8)
         .toFixed();
+    try {
+        const fees = await context.sdk.getFees();
+        suggestedAmount = new BigNumber(
+            Math.floor(
+                fees[asset.toLowerCase()].release +
+                    Number(context.tx.targetAmount) * 1e8
+            )
+        )
+            .decimalPlaces(0)
+            .toFixed();
+    } catch (e) {}
 
     const newTx: GatewaySession = {
         ...context.tx,

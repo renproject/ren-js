@@ -109,38 +109,8 @@ const depositListener = (
     let cleanup = () => {};
     renLockAndMint(context).then(async (minter) => {
         cleanup = () => minter.removeAllListeners();
-
         minter.on("deposit", async (deposit) => {
-            const txHash = await deposit.txHash();
-            const persistedTx = context.tx.transactions[txHash];
-
-            // Prevent deposit machine tx listeners from interacting with other deposits
-            const targetDeposit = (context as DepositMachineContext).deposit;
-            if (targetDeposit) {
-                if (targetDeposit.sourceTxHash !== txHash) {
-                    console.error("wrong deposit");
-                    return;
-                }
-            }
-
-            // If we don't have a sourceTxHash, we haven't seen a deposit yet
-            const rawSourceTx: any = deposit.deposit;
-            const depositState: GatewayTransaction = persistedTx || {
-                sourceTxHash: txHash,
-                sourceTxAmount: rawSourceTx.amount,
-                sourceTxVOut: rawSourceTx.vOut,
-                rawSourceTx,
-            };
-
-            if (!persistedTx) {
-                callback({
-                    type: "DEPOSIT",
-                    data: { ...depositState },
-                });
-            } else {
-                callback("DETECTED");
-            }
-
+            // Register event handlers prior to setup in case events land early
             receive((event) => {
                 switch (event.type) {
                     case "SETTLE":
@@ -189,6 +159,36 @@ const depositListener = (
                         break;
                 }
             });
+
+            const txHash = await deposit.txHash();
+            const persistedTx = context.tx.transactions[txHash];
+
+            // Prevent deposit machine tx listeners from interacting with other deposits
+            const targetDeposit = (context as DepositMachineContext).deposit;
+            if (targetDeposit) {
+                if (targetDeposit.sourceTxHash !== txHash) {
+                    console.error("wrong deposit");
+                    return;
+                }
+            }
+
+            // If we don't have a sourceTxHash, we haven't seen a deposit yet
+            const rawSourceTx: any = deposit.deposit;
+            const depositState: GatewayTransaction = persistedTx || {
+                sourceTxHash: txHash,
+                sourceTxAmount: rawSourceTx.amount,
+                sourceTxVOut: rawSourceTx.vOut,
+                rawSourceTx,
+            };
+
+            if (!persistedTx) {
+                callback({
+                    type: "DEPOSIT",
+                    data: { ...depositState },
+                });
+            } else {
+                callback("DETECTED");
+            }
         });
 
         receive((event) => {

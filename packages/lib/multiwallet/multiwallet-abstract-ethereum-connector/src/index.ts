@@ -57,7 +57,6 @@ export abstract class AbstractEthereumConnector
     >["deactivate"];
     // Get the complete connector status in one call
     async getStatus(): Promise<ConnectorUpdate<SaneProvider, Address>> {
-        debugger;
         return {
             account: await this.getAccount(),
             renNetwork: await this.getRenNetwork(),

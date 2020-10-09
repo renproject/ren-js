@@ -7,6 +7,7 @@ import {
   useMultiwallet,
 } from '../src/MultiwalletProvider';
 import { EthereumInjectedConnector } from '../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index';
+import { EthereumWalletConnectConnector } from '../../../lib/multiwallet/multiwallet-ethereum-walletconnect-connector/src/index';
 import { BinanceSmartChainInjectedConnector } from '../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index';
 
 const options: WalletPickerConfig<any, string> = {
@@ -16,6 +17,17 @@ const options: WalletPickerConfig<any, string> = {
         name: 'Metamask',
         logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
         connector: new EthereumInjectedConnector({ debug: true }),
+      },
+      {
+        name: 'WalletConnect',
+        logo: 'https://avatars0.githubusercontent.com/u/37784886?s=60&v=4',
+        connector: new EthereumWalletConnectConnector({
+          rpc: {
+            42: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
+          },
+          qrcode: true,
+          debug: true,
+        }),
       },
     ],
     bsc: [

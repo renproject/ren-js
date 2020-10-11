@@ -1,6 +1,6 @@
 {
   "name": "@renproject/react-components",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0-alpha.8",
   "description": "",
   "author": "renproject",
   "license": "GPL-3.0",
@@ -21,6 +21,7 @@
     "test": "cross-env CI=1 react-scripts test --env=jsdom",
     "test:watch": "react-scripts test --env=jsdom",
     "demo:build": "react-scripts build",
+    "clean": "yarn rimraf ./dist",
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "start": "react-scripts start",
@@ -47,6 +48,9 @@
     "prop-types": "^15.7.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
+  },
+  "devDependencies": {
+    "node-sass": "^4.14.1"
   },
   "files": [
     "dist",

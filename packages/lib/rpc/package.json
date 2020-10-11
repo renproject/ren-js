@@ -1,6 +1,6 @@
 {
     "name": "@renproject/rpc",
-    "version": "2.0.0-alpha.7",
+    "version": "2.0.0-alpha.8",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -28,6 +28,7 @@
     "module": "./src/index.ts",
     "scripts": {
         "describe": "npm-scripts-info",
+        "clean": "yarn rimraf ./build",
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
@@ -51,9 +52,9 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "file:../interfaces",
-        "@renproject/provider": "file:../provider",
-        "@renproject/utils": "file:../utils",
+        "@renproject/interfaces": "^2.0.0-alpha.8",
+        "@renproject/provider": "^2.0.0-alpha.8",
+        "@renproject/utils": "^2.0.0-alpha.8",
         "@types/node": "^14.11.1",
         "bignumber.js": "^9.0.0",
         "immutable": "^4.0.0-rc.12"

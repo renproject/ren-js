@@ -10,6 +10,7 @@
         "lint:all": "$npm_execpath run --silent lint:ts && $npm_execpath run --silent lint:extra",
         "lint": "$npm_execpath run --silent lint:ts",
         "start": "react-scripts start",
+        "clean": "yarn rimraf ./build",
         "build": "NODE_OPTIONS=--max_old_space_size=4096 REACT_APP_SOURCE_VERSION=$SOURCE_VERSION react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",

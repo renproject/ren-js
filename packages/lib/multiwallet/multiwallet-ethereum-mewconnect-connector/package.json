@@ -13,9 +13,9 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "./dist/index.js",
-    "typings": "./dist/index.d.ts",
-    "module": "./dist/multiwallet-ethereum-mewconnect-connector.esm.js",
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
         "build": "yarn build:main && yarn build:module",

@@ -1,20 +1,20 @@
 import { Script } from "./script";
 
-const gatewayScript = (gPubKey: Buffer, gHash: Buffer): Script =>
+const gatewayScript = (gGubKeyHash: Buffer, gHash: Buffer): Script =>
     new Script()
         .addData(gHash)
         .addOp(Script.OP.OP_DROP)
         .addOp(Script.OP.OP_DUP)
         .addOp(Script.OP.OP_HASH160)
-        .addData(gPubKey)
+        .addData(gGubKeyHash)
         .addOp(Script.OP.OP_EQUALVERIFY)
         .addOp(Script.OP.OP_CHECKSIG);
 
 export const createAddress = (
-    gPubKey: Buffer,
+    gGubKeyHash: Buffer,
     gHash: Buffer,
     prefix: Buffer
-): Buffer => gatewayScript(gPubKey, gHash).toAddress(prefix);
+): Buffer => gatewayScript(gGubKeyHash, gHash).toAddress(prefix);
 
-export const pubKeyScript = (gPubKey: Buffer, gHash: Buffer) =>
-    gatewayScript(gPubKey, gHash).toScriptHashOut();
+export const pubKeyScript = (gGubKeyHash: Buffer, gHash: Buffer) =>
+    gatewayScript(gGubKeyHash, gHash).toScriptHashOut();

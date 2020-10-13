@@ -10,21 +10,13 @@ import {
     Transaction,
 } from "./base";
 
-export class BitcoinChain
-    extends BitcoinBaseChain
+export class BitcoinClass extends BitcoinBaseChain
     implements LockChain<Transaction, Deposit, Asset, Address> {
     getBurnPayload: (() => string) | undefined;
 
-    constructor(
-        network?: BitcoinNetwork,
-        thisClass: typeof BitcoinBaseChain = BitcoinChain
-    ) {
-        super(network, thisClass);
-    }
-
     Address = (address: string): this => {
         // Type validation
-        assertType("string", { address });
+        assertType<string>("string", { address });
 
         this.getBurnPayload = () => address;
         return this;
@@ -36,4 +28,5 @@ export class BitcoinChain
 }
 
 // @dev Removes any static fields.
-export const Bitcoin = Callable(BitcoinChain);
+export type Bitcoin = BitcoinClass;
+export const Bitcoin = Callable(BitcoinClass);

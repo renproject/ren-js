@@ -21,7 +21,7 @@ export class OverwriteProvider<
     public async sendMessage<Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 5
+        retry = 2
     ): Promise<Responses[Method]> {
         const overrides = ({
             ren_queryShards: {
@@ -67,6 +67,14 @@ export class OverwriteProvider<
                                 hosts: ["Ethereum"],
                                 locked: "0",
                                 origin: "Filecoin",
+                                pubKey:
+                                    "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
+                            },
+                            {
+                                asset: "LUNA",
+                                hosts: ["Ethereum"],
+                                locked: "0",
+                                origin: "Terra",
                                 pubKey:
                                     "Akwn5WEMcB2Ff_E0ZOoVks9uZRvG_eFD99AysymOc5fm",
                             },

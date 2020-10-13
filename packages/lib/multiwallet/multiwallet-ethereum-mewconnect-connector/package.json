@@ -38,17 +38,14 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
+        "link:all": "yarn link @renproject/interfaces @renproject/multiwallet-abstract-ethereum-connector @renproject/multiwallet-base-connector && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
         "@myetherwallet/mewconnect-web-client": "^2.1.5-beta.1",
-        "@renproject/chains-ethereum": "^2.0.0-alpha.7",
         "@renproject/multiwallet-base-connector": "^2.1.1-alpha.0",
         "@renproject/interfaces": "^2.0.0-alpha.7",
         "@renproject/multiwallet-abstract-ethereum-connector": "^2.1.1-alpha.0"
-
-    },
-    "peerDependencies": {
     },
     "resolutions": {
         "sha3": "^2.1.2"

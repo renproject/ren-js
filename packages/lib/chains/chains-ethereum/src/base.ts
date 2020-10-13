@@ -1,4 +1,5 @@
 import {
+    BurnDetails,
     ContractCall,
     Logger,
     MintChain,
@@ -10,24 +11,26 @@ import {
 } from "@renproject/interfaces";
 import { RenNetworkDetails, RenNetworkDetailsMap } from "@renproject/networks";
 import {
+    assert,
     assertType,
     extractError,
-    ignorePromiEventError,
+    fromHex,
     Ox,
-    parseRenContract,
     payloadToABI,
     payloadToMintABI,
     SECONDS,
     sleep,
+    strip0x,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import BlocknativeSdk from "bnc-sdk";
 import { isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
 import Web3 from "web3";
-import { TransactionConfig, TransactionReceipt } from "web3-core";
+import { Log, TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
-import { keccak256 as web3Keccak256, sha3 } from "web3-utils";
+import { keccak256 as web3Keccak256 } from "web3-utils";
 
 export type Web3Events = {
     transactionHash: [string];
@@ -41,6 +44,22 @@ export type RenWeb3Events = {
     eth_receipt: [TransactionReceipt];
     eth_confirmation: [number, TransactionReceipt];
     error: [Error];
+};
+
+// tslint:disable-next-line: no-any
+export const ignorePromiEventError = (error: any): boolean => {
+    try {
+        return (
+            error &&
+            error.message &&
+            (error.message.match(/Invalid block number/) ||
+                error.message.match(
+                    /Timeout exceeded during the transaction confirmation process./
+                ))
+        );
+    } catch (error) {
+        return false;
+    }
 };
 
 /**
@@ -70,7 +89,34 @@ export const forwardWeb3Events = <T, TEvents extends Web3Events>(
     });
 };
 
-export const BURN_TOPIC = web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)");
+/**
+ * eventTopics contains the Ethereum event identifiers (the first log topic) for
+ * Gateway contract events.
+ */
+export const eventTopics = {
+    /**
+     * ```sol
+     * event LogBurn(
+     *     bytes _to,
+     *     uint256 _amount,
+     *     uint256 indexed _n,
+     *     bytes indexed _indexedTo
+     *  );
+     * ```
+     */
+    LogBurn: web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)"),
+    /**
+     * ```sol
+     * event LogMint(
+     *     address indexed _to,
+     *     uint256 _amount,
+     *     uint256 indexed _n,
+     *     bytes32 indexed _signedMessageHash
+     * );
+     * ```
+     */
+    LogMint: web3Keccak256("LogMint(address,uint256,uint256,bytes32)"),
+};
 
 /**
  * Waits for the receipt of a transaction to be available, retrying every 3
@@ -87,7 +133,7 @@ export const waitForReceipt = async (
     txHash: string /*, nonce?: number*/
 ) =>
     new Promise<TransactionReceipt>(async (resolve, reject) => {
-        assertType("string", { txHash });
+        assertType<string>("string", { txHash });
 
         let blocknative;
 
@@ -99,7 +145,7 @@ export const waitForReceipt = async (
             });
 
             const { emitter } = blocknative.transaction(txHash);
-            emitter.on("txSpeedUp", (state) => {
+            emitter.on("txSpeedUp", state => {
                 if (state.hash) {
                     txHash = Ox(state.hash);
                 }
@@ -147,11 +193,68 @@ export const waitForReceipt = async (
         return;
     });
 
-export const extractBurnReference = async (
+export const getGatewayAddress = async (
+    network: RenNetworkDetails,
+    web3: Web3,
+    asset: Asset
+) => {
+    try {
+        const registry = new web3.eth.Contract(
+            network.addresses.GatewayRegistry.abi,
+            network.addresses.GatewayRegistry.address
+        );
+        return await registry.methods.getGatewayBySymbol(asset).call();
+    } catch (error) {
+        (
+            error || {}
+        ).error = `Error looking up ${asset}Gateway address: ${error.message}`;
+        throw error;
+    }
+};
+
+const parseBurnEvent = (web3: Web3, event: Log): BurnDetails<Transaction> => {
+    assert(event.topics[0] === eventTopics.LogBurn);
+
+    const { _to, _amount, _n } = web3.eth.abi.decodeLog(
+        [
+            {
+                indexed: false,
+                name: "_to",
+                type: "bytes",
+            },
+            {
+                indexed: false,
+                name: "_amount",
+                type: "uint256",
+            },
+            {
+                indexed: true,
+                name: "_n",
+                type: "uint256",
+            },
+            {
+                indexed: true,
+                name: "_indexedTo",
+                type: "bytes",
+            },
+        ],
+        event.data,
+        event.topics.slice(1) as string[]
+    );
+
+    return {
+        transaction: event.transactionHash,
+        amount: new BigNumber(_amount.toString()),
+        to: fromHex(_to),
+        nonce: new BigNumber(_n.toString()),
+    };
+};
+
+export const extractBurnDetails = async (
     web3: Web3,
     txHash: string
-): Promise<number | string> => {
-    assertType("string", { txHash });
+): Promise<BurnDetails<Transaction>> => {
+    assertType<string>("string", { txHash });
 
     const receipt = await waitForReceipt(web3, txHash);
 
@@ -159,20 +262,46 @@ export const extractBurnReference = async (
         throw Error("No events found in transaction");
     }
 
-    let burnReference: number | string | undefined;
+    const burnDetails = receipt.logs
+        .filter(event => event.topics[0] === eventTopics.LogBurn)
+        .map(event => parseBurnEvent(web3, event));
 
-    for (const [, event] of Object.entries(receipt.logs)) {
-        if (event.topics[0] === BURN_TOPIC) {
-            burnReference = event.topics[1] as string;
-            break;
-        }
+    if (burnDetails.length > 1) {
+        // WARNING: More than one burn found.
     }
 
-    if (!burnReference && burnReference !== 0) {
-        throw Error("No reference ID found in logs");
+    if (burnDetails.length) {
+        return burnDetails[0];
     }
 
-    return burnReference;
+    throw Error("No reference ID found in logs");
+};
+
+export const findBurnByNonce = async (
+    network: RenNetworkDetails,
+    web3: Web3,
+    asset: Asset,
+    nonce: string
+): Promise<BurnDetails<Transaction>> => {
+    const gatewayAddress = await getGatewayAddress(network, web3, asset);
+
+    const nonceBuffer = new BN(nonce).toBuffer("be", 32);
+
+    const burnEvents = await web3.eth.getPastLogs({
+        address: gatewayAddress,
+        fromBlock: "1",
+        toBlock: "latest",
+        topics: [eventTopics.LogBurn, nonceBuffer] as string[],
+    });
+
+    if (!burnEvents.length) {
+        throw Error(`Burn not found for nonce ${Ox(nonceBuffer)}`);
+    }
+    if (burnEvents.length > 1) {
+        // WARNING: More than one burn with the same nonce.
+    }
+
+    return parseBurnEvent(web3, burnEvents[0]);
 };
 
 export const defaultAccountError = "No accounts found in Web3 wallet.";
@@ -208,7 +337,7 @@ export const manualPromiEvent = async (
     txHash: string,
     promiEvent: PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>
 ) => {
-    assertType("string", { txHash });
+    assertType<string>("string", { txHash });
 
     const receipt = await web3.eth.getTransactionReceipt(txHash);
     promiEvent.emit("transactionHash", txHash);
@@ -244,54 +373,21 @@ export const manualPromiEvent = async (
     return receipt;
 };
 
-export const getTokenName = (
-    tokenOrContract: RenTokens | RenContract
-): RenTokens => {
-    try {
-        return getTokenName(parseRenContract(tokenOrContract).asset);
-    } catch (error) {
-        return tokenOrContract;
-    }
-};
-
 export const getTokenAddress = async (
     network: RenNetworkDetails,
     web3: Web3,
-    tokenOrContract: RenTokens | RenContract
+    asset: Asset
 ): Promise<string> => {
     try {
         const registry = new web3.eth.Contract(
             network.addresses.GatewayRegistry.abi,
             network.addresses.GatewayRegistry.address
         );
-        return await registry.methods
-            .getTokenBySymbol(getTokenName(tokenOrContract))
-            .call();
+        return await registry.methods.getTokenBySymbol(asset).call();
     } catch (error) {
         (
             error || {}
-        ).error = `Error looking up ${tokenOrContract} token address: ${error.message}`;
-        throw error;
-    }
-};
-
-export const getGatewayAddress = async (
-    network: RenNetworkDetails,
-    web3: Web3,
-    tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
-) => {
-    try {
-        const registry = new web3.eth.Contract(
-            network.addresses.GatewayRegistry.abi,
-            network.addresses.GatewayRegistry.address
-        );
-        return await registry.methods
-            .getGatewayBySymbol(getTokenName(tokenOrContract))
-            .call();
-    } catch (error) {
-        (
-            error || {}
-        ).error = `Error looking up ${tokenOrContract}Gateway address: ${error.message}`;
+        ).error = `Error looking up ${asset} token address: ${error.message}`;
         throw error;
     }
 };
@@ -299,15 +395,11 @@ export const getGatewayAddress = async (
 export const findTransactionBySigHash = async (
     network: RenNetworkDetails,
     web3: Web3,
-    tokenOrContract: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH"),
+    asset: Asset,
     sigHash: Buffer
 ): Promise<string | undefined> => {
     try {
-        const gatewayAddress = await getGatewayAddress(
-            network,
-            web3,
-            tokenOrContract
-        );
+        const gatewayAddress = await getGatewayAddress(network, web3, asset);
         const gatewayContract = new web3.eth.Contract(
             network.addresses.Gateway.abi,
             gatewayAddress
@@ -316,25 +408,20 @@ export const findTransactionBySigHash = async (
         // the contract
         const status = await gatewayContract.methods.status(Ox(sigHash)).call();
         if (status) {
-            const recentRegistrationEvents = await web3.eth.getPastLogs({
+            const mintEvents = await web3.eth.getPastLogs({
                 address: gatewayAddress,
                 fromBlock: "1",
                 toBlock: "latest",
                 // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
                 // address.slice(2), null, null] as any,
-                topics: [
-                    sha3("LogMint(address,uint256,uint256,bytes32)"),
-                    null,
-                    null,
-                    sigHash,
-                ] as string[],
+                topics: [eventTopics.LogMint, null, null, sigHash] as string[],
             });
-            if (!recentRegistrationEvents.length) {
+            if (!mintEvents.length) {
                 throw new Error(
                     `Mint has been submitted but no log was found.`
                 );
             }
-            const log = recentRegistrationEvents[0];
+            const log = mintEvents[0];
             return log.transactionHash;
         }
     } catch (error) {
@@ -373,12 +460,12 @@ export const submitToEthereum = async (
 
         const callParams = last
             ? [
-                  ...(contractParams || []).map((value) => value.value),
+                  ...(contractParams || []).map(value => value.value),
                   Ox(new BigNumber(mintTx.out.amount).toString(16)), // _amount: BigNumber
                   Ox(mintTx.out.nhash),
                   Ox(mintTx.out.signature), // _sig: string
               ]
-            : (contractParams || []).map((value) => value.value);
+            : (contractParams || []).map(value => value.value);
 
         const ABI = last
             ? payloadToMintABI(contractFn, contractParams || [])
@@ -469,23 +556,19 @@ export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
 
 export class EthereumBaseChain
     implements MintChain<Transaction, Asset, Address> {
-    public name = "Eth";
+    public name = "Ethereum";
     public renNetwork: RenNetwork | undefined;
 
     public readonly web3: Web3 | undefined;
     public renNetworkDetails: RenNetworkDetails | undefined;
 
-    public readonly getTokenContractAddress = async (
-        token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
-    ) => {
+    public readonly getTokenContractAddress = async (asset: Asset) => {
         if (!this.web3 || !this.renNetworkDetails) {
             throw new Error(`${name} object not initialized`);
         }
-        return getTokenAddress(this.renNetworkDetails, this.web3, token);
+        return getTokenAddress(this.renNetworkDetails, this.web3, asset);
     };
-    public readonly getGatewayContractAddress = async (
-        token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")
-    ) => {
+    public readonly getGatewayContractAddress = async (token: Asset) => {
         if (!this.web3 || !this.renNetworkDetails) {
             throw new Error(`${name} object not initialized`);
         }
@@ -495,16 +578,8 @@ export class EthereumBaseChain
     constructor(
         web3Provider: provider,
         renNetwork?: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails,
-        thisClass?: typeof EthereumBaseChain
+        renNetworkDetails?: RenNetworkDetails
     ) {
-        if (!(this instanceof EthereumBaseChain)) {
-            return new (thisClass || EthereumBaseChain)(
-                web3Provider,
-                renNetwork
-            );
-        }
-
         this.web3 = new Web3(web3Provider);
 
         this.renNetworkDetails =
@@ -530,16 +605,16 @@ export class EthereumBaseChain
 
     // Supported assets
 
-    /**
-     * `supportsAsset` should return true if the asset is native to the
-     * MintChain.
-     *
-     * @example
-     * ethereum.supportsAsset = asset => asset === "ETH";
-     */
-    supportsAsset = (asset: Asset): boolean => {
-        return asset === "eth";
-    };
+    // /**
+    //  * `supportsAsset` should return true if the asset is native to the
+    //  * MintChain.
+    //  *
+    //  * @example
+    //  * ethereum.supportsAsset = asset => asset === "ETH";
+    //  */
+    // supportsAsset = (asset: Asset): boolean => {
+    //     return asset === "eth";
+    // };
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
@@ -600,7 +675,10 @@ export class EthereumBaseChain
             const transactionBlock = new BigNumber(
                 receipt.blockNumber.toString()
             );
-            current = currentBlock.minus(transactionBlock).plus(1).toNumber();
+            current = currentBlock
+                .minus(transactionBlock)
+                .plus(1)
+                .toNumber();
         }
         return {
             current,
@@ -660,12 +738,12 @@ export class EthereumBaseChain
         );
     };
 
-    resolveTokenGatewayContract = async (token: RenTokens): Promise<string> => {
+    resolveTokenGatewayContract = async (asset: Asset): Promise<string> => {
         if (!this.renNetworkDetails || !this.web3) {
             throw new Error(`${name} object not initialized`);
         }
         return Ox(
-            await getTokenAddress(this.renNetworkDetails, this.web3, token)
+            await getTokenAddress(this.renNetworkDetails, this.web3, asset)
         );
     };
 
@@ -678,104 +756,113 @@ export class EthereumBaseChain
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     findBurnTransaction = async (
-        params: {
-            ethereumTxHash?: Transaction;
+        asset: string,
+        // Once of the following should not be undefined.
+        burn: {
+            transaction?: Transaction;
+            burnNonce?: string | number;
             contractCalls?: ContractCall[];
-            burnReference?: string | number | undefined;
         },
+
         eventEmitter: EventEmitter,
-        logger: Logger,
-        // tslint:disable-next-line: no-any
-        txConfig?: any
-    ): Promise<string | number> => {
-        const { contractCalls } = params;
-        let { ethereumTxHash, burnReference } = params;
+        logger: Logger
+    ): Promise<BurnDetails<Transaction>> => {
+        if (!this.renNetworkDetails || !this.web3) {
+            throw new Error(`${name} object not initialized`);
+        }
 
-        // There are three parameter configs:
-        // Situation (1): A `burnReference` is provided
-        // Situation (2): Contract call details are provided
-        // Situation (3): A txHash is provided
+        const { burnNonce, contractCalls } = burn;
+        let { transaction } = burn;
 
-        // For (1), we don't have to do anything.
-        if (!burnReference && burnReference !== 0) {
-            if (!this.renNetworkDetails || !this.web3) {
-                throw new Error(`${name} object not initialized`);
-            }
-            // Handle situation (2)
-            // Make a call to the provided contract and Pass on the
-            // transaction hash.
-            if (contractCalls) {
-                for (let i = 0; i < contractCalls.length; i++) {
-                    const contractCall = contractCalls[i];
-                    const last = i === contractCalls.length - 1;
-                    const {
-                        contractParams,
-                        contractFn,
-                        sendTo,
-                        txConfig: txConfigParam,
-                    } = contractCall;
-                    const callParams = [
-                        ...(contractParams || []).map((value) => value.value),
-                    ];
-                    const ABI = payloadToABI(contractFn, contractParams);
-                    const contract = new this.web3.eth.Contract(ABI, sendTo);
-                    const config = await withDefaultAccount(this.web3, {
-                        ...txConfigParam,
-                        ...{
-                            value:
-                                txConfigParam && txConfigParam.value
-                                    ? txConfigParam.value.toString()
-                                    : undefined,
-                            gasPrice:
-                                txConfigParam && txConfigParam.gasPrice
-                                    ? txConfigParam.gasPrice.toString()
-                                    : undefined,
-                        },
-                        ...txConfig,
-                    });
-                    logger.debug(
-                        "Calling Ethereum contract",
-                        contractFn,
-                        sendTo,
-                        ...callParams,
-                        config
-                    );
-                    const tx = contract.methods[contractFn](...callParams).send(
-                        config
-                    );
-                    if (last) {
-                        forwardWeb3Events(tx, eventEmitter);
-                    }
-                    ethereumTxHash = await new Promise((resolve, reject) =>
-                        tx
-                            .on("transactionHash", resolve)
-                            .catch((error: Error) => {
-                                try {
-                                    if (ignorePromiEventError(error)) {
-                                        logger.error(extractError(error));
-                                        return;
-                                    }
-                                } catch (_error) {
-                                    /* Ignore _error */
-                                }
-                                reject(error);
-                            })
-                    );
-                    logger.debug("Ethereum txHash", ethereumTxHash);
-                }
-            }
-            if (!ethereumTxHash) {
-                throw new Error(
-                    "Must provide txHash or contract call details."
-                );
-            }
-            burnReference = await extractBurnReference(
+        if (burnNonce) {
+            return findBurnByNonce(
+                this.renNetworkDetails,
                 this.web3,
-                ethereumTxHash
+                asset,
+                burnNonce.toString()
             );
         }
 
-        return burnReference;
+        // There are three parameter configs:
+        // Situation (1): A `burnNonce` is provided
+        // Situation (2): Contract call details are provided
+        // Situation (3): A transaction is provided
+
+        // Handle situation (2)
+        // Make a call to the provided contract and Pass on the
+        // transaction hash.
+        if (!transaction && contractCalls) {
+            for (let i = 0; i < contractCalls.length; i++) {
+                const contractCall = contractCalls[i];
+                const last = i === contractCalls.length - 1;
+                const {
+                    contractParams,
+                    contractFn,
+                    sendTo,
+                    txConfig,
+                } = contractCall;
+                const callParams = [
+                    ...(contractParams || []).map(value => value.value),
+                ];
+                const ABI = payloadToABI(contractFn, contractParams);
+                const contract = new this.web3.eth.Contract(ABI, sendTo);
+                const config = await withDefaultAccount(this.web3, {
+                    ...txConfig,
+                    ...{
+                        value:
+                            txConfig && txConfig.value
+                                ? txConfig.value.toString()
+                                : undefined,
+                        gasPrice:
+                            txConfig && txConfig.gasPrice
+                                ? txConfig.gasPrice.toString()
+                                : undefined,
+                    },
+                });
+                logger.debug(
+                    "Calling Ethereum contract",
+                    contractFn,
+                    sendTo,
+                    ...callParams,
+                    config
+                );
+                const tx = contract.methods[contractFn](...callParams).send(
+                    config
+                );
+                if (last) {
+                    forwardWeb3Events(tx, eventEmitter);
+                }
+                transaction = await new Promise<string>((resolve, reject) =>
+                    tx.on("transactionHash", resolve).catch((error: Error) => {
+                        try {
+                            if (ignorePromiEventError(error)) {
+                                logger.error(extractError(error));
+                                return;
+                            }
+                        } catch (_error) {
+                            /* Ignore _error */
+                        }
+                        reject(error);
+                    })
+                );
+                logger.debug("Transaction hash", transaction);
+            }
+        }
+
+        if (!transaction) {
+            throw new Error(`Unable to find burn from provided parameters.`);
+        }
+
+        return extractBurnDetails(this.web3, transaction);
+    };
+
+    transactionRPCFormat = (transaction: Transaction, _v2?: boolean) => {
+        assertType<string>("string", { transaction });
+
+        return {
+            txid: fromHex(transaction),
+            txindex: "0",
+        };
     };
 }
 

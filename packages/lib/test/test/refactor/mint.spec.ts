@@ -103,19 +103,19 @@ describe("Refactor: mint", () => {
                 const color = colors[i];
                 i += 1;
 
-                deposit.logger = new SimpleLogger(
+                deposit._logger = new SimpleLogger(
                     logLevel,
                     color(`[${hash.slice(0, 6)}] `)
                 );
 
-                const info = deposit.logger.log;
+                const info = deposit._logger.log;
 
                 info(
                     `Received ${
                         // tslint:disable-next-line: no-any
-                        (deposit.deposit as any).amount / 1e8
+                        (deposit.depositDetails as any).amount / 1e8
                     } ${asset}`,
-                    deposit.deposit
+                    deposit.depositDetails
                 );
 
                 info(`Calling .confirmed`);

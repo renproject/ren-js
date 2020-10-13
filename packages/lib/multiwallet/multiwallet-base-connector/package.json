@@ -38,10 +38,11 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum && yarn link",
+        "link:all": "yarn link @renproject/interfaces && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
+        "@renproject/interfaces": "2.0.0-alpha.7",
         "events": "3.2.0",
         "@types/events": "3.0.0"
     },

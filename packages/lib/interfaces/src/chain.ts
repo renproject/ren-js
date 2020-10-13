@@ -1,8 +1,9 @@
+import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
 
 import { Logger } from "./logger";
 import { RenNetwork } from "./networks";
-import { ContractCall, RenTokens } from "./parameters";
+import { ContractCall } from "./parameters";
 import { PromiEvent } from "./promiEvent";
 import { MintTransaction } from "./transaction";
 import { EventType } from "./types";
@@ -15,6 +16,22 @@ export type TransactionListener<
     E extends { [key: string]: any[] }
 > = PromiEvent<T, { txHash: [string]; confirmation: [number, number] } & E>;
 
+/**
+ * # Adding chains
+ * Once a chain has been added to the [multichain repo](https://github.com/renproject/multichain) and accepted by the
+ * darknodes, a handler can be written for RenJS.
+ *
+ * The expected interface can be found in `../interfaces/src/chain.ts`. There are two types of chains - lock chains and
+ * mint chains, each requiring a different handler interface. Lock chain handlers are for chains where funds are locked
+ * up under RenVM's control - e.g. Bitcoin or Zcash. A mint chain handler is for the chain where the wrapped tokens are
+ * created - e.g. Ethereum.
+ *
+ * If a chain is a fork of another supported chain, it's recommended that the handler extends the forked chain's
+ * handler.
+ *
+ * If a chain has multiple assets (e.g. ETH and ERC20s), it's recommended that a single handler is written that supports
+ * all the relevant assets.
+ */
 export interface ChainCommon<
     // tslint:disable-next-line: no-any
     Transaction = any,
@@ -51,15 +68,6 @@ export interface ChainCommon<
     initialize: (network: RenNetwork) => SyncOrPromise<this>;
 
     // Supported assets
-
-    /**
-     * `supportsAsset` should return true if the asset is native to the
-     * Chain.
-     *
-     * @example
-     * bitcoin.supportsAsset = asset => asset === "BTC";
-     */
-    supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
@@ -110,6 +118,14 @@ export interface ChainCommon<
     transactionConfidence: (
         transaction: Transaction
     ) => SyncOrPromise<{ current: number; target: number }>;
+
+    transactionRPCFormat: (
+        transaction: Transaction,
+        v2?: boolean
+    ) => {
+        txid: Buffer;
+        txindex: string;
+    };
 }
 
 // tslint:disable-next-line: no-any
@@ -135,6 +151,13 @@ export interface LockChain<
     Asset extends string = string,
     Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
+    // Assets
+
+    /**
+     * `assetIsNative` should return true if the asset is native to the Chain.
+     */
+    assetIsNative: (asset: Asset) => SyncOrPromise<boolean>;
+
     // Deposits
 
     /**
@@ -145,7 +168,10 @@ export interface LockChain<
      */
     getDeposits: (
         asset: Asset,
-        address: Address
+        address: Address,
+        // Indicates whether the deposits are being fetched for the first time.
+        // Allows the chain to only fetch new deposits in successive requests.
+        firstCheck?: boolean
     ) => SyncOrPromise<LockDeposit[]>;
 
     // Encoding
@@ -191,20 +217,15 @@ export interface LockChain<
     // need to support this. For now, other chains can return an empty string.
     depositV1HashString: (deposit: LockDeposit) => string;
 
-    depositRPCFormat: (
-        deposit: LockDeposit,
-        pubKeyScript: Buffer,
-        v2?: boolean
-    ) => any; // tslint:disable-line: no-any
-
-    generateNHash: (
-        nonce: Buffer,
-        deposit: LockDeposit,
-        v2?: boolean,
-        logger?: Logger
-    ) => Buffer;
-
     burnPayload?: () => SyncOrPromise<string | undefined>;
+}
+
+// tslint:disable-next-line: no-any
+export interface BurnDetails<Transaction> {
+    transaction: Transaction;
+    amount: BigNumber;
+    to: Buffer;
+    nonce: BigNumber;
 }
 
 /**
@@ -217,7 +238,16 @@ export interface MintChain<
     Asset extends string = string,
     Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
-    resolveTokenGatewayContract: (token: RenTokens) => Promise<string>;
+    // /**
+    //  * `supportsAsset` should return true if the the asset can be minted onto
+    //  * this chain.
+    //  *
+    //  * @example
+    //  * ethereum.supportsAsset = asset => asset === "BTC" ||;
+    //  */
+    // supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
+
+    resolveTokenGatewayContract: (asset: Asset) => Promise<string>;
 
     /**
      * `submitMint` should take the completed mint transaction from RenVM and
@@ -244,16 +274,18 @@ export interface MintChain<
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     findBurnTransaction: (
-        params: {
-            ethereumTxHash?: Transaction;
+        asset: string,
+
+        // Once of the following should not be undefined.
+        burn: {
+            transaction?: Transaction;
+            burnNonce?: string | number;
             contractCalls?: ContractCall[];
-            burnReference?: string | number | undefined;
         },
+
         eventEmitter: EventEmitter,
-        logger: Logger,
-        // tslint:disable-next-line: no-any
-        txConfig?: any
-    ) => SyncOrPromise<string | number>;
+        logger: Logger
+    ) => SyncOrPromise<BurnDetails<Transaction>>;
 
     contractCalls?: (
         eventType: EventType,

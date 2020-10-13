@@ -41,7 +41,7 @@ export class ParallelHttpProvider<
         this.logger = logger;
         this.nodes = List(
             nodeURLs.map(
-                (nodeURL) => new HttpProvider<Requests, Responses>(nodeURL)
+                nodeURL => new HttpProvider<Requests, Responses>(nodeURL)
             )
         );
     }
@@ -49,20 +49,20 @@ export class ParallelHttpProvider<
     public sendMessage = async <Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 1
+        retry = 2
     ): Promise<Responses[Method]> => {
         // tslint:disable-next-line: prefer-const
         let [responses, errors] = await promiseAll(
             this.nodes
                 .valueSeq()
-                .map(async (node) =>
+                .map(async node =>
                     node.sendMessage<Method>(method, request, retry)
                 )
                 .toList(),
             null,
             this.logger
         );
-        responses = responses.filter((result) => result !== null);
+        responses = responses.filter(result => result !== null);
 
         const first = responses.first(null);
         if (first === null) {

@@ -38,14 +38,14 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum && yarn link",
+        "link:all": "yarn link @renproject/interfaces @renproject/chains-ethereum @renproject/multiwallet-base-connector && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
         "@renproject/interfaces": "2.0.0-alpha.7",
         "@renproject/chains-ethereum": "2.0.0-alpha.7",
-        "@renproject/multiwallet-base-connector": "2.0.0-alpha.7"
-
+        "@renproject/multiwallet-base-connector": "2.0.0-alpha.7",
+        "web3": "^2.0.0-alpha.1"
     },
     "resolutions": {
         "sha3": "^2.1.2"

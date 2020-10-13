@@ -30,7 +30,7 @@ export class HttpProvider<
     ) {
         this.verbose = verbose || false;
         // Type validation
-        assertType("string", { ipOrMultiaddress });
+        assertType<string>("string", { ipOrMultiaddress });
 
         if (ipOrMultiaddress.charAt(0) === "/") {
             try {
@@ -58,11 +58,12 @@ export class HttpProvider<
     public async sendMessage<Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 5,
+        retry = 2,
         timeout = 120 * SECONDS
     ): Promise<Responses[Method]> {
         // Print request:
         if (this.verbose) {
+            // tslint:disable-next-line: no-console
             console.log(
                 "[request]",
                 JSON.stringify(generatePayload(method, request), null, "    ")
@@ -94,6 +95,7 @@ export class HttpProvider<
                 throw new Error(`Empty result returned from node`);
             }
             if (this.verbose) {
+                // tslint:disable-next-line: no-console
                 console.log(
                     "[response]",
                     JSON.stringify(response.data.result, null, "    ")

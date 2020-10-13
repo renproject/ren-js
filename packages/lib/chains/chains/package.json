@@ -38,7 +38,7 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum @renproject/chains-filecoin && yarn link",
+        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum @renproject/chains-filecoin @renproject/chains-terra && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
@@ -60,5 +60,9 @@
         "include": [
             "src"
         ]
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4
     }
 }

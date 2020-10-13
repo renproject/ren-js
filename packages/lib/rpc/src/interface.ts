@@ -2,6 +2,7 @@
 
 import {
     AbiItem,
+    Asset,
     BurnTransaction,
     Logger,
     MintTransaction,
@@ -22,7 +23,10 @@ export interface AbstractRenVMProvider {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: any,
+        output:
+            | { txHash: string; vOut: string }
+            | { txid: Buffer; txindex: string },
+        amount: string,
         payload: Buffer,
         pHash: Buffer,
         to: string,
@@ -32,13 +36,47 @@ export interface AbstractRenVMProvider {
         tags: [string] | []
     ) => Promise<Buffer>;
 
+    burnTxHash?: (
+        params: {
+            // v2
+
+            renContractOrSelector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txid: Buffer; txindex: string };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        },
+        logger?: Logger
+    ) => Promise<Buffer>;
+
     submitBurn: (
-        renContract: RenContract,
-        amount: BigNumber,
-        token: string,
-        to: string,
-        ref: BigNumber,
-        tags: [string] | []
+        params:
+            | {
+                  // v2
+
+                  renContractOrSelector: string;
+                  gHash: Buffer;
+                  gPubKey: Buffer;
+                  nHash: Buffer;
+                  nonce: Buffer;
+                  output: { txid: Buffer; txindex: string };
+                  amount: string;
+                  payload: Buffer;
+                  pHash: Buffer;
+                  to: string;
+              }
+            | {
+                  // v1
+                  renContract: RenContract;
+                  burnNonce: BigNumber;
+              },
+        tags: [string] | [],
+        logger?: Logger
     ) => Promise<Buffer>;
 
     queryMintOrBurn: <T extends MintTransaction | BurnTransaction>(
@@ -59,10 +97,7 @@ export interface AbstractRenVMProvider {
      *        key should be fetched.
      * @returns The key hash (20 bytes) as a string.
      */
-    selectPublicKey: (
-        renContract: RenContract,
-        logger?: Logger
-    ) => Promise<Buffer>;
+    selectPublicKey: (token: Asset, logger?: Logger) => Promise<Buffer>;
 
     // In the future, this will be asynchronous. It returns a promise for
     // compatibility.
@@ -75,11 +110,11 @@ export interface AbstractRenVMProvider {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: any,
+        output: { txid: Buffer; txindex: string },
+        amount: string,
         payload: Buffer,
         pHash: Buffer,
         to: string,
-        token: string,
         outputHashFormat: string
     ) => Buffer;
 }

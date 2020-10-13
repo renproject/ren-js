@@ -16,7 +16,7 @@ describe("Filscout", () => {
     });
 });
 
-describe.only("FilScan", () => {
+describe("FilScan", () => {
     it("Can fetch messages", async () => {
         const messages = await filscan.fetchDeposits(
             "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",

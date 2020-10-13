@@ -1,9 +1,8 @@
-import { waitForReceipt } from "@renproject/utils";
+import RenJS from "@renproject/ren";
+import { keccak256, waitForReceipt } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import Web3 from "web3";
-import { sha3 } from "web3-utils";
-import RenJS from "@renproject/ren";
 
 chai.should();
 
@@ -13,35 +12,35 @@ const transferABI = [
     {
         type: "address",
         name: "from",
-        indexed: true,
+        indexed: true
     },
     {
         type: "address",
         name: "to",
-        indexed: true,
+        indexed: true
     },
     {
         type: "uint256",
-        name: "value",
-    },
+        name: "value"
+    }
 ];
 
 const burnABI = [
     { type: "bytes", name: "_to" },
     { type: "uint256", name: "_amount" },
     { type: "uint256", name: "_n", indexed: true },
-    { type: "bytes", name: "_indexedTo", indexed: true },
+    { type: "bytes", name: "_indexedTo", indexed: true }
 ];
 
 const mintABI = [
     { type: "address", name: "_to", indexed: true },
     { type: "uint256", name: "_amount" },
     { type: "uint256", name: "_n", indexed: true },
-    { type: "bytes32", name: "_signedMessageHash", indexed: true },
+    { type: "bytes32", name: "_signedMessageHash", indexed: true }
 ];
 
 describe.skip("RenJS initialization and exports", () => {
-    it.skip("check burns", async function () {
+    it.skip("check burns", async function() {
         this.timeout(10000000000);
         const renJS = new RenJS("testnet");
         const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
@@ -54,7 +53,9 @@ describe.skip("RenJS initialization and exports", () => {
             toBlock: "latest",
             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
             // address.slice(2), null, null] as any,
-            topics: [sha3("LogBurn(bytes,uint256,uint256,bytes)")] as string[],
+            topics: [
+                keccak256(Buffer.from("LogBurn(bytes,uint256,uint256,bytes)"))
+            ] as string[]
         });
 
         console.debug(`Found ${burns.length} burns...`);
@@ -100,7 +101,7 @@ describe.skip("RenJS initialization and exports", () => {
         }
     });
 
-    it("check mints", async function () {
+    it("check mints", async function() {
         this.timeout(10000000000);
         const renJS = new RenJS("testnet");
         const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
@@ -114,8 +115,8 @@ describe.skip("RenJS initialization and exports", () => {
             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
             // address.slice(2), null, null] as any,
             topics: [
-                sha3("LogMint(address,uint256,uint256,bytes32)"),
-            ] as string[],
+                sha3("LogMint(address,uint256,uint256,bytes32)")
+            ] as string[]
         });
 
         console.debug(`Found ${mints.length} mints...`);

@@ -1,5 +1,4 @@
-import { assertType } from "@renproject/utils";
-import { sha256 } from "ethereumjs-util";
+import { assertType, sha256 } from "@renproject/utils";
 
 import { marshalString, marshalTypedPackValue } from "./pack/marshal";
 import { PackPrimitive, PackStructType, TypedPackValue } from "./pack/pack";
@@ -31,9 +30,6 @@ export const burnParamsType: PackStructType = {
             amount: PackPrimitive.U256,
         },
         {
-            token: PackPrimitive.String,
-        },
-        {
             to: PackPrimitive.String,
         },
         {
@@ -48,7 +44,6 @@ export type BurnParams = RPCValue<
     // Values
     {
         amount: RenVMValue<RenVMType.U256>; // "78176031223228949374118281478848818002695062229035954382782001433280732357353",
-        token: RenVMValue<RenVMType.Str>; // "􈶙񄈐񟖀龺򩱜񙱪󯎰􎽡򃴏􁇟򱫚񖋯󅦔񀍓󃻠򀐽󆑵򠻵򷄿򮹩񌧀󓪸󥃡򂀇񬄷󐮕򐘜󻓜쐈򦮎𮨼🳍򰉎񪉢򫨜󓨻񞖫󍱸𓦒񻰕煖􁵂򾫋񦤺𬲼򇜟򇒪ᚠ𐅅񑑒∝󄋞󧫝𤫬󹎕񹝜񚔊򵥸󂁇𽺿򚧽􉉣𲭃򂡂񣨙񷮪󆽅󰖴󈗪񠕨󾱺񛙸󼒛󬁀𽿺򸑫󓓭"
         to: RenVMValue<RenVMType.Str>; // "򔿺󢰺𳍚󤐭񵄔󘄯췇򺟒񨒘󊰲񱴬𭑊򊹴󧙵å񺢏𒪤󜟵󒌗򭦶𰌽󺝥󫶪񞣻􇌙񃄥󃒃변򶲛񙾿񽆆򍙂󂺧񞀰󯲺󖌻𸙩𓾬",
         nonce: RenVMValue<RenVMType.B32>; // "GWsi_pwKD1KHsz9H1wXdn2aHtWuJOG2S-XgnShYPr3E",
     }
@@ -56,12 +51,16 @@ export type BurnParams = RPCValue<
 
 export type BurnTransactionInput = TransactionInput<BurnParams>;
 
-export const mintParamsType = (
-    chainSpecific: PackStructType
-): PackStructType => ({
+export const mintParamsType = (): PackStructType => ({
     struct: [
         {
             txid: PackPrimitive.Bytes,
+        },
+        {
+            txindex: PackPrimitive.U32,
+        },
+        {
+            amount: PackPrimitive.U256,
         },
         {
             payload: PackPrimitive.Bytes,
@@ -70,14 +69,11 @@ export const mintParamsType = (
             phash: PackPrimitive.Bytes32,
         },
         {
-            token: PackPrimitive.String,
-        },
-        {
             to: PackPrimitive.String,
         },
-        // {
-        //     nonce: PackPrimitive.Bytes32,
-        // },
+        {
+            nonce: PackPrimitive.Bytes32,
+        },
         {
             nhash: PackPrimitive.Bytes32,
         },
@@ -87,7 +83,27 @@ export const mintParamsType = (
         {
             ghash: PackPrimitive.Bytes32,
         },
-        ...chainSpecific.struct,
+        // {
+        //     payload: PackPrimitive.Bytes
+        // },
+        // {
+        //     phash: PackPrimitive.Bytes32
+        // },
+        // {
+        //     to: PackPrimitive.String
+        // },
+        // // {
+        // //     nonce: PackPrimitive.Bytes32,
+        // // },
+        // {
+        //     nhash: PackPrimitive.Bytes32
+        // },
+        // {
+        //     gpubkey: PackPrimitive.Bytes
+        // },
+        // {
+        //     ghash: PackPrimitive.Bytes32
+        // },
     ],
 });
 
@@ -103,7 +119,6 @@ export type MintParams = RPCValue<
         payload: RenVMValue<RenVMType.B>; // "I_9MVtYiO4NlH7lwIx8",
         phash: RenVMValue<RenVMType.B32>; // "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ",
         to: RenVMValue<RenVMType.Str>; // "򝊞􋄛𧚞󥫨򨚘󳽈򤙳񙓻򳳱􎖫򗣌𻄭񑦁򏬰񆆅򒒛􊗓𧜿򇞣􁓹",
-        token: RenVMValue<RenVMType.Str>; // ""
     } & (
         | {
               output: {
@@ -128,7 +143,7 @@ export const hashTransaction = (
     selector: string,
     packValue: TypedPackValue
 ) => {
-    assertType("string", { version, selector });
+    assertType<string>("string", { version, selector });
     return sha256(
         Buffer.concat([
             marshalString(version),

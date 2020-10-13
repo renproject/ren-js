@@ -71,7 +71,7 @@ export const fetchDeposits = async (
             (message): FilTransaction => {
                 return {
                     cid: message.cid,
-                    to: message.to,
+                    // to: message.to,
                     amount: new BigNumber(message.value)
                         .times(new BigNumber(10).exponentiatedBy(18))
                         .decimalPlaces(0)
@@ -83,7 +83,7 @@ export const fetchDeposits = async (
             }
         )
         .filter(
-            (message) =>
+            message =>
                 !paramsFilterBase64 || message.params === paramsFilterBase64
         );
 };

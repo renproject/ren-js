@@ -37,6 +37,11 @@ export const unmarshalMintTx = (
 
     if (response.tx.out) {
         out = unmarshalTypedPackValue(response.tx.out);
+
+        if (out.revert) {
+            throw new Error(out.revert);
+        }
+
         if (out.sig) {
             const [r, s, v] = [
                 out.sig.slice(0, 32),
@@ -65,11 +70,21 @@ export const unmarshalBurnTx = (
         `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`
     );
 
+    let out;
+
+    if (response.tx.out) {
+        out = unmarshalTypedPackValue(response.tx.out);
+        if (out.revert) {
+            throw new Error(out.revert);
+        }
+    }
+
     return {
         hash: response.tx.hash,
         to: response.tx.selector,
         in: unmarshalTypedPackValue(response.tx.in),
         txStatus: response.txStatus,
+        out,
     };
 };
 

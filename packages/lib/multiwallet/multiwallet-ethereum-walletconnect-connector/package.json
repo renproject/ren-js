@@ -42,9 +42,9 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/multiwallet-base-connector": "^2.1.1-alpha.0",
+        "@renproject/multiwallet-base-connector": "^2.0.0-alpha.7",
         "@renproject/interfaces": "2.0.0-alpha.7",
-        "@renproject/multiwallet-abstract-ethereum-connector": "^2.1.1-alpha.0"
+        "@renproject/multiwallet-abstract-ethereum-connector": "^2.0.0-alpha.7"
     },
     "peerDependencies": {
         "@walletconnect/web3-provider": "^1.2.2"

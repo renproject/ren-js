@@ -85,7 +85,7 @@
         "typedoc": "^0.19.1",
         "typescript": "^4.0.2",
         "uuid": "^8.3.0",
-        "webpack": "4.44.2",
+        "webpack": "4.42.0",
         "webpack-cli": "^3.3.12",
         "webpack-node-externals": "^2.5.2"
     },
@@ -109,6 +109,7 @@
     "workspaces": [
         "packages/ui/react-components",
         "packages/ui/multiwallet-ui",
+        "packages/ui/ren-js-example",
         "packages/lib/*",
         "packages/lib/chains/*",
         "packages/lib/multiwallet/*"

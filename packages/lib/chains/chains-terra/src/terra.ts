@@ -1,5 +1,4 @@
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 import {
     assertType,
     Callable,

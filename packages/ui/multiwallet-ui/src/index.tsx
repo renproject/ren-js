@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, useCallback } from 'react';
+import React, { HTMLAttributes, useCallback, useEffect } from 'react';
 import {
   Box,
   ButtonBase,
@@ -69,7 +69,6 @@ export const WalletPicker = <P, A>({
   config,
   close,
   connecting,
-  connected,
   connectingClasses,
   walletClasses,
   pickerClasses,
@@ -79,10 +78,6 @@ export const WalletPicker = <P, A>({
   const classes = { ...defaultClasses, ...pickerClasses };
 
   const connectors = config.chains[chain];
-
-  if (connected) {
-    close();
-  }
 
   // Allow for an information screen to be set before the wallet selection is showed
   const [Info, setInfo] = React.useState(
@@ -139,6 +134,11 @@ export const WalletPickerModal = <P, A>({
   const { enabledChains } = useMultiwallet<P, A>();
   const connecting = enabledChains[options.chain]?.status === 'connecting';
   const connected = enabledChains[options.chain]?.status === 'connected';
+  useEffect(() => {
+    if (connected) {
+      close();
+    }
+  }, [connected, close]);
   return (
     <Modal open={open || false}>
       <Box
@@ -200,7 +200,10 @@ const WalletEntry = <P, A>({
     return setInfo(() => (
       <Info
         close={close}
-        acknowledge={() => activateConnector(chain, connector)}
+        acknowledge={() => {
+          setInfo(undefined);
+          activateConnector(chain, connector);
+        }}
       />
     ));
   }, [setInfo, activateConnector, close, Info, chain, connector]);

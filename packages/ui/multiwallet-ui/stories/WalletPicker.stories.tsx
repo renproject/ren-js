@@ -1,6 +1,6 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import { WalletPicker, WalletPickerProps } from '../src';
+import { MultiwalletProvider, WalletPicker, WalletPickerProps } from '../src';
 import { makeStyles } from '@material-ui/core';
 
 const meta: Meta<typeof WalletPicker> = {
@@ -13,7 +13,11 @@ const meta: Meta<typeof WalletPicker> = {
 
 export default meta;
 
-const Template: Story<any> = (args) => <WalletPicker {...args} />;
+const Template: Story<any> = (args) => (
+  <MultiwalletProvider>
+    <WalletPicker {...args} />
+  </MultiwalletProvider>
+);
 
 // By passing using the Args format for exported stories, you can control the props for a component for reuse in a test
 // https://storybook.js.org/docs/react/workflows/unit-testing

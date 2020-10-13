@@ -71,5 +71,9 @@
         "include": [
             "src"
         ]
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4
     }
 }

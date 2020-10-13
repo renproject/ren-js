@@ -1,27 +1,24 @@
 import {
     encode as encodeAddress,
     validateAddressString,
-} from "@openworklabs/filecoin-address";
-import base32Function from "@openworklabs/filecoin-address/dist/base32";
+} from "@glif/filecoin-address";
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
 import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 import {
     assertType,
     Callable,
-    fromHex,
+    keccak256,
     Ox,
     rawEncode,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
 import { blake2b } from "blakejs";
+import CID from "cids";
 import elliptic from "elliptic";
-import { keccak256 } from "ethereumjs-util";
 
 import { FilTransaction } from "./api/deposit";
-import { fetchDeposits, fetchMessage } from "./api/filscan";
-
-const base32 = base32Function("abcdefghijklmnopqrstuvwxyz234567");
+import { fetchDeposits, fetchMessage } from "./api/indexer";
 
 export type FilAddress = {
     address: string; // Filecoin address
@@ -56,7 +53,7 @@ const transactionToDeposit = (transaction: FilTransaction) => ({
 
 export class FilecoinClass
     implements LockChain<FilTransaction, FilDeposit, FilAsset, FilAddress> {
-    public name = "Fil";
+    public name = "Filecoin";
     public renNetwork: RenNetwork | undefined;
     public chainNetwork: FilecoinNetwork | undefined;
 
@@ -174,7 +171,7 @@ export class FilecoinClass
 
         return {
             address,
-            params: gHash.toString("base64"),
+            params: toBase64(Buffer.from(toURLBase64(gHash))),
         };
     };
 
@@ -206,7 +203,7 @@ export class FilecoinClass
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
-        assertType("string", { address });
+        assertType<string>("string", { address: address.address });
         return this._addressIsValid(address, this.chainNetwork);
     };
 
@@ -232,69 +229,22 @@ export class FilecoinClass
         throw new Error(NETWORK_NOT_SUPPORTED);
     };
 
-    depositRPCFormat = (
-        { transaction }: FilDeposit,
-        _pubKeyScript: Buffer,
-        v2?: boolean
-    ) => {
+    transactionRPCFormat = (transaction: FilTransaction, v2?: boolean) => {
         if (!v2) {
             throw new Error(NETWORK_NOT_SUPPORTED);
         }
 
         return {
-            t: {
-                struct: [
-                    {
-                        txid: PackPrimitive.Bytes,
-                    },
-                    {
-                        amount: PackPrimitive.U256,
-                    },
-                    {
-                        nonce: PackPrimitive.U256,
-                    },
-                ],
-            },
-            v: {
-                amount: transaction.amount,
-                txid: toURLBase64(
-                    Buffer.from(base32.decode(transaction.cid.slice(1)))
-                ),
-                nonce: transaction.nonce.toString(),
-            },
+            txid: Buffer.from(new CID(transaction.cid).bytes),
+            txindex: transaction.nonce.toFixed(),
         };
-    };
-
-    generateNHash = (
-        nonce: Buffer,
-        { transaction }: FilDeposit,
-        v2?: boolean,
-        logger?: Logger
-    ): Buffer => {
-        if (!v2) {
-            throw new Error(NETWORK_NOT_SUPPORTED);
-        }
-
-        const encoded = rawEncode(
-            ["bytes32", "bytes", "uint32"],
-            // [nonce, fromHex(transaction.cid).reverse(), 0]
-            [nonce, Buffer.from(base32.decode(transaction.cid.slice(1))), 0]
-        );
-
-        const digest = keccak256(encoded);
-
-        if (logger) {
-            logger.debug("nHash", toBase64(digest), Ox(encoded));
-        }
-
-        return digest;
     };
 
     getBurnPayload: (() => string) | undefined;
 
     Address = (address: string): this => {
         // Type validation
-        assertType("string", { address });
+        assertType<string>("string", { address });
 
         this.getBurnPayload = () => address;
         return this;

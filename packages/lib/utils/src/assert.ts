@@ -45,7 +45,11 @@ export const assert = (
  * Types are matched by a regex so '|' can't be used at multiple levels, e.g.
  * `string | Array<string | number>`.
  */
-export const assertType = <T = any>(
+export const assertType = <
+    // Type extends string,
+    // T = Type extends "Buffer" ? Buffer : any
+    T = any
+>(
     type: string,
     objects: {
         [value: string]: T;
@@ -77,31 +81,6 @@ type PrimitiveTypeName =
     | "any"
     | "BigNumber"
     | "Buffer";
-type PrimitiveType<TypeName> = TypeName extends "string"
-    ? string
-    : TypeName extends "number"
-    ? number
-    : TypeName extends "bigint"
-    ? bigint
-    : TypeName extends "boolean"
-    ? boolean
-    : TypeName extends "symbol"
-    ? symbol
-    : TypeName extends "undefined"
-    ? undefined
-    : TypeName extends "object"
-    ? object
-    : TypeName extends "function"
-    ? Function // tslint:disable-line: ban-types
-    : TypeName extends "null"
-    ? null
-    : TypeName extends "any"
-    ? any
-    : TypeName extends "Buffer"
-    ? BigNumber
-    : TypeName extends "Buffer"
-    ? Buffer
-    : never;
 
 const typeOf = (v: any): PrimitiveTypeName =>
     v === null
@@ -112,21 +91,19 @@ const typeOf = (v: any): PrimitiveTypeName =>
         ? "Buffer"
         : typeof v;
 
-export const assertTypeCheck = <T = any>(
+const assertTypeCheck = <T = any>(
     type: (t: any, key: string) => boolean,
     objects: {
         [value: string]: T;
     },
-    typeDescription?: string
+    typeDescription: string
 ): objects is { [value: string]: T } => {
     for (const key of Object.keys(objects)) {
         const value = objects[key];
         if (!type(value, key)) {
             const readableType = Array.isArray(value) ? "any[]" : typeOf(value);
             throw new Error(
-                typeDescription
-                    ? `Expected ${key} to be of type '${typeDescription}', instead got '${readableType}'.`
-                    : `${key} failed type assertion. Got type '${readableType}'.`
+                `Expected ${key} to be of type '${typeDescription}', instead got '${readableType}'.`
             );
         }
     }
@@ -138,7 +115,7 @@ const is = (type: PrimitiveTypeName) => (v: any) =>
 
 const isUnionType = (unionType: string): string[] | false => {
     const types = unionType.split(" | ") as PrimitiveTypeName[];
-    return types.length > 0 ? types : false;
+    return types.length > 1 ? types : false;
 };
 
 const isArrayType = (arrayType: string): string | false => {
@@ -170,34 +147,7 @@ const isArrayType = (arrayType: string): string | false => {
     return false;
 };
 
-export const assertPrimitiveType = <T extends PrimitiveTypeName>(
-    type: T,
-    objects: {
-        [value: string]: PrimitiveType<T>;
-    }
-): objects is { [value: string]: PrimitiveType<T> } =>
-    assertTypeCheck(is(type), objects, type);
-
-export const assertClass = <T extends new (...args: any) => any>(
-    classType: T,
-    objects: {
-        [value: string]: InstanceType<T>;
-    }
-): objects is { [value: string]: InstanceType<T> } => {
-    return assertTypeCheck(
-        (v) => v instanceof classType,
-        objects,
-        classType.name
-    );
-};
-
-export const assertBuffer = (objects: {
-    [value: string]: Buffer;
-}): objects is { [value: string]: Buffer } => {
-    return assertType("Buffer", objects);
-};
-
-export const assertTypeUnion = <T = any>(
+const assertTypeUnion = <T = any>(
     unionType: string,
     objects: {
         [value: string]: T;
@@ -225,7 +175,7 @@ export const assertTypeUnion = <T = any>(
     );
 };
 
-export const assertArray = <T = any>(
+const assertArray = <T = any>(
     arrayType: string,
     objects: {
         [value: string]: T[];
@@ -237,9 +187,6 @@ export const assertArray = <T = any>(
     }
 
     for (const key of Object.keys(objects)) {
-        if (!key) {
-            return false;
-        }
         const value = objects[key];
         assertTypeCheck((v: any) => Array.isArray(v), { value }, "any[]");
 

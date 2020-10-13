@@ -10,7 +10,7 @@ import {
     SimpleLogger,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, v1 } from "@renproject/rpc";
-import { utils } from "@renproject/utils";
+import { Ox, randomNonce, strip0x } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
@@ -58,10 +58,14 @@ export default class RenJS {
     /**
      * `utils` exposes helper functions, See [[utils]].
      */
-    public static utils: typeof utils = utils;
+    public static utils = {
+        Ox,
+        strip0x,
+        randomNonce,
+    };
 
     // Not static
-    public readonly utils: typeof utils = utils;
+    public readonly utils = RenJS.utils;
 
     /**
      * RenVM provider exposing `sendMessage` and other helper functions for
@@ -171,10 +175,20 @@ export default class RenJS {
      * @param params See [[BurnAndReleaseParams]].
      * @returns An instance of [[BurnAndRelease]].
      */
-    public readonly burnAndRelease = async (
-        params: BurnAndReleaseParams
-    ): Promise<BurnAndRelease> =>
-        new BurnAndRelease(this.renVM, params, this._logger).initialize();
+    public readonly burnAndRelease = async <
+        // tslint:disable-next-line: no-any
+        Transaction = any,
+        Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+        Asset extends string = string,
+        Address = string
+    >(
+        params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>
+    ): Promise<BurnAndRelease<Transaction, Deposit, Asset, Address>> =>
+        new BurnAndRelease<Transaction, Deposit, Asset, Address>(
+            this.renVM,
+            params,
+            this._logger
+        ).initialize();
 
     public readonly getFees = async () => this.renVM.getFees();
 }

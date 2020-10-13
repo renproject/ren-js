@@ -1,8 +1,9 @@
+import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
 
 import { Logger } from "./logger";
 import { RenNetwork } from "./networks";
-import { ContractCall, RenTokens } from "./parameters";
+import { ContractCall } from "./parameters";
 import { PromiEvent } from "./promiEvent";
 import { MintTransaction } from "./transaction";
 import { EventType } from "./types";
@@ -117,6 +118,14 @@ export interface ChainCommon<
     transactionConfidence: (
         transaction: Transaction
     ) => SyncOrPromise<{ current: number; target: number }>;
+
+    transactionRPCFormat: (
+        transaction: Transaction,
+        v2?: boolean
+    ) => {
+        txid: Buffer;
+        txindex: string;
+    };
 }
 
 // tslint:disable-next-line: no-any
@@ -208,20 +217,15 @@ export interface LockChain<
     // need to support this. For now, other chains can return an empty string.
     depositV1HashString: (deposit: LockDeposit) => string;
 
-    depositRPCFormat: (
-        deposit: LockDeposit,
-        pubKeyScript: Buffer,
-        v2?: boolean
-    ) => any; // tslint:disable-line: no-any
-
-    generateNHash: (
-        nonce: Buffer,
-        deposit: LockDeposit,
-        v2?: boolean,
-        logger?: Logger
-    ) => Buffer;
-
     burnPayload?: () => SyncOrPromise<string | undefined>;
+}
+
+// tslint:disable-next-line: no-any
+export interface BurnDetails<Transaction> {
+    transaction: Transaction;
+    amount: BigNumber;
+    to: Buffer;
+    nonce: BigNumber;
 }
 
 /**
@@ -243,7 +247,7 @@ export interface MintChain<
     //  */
     // supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
 
-    resolveTokenGatewayContract: (token: RenTokens) => Promise<string>;
+    resolveTokenGatewayContract: (asset: Asset) => Promise<string>;
 
     /**
      * `submitMint` should take the completed mint transaction from RenVM and
@@ -270,16 +274,18 @@ export interface MintChain<
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     findBurnTransaction: (
-        params: {
-            ethereumTxHash?: Transaction;
+        asset: string,
+
+        // Once of the following should not be undefined.
+        burn: {
+            transaction?: Transaction;
+            burnNonce?: string | number;
             contractCalls?: ContractCall[];
-            burnReference?: string | number | undefined;
         },
+
         eventEmitter: EventEmitter,
-        logger: Logger,
-        // tslint:disable-next-line: no-any
-        txConfig?: any
-    ) => SyncOrPromise<string | number>;
+        logger: Logger
+    ) => SyncOrPromise<BurnDetails<Transaction>>;
 
     contractCalls?: (
         eventType: EventType,

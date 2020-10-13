@@ -6,33 +6,29 @@ import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import Web3 from "web3";
 
-chai.use((chaiBigNumber)(BigNumber));
+chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
 require("dotenv").config();
 
 describe("processParams", () => {
     // let web3: Web3;
-
     // before(() => {
     //     web3 = new Web3(`https://kovan.infura.io/v3/${process.env.INFURA_KEY}`);
     // });
-
     // it("Burn", () => {
     //     processBurnAndReleaseParams(renTestnet, {
-    //         sendToken: "BTC",
+    //         asset: "BTC",
     //         ethereumTxHash: "ethereumTxHash",
     //     })
-    //         .should.deep.equal({ sendToken: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" }, "Burn 1");
-
+    //         .should.deep.equal({ asset: "BTC0Eth2Btc", ethereumTxHash: "ethereumTxHash" }, "Burn 1");
     //     processBurnAndReleaseParams(renTestnet, {
-    //         sendToken: "BTC",
-    //         burnReference: 1,
+    //         asset: "BTC",
+    //         burnNonce: 1,
     //     })
-    //         .should.deep.equal({ sendToken: "BTC0Eth2Btc", burnReference: 1 }, "Burn 2");
-
+    //         .should.deep.equal({ asset: "BTC0Eth2Btc", burnNonce: 1 }, "Burn 2");
     //     processBurnAndReleaseParams(renTestnet, {
-    //         sendToken: "BTC",
+    //         asset: "BTC",
     //         web3Provider: {},
     //         contractCalls: [{
     //             sendTo: "sendTo",
@@ -42,7 +38,7 @@ describe("processParams", () => {
     //         }],
     //     })
     //         .should.deep.equal({
-    //             sendToken: "BTC0Eth2Btc",
+    //             asset: "BTC0Eth2Btc",
     //             web3Provider: {},
     //             contractCalls: [{
     //                 sendTo: "sendTo",
@@ -51,15 +47,14 @@ describe("processParams", () => {
     //                 txConfig: { gas: 2 },
     //             }],
     //         }, "Burn 3");
-
     //     // JSON.stringify(resolveSendCall(renTestnet, {
-    //     //     sendToken: RenContract.Eth2Btc,
+    //     //     asset: RenContract.Eth2Btc,
     //     //     web3Provider: web3.currentProvider,
     //     //     sendTo: "sendTo",
     //     //     sendAmount: "0",
     //     // }))
     //     //     .should.equal(JSON.stringify({
-    //     //         sendToken: "BTC0Eth2Btc",
+    //     //         asset: "BTC0Eth2Btc",
     //     //         web3Provider: web3.currentProvider,
     //     //         suggestedAmount: "0",
     //     //         contractCalls: [
@@ -81,10 +76,9 @@ describe("processParams", () => {
     //     //             }],
     //     //     }), "Burn 4");
     // });
-
     // it("Mint", () => {
     //     processLockAndMintParams(renTestnet, {
-    //         sendToken: "BTC",
+    //         asset: "BTC",
     //         txHash: "txHash",
     //         contractCalls: [{
     //             sendTo: "sendTo",
@@ -94,7 +88,7 @@ describe("processParams", () => {
     //         }],
     //     })
     //         .should.deep.equal({
-    //             sendToken: "BTC0Btc2Eth",
+    //             asset: "BTC0Btc2Eth",
     //             txHash: "txHash",
     //             contractCalls: [{
     //                 sendTo: "sendTo",
@@ -103,9 +97,8 @@ describe("processParams", () => {
     //                 txConfig: { gas: 2 },
     //             }],
     //         });
-
     //     processLockAndMintParams(renTestnet, {
-    //         sendToken: "BTC",
+    //         asset: "BTC",
     //         txHash: "txHash",
     //         contractCalls: [{
     //             sendTo: "sendTo",
@@ -115,7 +108,7 @@ describe("processParams", () => {
     //         }],
     //     })
     //         .should.deep.equal({
-    //             sendToken: "BTC0Btc2Eth",
+    //             asset: "BTC0Btc2Eth",
     //             txHash: "txHash",
     //             contractCalls: [{
     //                 sendTo: "sendTo",
@@ -124,16 +117,15 @@ describe("processParams", () => {
     //                 txConfig: { gas: 2 },
     //             }],
     //         });
-
     //     // resolveSendCall(renTestnet, {
-    //     //     sendToken: RenContract.Btc2Eth,
+    //     //     asset: RenContract.Btc2Eth,
     //     //     txHash: "txHash",
     //     //     sendTo: "sendTo",
     //     //     sendAmount: "0.01",
     //     //     txConfig: { gas: 2 },
     //     // })
     //     //     .should.deep.equal({
-    //     //         sendToken: "BTC0Btc2Eth",
+    //     //         asset: "BTC0Btc2Eth",
     //     //         txHash: "txHash",
     //     //         suggestedAmount: "0.01",
     //     //         contractCalls: [{

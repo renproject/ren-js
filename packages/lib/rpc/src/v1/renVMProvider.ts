@@ -13,8 +13,8 @@ import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
     fromBase64,
-    generateMintTxHash,
     getTokenPrices,
+    keccak256,
     normalizeValue,
     parseRenContract,
     SECONDS,
@@ -26,6 +26,7 @@ import {
 import BigNumber from "bignumber.js";
 import { List, OrderedMap, Set } from "immutable";
 
+import { AbstractRenVMProvider } from "../interface";
 import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
@@ -41,6 +42,21 @@ import {
 } from "./methods";
 import { unmarshalBurnTx, unmarshalFees, unmarshalMintTx } from "./unmarshal";
 import { RenVMType } from "./value";
+
+export const generateMintTxHash = (
+    renContract: RenContract,
+    encodedID: string,
+    deposit: string,
+    logger?: Logger
+): Buffer => {
+    // Type validation
+    assertType<string>("string", { encodedID, deposit });
+
+    const message = `txHash_${renContract}_${encodedID}_${deposit}`;
+    const digest = keccak256(Buffer.from(message));
+    if (logger) logger.debug("Mint txHash", toBase64(digest), message);
+    return digest;
+};
 
 export const resolveRpcURL = (network: RenNetwork | string) => {
     switch (network) {
@@ -200,11 +216,10 @@ export class RenVMProvider implements RenVMProviderInterface {
         _payload: Buffer,
         _pHash: Buffer,
         _to: Buffer,
-        _token: Buffer,
         outputHashFormat: string
     ): Buffer => {
-        assertType("Buffer", { gHash });
-        assertType("string", { outputHashFormat });
+        assertType<Buffer>("Buffer", { gHash });
+        assertType<string>("string", { outputHashFormat });
         return generateMintTxHash(
             renContract,
             toBase64(gHash),
@@ -220,7 +235,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         _nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: any,
+        output: { txindex: string; txid: Buffer },
+        amount: string,
         payload: Buffer,
         _pHash: Buffer,
         to: string,
@@ -229,8 +245,11 @@ export class RenVMProvider implements RenVMProviderInterface {
         fnABI: AbiItem[],
         tags: [string] | []
     ): Promise<Buffer> => {
-        assertType("Buffer", { nonce, payload });
-        assertType("string", { to, token, fn });
+        const { txindex, txid } = output;
+
+        assertType<Buffer>("Buffer", { nonce, payload, txid });
+        assertType<string>("string", { to, token, fn, txindex });
+
         const response = await this.provider.sendMessage<
             RPCMethod.MethodSubmitTx
         >(RPCMethod.MethodSubmitTx, {
@@ -274,7 +293,10 @@ export class RenVMProvider implements RenVMProviderInterface {
                     {
                         name: "utxo" as const,
                         type: RenVMType.ExtTypeBtcCompatUTXO,
-                        value: output,
+                        value: {
+                            txHash: toBase64(txid),
+                            vOut: txindex,
+                        },
                     },
                 ],
             },
@@ -285,13 +307,33 @@ export class RenVMProvider implements RenVMProviderInterface {
     };
 
     public submitBurn = async (
-        renContract: RenContract,
-        _amount: BigNumber,
-        _token: string,
-        _to: string,
-        ref: BigNumber,
-        tags: [string] | []
+        params:
+            | {
+                  // v2
+                  renContractOrSelector: string;
+                  gHash: Buffer;
+                  gPubKey: Buffer;
+                  nHash: Buffer;
+                  nonce: Buffer;
+                  output: { txid: Buffer; txindex: string };
+                  amount: string;
+                  payload: Buffer;
+                  pHash: Buffer;
+                  to: string;
+              }
+            | {
+                  // v1
+                  renContract: RenContract;
+                  burnNonce: BigNumber;
+              },
+        tags: [string] | [],
+        _logger: Logger
     ): Promise<Buffer> => {
+        const { renContract, burnNonce } = params as {
+            // v1
+            renContract: RenContract;
+            burnNonce: BigNumber;
+        };
         const response = await this.provider.sendMessage(
             RPCMethod.MethodSubmitTx,
             {
@@ -301,7 +343,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                         {
                             name: "ref",
                             type: RenVMType.U64,
-                            value: ref.decimalPlaces(0).toFixed(),
+                            value: burnNonce.decimalPlaces(0).toFixed(),
                         },
                     ],
                 },
@@ -334,7 +376,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean
     ): Promise<T> => {
-        assertType("Buffer", { utxoTxHash });
+        assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -380,22 +422,22 @@ export class RenVMProvider implements RenVMProviderInterface {
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (
-        renContract: RenContract,
+        token: Asset,
         logger?: Logger
     ): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
         const response = await this.queryShards(5);
 
         // Filter to only keep shards that are primary/online.
-        const primaryShards = response.shards.filter((shard) => shard.primary);
+        const primaryShards = response.shards.filter(shard => shard.primary);
 
         // Find the shard with the lowest total value locked (sum all the locked
         // amounts from all gateways in a shard, after converting to a consistent
         // currencies using the coinGecko API).
         const tokens = Set<string>()
             .concat(
-                ...primaryShards.map((shard) =>
-                    shard.gateways.map((gateway) => gateway.asset)
+                ...primaryShards.map(shard =>
+                    shard.gateways.map(gateway => gateway.asset)
                 )
             )
             .toArray();
@@ -403,15 +445,14 @@ export class RenVMProvider implements RenVMProviderInterface {
             tokens,
             logger
         ).catch(() => OrderedMap());
-        const token: Asset = parseRenContract(renContract).asset;
 
         const smallestShard = List(primaryShards)
-            .filter((shard) =>
-                shard.gateways.map((gateway) => gateway.asset).includes(token)
+            .filter(shard =>
+                shard.gateways.map(gateway => gateway.asset).includes(token)
             )
-            .sortBy((shard) =>
+            .sortBy(shard =>
                 shard.gateways
-                    .map((gateway) =>
+                    .map(gateway =>
                         normalizeValue(
                             tokenPrices,
                             gateway.asset,
@@ -432,7 +473,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         // Get the gateway pubKey from the gateway with the right asset within
         // the shard with the lowest total value locked.
         const tokenGateway = List(smallestShard.gateways)
-            .filter((gateway) => gateway.asset === token)
+            .filter(gateway => gateway.asset === token)
             .first(undefined);
 
         if (!tokenGateway) {

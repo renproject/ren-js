@@ -4,14 +4,13 @@ import {
     assertType,
     fromHex,
     hash160,
+    keccak256,
     Ox,
     rawEncode,
     toBase64,
-    toURLBase64,
 } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import base58 from "bs58";
-import { keccak256 } from "ethereumjs-util";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import { BTCHandler } from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
@@ -215,7 +214,7 @@ export class BitcoinBaseChain
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
-        assertType("string", { address });
+        assertType<string>("string", { address });
         return this.utils.addressIsValid(address, this.chainNetwork);
     };
 
@@ -240,82 +239,17 @@ export class BitcoinBaseChain
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
     };
 
-    depositRPCFormat = (
-        { transaction }: Deposit,
-        pubKeyScript: Buffer,
-        v2?: boolean
-    ) => {
-        if (v2) {
-            return {
-                t: {
-                    struct: [
-                        {
-                            nonce: PackPrimitive.Bytes32,
-                        },
-                        {
-                            output: {
-                                struct: [
-                                    {
-                                        outpoint: {
-                                            struct: [
-                                                {
-                                                    hash: PackPrimitive.Bytes,
-                                                },
-                                                {
-                                                    index: PackPrimitive.U32,
-                                                },
-                                            ],
-                                        },
-                                    },
-                                    {
-                                        value: PackPrimitive.U256,
-                                    },
-                                    {
-                                        pubKeyScript: PackPrimitive.Bytes,
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                },
-                v: {
-                    output: {
-                        outpoint: {
-                            hash: toURLBase64(
-                                fromHex(transaction.txHash).reverse()
-                            ),
-                            index: transaction.vOut.toFixed(),
-                        },
-                        pubKeyScript: toURLBase64(pubKeyScript),
-                        value: transaction.amount.toString(),
-                    },
-                },
-            };
-        }
+    transactionRPCFormat = (transaction: Transaction, v2?: boolean) => {
+        const { txHash, vOut } = transaction;
+
+        assertType<string>("string", { txHash });
+        assertType<number>("number", { vOut });
 
         return {
-            txHash: toBase64(fromHex(transaction.txHash)),
-            vOut: transaction.vOut.toFixed(),
+            txid: v2
+                ? fromHex(transaction.txHash).reverse()
+                : fromHex(transaction.txHash),
+            txindex: transaction.vOut.toFixed(),
         };
-    };
-
-    generateNHash = (
-        nonce: Buffer,
-        { transaction }: Deposit,
-        v2?: boolean,
-        logger?: Logger
-    ): Buffer => {
-        const encoded = rawEncode(
-            ["bytes32", v2 ? "bytes" : "bytes32", "uint32"],
-            [nonce, fromHex(transaction.txHash).reverse(), transaction.vOut]
-        );
-
-        const digest = keccak256(encoded);
-
-        if (logger) {
-            logger.debug("nHash", toBase64(digest), Ox(encoded));
-        }
-
-        return digest;
     };
 }

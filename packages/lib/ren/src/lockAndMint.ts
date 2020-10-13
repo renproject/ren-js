@@ -19,16 +19,17 @@ import {
     fromBase64,
     fromHex,
     generateGHash,
+    generateNHash,
     generatePHash,
-    ignorePromiEventError,
+    generateSHash,
     Ox,
-    parseRenContract,
     payloadToMintABI,
     randomNonce,
     renVMHashToBase64,
     resolveInToken,
     SECONDS,
     sleep,
+    strip0x,
     toBase64,
 } from "@renproject/utils";
 import { EventEmitter } from "events";
@@ -209,7 +210,7 @@ export class LockAndMint<
     ): this => {
         // Emit previous deposit events.
         if (event === "deposit") {
-            this.deposits.map((deposit) => {
+            this.deposits.map(deposit => {
                 listener(deposit);
             });
         }
@@ -277,7 +278,7 @@ export class LockAndMint<
         const tokenGatewayContract =
             this._renVM.version >= 2
                 ? Ox(
-                      v2.hashSelector(
+                      generateSHash(
                           v2.resolveV2Contract({
                               asset: this._params.asset,
                               from: (this._params.from as unknown) as
@@ -288,7 +289,7 @@ export class LockAndMint<
                       )
                   )
                 : await this._params.to.resolveTokenGatewayContract(
-                      resolveInToken(this._params)
+                      this._params.asset
                   );
 
         this._pHash = generatePHash(contractParams || [], this._logger);
@@ -304,7 +305,7 @@ export class LockAndMint<
         );
         this._gHash = gHash;
         this._mpkh = await this._renVM.selectPublicKey(
-            resolveInToken(this._params),
+            this._params.asset,
             this._logger
         );
         this._logger.debug("mpkh:", Ox(this._mpkh));
@@ -388,7 +389,7 @@ export class LockAndMintDeposit<
         gHash: Buffer,
         pHash: Buffer
     ) {
-        assertType("Buffer", { mpkh, gHash });
+        assertType<Buffer>("Buffer", { mpkh, gHash });
         this._renVM = renVM;
         this._params = params; // processLockAndMintParams(this.network, _params);
         this._logger = logger;
@@ -455,7 +456,7 @@ export class LockAndMintDeposit<
         const tokenGatewayContract =
             this._renVM.version >= 2
                 ? Ox(
-                      v2.hashSelector(
+                      generateSHash(
                           v2.resolveV2Contract({
                               asset: this._params.asset,
                               from: (this._params.from as unknown) as
@@ -466,7 +467,7 @@ export class LockAndMintDeposit<
                       )
                   )
                 : await this._params.to.resolveTokenGatewayContract(
-                      resolveInToken(this._params)
+                      this._params.asset
                   );
 
         // TODO: Validate inputs.
@@ -483,7 +484,7 @@ export class LockAndMintDeposit<
         if (this._logger) {
             this._logger.debug(
                 "txHash Parameters:",
-                resolveInToken(this._params),
+                this._params.asset,
                 encodedGHash,
                 deposit
             );
@@ -500,17 +501,23 @@ export class LockAndMintDeposit<
         }
 
         const encodedParameters = new AbiCoder().encodeParameters(
-            (contractParams || []).map((i) => i.type),
-            (contractParams || []).map((i) => i.value)
+            (contractParams || []).map(i => i.type),
+            (contractParams || []).map(i => i.value)
         );
 
-        const tokenIdentifier = await this._params.to.resolveTokenGatewayContract(
-            parseRenContract(resolveInToken(this._params)).asset
+        // const tokenIdentifier = await this._params.to.resolveTokenGatewayContract(
+        //     this._params.asset
+        // );
+
+        const transactionDetails = this._params.from.transactionRPCFormat(
+            this.depositDetails.transaction,
+            this._renVM.version >= 2
         );
 
-        const nHash = this._params.from.generateNHash(
+        const nHash = generateNHash(
             fromHex(nonce),
-            this.depositDetails,
+            transactionDetails.txid,
+            transactionDetails.txindex,
             this._renVM.version >= 2
         );
 
@@ -543,15 +550,14 @@ export class LockAndMintDeposit<
                 this._mpkh,
                 nHash,
                 fromHex(nonce),
-                this._params.from.depositRPCFormat(
-                    deposit,
-                    pubKeyScript,
+                this._params.from.transactionRPCFormat(
+                    deposit.transaction,
                     this._renVM.version >= 2 // v2
                 ),
+                deposit.amount,
                 fromHex(encodedParameters),
                 this._pHash,
-                sendTo,
-                tokenIdentifier,
+                strip0x(sendTo),
                 outputHashFormat
             )
         );
@@ -600,8 +606,8 @@ export class LockAndMintDeposit<
         const fnABI = payloadToMintABI(contractFn, contractParams || []);
 
         const encodedParameters = new AbiCoder().encodeParameters(
-            (contractParams || []).map((i) => i.type),
-            (contractParams || []).map((i) => i.value)
+            (contractParams || []).map(i => i.type),
+            (contractParams || []).map(i => i.value)
         );
 
         if (this._params.tags && this._params.tags.length > 1) {
@@ -613,20 +619,26 @@ export class LockAndMintDeposit<
                 : [];
 
         const tokenIdentifier = await this._params.to.resolveTokenGatewayContract(
-            parseRenContract(resolveInToken(this._params)).asset
+            this._params.asset
         );
 
-        const nHash = this._params.from.generateNHash(
-            fromHex(nonce),
-            this.depositDetails,
+        const transactionDetails = this._params.from.transactionRPCFormat(
+            this.depositDetails.transaction,
             this._renVM.version >= 2
         );
 
-        const pubKeyScript = await this._params.from.getPubKeyScript(
-            this._params.asset,
-            this._mpkh,
-            this._gHash
+        const nHash = generateNHash(
+            fromHex(nonce),
+            transactionDetails.txid,
+            transactionDetails.txindex,
+            this._renVM.version >= 2
         );
+
+        // const pubKeyScript = await this._params.from.getPubKeyScript(
+        //     this._params.asset,
+        //     this._mpkh,
+        //     this._gHash
+        // );
 
         const selector =
             this._renVM.version >= 2
@@ -645,14 +657,14 @@ export class LockAndMintDeposit<
             this._mpkh,
             nHash,
             fromHex(nonce),
-            this._params.from.depositRPCFormat(
-                deposit,
-                pubKeyScript,
+            this._params.from.transactionRPCFormat(
+                deposit.transaction,
                 this._renVM.version >= 2 // v2
             ),
+            deposit.amount,
             fromHex(encodedParameters),
             this._pHash,
-            Ox(sendTo),
+            this._renVM.version >= 2 ? strip0x(sendTo) : Ox(sendTo),
             Ox(tokenIdentifier),
             contractFn,
             fnABI,
@@ -692,7 +704,7 @@ export class LockAndMintDeposit<
         >();
 
         (async () => {
-            this._submit().catch((_error) => {
+            this._submit().catch(_error => {
                 /* ignore error */
             });
 
@@ -760,18 +772,7 @@ export class LockAndMintDeposit<
         >();
 
         (async () => {
-            // const deposit = this.deposit;
-            // let txHash = this.params.txHash
-            //     ? renVMHashToBase64(this.params.txHash)
-            //     : undefined;
-
             const utxoTxHash = await this.txHash();
-            // if (txHash && txHash !== utxoTxHash) {
-            //     throw new Error(
-            //         `Inconsistent RenVM transaction hash: got ${txHash} but expected ${utxoTxHash}`
-            //     );
-            // }
-            // txHash = utxoTxHash;
 
             let txHash: string;
 
@@ -807,7 +808,7 @@ export class LockAndMintDeposit<
 
             const response = await this._renVM.waitForTX<MintTransaction>(
                 fromBase64(txHash),
-                (status) => {
+                status => {
                     promiEvent.emit("status", status);
                     this._logger.debug("transaction status:", status);
                 },
@@ -842,7 +843,7 @@ export class LockAndMintDeposit<
 
         // Check if the signature has already been submitted
         return await this._params.to.findTransaction(
-            resolveInToken(this._params),
+            this._params.asset,
             this._queryTxResult
         );
     };
@@ -872,7 +873,7 @@ export class LockAndMintDeposit<
                 );
             }
 
-            const asset = this._params.asset; // parseRenContract(this.queryTxResult.to).asset;
+            const asset = this._params.asset;
 
             return this._params.to.submitMint(
                 asset,
@@ -881,24 +882,10 @@ export class LockAndMintDeposit<
                 (promiEvent as unknown) as EventEmitter
             );
         })()
-            .then((transaction) => {
+            .then(transaction => {
                 promiEvent.resolve(transaction);
             })
             .catch(promiEvent.reject);
-
-        // TODO: Look into why .catch isn't being called on tx
-        promiEvent.on("error", (error) => {
-            try {
-                if (ignorePromiEventError(error)) {
-                    this._logger.error(extractError(error));
-                    return;
-                }
-            } catch (_error) {
-                /* Ignore _error */
-            }
-            this._logger.debug("promiEvent.on('error') forwarded", error);
-            promiEvent.reject(error);
-        });
 
         return promiEvent;
     };
@@ -924,8 +911,8 @@ export class LockAndMintDeposit<
         );
 
         if (this._params.contractCalls) {
-            this._params.contractCalls.map((contractCall) => {
-                assertType("string", {
+            this._params.contractCalls.map(contractCall => {
+                assertType<string>("string", {
                     sendTo: contractCall.sendTo,
                     contractFn: contractCall.contractFn,
                 });

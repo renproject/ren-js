@@ -10,14 +10,13 @@ import {
     Transaction,
 } from "./base";
 
-export class BitcoinClass
-    extends BitcoinBaseChain
+export class BitcoinClass extends BitcoinBaseChain
     implements LockChain<Transaction, Deposit, Asset, Address> {
     getBurnPayload: (() => string) | undefined;
 
     Address = (address: string): this => {
         // Type validation
-        assertType("string", { address });
+        assertType<string>("string", { address });
 
         this.getBurnPayload = () => address;
         return this;

@@ -18,12 +18,15 @@ import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
     fromBase64,
+    fromBigNumber,
     fromHex,
+    generateGHash,
+    generatePHash,
+    generateSHash,
     getTokenPrices,
     normalizeValue,
-    pad0x,
-    parseRenContract,
     SECONDS,
+    sha256,
     sleep,
     strip0x,
     toBase64,
@@ -32,7 +35,6 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { List, OrderedMap, Set } from "immutable";
-import { sha256 } from "ethereumjs-util";
 
 import {
     ParamsQueryBlock,
@@ -74,37 +76,43 @@ export const resolveRpcURL = (network: RenNetwork | string) => {
     return network;
 };
 
-export const resolveV2Contract = ({
+export const resolveV2Contract = <
+    // tslint:disable-next-line: no-any
+    Transaction = any,
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    ChainAsset extends string = string,
+    Address = string,
+    MintAsset extends string = string
+>({
     asset,
     from,
     to,
 }: {
-    asset: string;
-    from: LockChain | MintChain;
-    to: LockChain | MintChain;
+    asset: ChainAsset;
+    from:
+        | LockChain<Transaction, Deposit, Asset, Address>
+        | MintChain<MintAsset>;
+    to: LockChain<Transaction, Deposit, Asset, Address> | MintChain<MintAsset>;
 }): string => {
     if (
-        (from as LockChain).assetIsNative &&
-        (from as LockChain).assetIsNative(asset)
+        (from as LockChain<Transaction, Deposit, Asset, Address>)
+            .assetIsNative &&
+        (from as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative(
+            asset
+        )
     ) {
         return `${asset}/to${to.name}`;
     }
     if (
-        (to as LockChain).assetIsNative &&
-        (to as LockChain).assetIsNative(asset)
+        (to as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative &&
+        (to as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative(
+            asset
+        )
     ) {
         return `${asset}/from${from.name}`;
     }
     return `${asset}/from$${from.name}To${to.name}`;
 };
-
-export const hashSelector = (selector: string): Buffer =>
-    sha256(
-        Buffer.concat([
-            Buffer.from([0, 0, 0, selector.length]),
-            Buffer.from(selector),
-        ])
-    );
 
 export type RenVMProviderInterface = Provider<RenVMParams, RenVMResponses>;
 
@@ -239,34 +247,54 @@ export class RenVMProvider implements RenVMProviderInterface {
 
     public getFees = async () => unmarshalFees(await this.queryFees());
 
-    public buildMintTransaction = (
-        renContractOrSelector: string,
-        gHash: Buffer,
-        gPubKey: Buffer,
-        nHash: Buffer,
-        nonce: Buffer,
-        // tslint:disable-next-line: no-any
-        output: TypedPackValue,
-        payload: Buffer,
-        pHash: Buffer,
-        to: string,
-        token: string
-    ): MintTransactionInput => {
-        assertType("Buffer", { gHash, gPubKey, nHash, nonce, payload, pHash });
-        assertType("string", { to, token });
+    public buildMintTransaction = (params: {
+        renContractOrSelector: string;
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        output: { txid: Buffer; txindex: string };
+        amount: string;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
+    }): MintTransactionInput => {
+        const {
+            renContractOrSelector,
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            output,
+            amount,
+            payload,
+            pHash,
+            to,
+        } = params;
+        assertType<Buffer>("Buffer", {
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            payload,
+            pHash,
+            txid: output.txid,
+        });
+        assertType<string>("string", { to, amount, txindex: output.txindex });
         const version = "1";
         const txIn = {
-            t: mintParamsType(output.t as PackStructType),
+            t: mintParamsType(),
             v: {
+                txid: toURLBase64(output.txid),
+                txindex: output.txindex,
                 ghash: toURLBase64(gHash),
                 gpubkey: toURLBase64(gPubKey),
                 nhash: toURLBase64(nHash),
                 nonce: toURLBase64(nonce),
                 payload: toURLBase64(payload),
                 phash: toURLBase64(pHash),
-                to: strip0x(to),
-                token: strip0x(token),
-                ...output.v,
+                to,
+                amount,
             },
         };
         return {
@@ -287,14 +315,16 @@ export class RenVMProvider implements RenVMProviderInterface {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: TypedPackValue,
+        output:
+            | { txHash: string; vOut: string }
+            | { txindex: string; txid: Buffer },
+        amount: string,
         payload: Buffer,
         pHash: Buffer,
         to: string,
-        token: string,
         _outputHashString: string
     ): Buffer => {
-        assertType("Buffer", {
+        assertType<Buffer>("Buffer", {
             gHash,
             gPubKey,
             nHash,
@@ -302,20 +332,25 @@ export class RenVMProvider implements RenVMProviderInterface {
             payload,
             pHash,
         });
-        assertType("string", { to, token });
+        assertType<string>("string", { to });
+
+        const { txid, txindex } = output as { txid: Buffer; txindex: string };
+        assertType<Buffer>("Buffer", { txid });
+        assertType<string>("string", { txindex });
+
         return fromBase64(
-            this.buildMintTransaction(
+            this.buildMintTransaction({
                 renContractOrSelector,
                 gHash,
                 gPubKey,
                 nHash,
                 nonce,
-                output,
+                output: { txid, txindex },
+                amount,
                 payload,
                 pHash,
                 to,
-                token
-            ).hash
+            }).hash
         );
     };
 
@@ -326,7 +361,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output: TypedPackValue,
+        output: { txindex: string; txid: Buffer },
+        amount: string,
         payload: Buffer,
         pHash: Buffer,
         to: string,
@@ -335,65 +371,199 @@ export class RenVMProvider implements RenVMProviderInterface {
         _fnABI: AbiItem[],
         _tags: [string] | []
     ): Promise<Buffer> => {
-        assertType("Buffer", { gHash, gPubKey, nHash, nonce, payload, pHash });
-        assertType("string", { to, token });
-        const response = await this.provider.sendMessage<
-            RPCMethod.MethodSubmitTx
-        >(RPCMethod.MethodSubmitTx, {
-            tx: this.buildMintTransaction(
-                renContractOrSelector,
-                gHash,
-                gPubKey,
-                nHash,
-                nonce,
-                output,
-                payload,
-                pHash,
-                to,
-                token
-            ),
-            // tags,
+        const { txid, txindex } = output;
+
+        assertType<Buffer>("Buffer", {
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            payload,
+            pHash,
+            txid,
+        });
+        assertType<string>("string", { to, token, txindex, amount });
+
+        const tx = this.buildMintTransaction({
+            renContractOrSelector,
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            output: { txid, txindex },
+            amount,
+            payload,
+            pHash,
+            to,
         });
 
-        return fromBase64(response.tx.hash);
-    };
-
-    public submitBurn = async (
-        renContractOrSelector: string,
-        amount: BigNumber,
-        token: string,
-        to: string,
-        ref: BigNumber,
-        _tags: [string] | []
-    ): Promise<Buffer> => {
-        assertType("string", { token, to });
-        // const selector = resolveV2Contract(renContract);
-        const version = "1";
-        const txIn = {
-            t: burnParamsType,
-            v: {
-                amount: amount.toFixed(),
-                token,
-                to,
-                nonce: toBase64(fromHex(pad0x(ref.toString(16)))),
-            },
-        };
-        const response = await this.provider.sendMessage(
+        await this.provider.sendMessage<RPCMethod.MethodSubmitTx>(
             RPCMethod.MethodSubmitTx,
             {
-                tx: {
-                    hash: toURLBase64(
-                        hashTransaction(version, renContractOrSelector, txIn)
-                    ),
-                    selector: renContractOrSelector,
-                    version,
-                    in: txIn,
-                },
+                tx,
                 // tags,
             }
         );
 
-        return fromBase64(response.tx.hash);
+        return fromBase64(tx.hash);
+    };
+
+    public burnTxHash = async (
+        params: {
+            // v2
+            renContractOrSelector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txid: Buffer; txindex: string };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        },
+        _logger?: Logger
+    ): Promise<Buffer> => {
+        const {
+            renContractOrSelector,
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            output,
+            amount,
+            payload,
+            pHash,
+            to,
+        } = params as {
+            // v2
+            renContractOrSelector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txid: Buffer; txindex: string };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        };
+
+        assertType<Buffer>("Buffer", {
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            payload,
+            pHash,
+            txid: output.txid,
+        });
+        assertType<string>("string", {
+            renContractOrSelector,
+            to,
+            txindex: output.txindex,
+            amount,
+        });
+
+        const tx = this.buildMintTransaction({
+            renContractOrSelector,
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            output,
+            amount,
+            payload,
+            pHash,
+            to,
+        });
+
+        return fromBase64(tx.hash);
+    };
+
+    public submitBurn = async (
+        params:
+            | {
+                  // v2
+                  renContractOrSelector: string;
+                  gHash: Buffer;
+                  gPubKey: Buffer;
+                  nHash: Buffer;
+                  nonce: Buffer;
+                  output: { txid: Buffer; txindex: string };
+                  amount: string;
+                  payload: Buffer;
+                  pHash: Buffer;
+                  to: string;
+              }
+            | {
+                  // v1
+                  renContract: RenContract;
+                  burnNonce: BigNumber;
+              },
+        _tags: [string] | [],
+        _logger?: Logger
+    ): Promise<Buffer> => {
+        const {
+            renContractOrSelector,
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            output,
+            amount,
+            payload,
+            pHash,
+            to,
+        } = params as {
+            // v2
+            renContractOrSelector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txid: Buffer; txindex: string };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        };
+
+        assertType<Buffer>("Buffer", {
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            payload,
+            pHash,
+            txid: output.txid,
+        });
+        assertType<string>("string", {
+            renContractOrSelector,
+            to,
+            txindex: output.txindex,
+            amount,
+        });
+
+        const tx = this.buildMintTransaction({
+            renContractOrSelector,
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            output,
+            amount,
+            payload,
+            pHash,
+            to,
+        });
+
+        await this.provider.sendMessage(RPCMethod.MethodSubmitTx, {
+            tx,
+            // tags,
+        });
+
+        return fromBase64(tx.hash);
     };
 
     public readonly queryMintOrBurn = async <
@@ -403,9 +573,13 @@ export class RenVMProvider implements RenVMProviderInterface {
     ): Promise<T> => {
         try {
             const response = await this.queryTx(toURLBase64(renVMTxHash));
+
             // Unmarshal transaction.
-            // TODO: Improve mint/burn detection
-            const isMint = response.tx.selector.match(/\/to/);
+            // TODO: Improve mint/burn detection. Currently checks if the format
+            // is `ASSET/toChain` or `ASSET/fromChainToChain`. It may return
+            // a false positive if the chain name contains `To`.
+            const isMint = response.tx.selector.match(/((\/to)|(To))/);
+
             if (isMint) {
                 return unmarshalMintTx(response as ResponseQueryMintTx) as T;
             } else {
@@ -424,7 +598,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean
     ): Promise<T> => {
-        assertType("Buffer", { utxoTxHash });
+        assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
         // tslint:disable-next-line: no-constant-condition
         while (true) {
@@ -470,22 +644,22 @@ export class RenVMProvider implements RenVMProviderInterface {
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (
-        renContract: RenContract,
+        token: Asset,
         logger?: Logger
     ): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
         const response = await this.queryShards(5);
 
         // Filter to only keep shards that are primary/online.
-        const primaryShards = response.shards.filter((shard) => shard.primary);
+        const primaryShards = response.shards.filter(shard => shard.primary);
 
         // Find the shard with the lowest total value locked (sum all the locked
         // amounts from all gateways in a shard, after converting to a consistent
         // currencies using the coinGecko API).
         const tokens = Set<string>()
             .concat(
-                ...primaryShards.map((shard) =>
-                    shard.gateways.map((gateway) => gateway.asset)
+                ...primaryShards.map(shard =>
+                    shard.gateways.map(gateway => gateway.asset)
                 )
             )
             .toArray();
@@ -493,15 +667,14 @@ export class RenVMProvider implements RenVMProviderInterface {
             tokens,
             logger
         ).catch(() => OrderedMap());
-        const token: Asset = parseRenContract(renContract).asset;
 
         const smallestShard = List(primaryShards)
-            .filter((shard) =>
-                shard.gateways.map((gateway) => gateway.asset).includes(token)
+            .filter(shard =>
+                shard.gateways.map(gateway => gateway.asset).includes(token)
             )
-            .sortBy((shard) =>
+            .sortBy(shard =>
                 shard.gateways
-                    .map((gateway) =>
+                    .map(gateway =>
                         normalizeValue(
                             tokenPrices,
                             gateway.asset,
@@ -522,7 +695,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         // Get the gateway pubKey from the gateway with the right asset within
         // the shard with the lowest total value locked.
         const tokenGateway = List(smallestShard.gateways)
-            .filter((gateway) => gateway.asset === token)
+            .filter(gateway => gateway.asset === token)
             .first(undefined);
 
         if (!tokenGateway) {

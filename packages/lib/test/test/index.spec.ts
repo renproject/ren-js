@@ -84,7 +84,7 @@ describe("RenJS initialization and exports", () => {
     //             // Send BTC from the Ethereum blockchain to the Bitcoin blockchain.
     //             sendToken: RenJS.Tokens.BTC.Eth2Btc,
 
-    //             burnReference: 0x47,
+    //             burnNonce: 0x47,
     //         })
     //         .readFromEthereum();
 

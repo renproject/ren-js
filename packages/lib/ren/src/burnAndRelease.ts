@@ -1,42 +1,63 @@
 import {
     BurnAndReleaseParams,
+    BurnDetails,
     BurnTransaction,
+    DepositCommon,
     EventType,
     LockChain,
     Logger,
+    LogLevel,
     MintChain,
     newPromiEvent,
     PromiEvent,
     RenNetwork,
+    SimpleLogger,
     TxStatus,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, v2 } from "@renproject/rpc";
 import {
     assertObject,
     assertType,
-    extractError,
     fromBase64,
     generateBurnTxHash,
-    ignorePromiEventError,
+    generateGHash,
+    generateNHash,
+    generatePHash,
+    generateSHash,
+    Ox,
     renVMHashToBase64,
     resolveOutToken,
     toBase64,
+    toURLBase64,
 } from "@renproject/utils";
-import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import { EventEmitter } from "events";
 
-export class BurnAndRelease {
+export class BurnAndRelease<
+    // tslint:disable-next-line: no-any
+    Transaction = any,
+    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    Asset extends string = string,
+    Address = string
+> {
     public queryTxResult: BurnTransaction | undefined;
 
     public renNetwork: RenNetwork | undefined;
 
-    public readonly _params: BurnAndReleaseParams;
+    public readonly _params: BurnAndReleaseParams<
+        Transaction,
+        Deposit,
+        Asset,
+        Address
+    >;
     public readonly _renVM: AbstractRenVMProvider;
     public readonly _logger: Logger;
 
+    public _burnDetails: BurnDetails<Transaction> | undefined;
+
     constructor(
         _renVM: AbstractRenVMProvider,
-        _params: BurnAndReleaseParams,
+        _params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>,
         _logger: Logger
     ) {
         this._logger = _logger;
@@ -57,8 +78,8 @@ export class BurnAndRelease {
             {
                 from: "object",
                 to: "object",
-                ethereumTxHash: "string | undefined",
-                burnReference: "string | number | undefined",
+                transaction: "any | undefined",
+                burnNonce: "string | number | undefined",
                 contractCalls: "any[] | undefined",
                 asset: "string",
                 txHash: "string | undefined",
@@ -69,8 +90,8 @@ export class BurnAndRelease {
         );
 
         if (this._params.contractCalls) {
-            this._params.contractCalls.map((contractCall) => {
-                assertType("string", {
+            this._params.contractCalls.map(contractCall => {
+                assertType<string>("string", {
                     sendTo: contractCall.sendTo,
                     contractFn: contractCall.contractFn,
                 });
@@ -113,13 +134,13 @@ export class BurnAndRelease {
      *        like gas.
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
-    public burn = (
+    public burn = (): PromiEvent<
+        BurnAndRelease<Transaction, Deposit, Asset, Address>,
         // tslint:disable-next-line: no-any
-        txConfig?: any
-        // tslint:disable-next-line: no-any
-    ): PromiEvent<BurnAndRelease, { [event: string]: any }> => {
+        { [event: string]: any }
+    > => {
         const promiEvent = newPromiEvent<
-            BurnAndRelease,
+            BurnAndRelease<Transaction, Deposit, Asset, Address>,
             // tslint:disable-next-line: no-any
             { [event: string]: any }
         >();
@@ -129,30 +150,28 @@ export class BurnAndRelease {
                 return this;
             }
 
-            this._params.burnReference = await this._params.from.findBurnTransaction(
-                this._params,
+            const {
+                asset,
+                transaction,
+                burnNonce,
+                contractCalls,
+            } = this._params;
+
+            this._burnDetails = await this._params.from.findBurnTransaction(
+                asset,
+                {
+                    transaction,
+                    burnNonce,
+                    contractCalls,
+                },
                 (promiEvent as unknown) as EventEmitter,
-                this._logger,
-                txConfig
+                this._logger
             );
 
             return this;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
-
-        // TODO: Look into why .catch isn't being called on tx
-        promiEvent.on("error", (error) => {
-            try {
-                if (ignorePromiEventError(error)) {
-                    this._logger.error(extractError(error));
-                    return;
-                }
-            } catch (_error) {
-                /* Ignore _error */
-            }
-            promiEvent.reject(error);
-        });
 
         return promiEvent;
     };
@@ -161,25 +180,93 @@ export class BurnAndRelease {
      * txHash calculates the RenVM transaction hash for the burn. This is
      * used to track the progress of the release in RenVM.
      */
-    public txHash = (): string => {
+    public txHash = async (): Promise<string> => {
         const txHash = this._params.txHash;
         if (txHash) {
             return renVMHashToBase64(txHash);
         }
 
-        if (!this._params.burnReference && this._params.burnReference !== 0) {
+        if (!this._burnDetails) {
             throw new Error("Must call `burn` before calling `txHash`");
         }
-        const burnReference = new BigNumber(
-            this._params.burnReference
-        ).toFixed();
-        return toBase64(
-            generateBurnTxHash(
-                resolveOutToken(this._params),
-                burnReference,
+
+        if (this._renVM.version >= 2 && this._renVM.burnTxHash) {
+            const selector =
+                this._renVM.version >= 2
+                    ? v2.resolveV2Contract({
+                          asset: this._params.asset,
+                          from: (this._params.from as unknown) as
+                              | LockChain
+                              | MintChain,
+                          to: (this._params.to as unknown) as
+                              | LockChain
+                              | MintChain,
+                      })
+                    : resolveOutToken(this._params);
+
+            const { transaction, amount, to, nonce } = this._burnDetails;
+
+            const asset = selector.split("/")[0];
+
+            const gPubKey = await this._renVM.selectPublicKey(
+                asset,
                 this._logger
-            )
-        );
+            );
+
+            const payload = Buffer.from([]);
+            const pHash = generatePHash([], this._logger);
+            const { txid, txindex } = this._params.from.transactionRPCFormat(
+                transaction,
+                true
+            );
+            const nonceBuffer = new BN(nonce.toFixed()).toBuffer("be", 32);
+
+            const nHash = generateNHash(
+                nonceBuffer,
+                txid,
+                txindex,
+                this._renVM.version >= 2,
+                this._logger
+            );
+            const sHash = generateSHash(
+                `${this._params.asset}/to${this._params.to.name}`
+            );
+
+            const gHash = generateGHash(
+                [],
+                "0x01caf724ea7f2032072510c4c428732bb3a49ba2f2",
+                Ox(sHash),
+                nonceBuffer,
+                this._renVM.version >= 2,
+                this._logger
+            );
+
+            return toURLBase64(
+                await this._renVM.burnTxHash({
+                    renContractOrSelector: selector,
+                    gHash,
+                    gPubKey,
+                    nHash,
+                    nonce: nonceBuffer,
+                    output: {
+                        txid,
+                        txindex,
+                    },
+                    amount: amount.toFixed(),
+                    payload,
+                    pHash,
+                    to: to.toString(),
+                })
+            );
+        } else {
+            return toBase64(
+                generateBurnTxHash(
+                    resolveOutToken(this._params),
+                    this._burnDetails.nonce.toFixed(),
+                    this._logger
+                )
+            );
+        }
     };
 
     /**
@@ -187,7 +274,7 @@ export class BurnAndRelease {
      */
     public queryTx = async (): Promise<BurnTransaction> => {
         this.queryTxResult = (await this._renVM.queryMintOrBurn(
-            fromBase64(this.txHash())
+            fromBase64(await this.txHash())
         )) as BurnTransaction;
         return this.queryTxResult;
     };
@@ -208,24 +295,23 @@ export class BurnAndRelease {
         >();
 
         (async () => {
-            const { burnReference } = this._params;
-            if (!this._params.txHash && !burnReference && burnReference !== 0) {
+            if (!this._burnDetails && !this._params.txHash) {
                 throw new Error("Must call `burn` before calling `release`");
             }
 
-            const txHash = this.txHash();
+            const txHash = await this.txHash();
 
-            if (this._params.tags && this._params.tags.length > 1) {
-                throw new Error(
-                    "Providing multiple tags is not supported yet."
-                );
-            }
-            const tags: [string] | [] =
-                this._params.tags && this._params.tags.length
-                    ? [this._params.tags[0]]
-                    : [];
+            if (!this._params.txHash && this._burnDetails) {
+                if (this._params.tags && this._params.tags.length > 1) {
+                    throw new Error(
+                        "Providing multiple tags is not supported yet."
+                    );
+                }
+                const tags: [string] | [] =
+                    this._params.tags && this._params.tags.length
+                        ? [this._params.tags[0]]
+                        : [];
 
-            if (burnReference || burnReference === 0) {
                 const selector =
                     this._renVM.version >= 2
                         ? v2.resolveV2Contract({
@@ -233,34 +319,110 @@ export class BurnAndRelease {
                               from: (this._params.from as unknown) as
                                   | LockChain
                                   | MintChain,
-                              to: this._params.to,
+                              to: (this._params.to as unknown) as
+                                  | LockChain
+                                  | MintChain,
                           })
                         : resolveOutToken(this._params);
 
-                const returnedTxHash = await this._renVM.submitBurn(
-                    selector,
-                    new BigNumber(0),
-                    "",
-                    "",
-                    new BigNumber(burnReference),
-                    tags
-                );
-                if (txHash && toBase64(returnedTxHash) !== txHash) {
-                    this._logger.warn(
-                        `Unexpected txHash returned from RenVM. Received: ${toBase64(
-                            returnedTxHash
-                        )}, expected: ${txHash}`
-                    );
+                const { transaction, amount, to, nonce } = this._burnDetails;
+
+                try {
+                    let returnedTxHash: Buffer;
+
+                    if (this._renVM.version >= 2) {
+                        assertType<Buffer>("Buffer", { to });
+                        // const selector = resolveV2Contract(renContract);
+
+                        // TODO: Turn into function with tests.
+                        const asset = selector.split("/")[0];
+
+                        const gPubKey = await this._renVM.selectPublicKey(
+                            asset,
+                            this._logger
+                        );
+
+                        const payload = Buffer.from([]);
+                        const pHash = generatePHash([], this._logger);
+                        const {
+                            txid,
+                            txindex,
+                        } = this._params.from.transactionRPCFormat(
+                            transaction,
+                            true
+                        );
+                        const nonceBuffer = new BN(nonce.toFixed()).toBuffer(
+                            "be",
+                            32
+                        );
+
+                        const nHash = generateNHash(
+                            nonceBuffer,
+                            txid,
+                            txindex,
+                            this._renVM.version >= 2,
+                            this._logger
+                        );
+                        const sHash = generateSHash(
+                            `${this._params.asset}/to${this._params.to.name}`
+                        );
+
+                        const gHash = generateGHash(
+                            [],
+                            "0x01caf724ea7f2032072510c4c428732bb3a49ba2f2",
+                            Ox(sHash),
+                            nonceBuffer,
+                            this._renVM.version >= 2,
+                            this._logger
+                        );
+
+                        returnedTxHash = await this._renVM.submitBurn(
+                            {
+                                renContractOrSelector: selector,
+                                gHash,
+                                gPubKey,
+                                nHash,
+                                nonce: nonceBuffer,
+                                output: {
+                                    txid,
+                                    txindex,
+                                },
+                                amount: amount.toFixed(),
+                                payload,
+                                pHash,
+                                to: to.toString(),
+                            },
+                            tags
+                        );
+                    } else {
+                        returnedTxHash = await this._renVM.submitBurn(
+                            {
+                                renContract: selector,
+                                burnNonce: nonce,
+                            },
+                            tags
+                        );
+                    }
+                    if (txHash && toBase64(returnedTxHash) !== txHash) {
+                        this._logger.warn(
+                            `Unexpected txHash returned from RenVM. Received: ${toBase64(
+                                returnedTxHash
+                            )}, expected: ${txHash}`
+                        );
+                    }
+                } catch (error) {
+                    // TODO: Check against already being submitted.
+                    throw error;
                 }
             }
 
-            // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnReference);
+            // const txHash = await this.renVMNetwork.submitTokenFromEthereum(this.params.sendToken, burnNonce);
             promiEvent.emit("txHash", txHash);
             this._logger.debug("txHash:", txHash);
 
             return await this._renVM.waitForTX<BurnTransaction>(
                 fromBase64(txHash),
-                (status) => {
+                status => {
                     promiEvent.emit("status", status);
                     this._logger.debug("transaction status:", status);
                 },

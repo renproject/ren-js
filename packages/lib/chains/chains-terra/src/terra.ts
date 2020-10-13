@@ -172,7 +172,7 @@ export class TerraClass
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
-        assertType("string", { address });
+        assertType<string>("string", { address: address.address });
         // TODO
         return true;
     };
@@ -199,66 +199,22 @@ export class TerraClass
         throw new Error(UNSUPPORTED_TERRA_NETWORK);
     };
 
-    depositRPCFormat = (
-        { transaction }: TerraDeposit,
-        _pubKeyScript: Buffer,
-        v2?: boolean
-    ) => {
+    transactionRPCFormat = (transaction: TerraTransaction, v2?: boolean) => {
         if (!v2) {
             throw new Error(UNSUPPORTED_TERRA_NETWORK);
         }
 
         return {
-            t: {
-                struct: [
-                    {
-                        txid: PackPrimitive.Bytes,
-                    },
-                    {
-                        amount: PackPrimitive.U256,
-                    },
-                    {
-                        nonce: PackPrimitive.U256,
-                    },
-                ],
-            },
-            v: {
-                amount: transaction.amount,
-                txid: toURLBase64(Buffer.from(transaction.hash, "hex")),
-                nonce: "0",
-            },
+            txid: Buffer.from(transaction.hash, "hex"),
+            txindex: "0",
         };
-    };
-
-    generateNHash = (
-        _nonce: Buffer,
-        { transaction }: TerraDeposit,
-        v2?: boolean,
-        logger?: Logger
-    ): Buffer => {
-        if (!v2) {
-            throw new Error(UNSUPPORTED_TERRA_NETWORK);
-        }
-
-        const encoded = rawEncode(
-            ["uint256", "bytes", "uint32"],
-            [0, fromHex(transaction.hash), 0]
-        );
-
-        const digest = keccak256(encoded);
-
-        if (logger) {
-            logger.debug("nHash", toBase64(digest), Ox(encoded));
-        }
-
-        return digest;
     };
 
     getBurnPayload: (() => string) | undefined;
 
     Address = (address: string): this => {
         // Type validation
-        assertType("string", { address });
+        assertType<string>("string", { address });
 
         this.getBurnPayload = () => address;
         return this;

@@ -45,7 +45,6 @@
         "@renproject/chains-bitcoin": "^2.0.0-alpha.7",
         "@renproject/chains-ethereum": "^2.0.0-alpha.7",
         "@renproject/chains-filecoin": "^2.0.0-alpha.8",
-        "@renproject/chains-terra": "^2.0.0-alpha.8",
         "@renproject/interfaces": "^2.0.0-alpha.8",
         "@renproject/networks": "^2.0.0-alpha.7"
     },
@@ -61,5 +60,9 @@
         "include": [
             "src"
         ]
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4
     }
 }

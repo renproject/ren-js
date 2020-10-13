@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-ethereum-walletconnect-connector",
-    "version": "2.0.0-alpha.9",
+    "version": "2.0.0-alpha.10",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,8 +43,8 @@
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.9",
-        "@renproject/multiwallet-abstract-ethereum-connector": "^2.0.0-alpha.9",
-        "@renproject/multiwallet-base-connector": "^2.0.0-alpha.9"
+        "@renproject/multiwallet-abstract-ethereum-connector": "^2.0.0-alpha.10",
+        "@renproject/multiwallet-base-connector": "^2.0.0-alpha.10"
     },
     "peerDependencies": {
         "@walletconnect/web3-provider": "^1.2.2"

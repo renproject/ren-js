@@ -44,7 +44,7 @@
     "dependencies": {
         "@glif/filecoin-wallet-provider": "^1.0.0-lerna.5",
         "@glif/filecoin-address": "^1.0.0-lerna.4",
-        "@renproject/interfaces": "^2.0.0-alpha.8",
+        "@renproject/interfaces": "^2.0.0-alpha.7",
         "@renproject/networks": "^2.0.0-alpha.7",
         "@renproject/rpc": "^2.0.0-alpha.7",
         "@renproject/utils": "^2.0.0-alpha.7",

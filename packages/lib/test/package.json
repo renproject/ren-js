@@ -26,7 +26,7 @@
     },
     "dependencies": {
         "@renproject/chains": "^2.0.0-alpha.7",
-        "@renproject/interfaces": "^2.0.0-alpha.8",
+        "@renproject/interfaces": "^2.0.0-alpha.7",
         "@renproject/networks": "^2.0.0-alpha.7",
         "@renproject/provider": "^2.0.0-alpha.7",
         "@renproject/ren": "^2.0.0-alpha.7",

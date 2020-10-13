@@ -63,6 +63,23 @@ const connectingProps: WalletPickerProps<any, any> = {
 
 Connecting.args = connectingProps;
 
+export const CustomConnecting = Template.bind({});
+
+const customConnectingProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+  connecting: true,
+  config: {
+    chains: {
+      ethereum: [],
+    },
+  },
+  ConnectingInfo: ({ chain }) => (
+    <div>A custom connecting component for {chain}</div>
+  ),
+};
+
+CustomConnecting.args = customConnectingProps;
+
 export const DefaultInfo = Template.bind({});
 
 const defaultInfoProps: WalletPickerProps<any, any> = {
@@ -81,6 +98,25 @@ const defaultInfoProps: WalletPickerProps<any, any> = {
 };
 
 DefaultInfo.args = defaultInfoProps;
+
+const ChildTemplate: Story<any> = (args) => (
+  <WalletPicker {...args}>
+    <div> Some extra Info</div>
+  </WalletPicker>
+);
+
+export const InfoChild = ChildTemplate.bind({});
+
+const infoChildProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+  config: {
+    chains: {
+      ethereum: [],
+    },
+  },
+};
+
+InfoChild.args = infoChildProps;
 
 const usePickerStyles = makeStyles({
   root: {

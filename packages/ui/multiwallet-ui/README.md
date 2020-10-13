@@ -1,12 +1,126 @@
-# TSDX React w/ Storybook User Guide
+# Multiwallet UI
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+This package provides a React wallet selection modal and state management for Multiwallet connectors.
 
-> This TSDX setup is meant for developing React component libraries (not apps!) that can be published to NPM. If you’re looking to build a React-based app, you should use `create-react-app`, `razzle`, `nextjs`, `gatsby`, or `react-static`.
+## Usage
+```bash
+yarn add @renproject/multiwallet-ui
+# For each chain / connector
+yarn add @renproject/multiwallet-{DESIRED_CHAIN}-{DESIRED_WALLET}-conector
+# Ensure peer dependencies are installed
+```
 
-> If you’re new to TypeScript and React, checkout [this handy cheatsheet](https://github.com/sw-yx/react-typescript-cheatsheet/)
+At the root of your app, add the provider
+```ts
+import React from "react";
+import ReactDOM from "react-dom";
 
-## Commands
+import { MultiwalletProvider } from "@renproject/multiwallet-ui";
+import App from "./App";
+
+ReactDOM.render(
+  <MultiwalletProvider>
+    <App/>
+  </MultiwalletProvider>,
+  document.getElementById("root")
+)
+```
+
+In your app, configure the desired providers for their chains eg.
+```ts
+import { EthereumInjectedConnector } from '@renproject/multiwallet-ethereum-injected-connector';
+import { EthereumWalletConnectConnector } from '@renproject/multiwallet-ethereum-walletconnect-connector';
+import { BinanceSmartChainInjectedConnector } from '@renproject/multiwallet-binancesmartchain-injected-connector';
+
+const options = {
+  chains: {
+    ethereum: [
+      {
+        name: 'Metamask',
+        logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+        connector: new EthereumInjectedConnector({ debug: true }),
+      },
+      {
+        name: 'WalletConnect',
+        logo: 'https://avatars0.githubusercontent.com/u/37784886?s=60&v=4',
+        connector: new EthereumWalletConnectConnector({
+          rpc: {
+            42: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
+          },
+          qrcode: true,
+          debug: true,
+        }),
+      },
+    ],
+    bsc: [
+      {
+        name: 'BinanceSmartWallet',
+        logo: 'https://avatars2.githubusercontent.com/u/45615063?s=60&v=4',
+        connector: new BinanceSmartChainInjectedConnector({ debug: true }),
+      },
+    ],
+  },
+};
+```
+
+Finally, render the modal use the `useMultiwallet` hook to request a connection to the chain.
+
+```tsx
+import * as React from 'react';
+import { WalletPickerModal, useMultiwallet } from '@renproject/multiwallet-ui';
+// import options object
+
+const WalletDemo: React.FC = () => {
+  const {enabledChains} = useMultiwallet();
+  return (
+    <div>
+      {Object.entries(enabledChains).map(([chain, connector]) => (
+        <span key={chain}>
+          {chain}: Status {connector.status} to {connector.account}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const App = () => {
+  const [open, setOpen] = React.useState(false);
+  const [chain, setChain] = React.useState('');
+  const setClosed = React.useMemo(() => () => setOpen(false), [setOpen]);
+
+  return (
+    <>
+      <WalletDemo />
+      <button
+        onClick={() => {
+          setChain('ethereum');
+          setOpen(true);
+        }}
+      >
+        Request Ethereum
+      </button>
+      <button
+        onClick={() => {
+          setChain('bsc');
+          setOpen(true);
+        }}
+      >
+        Request BSC
+      </button>
+      <WalletPickerModal
+        open={open}
+        close={setClosed}
+        options={{ chain, close: setClosed, config: options }}
+      />
+    </>
+  );
+};
+```
+
+See the `/example` directory for a working example, or check the storybook as detailed below for further usage guides.
+
+## Developing
+### Commands
 
 TSDX scaffolds your new library inside `/src`, and also sets up a [Parcel-based](https://parceljs.org) playground for it inside `/example`.
 
@@ -20,7 +134,7 @@ This builds to `/dist` and runs the project in watch mode so any edits you save 
 
 Then run either Storybook or the example playground:
 
-### Storybook
+#### Storybook
 
 Run inside another terminal:
 
@@ -32,7 +146,7 @@ This loads the stories from `./stories`.
 
 > NOTE: Stories should reference the components as if using the library, similar to the example playground. This means importing from the root project directory. This has been aliased in the tsconfig and the storybook webpack config as a helper.
 
-### Example
+#### Example
 
 Then run the example inside another:
 
@@ -48,19 +162,19 @@ To do a one-off build, use `npm run build` or `yarn build`.
 
 To run tests, use `npm test` or `yarn test`.
 
-## Configuration
+### Configuration
 
 Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
 
-### Jest
+#### Jest
 
 Jest tests are set up to run with `npm test` or `yarn test`.
 
-### Bundle analysis
+#### Bundle analysis
 
 Calculates the real cost of your library using [size-limit](https://github.com/ai/size-limit) with `npm run size` and visulize it with `npm run analyze`.
 
-#### Setup Files
+##### Setup Files
 
 This is the folder structure we set up for you:
 
@@ -85,97 +199,30 @@ README.md         # EDIT THIS
 tsconfig.json
 ```
 
-#### React Testing Library
-
-We do not set up `react-testing-library` for you yet, we welcome contributions and documentation on this.
-
-### Rollup
+#### Rollup
 
 TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
 
-### TypeScript
+#### TypeScript
 
 `tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
 
-## Continuous Integration
+### Continuous Integration
 
-### GitHub Actions
+#### GitHub Actions
 
 Two actions are added by default:
 
 - `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
 - `size` which comments cost comparison of your library on every pull request using [size-limit](https://github.com/ai/size-limit)
 
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
-}
-```
-
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
-
-## Module Formats
+### Module Formats
 
 CJS, ESModules, and UMD module formats are supported.
 
 The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
 
-## Deploying the Example Playground
-
-The Playground is just a simple [Parcel](https://parceljs.org) app, you can deploy it anywhere you would normally deploy that. Here are some guidelines for **manually** deploying with the Netlify CLI (`npm i -g netlify-cli`):
-
-```bash
-cd example # if not already in the example folder
-npm run build # builds to dist
-netlify deploy # deploy the dist folder
-```
-
-Alternatively, if you already have a git repo connected, you can set up continuous deployment with Netlify:
-
-```bash
-netlify init
-# build command: yarn build && cd example && yarn && yarn build
-# directory to deploy: example/dist
-# pick yes for netlify.toml
-```
-
-## Named Exports
+### Named Exports
 
 Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
 
-## Including Styles
-
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
-
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
-
-## Publishing to NPM
-
-We recommend using [np](https://github.com/sindresorhus/np).
-
-## Usage with Lerna
-
-When creating a new package with TSDX within a project set up with Lerna, you might encounter a `Cannot resolve dependency` error when trying to run the `example` project. To fix that you will need to make changes to the `package.json` file _inside the `example` directory_.
-
-The problem is that due to the nature of how dependencies are installed in Lerna projects, the aliases in the example project's `package.json` might not point to the right place, as those dependencies might have been installed in the root of your Lerna project.
-
-Change the `alias` to point to where those packages are actually installed. This depends on the directory structure of your Lerna project, so the actual path might be different from the diff below.
-
-```diff
-   "alias": {
--    "react": "../node_modules/react",
--    "react-dom": "../node_modules/react-dom"
-+    "react": "../../../node_modules/react",
-+    "react-dom": "../../../node_modules/react-dom"
-   },
-```
-
-An alternative to fixing this problem would be to remove aliases altogether and define the dependencies referenced as aliases as dev dependencies instead. [However, that might cause other problems.](https://github.com/palmerhq/tsdx/issues/64)

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import { WalletPicker, WalletPickerProps } from '../src';
+import { MultiwalletProvider, WalletPicker, WalletPickerProps } from '../src';
 import { makeStyles } from '@material-ui/core';
 
 const meta: Meta<typeof WalletPicker> = {
@@ -13,7 +13,11 @@ const meta: Meta<typeof WalletPicker> = {
 
 export default meta;
 
-const Template: Story<any> = (args) => <WalletPicker {...args} />;
+const Template: Story<any> = (args) => (
+  <MultiwalletProvider>
+    <WalletPicker {...args} />
+  </MultiwalletProvider>
+);
 
 // By passing using the Args format for exported stories, you can control the props for a component for reuse in a test
 // https://storybook.js.org/docs/react/workflows/unit-testing
@@ -59,6 +63,23 @@ const connectingProps: WalletPickerProps<any, any> = {
 
 Connecting.args = connectingProps;
 
+export const CustomConnecting = Template.bind({});
+
+const customConnectingProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+  connecting: true,
+  config: {
+    chains: {
+      ethereum: [],
+    },
+  },
+  ConnectingInfo: ({ chain }) => (
+    <div>A custom connecting component for {chain}</div>
+  ),
+};
+
+CustomConnecting.args = customConnectingProps;
+
 export const DefaultInfo = Template.bind({});
 
 const defaultInfoProps: WalletPickerProps<any, any> = {
@@ -77,6 +98,25 @@ const defaultInfoProps: WalletPickerProps<any, any> = {
 };
 
 DefaultInfo.args = defaultInfoProps;
+
+const ChildTemplate: Story<any> = (args) => (
+  <WalletPicker {...args}>
+    <div> Some extra Info</div>
+  </WalletPicker>
+);
+
+export const InfoChild = ChildTemplate.bind({});
+
+const infoChildProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+  config: {
+    chains: {
+      ethereum: [],
+    },
+  },
+};
+
+InfoChild.args = infoChildProps;
 
 const usePickerStyles = makeStyles({
   root: {

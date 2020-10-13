@@ -5,7 +5,6 @@ import {
 } from "@renproject/multiwallet-base-connector";
 import { provider, HttpProvider } from "web3-providers";
 import { Address } from "@renproject/chains-ethereum";
-import Web3 from "web3";
 import { RenNetwork } from "@renproject/interfaces";
 
 const isResults = <T>(x: { results: T } | T): x is { results: T } =>
@@ -38,7 +37,6 @@ export abstract class AbstractEthereumConnector
     supportsTestnet = true;
     networkIdMapper = ethNetworkToRenNetwork;
     emitter;
-    library?: Web3;
     constructor({
         debug = false,
         networkIdMapper = ethNetworkToRenNetwork,
@@ -64,7 +62,7 @@ export abstract class AbstractEthereumConnector
         };
     }
 
-    // Get default web3 account
+    // Get default ethereum account
     async getAccount() {
         const account = resultOrRaw(
             await ((await this.getProvider()) as any).request({

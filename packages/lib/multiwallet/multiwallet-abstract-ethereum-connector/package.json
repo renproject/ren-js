@@ -42,8 +42,8 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/chains-ethereum": "2.0.0-alpha.7",
-        "@renproject/interfaces": "2.0.0-alpha.7",
+        "@renproject/chains-ethereum": "^2.0.0-alpha.9",
+        "@renproject/interfaces": "^2.0.0-alpha.9",
         "@renproject/multiwallet-base-connector": "^2.0.0-alpha.9",
         "web3": "^2.0.0-alpha.1"
     },

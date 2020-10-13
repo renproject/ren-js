@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, useCallback } from 'react';
+import React, { HTMLAttributes, useCallback, useEffect } from 'react';
 import {
   Box,
   ButtonBase,
@@ -16,10 +16,22 @@ import { useMultiwallet } from './MultiwalletProvider';
 export * from './MultiwalletProvider';
 
 export interface ConnectorConfig<P, A> {
+  /**
+     Name of the wallet
+   */
   name: string;
+  /**
+     URL for logo to be shown (might change in future to a component)
+   */
   logo: string;
-  info?: React.FC<{ acknowledge: () => void; close: () => void }>;
+  /**
+     The Multiwallet Connector to be used for this wallet
+   */
   connector: ConnectorInterface<P, A>;
+  /**
+     A component to be shown before a wallet is activated, for extra context / warnings
+  */
+  info?: React.FC<{ acknowledge: () => void; close: () => void }>;
 }
 
 export interface WalletPickerConfig<P, A> {
@@ -29,15 +41,42 @@ export interface WalletPickerConfig<P, A> {
 
 export interface WalletPickerProps<P, A>
   extends HTMLAttributes<HTMLDivElement> {
+  /**
+     Which chain to show wallets for
+   */
   chain: string;
+  /**
+     Function used to close/cancel the connection request
+     */
   close: () => void;
+  /**
+     Configuration for connectors across all chains
+   */
   config: WalletPickerConfig<P, A>;
+  /**
+     Whether a wallet is in the process of connecting
+     */
   connecting?: boolean;
-  connected?: boolean;
+  /**
+     MaterialUI class overrides for the component shown when connecting
+     */
   connectingClasses?: PaperProps['classes'];
+  /**
+       MaterialUI class overrides for the wallet selection components
+     */
   walletClasses?: WalletEntryProps<P, A>['classes'];
+  /**
+       MaterialUI class overrides for the picker container
+     */
   pickerClasses?: ReturnType<typeof useWalletPickerStyles>;
+  /**
+       An optional component to show before wallets are presented
+     */
   DefaultInfo?: React.FC<{ acknowledge: () => void; close: () => void }>;
+  /**
+       An optional replacement to show when a wallet is connecting
+     */
+  ConnectingInfo?: React.FC<{ chain: string }>;
 }
 
 const useWalletPickerStyles = makeStyles({
@@ -69,20 +108,17 @@ export const WalletPicker = <P, A>({
   config,
   close,
   connecting,
-  connected,
   connectingClasses,
   walletClasses,
   pickerClasses,
   DefaultInfo,
+  ConnectingInfo,
+  children,
 }: WalletPickerProps<P, A>) => {
   const defaultClasses = useWalletPickerStyles();
   const classes = { ...defaultClasses, ...pickerClasses };
 
   const connectors = config.chains[chain];
-
-  if (connected) {
-    close();
-  }
 
   // Allow for an information screen to be set before the wallet selection is showed
   const [Info, setInfo] = React.useState(
@@ -96,9 +132,10 @@ export const WalletPicker = <P, A>({
   return (
     <Paper className={classes.root}>
       {Info ||
-        (connecting && (
-          <Connecting classes={connectingClasses} chain={chain} />
-        )) || (
+        (connecting &&
+          ((ConnectingInfo && <ConnectingInfo chain={chain} />) || (
+            <Connecting classes={connectingClasses} chain={chain} />
+          ))) || (
           <>
             <Box pl={2} className={classes.header} flexDirection="row">
               <Typography>Connect a wallet</Typography>
@@ -121,13 +158,23 @@ export const WalletPicker = <P, A>({
             </Box>
           </>
         )}
+      {children}
     </Paper>
   );
 };
 
 export interface WalletPickerModalProps<P, A> {
+  /**
+   See the props for the WalletPicker component
+   */
   options: WalletPickerProps<P, A>;
+  /**
+     Function used to close/cancel the connection request
+   */
   close: () => void;
+  /**
+     Whether to show the modal
+   */
   open?: boolean;
 }
 
@@ -139,6 +186,11 @@ export const WalletPickerModal = <P, A>({
   const { enabledChains } = useMultiwallet<P, A>();
   const connecting = enabledChains[options.chain]?.status === 'connecting';
   const connected = enabledChains[options.chain]?.status === 'connected';
+  useEffect(() => {
+    if (connected) {
+      close();
+    }
+  }, [connected, close]);
   return (
     <Modal open={open || false}>
       <Box
@@ -148,12 +200,7 @@ export const WalletPickerModal = <P, A>({
         alignItems="center"
         justifyContent="center"
       >
-        <WalletPicker
-          {...options}
-          connecting={connecting}
-          connected={connected}
-          close={close}
-        />
+        <WalletPicker {...options} connecting={connecting} close={close} />
       </Box>
     </Modal>
   );
@@ -200,7 +247,10 @@ const WalletEntry = <P, A>({
     return setInfo(() => (
       <Info
         close={close}
-        acknowledge={() => activateConnector(chain, connector)}
+        acknowledge={() => {
+          setInfo(undefined);
+          activateConnector(chain, connector);
+        }}
       />
     ));
   }, [setInfo, activateConnector, close, Info, chain, connector]);

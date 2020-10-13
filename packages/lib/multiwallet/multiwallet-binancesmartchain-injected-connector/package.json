@@ -42,7 +42,7 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "2.0.0-alpha.7",
+        "@renproject/interfaces": "^2.0.0-alpha.9",
         "@renproject/multiwallet-abstract-ethereum-connector": "^2.0.0-alpha.9",
         "@renproject/multiwallet-ethereum-injected-connector": "^2.0.0-alpha.9"
     },

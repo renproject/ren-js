@@ -3109,7 +3109,7 @@
     prop-types "^15.6.1"
     react-lifecycles-compat "^3.0.4"
 
-"@renproject/chains-ethereum@2.0.0-alpha.7", "@renproject/chains-ethereum@^2.0.0-alpha.7":
+"@renproject/chains-ethereum@2.0.0-alpha.7":
   version "2.0.0-alpha.7"
   resolved "https://registry.yarnpkg.com/@renproject/chains-ethereum/-/chains-ethereum-2.0.0-alpha.7.tgz#8e1d49f3624c00312b5e8f4b049472954589fa48"
   integrity sha512-5DkE0eooC7btCmr6VsXiPfBqPV2bwEHytAL2ktZwy4nf7oIBFJ/xJnt1y9qbEUJrIc23y6o6OAyExRrp4OgoHg==
@@ -3131,7 +3131,7 @@
   resolved "https://registry.yarnpkg.com/@renproject/fonts/-/fonts-1.0.2.tgz#306ea985610b559fb6147f091efce567cbb25d35"
   integrity sha512-mAU1JnrE0u3g+103baJwZf81Zz5s6MvO8zDoFtpE3qJQ9zNEssCdgTA57Jjvk1WNLTIY/JDSWPLYcpmrVlGiCQ==
 
-"@renproject/interfaces@2.0.0-alpha.7", "@renproject/interfaces@^2.0.0-alpha.7":
+"@renproject/interfaces@2.0.0-alpha.7":
   version "2.0.0-alpha.7"
   resolved "https://registry.yarnpkg.com/@renproject/interfaces/-/interfaces-2.0.0-alpha.7.tgz#786691c2c276c0141ec4930f53eabc9233872176"
   integrity sha512-cErVQX4ojTatgzNhzFJmrInrT/F9nXWwcblRHbUZd6JnzohOVkG8TJNv5etDHaDD57aCin5h73/xBLsm1PGBsA==
@@ -3140,14 +3140,24 @@
     bignumber.js "^9.0.0"
     web3-core "^2.0.0-alpha.1"
 
-"@renproject/networks@^2.0.0-alpha.7":
-  version "2.0.0-alpha.7"
-  resolved "https://registry.yarnpkg.com/@renproject/networks/-/networks-2.0.0-alpha.7.tgz#5d1f6ef183b8f3a051022e5ad5385b80e68ae6d0"
-  integrity sha512-ysZqeidjwOpZnSKNO6pN93kYHNFGcoDAalIElMkHVk8awssnr5kgyBvVRIELKyds/jbiIXZkCftOiEO92qLdFA==
+"@renproject/multiwallet-abstract-ethereum-connector@^2.1.1-alpha.0":
+  version "2.0.0-alpha.9"
+  resolved "https://registry.yarnpkg.com/@renproject/multiwallet-abstract-ethereum-connector/-/multiwallet-abstract-ethereum-connector-2.0.0-alpha.9.tgz#25ec4e4440345624b6d85be9022bd19cc632e46e"
+  integrity sha512-0TivOE/2N60ndWIKQ0O75kmZbHYokO3kjVYVj8Lcr/C1oLx9wZnwszFlTWDyGu4Wq5hogzYgLd6hrX2mOZhjnA==
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.7"
-    "@renproject/sol" "^1.0.1"
-    web3-utils "^2.0.0-alpha.1"
+    "@renproject/chains-ethereum" "2.0.0-alpha.7"
+    "@renproject/interfaces" "2.0.0-alpha.7"
+    "@renproject/multiwallet-base-connector" "^2.0.0-alpha.9"
+    web3 "^2.0.0-alpha.1"
+
+"@renproject/multiwallet-base-connector@^2.0.0-alpha.9", "@renproject/multiwallet-base-connector@^2.1.1-alpha.0":
+  version "2.0.0-alpha.9"
+  resolved "https://registry.yarnpkg.com/@renproject/multiwallet-base-connector/-/multiwallet-base-connector-2.0.0-alpha.9.tgz#1e05d9a81fea5114e96b734b1b446ed2f63dcf64"
+  integrity sha512-flMlRk6MYUtzmTfat8WAhz1wwNNLZvxnJ64/iPAkwv4w3f35D40dj/K4afO8oapuOBZsqRsQ+EGGcZGKsSt8uA==
+  dependencies:
+    "@renproject/interfaces" "2.0.0-alpha.7"
+    "@types/events" "3.0.0"
+    events "3.2.0"
 
 "@renproject/sol@^1.0.1":
   version "1.0.1"
@@ -3157,20 +3167,6 @@
     "@openzeppelin/contracts" "^2.5.0"
     "@openzeppelin/contracts-ethereum-package" "^2.4.0"
     "@openzeppelin/upgrades" "^2.7.2"
-
-"@renproject/utils@^2.0.0-alpha.7":
-  version "2.0.0-alpha.7"
-  resolved "https://registry.yarnpkg.com/@renproject/utils/-/utils-2.0.0-alpha.7.tgz#2e93ba913535c8265076b0afa7deea0b23d3e0c6"
-  integrity sha512-nPE7htxuhOFF9lUkAe13/8FW6dbb9OaL1jSv67DmlKaspAqGMtpjRcefu4+o+8V7wexi0oeY8XnbnsDiKEljzA==
-  dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.7"
-    "@types/node" "^14.11.1"
-    axios "^0.20.0"
-    bignumber.js "^9.0.0"
-    ethereumjs-util "^7.0.5"
-    events "^3.2.0"
-    immutable "^4.0.0-rc.12"
-    web3-eth-abi "^2.0.0-alpha.1"
 
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
@@ -4735,13 +4731,6 @@
   dependencies:
     "@types/ethereum-protocol" "*"
 
-"@types/web3@^1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@types/web3/-/web3-1.2.2.tgz#d95a101547ce625c5ebd0470baa5dbd4b9f3c015"
-  integrity sha512-eFiYJKggNrOl0nsD+9cMh2MLk4zVBfXfGnVeRFbpiZzBE20eet4KLA3fXcjSuHaBn0RnQzwLAGdgzgzdet4C0A==
-  dependencies:
-    web3 "*"
-
 "@types/webpack-env@^1.15.2":
   version "1.15.3"
   resolved "https://registry.yarnpkg.com/@types/webpack-env/-/webpack-env-1.15.3.tgz#fb602cd4c2f0b7c0fb857e922075fdf677d25d84"
@@ -5244,19 +5233,6 @@
     strip-ansi "^4.0.0"
     text-table "^0.2.0"
     webpack-log "^1.1.2"
-
-"@xstate/graph@^1.1.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@xstate/graph/-/graph-1.2.0.tgz#83618bbff4f801fecb9b4f33f1d4a44e1b5a40ff"
-  integrity sha512-6h8ZRmnHsg1BW2NmkM2gb1l6bJwi6SaSLi7ErFzzseLKmcQL2oWBSjHJdsdYMuD2DXFsnHbVi3WqsQE++R7nmA==
-
-"@xstate/test@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@xstate/test/-/test-0.4.1.tgz#115aed246dc352a52da3e5594d273ad9ccf483df"
-  integrity sha512-N8xEWcnWPVVpRkVgGGhpHGTJKLnm2UyGqkvk7eNaMqWdcg8fT6SyRSLtzJuqtJe8wZviScTr7P71Yp1cLawDWg==
-  dependencies:
-    "@xstate/graph" "^1.1.0"
-    chalk "^2.4.2"
 
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"
@@ -6185,6 +6161,14 @@ babel-plugin-extract-import-names@1.6.18:
   dependencies:
     "@babel/helper-plugin-utils" "7.10.4"
 
+babel-plugin-import@^1.13.1:
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/babel-plugin-import/-/babel-plugin-import-1.13.1.tgz#f6cf1acb76c5ce366bae2663ad12bd894316d8db"
+  integrity sha512-2Ohk36qvQAZr2sNXVwOgBFH7/ZQH0lL6igPj6lNIhk5t0uORneeAvHnohClCWbaogUhKGJxAiwbPhymZXPGQiQ==
+  dependencies:
+    "@babel/helper-module-imports" "^7.0.0"
+    "@babel/runtime" "^7.0.0"
+
 babel-plugin-istanbul@^5.1.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-istanbul/-/babel-plugin-istanbul-5.2.0.tgz#df4ade83d897a92df069c4d9a25cf2671293c854"
@@ -6788,9 +6772,9 @@ bitcore-lib@^8.22.2:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e":
+"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e":
   version "1.9.0"
-  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e"
+  resolved "https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"
@@ -24854,19 +24838,6 @@ web3-utils@2.0.0-alpha.1, web3-utils@^2.0.0-alpha.1:
     randombytes "^2.1.0"
     utf8 "2.1.1"
 
-web3@*, web3@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/web3/-/web3-1.3.0.tgz#8fe4cd6e2a21c91904f343ba75717ee4c76bb349"
-  integrity sha512-4q9dna0RecnrlgD/bD1C5S+81Untbd6Z/TBD7rb+D5Bvvc0Wxjr4OP70x+LlnwuRDjDtzBwJbNUblh2grlVArw==
-  dependencies:
-    web3-bzz "1.3.0"
-    web3-core "1.3.0"
-    web3-eth "1.3.0"
-    web3-eth-personal "1.3.0"
-    web3-net "1.3.0"
-    web3-shh "1.3.0"
-    web3-utils "1.3.0"
-
 web3@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/web3/-/web3-1.2.1.tgz#5d8158bcca47838ab8c2b784a2dee4c3ceb4179b"
@@ -24907,6 +24878,19 @@ web3@1.2.4:
     web3-net "1.2.4"
     web3-shh "1.2.4"
     web3-utils "1.2.4"
+
+web3@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/web3/-/web3-1.3.0.tgz#8fe4cd6e2a21c91904f343ba75717ee4c76bb349"
+  integrity sha512-4q9dna0RecnrlgD/bD1C5S+81Untbd6Z/TBD7rb+D5Bvvc0Wxjr4OP70x+LlnwuRDjDtzBwJbNUblh2grlVArw==
+  dependencies:
+    web3-bzz "1.3.0"
+    web3-core "1.3.0"
+    web3-eth "1.3.0"
+    web3-eth-personal "1.3.0"
+    web3-net "1.3.0"
+    web3-shh "1.3.0"
+    web3-utils "1.3.0"
 
 web3@^2.0.0-alpha.1:
   version "2.0.0-alpha.1"
@@ -25682,11 +25666,6 @@ xregexp@^4.3.0:
   integrity sha512-7jXDIFXh5yJ/orPn4SXjuVrWWoi4Cr8jfV1eHv9CixKSbU+jY4mxfrBwAuDvupPNKpMUY+FeIqsVw/JLT9+B8g==
   dependencies:
     "@babel/runtime-corejs3" "^7.8.3"
-
-xstate@^4.13.0:
-  version "4.13.0"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.13.0.tgz#0be22ceb8bae2bc6a025fab330fe44204d76771c"
-  integrity sha512-UnUJJzP2KTPqnmxIoD/ymXtpy/hehZnUlO6EXqWC/72XkPb15p9Oz/X4WhS3QE+by7NP+6b5bCi/GTGFzm5D+A==
 
 xtend@^4.0.0, xtend@^4.0.1, xtend@~4.0.0, xtend@~4.0.1:
   version "4.0.2"

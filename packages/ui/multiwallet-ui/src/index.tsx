@@ -3,12 +3,12 @@ import {
   Box,
   ButtonBase,
   IconButton,
-  makeStyles,
   Modal,
   Paper,
   PaperProps,
   Typography,
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import CloseIcon from '@material-ui/icons/Close';
 import { ConnectorInterface } from '@renproject/multiwallet-base-connector';
 import { useMultiwallet } from './MultiwalletProvider';
@@ -242,18 +242,20 @@ const WalletEntry = <P, A>({
 }: WalletEntryProps<P, A> & {}) => {
   const { activateConnector } = useMultiwallet<P, A>();
 
-  const buildInfo = useCallback(() => {
-    if (!Info) return;
-    return setInfo(() => (
-      <Info
-        close={close}
-        acknowledge={() => {
-          setInfo(undefined);
-          activateConnector(chain, connector);
-        }}
-      />
-    ));
-  }, [setInfo, activateConnector, close, Info, chain, connector]);
+  const buildInfo = useCallback(
+    (Info) => {
+      return setInfo(() => (
+        <Info
+          close={close}
+          acknowledge={() => {
+            setInfo(undefined);
+            activateConnector(chain, connector);
+          }}
+        />
+      ));
+    },
+    [setInfo, activateConnector, close, chain, connector]
+  );
 
   const defaultClasses = useWalletEntryStyles();
   const combinedClasses = { ...defaultClasses, ...classes };
@@ -262,7 +264,7 @@ const WalletEntry = <P, A>({
       className={combinedClasses.button}
       onClick={() => {
         if (Info) {
-          buildInfo();
+          buildInfo(Info);
         } else {
           activateConnector(chain, connector);
         }

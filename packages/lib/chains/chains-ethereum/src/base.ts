@@ -285,7 +285,7 @@ export const findBurnByNonce = async (
 ): Promise<BurnDetails<Transaction>> => {
     const gatewayAddress = await getGatewayAddress(network, web3, asset);
 
-    const nonceBuffer = new BN(nonce).toBuffer("be", 32);
+    const nonceBuffer = new BN(nonce).toArrayLike(Buffer, "be", 32);
 
     const burnEvents = await web3.eth.getPastLogs({
         address: gatewayAddress,
@@ -335,7 +335,7 @@ export const withDefaultAccount = async (
 export const manualPromiEvent = async (
     web3: Web3,
     txHash: string,
-    promiEvent: PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>
+    promiEvent: EventEmitter // PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>
 ) => {
     assertType<string>("string", { txHash });
 
@@ -414,7 +414,12 @@ export const findTransactionBySigHash = async (
                 toBlock: "latest",
                 // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
                 // address.slice(2), null, null] as any,
-                topics: [eventTopics.LogMint, null, null, sigHash] as string[],
+                topics: [
+                    eventTopics.LogMint,
+                    null,
+                    null,
+                    Ox(sigHash),
+                ] as string[],
             });
             if (!mintEvents.length) {
                 throw new Error(
@@ -702,12 +707,12 @@ export class EthereumBaseChain
 
         const existingTransaction = await this.findTransaction(asset, mintTx);
         if (existingTransaction) {
-            throw new Error("manualPromiEvent: unimplemented");
-            // return await manualPromiEvent(
-            //     web3,
-            //     existingTransaction,
-            //     promiEvent
-            // );
+            await manualPromiEvent(
+                this.web3,
+                existingTransaction,
+                eventEmitter
+            );
+            return existingTransaction;
         }
 
         return await submitToEthereum(

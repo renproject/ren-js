@@ -681,6 +681,15 @@ export class LockAndMintDeposit<
         return toBase64(returnedTxHash);
     };
 
+    public confirmations = async (): Promise<{
+        current: number;
+        target: number;
+    }> => {
+        return this._params.from.transactionConfidence(
+            this.depositDetails.transaction
+        );
+    };
+
     /**
      * `confirmed` will return once the deposit has reached the target number of
      * confirmations.
@@ -696,11 +705,11 @@ export class LockAndMintDeposit<
      */
     public confirmed = (): PromiEvent<
         LockAndMintDeposit<Transaction, Deposit, Asset, Address>,
-        { confirmation: [number, number] }
+        { confirmation: [number, number]; target: [number, number] }
     > => {
         const promiEvent = newPromiEvent<
             LockAndMintDeposit<Transaction, Deposit, Asset, Address>,
-            { confirmation: [number, number] }
+            { confirmation: [number, number]; target: [number, number] }
         >();
 
         (async () => {
@@ -708,7 +717,7 @@ export class LockAndMintDeposit<
                 /* ignore error */
             });
 
-            let currentConfidenceRatio = 0;
+            let currentConfidenceRatio = -Infinity;
             // tslint:disable-next-line: no-constant-condition
             while (true) {
                 try {
@@ -722,7 +731,7 @@ export class LockAndMintDeposit<
                     if (confidenceRatio > currentConfidenceRatio) {
                         currentConfidenceRatio = confidenceRatio;
                         promiEvent.emit(
-                            "confirmation",
+                            confidenceRatio === 0 ? "target" : "confirmation",
                             confidence.current,
                             confidence.target
                         );
@@ -869,22 +878,20 @@ export class LockAndMintDeposit<
         (async () => {
             if (!this._queryTxResult) {
                 throw new Error(
-                    `Unable to submit to Ethereum without signature. Call 'submit' first.`
+                    `Unable to submit to Ethereum without signature. Call 'signed' first.`
                 );
             }
 
             const asset = this._params.asset;
 
-            return this._params.to.submitMint(
+            return await this._params.to.submitMint(
                 asset,
                 this._params.contractCalls || [],
                 this._queryTxResult,
                 (promiEvent as unknown) as EventEmitter
             );
         })()
-            .then(transaction => {
-                promiEvent.resolve(transaction);
-            })
+            .then(promiEvent.resolve)
             .catch(promiEvent.reject);
 
         return promiEvent;
@@ -929,7 +936,7 @@ export class LockAndMintDeposit<
 
     //     if (!renVMResponse || !renVMResponse.out) {
     //         throw new Error(
-    //             `Unable to create transaction without signature. Call 'submit' first.`
+    //             `Unable to create transaction without signature. Call 'signed' first.`
     //         );
     //     }
 

@@ -91,7 +91,7 @@ export class FilecoinClass
      */
     assetDecimals = (asset: FilAsset): number => {
         if (asset === this._asset) {
-            return 8;
+            return 18;
         }
         throw new Error(`Unsupported asset ${asset}`);
     };
@@ -128,7 +128,7 @@ export class FilecoinClass
         transaction = await fetchMessage(transaction.cid);
         return {
             current: transaction.confirmations,
-            target: this.chainNetwork === "mainnet" ? 6 : 0,
+            target: this.chainNetwork === "mainnet" ? 6 : 1,
         };
     };
 

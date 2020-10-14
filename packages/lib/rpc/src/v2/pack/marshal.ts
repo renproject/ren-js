@@ -64,7 +64,17 @@ export const marshalPackType = (type: PackType) => {
 };
 
 export const marshalUint = (value: number, length: number) => {
-    return new BN(value).toBuffer("be", length);
+    try {
+        return new BN(
+            // tslint:disable-next-line: strict-type-predicates
+            typeof value === "number" ? value : (value as string).toString()
+        ).toArrayLike(Buffer, "be", length);
+    } catch (error) {
+        error.message = `Unable to marshal uint${length * 8} '${value}': ${
+            error.message
+        }`;
+        throw error;
+    }
 };
 
 const marshalU = (length: number) => (value: number) =>

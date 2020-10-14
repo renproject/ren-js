@@ -14,7 +14,14 @@ export type TransactionListener<
     T,
     // tslint:disable-next-line: no-any
     E extends { [key: string]: any[] }
-> = PromiEvent<T, { txHash: [string]; confirmation: [number, number] } & E>;
+> = PromiEvent<
+    T,
+    {
+        txHash: [string];
+        confirmation: [number, number];
+        target: [number, number];
+    } & E
+>;
 
 /**
  * # Adding chains
@@ -228,10 +235,6 @@ export interface BurnDetails<Transaction> {
     nonce: BigNumber;
 }
 
-/**
- * WARNING: This interface will be updated to match the Go multichain package's
- * interface. New MintChains should not be implemented using this interface.
- */
 export interface MintChain<
     // tslint:disable-next-line: no-any
     Transaction = any,

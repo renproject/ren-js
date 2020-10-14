@@ -219,7 +219,11 @@ export class BurnAndRelease<
                 transaction,
                 true
             );
-            const nonceBuffer = new BN(nonce.toFixed()).toBuffer("be", 32);
+            const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
+                Buffer,
+                "be",
+                32
+            );
 
             const nHash = generateNHash(
                 nonceBuffer,
@@ -351,7 +355,8 @@ export class BurnAndRelease<
                             transaction,
                             true
                         );
-                        const nonceBuffer = new BN(nonce.toFixed()).toBuffer(
+                        const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
+                            Buffer,
                             "be",
                             32
                         );

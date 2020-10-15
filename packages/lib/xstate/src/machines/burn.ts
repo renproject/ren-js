@@ -23,8 +23,7 @@ export interface BurnMachineSchema {
         createError: {};
         srcSettling: {};
         srcConfirmed: {};
-        destSettling: {};
-        destConfirmed: {};
+        destInitiated: {}; // We only care if the txHash has been issued by renVM
     };
 }
 
@@ -107,15 +106,10 @@ export const burnMachine = Machine<
             },
             srcConfirmed: {
                 on: {
-                    RELEASED: "destSettling",
+                    RELEASED: "destInitiated",
                 },
             },
-            destSettling: {
-                on: {
-                    CONFIRMED: "destConfirmed",
-                },
-            },
-            destConfirmed: {},
+            destInitiated: {},
         },
     },
     {

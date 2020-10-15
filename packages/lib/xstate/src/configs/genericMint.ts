@@ -1,23 +1,8 @@
 import RenJS from "@renproject/ren";
-import Web3 from "web3";
 import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
-import {
-    depositMachine,
-    DepositMachineContext,
-    DepositMachineEvent,
-} from "../machines/deposit";
+import { depositMachine, DepositMachineContext } from "../machines/deposit";
 import { GatewayMachineContext } from "../machines/mint";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
-
-const findClaimableDeposit = ({ depositMachines }: GatewayMachineContext) => {
-    if (!depositMachines) return;
-    for (let key in depositMachines || {}) {
-        const machine = depositMachines[key];
-        if (machine.state.value === "accepted") {
-            return machine.state.context.deposit;
-        }
-    }
-};
 
 /*
   Sample mintChainMap / lockChainMap implementations
@@ -209,36 +194,6 @@ const depositListener = (
     };
 };
 
-// Check for confirmations on the destination chain.
-// FIXME: this should be handled at the RenJS level, but it does not currently
-// expose a general purpose way to check confirmations on the destination
-export const destConfListener = (context: DepositMachineContext) => (
-    callback: Sender<DepositMachineEvent>
-) => {
-    const web3: Web3 = new Web3(context.providers[context.tx.destNetwork]);
-    const interval = setInterval(async () => {
-        const destTx = await web3.eth.getTransaction(
-            context.deposit.destTxHash || ""
-        );
-        let update: GatewayTransaction;
-        if (!destTx) {
-            throw Error("No dest tx");
-        }
-        if (!destTx.blockNumber) {
-            update = { ...context.deposit, destTxConfs: 0 };
-            callback({ type: "CONFIRMATION", data: update });
-        } else {
-            const confs =
-                (await web3.eth.getBlockNumber()) - destTx.blockNumber;
-
-            update = { ...context.deposit, destTxConfs: confs };
-            callback({ type: "CONFIRMATION", data: update });
-        }
-    }, 5000);
-
-    return () => clearInterval(interval);
-};
-
 // Spawn an actor that will listen for either all deposits to a gatewayAddress,
 // or to a single deposit if present in the context
 const listenerAction = assign<GatewayMachineContext>({
@@ -268,9 +223,6 @@ const spawnDepositMachine = (
         depositMachine
             .withContext(machineContext as DepositMachineContext)
             .withConfig({
-                services: {
-                    destConfListener,
-                },
                 actions: {
                     listenerAction: listenerAction as any,
                 },
@@ -328,11 +280,9 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
         listenerAction: listenerAction as any,
     },
     guards: {
-        isRequestingSignature: (ctx) =>
-            findClaimableDeposit(ctx) ? true : false,
         isCompleted: ({ tx }, evt) =>
             evt.data?.sourceTxAmount >= tx.targetAmount,
-        hasExpired: ({ tx }) => tx.expiryTime < new Date().getTime(),
+        isExpired: ({ tx }) => tx.expiryTime < new Date().getTime(),
         isCreated: ({ tx }) => (tx.gatewayAddress ? true : false),
     },
 };

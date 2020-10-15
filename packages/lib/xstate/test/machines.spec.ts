@@ -1,11 +1,5 @@
 import { createModel } from "@xstate/test";
-import {
-    mintMachine,
-    mintConfig,
-    depositMachine,
-    destConfListener,
-    burnConfig,
-} from "../src";
+import { mintMachine, mintConfig, depositMachine, burnConfig } from "../src";
 import { burnMachine } from "../src/machines/burn";
 
 // const expect = chai.expect;
@@ -76,7 +70,6 @@ describe("MintMachine", function () {
 const depositModel = createModel(
     depositMachine
         .withConfig({
-            services: { destConfListener },
             actions: { listenerAction: mintConfig.actions?.listenerAction },
         } as any)
         .withContext({

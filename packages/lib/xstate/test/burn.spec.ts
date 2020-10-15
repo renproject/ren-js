@@ -133,13 +133,18 @@ describe("BurnMachine", function () {
             fromChainMap,
             toChainMap,
         });
+        let result: any = {};
 
         const p = new Promise<any>((resolve) => {
             const service = interpret(machine)
                 .onTransition((state) => {
                     if (state.value === "srcSettling") {
                         // we have successfully created a burn tx
-                        resolve(state);
+                        result = state;
+                        service.send("CONFIRMED");
+                    }
+                    if (state.value === "srcConfirmed") {
+                        service.stop();
                     }
                 })
                 .onStop(() => console.log("Interpreter stopped"));
@@ -147,7 +152,10 @@ describe("BurnMachine", function () {
             // Start the service
             service.start();
             service.subscribe(((state: any, evt: any) => {}) as any);
-            service.onStop(() => console.log("Service stopped"));
+            service.onStop(() => {
+                resolve(result);
+                console.log("Service stopped");
+            });
         });
         return p.then((state) => {
             expect(

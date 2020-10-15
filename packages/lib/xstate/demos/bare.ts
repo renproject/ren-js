@@ -1,8 +1,8 @@
 import { Machine, interpret } from "xstate";
-import { mintMachine, mintConfig } from "@renproject/xstate";
+import { mintMachine, mintConfig, GatewaySession } from "@renproject/xstate";
 import RenJS from "@renproject/ren";
 
-const mintTransaction = {
+const mintTransaction: GatewaySession = {
     id: "a unique identifier",
     type: "mint",
     network: "testnet",
@@ -46,10 +46,16 @@ export const fromChainMap = {
     bitcoinCash: () => BitcoinCash(),
 };
 
+const blockchainProviders = {
+    ethereum: () => {
+        /* new Web3().... */
+    },
+};
+
 const machine = mintMachine.withConfig(mintConfig).withContext({
     tx: mintTransaction,
     sdk: new RenJS("testnet"),
-    providers: blockChainProviders,
+    providers: blockchainProviders,
     fromChainMap,
     toChainMap,
 });

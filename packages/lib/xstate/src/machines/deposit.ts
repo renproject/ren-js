@@ -1,7 +1,8 @@
-import { Machine, actions, assign, send, Actor, sendParent } from "xstate";
+import { Machine, assign, send, Actor, sendParent } from "xstate";
 import RenJS from "@renproject/ren";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
+import { log } from "xstate/lib/actions";
 
 export interface DepositMachineContext {
     deposit: GatewayTransaction; // The deposit being tracked
@@ -25,15 +26,14 @@ export interface DepositMachineContext {
 export interface DepositMachineSchema {
     states: {
         restoringDeposit: {}; // We are waiting for ren-js to find the deposit
-        errorRestoring: {};
+        errorRestoring: {}; // We couldn't restore this deposit
         restoredDeposit: {}; // renjs has found the deposit for the transaction
         srcSettling: {}; // we are waiting for the source chain to confirm the transaction
         srcConfirmed: {}; // source chain has confirmed the transaction
         accepted: {}; // renvm has accepted and signed the transaction
         claiming: {}; // the user is submitting the transaction to mint on the destination chain
-        destSettling: {}; // waiting for confirmations on the destination chain
-        destConfirmed: {}; // destination chain has confirmed the transaction
-        completed: {}; // user has acknowledged that the transaction is completed
+        destInitiated: {}; // We have recieved a txHash for the destination chain
+        completed: {}; // user has acknowledged that the transaction is completed, so we can stop listening for further deposits
         rejected: {}; // user does not want to claim this deposit
     };
 }
@@ -62,7 +62,7 @@ export const depositMachine = Machine<
         id: "RenVMDepositTransaction",
         initial: "restoringDeposit",
         states: {
-            errorRestoring: {},
+            errorRestoring: { entry: [log("restore error")] },
             restoringDeposit: {
                 entry: ["listenerAction"],
                 on: {
@@ -100,6 +100,9 @@ export const depositMachine = Machine<
                 on: {
                     RESTORED: [
                         {
+                            target: "errorRestoring",
+                        },
+                        {
                             target: "srcSettling",
                             cond: "isSrcSettling",
                         },
@@ -112,12 +115,8 @@ export const depositMachine = Machine<
                             cond: "isAccepted",
                         },
                         {
-                            target: "destSettling",
-                            cond: "isDestSettling",
-                        },
-                        {
-                            target: "destConfirmed",
-                            cond: "isDestSettled",
+                            target: "destInitiated",
+                            cond: "isDestInitiated",
                         },
                     ].reverse(),
                 },
@@ -135,10 +134,12 @@ export const depositMachine = Machine<
                         {
                             target: "srcConfirmed",
                             actions: [
-                                sendParent((ctx, _) => ({
-                                    type: "DEPOSIT_UPDATE",
-                                    data: ctx.deposit,
-                                })),
+                                sendParent((ctx, _) => {
+                                    return {
+                                        type: "DEPOSIT_UPDATE",
+                                        data: ctx.deposit,
+                                    };
+                                }),
                                 assign({
                                     deposit: (context, _) => ({
                                         ...context.deposit,
@@ -178,6 +179,12 @@ export const depositMachine = Machine<
                 },
             },
             accepted: {
+                entry: sendParent((ctx, _) => {
+                    return {
+                        type: "CLAIMABLE",
+                        data: ctx.deposit,
+                    };
+                }),
                 on: {
                     CLAIM: "claiming",
                     REJECT: "rejected",
@@ -191,7 +198,7 @@ export const depositMachine = Machine<
                 on: {
                     SUBMITTED: [
                         {
-                            target: "destSettling",
+                            target: "destInitiated",
                             actions: [
                                 assign({
                                     deposit: (ctx, evt) => ({
@@ -208,47 +215,7 @@ export const depositMachine = Machine<
                     ],
                 },
             },
-            destSettling: {
-                invoke: {
-                    id: "destConfListener",
-                    src: "destConfListener",
-                },
-                on: {
-                    CONFIRMATION: [
-                        {
-                            target: "destConfirmed",
-                            cond: "isDestSettled",
-                            actions: [
-                                assign({
-                                    deposit: (ctx, evt) => ({
-                                        ...ctx.deposit,
-                                        ...evt.data,
-                                    }),
-                                }),
-                                sendParent((ctx, evt) => ({
-                                    type: "DEPOSIT_UPDATE",
-                                    data: ctx.deposit,
-                                })),
-                            ],
-                        },
-                        {
-                            actions: [
-                                assign({
-                                    deposit: (ctx, evt) => ({
-                                        ...ctx.deposit,
-                                        ...evt.data,
-                                    }),
-                                }),
-                                sendParent((ctx, evt) => ({
-                                    type: "DEPOSIT_UPDATE",
-                                    data: ctx.deposit,
-                                })),
-                            ],
-                        },
-                    ],
-                },
-            },
-            destConfirmed: {
+            destInitiated: {
                 on: {
                     ACKNOWLEDGE: "completed",
                 },
@@ -265,18 +232,14 @@ export const depositMachine = Machine<
     {
         guards: {
             isSrcSettling: ({ deposit: { sourceTxConfs } }) =>
-                (sourceTxConfs || 0) < 1,
+                (sourceTxConfs || 0) <= 1,
             isSrcConfirmed: () => false,
             isSrcSettled: ({ deposit: { sourceTxConfs } }) =>
                 (sourceTxConfs || 0) > 1,
             isAccepted: ({ deposit: { renSignature } }) =>
                 renSignature ? true : false,
-            isDestSettling: ({ deposit: { destTxHash } }) =>
+            isDestInitiated: ({ deposit: { destTxHash } }) =>
                 destTxHash ? true : false,
-            isDestSettled: ({
-                deposit: { destTxConfs },
-                tx: { destConfsTarget },
-            }) => (destTxConfs || 0) > (destConfsTarget || 1),
         },
     }
 );

@@ -6,6 +6,7 @@ import {
   WalletPickerModal,
   WalletPickerModalProps,
 } from '../src';
+import { RenNetwork } from '@renproject/interfaces';
 
 const meta: Meta<typeof WalletPickerModal> = {
   title: 'WalletPickerModal',
@@ -26,7 +27,6 @@ const meta: Meta<typeof WalletPickerModal> = {
 export default meta;
 
 const Template: Story<any> = (args) => <WalletPickerModal {...args} />;
-
 export const Default = Template.bind({});
 
 const props: WalletPickerModalProps<any, any> = {
@@ -82,7 +82,7 @@ const connectingProps: WalletPickerModalProps<any, any> = {
             name: 'metamask',
             logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
             connector: {
-              emitter: new EventEmitter(),
+              emitter: new EventEmitter() as any,
               activate: () =>
                 new Promise((_resolve) => {
                   /*connecting forever*/
@@ -96,3 +96,47 @@ const connectingProps: WalletPickerModalProps<any, any> = {
 };
 
 Connecting.args = connectingProps;
+
+export const Resolving = ConnectingTemplate.bind({});
+
+const resolvingProps: WalletPickerModalProps<any, any> = {
+  close: () => {
+    console.log('close');
+  },
+  open: true,
+  options: {
+    close: () => {
+      console.log('close');
+    },
+    chain: 'ethereum',
+    config: {
+      chains: {
+        ethereum: [
+          {
+            name: 'metamask',
+            logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+            connector: {
+              emitter: new EventEmitter() as any,
+              getAccount: async () => '123',
+              getProvider: async () => ({}),
+              getRenNetwork: async () => '' as any,
+              supportsTestnet: true,
+              deactivate: async () => {},
+              activate: () =>
+                new Promise((resolve) => {
+                  console.log('activating');
+                  resolve({
+                    account: '123',
+                    provider: {},
+                    renNetwork: RenNetwork.Testnet,
+                  });
+                }),
+            },
+          },
+        ],
+      },
+    },
+  },
+};
+
+Resolving.args = resolvingProps;

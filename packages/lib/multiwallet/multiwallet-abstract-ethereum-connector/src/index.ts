@@ -20,7 +20,9 @@ const resultOrRaw = <T>(x: { results: T } | T) => {
 export const ethNetworkToRenNetwork = (id: number): RenNetwork => {
     return {
         1: RenNetwork.Mainnet,
+        "0x01": RenNetwork.Mainnet,
         42: RenNetwork.Testnet,
+        "0x42": RenNetwork.Testnet,
     }[id];
 };
 
@@ -77,7 +79,7 @@ export abstract class AbstractEthereumConnector
     // Cast current ethereum network to Ren network version or throw
     async getRenNetwork() {
         return this.networkIdMapper(
-            resultOrRaw((await this.getProvider()) as any).request({
+            await resultOrRaw((await this.getProvider()) as any).request({
                 method: "eth_chainId",
             })
         );

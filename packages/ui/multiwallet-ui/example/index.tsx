@@ -11,6 +11,7 @@ import { EthereumWalletConnectConnector } from '../../../lib/multiwallet/multiwa
 import { EthereumMEWConnectConnector } from '../../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index';
 import { BinanceSmartChainInjectedConnector } from '../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index';
 import { Button, Container, Box, Paper, Typography } from '@material-ui/core';
+import { RenNetwork } from '@renproject/interfaces';
 
 const options: WalletPickerConfig<any, string> = {
   chains: {
@@ -53,8 +54,13 @@ const options: WalletPickerConfig<any, string> = {
   },
 };
 
-const WalletDemo: React.FC = () => {
+const WalletDemo: React.FC<{ network: RenNetwork }> = ({ network }) => {
   const context = useMultiwallet<any, any>();
+
+  React.useEffect(() => {
+    if (context.targetNetwork !== network) context.setTargetNetwork(network);
+  }, [network, context]);
+
   return (
     <>
       {Object.entries(context.enabledChains).map(([chain, connector]) => (
@@ -74,6 +80,7 @@ const App = () => {
   const [open, setOpen] = React.useState(false);
   const [chain, setChain] = React.useState('');
   const setClosed = React.useMemo(() => () => setOpen(false), [setOpen]);
+  const [network, setNetwork] = React.useState(RenNetwork.Mainnet);
 
   return (
     <Box bgcolor="#fafafa" height="100vh" display="flex" alignItems="center">
@@ -87,7 +94,19 @@ const App = () => {
             borderRadius={2}
             bgcolor="primary"
           >
-            <WalletDemo />
+            <select
+              onChange={(e) =>
+                setNetwork(
+                  e.target.value === 'Testnet'
+                    ? RenNetwork.Testnet
+                    : RenNetwork.Mainnet
+                )
+              }
+            >
+              <option>Testnet</option>
+              <option>Mainnet</option>
+            </select>
+            <WalletDemo network={network} />
             <Box display="flex" justifyContent="center">
               <Button
                 color="primary"
@@ -115,7 +134,12 @@ const App = () => {
         <WalletPickerModal
           open={open}
           close={setClosed}
-          options={{ chain, close: setClosed, config: options }}
+          options={{
+            chain,
+            close: setClosed,
+            config: options,
+            targetNetwork: RenNetwork.Mainnet,
+          }}
         />
       </MultiwalletProvider>
     </Box>

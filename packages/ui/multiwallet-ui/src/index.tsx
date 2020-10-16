@@ -58,6 +58,14 @@ export interface WalletPickerProps<P, A>
      */
   connecting?: boolean;
   /**
+       Whether a wallet is connected to the wrong chain
+     */
+  wrongNetwork?: boolean;
+  /**
+       Network the wallet should connect to
+     */
+  targetNetwork: string;
+  /**
      MaterialUI class overrides for the component shown when connecting
      */
   connectingClasses?: PaperProps['classes'];
@@ -108,6 +116,8 @@ export const WalletPicker = <P, A>({
   config,
   close,
   connecting,
+  wrongNetwork,
+  targetNetwork,
   connectingClasses,
   walletClasses,
   pickerClasses,
@@ -135,7 +145,14 @@ export const WalletPicker = <P, A>({
         (connecting &&
           ((ConnectingInfo && <ConnectingInfo chain={chain} />) || (
             <Connecting classes={connectingClasses} chain={chain} />
-          ))) || (
+          ))) ||
+        (wrongNetwork && (
+          <WrongNetwork
+            classes={connectingClasses}
+            chain={chain}
+            targetNetwork={targetNetwork}
+          />
+        )) || (
           <>
             <Box pl={2} className={classes.header} flexDirection="row">
               <Typography>Connect a wallet</Typography>
@@ -183,9 +200,10 @@ export const WalletPickerModal = <P, A>({
   close,
   options,
 }: WalletPickerModalProps<P, A>) => {
-  const { enabledChains } = useMultiwallet<P, A>();
+  const { enabledChains, targetNetwork } = useMultiwallet<P, A>();
   const connecting = enabledChains[options.chain]?.status === 'connecting';
   const connected = enabledChains[options.chain]?.status === 'connected';
+  const wrongNetwork = enabledChains[options.chain]?.status === 'wrong_network';
   useEffect(() => {
     if (connected) {
       close();
@@ -200,7 +218,13 @@ export const WalletPickerModal = <P, A>({
         alignItems="center"
         justifyContent="center"
       >
-        <WalletPicker {...options} connecting={connecting} close={close} />
+        <WalletPicker
+          {...options}
+          connecting={connecting}
+          close={close}
+          wrongNetwork={wrongNetwork}
+          targetNetwork={targetNetwork}
+        />
       </Box>
     </Modal>
   );
@@ -294,6 +318,23 @@ const Connecting: React.FC<{
   return (
     <Paper classes={classes || defaultClasses}>
       <Typography>Connecting to {chain}</Typography>
+    </Paper>
+  );
+};
+
+// Element to show when a selected chain is connectted to the wrong network
+const WrongNetwork: React.FC<{
+  chain: string;
+  targetNetwork: string;
+  classes?: PaperProps['classes'];
+}> = ({ chain, classes, targetNetwork }) => {
+  const defaultClasses = useConnectingStyles();
+  return (
+    <Paper classes={classes || defaultClasses}>
+      <Typography>
+        Connected to {chain} on the wrong network, please connect to{' '}
+        {targetNetwork}
+      </Typography>
     </Paper>
   );
 };

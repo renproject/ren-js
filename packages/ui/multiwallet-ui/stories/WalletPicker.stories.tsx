@@ -2,6 +2,7 @@ import React from 'react';
 import { Meta, Story } from '@storybook/react';
 import { MultiwalletProvider, WalletPicker, WalletPickerProps } from '../src';
 import { makeStyles } from '@material-ui/core/styles';
+import { RenNetwork } from '@renproject/interfaces';
 
 const meta: Meta<typeof WalletPicker> = {
   title: 'Welcome',
@@ -28,6 +29,7 @@ const defaultProps: WalletPickerProps<any, any> = {
     console.log('close');
   },
   chain: 'ethereum',
+  targetNetwork: RenNetwork.Testnet,
   config: {
     chains: {
       ethereum: [

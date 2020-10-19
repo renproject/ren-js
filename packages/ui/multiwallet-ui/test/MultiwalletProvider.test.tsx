@@ -20,7 +20,7 @@ let mockConnector: ConnectorInterface<any, any> = {
   getProvider: async () => {},
   getAccount: async () => {},
   deactivate: async () => {},
-  getRenNetwork: async () => RenNetwork.Testnet,
+  getRenNetwork: async () => RenNetwork.Mainnet,
   emitter,
 };
 
@@ -74,7 +74,7 @@ describe('MultiwalletProvider', () => {
       getProvider: async () => {},
       getAccount: async () => {},
       deactivate: async () => {},
-      getRenNetwork: async () => RenNetwork.Testnet,
+      getRenNetwork: async () => RenNetwork.Mainnet,
       emitter,
     };
   });
@@ -101,7 +101,7 @@ describe('MultiwalletProvider', () => {
     mockConnector.activate = async () => ({
       account: 'test',
       provider: {},
-      renNetwork: RenNetwork.Testnet,
+      renNetwork: RenNetwork.Mainnet,
     });
     await act(async () =>
       ReactDOM.render(
@@ -124,7 +124,7 @@ describe('MultiwalletProvider', () => {
     mockConnector.activate = async () => ({
       account: 'test',
       provider: {},
-      renNetwork: RenNetwork.Testnet,
+      renNetwork: RenNetwork.Mainnet,
     });
     await act(async () =>
       ReactDOM.render(
@@ -150,10 +150,11 @@ describe('MultiwalletProvider', () => {
 
   it('It correctly handles update events', async (done) => {
     const div = document.createElement('div');
+    let account = 'test';
     mockConnector.activate = async () => ({
-      account: 'test',
+      account,
       provider: {},
-      renNetwork: RenNetwork.Testnet,
+      renNetwork: RenNetwork.Mainnet,
     });
     await act(async () =>
       ReactDOM.render(
@@ -166,11 +167,12 @@ describe('MultiwalletProvider', () => {
 
     setTimeout(async () => {
       await act(async () => {
+        account = 'newAccount';
         mockConnector.emitter.emit(ConnectorEvents.UPDATE, {
-          account: 'newAccount',
+          account,
         });
       });
-    }, 1000);
+    }, 500);
 
     setTimeout(() => {
       expect(div.innerHTML).toContain('newAccount');
@@ -184,7 +186,7 @@ describe('MultiwalletProvider', () => {
     mockConnector.activate = async () => ({
       account: 'test',
       provider: {},
-      renNetwork: RenNetwork.Testnet,
+      renNetwork: RenNetwork.Mainnet,
     });
     await act(async () =>
       ReactDOM.render(
@@ -239,7 +241,7 @@ describe('MultiwalletProvider', () => {
     mockConnector.activate = async () => ({
       account: 'test',
       provider: {},
-      renNetwork: RenNetwork.Testnet,
+      renNetwork: RenNetwork.Mainnet,
     });
     await act(async () =>
       ReactDOM.render(

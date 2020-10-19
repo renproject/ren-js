@@ -9,6 +9,7 @@ import {
   ConnectorInterface,
   ConnectorEvents,
 } from '@renproject/multiwallet-base-connector';
+import { RenNetwork } from '@renproject/interfaces';
 
 interface MultiwalletConnector<P, A> {
   connector: ConnectorInterface<P, A>;
@@ -16,7 +17,7 @@ interface MultiwalletConnector<P, A> {
   account?: A;
   error?: Error;
   chain: string;
-  status: 'connecting' | 'connected' | 'disconnected';
+  status: 'connecting' | 'connected' | 'disconnected' | 'wrong_network';
   // name: string;
 }
 
@@ -25,6 +26,8 @@ export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
   enabledChains: {
     [key in string]: MultiwalletConnector<PossibleProviders, PossibleAccounts>;
   };
+  targetNetwork: RenNetwork;
+  setTargetNetwork: (n: RenNetwork) => void;
   activateConnector: <P, A>(
     chain: string,
     connector: ConnectorInterface<P, A>
@@ -33,6 +36,8 @@ export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
 
 const context = createContext<MultiwalletInterface<any, any>>({
   enabledChains: {},
+  targetNetwork: RenNetwork.Mainnet,
+  setTargetNetwork: () => {},
   activateConnector: () => {
     throw new Error('Multiwallet not ready');
   },
@@ -42,20 +47,22 @@ export function ConnectorWatcher<P, A>({
   connector,
   chain,
   update,
+  targetNetwork,
 }: MultiwalletConnector<P, A> & {
   update: (update: MultiwalletConnector<P, A>) => void;
+  targetNetwork: RenNetwork;
 }) {
   const handleUpdate = useCallback(
-    ({ provider, account }) => {
+    ({ provider, account, renNetwork }) => {
       update({
         connector,
         account,
         chain,
         provider,
-        status: 'connected',
+        status: renNetwork !== targetNetwork ? 'wrong_network' : 'connected',
       });
     },
-    [update, chain, connector]
+    [update, chain, connector, targetNetwork]
   );
 
   const handleError = useCallback(
@@ -87,6 +94,12 @@ export function ConnectorWatcher<P, A>({
   );
 
   useEffect(() => {
+    // remove any hanging listeners in case of a re-connect
+    connector.emitter.removeAllListeners();
+
+    // re-activating should not be an issue, this saves us from
+    // having to keep track of whether the connector is connected
+    // in multiple places
     connector
       .activate()
       .then((r) => {
@@ -101,7 +114,8 @@ export function ConnectorWatcher<P, A>({
           chain,
           account: r.account,
           provider: r.provider,
-          status: 'connected',
+          status:
+            r.renNetwork !== targetNetwork ? 'wrong_network' : 'connected',
         });
       })
       .catch((e) =>
@@ -115,13 +129,22 @@ export function ConnectorWatcher<P, A>({
     return () => {
       connector.emitter.removeAllListeners();
     };
-  }, [connector, update, chain, handleDeactivate, handleError, handleUpdate]);
+  }, [
+    connector,
+    update,
+    chain,
+    handleDeactivate,
+    handleError,
+    handleUpdate,
+    targetNetwork,
+  ]);
 
   return null;
 }
 
 export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
   const Provider = context.Provider;
+  const [targetNetwork, setTargetNetwork] = useState(RenNetwork.Mainnet);
   const [enabledChains, setEnabledChains] = useState<
     MultiwalletInterface<P, A>['enabledChains']
   >({});
@@ -141,10 +164,12 @@ export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
       // Don't re-connect if the same connector is already connecting or connected
       if (
         oldConnector?.connector === connector &&
-        oldConnector?.status !== 'disconnected'
+        !['disconnected', 'wrong_network'].includes(oldConnector?.status)
       ) {
         return;
       }
+
+      // Deactivate the current connector
       if (oldConnector) {
         if (oldConnector.status !== 'disconnected') {
           await oldConnector.connector.deactivate();
@@ -152,6 +177,7 @@ export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
         delete enabledChains[chain];
         setEnabledChains({ ...enabledChains });
       }
+
       updateConnector({ connector, chain, status: 'connecting' });
     },
     [enabledChains, setEnabledChains, updateConnector]
@@ -160,9 +186,21 @@ export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
   return (
     <>
       {Object.entries(enabledChains).map(([chain, x]) => (
-        <ConnectorWatcher key={chain} {...x} update={updateConnector} />
+        <ConnectorWatcher
+          key={chain}
+          {...x}
+          update={updateConnector}
+          targetNetwork={targetNetwork}
+        />
       ))}
-      <Provider value={{ enabledChains, activateConnector }}>
+      <Provider
+        value={{
+          enabledChains,
+          activateConnector,
+          targetNetwork,
+          setTargetNetwork,
+        }}
+      >
         {children}
       </Provider>
     </>

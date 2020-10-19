@@ -12,6 +12,7 @@ import {
   Default as MultiwalletModal,
   Connecting as ConnectingModal,
   Resolving,
+  WrongNetwork,
 } from '../stories/WalletPickerModal.stories';
 
 describe('Multiwallet', () => {
@@ -127,7 +128,7 @@ describe('MultiwalletModal', () => {
       Resolving.args?.options?.config?.chains.ethereum[0].connector as any,
       'activate'
     );
-    const closeSpy = jest.spyOn(Resolving.args as any, 'close');
+    const closeSpy = jest.spyOn(Resolving.args?.options as any, 'close');
 
     ReactDOM.render(<Resolving {...Resolving.args} />, div);
     await act(
@@ -149,6 +150,44 @@ describe('MultiwalletModal', () => {
       setTimeout(() => {
         expect(activatingSpy).toBeCalled();
         expect(closeSpy).toBeCalled();
+        resolve();
+      }, 100);
+    });
+
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('should warn of wrong network', async () => {
+    const div = document.createElement('div');
+    const activatingSpy = jest.spyOn(
+      WrongNetwork.args?.options?.config?.chains.ethereum[0].connector as any,
+      'activate'
+    );
+    const closeSpy = jest.spyOn(WrongNetwork.args?.options as any, 'close');
+
+    ReactDOM.render(<WrongNetwork {...WrongNetwork.args} />, div);
+    await act(
+      () =>
+        new Promise(async (resolve) => {
+          setTimeout(() => {
+            // Modal does not render in div
+            const button = window.document.body
+              .querySelectorAll('button')
+              .item(1);
+            if (!button) throw new Error('Not rendered');
+            Simulate.click(button);
+            resolve();
+          }, 100);
+        })
+    );
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        expect(activatingSpy).toBeCalled();
+        expect(closeSpy).not.toBeCalled();
+        expect(window.document.body.querySelector('p')?.innerHTML).toContain(
+          'wrong network'
+        );
         resolve();
       }, 100);
     });

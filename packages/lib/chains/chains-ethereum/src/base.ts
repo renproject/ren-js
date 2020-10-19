@@ -193,25 +193,6 @@ export const waitForReceipt = async (
         return;
     });
 
-export const getGatewayAddress = async (
-    network: RenNetworkDetails,
-    web3: Web3,
-    asset: Asset
-) => {
-    try {
-        const registry = new web3.eth.Contract(
-            network.addresses.GatewayRegistry.abi,
-            network.addresses.GatewayRegistry.address
-        );
-        return await registry.methods.getGatewayBySymbol(asset).call();
-    } catch (error) {
-        (
-            error || {}
-        ).error = `Error looking up ${asset}Gateway address: ${error.message}`;
-        throw error;
-    }
-};
-
 const parseBurnEvent = (web3: Web3, event: Log): BurnDetails<Transaction> => {
     assert(event.topics[0] === eventTopics.LogBurn);
 
@@ -373,6 +354,31 @@ export const manualPromiEvent = async (
     return receipt;
 };
 
+export const getGatewayAddress = async (
+    network: RenNetworkDetails,
+    web3: Web3,
+    asset: Asset
+): Promise<string> => {
+    try {
+        const registry = new web3.eth.Contract(
+            network.addresses.GatewayRegistry.abi,
+            network.addresses.GatewayRegistry.address
+        );
+        const registryAddress: string = await registry.methods
+            .getGatewayBySymbol(asset)
+            .call();
+        if (!registryAddress) {
+            throw new Error(`Empty address returned.`);
+        }
+        return registryAddress;
+    } catch (error) {
+        (error || {}).message = `Error looking up ${asset} gateway address${
+            error.message ? `: ${String(error.message)}` : "."
+        }`;
+        throw error;
+    }
+};
+
 export const getTokenAddress = async (
     network: RenNetworkDetails,
     web3: Web3,
@@ -383,11 +389,17 @@ export const getTokenAddress = async (
             network.addresses.GatewayRegistry.abi,
             network.addresses.GatewayRegistry.address
         );
-        return await registry.methods.getTokenBySymbol(asset).call();
+        const tokenAddress: string = await registry.methods
+            .getTokenBySymbol(asset)
+            .call();
+        if (!tokenAddress) {
+            throw new Error(`Empty address returned.`);
+        }
+        return tokenAddress;
     } catch (error) {
-        (
-            error || {}
-        ).error = `Error looking up ${asset} token address: ${error.message}`;
+        (error || {}).message = `Error looking up ${asset} token address${
+            error.message ? `: ${String(error.message)}` : "."
+        }`;
         throw error;
     }
 };
@@ -396,7 +408,8 @@ export const findTransactionBySigHash = async (
     network: RenNetworkDetails,
     web3: Web3,
     asset: Asset,
-    sigHash: Buffer
+    sigHash: Buffer,
+    nHash: Buffer
 ): Promise<string | undefined> => {
     try {
         const gatewayAddress = await getGatewayAddress(network, web3, asset);
@@ -408,7 +421,7 @@ export const findTransactionBySigHash = async (
         // the contract
         const status = await gatewayContract.methods.status(Ox(sigHash)).call();
         if (status) {
-            const mintEvents = await web3.eth.getPastLogs({
+            const oldMintEvents = await web3.eth.getPastLogs({
                 address: gatewayAddress,
                 fromBlock: "1",
                 toBlock: "latest",
@@ -421,6 +434,20 @@ export const findTransactionBySigHash = async (
                     Ox(sigHash),
                 ] as string[],
             });
+            const newMintEvents = await web3.eth.getPastLogs({
+                address: gatewayAddress,
+                fromBlock: "1",
+                toBlock: "latest",
+                // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
+                // address.slice(2), null, null] as any,
+                topics: [
+                    eventTopics.LogMint,
+                    null,
+                    null,
+                    Ox(nHash),
+                ] as string[],
+            });
+            const mintEvents = [...newMintEvents, ...oldMintEvents];
             if (!mintEvents.length) {
                 throw new Error(
                     `Mint has been submitted but no log was found.`
@@ -562,6 +589,7 @@ export const renNetworkToEthereumNetwork = (network: RenNetwork) => {
 export class EthereumBaseChain
     implements MintChain<Transaction, Asset, Address> {
     public name = "Ethereum";
+    public legacyName = "Eth";
     public renNetwork: RenNetwork | undefined;
 
     public readonly web3: Web3 | undefined;
@@ -640,10 +668,12 @@ export class EthereumBaseChain
     };
 
     addressIsValid = (address: Address): boolean => {
+        if (address.match(/^.+\.eth$/)) {
+            return true;
+        }
         if (address.match(/^0x[a-fA-F0-9]{40}$/)) {
             return isValidChecksumAddress(address);
         }
-        // TODO: Support ENS domains.
         return false;
     };
 
@@ -739,7 +769,8 @@ export class EthereumBaseChain
             this.renNetworkDetails,
             this.web3,
             asset,
-            mintTx.out.sighash
+            mintTx.out.sighash,
+            mintTx.out.nhash
         );
     };
 

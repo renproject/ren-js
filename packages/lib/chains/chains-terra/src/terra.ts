@@ -80,20 +80,23 @@ export class TerraClass
      */
     getDeposits = async (
         asset: TerraAsset,
-        address: TerraAddress
-    ): Promise<TerraDeposit[]> => {
+        address: TerraAddress,
+        _instanceID: number,
+        onDeposit: (deposit: TerraDeposit) => void
+    ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
         this.assetAssetSupported(asset);
-        return (
+        (
             await terraDev.fetchDeposits(
                 address.address,
                 this.chainNetwork,
                 address.memo
             )
-        ).map(transactionToDeposit);
-        // .filter((utxo) => utxo.amount > 70000);
+        )
+            .map(transactionToDeposit)
+            .map(onDeposit);
     };
 
     /**
@@ -180,7 +183,6 @@ export class TerraClass
      * See [[OriginChain.addressExplorerLink]].
      */
     addressExplorerLink = (address: TerraAddress): string => {
-        // TODO: Provide multiple options, and check network.
         return `https://finder.terra.money/${this.chainNetwork}/account/${address.address}`;
     };
 
@@ -190,7 +192,6 @@ export class TerraClass
     transactionID = (transaction: TerraTransaction) => transaction.hash;
 
     transactionExplorerLink = (transaction: TerraTransaction): string => {
-        // TODO: Provide multiple options, and check network.
         return `https://finder.terra.money/${this.chainNetwork}/tx/${transaction.hash}`;
     };
 

@@ -45,7 +45,7 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
             if ((error as any).code === 4001) {
                 this.emitter.emitError(new Error("User rejected request"));
             }
-            console.log(error);
+            console.error(error);
         }
 
         // if unsuccessful, try enable

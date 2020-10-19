@@ -41,7 +41,8 @@ export class ParallelHttpProvider<
         this.logger = logger;
         this.nodes = List(
             nodeURLs.map(
-                nodeURL => new HttpProvider<Requests, Responses>(nodeURL)
+                nodeURL =>
+                    new HttpProvider<Requests, Responses>(nodeURL, logger)
             )
         );
     }

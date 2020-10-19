@@ -17,10 +17,11 @@ export const renBscTestnet = CastNetwork({
     chainLabel: "Binance Testnet",
     networkID,
     infura: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    etherscan: "https://explorer.binance.org/smart-testnet",
+    // etherscan: "https://explorer.binance.org/smart-testnet",
+    etherscan: "https://testnet.bscscan.com",
     addresses: {
         GatewayRegistry: {
-            address: "0xf1DA6f4A594553335EdeA6B1203a4B590c752E32",
+            address: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",
             abi: GatewayRegistry.abi as AbiItem[],
             artifact: GatewayRegistry,
         },
@@ -33,7 +34,7 @@ export const renBscTestnet = CastNetwork({
             artifact: (GatewayLogic as unknown) as Contract,
         },
         BasicAdapter: {
-            address: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
+            address: "0x105435a9b0f375B179e5e43A16228C04F01Fb2ee",
             abi: BasicAdapter.abi as AbiItem[],
             artifact: (BasicAdapter as unknown) as Contract,
         },

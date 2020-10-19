@@ -1,6 +1,6 @@
 {
     "name": "@renproject/networks",
-    "version": "2.0.0-alpha.11",
+    "version": "2.0.0-alpha.12",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,7 +42,7 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.11",
+        "@renproject/interfaces": "^2.0.0-alpha.12",
         "@renproject/sol": "^1.0.1",
         "web3-utils": "^2.0.0-alpha.1"
     },

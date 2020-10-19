@@ -109,8 +109,8 @@ export const generateSighash = (
         [
             "bytes32",
             "uint256",
-            v2 ? "string" : "address",
-            v2 ? "string" : "address",
+            v2 ? "bytes32" : "address",
+            "address",
             "bytes32",
         ],
         [pHash, amount, Ox(tokenIdentifier), Ox(to), nonceHash]

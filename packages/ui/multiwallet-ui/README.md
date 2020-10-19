@@ -4,7 +4,7 @@ This package provides a React wallet selection modal and state management for Mu
 
 ## Usage
 ```bash
-yarn add @renproject/multiwallet-ui
+yarn add @renproject/multiwallet-ui @material-ui/core @material-ui/icons
 # For each chain / connector
 yarn add @renproject/multiwallet-{DESIRED_CHAIN}-{DESIRED_WALLET}-conector
 # Ensure peer dependencies are installed

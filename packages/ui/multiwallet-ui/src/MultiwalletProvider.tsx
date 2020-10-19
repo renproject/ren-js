@@ -164,10 +164,12 @@ export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
       // Don't re-connect if the same connector is already connecting or connected
       if (
         oldConnector?.connector === connector &&
-        oldConnector?.status !== 'disconnected'
+        !['disconnected', 'wrong_network'].includes(oldConnector?.status)
       ) {
         return;
       }
+
+      // Deactivate the current connector
       if (oldConnector) {
         if (oldConnector.status !== 'disconnected') {
           await oldConnector.connector.deactivate();
@@ -175,6 +177,7 @@ export const MultiwalletProvider = <P, A>({ children }: { children: any }) => {
         delete enabledChains[chain];
         setEnabledChains({ ...enabledChains });
       }
+
       updateConnector({ connector, chain, status: 'connecting' });
     },
     [enabledChains, setEnabledChains, updateConnector]

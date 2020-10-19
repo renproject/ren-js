@@ -31,9 +31,9 @@ export const Default = Template.bind({});
 
 const props: WalletPickerModalProps<any, any> = {
   open: true,
-  close: () => {},
   options: {
     chain: 'ethereum',
+    targetNetwork: RenNetwork.Testnet,
     close: () => {},
     config: {
       chains: {
@@ -59,11 +59,9 @@ const ConnectingTemplate: Story<any> = (args) => (
 export const Connecting = ConnectingTemplate.bind({});
 
 const connectingProps: WalletPickerModalProps<any, any> = {
-  close: () => {
-    console.log('close');
-  },
   open: true,
   options: {
+    targetNetwork: RenNetwork.Testnet,
     close: () => {
       console.log('close');
     },
@@ -100,11 +98,9 @@ Connecting.args = connectingProps;
 export const Resolving = ConnectingTemplate.bind({});
 
 const resolvingProps: WalletPickerModalProps<any, any> = {
-  close: () => {
-    console.log('close');
-  },
   open: true,
   options: {
+    targetNetwork: RenNetwork.Testnet,
     close: () => {
       console.log('close');
     },
@@ -140,3 +136,45 @@ const resolvingProps: WalletPickerModalProps<any, any> = {
 };
 
 Resolving.args = resolvingProps;
+
+export const WrongNetwork = ConnectingTemplate.bind({});
+
+const wrongNetworkProps: WalletPickerModalProps<any, any> = {
+  open: true,
+  options: {
+    targetNetwork: RenNetwork.Mainnet,
+    close: () => {
+      console.log('close');
+    },
+    chain: 'ethereum',
+    config: {
+      chains: {
+        ethereum: [
+          {
+            name: 'metamask',
+            logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+            connector: {
+              emitter: new EventEmitter() as any,
+              getAccount: async () => '123',
+              getProvider: async () => ({}),
+              getRenNetwork: async () => '' as any,
+              supportsTestnet: true,
+              deactivate: async () => {},
+              activate: () =>
+                new Promise((resolve) => {
+                  console.log('activating');
+                  resolve({
+                    account: '123',
+                    provider: {},
+                    renNetwork: RenNetwork.Testnet,
+                  });
+                }),
+            },
+          },
+        ],
+      },
+    },
+  },
+};
+
+WrongNetwork.args = wrongNetworkProps;

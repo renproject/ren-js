@@ -54,12 +54,8 @@ const options: WalletPickerConfig<any, string> = {
   },
 };
 
-const WalletDemo: React.FC<{ network: RenNetwork }> = ({ network }) => {
+const WalletDemo: React.FC<{ network: RenNetwork }> = () => {
   const context = useMultiwallet<any, any>();
-
-  React.useEffect(() => {
-    if (context.targetNetwork !== network) context.setTargetNetwork(network);
-  }, [network, context]);
 
   return (
     <>

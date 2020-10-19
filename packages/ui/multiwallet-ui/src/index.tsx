@@ -12,6 +12,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import CloseIcon from '@material-ui/icons/Close';
 import { ConnectorInterface } from '@renproject/multiwallet-base-connector';
 import { useMultiwallet } from './MultiwalletProvider';
+import { RenNetwork } from '@renproject/interfaces';
 
 export * from './MultiwalletProvider';
 
@@ -64,7 +65,7 @@ export interface WalletPickerProps<P, A>
   /**
        Network the wallet should connect to
      */
-  targetNetwork: string;
+  targetNetwork: RenNetwork;
   /**
      MaterialUI class overrides for the component shown when connecting
      */
@@ -186,10 +187,6 @@ export interface WalletPickerModalProps<P, A> {
    */
   options: WalletPickerProps<P, A>;
   /**
-     Function used to close/cancel the connection request
-   */
-  close: () => void;
-  /**
      Whether to show the modal
    */
   open?: boolean;
@@ -197,18 +194,27 @@ export interface WalletPickerModalProps<P, A> {
 
 export const WalletPickerModal = <P, A>({
   open,
-  close,
   options,
 }: WalletPickerModalProps<P, A>) => {
-  const { enabledChains, targetNetwork } = useMultiwallet<P, A>();
+  const { enabledChains, targetNetwork, setTargetNetwork } = useMultiwallet<
+    P,
+    A
+  >();
   const connecting = enabledChains[options.chain]?.status === 'connecting';
   const connected = enabledChains[options.chain]?.status === 'connected';
   const wrongNetwork = enabledChains[options.chain]?.status === 'wrong_network';
   useEffect(() => {
     if (connected) {
-      close();
+      options.close();
     }
-  }, [connected, close]);
+  }, [connected, options]);
+
+  useEffect(() => {
+    if (options.targetNetwork !== targetNetwork) {
+      setTargetNetwork(options.targetNetwork);
+    }
+  }, [options.targetNetwork, targetNetwork, setTargetNetwork]);
+
   return (
     <Modal open={open || false}>
       <Box
@@ -221,9 +227,7 @@ export const WalletPickerModal = <P, A>({
         <WalletPicker
           {...options}
           connecting={connecting}
-          close={close}
           wrongNetwork={wrongNetwork}
-          targetNetwork={targetNetwork}
         />
       </Box>
     </Modal>

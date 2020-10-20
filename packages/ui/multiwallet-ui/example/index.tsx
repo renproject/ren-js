@@ -91,16 +91,17 @@ const App = () => {
             bgcolor="primary"
           >
             <select
+              value={network}
               onChange={(e) =>
                 setNetwork(
-                  e.target.value === 'Testnet'
+                  e.target.value === 'testnet'
                     ? RenNetwork.Testnet
                     : RenNetwork.Mainnet
                 )
               }
             >
-              <option>Testnet</option>
-              <option>Mainnet</option>
+              <option value="testnet">Testnet</option>
+              <option value="mainnet">Mainnet</option>
             </select>
             <WalletDemo network={network} />
             <Box display="flex" justifyContent="center">
@@ -129,12 +130,11 @@ const App = () => {
         </Container>
         <WalletPickerModal
           open={open}
-          close={setClosed}
           options={{
             chain,
             close: setClosed,
             config: options,
-            targetNetwork: RenNetwork.Mainnet,
+            targetNetwork: network,
           }}
         />
       </MultiwalletProvider>

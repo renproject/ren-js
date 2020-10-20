@@ -1,6 +1,6 @@
 {
     "name": "@renproject/xstate",
-    "version": "2.0.0-alpha.6",
+    "version": "2.0.1-alpha.0",
     "description": "XState Statemachines for tracking transactions reactively",
     "repository": {
         "type": "git",
@@ -40,11 +40,11 @@
         "bignumber.js": "^9.0.0"
     },
     "devDependencies": {
-        "@renproject/ren": "^2.0.0-alpha.7",
+        "@renproject/ren": "^2.0.0-alpha.8",
         "xstate": "^4.13.0"
     },
     "peerDependencies": {
-        "@renproject/ren": "^2.0.0-alpha.7",
+        "@renproject/ren": "^2.0.0-alpha.8",
         "xstate": "^4.13.0"
     }
 }

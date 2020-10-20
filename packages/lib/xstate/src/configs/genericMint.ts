@@ -179,7 +179,11 @@ const depositListener = (
         receive((event) => {
             switch (event.type) {
                 case "RESTORE":
-                    minter.processDeposit(event.data).then().catch();
+                    try {
+                        minter.processDeposit(event.data);
+                    } catch (e) {
+                        console.error(e);
+                    }
                     break;
             }
         });

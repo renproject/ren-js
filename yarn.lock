@@ -3548,6 +3548,62 @@
   resolved "https://registry.yarnpkg.com/@renproject/fonts/-/fonts-1.0.1.tgz#5eb052638eec862760044b4367f062f8a890c5b8"
   integrity sha512-OWk811Ay63UdPxY5nEg4N99Goz6K9HLaeGfUN2q0uehhQ70hJDqDQq/vYl5rtE07mv7MYX7GYTpj5POlPbZNRg==
 
+"@renproject/interfaces@^2.0.0-alpha.12":
+  version "2.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@renproject/interfaces/-/interfaces-2.0.0-alpha.12.tgz#24f21836324253d29d895ee6980eb4b3515a39fb"
+  integrity sha512-uirWXwvlZiqP8rBs7miiotvZjr1wI8K6qZPUQXt9z3uzG2EqrwKq/ePPVXmOcA8sm38R++krNfSjx4U0NKvDPw==
+  dependencies:
+    "@types/node" "^14.11.1"
+    bignumber.js "^9.0.0"
+    web3-core "^2.0.0-alpha.1"
+
+"@renproject/networks@^2.0.0-alpha.12":
+  version "2.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@renproject/networks/-/networks-2.0.0-alpha.12.tgz#392f834ee37fa5c4ccf13fbd19dfdfc96afb7655"
+  integrity sha512-a5N5qx0jTHd5xfENRMYI9zmdj/N4g6oYxEG47ITwwnoO9bvPXVI8wAijZa3CnbP8ZzZief0PIW1G2kHexzKFIQ==
+  dependencies:
+    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/sol" "^1.0.1"
+    web3-utils "^2.0.0-alpha.1"
+
+"@renproject/provider@^2.0.0-alpha.12":
+  version "2.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@renproject/provider/-/provider-2.0.0-alpha.12.tgz#9c071c539d920e2ebd14e93f00f8fa332caecdde"
+  integrity sha512-gH4WG/Qzhw8HPmSzHiH4N5XCWemCzQlV/m2g0N/Bb7ztc5HZe5hhuFgYIdgWXA0WneqT7E9Kpd32HV7jojKGfw==
+  dependencies:
+    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/utils" "^2.0.0-alpha.12"
+    "@types/node" "^14.11.1"
+    axios "^0.20.0"
+    immutable "^4.0.0-rc.12"
+
+"@renproject/ren@^2.0.0-alpha.11":
+  version "2.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@renproject/ren/-/ren-2.0.0-alpha.12.tgz#5161e256b0b47f3dd7a1b5a13208734288d2086d"
+  integrity sha512-IaPApa1lUJBXaUBZRjSN3zmfiWH3PZiMZ0fpkICAQu0/9wIclUj7ULdzGgn2/hae//M1NsBGe3h2YOcohUZaYA==
+  dependencies:
+    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/networks" "^2.0.0-alpha.12"
+    "@renproject/provider" "^2.0.0-alpha.12"
+    "@renproject/rpc" "^2.0.0-alpha.12"
+    "@renproject/utils" "^2.0.0-alpha.12"
+    "@types/node" "^14.11.1"
+    bignumber.js "^9.0.0"
+    immutable "^4.0.0-rc.12"
+    web3-eth-abi "^2.0.0-alpha.1"
+
+"@renproject/rpc@^2.0.0-alpha.12":
+  version "2.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@renproject/rpc/-/rpc-2.0.0-alpha.12.tgz#52ecdcb0e83950bb7f9b4b1307dca99ba3735e8c"
+  integrity sha512-IpgHNQ2QMuugq1Vb24yzkBSz3cznYLQ9ByF2VuM6YVT1lI9LCNPV2hnroXktGtWClPep6REjkf48O/9V0VL7tw==
+  dependencies:
+    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/provider" "^2.0.0-alpha.12"
+    "@renproject/utils" "^2.0.0-alpha.12"
+    "@types/node" "^14.11.1"
+    bignumber.js "^9.0.0"
+    immutable "^4.0.0-rc.12"
+
 "@renproject/sol@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@renproject/sol/-/sol-1.0.1.tgz#d103c6d1f54cb4004d7bf6c0fe5cb6f932bfe98f"
@@ -3556,6 +3612,23 @@
     "@openzeppelin/contracts" "^2.5.0"
     "@openzeppelin/contracts-ethereum-package" "^2.4.0"
     "@openzeppelin/upgrades" "^2.7.2"
+
+"@renproject/utils@^2.0.0-alpha.12":
+  version "2.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@renproject/utils/-/utils-2.0.0-alpha.12.tgz#176d86a385a9c81ea3aceba580bd4767c81f9a2c"
+  integrity sha512-5xR+Wt8qOyeV15fF/VxCPPnmX8GhimOti+A0mKqi/8FAMANhX2/6C092x5JZeCD3tpc7g/XidAbgYJFycvQplQ==
+  dependencies:
+    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@types/create-hash" "1.2.2"
+    "@types/keccak" "^3.0.1"
+    "@types/mocha" "^8.0.3"
+    "@types/node" "^14.11.1"
+    axios "^0.20.0"
+    bignumber.js "^9.0.0"
+    ethereumjs-util "^7.0.5"
+    events "^3.2.0"
+    immutable "^4.0.0-rc.12"
+    web3-eth-abi "^2.0.0-alpha.1"
 
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
@@ -4006,6 +4079,13 @@
   resolved "https://registry.yarnpkg.com/@types/color-name/-/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
   integrity sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==
 
+"@types/create-hash@1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@types/create-hash/-/create-hash-1.2.2.tgz#e87247083df8478f6b83655592bde0d709028235"
+  integrity sha512-Fg8/kfMJObbETFU/Tn+Y0jieYewryLrbKwLCEIwPyklZZVY2qB+64KFjhplGSw+cseZosfFXctXO+PyIYD8iZQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/debug@^4.1.5":
   version "4.1.5"
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.5.tgz#b14efa8852b7768d898906613c23f688713e02cd"
@@ -4125,6 +4205,13 @@
   version "0.0.29"
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha1-7ihweulOEdK4J7y+UnC86n8+ce4=
+
+"@types/keccak@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/keccak/-/keccak-3.0.1.tgz#1dfad12395f32927cf409707534dd796d57aa84c"
+  integrity sha512-/MxAVmtyyeOvZ6dGf3ciLwFRuV5M8DRIyYNFGHYI6UyBW4/XqyO0LZw+JFMvaeY3cHItQAkELclBU1x5ank6mg==
+  dependencies:
+    "@types/node" "*"
 
 "@types/minimatch@*", "@types/minimatch@3.0.3":
   version "3.0.3"

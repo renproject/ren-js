@@ -1,9 +1,7 @@
 import { interpret } from "xstate";
-const utils = jest.genMockFromModule("@renproject/utils") as any;
-
-utils.SECONDS = 100;
 
 import RenJS from "@renproject/ren";
+import Web3 from "web3";
 
 import {
     mintMachine,
@@ -14,6 +12,8 @@ import {
 import { LockChain, MintChain, TxStatus } from "@renproject/interfaces";
 import { RenVMProvider } from "@renproject/rpc/build/main/v1";
 import { AbstractRenVMProvider } from "@renproject/rpc";
+import BigNumber from "bignumber.js";
+import { fromHex } from "@renproject/utils";
 
 require("dotenv").config();
 const providers = {
@@ -39,18 +39,25 @@ function buildMockLockChain(conf = { targetConfirmations: 500 }) {
         name: "mockLockChain",
         assetDecimals: () => 1,
         addressIsValid: () => true,
-        transactionID: () => "tid",
+        transactionID: () =>
+            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
         transactionConfidence,
         initialize: () => {
             return mockLockChain;
         },
-        supportsAsset: () => true,
-        getDeposits: () => [{ transaction: {}, amount: "1" }],
-        generateNHash: () => Buffer.from("123"),
+        getDeposits: async (_a, _b, _c, onDeposit) => {
+            onDeposit({ transaction: {}, amount: "1" });
+        },
         getGatewayAddress: () => "gatewayaddr",
         getPubKeyScript: () => Buffer.from("pubkey"),
         depositV1HashString: () => "v1hashstring",
-        depositRPCFormat: () => {},
+        assetIsNative: () => true,
+        transactionRPCFormat: () => ({
+            txid: fromHex(
+                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+            ),
+            txindex: "0",
+        }),
     };
     return {
         mockLockChain,
@@ -68,12 +75,18 @@ function buildMockMintChain() {
         name: "mockMintChain",
         assetDecimals: () => 1,
         addressIsValid: () => true,
-        transactionID: () => "tid" + new Date().getTime(),
+        transactionID: () =>
+            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
         transactionConfidence: () => ({ current: 0, target: 1 }),
         initialize: () => {
             return mockMintChain;
         },
-        supportsAsset: () => true,
+        transactionRPCFormat: () => ({
+            txid: fromHex(
+                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+            ),
+            txindex: "0",
+        }),
         resolveTokenGatewayContract: async () =>
             "0x0000000000000000000000000000000000000000",
         submitMint: (_asset, _calls, _tx, emitter) => {
@@ -84,7 +97,24 @@ function buildMockMintChain() {
                 );
             }, 100);
         },
-        findBurnTransaction: () => "burnTxHash",
+        findBurnTransaction: (_p, _d, emitter) => {
+            setTimeout(() => {
+                emitter.emit(
+                    "transactionHash",
+                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                );
+            }, 1000);
+
+            return {
+                transaction: {
+                    hash:
+                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                },
+                amount: new BigNumber(0),
+                to: Buffer.from("asd"),
+                nonce: new BigNumber(0),
+            };
+        },
         findTransaction: () => "mintTxHash",
         contractCalls: async () => [
             {

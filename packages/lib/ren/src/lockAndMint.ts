@@ -15,6 +15,7 @@ import { AbstractRenVMProvider, v2 } from "@renproject/rpc";
 import {
     assertObject,
     assertType,
+    emptyNonce,
     extractError,
     fromBase64,
     fromHex,
@@ -22,9 +23,9 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
+    generateSighash,
     Ox,
     payloadToMintABI,
-    randomNonce,
     renVMHashToBase64,
     resolveInToken,
     SECONDS,
@@ -71,6 +72,7 @@ export class LockAndMint<
         string,
         LockAndMintDeposit<Transaction, Deposit, Asset, Address>
     > = OrderedMap();
+    private readonly getDepositsInstance: number;
 
     /**
      * Constructor.
@@ -84,17 +86,21 @@ export class LockAndMint<
 
         this._logger = _logger;
         this._renVM = _renVM;
-        this._params = _params; // processLockAndMintParams(this.network, _params);
+        this._params = _params;
+
+        // tslint:disable-next-line: insecure-random
+        this.getDepositsInstance = Math.random();
 
         const txHash = this._params.txHash;
 
+        // Decode nonce or use empty nonce 0x0.
         const nonce = this._params.nonce
             ? fromHex(this._params.nonce)
-            : randomNonce();
+            : emptyNonce();
         this._params.nonce = nonce;
 
         if (!txHash) {
-            this._params.nonce = nonce || randomNonce();
+            this._params.nonce = nonce;
         }
 
         {
@@ -148,9 +154,9 @@ export class LockAndMint<
      * @param deposit The deposit details in the format expected by the mint
      *                chain.
      */
-    public processDeposit = async (
+    public processDeposit = (
         deposit: Deposit
-    ): Promise<LockAndMintDeposit<Transaction, Deposit, Asset, Address>> => {
+    ): LockAndMintDeposit<Transaction, Deposit, Asset, Address> => {
         if (
             !this._pHash ||
             !this._gHash ||
@@ -294,7 +300,6 @@ export class LockAndMint<
 
         this._pHash = generatePHash(contractParams || [], this._logger);
 
-        // TODO: Validate inputs.
         const gHash = generateGHash(
             contractParams || [],
             sendTo,
@@ -335,9 +340,11 @@ export class LockAndMint<
 
         // tslint:disable-next-line: no-constant-condition
         while (true) {
+            const listenerCancelled = () => this.listenerCount("deposit") === 0;
+
             try {
                 // If there are no listeners, continue.
-                if (this.listenerCount("deposit") === 0) {
+                if (listenerCancelled()) {
                     await sleep(1 * SECONDS);
                     continue;
                 }
@@ -346,14 +353,13 @@ export class LockAndMint<
             }
 
             try {
-                const newDeposits = await this._params.from.getDeposits(
+                await this._params.from.getDeposits(
                     this._params.asset,
-                    this.gatewayAddress
+                    this.gatewayAddress,
+                    this.getDepositsInstance,
+                    this.processDeposit,
+                    listenerCancelled
                 );
-
-                for (const deposit of newDeposits) {
-                    await this.processDeposit(deposit);
-                }
             } catch (error) {
                 this._logger.error(extractError(error));
             }
@@ -379,6 +385,7 @@ export class LockAndMintDeposit<
     public _mpkh: Buffer;
     public _gHash: Buffer;
     public _pHash: Buffer;
+    public _nHash: Buffer | undefined;
 
     constructor(
         renVM: AbstractRenVMProvider,
@@ -400,7 +407,7 @@ export class LockAndMintDeposit<
 
         const { txHash, contractCalls, nonce } = this._params;
 
-        if (!this._params.nonce) {
+        if (!nonce) {
             throw new Error(`No nonce passed in to LockAndMintDeposit`);
         }
 
@@ -409,8 +416,6 @@ export class LockAndMintDeposit<
                 `Must provide Ren transaction hash or contract call details.`
             );
         }
-
-        this._params.nonce = nonce || randomNonce();
 
         this.validateParams();
 
@@ -470,7 +475,6 @@ export class LockAndMintDeposit<
                       this._params.asset
                   );
 
-        // TODO: Validate inputs.
         const gHash = generateGHash(
             contractParams || [],
             sendTo,
@@ -520,12 +524,13 @@ export class LockAndMintDeposit<
             transactionDetails.txindex,
             this._renVM.version >= 2
         );
+        this._nHash = nHash;
 
-        const pubKeyScript = await this._params.from.getPubKeyScript(
-            this._params.asset,
-            this._mpkh,
-            this._gHash
-        );
+        // const pubKeyScript = await this._params.from.getPubKeyScript(
+        //     this._params.asset,
+        //     this._mpkh,
+        //     this._gHash
+        // );
 
         const outputHashFormat =
             this._renVM.version >= 2
@@ -634,12 +639,6 @@ export class LockAndMintDeposit<
             this._renVM.version >= 2
         );
 
-        // const pubKeyScript = await this._params.from.getPubKeyScript(
-        //     this._params.asset,
-        //     this._mpkh,
-        //     this._gHash
-        // );
-
         const selector =
             this._renVM.version >= 2
                 ? v2.resolveV2Contract({
@@ -671,7 +670,7 @@ export class LockAndMintDeposit<
             tags
         );
         if (txHash && toBase64(returnedTxHash) !== txHash) {
-            this._logger.warn(
+            this._logger.debug(
                 `Unexpected txHash returned from RenVM. Received: ${toBase64(
                     returnedTxHash
                 )}, expected: ${txHash}`
@@ -789,11 +788,6 @@ export class LockAndMintDeposit<
             // know about the transaction.
             try {
                 txHash = await this._submit();
-                if (txHash !== utxoTxHash) {
-                    this._logger.warn(
-                        `Unexpected txHash returned from RenVM: expected ${utxoTxHash} but got ${txHash}`
-                    );
-                }
             } catch (error) {
                 // this.logger.error(error);
                 try {

@@ -409,7 +409,7 @@ export class BurnAndRelease<
                         );
                     }
                     if (txHash && toBase64(returnedTxHash) !== txHash) {
-                        this._logger.warn(
+                        this._logger.debug(
                             `Unexpected txHash returned from RenVM. Received: ${toBase64(
                                 returnedTxHash
                             )}, expected: ${txHash}`

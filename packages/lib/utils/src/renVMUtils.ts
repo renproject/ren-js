@@ -53,7 +53,8 @@ export const resolveInToken = <
     from: LockAndMintParams<Transaction, Deposit, Asset, Address>["from"];
     to: LockAndMintParams<Transaction, Deposit, Asset, Address>["to"];
 }): RenContract => {
-    return `${asset}0${from.name}2${to.name}` as RenContract;
+    return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
+        from.name}` as RenContract;
 };
 
 export const resolveOutToken = <

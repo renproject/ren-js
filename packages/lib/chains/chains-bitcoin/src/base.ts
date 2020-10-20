@@ -43,9 +43,10 @@ const transactionToDeposit = (transaction: Transaction) => ({
     amount: transaction.amount.toString(),
 });
 
-export class BitcoinBaseChain
+export abstract class BitcoinBaseChain
     implements LockChain<Transaction, Deposit, Asset, Address> {
-    public name = "Btc";
+    public name = "Bitcoin";
+    public legacyName = "Btc";
     public renNetwork: RenNetwork | undefined;
     public chainNetwork: BitcoinNetwork | undefined;
 
@@ -102,14 +103,21 @@ export class BitcoinBaseChain
         throw new Error(`Unsupported asset ${asset}`);
     };
 
+    // Track how many times getDeposits has been called.
+    private readonly getDepositsCountsMap = new Map<
+        number,
+        Map<Address, number>
+    >();
+
     /**
      * See [[OriginChain.getDeposits]].
      */
     getDeposits = async (
         asset: Asset,
         address: Address,
-        firstCheck = false
-    ): Promise<Deposit[]> => {
+        instanceID: number,
+        onDeposit: (deposit: Deposit) => void
+    ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
@@ -117,8 +125,16 @@ export class BitcoinBaseChain
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
         this.assetAssetSupported(asset);
-        if (firstCheck && this.utils.getTransactions) {
-            return (
+
+        // Check how many times getDeposits has been called for the instanceID
+        // nad address.
+        const getDepositsCounts =
+            this.getDepositsCountsMap.get(instanceID) ||
+            new Map<Address, number>();
+        const getDepositsCount = getDepositsCounts.get(address) || 0;
+
+        if (getDepositsCount === 0 && this.utils.getTransactions) {
+            (
                 await this.utils.getTransactions(
                     this.chainNetwork === "testnet",
                     {
@@ -126,16 +142,23 @@ export class BitcoinBaseChain
                         confirmations: 0,
                     }
                 )
-            ).map(transactionToDeposit);
+            )
+                .map(transactionToDeposit)
+                .map(onDeposit);
+        } else {
+            (
+                await this.utils.getUTXOs(this.chainNetwork === "testnet", {
+                    address,
+                    confirmations: 0,
+                })
+            )
+                .map(transactionToDeposit)
+                .map(onDeposit);
         }
 
-        return (
-            await this.utils.getUTXOs(this.chainNetwork === "testnet", {
-                address,
-                confirmations: 0,
-            })
-        ).map(transactionToDeposit);
-        // .filter((utxo) => utxo.amount > 70000);
+        // Increment getDepositsCount.
+        getDepositsCounts.set(address, getDepositsCount + 1);
+        this.getDepositsCountsMap.set(instanceID, getDepositsCounts);
     };
 
     /**
@@ -218,21 +241,9 @@ export class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.addressExplorerLink]].
-     */
-    addressExplorerLink = (address: Address): string => {
-        // TODO
-        return address;
-    };
-
-    /**
      * See [[OriginChain.transactionExplorerLink]].
      */
     transactionID = (transaction: Transaction) => transaction.txHash;
-
-    transactionExplorerLink = (transaction: Transaction): string => {
-        return transaction.txHash;
-    };
 
     depositV1HashString = ({ transaction }: Deposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;

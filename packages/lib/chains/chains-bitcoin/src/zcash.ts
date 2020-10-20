@@ -4,12 +4,13 @@ import base58 from "bs58";
 import { ZECHandler } from "send-crypto/build/main/handlers/ZEC/ZECHandler";
 import { validate } from "wallet-address-validator";
 
-import { Address, BitcoinNetwork } from "./base";
+import { Address, BitcoinNetwork, Transaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
 
 export class ZcashClass extends BitcoinClass {
-    public name = "Zec";
+    public name = "Zcash";
+    public legacyName = "Zec";
 
     public asset = "ZEC";
     public utils = {
@@ -24,6 +25,24 @@ export class ZcashClass extends BitcoinClass {
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (address: Address, network: BitcoinNetwork) =>
             validate(address, "zec", network),
+    };
+
+    addressExplorerLink = (address: Address): string | undefined => {
+        if (this.chainNetwork === "mainnet") {
+            return `https://sochain.com/address/ZEC/${address}/`;
+        } else if (this.chainNetwork === "testnet") {
+            return `https://sochain.com/address/ZECTEST/${address}/`;
+        }
+        return undefined;
+    };
+
+    transactionExplorerLink = (tx: Transaction): string | undefined => {
+        if (this.chainNetwork === "mainnet") {
+            return `https://sochain.com/tx/ZEC/${tx.txHash}/`;
+        } else if (this.chainNetwork === "testnet") {
+            return `https://sochain.com/tx/ZECTEST/${tx.txHash}/`;
+        }
+        return undefined;
     };
 }
 

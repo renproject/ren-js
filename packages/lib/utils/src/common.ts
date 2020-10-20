@@ -169,6 +169,8 @@ export const randomBytes = (bytes: number): Buffer => {
  */
 export const randomNonce = (): Buffer => randomBytes(32);
 
+export const emptyNonce = () => fromHex("00".repeat(32));
+
 export const rawEncode = (
     types: Array<string | {}>,
     // tslint:disable-next-line:no-any

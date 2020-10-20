@@ -26,7 +26,8 @@ const options: WalletPickerConfig<any, string> = {
         logo: 'https://avatars0.githubusercontent.com/u/37784886?s=60&v=4',
         connector: new EthereumWalletConnectConnector({
           rpc: {
-            42: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
+            1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
+            42: `https://kovan.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
           },
           qrcode: true,
           debug: true,
@@ -37,6 +38,7 @@ const options: WalletPickerConfig<any, string> = {
         logo: 'https://avatars0.githubusercontent.com/u/24321658?s=60&v=4',
         connector: new EthereumMEWConnectConnector({
           rpc: {
+            1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
             42: `wss://kovan.infura.io/ws/v3/${process.env.REACT_APP_INFURA_KEY}`,
           },
           chainId: 42,
@@ -54,7 +56,7 @@ const options: WalletPickerConfig<any, string> = {
   },
 };
 
-const WalletDemo: React.FC<{ network: RenNetwork }> = () => {
+const WalletDemo: React.FC<{ network: string }> = () => {
   const context = useMultiwallet<any, any>();
 
   return (
@@ -76,7 +78,7 @@ const App = () => {
   const [open, setOpen] = React.useState(false);
   const [chain, setChain] = React.useState('');
   const setClosed = React.useMemo(() => () => setOpen(false), [setOpen]);
-  const [network, setNetwork] = React.useState(RenNetwork.Mainnet);
+  const [network, setNetwork] = React.useState('testnet');
 
   return (
     <Box bgcolor="#fafafa" height="100vh" display="flex" alignItems="center">
@@ -92,13 +94,7 @@ const App = () => {
           >
             <select
               value={network}
-              onChange={(e) =>
-                setNetwork(
-                  e.target.value === 'testnet'
-                    ? RenNetwork.Testnet
-                    : RenNetwork.Mainnet
-                )
-              }
+              onChange={(e) => setNetwork(e.target.value)}
             >
               <option value="testnet">Testnet</option>
               <option value="mainnet">Mainnet</option>
@@ -132,7 +128,7 @@ const App = () => {
           open={open}
           options={{
             chain,
-            close: setClosed,
+            onClose: setClosed,
             config: options,
             targetNetwork: network,
           }}

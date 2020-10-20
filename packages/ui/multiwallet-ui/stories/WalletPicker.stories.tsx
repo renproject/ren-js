@@ -25,7 +25,7 @@ const Template: Story<any> = (args) => (
 export const Default = Template.bind({});
 
 const defaultProps: WalletPickerProps<any, any> = {
-  close: () => {
+  onClose: () => {
     console.log('close');
   },
   chain: 'ethereum',
@@ -34,11 +34,11 @@ const defaultProps: WalletPickerProps<any, any> = {
     chains: {
       ethereum: [
         {
-          info: ({ acknowledge, close }) => (
+          info: ({ acknowledge, onClose }) => (
             <div>
               Are you sure you want to connect this wallet?{' '}
               <button onClick={acknowledge}>Yes</button>
-              <button onClick={close}>No</button>
+              <button onClick={onClose}>No</button>
             </div>
           ),
           name: 'metamask',
@@ -82,6 +82,26 @@ const customConnectingProps: WalletPickerProps<any, any> = {
 
 CustomConnecting.args = customConnectingProps;
 
+export const CustomWalletButton = Template.bind({});
+
+const customWalletButtonProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+  config: {
+    chains: {
+      ethereum: [
+        {
+          name: 'metamask',
+          logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+          connector: {} as any,
+        },
+      ],
+    },
+  },
+  WalletEntryButton: ({ name }) => <button>A custom button for {name}</button>,
+};
+
+CustomWalletButton.args = customWalletButtonProps;
+
 export const DefaultInfo = Template.bind({});
 
 const defaultInfoProps: WalletPickerProps<any, any> = {
@@ -102,6 +122,28 @@ const defaultInfoProps: WalletPickerProps<any, any> = {
 };
 
 DefaultInfo.args = defaultInfoProps;
+
+export const WrongNetworkInfo = Template.bind({});
+
+const WrongNetworkInfoProps: WalletPickerProps<any, any> = {
+  ...defaultProps,
+  wrongNetwork: true,
+  WrongNetworkInfo: ({ onClose }) => (
+    <div>
+      Custom wrong network component
+      <button id="acknowledge" onClick={() => onClose()}>
+        Close
+      </button>
+    </div>
+  ),
+  config: {
+    chains: {
+      ethereum: [],
+    },
+  },
+};
+
+WrongNetworkInfo.args = WrongNetworkInfoProps;
 
 const ChildTemplate: Story<any> = (args) => (
   <WalletPicker {...args}>

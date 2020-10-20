@@ -7,6 +7,8 @@ import {
   Connecting,
   ClassExtension,
   CustomConnecting,
+  WrongNetworkInfo,
+  CustomWalletButton,
 } from '../stories/WalletPicker.stories';
 import {
   Default as MultiwalletModal,
@@ -56,6 +58,18 @@ describe('Multiwallet', () => {
   it('renders custom connecting component', () => {
     const div = document.createElement('div');
     ReactDOM.render(<CustomConnecting {...CustomConnecting.args} />, div);
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('renders custom walletbutton component', () => {
+    const div = document.createElement('div');
+    ReactDOM.render(<CustomWalletButton {...CustomWalletButton.args} />, div);
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('renders custom wrong network component', () => {
+    const div = document.createElement('div');
+    ReactDOM.render(<WrongNetworkInfo {...WrongNetworkInfo.args} />, div);
     ReactDOM.unmountComponentAtNode(div);
   });
 
@@ -128,7 +142,7 @@ describe('MultiwalletModal', () => {
       Resolving.args?.options?.config?.chains.ethereum[0].connector as any,
       'activate'
     );
-    const closeSpy = jest.spyOn(Resolving.args?.options as any, 'close');
+    const closeSpy = jest.spyOn(Resolving.args?.options as any, 'onClose');
 
     ReactDOM.render(<Resolving {...Resolving.args} />, div);
     await act(
@@ -163,7 +177,7 @@ describe('MultiwalletModal', () => {
       WrongNetwork.args?.options?.config?.chains.ethereum[0].connector as any,
       'activate'
     );
-    const closeSpy = jest.spyOn(WrongNetwork.args?.options as any, 'close');
+    const closeSpy = jest.spyOn(WrongNetwork.args?.options as any, 'onClose');
 
     ReactDOM.render(<WrongNetwork {...WrongNetwork.args} />, div);
     await act(
@@ -186,10 +200,35 @@ describe('MultiwalletModal', () => {
         expect(activatingSpy).toBeCalled();
         expect(closeSpy).not.toBeCalled();
         expect(window.document.body.querySelector('p')?.innerHTML).toContain(
-          'wrong network'
+          'Wrong Network'
         );
         resolve();
       }, 100);
+    });
+
+    // cancel connection request
+    await act(
+      () =>
+        new Promise(async (resolve) => {
+          setTimeout(() => {
+            const button = window.document.body
+              .querySelectorAll('button')
+              .item(0);
+            if (!button) throw new Error('Not rendered');
+            Simulate.click(button);
+            resolve();
+          }, 100);
+        })
+    );
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        expect(closeSpy).toBeCalled();
+        expect(
+          window.document.body.querySelector('p')?.innerHTML
+        ).not.toContain('Wrong Network');
+        resolve();
+      }, 500);
     });
 
     ReactDOM.unmountComponentAtNode(div);

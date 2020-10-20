@@ -18,7 +18,7 @@
         "listFiles": false,
         "pretty": true,
         "lib": ["es2017", "dom"],
-        "types": [],
+        "types": ["mocha"],
         "typeRoots": ["node_modules/@types", "src/types"],
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,
@@ -28,7 +28,8 @@
         "suppressImplicitAnyIndexErrors": true,
         "strictPropertyInitialization": true,
         "alwaysStrict": true,
-        "strictFunctionTypes": true
+        "strictFunctionTypes": true,
+        "sourceMap": true
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules/**"],

@@ -125,12 +125,12 @@ export interface BurnAndReleaseParams<
     /**
      * The hash of the burn transaction on Ethereum.
      */
-    ethereumTxHash?: string;
+    transaction?: Transaction;
 
     /**
      * The reference ID of the burn emitted in the contract log.
      */
-    burnReference?: string | number;
+    burnNonce?: string | number;
 
     /**
      * Details for submitting one or more Ethereum transactions. The last one

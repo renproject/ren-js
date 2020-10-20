@@ -51,6 +51,7 @@ function buildMockLockChain(conf = { targetConfirmations: 500 }) {
         getGatewayAddress: () => "gatewayaddr",
         getPubKeyScript: () => Buffer.from("pubkey"),
         depositV1HashString: () => "v1hashstring",
+        legacyName: "Btc",
         assetIsNative: () => true,
         transactionRPCFormat: () => ({
             txid: fromHex(
@@ -87,6 +88,7 @@ function buildMockMintChain() {
             ),
             txindex: "0",
         }),
+        legacyName: "Eth",
         resolveTokenGatewayContract: async () =>
             "0x0000000000000000000000000000000000000000",
         submitMint: (_asset, _calls, _tx, emitter) => {
@@ -368,11 +370,11 @@ describe("MintMachine", function () {
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                 gatewayAddress: "gatewayaddr",
                 transactions: {
-                    ["vKFLy1mcP/RrjtuujIklZF1eRjuVPALtY85KO0Tk+1M="]: {
+                    ["wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo="]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 1,
                         sourceTxHash:
-                            "vKFLy1mcP/RrjtuujIklZF1eRjuVPALtY85KO0Tk+1M=",
+                            "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
                         rawSourceTx: {},
                     },
                 },
@@ -464,11 +466,11 @@ describe("MintMachine", function () {
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                 gatewayAddress: "gatewayaddr",
                 transactions: {
-                    ["vKFLy1mcP/RrjtuujIklZF1eRjuVPALtY85KO0Tk+1M="]: {
+                    ["wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo="]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 1,
                         sourceTxHash:
-                            "vKFLy1mcP/RrjtuujIklZF1eRjuVPALtY85KO0Tk+1M=",
+                            "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
                         rawSourceTx: {},
                     },
                 },

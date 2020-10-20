@@ -5,6 +5,7 @@ import {
     SECONDS,
 } from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
+import { Logger } from "@renproject/interfaces";
 
 import { JSONRPCResponse, Provider } from "./jsonRPC";
 
@@ -22,15 +23,12 @@ export class HttpProvider<
     Responses extends { [event: string]: any } = {}
 > implements Provider {
     public readonly nodeURL: string;
-    public readonly verbose: boolean = false;
+    public readonly logger: Logger | undefined;
 
-    constructor(
-        ipOrMultiaddress: string,
-        { verbose }: { verbose?: boolean } = { verbose: false }
-    ) {
-        this.verbose = verbose || false;
+    constructor(ipOrMultiaddress: string, logger?: Logger) {
+        this.logger = logger;
         // Type validation
-        assertType("string", { ipOrMultiaddress });
+        assertType<string>("string", { ipOrMultiaddress });
 
         if (ipOrMultiaddress.charAt(0) === "/") {
             try {
@@ -58,12 +56,13 @@ export class HttpProvider<
     public async sendMessage<Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 5,
+        retry = 2,
         timeout = 120 * SECONDS
     ): Promise<Responses[Method]> {
         // Print request:
-        if (this.verbose) {
-            console.log(
+        if (this.logger) {
+            // tslint:disable-next-line: no-console
+            this.logger.log(
                 "[request]",
                 JSON.stringify(generatePayload(method, request), null, "    ")
             );
@@ -93,8 +92,9 @@ export class HttpProvider<
             if (response.data.result === undefined) {
                 throw new Error(`Empty result returned from node`);
             }
-            if (this.verbose) {
-                console.log(
+            if (this.logger) {
+                // tslint:disable-next-line: no-console
+                this.logger.log(
                     "[response]",
                     JSON.stringify(response.data.result, null, "    ")
                 );

@@ -152,13 +152,17 @@ const depositListener = (
             const targetDeposit = (context as DepositMachineContext).deposit;
             if (targetDeposit) {
                 if (targetDeposit.sourceTxHash !== txHash) {
-                    console.error("wrong deposit");
+                    console.error(
+                        "wrong deposit:",
+                        targetDeposit.sourceTxHash,
+                        txHash
+                    );
                     return;
                 }
             }
 
             // If we don't have a sourceTxHash, we haven't seen a deposit yet
-            const rawSourceTx: any = deposit.deposit;
+            const rawSourceTx: any = deposit.depositDetails.transaction;
             const depositState: GatewayTransaction = persistedTx || {
                 sourceTxHash: txHash,
                 sourceTxAmount: rawSourceTx.amount,
@@ -188,9 +192,6 @@ const depositListener = (
             }
         });
 
-        if (context.tx.transactions) {
-            minter.wait().then(() => console.log("done waiting"));
-        }
         callback("LISTENING");
     });
     return () => {

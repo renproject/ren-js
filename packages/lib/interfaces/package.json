@@ -1,6 +1,6 @@
 {
     "name": "@renproject/interfaces",
-    "version": "2.0.0-alpha.8",
+    "version": "2.0.0-alpha.12",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -13,9 +13,9 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "./src/index.ts",
-    "typings": "./src/index.ts",
-    "module": "./src/index.ts",
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
         "clean": "yarn rimraf ./build",
@@ -71,5 +71,9 @@
         "include": [
             "src"
         ]
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4
     }
 }

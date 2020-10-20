@@ -20,23 +20,25 @@ export const createAddress = (
     addressToString: (bytes: Buffer) => string
 ) => (
     isTestnet: boolean,
-    gPubKey: Buffer,
+    gGubKeyHash: Buffer,
     gHash: Buffer,
     prefix: Buffer
 ): string => {
     const v1Address = v1.createAddress(networks, opcode, script)(
         isTestnet,
-        gPubKey,
+        gGubKeyHash,
         gHash
     );
 
-    const v2Address = addressToString(v2.createAddress(gPubKey, gHash, prefix));
+    const v2Address = addressToString(
+        v2.createAddress(gGubKeyHash, gHash, prefix)
+    );
 
     if (v1Address !== v2Address) {
         throw new Error(
             `Error: Different results returned from gateway address generation with parameters: \
 isTestnet: ${isTestnet}, \
-gPubKey: ${Ox(gPubKey)}, \
+gPubKey: ${Ox(gGubKeyHash)}, \
 gHash: ${Ox(gHash)}, \
 prefix: ${Ox(prefix)}`
         );

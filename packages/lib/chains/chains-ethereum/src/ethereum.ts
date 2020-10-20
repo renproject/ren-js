@@ -12,7 +12,7 @@ import { provider } from "web3-providers";
 
 import { Asset, EthereumBaseChain, Transaction } from "./base";
 
-export class EthereumChain
+export class EthereumClass
     extends EthereumBaseChain
     implements MintChain<Transaction, Asset> {
     public getContractCalls:
@@ -28,7 +28,7 @@ export class EthereumChain
         renNetwork?: RenNetwork,
         renNetworkDetails?: RenNetworkDetails
     ) {
-        super(web3Provider, renNetwork, renNetworkDetails, EthereumChain);
+        super(web3Provider, renNetwork, renNetworkDetails);
     }
 
     public contractCalls = (
@@ -158,4 +158,5 @@ export class EthereumChain
     };
 }
 
-export const Ethereum = Callable(EthereumChain);
+export type Ethereum = EthereumBaseChain;
+export const Ethereum = Callable(EthereumClass);

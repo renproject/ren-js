@@ -1,27 +1,23 @@
 import {
     encode as encodeAddress,
     validateAddressString,
-} from "@openworklabs/filecoin-address";
-import base32Function from "@openworklabs/filecoin-address/dist/base32";
+} from "@glif/filecoin-address";
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 import {
     assertType,
     Callable,
-    fromHex,
+    keccak256,
     Ox,
     rawEncode,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
 import { blake2b } from "blakejs";
+import CID from "cids";
 import elliptic from "elliptic";
-import { keccak256 } from "ethereumjs-util";
 
 import { FilTransaction } from "./api/deposit";
-import { fetchDeposits, fetchMessage } from "./api/filscan";
-
-const base32 = base32Function("abcdefghijklmnopqrstuvwxyz234567");
+import { fetchDeposits, fetchMessage } from "./api/indexer";
 
 export type FilAddress = {
     address: string; // Filecoin address
@@ -34,7 +30,7 @@ export type FilDeposit = {
 export type FilAsset = string;
 export type FilecoinNetwork = "mainnet" | "testnet" | "devnet";
 
-export const NETWORK_NOT_SUPPORTED = `Filecoin is not supported by the current RenVM network.`;
+const NETWORK_NOT_SUPPORTED = `Filecoin is not supported by the current RenVM network.`;
 
 const resolveFilecoinNetwork = (renNetwork: RenNetwork): FilecoinNetwork => {
     switch (renNetwork) {
@@ -54,9 +50,9 @@ const transactionToDeposit = (transaction: FilTransaction) => ({
     amount: transaction.amount,
 });
 
-export class FilecoinChain
+export class FilecoinClass
     implements LockChain<FilTransaction, FilDeposit, FilAsset, FilAddress> {
-    public name = "Fil";
+    public name = "Filecoin";
     public renNetwork: RenNetwork | undefined;
     public chainNetwork: FilecoinNetwork | undefined;
 
@@ -64,14 +60,7 @@ export class FilecoinChain
     public _addressIsValid = (address: FilAddress, _network: FilecoinNetwork) =>
         validateAddressString(address.address);
 
-    constructor(
-        network?: FilecoinNetwork,
-        thisClass: typeof FilecoinChain = FilecoinChain
-    ) {
-        if (!(this instanceof FilecoinChain)) {
-            return new (thisClass || FilecoinChain)(network);
-        }
-
+    constructor(network?: FilecoinNetwork) {
         this.chainNetwork = network;
     }
 
@@ -87,12 +76,12 @@ export class FilecoinChain
     };
 
     /**
-     * See [[OriginChain.supportsAsset]].
+     * See [[OriginChain.assetIsNative]].
      */
-    supportsAsset = (asset: FilAsset): boolean => asset === this._asset;
+    assetIsNative = (asset: FilAsset): boolean => asset === this._asset;
 
     public readonly assetAssetSupported = (asset: FilAsset) => {
-        if (!this.supportsAsset(asset)) {
+        if (!this.assetIsNative(asset)) {
             throw new Error(`Unsupported asset ${asset}`);
         }
     };
@@ -102,7 +91,7 @@ export class FilecoinChain
      */
     assetDecimals = (asset: FilAsset): number => {
         if (asset === this._asset) {
-            return 8;
+            return 18;
         }
         throw new Error(`Unsupported asset ${asset}`);
     };
@@ -112,8 +101,10 @@ export class FilecoinChain
      */
     getDeposits = async (
         asset: FilAsset,
-        address: FilAddress
-    ): Promise<FilDeposit[]> => {
+        address: FilAddress,
+        _instanceID: number,
+        onDeposit: (deposit: FilDeposit) => void
+    ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
@@ -121,10 +112,9 @@ export class FilecoinChain
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
         this.assetAssetSupported(asset);
-        return (await fetchDeposits(address.address, address.params)).map(
-            transactionToDeposit
-        );
-        // .filter((utxo) => utxo.amount > 70000);
+        (await fetchDeposits(address.address, address.params))
+            .map(transactionToDeposit)
+            .map(onDeposit);
     };
 
     /**
@@ -139,7 +129,7 @@ export class FilecoinChain
         transaction = await fetchMessage(transaction.cid);
         return {
             current: transaction.confirmations,
-            target: this.chainNetwork === "mainnet" ? 6 : 0,
+            target: this.chainNetwork === "mainnet" ? 12 : 6, // NOT FINAL VALUES
         };
     };
 
@@ -181,7 +171,7 @@ export class FilecoinChain
 
         return {
             address,
-            params: gHash.toString("base64"),
+            params: toBase64(Buffer.from(toURLBase64(gHash))),
         };
     };
 
@@ -213,7 +203,7 @@ export class FilecoinChain
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
-        assertType("string", { address });
+        assertType<string>("string", { address: address.address });
         return this._addressIsValid(address, this.chainNetwork);
     };
 
@@ -221,7 +211,7 @@ export class FilecoinChain
      * See [[OriginChain.addressExplorerLink]].
      */
     addressExplorerLink = (address: FilAddress): string => {
-        // TODO: Provide multiple options, and check network.
+        // TODO: Check network.
         return `https://filfox.info/en/address/${address.address}`;
     };
 
@@ -231,7 +221,7 @@ export class FilecoinChain
     transactionID = (transaction: FilTransaction) => transaction.cid;
 
     transactionExplorerLink = (transaction: FilTransaction): string => {
-        // TODO: Provide multiple options, and check network.
+        // TODO: Check network.
         return `https://filfox.info/en/message/${transaction.cid}`;
     };
 
@@ -239,68 +229,22 @@ export class FilecoinChain
         throw new Error(NETWORK_NOT_SUPPORTED);
     };
 
-    depositRPCFormat = (
-        { transaction }: FilDeposit,
-        _pubKeyScript: Buffer,
-        v2?: boolean
-    ) => {
+    transactionRPCFormat = (transaction: FilTransaction, v2?: boolean) => {
         if (!v2) {
             throw new Error(NETWORK_NOT_SUPPORTED);
         }
 
         return {
-            t: {
-                struct: [
-                    {
-                        txid: PackPrimitive.Bytes,
-                    },
-                    {
-                        amount: PackPrimitive.U256,
-                    },
-                    {
-                        nonce: PackPrimitive.U256,
-                    },
-                ],
-            },
-            v: {
-                amount: transaction.amount,
-                txid: toURLBase64(
-                    Buffer.from(base32.decode(transaction.cid.slice(1)))
-                ),
-                nonce: transaction.nonce.toString(),
-            },
+            txid: Buffer.from(new CID(transaction.cid).bytes),
+            txindex: transaction.nonce.toFixed(),
         };
-    };
-
-    generateNHash = (
-        nonce: Buffer,
-        { transaction }: FilDeposit,
-        v2?: boolean,
-        logger?: Logger
-    ): Buffer => {
-        if (!v2) {
-            throw new Error(NETWORK_NOT_SUPPORTED);
-        }
-
-        const encoded = rawEncode(
-            ["bytes32", "bytes", "uint32"],
-            [nonce, fromHex(transaction.cid).reverse(), 0]
-        );
-
-        const digest = keccak256(encoded);
-
-        if (logger) {
-            logger.debug("nHash", toBase64(digest), Ox(encoded));
-        }
-
-        return digest;
     };
 
     getBurnPayload: (() => string) | undefined;
 
     Address = (address: string): this => {
         // Type validation
-        assertType("string", { address });
+        assertType<string>("string", { address });
 
         this.getBurnPayload = () => address;
         return this;
@@ -312,4 +256,5 @@ export class FilecoinChain
 }
 
 // @dev Removes any static fields.
-export const Filecoin = Callable(FilecoinChain);
+export type Filecoin = FilecoinClass;
+export const Filecoin = Callable(FilecoinClass);

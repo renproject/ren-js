@@ -10,7 +10,7 @@ import {
     SimpleLogger,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, v1 } from "@renproject/rpc";
-import { utils } from "@renproject/utils";
+import { Ox, randomNonce, strip0x } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { LockAndMint } from "./lockAndMint";
@@ -58,10 +58,14 @@ export default class RenJS {
     /**
      * `utils` exposes helper functions, See [[utils]].
      */
-    public static utils: typeof utils = utils;
+    public static utils = {
+        Ox,
+        strip0x,
+        randomNonce,
+    };
 
     // Not static
-    public readonly utils: typeof utils = utils;
+    public readonly utils = RenJS.utils;
 
     /**
      * RenVM provider exposing `sendMessage` and other helper functions for
@@ -69,7 +73,7 @@ export default class RenJS {
      */
     public readonly renVM: AbstractRenVMProvider;
 
-    private readonly logger: Logger;
+    private readonly _logger: Logger;
 
     /**
      * Accepts the name of a network, or a network object.
@@ -97,7 +101,7 @@ export default class RenJS {
         //     config = providerOrConfig as RenJSConfig;
         // }
 
-        this.logger =
+        this._logger =
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
@@ -108,7 +112,7 @@ export default class RenJS {
                 : new v1.RenVMProvider(
                       provider || RenNetwork.Mainnet,
                       undefined,
-                      this.logger
+                      this._logger
                   );
 
         // FIXME
@@ -119,6 +123,8 @@ export default class RenJS {
     /**
      * `lockAndMint` initiates the process of bridging an asset from its native
      * chain to a host chain.
+     *
+     * Returns a [[LockAndMint]] object.
      *
      * Example initialization:
      *
@@ -159,19 +165,30 @@ export default class RenJS {
         new LockAndMint<Transaction, Deposit, Asset, Address>(
             this.renVM,
             params,
-            this.logger
+            this._logger
         ).initialize();
 
     /**
-     * Submits a burn log to RenVM.
+     * `burnAndRelease` submits a burn log to RenVM.
+     * Returns a [[BurnAndRelease]] object.
      *
      * @param params See [[BurnAndReleaseParams]].
      * @returns An instance of [[BurnAndRelease]].
      */
-    public readonly burnAndRelease = async (
-        params: BurnAndReleaseParams
-    ): Promise<BurnAndRelease> =>
-        new BurnAndRelease(this.renVM, params, this.logger).initialize();
+    public readonly burnAndRelease = async <
+        // tslint:disable-next-line: no-any
+        Transaction = any,
+        Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+        Asset extends string = string,
+        Address = string
+    >(
+        params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>
+    ): Promise<BurnAndRelease<Transaction, Deposit, Asset, Address>> =>
+        new BurnAndRelease<Transaction, Deposit, Asset, Address>(
+            this.renVM,
+            params,
+            this._logger
+        ).initialize();
 
     public readonly getFees = async () => this.renVM.getFees();
 }

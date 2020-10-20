@@ -12,10 +12,10 @@ describe("RenVMProvider", () => {
         const response = require("./selectPublicKey.json");
 
         const renVMProvider = new RenVMProvider("testnet", {
-            sendMessage: () => response,
+            sendMessage: () => response
         } as any); // tslint:disable-line: no-any
-        Ox(
-            hash160(await renVMProvider.selectPublicKey("BTC0Btc2Eth"))
-        ).should.equal("0xe771b00d9f6d7125af80281ad778123ba468f1f2");
+        Ox(hash160(await renVMProvider.selectPublicKey("BTC"))).should.equal(
+            "0xe771b00d9f6d7125af80281ad778123ba468f1f2"
+        );
     });
 });

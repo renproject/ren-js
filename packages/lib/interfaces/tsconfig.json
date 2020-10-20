@@ -29,7 +29,8 @@
         "suppressImplicitAnyIndexErrors": true,
         "strictPropertyInitialization": true,
         "alwaysStrict": true,
-        "strictFunctionTypes": true
+        "strictFunctionTypes": true,
+        "sourceMap": true
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules/**"],

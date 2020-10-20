@@ -95,9 +95,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     burnAndRelease(context).then(async (burn) => {
         let confirmations = 0;
         const tx = Object.values(context.tx.transactions)[0];
-        const burnRef = burn.burn({
-            txHash: Object.keys(context.tx.transactions)[0],
-        });
+        const burnRef = burn.burn();
 
         const burnListener = (confs: number) => {
             confirmations = confs;

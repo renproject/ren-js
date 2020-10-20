@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "2.0.0-alpha.8",
+    "version": "2.0.0-alpha.12",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -13,9 +13,9 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "./src/index.ts",
-    "typings": "./src/index.ts",
-    "module": "./src/index.ts",
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
         "clean": "yarn rimraf ./build",
@@ -38,15 +38,15 @@
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
         "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum @renproject/chains-filecoin && yarn link",
+        "link:all": "yarn link @renproject/chains-bitcoin @renproject/chains-ethereum @renproject/chains-filecoin @renproject/chains-terra && yarn link",
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^2.0.0-alpha.7",
-        "@renproject/chains-ethereum": "^2.0.0-alpha.7",
-        "@renproject/chains-filecoin": "^2.0.0-alpha.8",
-        "@renproject/interfaces": "^2.0.0-alpha.8",
-        "@renproject/networks": "^2.0.0-alpha.7"
+        "@renproject/chains-bitcoin": "^2.0.0-alpha.12",
+        "@renproject/chains-ethereum": "^2.0.0-alpha.12",
+        "@renproject/chains-filecoin": "^2.0.0-alpha.12",
+        "@renproject/interfaces": "^2.0.0-alpha.12",
+        "@renproject/networks": "^2.0.0-alpha.12"
     },
     "resolutions": {
         "sha3": "^2.1.2"
@@ -60,5 +60,9 @@
         "include": [
             "src"
         ]
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4
     }
 }

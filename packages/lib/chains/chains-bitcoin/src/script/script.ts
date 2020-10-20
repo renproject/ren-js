@@ -1,13 +1,6 @@
-import { ripemd160, sha256 } from "ethereumjs-util";
+import { hash160, sha256 } from "@renproject/utils";
 
 import { Opcode } from "./opcodes";
-
-const hash160 = (publicKey: Buffer) =>
-    ripemd160(
-        sha256(publicKey),
-        // Don't pad
-        false
-    );
 
 const checksum = (hash: Buffer) => sha256(sha256(hash)).slice(0, 4);
 
@@ -30,7 +23,7 @@ export class Script {
         this.script = Buffer.concat([
             this.script,
             Buffer.from([data.length]),
-            data,
+            data
         ]);
         return this;
     };
@@ -55,7 +48,7 @@ export class Script {
         // Append checksum
         const hashWithChecksum = Buffer.concat([
             hashWithPrefix,
-            checksum(hashWithPrefix),
+            checksum(hashWithPrefix)
         ]);
 
         return hashWithChecksum;

@@ -1,0 +1,50 @@
+{
+    "name": "@renproject/xstate",
+    "version": "2.0.1-alpha.0",
+    "description": "XState Statemachines for tracking transactions reactively",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/renproject/ren-js.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "keywords": [
+        "ren-js",
+        "ren",
+        "renvm",
+        "ren project",
+        "cryptocurrencies",
+        "blockchain",
+        "ethereum",
+        "bitcoin",
+        "defi",
+        "xstate"
+    ],
+    "author": "Ren",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/renproject/ren-js/issues"
+    },
+    "main": "build/main/index.js",
+    "typings": "build/main/index.d.ts",
+    "scripts": {
+        "build": "yarn build:main && yarn build:module",
+        "build:main": "tsc -p tsconfig.json",
+        "build:module": "tsc -p tsconfig.module.json",
+        "clean": "yarn rimraf ./build",
+        "test": "run-s build test:unit",
+        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
+    },
+    "dependencies": {
+        "bignumber.js": "^9.0.0"
+    },
+    "devDependencies": {
+        "@renproject/ren": "^2.0.0-alpha.8",
+        "xstate": "^4.13.0"
+    },
+    "peerDependencies": {
+        "@renproject/ren": "^2.0.0-alpha.8",
+        "xstate": "^4.13.0"
+    }
+}

@@ -3,15 +3,16 @@ import {
   Box,
   ButtonBase,
   IconButton,
-  makeStyles,
   Modal,
   Paper,
   PaperProps,
   Typography,
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import CloseIcon from '@material-ui/icons/Close';
 import { ConnectorInterface } from '@renproject/multiwallet-base-connector';
 import { useMultiwallet } from './MultiwalletProvider';
+import { RenNetwork } from '@renproject/interfaces';
 
 export * from './MultiwalletProvider';
 
@@ -57,6 +58,14 @@ export interface WalletPickerProps<P, A>
      Whether a wallet is in the process of connecting
      */
   connecting?: boolean;
+  /**
+       Whether a wallet is connected to the wrong chain
+     */
+  wrongNetwork?: boolean;
+  /**
+       Network the wallet should connect to
+     */
+  targetNetwork: RenNetwork;
   /**
      MaterialUI class overrides for the component shown when connecting
      */
@@ -108,6 +117,8 @@ export const WalletPicker = <P, A>({
   config,
   close,
   connecting,
+  wrongNetwork,
+  targetNetwork,
   connectingClasses,
   walletClasses,
   pickerClasses,
@@ -135,7 +146,14 @@ export const WalletPicker = <P, A>({
         (connecting &&
           ((ConnectingInfo && <ConnectingInfo chain={chain} />) || (
             <Connecting classes={connectingClasses} chain={chain} />
-          ))) || (
+          ))) ||
+        (wrongNetwork && (
+          <WrongNetwork
+            classes={connectingClasses}
+            chain={chain}
+            targetNetwork={targetNetwork}
+          />
+        )) || (
           <>
             <Box pl={2} className={classes.header} flexDirection="row">
               <Typography>Connect a wallet</Typography>
@@ -169,10 +187,6 @@ export interface WalletPickerModalProps<P, A> {
    */
   options: WalletPickerProps<P, A>;
   /**
-     Function used to close/cancel the connection request
-   */
-  close: () => void;
-  /**
      Whether to show the modal
    */
   open?: boolean;
@@ -180,17 +194,27 @@ export interface WalletPickerModalProps<P, A> {
 
 export const WalletPickerModal = <P, A>({
   open,
-  close,
   options,
 }: WalletPickerModalProps<P, A>) => {
-  const { enabledChains } = useMultiwallet<P, A>();
+  const { enabledChains, targetNetwork, setTargetNetwork } = useMultiwallet<
+    P,
+    A
+  >();
   const connecting = enabledChains[options.chain]?.status === 'connecting';
   const connected = enabledChains[options.chain]?.status === 'connected';
+  const wrongNetwork = enabledChains[options.chain]?.status === 'wrong_network';
   useEffect(() => {
     if (connected) {
-      close();
+      options.close();
     }
-  }, [connected, close]);
+  }, [connected, options]);
+
+  useEffect(() => {
+    if (options.targetNetwork !== targetNetwork) {
+      setTargetNetwork(options.targetNetwork);
+    }
+  }, [options.targetNetwork, targetNetwork, setTargetNetwork]);
+
   return (
     <Modal open={open || false}>
       <Box
@@ -200,7 +224,11 @@ export const WalletPickerModal = <P, A>({
         alignItems="center"
         justifyContent="center"
       >
-        <WalletPicker {...options} connecting={connecting} close={close} />
+        <WalletPicker
+          {...options}
+          connecting={connecting}
+          wrongNetwork={wrongNetwork}
+        />
       </Box>
     </Modal>
   );
@@ -242,18 +270,20 @@ const WalletEntry = <P, A>({
 }: WalletEntryProps<P, A> & {}) => {
   const { activateConnector } = useMultiwallet<P, A>();
 
-  const buildInfo = useCallback(() => {
-    if (!Info) return;
-    return setInfo(() => (
-      <Info
-        close={close}
-        acknowledge={() => {
-          setInfo(undefined);
-          activateConnector(chain, connector);
-        }}
-      />
-    ));
-  }, [setInfo, activateConnector, close, Info, chain, connector]);
+  const buildInfo = useCallback(
+    (Info) => {
+      return setInfo(() => (
+        <Info
+          close={close}
+          acknowledge={() => {
+            setInfo(undefined);
+            activateConnector(chain, connector);
+          }}
+        />
+      ));
+    },
+    [setInfo, activateConnector, close, chain, connector]
+  );
 
   const defaultClasses = useWalletEntryStyles();
   const combinedClasses = { ...defaultClasses, ...classes };
@@ -262,7 +292,7 @@ const WalletEntry = <P, A>({
       className={combinedClasses.button}
       onClick={() => {
         if (Info) {
-          buildInfo();
+          buildInfo(Info);
         } else {
           activateConnector(chain, connector);
         }
@@ -292,6 +322,23 @@ const Connecting: React.FC<{
   return (
     <Paper classes={classes || defaultClasses}>
       <Typography>Connecting to {chain}</Typography>
+    </Paper>
+  );
+};
+
+// Element to show when a selected chain is connectted to the wrong network
+const WrongNetwork: React.FC<{
+  chain: string;
+  targetNetwork: string;
+  classes?: PaperProps['classes'];
+}> = ({ chain, classes, targetNetwork }) => {
+  const defaultClasses = useConnectingStyles();
+  return (
+    <Paper classes={classes || defaultClasses}>
+      <Typography>
+        Connected to {chain} on the wrong network, please connect to{' '}
+        {targetNetwork}
+      </Typography>
     </Paper>
   );
 };

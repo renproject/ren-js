@@ -8,7 +8,10 @@ import {
 } from '../src/MultiwalletProvider';
 import { EthereumInjectedConnector } from '../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index';
 import { EthereumWalletConnectConnector } from '../../../lib/multiwallet/multiwallet-ethereum-walletconnect-connector/src/index';
+import { EthereumMEWConnectConnector } from '../../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index';
 import { BinanceSmartChainInjectedConnector } from '../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index';
+import { Button, Container, Box, Paper, Typography } from '@material-ui/core';
+import { RenNetwork } from '@renproject/interfaces';
 
 const options: WalletPickerConfig<any, string> = {
   chains: {
@@ -29,6 +32,17 @@ const options: WalletPickerConfig<any, string> = {
           debug: true,
         }),
       },
+      {
+        name: 'MEW',
+        logo: 'https://avatars0.githubusercontent.com/u/24321658?s=60&v=4',
+        connector: new EthereumMEWConnectConnector({
+          rpc: {
+            42: `wss://kovan.infura.io/ws/v3/${process.env.REACT_APP_INFURA_KEY}`,
+          },
+          chainId: 42,
+          debug: true,
+        }),
+      },
     ],
     bsc: [
       {
@@ -40,17 +54,21 @@ const options: WalletPickerConfig<any, string> = {
   },
 };
 
-const WalletDemo: React.FC = () => {
+const WalletDemo: React.FC<{ network: RenNetwork }> = () => {
   const context = useMultiwallet<any, any>();
-  console.log(context);
+
   return (
-    <div>
+    <>
       {Object.entries(context.enabledChains).map(([chain, connector]) => (
-        <span key={chain}>
-          {chain}: Status {connector.status} to {connector.account}
-        </span>
+        <Paper>
+          <Box p={2}>
+            <Typography key={chain}>
+              {chain}: Status {connector.status} to {connector.account}
+            </Typography>
+          </Box>
+        </Paper>
       ))}
-    </div>
+    </>
   );
 };
 
@@ -58,32 +76,69 @@ const App = () => {
   const [open, setOpen] = React.useState(false);
   const [chain, setChain] = React.useState('');
   const setClosed = React.useMemo(() => () => setOpen(false), [setOpen]);
+  const [network, setNetwork] = React.useState(RenNetwork.Mainnet);
 
   return (
-    <MultiwalletProvider>
-      <WalletDemo />
-      <button
-        onClick={() => {
-          setChain('ethereum');
-          setOpen(true);
-        }}
-      >
-        Request Ethereum
-      </button>
-      <button
-        onClick={() => {
-          setChain('bsc');
-          setOpen(true);
-        }}
-      >
-        Request BSC
-      </button>
-      <WalletPickerModal
-        open={open}
-        close={setClosed}
-        options={{ chain, close: setClosed, config: options }}
-      />
-    </MultiwalletProvider>
+    <Box bgcolor="#fafafa" height="100vh" display="flex" alignItems="center">
+      <MultiwalletProvider>
+        <Container>
+          <Box
+            height="70vh"
+            display="flex"
+            flexDirection="column"
+            justifyContent="space-around"
+            borderRadius={2}
+            bgcolor="primary"
+          >
+            <select
+              onChange={(e) =>
+                setNetwork(
+                  e.target.value === 'Testnet'
+                    ? RenNetwork.Testnet
+                    : RenNetwork.Mainnet
+                )
+              }
+            >
+              <option>Testnet</option>
+              <option>Mainnet</option>
+            </select>
+            <WalletDemo network={network} />
+            <Box display="flex" justifyContent="center">
+              <Button
+                color="primary"
+                variant="outlined"
+                onClick={() => {
+                  setChain('ethereum');
+                  setOpen(true);
+                }}
+              >
+                Request Ethereum
+              </Button>
+              <Button
+                color="primary"
+                variant="outlined"
+                onClick={() => {
+                  setChain('bsc');
+                  setOpen(true);
+                }}
+              >
+                Request BSC
+              </Button>
+            </Box>
+          </Box>
+        </Container>
+        <WalletPickerModal
+          open={open}
+          close={setClosed}
+          options={{
+            chain,
+            close: setClosed,
+            config: options,
+            targetNetwork: RenNetwork.Mainnet,
+          }}
+        />
+      </MultiwalletProvider>
+    </Box>
   );
 };
 

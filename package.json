@@ -1,6 +1,15 @@
 {
     "name": "root",
     "private": true,
+    "scripts": {
+        "link:all": "lerna run link:all",
+        "unlink:all": "lerna run unlink:all",
+        "clean": "lerna run clean --scope @renproject/*",
+        "build": "lerna run build --scope @renproject/*",
+        "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
+        "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",
+        "lint": "tslint packages/*/*/src/**/*.ts{,x}"
+    },
     "devDependencies": {
         "@bitjson/npm-scripts-info": "^1.0.0",
         "@bitjson/typedoc": "^0.15.0-0",
@@ -97,15 +106,6 @@
         "@types/react-router": "^5.1.8",
         "@rollup/pluginutils": "^4.0.0",
         "**/**/lodash": "^4.17.12"
-    },
-    "scripts": {
-        "link:all": "lerna run link:all",
-        "unlink:all": "lerna run unlink:all",
-        "clean": "lerna run clean --scope @renproject/*",
-        "build": "lerna run build --scope @renproject/*",
-        "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
-        "start": "lerna run start --parallel --scope gateway.renproject.io --scope gateway-example",
-        "lint": "tslint packages/*/*/src/**/*.ts{,x}"
     },
     "workspaces": [
         "packages/ui/react-components",

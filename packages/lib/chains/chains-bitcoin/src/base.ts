@@ -216,17 +216,10 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.encodeAddress]].
+     * See [[OriginChain.addressStringToBytes]].
      */
-    encodeAddress = (address: Address): Buffer => {
-        return Buffer.from(address);
-    };
-
-    /**
-     * See [[OriginChain.decodeAddress]].
-     */
-    decodeAddress = (encodedAddress: Buffer): Address => {
-        return encodedAddress.toString();
+    addressStringToBytes = (address: string): Buffer => {
+        return base58.decode(address);
     };
 
     /**

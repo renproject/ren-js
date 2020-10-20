@@ -1,4 +1,5 @@
 import {
+    decode as decodeAddress,
     encode as encodeAddress,
     validateAddressString,
 } from "@glif/filecoin-address";
@@ -181,19 +182,10 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.encodeAddress]].
+     * See [[OriginChain.addressStringToBytes]].
      */
-    encodeAddress = (address: FilAddress): Buffer => {
-        return Buffer.from(address.address);
-    };
-
-    /**
-     * See [[OriginChain.decodeAddress]].
-     */
-    decodeAddress = (encodedAddress: Buffer): FilAddress => {
-        return {
-            address: encodedAddress.toString(),
-        };
+    addressStringToBytes = (address: string): Buffer => {
+        return decodeAddress(address).str;
     };
 
     /**

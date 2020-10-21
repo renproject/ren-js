@@ -6,7 +6,7 @@ This package provides a React wallet selection modal and state management for Mu
 ```bash
 yarn add @renproject/multiwallet-ui @material-ui/core @material-ui/icons
 # For each chain / connector
-yarn add @renproject/multiwallet-{DESIRED_CHAIN}-{DESIRED_WALLET}-conector
+yarn add @renproject/multiwallet-{DESIRED_CHAIN}-{DESIRED_WALLET}-connector
 # Ensure peer dependencies are installed
 ```
 
@@ -63,7 +63,7 @@ const options = {
 };
 ```
 
-Finally, render the modal use the `useMultiwallet` hook to request a connection to the chain.
+Finally, render the modal and use the `useMultiwallet` hook to request a connection to the chain.
 
 ```tsx
 import * as React from 'react';
@@ -109,8 +109,7 @@ const App = () => {
       </button>
       <WalletPickerModal
         open={open}
-        close={setClosed}
-        options={{ chain, close: setClosed, config: options }}
+        options={{ chain, onClose: setClosed, config: options, targetNetwork: 'mainnet' }}
       />
     </>
   );
@@ -120,6 +119,7 @@ const App = () => {
 See the `/example` directory for a working example, or check the storybook as detailed below for further usage guides.
 
 ## Developing
+This library uses [TSDX](https://tsdx.io/) to bootstrap, build and run tests.
 ### Commands
 
 TSDX scaffolds your new library inside `/src`, and also sets up a [Parcel-based](https://parceljs.org) playground for it inside `/example`.

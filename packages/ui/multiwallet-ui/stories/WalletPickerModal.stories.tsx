@@ -34,7 +34,7 @@ const props: WalletPickerModalProps<any, any> = {
   options: {
     chain: 'ethereum',
     targetNetwork: RenNetwork.Testnet,
-    close: () => {},
+    onClose: () => {},
     config: {
       chains: {
         ethereum: [
@@ -62,7 +62,7 @@ const connectingProps: WalletPickerModalProps<any, any> = {
   open: true,
   options: {
     targetNetwork: RenNetwork.Testnet,
-    close: () => {
+    onClose: () => {
       console.log('close');
     },
     chain: 'ethereum',
@@ -70,11 +70,11 @@ const connectingProps: WalletPickerModalProps<any, any> = {
       chains: {
         ethereum: [
           {
-            info: ({ acknowledge, close }) => (
+            info: ({ acknowledge, onClose }) => (
               <div>
                 Are you sure you want to connect this wallet?{' '}
                 <button onClick={acknowledge}>Yes</button>
-                <button onClick={close}>No</button>
+                <button onClick={onClose}>No</button>
               </div>
             ),
             name: 'metamask',
@@ -101,7 +101,7 @@ const resolvingProps: WalletPickerModalProps<any, any> = {
   open: true,
   options: {
     targetNetwork: RenNetwork.Testnet,
-    close: () => {
+    onClose: () => {
       console.log('close');
     },
     chain: 'ethereum',
@@ -139,11 +139,13 @@ Resolving.args = resolvingProps;
 
 export const WrongNetwork = ConnectingTemplate.bind({});
 
+const emitter = new EventEmitter();
+
 const wrongNetworkProps: WalletPickerModalProps<any, any> = {
   open: true,
   options: {
     targetNetwork: RenNetwork.Mainnet,
-    close: () => {
+    onClose: () => {
       console.log('close');
     },
     chain: 'ethereum',
@@ -154,12 +156,14 @@ const wrongNetworkProps: WalletPickerModalProps<any, any> = {
             name: 'metamask',
             logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
             connector: {
-              emitter: new EventEmitter() as any,
+              emitter: emitter as any,
               getAccount: async () => '123',
               getProvider: async () => ({}),
               getRenNetwork: async () => '' as any,
               supportsTestnet: true,
-              deactivate: async () => {},
+              deactivate: async () => {
+                emitter.emit('CONNECTOR_DEACTIVATE', 'mock deactivate');
+              },
               activate: () =>
                 new Promise((resolve) => {
                   console.log('activating');

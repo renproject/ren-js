@@ -35,6 +35,7 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
         if (!provider) {
             throw Error("Missing Provider");
         }
+        await this.cleanup();
 
         if (!provider.wc.connected) {
             await provider.wc.createSession({
@@ -84,12 +85,18 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
         return this.networkIdMapper(await this.provider.send("eth_chainId"));
     }
 
-    deactivate = async (reason?: string) => {
+    async cleanup() {
         const provider: any = await this.getProvider();
         provider.removeListener("close", this.deactivate);
         provider.removeListener("networkChanged", this.handleUpdate);
         provider.removeListener("accountsChanged", this.handleUpdate);
         provider.removeListener("chainChanged", this.handleUpdate);
+    }
+
+    deactivate = async (reason?: string) => {
+        await this.cleanup();
+        const provider: any = await this.getProvider();
+        provider.removeListener("close", this.deactivate);
         await provider.close();
         return this.emitter.emitDeactivate(reason);
     };

@@ -93,22 +93,13 @@ export function ConnectorWatcher<P, A>({
     [update, chain, connector]
   );
 
-  useEffect(() => {
-    // remove any hanging listeners in case of a re-connect
-    connector.emitter.removeAllListeners();
-
+  const activate = useCallback(() => {
     // re-activating should not be an issue, this saves us from
     // having to keep track of whether the connector is connected
     // in multiple places
     connector
       .activate()
       .then((r) => {
-        connector.emitter.addListener(ConnectorEvents.UPDATE, handleUpdate);
-        connector.emitter.addListener(ConnectorEvents.ERROR, handleError);
-        connector.emitter.addListener(
-          ConnectorEvents.DEACTIVATE,
-          handleDeactivate
-        );
         update({
           connector,
           chain,
@@ -126,18 +117,28 @@ export function ConnectorWatcher<P, A>({
           error: e,
         })
       );
+  }, [connector, update, chain, targetNetwork]);
+
+  // Register listeners
+  useEffect(() => {
+    // remove any hanging listeners in case of a re-connect
+    connector.emitter.removeAllListeners();
+
+    // Immediately add listeners because they may fire before
+    // or during activation
+    connector.emitter.addListener(ConnectorEvents.UPDATE, handleUpdate);
+    connector.emitter.addListener(ConnectorEvents.ERROR, handleError);
+    connector.emitter.addListener(ConnectorEvents.DEACTIVATE, handleDeactivate);
+
     return () => {
       connector.emitter.removeAllListeners();
     };
-  }, [
-    connector,
-    update,
-    chain,
-    handleDeactivate,
-    handleError,
-    handleUpdate,
-    targetNetwork,
-  ]);
+  }, [connector, handleDeactivate, handleError, handleUpdate]);
+
+  // Always re-activate if targetNetwork has changed
+  useEffect(() => {
+    activate();
+  }, [activate, targetNetwork]);
 
   return null;
 }

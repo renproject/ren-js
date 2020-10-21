@@ -7,11 +7,19 @@ export interface BinanceSmartChainConnectorOptions
     debug: boolean;
 }
 
-const bscNetworkToRenNetworkMapper = (id: number) => {
+const bscNetworkToRenNetworkMapper = (id: number | string) => {
+    let decodedId = id;
+    if (typeof id === "string") {
+        try {
+            decodedId = parseInt(id);
+        } catch (e) {
+            decodedId = Buffer.from(id.split("0x").pop() || "", "hex")[0];
+        }
+    }
     return {
         97: RenNetwork.Testnet,
         56: RenNetwork.Mainnet,
-    }[id];
+    }[decodedId];
 };
 
 export class BinanceSmartChainInjectedConnector extends EthereumInjectedConnector {

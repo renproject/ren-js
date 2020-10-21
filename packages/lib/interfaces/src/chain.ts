@@ -198,20 +198,12 @@ export interface LockChain<
     // Encoding
 
     /**
-     * `encodeAddress` should return a bytes representation of the provided
-     * address. The default implementation is `address => Buffer.from(address)`.
+     * `addressBytes` should return the bytes representation of the address.
      *
-     * @dev Must be compatible with the matching RenVM multichain LockChain.
+     * @dev Must be compatible with the matching RenVM multichain LockChain's
+     * `decodeAddress` method.
      */
-    encodeAddress?: (address: Address) => Buffer;
-
-    /**
-     * `decodeAddress` should return the address represented by the provided
-     * bytes. The default implementation is `buffer => buffer.toString()`.
-     *
-     * @dev Must be compatible with the matching RenVM multichain LockChain.
-     */
-    decodeAddress?: (encodedAddress: Buffer) => Address;
+    addressStringToBytes: (address: string) => Buffer;
 
     // RenVM specific utils
 
@@ -245,7 +237,7 @@ export interface LockChain<
 export interface BurnDetails<Transaction> {
     transaction: Transaction;
     amount: BigNumber;
-    to: Buffer;
+    to: string;
     nonce: BigNumber;
 }
 

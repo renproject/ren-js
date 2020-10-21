@@ -226,7 +226,7 @@ const parseBurnEvent = (web3: Web3, event: Log): BurnDetails<Transaction> => {
     return {
         transaction: event.transactionHash,
         amount: new BigNumber(_amount.toString()),
-        to: fromHex(_to),
+        to: fromHex(_to).toString(),
         nonce: new BigNumber(_n.toString()),
     };
 };

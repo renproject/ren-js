@@ -3174,25 +3174,25 @@
   integrity sha512-mAU1JnrE0u3g+103baJwZf81Zz5s6MvO8zDoFtpE3qJQ9zNEssCdgTA57Jjvk1WNLTIY/JDSWPLYcpmrVlGiCQ==
 
 "@renproject/interfaces@file:packages/lib/interfaces":
-  version "2.0.0-alpha.11"
+  version "2.0.0-alpha.12"
   dependencies:
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     web3-core "^2.0.0-alpha.1"
 
 "@renproject/networks@file:packages/lib/networks":
-  version "2.0.0-alpha.11"
+  version "2.0.0-alpha.12"
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.11"
+    "@renproject/interfaces" "^2.0.0-alpha.12"
     "@renproject/sol" "^1.0.1"
     web3-utils "^2.0.0-alpha.1"
 
 "@renproject/rpc@file:packages/lib/rpc":
-  version "2.0.0-alpha.11"
+  version "2.0.0-alpha.12"
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.11"
-    "@renproject/provider" "^2.0.0-alpha.11"
-    "@renproject/utils" "^2.0.0-alpha.11"
+    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/provider" "^2.0.0-alpha.12"
+    "@renproject/utils" "^2.0.0-alpha.12"
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     immutable "^4.0.0-rc.12"
@@ -3207,9 +3207,9 @@
     "@openzeppelin/upgrades" "^2.7.2"
 
 "@renproject/utils@file:packages/lib/utils":
-  version "2.0.0-alpha.11"
+  version "2.0.0-alpha.12"
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.11"
+    "@renproject/interfaces" "^2.0.0-alpha.12"
     "@types/create-hash" "1.2.2"
     "@types/keccak" "^3.0.1"
     "@types/mocha" "^8.0.3"
@@ -4812,6 +4812,13 @@
   dependencies:
     "@types/ethereum-protocol" "*"
 
+"@types/web3@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@types/web3/-/web3-1.2.2.tgz#d95a101547ce625c5ebd0470baa5dbd4b9f3c015"
+  integrity sha512-eFiYJKggNrOl0nsD+9cMh2MLk4zVBfXfGnVeRFbpiZzBE20eet4KLA3fXcjSuHaBn0RnQzwLAGdgzgzdet4C0A==
+  dependencies:
+    web3 "*"
+
 "@types/webpack-env@^1.15.2":
   version "1.15.3"
   resolved "https://registry.yarnpkg.com/@types/webpack-env/-/webpack-env-1.15.3.tgz#fb602cd4c2f0b7c0fb857e922075fdf677d25d84"
@@ -5314,6 +5321,19 @@
     strip-ansi "^4.0.0"
     text-table "^0.2.0"
     webpack-log "^1.1.2"
+
+"@xstate/graph@^1.1.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@xstate/graph/-/graph-1.2.0.tgz#83618bbff4f801fecb9b4f33f1d4a44e1b5a40ff"
+  integrity sha512-6h8ZRmnHsg1BW2NmkM2gb1l6bJwi6SaSLi7ErFzzseLKmcQL2oWBSjHJdsdYMuD2DXFsnHbVi3WqsQE++R7nmA==
+
+"@xstate/test@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@xstate/test/-/test-0.4.1.tgz#115aed246dc352a52da3e5594d273ad9ccf483df"
+  integrity sha512-N8xEWcnWPVVpRkVgGGhpHGTJKLnm2UyGqkvk7eNaMqWdcg8fT6SyRSLtzJuqtJe8wZviScTr7P71Yp1cLawDWg==
+  dependencies:
+    "@xstate/graph" "^1.1.0"
+    chalk "^2.4.2"
 
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"
@@ -25059,6 +25079,19 @@ web3-utils@2.0.0-alpha.1, web3-utils@^2.0.0-alpha.1:
     randombytes "^2.1.0"
     utf8 "2.1.1"
 
+web3@*, web3@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/web3/-/web3-1.3.0.tgz#8fe4cd6e2a21c91904f343ba75717ee4c76bb349"
+  integrity sha512-4q9dna0RecnrlgD/bD1C5S+81Untbd6Z/TBD7rb+D5Bvvc0Wxjr4OP70x+LlnwuRDjDtzBwJbNUblh2grlVArw==
+  dependencies:
+    web3-bzz "1.3.0"
+    web3-core "1.3.0"
+    web3-eth "1.3.0"
+    web3-eth-personal "1.3.0"
+    web3-net "1.3.0"
+    web3-shh "1.3.0"
+    web3-utils "1.3.0"
+
 web3@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/web3/-/web3-1.2.1.tgz#5d8158bcca47838ab8c2b784a2dee4c3ceb4179b"
@@ -25099,19 +25132,6 @@ web3@1.2.4:
     web3-net "1.2.4"
     web3-shh "1.2.4"
     web3-utils "1.2.4"
-
-web3@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/web3/-/web3-1.3.0.tgz#8fe4cd6e2a21c91904f343ba75717ee4c76bb349"
-  integrity sha512-4q9dna0RecnrlgD/bD1C5S+81Untbd6Z/TBD7rb+D5Bvvc0Wxjr4OP70x+LlnwuRDjDtzBwJbNUblh2grlVArw==
-  dependencies:
-    web3-bzz "1.3.0"
-    web3-core "1.3.0"
-    web3-eth "1.3.0"
-    web3-eth-personal "1.3.0"
-    web3-net "1.3.0"
-    web3-shh "1.3.0"
-    web3-utils "1.3.0"
 
 web3@^2.0.0-alpha.1:
   version "2.0.0-alpha.1"
@@ -25887,6 +25907,11 @@ xregexp@^4.3.0:
   integrity sha512-7jXDIFXh5yJ/orPn4SXjuVrWWoi4Cr8jfV1eHv9CixKSbU+jY4mxfrBwAuDvupPNKpMUY+FeIqsVw/JLT9+B8g==
   dependencies:
     "@babel/runtime-corejs3" "^7.8.3"
+
+xstate@^4.13.0:
+  version "4.13.0"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.13.0.tgz#0be22ceb8bae2bc6a025fab330fe44204d76771c"
+  integrity sha512-UnUJJzP2KTPqnmxIoD/ymXtpy/hehZnUlO6EXqWC/72XkPb15p9Oz/X4WhS3QE+by7NP+6b5bCi/GTGFzm5D+A==
 
 xtend@^4.0.0, xtend@^4.0.1, xtend@~4.0.0, xtend@~4.0.1:
   version "4.0.2"

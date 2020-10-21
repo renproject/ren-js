@@ -152,19 +152,11 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.encodeAddress]].
+     * See [[OriginChain.addressStringToBytes]].
      */
-    encodeAddress = (address: TerraAddress): Buffer => {
-        return Buffer.from(address.address);
-    };
-
-    /**
-     * See [[OriginChain.decodeAddress]].
-     */
-    decodeAddress = (encodedAddress: Buffer): TerraAddress => {
-        return {
-            address: encodedAddress.toString(),
-        };
+    addressStringToBytes = (address: string): Buffer => {
+        // TODO
+        return Buffer.from(address);
     };
 
     /**

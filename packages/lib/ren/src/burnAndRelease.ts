@@ -238,7 +238,7 @@ export class BurnAndRelease<
 
             const gHash = generateGHash(
                 [],
-                "0x01caf724ea7f2032072510c4c428732bb3a49ba2f2",
+                Ox(this._params.to.addressStringToBytes(to)),
                 Ox(sHash),
                 nonceBuffer,
                 this._renVM.version >= 2,
@@ -335,7 +335,7 @@ export class BurnAndRelease<
                     let returnedTxHash: Buffer;
 
                     if (this._renVM.version >= 2) {
-                        assertType<Buffer>("Buffer", { to });
+                        assertType<string>("string", { to });
                         // const selector = resolveV2Contract(renContract);
 
                         // TODO: Turn into function with tests.
@@ -374,7 +374,7 @@ export class BurnAndRelease<
 
                         const gHash = generateGHash(
                             [],
-                            "0x01caf724ea7f2032072510c4c428732bb3a49ba2f2",
+                            Ox(this._params.to.addressStringToBytes(to)),
                             Ox(sHash),
                             nonceBuffer,
                             this._renVM.version >= 2,

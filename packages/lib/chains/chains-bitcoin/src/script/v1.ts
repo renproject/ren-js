@@ -8,7 +8,7 @@ const UTXOGatewayScript = (
     opcode: typeof BOpcode,
     script: typeof bScript,
     gGubKeyHash: Buffer,
-    gHash: Buffer
+    gHash: Buffer,
 ) =>
     new script()
         .add(gHash)
@@ -23,7 +23,7 @@ const UTXOGatewayScript = (
 export const createAddress = (
     networks: typeof BNetworks,
     opcode: typeof BOpcode,
-    script: typeof bScript
+    script: typeof bScript,
 ) => (isTestnet: boolean, gGubKeyHash: Buffer, gHash: Buffer): string =>
     UTXOGatewayScript(opcode, script, gGubKeyHash, gHash)
         .toAddress(isTestnet ? networks.testnet : networks.mainnet)
@@ -32,6 +32,6 @@ export const createAddress = (
 export const pubKeyScript = (
     _networks: typeof BNetworks,
     opcode: typeof BOpcode,
-    script: typeof bScript
+    script: typeof bScript,
 ) => (_isTestnet: boolean, gGubKeyHash: Buffer, gHash: Buffer) =>
     UTXOGatewayScript(opcode, script, gGubKeyHash, gHash).toBuffer();

@@ -1,5 +1,3 @@
-
-
 export type BN = {
     toString: () => string;
 

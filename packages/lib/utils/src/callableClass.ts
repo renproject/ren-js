@@ -25,7 +25,7 @@ export type CallableConstructor<
 //     t as CallableConstructor<TConstructor>;
 
 export function Callable<TConstructor extends Constructor>(
-    type: TConstructor
+    type: TConstructor,
 ): CallableConstructor<TConstructor> {
     function createInstance(
         ...args: ConstructorArgs<TConstructor>

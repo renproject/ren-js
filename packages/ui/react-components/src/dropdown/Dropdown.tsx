@@ -6,8 +6,12 @@ import { ReactComponent as Chevron } from "./icon-dropdown.svg";
 import "./styles.scss";
 
 // tslint:disable: react-unused-props-and-state
-interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-    selected: { value: string, render: React.ReactNode };
+interface Props
+    extends React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLDivElement>,
+        HTMLDivElement
+    > {
+    selected: { value: string; render: React.ReactNode };
     options: Map<string, React.ReactNode>;
     setValue(value: string): void;
 }
@@ -26,45 +30,61 @@ export class Dropdown extends React.Component<Props, State> {
     public render = () => {
         const { shown } = this.state;
         const { selected, options, setValue, className, ...props } = this.props;
-        return <div
-            {...props}
-            className={["header--group", className].join(" ")}
-            ref={this.setRef}
-        >
-            <div className="header--selected" role="menuitem" onClick={this.toggle}>
-                <span>{selected.render}</span><Chevron style={{ opacity: 0.6 }} />
+        return (
+            <div
+                {...props}
+                className={["header--group", className].join(" ")}
+                ref={this.setRef}
+            >
+                <div
+                    className="header--selected"
+                    role="menuitem"
+                    onClick={this.toggle}
+                >
+                    <span>{selected.render}</span>
+                    <Chevron style={{ opacity: 0.6 }} />
+                </div>
+                {shown ? (
+                    <div className="header--dropdown--spacing header--dropdown--options">
+                        <ul className="header--dropdown">
+                            {OrderedMap(options)
+                                .map((render, value) => (
+                                    <li
+                                        key={value}
+                                        role="button"
+                                        data-id={value}
+                                        className={[
+                                            value === selected.value
+                                                ? "header--dropdown--selected"
+                                                : "",
+                                            "header--dropdown--option",
+                                        ].join(" ")}
+                                        onClick={this.onClick}
+                                    >
+                                        {render}
+                                    </li>
+                                ))
+                                .valueSeq()
+                                .toArray()}
+                        </ul>
+                    </div>
+                ) : null}
             </div>
-            {shown ?
-                <div className="header--dropdown--spacing header--dropdown--options">
-                    <ul className="header--dropdown">
-                        {
-                            OrderedMap(options).map((render, value) => <li
-                                key={value}
-                                role="button"
-                                data-id={value}
-                                className={[value === selected.value ? "header--dropdown--selected" : "", "header--dropdown--option"].join(" ")}
-                                onClick={this.onClick}
-                            >
-                                {render}
-                            </li>).valueSeq().toArray()}
-                    </ul>
-                </div> : null
-            }
-        </div>;
-    }
+        );
+    };
 
     private readonly setRef = (ref: HTMLDivElement) => {
         this.ref = ref;
-    }
+    };
 
     private readonly clickAway = (event: MouseEvent) => {
         // tslint:disable-next-line: no-any
-        if ((this.ref && !this.ref.contains(event.target as Node | null))) {
+        if (this.ref && !this.ref.contains(event.target as Node | null)) {
             this.setState({ shown: false });
         }
         document.removeEventListener("mousedown", this.clickAway);
         // @ts-ignore
-    }
+    };
 
     private readonly toggle = () => {
         const newShown = !this.state.shown;
@@ -75,23 +95,24 @@ export class Dropdown extends React.Component<Props, State> {
         } else {
             document.removeEventListener("mousedown", this.clickAway);
         }
-    }
+    };
 
     private readonly onClick = (e: React.MouseEvent<HTMLLIElement>): void => {
-        const id = e.currentTarget.dataset ? e.currentTarget.dataset.id : undefined;
+        const id = e.currentTarget.dataset
+            ? e.currentTarget.dataset.id
+            : undefined;
         if (id) {
             this.props.setValue(id);
 
             // Hide dropdown
             this.setState({ shown: false });
         }
-    }
+    };
 }
 
 interface State {
     shown: boolean;
 }
-
 
 // Stateless version:
 

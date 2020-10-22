@@ -1,7 +1,10 @@
 import * as React from "react";
 
 import { faBitcoin, faEthereum } from "@fortawesome/free-brands-svg-icons";
-import { FontAwesomeIcon, Props as FAProps } from "@fortawesome/react-fontawesome";
+import {
+    FontAwesomeIcon,
+    Props as FAProps,
+} from "@fortawesome/react-fontawesome";
 
 export enum Currency {
     AUD = "aud",
@@ -18,19 +21,18 @@ export enum Currency {
 }
 
 export const currencies = [
-    { currency: Currency.AUD, description: "Australian Dollar (AUD)", },
-    { currency: Currency.GBP, description: "British Pound (GBP)", },
-    { currency: Currency.CNY, description: "Chinese Yuan (CNY)", },
-    { currency: Currency.EUR, description: "Euro (EUR)", },
-    { currency: Currency.JPY, description: "Japanese Yen (JPY)", },
-    { currency: Currency.KRW, description: "Korean Won (KRW)", },
-    { currency: Currency.RUB, description: "Russian Ruble (RUB)", },
-    { currency: Currency.USD, description: "US Dollar (USD)", },
+    { currency: Currency.AUD, description: "Australian Dollar (AUD)" },
+    { currency: Currency.GBP, description: "British Pound (GBP)" },
+    { currency: Currency.CNY, description: "Chinese Yuan (CNY)" },
+    { currency: Currency.EUR, description: "Euro (EUR)" },
+    { currency: Currency.JPY, description: "Japanese Yen (JPY)" },
+    { currency: Currency.KRW, description: "Korean Won (KRW)" },
+    { currency: Currency.RUB, description: "Russian Ruble (RUB)" },
+    { currency: Currency.USD, description: "US Dollar (USD)" },
 
-    { currency: Currency.ETH, description: "Ethereum (ETH)", },
-    { currency: Currency.BTC, description: "Bitcoin (BTC)", },
+    { currency: Currency.ETH, description: "Ethereum (ETH)" },
+    { currency: Currency.BTC, description: "Bitcoin (BTC)" },
 ];
-
 
 interface Props extends Partial<FAProps> {
     currency: Currency;
@@ -62,7 +64,6 @@ export const textCurrencyIcon = (currency: Currency) => {
     }
 };
 
-
 export const CurrencyIcon = ({ currency, className, ...props }: Props) => {
     // Note: Typescript will warn if the switch statement is non-exhaustive
 
@@ -85,8 +86,20 @@ export const CurrencyIcon = ({ currency, className, ...props }: Props) => {
         case Currency.USD:
             return <>$</>;
         case Currency.ETH:
-            return <FontAwesomeIcon {...props} className={["currency-icon", className].join(" ")} icon={faEthereum} />;
+            return (
+                <FontAwesomeIcon
+                    {...props}
+                    className={["currency-icon", className].join(" ")}
+                    icon={faEthereum}
+                />
+            );
         case Currency.BTC:
-            return <FontAwesomeIcon {...props} className={["currency-icon", className].join(" ")} icon={faBitcoin} />;
+            return (
+                <FontAwesomeIcon
+                    {...props}
+                    className={["currency-icon", className].join(" ")}
+                    icon={faBitcoin}
+                />
+            );
     }
 };

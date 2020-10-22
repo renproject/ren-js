@@ -2,7 +2,7 @@ import { EthArgs, Logger, RenContract } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 import { fromHex, Ox, rawEncode, toBase64 } from "./common";
-import { keccak256, sha256 } from "./hash";
+import { keccak256 } from "./hash";
 
 // export const generateNHash = (tx: Tx): Buffer => {
 //     const encoded = rawEncode(
@@ -22,8 +22,8 @@ export const generatePHash = (zip: EthArgs, logger?: Logger): Buffer => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
     const args = Array.isArray(zip[0]) ? ((zip[0] as any) as EthArgs) : zip; // tslint:disable-line: no-any
 
-    const types = args.map(param => param.type);
-    const values = args.map(param => param.value);
+    const types = args.map((param) => param.type);
+    const values = args.map((param) => param.value);
 
     const message = rawEncode(types, values);
     const digest = keccak256(message);
@@ -44,7 +44,7 @@ export const generateGHash = (
     tokenIdentifier: string,
     nonce: Buffer,
     v2?: boolean,
-    logger?: Logger
+    logger?: Logger,
 ): Buffer => {
     // Type validation
     assertType<Buffer>("Buffer", { nonce });
@@ -56,7 +56,7 @@ export const generateGHash = (
         ? Buffer.concat([pHash, fromHex(tokenIdentifier), fromHex(to), nonce])
         : rawEncode(
               ["bytes32", "address", "address", "bytes32"],
-              [pHash, tokenIdentifier, to, nonce]
+              [pHash, tokenIdentifier, to, nonce],
           );
 
     const digest = keccak256(encoded);
@@ -73,7 +73,7 @@ export const generateNHash = (
     txid: Buffer,
     txindex: string,
     v2?: boolean,
-    logger?: Logger
+    logger?: Logger,
 ): Buffer => {
     const encoded = v2
         ? Buffer.concat([
@@ -99,7 +99,7 @@ export const generateSighash = (
     tokenIdentifier: string,
     nonceHash: Buffer,
     v2?: boolean,
-    logger?: Logger
+    logger?: Logger,
 ): Buffer => {
     // Type validation
     assertType<string>("string", { to, tokenIdentifier });
@@ -113,7 +113,7 @@ export const generateSighash = (
             "address",
             "bytes32",
         ],
-        [pHash, amount, Ox(tokenIdentifier), Ox(to), nonceHash]
+        [pHash, amount, Ox(tokenIdentifier), Ox(to), nonceHash],
     );
 
     const digest = keccak256(encoded);
@@ -138,7 +138,7 @@ export const renVMHashToBase64 = (txHash: string) => {
 export const generateBurnTxHash = (
     renContract: RenContract,
     encodedID: string,
-    logger?: Logger
+    logger?: Logger,
 ): Buffer => {
     // Type validation
     assertType<string>("string", { encodedID });

@@ -9,7 +9,7 @@ import BigNumber from "bignumber.js";
 const convert = (
     valueIn: BigNumber,
     fromUnit: BigNumber,
-    toUnit: BigNumber
+    toUnit: BigNumber,
 ) => {
     return valueIn.multipliedBy(fromUnit).dividedBy(toUnit);
 };
@@ -31,7 +31,7 @@ class BaseValue<T extends { [unit: string]: BigNumber }> {
         this.value = convert(
             toBigNumber(valueIn),
             this.unitTypes[unit],
-            new BigNumber("1")
+            new BigNumber("1"),
         );
     }
     public to = (unit: keyof T): BigNumber =>
@@ -39,7 +39,7 @@ class BaseValue<T extends { [unit: string]: BigNumber }> {
             this.value,
             new BigNumber("1"),
             // tslint:disable-next-line: no-use-before-declare
-            this.unitTypes[resolveUnit(unit as string) as keyof T]
+            this.unitTypes[resolveUnit(unit as string) as keyof T],
         );
 }
 
@@ -209,7 +209,7 @@ const resolveUnit = (unitIn: string): Units => {
 
 export const value = <Unit extends Units>(
     valueIn: NumberValue,
-    unitIn: Unit
+    unitIn: Unit,
 ): Value<Unit> => {
     const unit = resolveUnit(unitIn);
 
@@ -223,7 +223,7 @@ export const value = <Unit extends Units>(
         if (new Set(Object.keys(ValueClass.units)).has(unit)) {
             return new ValueClass(
                 valueIn,
-                unit as keyof typeof ValueClass.units
+                unit as keyof typeof ValueClass.units,
             ) as Value<Unit>;
         }
     }

@@ -32,15 +32,15 @@ describe("fetchPrices", () => {
         it("", async () => {
             prices = prices || (await getTokenPrices(["BTC", "ZEC", "BCH"]));
             expect(normalizeValue(prices, "BTC", 1e8).toNumber()).toEqual(
-                prices.get("BTC")
+                prices.get("BTC"),
             );
 
             expect(normalizeValue(prices, "ZEC", 1e8).toNumber()).toEqual(
-                prices.get("ZEC")
+                prices.get("ZEC"),
             );
 
             expect(normalizeValue(prices, "BCH", 1e8).toNumber()).toEqual(
-                prices.get("BCH")
+                prices.get("BCH"),
             );
 
             expect(normalizeValue(prices, "FAKE", 1e8).toNumber()).toEqual(0);

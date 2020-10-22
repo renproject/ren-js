@@ -23,7 +23,8 @@ const blockies = () => {
             randSeed[i] = 0;
         }
         for (let i = 0; i < seed.length; i++) {
-            randSeed[i % 4] = ((randSeed[i % 4] << 5) - randSeed[i % 4]) + seed.charCodeAt(i);
+            randSeed[i % 4] =
+                (randSeed[i % 4] << 5) - randSeed[i % 4] + seed.charCodeAt(i);
         }
     };
 
@@ -36,7 +37,7 @@ const blockies = () => {
         randSeed[1] = randSeed[2];
         randSeed[2] = randSeed[3];
 
-        randSeed[3] = (randSeed[3] ^ (randSeed[3] >> 19) ^ t ^ (t >> 8));
+        randSeed[3] = randSeed[3] ^ (randSeed[3] >> 19) ^ t ^ (t >> 8);
 
         return (randSeed[3] >>> 0) / ((1 << 31) >>> 0);
     };
@@ -45,9 +46,9 @@ const blockies = () => {
         // saturation is the whole color spectrum
         const h = Math.floor(rand() * 360);
         // saturation goes from 40 to 100, it avoids greyish colors
-        const s = ((rand() * 60) + 40) + "%";
+        const s = rand() * 60 + 40 + "%";
         // lightness can be anything from 0 to 100, but probabilities are a bell curve around 50%
-        const l = ((rand() + rand() + rand() + rand()) * 25) + "%";
+        const l = (rand() + rand() + rand() + rand()) * 25 + "%";
 
         const color = "hsl(" + h + "," + s + "," + l + ")";
         return color;
@@ -84,8 +85,10 @@ const blockies = () => {
         // tslint:disable-next-line: no-any
         const newOpts: any = {};
 
-        // tslint:disable-next-line: insecure-random
-        newOpts.seed = opts.seed || Math.floor((Math.random() * Math.pow(10, 16))).toString(16);
+        newOpts.seed =
+            opts.seed ||
+            // tslint:disable-next-line: insecure-random
+            Math.floor(Math.random() * Math.pow(10, 16)).toString(16);
 
         seedRand(newOpts.seed);
 
@@ -122,19 +125,24 @@ const blockies = () => {
         }
 
         for (let i = 0; i < imageData.length; i++) {
-
             // if data is 0, leave the background
             if (imageData[i]) {
                 const row = Math.floor(i / width);
                 const col = i % width;
 
                 // if data is 2, choose spot color, if 1 choose foreground
-                const fillStyle = (imageData[i] === 1) ? opts.color : opts.spotColor;
+                const fillStyle =
+                    imageData[i] === 1 ? opts.color : opts.spotColor;
                 if (fillStyle) {
                     cc.fillStyle = fillStyle;
                 }
 
-                cc.fillRect(col * opts.scale, row * opts.scale, opts.scale, opts.scale);
+                cc.fillRect(
+                    col * opts.scale,
+                    row * opts.scale,
+                    opts.scale,
+                    opts.scale,
+                );
             }
         }
         return canvas;
@@ -151,7 +159,7 @@ const blockies = () => {
 
     return {
         create: createIcon,
-        render: renderIcon
+        render: renderIcon,
     };
 };
 
@@ -181,7 +189,7 @@ export class Blocky extends React.Component<Props, State> {
             spotColor,
             bgColor,
         };
-    }
+    };
 
     public renderIcon = (address: string | null) => {
         if (address) {
@@ -196,35 +204,46 @@ export class Blocky extends React.Component<Props, State> {
         } else {
             this.setState({ loading: true });
         }
-    }
+    };
 
     public componentWillReceiveProps = (nextProps: Props): void => {
         this.renderIcon(nextProps.address);
-    }
+    };
 
     public componentDidMount = (): void => {
         this.renderIcon(this.props.address);
-    }
+    };
 
     public setRef = (canvas: HTMLCanvasElement | null) => {
         this.canvas = canvas;
-    }
+    };
 
     public render = (): JSX.Element => {
         const { address, fgColor, bgColor, spotColor, ...props } = this.props;
         const { loading } = this.state;
         return (
-            <div {...props} className={["blocky--outer", this.props.className].join(" ")}>
+            <div
+                {...props}
+                className={["blocky--outer", this.props.className].join(" ")}
+            >
                 <div data-tip={address || "..."}>
-                    {loading ? <i className="fa fa-spin fa-spinner blocky__loading" /> : <i />}
+                    {loading ? (
+                        <i className="fa fa-spin fa-spinner blocky__loading" />
+                    ) : (
+                        <i />
+                    )}
                     <canvas className="blocky" ref={this.setRef} />
                 </div>
             </div>
         );
-    }
+    };
 }
 
-interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+interface Props
+    extends React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLDivElement>,
+        HTMLDivElement
+    > {
     address: string | null;
     fgColor?: string;
     bgColor?: string;

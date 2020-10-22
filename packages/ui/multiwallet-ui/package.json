@@ -44,7 +44,10 @@
     "printWidth": 80,
     "semi": true,
     "singleQuote": true,
-    "trailingComma": "es5"
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "endOfLine": "lf",
+    "arrowParens": "always"
   },
   "module": "dist/multiwallet-ui-tsdx.esm.js",
   "size-limit": [

@@ -18,8 +18,17 @@ export interface OptionType {
     white?: boolean;
 }
 
-export const CustomValue = <X extends OptionType>(props: SingleValueProps<X>) => {
-    const { children, className, cx, getStyles, isDisabled, innerProps } = props;
+export const CustomValue = <X extends OptionType>(
+    props: SingleValueProps<X>,
+) => {
+    const {
+        children,
+        className,
+        cx,
+        getStyles,
+        isDisabled,
+        innerProps,
+    } = props;
     const option = props.data;
     return (
         <div
@@ -34,9 +43,9 @@ export const CustomValue = <X extends OptionType>(props: SingleValueProps<X>) =>
             )}
             {...innerProps}
         >
-            {option.value &&
+            {option.value && (
                 <TokenIcon white={option.white} token={option.value} />
-            }
+            )}
             {children}
         </div>
     );
@@ -58,16 +67,19 @@ export const CustomOption = <X extends OptionType>(props: OptionProps<X>) => {
     return (
         <div
             style={getStyles("option", props)}
-            // tslint:disable-next-line: no-any
-            className={[(cx as any)(
-                {
-                    option: true,
-                    "option--is-disabled": isDisabled,
-                    "option--is-focused": isFocused,
-                    "option--is-selected": isSelected,
-                },
-                className
-            ), isSelected ? "Select--currency__option--selected" : ""].join(" ")}
+            className={[
+                // tslint:disable-next-line: no-any
+                (cx as any)(
+                    {
+                        option: true,
+                        "option--is-disabled": isDisabled,
+                        "option--is-focused": isFocused,
+                        "option--is-selected": isSelected,
+                    },
+                    className,
+                ),
+                isSelected ? "Select--currency__option--selected" : "",
+            ].join(" ")}
             ref={innerRef}
             {...innerProps}
         >
@@ -90,14 +102,19 @@ export const CustomGroup = <X extends OptionType>(props: GroupProps<X>) => {
     } = props;
     const {
         headingProps,
-        theme
+        theme,
         // tslint:disable-next-line: no-any
     } = props as any;
     return (
         <div
             style={getStyles("group", props)}
-            // tslint:disable-next-line: no-any
-            className={[(cx as any)({ group: true }, className), label === "Not Available" ? "Select--currency__group--disabled" : ""].join(" ")}
+            className={[
+                // tslint:disable-next-line: no-any
+                (cx as any)({ group: true }, className),
+                label === "Not Available"
+                    ? "Select--currency__group--disabled"
+                    : "",
+            ].join(" ")}
         >
             <Heading
                 {...headingProps}

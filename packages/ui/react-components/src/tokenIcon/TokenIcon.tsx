@@ -31,47 +31,53 @@ import { ReactComponent as WhiteZRX } from "./icons/white/zrx.svg";
 import "./styles.scss";
 
 const icons = {
-  color: {
-    BTC: ColorBTC,
-    BCH: ColorBCH,
-    DAI: ColorDAI,
-    DGX: ColorDGX,
-    ETH: ColorETH,
-    OMG: ColorOMG,
-    REN: ColorREN,
-    TUSD: ColorTUSD,
-    WBTC: ColorWBTC,
-    ZEC: ColorZEC,
-    ZRX: ColorZRX,
-  },
-  white: {
-    BTC: WhiteBTC,
-    BCH: WhiteBCH,
-    DAI: WhiteDAI,
-    DGX: WhiteDGX,
-    ETH: WhiteETH,
-    OMG: WhiteOMG,
-    REN: WhiteREN,
-    TUSD: WhiteTUSD,
-    WBTC: WhiteWBTC,
-    ZEC: WhiteZEC,
-    ZRX: WhiteZRX,
-    GUSD: WhiteGUSD,
-    PAX: WhitePAX,
-    USDT: WhiteUSDT,
-  }
+    color: {
+        BTC: ColorBTC,
+        BCH: ColorBCH,
+        DAI: ColorDAI,
+        DGX: ColorDGX,
+        ETH: ColorETH,
+        OMG: ColorOMG,
+        REN: ColorREN,
+        TUSD: ColorTUSD,
+        WBTC: ColorWBTC,
+        ZEC: ColorZEC,
+        ZRX: ColorZRX,
+    },
+    white: {
+        BTC: WhiteBTC,
+        BCH: WhiteBCH,
+        DAI: WhiteDAI,
+        DGX: WhiteDGX,
+        ETH: WhiteETH,
+        OMG: WhiteOMG,
+        REN: WhiteREN,
+        TUSD: WhiteTUSD,
+        WBTC: WhiteWBTC,
+        ZEC: WhiteZEC,
+        ZRX: WhiteZRX,
+        GUSD: WhiteGUSD,
+        PAX: WhitePAX,
+        USDT: WhiteUSDT,
+    },
 };
 
-interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLImageElement>, HTMLImageElement> {
-  token: string;
-  white?: boolean;
+interface Props
+    extends React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLImageElement>,
+        HTMLImageElement
+    > {
+    token: string;
+    white?: boolean;
 }
 
-export const TokenIcon = ({ token, white, className, ...props }: Props): JSX.Element =>
-  React.createElement(
-    icons[white ? "white" : "color"][token] || Info,
-    {
-      ...props,
-      className: ["token--icon", className ? className : ""].join(" "),
-    }
-  );
+export const TokenIcon = ({
+    token,
+    white,
+    className,
+    ...props
+}: Props): JSX.Element =>
+    React.createElement(icons[white ? "white" : "color"][token] || Info, {
+        ...props,
+        className: ["token--icon", className ? className : ""].join(" "),
+    });

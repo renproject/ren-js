@@ -34,7 +34,7 @@ describe("Refactor - Burning", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("burning from contract", async function() {
+    longIt("burning from contract", async function () {
         this.timeout(100000000000);
 
         const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
@@ -48,7 +48,7 @@ describe("Refactor - Burning", () => {
 
         const asset = "FIL";
         const to = Filecoin().Address(
-            "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy"
+            "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
         );
 
         const from = Ethereum(provider, undefined, renRinkeby);
@@ -57,15 +57,15 @@ describe("Refactor - Burning", () => {
             "https://lightnode-new-testnet.herokuapp.com/",
             // tslint:disable-next-line: no-http-string
             // "http://34.239.188.210:18515",
-            { verbose: true }
+            { verbose: true },
         ) as Provider<RenVMParams, RenVMResponses>;
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
             // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider
+            httpProvider,
         ) as RenVMProviderInterface;
         const renVMProvider = new RenVMProvider(
             "testnet",
-            rpcProvider
+            rpcProvider,
         ) as AbstractRenVMProvider;
 
         const renJS = new RenJS(renVMProvider);
@@ -75,7 +75,7 @@ describe("Refactor - Burning", () => {
         try {
             const fees = await renJS.getFees();
             suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].burn + 0.0001 * 1e8
+                fees[asset.toLowerCase()].burn + 0.0001 * 1e8,
             );
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
@@ -89,7 +89,7 @@ describe("Refactor - Burning", () => {
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
             to,
-            from: from.Contract(btcAddress => ({
+            from: from.Contract((btcAddress) => ({
                 // The contract we want to interact with
                 sendTo: gateway,
 
@@ -116,23 +116,23 @@ describe("Refactor - Burning", () => {
 
         await burnAndRelease
             .burn()
-            .on("confirmation", confs => {
+            .on("confirmation", (confs) => {
                 confirmations = confs;
             })
             .on("transactionHash", console.log);
 
         await burnAndRelease
             .release()
-            .on("status", status =>
+            .on("status", (status) =>
                 status === "confirming"
                     ? console.log(`confirming (${confirmations}/15)`)
-                    : console.log(status)
+                    : console.log(status),
             )
             .on("txHash", console.log);
     });
 
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("burning from address", async function() {
+    longIt("burning from address", async function () {
         this.timeout(100000000000);
 
         const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
@@ -149,7 +149,7 @@ describe("Refactor - Burning", () => {
         // Use 0.0001 more than fee.
         const fees = await renJS.getFees();
         const suggestedAmount = new BigNumber(
-            Math.floor(fees[asset.toLowerCase()].burn + 0.0001 * 1e8)
+            Math.floor(fees[asset.toLowerCase()].burn + 0.0001 * 1e8),
         )
             .decimalPlaces(0)
             .toFixed();
@@ -164,17 +164,17 @@ describe("Refactor - Burning", () => {
 
         await burnAndRelease
             .burn()
-            .on("confirmation", confs => {
+            .on("confirmation", (confs) => {
                 confirmations = confs;
             })
             .on("transactionHash", console.log);
 
         await burnAndRelease
             .release()
-            .on("status", status =>
+            .on("status", (status) =>
                 status === "confirming"
                     ? console.log(`confirming (${confirmations}/15)`)
-                    : console.log(status)
+                    : console.log(status),
             )
             .on("txHash", console.log);
     });

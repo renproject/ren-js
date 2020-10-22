@@ -32,7 +32,7 @@ const logger = {
     },
     consoleLine: (divider = "—") => {
         logger.printLine(
-            `\n${chalk.yellow(divider.repeat(process.stdout.columns))}`
+            `\n${chalk.yellow(divider.repeat(process.stdout.columns))}`,
         );
     },
     error: (error) => logger.printLine(chalk.red(`[ERROR] ${error}`)),

@@ -22,13 +22,13 @@ import { Fees } from "./value";
 const decodeNumber = (input: string) => new BigNumber(input);
 
 export const unmarshalMintTx = (
-    response: ResponseQueryMintTx
+    response: ResponseQueryMintTx,
 ): MintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     assert(
         response.tx.selector.match(/\/to/) !== null,
-        `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.selector})`
+        `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.selector})`,
     );
 
     let out;
@@ -63,11 +63,11 @@ export const unmarshalMintTx = (
 };
 
 export const unmarshalBurnTx = (
-    response: ResponseQueryBurnTx
+    response: ResponseQueryBurnTx,
 ): BurnTransaction => {
     assert(
         response.tx.selector.match(/\/from/) !== null,
-        `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`
+        `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`,
     );
 
     let out;
@@ -103,7 +103,7 @@ const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
                     burn: decodeNumber(fees[token].burn).toNumber(),
                 },
             }),
-            {}
+            {},
         ),
     } as unknown) as RenVMAssetFees;
 };

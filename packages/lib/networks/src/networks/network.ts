@@ -36,5 +36,5 @@ export const CastNetwork = <
     A extends Addresses<C>,
     N extends NetworkType<C, A>
 >(
-    t: N
+    t: N,
 ) => t;

@@ -6,12 +6,10 @@ import {
     EventType,
     LockChain,
     Logger,
-    LogLevel,
     MintChain,
     newPromiEvent,
     PromiEvent,
     RenNetwork,
-    SimpleLogger,
     TxStatus,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, v2 } from "@renproject/rpc";
@@ -58,7 +56,7 @@ export class BurnAndRelease<
     constructor(
         _renVM: AbstractRenVMProvider,
         _params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>,
-        _logger: Logger
+        _logger: Logger,
     ) {
         this._logger = _logger;
         this._renVM = _renVM;
@@ -86,11 +84,11 @@ export class BurnAndRelease<
                 nonce: "Buffer | string | undefined",
                 tags: "string[] | undefined",
             },
-            { params: this._params }
+            { params: this._params },
         );
 
         if (this._params.contractCalls) {
-            this._params.contractCalls.map(contractCall => {
+            this._params.contractCalls.map((contractCall) => {
                 assertType<string>("string", {
                     sendTo: contractCall.sendTo,
                     contractFn: contractCall.contractFn,
@@ -120,7 +118,7 @@ export class BurnAndRelease<
                 (await this._params.from.contractCalls(
                     EventType.BurnAndRelease,
                     this._params.asset,
-                    burnPayload
+                    burnPayload,
                 )));
 
         return this;
@@ -165,7 +163,7 @@ export class BurnAndRelease<
                     contractCalls,
                 },
                 (promiEvent as unknown) as EventEmitter,
-                this._logger
+                this._logger,
             );
 
             return this;
@@ -210,19 +208,19 @@ export class BurnAndRelease<
 
             const gPubKey = await this._renVM.selectPublicKey(
                 asset,
-                this._logger
+                this._logger,
             );
 
             const payload = Buffer.from([]);
             const pHash = generatePHash([], this._logger);
             const { txid, txindex } = this._params.from.transactionRPCFormat(
                 transaction,
-                true
+                true,
             );
             const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
                 Buffer,
                 "be",
-                32
+                32,
             );
 
             const nHash = generateNHash(
@@ -230,10 +228,10 @@ export class BurnAndRelease<
                 txid,
                 txindex,
                 this._renVM.version >= 2,
-                this._logger
+                this._logger,
             );
             const sHash = generateSHash(
-                `${this._params.asset}/to${this._params.to.name}`
+                `${this._params.asset}/to${this._params.to.name}`,
             );
 
             const gHash = generateGHash(
@@ -242,7 +240,7 @@ export class BurnAndRelease<
                 Ox(sHash),
                 nonceBuffer,
                 this._renVM.version >= 2,
-                this._logger
+                this._logger,
             );
 
             return toURLBase64(
@@ -260,15 +258,15 @@ export class BurnAndRelease<
                     payload,
                     pHash,
                     to: to.toString(),
-                })
+                }),
             );
         } else {
             return toBase64(
                 generateBurnTxHash(
                     resolveOutToken(this._params),
                     this._burnDetails.nonce.toFixed(),
-                    this._logger
-                )
+                    this._logger,
+                ),
             );
         }
     };
@@ -278,7 +276,7 @@ export class BurnAndRelease<
      */
     public queryTx = async (): Promise<BurnTransaction> => {
         this.queryTxResult = (await this._renVM.queryMintOrBurn(
-            fromBase64(await this.txHash())
+            fromBase64(await this.txHash()),
         )) as BurnTransaction;
         return this.queryTxResult;
     };
@@ -308,7 +306,7 @@ export class BurnAndRelease<
             if (!this._params.txHash && this._burnDetails) {
                 if (this._params.tags && this._params.tags.length > 1) {
                     throw new Error(
-                        "Providing multiple tags is not supported yet."
+                        "Providing multiple tags is not supported yet.",
                     );
                 }
                 const tags: [string] | [] =
@@ -343,7 +341,7 @@ export class BurnAndRelease<
 
                         const gPubKey = await this._renVM.selectPublicKey(
                             asset,
-                            this._logger
+                            this._logger,
                         );
 
                         const payload = Buffer.from([]);
@@ -353,12 +351,12 @@ export class BurnAndRelease<
                             txindex,
                         } = this._params.from.transactionRPCFormat(
                             transaction,
-                            true
+                            true,
                         );
                         const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
                             Buffer,
                             "be",
-                            32
+                            32,
                         );
 
                         const nHash = generateNHash(
@@ -366,10 +364,10 @@ export class BurnAndRelease<
                             txid,
                             txindex,
                             this._renVM.version >= 2,
-                            this._logger
+                            this._logger,
                         );
                         const sHash = generateSHash(
-                            `${this._params.asset}/to${this._params.to.name}`
+                            `${this._params.asset}/to${this._params.to.name}`,
                         );
 
                         const gHash = generateGHash(
@@ -378,7 +376,7 @@ export class BurnAndRelease<
                             Ox(sHash),
                             nonceBuffer,
                             this._renVM.version >= 2,
-                            this._logger
+                            this._logger,
                         );
 
                         returnedTxHash = await this._renVM.submitBurn(
@@ -397,7 +395,7 @@ export class BurnAndRelease<
                                 pHash,
                                 to: to.toString(),
                             },
-                            tags
+                            tags,
                         );
                     } else {
                         returnedTxHash = await this._renVM.submitBurn(
@@ -405,14 +403,14 @@ export class BurnAndRelease<
                                 renContract: selector,
                                 burnNonce: nonce,
                             },
-                            tags
+                            tags,
                         );
                     }
                     if (txHash && toBase64(returnedTxHash) !== txHash) {
                         this._logger.debug(
                             `Unexpected txHash returned from RenVM. Received: ${toBase64(
-                                returnedTxHash
-                            )}, expected: ${txHash}`
+                                returnedTxHash,
+                            )}, expected: ${txHash}`,
                         );
                     }
                 } catch (error) {
@@ -427,11 +425,11 @@ export class BurnAndRelease<
 
             return await this._renVM.waitForTX<BurnTransaction>(
                 fromBase64(txHash),
-                status => {
+                (status) => {
                     promiEvent.emit("status", status);
                     this._logger.debug("transaction status:", status);
                 },
-                () => promiEvent._isCancelled()
+                () => promiEvent._isCancelled(),
             );
         })()
             .then(promiEvent.resolve)

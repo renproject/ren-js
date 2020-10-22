@@ -35,11 +35,15 @@
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
+        "prettier": "yarn fix:prettier",
+        "lint": "run-s lint:*",
+        "lint:tslint": "tslint --project ./ -t stylish --quiet",
+        "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build:main test:unit lint",
+        "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
+        "test": "run-s build:main test:* lint",
         "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
-        "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -82,7 +86,12 @@
         ]
     },
     "prettier": {
-        "trailingComma": "es5",
-        "tabWidth": 4
+        "printWidth": 80,
+        "semi": true,
+        "singleQuote": false,
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "endOfLine": "lf",
+        "arrowParens": "always"
     }
 }

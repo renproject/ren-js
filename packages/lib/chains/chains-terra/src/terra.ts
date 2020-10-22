@@ -1,14 +1,5 @@
-import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import {
-    assertType,
-    Callable,
-    fromHex,
-    keccak256,
-    Ox,
-    rawEncode,
-    toBase64,
-    toURLBase64,
-} from "@renproject/utils";
+import { LockChain, RenNetwork } from "@renproject/interfaces";
+import { assertType, Callable } from "@renproject/utils";
 import { Key } from "@terra-money/terra.js";
 
 import {
@@ -82,7 +73,7 @@ export class TerraClass
         asset: TerraAsset,
         address: TerraAddress,
         _instanceID: number,
-        onDeposit: (deposit: TerraDeposit) => void
+        onDeposit: (deposit: TerraDeposit) => void,
     ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -92,7 +83,7 @@ export class TerraClass
             await terraDev.fetchDeposits(
                 address.address,
                 this.chainNetwork,
-                address.memo
+                address.memo,
             )
         )
             .map(transactionToDeposit)
@@ -103,7 +94,7 @@ export class TerraClass
      * See [[OriginChain.transactionConfidence]].
      */
     transactionConfidence = async (
-        transaction: TerraTransaction
+        transaction: TerraTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -111,7 +102,7 @@ export class TerraClass
         transaction = await terraDev.fetchDeposit(
             transaction.hash,
             transaction.messageIndex,
-            this.chainNetwork
+            this.chainNetwork,
         );
         return {
             current: transaction.confirmations,
@@ -125,7 +116,7 @@ export class TerraClass
     getGatewayAddress = (
         asset: TerraAsset,
         compressedPublicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ): Promise<TerraAddress> | TerraAddress => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -145,7 +136,7 @@ export class TerraClass
     getPubKeyScript = (
         asset: TerraAsset,
         _publicKey: Buffer,
-        _gHash: Buffer
+        _gHash: Buffer,
     ) => {
         this.assetAssetSupported(asset);
         return Buffer.from([]);

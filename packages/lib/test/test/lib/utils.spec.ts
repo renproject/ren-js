@@ -44,7 +44,7 @@ describe("Utils", function () {
 
     it("Burn Topic hash", () => {
         BURN_TOPIC.should.equal(
-            "0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e"
+            "0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e",
         );
     });
 
@@ -110,7 +110,7 @@ describe("Utils", function () {
         await new RenJS(NETWORK as RenNetwork).renVM
             .queryMintOrBurn(Buffer.from([0]))
             .should.be.rejectedWith(
-                /tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/
+                /tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/,
             );
     });
 

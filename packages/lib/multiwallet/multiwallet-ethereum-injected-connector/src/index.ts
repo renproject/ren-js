@@ -22,11 +22,15 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
     }
     handleUpdate = () =>
         this.getStatus()
-            .then((...args) => this.emitter.emitUpdate(...args))
+            .then((...args) => {
+                this.emitter.emitUpdate(...args);
+            })
             .catch((...args) => this.deactivate(...args));
 
+    // tslint:disable-next-line: no-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
         // No good typings for injected providers exist...
+        // tslint:disable-next-line: no-any
         const provider: any = await this.getProvider();
         if (!provider) {
             throw Error("Missing Provider");
@@ -39,9 +43,10 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
         let account;
         try {
             account = resultOrRaw(
-                await provider.request({ method: "eth_requestAccounts" })
+                await provider.request({ method: "eth_requestAccounts" }),
             )[0];
         } catch (error) {
+            // tslint:disable-next-line: no-any
             if ((error as any).code === 4001) {
                 this.emitter.emitError(new Error("User rejected request"));
             }
@@ -64,11 +69,12 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
     };
 
     deactivate = async (reason?: string) => {
+        // tslint:disable-next-line: no-any
         const provider: any = await this.getProvider();
         provider.removeListener("close", this.deactivate);
         provider.removeListener("networkChanged", this.handleUpdate);
         provider.removeListener("accountsChanged", this.handleUpdate);
         provider.removeListener("chainChanged", this.handleUpdate);
-        return this.emitter.emitDeactivate(reason);
+        this.emitter.emitDeactivate(reason);
     };
 }

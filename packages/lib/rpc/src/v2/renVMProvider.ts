@@ -2,9 +2,7 @@ import {
     AbiItem,
     Asset,
     BurnTransaction,
-    Chain,
     DepositCommon,
-    LockAndMintParams,
     LockChain,
     Logger,
     MintChain,
@@ -18,18 +16,10 @@ import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
     fromBase64,
-    fromBigNumber,
-    fromHex,
-    generateGHash,
-    generatePHash,
-    generateSHash,
     getTokenPrices,
     normalizeValue,
     SECONDS,
-    sha256,
     sleep,
-    strip0x,
-    toBase64,
     TokenPrices,
     toURLBase64,
 } from "@renproject/utils";
@@ -50,12 +40,6 @@ import {
     RPCMethod,
 } from "./methods";
 import {
-    PackStructType,
-    PackTypeDefinition,
-    TypedPackValue,
-} from "./pack/pack";
-import {
-    burnParamsType,
     hashTransaction,
     mintParamsType,
     MintTransactionInput,
@@ -98,7 +82,7 @@ export const resolveV2Contract = <
         (from as LockChain<Transaction, Deposit, Asset, Address>)
             .assetIsNative &&
         (from as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative(
-            asset
+            asset,
         )
     ) {
         return `${asset}/to${to.name}`;
@@ -106,7 +90,7 @@ export const resolveV2Contract = <
     if (
         (to as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative &&
         (to as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative(
-            asset
+            asset,
         )
     ) {
         return `${asset}/from${from.name}`;
@@ -128,7 +112,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     constructor(
         network: RenNetwork | RenNetworkString,
         provider?: Provider<RenVMParams, RenVMResponses> | string,
-        logger?: Logger
+        logger?: Logger,
     ) {
         if (!provider || typeof provider === "string") {
             const rpcUrl = provider || resolveRpcURL(network);
@@ -140,7 +124,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             } catch (error) {
                 if (String(error && error.message).match(/Invalid node URL/)) {
                     throw new Error(
-                        `Invalid network or provider URL: "${network}"`
+                        `Invalid network or provider URL: "${network}"`,
                     );
                 }
                 throw error;
@@ -155,41 +139,41 @@ export class RenVMProvider implements RenVMProviderInterface {
 
     public queryBlock = async (
         blockHeight: ParamsQueryBlock["blockHeight"],
-        retry?: number
+        retry?: number,
     ) =>
         this.sendMessage<RPCMethod.MethodQueryBlock>(
             RPCMethod.MethodQueryBlock,
             { blockHeight },
-            retry
+            retry,
         );
 
     public queryBlocks = async (
         blockHeight: ParamsQueryBlocks["blockHeight"],
         n: ParamsQueryBlocks["n"],
-        retry?: number
+        retry?: number,
     ) =>
         this.sendMessage<RPCMethod.MethodQueryBlocks>(
             RPCMethod.MethodQueryBlocks,
             { blockHeight, n },
-            retry
+            retry,
         );
 
     public submitTx = async (
         tx: ParamsSubmitBurn["tx"] | ParamsSubmitMint["tx"],
-        retry?: number
+        retry?: number,
     ) =>
         this.sendMessage<RPCMethod.MethodSubmitTx>(
             RPCMethod.MethodSubmitTx,
             // tslint:disable-next-line: no-object-literal-type-assertion
             { tx } as ParamsSubmitBurn | ParamsSubmitMint,
-            retry
+            retry,
         );
 
     public queryTx = async (txHash: ParamsQueryTx["txHash"], retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryTx>(
             RPCMethod.MethodQueryTx,
             { txHash },
-            retry
+            retry,
         );
 
     public queryTxs = async (
@@ -197,7 +181,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         page?: number,
         pageSize?: number,
         txStatus?: ParamsQueryTxs["txStatus"],
-        retry?: number
+        retry?: number,
     ) =>
         this.sendMessage<RPCMethod.MethodQueryTxs>(
             RPCMethod.MethodQueryTxs,
@@ -207,42 +191,42 @@ export class RenVMProvider implements RenVMProviderInterface {
                 pageSize: (pageSize || 0).toString(),
                 txStatus,
             },
-            retry
+            retry,
         );
 
     public queryNumPeers = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryNumPeers>(
             RPCMethod.MethodQueryNumPeers,
             {},
-            retry
+            retry,
         );
 
     public queryPeers = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryPeers>(
             RPCMethod.MethodQueryPeers,
             {},
-            retry
+            retry,
         );
 
     public queryShards = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryShards>(
             RPCMethod.MethodQueryShards,
             {},
-            retry
+            retry,
         );
 
     public queryStat = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryStat>(
             RPCMethod.MethodQueryStat,
             {},
-            retry
+            retry,
         );
 
     public queryFees = async (retry?: number) =>
         this.sendMessage<RPCMethod.MethodQueryFees>(
             RPCMethod.MethodQueryFees,
             {},
-            retry
+            retry,
         );
 
     public getFees = async () => unmarshalFees(await this.queryFees());
@@ -299,7 +283,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         };
         return {
             hash: toURLBase64(
-                hashTransaction(version, renContractOrSelector, txIn)
+                hashTransaction(version, renContractOrSelector, txIn),
             ),
             selector: renContractOrSelector,
             version,
@@ -322,7 +306,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         payload: Buffer,
         pHash: Buffer,
         to: string,
-        _outputHashString: string
+        _outputHashString: string,
     ): Buffer => {
         assertType<Buffer>("Buffer", {
             gHash,
@@ -350,7 +334,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                 payload,
                 pHash,
                 to,
-            }).hash
+            }).hash,
         );
     };
 
@@ -369,7 +353,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         token: string,
         _fn: string,
         _fnABI: AbiItem[],
-        _tags: [string] | []
+        _tags: [string] | [],
     ): Promise<Buffer> => {
         const { txid, txindex } = output;
 
@@ -402,7 +386,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             {
                 tx,
                 // tags,
-            }
+            },
         );
 
         return fromBase64(tx.hash);
@@ -422,7 +406,7 @@ export class RenVMProvider implements RenVMProviderInterface {
             pHash: Buffer;
             to: string;
         },
-        _logger?: Logger
+        _logger?: Logger,
     ): Promise<Buffer> => {
         const {
             renContractOrSelector,
@@ -502,7 +486,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                   burnNonce: BigNumber;
               },
         _tags: [string] | [],
-        _logger?: Logger
+        _logger?: Logger,
     ): Promise<Buffer> => {
         const {
             renContractOrSelector,
@@ -569,7 +553,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     public readonly queryMintOrBurn = async <
         T extends MintTransaction | BurnTransaction
     >(
-        renVMTxHash: Buffer
+        renVMTxHash: Buffer,
     ): Promise<T> => {
         try {
             const response = await this.queryTx(toURLBase64(renVMTxHash));
@@ -596,7 +580,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     >(
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
-        _cancelRequested?: () => boolean
+        _cancelRequested?: () => boolean,
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
@@ -618,7 +602,7 @@ export class RenVMProvider implements RenVMProviderInterface {
                 // tslint:disable-next-line: no-console
                 if (
                     String((error || {}).message).match(
-                        /(not found)|(not available)/
+                        /(not found)|(not available)/,
                     )
                 ) {
                     // ignore
@@ -645,62 +629,62 @@ export class RenVMProvider implements RenVMProviderInterface {
      */
     public readonly selectPublicKey = async (
         token: Asset,
-        logger?: Logger
+        logger?: Logger,
     ): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
         const response = await this.queryShards(5);
 
         // Filter to only keep shards that are primary/online.
-        const primaryShards = response.shards.filter(shard => shard.primary);
+        const primaryShards = response.shards.filter((shard) => shard.primary);
 
         // Find the shard with the lowest total value locked (sum all the locked
         // amounts from all gateways in a shard, after converting to a consistent
         // currencies using the coinGecko API).
         const tokens = Set<string>()
             .concat(
-                ...primaryShards.map(shard =>
-                    shard.gateways.map(gateway => gateway.asset)
-                )
+                ...primaryShards.map((shard) =>
+                    shard.gateways.map((gateway) => gateway.asset),
+                ),
             )
             .toArray();
         const tokenPrices: TokenPrices = await getTokenPrices(
             tokens,
-            logger
+            logger,
         ).catch(() => OrderedMap());
 
         const smallestShard = List(primaryShards)
-            .filter(shard =>
-                shard.gateways.map(gateway => gateway.asset).includes(token)
+            .filter((shard) =>
+                shard.gateways.map((gateway) => gateway.asset).includes(token),
             )
-            .sortBy(shard =>
+            .sortBy((shard) =>
                 shard.gateways
-                    .map(gateway =>
+                    .map((gateway) =>
                         normalizeValue(
                             tokenPrices,
                             gateway.asset,
-                            gateway.locked
-                        )
+                            gateway.locked,
+                        ),
                     )
                     .reduce((sum, value) => sum.plus(value), new BigNumber(0))
-                    .toNumber()
+                    .toNumber(),
             )
             .first(undefined);
 
         if (!smallestShard) {
             throw new Error(
-                "Unable to load public key from RenVM: no shards found"
+                "Unable to load public key from RenVM: no shards found",
             );
         }
 
         // Get the gateway pubKey from the gateway with the right asset within
         // the shard with the lowest total value locked.
         const tokenGateway = List(smallestShard.gateways)
-            .filter(gateway => gateway.asset === token)
+            .filter((gateway) => gateway.asset === token)
             .first(undefined);
 
         if (!tokenGateway) {
             throw new Error(
-                `Unable to load public key from RenVM: no gateway for the asset ${token}`
+                `Unable to load public key from RenVM: no gateway for the asset ${token}`,
             );
         }
 

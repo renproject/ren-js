@@ -33,7 +33,7 @@ export interface AbstractRenVMProvider {
         token: string,
         fn: string,
         fnABI: AbiItem[],
-        tags: [string] | []
+        tags: [string] | [],
     ) => Promise<Buffer>;
 
     burnTxHash?: (
@@ -51,7 +51,7 @@ export interface AbstractRenVMProvider {
             pHash: Buffer;
             to: string;
         },
-        logger?: Logger
+        logger?: Logger,
     ) => Promise<Buffer>;
 
     submitBurn: (
@@ -76,17 +76,17 @@ export interface AbstractRenVMProvider {
                   burnNonce: BigNumber;
               },
         tags: [string] | [],
-        logger?: Logger
+        logger?: Logger,
     ) => Promise<Buffer>;
 
     queryMintOrBurn: <T extends MintTransaction | BurnTransaction>(
-        utxoTxHash: Buffer
+        utxoTxHash: Buffer,
     ) => Promise<T>;
 
     waitForTX: <T extends MintTransaction | BurnTransaction>(
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
-        _cancelRequested?: () => boolean
+        _cancelRequested?: () => boolean,
     ) => Promise<T>;
 
     /**
@@ -115,6 +115,6 @@ export interface AbstractRenVMProvider {
         payload: Buffer,
         pHash: Buffer,
         to: string,
-        outputHashFormat: string
+        outputHashFormat: string,
     ) => Buffer;
 }

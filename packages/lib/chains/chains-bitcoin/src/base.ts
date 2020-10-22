@@ -1,13 +1,5 @@
-import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import {
-    assertType,
-    fromHex,
-    hash160,
-    keccak256,
-    Ox,
-    rawEncode,
-    toBase64,
-} from "@renproject/utils";
+import { LockChain, RenNetwork } from "@renproject/interfaces";
+import { assertType, fromHex, hash160, toBase64 } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import base58 from "bs58";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
@@ -116,7 +108,7 @@ export abstract class BitcoinBaseChain
         asset: Asset,
         address: Address,
         instanceID: number,
-        onDeposit: (deposit: Deposit) => void
+        onDeposit: (deposit: Deposit) => void,
     ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -140,7 +132,7 @@ export abstract class BitcoinBaseChain
                     {
                         address,
                         confirmations: 0,
-                    }
+                    },
                 )
             )
                 .map(transactionToDeposit)
@@ -165,7 +157,7 @@ export abstract class BitcoinBaseChain
      * See [[OriginChain.transactionConfidence]].
      */
     transactionConfidence = async (
-        transaction: Transaction
+        transaction: Transaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -173,7 +165,7 @@ export abstract class BitcoinBaseChain
         transaction = await this.utils.getUTXO(
             this.chainNetwork === "testnet",
             transaction.txHash,
-            transaction.vOut
+            transaction.vOut,
         );
         return {
             current: transaction.confirmations,
@@ -187,7 +179,7 @@ export abstract class BitcoinBaseChain
     getGatewayAddress = (
         asset: Asset,
         publicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ): Promise<Address> | Address => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -198,7 +190,7 @@ export abstract class BitcoinBaseChain
             isTestnet,
             hash160(publicKey),
             gHash,
-            this.utils.p2shPrefix[isTestnet ? "testnet" : "mainnet"]
+            this.utils.p2shPrefix[isTestnet ? "testnet" : "mainnet"],
         );
     };
 
@@ -211,7 +203,7 @@ export abstract class BitcoinBaseChain
         return this.utils.calculatePubKeyScript(
             isTestnet,
             hash160(publicKey),
-            gHash
+            gHash,
         );
     };
 

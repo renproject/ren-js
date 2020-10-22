@@ -9,7 +9,7 @@ describe("Filscout", () => {
     it("Can fetch messages", async () => {
         const messages = await filscout.fetchDeposits(
             "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
-            Buffer.from("Hello world!").toString("base64")
+            Buffer.from("Hello world!").toString("base64"),
         );
 
         expect(messages.length).toEqual(1);
@@ -20,7 +20,7 @@ describe("FilScan", () => {
     it("Can fetch messages", async () => {
         const messages = await filscan.fetchDeposits(
             "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
-            Buffer.from("Hello world!").toString("base64")
+            Buffer.from("Hello world!").toString("base64"),
         );
 
         expect(messages.length).toEqual(1);

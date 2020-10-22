@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 
 export const assert = (
     assertion: boolean,
-    sentence?: string
+    sentence?: string,
 ): assertion is true => {
     if (!assertion) {
         throw new Error(`Failed assertion${sentence ? `: ${sentence}` : ""}`);
@@ -53,12 +53,12 @@ export const assertType = <
     type: string,
     objects: {
         [value: string]: T;
-    }
+    },
 ): objects is { [value: string]: T } => {
     if (isArrayType(type)) {
         return assertArray(
             type,
-            (objects as unknown) as { [value: string]: T[] }
+            (objects as unknown) as { [value: string]: T[] },
         );
     }
     if (isUnionType(type)) {
@@ -96,14 +96,14 @@ const assertTypeCheck = <T = any>(
     objects: {
         [value: string]: T;
     },
-    typeDescription: string
+    typeDescription: string,
 ): objects is { [value: string]: T } => {
     for (const key of Object.keys(objects)) {
         const value = objects[key];
         if (!type(value, key)) {
             const readableType = Array.isArray(value) ? "any[]" : typeOf(value);
             throw new Error(
-                `Expected ${key} to be of type '${typeDescription}', instead got '${readableType}'.`
+                `Expected ${key} to be of type '${typeDescription}', instead got '${readableType}'.`,
             );
         }
     }
@@ -151,7 +151,7 @@ const assertTypeUnion = <T = any>(
     unionType: string,
     objects: {
         [value: string]: T;
-    }
+    },
 ): objects is { [value: string]: T } => {
     const types = unionType.split(" | ") as PrimitiveTypeName[];
     return assertTypeCheck(
@@ -171,7 +171,7 @@ const assertTypeUnion = <T = any>(
                 return is(type)(v);
             }, false),
         objects,
-        unionType
+        unionType,
     );
 };
 
@@ -179,7 +179,7 @@ const assertArray = <T = any>(
     arrayType: string,
     objects: {
         [value: string]: T[];
-    }
+    },
 ): objects is { [value: string]: T[] } => {
     const type = isArrayType(arrayType);
     if (!type) {
@@ -203,7 +203,7 @@ export const assertObject = <T extends { [key: string]: any }>(
     fieldTypes: ObjectDefinition,
     objects: {
         [value: string]: T;
-    }
+    },
 ): boolean => {
     for (const key of Object.keys(objects)) {
         const value = objects[key];
@@ -219,7 +219,9 @@ export const assertObject = <T extends { [key: string]: any }>(
                 });
             } else {
                 throw new Error(
-                    `Invalid object type definition ${typeof fieldTypes[field]}`
+                    `Invalid object type definition ${typeof fieldTypes[
+                        field
+                    ]}`,
                 );
             }
         }

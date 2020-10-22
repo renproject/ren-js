@@ -3,16 +3,17 @@
 declare module "chai-bignumber" {
     function chaiBigNumber(bignumber: any): (chai: any, utils: any) => void;
 
-    namespace chaiBigNumber {
-    }
+    namespace chaiBigNumber {}
 
     export = chaiBigNumber;
 }
 
 declare namespace Chai {
-
     // For BDD API
-    interface Assertion extends LanguageChains, NumericComparison, TypeComparison {
+    interface Assertion
+        extends LanguageChains,
+            NumericComparison,
+            TypeComparison {
         bignumber: BigNumberAssert;
     }
 
@@ -26,6 +27,6 @@ declare namespace Chai {
         at: {
             most(actual?: any, expected?: any, msg?: string): void;
             least(actual?: any, expected?: any, msg?: string): void;
-        }
+        };
     }
 }

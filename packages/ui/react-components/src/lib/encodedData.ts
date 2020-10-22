@@ -17,8 +17,10 @@ import { Record } from "./record";
 
 const ErrorInvalidBuffer = "invalid buffer";
 const ErrorInvalidHex = "invalid hex";
-const ErrorUnableToConvertToHexadecimalRepresentation = "Unable to convert to hexadecimal representation";
-const ErrorUnableToConvertToBase64Representation = "Unable to convert to base64 representation";
+const ErrorUnableToConvertToHexadecimalRepresentation =
+    "Unable to convert to hexadecimal representation";
+const ErrorUnableToConvertToBase64Representation =
+    "Unable to convert to base64 representation";
 const ErrorUnableToConvertToBuffer = "Unable to convert to buffer";
 
 export enum Encodings {
@@ -26,7 +28,7 @@ export enum Encodings {
     HEX = "hex",
     BASE64 = "base64",
     BUFFER = "buffer",
-    UNKNOWN = "unknown"
+    UNKNOWN = "unknown",
 }
 
 const DefaultEncodedData = {
@@ -34,9 +36,12 @@ const DefaultEncodedData = {
     encoding: Encodings.AUTO,
 };
 
-const parse = (param: string | Buffer | typeof DefaultEncodedData, encoding?: Encodings) => {
+const parse = (
+    param: string | Buffer | typeof DefaultEncodedData,
+    encoding?: Encodings,
+) => {
     if (encoding !== undefined) {
-        if (typeof (param) === "string" && encoding !== Encodings.BUFFER) {
+        if (typeof param === "string" && encoding !== Encodings.BUFFER) {
             param = {
                 value: param,
                 encoding,
@@ -63,7 +68,11 @@ const parse = (param: string | Buffer | typeof DefaultEncodedData, encoding?: En
     }
     if (param.encoding === Encodings.AUTO) {
         if (typeof param.value === "string") {
-            if (param.value === "" || param.value.slice(0, 2) === "0x" || param.value.match("^[A-Fa-f0-9]+$")) {
+            if (
+                param.value === "" ||
+                param.value.slice(0, 2) === "0x" ||
+                param.value.match("^[A-Fa-f0-9]+$")
+            ) {
                 param.encoding = Encodings.HEX;
             } else if (param.value.match("^[A-Za-z0-9+/=]+$")) {
                 param.encoding = Encodings.BASE64;
@@ -73,7 +82,10 @@ const parse = (param: string | Buffer | typeof DefaultEncodedData, encoding?: En
         }
     }
 
-    if (param.encoding === Encodings.BUFFER && !(param.value instanceof Buffer)) {
+    if (
+        param.encoding === Encodings.BUFFER &&
+        !(param.value instanceof Buffer)
+    ) {
         throw new Error(ErrorInvalidBuffer);
     }
 
@@ -102,14 +114,16 @@ const parse = (param: string | Buffer | typeof DefaultEncodedData, encoding?: En
 };
 
 export class EncodedData extends Record(DefaultEncodedData) {
-
     /**
      * Creates an instance of EncodedData.
      * @param {string | Buffer} param The encoded data
      * @param {Encodings} [encoding] One of "hex", "base64", "buffer"
      * @memberof EncodedData
      */
-    constructor(param: EncodedData | string | Buffer | typeof DefaultEncodedData, encoding?: Encodings) {
+    constructor(
+        param: EncodedData | string | Buffer | typeof DefaultEncodedData,
+        encoding?: Encodings,
+    ) {
         if (param instanceof EncodedData) {
             param = { value: param.value, encoding: param.encoding };
         }
@@ -122,18 +136,25 @@ export class EncodedData extends Record(DefaultEncodedData) {
             case Encodings.HEX:
                 return prefix + this.value;
             case Encodings.BASE64:
-                return prefix + Buffer.from(this.value as string, "base64").toString("hex");
+                return (
+                    prefix +
+                    Buffer.from(this.value as string, "base64").toString("hex")
+                );
             case Encodings.BUFFER:
                 return prefix + (this.value as Buffer).toString("hex");
             default:
-                throw new Error(ErrorUnableToConvertToHexadecimalRepresentation);
+                throw new Error(
+                    ErrorUnableToConvertToHexadecimalRepresentation,
+                );
         }
     }
 
     public toBase64(this: EncodedData): string {
         switch (this.encoding) {
             case Encodings.HEX:
-                return Buffer.from(this.value as string, "hex").toString("base64");
+                return Buffer.from(this.value as string, "hex").toString(
+                    "base64",
+                );
             case Encodings.BASE64:
                 return this.value as string;
             case Encodings.BUFFER:

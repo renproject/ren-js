@@ -20,7 +20,7 @@ export const naturalTime = (
         countDown: boolean;
         showingSeconds?: boolean;
         abbreviate?: boolean;
-    }
+    },
 ): string => {
     let diff;
     if (!options.countDown) {
@@ -36,7 +36,6 @@ export const naturalTime = (
     const suffix = options.suffix ? ` ${options.suffix}` : "";
     const prefix = options.prefix ? `${options.prefix} ` : "";
 
-
     if (days > 2) {
         days = Math.round(days);
         return `${prefix}${days} ${days === 1 ? "day" : "days"}${suffix}`;
@@ -48,23 +47,33 @@ export const naturalTime = (
     } else if (minutes >= 1) {
         minutes = Math.round(minutes);
         if (options.abbreviate) {
-            return `${prefix}${minutes} ${minutes === 1 ? "min" : "mins"}${suffix}`;
+            return `${prefix}${minutes} ${
+                minutes === 1 ? "min" : "mins"
+            }${suffix}`;
         }
-        return `${prefix}${minutes} ${minutes === 1 ? "minute" : "minutes"}${suffix}`;
+        return `${prefix}${minutes} ${
+            minutes === 1 ? "minute" : "minutes"
+        }${suffix}`;
     } else if (options.showingSeconds && seconds >= 1) {
         seconds = Math.floor(seconds);
         if (options.abbreviate) {
-            return `${prefix}${seconds} ${seconds === 1 ? "sec" : "secs"}${suffix}`;
+            return `${prefix}${seconds} ${
+                seconds === 1 ? "sec" : "secs"
+            }${suffix}`;
         }
-        return `${prefix}${seconds} ${seconds === 1 ? "second" : "seconds"}${suffix}`;
+        return `${prefix}${seconds} ${
+            seconds === 1 ? "second" : "seconds"
+        }${suffix}`;
     } else {
         return `${options.message}`;
     }
 };
 
 // Sleep for specified number of milliseconds
-// tslint:disable-next-line: no-string-based-set-timeout
-export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+export const sleep = async (ms: number) =>
+    // tslint:disable-next-line: no-string-based-set-timeout
+    new Promise((resolve) => setTimeout(resolve, ms));
+
 export const second = 1000;
 
 export enum TimeMagnitude {
@@ -75,7 +84,10 @@ export enum TimeMagnitude {
 }
 
 // Returns the the time units in which a time will be represented in by naturalTime
-export const getTimeMagnitude = (expiry: number, showingSeconds = false): TimeMagnitude => {
+export const getTimeMagnitude = (
+    expiry: number,
+    showingSeconds = false,
+): TimeMagnitude => {
     let diff;
     if (moment.unix(expiry).isBefore(moment())) {
         diff = moment.duration(moment().diff(moment.unix(expiry)));

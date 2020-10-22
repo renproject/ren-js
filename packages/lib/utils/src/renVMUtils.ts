@@ -21,7 +21,7 @@ const defaultMatch = [undefined, undefined, undefined, undefined];
  * (`BTC`), the origin chain (`Eth`) and the target chain (`Btc`).
  */
 export const parseRenContract = (
-    renContract: RenContract
+    renContract: RenContract,
 ): RenContractDetails => {
     // re.exec("BTC0Eth2Btc") => ['BTC0Eth2Btc', 'BTC', 'Eth', 'Btc']
     const [, asset, from, to] =
@@ -53,8 +53,9 @@ export const resolveInToken = <
     from: LockAndMintParams<Transaction, Deposit, Asset, Address>["from"];
     to: LockAndMintParams<Transaction, Deposit, Asset, Address>["to"];
 }): RenContract => {
-    return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
-        from.name}` as RenContract;
+    return `${asset}0${from.legacyName || from.name}2${
+        to.legacyName || from.name
+    }` as RenContract;
 };
 
 export const resolveOutToken = <

@@ -38,16 +38,16 @@ describe("value", () => {
 
         // From eth
         expect(value("10000", "wei").eth().toFixed()).toEqual(
-            "0.00000000000001"
+            "0.00000000000001",
         );
         expect(value("0.00000000000001", "eth").wei().toFixed()).toEqual(
-            "10000"
+            "10000",
         );
         expect(value("10000", "wei")._readable().toFixed()).toEqual(
-            "0.00000000000001"
+            "0.00000000000001",
         );
         expect(value("0.00000000000001", "eth")._smallest().toFixed()).toEqual(
-            "10000"
+            "10000",
         );
         expect(value("1", "wei").wei().toFixed()).toEqual("1");
         expect(value("0.1", "eth").eth().toFixed()).toEqual("0.1");
@@ -55,7 +55,7 @@ describe("value", () => {
         expect(
             value("0.1", "eth")
                 .to("ethereum" as "eth")
-                .toFixed()
+                .toFixed(),
         ).toEqual("0.1");
         expect(value("0.1", "eth").to("eth").toFixed()).toEqual("0.1");
 
@@ -64,7 +64,7 @@ describe("value", () => {
             // tslint:disable-next-line: no-any
             value("0.0001", "fake" as any)
                 ._readable()
-                .toFixed()
+                .toFixed(),
         ).toThrow(expect.error(`Unknown unit "fake"`));
     });
 });

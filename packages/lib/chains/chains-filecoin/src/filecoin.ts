@@ -3,16 +3,8 @@ import {
     encode as encodeAddress,
     validateAddressString,
 } from "@glif/filecoin-address";
-import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import {
-    assertType,
-    Callable,
-    keccak256,
-    Ox,
-    rawEncode,
-    toBase64,
-    toURLBase64,
-} from "@renproject/utils";
+import { LockChain, RenNetwork } from "@renproject/interfaces";
+import { assertType, Callable, toBase64, toURLBase64 } from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
 import elliptic from "elliptic";
@@ -104,7 +96,7 @@ export class FilecoinClass
         asset: FilAsset,
         address: FilAddress,
         _instanceID: number,
-        onDeposit: (deposit: FilDeposit) => void
+        onDeposit: (deposit: FilDeposit) => void,
     ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -122,7 +114,7 @@ export class FilecoinClass
      * See [[OriginChain.transactionConfidence]].
      */
     transactionConfidence = async (
-        transaction: FilTransaction
+        transaction: FilTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -140,7 +132,7 @@ export class FilecoinClass
     getGatewayAddress = (
         asset: FilAsset,
         compressedPublicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ): Promise<FilAddress> | FilAddress => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
@@ -154,7 +146,7 @@ export class FilecoinClass
             .getPublic(false, "hex");
 
         const payload = Buffer.from(
-            blake2b(Buffer.from(publicKey, "hex"), null, 20)
+            blake2b(Buffer.from(publicKey, "hex"), null, 20),
         );
 
         // secp256k1 protocol prefix

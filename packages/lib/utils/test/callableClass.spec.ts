@@ -10,7 +10,7 @@ const TestClass = Callable(
         constructor() {
             this.x = 1;
         }
-    }
+    },
 );
 
 describe("callableClass", () => {

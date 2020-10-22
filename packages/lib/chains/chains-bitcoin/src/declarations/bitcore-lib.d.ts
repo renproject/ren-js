@@ -165,7 +165,7 @@ declare module "bitcore-lib" {
                 hashbuf: Buffer,
                 sig: Signature,
                 pubkey: PublicKey,
-                endian?: "little"
+                endian?: "little",
             ): boolean;
         }
 
@@ -313,7 +313,7 @@ declare module "bitcore-lib" {
         deriveChild(arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild(
             arg: string | number,
-            hardened?: boolean
+            hardened?: boolean,
         ): HDPrivateKey;
 
         toString(): string;
@@ -343,20 +343,20 @@ declare module "bitcore-lib" {
         function buildMultisigOut(
             publicKeys: PublicKey[],
             threshold: number,
-            opts: object
+            opts: object,
         ): Script;
         function buildWitnessMultisigOutFromScript(script: Script): Script;
         function buildMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildP2SHMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildPublicKeyHashOut(address: Address): Script;
         function buildPublicKeyOut(pubkey: PublicKey): Script;
@@ -364,12 +364,12 @@ declare module "bitcore-lib" {
         function buildScriptHashOut(script: Script): Script;
         function buildPublicKeyIn(
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
         function buildPublicKeyHashIn(
             publicKey: PublicKey,
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
 
         function fromAddress(address: string | Address): Script;
@@ -451,7 +451,7 @@ declare module "bitcore-lib" {
         function remove(network: Network): void;
         function get(
             args: string | number | Network,
-            keys: string | string[]
+            keys: string | string[],
         ): Network;
     }
 
@@ -465,7 +465,7 @@ declare module "bitcore-lib" {
         constructor(
             data: Buffer | Uint8Array | string | object,
             network?: Networks.Network,
-            type?: string
+            type?: string,
         );
     }
 
@@ -640,7 +640,7 @@ declare module "bitcore-lib-cash" {
                 hashbuf: Buffer,
                 sig: Signature,
                 pubkey: PublicKey,
-                endian?: "little"
+                endian?: "little",
             ): boolean;
         }
 
@@ -788,7 +788,7 @@ declare module "bitcore-lib-cash" {
         deriveChild(arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild(
             arg: string | number,
-            hardened?: boolean
+            hardened?: boolean,
         ): HDPrivateKey;
 
         toString(): string;
@@ -818,20 +818,20 @@ declare module "bitcore-lib-cash" {
         function buildMultisigOut(
             publicKeys: PublicKey[],
             threshold: number,
-            opts: object
+            opts: object,
         ): Script;
         function buildWitnessMultisigOutFromScript(script: Script): Script;
         function buildMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildP2SHMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildPublicKeyHashOut(address: Address): Script;
         function buildPublicKeyOut(pubkey: PublicKey): Script;
@@ -839,12 +839,12 @@ declare module "bitcore-lib-cash" {
         function buildScriptHashOut(script: Script): Script;
         function buildPublicKeyIn(
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
         function buildPublicKeyHashIn(
             publicKey: PublicKey,
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
 
         function fromAddress(address: string | Address): Script;
@@ -926,7 +926,7 @@ declare module "bitcore-lib-cash" {
         function remove(network: Network): void;
         function get(
             args: string | number | Network,
-            keys: string | string[]
+            keys: string | string[],
         ): Network;
     }
 
@@ -940,7 +940,7 @@ declare module "bitcore-lib-cash" {
         constructor(
             data: Buffer | Uint8Array | string | object,
             network?: Networks.Network,
-            type?: string
+            type?: string,
         );
     }
 
@@ -1115,7 +1115,7 @@ declare module "bitcore-lib-zcash" {
                 hashbuf: Buffer,
                 sig: Signature,
                 pubkey: PublicKey,
-                endian?: "little"
+                endian?: "little",
             ): boolean;
         }
 
@@ -1263,7 +1263,7 @@ declare module "bitcore-lib-zcash" {
         deriveChild(arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild(
             arg: string | number,
-            hardened?: boolean
+            hardened?: boolean,
         ): HDPrivateKey;
 
         toString(): string;
@@ -1293,20 +1293,20 @@ declare module "bitcore-lib-zcash" {
         function buildMultisigOut(
             publicKeys: PublicKey[],
             threshold: number,
-            opts: object
+            opts: object,
         ): Script;
         function buildWitnessMultisigOutFromScript(script: Script): Script;
         function buildMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildP2SHMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildPublicKeyHashOut(address: Address): Script;
         function buildPublicKeyOut(pubkey: PublicKey): Script;
@@ -1314,12 +1314,12 @@ declare module "bitcore-lib-zcash" {
         function buildScriptHashOut(script: Script): Script;
         function buildPublicKeyIn(
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
         function buildPublicKeyHashIn(
             publicKey: PublicKey,
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
 
         function fromAddress(address: string | Address): Script;
@@ -1401,7 +1401,7 @@ declare module "bitcore-lib-zcash" {
         function remove(network: Network): void;
         function get(
             args: string | number | Network,
-            keys: string | string[]
+            keys: string | string[],
         ): Network;
     }
 
@@ -1415,7 +1415,7 @@ declare module "bitcore-lib-zcash" {
         constructor(
             data: Buffer | Uint8Array | string | object,
             network?: Networks.Network,
-            type?: string
+            type?: string,
         );
     }
 
@@ -1590,7 +1590,7 @@ declare module "bitcore-lib-dogecoin" {
                 hashbuf: Buffer,
                 sig: Signature,
                 pubkey: PublicKey,
-                endian?: "little"
+                endian?: "little",
             ): boolean;
         }
 
@@ -1738,7 +1738,7 @@ declare module "bitcore-lib-dogecoin" {
         deriveChild(arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild(
             arg: string | number,
-            hardened?: boolean
+            hardened?: boolean,
         ): HDPrivateKey;
 
         toString(): string;
@@ -1768,20 +1768,20 @@ declare module "bitcore-lib-dogecoin" {
         function buildMultisigOut(
             publicKeys: PublicKey[],
             threshold: number,
-            opts: object
+            opts: object,
         ): Script;
         function buildWitnessMultisigOutFromScript(script: Script): Script;
         function buildMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildP2SHMultisigIn(
             pubkeys: PublicKey[],
             threshold: number,
             signatures: Buffer[],
-            opts: object
+            opts: object,
         ): Script;
         function buildPublicKeyHashOut(address: Address): Script;
         function buildPublicKeyOut(pubkey: PublicKey): Script;
@@ -1789,12 +1789,12 @@ declare module "bitcore-lib-dogecoin" {
         function buildScriptHashOut(script: Script): Script;
         function buildPublicKeyIn(
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
         function buildPublicKeyHashIn(
             publicKey: PublicKey,
             signature: crypto.Signature | Buffer,
-            sigtype: number
+            sigtype: number,
         ): Script;
 
         function fromAddress(address: string | Address): Script;
@@ -1876,7 +1876,7 @@ declare module "bitcore-lib-dogecoin" {
         function remove(network: Network): void;
         function get(
             args: string | number | Network,
-            keys: string | string[]
+            keys: string | string[],
         ): Network;
     }
 
@@ -1890,7 +1890,7 @@ declare module "bitcore-lib-dogecoin" {
         constructor(
             data: Buffer | Uint8Array | string | object,
             network?: Networks.Network,
-            type?: string
+            type?: string,
         );
     }
 

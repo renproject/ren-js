@@ -28,7 +28,7 @@ export const MarketPairs = new Map<
 
 export const getMarket = (
     left: Token,
-    right: Token
+    right: Token,
 ): MarketPair | undefined => {
     const opt1 = `${left}/${right}`;
     const opt2 = `${right}/${left}`;
@@ -49,63 +49,79 @@ export default () => {
     const [bottom, setBottom] = React.useState("DAI");
     const [value, setValue] = React.useState("0");
 
-    const toggleSide = () => { setTop(bottom); setBottom(top); };
+    const toggleSide = () => {
+        setTop(bottom);
+        setBottom(top);
+    };
 
-    const toggle = <div className="order--tabs">
-        <span
-            role="button"
-            onClick={toggleSide}
+    const toggle = (
+        <div className="order--tabs">
+            <span role="button" onClick={toggleSide}>
+                <img alt="Swap side" role="button" src={arrow} />
+            </span>
+        </div>
+    );
+
+    const topSelect = (
+        <SelectMarket
+            top
+            thisToken={top}
+            otherToken={bottom}
+            allTokens={Tokens}
+            key={"top"}
+            onMarketChange={setTop}
+            getMarket={getMarket}
+        />
+    );
+    const bottomSelect = (
+        <SelectMarket
+            bottom
+            thisToken={bottom}
+            otherToken={top}
+            allTokens={Tokens}
+            key={"bottom"}
+            onMarketChange={setBottom}
+            getMarket={getMarket}
+        />
+    );
+
+    const first = (
+        <TokenValueInput
+            title={"Top title"}
+            value={value}
+            subtext={
+                <>
+                    <CurrencyIcon currency={Currency.USD} />
+                    {value}
+                </>
+            }
+            hint={null}
+            error={false}
+            onValueChange={setValue}
         >
-            <img alt="Swap side" role="button" src={arrow} />
-        </span>
-    </div>;
+            {topSelect}
+        </TokenValueInput>
+    );
 
-    const topSelect = <SelectMarket
-        top
-        thisToken={top}
-        otherToken={bottom}
-        allTokens={Tokens}
-        key={"top"}
-        onMarketChange={setTop}
-        getMarket={getMarket}
-    />;
-    const bottomSelect = <SelectMarket
-        bottom
-        thisToken={bottom}
-        otherToken={top}
-        allTokens={Tokens}
-        key={"bottom"}
-        onMarketChange={setBottom}
-        getMarket={getMarket}
-    />;
+    const second = (
+        <TokenValueInput
+            title={"Bottom title"}
+            value={value.split("").reverse().join("")}
+            subtext={"Reversed value"}
+            hint={"This is the same but reversed"}
+            error={false}
+            onValueChange={null}
+            className="order-inputs--second"
+        >
+            {bottomSelect}
+        </TokenValueInput>
+    );
 
-    const first = <TokenValueInput
-        title={"Top title"}
-        value={value}
-        subtext={<>
-            <CurrencyIcon currency={Currency.USD} />
-            {value}
-        </>}
-        hint={null}
-        error={false}
-        onValueChange={setValue}
-    >
-        {topSelect}
-    </TokenValueInput >;
-
-    const second = <TokenValueInput
-        title={"Bottom title"}
-        value={value.split("").reverse().join("")}
-        subtext={"Reversed value"}
-        hint={"This is the same but reversed"}
-        error={false}
-        onValueChange={null}
-        className="order-inputs--second"
-    >
-        {bottomSelect}
-    </TokenValueInput>;
-
-    return <div className="order--wrapper">
-        {first}{toggle}{second}
-    </div>;
+    return (
+        <div className="order--wrapper">
+            {first}
+            {toggle}
+            {second}
+        </div>
+    );
 };

@@ -41,7 +41,7 @@ describe("Plaground", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("mint", async function() {
+    longIt("mint", async function () {
         this.timeout(100000000000);
 
         const from = Filecoin();
@@ -62,15 +62,15 @@ describe("Plaground", () => {
             // "https://lightnode-new-testnet.herokuapp.com/",
             // tslint:disable-next-line: no-http-string
             "http://34.239.188.210:18515",
-            { verbose: true }
+            { verbose: true },
         ) as Provider<RenVMParams, RenVMResponses>;
         const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
             // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider
+            httpProvider,
         ) as RenVMProviderInterface;
         const renVMProvider = new RenVMProvider(
             "testnet",
-            rpcProvider
+            rpcProvider,
         ) as AbstractRenVMProvider;
 
         const logLevel = LogLevel.Log;
@@ -82,7 +82,7 @@ describe("Plaground", () => {
         try {
             const fees = await renJS.getFees();
             suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8
+                fees[asset.toLowerCase()].lock + 0.0001 * 1e8,
             );
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
@@ -101,8 +101,8 @@ describe("Plaground", () => {
 
         console.info(
             `Deposit ${blue(asset)} to ${blue(
-                JSON.stringify(lockAndMint.gatewayAddress, null, "    ")
-            )}`
+                JSON.stringify(lockAndMint.gatewayAddress, null, "    "),
+            )}`,
         );
 
         // lockAndMint
@@ -123,15 +123,15 @@ describe("Plaground", () => {
         if (faucetSupported) {
             console.log(
                 `${blue("[faucet]")} ${blue(asset)} balance is ${blue(
-                    await account.balanceOf(asset)
-                )} ${blue(asset)} (${blue(await account.address(asset))})`
+                    await account.balanceOf(asset),
+                )} ${blue(asset)} (${blue(await account.address(asset))})`,
             );
         }
 
         await new Promise((resolve, reject) => {
             let i = 0;
 
-            lockAndMint.on("deposit", async deposit => {
+            lockAndMint.on("deposit", async (deposit) => {
                 const hash = await deposit.txHash();
 
                 // if (deposit.depositDetails.amount === "80000") {
@@ -143,7 +143,7 @@ describe("Plaground", () => {
 
                 deposit._logger = new SimpleLogger(
                     logLevel,
-                    color(`[${hash.slice(0, 6)}] `)
+                    color(`[${hash.slice(0, 6)}] `),
                 );
 
                 const info = deposit._logger.log;
@@ -153,7 +153,7 @@ describe("Plaground", () => {
                         // tslint:disable-next-line: no-any
                         (deposit.depositDetails as any).amount / 1e8
                     } ${asset}`,
-                    deposit.depositDetails
+                    deposit.depositDetails,
                 );
 
                 info(`Calling .confirmed`);
@@ -169,9 +169,9 @@ describe("Plaground", () => {
                         info(
                             retries === 10
                                 ? `Calling .signed`
-                                : `Retrying .signed`
+                                : `Retrying .signed`,
                         );
-                        await deposit.signed().on("status", status => {
+                        await deposit.signed().on("status", (status) => {
                             info(`status: ${status}`);
                         });
                         break;
@@ -183,7 +183,7 @@ describe("Plaground", () => {
                 }
 
                 info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", txHash => {
+                await deposit.mint().on("transactionHash", (txHash) => {
                     info(`txHash: ${txHash}`);
                 });
 
@@ -200,16 +200,16 @@ describe("Plaground", () => {
                     ) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
-                                suggestedAmount / 1e8
+                                suggestedAmount / 1e8,
                             )} ${blue(asset)} to ${blue(
-                                lockAndMint.gatewayAddress
-                            )}`
+                                lockAndMint.gatewayAddress,
+                            )}`,
                         );
                         account
                             .sendSats(
                                 lockAndMint.gatewayAddress,
                                 suggestedAmount,
-                                asset
+                                asset,
                             )
                             .catch(reject);
                     }

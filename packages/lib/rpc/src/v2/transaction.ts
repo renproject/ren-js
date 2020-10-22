@@ -141,7 +141,7 @@ export type MintTransactionInput = TransactionInput<MintParams>;
 export const hashTransaction = (
     version: string,
     selector: string,
-    packValue: TypedPackValue
+    packValue: TypedPackValue,
 ) => {
     assertType<string>("string", { version, selector });
     return sha256(
@@ -149,6 +149,6 @@ export const hashTransaction = (
             marshalString(version),
             marshalString(selector),
             marshalTypedPackValue(packValue),
-        ])
+        ]),
     );
 };

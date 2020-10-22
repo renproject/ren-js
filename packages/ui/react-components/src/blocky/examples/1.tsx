@@ -16,10 +16,11 @@ const randomAddress = () => {
 const range = (n: number) => Array.from(Array(n).keys());
 
 export default () => {
-
-    return <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {range(24).map((_, i) =>
-            <Blocky key={i} address={randomAddress()} />
-        )}
-    </div>;
+    return (
+        <div style={{ display: "flex", flexWrap: "wrap" }}>
+            {range(24).map((_, i) => (
+                <Blocky key={i} address={randomAddress()} />
+            ))}
+        </div>
+    );
 };

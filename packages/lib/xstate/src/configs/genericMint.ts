@@ -121,7 +121,16 @@ const depositListener = (
                         deposit
                             ?.signed()
                             .on("status", (state) => console.log(state))
-                            .then(() => callback("SIGNED"))
+                            .then((v) =>
+                                callback({
+                                    type: "SIGNED",
+                                    data: {
+                                        renResponse: v._queryTxResult?.out,
+                                        signature:
+                                            v._queryTxResult?.out?.signature,
+                                    },
+                                })
+                            )
                             .catch((e) =>
                                 callback({ type: "SIGN_ERROR", data: e })
                             );

@@ -175,7 +175,15 @@ export const depositMachine = Machine<
                         `${context.deposit.sourceTxHash}DepositListener`,
                 }),
                 on: {
-                    SIGNED: "accepted",
+                    SIGNED: {
+                        target: "accepted",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                ...evt.data,
+                            }),
+                        }),
+                    },
                 },
             },
             accepted: {

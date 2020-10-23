@@ -1,5 +1,5 @@
 import { Machine, interpret } from "xstate";
-import { mintMachine, mintConfig, GatewaySession } from "@renproject/xstate";
+import { mintMachine, mintConfig, GatewaySession } from "@renproject/rentx";
 import RenJS from "@renproject/ren";
 
 const mintTransaction: GatewaySession = {

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "2.0.0-alpha.15",
+    "version": "2.0.0-alpha.16",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -46,11 +46,11 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^2.0.0-alpha.15",
-        "@renproject/chains-ethereum": "^2.0.0-alpha.15",
-        "@renproject/chains-filecoin": "^2.0.0-alpha.15",
-        "@renproject/interfaces": "^2.0.0-alpha.15",
-        "@renproject/networks": "^2.0.0-alpha.15"
+        "@renproject/chains-bitcoin": "^2.0.0-alpha.16",
+        "@renproject/chains-ethereum": "^2.0.0-alpha.16",
+        "@renproject/chains-filecoin": "^2.0.0-alpha.16",
+        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/networks": "^2.0.0-alpha.16"
     },
     "resolutions": {
         "sha3": "^2.1.2"

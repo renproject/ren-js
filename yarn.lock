@@ -3174,25 +3174,25 @@
   integrity sha512-mAU1JnrE0u3g+103baJwZf81Zz5s6MvO8zDoFtpE3qJQ9zNEssCdgTA57Jjvk1WNLTIY/JDSWPLYcpmrVlGiCQ==
 
 "@renproject/interfaces@file:packages/lib/interfaces":
-  version "2.0.0-alpha.12"
+  version "2.0.0-alpha.13"
   dependencies:
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     web3-core "^2.0.0-alpha.1"
 
 "@renproject/networks@file:packages/lib/networks":
-  version "2.0.0-alpha.12"
+  version "2.0.0-alpha.13"
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/interfaces" "^2.0.0-alpha.13"
     "@renproject/sol" "^1.0.1"
     web3-utils "^2.0.0-alpha.1"
 
 "@renproject/rpc@file:packages/lib/rpc":
-  version "2.0.0-alpha.12"
+  version "2.0.0-alpha.13"
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.12"
-    "@renproject/provider" "^2.0.0-alpha.12"
-    "@renproject/utils" "^2.0.0-alpha.12"
+    "@renproject/interfaces" "^2.0.0-alpha.13"
+    "@renproject/provider" "^2.0.0-alpha.13"
+    "@renproject/utils" "^2.0.0-alpha.13"
     "@types/node" "^14.11.1"
     bignumber.js "^9.0.0"
     immutable "^4.0.0-rc.12"
@@ -3207,9 +3207,9 @@
     "@openzeppelin/upgrades" "^2.7.2"
 
 "@renproject/utils@file:packages/lib/utils":
-  version "2.0.0-alpha.12"
+  version "2.0.0-alpha.13"
   dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.12"
+    "@renproject/interfaces" "^2.0.0-alpha.13"
     "@types/create-hash" "1.2.2"
     "@types/keccak" "^3.0.1"
     "@types/mocha" "^8.0.3"

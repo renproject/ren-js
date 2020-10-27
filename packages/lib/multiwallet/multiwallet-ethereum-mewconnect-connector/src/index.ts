@@ -2,8 +2,6 @@ import { RenNetwork } from "@renproject/interfaces";
 import { AbstractEthereumConnector } from "@renproject/multiwallet-abstract-ethereum-connector";
 import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 
-// import MEWConnect from "@myetherwallet/mewconnect-web-client";
-
 export interface EthereumConnectorOptions {
     debug: boolean;
     rpc: { [chainId: number]: string };
@@ -14,8 +12,8 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
     private readonly rpc: { [chainId: number]: string };
     private readonly chainId: number;
 
-    // tslint:disable-next-line: no-any
-    private provider?: any; // MEWConnect.Provider;
+    private provider?: any;
+    private mewConnectProvider?: any;
     supportsTestnet = false;
     constructor(options: EthereumConnectorOptions) {
         super(options);
@@ -37,6 +35,8 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
         if (!provider) {
             throw Error("Missing Provider");
         }
+        // clear any hanging listeners
+        await this.cleanup();
 
         await provider.enable().catch((error: Error): void => {
             // TODO ideally this would be a better check
@@ -47,6 +47,7 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
             throw error;
         });
 
+        this.mewConnectProvider.on("disconnected", this.deactivate);
         provider.on("close", this.deactivate);
         provider.on("networkChanged", this.handleUpdate);
         provider.on("accountsChanged", this.handleUpdate);
@@ -59,15 +60,15 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
         if (this.provider) return this.provider as any;
         const { Provider } = await import(
             "@myetherwallet/mewconnect-web-client"
-        ).then(m => m?.default ?? m);
-        const mewConnectProvider = new Provider({
+        ).then((m) => m?.default ?? m);
+        this.mewConnectProvider = new Provider({
             windowClosedError: true,
             // tslint:disable-next-line: no-any
         }) as any;
-        this.provider = mewConnectProvider.makeWeb3Provider(
+        this.provider = this.mewConnectProvider.makeWeb3Provider(
             this.chainId,
             this.rpc[this.chainId],
-            true,
+            true
         );
         return this.provider;
     };
@@ -81,16 +82,23 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
     // Cast current ethereum network to Ren network version or throw
     async getRenNetwork(): Promise<RenNetwork> {
         if (!this.provider) throw new Error("not initialized");
-        return this.networkIdMapper(await this.provider.send("eth_chainId"));
+        // MEWConnect only support Mainnet
+        return RenNetwork.Mainnet;
+        // return this.networkIdMapper(await this.provider.send("eth_chainId"));
     }
 
-    deactivate = async (reason?: string) => {
-        // tslint:disable-next-line: no-any
+    async cleanup() {
+        this.mewConnectProvider.removeListener("disconnected", this.deactivate);
         const provider: any = await this.getProvider();
         provider.removeListener("close", this.deactivate);
         provider.removeListener("networkChanged", this.handleUpdate);
         provider.removeListener("accountsChanged", this.handleUpdate);
         provider.removeListener("chainChanged", this.handleUpdate);
+    }
+
+    deactivate = async (reason?: string) => {
+        await this.cleanup();
+        const provider: any = await this.getProvider();
         await provider.close();
         this.emitter.emitDeactivate(reason);
     };

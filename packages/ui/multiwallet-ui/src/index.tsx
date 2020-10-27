@@ -1,11 +1,11 @@
 import {
-  Box,
-  ButtonBase,
-  IconButton,
-  Modal,
-  Paper,
-  PaperProps,
-  Typography,
+    Box,
+    ButtonBase,
+    IconButton,
+    Modal,
+    Paper,
+    PaperProps,
+    Typography,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import CloseIcon from "@material-ui/icons/Close";
@@ -31,9 +31,9 @@ export interface ConnectorConfig<P, A> {
    */
   connector: ConnectorInterface<P, A>;
   /**
-   * A component to be shown before a wallet is activated, for extra context / warnings
-   */
-  info?: React.FC<{ acknowledge: () => void; close: () => void }>;
+     A component to be shown before a wallet is activated, for extra context / warnings
+  */
+  info?: React.FC<{ acknowledge: () => void; onClose: () => void }>;
 }
 
 export interface WalletPickerConfig<P, A> {
@@ -48,45 +48,63 @@ export interface WalletPickerProps<P, A>
    */
   chain: string;
   /**
-   * Function used to close/cancel the connection request
+     Function used to close/cancel the connection request
    */
-  close: () => void;
+  onClose: () => void;
   /**
    * Configuration for connectors across all chains
    */
   config: WalletPickerConfig<P, A>;
   /**
-   * Whether a wallet is in the process of connecting
+     Whether a wallet is in the process of connecting
    */
   connecting?: boolean;
   /**
-   * Whether a wallet is connected to the wrong chain
+     Whether a wallet is connected to the wrong chain
    */
   wrongNetwork?: boolean;
   /**
-   * Network the wallet should connect to
+     Network the wallet should connect to
    */
-  targetNetwork: RenNetwork;
+  targetNetwork: RenNetwork | string;
   /**
-   * MaterialUI class overrides for the component shown when connecting
+     MaterialUI class overrides for the component shown when connecting
    */
   connectingClasses?: PaperProps['classes'];
   /**
-   * MaterialUI class overrides for the wallet selection components
+     MaterialUI class overrides for the wallet selection components
    */
   walletClasses?: WalletEntryProps<P, A>['classes'];
   /**
-   * MaterialUI class overrides for the picker container
+     MaterialUI class overrides for the picker container
    */
   pickerClasses?: ReturnType<typeof useWalletPickerStyles>;
   /**
-   * An optional component to show before wallets are presented
+     An optional component to show before wallets are presented
    */
-  DefaultInfo?: React.FC<{ acknowledge: () => void; close: () => void }>;
+  DefaultInfo?: React.FC<{ acknowledge: () => void; onClose: () => void }>;
   /**
-   * An optional replacement to show when a wallet is connecting
+     An optional replacement to show when a wallet is connecting
    */
-  ConnectingInfo?: React.FC<{ chain: string }>;
+  ConnectingInfo?: React.FC<{ chain: string; onClose: () => void }>;
+  /**
+     An optional replacement to show when a wallet is connected to the wong network
+   */
+  WrongNetworkInfo?: React.FC<{
+    chain: string;
+    targetNetwork: string;
+    onClose: () => void;
+  }>;
+
+  /**
+     An optional replacement for the button shown for each wallet option
+   */
+  WalletEntryButton?: React.FC<{
+    chain: string;
+    onClick: () => void;
+    name: string;
+    logo: string;
+  }>;
 }
 
 const useWalletPickerStyles = makeStyles({
@@ -99,10 +117,36 @@ const useWalletPickerStyles = makeStyles({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  headerTitle: {},
+  headerCloseIcon: {},
   body: {
     textTransform: 'capitalize',
   },
+  chainTitle: {
+    textTransform: 'capitalize',
+  },
 });
+
+export const WalletPickerHeader = ({
+  title,
+  classes,
+  onClose,
+}: {
+  title: string;
+  classes: ReturnType<typeof useWalletPickerStyles>;
+  onClose: WalletPickerProps<any, any>['onClose'];
+}) => (
+  <Box pl={2} className={classes.header} flexDirection="row">
+    <Typography className={classes.headerTitle}>{title}</Typography>
+    <IconButton
+      className={classes.headerCloseIcon}
+      onClick={onClose}
+      aria-label="close"
+    >
+      <CloseIcon />
+    </IconButton>
+  </Box>
+);
 
 /**
  * A WalletPicker component, intended to be launched in a modal.
@@ -116,7 +160,7 @@ const useWalletPickerStyles = makeStyles({
 export const WalletPicker = <P, A>({
   chain,
   config,
-  close,
+  onClose,
   connecting,
   wrongNetwork,
   targetNetwork,
@@ -125,6 +169,8 @@ export const WalletPicker = <P, A>({
   pickerClasses,
   DefaultInfo,
   ConnectingInfo,
+  WrongNetworkInfo,
+  WalletEntryButton,
   children,
 }: WalletPickerProps<P, A>) => {
   const defaultClasses = useWalletPickerStyles();
@@ -136,7 +182,10 @@ export const WalletPicker = <P, A>({
   const [Info, setInfo] = React.useState(
     DefaultInfo
       ? () => (
-          <DefaultInfo close={close} acknowledge={() => setInfo(undefined)} />
+          <DefaultInfo
+            onClose={onClose}
+            acknowledge={() => setInfo(undefined)}
+          />
         )
       : undefined
   );
@@ -145,33 +194,56 @@ export const WalletPicker = <P, A>({
     <Paper className={classes.root}>
       {Info ||
         (connecting &&
-          ((ConnectingInfo && <ConnectingInfo chain={chain} />) || (
-            <Connecting classes={connectingClasses} chain={chain} />
+          (ConnectingInfo ? (
+            <ConnectingInfo chain={chain} onClose={onClose} />
+          ) : (
+            <>
+              <WalletPickerHeader
+                classes={classes}
+                onClose={onClose}
+                title="Connecting"
+              />
+              <Connecting classes={connectingClasses} chain={chain} />
+            </>
           ))) ||
-        (wrongNetwork && (
-          <WrongNetwork
-            classes={connectingClasses}
-            chain={chain}
-            targetNetwork={targetNetwork}
-          />
-        )) || (
+        (wrongNetwork &&
+          (WrongNetworkInfo ? (
+            <WrongNetworkInfo
+              chain={chain}
+              targetNetwork={targetNetwork}
+              onClose={onClose}
+            />
+          ) : (
+            <>
+              <WalletPickerHeader
+                classes={classes}
+                onClose={onClose}
+                title="Wrong Network"
+              />
+              <WrongNetwork
+                classes={connectingClasses}
+                chain={chain}
+                targetNetwork={targetNetwork}
+              />
+            </>
+          ))) || (
           <>
-            <Box pl={2} className={classes.header} flexDirection="row">
-              <Typography>Connect a wallet</Typography>
-              <IconButton onClick={close} aria-label="close">
-                <CloseIcon />
-              </IconButton>
-            </Box>
+            <WalletPickerHeader
+              classes={classes}
+              onClose={onClose}
+              title="Connect a wallet"
+            />
             <Box p={2} className={classes.body}>
-              <Typography>{chain}</Typography>
-              {connectors.map(x => (
+              <Typography className={classes.chainTitle}>{chain}</Typography>
+              {connectors.map((x) => (
                 <WalletEntry
                   key={x.name}
                   {...x}
                   classes={walletClasses}
-                  close={close}
+                  onClose={onClose}
                   chain={chain}
                   setInfo={setInfo}
+                  WalletEntryButton={WalletEntryButton}
                 />
               ))}
             </Box>
@@ -206,15 +278,28 @@ export const WalletPickerModal = <P, A>({
   const wrongNetwork = enabledChains[options.chain]?.status === 'wrong_network';
   useEffect(() => {
     if (connected) {
-      options.close();
+      options.onClose();
     }
   }, [connected, options]);
 
   useEffect(() => {
     if (options.targetNetwork !== targetNetwork) {
-      setTargetNetwork(options.targetNetwork);
+      switch (options.targetNetwork) {
+        case 'testnet':
+          setTargetNetwork(RenNetwork.Testnet);
+          break;
+        case 'mainnet':
+          setTargetNetwork(RenNetwork.Mainnet);
+      }
     }
   }, [options.targetNetwork, targetNetwork, setTargetNetwork]);
+
+  const cancel = useCallback(() => {
+    if (connecting || wrongNetwork) {
+      enabledChains[options.chain]?.connector.deactivate();
+    }
+    options.onClose();
+  }, [connecting, wrongNetwork, enabledChains, options]);
 
   return (
     <Modal open={open || false}>
@@ -227,6 +312,7 @@ export const WalletPickerModal = <P, A>({
       >
         <WalletPicker
           {...options}
+          onClose={cancel}
           connecting={connecting}
           wrongNetwork={wrongNetwork}
         />
@@ -235,7 +321,7 @@ export const WalletPickerModal = <P, A>({
   );
 };
 
-const useWalletEntryStyles = makeStyles(t => ({
+const useWalletEntryStyles = makeStyles((t) => ({
   button: {
     width: '100%',
     display: 'flex',
@@ -255,8 +341,9 @@ const useWalletEntryStyles = makeStyles(t => ({
 interface WalletEntryProps<P, A> extends ConnectorConfig<P, A> {
   chain: string;
   classes?: ReturnType<typeof useWalletEntryStyles>;
-  close: () => void;
+  onClose: () => void;
   setInfo: (i: any) => void;
+  WalletEntryButton?: WalletPickerProps<P, A>['WalletEntryButton'];
 }
 
 const WalletEntry = <P, A>({
@@ -266,16 +353,17 @@ const WalletEntry = <P, A>({
   connector,
   info: Info,
   classes,
-  close,
+  onClose,
   setInfo,
+  WalletEntryButton,
 }: WalletEntryProps<P, A> & {}) => {
   const { activateConnector } = useMultiwallet<P, A>();
 
   const buildInfo = useCallback(
-    Info => {
+    (Info) => {
       return setInfo(() => (
         <Info
-          close={close}
+          onClose={onClose}
           acknowledge={() => {
             setInfo(undefined);
             activateConnector(chain, connector);
@@ -283,22 +371,28 @@ const WalletEntry = <P, A>({
         />
       ));
     },
-    [setInfo, activateConnector, close, chain, connector]
+    [setInfo, activateConnector, onClose, chain, connector]
   );
 
   const defaultClasses = useWalletEntryStyles();
   const combinedClasses = { ...defaultClasses, ...classes };
-  return (
-    <ButtonBase
-      className={combinedClasses.button}
-      onClick={() => {
-        if (Info) {
-          buildInfo(Info);
-        } else {
-          activateConnector(chain, connector);
-        }
-      }}
-    >
+  const onClick = useCallback(() => {
+    if (Info) {
+      buildInfo(Info);
+    } else {
+      activateConnector(chain, connector);
+    }
+  }, [activateConnector, buildInfo, Info, chain, connector]);
+
+  return WalletEntryButton ? (
+    <WalletEntryButton
+      chain={chain}
+      onClick={onClick}
+      name={name}
+      logo={logo}
+    />
+  ) : (
+    <ButtonBase className={combinedClasses.button} onClick={onClick}>
       <Paper className={combinedClasses.body}>
         <Typography>{name}</Typography> <img alt={`${name} logo`} src={logo} />
       </Paper>
@@ -306,7 +400,7 @@ const WalletEntry = <P, A>({
   );
 };
 
-const useConnectingStyles = makeStyles(t => ({
+const useConnectingStyles = makeStyles((t) => ({
   root: {
     display: 'flex',
     padding: t.spacing(2),

@@ -1,11 +1,11 @@
-# 🤖 @renproject/xstate
+# 🤖 @renproject/rentx
 This implements RenVM transaction lifecycles in xstate statemachines to allow developers to easily trace the state of a transaction, and explicitly know which cases they should handle during processing.
 
 The aim is to provide a declarative interface, that can accept serializable "transaction" objects, that will reactively process the appropriate stages in the transaction lifecycle.
 
-## Differences between renjs and @renproject/xstate
+## Differences between renjs and @renproject/rentx
 
-|                           | renjs | @renproject/xstate |
+|                           | renjs | @renproject/rentx  |
 | ------------------------- | ----- | ------------------ |
 | reactive                  | ❌    | ✓                  |
 | serializable transactions | ❌    | ✓                  |
@@ -35,7 +35,7 @@ Each machine requires
 Minting
 ```typescript
 import { Machine, interpret } from "xstate";
-import { mintMachine, mintConfig } from "@renproject/xstate";
+import { mintMachine, mintConfig } from "@renproject/rentx";
 import {
   Bitcoin,
   BinanceSmartChain,

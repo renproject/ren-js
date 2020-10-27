@@ -17,13 +17,19 @@ const resultOrRaw = <T>(x: { results: T } | T) => {
     return x;
 };
 
-export const ethNetworkToRenNetwork = (id: number): RenNetwork => {
+export const ethNetworkToRenNetwork = (id: number | string): RenNetwork => {
+    let decodedId = id;
+    if (typeof id === "string") {
+        try {
+            decodedId = parseInt(id);
+        } catch (e) {
+            decodedId = Buffer.from(id.split("0x").pop() || "", "hex")[0];
+        }
+    }
     return {
         1: RenNetwork.Mainnet,
-        "0x01": RenNetwork.Mainnet,
         42: RenNetwork.Testnet,
-        "0x42": RenNetwork.Testnet,
-    }[id];
+    }[decodedId];
 };
 
 export interface EthereumConnectorOptions {

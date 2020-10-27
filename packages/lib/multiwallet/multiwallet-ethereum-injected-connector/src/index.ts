@@ -32,9 +32,14 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
         // No good typings for injected providers exist...
         // tslint:disable-next-line: no-any
         const provider: any = await this.getProvider();
+
         if (!provider) {
             throw Error("Missing Provider");
         }
+
+        // clear all previous listeners
+        await this.cleanup();
+
         if (provider.isMetamask) {
             // This behaviour is being deprecated so don't rely on it
             provider.autoRefreshOnNetworkChange = false;
@@ -68,13 +73,16 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
         return window.ethereum;
     };
 
-    deactivate = async (reason?: string) => {
-        // tslint:disable-next-line: no-any
+    cleanup = async () => {
         const provider: any = await this.getProvider();
         provider.removeListener("close", this.deactivate);
         provider.removeListener("networkChanged", this.handleUpdate);
         provider.removeListener("accountsChanged", this.handleUpdate);
         provider.removeListener("chainChanged", this.handleUpdate);
-        this.emitter.emitDeactivate(reason);
+    };
+
+    deactivate = async (reason?: string) => {
+        await this.cleanup();
+        return this.emitter.emitDeactivate(reason);
     };
 }

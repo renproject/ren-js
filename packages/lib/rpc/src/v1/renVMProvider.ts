@@ -210,11 +210,14 @@ export class RenVMProvider implements RenVMProviderInterface {
         _gPubKey: Buffer,
         _nHash: Buffer,
         _nonce: Buffer,
-        // tslint:disable-next-line: no-any
-        _output: any,
+        _output: {
+            txid: Buffer;
+            txindex: string;
+        },
+        _amount: string,
         _payload: Buffer,
         _pHash: Buffer,
-        _to: Buffer,
+        _to: string,
         outputHashFormat: string,
     ): Buffer => {
         assertType<Buffer>("Buffer", { gHash });

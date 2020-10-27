@@ -20,7 +20,10 @@ import { keccak256 } from "./hash";
  */
 export const generatePHash = (zip: EthArgs, logger?: Logger): Buffer => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = Array.isArray(zip[0]) ? ((zip[0] as any) as EthArgs) : zip; // tslint:disable-line: no-any
+    const args = (Array.isArray(zip[0])
+        ? ((zip[0] as any) as EthArgs) // tslint:disable-line: no-any
+        : zip
+    ).filter((arg) => !arg.notInPayload);
 
     const types = args.map((param) => param.type);
     const values = args.map((param) => param.value);

@@ -62,7 +62,7 @@ export class HttpProvider<
         // Print request:
         if (this.logger) {
             // tslint:disable-next-line: no-console
-            this.logger.log(
+            this.logger.debug(
                 "[request]",
                 JSON.stringify(generatePayload(method, request), null, "    "),
             );
@@ -94,7 +94,7 @@ export class HttpProvider<
             }
             if (this.logger) {
                 // tslint:disable-next-line: no-console
-                this.logger.log(
+                this.logger.debug(
                     "[response]",
                     JSON.stringify(response.data.result, null, "    "),
                 );

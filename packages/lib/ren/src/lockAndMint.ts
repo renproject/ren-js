@@ -23,6 +23,7 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
+    overrideContractCalls,
     Ox,
     payloadToMintABI,
     renVMHashToBase64,
@@ -607,11 +608,20 @@ export class LockAndMintDeposit<
             contractCalls.length - 1
         ];
 
-        const fnABI = payloadToMintABI(contractFn, contractParams || []);
+        const filteredContractParams = contractParams
+            ? contractParams.filter(
+                  (contractParam) => !contractParam.notInPayload,
+              )
+            : contractParams;
+
+        const fnABI = payloadToMintABI(
+            contractFn,
+            filteredContractParams || [],
+        );
 
         const encodedParameters = new AbiCoder().encodeParameters(
-            (contractParams || []).map((i) => i.type),
-            (contractParams || []).map((i) => i.value),
+            (filteredContractParams || []).map((i) => i.type),
+            (filteredContractParams || []).map((i) => i.value),
         );
 
         if (this._params.tags && this._params.tags.length > 1) {
@@ -669,7 +679,7 @@ export class LockAndMintDeposit<
             tags,
         );
         if (txHash && toBase64(returnedTxHash) !== txHash) {
-            this._logger.debug(
+            this._logger.warn(
                 `Unexpected txHash returned from RenVM. Received: ${toBase64(
                     returnedTxHash,
                 )}, expected: ${txHash}`,
@@ -857,7 +867,7 @@ export class LockAndMintDeposit<
      */
     public mint = (
         // tslint:disable-next-line: no-any
-        _txConfig?: any,
+        override?: { [name: string]: any },
         // tslint:disable-next-line: no-any
     ): PromiEvent<any, { [key: string]: any }> => {
         // tslint:disable-next-line: no-any
@@ -875,11 +885,21 @@ export class LockAndMintDeposit<
                 );
             }
 
+            const overrideArray = Object.keys(override || {}).map((key) => ({
+                name: key,
+                value: (override || {})[key],
+            }));
+
+            const contractCalls = overrideContractCalls(
+                this._params.contractCalls || [],
+                { contractParams: overrideArray },
+            );
+
             const asset = this._params.asset;
 
             return await this._params.to.submitMint(
                 asset,
-                this._params.contractCalls || [],
+                contractCalls,
                 this._queryTxResult,
                 (promiEvent as unknown) as EventEmitter,
             );

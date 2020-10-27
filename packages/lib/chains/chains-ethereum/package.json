@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-ethereum",
-    "version": "2.0.0-alpha.13",
+    "version": "2.0.0-alpha.14",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -46,9 +46,9 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.13",
-        "@renproject/networks": "^2.0.0-alpha.13",
-        "@renproject/utils": "^2.0.0-alpha.13",
+        "@renproject/interfaces": "^2.0.0-alpha.14",
+        "@renproject/networks": "^2.0.0-alpha.14",
+        "@renproject/utils": "^2.0.0-alpha.14",
         "@types/node": "^14.11.1",
         "bignumber.js": "^9.0.0",
         "bnc-sdk": "^2.1.5",

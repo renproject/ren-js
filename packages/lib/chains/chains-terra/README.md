@@ -1,1 +1,1 @@
-# `@renproject/chains-filecoin`
+# `@renproject/chains-terra`

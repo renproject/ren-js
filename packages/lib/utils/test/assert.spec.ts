@@ -7,7 +7,6 @@ import BigNumber from "bignumber.js";
 import { assert, assertObject, assertType } from "../src/assert";
 
 chai.should();
-require("dotenv").config();
 
 describe("assert", () => {
     it("basic assert", () => {

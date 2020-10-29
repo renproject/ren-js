@@ -1,4 +1,5 @@
 import {
+    AbiItem,
     BurnDetails,
     ContractCall,
     Logger,
@@ -7,7 +8,6 @@ import {
     PromiEvent,
     RenNetwork,
 } from "@renproject/interfaces";
-import { RenNetworkDetails, RenNetworkDetailsMap } from "@renproject/networks";
 import {
     assert,
     assertType,
@@ -28,6 +28,25 @@ import Web3 from "web3";
 import { Log, TransactionConfig, TransactionReceipt } from "web3-core";
 import { provider } from "web3-providers";
 import { keccak256 as web3Keccak256 } from "web3-utils";
+
+import {
+    EthereumConfig,
+    renChaosnet,
+    renDevnet,
+    renLocalnet,
+    renMainnet,
+    renStagingTestnet,
+    renTestnet,
+} from "./networks";
+
+export const EthereumConfigMap = {
+    [RenNetwork.Mainnet]: renMainnet,
+    [RenNetwork.Chaosnet]: renChaosnet,
+    [RenNetwork.Testnet]: renTestnet,
+    [RenNetwork.Devnet]: renDevnet,
+    [RenNetwork.Localnet]: renLocalnet,
+    [RenNetwork.StagingTestnet]: renStagingTestnet,
+};
 
 export type Web3Events = {
     transactionHash: [string];
@@ -256,14 +275,35 @@ export const extractBurnDetails = async (
 };
 
 export const getGatewayAddress = async (
-    network: RenNetworkDetails,
+    network: EthereumConfig,
     web3: Web3,
     asset: Asset,
 ): Promise<string> => {
     try {
+        const getGatewayBySymbol: AbiItem = {
+            constant: true,
+            inputs: [
+                {
+                    internalType: "string",
+                    name: "_tokenSymbol",
+                    type: "string",
+                },
+            ],
+            name: "getGatewayBySymbol",
+            outputs: [
+                {
+                    internalType: "contract IGateway",
+                    name: "",
+                    type: "address",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
         const registry = new web3.eth.Contract(
-            network.addresses.GatewayRegistry.abi,
-            network.addresses.GatewayRegistry.address,
+            [getGatewayBySymbol],
+            network.addresses.GatewayRegistry,
         );
         const registryAddress: string = await registry.methods
             .getGatewayBySymbol(asset)
@@ -281,7 +321,7 @@ export const getGatewayAddress = async (
 };
 
 export const findBurnByNonce = async (
-    network: RenNetworkDetails,
+    network: EthereumConfig,
     web3: Web3,
     asset: Asset,
     nonce: string,
@@ -377,14 +417,36 @@ export const manualPromiEvent = async (
 };
 
 export const getTokenAddress = async (
-    network: RenNetworkDetails,
+    network: EthereumConfig,
     web3: Web3,
     asset: Asset,
 ): Promise<string> => {
     try {
+        const getTokenBySymbolABI: AbiItem = {
+            constant: true,
+            inputs: [
+                {
+                    internalType: "string",
+                    name: "_tokenSymbol",
+                    type: "string",
+                },
+            ],
+            name: "getTokenBySymbol",
+            outputs: [
+                {
+                    internalType: "contract IERC20",
+                    name: "",
+                    type: "address",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
         const registry = new web3.eth.Contract(
-            network.addresses.GatewayRegistry.abi,
-            network.addresses.GatewayRegistry.address,
+            [getTokenBySymbolABI],
+            network.addresses.GatewayRegistry,
         );
         const tokenAddress: string = await registry.methods
             .getTokenBySymbol(asset)
@@ -402,7 +464,7 @@ export const getTokenAddress = async (
 };
 
 export const findTransactionBySigHash = async (
-    network: RenNetworkDetails,
+    network: EthereumConfig,
     web3: Web3,
     asset: Asset,
     sigHash: Buffer,
@@ -410,8 +472,29 @@ export const findTransactionBySigHash = async (
 ): Promise<string | undefined> => {
     try {
         const gatewayAddress = await getGatewayAddress(network, web3, asset);
+        const statusABI: AbiItem = {
+            constant: true,
+            inputs: [
+                {
+                    internalType: "bytes32",
+                    name: "",
+                    type: "bytes32",
+                },
+            ],
+            name: "status",
+            outputs: [
+                {
+                    internalType: "bool",
+                    name: "",
+                    type: "bool",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
         const gatewayContract = new web3.eth.Contract(
-            network.addresses.Gateway.abi,
+            [statusABI],
             gatewayAddress,
         );
         // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
@@ -587,10 +670,9 @@ export class EthereumBaseChain
     implements MintChain<Transaction, Asset, Address> {
     public name = "Ethereum";
     public legacyName = "Eth";
-    public renNetwork: RenNetwork | undefined;
 
     public readonly web3: Web3 | undefined;
-    public renNetworkDetails: RenNetworkDetails | undefined;
+    public renNetworkDetails: EthereumConfig | undefined;
 
     public readonly getTokenContractAddress = async (asset: Asset) => {
         if (!this.web3 || !this.renNetworkDetails) {
@@ -607,29 +689,22 @@ export class EthereumBaseChain
 
     constructor(
         web3Provider: provider,
-        renNetwork?: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails,
+        renNetworkDetails?: RenNetwork | EthereumConfig,
     ) {
         this.web3 = new Web3(web3Provider);
 
         this.renNetworkDetails =
-            renNetworkDetails ||
-            (renNetwork ? RenNetworkDetailsMap[renNetwork] : undefined);
-
-        if (renNetwork) {
-            this.initialize(renNetwork);
-        }
+            typeof renNetworkDetails === "string"
+                ? EthereumConfigMap[renNetworkDetails]
+                : renNetworkDetails;
     }
 
     /**
      * See [LockChain.initialize].
      */
     initialize = (renNetwork: RenNetwork) => {
-        if (!this.renNetwork) {
-            this.renNetwork = renNetwork;
-            this.renNetworkDetails =
-                this.renNetworkDetails || RenNetworkDetailsMap[renNetwork];
-        }
+        this.renNetworkDetails =
+            this.renNetworkDetails || EthereumConfigMap[renNetwork];
         return this;
     };
 
@@ -707,7 +782,10 @@ export class EthereumBaseChain
             const transactionBlock = new BigNumber(
                 receipt.blockNumber.toString(),
             );
-            current = currentBlock.minus(transactionBlock).plus(1).toNumber();
+            current = currentBlock
+                .minus(transactionBlock)
+                .plus(1)
+                .toNumber();
         }
         return {
             current,

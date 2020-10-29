@@ -4,6 +4,9 @@ export enum RenNetwork {
     Testnet = "testnet",
     Devnet = "devnet",
     Localnet = "localnet",
+
+    // Staging
+    StagingTestnet = "staging-testnet",
 }
 
 export type RenNetworkString =
@@ -11,7 +14,8 @@ export type RenNetworkString =
     | "chaosnet"
     | "testnet"
     | "devnet"
-    | "localnet";
+    | "localnet"
+    | "staging-testnet";
 
 export const RenNetworks = [
     RenNetwork.Mainnet,
@@ -19,6 +23,7 @@ export const RenNetworks = [
     RenNetwork.Testnet,
     RenNetwork.Devnet,
     RenNetwork.Localnet,
+    RenNetwork.StagingTestnet,
 ];
 export const isRenNetwork = (
     // tslint:disable-next-line: no-any

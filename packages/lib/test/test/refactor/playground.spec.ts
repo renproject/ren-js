@@ -1,27 +1,9 @@
-// tslint:disable: no-console
+// tslint:disable: no-console no-implicit-dependencies
 
-import {
-    Bitcoin,
-    Dogecoin,
-    Ethereum,
-    Filecoin,
-    Terra,
-} from "@renproject/chains";
+import * as Chains from "@renproject/chains";
+
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renRinkeby } from "@renproject/networks";
-import {
-    HttpProvider,
-    OverwriteProvider,
-    Provider,
-} from "@renproject/provider";
 import RenJS from "@renproject/ren";
-import { AbstractRenVMProvider } from "@renproject/rpc";
-import {
-    RenVMParams,
-    RenVMProvider,
-    RenVMProviderInterface,
-    RenVMResponses,
-} from "@renproject/rpc/src/v2";
 import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
@@ -37,15 +19,15 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 const colors = [green, magenta, yellow, cyan, blue, red];
 
-describe("Plaground", () => {
+describe("Playground", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Filecoin();
-        const asset = "FIL";
+        const from = Chains.Filecoin();
+        const asset = from._asset;
         // const from = Bitcoin();
         // const asset = "BTC";
         const faucetSupported =
@@ -55,29 +37,15 @@ describe("Plaground", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renStagingTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            // tslint:disable-next-line: no-http-string
-            "http://34.239.188.210:18515",
-        ) as Provider<RenVMParams, RenVMResponses>;
-        const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider,
-        ) as RenVMProviderInterface;
-        const renVMProvider = new RenVMProvider(
-            "testnet",
-            rpcProvider,
-        ) as AbstractRenVMProvider;
-
         const logLevel = LogLevel.Log;
-        const renJS = new RenJS(renVMProvider, { logLevel });
+        const renJS = new RenJS("staging-testnet", { logLevel });
         // const renJS = new RenJS("testnet")
 
         // Use 0.0001 more than fee.
-        let suggestedAmount;
+        let suggestedAmount: number;
         try {
             const fees = await renJS.getFees();
             suggestedAmount = Math.floor(
@@ -91,7 +59,7 @@ describe("Plaground", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Ethereum(provider, undefined, renRinkeby).Account({
+            to: Chains.Ethereum(provider, Chains.renStagingTestnet).Account({
                 address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
             }),
 

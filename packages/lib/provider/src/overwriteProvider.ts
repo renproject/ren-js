@@ -18,7 +18,7 @@ export class OverwriteProvider<
         this.provider = provider;
     }
 
-    public async sendMessage<Method extends string>(
+    public async sendMessage<Method extends keyof Requests & string>(
         method: Method,
         request: Requests[Method],
         retry = 2,

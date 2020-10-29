@@ -1,8 +1,8 @@
 // tslint:disable: no-console
 
-import { Bitcoin, Ethereum } from "@renproject/chains";
+import * as Chains from "@renproject/chains";
+
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renTestnet } from "@renproject/networks";
 import RenJS from "@renproject/ren";
 import { SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
@@ -23,7 +23,7 @@ describe("Refactor: mint", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("mint to contract", async function () {
+    longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
         const asset = "BTC";
@@ -32,7 +32,7 @@ describe("Refactor: mint", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const logLevel: LogLevel = LogLevel.Log;
@@ -54,8 +54,8 @@ describe("Refactor: mint", () => {
 
         const lockAndMint = await renJS.lockAndMint({
             asset,
-            from: Bitcoin(),
-            to: Ethereum(provider).Account({
+            from: Chains.Bitcoin(),
+            to: Chains.Ethereum(provider).Account({
                 address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
         });

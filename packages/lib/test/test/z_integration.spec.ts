@@ -9,14 +9,12 @@ import {
     RenContract,
     RenNetwork,
 } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
 import {
     Ox,
     parseRenContract,
     retryNTimes,
     SECONDS,
     sleep,
-    stringToNetwork,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -71,9 +69,9 @@ const MNEMONIC = process.env.MNEMONIC;
 const NETWORK = process.env.NETWORK;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
-describe("Cross chain transactions", function () {
+describe("Cross chain transactions", function() {
     // // Disable test timeout.
-    // this.timeout(0);
+    this.timeout(0);
     // let provider: HDWalletProvider;
     // let web3: Web3;
     // let network: RenNetwork;

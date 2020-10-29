@@ -9,7 +9,13 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
+import { HttpProvider, OverwriteProvider } from "@renproject/provider";
 import { AbstractRenVMProvider, v1 } from "@renproject/rpc";
+import {
+    RenVMParams,
+    RenVMProvider,
+    RenVMResponses,
+} from "@renproject/rpc/build/main/v2";
 import { Ox, randomNonce, strip0x } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
@@ -27,20 +33,20 @@ export interface RenJSConfig {
  * import RenJS from "@renproject/ren";
  * ```
  *
- * It's initialized with a network, which controls both the RenVM network and
- * Ethereum chain to use:
+ * By default, RenJS will connect to the RenVM mainnet network. To connect
+ * to `testnet` or to configure a custom connection, RenJS takes an optional
+ * provider object. See the [[constructor]] for more details.
  *
  * ```typescript
  * new RenJS(); // Same as `new RenJS("mainnet");`
  * new RenJS("testnet");
+ * new RenJS(custom provider object);
  * ```
- *
- * A second optional parameter lets you provide a RenVM RPC provider or a
- * lightnode URL. See the [[constructor]] for more details.
  *
  * It then exposes two main functions:
  * 1. [[lockAndMint]] - for transferring assets to Ethereum.
  * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
+ *
  */
 export default class RenJS {
     // /**
@@ -85,6 +91,7 @@ export default class RenJS {
             | RenNetwork
             | RenNetworkString
             | AbstractRenVMProvider
+            | "staging-testnet"
             | null
             | undefined,
         config?: RenJSConfig,
@@ -105,8 +112,20 @@ export default class RenJS {
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
+        if (provider === "staging-testnet") {
+            provider = new RenVMProvider(
+                "testnet",
+                new OverwriteProvider<RenVMParams, RenVMResponses>(
+                    new HttpProvider<RenVMParams, RenVMResponses>(
+                        // "http://34.239.188.210:18515",
+                        "https://lightnode-new-testnet.herokuapp.com/",
+                    ),
+                ),
+            );
+        }
+
         // Use provided provider, provider URL or default lightnode URL.
-        const rpcProvider =
+        this.renVM =
             provider && typeof provider !== "string"
                 ? provider
                 : new v1.RenVMProvider(
@@ -114,10 +133,6 @@ export default class RenJS {
                       undefined,
                       this._logger,
                   );
-
-        // FIXME
-        // tslint:disable-next-line: no-any
-        this.renVM = rpcProvider as any;
     }
 
     /**

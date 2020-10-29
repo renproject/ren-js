@@ -7,8 +7,6 @@ import RenJS from "@renproject/ren";
 
 chai.should();
 
-require("dotenv").config();
-
 describe("RenJS initialization and exports", () => {
     it("should be able to pass in different networks", async () => {
         new RenJS().should.be.an.instanceOf(RenJS);

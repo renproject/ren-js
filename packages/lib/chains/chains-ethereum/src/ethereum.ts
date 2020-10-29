@@ -2,15 +2,14 @@ import {
     ContractCall,
     EventType,
     MintChain,
-    RenNetwork,
     SyncOrPromise,
 } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
 import { Callable, Ox, toBigNumber } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { provider } from "web3-providers";
 
 import { Asset, EthereumBaseChain, Transaction } from "./base";
+import { EthereumConfig } from "./networks";
 
 export class EthereumClass extends EthereumBaseChain
     implements MintChain<Transaction, Asset> {
@@ -22,12 +21,8 @@ export class EthereumClass extends EthereumBaseChain
           ) => SyncOrPromise<ContractCall[]>)
         | undefined;
 
-    constructor(
-        web3Provider: provider,
-        renNetwork?: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails,
-    ) {
-        super(web3Provider, renNetwork, renNetworkDetails);
+    constructor(web3Provider: provider, renNetworkDetails?: EthereumConfig) {
+        super(web3Provider, renNetworkDetails);
     }
 
     public contractCalls = (
@@ -51,7 +46,7 @@ export class EthereumClass extends EthereumBaseChain
             asset: Asset,
             burnPayload?: string,
         ) => {
-            if (!this.renNetwork || !this.renNetworkDetails || !this.web3) {
+            if (!this.renNetworkDetails || !this.web3) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'`,
                 );
@@ -69,8 +64,7 @@ export class EthereumClass extends EthereumBaseChain
 
                 return [
                     {
-                        sendTo: this.renNetworkDetails.addresses.BasicAdapter
-                            .address,
+                        sendTo: this.renNetworkDetails.addresses.BasicAdapter,
                         contractFn: "mint",
                         contractParams: [
                             {
@@ -138,7 +132,7 @@ export class EthereumClass extends EthereumBaseChain
             asset: Asset,
             burnPayload?: string,
         ) => {
-            if (!this.renNetwork) {
+            if (!this.renNetworkDetails) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'`,
                 );

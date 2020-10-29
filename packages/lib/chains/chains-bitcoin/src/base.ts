@@ -169,7 +169,7 @@ export abstract class BitcoinBaseChain
         );
         return {
             current: transaction.confirmations,
-            target: this.chainNetwork === "mainnet" ? 6 : 0,
+            target: this.chainNetwork === "mainnet" ? 6 : 2,
         };
     };
 

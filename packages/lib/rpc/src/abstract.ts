@@ -16,6 +16,21 @@ export interface AbstractRenVMProvider {
 
     getFees: () => Promise<any>;
 
+    mintTxHash: (
+        renContract: RenContract,
+        gHash: Buffer,
+        gPubKey: Buffer,
+        nHash: Buffer,
+        nonce: Buffer,
+        // tslint:disable-next-line: no-any
+        output: { txindex: string; txid: Buffer },
+        amount: string,
+        payload: Buffer,
+        pHash: Buffer,
+        to: string,
+        outputHashFormat: string,
+    ) => Buffer;
+
     submitMint: (
         renContract: RenContract,
         gHash: Buffer,
@@ -23,9 +38,7 @@ export interface AbstractRenVMProvider {
         nHash: Buffer,
         nonce: Buffer,
         // tslint:disable-next-line: no-any
-        output:
-            | { txHash: string; vOut: string }
-            | { txid: Buffer; txindex: string },
+        output: { txindex: string; txid: Buffer },
         amount: string,
         payload: Buffer,
         pHash: Buffer,
@@ -97,24 +110,9 @@ export interface AbstractRenVMProvider {
      *        key should be fetched.
      * @returns The key hash (20 bytes) as a string.
      */
-    selectPublicKey: (token: Asset, logger?: Logger) => Promise<Buffer>;
+    selectPublicKey: (token: Asset) => Promise<Buffer>;
 
     // In the future, this will be asynchronous. It returns a promise for
     // compatibility.
     getNetwork: () => Promise<string>;
-
-    mintTxHash: (
-        renContract: RenContract,
-        gHash: Buffer,
-        gPubKey: Buffer,
-        nHash: Buffer,
-        nonce: Buffer,
-        // tslint:disable-next-line: no-any
-        output: { txid: Buffer; txindex: string },
-        amount: string,
-        payload: Buffer,
-        pHash: Buffer,
-        to: string,
-        outputHashFormat: string,
-    ) => Buffer;
 }

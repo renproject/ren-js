@@ -1,8 +1,8 @@
 // tslint:disable: no-console
 
-import { Bitcoin, Ethereum } from "@renproject/chains";
+import * as Chains from "@renproject/chains";
+
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renTestnet } from "@renproject/networks";
 import RenJS from "@renproject/ren";
 import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
@@ -26,7 +26,7 @@ describe("Extra params", () => {
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Bitcoin();
+        const from = Chains.Bitcoin();
         const asset = "BTC";
         const faucetSupported =
             ["BTC", "ZEC", "BCH", "ETH"].indexOf(asset) >= 0;
@@ -35,7 +35,7 @@ describe("Extra params", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const network = renTestnet; // renTestnet;
+        const network = Chains.renTestnet; // renTestnet;
 
         const infuraURL = `${network.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
@@ -86,7 +86,7 @@ describe("Extra params", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Ethereum(provider, undefined, network).Contract({
+            to: Chains.Ethereum(provider, network).Contract({
                 sendTo: contractAddress,
                 contractFn: "mintExtra",
                 contractParams: [

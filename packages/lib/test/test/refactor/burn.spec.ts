@@ -1,21 +1,8 @@
 // tslint:disable: no-console
 
-import { Bitcoin, Ethereum, Filecoin } from "@renproject/chains";
-import { RenNetwork } from "@renproject/interfaces";
-import { renRinkeby } from "@renproject/networks";
-import {
-    HttpProvider,
-    OverwriteProvider,
-    Provider,
-} from "@renproject/provider";
+import * as Chains from "@renproject/chains";
+
 import RenJS from "@renproject/ren";
-import { AbstractRenVMProvider } from "@renproject/rpc";
-import {
-    RenVMParams,
-    RenVMProvider,
-    RenVMProviderInterface,
-    RenVMResponses,
-} from "@renproject/rpc/src/v2";
 import { extractError } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -34,10 +21,10 @@ describe("Refactor - Burning", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("burning from contract", async function () {
+    longIt("burning from contract", async function() {
         this.timeout(100000000000);
 
-        const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renStagingTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Bitcoin recipient.
@@ -47,28 +34,13 @@ describe("Refactor - Burning", () => {
         // const to = Bitcoin().Address(recipient);
 
         const asset = "FIL";
-        const to = Filecoin().Address(
+        const to = Chains.Filecoin().Address(
             "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
         );
 
-        const from = Ethereum(provider, undefined, renRinkeby);
+        const from = Chains.Ethereum(provider, Chains.renStagingTestnet);
 
-        const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-            "https://lightnode-new-testnet.herokuapp.com/",
-            // tslint:disable-next-line: no-http-string
-            // "http://34.239.188.210:18515",
-            { verbose: true },
-        ) as Provider<RenVMParams, RenVMResponses>;
-        const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider,
-        ) as RenVMProviderInterface;
-        const renVMProvider = new RenVMProvider(
-            "testnet",
-            rpcProvider,
-        ) as AbstractRenVMProvider;
-
-        const renJS = new RenJS(renVMProvider);
+        const renJS = new RenJS("staging-testnet");
 
         // Use 0.0001 more than fee.
         let suggestedAmount: number | string;
@@ -132,14 +104,14 @@ describe("Refactor - Burning", () => {
     });
 
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("burning from address", async function () {
+    longIt("burning from address", async function() {
         this.timeout(100000000000);
 
-        const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renStagingTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const asset = "BTC";
-        const from = Ethereum(provider, undefined, renRinkeby);
+        const from = Chains.Ethereum(provider, Chains.renStagingTestnet);
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
@@ -156,7 +128,7 @@ describe("Refactor - Burning", () => {
 
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
-            to: Bitcoin().Address(recipient),
+            to: Chains.Bitcoin().Address(recipient),
             from: from.Account({ value: suggestedAmount }),
         });
 

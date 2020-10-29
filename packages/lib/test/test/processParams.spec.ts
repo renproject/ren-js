@@ -1,10 +1,7 @@
-import { RenContract } from "@renproject/interfaces";
-import { renTestnet } from "@renproject/networks";
 // import { processBurnAndReleaseParams, processLockAndMintParams } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
-import Web3 from "web3";
 
 chai.use(chaiBigNumber(BigNumber));
 chai.should();

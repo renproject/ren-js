@@ -1,13 +1,12 @@
 // tslint:disable: no-console
 
-import { BURN_TOPIC } from "@renproject/chains";
-import { EthArgs, RenNetwork } from "@renproject/interfaces";
 import {
     renChaosnet,
     renDevnet,
     renLocalnet,
     renTestnet,
-} from "@renproject/networks";
+} from "@renproject/chains";
+import { EthArgs, RenNetwork } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { generatePHash } from "@renproject/utils";
 import chai from "chai";
@@ -21,7 +20,7 @@ require("dotenv").config();
 
 const NETWORK = process.env.NETWORK;
 
-describe("Utils", function () {
+describe("Utils", function() {
     // Disable test timeout.
     this.timeout(0);
 
@@ -40,12 +39,6 @@ describe("Utils", function () {
         ];
 
         expect(generatePHash(payload)).toEqual(expect.a(Buffer));
-    });
-
-    it("Burn Topic hash", () => {
-        BURN_TOPIC.should.equal(
-            "0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e",
-        );
     });
 
     const testcases = [

@@ -16,16 +16,14 @@ import { ParallelHttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
     fromBase64,
-    getTokenPrices,
-    normalizeValue,
     SECONDS,
     sleep,
-    TokenPrices,
     toURLBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { List, OrderedMap, Set } from "immutable";
+import { List } from "immutable";
 
+import { AbstractRenVMProvider } from "../abstract";
 import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
@@ -49,13 +47,10 @@ import { unmarshalBurnTx, unmarshalFees, unmarshalMintTx } from "./unmarshal";
 export const resolveRpcURL = (network: RenNetwork | string) => {
     switch (network) {
         case RenNetwork.Mainnet:
-            return "https://lightnode-mainnet.herokuapp.com";
         case RenNetwork.Chaosnet:
-            return "https://lightnode-chaosnet.herokuapp.com";
         case RenNetwork.Testnet:
-            return "https://lightnode-testnet.herokuapp.com";
         case RenNetwork.Devnet:
-            return "https://lightnode-devnet.herokuapp.com";
+            throw new Error(`JSON-RPC v2 not supported by ${network}.`);
     }
     return network;
 };
@@ -100,7 +95,8 @@ export const resolveV2Contract = <
 
 export type RenVMProviderInterface = Provider<RenVMParams, RenVMResponses>;
 
-export class RenVMProvider implements RenVMProviderInterface {
+export class RenVMProvider
+    implements RenVMProviderInterface, AbstractRenVMProvider {
     public version = 2;
 
     private readonly network: RenNetwork;
@@ -627,50 +623,16 @@ export class RenVMProvider implements RenVMProviderInterface {
      *        key should be fetched.
      * @returns The public key hash (20 bytes) as a string.
      */
-    public readonly selectPublicKey = async (
-        token: Asset,
-        logger?: Logger,
-    ): Promise<Buffer> => {
+    public readonly selectPublicKey = async (token: Asset): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
         const response = await this.queryShards(5);
 
-        // Filter to only keep shards that are primary/online.
-        const primaryShards = response.shards.filter((shard) => shard.primary);
+        // Prioritize primary shards.
+        const chosenShard = response.shards.sort((a, b) =>
+            a.primary && b.primary ? -1 : a.primary ? -1 : b.primary ? 1 : 0,
+        )[0];
 
-        // Find the shard with the lowest total value locked (sum all the locked
-        // amounts from all gateways in a shard, after converting to a consistent
-        // currencies using the coinGecko API).
-        const tokens = Set<string>()
-            .concat(
-                ...primaryShards.map((shard) =>
-                    shard.gateways.map((gateway) => gateway.asset),
-                ),
-            )
-            .toArray();
-        const tokenPrices: TokenPrices = await getTokenPrices(
-            tokens,
-            logger,
-        ).catch(() => OrderedMap());
-
-        const smallestShard = List(primaryShards)
-            .filter((shard) =>
-                shard.gateways.map((gateway) => gateway.asset).includes(token),
-            )
-            .sortBy((shard) =>
-                shard.gateways
-                    .map((gateway) =>
-                        normalizeValue(
-                            tokenPrices,
-                            gateway.asset,
-                            gateway.locked,
-                        ),
-                    )
-                    .reduce((sum, value) => sum.plus(value), new BigNumber(0))
-                    .toNumber(),
-            )
-            .first(undefined);
-
-        if (!smallestShard) {
+        if (!chosenShard) {
             throw new Error(
                 "Unable to load public key from RenVM: no shards found",
             );
@@ -678,7 +640,7 @@ export class RenVMProvider implements RenVMProviderInterface {
 
         // Get the gateway pubKey from the gateway with the right asset within
         // the shard with the lowest total value locked.
-        const tokenGateway = List(smallestShard.gateways)
+        const tokenGateway = List(chosenShard.gateways)
             .filter((gateway) => gateway.asset === token)
             .first(undefined);
 

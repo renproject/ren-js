@@ -41,6 +41,9 @@
     },
     "devDependencies": {
         "@renproject/ren": "^2.0.0-alpha.16",
+        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/rpc": "^2.0.0-alpha.16",
+        "dotenv": "^8.2.0",
         "xstate": "^4.13.0"
     },
     "peerDependencies": {

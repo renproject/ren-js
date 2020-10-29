@@ -7,8 +7,6 @@ import { describe, it } from "mocha";
 import { PackPrimitive } from "../src/v2/pack/pack";
 import { hashTransaction } from "../src/v2/transaction";
 
-require("dotenv").config();
-
 export const submit = {
     jsonrpc: "2.0",
     id: 1,

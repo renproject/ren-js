@@ -21,7 +21,7 @@ export class HttpProvider<
     Requests extends { [event: string]: any } = {},
     // tslint:disable-next-line: no-any
     Responses extends { [event: string]: any } = {}
-> implements Provider {
+> implements Provider<Requests, Responses> {
     public readonly nodeURL: string;
     public readonly logger: Logger | undefined;
 
@@ -53,12 +53,13 @@ export class HttpProvider<
         }
     }
 
-    public async sendMessage<Method extends string>(
+    public sendMessage = async <Method extends keyof Requests & string>(
         method: Method,
         request: Requests[Method],
         retry = 2,
         timeout = 120 * SECONDS,
-    ): Promise<Responses[Method]> {
+    ): Promise<Responses[Method]> => {
+        // Promise<Responses[Method]> {
         // Print request:
         if (this.logger) {
             // tslint:disable-next-line: no-console
@@ -108,13 +109,16 @@ export class HttpProvider<
             }
             throw error;
         }
-    }
+    };
 
-    private responseError(msg: string, response: AxiosResponse): ResponseError {
+    private readonly responseError = (
+        msg: string,
+        response: AxiosResponse,
+    ): ResponseError => {
         const error = new Error(msg) as ResponseError;
         error.response = response;
         return error;
-    }
+    };
 }
 
 interface ResponseError extends Error {

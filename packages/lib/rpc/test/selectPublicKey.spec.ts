@@ -5,8 +5,6 @@ import { RenVMProvider } from "../src/v1";
 
 chai.should();
 
-require("dotenv").config();
-
 describe("RenVMProvider", () => {
     it("selectPublicKey", async () => {
         const response = require("./selectPublicKey.json");

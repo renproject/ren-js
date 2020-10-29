@@ -36,18 +36,12 @@
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
-        "doc": "run-s doc:html && open-cli build/docs/index.html",
-        "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
-        "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/interfaces @renproject/utils @renproject/rpc @renproject/networks && yarn link",
-        "unlink:all": "(yarn unlink || true)"
+        "prepare-release": "run-s npmignore build doc:html"
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.16",
-        "@renproject/networks": "^2.0.0-alpha.16",
         "@renproject/rpc": "^2.0.0-alpha.16",
         "@renproject/utils": "^2.0.0-alpha.16",
         "@types/bs58": "^4.0.1",

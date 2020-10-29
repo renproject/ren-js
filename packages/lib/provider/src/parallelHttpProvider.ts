@@ -33,7 +33,7 @@ export class ParallelHttpProvider<
     Requests extends { [event: string]: any } = {},
     // tslint:disable-next-line: no-any
     Responses extends { [event: string]: any } = {}
-> implements Provider {
+> implements Provider<Requests, Responses> {
     public nodes: List<HttpProvider<Requests, Responses>>;
     private readonly logger: Logger | undefined;
 
@@ -47,7 +47,7 @@ export class ParallelHttpProvider<
         );
     }
 
-    public sendMessage = async <Method extends string>(
+    public sendMessage = async <Method extends keyof Requests & string>(
         method: Method,
         request: Requests[Method],
         retry = 2,

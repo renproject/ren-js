@@ -1,23 +1,6 @@
 # `🛠️ RenJS`
 
-There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
-
-1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/ren-js/tree/master/packages/lib/gateway)): The simplest way to get started, providing a full user experience.
-2. **RenJS** (this repository): A lower-level SDK which can be integrated into your existing user interface.
-
-See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.
-
-## Changelog
-
-See the [Releases](https://github.com/renproject/ren-js/releases) page.
-
-## About
-
-RenJS is a Node.js and browser SDK for bridging crypto assets cross-chain.
-
-<br />
-<hr />
-<br />
+`RenJS` is the official Javascript SDK for interacting with [RenVM](https://renproject.io). See [github.com/renproject/ren-js](https://github.com/renproject/ren-js) for information.
 
 ## Installation
 
@@ -31,12 +14,28 @@ npm install --save @renproject/ren
 
 ## Usage
 
-Usage is described in the [getting started tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
+Usage is described in the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
 
-Example of bridging BTC into Ethereum (see [Infura](https://infura.io/) for initializing Web3):
+### RenVM network information
+
+```ts
+const RenJS = require("@renproject/ren");
+const renJS = new RenJS();
+
+// Print available methods
+console.log(renJS.renVM);
+
+// Query fees
+renJS.renVM.queryFees().then(console.log);
+```
+
+### Bridging BTC to Ethereum
+
+See [Infura](https://infura.io/) to get an Infura key.
 
 ```typescript
-const renJS = new RenJS("testnet"); // or "chaosnet"
+const RenJS = require("@renproject/ren");
+const renJS = new RenJS("testnet"); // or "mainnet"
 const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
 const amount = 0.001;
@@ -59,10 +58,11 @@ lockAndMint
     .catch(console.error);
 ```
 
-Example of bridging BTC out of Ethereum:
+### Bridging BTC from Ethereum back to the Bitcoin chain
 
 ```typescript
-const renJS = new RenJS("testnet"); // or "chaosnet"
+const RenJS = require("@renproject/ren");
+const renJS = new RenJS("testnet"); // Or "mainnet"
 const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
 const amount = 0.001;
@@ -93,28 +93,8 @@ renJS
 yarn run build
 # or watch, to rebuild on new changes:
 yarn run watch
-
 ```
 
 ### Running tests
 
-You'll need to:
-
-1. Generate a mnemonic and send ETH (kovan for testnet) (path: `m/44'/60'/0'/0/`).
-2. Generate a private key and send testnet crypto funds.
-3. Generate an Infura API key.
-
-Create a `.env` file which contains the following exported variables:
-
-```sh
-export MNEMONIC="your mnemonic here"
-export TESTNET_PRIVATE_KEY="your bitcoin private key (encoded in WIF)"
-export INFURA_KEY="your infura key (for it's v3 endpoint)"
-export NETWORK="mainnet or testnet"
-```
-
-Then just run the following command to execute the tests. Make sure there is sufficient Kovan ETH in the linked account before running tests.
-
-```sh
-yarn run test
-```
+See [../test](../test).

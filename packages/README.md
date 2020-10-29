@@ -6,7 +6,6 @@
 -   [`rentx`](./lib/rentx) - Transaction state management library.
 -   [`interfaces`](./lib/interfaces) - Typescript definitions.
 -   [`provider`](./lib/provider) - JSON-RPC provider.
--   [`networks`](./lib/networks) - Definition of RenVM's mainnet and testnet networks.
 -   [`utils`](./lib/utils) - Helper functions used by the other packages.
 -   [`rpc`](./lib/rpc) - RenVM-specific JSON-RPC definitions.
 -   [`test`](./lib/test) - Integration tests.

@@ -21,9 +21,9 @@ export interface Provider<
     // tslint:disable-next-line: no-any
     Responses extends { [event: string]: any } = {}
 > {
-    sendMessage<Method extends keyof Requests>(
+    sendMessage<Method extends keyof Requests & string>(
         method: Method,
         request: Requests[Method],
         retry?: number,
-    ): Promise<Method extends keyof Responses ? Responses[Method] : {}>;
+    ): Promise<Responses[Method]>;
 }

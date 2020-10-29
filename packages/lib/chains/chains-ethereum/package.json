@@ -36,27 +36,25 @@
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
-        "doc": "run-s doc:html && open-cli build/docs/index.html",
-        "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
-        "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html",
-        "link:all": "yarn link @renproject/interfaces @renproject/utils @renproject/networks && yarn link",
-        "unlink:all": "(yarn unlink || true)"
+        "prepare-release": "run-s npmignore build doc:html"
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.16",
-        "@renproject/networks": "^2.0.0-alpha.16",
         "@renproject/utils": "^2.0.0-alpha.16",
+        "@types/bn.js": "^4.11.6",
         "@types/node": "^14.11.1",
         "bignumber.js": "^9.0.0",
+        "bn.js": "^5.1.3",
         "bnc-sdk": "^2.1.5",
+        "ethereumjs-util": "^7.0.7",
         "wallet-address-validator": "^0.2.4",
         "web3": "^2.0.0-alpha.1",
         "web3-core": "^2.0.0-alpha.1",
         "web3-eth-abi": "^2.0.0-alpha.1",
-        "web3-providers": "^2.0.0-alpha.1"
+        "web3-providers": "^2.0.0-alpha.1",
+        "web3-utils": "^2.0.0-alpha.1"
     },
     "resolutions": {
         "sha3": "^2.1.2"

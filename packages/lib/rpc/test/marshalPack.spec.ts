@@ -12,8 +12,6 @@ import {
     TypedPackValue,
 } from "../src/v2/pack/pack";
 
-require("dotenv").config();
-
 describe("Pack", () => {
     it("Marshal pack value", () => {
         const expected =

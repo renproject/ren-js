@@ -309,10 +309,7 @@ export class LockAndMint<
             this._logger,
         );
         this._gHash = gHash;
-        this._mpkh = await this._renVM.selectPublicKey(
-            this._params.asset,
-            this._logger,
-        );
+        this._mpkh = await this._renVM.selectPublicKey(this._params.asset);
         this._logger.debug("mpkh:", Ox(this._mpkh));
 
         const gatewayAddress = await this._params.from.getGatewayAddress(
@@ -939,83 +936,4 @@ export class LockAndMintDeposit<
             });
         }
     };
-
-    // /**
-    //  * Alternative to `mint` that doesn't need a web3 instance
-    //  */
-    // public createTransactions = (txConfig?: any): any[] => {
-    //     const renVMResponse = this.queryTxResult;
-    //     const contractCalls = this.params.contractCalls || [];
-
-    //     if (!renVMResponse || !renVMResponse.out) {
-    //         throw new Error(
-    //             `Unable to create transaction without signature. Call 'signed' first.`
-    //         );
-    //     }
-
-    //     const signature = renVMResponse.out.signature;
-
-    //     return contractCalls.map((contractCall, i) => {
-    //         const {
-    //             contractParams,
-    //             contractFn,
-    //             sendTo,
-    //             txConfig: txConfigParam,
-    //         } = contractCall;
-
-    //         const params =
-    //             i === contractCalls.length - 1
-    //                 ? [
-    //                       ...(contractParams || []).map((value) => value.value),
-    //                       Ox(
-    //                           new BigNumber(
-    //                               renVMResponse.autogen.amount
-    //                           ).toString(16)
-    //                       ), // _amount: BigNumber
-    //                       Ox(renVMResponse.autogen.nhash),
-    //                       // Ox(generateNHash(renVMResponse)), // _nHash: string
-    //                       Ox(signature), // _sig: string
-    //                   ]
-    //                 : [...(contractParams || []).map((value) => value.value)];
-
-    //         const ABI =
-    //             i === contractCalls.length - 1
-    //                 ? payloadToMintABI(contractFn, contractParams || [])
-    //                 : payloadToABI(contractFn, contractParams || []);
-
-    //         // tslint:disable-next-line: no-any
-    //         const web3: Web3 = new (Web3 as any)();
-    //         const contract = new web3.eth.Contract(ABI);
-
-    //         const data = contract.methods[contractFn](...params).encodeABI();
-
-    //         const rawTransaction = {
-    //             to: sendTo,
-    //             data,
-
-    //             ...txConfigParam,
-    //             ...{
-    //                 value:
-    //                     txConfigParam && txConfigParam.value
-    //                         ? txConfigParam.value.toString()
-    //                         : undefined,
-    //                 gasPrice:
-    //                     txConfigParam && txConfigParam.gasPrice
-    //                         ? txConfigParam.gasPrice.toString()
-    //                         : undefined,
-    //             },
-
-    //             ...txConfig,
-    //         };
-
-    //         this.logger.debug(
-    //             "Raw transaction created",
-    //             contractFn,
-    //             sendTo,
-    //             rawTransaction
-    //         );
-
-    //         return rawTransaction;
-    //     });
-    // };
 }

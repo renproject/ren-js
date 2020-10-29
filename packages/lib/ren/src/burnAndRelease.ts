@@ -206,10 +206,7 @@ export class BurnAndRelease<
 
             const asset = selector.split("/")[0];
 
-            const gPubKey = await this._renVM.selectPublicKey(
-                asset,
-                this._logger,
-            );
+            const gPubKey = await this._renVM.selectPublicKey(asset);
 
             const payload = Buffer.from([]);
             const pHash = generatePHash([], this._logger);
@@ -341,7 +338,6 @@ export class BurnAndRelease<
 
                         const gPubKey = await this._renVM.selectPublicKey(
                             asset,
-                            this._logger,
                         );
 
                         const payload = Buffer.from([]);

@@ -13,8 +13,6 @@ import {
 } from "../src/v2/pack/pack";
 import { hashTransaction } from "../src/v2/transaction";
 
-require("dotenv").config();
-
 describe("Pack", () => {
     it("Hash transaction", () => {
         const expected =

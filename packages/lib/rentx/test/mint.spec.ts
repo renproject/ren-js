@@ -48,6 +48,7 @@ function buildMockLockChain(conf = { targetConfirmations: 500 }) {
         getDeposits: async (_a, _b, _c, onDeposit) => {
             onDeposit({ transaction: {}, amount: "1" });
         },
+        addressStringToBytes: (i) => Buffer.from(i),
         getGatewayAddress: () => "gatewayaddr",
         getPubKeyScript: () => Buffer.from("pubkey"),
         depositV1HashString: () => "v1hashstring",
@@ -55,7 +56,7 @@ function buildMockLockChain(conf = { targetConfirmations: 500 }) {
         assetIsNative: () => true,
         transactionRPCFormat: () => ({
             txid: fromHex(
-                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
             ),
             txindex: "0",
         }),
@@ -84,7 +85,7 @@ function buildMockMintChain() {
         },
         transactionRPCFormat: () => ({
             txid: fromHex(
-                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
             ),
             txindex: "0",
         }),
@@ -95,7 +96,7 @@ function buildMockMintChain() {
             setTimeout(() => {
                 emitter.emit(
                     "transactionHash",
-                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 );
             }, 100);
         },
@@ -103,7 +104,7 @@ function buildMockMintChain() {
             setTimeout(() => {
                 emitter.emit(
                     "transactionHash",
-                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 );
             }, 1000);
 
@@ -113,7 +114,7 @@ function buildMockMintChain() {
                         "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 },
                 amount: new BigNumber(0),
-                to: Buffer.from("asd"),
+                to: "toAddress",
                 nonce: new BigNumber(0),
             };
         },
@@ -135,13 +136,13 @@ const makeMintTransaction = (): GatewaySession => ({
     sourceAsset: "btc",
     sourceNetwork: "testSourceChain",
     destAddress: "0x0000000000000000000000000000000000000000",
-    destAsset: "renBTC",
     destNetwork: "testDestChain",
     destConfsTarget: 6,
     targetAmount: 1,
     userAddress: "0x0000000000000000000000000000000000000000",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
+    customParams: {},
 });
 
 jest.setTimeout(1000 * 106);
@@ -187,7 +188,7 @@ describe("MintMachine", function () {
         });
         return p.then(() => {
             expect(
-                Object.keys(machine?.context?.tx?.transactions || {}).length
+                Object.keys(machine?.context?.tx?.transactions || {}).length,
             ).toBeGreaterThan(0);
         });
     });
@@ -221,7 +222,7 @@ describe("MintMachine", function () {
             const service = interpret(machine)
                 .onTransition((state) => {
                     const depositTx = Object.values(
-                        state.context.tx.transactions
+                        state.context.tx.transactions,
                     )[0];
 
                     if (depositTx) {
@@ -243,7 +244,7 @@ describe("MintMachine", function () {
         });
         return p.then(() => {
             const depositTx = Object.values(
-                machine.context?.tx?.transactions || {}
+                machine.context?.tx?.transactions || {},
             )[0];
             expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
         });
@@ -267,7 +268,7 @@ describe("MintMachine", function () {
         };
 
         const renVMProvider = (new RenVMProvider(
-            "testnet"
+            "testnet",
         ) as any) as AbstractRenVMProvider;
         let txHash: string;
         let confirmed = false;
@@ -295,7 +296,7 @@ describe("MintMachine", function () {
             const service = interpret(machine)
                 .onTransition((state) => {
                     const depositMachine = Object.values(
-                        state.context?.depositMachines || {}
+                        state.context?.depositMachines || {},
                     )[0];
                     if (depositMachine && !subscribed) {
                         subscribed = true;
@@ -327,7 +328,7 @@ describe("MintMachine", function () {
         });
         return p.then(() => {
             const depositTx = Object.values(
-                machine.context?.tx?.transactions || {}
+                machine.context?.tx?.transactions || {},
             )[0];
             expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
         });
@@ -350,7 +351,7 @@ describe("MintMachine", function () {
         };
 
         const renVMProvider = (new RenVMProvider(
-            "testnet"
+            "testnet",
         ) as any) as AbstractRenVMProvider;
         let txHash: string;
         let confirmed = false;
@@ -375,7 +376,7 @@ describe("MintMachine", function () {
                         sourceTxConfs: 1,
                         sourceTxHash:
                             "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
-                        rawSourceTx: {},
+                        rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
             },
@@ -392,7 +393,7 @@ describe("MintMachine", function () {
             const service = interpret(machine)
                 .onTransition((state) => {
                     const depositMachine = Object.values(
-                        state.context?.depositMachines || {}
+                        state.context?.depositMachines || {},
                     )[0];
                     if (depositMachine && !subscribed) {
                         subscribed = true;
@@ -422,7 +423,7 @@ describe("MintMachine", function () {
         });
         return p.then(() => {
             const depositTx = Object.values(
-                machine.context?.tx?.transactions || {}
+                machine.context?.tx?.transactions || {},
             )[0];
             expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
         });
@@ -446,7 +447,7 @@ describe("MintMachine", function () {
         };
 
         const renVMProvider = (new RenVMProvider(
-            "testnet"
+            "testnet",
         ) as any) as AbstractRenVMProvider;
         let txHash: string;
         let confirmed = false;
@@ -471,7 +472,7 @@ describe("MintMachine", function () {
                         sourceTxConfs: 1,
                         sourceTxHash:
                             "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
-                        rawSourceTx: {},
+                        rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
             },
@@ -488,7 +489,7 @@ describe("MintMachine", function () {
             const service = interpret(machine)
                 .onTransition((state) => {
                     const depositMachine = Object.values(
-                        state.context?.depositMachines || {}
+                        state.context?.depositMachines || {},
                     )[0];
                     if (confirmed) {
                         if (state.value === "requestingSignature") {
@@ -518,7 +519,7 @@ describe("MintMachine", function () {
         });
         return p.then(() => {
             const depositTx = Object.values(
-                machine.context?.tx?.transactions || {}
+                machine.context?.tx?.transactions || {},
             )[0];
             expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
         });

@@ -2,6 +2,7 @@ import { Machine, assign, send } from "xstate";
 import RenJS from "@renproject/ren";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
+import { assert } from "@renproject/utils";
 
 export interface BurnMachineContext {
     tx: GatewaySession;
@@ -57,6 +58,7 @@ export const burnMachine = Machine<
                         { target: "created" },
                     ],
                 },
+                meta: { test: async () => {} },
             },
             created: {
                 invoke: {
@@ -74,10 +76,28 @@ export const burnMachine = Machine<
                         }),
                     },
                 },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            !Object.keys(state.context.tx.transactions).length
+                                ? true
+                                : false,
+                            "Should not have a transaction",
+                        );
+                    },
+                },
             },
             createError: {
                 on: {
                     RETRY: "created",
+                },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.tx.error ? true : false,
+                            "Error must exist",
+                        );
+                    },
                 },
             },
             srcSettling: {
@@ -103,23 +123,48 @@ export const burnMachine = Machine<
                         target: "srcConfirmed",
                     },
                 },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            Object.keys(state.context.tx.transactions).length
+                                ? true
+                                : false,
+                            "Should have a transaction",
+                        );
+                    },
+                },
             },
             srcConfirmed: {
                 on: {
                     RELEASED: "destInitiated",
                 },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            getFirstTx(state.context.tx).sourceTxConfs >=
+                                (getFirstTx(state.context.tx)
+                                    .sourceTxConfTarget || 0)
+                                ? true
+                                : false,
+                            "Should have a transaction",
+                        );
+                    },
+                },
             },
-            destInitiated: {},
+            destInitiated: {
+                meta: { test: async () => {} },
+            },
         },
     },
     {
         guards: {
-            isSrcSettling: (ctx, _evt) =>
-                getFirstTx(ctx.tx)?.sourceTxHash ? true : false,
+            isSrcSettling: (ctx, _evt) => {
+                return getFirstTx(ctx.tx)?.sourceTxHash ? true : false;
+            },
             isSrcConfirmed: (ctx, _evt) =>
                 getFirstTx(ctx.tx)?.sourceTxConfs >=
                 (getFirstTx(ctx.tx)?.sourceTxConfTarget ||
                     Number.POSITIVE_INFINITY),
         },
-    }
+    },
 );

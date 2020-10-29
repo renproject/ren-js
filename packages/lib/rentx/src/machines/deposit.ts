@@ -3,6 +3,7 @@ import RenJS from "@renproject/ren";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
 import { log } from "xstate/lib/actions";
+import { assert } from "@renproject/utils";
 
 export interface DepositMachineContext {
     deposit: GatewayTransaction; // The deposit being tracked
@@ -11,12 +12,12 @@ export interface DepositMachineContext {
     providers: any; // The blockchain api providers required for the lockchain/burnchain
     fromChainMap: {
         [key in string]: (
-            context: Omit<DepositMachineContext, "deposit">
+            context: Omit<DepositMachineContext, "deposit">,
         ) => LockChain<any>;
     }; // Functions to create the "from" param;
     toChainMap: {
         [key in string]: (
-            context: Omit<DepositMachineContext, "deposit">
+            context: Omit<DepositMachineContext, "deposit">,
         ) => MintChain<any>;
     }; // Functions to create the "to" param;
     sdk: RenJS;
@@ -42,6 +43,7 @@ export type DepositMachineEvent =
     | { type: "NOOP" }
     | { type: "LISTENING" }
     | { type: "DETECTED" }
+    | { type: "ERROR"; error: Error }
     | { type: "RESTORE"; data: string }
     | { type: "RESTORED"; data: string }
     | { type: "CONFIRMED" }
@@ -62,7 +64,17 @@ export const depositMachine = Machine<
         id: "RenVMDepositTransaction",
         initial: "restoringDeposit",
         states: {
-            errorRestoring: { entry: [log("restore error")] },
+            errorRestoring: {
+                entry: [log("restore error")],
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.deposit.error ? true : false,
+                            "Error must exist",
+                        );
+                    },
+                },
+            },
             restoringDeposit: {
                 entry: ["listenerAction"],
                 on: {
@@ -84,14 +96,33 @@ export const depositMachine = Machine<
                                     // Named listener as ref does not seem to work
                                     return `${context.deposit.sourceTxHash}DepositListener`;
                                 },
-                            }
+                            },
                         ),
                     },
+                    ERROR: [
+                        {
+                            target: "errorRestoring",
+                            actions: assign({
+                                deposit: (ctx, event) => ({
+                                    ...ctx.deposit,
+                                    error: event.error,
+                                }),
+                            }),
+                        },
+                    ],
                     DETECTED: [
                         {
                             target: "restoredDeposit",
                         },
                     ],
+                },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            !state.context.tx.error ? true : false,
+                            "Error must not exist",
+                        );
+                    },
                 },
             },
 
@@ -120,6 +151,7 @@ export const depositMachine = Machine<
                         },
                     ].reverse(),
                 },
+                meta: { test: async () => {} },
             },
 
             srcSettling: {
@@ -168,6 +200,7 @@ export const depositMachine = Machine<
                         },
                     ],
                 },
+                meta: { test: async () => {} },
             },
             srcConfirmed: {
                 entry: send("SIGN", {
@@ -185,6 +218,7 @@ export const depositMachine = Machine<
                         }),
                     },
                 },
+                meta: { test: async () => {} },
             },
             accepted: {
                 entry: sendParent((ctx, _) => {
@@ -197,6 +231,7 @@ export const depositMachine = Machine<
                     CLAIM: "claiming",
                     REJECT: "rejected",
                 },
+                meta: { test: async () => {} },
             },
             claiming: {
                 entry: send("MINT", {
@@ -222,18 +257,23 @@ export const depositMachine = Machine<
                         },
                     ],
                 },
+                meta: { test: async () => {} },
             },
             destInitiated: {
                 on: {
                     ACKNOWLEDGE: "completed",
                 },
+                meta: { test: async () => {} },
             },
-            rejected: {},
+            rejected: {
+                meta: { test: async () => {} },
+            },
             completed: {
                 entry: sendParent((ctx, _) => ({
                     type: "DEPOSIT_COMPLETED",
                     data: ctx.deposit,
                 })),
+                meta: { test: async () => {} },
             },
         },
     },
@@ -249,5 +289,5 @@ export const depositMachine = Machine<
             isDestInitiated: ({ deposit: { destTxHash } }) =>
                 destTxHash ? true : false,
         },
-    }
+    },
 );

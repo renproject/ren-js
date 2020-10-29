@@ -70,7 +70,7 @@ const txCreator = async (context: GatewayMachineContext) => {
         const fees = await context.sdk.getFees();
         context.tx.suggestedAmount = Math.floor(
             fees[sourceAsset.toLowerCase()].lock +
-                (Number(targetAmount) || 0.0001) * 1e8
+                (Number(targetAmount) || 0.0001) * 1e8,
         );
     } catch (error) {
         console.error(error);
@@ -89,7 +89,7 @@ const txCreator = async (context: GatewayMachineContext) => {
 
 // Listen for confirmations on the source chain
 const depositListener = (
-    context: GatewayMachineContext | DepositMachineContext
+    context: GatewayMachineContext | DepositMachineContext,
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
     let cleanup = () => {};
     renLockAndMint(context).then(async (minter) => {
@@ -129,10 +129,10 @@ const depositListener = (
                                         signature:
                                             v._queryTxResult?.out?.signature,
                                     },
-                                })
+                                }),
                             )
                             .catch((e) =>
-                                callback({ type: "SIGN_ERROR", data: e })
+                                callback({ type: "SIGN_ERROR", data: e }),
                             );
                         break;
                     case "MINT":
@@ -148,7 +148,7 @@ const depositListener = (
                                 });
                             })
                             .catch((e) =>
-                                callback({ type: "SUBMIT_ERROR", data: e })
+                                callback({ type: "SUBMIT_ERROR", data: e }),
                             );
                         break;
                 }
@@ -163,8 +163,11 @@ const depositListener = (
                     console.error(
                         "wrong deposit:",
                         targetDeposit.sourceTxHash,
-                        txHash
+                        txHash,
                     );
+                    // FIXME: In theory, we might process an event before there is a cleanup
+                    // but it is more likely to receive a valid event immediately
+                    // after the listener is initialized
                     return () => {
                         cleanup();
                     };
@@ -174,12 +177,14 @@ const depositListener = (
             const persistedTx = context.tx.transactions[txHash];
             // If we don't have a sourceTxHash, we haven't seen a deposit yet
             const rawSourceTx: any = deposit.depositDetails.transaction;
-            const depositState: GatewayTransaction = persistedTx || {
-                sourceTxHash: txHash,
-                sourceTxAmount: rawSourceTx.amount,
-                sourceTxVOut: rawSourceTx.vOut,
-                rawSourceTx,
-            };
+            const depositState: GatewayTransaction = persistedTx
+                ? persistedTx
+                : {
+                      sourceTxHash: txHash,
+                      sourceTxConfs: 0,
+                      sourceTxAmount: rawSourceTx.amount,
+                      rawSourceTx,
+                  };
 
             if (!persistedTx) {
                 callback({
@@ -218,7 +223,7 @@ const depositListener = (
 const listenerAction = assign<GatewayMachineContext>({
     depositListenerRef: (
         c: GatewayMachineContext | DepositMachineContext,
-        _e: any
+        _e: any,
     ) => {
         let actorName = `${c.tx.id}SessionListener`;
         const deposit = (c as DepositMachineContext).deposit;
@@ -236,7 +241,7 @@ const listenerAction = assign<GatewayMachineContext>({
 
 const spawnDepositMachine = (
     machineContext: DepositMachineContext,
-    name: string
+    name: string,
 ) =>
     spawn(
         depositMachine
@@ -249,7 +254,7 @@ const spawnDepositMachine = (
         {
             sync: true,
             name,
-        }
+        },
     ) as Actor<any>;
 
 export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
@@ -273,7 +278,7 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                 delete (machineContext as any).depositMachines;
                 machines[evt.data.sourceTxHash] = spawnDepositMachine(
                     machineContext,
-                    `${evt.data.sourceTxHash}DepositMachine`
+                    `${evt.data.sourceTxHash}DepositMachine`,
                 );
                 return machines;
             },
@@ -290,7 +295,7 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                     delete (machineContext as any).depositMachines;
                     machines[i[0]] = spawnDepositMachine(
                         machineContext,
-                        `${machineContext.deposit.sourceTxHash}DepositMachine`
+                        `${machineContext.deposit.sourceTxHash}DepositMachine`,
                     );
                 }
                 return machines;

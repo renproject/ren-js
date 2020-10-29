@@ -37,6 +37,7 @@ function buildMockLockChain(conf = { targetConfirmations: 500 }) {
         transactionID: () =>
             "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
         transactionConfidence,
+        addressStringToBytes: (x) => Buffer.from(x),
         initialize: () => {
             return mockLockChain;
         },
@@ -50,7 +51,7 @@ function buildMockLockChain(conf = { targetConfirmations: 500 }) {
         assetIsNative: () => true,
         transactionRPCFormat: () => ({
             txid: fromHex(
-                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
             ),
             txindex: "0",
         }),
@@ -82,7 +83,7 @@ function buildMockMintChain() {
             setTimeout(() => {
                 emitter.emit(
                     "transactionHash",
-                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 );
             }, 100);
         },
@@ -90,7 +91,7 @@ function buildMockMintChain() {
             setTimeout(() => {
                 emitter.emit(
                     "transactionHash",
-                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 );
             }, 1000);
 
@@ -100,14 +101,14 @@ function buildMockMintChain() {
                         "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 },
                 amount: new BigNumber(0),
-                to: Buffer.from("asd"),
+                to: "toAddress",
                 nonce: new BigNumber(0),
             };
         },
         findTransaction: () => "mintTxHash",
         transactionRPCFormat: () => ({
             txid: fromHex(
-                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"
+                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
             ),
             txindex: "0",
         }),
@@ -128,13 +129,13 @@ const mintTransaction: GatewaySession = {
     sourceAsset: "renBTC",
     sourceNetwork: "testSourceChain",
     destAddress: "0x0000000000000000000000000000000000000000",
-    destAsset: "BTC",
     destNetwork: "testDestChain",
     destConfsTarget: 6,
     targetAmount: 1,
     userAddress: "0x0000000000000000000000000000000000000000",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
+    customParams: {},
 };
 
 jest.setTimeout(1000 * 46);
@@ -185,7 +186,7 @@ describe("BurnMachine", function () {
         });
         return p.then((state) => {
             expect(
-                Object.keys(state.context?.tx?.transactions || {}).length
+                Object.keys(state.context?.tx?.transactions || {}).length,
             ).toBeGreaterThan(0);
         });
     });

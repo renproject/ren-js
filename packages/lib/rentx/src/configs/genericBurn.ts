@@ -37,7 +37,7 @@ const burnAndRelease = async (context: BurnMachineContext) => {
 
 // Format a transaction and prompt the user to sign
 const txCreator = async (
-    context: BurnMachineContext
+    context: BurnMachineContext,
 ): Promise<GatewaySession> => {
     const asset = context.tx.sourceAsset;
 
@@ -49,8 +49,8 @@ const txCreator = async (
         suggestedAmount = new BigNumber(
             Math.floor(
                 fees[asset.toLowerCase()].release +
-                    Number(context.tx.targetAmount) * 1e8
-            )
+                    Number(context.tx.targetAmount) * 1e8,
+            ),
         )
             .decimalPlaces(0)
             .toFixed();
@@ -81,7 +81,10 @@ const txCreator = async (
                 sourceTxHash: hash,
                 sourceTxConfs: 0,
                 sourceTxAmount: Number(suggestedAmount),
-                rawSourceTx: {},
+                rawSourceTx: {
+                    amount: suggestedAmount,
+                    transaction: {},
+                },
             },
         },
     };
@@ -89,7 +92,7 @@ const txCreator = async (
 
 const burnTransactionListener = (context: BurnMachineContext) => (
     callback: Sender<BurnMachineEvent>,
-    _receive: Receiver<any>
+    _receive: Receiver<any>,
 ) => {
     const cleaners: Array<() => void> = [];
     burnAndRelease(context).then(async (burn) => {

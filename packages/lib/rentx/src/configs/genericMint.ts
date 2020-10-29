@@ -125,7 +125,7 @@ const depositListener = (
                                 callback({
                                     type: "SIGNED",
                                     data: {
-                                        renResponse: v._queryTxResult?.out,
+                                        renResponse: v._queryTxResult,
                                         signature:
                                             v._queryTxResult?.out?.signature,
                                     },
@@ -155,7 +155,6 @@ const depositListener = (
             });
 
             const txHash = await deposit.txHash();
-            const persistedTx = context.tx.transactions[txHash];
 
             // Prevent deposit machine tx listeners from interacting with other deposits
             const targetDeposit = (context as DepositMachineContext).deposit;
@@ -166,10 +165,13 @@ const depositListener = (
                         targetDeposit.sourceTxHash,
                         txHash
                     );
-                    return;
+                    return () => {
+                        cleanup();
+                    };
                 }
             }
 
+            const persistedTx = context.tx.transactions[txHash];
             // If we don't have a sourceTxHash, we haven't seen a deposit yet
             const rawSourceTx: any = deposit.depositDetails.transaction;
             const depositState: GatewayTransaction = persistedTx || {
@@ -193,7 +195,10 @@ const depositListener = (
             switch (event.type) {
                 case "RESTORE":
                     try {
-                        minter.processDeposit(event.data);
+                        minter.processDeposit({
+                            transaction: event.data,
+                            amount: event.data.amount,
+                        });
                     } catch (e) {
                         console.error(e);
                     }

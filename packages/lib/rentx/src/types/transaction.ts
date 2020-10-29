@@ -15,7 +15,7 @@ export interface GatewayTransaction {
     rawSourceTx: any;
 }
 
-export interface GatewaySession<CustomParams = void> {
+export interface GatewaySession<CustomParams = any> {
     id: string;
     type: "mint" | "burn";
     network: RenNetwork | "testnet" | "mainnet";
@@ -36,7 +36,7 @@ export interface GatewaySession<CustomParams = void> {
     gatewayAddress?: string;
     expiryTime: number; // unix time when address will no longer accept deposits
     transactions: { [key in string]: GatewayTransaction };
-    customParams?: CustomParams; // can be provided for extra transaction data
+    customParams: CustomParams; // can be provided for extra transaction data
 
     // manual timestamps
     createdAt?: number;

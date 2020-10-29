@@ -14,7 +14,7 @@ export const SECONDS = 1000;
  */
 export const sleep = async (ms: number): Promise<void> =>
     // tslint:disable-next-line: no-string-based-set-timeout
-    new Promise<void>(resolve => setTimeout(resolve, ms));
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * Remove 0x prefix from a hex string. If the input doesn't have a 0x prefix,
@@ -117,7 +117,7 @@ export const extractError = (error: any): string => {
 
 export const retryNTimes = async <T>(
     fnCall: () => Promise<T>,
-    retries: number
+    retries: number,
 ): Promise<T> => {
     let returnError;
     for (let i = 0; retries === -1 || i < retries; i++) {
@@ -174,5 +174,5 @@ export const emptyNonce = () => fromHex("00".repeat(32));
 export const rawEncode = (
     types: Array<string | {}>,
     // tslint:disable-next-line:no-any
-    parameters: any[]
+    parameters: any[],
 ): Buffer => fromHex(new AbiCoder().encodeParameters(types, parameters));

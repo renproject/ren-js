@@ -67,7 +67,7 @@ export const marshalUint = (value: number, length: number) => {
     try {
         return new BN(
             // tslint:disable-next-line: strict-type-predicates
-            typeof value === "number" ? value : (value as string).toString()
+            typeof value === "number" ? value : (value as string).toString(),
         ).toArrayLike(Buffer, "be", length);
     } catch (error) {
         error.message = `Unable to marshal uint${length * 8} '${value}': ${
@@ -98,7 +98,7 @@ export const marshalPackStructType = (type: PackStructType) => {
 
     return Buffer.concat([
         length,
-        ...type.struct.map(field => {
+        ...type.struct.map((field) => {
             const keys = Object.keys(field);
             if (keys.length === 0) {
                 throw new Error(`Invalid struct field with no entries.`);
@@ -132,7 +132,7 @@ export const marshalPackTypeDefinition = (type: PackTypeDefinition): Buffer => {
 export const marshalPackPrimitive = (
     type: PackPrimitive,
     // tslint:disable-next-line: no-any
-    value: any
+    value: any,
 ): Buffer => {
     switch (type) {
         // Booleans
@@ -161,7 +161,7 @@ export const marshalPackPrimitive = (
                 Buffer.isBuffer(value)
                     ? Buffer.from(value)
                     : // Supports base64 url format
-                      fromBase64(value)
+                      fromBase64(value),
             );
         }
         case PackPrimitive.Bytes32:
@@ -176,7 +176,7 @@ export const marshalPackPrimitive = (
 // tslint:disable-next-line: no-any
 export const marshalPackStruct = (type: PackStructType, value: any): Buffer => {
     return Buffer.concat(
-        type.struct.map(member => {
+        type.struct.map((member) => {
             const keys = Object.keys(member);
             if (keys.length === 0) {
                 throw new Error(`Invalid struct member with no entries.`);
@@ -192,14 +192,14 @@ export const marshalPackStruct = (type: PackStructType, value: any): Buffer => {
                 error.message = `Unable to marshal struct field ${key}: ${error.message}`;
                 throw error;
             }
-        })
+        }),
     );
 };
 
 export const marshalPackValue = (
     type: PackTypeDefinition,
     // tslint:disable-next-line: no-any
-    value: any
+    value: any,
 ): Buffer => {
     if (typeof type === "object") {
         return marshalPackStruct(type, value);
@@ -209,7 +209,7 @@ export const marshalPackValue = (
         return marshalPackPrimitive(type, value);
     }
     throw new Error(
-        `Unknown value type ${type}${!type ? ` for value ${value}` : ""}`
+        `Unknown value type ${type}${!type ? ` for value ${value}` : ""}`,
     );
 };
 

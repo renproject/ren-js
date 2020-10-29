@@ -13,25 +13,25 @@ describe("renVMUtils", () => {
             expect(parseRenContract("BTC0Btc2Eth")).toEqual({
                 asset: "BTC",
                 from: "Btc",
-                to: "Eth"
+                to: "Eth",
             });
 
             expect(parseRenContract("BTC0Eth2Btc")).toEqual({
                 asset: "BTC",
                 from: "Eth",
-                to: "Btc"
+                to: "Btc",
             });
 
             // 4-character ticker:
             expect(parseRenContract("DOGE0Eth2Doge")).toEqual({
                 asset: "DOGE",
                 from: "Eth",
-                to: "Doge"
+                to: "Doge",
             });
 
             // Throw an error for an invalid contract:
             expect(() => parseRenContract("bad contract")).toThrow(
-                new Error(`Invalid Ren Contract "bad contract"`)
+                new Error(`Invalid Ren Contract "bad contract"`),
             );
         });
     });
@@ -42,8 +42,8 @@ describe("renVMUtils", () => {
                 resolveInToken({
                     asset: "BTC",
                     from: ({ name: "Btc" } as unknown) as LockChain,
-                    to: ({ name: "Eth" } as unknown) as MintChain
-                })
+                    to: ({ name: "Eth" } as unknown) as MintChain,
+                }),
             ).toEqual("BTC0Btc2Eth");
         });
     });
@@ -54,8 +54,8 @@ describe("renVMUtils", () => {
                 resolveOutToken({
                     asset: "BTC",
                     from: ({ name: "Eth" } as unknown) as MintChain,
-                    to: ({ name: "Btc" } as unknown) as LockChain
-                })
+                    to: ({ name: "Btc" } as unknown) as LockChain,
+                }),
             ).toEqual("BTC0Eth2Btc");
         });
     });

@@ -21,13 +21,13 @@ export interface TerraAPI {
         address: string,
         network: TerraNetwork,
         memo: string | undefined,
-        page?: number
+        page?: number,
     ) => Promise<TerraTransaction[]>;
 
     fetchDeposit: (
         hash: string,
         messageIndex: number,
-        network: TerraNetwork
+        network: TerraNetwork,
     ) => Promise<TerraTransaction>;
 }
 

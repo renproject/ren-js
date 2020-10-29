@@ -23,7 +23,7 @@ describe("Refactor: mint", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("mint to contract", async function() {
+    longIt("mint to contract", async function () {
         this.timeout(100000000000);
 
         const asset = "BTC";
@@ -45,7 +45,7 @@ describe("Refactor: mint", () => {
         try {
             const fees = await renJS.getFees();
             suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8
+                fees[asset.toLowerCase()].lock + 0.0001 * 1e8,
             );
         } catch (error) {
             console.error(error);
@@ -77,8 +77,8 @@ describe("Refactor: mint", () => {
 
         console.log(
             `${asset} balance: ${await account.balanceOf(
-                asset
-            )} ${asset} (${await account.address(asset)})`
+                asset,
+            )} ${asset} (${await account.address(asset)})`,
         );
 
         await new Promise((resolve, reject) => {
@@ -97,8 +97,8 @@ describe("Refactor: mint", () => {
                         confirmations: 0,
                     },
                     amount: "200000",
-                })
-            ).then(async deposit => {
+                }),
+            ).then(async (deposit) => {
                 const hash = await deposit.txHash();
 
                 const color = colors[i % colors.length];
@@ -106,7 +106,7 @@ describe("Refactor: mint", () => {
 
                 deposit._logger = new SimpleLogger(
                     logLevel,
-                    color(`[${hash.slice(0, 6)}] `)
+                    color(`[${hash.slice(0, 6)}] `),
                 );
 
                 const info = deposit._logger.log;
@@ -116,7 +116,7 @@ describe("Refactor: mint", () => {
                         // tslint:disable-next-line: no-any
                         (deposit.depositDetails as any).amount / 1e8
                     } ${asset}`,
-                    deposit.depositDetails
+                    deposit.depositDetails,
                 );
 
                 info(`Calling .confirmed`);
@@ -127,12 +127,12 @@ describe("Refactor: mint", () => {
                     });
 
                 info(`Calling .signed`);
-                await deposit.signed().on("status", status => {
+                await deposit.signed().on("status", (status) => {
                     info(`status: ${status}`);
                 });
 
                 info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", txHash => {
+                await deposit.mint().on("transactionHash", (txHash) => {
                     info(`txHash: ${txHash}`);
                 });
 
@@ -145,16 +145,16 @@ describe("Refactor: mint", () => {
                     if (i === 0) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
-                                suggestedAmount / 1e8
+                                suggestedAmount / 1e8,
                             )} ${blue(asset)} to ${blue(
-                                lockAndMint.gatewayAddress
-                            )}`
+                                lockAndMint.gatewayAddress,
+                            )}`,
                         );
                         account
                             .sendSats(
                                 lockAndMint.gatewayAddress,
                                 suggestedAmount,
-                                asset
+                                asset,
                             )
                             .catch(reject);
                     }

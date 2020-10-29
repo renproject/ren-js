@@ -91,7 +91,7 @@ export const unmarshalPackValue = (type: PackTypeDefinition, value: any) => {
         return unmarshalPackPrimitive(type, value);
     }
     throw new Error(
-        `Unknown value type ${type}${!type ? ` for value ${value}` : ""}`
+        `Unknown value type ${type}${!type ? ` for value ${value}` : ""}`,
     );
 };
 

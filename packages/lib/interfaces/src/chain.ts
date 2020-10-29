@@ -131,12 +131,12 @@ export interface ChainCommon<
      * @dev Must be compatible with the matching RenVM multichain LockChain.
      */
     transactionConfidence: (
-        transaction: Transaction
+        transaction: Transaction,
     ) => SyncOrPromise<{ current: number; target: number }>;
 
     transactionRPCFormat: (
         transaction: Transaction,
-        v2?: boolean
+        v2?: boolean,
     ) => {
         txid: Buffer;
         txindex: string;
@@ -192,7 +192,7 @@ export interface LockChain<
         // address, and only return unspent deposits in successive calls.
         instanceID: number,
         onDeposit: (deposit: LockDeposit) => void,
-        listenerCancelled: () => boolean
+        listenerCancelled: () => boolean,
     ) => SyncOrPromise<void>;
 
     // Encoding
@@ -217,13 +217,13 @@ export interface LockChain<
     getGatewayAddress: (
         asset: Asset,
         publicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ) => SyncOrPromise<Address>;
 
     getPubKeyScript: (
         asset: Asset,
         publicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ) => SyncOrPromise<Buffer>;
 
     // Only chains supported by the legacy transaction format (BTC, ZEC & BCH)
@@ -266,12 +266,12 @@ export interface MintChain<
         asset: Asset,
         contractCalls: ContractCall[],
         mintTx: MintTransaction,
-        eventEmitter: EventEmitter
+        eventEmitter: EventEmitter,
     ) => SyncOrPromise<Transaction>;
 
     findTransaction: (
         asset: Asset,
-        mintTx: MintTransaction
+        mintTx: MintTransaction,
     ) => SyncOrPromise<Transaction | undefined>;
 
     /**
@@ -293,12 +293,12 @@ export interface MintChain<
         },
 
         eventEmitter: EventEmitter,
-        logger: Logger
+        logger: Logger,
     ) => SyncOrPromise<BurnDetails<Transaction>>;
 
     contractCalls?: (
         eventType: EventType,
         asset: Asset,
-        burnPayload?: string
+        burnPayload?: string,
     ) => SyncOrPromise<ContractCall[] | undefined>;
 }

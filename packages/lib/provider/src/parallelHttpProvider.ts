@@ -8,7 +8,7 @@ import { Provider } from "./jsonRPC";
 const promiseAll = async <a>(
     list: List<Promise<a>>,
     defaultValue: a,
-    logger?: Logger
+    logger?: Logger,
 ): Promise<[List<a>, OrderedSet<string>]> => {
     let errors = OrderedSet<string>();
     let newList = List<a>();
@@ -41,29 +41,29 @@ export class ParallelHttpProvider<
         this.logger = logger;
         this.nodes = List(
             nodeURLs.map(
-                nodeURL =>
-                    new HttpProvider<Requests, Responses>(nodeURL, logger)
-            )
+                (nodeURL) =>
+                    new HttpProvider<Requests, Responses>(nodeURL, logger),
+            ),
         );
     }
 
     public sendMessage = async <Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 2
+        retry = 2,
     ): Promise<Responses[Method]> => {
         // tslint:disable-next-line: prefer-const
         let [responses, errors] = await promiseAll(
             this.nodes
                 .valueSeq()
-                .map(async node =>
-                    node.sendMessage<Method>(method, request, retry)
+                .map(async (node) =>
+                    node.sendMessage<Method>(method, request, retry),
                 )
                 .toList(),
             null,
-            this.logger
+            this.logger,
         );
-        responses = responses.filter(result => result !== null);
+        responses = responses.filter((result) => result !== null);
 
         const first = responses.first(null);
         if (first === null) {

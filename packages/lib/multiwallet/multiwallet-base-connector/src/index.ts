@@ -1,5 +1,5 @@
-import { EventEmitter } from "events";
 import { RenNetwork } from "@renproject/interfaces";
+import { EventEmitter } from "events";
 
 export interface ConnectorUpdate<ChainProvider, ChainAccount> {
     provider: ChainProvider;
@@ -30,21 +30,24 @@ export class ConnectorEmitter<CP, CA> extends EventEmitter {
     }
     emitUpdate(update: ConnectorUpdate<CP, CA>): void {
         if (this.debug) {
-            console.log(`'${ConnectorEvents.UPDATE}'`, update);
+            // tslint:disable-next-line: no-console
+            console.debug(`'${ConnectorEvents.UPDATE}'`, update);
         }
         this.emit(ConnectorEvents.UPDATE, update);
     }
 
     emitError(error: Error): void {
         if (this.debug) {
-            console.log(`'${ConnectorEvents.ERROR}'`, error);
+            // tslint:disable-next-line: no-console
+            console.debug(`'${ConnectorEvents.ERROR}'`, error);
         }
         this.emit(ConnectorEvents.ERROR, error);
     }
 
     emitDeactivate(reason?: string): void {
         if (this.debug) {
-            console.log(`'${ConnectorEvents.DEACTIVATE}'`);
+            // tslint:disable-next-line: no-console
+            console.debug(`'${ConnectorEvents.DEACTIVATE}'`);
         }
         this.emit(ConnectorEvents.DEACTIVATE, reason);
     }

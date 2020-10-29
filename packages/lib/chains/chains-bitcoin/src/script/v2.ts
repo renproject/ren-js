@@ -13,7 +13,7 @@ const gatewayScript = (gGubKeyHash: Buffer, gHash: Buffer): Script =>
 export const createAddress = (
     gGubKeyHash: Buffer,
     gHash: Buffer,
-    prefix: Buffer
+    prefix: Buffer,
 ): Buffer => gatewayScript(gGubKeyHash, gHash).toAddress(prefix);
 
 export const pubKeyScript = (gGubKeyHash: Buffer, gHash: Buffer) =>

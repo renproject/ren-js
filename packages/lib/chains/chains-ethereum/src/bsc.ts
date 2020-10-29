@@ -15,7 +15,7 @@ export class BinanceSmartChainClass extends EthereumClass {
 
     constructor(
         web3Provider: provider | "mainnet" | "testnet" = "mainnet",
-        network: "mainnet" | "testnet" = "mainnet"
+        network: "mainnet" | "testnet" = "mainnet",
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
@@ -25,7 +25,7 @@ export class BinanceSmartChainClass extends EthereumClass {
                       (web3Provider === "testnet"
                           ? renBscTestnet
                           : getRenBscMainnet()
-                      ).infura
+                      ).infura,
                   ).currentProvider
                 : web3Provider,
             web3Provider === "testnet" || network === "testnet"
@@ -33,7 +33,7 @@ export class BinanceSmartChainClass extends EthereumClass {
                 : undefined,
             web3Provider === "testnet" || network === "testnet"
                 ? renBscTestnet
-                : undefined
+                : undefined,
         );
     }
 }

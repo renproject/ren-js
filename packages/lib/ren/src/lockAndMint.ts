@@ -23,7 +23,7 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
-    generateSighash,
+    overrideContractCalls,
     Ox,
     payloadToMintABI,
     renVMHashToBase64,
@@ -80,7 +80,7 @@ export class LockAndMint<
     constructor(
         _renVM: AbstractRenVMProvider,
         _params: LockAndMintParams<Transaction, Deposit, Asset, Address>,
-        _logger: Logger
+        _logger: Logger,
     ) {
         super();
 
@@ -133,7 +133,7 @@ export class LockAndMint<
             (this._params.to.contractCalls &&
                 (await this._params.to.contractCalls(
                     EventType.LockAndMint,
-                    this._params.asset
+                    this._params.asset,
                 )));
 
         try {
@@ -155,7 +155,7 @@ export class LockAndMint<
      *                chain.
      */
     public processDeposit = (
-        deposit: Deposit
+        deposit: Deposit,
     ): LockAndMintDeposit<Transaction, Deposit, Asset, Address> => {
         if (
             !this._pHash ||
@@ -164,7 +164,7 @@ export class LockAndMint<
             !this.gatewayAddress
         ) {
             throw new Error(
-                "Gateway address must be generated before calling 'wait'."
+                "Gateway address must be generated before calling 'wait'.",
             );
         }
 
@@ -191,7 +191,7 @@ export class LockAndMint<
                 deposit,
                 this._mpkh,
                 this._gHash,
-                this._pHash
+                this._pHash,
             );
             this.emit("deposit", depositObject);
             // this.deposits.set(deposit);
@@ -210,13 +210,13 @@ export class LockAndMint<
                       Deposit,
                       Asset,
                       Address
-                  >
+                  >,
               ) => void // tslint:disable-next-line: no-any
-            : never
+            : never,
     ): this => {
         // Emit previous deposit events.
         if (event === "deposit") {
-            this.deposits.map(deposit => {
+            this.deposits.map((deposit) => {
                 listener(deposit);
             });
         }
@@ -241,15 +241,15 @@ export class LockAndMint<
                       Deposit,
                       Asset,
                       Address
-                  >
+                  >,
               ) => void // tslint:disable-next-line: no-any
-            : never
+            : never,
     ): this => this.addListener(event, listener);
 
     // Private methods /////////////////////////////////////////////////////////
 
     private readonly generateGatewayAddress = async (
-        specifyGatewayAddress?: Address
+        specifyGatewayAddress?: Address,
     ): Promise<Address> => {
         if (specifyGatewayAddress || this._params.gatewayAddress) {
             this.gatewayAddress =
@@ -264,7 +264,7 @@ export class LockAndMint<
 
         if (!nonce) {
             throw new Error(
-                `Must call 'initialize' before calling 'generateGatewayAddress'`
+                `Must call 'initialize' before calling 'generateGatewayAddress'`,
             );
         }
 
@@ -291,11 +291,11 @@ export class LockAndMint<
                                   | LockChain
                                   | MintChain,
                               to: this._params.to,
-                          })
-                      )
+                          }),
+                      ),
                   )
                 : await this._params.to.resolveTokenGatewayContract(
-                      this._params.asset
+                      this._params.asset,
                   );
 
         this._pHash = generatePHash(contractParams || [], this._logger);
@@ -306,19 +306,19 @@ export class LockAndMint<
             tokenGatewayContract,
             fromHex(nonce),
             this._renVM.version >= 2,
-            this._logger
+            this._logger,
         );
         this._gHash = gHash;
         this._mpkh = await this._renVM.selectPublicKey(
             this._params.asset,
-            this._logger
+            this._logger,
         );
         this._logger.debug("mpkh:", Ox(this._mpkh));
 
         const gatewayAddress = await this._params.from.getGatewayAddress(
             this._params.asset,
             this._mpkh,
-            gHash
+            gHash,
         );
         this.gatewayAddress = gatewayAddress;
         this._logger.debug("gateway address:", this.gatewayAddress);
@@ -334,7 +334,7 @@ export class LockAndMint<
             !this.gatewayAddress
         ) {
             throw new Error(
-                "Gateway address must be generated before calling 'wait'."
+                "Gateway address must be generated before calling 'wait'.",
             );
         }
 
@@ -358,7 +358,7 @@ export class LockAndMint<
                     this.gatewayAddress,
                     this.getDepositsInstance,
                     this.processDeposit,
-                    listenerCancelled
+                    listenerCancelled,
                 );
             } catch (error) {
                 this._logger.error(extractError(error));
@@ -394,7 +394,7 @@ export class LockAndMintDeposit<
         deposit: Deposit,
         mpkh: Buffer,
         gHash: Buffer,
-        pHash: Buffer
+        pHash: Buffer,
     ) {
         assertType<Buffer>("Buffer", { mpkh, gHash });
         this._renVM = renVM;
@@ -413,7 +413,7 @@ export class LockAndMintDeposit<
 
         if (!txHash && (!contractCalls || !contractCalls.length)) {
             throw new Error(
-                `Must provide Ren transaction hash or contract call details.`
+                `Must provide Ren transaction hash or contract call details.`,
             );
         }
 
@@ -449,7 +449,7 @@ export class LockAndMintDeposit<
 
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
-                `Unable to generate txHash without contract call details.`
+                `Unable to generate txHash without contract call details.`,
             );
         }
 
@@ -468,11 +468,11 @@ export class LockAndMintDeposit<
                                   | LockChain
                                   | MintChain,
                               to: this._params.to,
-                          })
-                      )
+                          }),
+                      ),
                   )
                 : await this._params.to.resolveTokenGatewayContract(
-                      this._params.asset
+                      this._params.asset,
                   );
 
         const gHash = generateGHash(
@@ -481,7 +481,7 @@ export class LockAndMintDeposit<
             tokenGatewayContract,
             fromHex(nonce),
             this._renVM.version >= 2,
-            this._logger
+            this._logger,
         );
 
         const encodedGHash = toBase64(gHash);
@@ -490,7 +490,7 @@ export class LockAndMintDeposit<
                 "txHash Parameters:",
                 this._params.asset,
                 encodedGHash,
-                deposit
+                deposit,
             );
         }
 
@@ -500,13 +500,13 @@ export class LockAndMintDeposit<
 
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
-                `Unable to submit to RenVM without contract call details.`
+                `Unable to submit to RenVM without contract call details.`,
             );
         }
 
         const encodedParameters = new AbiCoder().encodeParameters(
-            (contractParams || []).map(i => i.type),
-            (contractParams || []).map(i => i.value)
+            (contractParams || []).map((i) => i.type),
+            (contractParams || []).map((i) => i.value),
         );
 
         // const tokenIdentifier = await this._params.to.resolveTokenGatewayContract(
@@ -515,14 +515,14 @@ export class LockAndMintDeposit<
 
         const transactionDetails = this._params.from.transactionRPCFormat(
             this.depositDetails.transaction,
-            this._renVM.version >= 2
+            this._renVM.version >= 2,
         );
 
         const nHash = generateNHash(
             fromHex(nonce),
             transactionDetails.txid,
             transactionDetails.txindex,
-            this._renVM.version >= 2
+            this._renVM.version >= 2,
         );
         this._nHash = nHash;
 
@@ -557,14 +557,14 @@ export class LockAndMintDeposit<
                 fromHex(nonce),
                 this._params.from.transactionRPCFormat(
                     deposit.transaction,
-                    this._renVM.version >= 2 // v2
+                    this._renVM.version >= 2, // v2
                 ),
                 deposit.amount,
                 fromHex(encodedParameters),
                 this._pHash,
                 strip0x(sendTo),
-                outputHashFormat
-            )
+                outputHashFormat,
+            ),
         );
     };
 
@@ -573,7 +573,7 @@ export class LockAndMintDeposit<
      */
     public queryTx = async (): Promise<MintTransaction> => {
         this._queryTxResult = (await this._renVM.queryMintOrBurn(
-            fromBase64(await this.txHash())
+            fromBase64(await this.txHash()),
         )) as MintTransaction;
         return this._queryTxResult;
     };
@@ -587,7 +587,7 @@ export class LockAndMintDeposit<
         const txHash = await this.txHash();
         if (providedTxHash && providedTxHash !== txHash) {
             throw new Error(
-                `Inconsistent RenVM transaction hash: got ${providedTxHash} but expected ${txHash}`
+                `Inconsistent RenVM transaction hash: got ${providedTxHash} but expected ${txHash}`,
             );
         }
 
@@ -599,7 +599,7 @@ export class LockAndMintDeposit<
 
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
-                `Unable to submit to RenVM without contract call details.`
+                `Unable to submit to RenVM without contract call details.`,
             );
         }
 
@@ -608,11 +608,20 @@ export class LockAndMintDeposit<
             contractCalls.length - 1
         ];
 
-        const fnABI = payloadToMintABI(contractFn, contractParams || []);
+        const filteredContractParams = contractParams
+            ? contractParams.filter(
+                  (contractParam) => !contractParam.notInPayload,
+              )
+            : contractParams;
+
+        const fnABI = payloadToMintABI(
+            contractFn,
+            filteredContractParams || [],
+        );
 
         const encodedParameters = new AbiCoder().encodeParameters(
-            (contractParams || []).map(i => i.type),
-            (contractParams || []).map(i => i.value)
+            (filteredContractParams || []).map((i) => i.type),
+            (filteredContractParams || []).map((i) => i.value),
         );
 
         if (this._params.tags && this._params.tags.length > 1) {
@@ -624,19 +633,19 @@ export class LockAndMintDeposit<
                 : [];
 
         const tokenIdentifier = await this._params.to.resolveTokenGatewayContract(
-            this._params.asset
+            this._params.asset,
         );
 
         const transactionDetails = this._params.from.transactionRPCFormat(
             this.depositDetails.transaction,
-            this._renVM.version >= 2
+            this._renVM.version >= 2,
         );
 
         const nHash = generateNHash(
             fromHex(nonce),
             transactionDetails.txid,
             transactionDetails.txindex,
-            this._renVM.version >= 2
+            this._renVM.version >= 2,
         );
 
         const selector =
@@ -658,7 +667,7 @@ export class LockAndMintDeposit<
             fromHex(nonce),
             this._params.from.transactionRPCFormat(
                 deposit.transaction,
-                this._renVM.version >= 2 // v2
+                this._renVM.version >= 2, // v2
             ),
             deposit.amount,
             fromHex(encodedParameters),
@@ -667,13 +676,13 @@ export class LockAndMintDeposit<
             Ox(tokenIdentifier),
             contractFn,
             fnABI,
-            tags
+            tags,
         );
         if (txHash && toBase64(returnedTxHash) !== txHash) {
-            this._logger.debug(
+            this._logger.warn(
                 `Unexpected txHash returned from RenVM. Received: ${toBase64(
-                    returnedTxHash
-                )}, expected: ${txHash}`
+                    returnedTxHash,
+                )}, expected: ${txHash}`,
             );
         }
 
@@ -685,7 +694,7 @@ export class LockAndMintDeposit<
         target: number;
     }> => {
         return this._params.from.transactionConfidence(
-            this.depositDetails.transaction
+            this.depositDetails.transaction,
         );
     };
 
@@ -712,7 +721,7 @@ export class LockAndMintDeposit<
         >();
 
         (async () => {
-            this._submit().catch(_error => {
+            this._submit().catch((_error) => {
                 /* ignore error */
             });
 
@@ -721,7 +730,7 @@ export class LockAndMintDeposit<
             while (true) {
                 try {
                     const confidence = await this._params.from.transactionConfidence(
-                        this.depositDetails.transaction
+                        this.depositDetails.transaction,
                     );
                     const confidenceRatio =
                         confidence.target === 0
@@ -732,20 +741,20 @@ export class LockAndMintDeposit<
                         promiEvent.emit(
                             confidenceRatio === 0 ? "target" : "confirmation",
                             confidence.current,
-                            confidence.target
+                            confidence.target,
                         );
                     }
                     if (confidenceRatio >= 1) {
                         break;
                     }
                     this._logger.debug(
-                        `deposit confidence: ${confidence.current} / ${confidence.target}`
+                        `deposit confidence: ${confidence.current} / ${confidence.target}`,
                     );
                 } catch (error) {
                     console.error(error);
                     this._logger.error(
                         `Error fetching transaction confidence: ` +
-                            extractError(error)
+                            extractError(error),
                     );
                 }
                 await sleep(15 * SECONDS);
@@ -795,7 +804,7 @@ export class LockAndMintDeposit<
                     const queryTxResponse = await this.queryTx();
                     if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
                         throw new Error(
-                            `Transaction ${utxoTxHash} has not been submitted previously.`
+                            `Transaction ${utxoTxHash} has not been submitted previously.`,
                         );
                     }
                     txHash = queryTxResponse.hash;
@@ -811,18 +820,18 @@ export class LockAndMintDeposit<
 
             const response = await this._renVM.waitForTX<MintTransaction>(
                 fromBase64(txHash),
-                status => {
+                (status) => {
                     promiEvent.emit("status", status);
                     this._logger.debug("transaction status:", status);
                 },
-                () => promiEvent._isCancelled()
+                () => promiEvent._isCancelled(),
             );
 
             this._queryTxResult = response;
 
             this._logger.debug(
                 "signature:",
-                this._queryTxResult.out && this._queryTxResult.out.signature
+                this._queryTxResult.out && this._queryTxResult.out.signature,
             );
 
             return this;
@@ -840,14 +849,14 @@ export class LockAndMintDeposit<
     public findTransaction = async (): Promise<{} | undefined> => {
         if (!this._queryTxResult) {
             throw new Error(
-                `Unable to find transaction without RenVM response. Call 'signed' first.`
+                `Unable to find transaction without RenVM response. Call 'signed' first.`,
             );
         }
 
         // Check if the signature has already been submitted
         return await this._params.to.findTransaction(
             this._params.asset,
-            this._queryTxResult
+            this._queryTxResult,
         );
     };
 
@@ -858,7 +867,7 @@ export class LockAndMintDeposit<
      */
     public mint = (
         // tslint:disable-next-line: no-any
-        _txConfig?: any
+        override?: { [name: string]: any },
         // tslint:disable-next-line: no-any
     ): PromiEvent<any, { [key: string]: any }> => {
         // tslint:disable-next-line: no-any
@@ -872,17 +881,27 @@ export class LockAndMintDeposit<
         (async () => {
             if (!this._queryTxResult) {
                 throw new Error(
-                    `Unable to submit to Ethereum without signature. Call 'signed' first.`
+                    `Unable to submit to Ethereum without signature. Call 'signed' first.`,
                 );
             }
+
+            const overrideArray = Object.keys(override || {}).map((key) => ({
+                name: key,
+                value: (override || {})[key],
+            }));
+
+            const contractCalls = overrideContractCalls(
+                this._params.contractCalls || [],
+                { contractParams: overrideArray },
+            );
 
             const asset = this._params.asset;
 
             return await this._params.to.submitMint(
                 asset,
-                this._params.contractCalls || [],
+                contractCalls,
                 this._queryTxResult,
-                (promiEvent as unknown) as EventEmitter
+                (promiEvent as unknown) as EventEmitter,
             );
         })()
             .then(promiEvent.resolve)
@@ -908,11 +927,11 @@ export class LockAndMintDeposit<
                 nonce: "Buffer | string | undefined",
                 tags: "string[] | undefined",
             },
-            { params: this._params }
+            { params: this._params },
         );
 
         if (this._params.contractCalls) {
-            this._params.contractCalls.map(contractCall => {
+            this._params.contractCalls.map((contractCall) => {
                 assertType<string>("string", {
                     sendTo: contractCall.sendTo,
                     contractFn: contractCall.contractFn,

@@ -78,7 +78,7 @@ interface TerraMessageTypes {
 type DecodedMsg = TerraMessageTypes["bank/MsgSend"];
 
 const extractDepositsFromTx = (chainHeight: number) => (
-    tx: TerraTx
+    tx: TerraTx,
 ): TerraTransaction[] => {
     const msgs: Array<
         Omit<TerraTx, "msg"> & {
@@ -91,7 +91,7 @@ const extractDepositsFromTx = (chainHeight: number) => (
     > = [];
     try {
         const decodedMsgs: DecodedMsg[] = JSON.parse(
-            Buffer.from(tx.msg, "base64").toString()
+            Buffer.from(tx.msg, "base64").toString(),
         );
         for (let i = 0; i < decodedMsgs.length; i++) {
             const msg = decodedMsgs[i];
@@ -131,7 +131,7 @@ const fetchDeposits = async (
     address: string,
     network: TerraNetwork,
     memo: string | undefined = undefined,
-    page = 0
+    page = 0,
 ): Promise<TerraTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
@@ -147,8 +147,8 @@ const fetchDeposits = async (
     if (status !== "OK") {
         throw new Error(
             `Unable to fetch Terra deposits: ${String(status)}: ${String(
-                errors
-            )}`
+                errors,
+            )}`,
         );
     }
 
@@ -169,7 +169,7 @@ const fetchDeposits = async (
 const fetchDeposit = async (
     hash: string,
     messageIndex: number,
-    network: TerraNetwork
+    network: TerraNetwork,
 ): Promise<TerraTransaction> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
@@ -185,8 +185,8 @@ const fetchDeposit = async (
     if (status !== "OK") {
         throw new Error(
             `Unable to fetch Terra deposit: ${String(status)}: ${String(
-                errors
-            )}`
+                errors,
+            )}`,
         );
     }
 

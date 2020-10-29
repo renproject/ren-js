@@ -49,12 +49,12 @@ export class InternalPromiEvent<
     // @ts-ignore no initializer because of proxyHandler
     public readonly on: <Event extends keyof EventTypes>(
         event: Event,
-        callback: (...values: EventTypes[Event]) => void | Promise<void>
+        callback: (...values: EventTypes[Event]) => void | Promise<void>,
     ) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly once: <Event extends keyof EventTypes>(
         event: Event,
-        callback: (...values: EventTypes[Event]) => void | Promise<void>
+        callback: (...values: EventTypes[Event]) => void | Promise<void>,
     ) => this;
     // @ts-ignore no initializer because of proxyHandler
     public readonly _cancel: () => void;

@@ -8,7 +8,7 @@ const INDEXER_URL = `https://account-chain-indexer.herokuapp.com/graphql`;
 export const fetchDeposits = async (
     address: string,
     paramsFilterBase64: string | undefined = undefined,
-    _page = 0
+    _page = 0,
 ): Promise<FilTransaction[]> => {
     // TODO: Add network parameter.
     const query = `{
@@ -43,7 +43,7 @@ export const fetchDeposits = async (
 
     if (response.errors && response.errors.length) {
         throw new Error(
-            `Unable to fetch Filecoin messages: ${response.errors[0].message}`
+            `Unable to fetch Filecoin messages: ${response.errors[0].message}`,
         );
     }
 
@@ -60,11 +60,11 @@ export const fetchDeposits = async (
                     confirmations: height ? height - height + 1 : 0,
                     nonce: message.nonce,
                 };
-            }
+            },
         )
         .filter(
-            message =>
-                !paramsFilterBase64 || message.params === paramsFilterBase64
+            (message) =>
+                !paramsFilterBase64 || message.params === paramsFilterBase64,
         );
 };
 
@@ -102,7 +102,7 @@ export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
 
     if (response.errors && response.errors.length) {
         throw new Error(
-            `Unable to fetch Filecoin messages: ${response.errors[0].message}`
+            `Unable to fetch Filecoin messages: ${response.errors[0].message}`,
         );
     }
 
@@ -110,13 +110,13 @@ export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
 
     if (messages.length === 0) {
         throw new Error(
-            `Error fetching Filecoin transaction: message not found.`
+            `Error fetching Filecoin transaction: message not found.`,
         );
     }
 
     if (messages.length > 0) {
         console.warn(
-            `More than Filecoin transaction found with the same transaction ID.`
+            `More than Filecoin transaction found with the same transaction ID.`,
         );
     }
 

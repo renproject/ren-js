@@ -1,3 +1,4 @@
+import { Logger } from "@renproject/interfaces";
 import {
     assertType,
     extractError,
@@ -5,7 +6,6 @@ import {
     SECONDS,
 } from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
-import { Logger } from "@renproject/interfaces";
 
 import { JSONRPCResponse, Provider } from "./jsonRPC";
 
@@ -43,7 +43,7 @@ export class HttpProvider<
         } else {
             if (ipOrMultiaddress.indexOf("://") === -1) {
                 throw new Error(
-                    `Invalid node URL without protocol: ${ipOrMultiaddress}.`
+                    `Invalid node URL without protocol: ${ipOrMultiaddress}.`,
                 );
             }
             this.nodeURL = ipOrMultiaddress;
@@ -57,14 +57,14 @@ export class HttpProvider<
         method: Method,
         request: Requests[Method],
         retry = 2,
-        timeout = 120 * SECONDS
+        timeout = 120 * SECONDS,
     ): Promise<Responses[Method]> {
         // Print request:
         if (this.logger) {
             // tslint:disable-next-line: no-console
-            this.logger.log(
+            this.logger.debug(
                 "[request]",
-                JSON.stringify(generatePayload(method, request), null, "    ")
+                JSON.stringify(generatePayload(method, request), null, "    "),
             );
         }
         try {
@@ -76,14 +76,14 @@ export class HttpProvider<
                         // Use a 120 second timeout. This could be reduced, but
                         // should be done based on the method, since some requests
                         // may take a long time, especially on a slow connection.
-                        { timeout }
+                        { timeout },
                     ),
-                retry
+                retry,
             );
             if (response.status !== 200) {
                 throw this.responseError(
                     "Unexpected status code returned from node",
-                    response
+                    response,
                 );
             }
             if (response.data.error) {
@@ -94,9 +94,9 @@ export class HttpProvider<
             }
             if (this.logger) {
                 // tslint:disable-next-line: no-console
-                this.logger.log(
+                this.logger.debug(
                     "[response]",
-                    JSON.stringify(response.data.result, null, "    ")
+                    JSON.stringify(response.data.result, null, "    "),
                 );
             }
             return response.data.result;

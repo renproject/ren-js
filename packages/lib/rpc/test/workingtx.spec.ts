@@ -28,48 +28,48 @@ export const submit = {
                                         outpoint: {
                                             struct: [
                                                 {
-                                                    hash: PackPrimitive.Bytes
+                                                    hash: PackPrimitive.Bytes,
                                                 },
                                                 {
-                                                    index: PackPrimitive.U32
-                                                }
-                                            ]
-                                        }
+                                                    index: PackPrimitive.U32,
+                                                },
+                                            ],
+                                        },
                                     },
                                     {
-                                        value: PackPrimitive.U256
+                                        value: PackPrimitive.U256,
                                     },
                                     {
-                                        pubKeyScript: PackPrimitive.Bytes
-                                    }
-                                ]
-                            }
+                                        pubKeyScript: PackPrimitive.Bytes,
+                                    },
+                                ],
+                            },
                         },
                         {
-                            payload: PackPrimitive.Bytes
+                            payload: PackPrimitive.Bytes,
                         },
                         {
-                            phash: PackPrimitive.Bytes32
+                            phash: PackPrimitive.Bytes32,
                         },
                         {
-                            token: PackPrimitive.String
+                            token: PackPrimitive.String,
                         },
                         {
-                            to: PackPrimitive.String
+                            to: PackPrimitive.String,
                         },
                         {
-                            nonce: PackPrimitive.Bytes32
+                            nonce: PackPrimitive.Bytes32,
                         },
                         {
-                            nhash: PackPrimitive.Bytes32
+                            nhash: PackPrimitive.Bytes32,
                         },
                         {
-                            ghash: PackPrimitive.Bytes32
+                            ghash: PackPrimitive.Bytes32,
                         },
                         {
-                            gpubkey: PackPrimitive.Bytes
-                        }
-                    ]
+                            gpubkey: PackPrimitive.Bytes,
+                        },
+                    ],
                 },
                 v: {
                     ghash: "U-DBJ9vAHUa5tB4mmOyw_tLyyV0-1dVfzXZoVD8JXGs",
@@ -79,25 +79,25 @@ export const submit = {
                     output: {
                         outpoint: {
                             hash: "uqU05-w6XPeJFbzvdyb_nQot3ueKabkNHrc5ez1xcFI",
-                            index: "0"
+                            index: "0",
                         },
                         pubKeyScript: "qRTGFsF0Ojzcp1YYS-0GOnAZdouRA4c",
-                        value: "10000"
+                        value: "10000",
                     },
                     payload: "",
                     phash: "xdJGAYb3IzySfn2y3McDwOUAtlPKgic7e_rYBF2FpHA",
                     to: "9e3feaf5f0483b2e196db31635734f627fdfd254",
-                    token: "B116c1a20647D5d1dD662C2f2B10C0a4A6124794"
-                }
+                    token: "B116c1a20647D5d1dD662C2f2B10C0a4A6124794",
+                },
             },
             out: {
                 t: {
-                    struct: []
+                    struct: [],
                 },
-                v: {}
-            }
-        }
-    }
+                v: {},
+            },
+        },
+    },
 };
 
 describe("Pack", () => {
@@ -106,7 +106,7 @@ describe("Pack", () => {
         const txIn = submit.params.tx.in;
 
         const actualHash = toURLBase64(
-            hashTransaction(version, selector, txIn)
+            hashTransaction(version, selector, txIn),
         );
         expect(actualHash).toEqual(hash);
     });

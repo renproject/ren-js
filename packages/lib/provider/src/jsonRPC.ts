@@ -24,6 +24,6 @@ export interface Provider<
     sendMessage<Method extends keyof Requests>(
         method: Method,
         request: Requests[Method],
-        retry?: number
+        retry?: number,
     ): Promise<Method extends keyof Responses ? Responses[Method] : {}>;
 }

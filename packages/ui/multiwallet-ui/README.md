@@ -1,8 +1,9 @@
-# Multiwallet UI
+# `Multiwallet UI`
 
 This package provides a React wallet selection modal and state management for Multiwallet connectors.
 
 ## Usage
+
 ```bash
 yarn add @renproject/multiwallet-ui @material-ui/core @material-ui/icons
 # For each chain / connector
@@ -11,22 +12,24 @@ yarn add @renproject/multiwallet-{DESIRED_CHAIN}-{DESIRED_WALLET}-connector
 ```
 
 At the root of your app, add the provider
-```ts
-import React from "react";
-import ReactDOM from "react-dom";
 
-import { MultiwalletProvider } from "@renproject/multiwallet-ui";
-import App from "./App";
+```ts
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+import { MultiwalletProvider } from '@renproject/multiwallet-ui';
+import App from './App';
 
 ReactDOM.render(
   <MultiwalletProvider>
-    <App/>
+    <App />
   </MultiwalletProvider>,
-  document.getElementById("root")
-)
+  document.getElementById('root')
+);
 ```
 
 In your app, configure the desired providers for their chains eg.
+
 ```ts
 import { EthereumInjectedConnector } from '@renproject/multiwallet-ethereum-injected-connector';
 import { EthereumWalletConnectConnector } from '@renproject/multiwallet-ethereum-walletconnect-connector';
@@ -71,7 +74,7 @@ import { WalletPickerModal, useMultiwallet } from '@renproject/multiwallet-ui';
 // import options object
 
 const WalletDemo: React.FC = () => {
-  const {enabledChains} = useMultiwallet();
+  const { enabledChains } = useMultiwallet();
   return (
     <div>
       {Object.entries(enabledChains).map(([chain, connector]) => (
@@ -109,7 +112,12 @@ const App = () => {
       </button>
       <WalletPickerModal
         open={open}
-        options={{ chain, onClose: setClosed, config: options, targetNetwork: 'mainnet' }}
+        options={{
+          chain,
+          onClose: setClosed,
+          config: options,
+          targetNetwork: 'mainnet',
+        }}
       />
     </>
   );
@@ -119,7 +127,9 @@ const App = () => {
 See the `/example` directory for a working example, or check the storybook as detailed below for further usage guides.
 
 ## Developing
+
 This library uses [TSDX](https://tsdx.io/) to bootstrap, build and run tests.
+
 ### Commands
 
 TSDX scaffolds your new library inside `/src`, and also sets up a [Parcel-based](https://parceljs.org) playground for it inside `/example`.
@@ -225,4 +235,3 @@ The appropriate paths are configured in `package.json` and `dist/index.js` accor
 ### Named Exports
 
 Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
-

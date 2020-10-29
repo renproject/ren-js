@@ -13,7 +13,7 @@ describe("Terra.dev", () => {
             messages = await terraDev.fetchDeposits(
                 "terra1muzv5awgfnavnelcc79c2rptp6jj085r7hsg7c",
                 TerraNetwork.Tequila, // isTestnet
-                ""
+                "",
                 // Buffer.from("Hello world!").toString("base64")
             );
         } catch (error) {
@@ -30,7 +30,7 @@ describe("Terra.dev", () => {
             messages = await terraDev.fetchDeposits(
                 "terra1muzv5awgfnavnelcc79c2rptp6jj085r7hsg7c",
                 TerraNetwork.Tequila, // isTestnet
-                "test123"
+                "test123",
                 // Buffer.from("Hello world!").toString("base64")
             );
         } catch (error) {
@@ -47,7 +47,7 @@ describe("Terra.dev", () => {
             message = await terraDev.fetchDeposit(
                 "6BCF73C2518412BE1180D9D811E758F29AC46CAB0271CB47E1A852F787FDD42A",
                 0,
-                TerraNetwork.Tequila // isTestnet
+                TerraNetwork.Tequila, // isTestnet
             );
         } catch (error) {
             error.message = extractError(error);

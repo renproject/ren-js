@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.0.0-alpha.14",
+    "version": "2.0.0-alpha.16",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -22,10 +22,14 @@
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
+        "prettier": "yarn fix:prettier",
+        "lint": "run-s lint:*",
+        "lint:tslint": "tslint --project ./ -t stylish --quiet",
+        "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
         "fix:tslint": "tslint --fix --project .",
+        "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
         "test": "run-s build:main test:* lint",
-        "lint": "tslint --project ./ -t stylish --quiet",
         "test:unit": "nyc ../../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -42,10 +46,10 @@
         "unlink:all": "(yarn unlink || true)"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.14",
-        "@renproject/networks": "^2.0.0-alpha.14",
-        "@renproject/rpc": "^2.0.0-alpha.14",
-        "@renproject/utils": "^2.0.0-alpha.14",
+        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/networks": "^2.0.0-alpha.16",
+        "@renproject/rpc": "^2.0.0-alpha.16",
+        "@renproject/utils": "^2.0.0-alpha.16",
         "@types/bs58": "^4.0.1",
         "@types/node": "^14.11.1",
         "bchaddrjs": "^0.4.9",
@@ -72,7 +76,12 @@
         ]
     },
     "prettier": {
-        "trailingComma": "es5",
-        "tabWidth": 4
+        "printWidth": 80,
+        "semi": true,
+        "singleQuote": false,
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "endOfLine": "lf",
+        "arrowParens": "always"
     }
 }

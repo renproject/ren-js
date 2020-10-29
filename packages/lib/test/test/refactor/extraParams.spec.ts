@@ -1,27 +1,9 @@
 // tslint:disable: no-console
 
-import {
-    Bitcoin,
-    Dogecoin,
-    Ethereum,
-    Filecoin,
-    Terra,
-} from "@renproject/chains";
+import { Bitcoin, Ethereum } from "@renproject/chains";
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renRinkeby } from "@renproject/networks";
-import {
-    HttpProvider,
-    OverwriteProvider,
-    Provider,
-} from "@renproject/provider";
+import { renTestnet } from "@renproject/networks";
 import RenJS from "@renproject/ren";
-import { AbstractRenVMProvider } from "@renproject/rpc";
-import {
-    RenVMParams,
-    RenVMProvider,
-    RenVMProviderInterface,
-    RenVMResponses,
-} from "@renproject/rpc/src/v2";
 import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
@@ -37,17 +19,15 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 const colors = [green, magenta, yellow, cyan, blue, red];
 
-describe("Plaground", () => {
+describe("Extra params", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Filecoin();
-        const asset = "FIL";
-        // const from = Bitcoin();
-        // const asset = "BTC";
+        const from = Bitcoin();
+        const asset = "BTC";
         const faucetSupported =
             ["BTC", "ZEC", "BCH", "ETH"].indexOf(asset) >= 0;
 
@@ -55,26 +35,41 @@ describe("Plaground", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const network = renTestnet; // renTestnet;
+
+        const infuraURL = `${network.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            // tslint:disable-next-line: no-http-string
-            "http://34.239.188.210:18515",
-        ) as Provider<RenVMParams, RenVMResponses>;
-        const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider,
-        ) as RenVMProviderInterface;
-        const renVMProvider = new RenVMProvider(
-            "testnet",
-            rpcProvider,
-        ) as AbstractRenVMProvider;
-
         const logLevel = LogLevel.Log;
-        const renJS = new RenJS(renVMProvider, { logLevel });
-        // const renJS = new RenJS("testnet")
+
+        // const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
+        //     // "https://lightnode-new-testnet.herokuapp.com/",
+        //     // tslint:disable-next-line: no-http-string
+        //     "http://34.239.188.210:18515",
+        // ) as Provider<RenVMParams, RenVMResponses>;
+        // const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
+        //     // "https://lightnode-new-testnet.herokuapp.com/",
+        //     httpProvider,
+        // ) as RenVMProviderInterface;
+        // const renVMProvider = new RenVMProvider(
+        //     "testnet",
+        //     rpcProvider,
+        // ) as AbstractRenVMProvider;
+
+        // const renJS = new RenJS(renVMProvider, { logLevel });
+        const renJS = new RenJS("testnet", { logLevel });
+
+        let contractAddress;
+        switch (network.networkID) {
+            case 4:
+                contractAddress = "0x0141966753f8C7D7e6Dc01Fc324200a65Cf49525";
+                break;
+            case 42:
+                contractAddress = "0x56ECbD7e6953FE814B619f6757882d517701FB79";
+                break;
+            default:
+                throw new Error(`Network not supported: ${network.name}`);
+        }
 
         // Use 0.0001 more than fee.
         let suggestedAmount;
@@ -91,8 +86,27 @@ describe("Plaground", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Ethereum(provider, undefined, renRinkeby).Account({
-                address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
+            to: Ethereum(provider, undefined, network).Contract({
+                sendTo: contractAddress,
+                contractFn: "mintExtra",
+                contractParams: [
+                    {
+                        type: "string",
+                        name: "_symbol",
+                        value: asset,
+                    },
+                    {
+                        type: "address",
+                        name: "_recipient",
+                        value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
+                    },
+                    {
+                        type: "string",
+                        name: "_extraMsg",
+                        value: "", // Default value
+                        notInPayload: true,
+                    },
+                ],
             }),
 
             nonce: Ox("00".repeat(32)),
@@ -103,21 +117,6 @@ describe("Plaground", () => {
                 JSON.stringify(lockAndMint.gatewayAddress, null, "    "),
             )}`,
         );
-
-        // lockAndMint
-        //     .processDeposit({
-        //         transaction: {
-        //             cid:
-        //                 "bafy2bzacedvu74e7ohjcwlh4fbx7ddf6li42fiuosajob6metcj2qwkgkgof2",
-        //             to: "t1v2ftlxhedyoijv7uqgxfygiziaqz23lgkvks77i",
-        //             amount: (0.01 * 1e8).toString(),
-        //             params: "EzGbvVHf8lb0v8CUfjh8y+tLbZzfIFcnNnt/gh6axmw=",
-        //             confirmations: 1,
-        //             nonce: 7,
-        //         },
-        //         amount: (0.01 * 1e8).toString(),
-        //     })
-        //     .catch(console.error);
 
         if (faucetSupported) {
             console.log(
@@ -185,9 +184,13 @@ describe("Plaground", () => {
                 }
 
                 info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", (txHash) => {
-                    info(`txHash: ${txHash}`);
-                });
+                await deposit
+                    .mint({
+                        _extraMsg: "test", // Override value.
+                    })
+                    .on("transactionHash", (txHash) => {
+                        info(`txHash: ${txHash}`);
+                    });
 
                 resolve();
             });

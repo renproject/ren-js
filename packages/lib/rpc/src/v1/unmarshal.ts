@@ -38,13 +38,13 @@ const assertArgumentType = <ArgType>(
     type: ArgType extends RenVMArg<infer _Name, infer Type> ? Type : never,
     arg: ArgType extends RenVMArg<infer Name, infer Type, infer Value>
         ? RenVMArg<Name, Type, Value>
-        : never
+        : never,
 ): ArgType extends RenVMArg<infer _Name, infer _Type, infer Value>
     ? Value
     : never => {
     assert(
         arg.type === type,
-        `Expected argument ${name} of type ${type} but got ${arg.name} of type ${arg.type}`
+        `Expected argument ${name} of type ${type} but got ${arg.name} of type ${arg.type}`,
     );
     return arg.value;
 };
@@ -56,12 +56,12 @@ const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
         ? Value extends string
             ? RenVMArg<Name, Type, Value>
             : never
-        : never
+        : never,
 ): Buffer => {
     try {
         return decodeBytes(
             // tslint:disable-next-line: no-any
-            assertArgumentType<ArgType>(name as any, type as any, arg as any)
+            assertArgumentType<ArgType>(name as any, type as any, arg as any),
         );
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${
@@ -78,12 +78,12 @@ const assertAndDecodeNumber = <ArgType>(
         ? Value extends string
             ? RenVMArg<Name, Type, Value>
             : never
-        : never
+        : never,
 ): BigNumber => {
     try {
         return decodeNumber(
             // tslint:disable-next-line: no-any
-            assertArgumentType<ArgType>(name as any, type as any, arg as any)
+            assertArgumentType<ArgType>(name as any, type as any, arg as any),
         );
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${
@@ -100,12 +100,12 @@ const assertAndDecodeAddress = <ArgType extends RenVMArg<string, RenVMType>>(
         ? Value extends string
             ? RenVMArg<Name, Type, Value>
             : never
-        : never
+        : never,
 ): string => {
     try {
         return Ox(
             // tslint:disable-next-line: no-any
-            assertArgumentType<ArgType>(name as any, type as any, arg as any)
+            assertArgumentType<ArgType>(name as any, type as any, arg as any),
         );
     } catch (error) {
         error.message = `Unable to decode parameter ${name} with value ${
@@ -128,7 +128,7 @@ const defaultPayload: ResponseQueryMintTx["tx"]["in"]["0"] = {
 
 const findField = <ArgType extends RenVMArg<string, RenVMType>>(
     field: ArgType extends RenVMArg<infer Name, infer _Type> ? Name : never,
-    response: ResponseQueryMintTx
+    response: ResponseQueryMintTx,
 ): ArgType => {
     for (const outField of response.tx.out || []) {
         if (outField.name === field) {
@@ -161,7 +161,7 @@ const onError = <P>(getP: () => P, defaultP: P) => {
 
 export const unmarshalMintTx = (
     response: ResponseQueryMintTx,
-    logger?: Logger
+    logger?: Logger,
 ): MintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
@@ -176,22 +176,22 @@ export const unmarshalMintTx = (
     const pRaw = assertArgumentType<In[0]>(
         "p",
         RenVMType.ExtEthCompatPayload,
-        onError(() => findField<In[0]>("p", response), defaultPayload)
+        onError(() => findField<In[0]>("p", response), defaultPayload),
     );
     const token = assertAndDecodeAddress<In[1]>(
         "token",
         RenVMType.ExtTypeEthCompatAddress,
-        findField<In[1]>("token", response)
+        findField<In[1]>("token", response),
     );
     const to = assertAndDecodeAddress<In[2]>(
         "to",
         RenVMType.ExtTypeEthCompatAddress,
-        findField<In[2]>("to", response)
+        findField<In[2]>("to", response),
     );
     const n = assertAndDecodeBytes<In[3]>(
         "n",
         RenVMType.B32,
-        findField<In[3]>("n", response)
+        findField<In[3]>("n", response),
     );
 
     const p = {
@@ -204,22 +204,22 @@ export const unmarshalMintTx = (
     const phash = assertAndDecodeBytes<Autogen[0]>(
         "phash",
         RenVMType.B32,
-        findField<Autogen[0]>("phash", response)
+        findField<Autogen[0]>("phash", response),
     );
     const ghash = assertAndDecodeBytes<Autogen[1]>(
         "ghash",
         RenVMType.B32,
-        findField<Autogen[1]>("ghash", response)
+        findField<Autogen[1]>("ghash", response),
     );
     const nhash = assertAndDecodeBytes<Autogen[2]>(
         "nhash",
         RenVMType.B32,
-        findField<Autogen[2]>("nhash", response)
+        findField<Autogen[2]>("nhash", response),
     );
     const amount = assertAndDecodeNumber<Autogen[3]>(
         "amount",
         RenVMType.U256,
-        findField<Autogen[3]>("amount", response)
+        findField<Autogen[3]>("amount", response),
     ).toFixed();
     const utxoRaw = assertArgumentType<Autogen[4]>(
         "utxo",
@@ -228,12 +228,12 @@ export const unmarshalMintTx = (
             "utxo",
             RenVMType.ExtTypeBtcCompatUTXO,
             RenVMOutputUTXO
-        >
+        >,
     );
     const sighash = assertAndDecodeBytes<Autogen[5]>(
         "sighash",
         RenVMType.B32,
-        findField<Autogen[5]>("sighash", response)
+        findField<Autogen[5]>("sighash", response),
     );
 
     const utxo = {
@@ -274,7 +274,7 @@ export const unmarshalMintTx = (
                 : assertAndDecodeNumber<Out["2"]>(
                       "v",
                       RenVMType.U8,
-                      vArg
+                      vArg,
                   ).toNumber();
 
         const signature = signatureToBuffer(
@@ -289,8 +289,8 @@ export const unmarshalMintTx = (
                 token,
                 nhash,
                 false,
-                logger
-            )
+                logger,
+            ),
         );
 
         out.signature = signature; // r, s, v
@@ -306,7 +306,7 @@ export const unmarshalMintTx = (
 };
 
 export const unmarshalBurnTx = (
-    response: ResponseQueryBurnTx
+    response: ResponseQueryBurnTx,
 ): BurnTransaction => {
     // TODO: Check that result is burn response.
     // assert(
@@ -318,7 +318,7 @@ export const unmarshalBurnTx = (
     const ref = assertAndDecodeNumber<typeof refArg>(
         "ref",
         RenVMType.U64,
-        refArg
+        refArg,
     ).toFixed();
     const toRaw = assertArgumentType<typeof toArg>("to", RenVMType.B, toArg);
     let amount;
@@ -326,13 +326,13 @@ export const unmarshalBurnTx = (
         amount = assertAndDecodeNumber<typeof amountArg>(
             "amount",
             RenVMType.U256,
-            amountArg
+            amountArg,
         ).toFixed();
     } catch (error) {
         amount = assertAndDecodeNumber<typeof amountArg>(
             "amount",
             RenVMType.U64,
-            amountArg
+            amountArg,
         ).toFixed();
     }
 
@@ -366,7 +366,7 @@ const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
                     burn: decodeNumber(fees[token].burn).toNumber(),
                 },
             }),
-            {}
+            {},
         ),
     } as unknown) as RenVMAssetFees;
 };

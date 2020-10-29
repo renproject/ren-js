@@ -50,7 +50,7 @@ const lockAndMint = renJS.lockAndMint({
 lockAndMint
     .gatewayAddress()
     .then((gatewayAddress) =>
-        console.log(`Deposit ${amount} BTC to ${gatewayAddress}`)
+        console.log(`Deposit ${amount} BTC to ${gatewayAddress}`),
     );
 
 lockAndMint

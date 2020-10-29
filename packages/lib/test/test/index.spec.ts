@@ -20,7 +20,7 @@ describe("RenJS initialization and exports", () => {
 
         // @ts-expect-error
         (() => new RenJS("fake-network")).should.throw(
-            /Invalid network or provider URL: "fake-network"/
+            /Invalid network or provider URL: "fake-network"/,
         );
     });
 

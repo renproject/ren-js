@@ -87,7 +87,7 @@ export default class RenJS {
             | AbstractRenVMProvider
             | null
             | undefined,
-        config?: RenJSConfig
+        config?: RenJSConfig,
     ) {
         // const provider: string | Provider | undefined;
         // let config: RenJSConfig | undefined;
@@ -112,7 +112,7 @@ export default class RenJS {
                 : new v1.RenVMProvider(
                       provider || RenNetwork.Mainnet,
                       undefined,
-                      this._logger
+                      this._logger,
                   );
 
         // FIXME
@@ -160,12 +160,12 @@ export default class RenJS {
         Asset extends string = string,
         Address = string
     >(
-        params: LockAndMintParams<Transaction, Deposit, Asset, Address>
+        params: LockAndMintParams<Transaction, Deposit, Asset, Address>,
     ): Promise<LockAndMint<Transaction, Deposit, Asset, Address>> =>
         new LockAndMint<Transaction, Deposit, Asset, Address>(
             this.renVM,
             params,
-            this._logger
+            this._logger,
         ).initialize();
 
     /**
@@ -182,12 +182,12 @@ export default class RenJS {
         Asset extends string = string,
         Address = string
     >(
-        params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>
+        params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>,
     ): Promise<BurnAndRelease<Transaction, Deposit, Asset, Address>> =>
         new BurnAndRelease<Transaction, Deposit, Asset, Address>(
             this.renVM,
             params,
-            this._logger
+            this._logger,
         ).initialize();
 
     public readonly getFees = async () => this.renVM.getFees();

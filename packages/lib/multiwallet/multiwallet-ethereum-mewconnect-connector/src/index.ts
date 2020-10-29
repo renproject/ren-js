@@ -22,11 +22,15 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
     }
     handleUpdate = () =>
         this.getStatus()
-            .then((...args) => this.emitter.emitUpdate(...args))
+            .then((...args) => {
+                this.emitter.emitUpdate(...args);
+            })
             .catch((...args) => this.deactivate(...args));
 
+    // tslint:disable-next-line: no-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
         // No good typings for injected providers exist...
+        // tslint:disable-next-line: no-any
         const provider: any = await this.getProvider();
         if (!provider) {
             throw Error("Missing Provider");
@@ -52,12 +56,14 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
     };
 
     getProvider = async () => {
+        // tslint:disable-next-line: no-any
         if (this.provider) return this.provider as any;
         const { Provider } = await import(
             "@myetherwallet/mewconnect-web-client"
         ).then((m) => m?.default ?? m);
         this.mewConnectProvider = new Provider({
             windowClosedError: true,
+            // tslint:disable-next-line: no-any
         }) as any;
         this.provider = this.mewConnectProvider.makeWeb3Provider(
             this.chainId,
@@ -94,6 +100,6 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector {
         await this.cleanup();
         const provider: any = await this.getProvider();
         await provider.close();
-        return this.emitter.emitDeactivate(reason);
+        this.emitter.emitDeactivate(reason);
     };
 }

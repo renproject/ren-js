@@ -1,32 +1,33 @@
-import React, { HTMLAttributes, useCallback, useEffect } from 'react';
 import {
-  Box,
-  ButtonBase,
-  IconButton,
-  Modal,
-  Paper,
-  PaperProps,
-  Typography,
-} from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import CloseIcon from '@material-ui/icons/Close';
-import { ConnectorInterface } from '@renproject/multiwallet-base-connector';
-import { useMultiwallet } from './MultiwalletProvider';
-import { RenNetwork } from '@renproject/interfaces';
+    Box,
+    ButtonBase,
+    IconButton,
+    Modal,
+    Paper,
+    PaperProps,
+    Typography,
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import CloseIcon from "@material-ui/icons/Close";
+import { RenNetwork } from "@renproject/interfaces";
+import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
+import React, { HTMLAttributes, useCallback, useEffect } from "react";
+
+import { useMultiwallet } from "./MultiwalletProvider";
 
 export * from './MultiwalletProvider';
 
 export interface ConnectorConfig<P, A> {
   /**
-     Name of the wallet
+   * Name of the wallet
    */
   name: string;
   /**
-     URL for logo to be shown (might change in future to a component)
+   * URL for logo to be shown (might change in future to a component)
    */
   logo: string;
   /**
-     The Multiwallet Connector to be used for this wallet
+   * The Multiwallet Connector to be used for this wallet
    */
   connector: ConnectorInterface<P, A>;
   /**
@@ -43,7 +44,7 @@ export interface WalletPickerConfig<P, A> {
 export interface WalletPickerProps<P, A>
   extends HTMLAttributes<HTMLDivElement> {
   /**
-     Which chain to show wallets for
+   * Which chain to show wallets for
    */
   chain: string;
   /**
@@ -51,7 +52,7 @@ export interface WalletPickerProps<P, A>
    */
   onClose: () => void;
   /**
-     Configuration for connectors across all chains
+   * Configuration for connectors across all chains
    */
   config: WalletPickerConfig<P, A>;
   /**
@@ -259,7 +260,7 @@ export interface WalletPickerModalProps<P, A> {
    */
   options: WalletPickerProps<P, A>;
   /**
-     Whether to show the modal
+   * Whether to show the modal
    */
   open?: boolean;
 }

@@ -40,9 +40,9 @@ const getCoinGeckoPrice: PriceFeed = async (token: string) =>
         // Fetch API endpoint with 5 second timeout.
         .get<{ market_data: { current_price: { usd: number } } }>(
             `${coinGeckoURL}/coins/${coinGeckoID(token)}?${coinGeckoParams}`,
-            { timeout: 5 * SECONDS }
+            { timeout: 5 * SECONDS },
         )
-        .then(response => response.data.market_data.current_price.usd || 0);
+        .then((response) => response.data.market_data.current_price.usd || 0);
 
 // Coinbase price feed
 const coinbaseURL = (token: string) =>
@@ -52,27 +52,27 @@ const getCoinbasePrice: PriceFeed = async (token: string) =>
         // Fetch API endpoint with 5 second timeout.
         .get<{ data: { base: string; currency: "USD"; amount: string } }>(
             coinbaseURL(token),
-            { timeout: 5 * SECONDS }
+            { timeout: 5 * SECONDS },
         )
-        .then(response => parseInt(response.data.data.amount, 10) || 0);
+        .then((response) => parseInt(response.data.data.amount, 10) || 0);
 
 export const getTokenPrices = async (
     tokens: string[],
-    logger?: Logger
+    logger?: Logger,
 ): Promise<TokenPrices> => {
     try {
         return await tokens
-            .map(token => ({
+            .map((token) => ({
                 token,
                 priceFeeds: [
                     getCoinGeckoPrice(token).catch(() => undefined),
-                    getCoinbasePrice(token).catch(() => undefined)
+                    getCoinbasePrice(token).catch(() => undefined),
                     // getCoinMarketCapPrice(token),
-                ]
+                ],
             }))
             .reduce(async (pricesPromise, { token, priceFeeds }) => {
                 const prices = await pricesPromise.catch(() =>
-                    OrderedMap<string, number>()
+                    OrderedMap<string, number>(),
                 );
                 const returnedAPIs = [];
                 for (const priceFeed of priceFeeds) {
@@ -91,7 +91,7 @@ export const getTokenPrices = async (
                     returnedAPIs.length
                         ? returnedAPIs.reduce((sum, price) => sum + price, 0) /
                               returnedAPIs.length
-                        : 0
+                        : 0,
                 );
             }, Promise.resolve(OrderedMap<string, number>()));
     } catch (error) {
@@ -105,11 +105,11 @@ export type TokenPrices = OrderedMap<string, number>;
 export const normalizeValue = (
     prices: TokenPrices,
     token: string,
-    value: string | number | BigNumber
+    value: string | number | BigNumber,
 ): BigNumber => {
     try {
         const shiftedValue = new BigNumber(value).div(
-            new BigNumber(10).exponentiatedBy(tokenDecimals(token))
+            new BigNumber(10).exponentiatedBy(tokenDecimals(token)),
         );
         const timesPrice = shiftedValue.times(prices.get(token, 0));
         return timesPrice;

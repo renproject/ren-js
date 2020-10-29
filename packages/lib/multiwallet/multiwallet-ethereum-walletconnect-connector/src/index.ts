@@ -26,11 +26,15 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
     }
     handleUpdate = () =>
         this.getStatus()
-            .then((...args) => this.emitter.emitUpdate(...args))
+            .then((...args) => {
+                this.emitter.emitUpdate(...args);
+            })
             .catch((...args) => this.deactivate(...args));
 
+    // tslint:disable-next-line: no-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
         // No good typings for injected providers exist...
+        // tslint:disable-next-line: no-any
         const provider: any = await this.getProvider();
         if (!provider) {
             throw Error("Missing Provider");
@@ -60,7 +64,9 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
     };
 
     getProvider = async () => {
+        // tslint:disable-next-line: no-any
         if (this.provider) return this.provider as any;
+        // tslint:disable-next-line: no-shadowed-variable
         const WalletConnectProvider = await import(
             "@walletconnect/web3-provider"
         ).then((m) => m?.default ?? m);
@@ -69,6 +75,7 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
             rpc: this.rpc,
             qrcode: this.qrcode,
             pollingInterval: this.pollingInterval,
+            // tslint:disable-next-line: no-any
         }) as any;
         return this.provider;
     };
@@ -98,6 +105,6 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
         const provider: any = await this.getProvider();
         provider.removeListener("close", this.deactivate);
         await provider.close();
-        return this.emitter.emitDeactivate(reason);
+        this.emitter.emitDeactivate(reason);
     };
 }

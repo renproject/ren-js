@@ -21,13 +21,13 @@ const to32Bytes = (bn: BigNumber): Buffer =>
 
 export const secp256k1n = new BigNumber(
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
-    16
+    16,
 );
 
 export const fixSignatureSimple = (
     r: Buffer,
     s: Buffer,
-    v: number
+    v: number,
 ): Signature => {
     assertType<Buffer>("Buffer", { r, s });
     let sBN = new BigNumber(Ox(s), 16);
@@ -61,7 +61,7 @@ export const fixSignature = (
     tokenIdentifier: string,
     nHash: Buffer,
     v2?: boolean,
-    logger?: Logger
+    logger?: Logger,
 ): Signature => {
     // Type validation
     assertType<string>("string", { amount, to, tokenIdentifier });
@@ -75,11 +75,11 @@ export const fixSignature = (
             tokenIdentifier,
             nHash,
             v2,
-            logger
+            logger,
         );
         if (Ox(sigHash) !== Ox(expectedSighash)) {
             logger.warn(
-                `Warning: unexpected signature hash returned from RenVM. Expected ${expectedSighash}, got ${sigHash}.`
+                `Warning: unexpected signature hash returned from RenVM. Expected ${expectedSighash}, got ${sigHash}.`,
             );
         }
     }

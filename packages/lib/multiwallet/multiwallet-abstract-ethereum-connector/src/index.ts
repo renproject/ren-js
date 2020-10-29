@@ -1,11 +1,11 @@
-import {
-    ConnectorEmitter,
-    ConnectorUpdate,
-    ConnectorInterface,
-} from "@renproject/multiwallet-base-connector";
-import { provider, HttpProvider } from "web3-providers";
 import { Address } from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/interfaces";
+import {
+    ConnectorEmitter,
+    ConnectorInterface,
+    ConnectorUpdate,
+} from "@renproject/multiwallet-base-connector";
+import { HttpProvider, provider } from "web3-providers";
 
 const isResults = <T>(x: { results: T } | T): x is { results: T } =>
     (x as { results: T }).results !== undefined;
@@ -44,7 +44,7 @@ export abstract class AbstractEthereumConnector
     implements ConnectorInterface<SaneProvider, Address> {
     supportsTestnet = true;
     networkIdMapper = ethNetworkToRenNetwork;
-    emitter;
+    emitter: ConnectorEmitter<SaneProvider, Address>;
     constructor({
         debug = false,
         networkIdMapper = ethNetworkToRenNetwork,
@@ -73,6 +73,7 @@ export abstract class AbstractEthereumConnector
     // Get default ethereum account
     async getAccount() {
         const account = resultOrRaw(
+            // tslint:disable-next-line: no-any
             await ((await this.getProvider()) as any).request({
                 method: "eth_requestAccounts",
             })
@@ -85,6 +86,7 @@ export abstract class AbstractEthereumConnector
     // Cast current ethereum network to Ren network version or throw
     async getRenNetwork() {
         return this.networkIdMapper(
+            // tslint:disable-next-line: no-any
             await resultOrRaw((await this.getProvider()) as any).request({
                 method: "eth_chainId",
             })

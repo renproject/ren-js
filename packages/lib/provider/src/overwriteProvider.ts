@@ -12,7 +12,7 @@ export class OverwriteProvider<
     private readonly provider: Provider<Requests, Responses>;
 
     constructor(
-        provider: Provider<Requests, Responses>
+        provider: Provider<Requests, Responses>,
         // _overrides: { [method: string]: Responses[keyof Responses] }
     ) {
         this.provider = provider;
@@ -21,7 +21,7 @@ export class OverwriteProvider<
     public async sendMessage<Method extends string>(
         method: Method,
         request: Requests[Method],
-        retry = 2
+        retry = 2,
     ): Promise<Responses[Method]> {
         const overrides = ({
             ren_queryShards: {
@@ -93,7 +93,7 @@ export class OverwriteProvider<
             : await this.provider.sendMessage(
                   method,
                   request,
-                  retry
+                  retry,
               )) as Responses[Method];
     }
 }

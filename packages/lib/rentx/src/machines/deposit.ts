@@ -39,6 +39,10 @@ export interface DepositMachineSchema {
     };
 }
 
+interface ContractParams {
+    [key: string]: any;
+}
+
 export type DepositMachineEvent =
     | { type: "NOOP" }
     | { type: "LISTENING" }
@@ -49,7 +53,7 @@ export type DepositMachineEvent =
     | { type: "CONFIRMED" }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "SIGNED"; data: GatewayTransaction }
-    | { type: "CLAIM" }
+    | { type: "CLAIM"; data: ContractParams }
     | { type: "REJECT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
     | { type: "ACKNOWLEDGE" };
@@ -228,16 +232,30 @@ export const depositMachine = Machine<
                     };
                 }),
                 on: {
-                    CLAIM: "claiming",
+                    CLAIM: {
+                        target: "claiming",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                contractParams: evt.data,
+                            }),
+                        }),
+                    },
                     REJECT: "rejected",
                 },
                 meta: { test: async () => {} },
             },
             claiming: {
-                entry: send("MINT", {
-                    to: (context) =>
-                        `${context.deposit.sourceTxHash}DepositListener`,
-                }),
+                entry: send(
+                    (ctx) => ({
+                        type: "MINT",
+                        data: ctx.deposit.contractParams,
+                    }),
+                    {
+                        to: (context) =>
+                            `${context.deposit.sourceTxHash}DepositListener`,
+                    },
+                ),
                 on: {
                     SUBMITTED: [
                         {

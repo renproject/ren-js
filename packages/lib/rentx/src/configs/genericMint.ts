@@ -101,6 +101,19 @@ const depositListener = (
                     case "SETTLE":
                         deposit
                             .confirmed()
+                            .on("target", (confs, targetConfs) => {
+                                const confirmedTx = {
+                                    sourceTxConfs: confs,
+                                    sourceTxConfTarget: targetConfs,
+                                };
+                                // Theoretically, this isn't a confirmation
+                                // but they are functionally identical, so
+                                // lets re-use the event
+                                callback({
+                                    type: "CONFIRMATION",
+                                    data: confirmedTx,
+                                });
+                            })
                             .on("confirmation", (confs, targetConfs) => {
                                 const confirmedTx = {
                                     sourceTxConfs: confs,
@@ -137,7 +150,11 @@ const depositListener = (
                         break;
                     case "MINT":
                         deposit
-                            ?.mint()
+                            ?.mint(event.data)
+                            .on("confirmation", (_confirmations) => {
+                                // We can check dest confirmations here
+                                // (for eth at least)
+                            })
                             .on("transactionHash", (txHash) => {
                                 const submittedTx = {
                                     destTxHash: txHash,

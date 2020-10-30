@@ -15,7 +15,6 @@ const makeTestContext = () => ({
         destNetwork: "ethereum",
         destAsset: "renBTC",
         targetAmount: 1,
-        destConfsTarget: 6,
         userAddress: "",
         expiryTime: new Date().getTime() + 1000 * 60,
         transactions: {

@@ -38,7 +38,7 @@ Each machine requires
 
 ### Standalone xstate example
 
-Minting
+#### Minting
 ```typescript
 import { interpret } from "xstate";
 import {

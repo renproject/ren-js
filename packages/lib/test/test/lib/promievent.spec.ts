@@ -8,13 +8,12 @@ export const UNIMPLEMENTED = 0;
 // chai.should();
 
 // const waitForEvent = async <T, Value>(promiEvent: PromiEvent<T, { [event: string]: [Value] }>, event: keyof { [event: string]: [Value] }) => new Promise<Value>((resolve) => {
-//     // tslint:disable-next-line: no-any
+//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 //     // const waitForEvent = async <T>(promiEvent: PromiEvent<T, any>, event: string) => new Promise((resolve) => {
 //     promiEvent.on(event, resolve);
 // });
 
 // const createPromiEvent = <T>(value: T, event = "value") => {
-//     // tslint:disable-next-line: no-any
 //     const promiEvent = newPromiEvent<T, { [event: string]: [T] }>();
 //     (async () => {
 

@@ -1,5 +1,4 @@
-// tslint:disable: no-console
-
+/* eslint-disable no-console */
 import * as Chains from "@renproject/chains";
 
 import RenJS from "@renproject/ren";
@@ -9,18 +8,17 @@ import chai from "chai";
 import { red } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
-    // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("burning from contract", async function() {
         this.timeout(100000000000);
 
@@ -46,9 +44,8 @@ describe("Refactor - Burning", () => {
         let suggestedAmount: number | string;
         try {
             const fees = await renJS.getFees();
-            suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].burn + 0.0001 * 1e8,
-            );
+            const fee: number = fees[asset.toLowerCase()].burn;
+            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = new BigNumber(0.03)
@@ -103,7 +100,6 @@ describe("Refactor - Burning", () => {
             .on("txHash", console.log);
     });
 
-    // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("burning from address", async function() {
         this.timeout(100000000000);
 
@@ -120,9 +116,8 @@ describe("Refactor - Burning", () => {
 
         // Use 0.0001 more than fee.
         const fees = await renJS.getFees();
-        const suggestedAmount = new BigNumber(
-            Math.floor(fees[asset.toLowerCase()].burn + 0.0001 * 1e8),
-        )
+        const fee: number = fees[asset.toLowerCase()].burn;
+        const suggestedAmount = new BigNumber(Math.floor(fee + 0.0001 * 1e8))
             .decimalPlaces(0)
             .toFixed();
 

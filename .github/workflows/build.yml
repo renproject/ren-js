@@ -3,39 +3,36 @@ name: build
 on: [push]
 
 jobs:
-  build:
-    name: Build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        node-version: [10.x]
-        os: [ubuntu-latest]
-    steps:
-    - name: Use Node.js ${{ matrix.node-version }} on ${{ matrix.os }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - uses: actions/checkout@v1
-    - name: Cache node modules
-      uses: actions/cache@v1
-      id: cache
-      with:
-        path: node_modules
-        key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
-        restore-keys: |
-          ${{ runner.OS }}-build-${{ env.cache-name }}-
-          ${{ runner.OS }}-build-
-          ${{ runner.OS }}-
-    - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        yarn install --network-concurrency 1
-    - name: Lint
-      uses: ren-forks/tslint-actions@v1.1.2
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        pattern: 'packages/*/*/src/**/*.ts{,x}'
-    - name: Build
-      run: |
-        yarn run link
-        yarn lerna run build
+    build:
+        name: Build
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                node-version: [10.x]
+                os: [ubuntu-latest]
+        steps:
+            - name: Use Node.js ${{ matrix.node-version }} on ${{ matrix.os }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{ matrix.node-version }}
+            - uses: actions/checkout@v1
+            - name: Cache node modules
+              uses: actions/cache@v1
+              id: cache
+              with:
+                  path: node_modules
+                  key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+                  restore-keys: |
+                      ${{ runner.OS }}-build-${{ env.cache-name }}-
+                      ${{ runner.OS }}-build-
+                      ${{ runner.OS }}-
+            - name: Install dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: |
+                  yarn install --network-concurrency 1
+            - name: Lint
+              run: |
+                  yarn lint
+            - name: Build
+              run: |
+                  yarn build

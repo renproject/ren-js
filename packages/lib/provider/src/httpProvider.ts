@@ -17,9 +17,9 @@ const generatePayload = (method: string, params?: unknown) => ({
 });
 
 export class HttpProvider<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Responses extends { [event: string]: any } = {}
 > implements Provider<Requests, Responses> {
     public readonly nodeURL: string;
@@ -32,7 +32,7 @@ export class HttpProvider<
 
         if (ipOrMultiaddress.charAt(0) === "/") {
             try {
-                const [, , ip, , port, ,] = ipOrMultiaddress.split("/"); // tslint:disable-line: whitespace
+                const [, , ip, , port, ,] = ipOrMultiaddress.split("/");
                 const fixedPort = port === "18514" ? "18515" : port;
                 // TODO: Use HTTPS if supported
                 const protocol = "http";
@@ -62,7 +62,6 @@ export class HttpProvider<
         // Promise<Responses[Method]> {
         // Print request:
         if (this.logger) {
-            // tslint:disable-next-line: no-console
             this.logger.debug(
                 "[request]",
                 JSON.stringify(generatePayload(method, request), null, "    "),
@@ -70,7 +69,7 @@ export class HttpProvider<
         }
         try {
             const response = await retryNTimes(
-                () =>
+                async () =>
                     axios.post<JSONRPCResponse<Responses[Method]>>(
                         this.nodeURL,
                         generatePayload(method, request),
@@ -94,7 +93,6 @@ export class HttpProvider<
                 throw new Error(`Empty result returned from node`);
             }
             if (this.logger) {
-                // tslint:disable-next-line: no-console
                 this.logger.debug(
                     "[response]",
                     JSON.stringify(response.data.result, null, "    "),
@@ -103,9 +101,9 @@ export class HttpProvider<
             return response.data.result;
         } catch (error) {
             if (error.response) {
-                error.message = `Node returned status ${
-                    error.response.status
-                } with reason: ${extractError(error)}`;
+                error.message = `Node returned status ${String(
+                    error.response.status,
+                )} with reason: ${extractError(error)}`;
             }
             throw error;
         }

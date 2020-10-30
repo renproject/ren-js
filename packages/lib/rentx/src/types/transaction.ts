@@ -10,8 +10,11 @@ export interface GatewayTransaction {
     sourceTxVOut?: string | number;
     sourceTxConfs: number;
     sourceTxConfTarget?: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renResponse?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renSignature?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rawSourceTx: any;
 }
 
@@ -31,6 +34,7 @@ export interface GatewaySession<CustomParams = void> {
 
     suggestedAmount?: string | number; // Amount of sourceAsset user is suggested to send
     error?: Error; // Latest error detected during processing
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     nonce?: any;
 
     gatewayAddress?: string;

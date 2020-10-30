@@ -3,11 +3,8 @@ import { expect } from "earljs";
 import { value } from "../src/value";
 
 describe("value", () => {
-    it("should be able to pass in different networks", async () => {
-        // tslint:disable-next-line: no-any
-        const equal = (l: any, r: any) => {
-            expect(l).toexpect(r);
-        };
+    it("should be able to pass in different networks", () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
         // BTC
         expect(
@@ -147,7 +144,7 @@ describe("value", () => {
 
         // Invalid unit
         expect(() =>
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value("0.0001", "fake" as any)
                 ._readable()
                 .toFixed(),

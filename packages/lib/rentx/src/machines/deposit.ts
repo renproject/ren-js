@@ -1,8 +1,12 @@
-import { Machine, assign, send, Actor, sendParent } from "xstate";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// TODO: Improve typings.
+
+import { Actor, assign, Machine, send, sendParent } from "xstate";
 import RenJS from "@renproject/ren";
-import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
 import { log } from "xstate/lib/actions";
+
+import { GatewaySession, GatewayTransaction } from "../types/transaction";
 
 export interface DepositMachineContext {
     deposit: GatewayTransaction; // The deposit being tracked
@@ -11,12 +15,12 @@ export interface DepositMachineContext {
     providers: any; // The blockchain api providers required for the lockchain/burnchain
     fromChainMap: {
         [key in string]: (
-            context: Omit<DepositMachineContext, "deposit">
+            context: Omit<DepositMachineContext, "deposit">,
         ) => LockChain<any>;
     }; // Functions to create the "from" param;
     toChainMap: {
         [key in string]: (
-            context: Omit<DepositMachineContext, "deposit">
+            context: Omit<DepositMachineContext, "deposit">,
         ) => MintChain<any>;
     }; // Functions to create the "to" param;
     sdk: RenJS;
@@ -84,7 +88,7 @@ export const depositMachine = Machine<
                                     // Named listener as ref does not seem to work
                                     return `${context.deposit.sourceTxHash}DepositListener`;
                                 },
-                            }
+                            },
                         ),
                     },
                     DETECTED: [
@@ -249,5 +253,5 @@ export const depositMachine = Machine<
             isDestInitiated: ({ deposit: { destTxHash } }) =>
                 destTxHash ? true : false,
         },
-    }
+    },
 );

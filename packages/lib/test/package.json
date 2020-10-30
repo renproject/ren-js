@@ -6,10 +6,10 @@
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
         "lint": "run-s lint:*",
-        "lint:tslint": "tslint --project ./ -t stylish --quiet",
+        "lint:eslint": "eslint src/**/*.ts",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
-        "fix:tslint": "tslint --fix --project .",
+        "fix:eslint": "yarn lint:eslint --fix",
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
         "test": "run-s test:*",
         "test-all": "ALL_TESTS=true run-s test:unit lint",
@@ -28,10 +28,10 @@
         "@renproject/ren": "^2.0.0-alpha.16",
         "@renproject/rpc": "^2.0.0-alpha.16",
         "@renproject/utils": "^2.0.0-alpha.16",
-        "@types/node": "^14.11.1",
-        "bignumber.js": "^9.0.0",
+        "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.20"
+        "send-crypto": "0.2.21",
+        "@types/node": ">=10"
     },
     "devDependencies": {
         "chalk": "^4.1.0",

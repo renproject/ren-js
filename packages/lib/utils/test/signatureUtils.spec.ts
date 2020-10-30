@@ -9,7 +9,6 @@ import {
     signatureToBuffer,
 } from "../src/signatureUtils";
 
-// tslint:disable-next-line: mocha-avoid-only
 describe("signatureUtils", () => {
     context("signatureToBuffer", () => {
         it("should convert a signature to a buffer", () => {

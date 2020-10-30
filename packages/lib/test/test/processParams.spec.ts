@@ -2,11 +2,12 @@
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
+import { config as loadDotEnv } from "dotenv";
 
 chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 describe("processParams", () => {
     // let web3: Web3;

@@ -1,29 +1,31 @@
-import 'react-app-polyfill/ie11';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { WalletPickerModal, WalletPickerConfig } from '../src';
+import "react-app-polyfill/ie11";
+
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+
+import { Box, Button, Container, Paper, Typography } from "@material-ui/core";
+
+import { BinanceSmartChainInjectedConnector } from "../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index";
+import { EthereumInjectedConnector } from "../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index";
+import { EthereumMEWConnectConnector } from "../../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index";
+import { EthereumWalletConnectConnector } from "../../../lib/multiwallet/multiwallet-ethereum-walletconnect-connector/src/index";
+import { WalletPickerConfig, WalletPickerModal } from "../src";
 import {
-  MultiwalletProvider,
-  useMultiwallet,
-} from '../src/MultiwalletProvider';
-import { EthereumInjectedConnector } from '../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index';
-import { EthereumWalletConnectConnector } from '../../../lib/multiwallet/multiwallet-ethereum-walletconnect-connector/src/index';
-import { EthereumMEWConnectConnector } from '../../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index';
-import { BinanceSmartChainInjectedConnector } from '../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index';
-import { Button, Container, Box, Paper, Typography } from '@material-ui/core';
-import { RenNetwork } from '@renproject/interfaces';
+    MultiwalletProvider,
+    useMultiwallet,
+} from "../src/MultiwalletProvider";
 
 const options: WalletPickerConfig<any, string> = {
   chains: {
     ethereum: [
       {
-        name: 'Metamask',
-        logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+        name: "Metamask",
+        logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
         connector: new EthereumInjectedConnector({ debug: true }),
       },
       {
-        name: 'WalletConnect',
-        logo: 'https://avatars0.githubusercontent.com/u/37784886?s=60&v=4',
+        name: "WalletConnect",
+        logo: "https://avatars0.githubusercontent.com/u/37784886?s=60&v=4",
         connector: new EthereumWalletConnectConnector({
           rpc: {
             1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
@@ -34,8 +36,8 @@ const options: WalletPickerConfig<any, string> = {
         }),
       },
       {
-        name: 'MEW',
-        logo: 'https://avatars0.githubusercontent.com/u/24321658?s=60&v=4',
+        name: "MEW",
+        logo: "https://avatars0.githubusercontent.com/u/24321658?s=60&v=4",
         connector: new EthereumMEWConnectConnector({
           rpc: {
             1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
@@ -48,8 +50,8 @@ const options: WalletPickerConfig<any, string> = {
     ],
     bsc: [
       {
-        name: 'BinanceSmartWallet',
-        logo: 'https://avatars2.githubusercontent.com/u/45615063?s=60&v=4',
+        name: "BinanceSmartWallet",
+        logo: "https://avatars2.githubusercontent.com/u/45615063?s=60&v=4",
         connector: new BinanceSmartChainInjectedConnector({ debug: true }),
       },
     ],
@@ -76,9 +78,9 @@ const WalletDemo: React.FC<{ network: string }> = () => {
 
 const App = () => {
   const [open, setOpen] = React.useState(false);
-  const [chain, setChain] = React.useState('');
+  const [chain, setChain] = React.useState("");
   const setClosed = React.useMemo(() => () => setOpen(false), [setOpen]);
-  const [network, setNetwork] = React.useState('testnet');
+  const [network, setNetwork] = React.useState("testnet");
 
   return (
     <Box bgcolor="#fafafa" height="100vh" display="flex" alignItems="center">
@@ -105,7 +107,7 @@ const App = () => {
                 color="primary"
                 variant="outlined"
                 onClick={() => {
-                  setChain('ethereum');
+                  setChain("ethereum");
                   setOpen(true);
                 }}
               >
@@ -115,7 +117,7 @@ const App = () => {
                 color="primary"
                 variant="outlined"
                 onClick={() => {
-                  setChain('bsc');
+                  setChain("bsc");
                   setOpen(true);
                 }}
               >
@@ -138,4 +140,4 @@ const App = () => {
   );
 };
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(<App />, document.getElementById("root"));

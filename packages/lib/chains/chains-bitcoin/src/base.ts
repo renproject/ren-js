@@ -46,9 +46,7 @@ export abstract class BitcoinBaseChain
     public utils = {
         getUTXO: BTCHandler.getUTXO,
         getUTXOs: BTCHandler.getUTXOs,
-        getTransactions: BTCHandler.getTransactions as
-            | typeof BTCHandler.getTransactions
-            | null,
+        getTransactions: BTCHandler.getTransactions,
         p2shPrefix: {
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
@@ -111,7 +109,7 @@ export abstract class BitcoinBaseChain
         onDeposit: (deposit: Deposit) => void,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         if (this.chainNetwork === "regtest") {
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
@@ -160,7 +158,7 @@ export abstract class BitcoinBaseChain
         transaction: Transaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         transaction = await this.utils.getUTXO(
             this.chainNetwork === "testnet",
@@ -182,7 +180,7 @@ export abstract class BitcoinBaseChain
         gHash: Buffer,
     ): Promise<Address> | Address => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
@@ -196,7 +194,7 @@ export abstract class BitcoinBaseChain
 
     getPubKeyScript = (asset: Asset, publicKey: Buffer, gHash: Buffer) => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
@@ -219,7 +217,7 @@ export abstract class BitcoinBaseChain
      */
     addressIsValid = (address: Address): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         assertType<string>("string", { address });
         return this.utils.addressIsValid(address, this.chainNetwork);

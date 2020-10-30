@@ -26,10 +26,11 @@ export const RenNetworks = [
     RenNetwork.StagingTestnet,
 ];
 export const isRenNetwork = (
-    // tslint:disable-next-line: no-any
-    maybeRenNetwork: any,
-): maybeRenNetwork is RenNetwork => RenNetworks.indexOf(maybeRenNetwork) !== -1; // tslint:disable-line: no-any
-export const isTestnet = (renNetwork: RenNetwork) =>
+    maybeRenNetwork: unknown,
+): maybeRenNetwork is RenNetwork =>
+    RenNetworks.indexOf(maybeRenNetwork as RenNetwork) !== -1;
+
+export const isTestnet = (renNetwork: RenNetwork): boolean =>
     renNetwork !== RenNetwork.Mainnet && renNetwork !== RenNetwork.Chaosnet;
 
 export type Chain = string;

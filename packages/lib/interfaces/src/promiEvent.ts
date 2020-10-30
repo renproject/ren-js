@@ -22,12 +22,15 @@
  * @date 2018
  */
 
-// tslint:disable: no-any
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types */
 
 import { EventEmitter } from "events";
 
 export class InternalPromiEvent<
     T,
+    // eslint-disable-next-line @typescript-eslint/ban-types
     EventTypes extends { [event: string]: any[] } = {}
 > {
     public readonly [Symbol.toStringTag]: "Promise";
@@ -71,7 +74,6 @@ export class InternalPromiEvent<
      * @constructor
      */
     constructor() {
-        // tslint:disable-next-line: promise-must-complete
         this.promise = new Promise<T>((resolve, reject) => {
             this.resolve = resolve;
             this.reject = reject;
@@ -82,6 +84,7 @@ export class InternalPromiEvent<
         this.eventEmitter = new EventEmitter();
 
         return new Proxy(this, {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             get: this.proxyHandler,
         });
     }
@@ -89,8 +92,12 @@ export class InternalPromiEvent<
     /**
      * Proxy handler to call the promise or eventEmitter methods
      */
-    public proxyHandler(target: PromiEvent<T, EventTypes>, name: string) {
+    public proxyHandler(
+        target: PromiEvent<T, EventTypes>,
+        name: string,
+    ): unknown {
         if (name === "resolve" || name === "reject") {
+            // eslint-disable-next-line security/detect-object-injection
             return target[name];
         }
 
@@ -103,30 +110,33 @@ export class InternalPromiEvent<
         }
 
         if (name === "_cancel") {
-            // tslint:disable-next-line: no-object-mutation
             return () => {
                 this._cancelled = true;
             };
         }
 
         if (name === "_isCancelled") {
-            // tslint:disable-next-line: no-object-mutation
             return () => this._cancelled === true;
         }
 
-        // tslint:disable-next-line: no-if-statement
+        // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-unsafe-member-access
         if ((target.eventEmitter as any)[name]) {
+            // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-unsafe-member-access
             return (target.eventEmitter as any)[name];
         }
+
+        return;
     }
 }
 
 // Tell Typescript that InternalPromiEvent<T> implements Promise<T>.
 export type PromiEvent<
     T,
+    // eslint-disable-next-line @typescript-eslint/ban-types
     EventTypes extends { [event: string]: any[] } = {}
 > = InternalPromiEvent<T, EventTypes> & Promise<T>;
 export const newPromiEvent = <
     T,
+    // eslint-disable-next-line @typescript-eslint/ban-types
     EventTypes extends { [event: string]: any[] } = {}
 >() => new InternalPromiEvent<T, EventTypes>() as PromiEvent<T, EventTypes>;

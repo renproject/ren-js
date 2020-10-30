@@ -110,13 +110,13 @@ export interface ParamsQueryFees {
 
 // ResponseQueryBlock defines the response of the MethodQueryBlock.
 export interface ResponseQueryBlock {
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     block: any; // Block json.RawMessage`json:"block"`
 }
 
 // ResponseQueryBlocks defines the response of the MethodQueryBlocks.
 export interface ResponseQueryBlocks {
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     blocks: any; // Blocks json.RawMessage`json:"blocks"`
 }
 
@@ -257,7 +257,7 @@ export type RPCResponse<
     : Method extends RPCMethod.MethodQueryStat
     ? ResponseQueryStat
     : Method extends RPCMethod.MethodQueryFees
-    ? ResponseQueryFees // tslint:disable-next-line: no-any
+    ? ResponseQueryFees // eslint-disable-next-line @typescript-eslint/no-explicit-any
     : any;
 
 export type RenVMParams = {
@@ -278,7 +278,7 @@ export type RPCParams<
 > = Method extends RPCMethod.MethodQueryBlock
     ? ParamsQueryBlock
     : Method extends RPCMethod.MethodQueryBlocks
-    ? ParamsQueryBlocks // tslint:disable-next-line: no-any
+    ? ParamsQueryBlocks
     : Method extends RPCMethod.MethodSubmitTx
     ? ParamsSubmitBurn | ParamsSubmitMint
     : Method extends RPCMethod.MethodQueryTx
@@ -294,5 +294,5 @@ export type RPCParams<
     : Method extends RPCMethod.MethodQueryStat
     ? ParamsQueryStat
     : Method extends RPCMethod.MethodQueryFees
-    ? ParamsQueryFees // tslint:disable-next-line: no-any
+    ? ParamsQueryFees // eslint-disable-next-line @typescript-eslint/no-explicit-any
     : any;

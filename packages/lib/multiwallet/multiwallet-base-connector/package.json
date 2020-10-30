@@ -22,10 +22,13 @@
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "clean": "yarn rimraf ./build",
+        "lint": "run-s lint:*",
+        "lint:eslint": "eslint src/**/*.ts",
+        "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
-        "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build:main test:* lint",
-        "lint": "tslint --project ./ -t stylish --quiet",
+        "fix:eslint": "yarn lint:eslint --fix",
+        "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
+        "test": "run-s test:*",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -39,7 +42,8 @@
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.16",
         "@types/events": "3.0.0",
-        "events": "3.2.0"
+        "events": "3.2.0",
+        "@types/node": ">=10"
     },
     "resolutions": {
         "sha3": "^2.1.2"

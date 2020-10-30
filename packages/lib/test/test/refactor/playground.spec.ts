@@ -1,4 +1,4 @@
-// tslint:disable: no-console no-implicit-dependencies
+/* eslint-disable no-console */
 
 import * as Chains from "@renproject/chains";
 
@@ -9,10 +9,11 @@ import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
@@ -20,9 +21,7 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 const colors = [green, magenta, yellow, cyan, blue, red];
 
 describe("Playground", () => {
-    // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("mint", async function() {
         this.timeout(100000000000);
 
@@ -48,9 +47,8 @@ describe("Playground", () => {
         let suggestedAmount: number;
         try {
             const fees = await renJS.getFees();
-            suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8,
-            );
+            const fee: number = fees[asset.toLowerCase()].lock;
+            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = 0.0015 * 1e8;
@@ -98,66 +96,68 @@ describe("Playground", () => {
         await new Promise((resolve, reject) => {
             let i = 0;
 
-            lockAndMint.on("deposit", async (deposit) => {
-                const hash = await deposit.txHash();
+            lockAndMint.on("deposit", (deposit) => {
+                (async () => {
+                    const hash = await deposit.txHash();
 
-                // if (deposit.depositDetails.amount === "80000") {
-                //     return;
-                // }
+                    // if (deposit.depositDetails.amount === "80000") {
+                    //     return;
+                    // }
 
-                const color = colors[i];
-                i += 1;
+                    const color = colors[i];
+                    i += 1;
 
-                deposit._logger = new SimpleLogger(
-                    logLevel,
-                    color(`[${hash.slice(0, 6)}] `),
-                );
+                    deposit._logger = new SimpleLogger(
+                        logLevel,
+                        color(`[${hash.slice(0, 6)}] `),
+                    );
 
-                const info = deposit._logger.log;
+                    const info = deposit._logger.log;
 
-                info(
-                    `Received ${
-                        // tslint:disable-next-line: no-any
-                        (deposit.depositDetails as any).amount / 1e8
-                    } ${asset}`,
-                    deposit.depositDetails,
-                );
+                    info(
+                        `Received ${
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (deposit.depositDetails as any).amount / 1e8
+                        } ${asset}`,
+                        deposit.depositDetails,
+                    );
 
-                info(`Calling .confirmed`);
-                await deposit
-                    .confirmed()
-                    .on("confirmation", (confs, target) => {
-                        info(`${confs}/${target} confirmations`);
+                    info(`Calling .confirmed`);
+                    await deposit
+                        .confirmed()
+                        .on("confirmation", (confs, target) => {
+                            info(`${confs}/${target} confirmations`);
+                        });
+
+                    let retries = 10;
+                    while (retries) {
+                        try {
+                            info(
+                                retries === 10
+                                    ? `Calling .signed`
+                                    : `Retrying .signed`,
+                            );
+                            await deposit.signed().on("status", (status) => {
+                                info(`status: ${status}`);
+                            });
+                            break;
+                        } catch (error) {
+                            console.error(error);
+                        }
+                        await sleep(10);
+                        retries--;
+                    }
+                    if (retries === 0) {
+                        throw new Error(`Unable to call ".signed"`);
+                    }
+
+                    info(`Calling .mint`);
+                    await deposit.mint().on("transactionHash", (txHash) => {
+                        info(`txHash: ${String(txHash)}`);
                     });
 
-                let retries = 10;
-                while (retries) {
-                    try {
-                        info(
-                            retries === 10
-                                ? `Calling .signed`
-                                : `Retrying .signed`,
-                        );
-                        await deposit.signed().on("status", (status) => {
-                            info(`status: ${status}`);
-                        });
-                        break;
-                    } catch (error) {
-                        console.error(error);
-                    }
-                    await sleep(10);
-                    retries--;
-                }
-                if (retries === 0) {
-                    throw new Error(`Unable to call ".signed"`);
-                }
-
-                info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", (txHash) => {
-                    info(`txHash: ${txHash}`);
-                });
-
-                resolve();
+                    resolve();
+                })().catch(console.error);
             });
 
             sleep(10 * SECONDS)

@@ -1,7 +1,11 @@
-import { Machine, assign, send } from "xstate";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// TODO: Improve typings.
+
+import { assign, Machine, send } from "xstate";
 import RenJS from "@renproject/ren";
-import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
+
+import { GatewaySession, GatewayTransaction } from "../types/transaction";
 
 export interface BurnMachineContext {
     tx: GatewaySession;
@@ -121,5 +125,5 @@ export const burnMachine = Machine<
                 (getFirstTx(ctx.tx)?.sourceTxConfTarget ||
                     Number.POSITIVE_INFINITY),
         },
-    }
+    },
 );

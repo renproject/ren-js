@@ -3,9 +3,9 @@ import { Provider } from "./jsonRPC";
 // TODO: Look into errors caused by `extending` HttpProvider.
 
 export class OverwriteProvider<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Responses extends { [event: string]: any } = {}
 > implements Provider {
     // public readonly overrides: Map<string, Responses[keyof Responses]>;
@@ -86,7 +86,7 @@ export class OverwriteProvider<
                     },
                 ],
             },
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any) as { [method: string]: Responses[keyof Responses] };
         return (overrides[method]
             ? overrides[method]

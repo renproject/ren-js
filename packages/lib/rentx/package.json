@@ -37,7 +37,7 @@
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
     },
     "dependencies": {
-        "bignumber.js": "^9.0.0"
+        "bignumber.js": "^9.0.1"
     },
     "devDependencies": {
         "@renproject/ren": "^2.0.0-alpha.16",

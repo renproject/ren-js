@@ -19,7 +19,6 @@ const promiseAll = async <a>(
             const errorString = extractError(error);
             if (!errors.has(errorString)) {
                 errors = errors.add(errorString);
-                // tslint:disable-next-line: no-console
                 if (logger) logger.error(errorString);
             }
             newList = newList.push(defaultValue);
@@ -29,9 +28,9 @@ const promiseAll = async <a>(
 };
 
 export class ParallelHttpProvider<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Responses extends { [event: string]: any } = {}
 > implements Provider<Requests, Responses> {
     public nodes: List<HttpProvider<Requests, Responses>>;
@@ -52,7 +51,7 @@ export class ParallelHttpProvider<
         request: Requests[Method],
         retry = 2,
     ): Promise<Responses[Method]> => {
-        // tslint:disable-next-line: prefer-const
+        // eslint-disable-next-line prefer-const
         let [responses, errors] = await promiseAll(
             this.nodes
                 .valueSeq()

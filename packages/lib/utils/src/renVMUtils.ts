@@ -38,10 +38,9 @@ export const parseRenContract = (
 };
 
 export const resolveInToken = <
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    // tslint:disable-next-line: no-shadowed-variable
     Asset extends string = string,
     Address = string
 >({
@@ -53,16 +52,14 @@ export const resolveInToken = <
     from: LockAndMintParams<Transaction, Deposit, Asset, Address>["from"];
     to: LockAndMintParams<Transaction, Deposit, Asset, Address>["to"];
 }): RenContract => {
-    return `${asset}0${from.legacyName || from.name}2${
-        to.legacyName || from.name
-    }` as RenContract;
+    return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
+        from.name}`;
 };
 
 export const resolveOutToken = <
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    // tslint:disable-next-line: no-shadowed-variable
     Asset extends string = string,
     Address = string
 >({
@@ -74,5 +71,5 @@ export const resolveOutToken = <
     from: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>["from"];
     to: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>["to"];
 }): RenContract => {
-    return `${asset}0${from.name}2${to.name}` as RenContract;
+    return `${asset}0${from.name}2${to.name}`;
 };

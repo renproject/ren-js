@@ -1,5 +1,4 @@
-// tslint:disable: no-console
-
+/* eslint-disable no-console */
 import { RenNetwork } from "@renproject/interfaces";
 import { fromBase64, fromHex, hash160 } from "@renproject/utils";
 import { describe, it } from "mocha";
@@ -20,7 +19,7 @@ describe("Common", () => {
                     "030dd65f7db2920bb229912e3f4213dd150e5f972c9b73e9be714d844561ac355c",
                 );
 
-                const address = chain.getGatewayAddress(
+                const address = await chain.getGatewayAddress(
                     chain.asset,
                     hash160(publicKey),
                     gHash,

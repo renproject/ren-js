@@ -49,6 +49,7 @@ prefix: ${Ox(prefix)}`,
 
 /**
  * @dev See [[createAddress]] comment.
+ *
  */
 export const pubKeyScript = (
     networks: typeof BNetworks,

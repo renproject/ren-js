@@ -1,15 +1,15 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
-import RenJS from "@renproject/ren";
 import { keccak256 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import Web3 from "web3";
 import { renTestnet, waitForReceipt } from "@renproject/chains";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const transferABI = [
     {

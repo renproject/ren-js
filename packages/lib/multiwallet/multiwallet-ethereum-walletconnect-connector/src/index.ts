@@ -1,5 +1,8 @@
 import { RenNetwork } from "@renproject/interfaces";
-import { AbstractEthereumConnector } from "@renproject/multiwallet-abstract-ethereum-connector";
+import {
+    AbstractEthereumConnector,
+    SaneProvider,
+} from "@renproject/multiwallet-abstract-ethereum-connector";
 import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
@@ -11,30 +14,35 @@ export interface EthereumConnectorOptions {
     pollingInterval?: number;
 }
 
-export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
+export type SaneWalletConnectProvider = WalletConnectProvider & SaneProvider;
+
+export class EthereumWalletConnectConnector extends AbstractEthereumConnector<
+    SaneWalletConnectProvider
+> {
     private readonly rpc: { [chainId: number]: string };
     private readonly bridge?: string;
     private readonly qrcode?: boolean;
     private readonly pollingInterval?: number;
 
-    private provider?: WalletConnectProvider;
+    private provider?: SaneWalletConnectProvider;
     supportsTestnet = false;
     constructor(options: EthereumConnectorOptions) {
         super(options);
         this.bridge = options.bridge;
         this.rpc = options.rpc;
     }
-    handleUpdate = () =>
+    handleUpdate = () => {
         this.getStatus()
             .then((...args) => {
                 this.emitter.emitUpdate(...args);
             })
-            .catch((...args) => this.deactivate(...args));
+            .catch(async (...args) => this.deactivate(...args));
+    };
 
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
         // No good typings for injected providers exist...
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const provider: any = await this.getProvider();
         if (!provider) {
             throw Error("Missing Provider");
@@ -64,9 +72,8 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
     };
 
     getProvider = async () => {
-        // tslint:disable-next-line: no-any
-        if (this.provider) return this.provider as any;
-        // tslint:disable-next-line: no-shadowed-variable
+        if (this.provider) return this.provider;
+        // eslint-disable-next-line @typescript-eslint/no-shadow
         const WalletConnectProvider = await import(
             "@walletconnect/web3-provider"
         ).then((m) => m?.default ?? m);
@@ -75,8 +82,8 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
             rpc: this.rpc,
             qrcode: this.qrcode,
             pollingInterval: this.pollingInterval,
-            // tslint:disable-next-line: no-any
-        }) as any;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as SaneWalletConnectProvider;
         return this.provider;
     };
 
@@ -93,17 +100,23 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector {
     }
 
     async cleanup() {
-        const provider: any = await this.getProvider();
-        provider.removeListener("close", this.deactivate);
-        provider.removeListener("networkChanged", this.handleUpdate);
-        provider.removeListener("accountsChanged", this.handleUpdate);
-        provider.removeListener("chainChanged", this.handleUpdate);
+        const provider = await this.getProvider();
+        if (provider.removeListener) {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            provider.removeListener("close", this.deactivate);
+            provider.removeListener("networkChanged", this.handleUpdate);
+            provider.removeListener("accountsChanged", this.handleUpdate);
+            provider.removeListener("chainChanged", this.handleUpdate);
+        }
     }
 
     deactivate = async (reason?: string) => {
         await this.cleanup();
-        const provider: any = await this.getProvider();
-        provider.removeListener("close", this.deactivate);
+        const provider = await this.getProvider();
+        if (provider.removeListener) {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            provider.removeListener("close", this.deactivate);
+        }
         await provider.close();
         this.emitter.emitDeactivate(reason);
     };

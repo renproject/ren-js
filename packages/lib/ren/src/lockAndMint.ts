@@ -47,7 +47,7 @@ import { AbiCoder } from "web3-eth-abi";
  * there is an active listener for the `"deposit"` event.
  */
 export class LockAndMint<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,
@@ -88,7 +88,6 @@ export class LockAndMint<
         this._renVM = _renVM;
         this._params = _params;
 
-        // tslint:disable-next-line: insecure-random
         this.getDepositsInstance = Math.random();
 
         const txHash = this._params.txHash;
@@ -105,7 +104,7 @@ export class LockAndMint<
 
         {
             // Debug log
-            const { to, from, ...restOfParams } = this._params;
+            const { to: _to, from: _from, ...restOfParams } = this._params;
             this._logger.debug("lockAndMint created:", restOfParams);
         }
     }
@@ -122,10 +121,10 @@ export class LockAndMint<
             ((await this._renVM.getNetwork()) as RenNetwork);
 
         if (!this._params.from.renNetwork) {
-            this._params.from.initialize(this._renNetwork);
+            await this._params.from.initialize(this._renNetwork);
         }
         if (!this._params.to.renNetwork) {
-            this._params.to.initialize(this._renNetwork);
+            await this._params.to.initialize(this._renNetwork);
         }
 
         this._params.contractCalls =
@@ -151,8 +150,9 @@ export class LockAndMint<
     /**
      * `processDeposit` allows you to manually provide the details of a deposit
      * and returns a [[LockAndMintDeposit]] object.
+     *
      * @param deposit The deposit details in the format expected by the mint
-     *                chain.
+     * chain.
      */
     public processDeposit = (
         deposit: Deposit,
@@ -168,7 +168,6 @@ export class LockAndMint<
             );
         }
 
-        // tslint:disable-next-line: no-non-null-assertion
         const depositID = this._params.from.transactionID(deposit.transaction);
         let depositObject = this.deposits.get(depositID);
 
@@ -178,7 +177,6 @@ export class LockAndMint<
             // || (existingConfidenceRatio !== undefined &&
             // confidenceRatio > existingConfidenceRatio)
         ) {
-            // tslint:disable-next-line: no-use-before-declare
             depositObject = new LockAndMintDeposit<
                 Transaction,
                 Deposit,
@@ -211,7 +209,7 @@ export class LockAndMint<
                       Asset,
                       Address
                   >,
-              ) => void // tslint:disable-next-line: no-any
+              ) => void
             : never,
     ): this => {
         // Emit previous deposit events.
@@ -229,6 +227,7 @@ export class LockAndMint<
      * `on` extends [[EventEmitter.on]], modifying it to immediately return all
      * previous `"deposit"` events, on top of new events, when a new listener is
      * created.
+     *
      * @param event The name of the event to subscribe to.
      * @param listener The callback called when an event is observed.
      */
@@ -242,7 +241,7 @@ export class LockAndMint<
                       Asset,
                       Address
                   >,
-              ) => void // tslint:disable-next-line: no-any
+              ) => void
             : never,
     ): this => this.addListener(event, listener);
 
@@ -335,7 +334,6 @@ export class LockAndMint<
             );
         }
 
-        // tslint:disable-next-line: no-constant-condition
         while (true) {
             const listenerCancelled = () => this.listenerCount("deposit") === 0;
 
@@ -367,7 +365,7 @@ export class LockAndMint<
 }
 
 export class LockAndMintDeposit<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,
@@ -418,7 +416,7 @@ export class LockAndMintDeposit<
 
         {
             // Debug log
-            const { to, from, ...restOfParams } = this._params;
+            const { to: _to, from: _from, ...restOfParams } = this._params;
             this._logger.debug("lockAndMint created", restOfParams);
         }
     }
@@ -569,10 +567,11 @@ export class LockAndMintDeposit<
      * queryTx requests the status of the mint from RenVM.
      */
     public queryTx = async (): Promise<MintTransaction> => {
-        this._queryTxResult = (await this._renVM.queryMintOrBurn(
+        const mintTransaction: MintTransaction = await this._renVM.queryMintOrBurn(
             fromBase64(await this.txHash()),
-        )) as MintTransaction;
-        return this._queryTxResult;
+        );
+        this._queryTxResult = mintTransaction;
+        return mintTransaction;
     };
 
     public _submit = async (): Promise<string> => {
@@ -723,7 +722,6 @@ export class LockAndMintDeposit<
             });
 
             let currentConfidenceRatio = -Infinity;
-            // tslint:disable-next-line: no-constant-condition
             while (true) {
                 try {
                     const confidence = await this._params.from.transactionConfidence(
@@ -863,15 +861,14 @@ export class LockAndMintDeposit<
      * It returns a PromiEvent and the events emitted depend on the mint chain.
      */
     public mint = (
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         override?: { [name: string]: any },
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): PromiEvent<any, { [key: string]: any }> => {
-        // tslint:disable-next-line: no-any
         const promiEvent = newPromiEvent<
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             any,
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { [key: string]: any }
         >();
 

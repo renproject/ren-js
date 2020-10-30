@@ -1,4 +1,4 @@
-// tslint:disable
+/* eslint-disable  */
 
 // Type definitions for bitcore-lib 0.15
 // Project: https://github.com/bitpay/bitcore-lib
@@ -6,8 +6,6 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
 // TypeScript Version: 2.2
-
-/// <reference types="node" />
 
 declare module "bitcore-lib" {
     enum Opcode {

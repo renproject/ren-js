@@ -99,7 +99,7 @@ export class FilecoinClass
         onDeposit: (deposit: FilDeposit) => void,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         if (this.chainNetwork === "devnet") {
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
@@ -117,7 +117,7 @@ export class FilecoinClass
         transaction: FilTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         transaction = await fetchMessage(transaction.cid);
         return {
@@ -135,7 +135,7 @@ export class FilecoinClass
         gHash: Buffer,
     ): Promise<FilAddress> | FilAddress => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
@@ -185,7 +185,7 @@ export class FilecoinClass
      */
     addressIsValid = (address: FilAddress): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         assertType<string>("string", { address: address.address });
         return this._addressIsValid(address, this.chainNetwork);

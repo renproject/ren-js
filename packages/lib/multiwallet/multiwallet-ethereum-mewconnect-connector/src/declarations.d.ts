@@ -1,4 +1,4 @@
 declare interface Window {
-    ethereum?: any;
+    ethereum?: unknown;
 }
 declare module "@myetherwallet/mewconnect-web-client";

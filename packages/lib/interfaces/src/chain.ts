@@ -12,7 +12,7 @@ export type SyncOrPromise<T> = Promise<T> | T;
 
 export type TransactionListener<
     T,
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     E extends { [key: string]: any[] }
 > = PromiEvent<
     T,
@@ -40,7 +40,7 @@ export type TransactionListener<
  * all the relevant assets.
  */
 export interface ChainCommon<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Asset = string,
     Address = string
@@ -143,7 +143,7 @@ export interface ChainCommon<
     };
 }
 
-// tslint:disable-next-line: no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DepositCommon<Transaction = any> = {
     transaction: Transaction;
     amount: string;
@@ -160,7 +160,7 @@ export type DepositCommon<Transaction = any> = {
  * BitcoinCash implementations for examples of this.
  */
 export interface LockChain<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset = string,
@@ -233,7 +233,6 @@ export interface LockChain<
     burnPayload?: () => SyncOrPromise<string | undefined>;
 }
 
-// tslint:disable-next-line: no-any
 export interface BurnDetails<Transaction> {
     transaction: Transaction;
     amount: BigNumber;
@@ -242,7 +241,7 @@ export interface BurnDetails<Transaction> {
 }
 
 export interface MintChain<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Asset = string,
     Address = string
@@ -279,7 +278,7 @@ export interface MintChain<
      * transaction first if the transaction details have been provided.
      *
      * @param {TransactionConfig} [txConfig] Optionally override default options
-     *        like gas.
+     * like gas.
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     findBurnTransaction: (

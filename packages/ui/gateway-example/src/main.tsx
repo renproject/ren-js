@@ -3,13 +3,13 @@
 import * as React from "react";
 
 import GatewayJS from "@renproject/gateway";
-import { SendParams } from "@renproject/interfaces";
+import { LockAndMintParamsSimple, SendParams } from "@renproject/interfaces";
 import { SelectMarket } from "@renproject/react-components";
 import { stringToNetwork } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import QueryString, { parse } from "qs";
 import Web3 from "web3";
-import { HttpProvider } from "web3-providers";
+import { HttpProvider } from "web3-core";
 
 import { ReactComponent as MetaMaskLogo } from "./metamask.svg";
 
@@ -25,9 +25,15 @@ declare global {
     }
 }
 
-
-const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, ethereumAddress: string, setTxHash: (txHash: string | null) => void, network: string, token: Token) => {
-
+const startShiftIn = async (
+    web3: Web3,
+    gatewayJS: GatewayJS,
+    amount: string,
+    ethereumAddress: string,
+    setTxHash: (txHash: string | null) => void,
+    network: string,
+    token: Token,
+) => {
     // const shiftInParams: LockAndMintParamsSimple = {
     //     sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
     //     suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
@@ -37,28 +43,40 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     //     web3Provider: web3.currentProvider,
     // };
 
-    // const shiftInParams: LockAndMintParamsSimple = {
-    //     sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
-    //     suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
-    //     sendTo: "0xE2cAd8EF34E8db287e8daF0eDd169CC9f89E2797",
-    //     contractFn: "deposit",
-    //     contractParams: [],
-    //     web3Provider: web3.currentProvider,
-    // };
-
-    const shiftInParams: SendParams = {
-        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
-        sendToken: GatewayJS.Tokens[token].Mint,
-        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
-        sendTo: ethereumAddress,
+    const shiftInParams: LockAndMintParamsSimple = {
+        sendToken: GatewayJS.Tokens.BTC.Btc2Eth,
+        suggestedAmount: GatewayJS.utils.value(amount, "btc").sats().toString(), // Convert to Satoshis
+        sendTo: "0xa79EBB362e7BBB24A6dED614C53bf78E6e0a5e1d",
+        contractFn: "deposit",
+        contractParams: [
+            {
+                name: "_msg",
+                type: "tuple(uint256,string)" as any,
+                value: [1, "Hello world!"],
+            },
+        ],
+        web3Provider: web3.currentProvider,
     };
+
+    console.log("shiftInParams.contractParams", shiftInParams.contractParams);
+
+    // const shiftInParams: SendParams = {
+    //     web3Provider: await GatewayJS.utils.useBrowserWeb3(),
+    //     sendToken: GatewayJS.Tokens[token].Mint,
+    //     sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+    //     sendTo: ethereumAddress,
+    // };
 
     // if (shiftInParams.confirmations === 0) {
     //     setTxHash(null);
     // }
 
-    const result = await gatewayJS.open(shiftInParams).result()
-        .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); })
+    const result = await gatewayJS
+        .open(shiftInParams)
+        .result()
+        .on("status", (status) => {
+            console.debug(`[GOT STATUS] ${status}`);
+        })
         .on("transferUpdated", (transfer) => {
             console.group(`[GOT TRANSFER]`);
             console.debug(transfer);
@@ -110,16 +128,26 @@ const startShiftIn = async (web3: Web3, gatewayJS: GatewayJS, amount: string, et
     // }
 };
 
-const startShiftOut = async (web3: Web3, gatewayJS: GatewayJS, amount: string, recipient: string, token: Token) => {
-    gatewayJS.burnAndRelease({
-        web3Provider: await GatewayJS.utils.useBrowserWeb3(),
+const startShiftOut = async (
+    web3: Web3,
+    gatewayJS: GatewayJS,
+    amount: string,
+    recipient: string,
+    token: Token,
+) => {
+    gatewayJS
+        .burnAndRelease({
+            web3Provider: await GatewayJS.utils.useBrowserWeb3(),
 
-        // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
-        sendToken: GatewayJS.Tokens[token as "BTC" | "ZEC" | "BCH"].Burn,
-        sendTo: recipient,
-        sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
-    }).result()
-        .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); })
+            // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
+            sendToken: GatewayJS.Tokens[token as "BTC" | "ZEC" | "BCH"].Burn,
+            sendTo: recipient,
+            sendAmount: GatewayJS.utils.value(amount, "btc").sats(),
+        })
+        .result()
+        .on("status", (status) => {
+            console.debug(`[GOT STATUS] ${status}`);
+        })
         .then(console.debug)
         .catch(console.error);
 };
@@ -132,7 +160,9 @@ const recoverTrades = async (web3: Web3, gatewayJS: GatewayJS) => {
             .recoverTransfer(web3.currentProvider, trade)
             .pause()
             .result()
-            .on("status", (status) => { console.debug(`[GOT STATUS] ${status}`); })
+            .on("status", (status) => {
+                console.debug(`[GOT STATUS] ${status}`);
+            })
             .then(console.debug)
             .catch(console.error);
     }
@@ -145,7 +175,15 @@ export const Tokens = new Map<Token, { symbol: Token; name: string }>()
     .set("BCH", { symbol: "BCH", name: "Bitcoin Cash" });
 
 // tslint:disable-next-line: no-any
-const extractQuery = <T extends any>(query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined, fallback: T): string | T => {
+const extractQuery = <T extends any>(
+    query:
+        | string
+        | QueryString.ParsedQs
+        | string[]
+        | QueryString.ParsedQs[]
+        | undefined,
+    fallback: T,
+): string | T => {
     if (Array.isArray(query)) return extractQuery(query[0], fallback);
     if (typeof query !== "string") return fallback;
     return query || fallback;
@@ -160,32 +198,41 @@ export const GatewayExample = () => {
         }
     });
 
-    const context = { lib: window.web3 ? new Web3(window.web3.currentProvider) : undefined };
-    const contextWeb3 = context.lib as unknown as Web3 | undefined;
+    const context = {
+        lib: window.web3 ? new Web3(window.web3.currentProvider) : undefined,
+    };
+    const contextWeb3 = (context.lib as unknown) as Web3 | undefined;
 
     // useWeb3Network(process.env.REACT_APP_ETHEREUM_NODE || "", {
     //     gsn: { signKey: useEphemeralKey() }
     //     // tslint:disable-next-line: no-any
     // } as any);
 
-    const urlParameters = parse(window.location.search, { ignoreQueryPrefix: true });
+    const urlParameters = parse(window.location.search, {
+        ignoreQueryPrefix: true,
+    });
 
     const network = extractQuery(urlParameters.network, "testnet");
     const endpoint = extractQuery(urlParameters.endpoint, undefined);
     const isTestnet = network === "testnet" || network === "devnet";
 
     // If the network is changed, `sendTo` should be changed too.
-    const gatewayJS = React.useMemo(() => new GatewayJS(
-        network,
-        { endpoint },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), []);
+    const gatewayJS = React.useMemo(
+        () =>
+            new GatewayJS(
+                network,
+                { endpoint },
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+            ),
+        [],
+    );
 
-    const [errorMessage, setErrorMessage] = React.useState(null as string | null);
+    const [errorMessage, setErrorMessage] = React.useState(
+        null as string | null,
+    );
 
     React.useEffect(() => {
         (async () => {
-
             if (!contextWeb3) {
                 setErrorMessage("Please use a Web3 browser");
                 return;
@@ -215,40 +262,76 @@ export const GatewayExample = () => {
         return ethereumAddress.match(/^(0x)[0-9a-fA-Z]{40}$/);
     }, [ethereumAddress]);
 
-    const [txHash, setTxHash] = React.useState(undefined as undefined | null | string);
+    const [txHash, setTxHash] = React.useState(
+        undefined as undefined | null | string,
+    );
 
-    const onSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!contextWeb3) {
-            setErrorMessage("Please use a Web3 browser");
-            return;
-        }
-        // if (!validAddress) {
-        //     setErrorMessage("Please enter a valid Ethereum address.");
-        //     return;
-        // }
-        if (!amount) {
-            setErrorMessage("Please enter a valid amount.");
-            return;
-        }
-        if (new BigNumber(amount).lte(0.00005)) {
-            setErrorMessage("Amount must be greater than 0.00005");
-            return;
-        }
-        setErrorMessage(null);
-        try {
-            if (isMint) {
-                await startShiftIn(contextWeb3, gatewayJS, amount, ethereumAddress, setTxHash, network, token);
-            } else {
-                await startShiftOut(contextWeb3, gatewayJS, amount, ethereumAddress, token);
+    const onSubmit = React.useCallback(
+        async (event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            if (!contextWeb3) {
+                setErrorMessage("Please use a Web3 browser");
+                return;
             }
-        } catch (error) {
-            console.error(error);
-            setErrorMessage(String(error.message || error.error || JSON.stringify(error)));
-        }
-    }, [network, token, gatewayJS, amount, ethereumAddress, isMint, contextWeb3]);
+            // if (!validAddress) {
+            //     setErrorMessage("Please enter a valid Ethereum address.");
+            //     return;
+            // }
+            if (!amount) {
+                setErrorMessage("Please enter a valid amount.");
+                return;
+            }
+            if (new BigNumber(amount).lte(0.00005)) {
+                setErrorMessage("Amount must be greater than 0.00005");
+                return;
+            }
+            setErrorMessage(null);
+            try {
+                if (isMint) {
+                    await startShiftIn(
+                        contextWeb3,
+                        gatewayJS,
+                        amount,
+                        ethereumAddress,
+                        setTxHash,
+                        network,
+                        token,
+                    );
+                } else {
+                    await startShiftOut(
+                        contextWeb3,
+                        gatewayJS,
+                        amount,
+                        ethereumAddress,
+                        token,
+                    );
+                }
+            } catch (error) {
+                console.error(error);
+                setErrorMessage(
+                    String(
+                        error.message || error.error || JSON.stringify(error),
+                    ),
+                );
+            }
+        },
+        [
+            network,
+            token,
+            gatewayJS,
+            amount,
+            ethereumAddress,
+            isMint,
+            contextWeb3,
+        ],
+    );
 
-    const onMarketChange = React.useCallback((newToken) => { setToken(newToken as Token); }, [setToken]);
+    const onMarketChange = React.useCallback(
+        (newToken) => {
+            setToken(newToken as Token);
+        },
+        [setToken],
+    );
 
     const useMetaMaskAccount = React.useCallback(async () => {
         if (!contextWeb3) {
@@ -271,21 +354,46 @@ export const GatewayExample = () => {
         setGettingMaxValue(true);
         try {
             const web3Address = (await contextWeb3.eth.getAccounts())[0];
-            const tokenAddress = await gatewayJS.getTokenAddress(contextWeb3, token);
-            const tokenContract = new contextWeb3.eth.Contract(stringToNetwork(network).addresses.erc.ERC20.abi, tokenAddress);
+            const tokenAddress = await gatewayJS.getTokenAddress(
+                contextWeb3,
+                token,
+            );
+            const tokenContract = new contextWeb3.eth.Contract(
+                stringToNetwork(network).addresses.erc.ERC20.abi,
+                tokenAddress,
+            );
             const decimals = await tokenContract.methods.decimals().call();
-            const balance = await tokenContract.methods.balanceOf(web3Address).call();
-            setAmount(new BigNumber(balance).div(new BigNumber(10).exponentiatedBy(new BigNumber(decimals).toNumber())).toFixed());
+            const balance = await tokenContract.methods
+                .balanceOf(web3Address)
+                .call();
+            setAmount(
+                new BigNumber(balance)
+                    .div(
+                        new BigNumber(10).exponentiatedBy(
+                            new BigNumber(decimals).toNumber(),
+                        ),
+                    )
+                    .toFixed(),
+            );
         } catch (error) {
             console.error(error);
         }
         setGettingMaxValue(false);
     }, [contextWeb3, setAmount, gatewayJS, setGettingMaxValue, network, token]);
 
-    return <>
-        <form onSubmit={onSubmit} className={`test-environment ${txHash === null ? "disabled" : ""}`}>
-            <p className="box">Send {isTestnet ? "Testnet" : ""} {token} to/from an Ethereum address{isTestnet ? <> (Kovan)</> : <></>}.</p>
-            <style>{`
+    return (
+        <>
+            <form
+                onSubmit={onSubmit}
+                className={`test-environment ${
+                    txHash === null ? "disabled" : ""
+                }`}
+            >
+                <p className="box">
+                    Send {isTestnet ? "Testnet" : ""} {token} to/from an
+                    Ethereum address{isTestnet ? <> (Kovan)</> : <></>}.
+                </p>
+                <style>{`
             .Select--currency__control {
                 border-radius: 4px !important;
             }
@@ -298,32 +406,101 @@ export const GatewayExample = () => {
                 margin-top: -5px;
             }
             `}</style>
-            <SelectMarket
-                top
-                thisToken={token}
-                otherToken={""}
-                allTokens={Tokens}
-                key={"top"}
-                onMarketChange={onMarketChange}
-                getMarket={() => { return undefined; }}
-            />
+                {/* <SelectMarket
+                    top
+                    thisToken={token}
+                    otherToken={""}
+                    allTokens={Tokens}
+                    key={"top"}
+                    onMarketChange={onMarketChange}
+                    getMarket={() => {
+                        return undefined;
+                    }}
+                /> */}
 
-            <div className="send">
-                <input value={ethereumAddress} onChange={(e) => { setEthereumAddress(e.target.value); }} placeholder={`Enter ${isTestnet ? "Kovan" : "Ethereum"} (mint) or ${isTestnet ? "Testnet" : ""} ${(Tokens.get(token) || { name: token.toUpperCase() }).name} (burn) address`} />
-                <div role="button" className="box box-action" onClick={useMetaMaskAccount}><MetaMaskLogo /></div>
-            </div>
-
-            <div className="send">
                 <div className="send">
-                    <input value={amount} onChange={(e) => { setAmount(e.target.value); }} placeholder="Amount" />
-                    {!isPending && !isMint ? <div role="button" className={`box box-action box-blue ${gettingMaxValue ? "disabled" : ""}`} onClick={gettingMaxValue ? undefined : burnMaximumValue}>max</div> : <></>}
-                    <div className="box">{token.toUpperCase()}</div>
+                    <input
+                        value={ethereumAddress}
+                        onChange={(e) => {
+                            setEthereumAddress(e.target.value);
+                        }}
+                        placeholder={`Enter ${
+                            isTestnet ? "Kovan" : "Ethereum"
+                        } (mint) or ${isTestnet ? "Testnet" : ""} ${
+                            (Tokens.get(token) || { name: token.toUpperCase() })
+                                .name
+                        } (burn) address`}
+                    />
+                    <div
+                        role="button"
+                        className="box box-action"
+                        onClick={useMetaMaskAccount}
+                    >
+                        <MetaMaskLogo />
+                    </div>
                 </div>
-                <button disabled={txHash === null} type="submit" className={`blue ${!amount || /* !validAddress */ false ? "disabled" : ""}`}>{isPending ? "Mint or burn" : isMint ? "Mint" : "Burn"}</button>
-            </div>
-            {errorMessage ? <p className="box red">{errorMessage}</p> : <></>}
-            {txHash === null ? <p>Submitting to Ethereum...</p> : <></>}
-            {typeof txHash === "string" ? <p>Submitted! <a href={`https://${isTestnet ? "kovan." : ""}etherscan.io/tx/${txHash}`}>Etherscan</a></p> : <></>}
-        </form>
-    </>;
+
+                <div className="send">
+                    <div className="send">
+                        <input
+                            value={amount}
+                            onChange={(e) => {
+                                setAmount(e.target.value);
+                            }}
+                            placeholder="Amount"
+                        />
+                        {!isPending && !isMint ? (
+                            <div
+                                role="button"
+                                className={`box box-action box-blue ${
+                                    gettingMaxValue ? "disabled" : ""
+                                }`}
+                                onClick={
+                                    gettingMaxValue
+                                        ? undefined
+                                        : burnMaximumValue
+                                }
+                            >
+                                max
+                            </div>
+                        ) : (
+                            <></>
+                        )}
+                        <div className="box">{token.toUpperCase()}</div>
+                    </div>
+                    <button
+                        disabled={txHash === null}
+                        type="submit"
+                        className={`blue ${
+                            !amount || /* !validAddress */ false
+                                ? "disabled"
+                                : ""
+                        }`}
+                    >
+                        {isPending ? "Mint or burn" : isMint ? "Mint" : "Burn"}
+                    </button>
+                </div>
+                {errorMessage ? (
+                    <p className="box red">{errorMessage}</p>
+                ) : (
+                    <></>
+                )}
+                {txHash === null ? <p>Submitting to Ethereum...</p> : <></>}
+                {typeof txHash === "string" ? (
+                    <p>
+                        Submitted!{" "}
+                        <a
+                            href={`https://${
+                                isTestnet ? "kovan." : ""
+                            }etherscan.io/tx/${txHash}`}
+                        >
+                            Etherscan
+                        </a>
+                    </p>
+                ) : (
+                    <></>
+                )}
+            </form>
+        </>
+    );
 };

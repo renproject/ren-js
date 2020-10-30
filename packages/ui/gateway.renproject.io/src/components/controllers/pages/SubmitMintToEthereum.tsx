@@ -1,8 +1,8 @@
-import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
 import { RenNetworkDetails } from "@renproject/contracts";
+import { Asset, Chain, LockAndMintEvent, Tx } from "@renproject/interfaces";
 import { TokenIcon } from "@renproject/react-components";
 import { extractError } from "@renproject/utils";
-import { lighten } from "polished";
+import BigNumber from "bignumber.js";
 import React from "react";
 import styled from "styled-components";
 
@@ -22,18 +22,9 @@ import { LabelledDiv } from "../../views/LabelledInput";
 import { Mini } from "../../views/Mini";
 import { TransparentButton, TransparentLoading } from "../../views/Styled";
 
-const Title = styled.span`
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 23px;
-    text-align: center;
-    color: #3f3f48;
-    opacity: 0.9;
-`;
-
 const StyledLink = styled.a`
     display: block;
-    color: ${(p) => lighten(0.1, p.theme.primaryColor)} !important;
+    color: #515159;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 14px !important;
@@ -51,6 +42,8 @@ interface Props {
     networkDetails: RenNetworkDetails;
     token: Asset;
     submit: (retry?: boolean) => Promise<void>;
+    onLoad: () => Promise<void>;
+    onLoadAsync: () => Promise<void>;
 }
 
 export const SubmitMintToEthereum: React.FC<Props> = ({
@@ -60,6 +53,8 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     networkDetails,
     token,
     submit,
+    onLoad,
+    onLoadAsync,
 }) => {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState(null as string | null);
@@ -111,14 +106,30 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     }, [submit, error]);
 
     const [initialized, setInitialized] = React.useState(false);
+    const [ready, setReady] = React.useState(false);
     React.useEffect(() => {
         if (!initialized) {
             setInitialized(true);
             if (txHash) {
                 onSubmit().catch(console.error);
+            } else {
+                onLoad()
+                    .then(() => {
+                        setReady(true);
+                    })
+                    .catch((err) => {
+                        setReady(true);
+                        console.error(err);
+                    });
+                onLoadAsync().catch(console.error);
+
+                // If onLoad doesn't complete within 1 minute, set ready anyway.
+                setTimeout(() => {
+                    setReady(true);
+                }, 60 * 1000);
             }
         }
-    }, [initialized, txHash, onSubmit]);
+    }, [initialized, txHash, onSubmit, onLoad, onLoadAsync, ready, setReady]);
 
     if (mini) {
         return (
@@ -159,12 +170,20 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
     }
 
     const amount =
+        transfer &&
         transfer.inTx &&
         transfer.inTx.chain !== Chain.Ethereum &&
         transfer.inTx.utxo &&
+        // If amount is zero - it may because RenJS isn't fetching the full UTXO details.
         transfer.inTx.utxo.amount
-            ? transfer.inTx.utxo.amount
+            ? new BigNumber(transfer.inTx.utxo.amount)
             : undefined;
+
+    const amountReadable = amount
+        ? new BigNumber(amount)
+              .div(new BigNumber(10).exponentiatedBy(8)) // TODO: decimals
+              .toFixed()
+        : undefined;
 
     return (
         <Container>
@@ -179,7 +198,16 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
                                     rel="noopener noreferrer"
                                     href={txUrl(transfer.inTx, networkDetails)}
                                 >
-                                    Tx ID: {txPreview(transfer.inTx)}
+                                    {amountReadable ? (
+                                        <>{amountReadable}</>
+                                    ) : (
+                                        "Received"
+                                    )}{" "}
+                                    {token.toUpperCase()}
+                                    {" - "}
+                                    <span className="blue">
+                                        {txPreview(transfer.inTx)}
+                                    </span>
                                 </StyledLink>
                             </div>
                         ) : (
@@ -211,15 +239,13 @@ export const SubmitMintToEthereum: React.FC<Props> = ({
                     <ContainerButtons>
                         <TransparentButton
                             className="button open--confirm"
-                            disabled={submitting}
+                            disabled={submitting || !ready}
                             onClick={onSubmit}
                         >
-                            Submit to Ethereum{" "}
-                            {submitting ? (
+                            {ready ? <>Submit to Ethereum </> : null}
+                            {submitting || !ready ? (
                                 <TransparentLoading alt={true} />
-                            ) : (
-                                ""
-                            )}
+                            ) : null}
                         </TransparentButton>
                     </ContainerButtons>
                 )}

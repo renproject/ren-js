@@ -1,6 +1,10 @@
 import { Networks, Opcode, Script } from "bitcore-lib";
 import { encode } from "bs58";
-import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BTC/BTCHandler";
+import {
+    getConfirmations,
+    getUTXO,
+    getUTXOs,
+} from "send-crypto/build/main/handlers/BTC/BTCHandler";
 import { validate } from "wallet-address-validator";
 
 import { createAddress } from "./common";
@@ -14,9 +18,19 @@ export const getBitcoinUTXOs = ({ isTestnet }: { isTestnet: boolean }) => {
     };
 };
 
-export const getBitcoinConfirmations = ({ isTestnet }: { isTestnet: boolean }) => {
+export const getBitcoinConfirmations = ({
+    isTestnet,
+}: {
+    isTestnet: boolean;
+}) => {
     return async (txHash: string) => {
         return getConfirmations(isTestnet, txHash);
+    };
+};
+
+export const getBitcoinUTXO = ({ isTestnet }: { isTestnet: boolean }) => {
+    return async (txHash: string, vOut: number) => {
+        return getUTXO(isTestnet, txHash, vOut);
     };
 };
 
@@ -35,7 +49,8 @@ export const getBitcoinConfirmations = ({ isTestnet }: { isTestnet: boolean }) =
 
 export const btcAddressToHex = (address: string) => Ox(Buffer.from(address));
 
-const isBTCAddress = (address: string) => validate(address, "btc", "testnet") || validate(address, "btc", "prod");
+const isBTCAddress = (address: string) =>
+    validate(address, "btc", "testnet") || validate(address, "btc", "prod");
 
 export interface Tactics {
     decoders: Array<(address: string) => Buffer>;
@@ -54,22 +69,23 @@ const btcTactics: Tactics = {
     ],
 };
 
-export const anyAddressFrom =
-    (isAnyAddress: (address: string) => boolean, { encoders, decoders }: Tactics) =>
-        (address: string) => {
-            for (const encoder of encoders) {
-                for (const decoder of decoders) {
-                    try {
-                        const encoded = encoder(decoder(address));
-                        if (isAnyAddress(encoded)) {
-                            return encoded;
-                        }
-                    } catch (error) {
-                        // Ignore errors
-                    }
+export const anyAddressFrom = (
+    isAnyAddress: (address: string) => boolean,
+    { encoders, decoders }: Tactics,
+) => (address: string) => {
+    for (const encoder of encoders) {
+        for (const decoder of decoders) {
+            try {
+                const encoded = encoder(decoder(address));
+                if (isAnyAddress(encoded)) {
+                    return encoded;
                 }
+            } catch (error) {
+                // Ignore errors
             }
-            return address;
-        };
+        }
+    }
+    return address;
+};
 
 export const btcAddressFrom = anyAddressFrom(isBTCAddress, btcTactics);

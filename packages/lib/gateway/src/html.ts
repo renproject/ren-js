@@ -1,4 +1,3 @@
-
 export const RenIFrame = (uniqueID: string, iframeURL: string) => `
 <iframe class="_ren_iframe-hidden" id="_ren_iframe-hidden-${uniqueID}" style="display: none"
     src="${iframeURL}"></iframe>
@@ -47,8 +46,14 @@ const cogSvg = (id: string) => `
 </svg>
 `;
 
-export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: boolean) => `
-<div class="_ren_gateway ${paused ? "_ren_gateway-minified" : ""}" id="_ren_gateway-${uniqueID}">
+export const RenElementHTML = (
+    uniqueID: string,
+    frameUrl: string,
+    paused?: boolean
+) => `
+<div class="_ren_gateway ${
+    paused ? "_ren_gateway-minified" : ""
+}" id="_ren_gateway-${uniqueID}">
     <style>
     ._ren_overlay {
         width: 100%;
@@ -109,28 +114,44 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: bool
 
     /* TODO: Use single CSS rule */
     ._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 1));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 1));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 2));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 2));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 3));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 3));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 4));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 4));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 5));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 5));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 6));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 6));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 7));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 7));
     }
     ._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway+._ren_gateway-minified ._ren_iframeShadow {
-        top: calc(${minimizedSpacing}px + calc(${minimizedHeight + minimizedSpacing}px * 8));
+        top: calc(${minimizedSpacing}px + calc(${
+    minimizedHeight + minimizedSpacing
+}px * 8));
     }
 
     ._ren_gateway-minified ._ren_overlay {
@@ -244,7 +265,9 @@ export const RenElementHTML = (uniqueID: string, frameUrl: string, paused?: bool
     </style>
     <div class="_ren_overlay" id="_ren_overlay-${uniqueID}"></div>
     <div class="_ren_iframeShadow" id="_ren_iframeShadow-${uniqueID}">
-        <iframe class="_ren_iframe" id="_ren_iframe-${uniqueID}" ${/*style="background-color: transparent" allowtransparency="true"*/""} frameborder="0" src="${frameUrl}" ></iframe>
+        <iframe class="_ren_iframe" id="_ren_iframe-${uniqueID}" ${
+    /*style="background-color: transparent" allowtransparency="true"*/ ""
+} frameborder="0" src="${frameUrl}" ></iframe>
         <div class="_ren_iframe_footer">
             <div class="_ren_iframe_footer_left" style="width: 15px;"></div>
             <div class="_ren_iframe_footer_center">

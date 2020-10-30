@@ -1,3 +1,4 @@
+import { RenNetworkDetails } from "@renproject/contracts";
 import {
     Asset,
     BurnAndReleaseStatus,
@@ -13,9 +14,9 @@ import {
     SerializableBurnAndReleaseParams,
     Tx,
     TxStatus,
+    UnmarshalledFees,
     UTXOWithChain,
 } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/contracts";
 import RenJS from "@renproject/ren";
 import { LockAndMint } from "@renproject/ren/build/main/lockAndMint";
 import {
@@ -113,9 +114,12 @@ const useSDKContainer = () => {
 
     const [renJS, setRenJS] = useState(null as null | RenJS);
     const [transfer, setTransfer] = useState(null as HistoryEvent | null);
+    const [fees, setFees] = useState(null as UnmarshalledFees | null);
 
     const connect = async (network: string): Promise<void> => {
-        setRenJS(new RenJS(network));
+        const newRenJS = new RenJS(network);
+        setRenJS(newRenJS);
+        newRenJS.getFees().then(setFees).catch(console.error);
     };
 
     const getNumberOfConfirmations = () => {
@@ -152,6 +156,22 @@ const useSDKContainer = () => {
         }
         if (!transferContainer.store) {
             throw new Error(`Transfer storage not initialized.`);
+        }
+
+        // Remove dust transactions.
+        try {
+            if (
+                transferIn &&
+                transferIn.inTx &&
+                transferIn.inTx.chain !== Chain.Ethereum &&
+                transferIn.inTx.utxo &&
+                transferIn.inTx.utxo.amount &&
+                transferIn.inTx.utxo.amount <= 547
+            ) {
+                transferIn.inTx = undefined;
+            }
+        } catch (error) {
+            console.error(error);
         }
 
         setTransfer((currentTransfer) => {
@@ -511,7 +531,14 @@ const useSDKContainer = () => {
     // 3. Submit the deposit to RenVM and retrieve back a signature
     // 4. Submit the signature to Ethereum
 
+    const [createdLockAndMint, setCreatedLockAndMint] = useState(
+        null as LockAndMint | null,
+    );
     const lockAndMintObject = (): LockAndMint => {
+        if (createdLockAndMint) {
+            return createdLockAndMint;
+        }
+
         if (!renJS) {
             throw new Error("Invalid parameters passed to `lockAndMintObject`");
         }
@@ -527,10 +554,12 @@ const useSDKContainer = () => {
                 ? transfer.inTx.utxo
                 : undefined;
 
-        return renJS.lockAndMint({
+        const lockAndMint = renJS.lockAndMint({
             ...params,
             deposit: params.deposit || inTx,
         });
+        setCreatedLockAndMint(lockAndMint);
+        return lockAndMint;
     };
 
     // Takes a transferParams as bytes or an array of primitive types and returns
@@ -591,25 +620,76 @@ const useSDKContainer = () => {
                   }
                 : undefined;
 
+        const token = transfer.transferParams.sendToken;
+        const asset: Asset | "" = !token
+            ? ""
+            : token === Asset.BTC || token === Asset.ZEC || token === Asset.BCH
+            ? (token as Asset)
+            : parseRenContract(token).asset;
+
+        let minimumDeposit = 547 + 1;
+        try {
+            minimumDeposit = fees
+                ? fees[asset.toLowerCase() as "btc" | "bch" | "zec"].lock + 1
+                : minimumDeposit;
+        } catch (error) {
+            console.error(error);
+        }
+
         const transaction = await lockAndMintObject().wait(0, specifyUTXO);
+        try {
+            const renVMQuery = await transaction.queryTx();
+            await updateTransfer({
+                renVMQuery,
+                txHash: renVMQuery.hash,
+            });
+        } catch (error) {
+            console.error(error);
+        }
         const promise = lockAndMintObject().wait(
             getNumberOfConfirmations(),
             specifyUTXO,
         );
+        let deposit: Tx | null = transfer.inTx;
+
         promise.on("deposit", (utxo: UTXOWithChain) => {
-            // tslint:disable-next-line: strict-type-predicates
-            if (utxo.utxo && utxo.utxo.vOut !== undefined) {
-                updateTransfer({
-                    status: LockAndMintStatus.Deposited,
-                    inTx: utxo,
-                }).catch((error) => {
-                    _catchBackgroundErr_(
-                        error,
-                        "Error in sdkContainer.tsx > waits",
-                    );
-                });
-                onDeposit(utxo);
+            if (deposit) {
+                if (
+                    deposit.chain !== Chain.Ethereum &&
+                    deposit.utxo &&
+                    // If txHash and amount are both different, reject second deposit.
+                    deposit.utxo.amount !== utxo.utxo.amount &&
+                    deposit.utxo.txHash !== utxo.utxo.txHash
+                ) {
+                    console.warn("Multiple deposits received.");
+                    return;
+                }
             }
+
+            // tslint:disable-next-line: strict-type-predicates
+            if (!utxo.utxo || utxo.utxo.vOut === undefined) {
+                console.warn("Invalid transaction format.");
+                return;
+            }
+
+            if (utxo.utxo.amount < minimumDeposit) {
+                console.warn(
+                    `Received deposit smaller than minimum (${utxo.utxo.amount}) < ${minimumDeposit})`,
+                );
+                return;
+            }
+
+            updateTransfer({
+                status: LockAndMintStatus.Deposited,
+                inTx: utxo,
+            }).catch((error) => {
+                _catchBackgroundErr_(
+                    error,
+                    "Error in sdkContainer.tsx > waits",
+                );
+            });
+            onDeposit(utxo);
+            deposit = utxo;
         });
         const signaturePromise = transaction
             .submit()
@@ -646,7 +726,41 @@ const useSDKContainer = () => {
         await updateTransfer({ renVMQuery: response, txHash: response.hash });
     };
 
-    const submitMintToEthereum = async (retry = false) => {
+    const fetchMintSignature = async () => {
+        if (!transfer) {
+            throw new Error("Transfer not set");
+        }
+        if (transfer.eventType !== EventType.LockAndMint) {
+            throw new Error(`Expected mint object, got ${transfer.eventType}`);
+        }
+
+        const transactionHash =
+            transfer.outTx && transfer.outTx.chain === Chain.Ethereum
+                ? transfer.outTx.hash
+                : null;
+
+        if (!transactionHash) {
+            if (
+                !transfer.inTx ||
+                transfer.inTx.chain === Chain.Ethereum ||
+                !transfer.inTx.utxo ||
+                // tslint:disable-next-line: strict-type-predicates
+                transfer.inTx.utxo.vOut === undefined
+            ) {
+                await updateTransfer({
+                    status: LockAndMintStatus.Committed,
+                });
+                return;
+            }
+
+            const lockAndMint = lockAndMintObject();
+            if (!lockAndMint.signature) {
+                await lockAndMint.submit(transfer.inTx.utxo);
+            }
+        }
+    };
+
+    const findPreviousMintTransaction = async (retry = false) => {
         const gatewayPopupID = uiContainer.gatewayPopupID;
         if (!transfer) {
             throw new Error("Transfer not set");
@@ -685,6 +799,23 @@ const useSDKContainer = () => {
                 );
                 if (txHash) {
                     transactionHash = txHash;
+                    const {
+                        error: getTransactionStatusError,
+                    } = await postMessageToClient(
+                        window,
+                        gatewayPopupID,
+                        GatewayMessageType.GetEthereumTxStatus,
+                        { txHash: transactionHash },
+                    );
+                    if (getTransactionStatusError) {
+                        throw new Error(getTransactionStatusError);
+                    }
+
+                    // Update lockAndMint in store.
+                    await updateTransfer({
+                        outTx: EthereumTx(transactionHash),
+                        status: LockAndMintStatus.ConfirmedOnEthereum,
+                    });
                 }
                 if (findMinTransactionError) {
                     console.error(findMinTransactionError);
@@ -693,15 +824,38 @@ const useSDKContainer = () => {
                 console.error(error);
             }
         }
+    };
+
+    const submitMintToEthereum = async (retry = false) => {
+        const gatewayPopupID = uiContainer.gatewayPopupID;
+        if (!transfer) {
+            throw new Error("Transfer not set");
+        }
+        if (transfer.eventType !== EventType.LockAndMint) {
+            throw new Error(`Expected mint object, got ${transfer.eventType}`);
+        }
+        if (!gatewayPopupID) {
+            throw new Error(`No gateway popup ID.`);
+        }
+
+        let transactionHash =
+            transfer.outTx && transfer.outTx.chain === Chain.Ethereum && !retry
+                ? transfer.outTx.hash
+                : null;
+
+        if (retry) {
+            await updateTransfer({
+                outTx: undefined,
+            });
+        }
+        // let receipt: TransactionReceipt;
 
         if (!transactionHash) {
-            await sleep(500);
-
-            // tslint:disable-next-line: strict-type-predicates
             if (
                 !transfer.inTx ||
                 transfer.inTx.chain === Chain.Ethereum ||
                 !transfer.inTx.utxo ||
+                // tslint:disable-next-line: strict-type-predicates
                 transfer.inTx.utxo.vOut === undefined
             ) {
                 await updateTransfer({
@@ -710,11 +864,12 @@ const useSDKContainer = () => {
                 return;
             }
 
-            const signature = await lockAndMintObject().submit(
-                transfer.inTx.utxo,
-            );
+            const lockAndMint = lockAndMintObject();
+            if (!lockAndMint.signature) {
+                await lockAndMint.submit(transfer.inTx.utxo);
+            }
 
-            const transactionConfigs = signature.createTransactions();
+            const transactionConfigs = lockAndMint.createTransactions();
 
             for (let i = 0; i < transactionConfigs.length; i++) {
                 const transactionConfig = transactionConfigs[i];
@@ -766,8 +921,6 @@ const useSDKContainer = () => {
             outTx: EthereumTx(transactionHash),
             status: LockAndMintStatus.ConfirmedOnEthereum,
         });
-
-        return;
     };
 
     const canClearMintTransaction = () => {
@@ -824,6 +977,7 @@ const useSDKContainer = () => {
 
     return {
         renJS,
+        fees,
         transfer,
         connect,
         getNumberOfConfirmations,
@@ -832,7 +986,6 @@ const useSDKContainer = () => {
         updateTransfer,
         submitBurnToEthereum,
         submitBurnToRenVM,
-        lockAndMintObject,
         generateAddress,
         waitForDeposits,
         queryTransferStatus,
@@ -841,6 +994,8 @@ const useSDKContainer = () => {
         clearMintTransaction,
         canClearLockTransaction,
         clearLockTransaction,
+        fetchMintSignature,
+        findPreviousMintTransaction,
     };
 };
 

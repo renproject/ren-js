@@ -61,7 +61,7 @@
         },
         "ordered-imports": true,
         "no-object-literal-type-assertion": true,
-        "semicolon": true,
+	"semicolon": [true, "always", "ignore-bound-class-methods"],
         "eofline": true,
         "no-non-null-assertion": true,
         "no-floating-promises": true,

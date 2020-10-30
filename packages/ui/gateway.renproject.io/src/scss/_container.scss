@@ -1,554 +1,550 @@
 ._ren {
-    .gateway-container {
-        border-radius: 6px;
-        text-align: left;
-        display: flex;
-        flex-flow: column;
-        justify-content: center;
-        height: 187px;
+  .gateway-container {
+    border-radius: 6px;
+    text-align: left;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    height: 187px;
+  }
+
+  .container--cancel {
+    right: ((40px - 12px) / 2);
+    top: ((40px - 12px) / 2);
+    height: 12px;
+    width: 12px;
+    margin-top: 0;
+    cursor: pointer;
+
+    svg {
+      height: 12px;
+      width: 12px;
     }
 
-    .container--cancel {
-        right: ((40px - 12px) / 2);
-        top: ((40px - 12px) / 2);
-        height: 12px;
-        width: 12px;
-        margin-top: 0;
-        cursor: pointer;
-
-        svg {
-            height: 12px;
-            width: 12px;
-        }
-
-        svg,
-        svg>* {
-            fill: #707575;
-        }
-
-        position: absolute;
-        top: 15px;
-        right: 10px;
-
-        transition: background-color 5ms;
-
-        &:hover {
-
-            svg,
-            svg>* {
-                fill: $foreground;
-            }
-        }
-
-        &.disabled {
-            opacity: 0.6;
-        }
+    svg,
+    svg > * {
+      fill: #707575;
     }
 
-    .container--warning {
-        left: 6px;
-        top: ((40px - 16px) / 2);
+    position: absolute;
+    top: 15px;
+    right: 10px;
 
-        background: #E3E3E7;
-        padding: 6px 10px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    transition: background-color 5ms;
 
-        margin-top: 0;
-        position: absolute;
-        transition: background-color 5ms;
-
-        svg {
-            height: 18px;
-            width: 18px;
-            margin-left: 5px;
-        }
-
-        >span:first-child {
-            margin-left: -47.5px;
-            width: 200px;
-        }
-
-        >span:not(:first-child) {
-            margin-left: 0;
-            text-transform: uppercase;
-            font-weight: 500;
-            font-size: 10px;
-        }
+    &:hover {
+      svg,
+      svg > * {
+        fill: $foreground;
+      }
     }
 
-    .container--buttons {
-        display: flex;
+    &.disabled {
+      opacity: 0.6;
+    }
+  }
 
-        button {
-            height: 50px;
-        }
+  .container--warning {
+    left: 6px;
+    top: ((40px - 16px) / 2);
 
-        justify-content: center;
+    background: #e3e3e7;
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 0;
+    position: absolute;
+    transition: background-color 5ms;
+
+    svg {
+      height: 18px;
+      width: 18px;
+      margin-left: 5px;
     }
 
-    .container--loading {
-        width: 100%;
-        height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-flow: column;
-
-        >span {
-            margin-top: 15px;
-        }
+    > span:first-child {
+      margin-left: -47.5px;
+      width: 200px;
     }
 
-    .connect-web3 {
-        text-align: center;
-        font-size: 2.0rem;
+    > span:not(:first-child) {
+      margin-left: 0;
+      text-transform: uppercase;
+      font-weight: 500;
+      font-size: 10px;
+    }
+  }
 
-        .connect-web3--browsers {
-            display: flex;
-            flex-flow: row;
+  .container--buttons {
+    display: flex;
 
-            margin-bottom: 20px;
-
-            svg {
-                height: 40px;
-                width: auto;
-                max-width: 40px;
-            }
-
-            a+a {
-                margin-left: 10px;
-            }
-        }
+    button {
+      height: 50px;
     }
 
-    .container--body--details {
-        text-align: center;
-        background-color: #fdfdfe;
-        color: $foreground;
-        padding: 0px 20px;
-        padding-bottom: 18px;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
+    justify-content: center;
+  }
 
-        overflow: auto;
+  .container--loading {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-flow: column;
 
-        .show-gateway--title {
-            font-size: 2.6rem;
-            line-height: 100%;
-            margin-bottom: 10px;
-        }
-
-        .show-gateway--subtitle {
-            font-weight: 500;
-            font-size: 14px;
-            line-height: 16px;
-            color: #707575;
-        }
-
-        .container--body--values {
-            font-size: 1.4rem;
-
-            >span {
-                line-height: 2.2;
-            }
-        }
-
-        .container--token--icon {
-            margin-bottom: 20px;
-
-            .token--icon {
-                height: 50px;
-                max-width: 50px;
-                width: 50px;
-            }
-        }
-
-        >svg {
-            width: 40px;
-        }
+    > span {
+      margin-top: 15px;
     }
+  }
 
-    .open--confirm {
-        @extend .button;
-        background: #006FE8; // linear-gradient(180.19deg, $primary-light -125.02%, $primary 98.68%);
-        border-radius: 6px !important;
+  .connect-web3 {
+    text-align: center;
+    font-size: 2rem;
+
+    .connect-web3--browsers {
+      display: flex;
+      flex-flow: row;
+
+      margin-bottom: 20px;
+
+      svg {
         height: 40px;
+        width: auto;
+        max-width: 40px;
+      }
+
+      a + a {
+        margin-left: 10px;
+      }
+    }
+  }
+
+  .container--body--details {
+    text-align: center;
+    background-color: #fdfdfe;
+    color: $foreground;
+    padding: 0px 20px;
+    padding-bottom: 18px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+
+    overflow: auto;
+
+    .show-gateway--title {
+      color: #3f3f48;
+      font-size: 2.6rem;
+      line-height: 100%;
+      margin-bottom: 10px;
     }
 
-    .url {
-        padding: 6px;
-        border: 1px solid #aaa;
-        font-size: 1.3rem;
-        border-radius: 3px;
+    .show-gateway--subtitle {
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 16px;
+      color: #707575;
     }
 
-    .submitting-to-renvm--body {
-        margin-top: 15px;
-        text-align: center;
+    .container--body--values {
+      font-size: 1.4rem;
+
+      > span {
+        line-height: 2.2;
+      }
     }
 
-    .submit-to-ethereum {
-        @extend .container--body--details;
+    .container--token--icon {
+      margin-bottom: 20px;
 
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        padding: 0;
-
-        button {
-            width: 100vw;
-        }
+      .token--icon {
+        height: 50px;
+        max-width: 50px;
+        width: 50px;
+      }
     }
 
-    .container--body {
-        padding-top: 0;
-        align-items: center;
-        display: flex;
-        flex-flow: column;
-        width: 100%;
-        padding-left: 0;
-        padding-right: 0;
-        height: 100%;
-        padding-bottom: 0;
+    > svg {
+      width: 40px;
     }
+  }
 
+  .open--confirm {
+    @extend .button;
+    background: #006fe8; // linear-gradient(180.19deg, $primary-light -125.02%, $primary 98.68%);
+    border-radius: 6px !important;
+    height: 40px;
+  }
 
-    .container--body--header {
-        height: 73px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-flow: column;
+  .url {
+    padding: 6px;
+    border: 1px solid #aaa;
+    font-size: 1.3rem;
+    border-radius: 3px;
+  }
 
-        .container--body--header--banner {
-            background-color: #F3F3F7;
-            height: 46px;
-            width: 100%;
-        }
+  .submitting-to-renvm--body {
+    margin-top: 15px;
+    text-align: center;
+  }
+
+  .submit-to-ethereum {
+    @extend .container--body--details;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0;
+
+    button {
+      width: 100vw;
     }
+  }
 
+  .container--body {
+    padding-top: 0;
+    align-items: center;
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    height: 100%;
+    padding-bottom: 0;
+  }
+
+  .container--body--header {
+    height: 73px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-flow: column;
+
+    .container--body--header--banner {
+      background-color: #f3f3f7;
+      height: 46px;
+      width: 100%;
+    }
+  }
+
+  .container--body--icon {
+    background-color: #f3f3f7;
+    margin-top: -28px;
+    border-radius: 50px;
+    text-align: center;
+
+    width: 60px;
+    height: 60px;
+    min-height: 60px;
+
+    svg {
+      width: 50px;
+      height: 50px;
+      min-height: 50px;
+      max-width: 50px;
+      margin-top: 5px;
+    }
+  }
+
+  .container--body--alert {
     .container--body--icon {
-        background-color: #F3F3F7;
-        margin-top: -28px;
-        border-radius: 50px;
-        text-align: center;
+      background-color: #e9eaf2;
 
+      svg {
         width: 60px;
         height: 60px;
-        min-height: 60px;
+        max-width: 60px;
+        margin-top: -2px;
+      }
+    }
+  }
 
-        svg {
-            width: 50px;
-            height: 50px;
-            min-height: 50px;
-            max-width: 50px;
-            margin-top: 5px;
-        }
+  .burn-container {
+    @extend .container--body--details;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0;
+
+    .container--body--icon {
+      svg {
+        width: 46px;
+        height: 60px;
+        max-width: 46px;
+        margin-top: -7px;
+      }
     }
 
-    .container--body--alert {
-        .container--body--icon {
-            background-color: #E9EAF2;
+    .container--body--message {
+      height: calc(187px - 46px - 60px);
 
-            svg {
-                width: 60px;
-                height: 60px;
-                max-width: 60px;
-                margin-top: -2px;
-            }
-        }
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 20px;
+      color: #707575;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+
+      > span {
+        padding: 0 65px;
+      }
+
+      > span.red {
+        padding: 0 20px;
+      }
     }
 
-    .burn-container {
-        @extend .container--body--details;
+    button {
+      width: 100vw;
+    }
+  }
 
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding: 0;
+  $graphSize: 100px;
 
-        .container--body--icon {
-            svg {
-                width: 46px;
-                height: 60px;
-                max-width: 46px;
-                margin-top: -7px;
-            }
-        }
+  .CircularProgressbar {
+    border-radius: 100%;
+    height: $graphSize;
+    margin-top: -($graphSize / 2);
+    background: white;
+    width: $graphSize;
+  }
 
-        .container--body--message {
+  .submit-burn-progress {
+    width: 100%;
+    height: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+    position: relative;
+  }
 
-            height: calc(187px - 46px - 60px);
+  .submit-burn-progress--body {
+    .submit-burn-progress--pending {
+      font-weight: bold;
+      font-size: 12px;
+      color: #3f3f48;
+      text-transform: uppercase;
+    }
 
-            font-weight: 500;
-            font-size: 14px;
-            line-height: 20px;
-            color: #707575;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+    .submit-burn-progress--hash {
+      font-size: 10px;
+      color: #3f3f48;
+      max-width: $graphSize - 30px;
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
-            >span {
-                padding: 0 65px;
-            }
+      a {
+        color: $primary;
+      }
+    }
 
-            >span.red {
-                padding: 0 20px;
-            }
-        }
+    position: absolute;
+    top: -($graphSize / 2);
+    height: $graphSize;
+    width: $graphSize;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container--error {
+    @extend .no-scrollbar;
+
+    text-align: center;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    overflow: scroll;
+
+    display: flex;
+    flex-flow: column;
+
+    .container--error--title {
+      font-weight: 500;
+      font-size: 17px;
+      color: #3f3f48;
+    }
+
+    .container--error--body {
+      font-weight: normal;
+      font-size: 13px;
+      color: #707575;
+    }
+  }
+
+  .complete--buttons {
+    .container--buttons {
+      display: flex;
+      flex-flow: column;
+
+      a {
+        height: 40px;
+        min-height: 40px;
+        max-height: unset;
+        border: 1px solid #dbe0e8;
 
         button {
-            width: 100vw;
+          background: white;
+          color: $primary;
+          font-size: 1.4rem;
         }
+
+        &:hover,
+        &:hover > button {
+          background: #f9f9fc;
+        }
+
+        & + a {
+          border-top: none;
+        }
+
+        &:first-child {
+          border-top-left-radius: 6px;
+          border-top-right-radius: 6px;
+        }
+
+        &:last-child {
+          border-bottom-left-radius: 6px;
+          border-bottom-right-radius: 6px;
+        }
+      }
+    }
+  }
+
+  .complete {
+    @extend .container--body--details;
+    padding-top: 0px;
+    padding: 0;
+
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    h2 {
+      font-size: 2.6rem;
+      font-weight: 300;
     }
 
-    $graphSize: 100px;
+    p {
+      font-size: 1.4rem;
+      text-align: center;
+      padding: 0 28px;
 
-    .CircularProgressbar {
-        border-radius: 100%;
-        height: $graphSize;
-        margin-top: -($graphSize / 2);
-        background: white;
-        width: $graphSize;
+      color: #87888c;
     }
 
-    .submit-burn-progress {
-        width: 100%;
+    .complete--links a {
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 16px;
+      text-align: center;
+
+      color: #006fe8;
+    }
+
+    // Define vars we'll be using
+    $brand-success: #006fe8;
+    $loader-size: 5em;
+    $check-height: $loader-size/2;
+    $check-width: $check-height/2;
+    $check-left: ($loader-size/6 + $loader-size/12);
+    $check-thickness: 3px;
+    $check-color: $brand-success;
+
+    .checkmark--outer {
+      background: white;
+      margin-bottom: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-left-color: $check-color;
+      animation: loader-spin 1.2s infinite linear;
+      position: relative;
+      display: inline-block;
+      vertical-align: top;
+      border-radius: 50%;
+      width: $loader-size;
+      height: $loader-size;
+      -webkit-animation: none;
+      animation: none;
+      border-color: $check-color;
+      transition: border 500ms ease-out;
+    }
+
+    .checkmark:after {
+      animation-duration: 800ms;
+      animation-timing-function: ease;
+      animation-name: checkmark;
+      transform: scaleX(-1) rotate(135deg);
+
+      opacity: 1;
+      height: $check-height;
+      width: $check-width;
+      transform-origin: left top;
+      border-right: $check-thickness solid $check-color;
+      border-top: $check-thickness solid $check-color;
+      content: "";
+      left: $check-left;
+      top: $check-height;
+      position: absolute;
+    }
+
+    @keyframes loader-spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes checkmark {
+      0% {
         height: 0;
-        display: flex;
-        justify-content: center;
-        z-index: 1;
-        position: relative;
+        width: 0;
+        opacity: 1;
+      }
+
+      20% {
+        height: 0;
+        width: $check-width;
+        opacity: 1;
+      }
+
+      40% {
+        height: $check-height;
+        width: $check-width;
+        opacity: 1;
+      }
+
+      100% {
+        height: $check-height;
+        width: $check-width;
+        opacity: 1;
+      }
     }
+  }
 
-    .submit-burn-progress--body {
-        .submit-burn-progress--pending {
-            font-weight: bold;
-            font-size: 12px;
-            color: #3F3F48;
-            text-transform: uppercase;
-        }
+  .confirmation--progress--container {
+    width: 100%;
+    padding: 0 20px;
+  }
 
-        .submit-burn-progress--hash {
-            font-size: 10px;
-            color: #3F3F48;
-            max-width: $graphSize - 30px;
-            overflow-x: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-
-            a {
-                color: $primary;
-            }
-        }
-
-        position: absolute;
-        top: -($graphSize / 2);
-        height: $graphSize;
-        width: $graphSize;
-        display: flex;
-        flex-flow: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .container--error {
-        @extend .no-scrollbar;
-
-        text-align: center;
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 8px;
-        overflow: scroll;
-
-        display: flex;
-        flex-flow: column;
-
-        .container--error--title {
-            font-weight: 500;
-            font-size: 17px;
-            color: #3F3F48;
-        }
-
-        .container--error--body {
-            font-weight: normal;
-            font-size: 13px;
-            color: #707575;
-        }
-    }
-
-    .complete--buttons {
-        .container--buttons {
-            display: flex;
-            flex-flow: column;
-
-            a {
-                height: 40px;
-                min-height: 40px;
-                max-height: unset;
-                border: 1px solid #DBE0E8;
-
-                button {
-                    background: white;
-                    color: $primary;
-                    font-size: 1.4rem;
-                }
-
-                &:hover,
-                &:hover>button {
-                    background: #F9F9FC;
-                }
-
-                &+a {
-                    border-top: none;
-                }
-
-                &:first-child {
-                    border-top-left-radius: 6px;
-                    border-top-right-radius: 6px;
-                }
-
-                &:last-child {
-                    border-bottom-left-radius: 6px;
-                    border-bottom-right-radius: 6px;
-                }
-            }
-        }
-    }
-
-    .complete {
-        @extend .container--body--details;
-        padding-top: 0px;
-        padding: 0;
-
-        display: flex;
-        flex-flow: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-
-        h2 {
-            font-size: 2.6rem;
-            font-weight: 300;
-        }
-
-        p {
-            font-size: 1.4rem;
-            text-align: center;
-            padding: 0 28px;
-
-            color: #87888C;
-
-        }
-
-        .complete--links a {
-            font-weight: 500;
-            font-size: 14px;
-            line-height: 16px;
-            text-align: center;
-
-            color: #006FE8;
-        }
-
-
-        // Define vars we'll be using
-        $brand-success: #006FE8;
-        $loader-size: 5em;
-        $check-height: $loader-size/2;
-        $check-width: $check-height/2;
-        $check-left: ($loader-size/6 + $loader-size/12);
-        $check-thickness: 3px;
-        $check-color: $brand-success;
-
-        .checkmark--outer {
-            background: white;
-            margin-bottom: 20px;
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            border-left-color: $check-color;
-            animation: loader-spin 1.2s infinite linear;
-            position: relative;
-            display: inline-block;
-            vertical-align: top;
-            border-radius: 50%;
-            width: $loader-size;
-            height: $loader-size;
-            -webkit-animation: none;
-            animation: none;
-            border-color: $check-color;
-            transition: border 500ms ease-out;
-        }
-
-        .checkmark:after {
-            animation-duration: 800ms;
-            animation-timing-function: ease;
-            animation-name: checkmark;
-            transform: scaleX(-1) rotate(135deg);
-
-            opacity: 1;
-            height: $check-height;
-            width: $check-width;
-            transform-origin: left top;
-            border-right: $check-thickness solid $check-color;
-            border-top: $check-thickness solid $check-color;
-            content: '';
-            left: $check-left;
-            top: $check-height;
-            position: absolute;
-        }
-
-        @keyframes loader-spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes checkmark {
-            0% {
-                height: 0;
-                width: 0;
-                opacity: 1;
-            }
-
-            20% {
-                height: 0;
-                width: $check-width;
-                opacity: 1;
-            }
-
-            40% {
-                height: $check-height;
-                width: $check-width;
-                opacity: 1;
-            }
-
-            100% {
-                height: $check-height;
-                width: $check-width;
-                opacity: 1;
-            }
-        }
-    }
-
-    .confirmation--progress--container {
-        width: 100%;
-        padding: 0 20px;
-    }
-
-    .deposit-received {
-        justify-content: flex-start;
-        padding-top: 15px;
-    }
+  .deposit-received {
+    justify-content: flex-start;
+    padding-top: 15px;
+  }
 }

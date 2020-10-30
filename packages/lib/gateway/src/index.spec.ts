@@ -1,4 +1,3 @@
-
 import GatewayJS from "./index";
 
 // test("can initialize gateway", (t: ExecutionContext<unknown>) => {

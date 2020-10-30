@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "1.0.3",
+    "version": "1.0.12",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -84,5 +84,9 @@
             "src"
         ]
     },
-    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc"
+    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc",
+    "prettier": {
+        "singleQuote": false,
+        "tabWidth": 4
+    }
 }

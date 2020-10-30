@@ -1,6 +1,10 @@
 import { isMainnetAddress, isTestnetAddress, toCashAddress } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
-import { getConfirmations, getUTXOs } from "send-crypto/build/main/handlers/BCH/BCHHandler";
+import {
+    getConfirmations,
+    getUTXO,
+    getUTXOs,
+} from "send-crypto/build/main/handlers/BCH/BCHHandler";
 
 import { anyAddressFrom, Tactics } from "./btc";
 import { createAddress } from "./common";
@@ -14,9 +18,19 @@ export const getBitcoinCashUTXOs = ({ isTestnet }: { isTestnet: boolean }) => {
     };
 };
 
-export const getBitcoinCashConfirmations = ({ isTestnet }: { isTestnet: boolean }) => {
+export const getBitcoinCashConfirmations = ({
+    isTestnet,
+}: {
+    isTestnet: boolean;
+}) => {
     return async (txHash: string) => {
         return getConfirmations(isTestnet, txHash);
+    };
+};
+
+export const getBitcoinCashUTXO = ({ isTestnet }: { isTestnet: boolean }) => {
+    return async (txHash: string, vOut: number) => {
+        return getUTXO(isTestnet, txHash, vOut);
     };
 };
 
@@ -24,9 +38,11 @@ export const bchAddressToHex = (address: string) => Ox(Buffer.from(address));
 
 const isBCHAddress = (address: string, options?: { isTestnet?: boolean }) => {
     try {
-        return options ?
-            options.isTestnet ? isTestnetAddress(address) : isMainnetAddress(address) :
-            isTestnetAddress(address) || isMainnetAddress(address);
+        return options
+            ? options.isTestnet
+                ? isTestnetAddress(address)
+                : isMainnetAddress(address)
+            : isTestnetAddress(address) || isMainnetAddress(address);
     } catch (error) {
         return false;
     }
@@ -38,9 +54,7 @@ const bchTactics: Tactics = {
         (address: string) => Buffer.from(address, "base64"),
         (address: string) => Buffer.from(strip0x(address), "hex"),
     ],
-    encoders: [
-        (buffer: Buffer) => toCashAddress(buffer.toString()),
-    ],
+    encoders: [(buffer: Buffer) => toCashAddress(buffer.toString())],
 };
 
 export const bchAddressFrom = anyAddressFrom(isBCHAddress, bchTactics);

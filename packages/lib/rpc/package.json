@@ -1,6 +1,6 @@
 {
     "name": "@renproject/rpc",
-    "version": "1.0.7",
+    "version": "1.0.13",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -82,5 +82,9 @@
             "src"
         ]
     },
-    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc"
+    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc",
+    "prettier": {
+        "singleQuote": false,
+        "tabWidth": 4
+    }
 }

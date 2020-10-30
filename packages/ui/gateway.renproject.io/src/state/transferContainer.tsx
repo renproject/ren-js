@@ -40,7 +40,7 @@ export class LocalStorageProvider<V = HistoryEvent>
         this.store = store;
     }
 
-    get = (k: string) => this.store.getItem<V>(k);
+    get = async (k: string) => (await this.store.getItem<V>(k)) || undefined;
     set = async (k: string, v: V) => this.store.setItem(k, v);
     keys = () => this.store.keys();
 }
@@ -69,7 +69,9 @@ const useTransferContainer = () => {
     >();
     const [noLocalStorage, setNoLocalStorage] = useState(false);
 
-    const connect = (networkIn: string, domainIn?: string) => {
+    // Note - connect is async but it's not called with `await`. This can cause
+    // issues if `gateway.getGateways()` is called before storage.keys() returns.
+    const connect = async (networkIn: string, domainIn?: string) => {
         if (networkIn === network && domainIn === domain && store) {
             return store;
         }
@@ -78,6 +80,8 @@ const useTransferContainer = () => {
         let nextStore: StorageProvider<string, HistoryEvent>;
         try {
             nextStore = new LocalStorageProvider(networkIn, domainIn);
+            // Check that local storage works.
+            await nextStore.keys();
             setNoLocalStorage(false);
         } catch (error) {
             // Local storage not available.

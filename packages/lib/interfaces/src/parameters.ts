@@ -1,10 +1,8 @@
 import BigNumber from "bignumber.js";
-import { TransactionConfig as Web3TransactionConfig } from "web3-core";
 
 import { DepositCommon, LockChain, MintChain } from "./chain";
 import { EthArgs } from "./ethArgs";
 
-export type TransactionConfig = Web3TransactionConfig;
 export type BNInterface = { toString(x?: "hex"): string };
 export type NumberValue = string | number | BigNumber | BNInterface;
 
@@ -32,7 +30,7 @@ export interface ContractCall {
     /**
      * Set transaction options:.
      */
-    txConfig?: TransactionConfig;
+    txConfig?: unknown;
 }
 
 /**
@@ -63,7 +61,7 @@ export interface TransferParamsCommon<Asset extends string> {
  * The parameters for a cross-chain transfer onto Ethereum.
  */
 export interface LockAndMintParams<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,
@@ -113,7 +111,7 @@ export interface LockAndMintParams<
  * from Ethereum.
  */
 export interface BurnAndReleaseParams<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,

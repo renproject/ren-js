@@ -1,5 +1,3 @@
-// tslint:disable: no-unused-expression
-
 import chai from "chai";
 import { expect } from "earljs";
 import BigNumber from "bignumber.js";
@@ -34,7 +32,7 @@ describe("assert", () => {
         assertType<number[]>("number[]", {
             a: [1, 2, 3],
         }).should.be.true;
-        // tslint:disable-next-line: array-type
+        // eslint-disable-next-line @typescript-eslint/array-type
         assertType<Array<number>>("Array<number>", {
             a: [1, 2, 3],
         }).should.be.true;

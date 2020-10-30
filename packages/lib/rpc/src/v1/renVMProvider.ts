@@ -95,7 +95,7 @@ export class RenVMProvider
                     RenVMResponses
                 >([rpcUrl], logger) as Provider<RenVMParams, RenVMResponses>;
             } catch (error) {
-                if (String(error && error.message).match(/Invalid node URL/)) {
+                if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(
                         `Invalid network or provider URL: "${network}"`,
                     );
@@ -137,7 +137,6 @@ export class RenVMProvider
     ) =>
         this.sendMessage<RPCMethod.MethodSubmitTx>(
             RPCMethod.MethodSubmitTx,
-            // tslint:disable-next-line: no-object-literal-type-assertion
             { tx } as ParamsSubmitBurn | ParamsSubmitMint,
             retry,
         );
@@ -236,7 +235,6 @@ export class RenVMProvider
         _gPubKey: Buffer,
         _nHash: Buffer,
         nonce: Buffer,
-        // tslint:disable-next-line: no-any
         output: { txindex: string; txid: Buffer },
         _amount: string,
         payload: Buffer,
@@ -380,7 +378,6 @@ export class RenVMProvider
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
-        // tslint:disable-next-line: no-constant-condition
         while (true) {
             if (_cancelRequested && _cancelRequested()) {
                 throw new Error(`waitForTX cancelled`);
@@ -395,15 +392,13 @@ export class RenVMProvider
                     onStatus(result.txStatus);
                 }
             } catch (error) {
-                // tslint:disable-next-line: no-console
                 if (
-                    String((error || {}).message).match(
-                        /(not found)|(not available)/,
+                    /(not found)|(not available)/.exec(
+                        String((error || {}).message),
                     )
                 ) {
                     // ignore
                 } else {
-                    // tslint:disable-next-line: no-console
                     if (this.logger) {
                         this.logger.error(String(error));
                     }
@@ -420,7 +415,7 @@ export class RenVMProvider
      * the provided contract.
      *
      * @param {RenContract} renContract The Ren Contract for which the public
-     *        key should be fetched.
+     * key should be fetched.
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (token: Asset): Promise<Buffer> => {
@@ -457,6 +452,7 @@ export class RenVMProvider
 
     // In the future, this will be asynchronous. It returns a promise for
     // compatibility.
+    // eslint-disable-next-line @typescript-eslint/require-await
     public getNetwork = async (): Promise<string> => {
         return this.network;
     };

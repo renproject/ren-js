@@ -1,5 +1,3 @@
-// tslint:disable: no-any
-
 import {
     AbiItem,
     Asset,
@@ -7,6 +5,7 @@ import {
     Logger,
     MintTransaction,
     RenContract,
+    SyncOrPromise,
     TxStatus,
 } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
@@ -14,6 +13,7 @@ import BigNumber from "bignumber.js";
 export interface AbstractRenVMProvider {
     version: number;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getFees: () => Promise<any>;
 
     mintTxHash: (
@@ -22,7 +22,6 @@ export interface AbstractRenVMProvider {
         gPubKey: Buffer,
         nHash: Buffer,
         nonce: Buffer,
-        // tslint:disable-next-line: no-any
         output: { txindex: string; txid: Buffer },
         amount: string,
         payload: Buffer,
@@ -37,7 +36,6 @@ export interface AbstractRenVMProvider {
         gPubKey: Buffer,
         nHash: Buffer,
         nonce: Buffer,
-        // tslint:disable-next-line: no-any
         output: { txindex: string; txid: Buffer },
         amount: string,
         payload: Buffer,
@@ -47,7 +45,7 @@ export interface AbstractRenVMProvider {
         fn: string,
         fnABI: AbiItem[],
         tags: [string] | [],
-    ) => Promise<Buffer>;
+    ) => SyncOrPromise<Buffer>;
 
     burnTxHash?: (
         params: {
@@ -65,7 +63,7 @@ export interface AbstractRenVMProvider {
             to: string;
         },
         logger?: Logger,
-    ) => Promise<Buffer>;
+    ) => SyncOrPromise<Buffer>;
 
     submitBurn: (
         params:
@@ -90,29 +88,27 @@ export interface AbstractRenVMProvider {
               },
         tags: [string] | [],
         logger?: Logger,
-    ) => Promise<Buffer>;
+    ) => SyncOrPromise<Buffer>;
 
     queryMintOrBurn: <T extends MintTransaction | BurnTransaction>(
         utxoTxHash: Buffer,
-    ) => Promise<T>;
+    ) => SyncOrPromise<T>;
 
     waitForTX: <T extends MintTransaction | BurnTransaction>(
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
-    ) => Promise<T>;
+    ) => SyncOrPromise<T>;
 
     /**
      * selectPublicKey fetches the key for the RenVM shard handling
      * the provided contract.
      *
      * @param {RenContract} renContract The Ren Contract for which the public
-     *        key should be fetched.
+     * key should be fetched.
      * @returns The key hash (20 bytes) as a string.
      */
-    selectPublicKey: (token: Asset) => Promise<Buffer>;
+    selectPublicKey: (token: Asset) => SyncOrPromise<Buffer>;
 
-    // In the future, this will be asynchronous. It returns a promise for
-    // compatibility.
-    getNetwork: () => Promise<string>;
+    getNetwork: () => SyncOrPromise<string>;
 }

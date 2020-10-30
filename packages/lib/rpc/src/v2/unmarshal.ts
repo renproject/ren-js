@@ -27,7 +27,7 @@ export const unmarshalMintTx = (
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     assert(
-        response.tx.selector.match(/\/to/) !== null,
+        /\/to/.exec(response.tx.selector) !== null,
         `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.selector})`,
     );
 
@@ -66,7 +66,7 @@ export const unmarshalBurnTx = (
     response: ResponseQueryBurnTx,
 ): BurnTransaction => {
     assert(
-        response.tx.selector.match(/\/from/) !== null,
+        /\/from/.exec(response.tx.selector) !== null,
         `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`,
     );
 

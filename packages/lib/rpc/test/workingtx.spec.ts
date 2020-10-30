@@ -1,5 +1,3 @@
-// tslint:disable: no-console
-
 import { toURLBase64 } from "@renproject/utils";
 import { expect } from "earljs";
 import { describe, it } from "mocha";

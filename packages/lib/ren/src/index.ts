@@ -83,6 +83,7 @@ export default class RenJS {
 
     /**
      * Accepts the name of a network, or a network object.
+     *
      * @param network Provide the name of a network - `"mainnet"` or `"testnet"` - or a network object.
      * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
      */
@@ -169,7 +170,7 @@ export default class RenJS {
      * @param params See [[LockAndMintParams]].
      */
     public readonly lockAndMint = async <
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         Asset extends string = string,
@@ -191,7 +192,7 @@ export default class RenJS {
      * @returns An instance of [[BurnAndRelease]].
      */
     public readonly burnAndRelease = async <
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         Asset extends string = string,
@@ -208,15 +209,14 @@ export default class RenJS {
     public readonly getFees = async () => this.renVM.getFees();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////// //
 // EXPORTS                                                                    //
 // Based on https://github.com/MikeMcl/bignumber.js/blob/master/bignumber.js  //
-////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////// //
 
-// tslint:disable: no-any no-object-mutation strict-type-predicates no-typeof-undefined
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any */
 
-// tslint:disable-next-line: no-string-literal
-(RenJS as any)["default"] = (RenJS as any).RenJS = RenJS;
+(RenJS as any).default = (RenJS as any).RenJS = RenJS;
 
 // AMD
 try {

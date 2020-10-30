@@ -1,5 +1,3 @@
-// tslint:disable: no-console
-
 import {
     renChaosnet,
     renDevnet,
@@ -12,11 +10,12 @@ import { generatePHash } from "@renproject/utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { expect } from "earljs";
+import { config as loadDotEnv } from "dotenv";
 
 chai.use(chaiAsPromised);
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const NETWORK = process.env.NETWORK;
 
@@ -99,7 +98,6 @@ describe("Utils", function() {
     }
 
     it(`queryTX`, async () => {
-        // tslint:disable-next-line: await-promise
         await new RenJS(NETWORK as RenNetwork).renVM
             .queryMintOrBurn(Buffer.from([0]))
             .should.be.rejectedWith(

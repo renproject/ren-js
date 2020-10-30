@@ -1,4 +1,4 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
 import * as Chains from "@renproject/chains";
 
@@ -9,10 +9,11 @@ import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const colors = [green, magenta, yellow, cyan, blue, red];
 
@@ -20,9 +21,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor: mint", () => {
-    // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
@@ -44,9 +43,8 @@ describe("Refactor: mint", () => {
         let suggestedAmount;
         try {
             const fees = await renJS.getFees();
-            suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8,
-            );
+            const fee: number = fees[asset.toLowerCase()].lock;
+            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error(error);
             suggestedAmount = 0.0008 * 1e8;
@@ -86,8 +84,7 @@ describe("Refactor: mint", () => {
 
             // lockAndMint.on("deposit", async deposit => {
 
-            // tslint:disable-next-line: no-floating-promises
-            Promise.resolve(
+            void Promise.resolve(
                 lockAndMint.processDeposit({
                     transaction: {
                         txHash:
@@ -113,7 +110,7 @@ describe("Refactor: mint", () => {
 
                 info(
                     `Received ${
-                        // tslint:disable-next-line: no-any
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (deposit.depositDetails as any).amount / 1e8
                     } ${asset}`,
                     deposit.depositDetails,
@@ -133,7 +130,7 @@ describe("Refactor: mint", () => {
 
                 info(`Calling .mint`);
                 await deposit.mint().on("transactionHash", (txHash) => {
-                    info(`txHash: ${txHash}`);
+                    info(`txHash: ${String(txHash)}`);
                 });
 
                 resolve();

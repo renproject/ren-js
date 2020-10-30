@@ -1,4 +1,4 @@
 declare interface Window {
-    BinanceChain?: any;
-    ethereum?: any;
+    BinanceChain?: unknown;
+    ethereum?: unknown;
 }

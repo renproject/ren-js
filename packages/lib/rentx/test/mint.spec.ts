@@ -1,10 +1,11 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
 import { TxStatus } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { AbstractRenVMProvider } from "@renproject/rpc";
 import { RenVMProvider } from "@renproject/rpc/build/main/v1";
 import { interpret } from "xstate";
+import { config as loadDotEnv } from "dotenv";
 
 import {
     GatewaySession,
@@ -14,7 +15,7 @@ import {
 } from "../src";
 import { buildMockLockChain, buildMockMintChain } from "./testutils/mock";
 
-require("dotenv").config();
+loadDotEnv();
 const providers = {
     testDestChain: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
 };
@@ -64,7 +65,7 @@ describe("MintMachine", () => {
                     if (
                         Object.values(state?.context?.depositMachines || {})[0]
                     ) {
-                        // we have successfully detected a depost and spawned
+                        // we have successfully detected a deposit and spawned
                         // a machine to listen for updates
                         resolve();
                     }
@@ -73,7 +74,8 @@ describe("MintMachine", () => {
 
             // Start the service
             service.start();
-            service.subscribe(((state: any, evt: any) => {}) as any);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            service.subscribe(((_state, _evt) => {}) as any);
             service.onStop(() => console.log("Service stopped"));
         });
         return p.then(() => {
@@ -131,7 +133,8 @@ describe("MintMachine", () => {
 
             // Start the service
             service.start();
-            service.subscribe(((state: any, evt: any) => {}) as any);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            service.subscribe(((_state, _evt) => {}) as any);
             service.onStop(() => console.log("Service stopped"));
         });
         return p.then(() => {
@@ -159,23 +162,24 @@ describe("MintMachine", () => {
             },
         };
 
-        const renVMProvider = (new RenVMProvider(
+        const renVMProvider: AbstractRenVMProvider = new RenVMProvider(
             "testnet",
-        ) as any) as AbstractRenVMProvider;
+        );
         let txHash: string;
         let confirmed = false;
-        renVMProvider.submitMint = async (...args) => {
+        renVMProvider.submitMint = (..._args) => {
             if (txHash && confirmed) return Buffer.from(txHash);
             throw Error("notx");
         };
-        renVMProvider.waitForTX = async (_a, cb) => {
+        renVMProvider.waitForTX = (_a, cb) => {
             if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
 
         const machine = mintMachine.withConfig(mintConfig).withContext({
             tx: makeMintTransaction(),
-            sdk: new RenJS(renVMProvider), //, { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,
@@ -185,7 +189,6 @@ describe("MintMachine", () => {
         setInterval(() => {
             setConfirmations((confirmations += 1));
         }, 100);
-        // tslint:disable-next-line: promise-must-complete
         const p = new Promise((resolve) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -195,18 +198,21 @@ describe("MintMachine", () => {
                     )[0];
                     if (depositMachine && !subscribed) {
                         subscribed = true;
-                        depositMachine.subscribe((state: any) => {
-                            if (!txHash)
-                                txHash = state.context.deposit.sourceTxHash;
-                            if (state?.event?.type === "CONFIRMED") {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        depositMachine.subscribe((innerState: any) => {
+                            if (!txHash) {
+                                txHash =
+                                    innerState.context.deposit.sourceTxHash;
+                            }
+                            if (innerState?.event?.type === "CONFIRMED") {
                                 confirmed = true;
                             }
 
-                            if (state?.event?.type === "SIGNED") {
+                            if (innerState?.event?.type === "SIGNED") {
                                 depositMachine.send({ type: "CLAIM" });
                             }
 
-                            if (state?.value === "destInitiated") {
+                            if (innerState?.value === "destInitiated") {
                                 resolve();
                                 // depositMachine.send({ type: "CLAIM" });
                             }
@@ -245,17 +251,18 @@ describe("MintMachine", () => {
             },
         };
 
-        const renVMProvider = (new RenVMProvider(
+        const renVMProvider: AbstractRenVMProvider = new RenVMProvider(
             "testnet",
-        ) as any) as AbstractRenVMProvider;
+        );
         let txHash: string;
         let confirmed = false;
-        renVMProvider.submitMint = async (...args) => {
+        renVMProvider.submitMint = (..._args) => {
             if (txHash && confirmed) return Buffer.from(txHash);
             throw Error("notx");
         };
-        renVMProvider.waitForTX = async (_a, cb) => {
+        renVMProvider.waitForTX = (_a, cb) => {
             if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
 
@@ -275,7 +282,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider), //, { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,
@@ -285,7 +292,6 @@ describe("MintMachine", () => {
         setInterval(() => {
             setConfirmations((confirmations += 1));
         }, 100);
-        // tslint:disable-next-line: promise-must-complete
         const p = new Promise((resolve) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -295,18 +301,20 @@ describe("MintMachine", () => {
                     )[0];
                     if (depositMachine && !subscribed) {
                         subscribed = true;
-                        depositMachine.subscribe((state: any) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        depositMachine.subscribe((innerState: any) => {
                             if (!txHash)
-                                txHash = state.context.deposit.sourceTxHash;
-                            if (state?.event?.type === "CONFIRMED") {
+                                txHash =
+                                    innerState.context.deposit.sourceTxHash;
+                            if (innerState?.event?.type === "CONFIRMED") {
                                 confirmed = true;
                             }
 
-                            if (state?.value === "accepted") {
+                            if (innerState?.value === "accepted") {
                                 depositMachine.send({ type: "CLAIM" });
                             }
 
-                            if (state?.value === "destInitiated") {
+                            if (innerState?.value === "destInitiated") {
                                 resolve();
                             }
                         });
@@ -344,17 +352,18 @@ describe("MintMachine", () => {
             },
         };
 
-        const renVMProvider = (new RenVMProvider(
+        const renVMProvider: AbstractRenVMProvider = new RenVMProvider(
             "testnet",
-        ) as any) as AbstractRenVMProvider;
+        );
         let txHash: string;
         let confirmed = false;
-        renVMProvider.submitMint = async (...args) => {
+        renVMProvider.submitMint = (..._args) => {
             if (txHash && confirmed) return Buffer.from(txHash);
             throw Error("notx");
         };
-        renVMProvider.waitForTX = async (_a, cb) => {
+        renVMProvider.waitForTX = (_a, cb) => {
             if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
 
@@ -363,7 +372,7 @@ describe("MintMachine", () => {
                 ...makeMintTransaction(),
                 nonce:
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
-                gatewayAddress: "gatewayaddr",
+                gatewayAddress: "gatewayAddress",
                 transactions: {
                     ["wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo="]: {
                         sourceTxAmount: 1,
@@ -374,7 +383,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider), //, { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,
@@ -384,7 +393,6 @@ describe("MintMachine", () => {
         setInterval(() => {
             setConfirmations((confirmations += 1));
         }, 100);
-        // tslint:disable-next-line: promise-must-complete
         const p = new Promise((resolve) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -399,13 +407,15 @@ describe("MintMachine", () => {
                     }
                     if (depositMachine && !subscribed) {
                         subscribed = true;
-                        depositMachine.subscribe((state: any) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        depositMachine.subscribe((innerState: any) => {
                             if (!txHash)
-                                txHash = state.context.deposit.sourceTxHash;
-                            if (state?.event?.type === "CONFIRMED") {
+                                txHash =
+                                    innerState.context.deposit.sourceTxHash;
+                            if (innerState?.event?.type === "CONFIRMED") {
                                 confirmed = true;
                             }
-                            if (state?.value === "destInitiated") {
+                            if (innerState?.value === "destInitiated") {
                                 resolve();
                             }
                         });

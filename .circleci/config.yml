@@ -8,125 +8,125 @@ jobs:
         working_directory: ~/renjs/packages/lib/ren
         steps:
             - checkout:
-                path: ~/renjs
+                  path: ~/renjs
 
             - run:
-                name: Start Localnet
-                background: true
-                command: |
-                    sudo apt-get update
-                    sudo apt-get -y upgrade
-                    wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
-                    sudo tar -xvf go1.12.6.linux-amd64.tar.gz
-                    sudo mv go /usr/local
-                    echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
-                    source $BASH_ENV
-                    git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
-                    cd darknode
-                    git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-                    go run cmd/localnet/main.go
+                  name: Start Localnet
+                  background: true
+                  command: |
+                      sudo apt-get update
+                      sudo apt-get -y upgrade
+                      wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
+                      sudo tar -xvf go1.12.6.linux-amd64.tar.gz
+                      sudo mv go /usr/local
+                      echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
+                      source $BASH_ENV
+                      git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
+                      cd darknode
+                      git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+                      go run cmd/localnet/main.go
 
             # Download and cache dependencies
             - restore_cache:
-                keys:
-                    - v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
-                    # fallback to using the latest cache if no exact match is found
-                    - v1-dependencies-
+                  keys:
+                      - v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
+                      # fallback to using the latest cache if no exact match is found
+                      - v1-dependencies-
 
             - run:
-                name: Install yarn and lerna
-                command: sudo npm install --global yarn && yarn version && sudo npm install --global lerna
-                when: always
+                  name: Install yarn and lerna
+                  command: sudo npm install --global yarn && yarn version && sudo npm install --global lerna
+                  when: always
 
             - run:
-                name: Lerna - install dependencies
-                path: ~/renjs
-                command: yarn install --network-concurrency 1
-                when: always
+                  name: Lerna - install dependencies
+                  path: ~/renjs
+                  command: yarn install --network-concurrency 1
+                  when: always
 
             - run:
-                name: Lerna - bootstrap
-                path: ~/renjs
-                command: yarn run link
-                when: always
-            
-            - run:
-                name: Lerna - build
-                path: ~/renjs
-                command: yarn run build
-                when: always
+                  name: Lerna - bootstrap
+                  path: ~/renjs
+                  command: yarn run link
+                  when: always
 
             - run:
-                name: Install dependencies
-                command: yarn install --network-concurrency 1
-                when: always
+                  name: Lerna - build
+                  path: ~/renjs
+                  command: yarn run build
+                  when: always
+
+            - run:
+                  name: Install dependencies
+                  command: yarn install --network-concurrency 1
+                  when: always
 
             - save_cache:
-                paths:
-                    - node_modules
-                key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
+                  paths:
+                      - node_modules
+                  key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
 
             - run: mkdir reports
 
             # Run mocha
             - run:
-                name: Run Testnet tests
-                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: NETWORK="testnet" bash ./test/ci/runtest.bash
-                when: always
+                  name: Run Testnet tests
+                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                  command: NETWORK="testnet" bash ./test/ci/runtest.bash
+                  when: always
 
             - run:
-                name: Run Localnet tests
-                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: NETWORK="localnet" bash ./test/ci/runtest.bash
-                when: always
+                  name: Run Localnet tests
+                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                  command: NETWORK="localnet" bash ./test/ci/runtest.bash
+                  when: always
 
             - run:
-                name: Run Devnet tests
-                # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                command: NETWORK="devnet" bash ./test/ci/runtest.bash
-                when: always
+                  name: Run Devnet tests
+                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+                  command: NETWORK="devnet" bash ./test/ci/runtest.bash
+                  when: always
 
             # Run eslint
             - run:
-                name: Run TSLint
-                command: |
-                    yarn run lint --format junit --out ./reports/eslint/eslint.xml
-                when: always
+                  name: Run linter
+                  command: |
+                      yarn run lint --format junit --out ./reports/eslint/eslint.xml
+                  when: always
 
             # Run coverage report for Code Climate
 
             - run:
-                name: code-coverage
-                command: |
-                    mkdir -p coverage
-                    # nyc report requires that nyc has already been run,
-                    # which creates the .nyc_output folder containing necessary data
-                    yarn nyc report --reporter=text-lcov > coverage/lcov.info
-                when: always
+                  name: code-coverage
+                  command: |
+                      mkdir -p coverage
+                      # nyc report requires that nyc has already been run,
+                      # which creates the .nyc_output folder containing necessary data
+                      yarn nyc report --reporter=text-lcov > coverage/lcov.info
+                  when: always
 
             - run:
-                name: Networks
-                command: |
-                    mkdir -p ./reports/networks
-                    node ./test/ci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
-                    echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
-                when: always
+                  name: Networks
+                  command: |
+                      mkdir -p ./reports/networks
+                      node ./test/ci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
+                      echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
+                  when: always
 
             # Upload results
 
             - store_test_results:
-                path: reports
+                  path: reports
 
             - store_artifacts:
-                path: ./reports/mocha/test-results.xml
+                  path: ./reports/mocha/test-results.xml
 
             - store_artifacts:
-                path: ./reports/eslint/eslint.xml
+                  path: ./reports/eslint/eslint.xml
 
             - store_artifacts:
-                path: ./network-status.json
+                  path: ./network-status.json
 
             - store_artifacts: # upload test coverage as artifact
-                path: ./coverage/lcov.info
-                prefix: tests
+                  path: ./coverage/lcov.info
+                  prefix: tests

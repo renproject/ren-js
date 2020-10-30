@@ -32,7 +32,7 @@ import BN from "bn.js";
 import { EventEmitter } from "events";
 
 export class BurnAndRelease<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Asset extends string = string,
@@ -102,10 +102,10 @@ export class BurnAndRelease<
             this.renNetwork || ((await this._renVM.getNetwork()) as RenNetwork);
 
         if (!this._params.from.renNetwork) {
-            this._params.from.initialize(this.renNetwork);
+            await this._params.from.initialize(this.renNetwork);
         }
         if (!this._params.to.renNetwork) {
-            this._params.to.initialize(this.renNetwork);
+            await this._params.to.initialize(this.renNetwork);
         }
 
         const burnPayload =
@@ -129,17 +129,17 @@ export class BurnAndRelease<
      * transaction first if the transaction details have been provided.
      *
      * @param {TransactionConfig} [txConfig] Optionally override default options
-     *        like gas.
+     * like gas.
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     public burn = (): PromiEvent<
         BurnAndRelease<Transaction, Deposit, Asset, Address>,
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { [event: string]: any }
     > => {
         const promiEvent = newPromiEvent<
             BurnAndRelease<Transaction, Deposit, Asset, Address>,
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { [event: string]: any }
         >();
 
@@ -272,10 +272,11 @@ export class BurnAndRelease<
      * queryTx requests the status of the burn from RenVM.
      */
     public queryTx = async (): Promise<BurnTransaction> => {
-        this.queryTxResult = (await this._renVM.queryMintOrBurn(
+        const burnTransaction: BurnTransaction = await this._renVM.queryMintOrBurn(
             fromBase64(await this.txHash()),
-        )) as BurnTransaction;
-        return this.queryTxResult;
+        );
+        this.queryTxResult = burnTransaction;
+        return burnTransaction;
     };
 
     /**

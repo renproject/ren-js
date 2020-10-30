@@ -37,10 +37,10 @@
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
         "prettier": "yarn fix:prettier",
         "lint": "run-s lint:*",
-        "lint:tslint": "tslint --project ./ -t stylish --quiet",
+        "lint:eslint": "eslint src/**/*.ts",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
-        "fix:tslint": "tslint --fix --project .",
+        "fix:eslint": "yarn lint:eslint --fix",
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
         "test": "run-s build:main test:* lint",
         "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
@@ -57,7 +57,7 @@
         "doc:publish": "gh-pages --repo git@github.com:renproject/ren-js-docs.git -m \"[ci skip] Updates\" -d build/docs",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html doc:publish",
+        "prepare-release": "run-s npmignore build doc:html doc:publish"
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.16",
@@ -65,11 +65,11 @@
         "@renproject/rpc": "^2.0.0-alpha.16",
         "@renproject/utils": "^2.0.0-alpha.16",
         "@types/bn.js": "^4.11.6",
-        "@types/node": "^14.11.1",
-        "bignumber.js": "^9.0.0",
+        "bignumber.js": "^9.0.1",
         "bn.js": "^5.1.3",
         "immutable": "^4.0.0-rc.12",
-        "web3-eth-abi": "^2.0.0-alpha.1"
+        "web3-eth-abi": "^2.0.0-alpha.1",
+        "@types/node": ">=10"
     },
     "devDependencies": {
         "gh-pages": "^3.1.0"

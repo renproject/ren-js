@@ -1,5 +1,3 @@
-// tslint:disable: mocha-no-side-effect-code
-
 import chai from "chai";
 import { expect } from "earljs";
 

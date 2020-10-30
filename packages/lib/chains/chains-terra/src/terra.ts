@@ -63,7 +63,7 @@ export class TerraClass
             case TerraAsset.LUNA:
                 return 6;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Unsupported asset ${String(asset)}`);
     };
 
     /**
@@ -76,7 +76,7 @@ export class TerraClass
         onDeposit: (deposit: TerraDeposit) => void,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
         (
@@ -97,7 +97,7 @@ export class TerraClass
         transaction: TerraTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         transaction = await terraDev.fetchDeposit(
             transaction.hash,
@@ -119,11 +119,11 @@ export class TerraClass
         gHash: Buffer,
     ): Promise<TerraAddress> | TerraAddress => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
 
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const address: Key = new (Key as any)(compressedPublicKey);
 
         return {
@@ -155,7 +155,7 @@ export class TerraClass
      */
     addressIsValid = (address: TerraAddress): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         assertType<string>("string", { address: address.address });
         // TODO

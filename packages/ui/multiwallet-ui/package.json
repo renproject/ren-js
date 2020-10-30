@@ -28,7 +28,8 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@renproject/multiwallet-base-connector": "^2.0.0-alpha.16"
+    "@renproject/multiwallet-base-connector": "^2.0.0-alpha.16",
+    "@renproject/interfaces": "^2.0.0-alpha.16"
   },
   "peerDependencies": {
     "@material-ui/core": "^4.11.0",
@@ -43,7 +44,7 @@
   "prettier": {
     "printWidth": 80,
     "semi": true,
-    "singleQuote": true,
+    "singleQuote": false,
     "tabWidth": 2,
     "trailingComma": "es5",
     "endOfLine": "lf",
@@ -73,6 +74,7 @@
     "@types/react": "^16.9.49",
     "@types/react-dom": "^16.9.8",
     "babel-loader": "^8.1.0",
+    "eslint-plugin-react-app": "^6.2.2",
     "husky": "^4.3.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -80,6 +82,6 @@
     "size-limit": "^4.6.0",
     "tsdx": "^0.14.0",
     "tslib": "^2.0.1",
-    "typescript": "^4.0.3"
+    "typescript": "^4.0.5"
   }
 }

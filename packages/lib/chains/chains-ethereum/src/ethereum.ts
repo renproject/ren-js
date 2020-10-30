@@ -58,7 +58,7 @@ export class EthereumClass extends EthereumBaseChain
                 }
 
                 // Resolve .ens name
-                if (address.match(/.*\.ens/)) {
+                if (/.*\.ens/.exec(address)) {
                     address = await this.web3.eth.ens.getAddress(address);
                 }
 

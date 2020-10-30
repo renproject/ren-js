@@ -79,7 +79,9 @@ export const fixSignature = (
         );
         if (Ox(sigHash) !== Ox(expectedSighash)) {
             logger.warn(
-                `Warning: unexpected signature hash returned from RenVM. Expected ${expectedSighash}, got ${sigHash}.`,
+                `Warning: unexpected signature hash returned from RenVM. Expected ${Ox(
+                    expectedSighash,
+                )}, got ${Ox(sigHash)}.`,
             );
         }
     }
@@ -109,7 +111,6 @@ export const fixSignature = (
     // if (recovered[v].equals(expected)) {
     //     // Do nothing
     // } else if (recovered[switchV(v)].equals(expected)) {
-    //     // tslint:disable-next-line: no-console
     //     console.info("[info][ren-js] switching v value");
     //     v = switchV(v);
     // } else {

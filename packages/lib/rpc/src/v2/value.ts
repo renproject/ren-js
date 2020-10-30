@@ -85,9 +85,9 @@ export type RenVMValue<Type extends RenVMType> = Type extends RenVMType.Address
     : Type extends RenVMType.U256
     ? DecimalString
     : Type extends RenVMType.Record
-    ? any // tslint:disable-line: no-any
+    ? any // eslint-disable-line @typescript-eslint/no-explicit-any
     : Type extends RenVMType.List
-    ? any[] // tslint:disable-line: no-any
+    ? any[] // eslint-disable-line @typescript-eslint/no-explicit-any
     : Type extends RenVMType.ExtTypeEthCompatAddress
     ? HexString
     : Type extends RenVMType.ExtTypeBtcCompatUTXO
@@ -95,10 +95,10 @@ export type RenVMValue<Type extends RenVMType> = Type extends RenVMType.Address
     : Type extends RenVMType.ExtTypeBtcCompatUTXOs
     ? RenVMUTXO[]
     : Type extends RenVMType.ExtTypeEthCompatTx
-    ? any // tslint:disable-line: no-any
+    ? any // eslint-disable-line @typescript-eslint/no-explicit-any
     : Type extends RenVMType.ExtEthCompatPayload
     ? ExtEthCompatPayload
-    : any; // tslint:disable-line: no-any
+    : any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export interface MintAndBurnFees {
     mint: RenVMValue<RenVMType.U64>;

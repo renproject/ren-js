@@ -1,8 +1,7 @@
-import { Chain, RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/interfaces";
 import chai from "chai";
 import { expect } from "earljs";
 import { describe, it } from "mocha";
-import Web3 from "web3";
 import RenJS from "@renproject/ren";
 
 chai.should();
@@ -16,13 +15,13 @@ describe("RenJS initialization and exports", () => {
         new RenJS("testnet").should.be.an.instanceOf(RenJS);
         new RenJS("devnet").should.be.an.instanceOf(RenJS);
 
-        // @ts-expect-error
+        // @ts-expect-error it should reject the parameter `"fake-network"`
         (() => new RenJS("fake-network")).should.throw(
             /Invalid network or provider URL: "fake-network"/,
         );
     });
 
-    it("On uninitialized class", async () => {
+    it("On uninitialized class", () => {
         expect(RenJS.Networks).toEqual(RenNetwork);
         // expect(RenJS.Tokens).toEqual(Tokens);
         // expect(RenJS.Chains).toEqual(Chain);
@@ -58,7 +57,6 @@ describe("RenJS initialization and exports", () => {
     //         ],
     //     });
 
-    //     // tslint:disable-next-line: await-promise
     //     await expect(
     //         new Promise((_, reject) => {
     //             const wait = lockAndMint.wait(0);
@@ -86,7 +84,6 @@ describe("RenJS initialization and exports", () => {
     //         })
     //         .readFromEthereum();
 
-    //     // tslint:disable-next-line: await-promise
     //     await expect(
     //         new Promise((_, reject) => {
     //             const wait = burnAndRelease.submit();

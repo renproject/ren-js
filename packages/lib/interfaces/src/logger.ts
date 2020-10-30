@@ -1,14 +1,14 @@
-// tslint:disable: no-any no-console
+/* eslint-disable no-console */
 
 import BigNumber from "bignumber.js";
 
 export interface Logger {
-    error(message?: any, ...optionalParams: any[]): void;
-    warn(message?: any, ...optionalParams: any[]): void;
-    log(message?: any, ...optionalParams: any[]): void;
-    info(message?: any, ...optionalParams: any[]): void;
-    debug(message?: any, ...optionalParams: any[]): void;
-    trace(message?: any, ...optionalParams: any[]): void;
+    error(message?: unknown, ...optionalParams: unknown[]): void;
+    warn(message?: unknown, ...optionalParams: unknown[]): void;
+    log(message?: unknown, ...optionalParams: unknown[]): void;
+    info(message?: unknown, ...optionalParams: unknown[]): void;
+    debug(message?: unknown, ...optionalParams: unknown[]): void;
+    trace(message?: unknown, ...optionalParams: unknown[]): void;
 }
 
 export enum LogLevel {
@@ -45,7 +45,7 @@ const levelValue = (level: LogLevel) => {
     }
 };
 
-const toString = (value: any) => {
+const toString = (value: unknown): string => {
     try {
         if (typeof value === "string") {
             return value;
@@ -53,10 +53,10 @@ const toString = (value: any) => {
         if (BigNumber.isBigNumber(value)) {
             return value.toFixed();
         }
-        const seen: any[] = [];
+        const seen: unknown[] = [];
         return JSON.stringify(
             value,
-            (_key, val) => {
+            (_key, val: unknown) => {
                 if (val !== null && typeof val === "object") {
                     if (seen.indexOf(val) >= 0) {
                         return;
@@ -70,7 +70,7 @@ const toString = (value: any) => {
     } catch (error) {
         try {
             return String(value);
-        } catch (error) {
+        } catch (errorInner) {
             return "";
         }
     }
@@ -113,7 +113,7 @@ export class SimpleLogger {
         }
     }
 
-    public trace = (message?: any, ...optionalParams: any[]): void => {
+    public trace = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Trace)) {
             if (optionalParams.length) {
                 console.group(
@@ -130,7 +130,7 @@ export class SimpleLogger {
         }
     };
 
-    public debug = (message?: any, ...optionalParams: any[]): void => {
+    public debug = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Debug)) {
             if (optionalParams.length) {
                 console.group(
@@ -147,7 +147,7 @@ export class SimpleLogger {
         }
     };
 
-    public info = (message?: any, ...optionalParams: any[]): void => {
+    public info = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Info)) {
             console.info(
                 this.logPrefix(LogLevel.Debug) + toString(message),
@@ -156,7 +156,7 @@ export class SimpleLogger {
         }
     };
 
-    public log = (message?: any, ...optionalParams: any[]): void => {
+    public log = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Log)) {
             console.log(
                 this.logPrefix(LogLevel.Debug) + toString(message),
@@ -165,7 +165,7 @@ export class SimpleLogger {
         }
     };
 
-    public warn = (message?: any, ...optionalParams: any[]): void => {
+    public warn = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Warn)) {
             console.warn(
                 this.logPrefix(LogLevel.Debug) + toString(message),
@@ -174,7 +174,7 @@ export class SimpleLogger {
         }
     };
 
-    public error = (message?: any, ...optionalParams: any[]): void => {
+    public error = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (levelValue(this.level) >= levelValue(LogLevel.Error)) {
             console.error(
                 this.logPrefix(LogLevel.Debug) + toString(message),

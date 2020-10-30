@@ -62,18 +62,17 @@ export type RenWeb3Events = {
     error: [Error];
 };
 
-// tslint:disable-next-line: no-any
-export const ignorePromiEventError = (error: any): boolean => {
+const ignorePromiEventError = (error: Error): boolean => {
     try {
-        return (
+        return !!(
             error &&
             error.message &&
-            (error.message.match(/Invalid block number/) ||
-                error.message.match(
-                    /Timeout exceeded during the transaction confirmation process./,
+            (/Invalid block number/.exec(error.message) ||
+                /Timeout exceeded during the transaction confirmation process./.exec(
+                    error.message,
                 ))
         );
-    } catch (error) {
+    } catch (innerError) {
         return false;
     }
 };
@@ -83,24 +82,28 @@ export const ignorePromiEventError = (error: any): boolean => {
  */
 export const forwardWeb3Events = <T, TEvents extends Web3Events>(
     src: PromiEvent<T, TEvents>,
-    dest: EventEmitter /*, filterFn = (_name: string) => true*/,
-) => {
-    src.on("transactionHash", (eventReceipt: string) => {
+    dest: EventEmitter,
+): void => {
+    // eslint-disable-next-line no-void
+    void src.on("transactionHash", (eventReceipt: string) => {
         dest.emit("transactionHash", eventReceipt);
         dest.emit("eth_transactionHash", eventReceipt);
     });
-    src.on("receipt", (eventReceipt: TransactionReceipt) => {
+    // eslint-disable-next-line no-void
+    void src.on("receipt", (eventReceipt: TransactionReceipt) => {
         dest.emit("receipt", eventReceipt);
         dest.emit("eth_receipt", eventReceipt);
     });
-    src.on(
+    // eslint-disable-next-line no-void
+    void src.on(
         "confirmation",
         (confNumber: number, eventReceipt: TransactionReceipt) => {
             dest.emit("confirmation", confNumber, eventReceipt);
             dest.emit("eth_confirmation", confNumber, eventReceipt);
         },
     );
-    src.on("error", (error: Error) => {
+    // eslint-disable-next-line no-void
+    void src.on("error", (error: Error) => {
         dest.emit("error", error);
     });
 };
@@ -140,14 +143,12 @@ export const eventTopics = {
  *
  * @param web3 A web3 instance.
  * @param txHash The hash of the transaction being read.
- *
- * @/param nonce The nonce of the transaction, to detect if it has been
- *        overwritten.
  */
 export const waitForReceipt = async (
     web3: Web3,
-    txHash: string /*, nonce?: number*/,
-) =>
+    txHash: string,
+): Promise<TransactionReceipt> =>
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     new Promise<TransactionReceipt>(async (resolve, reject) => {
         assertType<string>("string", { txHash });
 
@@ -176,9 +177,7 @@ export const waitForReceipt = async (
         // Wait for confirmation
         let receipt: TransactionReceipt | undefined;
         while (!receipt || !receipt.blockHash) {
-            receipt = (await web3.eth.getTransactionReceipt(
-                txHash,
-            )) as TransactionReceipt;
+            receipt = await web3.eth.getTransactionReceipt(txHash);
             if (receipt && receipt.blockHash) {
                 break;
             }
@@ -390,7 +389,7 @@ export const manualPromiEvent = async (
         promiEvent.emit(
             "confirmation",
             Math.max(0, currentBlock - receipt.blockNumber),
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             receipt as any,
         );
     };
@@ -412,7 +411,9 @@ export const manualPromiEvent = async (
     // lockAndMint.on("confirmation", () => { /* do something */ });
     // ```
     await emitConfirmation();
-    setTimeout(emitConfirmation, 1000);
+    setTimeout(() => {
+        emitConfirmation().catch(console.error);
+    }, 1000);
     return receipt;
 };
 
@@ -615,38 +616,35 @@ export const submitToEthereum = async (
 
         tx = contract.methods[contractFn](...callParams).send(txConfig);
 
-        if (last && tx) {
+        if (last && tx !== undefined) {
             forwardWeb3Events(tx, eventEmitter);
         }
     }
 
-    if (tx === undefined) {
-        throw new Error(`Must provide contract call.`);
-    }
+    return await new Promise<Transaction>((innerResolve, reject) => {
+        if (tx === undefined) {
+            throw new Error(`Must provide contract call.`);
+        }
 
-    return await new Promise<Transaction>((innerResolve, reject) =>
-        // tslint:disable-next-line: no-non-null-assertion
-        tx!
-            .once(
-                "confirmation",
-                (_confirmations: number, receipt: TransactionReceipt) => {
-                    innerResolve(receipt.transactionHash);
-                },
-            )
-            .catch((error: Error) => {
-                try {
-                    if (ignorePromiEventError(error)) {
-                        if (logger) {
-                            logger.error(extractError(error));
-                        }
-                        return;
+        tx.once(
+            "confirmation",
+            (_confirmations: number, receipt: TransactionReceipt) => {
+                innerResolve(receipt.transactionHash);
+            },
+        ).catch((error: Error) => {
+            try {
+                if (ignorePromiEventError(error)) {
+                    if (logger) {
+                        logger.error(extractError(error));
                     }
-                } catch (_error) {
-                    /* Ignore _error */
+                    return;
                 }
-                reject(error);
-            }),
-    );
+            } catch (_error) {
+                /* Ignore _error */
+            }
+            reject(error);
+        });
+    });
 };
 
 export type Transaction = string;
@@ -676,13 +674,13 @@ export class EthereumBaseChain
 
     public readonly getTokenContractAddress = async (asset: Asset) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         return getTokenAddress(this.renNetworkDetails, this.web3, asset);
     };
     public readonly getGatewayContractAddress = async (token: Asset) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         return getGatewayAddress(this.renNetworkDetails, this.web3, token);
     };
@@ -740,10 +738,10 @@ export class EthereumBaseChain
     };
 
     addressIsValid = (address: Address): boolean => {
-        if (address.match(/^.+\.eth$/)) {
+        if (/^.+\.eth$/.exec(address)) {
             return true;
         }
-        if (address.match(/^0x[a-fA-F0-9]{40}$/)) {
+        if (/^0x[a-fA-F0-9]{40}$/.exec(address)) {
             return isValidChecksumAddress(address);
         }
         return false;
@@ -751,7 +749,7 @@ export class EthereumBaseChain
 
     addressExplorerLink = (address: Address): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         return `${this.renNetworkDetails.etherscan}/address/${address}`;
     };
@@ -762,7 +760,7 @@ export class EthereumBaseChain
 
     transactionExplorerLink = (transaction: Transaction): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         return `${this.renNetworkDetails.etherscan}/tx/${transaction}`;
     };
@@ -771,7 +769,7 @@ export class EthereumBaseChain
         transaction: Transaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         const currentBlock = new BigNumber(
             (await this.web3.eth.getBlockNumber()).toString(),
@@ -804,7 +802,7 @@ export class EthereumBaseChain
         }
 
         if (!this.web3) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
 
         const existingTransaction = await this.findTransaction(asset, mintTx);
@@ -830,7 +828,7 @@ export class EthereumBaseChain
         mintTx: MintTransaction,
     ): Promise<Transaction | undefined> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         if (!mintTx.out) {
             throw new Error(
@@ -848,7 +846,7 @@ export class EthereumBaseChain
 
     resolveTokenGatewayContract = async (asset: Asset): Promise<string> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         return Ox(
             await getTokenAddress(this.renNetworkDetails, this.web3, asset),
@@ -860,7 +858,7 @@ export class EthereumBaseChain
      * transaction first if the transaction details have been provided.
      *
      * @param {TransactionConfig} [txConfig] Optionally override default options
-     *        like gas.
+     * like gas.
      * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     findBurnTransaction = async (
@@ -876,7 +874,7 @@ export class EthereumBaseChain
         logger: Logger,
     ): Promise<BurnDetails<Transaction>> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
 
         const { burnNonce, contractCalls } = burn;
@@ -1001,7 +999,7 @@ export class EthereumBaseChain
 //         ];
 
 //         const ABI = payloadToABI(contractFn, contractParams || []);
-//         // tslint:disable-next-line: no-any
+//         // eslint-disable-next-line @typescript-eslint/no-explicit-any
 //         const web3: Web3 = new (Web3 as any)();
 //         const contract = new web3.eth.Contract(ABI);
 

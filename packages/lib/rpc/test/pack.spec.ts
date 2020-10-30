@@ -1,5 +1,3 @@
-// tslint:disable: no-console
-
 import BigNumber from "bignumber.js";
 import { expect } from "earljs";
 import { describe, it } from "mocha";

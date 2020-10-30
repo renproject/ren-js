@@ -113,7 +113,8 @@ export type EthType =
 export interface EthArg<
     name extends string = string,
     type extends EthType = EthType,
-    valueType = any // tslint:disable-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    valueType = any
 > {
     name: name;
     type: type;

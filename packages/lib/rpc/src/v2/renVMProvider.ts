@@ -56,7 +56,7 @@ export const resolveRpcURL = (network: RenNetwork | string) => {
 };
 
 export const resolveV2Contract = <
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     ChainAsset extends string = string,
@@ -118,7 +118,7 @@ export class RenVMProvider
                     RenVMResponses
                 >([rpcUrl], logger) as Provider<RenVMParams, RenVMResponses>;
             } catch (error) {
-                if (String(error && error.message).match(/Invalid node URL/)) {
+                if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(
                         `Invalid network or provider URL: "${network}"`,
                     );
@@ -160,7 +160,6 @@ export class RenVMProvider
     ) =>
         this.sendMessage<RPCMethod.MethodSubmitTx>(
             RPCMethod.MethodSubmitTx,
-            // tslint:disable-next-line: no-object-literal-type-assertion
             { tx } as ParamsSubmitBurn | ParamsSubmitMint,
             retry,
         );
@@ -294,7 +293,6 @@ export class RenVMProvider
         gPubKey: Buffer,
         nHash: Buffer,
         nonce: Buffer,
-        // tslint:disable-next-line: no-any
         output:
             | { txHash: string; vOut: string }
             | { txindex: string; txid: Buffer },
@@ -340,7 +338,6 @@ export class RenVMProvider
         gPubKey: Buffer,
         nHash: Buffer,
         nonce: Buffer,
-        // tslint:disable-next-line: no-any
         output: { txindex: string; txid: Buffer },
         amount: string,
         payload: Buffer,
@@ -403,6 +400,7 @@ export class RenVMProvider
             to: string;
         },
         _logger?: Logger,
+        // eslint-disable-next-line @typescript-eslint/require-await
     ): Promise<Buffer> => {
         const {
             renContractOrSelector,
@@ -558,7 +556,7 @@ export class RenVMProvider
             // TODO: Improve mint/burn detection. Currently checks if the format
             // is `ASSET/toChain` or `ASSET/fromChainToChain`. It may return
             // a false positive if the chain name contains `To`.
-            const isMint = response.tx.selector.match(/((\/to)|(To))/);
+            const isMint = /((\/to)|(To))/.exec(response.tx.selector);
 
             if (isMint) {
                 return unmarshalMintTx(response as ResponseQueryMintTx) as T;
@@ -580,7 +578,6 @@ export class RenVMProvider
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
-        // tslint:disable-next-line: no-constant-condition
         while (true) {
             if (_cancelRequested && _cancelRequested()) {
                 throw new Error(`waitForTX cancelled`);
@@ -595,15 +592,13 @@ export class RenVMProvider
                     onStatus(result.txStatus);
                 }
             } catch (error) {
-                // tslint:disable-next-line: no-console
                 if (
-                    String((error || {}).message).match(
-                        /(not found)|(not available)/,
+                    /(not found)|(not available)/.exec(
+                        String((error || {}).message),
                     )
                 ) {
                     // ignore
                 } else {
-                    // tslint:disable-next-line: no-console
                     if (this.logger) {
                         this.logger.error(String(error));
                     }
@@ -620,7 +615,7 @@ export class RenVMProvider
      * the provided contract.
      *
      * @param {RenContract} renContract The Ren Contract for which the public
-     *        key should be fetched.
+     * key should be fetched.
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (token: Asset): Promise<Buffer> => {
@@ -658,6 +653,7 @@ export class RenVMProvider
 
     // In the future, this will be asynchronous. It returns a promise for
     // compatibility.
+    // eslint-disable-next-line @typescript-eslint/require-await
     public getNetwork = async (): Promise<string> => {
         return this.network;
     };

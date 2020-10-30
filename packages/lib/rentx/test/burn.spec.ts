@@ -1,12 +1,13 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
 import RenJS from "@renproject/ren";
 import { interpret } from "xstate";
+import { config as loadDotEnv } from "dotenv";
 
 import { burnConfig, burnMachine, GatewaySession } from "../src";
 import { buildMockLockChain, buildMockMintChain } from "./testutils/mock";
 
-require("dotenv").config();
+loadDotEnv();
 const providers = {
     testDestChain: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
 };

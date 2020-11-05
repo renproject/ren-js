@@ -46,7 +46,7 @@ describe("processParams", () => {
     //             }],
     //         }, "Burn 3");
     //     // JSON.stringify(resolveSendCall(renTestnet, {
-    //     //     asset: RenContract.Eth2Btc,
+    //     //     asset: "BTC0Eth2Btc",
     //     //     web3Provider: web3.currentProvider,
     //     //     sendTo: "sendTo",
     //     //     sendAmount: "0",
@@ -116,7 +116,7 @@ describe("processParams", () => {
     //             }],
     //         });
     //     // resolveSendCall(renTestnet, {
-    //     //     asset: RenContract.Btc2Eth,
+    //     //     asset: "BTC0Btc2Eth",
     //     //     txHash: "txHash",
     //     //     sendTo: "sendTo",
     //     //     sendAmount: "0.01",

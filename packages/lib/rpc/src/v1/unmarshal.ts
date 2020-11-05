@@ -1,8 +1,9 @@
 import {
     AbiItem,
-    BurnTransaction,
+    BurnAndReleaseTransaction,
+    LockAndMintTransaction,
     Logger,
-    MintTransaction,
+    NullLogger,
     RenVMAssetFees,
     RenVMFees,
 } from "@renproject/interfaces";
@@ -161,13 +162,13 @@ const onError = <P>(getP: () => P, defaultP: P) => {
 
 export const unmarshalMintTx = (
     response: ResponseQueryMintTx,
-    logger?: Logger,
-): MintTransaction => {
+    logger: Logger = NullLogger,
+): LockAndMintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     // TODO: Check that response is mint response.
     // assert(
-    //     parseRenContract(response.tx.to).to === "Eth",
+    //     parseV1Selector(response.tx.to).to === "Eth",
     //     `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.to})`
     // );
 
@@ -242,7 +243,7 @@ export const unmarshalMintTx = (
     };
 
     type Out = ResponseQueryMintTx["tx"]["out"] & {};
-    const out: MintTransaction["out"] = {
+    const out: LockAndMintTransaction["out"] = {
         sighash,
         ghash,
         nhash,
@@ -303,10 +304,10 @@ export const unmarshalMintTx = (
 
 export const unmarshalBurnTx = (
     response: ResponseQueryBurnTx,
-): BurnTransaction => {
+): BurnAndReleaseTransaction => {
     // TODO: Check that result is burn response.
     // assert(
-    //     parseRenContract(response.tx.to).from === Chain.Ethereum,
+    //     parseV1Selector(response.tx.to).from === Chain.Ethereum,
     //     `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.to})`
     // );
 

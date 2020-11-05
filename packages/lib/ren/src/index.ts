@@ -9,16 +9,11 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import { HttpProvider, OverwriteProvider } from "@renproject/provider";
-import { AbstractRenVMProvider, v1 } from "@renproject/rpc";
-import {
-    RenVMParams,
-    RenVMProvider,
-    RenVMResponses,
-} from "@renproject/rpc/build/main/v2";
+import { AbstractRenVMProvider, v1, v2 } from "@renproject/rpc";
 import { Ox, randomNonce, strip0x } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
+import { defaultDepositHandler } from "./defaultDepositHandler";
 import { LockAndMint } from "./lockAndMint";
 
 export interface RenJSConfig {
@@ -70,6 +65,8 @@ export default class RenJS {
         randomNonce,
     };
 
+    public static defaultDepositHandler = defaultDepositHandler;
+
     // Not static
     public readonly utils = RenJS.utils;
 
@@ -88,11 +85,10 @@ export default class RenJS {
      * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
      */
     constructor(
-        provider?:
+        providerOrNetwork?:
             | RenNetwork
             | RenNetworkString
             | AbstractRenVMProvider
-            | "staging-testnet"
             | null
             | undefined,
         config?: RenJSConfig,
@@ -113,24 +109,20 @@ export default class RenJS {
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
-        if (provider === "staging-testnet") {
-            provider = new RenVMProvider(
-                "testnet",
-                new OverwriteProvider<RenVMParams, RenVMResponses>(
-                    new HttpProvider<RenVMParams, RenVMResponses>(
-                        // "http://34.239.188.210:18515",
-                        "https://lightnode-new-testnet.herokuapp.com/",
-                    ),
-                ),
-            );
+        if (
+            providerOrNetwork === RenNetwork.MainnetVDot3 ||
+            providerOrNetwork === RenNetwork.TestnetVDot3 ||
+            providerOrNetwork === RenNetwork.DevnetVDot3
+        ) {
+            providerOrNetwork = new v2.RenVMProvider(providerOrNetwork);
         }
 
         // Use provided provider, provider URL or default lightnode URL.
         this.renVM =
-            provider && typeof provider !== "string"
-                ? provider
+            providerOrNetwork && typeof providerOrNetwork !== "string"
+                ? providerOrNetwork
                 : new v1.RenVMProvider(
-                      provider || RenNetwork.Mainnet,
+                      providerOrNetwork || RenNetwork.Mainnet,
                       undefined,
                       this._logger,
                   );
@@ -173,16 +165,15 @@ export default class RenJS {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-        Asset extends string = string,
         Address = string
     >(
-        params: LockAndMintParams<Transaction, Deposit, Asset, Address>,
-    ): Promise<LockAndMint<Transaction, Deposit, Asset, Address>> =>
-        new LockAndMint<Transaction, Deposit, Asset, Address>(
+        params: LockAndMintParams<Transaction, Deposit, Address>,
+    ): Promise<LockAndMint<Transaction, Deposit, Address>> =>
+        new LockAndMint<Transaction, Deposit, Address>(
             this.renVM,
             params,
             this._logger,
-        ).initialize();
+        )._initialize();
 
     /**
      * `burnAndRelease` submits a burn log to RenVM.
@@ -195,16 +186,15 @@ export default class RenJS {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-        Asset extends string = string,
         Address = string
     >(
-        params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>,
-    ): Promise<BurnAndRelease<Transaction, Deposit, Asset, Address>> =>
-        new BurnAndRelease<Transaction, Deposit, Asset, Address>(
+        params: BurnAndReleaseParams<Transaction, Deposit, Address>,
+    ): Promise<BurnAndRelease<Transaction, Deposit, Address>> =>
+        new BurnAndRelease<Transaction, Deposit, Address>(
             this.renVM,
             params,
             this._logger,
-        ).initialize();
+        )._initialize();
 
     public readonly getFees = async () => this.renVM.getFees();
 }

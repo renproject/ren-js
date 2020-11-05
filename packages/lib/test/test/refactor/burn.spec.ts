@@ -5,10 +5,11 @@ import RenJS from "@renproject/ren";
 import { extractError } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
-import { red } from "chalk";
+import { blue, red } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 
 chai.should();
 
@@ -22,29 +23,32 @@ describe("Refactor - Burning", () => {
     longIt("burning from contract", async function() {
         this.timeout(100000000000);
 
-        const infuraURL = `${Chains.renStagingTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const network = RenNetwork.Testnet as const;
+
+        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Bitcoin recipient.
-        // const asset = "BTC";
-        // const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
-        // const recipient = await account.address(asset);
-        // const to = Bitcoin().Address(recipient);
+        const asset = "BTC";
+        const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
+        const recipient = await account.address(asset);
+        const to = Chains.Bitcoin().Address(recipient);
 
-        const asset = "FIL";
-        const to = Chains.Filecoin().Address(
-            "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
-        );
+        // const asset = "FIL";
+        // const to = Chains.Filecoin().Address(
+        //     "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
+        // );
 
-        const from = Chains.Ethereum(provider, Chains.renStagingTestnet);
+        const from = Chains.Ethereum(provider, Chains.renTestnet);
 
-        const renJS = new RenJS("staging-testnet");
+        const logLevel = LogLevel.Log;
+        const renJS = new RenJS(network, { logLevel });
 
         // Use 0.0001 more than fee.
         let suggestedAmount: number | string;
         try {
             const fees = await renJS.getFees();
-            const fee: number = fees[asset.toLowerCase()].burn;
+            const fee: number = fees[asset.toLowerCase()].release;
             suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
@@ -88,26 +92,35 @@ describe("Refactor - Burning", () => {
             .on("confirmation", (confs) => {
                 confirmations = confs;
             })
-            .on("transactionHash", console.log);
+            .on("transactionHash", (txHash) =>
+                burnAndRelease._state.logger.log(`txHash: ${String(txHash)}`),
+            );
+
+        burnAndRelease._state.logger = new SimpleLogger(
+            logLevel,
+            blue(`[${burnAndRelease.txHash().slice(0, 6)}] `),
+        );
 
         await burnAndRelease
             .release()
             .on("status", (status) =>
                 status === "confirming"
-                    ? console.log(`confirming (${confirmations}/15)`)
-                    : console.log(status),
+                    ? burnAndRelease._state.logger.log(
+                          `confirming (${confirmations}/15)`,
+                      )
+                    : burnAndRelease._state.logger.log(status),
             )
-            .on("txHash", console.log);
+            .on("txHash", burnAndRelease._state.logger.log);
     });
 
     longIt("burning from address", async function() {
         this.timeout(100000000000);
 
-        const infuraURL = `${Chains.renStagingTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const asset = "BTC";
-        const from = Chains.Ethereum(provider, Chains.renStagingTestnet);
+        const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
@@ -116,7 +129,7 @@ describe("Refactor - Burning", () => {
 
         // Use 0.0001 more than fee.
         const fees = await renJS.getFees();
-        const fee: number = fees[asset.toLowerCase()].burn;
+        const fee: number = fees[asset.toLowerCase()].release;
         const suggestedAmount = new BigNumber(Math.floor(fee + 0.0001 * 1e8))
             .decimalPlaces(0)
             .toFixed();

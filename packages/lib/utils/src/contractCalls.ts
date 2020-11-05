@@ -14,12 +14,25 @@ const overrideContractCall = (
         {},
     );
 
+    let txConfig;
+    if (
+        typeof contractCall.txConfig === "object" &&
+        typeof override.txConfig === "object"
+    ) {
+        txConfig = {
+            ...contractCall.txConfig,
+            ...override.txConfig,
+        };
+    } else {
+        txConfig = override.txConfig || contractCall.txConfig;
+    }
+
     return {
         ...contractCall,
         ...override,
 
         // Clone txConfig
-        txConfig: { ...contractCall.txConfig, ...override.txConfig },
+        txConfig,
 
         // Clone contractParams
         contractParams: (contractCall.contractParams || []).map(

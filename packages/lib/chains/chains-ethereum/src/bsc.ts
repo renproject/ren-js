@@ -1,4 +1,9 @@
-import { RenNetwork } from "@renproject/interfaces";
+import {
+    getRenNetworkDetails,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
 import { Callable } from "@renproject/utils";
 import Web3 from "web3";
 import { provider } from "web3-providers";
@@ -22,7 +27,7 @@ export const renBscTestnet: EthereumConfig = {
 };
 
 export const BscConfigMap = {
-    [RenNetwork.StagingTestnet]: renBscTestnet,
+    [RenNetwork.TestnetVDot3]: renBscTestnet,
 };
 
 const getRenBscMainnet = () => {
@@ -53,9 +58,22 @@ export class BinanceSmartChainClass extends EthereumClass {
         );
     }
 
-    initialize = (renNetwork: RenNetwork) => {
+    initialize = (
+        renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
+    ) => {
         this.renNetworkDetails =
-            this.renNetworkDetails || BscConfigMap[renNetwork];
+            this.renNetworkDetails ||
+            BscConfigMap[getRenNetworkDetails(renNetwork).name];
+
+        if (!this.renNetworkDetails) {
+            throw new Error(
+                `Unable to set ${this.name} network for RenVM network ${
+                    getRenNetworkDetails(renNetwork).name
+                }. Please provide ${this.name} network details to ${
+                    this.name
+                } constructor.`,
+            );
+        }
         return this;
     };
 }

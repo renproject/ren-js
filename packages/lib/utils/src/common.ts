@@ -84,26 +84,57 @@ export const toURLBase64 = (input: Buffer | string): string => {
         .replace(/\=+$/, "");
 };
 
+const hasOwnProperty = <T>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    object: any,
+    property: keyof T,
+): object is T => {
+    return object.hasOwnProperty(property);
+};
+
+const invalidError = (errorMessage: string) =>
+    errorMessage === "" ||
+    errorMessage === "null" ||
+    errorMessage === "undefined";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const extractError = (error: unknown): string => {
     if (error && typeof error === "object") {
-        if (error.hasOwnProperty("response")) {
-            return extractError((error as { response: unknown }).response);
+        if (hasOwnProperty(error, "response") && error.response) {
+            const extractedError = extractError(error.response);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
         }
-        if (error.hasOwnProperty("data")) {
-            return extractError((error as { data: unknown }).data);
+        if (hasOwnProperty(error, "data") && error.data) {
+            const extractedError = extractError(error.data);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
         }
-        if (error.hasOwnProperty("error")) {
-            return extractError((error as { error: unknown }).error);
+        if (hasOwnProperty(error, "error") && error.error) {
+            const extractedError = extractError(error.error);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
         }
-        if (error.hasOwnProperty("context")) {
-            return extractError((error as { context: unknown }).context);
+        if (hasOwnProperty(error, "context") && error.context) {
+            const extractedError = extractError(error.context);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
         }
-        if (error.hasOwnProperty("message")) {
-            return extractError((error as { message: unknown }).message);
+        if (hasOwnProperty(error, "message") && error.message) {
+            const extractedError = extractError(error.message);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
         }
-        if (error.hasOwnProperty("statusText")) {
-            return extractError((error as { statusText: unknown }).statusText);
+        if (hasOwnProperty(error, "statusText") && error.statusText) {
+            const extractedError = extractError(error.statusText);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
         }
     }
     try {
@@ -123,6 +154,7 @@ export const extractError = (error: unknown): string => {
 export const retryNTimes = async <T>(
     fnCall: () => Promise<T>,
     retries: number,
+    timeout: number = 1 * SECONDS, // in ms
 ): Promise<T> => {
     let returnError;
     for (let i = 0; retries === -1 || i < retries; i++) {
@@ -137,6 +169,8 @@ export const retryNTimes = async <T>(
                 error.message += ` (${errorMessage})`;
             }
             returnError = error;
+
+            await sleep(timeout);
         }
     }
     throw returnError;

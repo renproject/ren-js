@@ -48,26 +48,17 @@ export const renMainnet: EthereumConfig = {
     },
 };
 
-export const renLocalnet: EthereumConfig = {
-    name: "Localnet",
+export const renTestnet: EthereumConfig = {
+    name: "Testnet",
     ...ethereumConfig.kovan,
     addresses: {
-        GatewayRegistry: "0x1832eb340d558a3c05C48247C6dF862Fde863ebB",
-        BasicAdapter: "0xD98d8EFF683129d040357439AbA49577452ECcaA",
+        GatewayRegistry: "0x557e211EC5fc9a6737d2C6b7a1aDe3e0C11A8D5D",
+        BasicAdapter: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
     },
 };
 
-export const renChaosnet: EthereumConfig = {
-    name: "Chaosnet",
-    ...ethereumConfig.mainnet,
-    addresses: {
-        GatewayRegistry: "0x817d2E41dABbA7A5e840353c9D73A40674ED3400",
-        BasicAdapter: "0x0807d0810714d85B49E40349a3002F06e841B7c3",
-    },
-};
-
-export const renDevnet: EthereumConfig = {
-    name: "Devnet",
+export const renDevnetVDot3: EthereumConfig = {
+    name: "Devnet v0.3",
     ...ethereumConfig.kovan,
     addresses: {
         GatewayRegistry: "0x5F051E588f39D95bc6c1742f6FA98B103aa0E5c8",
@@ -75,8 +66,8 @@ export const renDevnet: EthereumConfig = {
     },
 };
 
-export const renStagingTestnet: EthereumConfig = {
-    name: "Staging Testnet",
+export const renTestnetVDot3: EthereumConfig = {
+    name: "Testnet v0.3",
     ...ethereumConfig.rinkeby,
     addresses: {
         GatewayRegistry: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
@@ -84,11 +75,11 @@ export const renStagingTestnet: EthereumConfig = {
     },
 };
 
-export const renTestnet: EthereumConfig = {
-    name: "Testnet",
-    ...ethereumConfig.kovan,
+export const renMainnetVDot3: EthereumConfig = {
+    name: "Mainnet v0.3",
+    ...ethereumConfig.mainnet,
     addresses: {
-        GatewayRegistry: "0x557e211EC5fc9a6737d2C6b7a1aDe3e0C11A8D5D",
-        BasicAdapter: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
+        GatewayRegistry: "0x503670EC851C55EC1aCFB5230192da921467a24e",
+        BasicAdapter: "0xAe65b0f676313Fd715F29D07538d1dc8557f2b1A",
     },
 };

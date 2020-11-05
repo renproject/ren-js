@@ -8,15 +8,15 @@ import { Callable, Ox, toBigNumber } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { provider } from "web3-providers";
 
-import { Asset, EthereumBaseChain, Transaction } from "./base";
+import { Address, EthereumBaseChain, Transaction } from "./base";
 import { EthereumConfig } from "./networks";
 
 export class EthereumClass extends EthereumBaseChain
-    implements MintChain<Transaction, Asset> {
+    implements MintChain<Transaction, Address> {
     public getContractCalls:
         | ((
               eventType: EventType,
-              asset: Asset,
+              asset: string,
               burnPayload?: string,
           ) => SyncOrPromise<ContractCall[]>)
         | undefined;
@@ -27,7 +27,7 @@ export class EthereumClass extends EthereumBaseChain
 
     public contractCalls = (
         eventType: EventType,
-        asset: Asset,
+        asset: string,
         burnPayload?: string,
     ) =>
         this.getContractCalls
@@ -43,7 +43,7 @@ export class EthereumClass extends EthereumBaseChain
     }): this => {
         this.getContractCalls = async (
             eventType: EventType,
-            asset: Asset,
+            asset: string,
             burnPayload?: string,
         ) => {
             if (!this.renNetworkDetails || !this.web3) {
@@ -129,7 +129,7 @@ export class EthereumClass extends EthereumBaseChain
     ): this => {
         this.getContractCalls = (
             _eventType: EventType,
-            asset: Asset,
+            asset: string,
             burnPayload?: string,
         ) => {
             if (!this.renNetworkDetails) {

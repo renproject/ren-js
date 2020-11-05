@@ -1,4 +1,4 @@
-import { Logger } from "@renproject/interfaces";
+import { Logger, LogLevel, NullLogger } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 
 import { assertType } from "./assert";
@@ -61,13 +61,13 @@ export const fixSignature = (
     tokenIdentifier: string,
     nHash: Buffer,
     v2?: boolean,
-    logger?: Logger,
+    logger: Logger = NullLogger,
 ): Signature => {
     // Type validation
     assertType<string>("string", { amount, to, tokenIdentifier });
     assertType<Buffer>("Buffer", { r, s, sigHash, pHash, nHash });
 
-    if (logger) {
+    if (typeof logger.level !== "number" || logger.level >= LogLevel.Warn) {
         const expectedSighash = generateSighash(
             pHash,
             amount,

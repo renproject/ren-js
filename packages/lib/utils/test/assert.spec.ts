@@ -197,5 +197,15 @@ describe("assert", () => {
                 },
             ),
         ).toThrow(expect.error("Invalid object type definition undefined"));
+
+        assertObject(
+            // @ts-expect-error Should complain about missing field "first".
+            {},
+            {
+                a: {
+                    first: [],
+                },
+            },
+        );
     });
 });

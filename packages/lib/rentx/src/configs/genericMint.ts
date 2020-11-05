@@ -101,116 +101,108 @@ const depositListener = (
         .then((minter) => {
             cleanup = () => minter.removeAllListeners();
             minter.on("deposit", (deposit) => {
-                (async () => {
-                    // Register event handlers prior to setup in case events land early
-                    receive((event) => {
-                        switch (event.type) {
-                            case "SETTLE":
-                                deposit
-                                    .confirmed()
-                                    .on(
-                                        "confirmation",
-                                        (confs, targetConfs) => {
-                                            const confirmedTx = {
-                                                sourceTxConfs: confs,
-                                                sourceTxConfTarget: targetConfs,
-                                            };
-                                            callback({
-                                                type: "CONFIRMATION",
-                                                data: confirmedTx,
-                                            });
+                // Register event handlers prior to setup in case events land early
+                receive((event) => {
+                    switch (event.type) {
+                        case "SETTLE":
+                            deposit
+                                .confirmed()
+                                .on("confirmation", (confs, targetConfs) => {
+                                    const confirmedTx = {
+                                        sourceTxConfs: confs,
+                                        sourceTxConfTarget: targetConfs,
+                                    };
+                                    callback({
+                                        type: "CONFIRMATION",
+                                        data: confirmedTx,
+                                    });
+                                })
+                                .then(() => {
+                                    callback({
+                                        type: "CONFIRMED",
+                                    });
+                                })
+                                .catch(console.error);
+                            break;
+                        case "SIGN":
+                            deposit
+                                ?.signed()
+                                .on("status", (state) => console.log(state))
+                                .then((v) =>
+                                    callback({
+                                        type: "SIGNED",
+                                        data: {
+                                            renResponse:
+                                                v._state.queryTxResult?.out,
+                                            signature:
+                                                v._state.queryTxResult?.out
+                                                    ?.signature,
                                         },
-                                    )
-                                    .then(() => {
-                                        callback({
-                                            type: "CONFIRMED",
-                                        });
-                                    })
-                                    .catch(console.error);
-                                break;
-                            case "SIGN":
-                                deposit
-                                    ?.signed()
-                                    .on("status", (state) => console.log(state))
-                                    .then((v) =>
-                                        callback({
-                                            type: "SIGNED",
-                                            data: {
-                                                renResponse:
-                                                    v._queryTxResult?.out,
-                                                signature:
-                                                    v._queryTxResult?.out
-                                                        ?.signature,
-                                            },
-                                        }),
-                                    )
-                                    .catch((e) =>
-                                        callback({
-                                            type: "SIGN_ERROR",
-                                            data: e,
-                                        }),
-                                    );
-                                break;
-                            case "MINT":
-                                deposit
-                                    ?.mint()
-                                    .on(
-                                        "transactionHash",
-                                        (transactionHash) => {
-                                            const submittedTx = {
-                                                destTxHash: transactionHash,
-                                            };
-                                            callback({
-                                                type: "SUBMITTED",
-                                                data: submittedTx,
-                                            });
-                                        },
-                                    )
-                                    .catch((e) =>
-                                        callback({
-                                            type: "SUBMIT_ERROR",
-                                            data: e,
-                                        }),
-                                    );
-                                break;
-                        }
+                                    }),
+                                )
+                                .catch((e) =>
+                                    callback({
+                                        type: "SIGN_ERROR",
+                                        data: e,
+                                    }),
+                                );
+                            break;
+                        case "MINT":
+                            deposit
+                                ?.mint()
+                                .on("transactionHash", (transactionHash) => {
+                                    const submittedTx = {
+                                        destTxHash: transactionHash,
+                                    };
+                                    callback({
+                                        type: "SUBMITTED",
+                                        data: submittedTx,
+                                    });
+                                })
+                                .catch((e) =>
+                                    callback({
+                                        type: "SUBMIT_ERROR",
+                                        data: e,
+                                    }),
+                                );
+                            break;
+                    }
+                });
+
+                const txHash = deposit.txHash();
+                const persistedTx = context.tx.transactions[txHash];
+
+                // Prevent deposit machine tx listeners from interacting with other deposits
+                const targetDeposit = (context as DepositMachineContext)
+                    .deposit;
+                if (targetDeposit) {
+                    if (targetDeposit.sourceTxHash !== txHash) {
+                        console.error(
+                            "wrong deposit:",
+                            targetDeposit.sourceTxHash,
+                            txHash,
+                        );
+                        return;
+                    }
+                }
+
+                // If we don't have a sourceTxHash, we haven't seen a deposit yet
+                const rawSourceTx: any = deposit.depositDetails.transaction;
+                const depositState: GatewayTransaction = persistedTx || {
+                    sourceTxHash: txHash,
+                    sourceTxAmount: rawSourceTx.amount,
+                    sourceTxVOut: rawSourceTx.vOut,
+                    rawSourceTx,
+                };
+
+                if (!persistedTx) {
+                    callback({
+                        type: "DEPOSIT",
+                        data: { ...depositState },
                     });
-
-                    const txHash = await deposit.txHash();
-                    const persistedTx = context.tx.transactions[txHash];
-
-                    // Prevent deposit machine tx listeners from interacting with other deposits
-                    const targetDeposit = (context as DepositMachineContext)
-                        .deposit;
-                    if (targetDeposit) {
-                        if (targetDeposit.sourceTxHash !== txHash) {
-                            console.error(
-                                "wrong deposit:",
-                                targetDeposit.sourceTxHash,
-                                txHash,
-                            );
-                            return;
-                        }
-                    }
-
-                    // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                    const rawSourceTx: any = deposit.depositDetails.transaction;
-                    const depositState: GatewayTransaction = persistedTx || {
-                        sourceTxHash: txHash,
-                        sourceTxAmount: rawSourceTx.amount,
-                        sourceTxVOut: rawSourceTx.vOut,
-                        rawSourceTx,
-                    };
-
-                    if (!persistedTx) {
-                        callback({
-                            type: "DEPOSIT",
-                            data: { ...depositState },
-                        });
-                    } else {
-                        callback("DETECTED");
-                    }
-                })().catch(console.error);
+                } else {
+                    callback("DETECTED");
+                }
             });
 
             receive((event) => {

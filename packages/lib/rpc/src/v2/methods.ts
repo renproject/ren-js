@@ -1,43 +1,36 @@
-import { RenContract, TxStatus } from "@renproject/interfaces";
+import { TxStatus } from "@renproject/interfaces";
 
 import { TypedPackValue } from "./pack/pack";
-import { Shard } from "./shard";
 import { BurnTransactionInput, MintTransactionInput } from "./transaction";
-import { Fees, RenVMType, RenVMValue } from "./value";
+import { RenVMType, RenVMValue } from "./value";
 
 export enum RPCMethod {
     // MethodSubmitTx submits a new transaction to the Darknode for acceptance
     // into the transaction pool.
-    MethodSubmitTx = "ren_submitTx",
+    SubmitTx = "ren_submitTx",
+
     // MethodQueryTx returns the latest information about a transaction
     // identified by a transaction hash.
-    MethodQueryTx = "ren_queryTx",
+    QueryTx = "ren_queryTx",
+
     // MethodQueryTxs returns pages of transactions with optional filtering by
     // status and tags.
-    MethodQueryTxs = "ren_queryTxs",
+    QueryTxs = "ren_queryTxs",
 
     // MethodQueryBlock returns a block identified by the block height.
-    MethodQueryBlock = "ren_queryBlock",
+    QueryBlock = "ren_queryBlock",
+
     // MethodQueryBlocks returns recently committed blocks.
-    MethodQueryBlocks = "ren_queryBlocks",
+    QueryBlocks = "ren_queryBlocks",
 
-    // MethodQueryNumPeers returns the number of known peers.
-    MethodQueryNumPeers = "ren_queryNumPeers",
-    // MethodQueryPeers returns a random subset of known peers.
-    MethodQueryPeers = "ren_queryPeers",
+    // MethodQueryConfig returns the node configuration.
+    QueryConfig = "ren_queryConfig",
 
-    // MethodQueryShards returns information about the currently online/offline
-    // Shards.
-    MethodQueryShards = "ren_queryShards",
-
-    // MethodQueryStat returns status information about the Darknode. This
-    // information cannot be verified.
-    MethodQueryStat = "ren_queryStat",
-
-    // MethodQueryFees returns information about the current RenVM fees and
-    // underlying blockchain fees. This information cannot be verified.
-    MethodQueryFees = "ren_queryFees",
+    // MethodQueryState returns the contract state.
+    QueryState = "ren_queryState",
 }
+
+// Params //////////////////////////////////////////////////////////////////////
 
 // ParamsQueryTxs defines the parameters of the MethodQueryTxs.
 export interface ParamsQueryTxs {
@@ -65,7 +58,7 @@ export interface ParamsQueryBlocks {
 }
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
-interface ParamsSubmitTx<
+export interface ParamsSubmitTx<
     T extends MintTransactionInput | BurnTransactionInput
 > {
     // Tx being submitted.
@@ -83,30 +76,17 @@ export interface ParamsQueryTx {
     txHash: string;
 }
 
-// ParamsQueryNumPeers defines the parameters of the MethodQueryNumPeers.
-export interface ParamsQueryNumPeers {
+// ParamsQueryConfig defines the parameters of the MethodQueryConfig.
+export interface ParamsQueryConfig {
     // No parameters.
 }
 
-// ParamsQueryPeers defines the parameters of the MethodQueryPeers.
-export interface ParamsQueryPeers {
+// ParamsQueryState defines the parameters of the MethodQueryState.
+export interface ParamsQueryState {
     // No parameters.
 }
 
-// ParamsQueryShards defines the parameters of the MethodQueryShards.
-export interface ParamsQueryShards {
-    // No parameters.
-}
-
-// ParamsQueryStat defines the parameters of the MethodQueryStat.
-export interface ParamsQueryStat {
-    // No parameters.
-}
-
-// ParamsQueryFees defines the parameters of the MethodQueryFees.
-export interface ParamsQueryFees {
-    // No parameters.
-}
+// Responses ///////////////////////////////////////////////////////////////////
 
 // ResponseQueryBlock defines the response of the MethodQueryBlock.
 export interface ResponseQueryBlock {
@@ -126,7 +106,7 @@ export interface ResponseSubmitTx {
     // Tx abi.Tx`json:"tx"`
     tx: {
         hash: string;
-        to: RenContract;
+        to: string;
         in: TypedPackValue;
     };
 }
@@ -137,7 +117,7 @@ export interface ResponseQueryTx {
     tx: {
         version: "1";
         hash: string;
-        selector: RenContract;
+        selector: string;
         in: TypedPackValue;
         out?: TypedPackValue;
     };
@@ -149,150 +129,74 @@ export interface ResponseQueryTx {
 export interface ResponseQueryTxs {
     txs: Array<{
         hash: string;
-        to: RenContract;
+        to: string;
         in: TypedPackValue;
         out?: TypedPackValue;
     }>;
 }
 
-export interface ResponseQueryMintTx extends ResponseQueryTx {
-    // // Tx       abi.Tx`json:"tx"`
-    // tx: {
-    //     hash: string;
-    //     to: RenContract;
-    //     in: TypedPackValue;
-    //     out?: TypedPackValue;
-    // };
-    // // TxStatus string`json:"txStatus"`
-    // txStatus: TxStatus;
+// ResponseQueryConfig defines the response of the MethodQueryConfig.
+export interface ResponseQueryConfig {
+    confirmations: {
+        [chain: string]: RenVMValue<RenVMType.U64>;
+    };
+    whitelist: string[];
 }
 
-export interface ResponseQueryBurnTx extends ResponseQueryTx {
-    // // Tx       abi.Tx`json:"tx"`
-    // tx: {
-    //     hash: string;
-    //     to: RenContract;
-    //     in: TypedPackValue;
-    // };
-    // // TxStatus string`json:"txStatus"`
-    // txStatus: TxStatus;
+// ResponseQueryState defines the response of the MethodQueryState.
+export interface ResponseQueryState {
+    state: {
+        [chain: string]: {
+            address: string; // "muMT...";
+            gasCap: string; // "0";
+            gasLimit: string; // "400";
+            gasPrice: string; // "0";
+            latestChainHash: string; // "";
+            latestChainHeight: string; // "0";
+            minimumAmount: string; // "547";
+            pubKey: string; // "AqlA...";
+        } & {
+            // UTXO-based chains
+            output?: {
+                outpoint: {
+                    hash: string; // "";
+                    index: string; // "0";
+                };
+                pubKeyScript: string; // "";
+                value: string; // "0";
+            };
+        } & {
+            // Account-based chains
+            nonce?: string;
+        };
+    };
 }
 
-// ResponseQueryNumPeers defines the response of the MethodQueryNumPeers.
-export interface ResponseQueryNumPeers {
-    numPeers: number; // NumPeers int`json:"numPeers"`
-}
-
-// ResponseQueryPeers defines the response of the MethodQueryPeers.
-export interface ResponseQueryPeers {
-    peers: string[]; // Peers[]string`json:"peers"`
-}
-
-// ResponseQueryShards defines the response of the MethodQueryShards.
-export interface ResponseQueryShards {
-    shards: Shard[];
-}
-
-// ResponseQueryEpoch defines the response of the MethodQueryEpoch.
-export interface ResponseQueryEpoch {
-    // TODO: Define response.
-}
-
-// ResponseQueryStat defines the response of the MethodQueryStat.
-export interface ResponseQueryStat {
-    version: string;
-    multiAddress: string;
-    cpus: Array<{
-        cores: number;
-        clockRate: number;
-        cacheSize: number;
-        modelName: string;
-    }>;
-    memory: number;
-    memoryUsed: number;
-    memoryFree: number;
-    disk: number;
-    diskUsed: number;
-    diskFree: number;
-    systemUptime: number;
-    serviceUptime: number;
-}
-
-// ResponseQueryFees defines the response of the MethodQueryFees.
-export interface ResponseQueryFees {
-    [token: string]: Fees;
-}
-
-export type RenVMResponses = {
-    [RPCMethod.MethodQueryBlock]: ResponseQueryBlock;
-    [RPCMethod.MethodQueryBlocks]: ResponseQueryBlocks;
-    [RPCMethod.MethodSubmitTx]: ResponseSubmitTx;
-    [RPCMethod.MethodQueryTx]: ResponseQueryTx;
-    [RPCMethod.MethodQueryTxs]: ResponseQueryTxs;
-    [RPCMethod.MethodQueryNumPeers]: ResponseQueryNumPeers;
-    [RPCMethod.MethodQueryPeers]: ResponseQueryPeers;
-    [RPCMethod.MethodQueryShards]: ResponseQueryShards;
-    [RPCMethod.MethodQueryStat]: ResponseQueryStat;
-    [RPCMethod.MethodQueryFees]: ResponseQueryFees;
-};
-
-export type RPCResponse<
-    Method extends RPCMethod
-> = Method extends RPCMethod.MethodQueryBlock
-    ? ResponseQueryBlock
-    : Method extends RPCMethod.MethodQueryBlocks
-    ? ResponseQueryBlocks
-    : Method extends RPCMethod.MethodSubmitTx
-    ? ResponseSubmitTx
-    : Method extends RPCMethod.MethodQueryTx
-    ? ResponseQueryTx
-    : Method extends RPCMethod.MethodQueryTxs
-    ? ResponseQueryTxs
-    : Method extends RPCMethod.MethodQueryNumPeers
-    ? ResponseQueryNumPeers
-    : Method extends RPCMethod.MethodQueryPeers
-    ? ResponseQueryPeers
-    : Method extends RPCMethod.MethodQueryShards
-    ? ResponseQueryShards
-    : Method extends RPCMethod.MethodQueryStat
-    ? ResponseQueryStat
-    : Method extends RPCMethod.MethodQueryFees
-    ? ResponseQueryFees // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    : any;
+// /////////////////////////////////////////////////////////////////////////////
 
 export type RenVMParams = {
-    [RPCMethod.MethodQueryBlock]: ParamsQueryBlock;
-    [RPCMethod.MethodQueryBlocks]: ParamsQueryBlocks;
-    [RPCMethod.MethodSubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
-    [RPCMethod.MethodQueryTx]: ParamsQueryTx;
-    [RPCMethod.MethodQueryTxs]: ParamsQueryTxs;
-    [RPCMethod.MethodQueryNumPeers]: ParamsQueryNumPeers;
-    [RPCMethod.MethodQueryPeers]: ParamsQueryPeers;
-    [RPCMethod.MethodQueryShards]: ParamsQueryShards;
-    [RPCMethod.MethodQueryStat]: ParamsQueryStat;
-    [RPCMethod.MethodQueryFees]: ParamsQueryFees;
+    [RPCMethod.QueryBlock]: ParamsQueryBlock;
+    [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
+    [RPCMethod.SubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
+    [RPCMethod.QueryTx]: ParamsQueryTx;
+    [RPCMethod.QueryTxs]: ParamsQueryTxs;
+    [RPCMethod.QueryConfig]: ParamsQueryConfig;
+    [RPCMethod.QueryState]: ParamsQueryState;
 };
 
-export type RPCParams<
-    Method extends RPCMethod
-> = Method extends RPCMethod.MethodQueryBlock
-    ? ParamsQueryBlock
-    : Method extends RPCMethod.MethodQueryBlocks
-    ? ParamsQueryBlocks
-    : Method extends RPCMethod.MethodSubmitTx
-    ? ParamsSubmitBurn | ParamsSubmitMint
-    : Method extends RPCMethod.MethodQueryTx
-    ? ParamsQueryTx
-    : Method extends RPCMethod.MethodQueryTxs
-    ? ParamsQueryTxs
-    : Method extends RPCMethod.MethodQueryNumPeers
-    ? ParamsQueryNumPeers
-    : Method extends RPCMethod.MethodQueryPeers
-    ? ParamsQueryPeers
-    : Method extends RPCMethod.MethodQueryShards
-    ? ParamsQueryShards
-    : Method extends RPCMethod.MethodQueryStat
-    ? ParamsQueryStat
-    : Method extends RPCMethod.MethodQueryFees
-    ? ParamsQueryFees // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    : any;
+export type RenVMResponses = {
+    [RPCMethod.QueryBlock]: ResponseQueryBlock;
+    [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
+    [RPCMethod.SubmitTx]: ResponseSubmitTx;
+    [RPCMethod.QueryTx]: ResponseQueryTx;
+    [RPCMethod.QueryTxs]: ResponseQueryTxs;
+    [RPCMethod.QueryConfig]: ResponseQueryConfig;
+    [RPCMethod.QueryState]: ResponseQueryState;
+};
+
+// The following lines will throw a type error if RenVMResponses or RenVMParams
+// aren't defined for all RPC methods.
+// type _responsesCheck = RenVMResponses[RPCMethod];
+// type _paramsCheck = RenVMParams[RPCMethod];
+(): RenVMParams[RPCMethod] | void => {};
+(): RenVMResponses[RPCMethod] | void => {};

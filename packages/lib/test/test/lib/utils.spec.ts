@@ -107,7 +107,7 @@ describe("Utils", function() {
 
     // it.skip("fixSignature", () => {
     //     const response: UnmarshalledTx = {
-    //         to: RenContract.Btc2Eth,
+    //         to: "BTC0Btc2Eth",
     //         txStatus: TxStatus.TxStatusDone,
     //         hash: "0xec7f5d0fc132d87ff65095f9caee08be659a9b7f5b9bd2250291c94bb5d94801",
     //         in: {

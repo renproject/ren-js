@@ -3,7 +3,7 @@
 import * as Chains from "@renproject/chains";
 
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import RenJS from "@renproject/ren";
+import RenJS, { defaultDepositHandler } from "@renproject/ren";
 import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
@@ -15,10 +15,10 @@ chai.should();
 
 loadDotEnv();
 
+const colors = [green, magenta, yellow, cyan, blue, red];
+
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
-
-const colors = [green, magenta, yellow, cyan, blue, red];
 
 describe("Extra params", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
@@ -32,32 +32,15 @@ describe("Extra params", () => {
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
 
-        // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
+        const logLevel = LogLevel.Log;
 
-        const network = Chains.renTestnet; // renTestnet;
+        const network = Chains.renTestnet;
+        const renJS = new RenJS("testnet", { logLevel });
 
         const infuraURL = `${network.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        const logLevel = LogLevel.Log;
-
-        // const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-        //     // "https://lightnode-new-testnet.herokuapp.com/",
-        //     "http://34.239.188.210:18515",
-        // ) as Provider<RenVMParams, RenVMResponses>;
-        // const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-        //     // "https://lightnode-new-testnet.herokuapp.com/",
-        //     httpProvider,
-        // ) as RenVMProviderInterface;
-        // const renVMProvider = new RenVMProvider(
-        //     "testnet",
-        //     rpcProvider,
-        // ) as AbstractRenVMProvider;
-
-        // const renJS = new RenJS(renVMProvider, { logLevel });
-        const renJS = new RenJS("testnet", { logLevel });
-
-        let contractAddress;
+        let contractAddress: string;
         switch (network.networkID) {
             case 4:
                 contractAddress = "0x0141966753f8C7D7e6Dc01Fc324200a65Cf49525";
@@ -70,7 +53,7 @@ describe("Extra params", () => {
         }
 
         // Use 0.0001 more than fee.
-        let suggestedAmount;
+        let suggestedAmount: number;
         try {
             const fees = await renJS.getFees();
             const fee: number = fees[asset.toLowerCase()].lock;
@@ -124,74 +107,33 @@ describe("Extra params", () => {
         }
 
         await new Promise((resolve, reject) => {
-            let i = 0;
-
+            const counter = { i: 0 };
             lockAndMint.on("deposit", (deposit) => {
-                (async () => {
-                    const hash = await deposit.txHash();
+                const hash = deposit.txHash();
 
-                    // if (deposit.depositDetails.amount === "80000") {
-                    //     return;
-                    // }
+                // if (deposit.depositDetails.amount === "80000") {
+                //     return;
+                // }
 
-                    const color = colors[i];
-                    i += 1;
+                const color = colors[counter.i];
+                counter.i += 1;
 
-                    deposit._logger = new SimpleLogger(
-                        logLevel,
-                        color(`[${hash.slice(0, 6)}] `),
-                    );
+                deposit._state.logger = new SimpleLogger(
+                    logLevel,
+                    color(`[${hash.slice(0, 6)}] `),
+                );
 
-                    const info = deposit._logger.log;
+                deposit._state.logger.log(
+                    `Received ${
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (deposit.depositDetails as any).amount / 1e8
+                    } ${deposit.params.asset}`,
+                    deposit.depositDetails,
+                );
 
-                    info(
-                        `Received ${
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (deposit.depositDetails as any).amount / 1e8
-                        } ${asset}`,
-                        deposit.depositDetails,
-                    );
-
-                    info(`Calling .confirmed`);
-                    await deposit
-                        .confirmed()
-                        .on("confirmation", (confs, target) => {
-                            info(`${confs}/${target} confirmations`);
-                        });
-
-                    let retries = 10;
-                    while (retries) {
-                        try {
-                            info(
-                                retries === 10
-                                    ? `Calling .signed`
-                                    : `Retrying .signed`,
-                            );
-                            await deposit.signed().on("status", (status) => {
-                                info(`status: ${status}`);
-                            });
-                            break;
-                        } catch (error) {
-                            console.error(error);
-                        }
-                        await sleep(10);
-                        retries--;
-                    }
-                    if (retries === 0) {
-                        throw new Error(`Unable to call ".signed"`);
-                    }
-
-                    info(`Calling .mint`);
-                    await deposit
-                        .mint({
-                            _extraMsg: "test", // Override value.
-                        })
-                        .on("transactionHash", (txHash) => {
-                            info(`txHash: ${String(txHash)}`);
-                        });
-
-                    resolve();
-                })().catch(console.error);
+                defaultDepositHandler(deposit)
+                    .then(resolve)
+                    .catch(deposit._state.logger.error);
             });
 
             sleep(10 * SECONDS)
@@ -200,7 +142,7 @@ describe("Extra params", () => {
                     if (
                         faucetSupported &&
                         typeof lockAndMint.gatewayAddress === "string" &&
-                        i === 0
+                        counter.i === 0
                     ) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(

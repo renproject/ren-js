@@ -80,7 +80,7 @@ describe("Cross chain transactions", function() {
     //     new BN((await contract.methods.balanceOf(address).call()).toString());
     // const mintTest = async (
     //     token: string,
-    //     renVMToken: RenContract,
+    //     renVMToken: string,
     //     gatewayContract: string,
     //     adapterContract: string,
     //     amount: number,
@@ -196,7 +196,7 @@ describe("Cross chain transactions", function() {
     // };
     // const burnTest = async (
     //     token: string,
-    //     sendToken: RenContract,
+    //     sendToken: string,
     //     erc20Contract: Contract,
     //     gatewayContract: string,
     //     adapterContract: string,
@@ -490,7 +490,7 @@ describe("Cross chain transactions", function() {
     //     for (const contract of [RenJS.Tokens.BTC.Mint]) {
     //         logger.consoleLine();
     //         logger.info(`Starting mint test`);
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.000015, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -517,7 +517,7 @@ describe("Cross chain transactions", function() {
     //         logger.consoleLine();
     //         logger.info(`Starting burn test`);
     //         // TODO: Check balance of token before attempting to mint.
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.00040001, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -534,7 +534,7 @@ describe("Cross chain transactions", function() {
     //     for (const contract of [RenJS.Tokens.BTC.Mint]) {
     //         logger.consoleLine();
     //         logger.info(`Starting mint test - recovering transfer`);
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.00040001, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -599,7 +599,7 @@ describe("Cross chain transactions", function() {
     //     for (const contract of [RenJS.Tokens.BTC.Mint]) {
     //         logger.consoleLine();
     //         logger.info(`Starting mint test - recovering transfer`);
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();

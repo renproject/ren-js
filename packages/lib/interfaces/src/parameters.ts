@@ -36,8 +36,8 @@ export interface ContractCall {
 /**
  * The parameters required for both minting and burning.
  */
-export interface TransferParamsCommon<Asset extends string> {
-    asset: Asset;
+export interface TransferParamsCommon {
+    asset: string;
 
     /**
      * Provide the transaction hash returned from RenVM to continue a previous
@@ -62,13 +62,17 @@ export interface TransferParamsCommon<Asset extends string> {
  */
 export interface LockAndMintParams<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    Asset extends string = string,
-    Address = string
-> extends TransferParamsCommon<Asset> {
-    from: LockChain<Transaction, Deposit, Asset, Address>;
-    to: MintChain;
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
+        LockTransaction
+    >,
+    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintTransaction = any,
+    MintAddress = string
+> extends TransferParamsCommon {
+    from: LockChain<LockTransaction, LockDeposit, LockAddress>;
+    to: MintChain<MintTransaction, MintAddress>;
 
     /**
      * The amount of `sendToken` that should be sent.
@@ -103,7 +107,7 @@ export interface LockAndMintParams<
      * shard, but once sharding is live, this parameter will ensure that the
      * same address can be used to resume the transfer.
      */
-    gatewayAddress?: Address;
+    gatewayAddress?: LockAddress;
 }
 
 /**
@@ -112,18 +116,22 @@ export interface LockAndMintParams<
  */
 export interface BurnAndReleaseParams<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    Asset extends string = string,
-    Address = string
-> extends TransferParamsCommon<Asset> {
-    from: MintChain;
-    to: LockChain<Transaction, Deposit, Asset, Address>;
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
+        LockTransaction
+    >,
+    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintTransaction = any,
+    MintAddress = string
+> extends TransferParamsCommon {
+    from: MintChain<MintTransaction, MintAddress>;
+    to: LockChain<LockTransaction, LockDeposit, LockAddress>;
 
     /**
      * The hash of the burn transaction on Ethereum.
      */
-    transaction?: Transaction;
+    transaction?: MintTransaction;
 
     /**
      * The reference ID of the burn emitted in the contract log.

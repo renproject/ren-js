@@ -197,20 +197,20 @@ const assertArray = <T = unknown>(
     return true;
 };
 
-type ObjectDefinition = { [key: string]: string | ObjectDefinition };
+declare type ObjectDefinition<T> = {
+    [P in keyof T]: string | ObjectDefinition<unknown>;
+};
 
-export const assertObject = <T extends unknown>(
-    fieldTypes: ObjectDefinition,
-    objects: {
-        [value: string]: T;
-    },
+export const assertObject = <T extends object>(
+    fieldTypes: ObjectDefinition<T>,
+    objects: { [key: string]: T },
 ): boolean => {
     for (const key of Object.keys(objects)) {
         const value = objects[key];
 
         for (const field of Object.keys(fieldTypes)) {
             if (typeof fieldTypes[field] === "object") {
-                assertObject(fieldTypes[field] as ObjectDefinition, {
+                assertObject(fieldTypes[field] as ObjectDefinition<unknown>, {
                     [`${key}["${field}"]`]: value[field] as {
                         [key: string]: unknown;
                     },

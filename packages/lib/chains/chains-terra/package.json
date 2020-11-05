@@ -18,6 +18,8 @@
     "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
+        "link": "yarn link",
+        "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
@@ -40,9 +42,9 @@
         "prepare-release": "run-s npmignore build doc:html"
     },
     "dependencies": {
-        "@renproject/interfaces": "file:../../interfaces",
-        "@renproject/rpc": "file:../../rpc",
-        "@renproject/utils": "file:../../utils",
+        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/rpc": "^2.0.0-alpha.16",
+        "@renproject/utils": "^2.0.0-alpha.16",
         "@terra-money/terra.js": "^0.5.0",
         "@types/bs58": "^4.0.1",
         "bchaddrjs": "^0.4.9",

@@ -1,4 +1,4 @@
-import { Logger } from "@renproject/interfaces";
+import { Logger, LogLevel, NullLogger } from "@renproject/interfaces";
 import {
     assertType,
     extractError,
@@ -23,34 +23,19 @@ export class HttpProvider<
     Responses extends { [event: string]: any } = {}
 > implements Provider<Requests, Responses> {
     public readonly nodeURL: string;
-    public readonly logger: Logger | undefined;
+    public readonly logger: Logger;
 
-    constructor(ipOrMultiaddress: string, logger?: Logger) {
+    constructor(ipOrMultiaddress: string, logger: Logger = NullLogger) {
         this.logger = logger;
         // Type validation
         assertType<string>("string", { ipOrMultiaddress });
 
-        if (ipOrMultiaddress.charAt(0) === "/") {
-            try {
-                const [, , ip, , port, ,] = ipOrMultiaddress.split("/");
-                const fixedPort = port === "18514" ? "18515" : port;
-                // TODO: Use HTTPS if supported
-                const protocol = "http";
-                this.nodeURL = `${protocol}://${ip}:${fixedPort}`;
-            } catch (error) {
-                throw new Error(`Malformatted address: ${ipOrMultiaddress}`);
-            }
-        } else {
-            if (ipOrMultiaddress.indexOf("://") === -1) {
-                throw new Error(
-                    `Invalid node URL without protocol: ${ipOrMultiaddress}.`,
-                );
-            }
-            this.nodeURL = ipOrMultiaddress;
+        if (ipOrMultiaddress.indexOf("://") === -1) {
+            throw new Error(
+                `Invalid node URL without protocol: ${ipOrMultiaddress}.`,
+            );
         }
-        if (!this.nodeURL) {
-            throw new Error("Invalid empty node URL.");
-        }
+        this.nodeURL = ipOrMultiaddress;
     }
 
     public sendMessage = async <Method extends keyof Requests & string>(
@@ -59,12 +44,16 @@ export class HttpProvider<
         retry = 2,
         timeout = 120 * SECONDS,
     ): Promise<Responses[Method]> => {
-        // Promise<Responses[Method]> {
-        // Print request:
-        if (this.logger) {
+        const payload = generatePayload(method, request);
+
+        if (
+            // Check level before doing expensive JSON call.
+            typeof this.logger.level !== "number" ||
+            this.logger.level >= LogLevel.Debug
+        ) {
             this.logger.debug(
                 "[request]",
-                JSON.stringify(generatePayload(method, request), null, "    "),
+                JSON.stringify(payload, null, "    "),
             );
         }
         try {
@@ -72,13 +61,14 @@ export class HttpProvider<
                 async () =>
                     axios.post<JSONRPCResponse<Responses[Method]>>(
                         this.nodeURL,
-                        generatePayload(method, request),
+                        payload,
                         // Use a 120 second timeout. This could be reduced, but
                         // should be done based on the method, since some requests
                         // may take a long time, especially on a slow connection.
                         { timeout },
                     ),
                 retry,
+                1 * SECONDS,
             );
             if (response.status !== 200) {
                 throw this.responseError(
@@ -92,7 +82,10 @@ export class HttpProvider<
             if (response.data.result === undefined) {
                 throw new Error(`Empty result returned from node`);
             }
-            if (this.logger) {
+            if (
+                typeof this.logger.level !== "number" ||
+                this.logger.level >= LogLevel.Debug
+            ) {
                 this.logger.debug(
                     "[response]",
                     JSON.stringify(response.data.result, null, "    "),

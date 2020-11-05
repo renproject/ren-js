@@ -2,14 +2,21 @@
 
 import * as Chains from "@renproject/chains";
 
-import { LogLevel, SimpleLogger } from "@renproject/interfaces";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
+import {
+    extractError,
+    Ox,
+    retryNTimes,
+    SECONDS,
+    sleep,
+} from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
+import { DepositStatus } from "@renproject/ren/build/main/lockAndMint";
 
 chai.should();
 
@@ -25,8 +32,8 @@ describe("Playground", () => {
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Chains.Filecoin();
-        const asset = from._asset;
+        const from = Chains.Bitcoin();
+        const asset = from.asset;
         // const from = Bitcoin();
         // const asset = "BTC";
         const faucetSupported =
@@ -36,11 +43,11 @@ describe("Playground", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${Chains.renStagingTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const logLevel = LogLevel.Log;
-        const renJS = new RenJS("staging-testnet", { logLevel });
+        const renJS = new RenJS(RenNetwork.Testnet, { logLevel });
         // const renJS = new RenJS("testnet")
 
         // Use 0.0001 more than fee.
@@ -57,7 +64,7 @@ describe("Playground", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Chains.Ethereum(provider, Chains.renStagingTestnet).Account({
+            to: Chains.Ethereum(provider, Chains.renTestnet).Account({
                 address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
             }),
 
@@ -98,7 +105,7 @@ describe("Playground", () => {
 
             lockAndMint.on("deposit", (deposit) => {
                 (async () => {
-                    const hash = await deposit.txHash();
+                    const hash = deposit.txHash();
 
                     // if (deposit.depositDetails.amount === "80000") {
                     //     return;
@@ -107,12 +114,12 @@ describe("Playground", () => {
                     const color = colors[i];
                     i += 1;
 
-                    deposit._logger = new SimpleLogger(
+                    deposit._state.logger = new SimpleLogger(
                         logLevel,
                         color(`[${hash.slice(0, 6)}] `),
                     );
 
-                    const info = deposit._logger.log;
+                    const info = deposit._state.logger.log;
 
                     info(
                         `Received ${
@@ -122,39 +129,58 @@ describe("Playground", () => {
                         deposit.depositDetails,
                     );
 
-                    info(`Calling .confirmed`);
-                    await deposit
-                        .confirmed()
-                        .on("confirmation", (confs, target) => {
-                            info(`${confs}/${target} confirmations`);
-                        });
+                    const retries = 10;
 
-                    let retries = 10;
-                    while (retries) {
-                        try {
-                            info(
-                                retries === 10
-                                    ? `Calling .signed`
-                                    : `Retrying .signed`,
-                            );
+                    await retryNTimes(
+                        async () => {
+                            deposit._state.logger.debug(`Calling .confirmed`);
+                            await deposit
+                                .confirmed()
+                                .on("confirmation", (confs, target) => {
+                                    deposit._state.logger.debug(
+                                        `${confs}/${target} confirmations`,
+                                    );
+                                });
+                        },
+                        retries,
+                        10 * SECONDS,
+                    );
+
+                    expect(deposit.status).toBe(DepositStatus.Confirmed);
+
+                    await retryNTimes(
+                        async () => {
+                            deposit._state.logger.debug(`Calling .signed`);
                             await deposit.signed().on("status", (status) => {
-                                info(`status: ${status}`);
+                                deposit._state.logger.debug(
+                                    `status: ${status}`,
+                                );
                             });
-                            break;
-                        } catch (error) {
-                            console.error(error);
-                        }
-                        await sleep(10);
-                        retries--;
-                    }
-                    if (retries === 0) {
-                        throw new Error(`Unable to call ".signed"`);
-                    }
+                        },
+                        retries,
+                        10 * SECONDS,
+                    );
 
-                    info(`Calling .mint`);
-                    await deposit.mint().on("transactionHash", (txHash) => {
-                        info(`txHash: ${String(txHash)}`);
-                    });
+                    expect(deposit.status).toBe(DepositStatus.Signed);
+
+                    await retryNTimes(
+                        async () => {
+                            deposit._state.logger.debug(`Calling .mint`);
+                            await deposit
+                                .mint({
+                                    _extraMsg: "test", // Override value.
+                                })
+                                .on("transactionHash", (txHash) => {
+                                    deposit._state.logger.debug(
+                                        `txHash: ${String(txHash)}`,
+                                    );
+                                });
+                        },
+                        retries,
+                        10 * SECONDS,
+                    );
+
+                    expect(deposit.status).toBe(DepositStatus.Submitted);
 
                     resolve();
                 })().catch(console.error);

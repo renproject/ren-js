@@ -28,7 +28,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
             return mockLockChain;
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
-            onDeposit({ transaction: {}, amount: "1" });
+            await onDeposit({ transaction: {}, amount: "1" });
         },
         getGatewayAddress: () => "gatGatewayAddress",
         getPubKeyScript: () => Buffer.from("pubkey"),
@@ -59,7 +59,7 @@ export const buildMockMintChain = () => {
         name: "mockMintChain",
         assetDecimals: () => 1,
         addressIsValid: () => true,
-        transactionID: () => "tid" + new Date().getTime(),
+        transactionID: () => "tid" + String(new Date().getTime()),
         // transactionID: () =>
         //     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
         transactionConfidence: () => ({ current: 0, target: 1 }),
@@ -73,7 +73,7 @@ export const buildMockMintChain = () => {
             txindex: "0",
         }),
         legacyName: "Eth",
-        resolveTokenGatewayContract: async () =>
+        resolveTokenGatewayContract: () =>
             "0x0000000000000000000000000000000000000000",
         submitMint: (_asset, _calls, _tx, emitter) => {
             setTimeout(() => {
@@ -102,7 +102,7 @@ export const buildMockMintChain = () => {
             };
         },
         findTransaction: () => "mintTxHash",
-        contractCalls: async () => [
+        contractCalls: () => [
             {
                 sendTo: "0x0000000000000000000000000000000000000000",
                 contractFn: "nop",

@@ -15,7 +15,7 @@ import {
     useMultiwallet,
 } from "../src/MultiwalletProvider";
 
-const options: WalletPickerConfig<any, string> = {
+const options: WalletPickerConfig<unknown, string> = {
   chains: {
     ethereum: [
       {
@@ -59,7 +59,7 @@ const options: WalletPickerConfig<any, string> = {
 };
 
 const WalletDemo: React.FC<{ network: string }> = () => {
-  const context = useMultiwallet<any, any>();
+  const context = useMultiwallet<unknown, unknown>();
 
   return (
     <>

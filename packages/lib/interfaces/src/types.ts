@@ -1,9 +1,11 @@
-import { RenContract } from "./networks";
 import {
     SerializableBurnAndReleaseParams,
     SerializableLockAndMintParams,
 } from "./parameters";
-import { BurnTransaction, MintTransaction } from "./transaction";
+import {
+    BurnAndReleaseTransaction,
+    LockAndMintTransaction,
+} from "./transaction";
 
 export type Base64String = string;
 export type HexString = string;
@@ -57,7 +59,7 @@ export enum TxStatus {
 }
 
 export interface SendTokenInterface {
-    sendToken: RenContract;
+    sendToken: string;
 }
 
 interface HistoryEventCommon {
@@ -80,7 +82,7 @@ export interface LockAndMintEvent extends HistoryEventCommon {
     eventType: EventType.LockAndMint;
     status: LockAndMintStatus;
     transferParams: SerializableLockAndMintParams;
-    renVMQuery: MintTransaction | null;
+    renVMQuery: LockAndMintTransaction | null;
     gatewayAddress?: string;
 }
 
@@ -88,7 +90,7 @@ export interface BurnAndReleaseEvent extends HistoryEventCommon {
     eventType: EventType.BurnAndRelease;
     status: BurnAndReleaseStatus;
     transferParams: SerializableBurnAndReleaseParams;
-    renVMQuery: BurnTransaction | null;
+    renVMQuery: BurnAndReleaseTransaction | null;
 }
 
 export type HistoryEvent = LockAndMintEvent | BurnAndReleaseEvent;

@@ -2820,37 +2820,6 @@
     prop-types "^15.6.1"
     react-lifecycles-compat "^3.0.4"
 
-"@renproject/interfaces@file:packages/lib/interfaces":
-  version "2.0.0-alpha.16"
-  dependencies:
-    "@types/node" ">=10"
-    bignumber.js "^9.0.1"
-    web3-core "^2.0.0-alpha.1"
-
-"@renproject/rpc@file:packages/lib/rpc":
-  version "2.0.0-alpha.16"
-  dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.16"
-    "@renproject/provider" "^2.0.0-alpha.16"
-    "@renproject/utils" "^2.0.0-alpha.16"
-    "@types/node" ">=10"
-    bignumber.js "^9.0.1"
-    immutable "^4.0.0-rc.12"
-
-"@renproject/utils@file:packages/lib/utils":
-  version "2.0.0-alpha.16"
-  dependencies:
-    "@renproject/interfaces" "^2.0.0-alpha.16"
-    "@types/create-hash" "1.2.2"
-    "@types/keccak" "^3.0.1"
-    "@types/mocha" "^8.0.3"
-    "@types/node" ">=10"
-    axios "^0.20.0"
-    bignumber.js "^9.0.1"
-    events "^3.2.0"
-    immutable "^4.0.0-rc.12"
-    web3-eth-abi "^2.0.0-alpha.1"
-
 "@rollup/plugin-babel@^5.1.0":
   version "5.2.1"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.2.1.tgz#20fc8f8864dc0eaa1c5578408459606808f72924"

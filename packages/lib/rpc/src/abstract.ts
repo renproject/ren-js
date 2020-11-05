@@ -58,48 +58,38 @@ export interface AbstractRenVMProvider<
         tags: [string] | [];
     }) => SyncOrPromise<Buffer>;
 
-    burnTxHash?: (
-        params: {
-            // v2
+    burnTxHash?: (params: {
+        // v2
+        selector: string;
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        output: { txid: Buffer; txindex: string };
+        amount: string;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
+    }) => Buffer;
 
-            selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        },
-        logger?: Logger,
-    ) => Buffer;
+    submitBurn: (params: {
+        selector: string;
+        tags: [string] | [];
 
-    submitBurn: (
-        params:
-            | {
-                  // v2
+        // v1
+        burnNonce: BigNumber;
 
-                  selector: string;
-                  gHash: Buffer;
-                  gPubKey: Buffer;
-                  nHash: Buffer;
-                  nonce: Buffer;
-                  output: { txid: Buffer; txindex: string };
-                  amount: string;
-                  payload: Buffer;
-                  pHash: Buffer;
-                  to: string;
-              }
-            | {
-                  // v1
-                  selector: string;
-                  burnNonce: BigNumber;
-              },
-        tags: [string] | [],
-        logger?: Logger,
-    ) => SyncOrPromise<Buffer>;
+        // v2
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        output: { txid: Buffer; txindex: string };
+        amount: string;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
+    }) => SyncOrPromise<Buffer>;
 
     queryMintOrBurn: <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction

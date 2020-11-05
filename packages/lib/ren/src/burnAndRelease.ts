@@ -32,6 +32,7 @@ import {
 } from "@renproject/utils";
 import BN from "bn.js";
 import { EventEmitter } from "events";
+import BigNumber from "bignumber.js";
 
 export class BurnAndRelease<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -410,32 +411,43 @@ export class BurnAndRelease<
                             this._state.logger,
                         );
 
-                        returnedTxHash = await this.renVM.submitBurn(
-                            {
-                                selector,
-                                gHash,
-                                gPubKey,
-                                nHash,
-                                nonce: nonceBuffer,
-                                output: {
-                                    txid,
-                                    txindex,
-                                },
-                                amount: amount.toFixed(),
-                                payload,
-                                pHash,
-                                to: to.toString(),
-                            },
+                        returnedTxHash = await this.renVM.submitBurn({
+                            selector,
                             tags,
-                        );
+
+                            gHash,
+                            gPubKey,
+                            nHash,
+                            nonce: nonceBuffer,
+                            output: {
+                                txid,
+                                txindex,
+                            },
+                            amount: amount.toFixed(),
+                            payload,
+                            pHash,
+                            to: to.toString(),
+
+                            // from v1
+                            burnNonce: new BigNumber(0),
+                        });
                     } else {
-                        returnedTxHash = await this.renVM.submitBurn(
-                            {
-                                selector,
-                                burnNonce: nonce,
-                            },
+                        returnedTxHash = await this.renVM.submitBurn({
+                            selector,
                             tags,
-                        );
+                            burnNonce: nonce,
+
+                            // for v2
+                            gHash: Buffer.from([]),
+                            gPubKey: Buffer.from([]),
+                            nHash: Buffer.from([]),
+                            nonce: Buffer.from([]),
+                            output: { txid: Buffer.from([]), txindex: "" },
+                            amount: "",
+                            payload: Buffer.from([]),
+                            pHash: Buffer.from([]),
+                            to: "",
+                        });
                     }
                     if (txHash && toBase64(returnedTxHash) !== txHash) {
                         this._state.logger.warn(

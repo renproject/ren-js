@@ -290,34 +290,14 @@ export class RenVMProvider
         return fromBase64(response.tx.hash);
     };
 
-    public submitBurn = async (
-        params:
-            | {
-                  // v2
-                  selector: string;
-                  gHash: Buffer;
-                  gPubKey: Buffer;
-                  nHash: Buffer;
-                  nonce: Buffer;
-                  output: { txid: Buffer; txindex: string };
-                  amount: string;
-                  payload: Buffer;
-                  pHash: Buffer;
-                  to: string;
-              }
-            | {
-                  // v1
-                  selector: string;
-                  burnNonce: BigNumber;
-              },
-        tags: [string] | [],
-        _logger: Logger = NullLogger,
-    ): Promise<Buffer> => {
-        const { selector, burnNonce } = params as {
-            // v1
-            selector: string;
-            burnNonce: BigNumber;
-        };
+    public submitBurn = async (params: {
+        selector: string;
+        tags: [string] | [];
+
+        // v1
+        burnNonce: BigNumber;
+    }): Promise<Buffer> => {
+        const { selector, burnNonce, tags } = params;
         const response = await this.provider.sendMessage(
             RPCMethod.MethodSubmitTx,
             {

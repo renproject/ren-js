@@ -174,7 +174,18 @@ export class RenVMProvider
 
     public getFees = async () => {};
 
-    public buildTransaction = (params: {
+    public buildTransaction = ({
+        selector,
+        gHash,
+        gPubKey,
+        nHash,
+        nonce,
+        output,
+        amount,
+        payload,
+        pHash,
+        to,
+    }: {
         selector: string;
         gHash: Buffer;
         gPubKey: Buffer;
@@ -186,18 +197,6 @@ export class RenVMProvider
         pHash: Buffer;
         to: string;
     }): MintTransactionInput => {
-        const {
-            selector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        } = params;
         assertType<Buffer>("Buffer", {
             gHash,
             gPubKey,
@@ -233,74 +232,7 @@ export class RenVMProvider
         };
     };
 
-    public mintTxHash = ({
-        selector,
-        gHash,
-        gPubKey,
-        nHash,
-        nonce,
-        output,
-        amount,
-        payload,
-        pHash,
-        to,
-    }: {
-        selector: string;
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        output:
-            | { txHash: string; vOut: string }
-            | { txindex: string; txid: Buffer };
-        amount: string;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-    }): Buffer => {
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-        });
-        assertType<string>("string", { to });
-
-        const { txid, txindex } = output as { txid: Buffer; txindex: string };
-        assertType<Buffer>("Buffer", { txid });
-        assertType<string>("string", { txindex });
-
-        return fromBase64(
-            this.buildTransaction({
-                selector: selector,
-                gHash,
-                gPubKey,
-                nHash,
-                nonce,
-                output: { txid, txindex },
-                amount,
-                payload,
-                pHash,
-                to,
-            }).hash,
-        );
-    };
-
-    public submitMint = async ({
-        selector,
-        gHash,
-        gPubKey,
-        nHash,
-        nonce,
-        output,
-        amount,
-        payload,
-        pHash,
-        to,
-        token,
-    }: {
+    public mintTxHash = (params: {
         selector: string;
         gHash: Buffer;
         gPubKey: Buffer;
@@ -311,203 +243,31 @@ export class RenVMProvider
         payload: Buffer;
         pHash: Buffer;
         to: string;
-        token: string;
+    }): Buffer => {
+        return fromBase64(this.buildTransaction(params).hash);
+    };
+
+    public submitMint = async (params: {
+        selector: string;
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        output: { txindex: string; txid: Buffer };
+        amount: string;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
     }): Promise<Buffer> => {
-        const { txid, txindex } = output;
+        const tx = this.buildTransaction(params);
 
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-            txid,
-        });
-        assertType<string>("string", { to, token, txindex, amount });
-
-        const tx = this.buildTransaction({
-            selector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output: { txid, txindex },
-            amount,
-            payload,
-            pHash,
-            to,
-        });
-
-        await this.provider.sendMessage<RPCMethod.SubmitTx>(
-            RPCMethod.SubmitTx,
-            {
-                tx,
-                // tags,
-            },
-        );
+        await this.submitTx(tx);
 
         return fromBase64(tx.hash);
     };
 
-    public burnTxHash = (
-        params: {
-            // v2
-            selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        },
-        _logger: Logger = NullLogger,
-        // eslint-disable-next-line @typescript-eslint/require-await
-    ): Buffer => {
-        const {
-            selector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        } = params as {
-            // v2
-            selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        };
-
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-            txid: output.txid,
-        });
-        assertType<string>("string", {
-            selector,
-            to,
-            txindex: output.txindex,
-            amount,
-        });
-
-        const tx = this.buildTransaction({
-            selector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        });
-
-        return fromBase64(tx.hash);
-    };
-
-    public submitBurn = async (
-        params:
-            | {
-                  // v2
-                  selector: string;
-                  gHash: Buffer;
-                  gPubKey: Buffer;
-                  nHash: Buffer;
-                  nonce: Buffer;
-                  output: { txid: Buffer; txindex: string };
-                  amount: string;
-                  payload: Buffer;
-                  pHash: Buffer;
-                  to: string;
-              }
-            | {
-                  // v1
-                  selector: string;
-                  burnNonce: BigNumber;
-              },
-        _tags: [string] | [],
-        _logger: Logger = NullLogger,
-    ): Promise<Buffer> => {
-        const {
-            selector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        } = params as {
-            // v2
-            selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        };
-
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-            txid: output.txid,
-        });
-        assertType<string>("string", {
-            selector,
-            to,
-            txindex: output.txindex,
-            amount,
-        });
-
-        const tx = this.buildTransaction({
-            selector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        });
-
-        await this.provider.sendMessage(RPCMethod.SubmitTx, {
-            tx,
-            // tags,
-        });
-
-        return fromBase64(tx.hash);
-    };
+    public burnTxHash = this.mintTxHash;
+    public submitBurn = this.submitMint;
 
     public readonly queryMintOrBurn = async <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction

@@ -174,7 +174,7 @@ export class RenVMProvider
 
     public getFees = async () => {};
 
-    public buildMintTransaction = (params: {
+    public buildTransaction = (params: {
         selector: string;
         gHash: Buffer;
         gPubKey: Buffer;
@@ -273,7 +273,7 @@ export class RenVMProvider
         assertType<string>("string", { txindex });
 
         return fromBase64(
-            this.buildMintTransaction({
+            this.buildTransaction({
                 selector: selector,
                 gHash,
                 gPubKey,
@@ -326,7 +326,7 @@ export class RenVMProvider
         });
         assertType<string>("string", { to, token, txindex, amount });
 
-        const tx = this.buildMintTransaction({
+        const tx = this.buildTransaction({
             selector,
             gHash,
             gPubKey,
@@ -408,7 +408,7 @@ export class RenVMProvider
             amount,
         });
 
-        const tx = this.buildMintTransaction({
+        const tx = this.buildTransaction({
             selector,
             gHash,
             gPubKey,
@@ -488,7 +488,7 @@ export class RenVMProvider
             amount,
         });
 
-        const tx = this.buildMintTransaction({
+        const tx = this.buildTransaction({
             selector,
             gHash,
             gPubKey,

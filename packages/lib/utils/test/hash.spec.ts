@@ -1,12 +1,9 @@
-// tslint:disable: mocha-no-side-effect-code
-
 import chai from "chai";
 import { expect } from "earljs";
 
 import { hash160, keccak256, ripemd160, sha256 } from "../src/hash";
 
 chai.should();
-require("dotenv").config();
 
 const testCases = [
     {

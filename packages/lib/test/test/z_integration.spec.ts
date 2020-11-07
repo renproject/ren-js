@@ -1,61 +1,45 @@
-// tslint:disable: no-console
-
+/* eslint-disable no-console */
 /// <reference types="./testutils/chai" />
 /// <reference types="./testutils/declarations" />
 
-import {
-    EthArgs,
-    LogLevel,
-    RenContract,
-    RenNetwork,
-} from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
-import {
-    Ox,
-    parseRenContract,
-    retryNTimes,
-    SECONDS,
-    sleep,
-    stringToNetwork,
-} from "@renproject/utils";
+import { SECONDS, sleep } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
 import chalk from "chalk";
-import BN from "bn.js";
-import CryptoAccount from "send-crypto";
-import HDWalletProvider from "truffle-hdwallet-provider";
-import Web3 from "web3";
-import { Contract } from "web3-eth-contract";
-import RenJS from "@renproject/ren";
-import { BurnAndRelease } from "@renproject/ren/src/burnAndRelease";
-import { LockAndMint } from "@renproject/ren/src/lockAndMint";
+import { config as loadDotEnv } from "dotenv";
 
 chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
 const logger = {
-    printLine: (s, overwrite = false) =>
+    printLine: (s: unknown, overwrite = false) =>
         overwrite
-            ? process.stdout.write(`\u001b[0K\r${s}\r`)
+            ? process.stdout.write(`\u001b[0K\r${String(s)}\r`)
             : console.debug(s),
-    event: (eventString, { overwrite } = { overwrite: false }) => {
-        logger.printLine(`${chalk.blue("[EVENT]")} ${eventString}`, overwrite);
+    event: (eventString: unknown, { overwrite } = { overwrite: false }) => {
+        logger.printLine(
+            `${chalk.blue("[EVENT]")} ${String(eventString)}`,
+            overwrite,
+        );
     },
-    info: (eventString, { overwrite } = { overwrite: false }) => {
-        logger.printLine(`${chalk.yellow("[INFO]")} ${eventString}`, overwrite);
+    info: (eventString: unknown, { overwrite } = { overwrite: false }) => {
+        logger.printLine(
+            `${chalk.yellow("[INFO]")} ${String(eventString)}`,
+            overwrite,
+        );
     },
     consoleLine: (divider = "—") => {
         logger.printLine(
             `\n${chalk.yellow(divider.repeat(process.stdout.columns))}`,
         );
     },
-    error: (error) => logger.printLine(chalk.red(`[ERROR] ${error}`)),
+    error: (error: unknown) =>
+        logger.printLine(chalk.red(`[ERROR] ${String(error)}`)),
     newLine: () => logger.printLine(""),
 };
 
 // A debug `sleep`. It prints a count-down to the console.
-// tslint:disable-next-line: no-string-based-set-timeout
 export const sleepWithCountdown = async (seconds: number) => {
     while (seconds) {
         process.stdout.write(`\u001b[0K\r${seconds}\r`);
@@ -65,21 +49,20 @@ export const sleepWithCountdown = async (seconds: number) => {
     process.stdout.write("\u001b[0K\r");
 };
 
-require("dotenv").config();
+loadDotEnv();
 
-const MNEMONIC = process.env.MNEMONIC;
-const NETWORK = process.env.NETWORK;
-const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
+// const MNEMONIC = process.env.MNEMONIC;
+// const NETWORK = process.env.NETWORK;
+// const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
-describe("Cross chain transactions", function () {
+describe("Cross chain transactions", function() {
     // // Disable test timeout.
-    // this.timeout(0);
+    this.timeout(0);
     // let provider: HDWalletProvider;
     // let web3: Web3;
     // let network: RenNetwork;
     // let renJS: RenJS;
     // let accounts: string[];
-    // // tslint:disable-next-line: mocha-no-side-effect-code
     // const longIt = process.env.ALL_TESTS ? it : it.skip;
     // before(async () => {
     //     network = stringToNetwork(NETWORK || "testnet");
@@ -97,7 +80,7 @@ describe("Cross chain transactions", function () {
     //     new BN((await contract.methods.balanceOf(address).call()).toString());
     // const mintTest = async (
     //     token: string,
-    //     renVMToken: RenContract,
+    //     renVMToken: string,
     //     gatewayContract: string,
     //     adapterContract: string,
     //     amount: number,
@@ -213,7 +196,7 @@ describe("Cross chain transactions", function () {
     // };
     // const burnTest = async (
     //     token: string,
-    //     sendToken: RenContract,
+    //     sendToken: string,
     //     erc20Contract: Contract,
     //     gatewayContract: string,
     //     adapterContract: string,
@@ -325,7 +308,6 @@ describe("Cross chain transactions", function () {
     //         { ...caseZEC, it: it.skip },
     //         { ...caseBCH, it: it.skip },
     //     ]) {
-    //         // tslint:disable-next-line: mocha-no-side-effect-code
     //         testcaseFn.it(
     //             `should be able to mint and burn ${testcaseFn.name} to Ethereum`,
     //             async () => {
@@ -422,7 +404,6 @@ describe("Cross chain transactions", function () {
     //                     srcAddress,
     //                     network.version
     //                 );
-    //                 // tslint:disable-next-line: no-string-based-set-timeout
     //                 await new Promise((resolve) => {
     //                     setTimeout(resolve, 10 * 1000);
     //                 });
@@ -446,7 +427,6 @@ describe("Cross chain transactions", function () {
     //         { ...caseBTC, it: it.skip },
     //         { ...caseZEC, it: it.skip },
     //     ]) {
-    //         // tslint:disable-next-line: mocha-no-side-effect-code
     //         testcaseFn.it(
     //             `should be able to mint ${testcaseFn.name} using the helper function`,
     //             async () => {
@@ -506,12 +486,11 @@ describe("Cross chain transactions", function () {
     //         );
     //     }
     // });
-    // // tslint:disable-next-line: mocha-no-side-effect-code
     // longIt("simple interface - mint", async () => {
     //     for (const contract of [RenJS.Tokens.BTC.Mint]) {
     //         logger.consoleLine();
     //         logger.info(`Starting mint test`);
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.000015, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -533,13 +512,12 @@ describe("Cross chain transactions", function () {
     //         await submitIndividual(mint);
     //     }
     // });
-    // // tslint:disable-next-line: mocha-no-side-effect-code
     // longIt("simple interface - burn", async () => {
     //     for (const contract of [RenJS.Tokens.BTC.Burn]) {
     //         logger.consoleLine();
     //         logger.info(`Starting burn test`);
     //         // TODO: Check balance of token before attempting to mint.
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.00040001, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -556,7 +534,7 @@ describe("Cross chain transactions", function () {
     //     for (const contract of [RenJS.Tokens.BTC.Mint]) {
     //         logger.consoleLine();
     //         logger.info(`Starting mint test - recovering transfer`);
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.00040001, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -617,12 +595,11 @@ describe("Cross chain transactions", function () {
     //     const resultHex = await mintHex.queryTx();
     //     resultBase64.should.deep.equal(resultHex);
     // });
-    // // tslint:disable-next-line: mocha-no-side-effect-code
     // it.skip("confirmationless", async () => {
     //     for (const contract of [RenJS.Tokens.BTC.Mint]) {
     //         logger.consoleLine();
     //         logger.info(`Starting mint test - recovering transfer`);
-    //         const { asset: token } = parseRenContract(contract);
+    //         const { asset: token } = parseV1Selector(contract);
     //         const amount = RenJS.utils
     //             .value(0.00015, token.toLowerCase() as "btc" | "bch" | "zec")
     //             ._smallest();
@@ -661,7 +638,6 @@ describe("Cross chain transactions", function () {
     //         await submitIndividual(mint);
     //     }
     // });
-    // // tslint:disable-next-line: mocha-no-side-effect-code
     // longIt("minting without parameters", async () => {
     //     logger.consoleLine();
     //     logger.info(`Starting mint test`);

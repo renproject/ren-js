@@ -1,27 +1,25 @@
-// tslint:disable: no-console
-
-import { BURN_TOPIC } from "@renproject/chains";
-import { EthArgs, RenNetwork } from "@renproject/interfaces";
 import {
     renChaosnet,
     renDevnet,
     renLocalnet,
     renTestnet,
-} from "@renproject/networks";
+} from "@renproject/chains";
+import { EthArgs, RenNetwork } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { generatePHash } from "@renproject/utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { expect } from "earljs";
+import { config as loadDotEnv } from "dotenv";
 
 chai.use(chaiAsPromised);
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const NETWORK = process.env.NETWORK;
 
-describe("Utils", function () {
+describe("Utils", function() {
     // Disable test timeout.
     this.timeout(0);
 
@@ -40,12 +38,6 @@ describe("Utils", function () {
         ];
 
         expect(generatePHash(payload)).toEqual(expect.a(Buffer));
-    });
-
-    it("Burn Topic hash", () => {
-        BURN_TOPIC.should.equal(
-            "0x1619fc95050ffb8c94c9077c82b3e1ebbf8d571b6234241c55ba0aaf40da019e",
-        );
     });
 
     const testcases = [
@@ -106,7 +98,6 @@ describe("Utils", function () {
     }
 
     it(`queryTX`, async () => {
-        // tslint:disable-next-line: await-promise
         await new RenJS(NETWORK as RenNetwork).renVM
             .queryMintOrBurn(Buffer.from([0]))
             .should.be.rejectedWith(
@@ -116,7 +107,7 @@ describe("Utils", function () {
 
     // it.skip("fixSignature", () => {
     //     const response: UnmarshalledTx = {
-    //         to: RenContract.Btc2Eth,
+    //         to: "BTC0Btc2Eth",
     //         txStatus: TxStatus.TxStatusDone,
     //         hash: "0xec7f5d0fc132d87ff65095f9caee08be659a9b7f5b9bd2250291c94bb5d94801",
     //         in: {

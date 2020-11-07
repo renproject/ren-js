@@ -1,16 +1,15 @@
 import { AbiItem } from "./abi";
-import { RenContract } from "./networks";
 import { Base64String, TxStatus } from "./types";
 
 export interface RenTransaction<Input, Output> {
     hash: Base64String;
     txStatus: TxStatus;
-    to: RenContract;
+    to: string;
     in: Input;
     out?: Output;
 }
 
-export type MintTransaction = RenTransaction<
+export type LockAndMintTransaction = RenTransaction<
     // Input
     {
         p: {
@@ -39,7 +38,7 @@ export type MintTransaction = RenTransaction<
     }
 >;
 
-export type BurnTransaction = RenTransaction<
+export type BurnAndReleaseTransaction = RenTransaction<
     // Input
     {
         ref: string;

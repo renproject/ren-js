@@ -1,9 +1,13 @@
-import { Machine, assign, send, Actor, sendParent } from "xstate";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// TODO: Improve typings.
+
+import { Actor, assign, Machine, send, sendParent } from "xstate";
 import RenJS from "@renproject/ren";
-import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
 import { log } from "xstate/lib/actions";
 import { assert } from "@renproject/utils";
+
+import { GatewaySession, GatewayTransaction } from "../types/transaction";
 
 export interface DepositMachineContext {
     deposit: GatewayTransaction; // The deposit being tracked

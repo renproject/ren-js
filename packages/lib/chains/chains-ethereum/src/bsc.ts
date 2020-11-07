@@ -1,10 +1,34 @@
-import { RenNetwork } from "@renproject/interfaces";
-import { renBscTestnet } from "@renproject/networks";
+import {
+    getRenNetworkDetails,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
 import { Callable } from "@renproject/utils";
 import Web3 from "web3";
 import { provider } from "web3-providers";
 
 import { EthereumClass } from "./ethereum";
+import { EthereumConfig } from "./networks";
+
+export const renBscTestnet: EthereumConfig = {
+    name: "BSC Testnet",
+    chain: "bscTestnet",
+    isTestnet: true,
+    chainLabel: "BSC Testnet",
+    networkID: 97,
+    infura: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    // etherscan: "https://explorer.binance.org/smart-testnet",
+    etherscan: "https://testnet.bscscan.com",
+    addresses: {
+        GatewayRegistry: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",
+        BasicAdapter: "0x105435a9b0f375B179e5e43A16228C04F01Fb2ee",
+    },
+};
+
+export const BscConfigMap = {
+    [RenNetwork.TestnetVDot3]: renBscTestnet,
+};
 
 const getRenBscMainnet = () => {
     throw new Error(`BSC mainnet is not supported yet.`);
@@ -29,13 +53,29 @@ export class BinanceSmartChainClass extends EthereumClass {
                   ).currentProvider
                 : web3Provider,
             web3Provider === "testnet" || network === "testnet"
-                ? RenNetwork.Testnet
-                : undefined,
-            web3Provider === "testnet" || network === "testnet"
                 ? renBscTestnet
                 : undefined,
         );
     }
+
+    initialize = (
+        renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
+    ) => {
+        this.renNetworkDetails =
+            this.renNetworkDetails ||
+            BscConfigMap[getRenNetworkDetails(renNetwork).name];
+
+        if (!this.renNetworkDetails) {
+            throw new Error(
+                `Unable to set ${this.name} network for RenVM network ${
+                    getRenNetworkDetails(renNetwork).name
+                }. Please provide ${this.name} network details to ${
+                    this.name
+                } constructor.`,
+            );
+        }
+        return this;
+    };
 }
 
 export type BinanceSmartChain = BinanceSmartChainClass;

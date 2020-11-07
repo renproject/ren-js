@@ -1,19 +1,9 @@
-// tslint:disable: no-console
-
-import BigNumber from "bignumber.js";
 import { expect } from "earljs";
 import { describe, it } from "mocha";
 import { Ox } from "@renproject/utils";
 
-import { marshalTypedPackValue } from "../src/v2/pack/marshal";
-import {
-    PackPrimitive,
-    PackTypeDefinition,
-    TypedPackValue,
-} from "../src/v2/pack/pack";
+import { PackPrimitive, TypedPackValue } from "../src/v2/pack/pack";
 import { hashTransaction } from "../src/v2/transaction";
-
-require("dotenv").config();
 
 describe("Pack", () => {
     it("Hash transaction", () => {

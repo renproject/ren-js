@@ -1,65 +1,46 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
-import { Bitcoin, Ethereum } from "@renproject/chains";
+import * as Chains from "@renproject/chains";
+
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renTestnet } from "@renproject/networks";
-import RenJS from "@renproject/ren";
+import RenJS, { defaultDepositHandler } from "@renproject/ren";
 import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
+
+const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
-const colors = [green, magenta, yellow, cyan, blue, red];
-
 describe("Extra params", () => {
-    // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Bitcoin();
+        const from = Chains.Bitcoin();
         const asset = "BTC";
         const faucetSupported =
             ["BTC", "ZEC", "BCH", "ETH"].indexOf(asset) >= 0;
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
 
-        // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
+        const logLevel = LogLevel.Log;
 
-        const network = renTestnet; // renTestnet;
+        const network = Chains.renTestnet;
+        const renJS = new RenJS("testnet", { logLevel });
 
         const infuraURL = `${network.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        const logLevel = LogLevel.Log;
-
-        // const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-        //     // "https://lightnode-new-testnet.herokuapp.com/",
-        //     // tslint:disable-next-line: no-http-string
-        //     "http://34.239.188.210:18515",
-        // ) as Provider<RenVMParams, RenVMResponses>;
-        // const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-        //     // "https://lightnode-new-testnet.herokuapp.com/",
-        //     httpProvider,
-        // ) as RenVMProviderInterface;
-        // const renVMProvider = new RenVMProvider(
-        //     "testnet",
-        //     rpcProvider,
-        // ) as AbstractRenVMProvider;
-
-        // const renJS = new RenJS(renVMProvider, { logLevel });
-        const renJS = new RenJS("testnet", { logLevel });
-
-        let contractAddress;
+        let contractAddress: string;
         switch (network.networkID) {
             case 4:
                 contractAddress = "0x0141966753f8C7D7e6Dc01Fc324200a65Cf49525";
@@ -72,12 +53,11 @@ describe("Extra params", () => {
         }
 
         // Use 0.0001 more than fee.
-        let suggestedAmount;
+        let suggestedAmount: number;
         try {
             const fees = await renJS.getFees();
-            suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8,
-            );
+            const fee: number = fees[asset.toLowerCase()].lock;
+            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = 0.0015 * 1e8;
@@ -86,7 +66,7 @@ describe("Extra params", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Ethereum(provider, undefined, network).Contract({
+            to: Chains.Ethereum(provider, network).Contract({
                 sendTo: contractAddress,
                 contractFn: "mintExtra",
                 contractParams: [
@@ -127,72 +107,33 @@ describe("Extra params", () => {
         }
 
         await new Promise((resolve, reject) => {
-            let i = 0;
-
-            lockAndMint.on("deposit", async (deposit) => {
-                const hash = await deposit.txHash();
+            const counter = { i: 0 };
+            lockAndMint.on("deposit", (deposit) => {
+                const hash = deposit.txHash();
 
                 // if (deposit.depositDetails.amount === "80000") {
                 //     return;
                 // }
 
-                const color = colors[i];
-                i += 1;
+                const color = colors[counter.i];
+                counter.i += 1;
 
-                deposit._logger = new SimpleLogger(
+                deposit._state.logger = new SimpleLogger(
                     logLevel,
                     color(`[${hash.slice(0, 6)}] `),
                 );
 
-                const info = deposit._logger.log;
-
-                info(
+                deposit._state.logger.log(
                     `Received ${
-                        // tslint:disable-next-line: no-any
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (deposit.depositDetails as any).amount / 1e8
-                    } ${asset}`,
+                    } ${deposit.params.asset}`,
                     deposit.depositDetails,
                 );
 
-                info(`Calling .confirmed`);
-                await deposit
-                    .confirmed()
-                    .on("confirmation", (confs, target) => {
-                        info(`${confs}/${target} confirmations`);
-                    });
-
-                let retries = 10;
-                while (retries) {
-                    try {
-                        info(
-                            retries === 10
-                                ? `Calling .signed`
-                                : `Retrying .signed`,
-                        );
-                        await deposit.signed().on("status", (status) => {
-                            info(`status: ${status}`);
-                        });
-                        break;
-                    } catch (error) {
-                        console.error(error);
-                    }
-                    await sleep(10);
-                    retries--;
-                }
-                if (retries === 0) {
-                    throw new Error(`Unable to call ".signed"`);
-                }
-
-                info(`Calling .mint`);
-                await deposit
-                    .mint({
-                        _extraMsg: "test", // Override value.
-                    })
-                    .on("transactionHash", (txHash) => {
-                        info(`txHash: ${txHash}`);
-                    });
-
-                resolve();
+                defaultDepositHandler(deposit)
+                    .then(resolve)
+                    .catch(deposit._state.logger.error);
             });
 
             sleep(10 * SECONDS)
@@ -201,7 +142,7 @@ describe("Extra params", () => {
                     if (
                         faucetSupported &&
                         typeof lockAndMint.gatewayAddress === "string" &&
-                        i === 0
+                        counter.i === 0
                     ) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(

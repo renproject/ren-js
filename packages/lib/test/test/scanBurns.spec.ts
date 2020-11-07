@@ -1,12 +1,15 @@
-import RenJS from "@renproject/ren";
-import { keccak256, waitForReceipt } from "@renproject/utils";
+/* eslint-disable no-console */
+
+import { keccak256 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import Web3 from "web3";
+import { renTestnet, waitForReceipt } from "@renproject/chains";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const transferABI = [
     {
@@ -40,10 +43,9 @@ const mintABI = [
 ];
 
 describe.skip("RenJS initialization and exports", () => {
-    it.skip("check burns", async function () {
+    it.skip("check burns", async function() {
         this.timeout(10000000000);
-        const renJS = new RenJS("testnet");
-        const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
+        const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`;
 
         const web3 = new Web3(infuraURL);
 
@@ -54,7 +56,9 @@ describe.skip("RenJS initialization and exports", () => {
             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
             // address.slice(2), null, null] as any,
             topics: [
-                keccak256(Buffer.from("LogBurn(bytes,uint256,uint256,bytes)")),
+                keccak256(
+                    Buffer.from("LogBurn(bytes,uint256,uint256,bytes)"),
+                ).toString("hex"),
             ] as string[],
         });
 
@@ -101,10 +105,9 @@ describe.skip("RenJS initialization and exports", () => {
         }
     });
 
-    it("check mints", async function () {
+    it("check mints", async function() {
         this.timeout(10000000000);
-        const renJS = new RenJS("testnet");
-        const infuraURL = `${renJS.network.infura}/v3/${process.env.INFURA_KEY}`;
+        const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`;
 
         const web3 = new Web3(infuraURL);
 
@@ -115,7 +118,9 @@ describe.skip("RenJS initialization and exports", () => {
             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
             // address.slice(2), null, null] as any,
             topics: [
-                sha3("LogMint(address,uint256,uint256,bytes32)"),
+                keccak256(
+                    Buffer.from("LogMint(address,uint256,uint256,bytes32)"),
+                ).toString("hex"),
             ] as string[],
         });
 

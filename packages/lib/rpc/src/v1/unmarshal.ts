@@ -1,8 +1,9 @@
 import {
     AbiItem,
-    BurnTransaction,
+    BurnAndReleaseTransaction,
+    LockAndMintTransaction,
     Logger,
-    MintTransaction,
+    NullLogger,
     RenVMAssetFees,
     RenVMFees,
 } from "@renproject/interfaces";
@@ -21,7 +22,7 @@ import {
     ResponseQueryFees,
     ResponseQueryMintTx,
 } from "./methods";
-import { Fees, RenVMArg, RenVMOutputUTXO, RenVMType } from "./value";
+import { Fees, RenVMArg, RenVMType } from "./value";
 
 const decodeString = (input: string) => fromBase64(input).toString();
 const decodeBytes = (input: string) => fromBase64(input);
@@ -29,6 +30,7 @@ const decodeNumber = (input: string) => new BigNumber(input);
 
 /**
  * Validate an argument returned from RenVM.
+ *
  * @param name The expected name.
  * @param type The expected type.
  * @param arg The actual argument returned.
@@ -60,13 +62,13 @@ const assertAndDecodeBytes = <ArgType extends RenVMArg<string, RenVMType>>(
 ): Buffer => {
     try {
         return decodeBytes(
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             assertArgumentType<ArgType>(name as any, type as any, arg as any),
         );
     } catch (error) {
-        error.message = `Unable to decode parameter ${name} with value ${
-            arg.value
-        } (type ${typeof arg.value}): ${error.message}`;
+        error.message = `Unable to decode parameter ${name} with value ${String(
+            arg.value,
+        )} (type ${typeof arg.value}): ${String(error.message)}`;
         throw error;
     }
 };
@@ -82,13 +84,13 @@ const assertAndDecodeNumber = <ArgType>(
 ): BigNumber => {
     try {
         return decodeNumber(
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             assertArgumentType<ArgType>(name as any, type as any, arg as any),
         );
     } catch (error) {
-        error.message = `Unable to decode parameter ${name} with value ${
-            arg.value
-        } (type ${typeof arg.value}): ${error.message}`;
+        error.message = `Unable to decode parameter ${name} with value ${String(
+            arg.value,
+        )} (type ${typeof arg.value}): ${String(error.message)}`;
         throw error;
     }
 };
@@ -104,13 +106,13 @@ const assertAndDecodeAddress = <ArgType extends RenVMArg<string, RenVMType>>(
 ): string => {
     try {
         return Ox(
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             assertArgumentType<ArgType>(name as any, type as any, arg as any),
         );
     } catch (error) {
-        error.message = `Unable to decode parameter ${name} with value ${
-            arg.value
-        } (type ${typeof arg.value}): ${error.message}`;
+        error.message = `Unable to decode parameter ${name} with value ${String(
+            arg.value,
+        )} (type ${typeof arg.value}): ${String(error.message)}`;
         throw error;
     }
 };
@@ -123,7 +125,6 @@ const defaultPayload: ResponseQueryMintTx["tx"]["in"]["0"] = {
         value: "",
         fn: "",
     },
-    // tslint:disable-next-line: no-any
 };
 
 const findField = <ArgType extends RenVMArg<string, RenVMType>>(
@@ -161,13 +162,13 @@ const onError = <P>(getP: () => P, defaultP: P) => {
 
 export const unmarshalMintTx = (
     response: ResponseQueryMintTx,
-    logger?: Logger,
-): MintTransaction => {
+    logger: Logger = NullLogger,
+): LockAndMintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     // TODO: Check that response is mint response.
     // assert(
-    //     parseRenContract(response.tx.to).to === "Eth",
+    //     parseV1Selector(response.tx.to).to === "Eth",
     //     `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.to})`
     // );
 
@@ -224,11 +225,7 @@ export const unmarshalMintTx = (
     const utxoRaw = assertArgumentType<Autogen[4]>(
         "utxo",
         RenVMType.ExtTypeBtcCompatUTXO,
-        findField<Autogen[4]>("utxo", response) as RenVMArg<
-            "utxo",
-            RenVMType.ExtTypeBtcCompatUTXO,
-            RenVMOutputUTXO
-        >,
+        findField<Autogen[4]>("utxo", response),
     );
     const sighash = assertAndDecodeBytes<Autogen[5]>(
         "sighash",
@@ -246,7 +243,7 @@ export const unmarshalMintTx = (
     };
 
     type Out = ResponseQueryMintTx["tx"]["out"] & {};
-    const out: MintTransaction["out"] = {
+    const out: LockAndMintTransaction["out"] = {
         sighash,
         ghash,
         nhash,
@@ -307,10 +304,10 @@ export const unmarshalMintTx = (
 
 export const unmarshalBurnTx = (
     response: ResponseQueryBurnTx,
-): BurnTransaction => {
+): BurnAndReleaseTransaction => {
     // TODO: Check that result is burn response.
     // assert(
-    //     parseRenContract(response.tx.to).from === Chain.Ethereum,
+    //     parseV1Selector(response.tx.to).from === Chain.Ethereum,
     //     `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.to})`
     // );
 

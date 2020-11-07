@@ -29,6 +29,8 @@
     "main": "build/main/index.js",
     "typings": "build/main/index.d.ts",
     "scripts": {
+        "link": "yarn link",
+        "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
@@ -37,10 +39,13 @@
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
     },
     "dependencies": {
-        "bignumber.js": "^9.0.0"
+        "bignumber.js": "^9.0.1"
     },
     "devDependencies": {
         "@renproject/ren": "^2.0.0-alpha.16",
+        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/rpc": "^2.0.0-alpha.16",
+        "dotenv": "^8.2.0",
         "xstate": "^4.13.0"
     },
     "peerDependencies": {

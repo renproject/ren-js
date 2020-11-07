@@ -1,4 +1,4 @@
-import { RenContract, TxStatus } from "@renproject/interfaces";
+import { TxStatus } from "@renproject/interfaces";
 
 import { Shard } from "./shard";
 import {
@@ -73,7 +73,7 @@ export interface ParamsQueryBlocks {
 interface ParamsSubmitTx<T extends RenVMArgs> {
     // Tx being submitted.
     tx: {
-        to: RenContract;
+        to: string;
         in: T;
     };
     // Tags that should be attached to the Tx.
@@ -116,13 +116,13 @@ export interface ParamsQueryFees {
 
 // ResponseQueryBlock defines the response of the MethodQueryBlock.
 export interface ResponseQueryBlock {
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     block: any; // Block json.RawMessage`json:"block"`
 }
 
 // ResponseQueryBlocks defines the response of the MethodQueryBlocks.
 export interface ResponseQueryBlocks {
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     blocks: any; // Blocks json.RawMessage`json:"blocks"`
 }
 
@@ -132,7 +132,7 @@ export interface ResponseSubmitTx {
     // Tx abi.Tx`json:"tx"`
     tx: {
         hash: string;
-        to: RenContract;
+        to: string;
         args: MintArgsArray;
     };
 }
@@ -142,7 +142,7 @@ export interface ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
         hash: string;
-        to: RenContract;
+        to: string;
         in: RenVMArgs;
         autogen?: RenVMArgs;
         out?: RenVMArgs;
@@ -155,7 +155,7 @@ export interface ResponseQueryTx {
 export interface ResponseQueryTxs {
     txs: Array<{
         hash: string;
-        to: RenContract;
+        to: string;
         in: RenVMArgs;
         autogen?: RenVMArgs;
         out?: RenVMArgs;
@@ -166,7 +166,7 @@ export interface ResponseQueryMintTx extends ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
         hash: string;
-        to: RenContract;
+        to: string;
         in: MintArgsArray;
         autogen: TxAutogen;
         out?: TxResponseOutputs;
@@ -179,7 +179,7 @@ export interface ResponseQueryBurnTx extends ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
         hash: string;
-        to: RenContract;
+        to: string;
         in: TxBurnReturnedInputs;
     };
     // TxStatus string`json:"txStatus"`
@@ -231,43 +231,6 @@ export interface ResponseQueryFees {
     [token: string]: Fees;
 }
 
-export type RenVMResponses = {
-    [RPCMethod.MethodQueryBlock]: ResponseQueryBlock;
-    [RPCMethod.MethodQueryBlocks]: ResponseQueryBlocks;
-    [RPCMethod.MethodSubmitTx]: ResponseSubmitTx;
-    [RPCMethod.MethodQueryTx]: ResponseQueryTx;
-    [RPCMethod.MethodQueryTxs]: ResponseQueryTxs;
-    [RPCMethod.MethodQueryNumPeers]: ResponseQueryNumPeers;
-    [RPCMethod.MethodQueryPeers]: ResponseQueryPeers;
-    [RPCMethod.MethodQueryShards]: ResponseQueryShards;
-    [RPCMethod.MethodQueryStat]: ResponseQueryStat;
-    [RPCMethod.MethodQueryFees]: ResponseQueryFees;
-};
-
-export type RPCResponse<
-    Method extends RPCMethod
-> = Method extends RPCMethod.MethodQueryBlock
-    ? ResponseQueryBlock
-    : Method extends RPCMethod.MethodQueryBlocks
-    ? ResponseQueryBlocks
-    : Method extends RPCMethod.MethodSubmitTx
-    ? ResponseSubmitTx
-    : Method extends RPCMethod.MethodQueryTx
-    ? ResponseQueryTx
-    : Method extends RPCMethod.MethodQueryTxs
-    ? ResponseQueryTxs
-    : Method extends RPCMethod.MethodQueryNumPeers
-    ? ResponseQueryNumPeers
-    : Method extends RPCMethod.MethodQueryPeers
-    ? ResponseQueryPeers
-    : Method extends RPCMethod.MethodQueryShards
-    ? ResponseQueryShards
-    : Method extends RPCMethod.MethodQueryStat
-    ? ResponseQueryStat
-    : Method extends RPCMethod.MethodQueryFees
-    ? ResponseQueryFees // tslint:disable-next-line: no-any
-    : any;
-
 export type RenVMParams = {
     [RPCMethod.MethodQueryBlock]: ParamsQueryBlock;
     [RPCMethod.MethodQueryBlocks]: ParamsQueryBlocks;
@@ -281,26 +244,22 @@ export type RenVMParams = {
     [RPCMethod.MethodQueryFees]: ParamsQueryFees;
 };
 
-export type RPCParams<
-    Method extends RPCMethod
-> = Method extends RPCMethod.MethodQueryBlock
-    ? ParamsQueryBlock
-    : Method extends RPCMethod.MethodQueryBlocks
-    ? ParamsQueryBlocks // tslint:disable-next-line: no-any
-    : Method extends RPCMethod.MethodSubmitTx
-    ? ParamsSubmitBurn | ParamsSubmitMint
-    : Method extends RPCMethod.MethodQueryTx
-    ? ParamsQueryTx
-    : Method extends RPCMethod.MethodQueryTxs
-    ? ParamsQueryTxs
-    : Method extends RPCMethod.MethodQueryNumPeers
-    ? ParamsQueryNumPeers
-    : Method extends RPCMethod.MethodQueryPeers
-    ? ParamsQueryPeers
-    : Method extends RPCMethod.MethodQueryShards
-    ? ParamsQueryShards
-    : Method extends RPCMethod.MethodQueryStat
-    ? ParamsQueryStat
-    : Method extends RPCMethod.MethodQueryFees
-    ? ParamsQueryFees // tslint:disable-next-line: no-any
-    : any;
+export type RenVMResponses = {
+    [RPCMethod.MethodQueryBlock]: ResponseQueryBlock;
+    [RPCMethod.MethodQueryBlocks]: ResponseQueryBlocks;
+    [RPCMethod.MethodSubmitTx]: ResponseSubmitTx;
+    [RPCMethod.MethodQueryTx]: ResponseQueryTx;
+    [RPCMethod.MethodQueryTxs]: ResponseQueryTxs;
+    [RPCMethod.MethodQueryNumPeers]: ResponseQueryNumPeers;
+    [RPCMethod.MethodQueryPeers]: ResponseQueryPeers;
+    [RPCMethod.MethodQueryShards]: ResponseQueryShards;
+    [RPCMethod.MethodQueryStat]: ResponseQueryStat;
+    [RPCMethod.MethodQueryFees]: ResponseQueryFees;
+};
+
+// The following lines will throw a type error if RenVMResponses or RenVMParams
+// aren't defined for all RPC methods.
+// type _responsesCheck = RenVMResponses[RPCMethod];
+// type _paramsCheck = RenVMParams[RPCMethod];
+(): RenVMParams[RPCMethod] | void => {};
+(): RenVMResponses[RPCMethod] | void => {};

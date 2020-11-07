@@ -30,7 +30,7 @@ export const burnParamsType: PackStructType = {
             amount: PackPrimitive.U256,
         },
         {
-            to: PackPrimitive.String,
+            to: PackPrimitive.Str,
         },
         {
             nonce: PackPrimitive.Bytes32,
@@ -69,7 +69,7 @@ export const mintParamsType = (): PackStructType => ({
             phash: PackPrimitive.Bytes32,
         },
         {
-            to: PackPrimitive.String,
+            to: PackPrimitive.Str,
         },
         {
             nonce: PackPrimitive.Bytes32,

@@ -155,8 +155,9 @@ describe("common utils", () => {
         it("retries the correct number of times", async () => {
             const mustBeCalledNTimes = (n: number, badError = false) => {
                 let i = 0;
+                // eslint-disable-next-line @typescript-eslint/require-await
                 return async () => {
-                    i++;
+                    i += 1;
                     if (i < n) {
                         const error = new Error("Error.");
                         (error as {
@@ -185,23 +186,20 @@ describe("common utils", () => {
     });
 
     context("randomBytes", () => {
-        // tslint:disable: no-any
-
         // Restore global window state afterwards incase this is being run in
         // a browser environment.
-        let previousWindow: any;
+        let previousWindow: unknown;
         before(() => {
-            previousWindow = (global as any).window;
+            previousWindow = (global as { window: unknown }).window;
         });
         after(() => {
-            (global as any).window = previousWindow;
+            (global as { window: unknown }).window = previousWindow;
         });
 
         it("returns random bytes of the correct length", () => {
             expect(randomBytes(32).length).toEqual(32);
             expect(randomBytes(32)).not.toEqual(randomBytes(32));
-            // tslint:disable-next-line: no-any
-            (global as any).window = {
+            (global as { window: unknown }).window = {
                 crypto: {
                     getRandomValues: (uints: Uint32Array) => {
                         for (let i = 0; i < uints.length; i++) {
@@ -212,7 +210,6 @@ describe("common utils", () => {
             };
             expect(randomBytes(32).length).toEqual(32);
         });
-        // tslint:enable: no-any
     });
 
     context("randomNonce", () => {

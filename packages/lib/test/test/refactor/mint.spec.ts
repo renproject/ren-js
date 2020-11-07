@@ -1,18 +1,19 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
-import { Bitcoin, Ethereum } from "@renproject/chains";
+import * as Chains from "@renproject/chains";
+
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renTestnet } from "@renproject/networks";
 import RenJS from "@renproject/ren";
 import { SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { config as loadDotEnv } from "dotenv";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const colors = [green, magenta, yellow, cyan, blue, red];
 
@@ -20,33 +21,26 @@ const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor: mint", () => {
-    // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("mint to contract", async function () {
+    longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
         const asset = "BTC";
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
 
-        // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
-
-        const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
-
         const logLevel: LogLevel = LogLevel.Log;
-
-        // const renJS = new RenJS(renVMProvider, { logLevel });
         const renJS = new RenJS("testnet", { logLevel });
+
+        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Use 0.0001 more than fee.
         let suggestedAmount;
         try {
             const fees = await renJS.getFees();
-            suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8,
-            );
+            const fee: number = fees[asset.toLowerCase()].lock;
+            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error(error);
             suggestedAmount = 0.0008 * 1e8;
@@ -54,9 +48,9 @@ describe("Refactor: mint", () => {
 
         const lockAndMint = await renJS.lockAndMint({
             asset,
-            from: Bitcoin(),
-            to: Ethereum(provider).Account({
-                address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
+            from: Chains.Bitcoin(),
+            to: Chains.Ethereum(provider).Account({
+                address: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             }),
         });
 
@@ -84,62 +78,31 @@ describe("Refactor: mint", () => {
         await new Promise((resolve, reject) => {
             let i = 0;
 
-            // lockAndMint.on("deposit", async deposit => {
-
-            // tslint:disable-next-line: no-floating-promises
-            Promise.resolve(
-                lockAndMint.processDeposit({
-                    transaction: {
-                        txHash:
-                            "2f33d54f91f0f3ec7c50404b5155dd6699ab1f93720ba43dfe85dea70c63822c",
-                        amount: 200000,
-                        vOut: 0,
-                        confirmations: 0,
-                    },
-                    amount: "200000",
-                }),
-            ).then(async (deposit) => {
-                const hash = await deposit.txHash();
+            lockAndMint.on("deposit", (deposit) => {
+                const hash = deposit.txHash();
 
                 const color = colors[i % colors.length];
                 i += 1;
 
-                deposit._logger = new SimpleLogger(
+                deposit._state.logger = new SimpleLogger(
                     logLevel,
                     color(`[${hash.slice(0, 6)}] `),
                 );
 
-                const info = deposit._logger.log;
-
-                info(
+                deposit._state.logger.log(
                     `Received ${
-                        // tslint:disable-next-line: no-any
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (deposit.depositDetails as any).amount / 1e8
                     } ${asset}`,
                     deposit.depositDetails,
                 );
 
-                info(`Calling .confirmed`);
-                await deposit
-                    .confirmed()
-                    .on("confirmation", (confs, target) => {
-                        info(`${confs}/${target} confirmations`);
-                    });
-
-                info(`Calling .signed`);
-                await deposit.signed().on("status", (status) => {
-                    info(`status: ${status}`);
-                });
-
-                info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", (txHash) => {
-                    info(`txHash: ${txHash}`);
-                });
-
-                resolve();
+                RenJS.defaultDepositHandler(deposit)
+                    .then(resolve)
+                    .catch(deposit._state.logger.error);
             });
 
-            sleep(10 * SECONDS)
+            sleep(15 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
                     if (i === 0) {

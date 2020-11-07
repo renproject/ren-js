@@ -1,4 +1,4 @@
-// tslint:disable: no-any no-use-before-declare
+/* eslint-disable security/detect-object-injection */
 
 import BigNumber from "bignumber.js";
 
@@ -48,7 +48,7 @@ export const assert = (
 export const assertType = <
     // Type extends string,
     // T = Type extends "Buffer" ? Buffer : any
-    T = any
+    T = unknown
 >(
     type: string,
     objects: {
@@ -82,7 +82,7 @@ type PrimitiveTypeName =
     | "BigNumber"
     | "Buffer";
 
-const typeOf = (v: any): PrimitiveTypeName =>
+const typeOf = (v: unknown): PrimitiveTypeName =>
     v === null
         ? "null"
         : BigNumber.isBigNumber(v)
@@ -91,14 +91,15 @@ const typeOf = (v: any): PrimitiveTypeName =>
         ? "Buffer"
         : typeof v;
 
-const assertTypeCheck = <T = any>(
-    type: (t: any, key: string) => boolean,
+const assertTypeCheck = <T = unknown>(
+    type: (t: unknown, key: string) => boolean,
     objects: {
         [value: string]: T;
     },
     typeDescription: string,
 ): objects is { [value: string]: T } => {
     for (const key of Object.keys(objects)) {
+        // eslint-disable-next-line security/detect-object-injection
         const value = objects[key];
         if (!type(value, key)) {
             const readableType = Array.isArray(value) ? "any[]" : typeOf(value);
@@ -110,7 +111,7 @@ const assertTypeCheck = <T = any>(
     return true;
 };
 
-const is = (type: PrimitiveTypeName) => (v: any) =>
+const is = (type: PrimitiveTypeName) => (v: unknown) =>
     type === "any" ? true : typeOf(v) === type;
 
 const isUnionType = (unionType: string): string[] | false => {
@@ -126,10 +127,9 @@ const isArrayType = (arrayType: string): string | false => {
         arrayType.slice(0, 6) === "Array<" && arrayType.slice(-1) === ">";
 
     if (isArray) {
-        const arrayMatch = arrayType.match(/^Array<(.*)>$/);
+        const arrayMatch = /^Array<(.*)>$/.exec(arrayType);
         if (arrayMatch) {
-            let type: string;
-            [, type] = arrayMatch;
+            const [, type] = arrayMatch;
             return type;
         }
     }
@@ -137,17 +137,16 @@ const isArrayType = (arrayType: string): string | false => {
     const isBracketArray =
         arrayType.indexOf(" ") === -1 && arrayType.slice(-2) === "[]";
     if (isBracketArray) {
-        const bracketMatch = arrayType.match(/^([^ ]*)\[\]$/);
+        const bracketMatch = /^([^ ]*)\[\]$/.exec(arrayType);
         if (bracketMatch) {
-            let type: string;
-            [, type] = bracketMatch;
+            const [, type] = bracketMatch;
             return type;
         }
     }
     return false;
 };
 
-const assertTypeUnion = <T = any>(
+const assertTypeUnion = <T = unknown>(
     unionType: string,
     objects: {
         [value: string]: T;
@@ -162,7 +161,8 @@ const assertTypeUnion = <T = any>(
                 }
                 if (isArrayType(type)) {
                     try {
-                        assertArray(type, { [key]: v });
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        assertArray(type, { [key]: v as unknown[] });
                         return true;
                     } catch (error) {
                         return false;
@@ -175,7 +175,7 @@ const assertTypeUnion = <T = any>(
     );
 };
 
-const assertArray = <T = any>(
+const assertArray = <T = unknown>(
     arrayType: string,
     objects: {
         [value: string]: T[];
@@ -188,7 +188,7 @@ const assertArray = <T = any>(
 
     for (const key of Object.keys(objects)) {
         const value = objects[key];
-        assertTypeCheck((v: any) => Array.isArray(v), { value }, "any[]");
+        assertTypeCheck((v) => Array.isArray(v), { value }, "any[]");
 
         for (let i = 0; i < value.length; i++) {
             assertType(type, { [`${key}[${i}]`]: value[i] });
@@ -197,21 +197,23 @@ const assertArray = <T = any>(
     return true;
 };
 
-type ObjectDefinition = { [key: string]: string | ObjectDefinition };
+declare type ObjectDefinition<T> = {
+    [P in keyof T]: string | ObjectDefinition<unknown>;
+};
 
-export const assertObject = <T extends { [key: string]: any }>(
-    fieldTypes: ObjectDefinition,
-    objects: {
-        [value: string]: T;
-    },
+export const assertObject = <T extends object>(
+    fieldTypes: ObjectDefinition<T>,
+    objects: { [key: string]: T },
 ): boolean => {
     for (const key of Object.keys(objects)) {
         const value = objects[key];
 
         for (const field of Object.keys(fieldTypes)) {
             if (typeof fieldTypes[field] === "object") {
-                assertObject(fieldTypes[field] as ObjectDefinition, {
-                    [`${key}["${field}"]`]: value[field],
+                assertObject(fieldTypes[field] as ObjectDefinition<unknown>, {
+                    [`${key}["${field}"]`]: value[field] as {
+                        [key: string]: unknown;
+                    },
                 });
             } else if (typeof fieldTypes[field] === "string") {
                 assertType(fieldTypes[field] as string, {

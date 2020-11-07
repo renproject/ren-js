@@ -38,31 +38,29 @@ export interface EthereumConnectorOptions {
     networkIdMapper?: typeof ethNetworkToRenNetwork;
 }
 
-type SaneProvider = Exclude<provider, string | null | HttpProvider>;
+export type SaneProvider = Exclude<provider, string | null | HttpProvider> & {
+    removeListener?: (name: string, listener: unknown) => void;
+    close?: () => Promise<void>;
+};
 
-export abstract class AbstractEthereumConnector
-    implements ConnectorInterface<SaneProvider, Address> {
+export abstract class AbstractEthereumConnector<
+    Provider extends SaneProvider = SaneProvider
+> implements ConnectorInterface<Provider, Address> {
     supportsTestnet = true;
     networkIdMapper = ethNetworkToRenNetwork;
-    emitter: ConnectorEmitter<SaneProvider, Address>;
+    emitter: ConnectorEmitter<Provider, Address>;
     constructor({
         debug = false,
         networkIdMapper = ethNetworkToRenNetwork,
     }: EthereumConnectorOptions) {
         this.networkIdMapper = networkIdMapper;
-        this.emitter = new ConnectorEmitter<SaneProvider, Address>(debug);
+        this.emitter = new ConnectorEmitter<Provider, Address>(debug);
     }
-    abstract activate: ConnectorInterface<SaneProvider, Address>["activate"];
-    abstract getProvider: ConnectorInterface<
-        SaneProvider,
-        Address
-    >["getProvider"];
-    abstract deactivate: ConnectorInterface<
-        SaneProvider,
-        Address
-    >["deactivate"];
+    abstract activate: ConnectorInterface<Provider, Address>["activate"];
+    abstract getProvider: ConnectorInterface<Provider, Address>["getProvider"];
+    abstract deactivate: ConnectorInterface<Provider, Address>["deactivate"];
     // Get the complete connector status in one call
-    async getStatus(): Promise<ConnectorUpdate<SaneProvider, Address>> {
+    async getStatus(): Promise<ConnectorUpdate<Provider, Address>> {
         return {
             account: await this.getAccount(),
             renNetwork: await this.getRenNetwork(),
@@ -73,7 +71,7 @@ export abstract class AbstractEthereumConnector
     // Get default ethereum account
     async getAccount() {
         const account = resultOrRaw(
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await ((await this.getProvider()) as any).request({
                 method: "eth_requestAccounts",
             })
@@ -86,7 +84,7 @@ export abstract class AbstractEthereumConnector
     // Cast current ethereum network to Ren network version or throw
     async getRenNetwork() {
         return this.networkIdMapper(
-            // tslint:disable-next-line: no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await resultOrRaw((await this.getProvider()) as any).request({
                 method: "eth_chainId",
             })

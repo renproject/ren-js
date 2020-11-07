@@ -1,7 +1,12 @@
-import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// TODO: Improve typings.
+
 import BigNumber from "bignumber.js";
+import { MachineOptions, Receiver, Sender } from "xstate";
+
+import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
 import { GatewaySession } from "../types/transaction";
-import { Sender, MachineOptions, Receiver } from "xstate";
 
 /*
 Sample burnChainMap / releaseChainMap implementations
@@ -46,15 +51,15 @@ const txCreator = async (
         .toFixed();
     try {
         const fees = await context.sdk.getFees();
+        const fee: number = fees[asset.toLowerCase()].release;
         suggestedAmount = new BigNumber(
-            Math.floor(
-                fees[asset.toLowerCase()].release +
-                    Number(context.tx.targetAmount) * 1e8,
-            ),
+            Math.floor(fee + Number(context.tx.targetAmount) * 1e8),
         )
             .decimalPlaces(0)
             .toFixed();
-    } catch (e) {}
+    } catch (error) {
+        // Ignore error
+    }
 
     const newTx: GatewaySession = {
         ...context.tx,
@@ -64,14 +69,12 @@ const txCreator = async (
 
     const burn = await burnAndRelease(context);
     // We immediately submit the burn request
-    const hash: string = await new Promise(async (resolve, reject) => {
-        try {
+    const hash: string = await new Promise((resolve, reject) => {
+        (async () => {
             await burn
                 .burn()
-                .on("transactionHash", (hash: string) => resolve(hash));
-        } catch (e) {
-            reject(e);
-        }
+                .on("transactionHash", (txHash: string) => resolve(txHash));
+        })().catch(reject);
     });
 
     return {
@@ -95,50 +98,56 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     _receive: Receiver<any>,
 ) => {
     const cleaners: Array<() => void> = [];
-    burnAndRelease(context).then(async (burn) => {
-        let confirmations = 0;
-        const tx = Object.values(context.tx.transactions)[0];
-        const burnRef = burn.burn();
+    burnAndRelease(context)
+        .then(async (burn) => {
+            let confirmations = 0;
+            const tx = Object.values(context.tx.transactions)[0];
+            const burnRef = burn.burn();
 
-        const burnListener = (confs: number) => {
-            confirmations = confs;
-            callback({
-                type: "CONFIRMATION",
-                data: { ...tx, sourceTxConfs: confs },
+            const burnListener = (confs: number) => {
+                confirmations = confs;
+                callback({
+                    type: "CONFIRMATION",
+                    data: { ...tx, sourceTxConfs: confs },
+                });
+            };
+            cleaners.push(() => {
+                burnRef._cancel();
+                burnRef.removeListener("confirmation", burnListener);
             });
-        };
-        cleaners.push(() => {
-            burnRef._cancel();
-            burnRef.removeListener("confirmation", burnListener);
-        });
 
-        await burnRef
-            ?.on("confirmation", burnListener)
-            .catch((error) => callback({ type: "BURN_ERROR", data: error }));
+            await burnRef
+                ?.on("confirmation", burnListener)
+                .catch((error) =>
+                    callback({ type: "BURN_ERROR", data: error }),
+                );
 
-        const releaseListener = (status: string) =>
-            status === "confirming"
-                ? console.log(`confirming (${confirmations}/15)`)
-                : console.log(status);
+            const releaseListener = (status: string) =>
+                status === "confirming"
+                    ? console.log(`confirming (${confirmations}/15)`)
+                    : console.log(status);
 
-        const hashListener = (hash: string) => console.log("hash", hash);
+            const hashListener = (hash: string) => console.log("hash", hash);
 
-        const releaseRef = burn.release();
-        cleaners.push(() => {
-            releaseRef._cancel();
-            releaseRef.removeListener("status", releaseListener);
-            releaseRef.removeListener("txHash", hashListener);
-        });
+            const releaseRef = burn.release();
+            cleaners.push(() => {
+                releaseRef._cancel();
+                releaseRef.removeListener("status", releaseListener);
+                releaseRef.removeListener("txHash", hashListener);
+            });
 
-        await releaseRef
-            .on("status", releaseListener)
-            .on("txHash", hashListener)
-            .catch((error) => callback({ type: "RELEASE_ERROR", data: error }));
-    });
+            await releaseRef
+                .on("status", releaseListener)
+                .on("txHash", hashListener)
+                .catch((error) =>
+                    callback({ type: "RELEASE_ERROR", data: error }),
+                );
+        })
+        .catch(console.error);
 
     return () => {
-        for (let i of cleaners) {
-            i();
+        for (const cleaner of cleaners) {
+            cleaner();
         }
     };
 };

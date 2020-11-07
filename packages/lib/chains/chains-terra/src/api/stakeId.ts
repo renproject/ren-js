@@ -14,9 +14,9 @@ const STAKE_ID_URL = (network: TerraNetwork) => {
         //     prefix = "soju";
         //     break;
         default:
-            throw new Error(`Terra network ${network} not supported.`);
+            throw new Error(`Terra network ${String(network)} not supported.`);
     }
-    return `https://${prefix}.stake.id/api`;
+    return `https://${String(prefix)}.stake.id/api`;
 };
 
 interface TerraTx {
@@ -42,6 +42,7 @@ interface MessagesResponse {
     }>;
     page: {
         total: number;
+        // eslint-disable-next-line id-blacklist
         number: number;
     };
     delegations: Array<{
@@ -80,15 +81,13 @@ type DecodedMsg = TerraMessageTypes["bank/MsgSend"];
 const extractDepositsFromTx = (chainHeight: number) => (
     tx: TerraTx,
 ): TerraTransaction[] => {
-    const msgs: Array<
-        Omit<TerraTx, "msg"> & {
-            to_address: string;
-            from_address: string;
-            amount: string;
-            denom: string;
-            messageIndex: number;
-        }
-    > = [];
+    const msgs: Array<Omit<TerraTx, "msg"> & {
+        to_address: string;
+        from_address: string;
+        amount: string;
+        denom: string;
+        messageIndex: number;
+    }> = [];
     try {
         const decodedMsgs: DecodedMsg[] = JSON.parse(
             Buffer.from(tx.msg, "base64").toString(),

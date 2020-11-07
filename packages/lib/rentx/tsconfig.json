@@ -1,11 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES2016",
-        "lib": [
-            "DOM",
-            "es2017",
-            "esnext"
-        ],
+        "lib": ["DOM", "es2017", "esnext"],
         "outDir": "build/main",
         "rootDir": "src",
         "allowJs": true,
@@ -17,13 +13,8 @@
         "module": "CommonJS",
         "moduleResolution": "node",
         "declaration": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true
+        "resolveJsonModule": true
     },
-    "include": [
-        "src/**/*.ts"
-    ],
-    "exclude": [
-        "src/**/flycheck*"
-    ]
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/flycheck*"]
 }

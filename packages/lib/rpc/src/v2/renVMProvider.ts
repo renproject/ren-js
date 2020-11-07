@@ -1,31 +1,27 @@
 import {
-    AbiItem,
-    Asset,
-    BurnTransaction,
-    DepositCommon,
+    BurnAndReleaseTransaction,
+    getRenNetworkDetails,
+    LockAndMintTransaction,
     LockChain,
     Logger,
     MintChain,
-    MintTransaction,
-    RenContract,
+    NullLogger,
     RenNetwork,
+    RenNetworkDetails,
     RenNetworkString,
     TxStatus,
 } from "@renproject/interfaces";
-import { ParallelHttpProvider, Provider } from "@renproject/provider";
+import { HttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
     fromBase64,
-    getTokenPrices,
-    normalizeValue,
     SECONDS,
     sleep,
-    TokenPrices,
     toURLBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { List, OrderedMap, Set } from "immutable";
 
+import { AbstractRenVMProvider } from "../abstract";
 import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
@@ -35,8 +31,6 @@ import {
     ParamsSubmitMint,
     RenVMParams,
     RenVMResponses,
-    ResponseQueryBurnTx,
-    ResponseQueryMintTx,
     RPCMethod,
 } from "./methods";
 import {
@@ -44,87 +38,62 @@ import {
     mintParamsType,
     MintTransactionInput,
 } from "./transaction";
-import { unmarshalBurnTx, unmarshalFees, unmarshalMintTx } from "./unmarshal";
+import { unmarshalBurnTx, unmarshalMintTx } from "./unmarshal";
 
-export const resolveRpcURL = (network: RenNetwork | string) => {
-    switch (network) {
-        case RenNetwork.Mainnet:
-            return "https://lightnode-mainnet.herokuapp.com";
-        case RenNetwork.Chaosnet:
-            return "https://lightnode-chaosnet.herokuapp.com";
-        case RenNetwork.Testnet:
-            return "https://lightnode-testnet.herokuapp.com";
-        case RenNetwork.Devnet:
-            return "https://lightnode-devnet.herokuapp.com";
-    }
-    return network;
-};
-
-export const resolveV2Contract = <
-    // tslint:disable-next-line: no-any
-    Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    ChainAsset extends string = string,
-    Address = string,
-    MintAsset extends string = string
->({
+export const resolveV2Contract = ({
     asset,
     from,
     to,
 }: {
-    asset: ChainAsset;
-    from:
-        | LockChain<Transaction, Deposit, Asset, Address>
-        | MintChain<MintAsset>;
-    to: LockChain<Transaction, Deposit, Asset, Address> | MintChain<MintAsset>;
+    asset: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    from: LockChain<any, any, any> | MintChain<any, any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    to: LockChain<any, any, any> | MintChain<any, any>;
 }): string => {
     if (
-        (from as LockChain<Transaction, Deposit, Asset, Address>)
-            .assetIsNative &&
-        (from as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative(
-            asset,
-        )
+        (from as LockChain).assetIsNative &&
+        (from as LockChain).assetIsNative(asset)
     ) {
         return `${asset}/to${to.name}`;
     }
     if (
-        (to as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative &&
-        (to as LockChain<Transaction, Deposit, Asset, Address>).assetIsNative(
-            asset,
-        )
+        (to as LockChain).assetIsNative &&
+        (to as LockChain).assetIsNative(asset)
     ) {
         return `${asset}/from${from.name}`;
     }
     return `${asset}/from$${from.name}To${to.name}`;
 };
 
-export type RenVMProviderInterface = Provider<RenVMParams, RenVMResponses>;
-
-export class RenVMProvider implements RenVMProviderInterface {
+export class RenVMProvider
+    implements AbstractRenVMProvider<RenVMParams, RenVMResponses> {
     public version = 2;
 
     private readonly network: RenNetwork;
 
     public readonly provider: Provider<RenVMParams, RenVMResponses>;
     sendMessage: RenVMProvider["provider"]["sendMessage"];
-    private readonly logger: Logger | undefined;
+    private readonly logger: Logger;
 
     constructor(
-        network: RenNetwork | RenNetworkString,
+        network: RenNetwork | RenNetworkString | RenNetworkDetails,
         provider?: Provider<RenVMParams, RenVMResponses> | string,
-        logger?: Logger,
+        logger: Logger = NullLogger,
     ) {
         if (!provider || typeof provider === "string") {
-            const rpcUrl = provider || resolveRpcURL(network);
+            const rpcUrl = provider || getRenNetworkDetails(network).lightnode;
             try {
-                provider = new ParallelHttpProvider<
-                    RenVMParams,
-                    RenVMResponses
-                >([rpcUrl], logger) as Provider<RenVMParams, RenVMResponses>;
+                provider = new HttpProvider<RenVMParams, RenVMResponses>(
+                    rpcUrl,
+                    logger,
+                ) as Provider<RenVMParams, RenVMResponses>;
             } catch (error) {
-                if (String(error && error.message).match(/Invalid node URL/)) {
+                if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(
-                        `Invalid network or provider URL: "${network}"`,
+                        `Invalid network or provider URL: "${
+                            getRenNetworkDetails(network).name
+                        }"`,
                     );
                 }
                 throw error;
@@ -141,8 +110,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         blockHeight: ParamsQueryBlock["blockHeight"],
         retry?: number,
     ) =>
-        this.sendMessage<RPCMethod.MethodQueryBlock>(
-            RPCMethod.MethodQueryBlock,
+        this.sendMessage<RPCMethod.QueryBlock>(
+            RPCMethod.QueryBlock,
             { blockHeight },
             retry,
         );
@@ -152,8 +121,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         n: ParamsQueryBlocks["n"],
         retry?: number,
     ) =>
-        this.sendMessage<RPCMethod.MethodQueryBlocks>(
-            RPCMethod.MethodQueryBlocks,
+        this.sendMessage<RPCMethod.QueryBlocks>(
+            RPCMethod.QueryBlocks,
             { blockHeight, n },
             retry,
         );
@@ -162,16 +131,15 @@ export class RenVMProvider implements RenVMProviderInterface {
         tx: ParamsSubmitBurn["tx"] | ParamsSubmitMint["tx"],
         retry?: number,
     ) =>
-        this.sendMessage<RPCMethod.MethodSubmitTx>(
-            RPCMethod.MethodSubmitTx,
-            // tslint:disable-next-line: no-object-literal-type-assertion
+        this.sendMessage<RPCMethod.SubmitTx>(
+            RPCMethod.SubmitTx,
             { tx } as ParamsSubmitBurn | ParamsSubmitMint,
             retry,
         );
 
     public queryTx = async (txHash: ParamsQueryTx["txHash"], retry?: number) =>
-        this.sendMessage<RPCMethod.MethodQueryTx>(
-            RPCMethod.MethodQueryTx,
+        this.sendMessage<RPCMethod.QueryTx>(
+            RPCMethod.QueryTx,
             { txHash },
             retry,
         );
@@ -183,8 +151,8 @@ export class RenVMProvider implements RenVMProviderInterface {
         txStatus?: ParamsQueryTxs["txStatus"],
         retry?: number,
     ) =>
-        this.sendMessage<RPCMethod.MethodQueryTxs>(
-            RPCMethod.MethodQueryTxs,
+        this.sendMessage<RPCMethod.QueryTxs>(
+            RPCMethod.QueryTxs,
             {
                 tags,
                 page: (page || 0).toString(),
@@ -194,45 +162,31 @@ export class RenVMProvider implements RenVMProviderInterface {
             retry,
         );
 
-    public queryNumPeers = async (retry?: number) =>
-        this.sendMessage<RPCMethod.MethodQueryNumPeers>(
-            RPCMethod.MethodQueryNumPeers,
+    public queryConfig = async (retry?: number) =>
+        this.sendMessage<RPCMethod.QueryConfig>(
+            RPCMethod.QueryConfig,
             {},
             retry,
         );
 
-    public queryPeers = async (retry?: number) =>
-        this.sendMessage<RPCMethod.MethodQueryPeers>(
-            RPCMethod.MethodQueryPeers,
-            {},
-            retry,
-        );
+    public queryState = async (retry?: number) =>
+        this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
 
-    public queryShards = async (retry?: number) =>
-        this.sendMessage<RPCMethod.MethodQueryShards>(
-            RPCMethod.MethodQueryShards,
-            {},
-            retry,
-        );
+    public getFees = async () => {};
 
-    public queryStat = async (retry?: number) =>
-        this.sendMessage<RPCMethod.MethodQueryStat>(
-            RPCMethod.MethodQueryStat,
-            {},
-            retry,
-        );
-
-    public queryFees = async (retry?: number) =>
-        this.sendMessage<RPCMethod.MethodQueryFees>(
-            RPCMethod.MethodQueryFees,
-            {},
-            retry,
-        );
-
-    public getFees = async () => unmarshalFees(await this.queryFees());
-
-    public buildMintTransaction = (params: {
-        renContractOrSelector: string;
+    public buildTransaction = ({
+        selector,
+        gHash,
+        gPubKey,
+        nHash,
+        nonce,
+        output,
+        amount,
+        payload,
+        pHash,
+        to,
+    }: {
+        selector: string;
         gHash: Buffer;
         gPubKey: Buffer;
         nHash: Buffer;
@@ -243,18 +197,6 @@ export class RenVMProvider implements RenVMProviderInterface {
         pHash: Buffer;
         to: string;
     }): MintTransactionInput => {
-        const {
-            renContractOrSelector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        } = params;
         assertType<Buffer>("Buffer", {
             gHash,
             gPubKey,
@@ -282,276 +224,53 @@ export class RenVMProvider implements RenVMProviderInterface {
             },
         };
         return {
-            hash: toURLBase64(
-                hashTransaction(version, renContractOrSelector, txIn),
-            ),
-            selector: renContractOrSelector,
+            hash: toURLBase64(hashTransaction(version, selector, txIn)),
+            selector: selector,
             version,
             // TODO: Fix types
             in: (txIn as unknown) as MintTransactionInput["in"],
         };
     };
 
-    public mintTxHash = (
-        renContractOrSelector: string,
-        gHash: Buffer,
-        gPubKey: Buffer,
-        nHash: Buffer,
-        nonce: Buffer,
-        // tslint:disable-next-line: no-any
-        output:
-            | { txHash: string; vOut: string }
-            | { txindex: string; txid: Buffer },
-        amount: string,
-        payload: Buffer,
-        pHash: Buffer,
-        to: string,
-        _outputHashString: string,
-    ): Buffer => {
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-        });
-        assertType<string>("string", { to });
-
-        const { txid, txindex } = output as { txid: Buffer; txindex: string };
-        assertType<Buffer>("Buffer", { txid });
-        assertType<string>("string", { txindex });
-
-        return fromBase64(
-            this.buildMintTransaction({
-                renContractOrSelector,
-                gHash,
-                gPubKey,
-                nHash,
-                nonce,
-                output: { txid, txindex },
-                amount,
-                payload,
-                pHash,
-                to,
-            }).hash,
-        );
+    public mintTxHash = (params: {
+        selector: string;
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        output: { txindex: string; txid: Buffer };
+        amount: string;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
+    }): Buffer => {
+        return fromBase64(this.buildTransaction(params).hash);
     };
 
-    public submitMint = async (
-        renContractOrSelector: string,
-        gHash: Buffer,
-        gPubKey: Buffer,
-        nHash: Buffer,
-        nonce: Buffer,
-        // tslint:disable-next-line: no-any
-        output: { txindex: string; txid: Buffer },
-        amount: string,
-        payload: Buffer,
-        pHash: Buffer,
-        to: string,
-        token: string,
-        _fn: string,
-        _fnABI: AbiItem[],
-        _tags: [string] | [],
-    ): Promise<Buffer> => {
-        const { txid, txindex } = output;
+    public submitMint = async (params: {
+        selector: string;
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        output: { txindex: string; txid: Buffer };
+        amount: string;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
+    }): Promise<Buffer> => {
+        const tx = this.buildTransaction(params);
 
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-            txid,
-        });
-        assertType<string>("string", { to, token, txindex, amount });
-
-        const tx = this.buildMintTransaction({
-            renContractOrSelector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output: { txid, txindex },
-            amount,
-            payload,
-            pHash,
-            to,
-        });
-
-        await this.provider.sendMessage<RPCMethod.MethodSubmitTx>(
-            RPCMethod.MethodSubmitTx,
-            {
-                tx,
-                // tags,
-            },
-        );
+        await this.submitTx(tx);
 
         return fromBase64(tx.hash);
     };
 
-    public burnTxHash = async (
-        params: {
-            // v2
-            renContractOrSelector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        },
-        _logger?: Logger,
-    ): Promise<Buffer> => {
-        const {
-            renContractOrSelector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        } = params as {
-            // v2
-            renContractOrSelector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        };
-
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-            txid: output.txid,
-        });
-        assertType<string>("string", {
-            renContractOrSelector,
-            to,
-            txindex: output.txindex,
-            amount,
-        });
-
-        const tx = this.buildMintTransaction({
-            renContractOrSelector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        });
-
-        return fromBase64(tx.hash);
-    };
-
-    public submitBurn = async (
-        params:
-            | {
-                  // v2
-                  renContractOrSelector: string;
-                  gHash: Buffer;
-                  gPubKey: Buffer;
-                  nHash: Buffer;
-                  nonce: Buffer;
-                  output: { txid: Buffer; txindex: string };
-                  amount: string;
-                  payload: Buffer;
-                  pHash: Buffer;
-                  to: string;
-              }
-            | {
-                  // v1
-                  renContract: RenContract;
-                  burnNonce: BigNumber;
-              },
-        _tags: [string] | [],
-        _logger?: Logger,
-    ): Promise<Buffer> => {
-        const {
-            renContractOrSelector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        } = params as {
-            // v2
-            renContractOrSelector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txid: Buffer; txindex: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        };
-
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-            txid: output.txid,
-        });
-        assertType<string>("string", {
-            renContractOrSelector,
-            to,
-            txindex: output.txindex,
-            amount,
-        });
-
-        const tx = this.buildMintTransaction({
-            renContractOrSelector,
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            output,
-            amount,
-            payload,
-            pHash,
-            to,
-        });
-
-        await this.provider.sendMessage(RPCMethod.MethodSubmitTx, {
-            tx,
-            // tags,
-        });
-
-        return fromBase64(tx.hash);
-    };
+    public burnTxHash = this.mintTxHash;
+    public submitBurn = this.submitMint;
 
     public readonly queryMintOrBurn = async <
-        T extends MintTransaction | BurnTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(
         renVMTxHash: Buffer,
     ): Promise<T> => {
@@ -562,12 +281,12 @@ export class RenVMProvider implements RenVMProviderInterface {
             // TODO: Improve mint/burn detection. Currently checks if the format
             // is `ASSET/toChain` or `ASSET/fromChainToChain`. It may return
             // a false positive if the chain name contains `To`.
-            const isMint = response.tx.selector.match(/((\/to)|(To))/);
+            const isMint = /((\/to)|(To))/.exec(response.tx.selector);
 
             if (isMint) {
-                return unmarshalMintTx(response as ResponseQueryMintTx) as T;
+                return unmarshalMintTx(response) as T;
             } else {
-                return unmarshalBurnTx(response as ResponseQueryBurnTx) as T;
+                return unmarshalBurnTx(response) as T;
             }
         } catch (error) {
             console.error(error);
@@ -576,7 +295,7 @@ export class RenVMProvider implements RenVMProviderInterface {
     };
 
     public readonly waitForTX = async <
-        T extends MintTransaction | BurnTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
@@ -584,7 +303,6 @@ export class RenVMProvider implements RenVMProviderInterface {
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
-        // tslint:disable-next-line: no-constant-condition
         while (true) {
             if (_cancelRequested && _cancelRequested()) {
                 throw new Error(`waitForTX cancelled`);
@@ -599,18 +317,14 @@ export class RenVMProvider implements RenVMProviderInterface {
                     onStatus(result.txStatus);
                 }
             } catch (error) {
-                // tslint:disable-next-line: no-console
                 if (
-                    String((error || {}).message).match(
-                        /(not found)|(not available)/,
+                    /(not found)|(not available)/.exec(
+                        String((error || {}).message),
                     )
                 ) {
                     // ignore
                 } else {
-                    // tslint:disable-next-line: no-console
-                    if (this.logger) {
-                        this.logger.error(String(error));
-                    }
+                    this.logger.error(String(error));
                     // TODO: throw unexpected errors
                 }
             }
@@ -623,80 +337,21 @@ export class RenVMProvider implements RenVMProviderInterface {
      * selectPublicKey fetches the public key for the RenVM shard handling
      * the provided contract.
      *
-     * @param {RenContract} renContract The Ren Contract for which the public
-     *        key should be fetched.
+     * @param chain The chain for which the public key should be fetched.
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (
-        token: Asset,
-        logger?: Logger,
+        chain: string,
     ): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
-        const response = await this.queryShards(5);
-
-        // Filter to only keep shards that are primary/online.
-        const primaryShards = response.shards.filter((shard) => shard.primary);
-
-        // Find the shard with the lowest total value locked (sum all the locked
-        // amounts from all gateways in a shard, after converting to a consistent
-        // currencies using the coinGecko API).
-        const tokens = Set<string>()
-            .concat(
-                ...primaryShards.map((shard) =>
-                    shard.gateways.map((gateway) => gateway.asset),
-                ),
-            )
-            .toArray();
-        const tokenPrices: TokenPrices = await getTokenPrices(
-            tokens,
-            logger,
-        ).catch(() => OrderedMap());
-
-        const smallestShard = List(primaryShards)
-            .filter((shard) =>
-                shard.gateways.map((gateway) => gateway.asset).includes(token),
-            )
-            .sortBy((shard) =>
-                shard.gateways
-                    .map((gateway) =>
-                        normalizeValue(
-                            tokenPrices,
-                            gateway.asset,
-                            gateway.locked,
-                        ),
-                    )
-                    .reduce((sum, value) => sum.plus(value), new BigNumber(0))
-                    .toNumber(),
-            )
-            .first(undefined);
-
-        if (!smallestShard) {
-            throw new Error(
-                "Unable to load public key from RenVM: no shards found",
-            );
-        }
-
-        // Get the gateway pubKey from the gateway with the right asset within
-        // the shard with the lowest total value locked.
-        const tokenGateway = List(smallestShard.gateways)
-            .filter((gateway) => gateway.asset === token)
-            .first(undefined);
-
-        if (!tokenGateway) {
-            throw new Error(
-                `Unable to load public key from RenVM: no gateway for the asset ${token}`,
-            );
-        }
-
-        // Use this gateway pubKey to build the gateway address.
-        // return hash160(
-        return fromBase64(tokenGateway.pubKey);
-        // );
+        const response = await this.queryState(5);
+        return fromBase64(response.state[chain].pubKey);
     };
 
     // In the future, this will be asynchronous. It returns a promise for
     // compatibility.
-    public getNetwork = async (): Promise<string> => {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public getNetwork = async (): Promise<RenNetwork> => {
         return this.network;
     };
 }

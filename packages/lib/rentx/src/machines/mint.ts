@@ -1,10 +1,14 @@
-import { Machine, assign, send, Actor } from "xstate";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// TODO: Improve typings.
+
+import { Actor, assign, Machine, send } from "xstate";
 import RenJS from "@renproject/ren";
-import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { LockChain, MintChain } from "@renproject/interfaces";
-import { depositMachine } from "./deposit";
 import { assert } from "@renproject/utils";
 import { log } from "xstate/lib/actions";
+
+import { GatewaySession, GatewayTransaction } from "../types/transaction";
+import { depositMachine } from "./deposit";
 
 export interface GatewayMachineContext {
     tx: GatewaySession; // The session arguments used for instantiating a mint gateway
@@ -77,10 +81,10 @@ export const mintMachine = Machine<
 
         creating: {
             meta: {
-                test: async (_: void, state: any) => {
+                test: (_: void, state: any) => {
                     assert(
                         !state.context.tx.gatewayAddress ? true : false,
-                        "Gateway address should not be initialized"
+                        "Gateway address should not be initialized",
                     );
                 },
             },
@@ -112,20 +116,20 @@ export const mintMachine = Machine<
 
         srcInitializeError: {
             meta: {
-                test: async (_: void, state: any) => {
+                test: (_: void, state: any) => {
                     assert(
                         state.context.tx.error ? true : false,
-                        "Error must exist"
+                        "Error must exist",
                     );
                 },
             },
         },
         listening: {
             meta: {
-                test: async (_: void, state: any) => {
+                test: (_: void, state: any) => {
                     assert(
                         state.context.tx.gatewayAddress ? true : false,
-                        "GatewayAddress must exist"
+                        "GatewayAddress must exist",
                     );
                 },
             },
@@ -205,7 +209,7 @@ export const mintMachine = Machine<
                             .length === 0
                     ) {
                         throw Error(
-                            "A deposit must exist for a signature to be requested"
+                            "A deposit must exist for a signature to be requested",
                         );
                     }
                 },

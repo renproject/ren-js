@@ -17,6 +17,7 @@ This includes:
 ```ts
 import RenJS from "@renproject/ren";
 import { Bitcoin, Ethereum } from "@renproject/chains";
+
 /* or: */
 // import { Bitcoin } from "@renproject/chains-bitcoin";
 import Web3 from "web3";
@@ -43,10 +44,10 @@ const gateway = await renJS.lock({
             },
         ],
     }),
-    nonce: "01234"
-    to: Ethereum(web3).Account({
-        address: "0x1234...",
-    }),
+    // nonce: "01234"
+    // to: Ethereum(web3).Account({
+    //     address: "0x1234...",
+    // }),
 });
 
 console.log(`Please deposit ${gateway.asset} to ${gateway.address}`);
@@ -54,7 +55,7 @@ console.log(`Please deposit ${gateway.asset} to ${gateway.address}`);
 gateway.on("deposit", async (deposit) => {
     console.log(`Received deposit of ${deposit.value} ${deposit.asset}`);
     deposit.on("confirmation", () =>
-        console.log(`${deposit.confirmations}/6 confirmations`)
+        console.log(`${deposit.confirmations}/6 confirmations`),
     );
 
     await deposit.confirmed();

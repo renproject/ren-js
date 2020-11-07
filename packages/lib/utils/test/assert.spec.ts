@@ -1,5 +1,3 @@
-// tslint:disable: no-unused-expression
-
 import chai from "chai";
 import { expect } from "earljs";
 import BigNumber from "bignumber.js";
@@ -7,7 +5,6 @@ import BigNumber from "bignumber.js";
 import { assert, assertObject, assertType } from "../src/assert";
 
 chai.should();
-require("dotenv").config();
 
 describe("assert", () => {
     it("basic assert", () => {
@@ -35,7 +32,7 @@ describe("assert", () => {
         assertType<number[]>("number[]", {
             a: [1, 2, 3],
         }).should.be.true;
-        // tslint:disable-next-line: array-type
+        // eslint-disable-next-line @typescript-eslint/array-type
         assertType<Array<number>>("Array<number>", {
             a: [1, 2, 3],
         }).should.be.true;
@@ -200,5 +197,15 @@ describe("assert", () => {
                 },
             ),
         ).toThrow(expect.error("Invalid object type definition undefined"));
+
+        assertObject(
+            // @ts-expect-error Should complain about missing field "first".
+            {},
+            {
+                a: {
+                    first: [],
+                },
+            },
+        );
     });
 });

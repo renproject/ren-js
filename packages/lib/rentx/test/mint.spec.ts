@@ -37,7 +37,7 @@ const makeMintTransaction = (): GatewaySession => ({
 
 jest.setTimeout(1000 * 106);
 describe("MintMachine", () => {
-    it.only("should create a tx", async () => {
+    it("should create a tx", async () => {
         const fromChainMap = {
             testSourceChain: () => {
                 return buildMockLockChain().mockLockChain;
@@ -61,7 +61,6 @@ describe("MintMachine", () => {
         const p = new Promise((resolve) => {
             const service = interpret(machine)
                 .onTransition((state) => {
-                    console.log(state);
                     if (state?.context?.tx?.gatewayAddress) {
                         // we have successfully detected a deposit and spawned
                         // a machine to listen for updates
@@ -75,6 +74,7 @@ describe("MintMachine", () => {
             service.onStop(() => console.log("Service stopped"));
         });
         return p.then(() => {
+            console.log(machine.context);
             expect(machine?.context?.tx?.gatewayAddress).toBeTruthy();
         });
     });
@@ -138,7 +138,7 @@ describe("MintMachine", () => {
         });
     });
 
-    it("should try to submit once the confirmation target has been met", async () => {
+    it.only("should try to submit once the confirmation target has been met", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
             targetConfirmations: 10,
         });

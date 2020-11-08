@@ -97,9 +97,11 @@ const depositListener = (
     context: GatewayMachineContext | DepositMachineContext,
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
     let cleanup = () => {};
+
     renLockAndMint(context)
         .then((minter) => {
             cleanup = () => minter.removeAllListeners();
+
             minter.on("deposit", (deposit) => {
                 // Register event handlers prior to setup in case events land early
                 receive((event) => {
@@ -124,6 +126,7 @@ const depositListener = (
                                 })
                                 .catch(console.error);
                             break;
+
                         case "SIGN":
                             deposit
                                 ?.signed()
@@ -147,6 +150,7 @@ const depositListener = (
                                     }),
                                 );
                             break;
+
                         case "MINT":
                             deposit
                                 ?.mint()
@@ -208,14 +212,15 @@ const depositListener = (
             receive((event) => {
                 switch (event.type) {
                     case "RESTORE":
-                        try {
-                            minter.processDeposit({
+                        minter
+                            .processDeposit({
                                 transaction: event.data,
                                 amount: event.data.amount,
+                            })
+                            .then(() => {})
+                            .catch((e) => {
+                                console.error(e);
                             });
-                        } catch (e) {
-                            console.error(e);
-                        }
                         break;
                 }
             });

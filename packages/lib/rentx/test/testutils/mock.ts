@@ -28,7 +28,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
             return mockLockChain;
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
-            await onDeposit({ transaction: {}, amount: "1" });
+            await onDeposit({ transaction: { amount: "1" }, amount: "1" });
         },
         getGatewayAddress: () => "gatGatewayAddress",
         getPubKeyScript: () => Buffer.from("pubkey"),
@@ -51,7 +51,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
     };
 };
 
-export const buildMockMintChain = () => {
+export const buildMockMintChain = (minted?: boolean) => {
     const state = {
         currentLockConfs: 0,
     };
@@ -101,7 +101,8 @@ export const buildMockMintChain = () => {
                 nonce: new BigNumber(0),
             };
         },
-        findTransaction: () => "mintTxHash",
+        // This will skip the deposit process if truthy
+        findTransaction: () => minted,
         contractCalls: () => [
             {
                 sendTo: "0x0000000000000000000000000000000000000000",

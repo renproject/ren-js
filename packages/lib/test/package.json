@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.0.0-alpha.16",
+    "version": "2.0.0-alpha.17",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -21,16 +21,16 @@
         "npmignore": "npmignore -g ../../../.gitignore"
     },
     "dependencies": {
-        "@renproject/chains": "^2.0.0-alpha.16",
-        "@renproject/interfaces": "^2.0.0-alpha.16",
-        "@renproject/provider": "^2.0.0-alpha.16",
-        "@renproject/ren": "^2.0.0-alpha.16",
-        "@renproject/rpc": "^2.0.0-alpha.16",
-        "@renproject/utils": "^2.0.0-alpha.16",
+        "@renproject/chains": "^2.0.0-alpha.17",
+        "@renproject/interfaces": "^2.0.0-alpha.17",
+        "@renproject/provider": "^2.0.0-alpha.17",
+        "@renproject/ren": "^2.0.0-alpha.17",
+        "@renproject/rpc": "^2.0.0-alpha.17",
+        "@renproject/utils": "^2.0.0-alpha.17",
+        "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.21",
-        "@types/node": ">=10"
+        "send-crypto": "0.2.21"
     },
     "devDependencies": {
         "chalk": "^4.1.0",

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-base-connector",
-    "version": "2.0.0-alpha.16",
+    "version": "2.0.0-alpha.17",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,10 +42,10 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/interfaces": "^2.0.0-alpha.17",
         "@types/events": "3.0.0",
-        "events": "3.2.0",
-        "@types/node": ">=10"
+        "@types/node": ">=10",
+        "events": "3.2.0"
     },
     "resolutions": {
         "sha3": "^2.1.2"

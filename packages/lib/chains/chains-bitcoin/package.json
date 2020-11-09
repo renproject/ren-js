@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.0.0-alpha.16",
+    "version": "2.0.0-alpha.17",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,10 +43,11 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.16",
-        "@renproject/rpc": "^2.0.0-alpha.16",
-        "@renproject/utils": "^2.0.0-alpha.16",
+        "@renproject/interfaces": "^2.0.0-alpha.17",
+        "@renproject/rpc": "^2.0.0-alpha.17",
+        "@renproject/utils": "^2.0.0-alpha.17",
         "@types/bs58": "^4.0.1",
+        "@types/node": ">=10",
         "bchaddrjs": "^0.4.9",
         "bignumber.js": "^9.0.1",
         "bitcore-lib": "^8.22.2",
@@ -55,8 +56,7 @@
         "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bs58": "^4.0.1",
         "send-crypto": "0.2.21",
-        "wallet-address-validator": "^0.2.4",
-        "@types/node": ">=10"
+        "wallet-address-validator": "^0.2.4"
     },
     "resolutions": {
         "sha3": "^2.1.2"

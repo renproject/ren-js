@@ -143,12 +143,14 @@ const depositListener = (
                                         },
                                     }),
                                 )
-                                .catch((e) =>
+                                .catch((e) => {
+                                    // If a tx has already been minted, we will get an error at this step
+                                    // We can assume that a "utxo spent" error implies that the asset has been minted
                                     callback({
                                         type: "SIGN_ERROR",
                                         data: e,
-                                    }),
-                                );
+                                    });
+                                });
                             break;
 
                         case "MINT":
@@ -319,6 +321,8 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
         listenerAction: listenerAction as any,
     },
     guards: {
+        isRequestCompleted: ({ signatureRequest }, evt) =>
+            evt.data?.sourceTxHash === signatureRequest && evt.data.destTxHash,
         isCompleted: ({ tx }, evt) =>
             evt.data?.sourceTxAmount >= tx.targetAmount,
         isExpired: ({ tx }) => tx.expiryTime < new Date().getTime(),

@@ -12,7 +12,7 @@ import { depositMachine } from "./deposit";
 
 export interface GatewayMachineContext {
     tx: GatewaySession; // The session arguments used for instantiating a mint gateway
-    signatureRequest?: string;
+    signatureRequest?: string | null;
     depositMachines?: { [key in string]: Actor<typeof depositMachine> }; // Keeps track of child machines that track underlying deposits
     depositListenerRef?: Actor<any>; // a listener callback that interacts with renjs deposit objects
     providers: any; // Providers needed for LockChains
@@ -201,6 +201,21 @@ export const mintMachine = Machine<
                         },
                     }),
                 },
+                DEPOSIT_UPDATE: [
+                    {
+                        cond: "isRequestCompleted",
+                        actions: assign({
+                            signatureRequest: (_ctx, _evt) => null,
+                            tx: (ctx, evt) => {
+                                if (evt.data?.sourceTxHash) {
+                                    ctx.tx.transactions[evt.data.sourceTxHash] =
+                                        evt.data;
+                                }
+                                return ctx.tx;
+                            },
+                        }),
+                    },
+                ],
             },
             meta: {
                 test: (_: any, state: any) => {

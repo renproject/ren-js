@@ -1,6 +1,6 @@
 {
     "name": "@renproject/rentx",
-    "version": "2.0.0-alpha.17",
+    "version": "2.0.0-2.0.0-alpha.17.0",
     "description": "XState Statemachines for tracking RenVM transactions reactively",
     "repository": {
         "type": "git",
@@ -42,9 +42,9 @@
         "bignumber.js": "^9.0.1"
     },
     "devDependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.17",
-        "@renproject/ren": "^2.0.0-alpha.17",
-        "@renproject/rpc": "^2.0.0-alpha.17",
+        "@renproject/interfaces": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/ren": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/rpc": "^2.0.0-2.0.0-alpha.17.0",
         "dotenv": "^8.2.0",
         "xstate": "^4.13.0"
     },

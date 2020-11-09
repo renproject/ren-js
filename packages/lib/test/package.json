@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.0.0-2.0.0-alpha.17.0",
+    "version": "2.0.0-alpha.18.0",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -21,12 +21,12 @@
         "npmignore": "npmignore -g ../../../.gitignore"
     },
     "dependencies": {
-        "@renproject/chains": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/interfaces": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/provider": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/ren": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/rpc": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/utils": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/chains": "^2.0.0-alpha.18.0",
+        "@renproject/interfaces": "^2.0.0-alpha.18.0",
+        "@renproject/provider": "^2.0.0-alpha.18.0",
+        "@renproject/ren": "^2.0.0-alpha.18.0",
+        "@renproject/rpc": "^2.0.0-alpha.18.0",
+        "@renproject/utils": "^2.0.0-alpha.18.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.12",

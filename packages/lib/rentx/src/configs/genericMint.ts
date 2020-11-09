@@ -109,6 +109,16 @@ const depositListener = (
                         case "SETTLE":
                             deposit
                                 .confirmed()
+                                .on("target", (confs, targetConfs) => {
+                                    const confirmedTx = {
+                                        sourceTxConfs: confs,
+                                        sourceTxConfTarget: targetConfs,
+                                    };
+                                    callback({
+                                        type: "CONFIRMATION",
+                                        data: confirmedTx,
+                                    });
+                                })
                                 .on("confirmation", (confs, targetConfs) => {
                                     const confirmedTx = {
                                         sourceTxConfs: confs,
@@ -198,6 +208,7 @@ const depositListener = (
                     sourceTxHash: txHash,
                     sourceTxAmount: rawSourceTx.amount,
                     sourceTxVOut: rawSourceTx.vOut,
+                    sourceTxConfs: 0,
                     rawSourceTx,
                 };
 

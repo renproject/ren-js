@@ -260,15 +260,19 @@ export class RenVMProvider
         to: string;
     }): Promise<Buffer> => {
         const tx = this.buildTransaction(params);
-
         await this.submitTx(tx);
-
         return fromBase64(tx.hash);
     };
 
     public burnTxHash = this.mintTxHash;
     public submitBurn = this.submitMint;
 
+    /**
+     * Queries the result of a RenVM transaction and unmarshals the result into
+     * a [[LockAndMintTransaction]] or [[BurnAndReleaseTransaction]].
+     *
+     * @param renVMTxHash The transaction hash as a Buffer.
+     */
     public readonly queryMintOrBurn = async <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(
@@ -294,6 +298,16 @@ export class RenVMProvider
         }
     };
 
+    /**
+     * Fetches the result of a RenVM transaction on a repeated basis until the
+     * transaction's status is `"done"`.
+     *
+     * @param utxoTxHash The transaction hash as a Buffer.
+     * @param onStatus A callback called each time the status of the transaction
+     * is refreshed - even if it hasn't changed.
+     * @param _cancelRequested A function that returns `true` to cancel the
+     * loop.
+     */
     public readonly waitForTX = async <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(

@@ -50,7 +50,7 @@
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html"
+        "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.16",

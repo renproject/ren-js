@@ -38,7 +38,7 @@
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html"
+        "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
         "@myetherwallet/mewconnect-web-client": "^2.1.5-beta.1",

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "2.0.0-alpha.16",
+    "version": "2.0.0-2.0.0-alpha.17.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -40,14 +40,14 @@
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html"
+        "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.16",
-        "@renproject/utils": "^2.0.0-alpha.16",
+        "@renproject/interfaces": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/utils": "^2.0.0-2.0.0-alpha.17.0",
+        "@types/node": ">=10",
         "axios": "^0.20.0",
-        "immutable": "^4.0.0-rc.12",
-        "@types/node": ">=10"
+        "immutable": "^4.0.0-rc.12"
     },
     "resolutions": {
         "sha3": "^2.1.2"

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "2.0.0-alpha.16",
+    "version": "2.0.0-2.0.0-alpha.17.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -40,13 +40,13 @@
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html"
+        "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^2.0.0-alpha.16",
-        "@renproject/chains-ethereum": "^2.0.0-alpha.16",
-        "@renproject/chains-filecoin": "^2.0.0-alpha.16",
-        "@renproject/interfaces": "^2.0.0-alpha.16",
+        "@renproject/chains-bitcoin": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/chains-ethereum": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/chains-filecoin": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/interfaces": "^2.0.0-2.0.0-alpha.17.0",
         "@types/node": ">=10"
     },
     "resolutions": {

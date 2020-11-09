@@ -17,6 +17,7 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { DepositStatus } from "@renproject/ren/build/main/lockAndMint";
+import { expect } from "earljs";
 
 chai.should();
 
@@ -133,11 +134,11 @@ describe("Playground", () => {
 
                     await retryNTimes(
                         async () => {
-                            deposit._state.logger.debug(`Calling .confirmed`);
+                            deposit._state.logger.log(`Calling .confirmed`);
                             await deposit
                                 .confirmed()
                                 .on("confirmation", (confs, target) => {
-                                    deposit._state.logger.debug(
+                                    deposit._state.logger.log(
                                         `${confs}/${target} confirmations`,
                                     );
                                 });
@@ -146,32 +147,30 @@ describe("Playground", () => {
                         10 * SECONDS,
                     );
 
-                    expect(deposit.status).toBe(DepositStatus.Confirmed);
+                    expect(deposit.status).toEqual(DepositStatus.Confirmed);
 
                     await retryNTimes(
                         async () => {
-                            deposit._state.logger.debug(`Calling .signed`);
+                            deposit._state.logger.log(`Calling .signed`);
                             await deposit.signed().on("status", (status) => {
-                                deposit._state.logger.debug(
-                                    `status: ${status}`,
-                                );
+                                deposit._state.logger.log(`status: ${status}`);
                             });
                         },
                         retries,
                         10 * SECONDS,
                     );
 
-                    expect(deposit.status).toBe(DepositStatus.Signed);
+                    expect(deposit.status).toEqual(DepositStatus.Signed);
 
                     await retryNTimes(
                         async () => {
-                            deposit._state.logger.debug(`Calling .mint`);
+                            deposit._state.logger.log(`Calling .mint`);
                             await deposit
                                 .mint({
                                     _extraMsg: "test", // Override value.
                                 })
                                 .on("transactionHash", (txHash) => {
-                                    deposit._state.logger.debug(
+                                    deposit._state.logger.log(
                                         `txHash: ${String(txHash)}`,
                                     );
                                 });
@@ -180,13 +179,13 @@ describe("Playground", () => {
                         10 * SECONDS,
                     );
 
-                    expect(deposit.status).toBe(DepositStatus.Submitted);
+                    expect(deposit.status).toEqual(DepositStatus.Submitted);
 
                     resolve();
                 })().catch(console.error);
             });
 
-            sleep(10 * SECONDS)
+            sleep(20 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
                     if (

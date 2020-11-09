@@ -36,7 +36,7 @@ const NETWORK_NOT_SUPPORTED = `Filecoin is not supported by the current RenVM ne
 
 const transactionToDeposit = (transaction: FilTransaction) => ({
     transaction,
-    amount: transaction.amount,
+    amount: transaction.amount.toString(),
 });
 
 export class FilecoinClass

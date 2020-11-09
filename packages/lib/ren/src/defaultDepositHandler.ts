@@ -11,6 +11,11 @@ const createDepositHandler = (retries = -1) => {
                 deposit._state.logger.log(`Calling .confirmed`);
                 await deposit
                     .confirmed()
+                    .on("target", (confs, target) => {
+                        deposit._state.logger.log(
+                            `${confs}/${target} confirmations`,
+                        );
+                    })
                     .on("confirmation", (confs, target) => {
                         deposit._state.logger.log(
                             `${confs}/${target} confirmations`,

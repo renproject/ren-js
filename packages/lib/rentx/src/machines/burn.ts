@@ -176,7 +176,7 @@ export const burnMachine = Machine<
                                     .sourceTxConfTarget || 0)
                                 ? true
                                 : false,
-                            "Should have a transaction",
+                            "Should have a confirmed transaction",
                         );
                     },
                 },

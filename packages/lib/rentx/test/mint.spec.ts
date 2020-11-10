@@ -316,8 +316,6 @@ describe("MintMachine", () => {
                         subscribed = true;
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         depositMachine.subscribe((innerState: any) => {
-                            console.log(innerState?.event);
-                            console.log(innerState?.value);
                             if (!txHash)
                                 txHash =
                                     innerState.context.deposit.sourceTxHash;

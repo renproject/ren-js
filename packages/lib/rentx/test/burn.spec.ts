@@ -57,7 +57,10 @@ describe("BurnMachine", () => {
                     if (state.value === "srcSettling") {
                         // we have successfully created a burn tx
                         result = state;
-                        service.send("CONFIRMED");
+                        service.send({
+                            type: "CONFIRMED",
+                            data: { sourceTxHash: "123" },
+                        } as any);
                     }
                     if (state.value === "srcConfirmed") {
                         service.stop();

@@ -48,7 +48,9 @@ const mintModel = createModel(mintMachine).withEvents({
     },
     // Unfortunately these break the test generator due to an issue with context mutation
     // DEPOSIT: { cases: [{ data: { sourceTxHash: "123" } }] },
-    // DEPOSIT_UPDATE: { cases: [{ data: { sourceTxHash: "123" } }] },
+    DEPOSIT_UPDATE: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
     EXPIRED: {},
     CLAIMABLE: {},
     ACKNOWLEDGE: {},
@@ -134,14 +136,21 @@ const burnModel = createModel(
     RESTORE: {},
     "done.invoke.burnCreator": {
         exec: async () => {},
-        cases: [{ data: { ...makeTestContext().tx } }],
+        cases: [{ data: { ...makeTestContext().tx, transactions: {} } }],
     },
     "error.platform.burnCreator": {
         exec: async () => {},
         cases: [{ data: { message: "an error" } }],
     },
-    CONFIRMATION: {},
-    CONFIRMED: {},
+    CONFIRMATION: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
+    CONFIRMED: {
+        cases: [{ data: { sourceTxHash: "123", sourceTxConfs: 1 } }],
+    },
+    SUBMITTED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     RELEASED: {},
     RETRY: {},
 });

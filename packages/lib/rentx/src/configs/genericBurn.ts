@@ -67,16 +67,6 @@ const txCreator = async (
     };
     context.tx = newTx;
 
-    // const burn = await burnAndRelease(context);
-    // We immediately submit the burn request
-    // const hash: string = await new Promise((resolve, reject) => {
-    //     (async () => {
-    //         const res = burn.burn();
-    //         await res;
-    //         res._cancel();
-    //     })().catch(reject);
-    // });
-
     return {
         ...newTx,
         transactions: {},

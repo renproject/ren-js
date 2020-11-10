@@ -57,6 +57,7 @@ export type DepositMachineEvent =
     | { type: "CONFIRMED" }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "SIGNED"; data: GatewayTransaction }
+    | { type: "SIGN_ERROR"; data: Error }
     | { type: "CLAIM"; data: ContractParams }
     | { type: "REJECT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
@@ -216,6 +217,10 @@ export const depositMachine = Machine<
                         `${context.deposit.sourceTxHash}DepositListener`,
                 }),
                 on: {
+                    // TODO: figure out how to handle this case
+                    // SIGN_ERROR: {
+                    //     target: "srcConfirmed",
+                    // },
                     SIGNED: {
                         target: "accepted",
                         actions: assign({
@@ -301,11 +306,13 @@ export const depositMachine = Machine<
     },
     {
         guards: {
-            isSrcSettling: ({ deposit: { sourceTxConfs } }) =>
-                (sourceTxConfs || 0) <= 1,
+            isSrcSettling: ({
+                deposit: { sourceTxConfs, sourceTxConfTarget },
+            }) => (sourceTxConfs || 0) < (sourceTxConfTarget || 1),
             isSrcConfirmed: () => false,
-            isSrcSettled: ({ deposit: { sourceTxConfs } }) =>
-                (sourceTxConfs || 0) > 1,
+            isSrcSettled: ({
+                deposit: { sourceTxConfs, sourceTxConfTarget },
+            }) => (sourceTxConfs || 0) >= (sourceTxConfTarget || 1),
             isAccepted: ({ deposit: { renSignature } }) =>
                 renSignature ? true : false,
             isDestInitiated: ({ deposit: { destTxHash } }) =>

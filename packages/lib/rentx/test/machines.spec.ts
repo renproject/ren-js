@@ -4,7 +4,7 @@ import { burnMachine } from "../src/machines/burn";
 
 // const expect = chai.expect;
 
-const testContext = {
+const makeTestContext = () => ({
     tx: {
         id: "txid",
         type: "mint",
@@ -15,7 +15,6 @@ const testContext = {
         destNetwork: "ethereum",
         destAsset: "renBTC",
         targetAmount: 1,
-        destConfsTarget: 6,
         userAddress: "",
         expiryTime: new Date().getTime() + 1000 * 60,
         transactions: {
@@ -31,14 +30,17 @@ const testContext = {
     providers: {},
     fromChainMap: { btc: () => ({} as any) },
     toChainMap: { ethereum: () => ({} as any) },
-};
+});
+
 mintMachine.config = mintConfig as any;
-mintMachine.context = testContext as any;
+mintMachine.context = makeTestContext() as any;
 const mintModel = createModel(mintMachine).withEvents({
     RESTORE: {},
     "done.invoke.txCreator": {
         exec: async () => {},
-        cases: [{ data: { ...testContext.tx, gatewayAddress: "generated" } }],
+        cases: [
+            { data: { ...makeTestContext().tx, gatewayAddress: "generated" } },
+        ],
     },
     "error.platform.txCreator": {
         exec: async () => {},
@@ -48,6 +50,8 @@ const mintModel = createModel(mintMachine).withEvents({
     // DEPOSIT: { cases: [{ data: { sourceTxHash: "123" } }] },
     // DEPOSIT_UPDATE: { cases: [{ data: { sourceTxHash: "123" } }] },
     EXPIRED: {},
+    CLAIMABLE: {},
+    ACKNOWLEDGE: {},
 });
 
 describe("MintMachine", function () {
@@ -73,17 +77,20 @@ const depositModel = createModel(
             actions: { listenerAction: mintConfig.actions?.listenerAction },
         } as any)
         .withContext({
-            ...testContext,
+            ...makeTestContext(),
             deposit: {
                 sourceTxAmount: 0,
                 sourceTxHash: "",
                 sourceTxConfs: 0,
                 rawSourceTx: {},
             },
-        } as any)
+        } as any),
 ).withEvents({
     DETECTED: {},
     RESTORE: {},
+    ERROR: {
+        cases: [{ error: new Error("error") }],
+    },
     RESTORED: {},
     CONFIRMATION: {},
     CONFIRMED: {},
@@ -91,6 +98,7 @@ const depositModel = createModel(
     SIGNED: {},
     CLAIM: {},
     SUBMITTED: {},
+    ACKNOWLEDGE: {},
 });
 
 describe("DepositMachine", function () {
@@ -110,21 +118,32 @@ describe("DepositMachine", function () {
     });
 });
 
+const burnContext: any = makeTestContext();
+burnContext.tx.transactions = {};
 const burnModel = createModel(
     burnMachine.withConfig(burnConfig).withContext({
-        ...testContext,
+        ...burnContext,
         deposit: {
             sourceTxAmount: 0,
             sourceTxHash: "",
             sourceTxConfs: 0,
             rawSourceTx: {},
         },
-    } as any)
+    } as any),
 ).withEvents({
     RESTORE: {},
+    "done.invoke.burnCreator": {
+        exec: async () => {},
+        cases: [{ data: { ...makeTestContext().tx } }],
+    },
+    "error.platform.burnCreator": {
+        exec: async () => {},
+        cases: [{ data: { message: "an error" } }],
+    },
     CONFIRMATION: {},
     CONFIRMED: {},
     RELEASED: {},
+    RETRY: {},
 });
 
 describe("BurnMachine", function () {

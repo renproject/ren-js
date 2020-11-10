@@ -27,13 +27,12 @@ const makeMintTransaction = (): GatewaySession => ({
     sourceAsset: "btc",
     sourceNetwork: "testSourceChain",
     destAddress: "0x0000000000000000000000000000000000000000",
-    destAsset: "renBTC",
     destNetwork: "testDestChain",
-    destConfsTarget: 6,
     targetAmount: 1,
     userAddress: "0x0000000000000000000000000000000000000000",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
+    customParams: {},
 });
 
 jest.setTimeout(1000 * 106);
@@ -62,9 +61,7 @@ describe("MintMachine", () => {
         const p = new Promise((resolve) => {
             const service = interpret(machine)
                 .onTransition((state) => {
-                    if (
-                        Object.values(state?.context?.depositMachines || {})[0]
-                    ) {
+                    if (state?.context?.tx?.gatewayAddress) {
                         // we have successfully detected a deposit and spawned
                         // a machine to listen for updates
                         resolve();
@@ -74,14 +71,11 @@ describe("MintMachine", () => {
 
             // Start the service
             service.start();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            service.subscribe(((_state, _evt) => {}) as any);
             service.onStop(() => console.log("Service stopped"));
         });
         return p.then(() => {
-            expect(
-                Object.keys(machine?.context?.tx?.transactions || {}).length,
-            ).toBeGreaterThan(0);
+            console.log(machine.context);
+            expect(machine?.context?.tx?.gatewayAddress).toBeTruthy();
         });
     });
 
@@ -111,6 +105,7 @@ describe("MintMachine", () => {
         setInterval(() => {
             setConfirmations((confirmations += 1));
         }, 100);
+
         let prevDepositTx: GatewayTransaction;
         const p = new Promise((resolve) => {
             const service = interpret(machine)
@@ -133,8 +128,6 @@ describe("MintMachine", () => {
 
             // Start the service
             service.start();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            service.subscribe(((_state, _evt) => {}) as any);
             service.onStop(() => console.log("Service stopped"));
         });
         return p.then(() => {
@@ -145,7 +138,7 @@ describe("MintMachine", () => {
         });
     });
 
-    it("should try to submit once the confirmation target has been met", async () => {
+    it.only("should try to submit once the confirmation target has been met", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
             targetConfirmations: 10,
         });
@@ -278,7 +271,7 @@ describe("MintMachine", () => {
                         sourceTxConfs: 1,
                         sourceTxHash:
                             "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
-                        rawSourceTx: {},
+                        rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
             },
@@ -379,7 +372,7 @@ describe("MintMachine", () => {
                         sourceTxConfs: 1,
                         sourceTxHash:
                             "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
-                        rawSourceTx: {},
+                        rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
             },

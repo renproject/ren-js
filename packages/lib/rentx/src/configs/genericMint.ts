@@ -97,9 +97,11 @@ const depositListener = (
     context: GatewayMachineContext | DepositMachineContext,
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
     let cleanup = () => {};
+
     renLockAndMint(context)
         .then((minter) => {
             cleanup = () => minter.removeAllListeners();
+
             minter.on("deposit", (deposit) => {
                 // Register event handlers prior to setup in case events land early
                 receive((event) => {
@@ -107,6 +109,16 @@ const depositListener = (
                         case "SETTLE":
                             deposit
                                 .confirmed()
+                                .on("target", (confs, targetConfs) => {
+                                    const confirmedTx = {
+                                        sourceTxConfs: confs,
+                                        sourceTxConfTarget: targetConfs,
+                                    };
+                                    callback({
+                                        type: "CONFIRMATION",
+                                        data: confirmedTx,
+                                    });
+                                })
                                 .on("confirmation", (confs, targetConfs) => {
                                     const confirmedTx = {
                                         sourceTxConfs: confs,
@@ -124,6 +136,7 @@ const depositListener = (
                                 })
                                 .catch(console.error);
                             break;
+
                         case "SIGN":
                             deposit
                                 ?.signed()
@@ -140,13 +153,16 @@ const depositListener = (
                                         },
                                     }),
                                 )
-                                .catch((e) =>
+                                .catch((e) => {
+                                    // If a tx has already been minted, we will get an error at this step
+                                    // We can assume that a "utxo spent" error implies that the asset has been minted
                                     callback({
                                         type: "SIGN_ERROR",
                                         data: e,
-                                    }),
-                                );
+                                    });
+                                });
                             break;
+
                         case "MINT":
                             deposit
                                 ?.mint()
@@ -192,6 +208,7 @@ const depositListener = (
                     sourceTxHash: txHash,
                     sourceTxAmount: rawSourceTx.amount,
                     sourceTxVOut: rawSourceTx.vOut,
+                    sourceTxConfs: 0,
                     rawSourceTx,
                 };
 
@@ -208,11 +225,15 @@ const depositListener = (
             receive((event) => {
                 switch (event.type) {
                     case "RESTORE":
-                        try {
-                            minter.processDeposit(event.data);
-                        } catch (e) {
-                            console.error(e);
-                        }
+                        minter
+                            .processDeposit({
+                                transaction: event.data,
+                                amount: event.data.amount,
+                            })
+                            .then(() => {})
+                            .catch((e) => {
+                                console.error(e);
+                            });
                         break;
                 }
             });
@@ -311,6 +332,8 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
         listenerAction: listenerAction as any,
     },
     guards: {
+        isRequestCompleted: ({ signatureRequest }, evt) =>
+            evt.data?.sourceTxHash === signatureRequest && evt.data.destTxHash,
         isCompleted: ({ tx }, evt) =>
             evt.data?.sourceTxAmount >= tx.targetAmount,
         isExpired: ({ tx }) => tx.expiryTime < new Date().getTime(),

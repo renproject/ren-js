@@ -295,9 +295,13 @@ export const WalletPickerModal = <P, A>({
     }
   }, [options.targetNetwork, targetNetwork, setTargetNetwork]);
 
-  const cancel = useCallback(() => {
+  const cancel = useCallback(async () => {
     if (connecting || wrongNetwork) {
-      enabledChains[options.chain]?.connector.deactivate().catch(console.error);
+      try {
+        await enabledChains[options.chain]?.connector.deactivate();
+      } catch (err) {
+        console.error(err);
+      }
     }
     options.onClose();
   }, [connecting, wrongNetwork, enabledChains, options]);

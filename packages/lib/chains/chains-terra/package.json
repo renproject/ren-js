@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-terra",
-    "version": "2.0.0-2.0.0-alpha.17.0",
+    "version": "2.0.0-alpha.18.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,9 +42,9 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/rpc": "^2.0.0-2.0.0-alpha.17.0",
-        "@renproject/utils": "^2.0.0-2.0.0-alpha.17.0",
+        "@renproject/interfaces": "^2.0.0-alpha.18.0",
+        "@renproject/rpc": "^2.0.0-alpha.18.0",
+        "@renproject/utils": "^2.0.0-alpha.18.0",
         "@terra-money/terra.js": "^0.5.0",
         "@types/bs58": "^4.0.1",
         "@types/node": ">=10",

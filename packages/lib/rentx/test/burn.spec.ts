@@ -19,13 +19,12 @@ const mintTransaction: GatewaySession = {
     sourceAsset: "renBTC",
     sourceNetwork: "testSourceChain",
     destAddress: "0x0000000000000000000000000000000000000000",
-    destAsset: "BTC",
     destNetwork: "testDestChain",
-    destConfsTarget: 6,
     targetAmount: 1,
     userAddress: "0x0000000000000000000000000000000000000000",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
+    customParams: {},
 };
 
 jest.setTimeout(1000 * 46);

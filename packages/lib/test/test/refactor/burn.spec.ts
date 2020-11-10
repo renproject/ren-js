@@ -23,7 +23,7 @@ describe("Refactor - Burning", () => {
     longIt("burning from contract", async function() {
         this.timeout(100000000000);
 
-        const network = RenNetwork.Testnet as const;
+        const network = RenNetwork.Testnet;
 
         const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);

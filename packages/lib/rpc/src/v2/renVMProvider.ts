@@ -293,7 +293,6 @@ export class RenVMProvider
                 return unmarshalBurnTx(response) as T;
             }
         } catch (error) {
-            console.error(error);
             throw error;
         }
     };

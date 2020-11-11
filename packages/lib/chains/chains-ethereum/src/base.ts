@@ -116,7 +116,7 @@ export const forwardWeb3Events = <T, TEvents extends Web3Events>(
  */
 export const eventTopics = {
     /**
-     * ```sol
+     * ```js
      * event LogBurn(
      *     bytes _to,
      *     uint256 _amount,
@@ -127,7 +127,7 @@ export const eventTopics = {
      */
     LogBurn: web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)"),
     /**
-     * ```sol
+     * ```js
      * event LogMint(
      *     address indexed _to,
      *     uint256 _amount,

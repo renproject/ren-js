@@ -140,22 +140,12 @@ export default class RenJS {
      * const lockAndMint = renJS.lockAndMint({
      *     asset: "BTC",
      *     from: Bitcoin(),
-     *     to: Ethereum(web3Provider),
+     *     to: Ethereum(web3Provider).Account({
+     *         address: "0x...",
+     *     }),
      *
-     *     // Unique value to generate unique deposit address.
+     *     // Optional - 32-byte unique deposit nonce. Defaults to 0x0.
      *     nonce: RenJS.utils.randomNonce(),
-     *
-     *     // Contract to be called for Ethereum
-     *     contractCalls: [{
-     *         sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
-     *         contractFn: "deposit",
-     *         contractParams: [{
-     *             name: "_msg",
-     *             type: "bytes",
-     *             value: web3.utils.fromAscii(`Depositing BTC`),
-     *         }],
-     *         txConfig: { gas: 500000 }
-     *     }],
      * });
      * ```
      *

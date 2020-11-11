@@ -1,12 +1,3 @@
-import {
-    SerializableBurnAndReleaseParams,
-    SerializableLockAndMintParams,
-} from "./parameters";
-import {
-    BurnAndReleaseTransaction,
-    LockAndMintTransaction,
-} from "./transaction";
-
 export type Base64String = string;
 export type HexString = string;
 
@@ -57,40 +48,3 @@ export enum TxStatus {
     // execution.
     TxStatusReverted = "reverted",
 }
-
-export interface SendTokenInterface {
-    sendToken: string;
-}
-
-interface HistoryEventCommon {
-    id: string;
-    time: number; // Seconds since Unix epoch
-    inTx: {} | null;
-    outTx: {} | null;
-    txHash: string | null;
-    renVMStatus: TxStatus | null;
-    returned: boolean;
-    archived?: boolean;
-}
-
-export enum EventType {
-    LockAndMint = "lockAndMint",
-    BurnAndRelease = "burnAndRelease",
-}
-
-export interface LockAndMintEvent extends HistoryEventCommon {
-    eventType: EventType.LockAndMint;
-    status: LockAndMintStatus;
-    transferParams: SerializableLockAndMintParams;
-    renVMQuery: LockAndMintTransaction | null;
-    gatewayAddress?: string;
-}
-
-export interface BurnAndReleaseEvent extends HistoryEventCommon {
-    eventType: EventType.BurnAndRelease;
-    status: BurnAndReleaseStatus;
-    transferParams: SerializableBurnAndReleaseParams;
-    renVMQuery: BurnAndReleaseTransaction | null;
-}
-
-export type HistoryEvent = LockAndMintEvent | BurnAndReleaseEvent;

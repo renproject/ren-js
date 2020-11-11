@@ -144,17 +144,3 @@ export interface BurnAndReleaseParams<
      */
     contractCalls?: ContractCall[];
 }
-
-export type SerializableBurnAndReleaseParams = Exclude<
-    BurnAndReleaseParams,
-    "web3Provider"
->;
-export type SerializableLockAndMintParams = Exclude<
-    LockAndMintParams,
-    "web3Provider"
->;
-
-export type TransferParams = LockAndMintParams | BurnAndReleaseParams;
-export type SerializableTransferParams =
-    | SerializableLockAndMintParams
-    | SerializableBurnAndReleaseParams;

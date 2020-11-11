@@ -2,39 +2,33 @@ import {
     ContractCall,
     EventType,
     MintChain,
-    RenNetwork,
     SyncOrPromise,
 } from "@renproject/interfaces";
-import { RenNetworkDetails } from "@renproject/networks";
 import { Callable, Ox, toBigNumber } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { provider } from "web3-providers";
 
-import { Asset, EthereumBaseChain, Transaction } from "./base";
+import { Address, EthereumBaseChain, Transaction } from "./base";
+import { EthereumConfig } from "./networks";
 
-export class EthereumClass
-    extends EthereumBaseChain
-    implements MintChain<Transaction, Asset> {
+export class EthereumClass extends EthereumBaseChain
+    implements MintChain<Transaction, Address> {
     public getContractCalls:
         | ((
               eventType: EventType,
-              asset: Asset,
-              burnPayload?: string
+              asset: string,
+              burnPayload?: string,
           ) => SyncOrPromise<ContractCall[]>)
         | undefined;
 
-    constructor(
-        web3Provider: provider,
-        renNetwork?: RenNetwork,
-        renNetworkDetails?: RenNetworkDetails
-    ) {
-        super(web3Provider, renNetwork, renNetworkDetails);
+    constructor(web3Provider: provider, renNetworkDetails?: EthereumConfig) {
+        super(web3Provider, renNetworkDetails);
     }
 
     public contractCalls = (
         eventType: EventType,
-        asset: Asset,
-        burnPayload?: string
+        asset: string,
+        burnPayload?: string,
     ) =>
         this.getContractCalls
             ? this.getContractCalls(eventType, asset, burnPayload)
@@ -49,12 +43,12 @@ export class EthereumClass
     }): this => {
         this.getContractCalls = async (
             eventType: EventType,
-            asset: Asset,
-            burnPayload?: string
+            asset: string,
+            burnPayload?: string,
         ) => {
-            if (!this.renNetwork || !this.renNetworkDetails || !this.web3) {
+            if (!this.renNetworkDetails || !this.web3) {
                 throw new Error(
-                    `Ethereum must be initialized before calling 'getContractCalls'`
+                    `Ethereum must be initialized before calling 'getContractCalls'`,
                 );
             }
             if (eventType === EventType.LockAndMint) {
@@ -64,14 +58,13 @@ export class EthereumClass
                 }
 
                 // Resolve .ens name
-                if (address.match(/.*\.ens/)) {
+                if (/.*\.ens/.exec(address)) {
                     address = await this.web3.eth.ens.getAddress(address);
                 }
 
                 return [
                     {
-                        sendTo: this.renNetworkDetails.addresses.BasicAdapter
-                            .address,
+                        sendTo: this.renNetworkDetails.addresses.BasicAdapter,
                         contractFn: "mint",
                         contractParams: [
                             {
@@ -93,7 +86,7 @@ export class EthereumClass
 
                 if (!value) {
                     throw new Error(
-                        `Send amount must be provided in order to send directly to an address.`
+                        `Send amount must be provided in order to send directly to an address.`,
                     );
                 }
 
@@ -132,16 +125,16 @@ export class EthereumClass
     public Contract = (
         contractCall:
             | ContractCall
-            | ((burnAddress: string, asset: string) => ContractCall)
+            | ((burnAddress: string, asset: string) => ContractCall),
     ): this => {
         this.getContractCalls = (
             _eventType: EventType,
-            asset: Asset,
-            burnPayload?: string
+            asset: string,
+            burnPayload?: string,
         ) => {
-            if (!this.renNetwork) {
+            if (!this.renNetworkDetails) {
                 throw new Error(
-                    `Ethereum must be initialized before calling 'getContractCalls'`
+                    `Ethereum must be initialized before calling 'getContractCalls'`,
                 );
             }
             if (typeof contractCall === "function") {

@@ -1,10 +1,10 @@
 import { LockChain } from "@renproject/interfaces";
 import { assertType, Callable } from "@renproject/utils";
 
-import { Address, Asset, BitcoinBaseChain, Deposit, Transaction } from "./base";
+import { Address, BitcoinBaseChain, Deposit, Transaction } from "./base";
 
 export class BitcoinClass extends BitcoinBaseChain
-    implements LockChain<Transaction, Deposit, Asset, Address> {
+    implements LockChain<Transaction, Deposit, Address> {
     getBurnPayload: (() => string) | undefined;
 
     addressExplorerLink = (address: Address): string | undefined => {

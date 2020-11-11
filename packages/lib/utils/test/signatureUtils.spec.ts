@@ -9,7 +9,6 @@ import {
     signatureToBuffer,
 } from "../src/signatureUtils";
 
-// tslint:disable-next-line: mocha-avoid-only
 describe("signatureUtils", () => {
     context("signatureToBuffer", () => {
         it("should convert a signature to a buffer", () => {
@@ -17,8 +16,8 @@ describe("signatureUtils", () => {
                 signatureToBuffer({
                     r: Buffer.from("00".repeat(32), "hex"),
                     s: Buffer.from("00".repeat(32), "hex"),
-                    v: 0
-                })
+                    v: 0,
+                }),
             ).toEqual(Buffer.from("00".repeat(65), "hex"));
         });
     });
@@ -26,7 +25,7 @@ describe("signatureUtils", () => {
     context("fixSignature", () => {
         it("should return fixed signatures", () => {
             const correctSigHash = fromHex(
-                "dfded4ed5ac76ba7379cfe7b3b0f53e768dca8d45a34854e649cfc3c18cbd9cd"
+                "dfded4ed5ac76ba7379cfe7b3b0f53e768dca8d45a34854e649cfc3c18cbd9cd",
             );
             const wrongSigHash = Buffer.from("00".repeat(32), "hex");
             const pHash = Buffer.from("00".repeat(32), "hex");
@@ -54,12 +53,12 @@ describe("signatureUtils", () => {
                     to,
                     tokenIdentifier,
                     nHash,
-                    false
-                )
+                    false,
+                ),
             ).toEqual({
                 r: Buffer.from("00".repeat(32), "hex"),
                 s: Buffer.from("00".repeat(32), "hex"),
-                v: 27
+                v: 27,
             });
 
             // Pass in correct sigHash:
@@ -76,12 +75,12 @@ describe("signatureUtils", () => {
                     tokenIdentifier,
                     nHash,
                     false,
-                    logger
-                )
+                    logger,
+                ),
             ).toEqual({
                 r: Buffer.from("00".repeat(32), "hex"),
                 s: Buffer.from("00".repeat(32), "hex"),
-                v: 27
+                v: 27,
             });
             expect(warned).toEqual(false);
 
@@ -99,12 +98,12 @@ describe("signatureUtils", () => {
                     tokenIdentifier,
                     nHash,
                     false,
-                    logger
-                )
+                    logger,
+                ),
             ).toEqual({
                 r: Buffer.from("00".repeat(32), "hex"),
                 s: Buffer.from("00".repeat(32), "hex"),
-                v: 27
+                v: 27,
             });
             expect(warned).toEqual(true);
         });
@@ -116,34 +115,34 @@ describe("signatureUtils", () => {
                 fixSignatureSimple(
                     Buffer.from("00".repeat(32), "hex"),
                     Buffer.from("00".repeat(32), "hex"),
-                    0
-                )
+                    0,
+                ),
             ).toEqual({
                 r: Buffer.from("00".repeat(32), "hex"),
                 s: Buffer.from("00".repeat(32), "hex"),
-                v: 27
+                v: 27,
             });
             expect(
                 fixSignatureSimple(
                     Buffer.from("00".repeat(32), "hex"),
                     fromBigNumber(secp256k1n),
-                    0
-                )
+                    0,
+                ),
             ).toEqual({
                 r: Buffer.from("00".repeat(32), "hex"),
                 s: Buffer.from("00".repeat(32), "hex"),
-                v: 28
+                v: 28,
             });
             expect(
                 fixSignatureSimple(
                     Buffer.from("00".repeat(32), "hex"),
                     fromBigNumber(secp256k1n),
-                    1
-                )
+                    1,
+                ),
             ).toEqual({
                 r: Buffer.from("00".repeat(32), "hex"),
                 s: Buffer.from("00".repeat(32), "hex"),
-                v: 27
+                v: 27,
             });
         });
     });

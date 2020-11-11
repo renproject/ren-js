@@ -1,7 +1,7 @@
 {
   "name": "@renproject/multiwallet-ui",
   "author": "renproject",
-  "version": "2.0.0-alpha.12",
+  "version": "2.0.0-alpha.18.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -28,7 +28,8 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@renproject/multiwallet-base-connector": "^2.0.0-alpha.12"
+    "@renproject/interfaces": "^2.0.0-alpha.18.0",
+    "@renproject/multiwallet-base-connector": "^2.0.0-alpha.18.0"
   },
   "peerDependencies": {
     "@material-ui/core": "^4.11.0",
@@ -43,8 +44,11 @@
   "prettier": {
     "printWidth": 80,
     "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
+    "singleQuote": false,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "endOfLine": "lf",
+    "arrowParens": "always"
   },
   "module": "dist/multiwallet-ui-tsdx.esm.js",
   "size-limit": [
@@ -59,6 +63,8 @@
   ],
   "devDependencies": {
     "@babel/core": "^7.11.6",
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
     "@size-limit/preset-small-lib": "^4.6.0",
     "@storybook/addon-essentials": "^6.0.21",
     "@storybook/addon-info": "^5.3.21",
@@ -68,6 +74,7 @@
     "@types/react": "^16.9.49",
     "@types/react-dom": "^16.9.8",
     "babel-loader": "^8.1.0",
+    "eslint-plugin-react-app": "^6.2.2",
     "husky": "^4.3.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -75,6 +82,6 @@
     "size-limit": "^4.6.0",
     "tsdx": "^0.14.0",
     "tslib": "^2.0.1",
-    "typescript": "^4.0.3"
+    "typescript": "^4.0.5"
   }
 }

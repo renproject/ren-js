@@ -1,4 +1,4 @@
-// tslint:disable: no-any only-arrow-functions
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Let's assume "class X {}". X itself can be called with "new" keyword, thus it extends this type
 type Constructor = new (...args: any[]) => any;
@@ -24,15 +24,19 @@ export type CallableConstructor<
 // export const Callable = <TConstructor extends Constructor>(t: TConstructor) =>
 //     t as CallableConstructor<TConstructor>;
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function Callable<TConstructor extends Constructor>(
-    type: TConstructor
+    type: TConstructor,
 ): CallableConstructor<TConstructor> {
+    // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     function createInstance(
         ...args: ConstructorArgs<TConstructor>
     ): ConstructorClass<TConstructor> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return new type(...args);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     createInstance.prototype = type.prototype;
     return createInstance as CallableConstructor<TConstructor>;
 }

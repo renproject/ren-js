@@ -1,6 +1,6 @@
 import Axios from "axios";
 
-import { FilTransaction } from "./deposit";
+import { FilecoinNetwork, FilTransaction } from "./deposit";
 
 // See https://github.com/renproject/account-chain-indexer
 const INDEXER_URL = `https://account-chain-indexer.herokuapp.com/graphql`;
@@ -8,8 +8,11 @@ const INDEXER_URL = `https://account-chain-indexer.herokuapp.com/graphql`;
 export const fetchDeposits = async (
     address: string,
     paramsFilterBase64: string | undefined = undefined,
-    _page = 0
+    network: FilecoinNetwork,
+    _page = 0,
 ): Promise<FilTransaction[]> => {
+    // const network = address.slice(0, 1) === "t" ? "testnet" : "mainnet";
+
     // TODO: Add network parameter.
     const query = `{
         messages: FilecoinTransactions(to: "${address}", params: "${paramsFilterBase64}") {
@@ -21,7 +24,7 @@ export const fetchDeposits = async (
             amount
         }
 
-        height: NetworkHeight(chain: "Filecoin", network: "testnet")
+        height: NetworkHeight(chain: "Filecoin", network: "${network}")
     }`;
 
     const response = (
@@ -43,7 +46,7 @@ export const fetchDeposits = async (
 
     if (response.errors && response.errors.length) {
         throw new Error(
-            `Unable to fetch Filecoin messages: ${response.errors[0].message}`
+            `Unable to fetch Filecoin messages: ${response.errors[0].message}`,
         );
     }
 
@@ -60,15 +63,18 @@ export const fetchDeposits = async (
                     confirmations: height ? height - height + 1 : 0,
                     nonce: message.nonce,
                 };
-            }
+            },
         )
         .filter(
-            message =>
-                !paramsFilterBase64 || message.params === paramsFilterBase64
+            (message) =>
+                !paramsFilterBase64 || message.params === paramsFilterBase64,
         );
 };
 
-export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
+export const fetchMessage = async (
+    cid: string,
+    network: FilecoinNetwork,
+): Promise<FilTransaction> => {
     // TODO: Add network parameter.
     const query = `{
         messages: FilecoinTransactions(cid: "${cid}") {
@@ -80,7 +86,7 @@ export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
             amount
         }
 
-        height: NetworkHeight(chain: "Filecoin", network: "testnet")
+        height: NetworkHeight(chain: "Filecoin", network: "${network}")
     }`;
 
     const response = (
@@ -102,7 +108,7 @@ export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
 
     if (response.errors && response.errors.length) {
         throw new Error(
-            `Unable to fetch Filecoin messages: ${response.errors[0].message}`
+            `Unable to fetch Filecoin messages: ${response.errors[0].message}`,
         );
     }
 
@@ -110,13 +116,13 @@ export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
 
     if (messages.length === 0) {
         throw new Error(
-            `Error fetching Filecoin transaction: message not found.`
+            `Error fetching Filecoin transaction: message not found.`,
         );
     }
 
     if (messages.length > 0) {
         console.warn(
-            `More than Filecoin transaction found with the same transaction ID.`
+            `More than Filecoin transaction found with the same transaction ID.`,
         );
     }
 

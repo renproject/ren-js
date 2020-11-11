@@ -9,10 +9,11 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider, v1 } from "@renproject/rpc";
+import { AbstractRenVMProvider, v1, v2 } from "@renproject/rpc";
 import { Ox, randomNonce, strip0x } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
+import { defaultDepositHandler } from "./defaultDepositHandler";
 import { LockAndMint } from "./lockAndMint";
 
 export interface RenJSConfig {
@@ -27,20 +28,20 @@ export interface RenJSConfig {
  * import RenJS from "@renproject/ren";
  * ```
  *
- * It's initialized with a network, which controls both the RenVM network and
- * Ethereum chain to use:
+ * By default, RenJS will connect to the RenVM mainnet network. To connect
+ * to `testnet` or to configure a custom connection, RenJS takes an optional
+ * provider object. See the [[constructor]] for more details.
  *
  * ```typescript
  * new RenJS(); // Same as `new RenJS("mainnet");`
  * new RenJS("testnet");
+ * new RenJS(custom provider object);
  * ```
- *
- * A second optional parameter lets you provide a RenVM RPC provider or a
- * lightnode URL. See the [[constructor]] for more details.
  *
  * It then exposes two main functions:
  * 1. [[lockAndMint]] - for transferring assets to Ethereum.
  * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
+ *
  */
 export default class RenJS {
     // /**
@@ -64,6 +65,8 @@ export default class RenJS {
         randomNonce,
     };
 
+    public static defaultDepositHandler = defaultDepositHandler;
+
     // Not static
     public readonly utils = RenJS.utils;
 
@@ -77,17 +80,18 @@ export default class RenJS {
 
     /**
      * Accepts the name of a network, or a network object.
+     *
      * @param network Provide the name of a network - `"mainnet"` or `"testnet"` - or a network object.
      * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
      */
     constructor(
-        provider?:
+        providerOrNetwork?:
             | RenNetwork
             | RenNetworkString
             | AbstractRenVMProvider
             | null
             | undefined,
-        config?: RenJSConfig
+        config?: RenJSConfig,
     ) {
         // const provider: string | Provider | undefined;
         // let config: RenJSConfig | undefined;
@@ -105,19 +109,23 @@ export default class RenJS {
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
-        // Use provided provider, provider URL or default lightnode URL.
-        const rpcProvider =
-            provider && typeof provider !== "string"
-                ? provider
-                : new v1.RenVMProvider(
-                      provider || RenNetwork.Mainnet,
-                      undefined,
-                      this._logger
-                  );
+        if (
+            providerOrNetwork === RenNetwork.MainnetVDot3 ||
+            providerOrNetwork === RenNetwork.TestnetVDot3 ||
+            providerOrNetwork === RenNetwork.DevnetVDot3
+        ) {
+            providerOrNetwork = new v2.RenVMProvider(providerOrNetwork);
+        }
 
-        // FIXME
-        // tslint:disable-next-line: no-any
-        this.renVM = rpcProvider as any;
+        // Use provided provider, provider URL or default lightnode URL.
+        this.renVM =
+            providerOrNetwork && typeof providerOrNetwork !== "string"
+                ? providerOrNetwork
+                : new v1.RenVMProvider(
+                      providerOrNetwork || RenNetwork.Mainnet,
+                      undefined,
+                      this._logger,
+                  );
     }
 
     /**
@@ -154,19 +162,18 @@ export default class RenJS {
      * @param params See [[LockAndMintParams]].
      */
     public readonly lockAndMint = async <
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-        Asset extends string = string,
         Address = string
     >(
-        params: LockAndMintParams<Transaction, Deposit, Asset, Address>
-    ): Promise<LockAndMint<Transaction, Deposit, Asset, Address>> =>
-        new LockAndMint<Transaction, Deposit, Asset, Address>(
+        params: LockAndMintParams<Transaction, Deposit, Address>,
+    ): Promise<LockAndMint<Transaction, Deposit, Address>> =>
+        new LockAndMint<Transaction, Deposit, Address>(
             this.renVM,
             params,
-            this._logger
-        ).initialize();
+            this._logger,
+        )._initialize();
 
     /**
      * `burnAndRelease` submits a burn log to RenVM.
@@ -176,32 +183,30 @@ export default class RenJS {
      * @returns An instance of [[BurnAndRelease]].
      */
     public readonly burnAndRelease = async <
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-        Asset extends string = string,
         Address = string
     >(
-        params: BurnAndReleaseParams<Transaction, Deposit, Asset, Address>
-    ): Promise<BurnAndRelease<Transaction, Deposit, Asset, Address>> =>
-        new BurnAndRelease<Transaction, Deposit, Asset, Address>(
+        params: BurnAndReleaseParams<Transaction, Deposit, Address>,
+    ): Promise<BurnAndRelease<Transaction, Deposit, Address>> =>
+        new BurnAndRelease<Transaction, Deposit, Address>(
             this.renVM,
             params,
-            this._logger
-        ).initialize();
+            this._logger,
+        )._initialize();
 
     public readonly getFees = async () => this.renVM.getFees();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////// //
 // EXPORTS                                                                    //
 // Based on https://github.com/MikeMcl/bignumber.js/blob/master/bignumber.js  //
-////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////// //
 
-// tslint:disable: no-any no-object-mutation strict-type-predicates no-typeof-undefined
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any */
 
-// tslint:disable-next-line: no-string-literal
-(RenJS as any)["default"] = (RenJS as any).RenJS = RenJS;
+(RenJS as any).default = (RenJS as any).RenJS = RenJS;
 
 // AMD
 try {

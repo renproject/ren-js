@@ -26,12 +26,12 @@ const mintABITemplate: AbiItem = {
 
 export const payloadToABI = (
     methodName: string,
-    payload: Array<{ type: string; name: string }> | undefined
+    payload: Array<{ type: string; name: string }> | undefined,
 ): AbiItem[] => {
     // Type validation
     assertType<string>("string", { methodName });
     (payload || []).map(({ type, name }) =>
-        assertType<string>("string", { type, name })
+        assertType<string>("string", { type, name }),
     );
 
     return [
@@ -39,7 +39,7 @@ export const payloadToABI = (
             name: methodName,
             type: "function",
             inputs: [
-                ...(payload || []).map(value => ({
+                ...(payload || []).map((value) => ({
                     type: value.type as EthType,
                     name: value.name,
                 })),
@@ -51,12 +51,12 @@ export const payloadToABI = (
 
 export const payloadToMintABI = (
     methodName: string,
-    payload: Array<{ type: string; name: string }> | undefined
+    payload: Array<{ type: string; name: string }> | undefined,
 ): AbiItem[] => {
     // Type validation
     assertType<string>("string", { methodName });
     (payload || []).map(({ type, name }) =>
-        assertType<string>("string", { type, name })
+        assertType<string>("string", { type, name }),
     );
 
     return [
@@ -64,7 +64,7 @@ export const payloadToMintABI = (
             ...mintABITemplate,
             name: methodName,
             inputs: [
-                ...(payload || []).map(value => ({
+                ...(payload || []).map((value) => ({
                     type: value.type as EthType,
                     name: value.name,
                 })),

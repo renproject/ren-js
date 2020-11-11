@@ -1,3 +1,3 @@
 declare interface Window {
-    ethereum?: any;
+    ethereum?: unknown;
 }

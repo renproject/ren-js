@@ -1,23 +1,27 @@
 import {
+    decode as decodeAddress,
     encode as encodeAddress,
     validateAddressString,
 } from "@glif/filecoin-address";
-import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
 import {
-    assertType,
-    Callable,
-    keccak256,
-    Ox,
-    rawEncode,
-    toBase64,
-    toURLBase64,
-} from "@renproject/utils";
+    getRenNetworkDetails,
+    LockChain,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
+import { assertType, Callable, toBase64, toURLBase64 } from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
 import elliptic from "elliptic";
 
-import { FilTransaction } from "./api/deposit";
+import {
+    FilecoinNetwork as FilecoinNetworkImport,
+    FilTransaction,
+} from "./api/deposit";
 import { fetchDeposits, fetchMessage } from "./api/indexer";
+
+export type FilecoinNetwork = FilecoinNetworkImport;
 
 export type FilAddress = {
     address: string; // Filecoin address
@@ -27,36 +31,21 @@ export type FilDeposit = {
     transaction: FilTransaction;
     amount: string;
 };
-export type FilAsset = string;
-export type FilecoinNetwork = "mainnet" | "testnet" | "devnet";
 
 const NETWORK_NOT_SUPPORTED = `Filecoin is not supported by the current RenVM network.`;
 
-const resolveFilecoinNetwork = (renNetwork: RenNetwork): FilecoinNetwork => {
-    switch (renNetwork) {
-        case RenNetwork.Mainnet:
-        case RenNetwork.Chaosnet:
-            return "mainnet";
-        case RenNetwork.Testnet:
-        case RenNetwork.Devnet:
-        case RenNetwork.Localnet:
-            return "testnet";
-    }
-    throw new Error(`Unrecognized network ${renNetwork}`);
-};
-
 const transactionToDeposit = (transaction: FilTransaction) => ({
     transaction,
-    amount: transaction.amount,
+    amount: transaction.amount.toString(),
 });
 
 export class FilecoinClass
-    implements LockChain<FilTransaction, FilDeposit, FilAsset, FilAddress> {
+    implements LockChain<FilTransaction, FilDeposit, FilAddress> {
     public name = "Filecoin";
-    public renNetwork: RenNetwork | undefined;
+    public renNetwork: RenNetworkDetails | undefined;
     public chainNetwork: FilecoinNetwork | undefined;
 
-    public _asset = "FIL";
+    public asset = "FIL";
     public _addressIsValid = (address: FilAddress, _network: FilecoinNetwork) =>
         validateAddressString(address.address);
 
@@ -67,20 +56,24 @@ export class FilecoinClass
     /**
      * See [[OriginChain.initialize]].
      */
-    public initialize = (renNetwork: RenNetwork) => {
-        this.renNetwork = renNetwork;
+    public initialize = (
+        renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
+    ) => {
+        this.renNetwork = getRenNetworkDetails(renNetwork);
         // Prioritize the network passed in to the constructor.
         this.chainNetwork =
-            this.chainNetwork || resolveFilecoinNetwork(renNetwork);
+            this.chainNetwork || this.renNetwork.isTestnet
+                ? "testnet"
+                : "mainnet";
         return this;
     };
 
     /**
      * See [[OriginChain.assetIsNative]].
      */
-    assetIsNative = (asset: FilAsset): boolean => asset === this._asset;
+    assetIsNative = (asset: string): boolean => asset === this.asset;
 
-    public readonly assetAssetSupported = (asset: FilAsset) => {
+    public readonly assetAssetSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
             throw new Error(`Unsupported asset ${asset}`);
         }
@@ -89,8 +82,8 @@ export class FilecoinClass
     /**
      * See [[OriginChain.assetDecimals]].
      */
-    assetDecimals = (asset: FilAsset): number => {
-        if (asset === this._asset) {
+    assetDecimals = (asset: string): number => {
+        if (asset === this.asset) {
             return 18;
         }
         throw new Error(`Unsupported asset ${asset}`);
@@ -100,33 +93,39 @@ export class FilecoinClass
      * See [[OriginChain.getDeposits]].
      */
     getDeposits = async (
-        asset: FilAsset,
+        asset: string,
         address: FilAddress,
         _instanceID: number,
-        onDeposit: (deposit: FilDeposit) => void
+        onDeposit: (deposit: FilDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         if (this.chainNetwork === "devnet") {
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
         this.assetAssetSupported(asset);
-        (await fetchDeposits(address.address, address.params))
-            .map(transactionToDeposit)
-            .map(onDeposit);
+        const txs = await fetchDeposits(
+            address.address,
+            address.params,
+            this.chainNetwork,
+        );
+
+        for (const tx of txs) {
+            await onDeposit(transactionToDeposit(tx));
+        }
     };
 
     /**
      * See [[OriginChain.transactionConfidence]].
      */
     transactionConfidence = async (
-        transaction: FilTransaction
+        transaction: FilTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
-        transaction = await fetchMessage(transaction.cid);
+        transaction = await fetchMessage(transaction.cid, this.chainNetwork);
         return {
             current: transaction.confirmations,
             target: this.chainNetwork === "mainnet" ? 12 : 6, // NOT FINAL VALUES
@@ -137,15 +136,14 @@ export class FilecoinClass
      * See [[OriginChain.getGatewayAddress]].
      */
     getGatewayAddress = (
-        asset: FilAsset,
+        asset: string,
         compressedPublicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ): Promise<FilAddress> | FilAddress => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
-        const isTestnet = this.chainNetwork === "testnet";
 
         const ec = new elliptic.ec("secp256k1");
         const publicKey = ec
@@ -153,13 +151,13 @@ export class FilecoinClass
             .getPublic(false, "hex");
 
         const payload = Buffer.from(
-            blake2b(Buffer.from(publicKey, "hex"), null, 20)
+            blake2b(Buffer.from(publicKey, "hex"), null, 20),
         );
 
         // secp256k1 protocol prefix
         const protocol = 1;
         // network prefix
-        const networkPrefix = isTestnet ? "t" : "f";
+        const networkPrefix = this.chainNetwork === "testnet" ? "t" : "f";
 
         const addressObject = {
             str: Buffer.concat([Buffer.from([protocol]), payload]),
@@ -175,25 +173,16 @@ export class FilecoinClass
         };
     };
 
-    getPubKeyScript = (asset: FilAsset, _publicKey: Buffer, _gHash: Buffer) => {
+    getPubKeyScript = (asset: string, _publicKey: Buffer, _gHash: Buffer) => {
         this.assetAssetSupported(asset);
         return Buffer.from([]);
     };
 
     /**
-     * See [[OriginChain.encodeAddress]].
+     * See [[OriginChain.addressStringToBytes]].
      */
-    encodeAddress = (address: FilAddress): Buffer => {
-        return Buffer.from(address.address);
-    };
-
-    /**
-     * See [[OriginChain.decodeAddress]].
-     */
-    decodeAddress = (encodedAddress: Buffer): FilAddress => {
-        return {
-            address: encodedAddress.toString(),
-        };
+    addressStringToBytes = (address: string): Buffer => {
+        return decodeAddress(address).str;
     };
 
     /**
@@ -201,7 +190,7 @@ export class FilecoinClass
      */
     addressIsValid = (address: FilAddress): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         assertType<string>("string", { address: address.address });
         return this._addressIsValid(address, this.chainNetwork);

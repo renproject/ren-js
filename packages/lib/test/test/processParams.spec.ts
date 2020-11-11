@@ -1,15 +1,13 @@
-import { RenContract } from "@renproject/interfaces";
-import { renTestnet } from "@renproject/networks";
 // import { processBurnAndReleaseParams, processLockAndMintParams } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";
-import Web3 from "web3";
+import { config as loadDotEnv } from "dotenv";
 
 chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 describe("processParams", () => {
     // let web3: Web3;
@@ -48,7 +46,7 @@ describe("processParams", () => {
     //             }],
     //         }, "Burn 3");
     //     // JSON.stringify(resolveSendCall(renTestnet, {
-    //     //     asset: RenContract.Eth2Btc,
+    //     //     asset: "BTC0Eth2Btc",
     //     //     web3Provider: web3.currentProvider,
     //     //     sendTo: "sendTo",
     //     //     sendAmount: "0",
@@ -118,7 +116,7 @@ describe("processParams", () => {
     //             }],
     //         });
     //     // resolveSendCall(renTestnet, {
-    //     //     asset: RenContract.Btc2Eth,
+    //     //     asset: "BTC0Btc2Eth",
     //     //     txHash: "txHash",
     //     //     sendTo: "sendTo",
     //     //     sendAmount: "0.01",

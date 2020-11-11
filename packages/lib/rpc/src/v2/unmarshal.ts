@@ -1,34 +1,24 @@
 import {
-    BurnTransaction,
-    MintTransaction,
-    RenVMAssetFees,
-    RenVMFees,
+    BurnAndReleaseTransaction,
+    LockAndMintTransaction,
 } from "@renproject/interfaces";
 import {
     assert,
     fixSignatureSimple,
     signatureToBuffer,
 } from "@renproject/utils";
-import BigNumber from "bignumber.js";
 
-import {
-    ResponseQueryBurnTx,
-    ResponseQueryFees,
-    ResponseQueryMintTx,
-} from "./methods";
+import { ResponseQueryTx } from "./methods";
 import { unmarshalTypedPackValue } from "./pack/pack";
-import { Fees } from "./value";
-
-const decodeNumber = (input: string) => new BigNumber(input);
 
 export const unmarshalMintTx = (
-    response: ResponseQueryMintTx
-): MintTransaction => {
+    response: ResponseQueryTx,
+): LockAndMintTransaction => {
     // Note: Numbers are decoded and re-encoded to ensure they are in the correct format.
 
     assert(
-        response.tx.selector.match(/\/to/) !== null,
-        `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.selector})`
+        /\/to/.exec(response.tx.selector) !== null,
+        `Expected mint details but got back burn details (${response.tx.hash} - ${response.tx.selector})`,
     );
 
     let out;
@@ -63,11 +53,11 @@ export const unmarshalMintTx = (
 };
 
 export const unmarshalBurnTx = (
-    response: ResponseQueryBurnTx
-): BurnTransaction => {
+    response: ResponseQueryTx,
+): BurnAndReleaseTransaction => {
     assert(
-        response.tx.selector.match(/\/from/) !== null,
-        `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`
+        /\/from/.exec(response.tx.selector) !== null,
+        `Expected burn details but got back mint details (${response.tx.hash} - ${response.tx.selector})`,
     );
 
     let out;
@@ -88,30 +78,30 @@ export const unmarshalBurnTx = (
     };
 };
 
-const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
-    const { lock, release, ...tokens } = fees;
+// const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
+//     const { lock, release, ...tokens } = fees;
 
-    // TODO: Fix type errors.
-    return ({
-        lock: decodeNumber(lock).toNumber(),
-        release: decodeNumber(release).toNumber(),
-        ...Object.keys(tokens).reduce(
-            (acc, token) => ({
-                ...acc,
-                [token]: {
-                    mint: decodeNumber(fees[token].mint).toNumber(),
-                    burn: decodeNumber(fees[token].burn).toNumber(),
-                },
-            }),
-            {}
-        ),
-    } as unknown) as RenVMAssetFees;
-};
+//     // TODO: Fix type errors.
+//     return ({
+//         lock: decodeNumber(lock).toNumber(),
+//         release: decodeNumber(release).toNumber(),
+//         ...Object.keys(tokens).reduce(
+//             (acc, token) => ({
+//                 ...acc,
+//                 [token]: {
+//                     mint: decodeNumber(fees[token].mint).toNumber(),
+//                     burn: decodeNumber(fees[token].burn).toNumber(),
+//                 },
+//             }),
+//             {},
+//         ),
+//     } as unknown) as RenVMAssetFees;
+// };
 
-export const unmarshalFees = (response: ResponseQueryFees): RenVMFees => {
-    const fees = {};
-    for (const key of Object.keys(response)) {
-        fees[key] = unmarshalAssetFees(response[key]);
-    }
-    return fees;
-};
+// export const unmarshalFees = (response: ResponseQueryFees): RenVMFees => {
+//     const fees = {};
+//     for (const key of Object.keys(response)) {
+//         fees[key] = unmarshalAssetFees(response[key]);
+//     }
+//     return fees;
+// };

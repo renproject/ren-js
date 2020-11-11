@@ -1,5 +1,3 @@
-import { RenNetwork } from "@renproject/interfaces";
-
 export enum TerraNetwork {
     Tequila = "tequila-0004",
     Columbus = "columbus-3",
@@ -21,22 +19,19 @@ export interface TerraAPI {
         address: string,
         network: TerraNetwork,
         memo: string | undefined,
-        page?: number
+        page?: number,
     ) => Promise<TerraTransaction[]>;
 
     fetchDeposit: (
         hash: string,
         messageIndex: number,
-        network: TerraNetwork
+        network: TerraNetwork,
     ) => Promise<TerraTransaction>;
 }
 
-export enum TerraAsset {
-    LUNA = "LUNA",
-}
 export type TerraAddress = {
     address: string; // Terra address
-    asset?: TerraAsset; // Asset tied to the pHash in the memo.
+    asset?: string; // Asset tied to the pHash in the memo.
     memo?: string; // Base64 string of the pHash.
 };
 export type TerraDeposit = {
@@ -45,20 +40,6 @@ export type TerraDeposit = {
 };
 
 export const UNSUPPORTED_TERRA_NETWORK = `Terra is not supported by the current RenVM network.`;
-
-export const resolveTerraNetwork = (renNetwork: RenNetwork): TerraNetwork => {
-    switch (renNetwork) {
-        case RenNetwork.Mainnet:
-        case RenNetwork.Chaosnet:
-            return TerraNetwork.Columbus;
-        case RenNetwork.Testnet:
-        case RenNetwork.Devnet:
-            return TerraNetwork.Tequila;
-        case RenNetwork.Localnet:
-            throw new Error(`Terra is currently not supported on localnet.`);
-    }
-    throw new Error(`Unrecognized network ${renNetwork}`);
-};
 
 export const transactionToDeposit = (transaction: TerraTransaction) => ({
     transaction,

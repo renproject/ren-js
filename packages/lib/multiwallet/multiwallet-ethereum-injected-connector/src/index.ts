@@ -1,9 +1,26 @@
-import { AbstractEthereumConnector } from "@renproject/multiwallet-abstract-ethereum-connector";
+import {
+    AbstractEthereumConnector,
+    SaneProvider,
+} from "@renproject/multiwallet-abstract-ethereum-connector";
 import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
+import { SyncOrPromise } from "@renproject/interfaces";
 
 export interface EthereumConnectorOptions {
     debug: boolean;
 }
+
+// No good typings for injected providers exist.
+export type InjectedProvider = SaneProvider & {
+    isMetamask?: boolean;
+    autoRefreshOnNetworkChange?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    request: (request: { method: string }) => Promise<any>;
+    enable: () => Promise<void>;
+    on: (
+        name: string,
+        listener: (...args: unknown[]) => SyncOrPromise<void>,
+    ) => void;
+};
 
 const isResults = <T>(x: { results: T } | T): x is { results: T } =>
     (x as { results: T }).results !== undefined;
@@ -15,19 +32,27 @@ const resultOrRaw = <T>(x: { results: T } | T) => {
     return x;
 };
 
-export class EthereumInjectedConnector extends AbstractEthereumConnector {
+export class EthereumInjectedConnector extends AbstractEthereumConnector<
+    InjectedProvider
+> {
     supportsTestnet = true;
     constructor(options: EthereumConnectorOptions) {
         super(options);
     }
-    handleUpdate = () =>
+    handleUpdate = () => {
         this.getStatus()
-            .then((...args) => this.emitter.emitUpdate(...args))
-            .catch((...args) => this.deactivate(...args));
+            .then((...args) => {
+                this.emitter.emitUpdate(...args);
+            })
+            .catch(async (...args) => this.deactivate(...args));
+    };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
-        // No good typings for injected providers exist...
-        const provider: any = await this.getProvider();
+        // Await in case a child class's getProvider is asynchronous.
+        const provider = await (this as AbstractEthereumConnector<
+            InjectedProvider
+        >).getProvider();
 
         if (!provider) {
             throw Error("Missing Provider");
@@ -37,17 +62,18 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
         await this.cleanup();
 
         if (provider.isMetamask) {
-            // This behaviour is being deprecated so don't rely on it
+            // This behavior is being deprecated so don't rely on it
             provider.autoRefreshOnNetworkChange = false;
         }
 
         let account;
         try {
             account = resultOrRaw(
-                await provider.request({ method: "eth_requestAccounts" })
+                await provider.request({ method: "eth_requestAccounts" }),
             )[0];
         } catch (error) {
-            if ((error as any).code === 4001) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (error.code === 4001) {
                 this.emitter.emitError(new Error("User rejected request"));
             }
             console.error(error);
@@ -65,19 +91,25 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector {
     };
 
     getProvider = () => {
-        return window.ethereum;
+        return window.ethereum as InjectedProvider;
     };
 
     cleanup = async () => {
-        const provider: any = await this.getProvider();
-        provider.removeListener("close", this.deactivate);
-        provider.removeListener("networkChanged", this.handleUpdate);
-        provider.removeListener("accountsChanged", this.handleUpdate);
-        provider.removeListener("chainChanged", this.handleUpdate);
+        // Await in case a child class's getProvider is asynchronous.
+        const provider = await (this as AbstractEthereumConnector<
+            InjectedProvider
+        >).getProvider();
+        if (provider.removeListener) {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            provider.removeListener("close", this.deactivate);
+            provider.removeListener("networkChanged", this.handleUpdate);
+            provider.removeListener("accountsChanged", this.handleUpdate);
+            provider.removeListener("chainChanged", this.handleUpdate);
+        }
     };
 
     deactivate = async (reason?: string) => {
         await this.cleanup();
-        return this.emitter.emitDeactivate(reason);
+        this.emitter.emitDeactivate(reason);
     };
 }

@@ -17,13 +17,13 @@ export const getHeight = async (network: TerraNetwork): Promise<number> => {
             prefix = "tequila-lcd";
             break;
         default:
-            throw new Error(`Terra network ${network} not supported.`);
+            throw new Error(`Terra network ${String(network)} not supported.`);
     }
 
     const terra =
         clients[network] ||
         new LCDClient({
-            URL: `https://${prefix}.terra.dev`,
+            URL: `https://${String(prefix)}.terra.dev`,
             chainID: network,
         });
     clients[network] = terra;

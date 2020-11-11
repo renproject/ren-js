@@ -110,11 +110,16 @@ export type EthType =
     | "byte"
     | EthByte;
 
-export interface EthArg<name extends string, type extends EthType, valueType> {
+export interface EthArg<
+    name extends string = string,
+    type extends EthType = EthType,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    valueType = any
+> {
     name: name;
     type: type;
-    value: valueType; // "8d8126"
+    value: valueType;
+    notInPayload?: boolean;
 }
 
-// tslint:disable-next-line: no-any
-export type EthArgs = Array<EthArg<string, EthType, any>>;
+export type EthArgs = EthArg[];

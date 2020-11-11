@@ -2,17 +2,17 @@ import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
 
 import { Logger } from "./logger";
-import { RenNetwork } from "./networks";
+import { RenNetwork, RenNetworkDetails, RenNetworkString } from "./networks";
 import { ContractCall } from "./parameters";
 import { PromiEvent } from "./promiEvent";
-import { MintTransaction } from "./transaction";
+import { LockAndMintTransaction } from "./transaction";
 import { EventType } from "./types";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
 export type TransactionListener<
     T,
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     E extends { [key: string]: any[] }
 > = PromiEvent<
     T,
@@ -40,9 +40,8 @@ export type TransactionListener<
  * all the relevant assets.
  */
 export interface ChainCommon<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
-    Asset = string,
     Address = string
 > {
     /**
@@ -64,7 +63,7 @@ export interface ChainCommon<
     /**
      * Should be set by `constructor` or `initialize`.
      */
-    renNetwork?: RenNetwork;
+    renNetwork?: RenNetworkDetails;
 
     // Class Initialization
 
@@ -80,7 +79,9 @@ export interface ChainCommon<
      * chain - whereas the default `testnet` configuration would use testnet
      * Bitcoin and Ethereum's Kovan testnet.
      */
-    initialize: (network: RenNetwork) => SyncOrPromise<this>;
+    initialize: (
+        network: RenNetwork | RenNetworkString | RenNetworkDetails,
+    ) => SyncOrPromise<this>;
 
     // Supported assets
 
@@ -95,7 +96,7 @@ export interface ChainCommon<
      *     throw new Error(`Unsupported asset ${asset}`);
      * }
      */
-    assetDecimals: (asset: Asset) => SyncOrPromise<number>;
+    assetDecimals: (asset: string) => SyncOrPromise<number>;
 
     // Address and transaction helpers
 
@@ -131,19 +132,19 @@ export interface ChainCommon<
      * @dev Must be compatible with the matching RenVM multichain LockChain.
      */
     transactionConfidence: (
-        transaction: Transaction
+        transaction: Transaction,
     ) => SyncOrPromise<{ current: number; target: number }>;
 
     transactionRPCFormat: (
         transaction: Transaction,
-        v2?: boolean
+        v2?: boolean,
     ) => {
         txid: Buffer;
         txindex: string;
     };
 }
 
-// tslint:disable-next-line: no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DepositCommon<Transaction = any> = {
     transaction: Transaction;
     amount: string;
@@ -160,18 +161,17 @@ export type DepositCommon<Transaction = any> = {
  * BitcoinCash implementations for examples of this.
  */
 export interface LockChain<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    Asset = string,
     Address = string
-> extends ChainCommon<Transaction, Asset, Address> {
+> extends ChainCommon<Transaction, Address> {
     // Assets
 
     /**
      * `assetIsNative` should return true if the asset is native to the Chain.
      */
-    assetIsNative: (asset: Asset) => SyncOrPromise<boolean>;
+    assetIsNative: (asset: string) => SyncOrPromise<boolean>;
 
     // Deposits
 
@@ -183,7 +183,7 @@ export interface LockChain<
      * returning, and streaming deposits using the onDeposit method.
      */
     getDeposits: (
-        asset: Asset,
+        asset: string,
         address: Address,
         // instanceID allows the chain to internally track it's progress in
         // searching for deposits for a particular LockAndMint object.
@@ -191,27 +191,19 @@ export interface LockChain<
         // the first time getDeposits is called for a particular instanceID and
         // address, and only return unspent deposits in successive calls.
         instanceID: number,
-        onDeposit: (deposit: LockDeposit) => void,
-        listenerCancelled: () => boolean
+        onDeposit: (deposit: LockDeposit) => Promise<void>,
+        listenerCancelled: () => boolean,
     ) => SyncOrPromise<void>;
 
     // Encoding
 
     /**
-     * `encodeAddress` should return a bytes representation of the provided
-     * address. The default implementation is `address => Buffer.from(address)`.
+     * `addressBytes` should return the bytes representation of the address.
      *
-     * @dev Must be compatible with the matching RenVM multichain LockChain.
+     * @dev Must be compatible with the matching RenVM multichain LockChain's
+     * `decodeAddress` method.
      */
-    encodeAddress?: (address: Address) => Buffer;
-
-    /**
-     * `decodeAddress` should return the address represented by the provided
-     * bytes. The default implementation is `buffer => buffer.toString()`.
-     *
-     * @dev Must be compatible with the matching RenVM multichain LockChain.
-     */
-    decodeAddress?: (encodedAddress: Buffer) => Address;
+    addressStringToBytes: (address: string) => Buffer;
 
     // RenVM specific utils
 
@@ -223,15 +215,15 @@ export interface LockChain<
      * @dev Must be compatible with the matching RenVM multichain LockChain.
      */
     getGatewayAddress: (
-        asset: Asset,
+        asset: string,
         publicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ) => SyncOrPromise<Address>;
 
     getPubKeyScript: (
-        asset: Asset,
+        asset: string,
         publicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ) => SyncOrPromise<Buffer>;
 
     // Only chains supported by the legacy transaction format (BTC, ZEC & BCH)
@@ -241,20 +233,18 @@ export interface LockChain<
     burnPayload?: () => SyncOrPromise<string | undefined>;
 }
 
-// tslint:disable-next-line: no-any
 export interface BurnDetails<Transaction> {
     transaction: Transaction;
     amount: BigNumber;
-    to: Buffer;
+    to: string;
     nonce: BigNumber;
 }
 
 export interface MintChain<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
-    Asset = string,
     Address = string
-> extends ChainCommon<Transaction, Asset, Address> {
+> extends ChainCommon<Transaction, Address> {
     // /**
     //  * `supportsAsset` should return true if the the asset can be minted onto
     //  * this chain.
@@ -262,33 +252,30 @@ export interface MintChain<
     //  * @example
     //  * ethereum.supportsAsset = asset => asset === "BTC" ||;
     //  */
-    // supportsAsset: (asset: Asset) => SyncOrPromise<boolean>;
+    // supportsAsset: (asset: string) => SyncOrPromise<boolean>;
 
-    resolveTokenGatewayContract: (asset: Asset) => Promise<string>;
+    resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
     /**
      * `submitMint` should take the completed mint transaction from RenVM and
      * submit its signature to the mint chain to finalize the mint.
      */
     submitMint: (
-        asset: Asset,
+        asset: string,
         contractCalls: ContractCall[],
-        mintTx: MintTransaction,
-        eventEmitter: EventEmitter
+        mintTx: LockAndMintTransaction,
+        eventEmitter: EventEmitter,
     ) => SyncOrPromise<Transaction>;
 
     findTransaction: (
-        asset: Asset,
-        mintTx: MintTransaction
+        asset: string,
+        nHash: Buffer,
+        sigHash?: Buffer,
     ) => SyncOrPromise<Transaction | undefined>;
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
-     *
-     * @param {TransactionConfig} [txConfig] Optionally override default options
-     *        like gas.
-     * @returns {(PromiEvent<BurnAndRelease, { [event: string]: any }>)}
      */
     findBurnTransaction: (
         asset: string,
@@ -301,12 +288,12 @@ export interface MintChain<
         },
 
         eventEmitter: EventEmitter,
-        logger: Logger
+        logger: Logger,
     ) => SyncOrPromise<BurnDetails<Transaction>>;
 
     contractCalls?: (
         eventType: EventType,
-        asset: Asset,
-        burnPayload?: string
+        asset: string,
+        burnPayload?: string,
     ) => SyncOrPromise<ContractCall[] | undefined>;
 }

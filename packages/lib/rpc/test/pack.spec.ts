@@ -1,5 +1,3 @@
-// tslint:disable: no-console
-
 import BigNumber from "bignumber.js";
 import { expect } from "earljs";
 import { describe, it } from "mocha";
@@ -7,8 +5,6 @@ import { fromBase64 } from "@renproject/utils";
 
 import { unmarshalPackValue } from "../src/v2/pack/pack";
 import { burnParamsType, mintParamsType } from "../src/v2/transaction";
-
-require("dotenv").config();
 
 describe("Pack", () => {
     it("Unmarshal burn", () => {
@@ -48,7 +44,7 @@ describe("Pack", () => {
         const to = "򝊞􋄛𧚞󥫨򨚘󳽈򤙳񙓻򳳱􎖫򗣌𻄭񑦁򏬰񆆅򒒛􊗓𧜿򇞣􁓹";
         const token = "";
 
-        const result = unmarshalPackValue(mintParamsType, {
+        const result = unmarshalPackValue(mintParamsType(), {
             ghash,
             gpubkey,
             nhash,

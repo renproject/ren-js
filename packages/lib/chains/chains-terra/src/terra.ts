@@ -1,20 +1,15 @@
-import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
 import {
-    assertType,
-    Callable,
-    fromHex,
-    keccak256,
-    Ox,
-    rawEncode,
-    toBase64,
-    toURLBase64,
-} from "@renproject/utils";
+    getRenNetworkDetails,
+    LockChain,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
+import { assertType, Callable } from "@renproject/utils";
 import { Key } from "@terra-money/terra.js";
 
 import {
-    resolveTerraNetwork,
     TerraAddress,
-    TerraAsset,
     TerraDeposit,
     TerraNetwork,
     TerraTransaction,
@@ -28,14 +23,13 @@ import { terraDev } from "./api/terraDev";
  * and it's asset LUNA.
  */
 export class TerraClass
-    implements
-        LockChain<TerraTransaction, TerraDeposit, TerraAsset, TerraAddress> {
+    implements LockChain<TerraTransaction, TerraDeposit, TerraAddress> {
     public name = "Terra";
-    public renNetwork: RenNetwork | undefined;
+    public renNetwork: RenNetworkDetails | undefined;
     public chainNetwork: TerraNetwork | undefined;
 
     // The assets native to Terra.
-    public _assets = [TerraAsset.LUNA];
+    public assets = ["Luna"];
 
     constructor(network?: TerraNetwork) {
         this.chainNetwork = network;
@@ -44,21 +38,25 @@ export class TerraClass
     /**
      * See [[OriginChain.initialize]].
      */
-    public initialize = (renNetwork: RenNetwork) => {
-        this.renNetwork = renNetwork;
+    public initialize = (
+        renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
+    ) => {
+        this.renNetwork = getRenNetworkDetails(renNetwork);
         // Prioritize the network passed in to the constructor.
         this.chainNetwork =
-            this.chainNetwork || resolveTerraNetwork(renNetwork);
+            this.chainNetwork || this.renNetwork.isTestnet
+                ? TerraNetwork.Tequila
+                : TerraNetwork.Columbus;
+
         return this;
     };
 
     /**
      * See [[OriginChain.assetIsNative]].
      */
-    assetIsNative = (asset: TerraAsset): boolean =>
-        this._assets.indexOf(asset) >= 0;
+    assetIsNative = (asset: string): boolean => this.assets.indexOf(asset) >= 0;
 
-    public readonly assetAssetSupported = (asset: TerraAsset) => {
+    public readonly assetAssetSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
             throw new Error(`Unsupported asset ${asset}`);
         }
@@ -67,51 +65,51 @@ export class TerraClass
     /**
      * See [[OriginChain.assetDecimals]].
      */
-    assetDecimals = (asset: TerraAsset): number => {
+    assetDecimals = (asset: string): number => {
         switch (asset) {
-            case TerraAsset.LUNA:
+            case "Luna":
                 return 6;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Unsupported asset ${String(asset)}`);
     };
 
     /**
      * See [[OriginChain.getDeposits]].
      */
     getDeposits = async (
-        asset: TerraAsset,
+        asset: string,
         address: TerraAddress,
         _instanceID: number,
-        onDeposit: (deposit: TerraDeposit) => void
+        onDeposit: (deposit: TerraDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
-        (
-            await terraDev.fetchDeposits(
-                address.address,
-                this.chainNetwork,
-                address.memo
-            )
-        )
-            .map(transactionToDeposit)
-            .map(onDeposit);
+        const txs = await terraDev.fetchDeposits(
+            address.address,
+            this.chainNetwork,
+            address.memo,
+        );
+
+        for (const tx of txs) {
+            await onDeposit(transactionToDeposit(tx));
+        }
     };
 
     /**
      * See [[OriginChain.transactionConfidence]].
      */
     transactionConfidence = async (
-        transaction: TerraTransaction
+        transaction: TerraTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         transaction = await terraDev.fetchDeposit(
             transaction.hash,
             transaction.messageIndex,
-            this.chainNetwork
+            this.chainNetwork,
         );
         return {
             current: transaction.confirmations,
@@ -123,16 +121,16 @@ export class TerraClass
      * See [[OriginChain.getGatewayAddress]].
      */
     getGatewayAddress = (
-        asset: TerraAsset,
+        asset: string,
         compressedPublicKey: Buffer,
-        gHash: Buffer
+        gHash: Buffer,
     ): Promise<TerraAddress> | TerraAddress => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         this.assetAssetSupported(asset);
 
-        // tslint:disable-next-line: no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const address: Key = new (Key as any)(compressedPublicKey);
 
         return {
@@ -142,29 +140,17 @@ export class TerraClass
         };
     };
 
-    getPubKeyScript = (
-        asset: TerraAsset,
-        _publicKey: Buffer,
-        _gHash: Buffer
-    ) => {
+    getPubKeyScript = (asset: string, _publicKey: Buffer, _gHash: Buffer) => {
         this.assetAssetSupported(asset);
         return Buffer.from([]);
     };
 
     /**
-     * See [[OriginChain.encodeAddress]].
+     * See [[OriginChain.addressStringToBytes]].
      */
-    encodeAddress = (address: TerraAddress): Buffer => {
-        return Buffer.from(address.address);
-    };
-
-    /**
-     * See [[OriginChain.decodeAddress]].
-     */
-    decodeAddress = (encodedAddress: Buffer): TerraAddress => {
-        return {
-            address: encodedAddress.toString(),
-        };
+    addressStringToBytes = (address: string): Buffer => {
+        // TODO
+        return Buffer.from(address);
     };
 
     /**
@@ -172,7 +158,7 @@ export class TerraClass
      */
     addressIsValid = (address: TerraAddress): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${name} object not initialized`);
+            throw new Error(`${this.name} object not initialized`);
         }
         assertType<string>("string", { address: address.address });
         // TODO

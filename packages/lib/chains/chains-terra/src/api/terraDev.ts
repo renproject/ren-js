@@ -14,9 +14,9 @@ const TERRA_DEV_URL = (network: TerraNetwork) => {
             prefix = "tequila-fcd";
             break;
         default:
-            throw new Error(`Terra network ${network} not supported.`);
+            throw new Error(`Terra network ${String(network)} not supported.`);
     }
-    return `https://${prefix}.terra.dev/v1`;
+    return `https://${String(prefix)}.terra.dev/v1`;
 };
 
 interface TerraDevTx {
@@ -29,7 +29,7 @@ interface TerraDevTx {
                     {
                         denom: "uluna";
                         amount: "10410";
-                    }
+                    },
                 ];
             };
             msg: [
@@ -40,12 +40,12 @@ interface TerraDevTx {
                             {
                                 denom: "uluna";
                                 amount: "100000000";
-                            }
+                            },
                         ];
                         to_address: "terra1muzv5awgfnavnelcc79c2rptp6jj085r7hsg7c";
                         from_address: "terra1muzv5awgfnavnelcc79c2rptp6jj085r7hsg7c";
                     };
-                }
+                },
             ];
             memo: "test123";
             signatures: [
@@ -55,7 +55,7 @@ interface TerraDevTx {
                         value: "AjthO041Lu27AySFNsQYgTLBYN6orpEdAjF21GbwRMD7";
                     };
                     signature: "czeRAxrQo8lagoGkEW3pFTOYSLG7/DvT2Q6COZVk//4eVVqADNjGiB/9LrgFRwO1DeP9zzeMIg9HMqRQwE+CZA==";
-                }
+                },
             ];
         };
     };
@@ -79,7 +79,7 @@ interface TerraDevTx {
                         {
                             key: "action";
                             value: "send";
-                        }
+                        },
                     ];
                 },
                 {
@@ -92,13 +92,13 @@ interface TerraDevTx {
                         {
                             key: "amount";
                             value: "100000000uluna";
-                        }
+                        },
                     ];
-                }
+                },
             ];
             success: true;
             msg_index: 0;
-        }
+        },
     ];
     events: [
         {
@@ -115,7 +115,7 @@ interface TerraDevTx {
                 {
                     key: "action";
                     value: "send";
-                }
+                },
             ];
         },
         {
@@ -128,9 +128,9 @@ interface TerraDevTx {
                 {
                     key: "amount";
                     value: "100000000uluna";
-                }
+                },
             ];
-        }
+        },
     ];
     height: "2521226";
     txhash: "6BCF73C2518412BE1180D9D811E758F29AC46CAB0271CB47E1A852F787FDD42A";
@@ -150,17 +150,15 @@ interface MessagesResponse {
 type MessageResponse = TerraDevTx;
 
 const extractDepositsFromTx = (chainHeight: number) => (
-    tx: TerraDevTx
+    tx: TerraDevTx,
 ): TerraTransaction[] => {
-    const msgs: Array<
-        TerraDevTx & {
-            to_address: string;
-            from_address: string;
-            amount: string;
-            denom: string;
-            messageIndex: number;
-        }
-    > = [];
+    const msgs: Array<TerraDevTx & {
+        to_address: string;
+        from_address: string;
+        amount: string;
+        denom: string;
+        messageIndex: number;
+    }> = [];
     try {
         const decodedMsgs = tx.tx.value.msg;
         for (let i = 0; i < decodedMsgs.length; i++) {
@@ -203,13 +201,12 @@ const fetchDeposits = async (
     address: string,
     network: TerraNetwork,
     memo: string | undefined = undefined,
-    page = 0
+    page = 0,
 ): Promise<TerraTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
-    const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${
-        page + 1
-    }&chainId=${network}`;
+    const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${page +
+        1}&chainId=${network}`;
 
     const response = (
         await Axios.get<MessagesResponse>(url, {
@@ -225,7 +222,7 @@ const fetchDeposits = async (
               (message) =>
                   message.tx &&
                   message.tx.value &&
-                  message.tx.value.memo === memo
+                  message.tx.value.memo === memo,
           );
 
     // Create an entry for each message. Transactions can contain multiple
@@ -241,7 +238,7 @@ const fetchDeposits = async (
 const fetchDeposit = async (
     hash: string,
     messageIndex: number,
-    network: TerraNetwork
+    network: TerraNetwork,
 ): Promise<TerraTransaction> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
@@ -252,7 +249,6 @@ const fetchDeposit = async (
         })
     ).data;
 
-    // tslint:disable-next-line: strict-type-predicates
     if (tx === null) {
         throw new Error(`Unable to find Terra transaction ${hash}`);
     }

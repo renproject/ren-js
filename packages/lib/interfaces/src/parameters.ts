@@ -1,10 +1,8 @@
 import BigNumber from "bignumber.js";
-import { TransactionConfig } from "web3-core";
 
 import { DepositCommon, LockChain, MintChain } from "./chain";
 import { EthArgs } from "./ethArgs";
 
-export { TransactionConfig } from "web3-core";
 export type BNInterface = { toString(x?: "hex"): string };
 export type NumberValue = string | number | BigNumber | BNInterface;
 
@@ -32,14 +30,14 @@ export interface ContractCall {
     /**
      * Set transaction options:.
      */
-    txConfig?: TransactionConfig;
+    txConfig?: unknown;
 }
 
 /**
  * The parameters required for both minting and burning.
  */
-export interface TransferParamsCommon<Asset extends string> {
-    asset: Asset;
+export interface TransferParamsCommon {
+    asset: string;
 
     /**
      * Provide the transaction hash returned from RenVM to continue a previous
@@ -63,14 +61,18 @@ export interface TransferParamsCommon<Asset extends string> {
  * The parameters for a cross-chain transfer onto Ethereum.
  */
 export interface LockAndMintParams<
-    // tslint:disable-next-line: no-any
-    Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    Asset extends string = string,
-    Address = string
-> extends TransferParamsCommon<Asset> {
-    from: LockChain<Transaction, Deposit, Asset, Address>;
-    to: MintChain;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
+        LockTransaction
+    >,
+    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintTransaction = any,
+    MintAddress = string
+> extends TransferParamsCommon {
+    from: LockChain<LockTransaction, LockDeposit, LockAddress>;
+    to: MintChain<MintTransaction, MintAddress>;
 
     /**
      * The amount of `sendToken` that should be sent.
@@ -105,7 +107,7 @@ export interface LockAndMintParams<
      * shard, but once sharding is live, this parameter will ensure that the
      * same address can be used to resume the transfer.
      */
-    gatewayAddress?: Address;
+    gatewayAddress?: LockAddress;
 }
 
 /**
@@ -113,19 +115,23 @@ export interface LockAndMintParams<
  * from Ethereum.
  */
 export interface BurnAndReleaseParams<
-    // tslint:disable-next-line: no-any
-    Transaction = any,
-    Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    Asset extends string = string,
-    Address = string
-> extends TransferParamsCommon<Asset> {
-    from: MintChain;
-    to: LockChain<Transaction, Deposit, Asset, Address>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
+        LockTransaction
+    >,
+    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintTransaction = any,
+    MintAddress = string
+> extends TransferParamsCommon {
+    from: MintChain<MintTransaction, MintAddress>;
+    to: LockChain<LockTransaction, LockDeposit, LockAddress>;
 
     /**
      * The hash of the burn transaction on Ethereum.
      */
-    transaction?: Transaction;
+    transaction?: MintTransaction;
 
     /**
      * The reference ID of the burn emitted in the contract log.

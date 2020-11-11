@@ -39,7 +39,7 @@ interface MessagesResponse {
                 sector_number: string; // "";
                 gas_fee: number; // 72444547015;
                 gas_fee_str: string; // "72.4445 NanoFIL";
-            }
+            },
         ];
     };
 }
@@ -47,7 +47,7 @@ interface MessagesResponse {
 export const fetchDeposits = async (
     address: string,
     paramsFilterBase64: string | undefined = undefined,
-    page = 0
+    page = 0,
 ): Promise<FilTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
@@ -80,10 +80,10 @@ export const fetchDeposits = async (
                     confirmations: 0, // TODO
                     nonce: 0, // TODO
                 };
-            }
+            },
         )
         .filter(
-            message =>
-                !paramsFilterBase64 || message.params === paramsFilterBase64
+            (message) =>
+                !paramsFilterBase64 || message.params === paramsFilterBase64,
         );
 };

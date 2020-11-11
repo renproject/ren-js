@@ -23,7 +23,7 @@ export class Script {
         this.script = Buffer.concat([
             this.script,
             Buffer.from([data.length]),
-            data
+            data,
         ]);
         return this;
     };
@@ -48,7 +48,7 @@ export class Script {
         // Append checksum
         const hashWithChecksum = Buffer.concat([
             hashWithPrefix,
-            checksum(hashWithPrefix)
+            checksum(hashWithPrefix),
         ]);
 
         return hashWithChecksum;

@@ -1,5 +1,3 @@
-// tslint:disable: no-use-before-declare
-
 import { fromBase64 } from "@renproject/utils";
 import BN from "bn.js";
 
@@ -39,7 +37,7 @@ export const marshalPackType = (type: PackType) => {
             return 7;
 
         // KindString is the kind of all utf8 strings.
-        case PackPrimitive.String:
+        case PackPrimitive.Str:
             return 10;
         // KindBytes is the kind of all dynamic byte arrays.
         case PackPrimitive.Bytes:
@@ -60,19 +58,17 @@ export const marshalPackType = (type: PackType) => {
         case "list":
             return 21;
     }
-    throw new Error(`Unknown type ${type}`);
+    throw new Error(`Unknown type ${String(type)}`);
 };
 
 export const marshalUint = (value: number, length: number) => {
     try {
         return new BN(
-            // tslint:disable-next-line: strict-type-predicates
-            typeof value === "number" ? value : (value as string).toString()
+            typeof value === "number" ? value : (value as string).toString(),
         ).toArrayLike(Buffer, "be", length);
     } catch (error) {
-        error.message = `Unable to marshal uint${length * 8} '${value}': ${
-            error.message
-        }`;
+        error.message = `Unable to marshal uint${length *
+            8} '${value}': ${String(error.message)}`;
         throw error;
     }
 };
@@ -98,7 +94,7 @@ export const marshalPackStructType = (type: PackStructType) => {
 
     return Buffer.concat([
         length,
-        ...type.struct.map(field => {
+        ...type.struct.map((field) => {
             const keys = Object.keys(field);
             if (keys.length === 0) {
                 throw new Error(`Invalid struct field with no entries.`);
@@ -122,17 +118,16 @@ export const marshalPackTypeDefinition = (type: PackTypeDefinition): Buffer => {
             Buffer.from([marshalPackType("struct")]),
             marshalPackStructType(type),
         ]);
-        // tslint:disable: strict-type-predicates
     } else if (typeof type === "string") {
         return Buffer.from([marshalPackType(type)]);
     }
-    throw new Error(`Unable to marshal type ${type}`);
+    throw new Error(`Unable to marshal type ${String(type)}`);
 };
 
 export const marshalPackPrimitive = (
     type: PackPrimitive,
-    // tslint:disable-next-line: no-any
-    value: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: any,
 ): Buffer => {
     switch (type) {
         // Booleans
@@ -152,7 +147,7 @@ export const marshalPackPrimitive = (
         case PackPrimitive.U256:
             return marshalU256(value);
         // Strings
-        case PackPrimitive.String: {
+        case PackPrimitive.Str: {
             return marshalString(value);
         }
         // Bytes
@@ -161,7 +156,7 @@ export const marshalPackPrimitive = (
                 Buffer.isBuffer(value)
                     ? Buffer.from(value)
                     : // Supports base64 url format
-                      fromBase64(value)
+                      fromBase64(value),
             );
         }
         case PackPrimitive.Bytes32:
@@ -173,10 +168,10 @@ export const marshalPackPrimitive = (
     }
 };
 
-// tslint:disable-next-line: no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const marshalPackStruct = (type: PackStructType, value: any): Buffer => {
     return Buffer.concat(
-        type.struct.map(member => {
+        type.struct.map((member) => {
             const keys = Object.keys(member);
             if (keys.length === 0) {
                 throw new Error(`Invalid struct member with no entries.`);
@@ -189,27 +184,30 @@ export const marshalPackStruct = (type: PackStructType, value: any): Buffer => {
             try {
                 return marshalPackValue(memberType, value[key]);
             } catch (error) {
-                error.message = `Unable to marshal struct field ${key}: ${error.message}`;
+                error.message = `Unable to marshal struct field ${key}: ${String(
+                    error.message,
+                )}`;
                 throw error;
             }
-        })
+        }),
     );
 };
 
 export const marshalPackValue = (
     type: PackTypeDefinition,
-    // tslint:disable-next-line: no-any
-    value: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: any,
 ): Buffer => {
     if (typeof type === "object") {
         return marshalPackStruct(type, value);
-        // tslint:disable: strict-type-predicates
     } else if (typeof type === "string") {
         if (type === "nil") return Buffer.from([]);
         return marshalPackPrimitive(type, value);
     }
     throw new Error(
-        `Unknown value type ${type}${!type ? ` for value ${value}` : ""}`
+        `Unknown value type ${String(type)}${
+            !type ? ` for value ${String(value)}` : ""
+        }`,
     );
 };
 

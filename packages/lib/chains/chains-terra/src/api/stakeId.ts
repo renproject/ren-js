@@ -14,9 +14,9 @@ const STAKE_ID_URL = (network: TerraNetwork) => {
         //     prefix = "soju";
         //     break;
         default:
-            throw new Error(`Terra network ${network} not supported.`);
+            throw new Error(`Terra network ${String(network)} not supported.`);
     }
-    return `https://${prefix}.stake.id/api`;
+    return `https://${String(prefix)}.stake.id/api`;
 };
 
 interface TerraTx {
@@ -42,6 +42,7 @@ interface MessagesResponse {
     }>;
     page: {
         total: number;
+        // eslint-disable-next-line id-blacklist
         number: number;
     };
     delegations: Array<{
@@ -78,20 +79,18 @@ interface TerraMessageTypes {
 type DecodedMsg = TerraMessageTypes["bank/MsgSend"];
 
 const extractDepositsFromTx = (chainHeight: number) => (
-    tx: TerraTx
+    tx: TerraTx,
 ): TerraTransaction[] => {
-    const msgs: Array<
-        Omit<TerraTx, "msg"> & {
-            to_address: string;
-            from_address: string;
-            amount: string;
-            denom: string;
-            messageIndex: number;
-        }
-    > = [];
+    const msgs: Array<Omit<TerraTx, "msg"> & {
+        to_address: string;
+        from_address: string;
+        amount: string;
+        denom: string;
+        messageIndex: number;
+    }> = [];
     try {
         const decodedMsgs: DecodedMsg[] = JSON.parse(
-            Buffer.from(tx.msg, "base64").toString()
+            Buffer.from(tx.msg, "base64").toString(),
         );
         for (let i = 0; i < decodedMsgs.length; i++) {
             const msg = decodedMsgs[i];
@@ -131,7 +130,7 @@ const fetchDeposits = async (
     address: string,
     network: TerraNetwork,
     memo: string | undefined = undefined,
-    page = 0
+    page = 0,
 ): Promise<TerraTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
@@ -147,8 +146,8 @@ const fetchDeposits = async (
     if (status !== "OK") {
         throw new Error(
             `Unable to fetch Terra deposits: ${String(status)}: ${String(
-                errors
-            )}`
+                errors,
+            )}`,
         );
     }
 
@@ -169,7 +168,7 @@ const fetchDeposits = async (
 const fetchDeposit = async (
     hash: string,
     messageIndex: number,
-    network: TerraNetwork
+    network: TerraNetwork,
 ): Promise<TerraTransaction> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
@@ -185,8 +184,8 @@ const fetchDeposit = async (
     if (status !== "OK") {
         throw new Error(
             `Unable to fetch Terra deposit: ${String(status)}: ${String(
-                errors
-            )}`
+                errors,
+            )}`,
         );
     }
 

@@ -1,4 +1,3 @@
-import React, { HTMLAttributes, useCallback, useEffect } from 'react';
 import {
   Box,
   ButtonBase,
@@ -7,31 +6,33 @@ import {
   Paper,
   PaperProps,
   Typography,
-} from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import CloseIcon from '@material-ui/icons/Close';
-import { ConnectorInterface } from '@renproject/multiwallet-base-connector';
-import { useMultiwallet } from './MultiwalletProvider';
-import { RenNetwork } from '@renproject/interfaces';
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import CloseIcon from "@material-ui/icons/Close";
+import { RenNetwork } from "@renproject/interfaces";
+import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
+import React, { HTMLAttributes, useCallback, useEffect } from "react";
 
-export * from './MultiwalletProvider';
+import { useMultiwallet } from "./MultiwalletProvider";
+
+export * from "./MultiwalletProvider";
 
 export interface ConnectorConfig<P, A> {
   /**
-     Name of the wallet
+   * Name of the wallet
    */
   name: string;
   /**
-     URL for logo to be shown (might change in future to a component)
+   * URL for logo to be shown (might change in future to a component)
    */
   logo: string;
   /**
-     The Multiwallet Connector to be used for this wallet
+   * The Multiwallet Connector to be used for this wallet
    */
   connector: ConnectorInterface<P, A>;
   /**
-     A component to be shown before a wallet is activated, for extra context / warnings
-  */
+   * A component to be shown before a wallet is activated, for extra context / warnings
+   */
   info?: React.FC<{ acknowledge: () => void; onClose: () => void }>;
 }
 
@@ -43,7 +44,7 @@ export interface WalletPickerConfig<P, A> {
 export interface WalletPickerProps<P, A>
   extends HTMLAttributes<HTMLDivElement> {
   /**
-     Which chain to show wallets for
+   * Which chain to show wallets for
    */
   chain: string;
   /**
@@ -51,7 +52,7 @@ export interface WalletPickerProps<P, A>
    */
   onClose: () => void;
   /**
-     Configuration for connectors across all chains
+   * Configuration for connectors across all chains
    */
   config: WalletPickerConfig<P, A>;
   /**
@@ -69,11 +70,11 @@ export interface WalletPickerProps<P, A>
   /**
      MaterialUI class overrides for the component shown when connecting
    */
-  connectingClasses?: PaperProps['classes'];
+  connectingClasses?: PaperProps["classes"];
   /**
      MaterialUI class overrides for the wallet selection components
    */
-  walletClasses?: WalletEntryProps<P, A>['classes'];
+  walletClasses?: WalletEntryProps<P, A>["classes"];
   /**
      MaterialUI class overrides for the picker container
    */
@@ -112,17 +113,17 @@ const useWalletPickerStyles = makeStyles({
     minWidth: 380,
   },
   header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   headerTitle: {},
   headerCloseIcon: {},
   body: {
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   },
   chainTitle: {
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   },
 });
 
@@ -133,8 +134,9 @@ export const WalletPickerHeader = ({
 }: {
   title: string;
   classes: ReturnType<typeof useWalletPickerStyles>;
-  onClose: WalletPickerProps<any, any>['onClose'];
-}) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onClose: WalletPickerProps<any, any>["onClose"];
+}): JSX.Element => (
   <Box pl={2} className={classes.header} flexDirection="row">
     <Typography className={classes.headerTitle}>{title}</Typography>
     <IconButton
@@ -171,7 +173,7 @@ export const WalletPicker = <P, A>({
   WrongNetworkInfo,
   WalletEntryButton,
   children,
-}: WalletPickerProps<P, A>) => {
+}: WalletPickerProps<P, A>): JSX.Element => {
   const defaultClasses = useWalletPickerStyles();
   const classes = { ...defaultClasses, ...pickerClasses };
 
@@ -259,7 +261,7 @@ export interface WalletPickerModalProps<P, A> {
    */
   options: WalletPickerProps<P, A>;
   /**
-     Whether to show the modal
+   * Whether to show the modal
    */
   open?: boolean;
 }
@@ -267,14 +269,14 @@ export interface WalletPickerModalProps<P, A> {
 export const WalletPickerModal = <P, A>({
   open,
   options,
-}: WalletPickerModalProps<P, A>) => {
+}: WalletPickerModalProps<P, A>): JSX.Element => {
   const { enabledChains, targetNetwork, setTargetNetwork } = useMultiwallet<
     P,
     A
   >();
-  const connecting = enabledChains[options.chain]?.status === 'connecting';
-  const connected = enabledChains[options.chain]?.status === 'connected';
-  const wrongNetwork = enabledChains[options.chain]?.status === 'wrong_network';
+  const connecting = enabledChains[options.chain]?.status === "connecting";
+  const connected = enabledChains[options.chain]?.status === "connected";
+  const wrongNetwork = enabledChains[options.chain]?.status === "wrong_network";
   useEffect(() => {
     if (connected) {
       options.onClose();
@@ -284,18 +286,22 @@ export const WalletPickerModal = <P, A>({
   useEffect(() => {
     if (options.targetNetwork !== targetNetwork) {
       switch (options.targetNetwork) {
-        case 'testnet':
+        case "testnet":
           setTargetNetwork(RenNetwork.Testnet);
           break;
-        case 'mainnet':
+        case "mainnet":
           setTargetNetwork(RenNetwork.Mainnet);
       }
     }
   }, [options.targetNetwork, targetNetwork, setTargetNetwork]);
 
-  const cancel = useCallback(() => {
+  const cancel = useCallback(async () => {
     if (connecting || wrongNetwork) {
-      enabledChains[options.chain]?.connector.deactivate();
+      try {
+        await enabledChains[options.chain]?.connector.deactivate();
+      } catch (err) {
+        console.error(err);
+      }
     }
     options.onClose();
   }, [connecting, wrongNetwork, enabledChains, options]);
@@ -322,18 +328,18 @@ export const WalletPickerModal = <P, A>({
 
 const useWalletEntryStyles = makeStyles((t) => ({
   button: {
-    width: '100%',
-    display: 'flex',
+    width: "100%",
+    display: "flex",
     padding: t.spacing(2),
   },
   body: {
     padding: t.spacing(2),
     flexGrow: 1,
-    display: 'flex',
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    textTransform: 'capitalize',
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    textTransform: "capitalize",
   },
 }));
 
@@ -341,8 +347,9 @@ interface WalletEntryProps<P, A> extends ConnectorConfig<P, A> {
   chain: string;
   classes?: ReturnType<typeof useWalletEntryStyles>;
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setInfo: (i: any) => void;
-  WalletEntryButton?: WalletPickerProps<P, A>['WalletEntryButton'];
+  WalletEntryButton?: WalletPickerProps<P, A>["WalletEntryButton"];
 }
 
 const WalletEntry = <P, A>({
@@ -355,13 +362,13 @@ const WalletEntry = <P, A>({
   onClose,
   setInfo,
   WalletEntryButton,
-}: WalletEntryProps<P, A> & {}) => {
+}: WalletEntryProps<P, A>): JSX.Element => {
   const { activateConnector } = useMultiwallet<P, A>();
 
   const buildInfo = useCallback(
-    (Info) => {
+    (InfoConstructor) => {
       return setInfo(() => (
-        <Info
+        <InfoConstructor
           onClose={onClose}
           acknowledge={() => {
             setInfo(undefined);
@@ -401,16 +408,16 @@ const WalletEntry = <P, A>({
 
 const useConnectingStyles = makeStyles((t) => ({
   root: {
-    display: 'flex',
+    display: "flex",
     padding: t.spacing(2),
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 }));
 
 // Element to show when a selected chain is connecting
 const Connecting: React.FC<{
   chain: string;
-  classes?: PaperProps['classes'];
+  classes?: PaperProps["classes"];
 }> = ({ chain, classes }) => {
   const defaultClasses = useConnectingStyles();
   return (
@@ -424,13 +431,13 @@ const Connecting: React.FC<{
 const WrongNetwork: React.FC<{
   chain: string;
   targetNetwork: string;
-  classes?: PaperProps['classes'];
+  classes?: PaperProps["classes"];
 }> = ({ chain, classes, targetNetwork }) => {
   const defaultClasses = useConnectingStyles();
   return (
     <Paper classes={classes || defaultClasses}>
       <Typography>
-        Connected to {chain} on the wrong network, please connect to{' '}
+        Connected to {chain} on the wrong network, please connect to{" "}
         {targetNetwork}
       </Typography>
     </Paper>

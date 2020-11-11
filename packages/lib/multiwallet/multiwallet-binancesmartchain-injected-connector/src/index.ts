@@ -1,6 +1,9 @@
 import { RenNetwork } from "@renproject/interfaces";
 import { EthereumConnectorOptions } from "@renproject/multiwallet-abstract-ethereum-connector";
-import { EthereumInjectedConnector } from "@renproject/multiwallet-ethereum-injected-connector";
+import {
+    EthereumInjectedConnector,
+    InjectedProvider,
+} from "@renproject/multiwallet-ethereum-injected-connector";
 
 export interface BinanceSmartChainConnectorOptions
     extends EthereumConnectorOptions {
@@ -32,6 +35,6 @@ export class BinanceSmartChainInjectedConnector extends EthereumInjectedConnecto
     }
 
     getProvider = () => {
-        return window.BinanceChain || window.ethereum;
+        return (window.BinanceChain || window.ethereum) as InjectedProvider;
     };
 }

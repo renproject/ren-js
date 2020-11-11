@@ -56,7 +56,7 @@ describe("common utils", () => {
             expect(fromHex("1234")).toEqual(Buffer.from([0x12, 0x34]));
             expect(fromHex("0x1234")).toEqual(Buffer.from([0x12, 0x34]));
             expect(fromHex(Buffer.from([0x12, 0x34]))).toEqual(
-                Buffer.from([0x12, 0x34])
+                Buffer.from([0x12, 0x34]),
             );
         });
     });
@@ -65,7 +65,7 @@ describe("common utils", () => {
         it("converts base64 string to Buffer", () => {
             expect(fromBase64("EjQ=")).toEqual(Buffer.from([0x12, 0x34]));
             expect(fromBase64(Buffer.from([0x12, 0x34]))).toEqual(
-                Buffer.from([0x12, 0x34])
+                Buffer.from([0x12, 0x34]),
             );
         });
 
@@ -86,16 +86,16 @@ describe("common utils", () => {
     context("fromBigNumber", () => {
         it("converts BigNumbers to Buffers", () => {
             expect(fromBigNumber(new BigNumber(1))).toEqual(
-                Buffer.from([0x01])
+                Buffer.from([0x01]),
             );
             expect(fromBigNumber(new BigNumber(11))).toEqual(
-                Buffer.from([0x0b])
+                Buffer.from([0x0b]),
             );
             expect(fromBigNumber(new BigNumber(16))).toEqual(
-                Buffer.from([0x10])
+                Buffer.from([0x10]),
             );
             expect(fromBigNumber(new BigNumber(256))).toEqual(
-                Buffer.from([0x01, 0x00])
+                Buffer.from([0x01, 0x00]),
             );
         });
     });
@@ -124,13 +124,13 @@ describe("common utils", () => {
                     response: {
                         data: {
                             data: {
-                                error: "test"
-                            }
-                        }
-                    }
+                                error: "test",
+                            },
+                        },
+                    },
                 },
 
-                "Error: test"
+                "Error: test",
             ];
 
             for (const testcase of testcases) {
@@ -155,8 +155,9 @@ describe("common utils", () => {
         it("retries the correct number of times", async () => {
             const mustBeCalledNTimes = (n: number, badError = false) => {
                 let i = 0;
+                // eslint-disable-next-line @typescript-eslint/require-await
                 return async () => {
-                    i++;
+                    i += 1;
                     if (i < n) {
                         const error = new Error("Error.");
                         (error as {
@@ -175,44 +176,40 @@ describe("common utils", () => {
             expect(await retryNTimes(mustBeCalledNTimes(1), 1)).toEqual(1);
 
             await expect(retryNTimes(mustBeCalledNTimes(2), 1)).toBeRejected(
-                new Error("Error. (Only called 1/2 times)")
+                new Error("Error. (Only called 1/2 times)"),
             );
 
             await expect(
-                retryNTimes(mustBeCalledNTimes(2, true), 1)
+                retryNTimes(mustBeCalledNTimes(2, true), 1),
             ).toBeRejected(new Error("Only called 1/2 times"));
         });
     });
 
     context("randomBytes", () => {
-        // tslint:disable: no-any
-
         // Restore global window state afterwards incase this is being run in
         // a browser environment.
-        let previousWindow: any;
+        let previousWindow: unknown;
         before(() => {
-            previousWindow = (global as any).window;
+            previousWindow = (global as { window: unknown }).window;
         });
         after(() => {
-            (global as any).window = previousWindow;
+            (global as { window: unknown }).window = previousWindow;
         });
 
         it("returns random bytes of the correct length", () => {
             expect(randomBytes(32).length).toEqual(32);
             expect(randomBytes(32)).not.toEqual(randomBytes(32));
-            // tslint:disable-next-line: no-any
-            (global as any).window = {
+            (global as { window: unknown }).window = {
                 crypto: {
                     getRandomValues: (uints: Uint32Array) => {
                         for (let i = 0; i < uints.length; i++) {
                             uints[i] = 0;
                         }
-                    }
-                }
+                    },
+                },
             };
             expect(randomBytes(32).length).toEqual(32);
         });
-        // tslint:enable: no-any
     });
 
     context("randomNonce", () => {
@@ -225,7 +222,7 @@ describe("common utils", () => {
     context("rawEncode", () => {
         it("should encode values passed in", () => {
             expect(rawEncode(["uint256"], [1])).toEqual(
-                Buffer.from("00".repeat(31) + "01", "hex")
+                Buffer.from("00".repeat(31) + "01", "hex"),
             );
         });
     });

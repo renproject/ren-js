@@ -2,7 +2,6 @@ import { expect } from "earljs";
 
 import { Callable } from "../src/callableClass";
 
-// tslint:disable-next-line: mocha-no-side-effect-code
 const TestClass = Callable(
     class {
         public x: number;
@@ -10,7 +9,7 @@ const TestClass = Callable(
         constructor() {
             this.x = 1;
         }
-    }
+    },
 );
 
 describe("callableClass", () => {

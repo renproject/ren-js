@@ -1,5 +1,6 @@
+/* eslint-disable no-console */
+import { RenNetwork, SyncOrPromise } from "@renproject/interfaces";
 import { EventEmitter } from "events";
-import { RenNetwork } from "@renproject/interfaces";
 
 export interface ConnectorUpdate<ChainProvider, ChainAccount> {
     provider: ChainProvider;
@@ -9,12 +10,12 @@ export interface ConnectorUpdate<ChainProvider, ChainAccount> {
 
 export interface ConnectorInterface<ChainProvider, ChainAccount> {
     supportsTestnet: boolean;
-    activate: () => Promise<ConnectorUpdate<ChainProvider, ChainAccount>>;
+    activate: () => SyncOrPromise<ConnectorUpdate<ChainProvider, ChainAccount>>;
 
-    getProvider: () => Promise<ChainProvider>;
-    getAccount: () => Promise<ChainAccount>;
-    getRenNetwork: () => Promise<RenNetwork>;
-    deactivate: (reason?: string) => Promise<void>;
+    getProvider: () => SyncOrPromise<ChainProvider>;
+    getAccount: () => SyncOrPromise<ChainAccount>;
+    getRenNetwork: () => SyncOrPromise<RenNetwork>;
+    deactivate: (reason?: string) => SyncOrPromise<void>;
     emitter: ConnectorEmitter<ChainProvider, ChainAccount>;
 }
 
@@ -30,21 +31,21 @@ export class ConnectorEmitter<CP, CA> extends EventEmitter {
     }
     emitUpdate(update: ConnectorUpdate<CP, CA>): void {
         if (this.debug) {
-            console.log(`'${ConnectorEvents.UPDATE}'`, update);
+            console.debug(`'${ConnectorEvents.UPDATE}'`, update);
         }
         this.emit(ConnectorEvents.UPDATE, update);
     }
 
     emitError(error: Error): void {
         if (this.debug) {
-            console.log(`'${ConnectorEvents.ERROR}'`, error);
+            console.debug(`'${ConnectorEvents.ERROR}'`, error);
         }
         this.emit(ConnectorEvents.ERROR, error);
     }
 
     emitDeactivate(reason?: string): void {
         if (this.debug) {
-            console.log(`'${ConnectorEvents.DEACTIVATE}'`);
+            console.debug(`'${ConnectorEvents.DEACTIVATE}'`);
         }
         this.emit(ConnectorEvents.DEACTIVATE, reason);
     }

@@ -1,51 +1,40 @@
-// tslint:disable: no-console
+/* eslint-disable no-console */
 
-import {
-    Bitcoin,
-    Dogecoin,
-    Ethereum,
-    Filecoin,
-    Terra,
-} from "@renproject/chains";
-import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import { renRinkeby } from "@renproject/networks";
-import {
-    HttpProvider,
-    OverwriteProvider,
-    Provider,
-} from "@renproject/provider";
+import * as Chains from "@renproject/chains";
+
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
-    RenVMParams,
-    RenVMProvider,
-    RenVMProviderInterface,
-    RenVMResponses,
-} from "@renproject/rpc/src/v2";
-import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
+    extractError,
+    Ox,
+    retryNTimes,
+    SECONDS,
+    sleep,
+} from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
+import { config as loadDotEnv } from "dotenv";
+import { DepositStatus } from "@renproject/ren/build/main/lockAndMint";
+import { expect } from "earljs";
 
 chai.should();
 
-require("dotenv").config();
+loadDotEnv();
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 const colors = [green, magenta, yellow, cyan, blue, red];
 
-describe("Plaground", () => {
-    // tslint:disable-next-line: mocha-no-side-effect-code
+describe("Playground", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    // tslint:disable-next-line: mocha-no-side-effect-code
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Filecoin();
-        const asset = "FIL";
+        const from = Chains.Bitcoin();
+        const asset = from.asset;
         // const from = Bitcoin();
         // const asset = "BTC";
         const faucetSupported =
@@ -55,35 +44,19 @@ describe("Plaground", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${renRinkeby.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        const httpProvider = new HttpProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            // tslint:disable-next-line: no-http-string
-            "http://34.239.188.210:18515",
-            { verbose: true }
-        ) as Provider<RenVMParams, RenVMResponses>;
-        const rpcProvider = new OverwriteProvider<RenVMParams, RenVMResponses>(
-            // "https://lightnode-new-testnet.herokuapp.com/",
-            httpProvider
-        ) as RenVMProviderInterface;
-        const renVMProvider = new RenVMProvider(
-            "testnet",
-            rpcProvider
-        ) as AbstractRenVMProvider;
-
         const logLevel = LogLevel.Log;
-        const renJS = new RenJS(renVMProvider, { logLevel });
+        const renJS = new RenJS(RenNetwork.Testnet, { logLevel });
         // const renJS = new RenJS("testnet")
 
         // Use 0.0001 more than fee.
-        let suggestedAmount;
+        let suggestedAmount: number;
         try {
             const fees = await renJS.getFees();
-            suggestedAmount = Math.floor(
-                fees[asset.toLowerCase()].lock + 0.0001 * 1e8
-            );
+            const fee: number = fees[asset.toLowerCase()].lock;
+            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = 0.0015 * 1e8;
@@ -92,7 +65,7 @@ describe("Plaground", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Ethereum(provider, undefined, renRinkeby).Account({
+            to: Chains.Ethereum(provider, Chains.renTestnet).Account({
                 address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
             }),
 
@@ -101,8 +74,8 @@ describe("Plaground", () => {
 
         console.info(
             `Deposit ${blue(asset)} to ${blue(
-                JSON.stringify(lockAndMint.gatewayAddress, null, "    ")
-            )}`
+                JSON.stringify(lockAndMint.gatewayAddress, null, "    "),
+            )}`,
         );
 
         // lockAndMint
@@ -123,74 +96,96 @@ describe("Plaground", () => {
         if (faucetSupported) {
             console.log(
                 `${blue("[faucet]")} ${blue(asset)} balance is ${blue(
-                    await account.balanceOf(asset)
-                )} ${blue(asset)} (${blue(await account.address(asset))})`
+                    await account.balanceOf(asset),
+                )} ${blue(asset)} (${blue(await account.address(asset))})`,
             );
         }
 
         await new Promise((resolve, reject) => {
             let i = 0;
 
-            lockAndMint.on("deposit", async deposit => {
-                const hash = await deposit.txHash();
+            lockAndMint.on("deposit", (deposit) => {
+                (async () => {
+                    const hash = deposit.txHash();
 
-                // if (deposit.depositDetails.amount === "80000") {
-                //     return;
-                // }
+                    // if (deposit.depositDetails.amount === "80000") {
+                    //     return;
+                    // }
 
-                const color = colors[i];
-                i += 1;
+                    const color = colors[i];
+                    i += 1;
 
-                deposit._logger = new SimpleLogger(
-                    logLevel,
-                    color(`[${hash.slice(0, 6)}] `)
-                );
+                    deposit._state.logger = new SimpleLogger(
+                        logLevel,
+                        color(`[${hash.slice(0, 6)}] `),
+                    );
 
-                const info = deposit._logger.log;
+                    const info = deposit._state.logger.log;
 
-                info(
-                    `Received ${
-                        // tslint:disable-next-line: no-any
-                        (deposit.depositDetails as any).amount / 1e8
-                    } ${asset}`,
-                    deposit.depositDetails
-                );
+                    info(
+                        `Received ${
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (deposit.depositDetails as any).amount / 1e8
+                        } ${asset}`,
+                        deposit.depositDetails,
+                    );
 
-                info(`Calling .confirmed`);
-                await deposit
-                    .confirmed()
-                    .on("confirmation", (confs, target) => {
-                        info(`${confs}/${target} confirmations`);
-                    });
+                    const retries = 10;
 
-                let retries = 10;
-                while (retries) {
-                    try {
-                        info(
-                            retries === 10
-                                ? `Calling .signed`
-                                : `Retrying .signed`
-                        );
-                        await deposit.signed().on("status", status => {
-                            info(`status: ${status}`);
-                        });
-                        break;
-                    } catch (error) {
-                        console.error(error);
-                    }
-                    await sleep(10);
-                    retries--;
-                }
+                    await retryNTimes(
+                        async () => {
+                            deposit._state.logger.log(`Calling .confirmed`);
+                            await deposit
+                                .confirmed()
+                                .on("confirmation", (confs, target) => {
+                                    deposit._state.logger.log(
+                                        `${confs}/${target} confirmations`,
+                                    );
+                                });
+                        },
+                        retries,
+                        10 * SECONDS,
+                    );
 
-                info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", txHash => {
-                    info(`txHash: ${txHash}`);
-                });
+                    expect(deposit.status).toEqual(DepositStatus.Confirmed);
 
-                resolve();
+                    await retryNTimes(
+                        async () => {
+                            deposit._state.logger.log(`Calling .signed`);
+                            await deposit.signed().on("status", (status) => {
+                                deposit._state.logger.log(`status: ${status}`);
+                            });
+                        },
+                        retries,
+                        10 * SECONDS,
+                    );
+
+                    expect(deposit.status).toEqual(DepositStatus.Signed);
+
+                    await retryNTimes(
+                        async () => {
+                            deposit._state.logger.log(`Calling .mint`);
+                            await deposit
+                                .mint({
+                                    _extraMsg: "test", // Override value.
+                                })
+                                .on("transactionHash", (txHash) => {
+                                    deposit._state.logger.log(
+                                        `txHash: ${String(txHash)}`,
+                                    );
+                                });
+                        },
+                        retries,
+                        10 * SECONDS,
+                    );
+
+                    expect(deposit.status).toEqual(DepositStatus.Submitted);
+
+                    resolve();
+                })().catch(console.error);
             });
 
-            sleep(10 * SECONDS)
+            sleep(20 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
                     if (
@@ -200,16 +195,16 @@ describe("Plaground", () => {
                     ) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
-                                suggestedAmount / 1e8
+                                suggestedAmount / 1e8,
                             )} ${blue(asset)} to ${blue(
-                                lockAndMint.gatewayAddress
-                            )}`
+                                lockAndMint.gatewayAddress,
+                            )}`,
                         );
                         account
                             .sendSats(
                                 lockAndMint.gatewayAddress,
                                 suggestedAmount,
-                                asset
+                                asset,
                             )
                             .catch(reject);
                     }

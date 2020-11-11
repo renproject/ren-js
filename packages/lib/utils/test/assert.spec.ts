@@ -1,5 +1,3 @@
-// tslint:disable: no-unused-expression
-
 import chai from "chai";
 import { expect } from "earljs";
 import BigNumber from "bignumber.js";
@@ -7,13 +5,12 @@ import BigNumber from "bignumber.js";
 import { assert, assertObject, assertType } from "../src/assert";
 
 chai.should();
-require("dotenv").config();
 
 describe("assert", () => {
     it("basic assert", () => {
         expect(assert(true, "test")).toEqual(true);
         expect(() => assert(false, "test")).toThrow(
-            new Error("Failed assertion: test")
+            new Error("Failed assertion: test"),
         );
         expect(() => assert(false)).toThrow(new Error("Failed assertion"));
     });
@@ -35,7 +32,7 @@ describe("assert", () => {
         assertType<number[]>("number[]", {
             a: [1, 2, 3],
         }).should.be.true;
-        // tslint:disable-next-line: array-type
+        // eslint-disable-next-line @typescript-eslint/array-type
         assertType<Array<number>>("Array<number>", {
             a: [1, 2, 3],
         }).should.be.true;
@@ -64,7 +61,7 @@ describe("assert", () => {
                     first: 1,
                     second: "1",
                 },
-            }
+            },
         ).should.be.true;
 
         assertObject(
@@ -81,51 +78,51 @@ describe("assert", () => {
                     },
                     second: "1",
                 },
-            }
+            },
         ).should.be.true;
     });
 
     it("throw error for wrong types", () => {
         expect(() => assertType("undefined", { b: null })).toThrow(
             expect.error(
-                "Expected b to be of type 'undefined', instead got 'null'."
-            )
+                "Expected b to be of type 'undefined', instead got 'null'.",
+            ),
         );
         expect(() => assertType("null", { b: undefined })).toThrow(
             expect.error(
-                "Expected b to be of type 'null', instead got 'undefined'."
-            )
+                "Expected b to be of type 'null', instead got 'undefined'.",
+            ),
         );
         expect(() => assertType("Buffer | string", { b: 1 })).toThrow(
             expect.error(
-                "Expected b to be of type 'Buffer | string', instead got 'number'."
-            )
+                "Expected b to be of type 'Buffer | string', instead got 'number'.",
+            ),
         );
         expect(() =>
-            assertType("Buffer | string | undefined", { d: null })
+            assertType("Buffer | string | undefined", { d: null }),
         ).toThrow(
             expect.error(
-                "Expected d to be of type 'Buffer | string | undefined', instead got 'null'."
-            )
+                "Expected d to be of type 'Buffer | string | undefined', instead got 'null'.",
+            ),
         );
         expect(() =>
             assertType("Array<number>", {
                 a: [1, 2, "a"],
-            })
+            }),
         ).toThrow(
             expect.error(
-                "Expected a[2] to be of type 'number', instead got 'string'."
-            )
+                "Expected a[2] to be of type 'number', instead got 'string'.",
+            ),
         );
 
         expect(() =>
             assertType("string | number[]", {
                 a: ["1", "2", "3"],
-            })
+            }),
         ).toThrow(
             expect.error(
-                "Expected a to be of type 'string | number[]', instead got 'any[]'."
-            )
+                "Expected a to be of type 'string | number[]', instead got 'any[]'.",
+            ),
         );
         expect(() =>
             assertObject(
@@ -142,12 +139,12 @@ describe("assert", () => {
                         },
                         second: "1",
                     },
-                }
-            )
+                },
+            ),
         ).toThrow(
             expect.error(
-                "Expected a[\"first\"][\"innerFirst\"] to be of type 'number', instead got 'string'."
-            )
+                "Expected a[\"first\"][\"innerFirst\"] to be of type 'number', instead got 'string'.",
+            ),
         );
 
         expect(() =>
@@ -161,12 +158,12 @@ describe("assert", () => {
                         first: "1",
                         second: "1",
                     },
-                }
-            )
+                },
+            ),
         ).toThrow(
             expect.error(
-                "Expected a[\"first\"] to be of type 'number', instead got 'string'."
-            )
+                "Expected a[\"first\"] to be of type 'number', instead got 'string'.",
+            ),
         );
     });
 
@@ -184,8 +181,8 @@ describe("assert", () => {
                     a: {
                         first: [],
                     },
-                }
-            )
+                },
+            ),
         ).toThrow(expect.error("Cannot convert undefined or null to object"));
 
         expect(() =>
@@ -197,8 +194,18 @@ describe("assert", () => {
                     a: {
                         first: [],
                     },
-                }
-            )
+                },
+            ),
         ).toThrow(expect.error("Invalid object type definition undefined"));
+
+        assertObject(
+            // @ts-expect-error Should complain about missing field "first".
+            {},
+            {
+                a: {
+                    first: [],
+                },
+            },
+        );
     });
 });

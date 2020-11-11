@@ -102,17 +102,17 @@ export type FilScanResponses = {
 export const fetchDeposits = async (
     address: string,
     paramsFilterBase64: string | undefined = undefined,
-    page = 0
+    page = 0,
 ): Promise<FilTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
     const provider = new HttpProvider<FilScanRequests, FilScanResponses>(
-        FILSCAN_URL
+        FILSCAN_URL,
     );
 
     const chainStats = await provider.sendMessage(
         FilScanMessages.StatChainInfo,
-        []
+        [],
     );
 
     const blockHeight = chainStats.data.latest_height;
@@ -146,22 +146,22 @@ export const fetchDeposits = async (
                         : 0,
                     nonce: message.nonce,
                 };
-            }
+            },
         )
         .filter(
-            message =>
-                !paramsFilterBase64 || message.params === paramsFilterBase64
+            (message) =>
+                !paramsFilterBase64 || message.params === paramsFilterBase64,
         );
 };
 
 export const fetchMessage = async (cid: string): Promise<FilTransaction> => {
     const provider = new HttpProvider<FilScanRequests, FilScanResponses>(
-        FILSCAN_URL
+        FILSCAN_URL,
     );
 
     const chainStats = await provider.sendMessage(
         FilScanMessages.StatChainInfo,
-        []
+        [],
     );
 
     const blockHeight = chainStats.data.latest_height;

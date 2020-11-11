@@ -1,3 +1,5 @@
+export type FilecoinNetwork = "mainnet" | "testnet" | "devnet";
+
 export interface FilTransaction {
     cid: string;
     // to: string;

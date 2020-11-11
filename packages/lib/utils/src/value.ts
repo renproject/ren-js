@@ -9,7 +9,7 @@ import BigNumber from "bignumber.js";
 const convert = (
     valueIn: BigNumber,
     fromUnit: BigNumber,
-    toUnit: BigNumber
+    toUnit: BigNumber,
 ) => {
     return valueIn.multipliedBy(fromUnit).dividedBy(toUnit);
 };
@@ -31,15 +31,14 @@ class BaseValue<T extends { [unit: string]: BigNumber }> {
         this.value = convert(
             toBigNumber(valueIn),
             this.unitTypes[unit],
-            new BigNumber("1")
+            new BigNumber("1"),
         );
     }
     public to = (unit: keyof T): BigNumber =>
         convert(
             this.value,
             new BigNumber("1"),
-            // tslint:disable-next-line: no-use-before-declare
-            this.unitTypes[resolveUnit(unit as string) as keyof T]
+            this.unitTypes[resolveUnit(unit as string) as keyof T],
         );
 }
 
@@ -55,7 +54,7 @@ const BTCUnits = {
 class BTCValue extends BaseValue<typeof BTCUnits> {
     public static units = BTCUnits;
     public static synonyms = [
-        { synonyms: ["bitcoin", "bitcoins", "tbtc"], unit: "btc" as "btc" },
+        { synonyms: ["bitcoin", "bitcoins", "tbtc"], unit: "btc" as const },
     ]; // tbtc is used to indicate testnet btc
     constructor(valueIn: NumberValue, unit: keyof typeof BTCUnits) {
         super(BTCUnits, valueIn, unit);
@@ -78,7 +77,7 @@ const BCHUnits = {
 class BCHValue extends BaseValue<typeof BCHUnits> {
     public static units = BCHUnits;
     public static synonyms = [
-        { synonyms: ["bitcoin-cash", "bcash", "tbch"], unit: "btc" as "bch" },
+        { synonyms: ["bitcoin-cash", "bcash", "tbch"], unit: "btc" as const },
     ];
     constructor(valueIn: NumberValue, unit: keyof typeof BCHUnits) {
         super(BCHUnits, valueIn, unit);
@@ -101,7 +100,7 @@ const ZECUnits = {
 class ZECValue extends BaseValue<typeof ZECUnits> {
     public static units = ZECUnits;
     public static synonyms = [
-        { synonyms: ["zcash", "tzec", "taz"], unit: "zec" as "zec" },
+        { synonyms: ["zcash", "tzec", "taz"], unit: "zec" as const },
     ];
     constructor(valueIn: NumberValue, unit: keyof typeof ZECUnits) {
         super(ZECUnits, valueIn, unit);
@@ -147,7 +146,7 @@ const ETHUnits = {
 class ETHValue extends BaseValue<typeof ETHUnits> {
     public static units = ETHUnits;
     public static synonyms = [
-        { synonyms: ["ethereum", "ether", "keth"], unit: "eth" as "eth" },
+        { synonyms: ["ethereum", "ether", "keth"], unit: "eth" as const },
     ];
     constructor(valueIn: NumberValue, unit: keyof typeof ETHUnits) {
         super(ETHUnits, valueIn, unit);
@@ -158,9 +157,7 @@ class ETHValue extends BaseValue<typeof ETHUnits> {
     public _readable = () => this.to("eth");
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // General /////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 const valueClasses = [BTCValue, BCHValue, ZECValue, ETHValue];
 type Units =
@@ -209,7 +206,7 @@ const resolveUnit = (unitIn: string): Units => {
 
 export const value = <Unit extends Units>(
     valueIn: NumberValue,
-    unitIn: Unit
+    unitIn: Unit,
 ): Value<Unit> => {
     const unit = resolveUnit(unitIn);
 
@@ -223,7 +220,7 @@ export const value = <Unit extends Units>(
         if (new Set(Object.keys(ValueClass.units)).has(unit)) {
             return new ValueClass(
                 valueIn,
-                unit as keyof typeof ValueClass.units
+                unit as keyof typeof ValueClass.units,
             ) as Value<Unit>;
         }
     }

@@ -10,20 +10,20 @@ export type JSONRPCResponse<T> =
           jsonrpc: string;
           version: string;
           result: undefined;
-          // tslint:disable-next-line: no-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           error: any;
           id: number;
       };
 
 export interface Provider<
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Responses extends { [event: string]: any } = {}
 > {
-    sendMessage<Method extends keyof Requests>(
+    sendMessage<Method extends keyof Requests & string>(
         method: Method,
         request: Requests[Method],
-        retry?: number
-    ): Promise<Method extends keyof Responses ? Responses[Method] : {}>;
+        retry?: number,
+    ): Promise<Responses[Method]>;
 }

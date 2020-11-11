@@ -18,7 +18,7 @@
         "listFiles": false,
         "pretty": true,
         "lib": ["esnext", "dom"],
-        "types": [],
+        "types": ["node"],
         "typeRoots": ["node_modules/@types", "src/types"],
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,

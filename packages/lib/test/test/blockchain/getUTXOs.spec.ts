@@ -1,4 +1,4 @@
-// import { renMainnet, renTestnet } from "@renproject/networks";
+// import { renMainnet, renTestnet } from "@renproject/chains";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chaiBigNumber from "chai-bignumber";

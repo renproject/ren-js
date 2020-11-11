@@ -19,7 +19,7 @@ chai.should();
 //         [
 //             { network: NetworkMainnet, expected: "3GhPbsey6igoAf99Akhjq97pKgQkDSv9fA", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
 //             { network: RenJS.NetworkDetails.NetworkTestnet, expected: "2N4rtJpMggc72XKvHRQYoyyTKHkkPrCNEkv", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
-//             { network: NetworkDevnet, expected: "2N29UmpkhCjbtgQPCa67d1qFPYciusV4w7yEwhn", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
+//             { network: NetworkDevnet, expected: "2N29UgPubKeyCjbtgQPCa67d1qFPYciusV4w7yEwhn", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
 //             { network: NetworkLocalnet, expected: "2NDzLJ2KMJYmFKw1HLs4v9Q98CpFCFieYaF", get hex() { return RenJS.utils.Ox(Buffer.from(this.expected)); } },
 
 //             // Segwit
@@ -35,9 +35,9 @@ chai.should();
 //             .forEach(({ network, expected, hex, actual }) => {
 //                 it(network.name, async () => {
 //                     if (expected) {
-//                         const address = createBTCAddress(network.isTestnet, .network.renVM.mpkh, "0x1234");
+//                         const address = createBTCAddress(network.isTestnet, .network.renVM.gPubKey, "0x1234");
 //                         address.should.equal(expected);
-//                         createBTCAddress(network.isTestnet, .network.renVM.mpkh, "1234")
+//                         createBTCAddress(network.isTestnet, .network.renVM.gPubKey, "1234")
 //                             .should.equal(address);
 //                     }
 //                     expected = expected || actual;
@@ -64,9 +64,9 @@ chai.should();
 //             .forEach(({ network, expected, actual, hex }) => {
 //                 it(network.name, async () => {
 //                     if (expected) {
-//                         const address = createZECAddress(network.isTestnet, .network.renVM.mpkh, "0x1234");
+//                         const address = createZECAddress(network.isTestnet, .network.renVM.gPubKey, "0x1234");
 //                         address.should.equal(expected);
-//                         createZECAddress(network.isTestnet, .network.renVM.mpkh, "1234")
+//                         createZECAddress(network.isTestnet, .network.renVM.gPubKey, "1234")
 //                             .should.equal(address);
 //                     }
 //                     expected = expected || actual;
@@ -91,9 +91,9 @@ chai.should();
 //         ]
 //             .forEach(({ network, expected, hex }) => {
 //                 it(network.name, async () => {
-//                     const address = createBCHAddress(network.isTestnet, .network.renVM.mpkh, "0x1234");
+//                     const address = createBCHAddress(network.isTestnet, .network.renVM.gPubKey, "0x1234");
 //                     address.should.equal(expected);
-//                     createBCHAddress(network.isTestnet, .network.renVM.mpkh, "1234")
+//                     createBCHAddress(network.isTestnet, .network.renVM.gPubKey, "1234")
 //                         .should.equal(address);
 //                     RenJS.utils.bch.addressToHex(address)
 //                         .should.equal(hex);

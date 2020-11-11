@@ -30,7 +30,7 @@ export const burnParamsType: PackStructType = {
             amount: PackPrimitive.U256,
         },
         {
-            to: PackPrimitive.String,
+            to: PackPrimitive.Str,
         },
         {
             nonce: PackPrimitive.Bytes32,
@@ -69,7 +69,7 @@ export const mintParamsType = (): PackStructType => ({
             phash: PackPrimitive.Bytes32,
         },
         {
-            to: PackPrimitive.String,
+            to: PackPrimitive.Str,
         },
         {
             nonce: PackPrimitive.Bytes32,
@@ -141,7 +141,7 @@ export type MintTransactionInput = TransactionInput<MintParams>;
 export const hashTransaction = (
     version: string,
     selector: string,
-    packValue: TypedPackValue
+    packValue: TypedPackValue,
 ) => {
     assertType<string>("string", { version, selector });
     return sha256(
@@ -149,6 +149,6 @@ export const hashTransaction = (
             marshalString(version),
             marshalString(selector),
             marshalTypedPackValue(packValue),
-        ])
+        ]),
     );
 };

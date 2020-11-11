@@ -24,7 +24,7 @@ export class BitcoinCashClass extends BitcoinClass {
             Networks,
             Opcode,
             Script,
-            (bytes: Buffer) => toCashAddress(base58.encode(bytes))
+            (bytes: Buffer) => toCashAddress(base58.encode(bytes)),
         ),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (address: Address, network: BitcoinNetwork) =>

@@ -1,5 +1,3 @@
-// tslint:disable: no-use-before-declare no-any
-
 import { fromBase64 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
@@ -11,7 +9,7 @@ export enum PackPrimitive {
     U64 = "u64",
     U128 = "u128",
     U256 = "u256",
-    String = "string",
+    Str = "string",
     Bytes = "bytes",
     Bytes32 = "bytes32",
     Bytes65 = "bytes65",
@@ -36,9 +34,11 @@ export type PackTypeDefinition =
 
 export interface TypedPackValue {
     t: PackTypeDefinition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     v: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
     switch (type) {
         // Booleans
@@ -53,7 +53,7 @@ export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
         case PackPrimitive.U256:
             return new BigNumber(value);
         // Strings
-        case PackPrimitive.String:
+        case PackPrimitive.Str:
             return Buffer.from(value);
         // Bytes
         case PackPrimitive.Bytes:
@@ -63,7 +63,7 @@ export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
     }
 };
 
-export const unmarshalPackStruct = (type: PackStructType, value: any) => {
+export const unmarshalPackStruct = (type: PackStructType, value: object) => {
     const struct = {};
 
     for (const member of type.struct) {
@@ -76,22 +76,31 @@ export const unmarshalPackStruct = (type: PackStructType, value: any) => {
         }
         const key = Object.keys(member)[0];
         const memberType = member[key];
+
+        if (value && !value.hasOwnProperty(key)) {
+            throw new Error(`Missing pack value for key ${key}`);
+        }
+
         struct[key] = unmarshalPackValue(memberType, value[key]);
     }
 
     return struct;
 };
 
-export const unmarshalPackValue = (type: PackTypeDefinition, value: any) => {
+export const unmarshalPackValue = (
+    type: PackTypeDefinition,
+    value: unknown,
+) => {
     if (typeof type === "object") {
-        return unmarshalPackStruct(type, value);
-        // tslint:disable: strict-type-predicates
+        return unmarshalPackStruct(type, value as object);
     } else if (typeof type === "string") {
         if (type === "nil") return null;
         return unmarshalPackPrimitive(type, value);
     }
     throw new Error(
-        `Unknown value type ${type}${!type ? ` for value ${value}` : ""}`
+        `Unknown value type ${String(type)}${
+            !type ? ` for value ${String(value)}` : ""
+        }`,
     );
 };
 

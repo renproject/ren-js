@@ -1,4 +1,4 @@
-import { Logger } from "@renproject/interfaces";
+import { Logger, LogLevel, NullLogger } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 
 import { assertType } from "./assert";
@@ -21,13 +21,13 @@ const to32Bytes = (bn: BigNumber): Buffer =>
 
 export const secp256k1n = new BigNumber(
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
-    16
+    16,
 );
 
 export const fixSignatureSimple = (
     r: Buffer,
     s: Buffer,
-    v: number
+    v: number,
 ): Signature => {
     assertType<Buffer>("Buffer", { r, s });
     let sBN = new BigNumber(Ox(s), 16);
@@ -61,13 +61,13 @@ export const fixSignature = (
     tokenIdentifier: string,
     nHash: Buffer,
     v2?: boolean,
-    logger?: Logger
+    logger: Logger = NullLogger,
 ): Signature => {
     // Type validation
     assertType<string>("string", { amount, to, tokenIdentifier });
     assertType<Buffer>("Buffer", { r, s, sigHash, pHash, nHash });
 
-    if (logger) {
+    if (typeof logger.level !== "number" || logger.level >= LogLevel.Warn) {
         const expectedSighash = generateSighash(
             pHash,
             amount,
@@ -75,11 +75,13 @@ export const fixSignature = (
             tokenIdentifier,
             nHash,
             v2,
-            logger
+            logger,
         );
         if (Ox(sigHash) !== Ox(expectedSighash)) {
             logger.warn(
-                `Warning: unexpected signature hash returned from RenVM. Expected ${expectedSighash}, got ${sigHash}.`
+                `Warning: unexpected signature hash returned from RenVM. Expected ${Ox(
+                    expectedSighash,
+                )}, got ${Ox(sigHash)}.`,
             );
         }
     }
@@ -109,7 +111,6 @@ export const fixSignature = (
     // if (recovered[v].equals(expected)) {
     //     // Do nothing
     // } else if (recovered[switchV(v)].equals(expected)) {
-    //     // tslint:disable-next-line: no-console
     //     console.info("[info][ren-js] switching v value");
     //     v = switchV(v);
     // } else {

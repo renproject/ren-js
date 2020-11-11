@@ -23,7 +23,7 @@ describe("Refactor: mint", () => {
     // tslint:disable-next-line: mocha-no-side-effect-code
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     // tslint:disable-next-line: mocha-no-side-effect-code
-    longIt("mint to contract", async function () {
+    longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
         const asset = "BTC";
@@ -58,8 +58,6 @@ describe("Refactor: mint", () => {
             to: Ethereum(provider).Account({
                 address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
             }),
-            nonce:
-                "0x27de009e7ed49dc8b1a7ac0a6fcbd6c173df72068674cbb8aa2679d3c9529c4d",
         });
 
         // const lockAndMint = await renJS.lockAndMint({
@@ -83,24 +81,27 @@ describe("Refactor: mint", () => {
             )} ${asset} (${await account.address(asset)})`
         );
 
-        // await lockAndMint.processDeposit({
-        //     transaction: {
-        //         txHash:
-        //             "aab2bdb228c073408dbc86591b2fa4023ef86ad3b988523439a83621725c6eca",
-        //         amount: 30000,
-        //         vOut: 0,
-        //         confirmations: 445,
-        //     },
-        //     amount: "30000",
-        // });
-
         await new Promise((resolve, reject) => {
             let i = 0;
 
-            lockAndMint.on("deposit", async (deposit) => {
+            // lockAndMint.on("deposit", async deposit => {
+
+            // tslint:disable-next-line: no-floating-promises
+            Promise.resolve(
+                lockAndMint.processDeposit({
+                    transaction: {
+                        txHash:
+                            "2f33d54f91f0f3ec7c50404b5155dd6699ab1f93720ba43dfe85dea70c63822c",
+                        amount: 200000,
+                        vOut: 0,
+                        confirmations: 0,
+                    },
+                    amount: "200000",
+                })
+            ).then(async deposit => {
                 const hash = await deposit.txHash();
 
-                const color = colors[i];
+                const color = colors[i % colors.length];
                 i += 1;
 
                 deposit._logger = new SimpleLogger(
@@ -126,12 +127,12 @@ describe("Refactor: mint", () => {
                     });
 
                 info(`Calling .signed`);
-                await deposit.signed().on("status", (status) => {
+                await deposit.signed().on("status", status => {
                     info(`status: ${status}`);
                 });
 
                 info(`Calling .mint`);
-                await deposit.mint().on("transactionHash", (txHash) => {
+                await deposit.mint().on("transactionHash", txHash => {
                     info(`txHash: ${txHash}`);
                 });
 

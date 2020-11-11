@@ -236,7 +236,7 @@ export class RenVMProvider implements RenVMProviderInterface {
         nonce: Buffer,
         // tslint:disable-next-line: no-any
         output: { txindex: string; txid: Buffer },
-        amount: string,
+        _amount: string,
         payload: Buffer,
         _pHash: Buffer,
         to: string,

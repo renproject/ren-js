@@ -219,7 +219,11 @@ export class BurnAndRelease<
                 transaction,
                 true
             );
-            const nonceBuffer = new BN(nonce.toFixed()).toBuffer("be", 32);
+            const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
+                Buffer,
+                "be",
+                32
+            );
 
             const nHash = generateNHash(
                 nonceBuffer,
@@ -351,7 +355,8 @@ export class BurnAndRelease<
                             transaction,
                             true
                         );
-                        const nonceBuffer = new BN(nonce.toFixed()).toBuffer(
+                        const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
+                            Buffer,
                             "be",
                             32
                         );
@@ -404,7 +409,7 @@ export class BurnAndRelease<
                         );
                     }
                     if (txHash && toBase64(returnedTxHash) !== txHash) {
-                        this._logger.warn(
+                        this._logger.debug(
                             `Unexpected txHash returned from RenVM. Received: ${toBase64(
                                 returnedTxHash
                             )}, expected: ${txHash}`

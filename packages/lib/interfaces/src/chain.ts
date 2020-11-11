@@ -14,7 +14,14 @@ export type TransactionListener<
     T,
     // tslint:disable-next-line: no-any
     E extends { [key: string]: any[] }
-> = PromiEvent<T, { txHash: [string]; confirmation: [number, number] } & E>;
+> = PromiEvent<
+    T,
+    {
+        txHash: [string];
+        confirmation: [number, number];
+        target: [number, number];
+    } & E
+>;
 
 /**
  * # Adding chains
@@ -35,7 +42,7 @@ export type TransactionListener<
 export interface ChainCommon<
     // tslint:disable-next-line: no-any
     Transaction = any,
-    Asset extends string = string,
+    Asset = string,
     Address = string
 > {
     /**
@@ -45,6 +52,14 @@ export interface ChainCommon<
      * bitcoin.name = "Bitcoin";
      */
     name: string;
+
+    /**
+     * The name of the Chain used the v0.2 RenVM nodes.
+     *
+     * @example
+     * bitcoin.legacyName = "Btc";
+     */
+    legacyName?: string;
 
     /**
      * Should be set by `constructor` or `initialize`.
@@ -90,7 +105,7 @@ export interface ChainCommon<
      * `addressExplorerLink` should return a URL that can be shown to a user
      * to access more information about an address.
      */
-    addressExplorerLink?: (address: Address) => string;
+    addressExplorerLink?: (address: Address) => string | undefined;
 
     /**
      * `transactionID` should return a string that uniquely represents the
@@ -102,7 +117,7 @@ export interface ChainCommon<
      * `transactionExplorerLink` should return a URL that can be shown to a user
      * to access more information about a transaction.
      */
-    transactionExplorerLink?: (transaction: Transaction) => string;
+    transactionExplorerLink?: (transaction: Transaction) => string | undefined;
 
     /**
      * `transactionConfidence` should return a target and a current
@@ -148,7 +163,7 @@ export interface LockChain<
     // tslint:disable-next-line: no-any
     Transaction = any,
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    Asset extends string = string,
+    Asset = string,
     Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
     // Assets
@@ -161,18 +176,24 @@ export interface LockChain<
     // Deposits
 
     /**
-     * `getDeposits` should return all previous deposits that have been made to
-     * the address, confirmed or unconfirmed.
-     *
-     * TODO: Add pagination.
+     * `getDeposits` should return all deposits that have been made to the
+     * provided address, confirmed or unconfirmed.
+     * `getDeposits` will get called in a loop by LockAndMintObjects, but a
+     * LockChain has the option of instead handling this itself by not
+     * returning, and streaming deposits using the onDeposit method.
      */
     getDeposits: (
         asset: Asset,
         address: Address,
-        // Indicates whether the deposits are being fetched for the first time.
-        // Allows the chain to only fetch new deposits in successive requests.
-        firstCheck?: boolean
-    ) => SyncOrPromise<LockDeposit[]>;
+        // instanceID allows the chain to internally track it's progress in
+        // searching for deposits for a particular LockAndMint object.
+        // For example - the Bitcoin LockChain will fetch spent deposits
+        // the first time getDeposits is called for a particular instanceID and
+        // address, and only return unspent deposits in successive calls.
+        instanceID: number,
+        onDeposit: (deposit: LockDeposit) => void,
+        listenerCancelled: () => boolean
+    ) => SyncOrPromise<void>;
 
     // Encoding
 
@@ -228,14 +249,10 @@ export interface BurnDetails<Transaction> {
     nonce: BigNumber;
 }
 
-/**
- * WARNING: This interface will be updated to match the Go multichain package's
- * interface. New MintChains should not be implemented using this interface.
- */
 export interface MintChain<
     // tslint:disable-next-line: no-any
     Transaction = any,
-    Asset extends string = string,
+    Asset = string,
     Address = string
 > extends ChainCommon<Transaction, Asset, Address> {
     // /**

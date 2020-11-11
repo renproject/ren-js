@@ -4,7 +4,7 @@ import base58 from "bs58";
 import { DOGEHandler } from "send-crypto/build/main/handlers/DOGE/DOGEHandler";
 import { validate } from "wallet-address-validator";
 
-import { Address, BitcoinNetwork } from "./base";
+import { Address, BitcoinNetwork, Transaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
 
@@ -24,6 +24,24 @@ export class DogecoinClass extends BitcoinClass {
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (address: Address, network: BitcoinNetwork) =>
             validate(address, this.asset.toLowerCase(), network),
+    };
+
+    addressExplorerLink = (address: Address): string | undefined => {
+        if (this.chainNetwork === "mainnet") {
+            return `https://sochain.com/address/DOGE/${address}/`;
+        } else if (this.chainNetwork === "testnet") {
+            return `https://sochain.com/address/DOGETEST/${address}/`;
+        }
+        return undefined;
+    };
+
+    transactionExplorerLink = (tx: Transaction): string | undefined => {
+        if (this.chainNetwork === "mainnet") {
+            return `https://sochain.com/tx/DOGE/${tx.txHash}/`;
+        } else if (this.chainNetwork === "testnet") {
+            return `https://sochain.com/tx/DOGETEST/${tx.txHash}/`;
+        }
+        return undefined;
     };
 }
 

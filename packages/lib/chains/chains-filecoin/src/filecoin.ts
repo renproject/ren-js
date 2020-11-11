@@ -3,7 +3,6 @@ import {
     validateAddressString,
 } from "@glif/filecoin-address";
 import { LockChain, Logger, RenNetwork } from "@renproject/interfaces";
-import { PackPrimitive } from "@renproject/rpc/src/v2/pack/pack";
 import {
     assertType,
     Callable,
@@ -92,7 +91,7 @@ export class FilecoinClass
      */
     assetDecimals = (asset: FilAsset): number => {
         if (asset === this._asset) {
-            return 8;
+            return 18;
         }
         throw new Error(`Unsupported asset ${asset}`);
     };
@@ -102,8 +101,10 @@ export class FilecoinClass
      */
     getDeposits = async (
         asset: FilAsset,
-        address: FilAddress
-    ): Promise<FilDeposit[]> => {
+        address: FilAddress,
+        _instanceID: number,
+        onDeposit: (deposit: FilDeposit) => void
+    ): Promise<void> => {
         if (!this.chainNetwork) {
             throw new Error(`${name} object not initialized`);
         }
@@ -111,10 +112,9 @@ export class FilecoinClass
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
         this.assetAssetSupported(asset);
-        return (await fetchDeposits(address.address, address.params)).map(
-            transactionToDeposit
-        );
-        // .filter((utxo) => utxo.amount > 70000);
+        (await fetchDeposits(address.address, address.params))
+            .map(transactionToDeposit)
+            .map(onDeposit);
     };
 
     /**
@@ -129,7 +129,7 @@ export class FilecoinClass
         transaction = await fetchMessage(transaction.cid);
         return {
             current: transaction.confirmations,
-            target: this.chainNetwork === "mainnet" ? 6 : 0,
+            target: this.chainNetwork === "mainnet" ? 12 : 6, // NOT FINAL VALUES
         };
     };
 
@@ -211,7 +211,7 @@ export class FilecoinClass
      * See [[OriginChain.addressExplorerLink]].
      */
     addressExplorerLink = (address: FilAddress): string => {
-        // TODO: Provide multiple options, and check network.
+        // TODO: Check network.
         return `https://filfox.info/en/address/${address.address}`;
     };
 
@@ -221,7 +221,7 @@ export class FilecoinClass
     transactionID = (transaction: FilTransaction) => transaction.cid;
 
     transactionExplorerLink = (transaction: FilTransaction): string => {
-        // TODO: Provide multiple options, and check network.
+        // TODO: Check network.
         return `https://filfox.info/en/message/${transaction.cid}`;
     };
 

@@ -1,7 +1,8 @@
 import {
     ContractCall,
-    EventType,
     MintChain,
+    OverwritableBurnAndReleaseParams,
+    OverwritableLockAndMintParams,
     SyncOrPromise,
 } from "@renproject/interfaces";
 import { Callable, Ox, toBigNumber } from "@renproject/utils";
@@ -13,26 +14,33 @@ import { EthereumConfig } from "./networks";
 
 export class EthereumClass extends EthereumBaseChain
     implements MintChain<Transaction, Address> {
-    public getContractCalls:
+    public _getParams:
         | ((
-              eventType: EventType,
               asset: string,
               burnPayload?: string,
-          ) => SyncOrPromise<ContractCall[]>)
+          ) => SyncOrPromise<
+              | OverwritableBurnAndReleaseParams
+              | OverwritableLockAndMintParams
+              | undefined
+          >)
         | undefined;
 
     constructor(web3Provider: provider, renNetworkDetails?: EthereumConfig) {
         super(web3Provider, renNetworkDetails);
     }
 
-    public contractCalls = (
-        eventType: EventType,
+    public getMintParams = (
+        asset: string,
+    ): SyncOrPromise<OverwritableLockAndMintParams | undefined> =>
+        this._getParams ? this._getParams(asset) : undefined;
+
+    public getBurnParams = (
         asset: string,
         burnPayload?: string,
-    ) =>
-        this.getContractCalls
-            ? this.getContractCalls(eventType, asset, burnPayload)
-            : undefined;
+    ): SyncOrPromise<OverwritableBurnAndReleaseParams | undefined> =>
+        this._getParams ? this._getParams(asset, burnPayload) : undefined;
+
+    public Address = (address: string) => this.Account({ address });
 
     public Account = ({
         value,
@@ -41,17 +49,16 @@ export class EthereumClass extends EthereumBaseChain
         value?: BigNumber | string | number;
         address?: string;
     }): this => {
-        this.getContractCalls = async (
-            eventType: EventType,
+        this._getParams = async (
             asset: string,
             burnPayload?: string,
-        ) => {
+        ): Promise<{ contractCalls: ContractCall[] }> => {
             if (!this.renNetworkDetails || !this.web3) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'`,
                 );
             }
-            if (eventType === EventType.LockAndMint) {
+            if (!value) {
                 // Mint
                 if (!address) {
                     throw new Error(`Must provide Ethereum recipient address`);
@@ -62,25 +69,28 @@ export class EthereumClass extends EthereumBaseChain
                     address = await this.web3.eth.ens.getAddress(address);
                 }
 
-                return [
-                    {
-                        sendTo: this.renNetworkDetails.addresses.BasicAdapter,
-                        contractFn: "mint",
-                        contractParams: [
-                            {
-                                type: "string",
-                                name: "_symbol",
-                                value: asset,
-                            },
-                            {
-                                type: "address",
-                                name: "_address",
-                                value: address,
-                            },
-                        ],
-                        // txConfig,
-                    },
-                ];
+                return {
+                    contractCalls: [
+                        {
+                            sendTo: this.renNetworkDetails.addresses
+                                .BasicAdapter,
+                            contractFn: "mint",
+                            contractParams: [
+                                {
+                                    type: "string",
+                                    name: "_symbol",
+                                    value: asset,
+                                },
+                                {
+                                    type: "address",
+                                    name: "_address",
+                                    value: address,
+                                },
+                            ],
+                            // txConfig,
+                        },
+                    ],
+                };
             } else {
                 // Burn
 
@@ -98,27 +108,30 @@ export class EthereumClass extends EthereumBaseChain
 
                 const gateway = await this.getGatewayContractAddress(asset);
 
-                return [
-                    {
-                        sendTo: gateway,
-                        contractFn: "burn",
-                        contractParams: [
-                            {
-                                type: "bytes" as const,
-                                name: "_to",
-                                value: Ox(addressToBuffer),
-                            },
-                            {
-                                type: "uint256" as const,
-                                name: "_amount",
-                                value: toBigNumber(value).toFixed(),
-                            },
-                        ],
-                        // txConfig,
-                    },
-                ];
+                return {
+                    contractCalls: [
+                        {
+                            sendTo: gateway,
+                            contractFn: "burn",
+                            contractParams: [
+                                {
+                                    type: "bytes" as const,
+                                    name: "_to",
+                                    value: Ox(addressToBuffer),
+                                },
+                                {
+                                    type: "uint256" as const,
+                                    name: "_amount",
+                                    value: toBigNumber(value).toFixed(),
+                                },
+                            ],
+                            // txConfig,
+                        },
+                    ],
+                };
             }
         };
+
         return this;
     };
 
@@ -127,11 +140,7 @@ export class EthereumClass extends EthereumBaseChain
             | ContractCall
             | ((burnAddress: string, asset: string) => ContractCall),
     ): this => {
-        this.getContractCalls = (
-            _eventType: EventType,
-            asset: string,
-            burnPayload?: string,
-        ) => {
+        this._getParams = (asset: string, burnPayload?: string) => {
             if (!this.renNetworkDetails) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'`,
@@ -142,10 +151,31 @@ export class EthereumClass extends EthereumBaseChain
                     throw new Error(`Must provide burn payload`);
                 }
                 const addressToBuffer = Buffer.from(burnPayload);
-                return [contractCall(Ox(addressToBuffer), asset)];
+                return {
+                    contractCalls: [contractCall(Ox(addressToBuffer), asset)],
+                };
             } else {
-                return [contractCall];
+                return { contractCalls: [contractCall] };
             }
+        };
+
+        return this;
+    };
+
+    public Transaction = (transaction: Transaction) => {
+        this._getParams = (_asset: string, _burnPayload?: string) => {
+            return {
+                transaction,
+            };
+        };
+        return this;
+    };
+
+    public BurnNonce = (burnNonce: Buffer | string | number) => {
+        this._getParams = (_asset: string, _burnPayload?: string) => {
+            return {
+                burnNonce,
+            };
         };
         return this;
     };

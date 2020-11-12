@@ -3,7 +3,6 @@ import {
     BurnAndReleaseTransaction,
     BurnDetails,
     DepositCommon,
-    EventType,
     getRenNetworkDetails,
     LockChain,
     Logger,
@@ -34,6 +33,12 @@ import BN from "bn.js";
 import { EventEmitter } from "events";
 import BigNumber from "bignumber.js";
 
+export enum BurnAndReleaseStatus {
+    Pending = "pending",
+    Burned = "burned",
+    Released = "released",
+}
+
 export class BurnAndRelease<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
@@ -47,13 +52,14 @@ export class BurnAndRelease<
 > {
     public burnDetails: BurnDetails<MintTransaction> | undefined;
 
-    public readonly params: BurnAndReleaseParams<
+    public params: BurnAndReleaseParams<
         LockTransaction,
         LockDeposit,
         LockAddress,
         MintTransaction,
         MintAddress
     >;
+    public status: BurnAndReleaseStatus;
     public readonly renVM: AbstractRenVMProvider;
 
     public readonly _state: {
@@ -82,6 +88,10 @@ export class BurnAndRelease<
 
         this.validateParams();
 
+        this.status = this.params.txHash
+            ? BurnAndReleaseStatus.Burned
+            : BurnAndReleaseStatus.Pending;
+
         {
             // Debug log
             const { ...restOfParams } = this.params;
@@ -92,7 +102,7 @@ export class BurnAndRelease<
     private readonly validateParams = () => {
         assertObject(
             {
-                from: "object",
+                from: "object | undefined",
                 to: "object",
                 transaction: "any | undefined",
                 burnNonce: "string | number | undefined",
@@ -120,7 +130,7 @@ export class BurnAndRelease<
             this._state.renNetwork ||
             getRenNetworkDetails(await this.renVM.getNetwork());
 
-        if (!this.params.from.renNetwork) {
+        if (this.params.from && !this.params.from.renNetwork) {
             await this.params.from.initialize(this._state.renNetwork);
         }
         if (!this.params.to.renNetwork) {
@@ -130,14 +140,18 @@ export class BurnAndRelease<
         const burnPayload =
             this.params.to.burnPayload && (await this.params.to.burnPayload());
 
-        this.params.contractCalls =
-            this.params.contractCalls ||
-            (this.params.from.contractCalls &&
-                (await this.params.from.contractCalls(
-                    EventType.BurnAndRelease,
-                    this.params.asset,
-                    burnPayload,
-                )));
+        const overwriteParams =
+            this.params.from &&
+            this.params.from.getBurnParams &&
+            (await this.params.from.getBurnParams(
+                this.params.asset,
+                burnPayload,
+            ));
+
+        this.params = {
+            ...overwriteParams,
+            ...this.params,
+        };
 
         if (this.renVM.version >= 2) {
             this._state.gPubKey = await this.renVM.selectPublicKey(
@@ -146,6 +160,20 @@ export class BurnAndRelease<
         }
 
         return this;
+    };
+
+    /**
+     * TODO: Refresh the BurnAndRelease status by checking the status of the
+     * mint-chain transaction and the RenVM transaction.
+     *
+     * ```ts
+     * await deposit.refreshStatus();
+     * // > "released"
+     * ```
+     */
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public refreshStatus = async (): Promise<BurnAndReleaseStatus> => {
+        return this.status;
     };
 
     /**
@@ -180,6 +208,12 @@ export class BurnAndRelease<
                 return this;
             }
 
+            if (!this.params.from) {
+                throw new Error(
+                    `Must either provide field \`to\` or field \`txHash\`.`,
+                );
+            }
+
             const {
                 asset,
                 transaction,
@@ -198,6 +232,8 @@ export class BurnAndRelease<
                 this._state.logger,
             );
 
+            this.status = BurnAndReleaseStatus.Burned;
+
             return this;
         })()
             .then(promiEvent.resolve)
@@ -213,7 +249,13 @@ export class BurnAndRelease<
     public txHash = (): string => {
         const txHash = this.params.txHash;
         if (txHash) {
-            return renVMHashToBase64(txHash);
+            return renVMHashToBase64(txHash, this.renVM.version >= 2);
+        }
+
+        if (!this.params.from) {
+            throw new Error(
+                `Must either provide field \`to\` or field \`txHash\`.`,
+            );
         }
 
         if (!this.burnDetails) {
@@ -232,7 +274,10 @@ export class BurnAndRelease<
                               | LockChain
                               | MintChain,
                       })
-                    : resolveOutToken(this.params);
+                    : resolveOutToken({
+                          ...this.params,
+                          from: this.params.from,
+                      });
 
             const { transaction, amount, to, nonce } = this.burnDetails;
 
@@ -294,7 +339,10 @@ export class BurnAndRelease<
         } else {
             return toBase64(
                 generateBurnTxHash(
-                    resolveOutToken(this.params),
+                    resolveOutToken({
+                        ...this.params,
+                        from: this.params.from,
+                    }),
                     this.burnDetails.nonce.toFixed(),
                     this._state.logger,
                 ),
@@ -336,6 +384,12 @@ export class BurnAndRelease<
             const txHash = this.txHash();
 
             if (!this.params.txHash && this.burnDetails) {
+                if (!this.params.from) {
+                    throw new Error(
+                        `Must either provide field \`to\` or field \`txHash\`.`,
+                    );
+                }
+
                 if (this.params.tags && this.params.tags.length > 1) {
                     throw new Error(
                         "Providing multiple tags is not supported yet.",
@@ -357,7 +411,10 @@ export class BurnAndRelease<
                                   | LockChain
                                   | MintChain,
                           })
-                        : resolveOutToken(this.params);
+                        : resolveOutToken({
+                              ...this.params,
+                              from: this.params.from,
+                          });
 
                 const { transaction, amount, to, nonce } = this.burnDetails;
 
@@ -449,7 +506,7 @@ export class BurnAndRelease<
                             to: "",
                         });
                     }
-                    if (txHash && toBase64(returnedTxHash) !== txHash) {
+                    if (txHash && !fromBase64(txHash).equals(returnedTxHash)) {
                         this._state.logger.warn(
                             `Unexpected txHash returned from RenVM. Received: ${toBase64(
                                 returnedTxHash,
@@ -466,7 +523,9 @@ export class BurnAndRelease<
             promiEvent.emit("txHash", txHash);
             this._state.logger.debug("txHash:", txHash);
 
-            return await this.renVM.waitForTX<BurnAndReleaseTransaction>(
+            const response = await this.renVM.waitForTX<
+                BurnAndReleaseTransaction
+            >(
                 fromBase64(txHash),
                 (status) => {
                     promiEvent.emit("status", status);
@@ -474,6 +533,10 @@ export class BurnAndRelease<
                 },
                 () => promiEvent._isCancelled(),
             );
+
+            this.status = BurnAndReleaseStatus.Released;
+
+            return response;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

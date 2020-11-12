@@ -41,18 +41,11 @@ const lockChainMap = {
 */
 
 export const renLockAndMint = async (context: GatewayMachineContext) => {
-    const {
-        nonce,
-        destNetwork,
-        suggestedAmount,
-        sourceNetwork,
-        sourceAsset,
-    } = context.tx;
+    const { nonce, destNetwork, sourceNetwork, sourceAsset } = context.tx;
     const { sdk, fromChainMap, toChainMap } = context;
 
     const mint = await sdk.lockAndMint({
         asset: sourceAsset.toUpperCase(),
-        suggestedAmount,
         from: fromChainMap[sourceNetwork](context),
         to: toChainMap[destNetwork](context),
         nonce,

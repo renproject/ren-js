@@ -138,7 +138,7 @@ describe("MintMachine", () => {
         });
     });
 
-    it.only("should try to submit once the confirmation target has been met", async () => {
+    it("should try to submit once the confirmation target has been met", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
             targetConfirmations: 10,
         });

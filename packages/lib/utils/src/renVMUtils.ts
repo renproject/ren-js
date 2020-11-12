@@ -109,6 +109,11 @@ export const resolveOutToken = <
         MintAddress
     >["to"];
 }): string => {
+    if (!from) {
+        throw new Error(
+            `Unable to calculate Ren selector without \`from\` field.`,
+        );
+    }
     return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
         from.name}`;
 };

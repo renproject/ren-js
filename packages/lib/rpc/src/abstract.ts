@@ -2,7 +2,6 @@ import {
     AbiItem,
     BurnAndReleaseTransaction,
     LockAndMintTransaction,
-    Logger,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -111,6 +110,10 @@ export interface AbstractRenVMProvider<
      */
     selectPublicKey: (assetOrChain: string) => SyncOrPromise<Buffer>;
 
+    /**
+     * Used to query what network a custom provider is connected to. LockAndMint
+     * and BurnAndRelease use this to configure their chain parameters.
+     */
     getNetwork: () => SyncOrPromise<
         RenNetwork | RenNetworkString | RenNetworkDetails
     >;

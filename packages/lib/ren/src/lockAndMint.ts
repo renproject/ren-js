@@ -1,7 +1,6 @@
 import {
     AbiItem,
     DepositCommon,
-    EventType,
     getRenNetworkDetails,
     LockAndMintParams,
     LockAndMintTransaction,
@@ -35,6 +34,7 @@ import {
     sleep,
     strip0x,
     toBase64,
+    toURLBase64,
 } from "@renproject/utils";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
@@ -179,7 +179,7 @@ export class LockAndMint<
     > => {
         this._state.renNetwork =
             this._state.renNetwork ||
-            getRenNetworkDetails(await this.renVM.getNetwork());
+            getRenNetworkDetails(await this.renVM.getNetwork(this.params));
 
         if (!this.params.from.renNetwork) {
             await this.params.from.initialize(this._state.renNetwork);
@@ -188,13 +188,14 @@ export class LockAndMint<
             await this.params.to.initialize(this._state.renNetwork);
         }
 
-        this.params.contractCalls =
-            this.params.contractCalls ||
-            (this.params.to.contractCalls &&
-                (await this.params.to.contractCalls(
-                    EventType.LockAndMint,
-                    this.params.asset,
-                )));
+        const overwriteParams =
+            this.params.to.getMintParams &&
+            (await this.params.to.getMintParams(this.params.asset));
+
+        this.params = {
+            ...overwriteParams,
+            ...this.params,
+        };
 
         try {
             this.gatewayAddress = await this.generateGatewayAddress();
@@ -342,14 +343,9 @@ export class LockAndMint<
 
     // Private methods /////////////////////////////////////////////////////////
 
-    private readonly generateGatewayAddress = async (
-        specifyGatewayAddress?: LockAddress,
-    ): Promise<LockAddress> => {
-        if (specifyGatewayAddress || this.params.gatewayAddress) {
-            this.gatewayAddress =
-                specifyGatewayAddress || this.params.gatewayAddress;
-        }
-
+    private readonly generateGatewayAddress = async (): Promise<
+        LockAddress
+    > => {
         if (this.gatewayAddress) {
             return this.gatewayAddress;
         }
@@ -403,6 +399,7 @@ export class LockAndMint<
         );
         this._state.gHash = gHash;
         this._state.gPubKey = await this.renVM.selectPublicKey(
+            this.params,
             this.renVM.version >= 2 ? this.params.from.name : this.params.asset,
         );
         this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
@@ -557,7 +554,7 @@ export class LockAndMintDeposit<
 
         const deposit = this.depositDetails;
         const providedTxHash = this.params.txHash
-            ? renVMHashToBase64(this.params.txHash)
+            ? renVMHashToBase64(this.params.txHash, this.renVM.version >= 2)
             : undefined;
 
         if (!nonce) {
@@ -652,14 +649,17 @@ export class LockAndMintDeposit<
             txHash: "",
         };
 
-        this._state.txHash = toBase64(
-            this.renVM.mintTxHash({
+        this._state.txHash = (renVM.version >= 2 ? toBase64 : toURLBase64)(
+            this.renVM.mintTxHash(this.params, {
                 ...this._state,
                 outputHashFormat,
             }),
         );
 
-        if (providedTxHash && providedTxHash !== this.txHash()) {
+        if (
+            providedTxHash &&
+            !fromBase64(providedTxHash).equals(fromBase64(this.txHash()))
+        ) {
             throw new Error(
                 `Inconsistent RenVM transaction hash: got ${providedTxHash} but expected ${this.txHash()}`,
             );
@@ -700,6 +700,7 @@ export class LockAndMintDeposit<
      */
     public queryTx = async (): Promise<LockAndMintTransaction> => {
         const mintTransaction: LockAndMintTransaction = await this.renVM.queryMintOrBurn(
+            this.params,
             fromBase64(this.txHash()),
         );
         this._state.queryTxResult = mintTransaction;
@@ -940,6 +941,7 @@ export class LockAndMintDeposit<
             this._state.logger.debug("renVM txHash:", txHash);
 
             const response = await this.renVM.waitForTX<LockAndMintTransaction>(
+                this.params,
                 fromBase64(txHash),
                 (status) => {
                     promiEvent.emit("status", status);
@@ -1065,7 +1067,7 @@ export class LockAndMintDeposit<
         }
 
         const returnedTxHash = toBase64(
-            await this.renVM.submitMint({
+            await this.renVM.submitMint(this.params, {
                 ...this._state,
                 token,
             }),
@@ -1083,11 +1085,7 @@ export class LockAndMintDeposit<
             {
                 from: "object",
                 to: "object",
-                suggestedAmount:
-                    "number | string | BigNumber | object | undefined",
-                confirmations: "number | undefined",
                 contractCalls: "any[]",
-                gatewayAddress: "string | undefined",
                 asset: "string",
                 txHash: "string | undefined",
                 nonce: "Buffer | string | undefined",

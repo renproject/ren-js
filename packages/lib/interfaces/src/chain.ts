@@ -3,10 +3,13 @@ import { EventEmitter } from "events";
 
 import { Logger } from "./logger";
 import { RenNetwork, RenNetworkDetails, RenNetworkString } from "./networks";
-import { ContractCall } from "./parameters";
+import {
+    BurnAndReleaseParams,
+    ContractCall,
+    LockAndMintParams,
+} from "./parameters";
 import { PromiEvent } from "./promiEvent";
 import { LockAndMintTransaction } from "./transaction";
-import { EventType } from "./types";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
@@ -240,6 +243,15 @@ export interface BurnDetails<Transaction> {
     nonce: BigNumber;
 }
 
+export type OverwritableLockAndMintParams = Omit<
+    Omit<Partial<LockAndMintParams>, "to">,
+    "from"
+>;
+export type OverwritableBurnAndReleaseParams = Omit<
+    Omit<Partial<BurnAndReleaseParams>, "to">,
+    "from"
+>;
+
 export interface MintChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
@@ -283,7 +295,7 @@ export interface MintChain<
         // Once of the following should not be undefined.
         burn: {
             transaction?: Transaction;
-            burnNonce?: string | number;
+            burnNonce?: Buffer | string | number;
             contractCalls?: ContractCall[];
         },
 
@@ -291,9 +303,12 @@ export interface MintChain<
         logger: Logger,
     ) => SyncOrPromise<BurnDetails<Transaction>>;
 
-    contractCalls?: (
-        eventType: EventType,
+    getMintParams?: (
+        asset: string,
+    ) => SyncOrPromise<OverwritableLockAndMintParams | undefined>;
+
+    getBurnParams?: (
         asset: string,
         burnPayload?: string,
-    ) => SyncOrPromise<ContractCall[] | undefined>;
+    ) => SyncOrPromise<OverwritableBurnAndReleaseParams | undefined>;
 }

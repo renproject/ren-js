@@ -33,7 +33,7 @@
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.21"
+        "send-crypto": "0.2.25"
     },
     "devDependencies": {
         "chalk": "^4.1.0",

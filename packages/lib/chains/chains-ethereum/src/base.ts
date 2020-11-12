@@ -325,17 +325,19 @@ export const findBurnByNonce = async (
     network: EthereumConfig,
     web3: Web3,
     asset: string,
-    nonce: string,
+    nonce: Buffer | string | number,
 ): Promise<BurnDetails<Transaction>> => {
     const gatewayAddress = await getGatewayAddress(network, web3, asset);
 
-    const nonceBuffer = new BN(nonce).toArrayLike(Buffer, "be", 32);
+    const nonceBuffer = Buffer.isBuffer(nonce)
+        ? nonce
+        : new BN(nonce).toArrayLike(Buffer, "be", 32);
 
     const burnEvents = await web3.eth.getPastLogs({
         address: gatewayAddress,
         fromBlock: "1",
         toBlock: "latest",
-        topics: [eventTopics.LogBurn, nonceBuffer] as string[],
+        topics: [eventTopics.LogBurn, Ox(nonceBuffer)] as string[],
     });
 
     if (!burnEvents.length) {
@@ -870,7 +872,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         // Once of the following should not be undefined.
         burn: {
             transaction?: Transaction;
-            burnNonce?: string | number;
+            burnNonce?: Buffer | string | number;
             contractCalls?: ContractCall[];
         },
 

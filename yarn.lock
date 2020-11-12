@@ -1561,14 +1561,6 @@
     "@glif/filecoin-address" "^1.0.0-lerna.4"
     bignumber.js "^9.0.0"
 
-"@glif/filecoin-message@^1.0.0-lerna.4":
-  version "1.0.0-lerna.4"
-  resolved "https://registry.yarnpkg.com/@glif/filecoin-message/-/filecoin-message-1.0.0-lerna.4.tgz#1e56e32b20d7388257cc028dee32f404c63e621e"
-  integrity sha512-DZ8xEwsSCvZLi0QTPmPZTOu3U0JMFzJGzp9hJcexZo22GQ0cBJr4K6fiiRIULcEEEAyLDw+KUCN81JBHmGye6A==
-  dependencies:
-    "@glif/filecoin-address" "^1.0.0-lerna.4"
-    bignumber.js "^9.0.0"
-
 "@glif/filecoin-number@^1.0.0-beta.5":
   version "1.0.0-beta.5"
   resolved "https://registry.yarnpkg.com/@glif/filecoin-number/-/filecoin-number-1.0.0-beta.5.tgz#4598b5db2fe7631b5c38b248ff2b1b2852ae39aa"
@@ -1578,26 +1570,10 @@
     bent "7.1.0"
     bignumber.js "9.0.0"
 
-"@glif/filecoin-number@^1.0.0-lerna.4":
-  version "1.0.0-lerna.4"
-  resolved "https://registry.yarnpkg.com/@glif/filecoin-number/-/filecoin-number-1.0.0-lerna.4.tgz#31af88552b817eff19f26af7fc5654869d8d15d1"
-  integrity sha512-ROpzulkN4GODU1GaO13j5gLTrdVsH+185Bk5kZ+YYYl99wwfoFizgFwk8+9rmg1u76x/Z4xJQi83+6K3SSkCOQ==
-  dependencies:
-    "@babel/polyfill" "7.7.0"
-    bent "7.1.0"
-    bignumber.js "9.0.0"
-
 "@glif/filecoin-rpc-client@^1.0.0-beta.5":
   version "1.0.0-beta.5"
   resolved "https://registry.yarnpkg.com/@glif/filecoin-rpc-client/-/filecoin-rpc-client-1.0.0-beta.5.tgz#19b11134f4afe806bde91b21e0a9faabbf7de9f0"
   integrity sha512-+SGQpHufwYF/WQHqA8m8BqVSOq1ulFgiOjIDqZPbKAUw7CjY2FBXGyARYEmaE1RlfMzKvzM8YFX9cSqpbVSzMw==
-  dependencies:
-    axios "0.19.2"
-
-"@glif/filecoin-rpc-client@^1.0.0-lerna.4":
-  version "1.0.0-lerna.4"
-  resolved "https://registry.yarnpkg.com/@glif/filecoin-rpc-client/-/filecoin-rpc-client-1.0.0-lerna.4.tgz#123b0484cfa874b2a502cd6e3f4d79a6d199d3ad"
-  integrity sha512-HAsSQc/FJhQ+OeC4S8KDpjy0l7SmpKhtYx6gLCLB/O23BGN13VZ595L7fyZ5giwSTNNyRgMJLqCeDx/Cf4BpQA==
   dependencies:
     axios "0.19.2"
 
@@ -1611,20 +1587,6 @@
     "@glif/filecoin-message" "^1.0.0-beta.5"
     "@glif/filecoin-number" "^1.0.0-beta.5"
     "@glif/filecoin-rpc-client" "^1.0.0-beta.5"
-    bignumber.js "^9.0.1"
-    bluebird "3.7.2"
-    ts-jest "^26.3.0"
-
-"@glif/filecoin-wallet-provider@^1.0.0-lerna.5":
-  version "1.0.0-lerna.8"
-  resolved "https://registry.yarnpkg.com/@glif/filecoin-wallet-provider/-/filecoin-wallet-provider-1.0.0-lerna.8.tgz#dede96c8201faaeac6381cd7a428a5c6d820e883"
-  integrity sha512-pr8exK0+g9VQAusAi0CglIY+qHGdYSw2dgFXMRIUmjJnOI3ZhV6Sr9pLO7VaGQaORnC1WnCcDItPNLH03BjSAg==
-  dependencies:
-    "@babel/polyfill" "7.8.7"
-    "@glif/filecoin-address" "^1.0.0-lerna.4"
-    "@glif/filecoin-message" "^1.0.0-lerna.4"
-    "@glif/filecoin-number" "^1.0.0-lerna.4"
-    "@glif/filecoin-rpc-client" "^1.0.0-lerna.4"
     bignumber.js "^9.0.1"
     bluebird "3.7.2"
     ts-jest "^26.3.0"
@@ -6277,9 +6239,9 @@ bitcore-lib@^8.22.2, bitcore-lib@^8.23.0:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e":
+"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e":
   version "1.9.0"
-  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e"
+  resolved "https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"

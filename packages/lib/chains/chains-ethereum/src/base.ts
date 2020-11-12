@@ -651,7 +651,7 @@ export type Address = string;
 
 export class EthereumBaseChain implements MintChain<Transaction, Address> {
     public name = "Ethereum";
-    public legacyName = "Eth";
+    public legacyName: MintChain["legacyName"] = "Eth";
 
     public readonly web3: Web3 | undefined;
     public renNetworkDetails: EthereumConfig | undefined;

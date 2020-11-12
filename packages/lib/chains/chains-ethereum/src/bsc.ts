@@ -21,6 +21,14 @@ export const renBscTestnet: EthereumConfig = {
     // etherscan: "https://explorer.binance.org/smart-testnet",
     etherscan: "https://testnet.bscscan.com",
     addresses: {
+        GatewayRegistry: "0x838F881876f53a772D2F8E2f8aa2e4a996431495",
+        BasicAdapter: "0x7de1253A8da6620351ec477b38BdC6a55FCd0f85",
+    },
+};
+
+export const renBscDevnet: EthereumConfig = {
+    ...renBscTestnet,
+    addresses: {
         GatewayRegistry: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",
         BasicAdapter: "0x105435a9b0f375B179e5e43A16228C04F01Fb2ee",
     },
@@ -36,6 +44,7 @@ const getRenBscMainnet = () => {
 
 export class BinanceSmartChainClass extends EthereumClass {
     public name = "BinanceSmartChain";
+    public legacyName = undefined;
 
     constructor(
         web3Provider: provider | "mainnet" | "testnet" = "mainnet",

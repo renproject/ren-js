@@ -30,7 +30,7 @@ const transactionToDeposit = (transaction: Transaction) => ({
 export abstract class BitcoinBaseChain
     implements LockChain<Transaction, Deposit, Address> {
     public name = "Bitcoin";
-    public legacyName = "Btc";
+    public legacyName: LockChain["legacyName"] = "Btc";
     public renNetwork: RenNetworkDetails | undefined;
     public chainNetwork: BitcoinNetwork | undefined;
 

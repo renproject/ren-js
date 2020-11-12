@@ -9,7 +9,7 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider, v1, v2 } from "@renproject/rpc";
+import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
 import { Ox, randomNonce, strip0x } from "@renproject/utils";
 
 import { BurnAndRelease } from "./burnAndRelease";
@@ -109,21 +109,12 @@ export default class RenJS {
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
-        if (
-            providerOrNetwork === RenNetwork.MainnetVDot3 ||
-            providerOrNetwork === RenNetwork.TestnetVDot3 ||
-            providerOrNetwork === RenNetwork.DevnetVDot3
-        ) {
-            providerOrNetwork = new v2.RenVMProvider(providerOrNetwork);
-        }
-
         // Use provided provider, provider URL or default lightnode URL.
         this.renVM =
             providerOrNetwork && typeof providerOrNetwork !== "string"
                 ? providerOrNetwork
-                : new v1.RenVMProvider(
+                : new CombinedProvider(
                       providerOrNetwork || RenNetwork.Mainnet,
-                      undefined,
                       this._logger,
                   );
     }

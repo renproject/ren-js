@@ -164,8 +164,9 @@ describe("MintMachine", () => {
             if (txHash && confirmed) return Buffer.from(txHash);
             throw Error("notx");
         };
-        renVMProvider.waitForTX = (_a, cb) => {
-            if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+        renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
+            if (txHash && confirmed && onStatus)
+                onStatus(TxStatus.TxStatusDone);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
@@ -253,8 +254,9 @@ describe("MintMachine", () => {
             if (txHash && confirmed) return Buffer.from(txHash);
             throw Error("notx");
         };
-        renVMProvider.waitForTX = (_a, cb) => {
-            if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+        renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
+            if (txHash && confirmed && onStatus)
+                onStatus(TxStatus.TxStatusDone);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
@@ -354,8 +356,9 @@ describe("MintMachine", () => {
             if (txHash && confirmed) return Buffer.from(txHash);
             throw Error("notx");
         };
-        renVMProvider.waitForTX = (_a, cb) => {
-            if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+        renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
+            if (txHash && confirmed && onStatus)
+                onStatus(TxStatus.TxStatusDone);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };

@@ -658,13 +658,17 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     public readonly getTokenContractAddress = async (asset: string) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return getTokenAddress(this.renNetworkDetails, this.web3, asset);
     };
     public readonly getGatewayContractAddress = async (token: string) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return getGatewayAddress(this.renNetworkDetails, this.web3, token);
     };
@@ -763,7 +767,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     addressExplorerLink = (address: Address): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return `${this.renNetworkDetails.etherscan}/address/${address}`;
     };
@@ -774,7 +780,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     transactionExplorerLink = (transaction: Transaction): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return `${this.renNetworkDetails.etherscan}/tx/${transaction}`;
     };
@@ -783,7 +791,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         transaction: Transaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         const currentBlock = new BigNumber(
             (await this.web3.eth.getBlockNumber()).toString(),
@@ -816,7 +826,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         }
 
         if (!this.web3) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
 
         const existingTransaction = await this.findTransaction(
@@ -847,7 +859,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         sigHash?: Buffer,
     ): Promise<Transaction | undefined> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return findTransactionBySigHash(
             this.renNetworkDetails,
@@ -860,7 +874,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     resolveTokenGatewayContract = async (asset: string): Promise<string> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return Ox(
             await getTokenAddress(this.renNetworkDetails, this.web3, asset),
@@ -884,7 +900,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         logger: Logger,
     ): Promise<BurnDetails<Transaction>> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
 
         const { burnNonce, contractCalls } = burn;
@@ -980,7 +998,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         mint: number;
     }> => {
         if (!this.web3) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         const gatewayAddress = await this.getGatewayContractAddress(asset);
 
@@ -1056,7 +1076,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         };
 
         if (!this.web3) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         const tokenAddress = await this.getTokenContractAddress(asset);
 

@@ -5,7 +5,6 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable } from "@renproject/utils";
-import Web3 from "web3";
 import { provider } from "web3-providers";
 
 import { EthereumClass } from "./ethereum";
@@ -34,12 +33,43 @@ export const renBscDevnet: EthereumConfig = {
     },
 };
 
+export const renBscMainnet: EthereumConfig = {
+    name: "BSC Mainnet",
+    chain: "bscMainnet",
+    isTestnet: false,
+    chainLabel: "BSC Mainnet",
+    networkID: 56,
+    infura: "https://bsc-dataseed.binance.org/",
+    etherscan: "https://bscscan.com",
+    addresses: {
+        GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
+        BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
+    },
+};
+
 export const BscConfigMap = {
     [RenNetwork.TestnetVDot3]: renBscTestnet,
 };
 
-const getRenBscMainnet = () => {
-    throw new Error(`BSC mainnet is not supported yet.`);
+const resolveBSCNetwork = (
+    renNetwork:
+        | RenNetwork
+        | RenNetworkString
+        | RenNetworkDetails
+        | EthereumConfig,
+) => {
+    if ((renNetwork as EthereumConfig).addresses) {
+        return renNetwork as EthereumConfig;
+    } else {
+        const details = getRenNetworkDetails(
+            renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
+        );
+        return details.isTestnet
+            ? details.name === RenNetwork.DevnetVDot3
+                ? renBscDevnet
+                : renBscTestnet
+            : renBscMainnet;
+    }
 };
 
 export class BinanceSmartChainClass extends EthereumClass {
@@ -47,24 +77,16 @@ export class BinanceSmartChainClass extends EthereumClass {
     public legacyName = undefined;
 
     constructor(
-        web3Provider: provider | "mainnet" | "testnet" = "mainnet",
-        network: "mainnet" | "testnet" = "mainnet",
+        web3Provider: provider,
+        renNetwork:
+            | RenNetwork
+            | RenNetworkString
+            | RenNetworkDetails
+            | EthereumConfig,
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
-        super(
-            web3Provider === "mainnet" || web3Provider === "testnet"
-                ? new Web3(
-                      (web3Provider === "testnet"
-                          ? renBscTestnet
-                          : getRenBscMainnet()
-                      ).infura,
-                  ).currentProvider
-                : web3Provider,
-            web3Provider === "testnet" || network === "testnet"
-                ? renBscTestnet
-                : undefined,
-        );
+        super(web3Provider, resolveBSCNetwork(renNetwork));
     }
 
     initialize = (

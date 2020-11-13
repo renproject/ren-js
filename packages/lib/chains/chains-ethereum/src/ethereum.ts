@@ -3,6 +3,9 @@ import {
     MintChain,
     OverwritableBurnAndReleaseParams,
     OverwritableLockAndMintParams,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
     SyncOrPromise,
 } from "@renproject/interfaces";
 import { Callable, Ox, toBigNumber } from "@renproject/utils";
@@ -25,8 +28,15 @@ export class EthereumClass extends EthereumBaseChain
           >)
         | undefined;
 
-    constructor(web3Provider: provider, renNetworkDetails?: EthereumConfig) {
-        super(web3Provider, renNetworkDetails);
+    constructor(
+        web3Provider: provider,
+        renNetwork?:
+            | RenNetwork
+            | RenNetworkString
+            | RenNetworkDetails
+            | EthereumConfig,
+    ) {
+        super(web3Provider, renNetwork);
     }
 
     public getMintParams = (

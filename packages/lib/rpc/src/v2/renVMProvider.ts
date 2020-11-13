@@ -396,8 +396,8 @@ export class RenVMProvider
     ): Promise<{ lock: BigNumber; release: BigNumber }> => {
         const renVMState = await this.sendMessage(RPCMethod.QueryState, {});
 
-        const { gasLimit, gasPrice } = renVMState.state[chain.name];
-        const fee = new BigNumber(gasLimit).times(new BigNumber(gasPrice));
+        const { gasLimit, gasCap } = renVMState.state[chain.name];
+        const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
 
         return {
             lock: fee,

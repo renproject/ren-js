@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-ethereum-mewconnect-connector",
-    "version": "2.0.0-alpha.20",
+    "version": "2.0.0-alpha.21",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,9 +42,9 @@
     },
     "dependencies": {
         "@myetherwallet/mewconnect-web-client": "^2.1.5-beta.1",
-        "@renproject/interfaces": "^2.0.0-alpha.20",
-        "@renproject/multiwallet-abstract-ethereum-connector": "^2.0.0-alpha.20",
-        "@renproject/multiwallet-base-connector": "^2.0.0-alpha.20",
+        "@renproject/interfaces": "^2.0.0-alpha.21",
+        "@renproject/multiwallet-abstract-ethereum-connector": "^2.0.0-alpha.21",
+        "@renproject/multiwallet-base-connector": "^2.0.0-alpha.21",
         "@types/node": ">=10"
     },
     "resolutions": {

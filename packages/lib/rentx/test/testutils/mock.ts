@@ -28,7 +28,10 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
             return mockLockChain;
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
-            await onDeposit({ transaction: { amount: "1" }, amount: "1" });
+            await onDeposit({
+                transaction: { amount: "1", txHash: "123" },
+                amount: "1",
+            });
         },
         getGatewayAddress: () => "gatGatewayAddress",
         getPubKeyScript: () => Buffer.from("pubkey"),

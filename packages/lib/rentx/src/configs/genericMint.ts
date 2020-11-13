@@ -132,7 +132,7 @@ const depositListener = (
 
                         case "SIGN":
                             deposit
-                                ?.signed()
+                                .signed()
                                 .on("status", (state) => console.log(state))
                                 .then((v) =>
                                     callback({
@@ -158,7 +158,7 @@ const depositListener = (
 
                         case "MINT":
                             deposit
-                                ?.mint()
+                                .mint()
                                 .on("transactionHash", (transactionHash) => {
                                     const submittedTx = {
                                         destTxHash: transactionHash,

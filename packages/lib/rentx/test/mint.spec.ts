@@ -58,13 +58,13 @@ describe("MintMachine", () => {
             toChainMap,
         });
 
-        const p = new Promise((resolve) => {
+        const p: Promise<string> = new Promise((resolve) => {
             const service = interpret(machine)
                 .onTransition((state) => {
                     if (state?.context?.tx?.gatewayAddress) {
                         // we have successfully detected a deposit and spawned
                         // a machine to listen for updates
-                        resolve();
+                        resolve(state.context.tx.gatewayAddress);
                     }
                 })
                 .onStop(() => console.log("Interpreter stopped"));
@@ -73,9 +73,8 @@ describe("MintMachine", () => {
             service.start();
             service.onStop(() => console.log("Service stopped"));
         });
-        return p.then(() => {
-            console.log(machine.context);
-            expect(machine?.context?.tx?.gatewayAddress).toBeTruthy();
+        return p.then((gatewayAddress: string) => {
+            expect(gatewayAddress).toBeTruthy();
         });
     });
 
@@ -130,6 +129,7 @@ describe("MintMachine", () => {
             service.start();
             service.onStop(() => console.log("Service stopped"));
         });
+
         return p.then(() => {
             const depositTx = Object.values(
                 machine.context?.tx?.transactions || {},
@@ -140,7 +140,7 @@ describe("MintMachine", () => {
 
     it("should try to submit once the confirmation target has been met", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
-            targetConfirmations: 10,
+            targetConfirmations: 2,
         });
 
         const fromChainMap = {
@@ -160,10 +160,19 @@ describe("MintMachine", () => {
         );
         let txHash: string;
         let confirmed = false;
-        renVMProvider.submitMint = (..._args) => {
-            if (txHash && confirmed) return Buffer.from(txHash);
-            throw Error("notx");
-        };
+
+        // mock the minting process
+        renVMProvider.submitMint = async (..._args) =>
+            new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // Only resolve if the tx is actually confirmed
+                    if (txHash && confirmed) resolve(Buffer.from(txHash));
+
+                    reject(Error("notx"));
+                }, 200);
+            });
+
+        // mock waiting for the transaction
         renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
             if (txHash && confirmed && onStatus)
                 onStatus(TxStatus.TxStatusDone);
@@ -173,16 +182,19 @@ describe("MintMachine", () => {
 
         const machine = mintMachine.withConfig(mintConfig).withContext({
             tx: makeMintTransaction(),
-            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider),
             providers,
             fromChainMap,
             toChainMap,
         });
 
         let confirmations = 0;
+
+        // We should have at least 2 confirmations by the time the second confirmation event fires
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 100);
+        }, 10000);
+
         const p = new Promise((resolve) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -198,6 +210,7 @@ describe("MintMachine", () => {
                                 txHash =
                                     innerState.context.deposit.sourceTxHash;
                             }
+
                             if (innerState?.event?.type === "CONFIRMED") {
                                 confirmed = true;
                             }
@@ -217,8 +230,6 @@ describe("MintMachine", () => {
 
             // Start the service
             service.start();
-            // service.subscribe(((state: any, evt: any) => {}) as any);
-            // Object.values(machine.context.depositMachines)[0].subscribe
             service.onStop(() => console.log("Service stopped"));
         });
         return p.then(() => {
@@ -228,9 +239,10 @@ describe("MintMachine", () => {
             expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
         });
     });
+
     it("should restore an already existing deposit", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
-            targetConfirmations: 10,
+            targetConfirmations: 2,
         });
 
         const fromChainMap = {
@@ -250,10 +262,17 @@ describe("MintMachine", () => {
         );
         let txHash: string;
         let confirmed = false;
-        renVMProvider.submitMint = (..._args) => {
-            if (txHash && confirmed) return Buffer.from(txHash);
-            throw Error("notx");
-        };
+        renVMProvider.submitMint = async (..._args) =>
+            new Promise((resolve, _reject) => {
+                const backoff = () =>
+                    setTimeout(() => {
+                        // Only resolve if the tx is actually confirmed
+                        if (txHash && confirmed) resolve(Buffer.from(txHash));
+                        backoff();
+                    }, 200);
+                backoff();
+            });
+
         renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
             if (txHash && confirmed && onStatus)
                 onStatus(TxStatus.TxStatusDone);
@@ -268,16 +287,16 @@ describe("MintMachine", () => {
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                 gatewayAddress: "gatewayaddr",
                 transactions: {
-                    ["wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo="]: {
+                    ["krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE="]: {
                         sourceTxAmount: 1,
-                        sourceTxConfs: 1,
+                        sourceTxConfs: 0,
                         sourceTxHash:
-                            "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
+                            "krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE=",
                         rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider),
             providers,
             fromChainMap,
             toChainMap,
@@ -286,7 +305,8 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 100);
+        }, 10000);
+
         const p = new Promise((resolve) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -322,6 +342,7 @@ describe("MintMachine", () => {
             // service.subscribe(((state: any, evt: any) => {}) as any);
             service.onStop(() => console.log("Service stopped"));
         });
+
         return p.then(() => {
             const depositTx = Object.values(
                 machine.context?.tx?.transactions || {},
@@ -332,7 +353,7 @@ describe("MintMachine", () => {
 
     it("should enter a waiting state when a deposit requires interaction", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
-            targetConfirmations: 10,
+            targetConfirmations: 2,
         });
 
         const fromChainMap = {
@@ -352,10 +373,16 @@ describe("MintMachine", () => {
         );
         let txHash: string;
         let confirmed = false;
-        renVMProvider.submitMint = (..._args) => {
-            if (txHash && confirmed) return Buffer.from(txHash);
-            throw Error("notx");
-        };
+        renVMProvider.submitMint = async (..._args) =>
+            new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // Only resolve if the tx is actually confirmed
+                    if (txHash && confirmed) resolve(Buffer.from(txHash));
+
+                    reject(Error("notx"));
+                }, 200);
+            });
+
         renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
             if (txHash && confirmed && onStatus)
                 onStatus(TxStatus.TxStatusDone);
@@ -370,11 +397,11 @@ describe("MintMachine", () => {
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                 gatewayAddress: "gatewayAddress",
                 transactions: {
-                    ["wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo="]: {
+                    ["krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE="]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 1,
                         sourceTxHash:
-                            "wDRsvC2ihOVE6HntEuecoDC3/PydP9N7X9mFdR9Ofeo=",
+                            "krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE=",
                         rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
@@ -388,7 +415,8 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 100);
+        }, 10000);
+
         const p = new Promise((resolve) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -408,7 +436,10 @@ describe("MintMachine", () => {
                             if (!txHash)
                                 txHash =
                                     innerState.context.deposit.sourceTxHash;
-                            if (innerState?.event?.type === "CONFIRMED") {
+                            if (
+                                innerState?.event?.type === "CONFIRMED" ||
+                                innerState.value === "srcConfirmed"
+                            ) {
                                 confirmed = true;
                             }
                             if (innerState?.value === "destInitiated") {
@@ -424,6 +455,7 @@ describe("MintMachine", () => {
             // service.subscribe(((state: any, evt: any) => {}) as any);
             service.onStop(() => console.log("Service stopped"));
         });
+
         return p.then(() => {
             const depositTx = Object.values(
                 machine.context?.tx?.transactions || {},

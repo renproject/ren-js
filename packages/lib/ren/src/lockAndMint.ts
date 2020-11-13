@@ -431,12 +431,16 @@ export class LockAndMint<
                 await this.processDeposit(deposit);
             };
 
+            // TODO: Flag deposits that have been cancelled, updating their status.
+            const cancelDeposit = async () => Promise.resolve();
+
             try {
                 await this.params.from.getDeposits(
                     this.params.asset,
                     this.gatewayAddress,
                     this.getDepositsInstance,
                     onDeposit,
+                    cancelDeposit,
                     listenerCancelled,
                 );
             } catch (error) {

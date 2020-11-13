@@ -207,6 +207,9 @@ export interface LockChain<
         // address, and only return unspent deposits in successive calls.
         instanceID: number,
         onDeposit: (deposit: LockDeposit) => Promise<void>,
+        // If a deposit is no longer valid, cancelDeposit should be called with
+        // the same details. NOTE: Not implemented yet in RenJS.
+        cancelDeposit: (deposit: LockDeposit) => Promise<void>,
         listenerCancelled: () => boolean,
     ) => SyncOrPromise<void>;
 

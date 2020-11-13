@@ -442,4 +442,12 @@ export class RenVMProvider
     public getNetwork = async (_selector: string): Promise<RenNetwork> => {
         return this.network;
     };
+
+    public estimateTransactionFee = async (
+        _selector: string,
+        chain: { name: string; legacyName?: string },
+    ): Promise<{ lock: BigNumber; release: BigNumber }> => {
+        const fees = await this.getFees();
+        return fees[chain.legacyName || chain.name];
+    };
 }

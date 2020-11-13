@@ -205,20 +205,15 @@ export class LockAndMint<
         // Will fetch deposits as long as there's at least one deposit.
         this.wait().catch(console.error);
 
-        if (this.renVM.version(this._state.selector) >= 2) {
-            try {
-                const renVMConfig = await (this
-                    .renVM as RenVMProvider).sendMessage(
-                    RPCMethod.QueryConfig,
-                    {},
+        try {
+            if (this.renVM.getConfirmationTarget) {
+                this._state.targetConfirmations = await this.renVM.getConfirmationTarget(
+                    this._state.selector,
+                    this.params.from,
                 );
-                this._state.targetConfirmations = parseInt(
-                    renVMConfig.confirmations[this.params.from.name],
-                    10,
-                );
-            } catch (error) {
-                // Ignore error.
             }
+        } catch (error) {
+            // Ignore error.
         }
 
         return this;
@@ -353,12 +348,12 @@ export class LockAndMint<
 
         if (!nonce) {
             throw new Error(
-                `Must call 'initialize' before calling 'generateGatewayAddress'`,
+                `Must call 'initialize' before calling 'generateGatewayAddress'.`,
             );
         }
 
         if (!contractCalls) {
-            throw new Error(`Must provide contract call details`);
+            throw new Error(`Must provide contract call details.`);
         }
 
         // Last contract call
@@ -533,7 +528,7 @@ export class LockAndMintDeposit<
         const { txHash, contractCalls, nonce } = this.params;
 
         if (!nonce) {
-            throw new Error(`No nonce passed in to LockAndMintDeposit`);
+            throw new Error(`No nonce passed in to LockAndMintDeposit.`);
         }
 
         if (!txHash && (!contractCalls || !contractCalls.length)) {
@@ -649,7 +644,7 @@ export class LockAndMintDeposit<
             !fromBase64(providedTxHash).equals(fromBase64(this.txHash()))
         ) {
             throw new Error(
-                `Inconsistent RenVM transaction hash: got ${providedTxHash} but expected ${this.txHash()}`,
+                `Inconsistent RenVM transaction hash: got ${providedTxHash} but expected ${this.txHash()}.`,
             );
         }
 

@@ -10,6 +10,7 @@ import {
     SyncOrPromise,
     TxStatus,
 } from "@renproject/interfaces";
+import BigNumber from "bignumber.js";
 
 import { AbstractRenVMProvider } from "./";
 import { RenVMProvider as V1Provider } from "./v1";
@@ -92,12 +93,6 @@ export class CombinedProvider
     };
 
     version = (selector: string) => (isV1Selector(selector) ? 1 : 2);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getFees = async (): Promise<any> => {
-        await Promise.resolve(1);
-        throw new Error(`not implemented`);
-    };
 
     mintTxHash = (
         params: Parameters<AbstractRenVMProvider["mintTxHash"]>[0],
@@ -195,4 +190,20 @@ export class CombinedProvider
         this.v1 && isV1Selector(selector)
             ? this.v1.getNetwork(selector)
             : this.v2.getNetwork(selector);
+
+    public getConfirmationTarget = async (
+        selector: string,
+        chain: { name: string },
+    ) =>
+        this.v1 && isV1Selector(selector)
+            ? undefined
+            : this.v2.getConfirmationTarget(selector, chain);
+
+    public estimateTransactionFee = async (
+        selector: string,
+        chain: { name: string },
+    ): Promise<{ lock: BigNumber; release: BigNumber }> =>
+        this.v1 && isV1Selector(selector)
+            ? this.v1.estimateTransactionFee(selector, chain)
+            : this.v2.estimateTransactionFee(selector, chain);
 }

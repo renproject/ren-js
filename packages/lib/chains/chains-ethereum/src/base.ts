@@ -658,13 +658,13 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     public readonly getTokenContractAddress = async (asset: string) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         return getTokenAddress(this.renNetworkDetails, this.web3, asset);
     };
     public readonly getGatewayContractAddress = async (token: string) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         return getGatewayAddress(this.renNetworkDetails, this.web3, token);
     };
@@ -718,33 +718,37 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     // Supported assets
 
-    // /**
-    //  * `supportsAsset` should return true if the asset is native to the
-    //  * MintChain.
-    //  *
-    //  * @example
-    //  * ethereum.supportsAsset = asset => asset === "ETH";
-    //  */
-    // supportsAsset = (asset: Asset): boolean => {
-    //     return asset === "eth";
-    // };
+    assetIsNative = (asset: string): boolean => {
+        return asset === "ETH";
+    };
+
+    /**
+     * `assetIsSupported` should return true if the asset is native to the
+     * MintChain.
+     *
+     * @example
+     * ethereum.assetIsSupported = asset => asset === "ETH";
+     */
+    assetIsSupported = async (asset: string): Promise<boolean> => {
+        if (this.assetIsNative(asset)) {
+            return true;
+        }
+        // Check that there's a gateway contract for the asset.
+        return !!(await this.getGatewayContractAddress(asset));
+    };
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
      *
      * If the asset is not supported, an error should be thrown.
      *
-     * @example
-     * ethereum.assetDecimals = asset => {
-     *     if (asset === "ETH") { return 18; }
-     *     throw new Error(`Unsupported asset ${asset}`);
-     * }
+     
      */
     assetDecimals = (asset: string): number => {
-        if (asset === "eth") {
+        if (asset === "ETH") {
             return 18;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Unsupported asset ${asset}.`);
     };
 
     addressIsValid = (address: Address): boolean => {
@@ -759,7 +763,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     addressExplorerLink = (address: Address): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         return `${this.renNetworkDetails.etherscan}/address/${address}`;
     };
@@ -770,7 +774,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     transactionExplorerLink = (transaction: Transaction): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         return `${this.renNetworkDetails.etherscan}/tx/${transaction}`;
     };
@@ -779,7 +783,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         transaction: Transaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         const currentBlock = new BigNumber(
             (await this.web3.eth.getBlockNumber()).toString(),
@@ -812,7 +816,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         }
 
         if (!this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
 
         const existingTransaction = await this.findTransaction(
@@ -843,7 +847,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         sigHash?: Buffer,
     ): Promise<Transaction | undefined> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         return findTransactionBySigHash(
             this.renNetworkDetails,
@@ -856,7 +860,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     resolveTokenGatewayContract = async (asset: string): Promise<string> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         return Ox(
             await getTokenAddress(this.renNetworkDetails, this.web3, asset),
@@ -880,7 +884,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         logger: Logger,
     ): Promise<BurnDetails<Transaction>> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
 
         const { burnNonce, contractCalls } = burn;
@@ -967,6 +971,105 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         }
 
         return extractBurnDetails(this.web3, transaction);
+    };
+
+    getFees = async (
+        asset: string,
+    ): Promise<{
+        burn: number;
+        mint: number;
+    }> => {
+        if (!this.web3) {
+            throw new Error(`${this.name} object not initialized.`);
+        }
+        const gatewayAddress = await this.getGatewayContractAddress(asset);
+
+        const mintFeeABI: AbiItem = {
+            constant: true,
+            inputs: [],
+            name: "mintFee",
+            outputs: [
+                {
+                    internalType: "uint16",
+                    name: "",
+                    type: "uint16",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        const burnFeeABI: AbiItem = {
+            constant: true,
+            inputs: [],
+            name: "burnFee",
+            outputs: [
+                {
+                    internalType: "uint16",
+                    name: "",
+                    type: "uint16",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        const gatewayContract = new this.web3.eth.Contract(
+            [mintFeeABI, burnFeeABI],
+            gatewayAddress,
+        );
+        const mintFee = await gatewayContract.methods.mintFee().call();
+        const burnFee = await gatewayContract.methods.mintFee().call();
+
+        return {
+            mint: new BigNumber(mintFee.toString()).toNumber(),
+            burn: new BigNumber(burnFee.toString()).toNumber(),
+        };
+    };
+
+    public getBalance = async (
+        asset: string,
+        address: Address,
+    ): Promise<BigNumber> => {
+        const balanceOfABI: AbiItem = {
+            constant: true,
+            inputs: [
+                {
+                    internalType: "address",
+                    name: "account",
+                    type: "address",
+                },
+            ],
+            name: "balanceOf",
+            outputs: [
+                {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        if (!this.web3) {
+            throw new Error(`${this.name} object not initialized.`);
+        }
+        const tokenAddress = await this.getTokenContractAddress(asset);
+
+        const tokenContract = new this.web3.eth.Contract(
+            [balanceOfABI],
+            tokenAddress,
+        );
+
+        const balanceRaw = await await tokenContract.methods
+            .balanceOf(address)
+            .call();
+
+        return new BigNumber(balanceRaw.toString());
     };
 
     transactionRPCFormat = (transaction: Transaction, _v2?: boolean) => {

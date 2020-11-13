@@ -89,6 +89,25 @@ export interface ChainCommon<
     // Supported assets
 
     /**
+     * `assetIsNative` should return true if the asset is native to the Chain.
+     * Mint-chains should return `false` for assets that have been bridged to
+     * it.
+     *
+     * @example
+     * ethereum.assetIsNative = asset => asset === "ETH" ||;
+     */
+    assetIsNative: (asset: string) => SyncOrPromise<boolean>;
+
+    /**
+     * `assetIsSupported` should return true if the the asset is native to the
+     * chain or if the asset can be minted onto the chain.
+     *
+     * @example
+     * ethereum.assetIsSupported = asset => asset === "ETH" || asset === "BTC" || ...;
+     */
+    assetIsSupported: (asset: string) => SyncOrPromise<boolean>;
+
+    /**
      * `assetDecimals` should return the number of decimals of the asset.
      *
      * If the asset is not supported, an error should be thrown.
@@ -96,7 +115,7 @@ export interface ChainCommon<
      * @example
      * bitcoin.assetDecimals = asset => {
      *     if (asset === "BTC") { return 8; }
-     *     throw new Error(`Unsupported asset ${asset}`);
+     *     throw new Error(`Unsupported asset ${asset}.`);
      * }
      */
     assetDecimals: (asset: string) => SyncOrPromise<number>;
@@ -169,13 +188,6 @@ export interface LockChain<
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Address = string
 > extends ChainCommon<Transaction, Address> {
-    // Assets
-
-    /**
-     * `assetIsNative` should return true if the asset is native to the Chain.
-     */
-    assetIsNative: (asset: string) => SyncOrPromise<boolean>;
-
     // Deposits
 
     /**
@@ -257,15 +269,6 @@ export interface MintChain<
     Transaction = any,
     Address = string
 > extends ChainCommon<Transaction, Address> {
-    // /**
-    //  * `supportsAsset` should return true if the the asset can be minted onto
-    //  * this chain.
-    //  *
-    //  * @example
-    //  * ethereum.supportsAsset = asset => asset === "BTC" ||;
-    //  */
-    // supportsAsset: (asset: string) => SyncOrPromise<boolean>;
-
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
     /**
@@ -302,6 +305,21 @@ export interface MintChain<
         eventEmitter: EventEmitter,
         logger: Logger,
     ) => SyncOrPromise<BurnDetails<Transaction>>;
+
+    /**
+     * Fetch the mint and burn fees for an asset.
+     */
+    getFees(
+        asset: string,
+    ): SyncOrPromise<{
+        burn: number;
+        mint: number;
+    }>;
+
+    /**
+     * Fetch the addresses' balance of the asset's representation on the chain.
+     */
+    getBalance(asset: string, address: Address): SyncOrPromise<BigNumber>;
 
     getMintParams?: (
         asset: string,

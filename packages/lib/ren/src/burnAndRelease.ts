@@ -264,7 +264,7 @@ export class BurnAndRelease<
         }
 
         if (!this.burnDetails) {
-            throw new Error("Must call `burn` before calling `txHash`");
+            throw new Error("Must call `burn` before calling `txHash`.");
         }
 
         if (
@@ -368,7 +368,7 @@ export class BurnAndRelease<
 
         (async () => {
             if (!this.burnDetails && !this.params.txHash) {
-                throw new Error("Must call `burn` before calling `release`");
+                throw new Error("Must call `burn` before calling `release`.");
             }
 
             const txHash = this.txHash();

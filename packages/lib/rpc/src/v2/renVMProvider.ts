@@ -182,8 +182,6 @@ export class RenVMProvider
     public queryState = async (retry?: number) =>
         this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
 
-    public getFees = async () => {};
-
     public buildTransaction = ({
         selector,
         gHash,
@@ -330,7 +328,7 @@ export class RenVMProvider
         let rawResponse;
         while (true) {
             if (_cancelRequested && _cancelRequested()) {
-                throw new Error(`waitForTX cancelled`);
+                throw new Error(`waitForTX cancelled.`);
             }
 
             try {
@@ -382,5 +380,28 @@ export class RenVMProvider
     // eslint-disable-next-line @typescript-eslint/require-await
     public getNetwork = async (_selector: string): Promise<RenNetwork> => {
         return this.network;
+    };
+
+    public getConfirmationTarget = async (
+        _selector: string,
+        chain: { name: string },
+    ) => {
+        const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
+        return parseInt(renVMConfig.confirmations[chain.name], 10);
+    };
+
+    public estimateTransactionFee = async (
+        _selector: string,
+        chain: { name: string },
+    ): Promise<{ lock: BigNumber; release: BigNumber }> => {
+        const renVMState = await this.sendMessage(RPCMethod.QueryState, {});
+
+        const { gasLimit, gasPrice } = renVMState.state[chain.name];
+        const fee = new BigNumber(gasLimit).times(new BigNumber(gasPrice));
+
+        return {
+            lock: fee,
+            release: fee,
+        };
     };
 }

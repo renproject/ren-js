@@ -2,15 +2,18 @@ import {
     BurnAndReleaseParams,
     DepositCommon,
     LockAndMintParams,
+    LockChain,
     Logger,
     LogLevel,
     LogLevelString,
+    MintChain,
     RenNetwork,
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
 import { Ox, randomNonce, strip0x } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { defaultDepositHandler } from "./defaultDepositHandler";
@@ -119,6 +122,68 @@ export default class RenJS {
                   );
     }
 
+    public getFees = async ({
+        asset,
+        from,
+        to,
+    }: {
+        asset: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: LockChain<any, any, any> | MintChain<any, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        to: LockChain<any, any, any> | MintChain<any, any>;
+    }): Promise<{
+        lock?: BigNumber;
+        release?: BigNumber;
+        mint: number;
+        burn: number;
+    }> => {
+        if (!from.assetIsSupported(asset)) {
+            throw new Error(`Asset not supported by chain ${from.name}.`);
+        }
+        if (!to.assetIsSupported(asset)) {
+            throw new Error(`Asset not supported by chain ${to.name}.`);
+        }
+
+        let fees;
+
+        if (from.assetIsNative(asset)) {
+            // LockAndMint
+            const mintFees = await (to as MintChain).getFees(asset);
+            const selector = this.renVM.selector({ asset, from, to });
+            const lockFees = await this.renVM.estimateTransactionFee(
+                selector,
+                from,
+            );
+            fees = {
+                ...lockFees,
+                ...mintFees,
+            };
+        } else if (to.assetIsNative(asset)) {
+            // BurnAndRelease
+            const mintFees = await (from as MintChain).getFees(asset);
+            const selector = this.renVM.selector({ asset, from, to });
+            const lockFees = await this.renVM.estimateTransactionFee(
+                selector,
+                to,
+            );
+            fees = {
+                ...lockFees,
+                ...mintFees,
+            };
+        } else {
+            // BurnAndMint
+            const mintFees = await (from as MintChain).getFees(asset);
+            const burnFees = await (to as MintChain).getFees(asset);
+            fees = {
+                mint: mintFees.mint,
+                burn: burnFees.burn,
+            };
+        }
+
+        return fees;
+    };
+
     /**
      * `lockAndMint` initiates the process of bridging an asset from its native
      * chain to a host chain.
@@ -176,8 +241,6 @@ export default class RenJS {
             params,
             this._logger,
         )._initialize();
-
-    public readonly getFees = async () => this.renVM.getFees();
 }
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -149,7 +149,7 @@ const findField = <ArgType extends RenVMArg<string, RenVMType>>(
         }
     }
 
-    throw new Error(`Unable to find field ${field} in response from RenVM`);
+    throw new Error(`Unable to find field ${field} in response from RenVM.`);
 };
 
 const onError = <P>(getP: () => P, defaultP: P) => {
@@ -353,8 +353,8 @@ const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
 
     // TODO: Fix type errors.
     return ({
-        lock: decodeNumber(lock).toNumber(),
-        release: decodeNumber(release).toNumber(),
+        lock: decodeNumber(lock),
+        release: decodeNumber(release),
         ...Object.keys(tokens).reduce(
             (acc, token) => ({
                 ...acc,

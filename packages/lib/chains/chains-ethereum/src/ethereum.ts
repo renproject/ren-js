@@ -55,13 +55,13 @@ export class EthereumClass extends EthereumBaseChain
         ): Promise<{ contractCalls: ContractCall[] }> => {
             if (!this.renNetworkDetails || !this.web3) {
                 throw new Error(
-                    `Ethereum must be initialized before calling 'getContractCalls'`,
+                    `Ethereum must be initialized before calling 'getContractCalls'.`,
                 );
             }
             if (!value) {
                 // Mint
                 if (!address) {
-                    throw new Error(`Must provide Ethereum recipient address`);
+                    throw new Error(`Must provide Ethereum recipient address.`);
                 }
 
                 // Resolve .ens name

@@ -72,10 +72,11 @@ export class FilecoinClass
      * See [[OriginChain.assetIsNative]].
      */
     assetIsNative = (asset: string): boolean => asset === this.asset;
+    assetIsSupported = this.assetIsNative;
 
-    public readonly assetAssetSupported = (asset: string) => {
+    public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}`);
+            throw new Error(`Unsupported asset ${asset}.`);
         }
     };
 
@@ -86,7 +87,7 @@ export class FilecoinClass
         if (asset === this.asset) {
             return 18;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Unsupported asset ${asset}.`);
     };
 
     /**
@@ -99,12 +100,14 @@ export class FilecoinClass
         onDeposit: (deposit: FilDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         if (this.chainNetwork === "devnet") {
-            throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
+            throw new Error(
+                `Unable to fetch deposits on ${this.chainNetwork}.`,
+            );
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
         const txs = await fetchDeposits(
             address.address,
             address.params,
@@ -123,7 +126,7 @@ export class FilecoinClass
         transaction: FilTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         transaction = await fetchMessage(transaction.cid, this.chainNetwork);
         return {
@@ -141,9 +144,9 @@ export class FilecoinClass
         gHash: Buffer,
     ): Promise<FilAddress> | FilAddress => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
 
         const ec = new elliptic.ec("secp256k1");
         const publicKey = ec
@@ -174,7 +177,7 @@ export class FilecoinClass
     };
 
     getPubKeyScript = (asset: string, _publicKey: Buffer, _gHash: Buffer) => {
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
         return Buffer.from([]);
     };
 
@@ -190,7 +193,7 @@ export class FilecoinClass
      */
     addressIsValid = (address: FilAddress): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         assertType<string>("string", { address: address.address });
         return this._addressIsValid(address, this.chainNetwork);

@@ -33,9 +33,6 @@ export interface AbstractRenVMProvider<
 
     version: (selector: string) => number;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getFees: () => Promise<any>;
-
     mintTxHash: (params: {
         selector: string;
         gHash: Buffer;
@@ -132,4 +129,20 @@ export interface AbstractRenVMProvider<
     getNetwork: (
         selector: string,
     ) => SyncOrPromise<RenNetwork | RenNetworkString | RenNetworkDetails>;
+
+    /**
+     * Look up the number of confirmations required by RenVM.
+     */
+    getConfirmationTarget?: (
+        selector: string,
+        chain: { name: string },
+    ) => SyncOrPromise<number | undefined>;
+
+    /**
+     * Return the estimated fee RenVM will use for locking and releasing.
+     */
+    estimateTransactionFee: (
+        selector: string,
+        chain: { name: string; legacyName?: string },
+    ) => SyncOrPromise<{ lock: BigNumber; release: BigNumber }>;
 }

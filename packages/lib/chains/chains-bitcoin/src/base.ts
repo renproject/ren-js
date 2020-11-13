@@ -71,10 +71,11 @@ export abstract class BitcoinBaseChain
      * See [[OriginChain.assetIsNative]].
      */
     assetIsNative = (asset: string): boolean => asset === this.asset;
+    assetIsSupported = this.assetIsNative;
 
-    public readonly assetAssetSupported = (asset: string) => {
+    public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}`);
+            throw new Error(`Unsupported asset ${asset}.`);
         }
     };
 
@@ -109,7 +110,7 @@ export abstract class BitcoinBaseChain
         if (this.chainNetwork === "regtest") {
             throw new Error(`Unable to fetch deposits on ${this.chainNetwork}`);
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
 
         // Check how many times getDeposits has been called for the instanceID
         // nad address.
@@ -172,7 +173,7 @@ export abstract class BitcoinBaseChain
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
         return this.utils.createAddress(
             isTestnet,
@@ -186,7 +187,7 @@ export abstract class BitcoinBaseChain
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
         return this.utils.calculatePubKeyScript(
             isTestnet,

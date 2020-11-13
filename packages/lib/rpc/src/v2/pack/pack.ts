@@ -78,7 +78,7 @@ export const unmarshalPackStruct = (type: PackStructType, value: object) => {
         const memberType = member[key];
 
         if (value && !value.hasOwnProperty(key)) {
-            throw new Error(`Missing pack value for key ${key}`);
+            throw new Error(`Missing pack value for key ${key}.`);
         }
 
         struct[key] = unmarshalPackValue(memberType, value[key]);
@@ -100,7 +100,7 @@ export const unmarshalPackValue = (
     throw new Error(
         `Unknown value type ${String(type)}${
             !type ? ` for value ${String(value)}` : ""
-        }`,
+        }.`,
     );
 };
 

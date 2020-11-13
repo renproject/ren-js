@@ -250,7 +250,7 @@ const fetchDeposit = async (
     ).data;
 
     if (tx === null) {
-        throw new Error(`Unable to find Terra transaction ${hash}`);
+        throw new Error(`Unable to find Terra transaction ${hash}.`);
     }
 
     // Create an entry for each message. Transactions can contain multiple

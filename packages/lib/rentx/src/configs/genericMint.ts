@@ -62,14 +62,14 @@ const txCreator = async (context: GatewayMachineContext) => {
         context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
     }
 
-    const { targetAmount, sourceAsset } = context.tx;
-
     try {
-        const fees = await context.sdk.getFees();
-        const fee: number = fees[sourceAsset.toLowerCase()].lock;
-        context.tx.suggestedAmount = Math.floor(
-            fee + (Number(targetAmount) || 0.0001) * 1e8,
-        );
+        // TODO: Pass lock and mint chain objects to getFees.
+        // const { targetAmount, sourceAsset } = context.tx;
+        // const fees = await context.sdk.getFees();
+        // const fee: number = fees[sourceAsset.toLowerCase()].lock;
+        // context.tx.suggestedAmount = Math.floor(
+        //     fee + (Number(targetAmount) || 0.0001) * 1e8,
+        // );
     } catch (error) {
         console.error(error);
         context.tx.suggestedAmount = 0.0008 * 1e8;

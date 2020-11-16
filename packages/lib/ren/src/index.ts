@@ -12,7 +12,13 @@ import {
     SimpleLogger,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
-import { Ox, randomNonce, strip0x } from "@renproject/utils";
+import {
+    fromSmallestUnit,
+    Ox,
+    randomNonce,
+    strip0x,
+    toSmallestUnit,
+} from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 import { BurnAndRelease } from "./burnAndRelease";
@@ -69,9 +75,10 @@ export default class RenJS {
      * generate a nonce when calling [[RenJS.lockAndMint]].
      */
     public static utils = {
-        Ox,
-        strip0x,
         randomNonce,
+        toSmallestUnit,
+        fromSmallestUnit,
+        fromAscii: (str: string) => Buffer.from(str),
     };
 
     /**

@@ -8,7 +8,7 @@ import {
     RenNetworkString,
     SyncOrPromise,
 } from "@renproject/interfaces";
-import { Callable, Ox, toBigNumber } from "@renproject/utils";
+import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { provider } from "web3-providers";
 
@@ -134,7 +134,7 @@ export class EthereumClass extends EthereumBaseChain
                                 {
                                     type: "uint256" as const,
                                     name: "_amount",
-                                    value: toBigNumber(value).toFixed(),
+                                    value: new BigNumber(value).toFixed(),
                                 },
                             ],
                             // txConfig,
@@ -194,6 +194,16 @@ export class EthereumClass extends EthereumBaseChain
         };
         return this;
     };
+
+    toWei = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .times(new BigNumber(10).exponentiatedBy(18))
+            .toFixed();
+
+    fromWei = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .dividedBy(new BigNumber(10).exponentiatedBy(18))
+            .toFixed();
 }
 
 export type Ethereum = EthereumBaseChain;

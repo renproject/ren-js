@@ -1,5 +1,6 @@
 import { LockChain } from "@renproject/interfaces";
 import { assertType, Callable } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { Address, BitcoinBaseChain, Deposit, Transaction } from "./base";
 
@@ -45,6 +46,16 @@ export class BitcoinClass extends BitcoinBaseChain
     burnPayload? = () => {
         return this.getBurnPayload ? this.getBurnPayload() : undefined;
     };
+
+    toSats = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .times(new BigNumber(10).exponentiatedBy(8))
+            .toFixed();
+
+    fromSats = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .dividedBy(new BigNumber(10).exponentiatedBy(8))
+            .toFixed();
 }
 
 // @dev Removes any static fields.

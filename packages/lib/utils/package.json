@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "2.0.0-alpha.21",
+    "version": "2.0.0-alpha.22",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,7 +43,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.21",
+        "@renproject/interfaces": "^2.0.0-alpha.22",
         "@types/create-hash": "1.2.2",
         "@types/keccak": "^3.0.1",
         "@types/mocha": "^8.0.3",
@@ -51,8 +51,8 @@
         "axios": "^0.20.0",
         "bignumber.js": "^9.0.1",
         "events": "^3.2.0",
-        "keccak": "^3.0.1",
         "immutable": "^4.0.0-rc.12",
+        "keccak": "^3.0.1",
         "web3-eth-abi": "^2.0.0-alpha.1"
     },
     "resolutions": {

@@ -54,7 +54,7 @@
         "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
         "doc": "run-s doc:html && open-cli build/docs/index.html",
         "doc:html-succint": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
-        "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts ../multiwallet/*/build/main/*.d.ts ../multiwallet/*/build/main/*/*.d.ts ../chains/*/build/main/*.d.ts ../chains/*/build/main/*/*.d.ts ../../ui/*/dist/*.d.ts ../../ui/*/dist/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --excludeNotExported --excludePrivate --excludeProtected --name \"RenJS Types Documentation\" --readme ./DOCS.md --theme minimal",
+        "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts ../multiwallet/*/build/main/*.d.ts ../multiwallet/*/build/main/*/*.d.ts ../chains/*/build/main/*.d.ts ../chains/*/build/main/*/*.d.ts ../../ui/*/dist/*.d.ts ../../ui/*/dist/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --excludeNotExported --excludePrivate --excludeProtected --name \"RenJS v2.0.0 Documentation\" --readme ./DOCS.md --theme minimal",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
         "doc:publish": "gh-pages --repo git@github.com:renproject/ren-js-docs.git -m \"[ci skip] Updates\" -d build/docs",
         "prepare": "yarn build",

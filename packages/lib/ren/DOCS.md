@@ -1,4 +1,4 @@
-# RenJS API Docs
+# RenJS Docs
 
 These are automatically generated docs for RenJS's interfaces, hosted at [renproject.github.io/ren-js-docs](https://renproject.github.io/ren-js-docs/).
 

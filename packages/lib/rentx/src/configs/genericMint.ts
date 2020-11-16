@@ -3,6 +3,7 @@
 // TODO: Improve typings.
 
 import RenJS from "@renproject/ren";
+import BigNumber from "bignumber.js";
 import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 
 import { depositMachine, DepositMachineContext } from "../machines/deposit";
@@ -62,9 +63,18 @@ const txCreator = async (context: GatewayMachineContext) => {
         context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
     }
 
+    const { targetAmount, sourceAsset, sourceNetwork } = context.tx;
+    const decimals = await context.fromChainMap[sourceNetwork](
+        context,
+    ).assetDecimals(sourceAsset);
+
+    context.tx.suggestedAmount = new BigNumber(
+        Number(targetAmount) * 10 ** decimals,
+    )
+        .decimalPlaces(8)
+        .toFixed();
     try {
         // TODO: Pass lock and mint chain objects to getFees.
-        // const { targetAmount, sourceAsset } = context.tx;
         // const fees = await context.sdk.getFees();
         // const fee: number = fees[sourceAsset.toLowerCase()].lock;
         // context.tx.suggestedAmount = Math.floor(
@@ -72,8 +82,8 @@ const txCreator = async (context: GatewayMachineContext) => {
         // );
     } catch (error) {
         console.error(error);
-        context.tx.suggestedAmount = 0.0008 * 1e8;
     }
+
     const minter = await renLockAndMint(context);
     const gatewayAddress = minter?.gatewayAddress;
     const newTx: GatewaySession = {

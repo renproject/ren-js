@@ -45,7 +45,17 @@ const txCreator = async (
     context: BurnMachineContext,
     // eslint-disable-next-line @typescript-eslint/require-await
 ): Promise<GatewaySession> => {
-    const suggestedAmount = new BigNumber(Number(context.tx.targetAmount) * 1e8)
+    const {
+        targetAmount,
+        sourceAsset,
+        sourceNetwork,
+        destNetwork,
+    } = context.tx;
+    const decimals = await context.toChainMap[destNetwork](
+        context,
+    ).assetDecimals(sourceAsset);
+
+    const suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals)
         .decimalPlaces(8)
         .toFixed();
     try {

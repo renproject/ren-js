@@ -31,12 +31,12 @@ const releaseChainMap: BurnMachineContext["toChainMap"] = {
 */
 
 const burnAndRelease = async (context: BurnMachineContext) => {
-    const txHash = Object.keys(context.tx.transactions)[0];
+    const transaction = Object.keys(context.tx.transactions)[0];
     return await context.sdk.burnAndRelease({
         asset: context.tx.sourceAsset.toUpperCase(),
         to: context.toChainMap[context.tx.destNetwork](context),
         from: context.fromChainMap[context.tx.sourceNetwork](context),
-        ...(txHash ? { txHash } : {}),
+        ...(transaction ? { transaction } : {}),
     });
 };
 
@@ -51,30 +51,28 @@ const txCreator = async (
         sourceNetwork,
         destNetwork,
     } = context.tx;
-    const decimals = await context.toChainMap[destNetwork](
-        context,
-    ).assetDecimals(sourceAsset.toUpperCase());
+    const to = context.toChainMap[destNetwork](context);
+    const from = context.fromChainMap[sourceNetwork](context);
+    const decimals = await to.assetDecimals(sourceAsset.toUpperCase());
 
-    const suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals)
-        .decimalPlaces(0)
-        .toFixed();
+    let suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals);
     try {
-        // TODO: Pass lock and mint chains to getFees.
-        // const asset = context.tx.sourceAsset;
-        // const fees = await context.sdk.getFees();
-        // const fee: number = fees.release;
-        // suggestedAmount = new BigNumber(
-        //     Math.floor(fee + Number(context.tx.targetAmount) * 1e8),
-        // )
-        //     .decimalPlaces(0)
-        //     .toFixed();
+        const fees = await context.sdk.getFees({
+            asset: sourceAsset.toUpperCase(),
+            from,
+            to,
+        });
+
+        suggestedAmount = suggestedAmount
+            .plus(fees.release || 0)
+            .plus(suggestedAmount.multipliedBy(fees.burn * 0.001));
     } catch (error) {
         // Ignore error
     }
 
     const newTx: GatewaySession = {
         ...context.tx,
-        suggestedAmount,
+        suggestedAmount: suggestedAmount.decimalPlaces(0).toFixed(),
     };
     context.tx = newTx;
 
@@ -107,7 +105,9 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 setTimeout(() => callback("SUBMIT"), 500);
             }
 
-            let tx: GatewayTransaction;
+            let tx: GatewayTransaction = Object.values(
+                context.tx.transactions,
+            )[0];
             const performBurn = async () => {
                 const burnRef = burn.burn();
 

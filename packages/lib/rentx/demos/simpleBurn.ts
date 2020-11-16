@@ -25,7 +25,7 @@ const burnTransaction: GatewaySession = parsedTx || {
     sourceNetwork: "ethereum",
     destAddress: "bitcoin address that will receive assets",
     destNetwork: "bitcoin",
-    targetAmount: 0.001,
+    targetAmount: 0.002,
     userAddress: "address that will sign the transaction",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
@@ -36,10 +36,15 @@ const burnTransaction: GatewaySession = parsedTx || {
 // based on the destination network
 export const fromChainMap = {
     ethereum: (context: GatewayMachineContext) => {
-        const { destAddress, sourceNetwork, suggestedAmount } = context.tx;
+        const {
+            destAddress,
+            sourceNetwork,
+            suggestedAmount,
+            network,
+        } = context.tx;
         const { providers } = context;
 
-        return Ethereum(providers[sourceNetwork]).Account({
+        return Ethereum(providers[sourceNetwork], network).Account({
             address: destAddress,
             value: suggestedAmount,
         });
@@ -72,12 +77,20 @@ web3.eth
             toChainMap,
         });
 
+        let shownRestore = false;
         // Interpret the machine, and add a listener for whenever a transition occurs.
         // The machine will detect which state the transaction should be in,
         // and perform the neccessary next actions
         const service = interpret(machine).onTransition((state) => {
             console.log(state.value);
             console.log(state.context.tx);
+            if (
+                !shownRestore &&
+                Object.values(state.context.tx.transactions).length
+            ) {
+                console.log("Restore with", JSON.stringify(state.context.tx));
+                shownRestore = true;
+            }
             const burnTx = Object.values(
                 state.context.tx.transactions || {},
             )[0];

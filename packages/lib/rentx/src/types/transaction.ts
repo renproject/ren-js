@@ -23,7 +23,7 @@ export interface GatewaySession<CustomParams = any> {
     id: string;
     type: "mint" | "burn"; // Whether an asset is being locked and minted (mint), or burned and released (burn)
     network: RenNetwork | "testnet" | "mainnet"; // Ren network version to be used, which determines network versions for the selected chains
-    sourceAsset: string; // Asset to be minted/burned
+    sourceAsset: string; // Asset to be minted/burned (on native chain)
     sourceNetwork: string; // Chain that the source asset is located on
     sourceConfsTarget?: number; // will be updated once detected
     destAddress: string; // Address that will recieve the asset

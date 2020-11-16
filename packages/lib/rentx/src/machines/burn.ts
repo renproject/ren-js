@@ -133,7 +133,16 @@ export const burnMachine = Machine<
                 },
             },
             srcSettling: {
+                // spawn in case we aren't creating
+                entry: "burnSpawner",
                 on: {
+                    SUBMIT: {
+                        actions: send("SUBMIT", {
+                            to: (ctx) => {
+                                return ctx.burnListenerRef?.id || "";
+                            },
+                        }),
+                    },
                     CONFIRMATION: {
                         // update src confs
                         actions: assign({

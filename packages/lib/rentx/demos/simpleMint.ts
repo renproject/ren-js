@@ -10,6 +10,7 @@ import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
+import BigNumber from "bignumber.js";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
@@ -30,7 +31,7 @@ const mintTransaction: GatewaySession = parsedTx || {
     sourceNetwork: "bitcoin",
     destAddress: "ethereum address that will receive assets",
     destNetwork: "ethereum",
-    targetAmount: 1,
+    targetAmount: 0.001,
     userAddress: "address that will sign the transaction",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
@@ -48,10 +49,10 @@ export const toChainMap = {
         });
     },
     ethereum: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
+        const { destAddress, destNetwork, network } = context.tx;
         const { providers } = context;
 
-        return Ethereum(providers[destNetwork]).Account({
+        return Ethereum(providers[destNetwork], network).Account({
             address: destAddress,
         });
     },
@@ -90,7 +91,9 @@ web3.eth
             if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
                 console.log(
                     "Please deposit",
-                    state.context.tx.suggestedAmount,
+                    new BigNumber(state.context.tx.suggestedAmount)
+                        .div(1e8)
+                        .toFixed(),
                     "BTC to",
                     state.context.tx.gatewayAddress,
                 );

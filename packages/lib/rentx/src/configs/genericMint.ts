@@ -63,23 +63,30 @@ const txCreator = async (context: GatewayMachineContext) => {
         context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
     }
 
-    const { targetAmount, sourceAsset, sourceNetwork } = context.tx;
-    const decimals = await context.fromChainMap[sourceNetwork](
-        context,
-    ).assetDecimals(sourceAsset.toUpperCase());
+    const {
+        targetAmount,
+        sourceAsset,
+        sourceNetwork,
+        destNetwork,
+    } = context.tx;
 
-    context.tx.suggestedAmount = new BigNumber(
-        Number(targetAmount) * 10 ** decimals,
-    )
-        .decimalPlaces(0)
-        .toFixed();
+    const to = context.toChainMap[destNetwork](context);
+    const from = context.fromChainMap[sourceNetwork](context);
+
+    const decimals = await from.assetDecimals(sourceAsset.toUpperCase());
+
+    let suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals);
+
     try {
-        // TODO: Pass lock and mint chain objects to getFees.
-        // const fees = await context.sdk.getFees();
-        // const fee: number = fees[sourceAsset.toLowerCase()].lock;
-        // context.tx.suggestedAmount = Math.floor(
-        //     fee + (Number(targetAmount) || 0.0001) * 1e8,
-        // );
+        const fees = await context.sdk.getFees({
+            asset: sourceAsset.toUpperCase(),
+            from,
+            to,
+        });
+
+        suggestedAmount = suggestedAmount
+            .plus(fees.lock || 0)
+            .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
     } catch (error) {
         console.error(error);
     }
@@ -88,9 +95,8 @@ const txCreator = async (context: GatewayMachineContext) => {
     const gatewayAddress = minter?.gatewayAddress;
     const newTx: GatewaySession = {
         ...context.tx,
+        suggestedAmount: suggestedAmount.decimalPlaces(0).toFixed(),
         gatewayAddress,
-        // Not serializable
-        // params: deposit.params,
     };
     return newTx;
 };

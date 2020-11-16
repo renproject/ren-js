@@ -448,6 +448,10 @@ export class RenVMProvider
         chain: { name: string; legacyName?: string },
     ): Promise<{ lock: BigNumber; release: BigNumber }> => {
         const fees = await this.getFees();
-        return fees[chain.legacyName || chain.name];
+        return fees[
+            chain.legacyName
+                ? chain.legacyName.toLowerCase()
+                : chain.name.toLowerCase()
+        ];
     };
 }

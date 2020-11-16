@@ -1,6 +1,6 @@
 {
     "name": "@renproject/rpc",
-    "version": "2.0.0-alpha.22",
+    "version": "2.0.0-y.0",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -54,8 +54,8 @@
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.22",
-        "@renproject/provider": "^2.0.0-alpha.22",
-        "@renproject/utils": "^2.0.0-alpha.22",
+        "@renproject/provider": "^2.0.0-y.0",
+        "@renproject/utils": "^2.0.0-y.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.12"

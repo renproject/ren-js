@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "2.0.0-alpha.22",
+    "version": "2.0.0-y.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -44,7 +44,7 @@
     },
     "dependencies": {
         "@renproject/interfaces": "^2.0.0-alpha.22",
-        "@renproject/utils": "^2.0.0-alpha.22",
+        "@renproject/utils": "^2.0.0-y.0",
         "@types/node": ">=10",
         "axios": "^0.20.0",
         "immutable": "^4.0.0-rc.12"

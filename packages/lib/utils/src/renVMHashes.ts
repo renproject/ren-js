@@ -1,7 +1,14 @@
 import { EthArgs, Logger, NullLogger } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
-import { fromHex, Ox, rawEncode, toBase64 } from "./common";
+import {
+    fromBase64,
+    fromHex,
+    Ox,
+    rawEncode,
+    toBase64,
+    toURLBase64,
+} from "./common";
 import { keccak256 } from "./hash";
 
 // export const generateNHash = (tx: Tx): Buffer => {
@@ -125,16 +132,16 @@ export const generateSighash = (
     return digest;
 };
 
-export const renVMHashToBase64 = (txHash: string) => {
+export const renVMHashToBase64 = (txHash: string, v2?: boolean) => {
     // Type validation
     assertType<string>("string", { txHash });
 
     // Hex
     if (/^(0x)?[0-9a-fA-Z]{64}$/.exec(txHash)) {
-        return toBase64(fromHex(txHash));
+        return (v2 ? toURLBase64 : toBase64)(fromHex(txHash));
     }
-    // Already base64
-    return txHash;
+    // Already base64. For v2, ensure it's in URL-base64 format.
+    return v2 ? toURLBase64(fromBase64(txHash)) : txHash;
 };
 
 export const generateBurnTxHash = (

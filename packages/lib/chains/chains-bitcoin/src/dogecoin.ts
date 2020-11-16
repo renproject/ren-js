@@ -10,6 +10,7 @@ import { createAddress, pubKeyScript } from "./script";
 
 export class DogecoinClass extends BitcoinClass {
     public name = "Doge";
+    public legacyName = undefined;
 
     public asset = "DOGE";
     public utils = {

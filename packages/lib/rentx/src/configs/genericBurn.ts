@@ -3,7 +3,7 @@
 // TODO: Improve typings.
 
 import BigNumber from "bignumber.js";
-import { MachineOptions, Receiver, Sender, assign, spawn } from "xstate";
+import { assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 
 import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
@@ -43,20 +43,21 @@ const burnAndRelease = async (context: BurnMachineContext) => {
 // Format a transaction and prompt the user to sign
 const txCreator = async (
     context: BurnMachineContext,
+    // eslint-disable-next-line @typescript-eslint/require-await
 ): Promise<GatewaySession> => {
-    const asset = context.tx.sourceAsset;
-
-    let suggestedAmount = new BigNumber(Number(context.tx.targetAmount) * 1e8)
+    const suggestedAmount = new BigNumber(Number(context.tx.targetAmount) * 1e8)
         .decimalPlaces(8)
         .toFixed();
     try {
-        const fees = await context.sdk.getFees();
-        const fee: number = fees[asset.toLowerCase()].release;
-        suggestedAmount = new BigNumber(
-            Math.floor(fee + Number(context.tx.targetAmount) * 1e8),
-        )
-            .decimalPlaces(0)
-            .toFixed();
+        // TODO: Pass lock and mint chains to getFees.
+        // const asset = context.tx.sourceAsset;
+        // const fees = await context.sdk.getFees();
+        // const fee: number = fees.release;
+        // suggestedAmount = new BigNumber(
+        //     Math.floor(fee + Number(context.tx.targetAmount) * 1e8),
+        // )
+        //     .decimalPlaces(0)
+        //     .toFixed();
     } catch (error) {
         // Ignore error
     }
@@ -87,7 +88,7 @@ const spawnBurnTransaction = assign<BurnMachineContext, BurnMachineEvent>({
 
 const burnTransactionListener = (context: BurnMachineContext) => (
     callback: Sender<BurnMachineEvent>,
-    receive: Receiver<any>,
+    _receive: Receiver<any>,
 ) => {
     const cleaners: Array<() => void> = [];
     burnAndRelease(context)
@@ -113,7 +114,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                         sourceTxConfs: 0,
                         sourceTxAmount: Number(context.tx.suggestedAmount),
                         rawSourceTx: {
-                            amount: context.tx.suggestedAmount + "",
+                            amount: String(context.tx.suggestedAmount),
                             transaction: {},
                         },
                     };

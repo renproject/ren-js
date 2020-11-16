@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 import { AbiItem } from "./abi";
 import { Base64String, TxStatus } from "./types";
 
@@ -55,8 +57,8 @@ export type RenVMAssetFees = {
         burn: number; // Burning fee basis points (10 = 0.1%)
     };
 } & {
-    lock: number; // Chain transaction fees for locking (in sats)
-    release: number; // Chain transaction fees for releasing (in sats)
+    lock: BigNumber; // Chain transaction fees for locking (in sats)
+    release: BigNumber; // Chain transaction fees for releasing (in sats)
 };
 
 export interface RenVMFees {

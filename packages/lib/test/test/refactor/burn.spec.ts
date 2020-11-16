@@ -20,26 +20,21 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("burning from contract", async function() {
+    it("burning from contract", async function() {
         this.timeout(100000000000);
 
-        const network = RenNetwork.Testnet as const;
+        const network = RenNetwork.TestnetVDot3;
 
-        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Bitcoin recipient.
-        const asset = "BTC";
+        const asset = "FIL";
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
-        const to = Chains.Bitcoin().Address(recipient);
+        const to = Chains.Filecoin().Address(recipient);
 
-        // const asset = "FIL";
-        // const to = Chains.Filecoin().Address(
-        //     "t1zl3sj2t7eazaojiqytccq4zlwosjxixsnf4rhyy",
-        // );
-
-        const from = Chains.Ethereum(provider, Chains.renTestnet);
+        const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
 
         const logLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
@@ -52,37 +47,17 @@ describe("Refactor - Burning", () => {
             suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
-            suggestedAmount = new BigNumber(0.03)
+            suggestedAmount = new BigNumber(0.0002)
                 .times(new BigNumber(10).exponentiatedBy(18))
                 .toFixed();
         }
 
-        const gateway = await from.getGatewayContractAddress(asset);
-
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
             to,
-            from: from.Contract((btcAddress) => ({
-                // The contract we want to interact with
-                sendTo: gateway,
-
-                // The name of the function we want to call
-                contractFn: "burn",
-
-                // Arguments expected for calling `deposit`
-                contractParams: [
-                    {
-                        type: "bytes" as const,
-                        name: "_to",
-                        value: btcAddress,
-                    },
-                    {
-                        type: "uint256" as const,
-                        name: "_amount",
-                        value: suggestedAmount,
-                    },
-                ],
-            })),
+            from: from.Account({
+                value: suggestedAmount,
+            }),
         });
 
         let confirmations = 0;
@@ -93,7 +68,11 @@ describe("Refactor - Burning", () => {
                 confirmations = confs;
             })
             .on("transactionHash", (txHash) =>
-                burnAndRelease._state.logger.log(`txHash: ${String(txHash)}`),
+                burnAndRelease._state.logger.log(
+                    `${
+                        burnAndRelease.params.from.name
+                    } transactionHash: ${String(txHash)}`,
+                ),
             );
 
         burnAndRelease._state.logger = new SimpleLogger(
@@ -101,7 +80,7 @@ describe("Refactor - Burning", () => {
             blue(`[${burnAndRelease.txHash().slice(0, 6)}] `),
         );
 
-        await burnAndRelease
+        const result = await burnAndRelease
             .release()
             .on("status", (status) =>
                 status === "confirming"
@@ -110,7 +89,11 @@ describe("Refactor - Burning", () => {
                       )
                     : burnAndRelease._state.logger.log(status),
             )
-            .on("txHash", burnAndRelease._state.logger.log);
+            .on("txHash", (txHash) =>
+                burnAndRelease._state.logger.log(`Ren txHash: ${txHash}`),
+            );
+
+        console.log(result.out);
     });
 
     longIt("burning from address", async function() {

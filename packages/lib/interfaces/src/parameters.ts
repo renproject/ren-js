@@ -55,6 +55,15 @@ export interface TransferParamsCommon {
      * lightnodes.
      */
     tags?: [string]; // Currently, only one tag can be provided.
+
+    /**
+     * Details for submitting one or more transactions. The last one will be
+     * used by the lockAndMint or burnAndRelease.
+     * For minting, the last call's parameters will be augmented with the three
+     * required parameters for minting - the amount, nHash and RenVM signature.
+     * For burning, the last call must involve ren-assets being burnt.
+     */
+    contractCalls?: ContractCall[];
 }
 
 /**
@@ -73,41 +82,6 @@ export interface LockAndMintParams<
 > extends TransferParamsCommon {
     from: LockChain<LockTransaction, LockDeposit, LockAddress>;
     to: MintChain<MintTransaction, MintAddress>;
-
-    /**
-     * The amount of `sendToken` that should be sent.
-     */
-    suggestedAmount?: NumberValue;
-
-    /**
-     * The number of confirmations to wait before submitting the signature
-     * to Ethereum. If this number is less than the default, the RenVM
-     * transaction is returned when those confirmations have passed, before
-     * the signature is available, and will not be submitted to Ethereum.
-     */
-    confirmations?: number;
-
-    /**
-     * Details for submitting one or more Ethereum transactions. The last one
-     * will be augmented with the three required parameters for minting - the
-     * amount, nHash and RenVM signature.
-     */
-    contractCalls?: ContractCall[];
-
-    /**
-     * Specify which deposit should be send to RenVM instead of waiting for one
-     * to be observed. This deposit must have been sent to the gateway address
-     * of the transfer.
-     */
-    // deposit?: UTXOIndex;
-
-    /**
-     * Specify a gateway address. Gateway addresses are based on the RenVM shard
-     * selected to process the transfer. Currently there is only one RenVM
-     * shard, but once sharding is live, this parameter will ensure that the
-     * same address can be used to resume the transfer.
-     */
-    gatewayAddress?: LockAddress;
 }
 
 /**
@@ -125,6 +99,7 @@ export interface BurnAndReleaseParams<
     MintTransaction = any,
     MintAddress = string
 > extends TransferParamsCommon {
+    // If a `txHash` is provided, `from` doesn't need to be provided.
     from: MintChain<MintTransaction, MintAddress>;
     to: LockChain<LockTransaction, LockDeposit, LockAddress>;
 
@@ -134,27 +109,7 @@ export interface BurnAndReleaseParams<
     transaction?: MintTransaction;
 
     /**
-     * The reference ID of the burn emitted in the contract log.
+     * The ID of the burn emitted in the contract log.
      */
-    burnNonce?: string | number;
-
-    /**
-     * Details for submitting one or more Ethereum transactions. The last one
-     * should trigger a burn event in the relevant Gateway contract.
-     */
-    contractCalls?: ContractCall[];
+    burnNonce?: Buffer | string | number;
 }
-
-export type SerializableBurnAndReleaseParams = Exclude<
-    BurnAndReleaseParams,
-    "web3Provider"
->;
-export type SerializableLockAndMintParams = Exclude<
-    LockAndMintParams,
-    "web3Provider"
->;
-
-export type TransferParams = LockAndMintParams | BurnAndReleaseParams;
-export type SerializableTransferParams =
-    | SerializableLockAndMintParams
-    | SerializableBurnAndReleaseParams;

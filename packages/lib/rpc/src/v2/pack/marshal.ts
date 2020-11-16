@@ -58,7 +58,7 @@ export const marshalPackType = (type: PackType) => {
         case "list":
             return 21;
     }
-    throw new Error(`Unknown type ${String(type)}`);
+    throw new Error(`Unknown type ${String(type)}.`);
 };
 
 export const marshalUint = (value: number, length: number) => {
@@ -121,7 +121,7 @@ export const marshalPackTypeDefinition = (type: PackTypeDefinition): Buffer => {
     } else if (typeof type === "string") {
         return Buffer.from([marshalPackType(type)]);
     }
-    throw new Error(`Unable to marshal type ${String(type)}`);
+    throw new Error(`Unable to marshal type ${String(type)}.`);
 };
 
 export const marshalPackPrimitive = (

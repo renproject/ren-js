@@ -132,6 +132,9 @@ module.exports = {
             allowConstantLoopConditions: true
         }],
 
+        "require-await": "off",
+        "@typescript-eslint/require-await": "error"
+
         // TSLint rules
         // "@typescript-eslint/tslint/config": [
         //     "warn",

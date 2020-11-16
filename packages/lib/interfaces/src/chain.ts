@@ -3,10 +3,13 @@ import { EventEmitter } from "events";
 
 import { Logger } from "./logger";
 import { RenNetwork, RenNetworkDetails, RenNetworkString } from "./networks";
-import { ContractCall } from "./parameters";
+import {
+    BurnAndReleaseParams,
+    ContractCall,
+    LockAndMintParams,
+} from "./parameters";
 import { PromiEvent } from "./promiEvent";
 import { LockAndMintTransaction } from "./transaction";
-import { EventType } from "./types";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
@@ -86,6 +89,25 @@ export interface ChainCommon<
     // Supported assets
 
     /**
+     * `assetIsNative` should return true if the asset is native to the Chain.
+     * Mint-chains should return `false` for assets that have been bridged to
+     * it.
+     *
+     * @example
+     * ethereum.assetIsNative = asset => asset === "ETH" ||;
+     */
+    assetIsNative: (asset: string) => SyncOrPromise<boolean>;
+
+    /**
+     * `assetIsSupported` should return true if the the asset is native to the
+     * chain or if the asset can be minted onto the chain.
+     *
+     * @example
+     * ethereum.assetIsSupported = asset => asset === "ETH" || asset === "BTC" || ...;
+     */
+    assetIsSupported: (asset: string) => SyncOrPromise<boolean>;
+
+    /**
      * `assetDecimals` should return the number of decimals of the asset.
      *
      * If the asset is not supported, an error should be thrown.
@@ -93,7 +115,7 @@ export interface ChainCommon<
      * @example
      * bitcoin.assetDecimals = asset => {
      *     if (asset === "BTC") { return 8; }
-     *     throw new Error(`Unsupported asset ${asset}`);
+     *     throw new Error(`Unsupported asset ${asset}.`);
      * }
      */
     assetDecimals: (asset: string) => SyncOrPromise<number>;
@@ -166,13 +188,6 @@ export interface LockChain<
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
     Address = string
 > extends ChainCommon<Transaction, Address> {
-    // Assets
-
-    /**
-     * `assetIsNative` should return true if the asset is native to the Chain.
-     */
-    assetIsNative: (asset: string) => SyncOrPromise<boolean>;
-
     // Deposits
 
     /**
@@ -192,6 +207,9 @@ export interface LockChain<
         // address, and only return unspent deposits in successive calls.
         instanceID: number,
         onDeposit: (deposit: LockDeposit) => Promise<void>,
+        // If a deposit is no longer valid, cancelDeposit should be called with
+        // the same details. NOTE: Not implemented yet in RenJS.
+        cancelDeposit: (deposit: LockDeposit) => Promise<void>,
         listenerCancelled: () => boolean,
     ) => SyncOrPromise<void>;
 
@@ -240,20 +258,20 @@ export interface BurnDetails<Transaction> {
     nonce: BigNumber;
 }
 
+export type OverwritableLockAndMintParams = Omit<
+    Omit<Partial<LockAndMintParams>, "to">,
+    "from"
+>;
+export type OverwritableBurnAndReleaseParams = Omit<
+    Omit<Partial<BurnAndReleaseParams>, "to">,
+    "from"
+>;
+
 export interface MintChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     Address = string
 > extends ChainCommon<Transaction, Address> {
-    // /**
-    //  * `supportsAsset` should return true if the the asset can be minted onto
-    //  * this chain.
-    //  *
-    //  * @example
-    //  * ethereum.supportsAsset = asset => asset === "BTC" ||;
-    //  */
-    // supportsAsset: (asset: string) => SyncOrPromise<boolean>;
-
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
     /**
@@ -283,7 +301,7 @@ export interface MintChain<
         // Once of the following should not be undefined.
         burn: {
             transaction?: Transaction;
-            burnNonce?: string | number;
+            burnNonce?: Buffer | string | number;
             contractCalls?: ContractCall[];
         },
 
@@ -291,9 +309,27 @@ export interface MintChain<
         logger: Logger,
     ) => SyncOrPromise<BurnDetails<Transaction>>;
 
-    contractCalls?: (
-        eventType: EventType,
+    /**
+     * Fetch the mint and burn fees for an asset.
+     */
+    getFees(
+        asset: string,
+    ): SyncOrPromise<{
+        burn: number;
+        mint: number;
+    }>;
+
+    /**
+     * Fetch the addresses' balance of the asset's representation on the chain.
+     */
+    getBalance(asset: string, address: Address): SyncOrPromise<BigNumber>;
+
+    getMintParams?: (
+        asset: string,
+    ) => SyncOrPromise<OverwritableLockAndMintParams | undefined>;
+
+    getBurnParams?: (
         asset: string,
         burnPayload?: string,
-    ) => SyncOrPromise<ContractCall[] | undefined>;
+    ) => SyncOrPromise<OverwritableBurnAndReleaseParams | undefined>;
 }

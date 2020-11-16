@@ -116,7 +116,7 @@ export const forwardWeb3Events = <T, TEvents extends Web3Events>(
  */
 export const eventTopics = {
     /**
-     * ```sol
+     * ```js
      * event LogBurn(
      *     bytes _to,
      *     uint256 _amount,
@@ -127,7 +127,7 @@ export const eventTopics = {
      */
     LogBurn: web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)"),
     /**
-     * ```sol
+     * ```js
      * event LogMint(
      *     address indexed _to,
      *     uint256 _amount,
@@ -325,17 +325,19 @@ export const findBurnByNonce = async (
     network: EthereumConfig,
     web3: Web3,
     asset: string,
-    nonce: string,
+    nonce: Buffer | string | number,
 ): Promise<BurnDetails<Transaction>> => {
     const gatewayAddress = await getGatewayAddress(network, web3, asset);
 
-    const nonceBuffer = new BN(nonce).toArrayLike(Buffer, "be", 32);
+    const nonceBuffer = Buffer.isBuffer(nonce)
+        ? nonce
+        : new BN(nonce).toArrayLike(Buffer, "be", 32);
 
     const burnEvents = await web3.eth.getPastLogs({
         address: gatewayAddress,
         fromBlock: "1",
         toBlock: "latest",
-        topics: [eventTopics.LogBurn, nonceBuffer] as string[],
+        topics: [eventTopics.LogBurn, Ox(nonceBuffer)] as string[],
     });
 
     if (!burnEvents.length) {
@@ -649,20 +651,24 @@ export type Address = string;
 
 export class EthereumBaseChain implements MintChain<Transaction, Address> {
     public name = "Ethereum";
-    public legacyName = "Eth";
+    public legacyName: MintChain["legacyName"] = "Eth";
 
     public readonly web3: Web3 | undefined;
     public renNetworkDetails: EthereumConfig | undefined;
 
     public readonly getTokenContractAddress = async (asset: string) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return getTokenAddress(this.renNetworkDetails, this.web3, asset);
     };
     public readonly getGatewayContractAddress = async (token: string) => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return getGatewayAddress(this.renNetworkDetails, this.web3, token);
     };
@@ -716,33 +722,37 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     // Supported assets
 
-    // /**
-    //  * `supportsAsset` should return true if the asset is native to the
-    //  * MintChain.
-    //  *
-    //  * @example
-    //  * ethereum.supportsAsset = asset => asset === "ETH";
-    //  */
-    // supportsAsset = (asset: Asset): boolean => {
-    //     return asset === "eth";
-    // };
+    assetIsNative = (asset: string): boolean => {
+        return asset === "ETH";
+    };
+
+    /**
+     * `assetIsSupported` should return true if the asset is native to the
+     * MintChain.
+     *
+     * @example
+     * ethereum.assetIsSupported = asset => asset === "ETH";
+     */
+    assetIsSupported = async (asset: string): Promise<boolean> => {
+        if (this.assetIsNative(asset)) {
+            return true;
+        }
+        // Check that there's a gateway contract for the asset.
+        return !!(await this.getGatewayContractAddress(asset));
+    };
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
      *
      * If the asset is not supported, an error should be thrown.
      *
-     * @example
-     * ethereum.assetDecimals = asset => {
-     *     if (asset === "ETH") { return 18; }
-     *     throw new Error(`Unsupported asset ${asset}`);
-     * }
+     
      */
     assetDecimals = (asset: string): number => {
-        if (asset === "eth") {
+        if (asset === "ETH") {
             return 18;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Unsupported asset ${asset}.`);
     };
 
     addressIsValid = (address: Address): boolean => {
@@ -757,7 +767,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     addressExplorerLink = (address: Address): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return `${this.renNetworkDetails.etherscan}/address/${address}`;
     };
@@ -768,7 +780,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     transactionExplorerLink = (transaction: Transaction): string => {
         if (!this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return `${this.renNetworkDetails.etherscan}/tx/${transaction}`;
     };
@@ -777,7 +791,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         transaction: Transaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.web3 || !this.renNetworkDetails) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         const currentBlock = new BigNumber(
             (await this.web3.eth.getBlockNumber()).toString(),
@@ -810,7 +826,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         }
 
         if (!this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
 
         const existingTransaction = await this.findTransaction(
@@ -841,7 +859,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         sigHash?: Buffer,
     ): Promise<Transaction | undefined> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return findTransactionBySigHash(
             this.renNetworkDetails,
@@ -854,7 +874,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
 
     resolveTokenGatewayContract = async (asset: string): Promise<string> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
         return Ox(
             await getTokenAddress(this.renNetworkDetails, this.web3, asset),
@@ -870,7 +892,7 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         // Once of the following should not be undefined.
         burn: {
             transaction?: Transaction;
-            burnNonce?: string | number;
+            burnNonce?: Buffer | string | number;
             contractCalls?: ContractCall[];
         },
 
@@ -878,7 +900,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         logger: Logger,
     ): Promise<BurnDetails<Transaction>> => {
         if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
         }
 
         const { burnNonce, contractCalls } = burn;
@@ -965,6 +989,109 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
         }
 
         return extractBurnDetails(this.web3, transaction);
+    };
+
+    getFees = async (
+        asset: string,
+    ): Promise<{
+        burn: number;
+        mint: number;
+    }> => {
+        if (!this.web3) {
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
+        const gatewayAddress = await this.getGatewayContractAddress(asset);
+
+        const mintFeeABI: AbiItem = {
+            constant: true,
+            inputs: [],
+            name: "mintFee",
+            outputs: [
+                {
+                    internalType: "uint16",
+                    name: "",
+                    type: "uint16",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        const burnFeeABI: AbiItem = {
+            constant: true,
+            inputs: [],
+            name: "burnFee",
+            outputs: [
+                {
+                    internalType: "uint16",
+                    name: "",
+                    type: "uint16",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        const gatewayContract = new this.web3.eth.Contract(
+            [mintFeeABI, burnFeeABI],
+            gatewayAddress,
+        );
+        const mintFee = await gatewayContract.methods.mintFee().call();
+        const burnFee = await gatewayContract.methods.mintFee().call();
+
+        return {
+            mint: new BigNumber(mintFee.toString()).toNumber(),
+            burn: new BigNumber(burnFee.toString()).toNumber(),
+        };
+    };
+
+    public getBalance = async (
+        asset: string,
+        address: Address,
+    ): Promise<BigNumber> => {
+        const balanceOfABI: AbiItem = {
+            constant: true,
+            inputs: [
+                {
+                    internalType: "address",
+                    name: "account",
+                    type: "address",
+                },
+            ],
+            name: "balanceOf",
+            outputs: [
+                {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        if (!this.web3) {
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
+        const tokenAddress = await this.getTokenContractAddress(asset);
+
+        const tokenContract = new this.web3.eth.Contract(
+            [balanceOfABI],
+            tokenAddress,
+        );
+
+        const balanceRaw = await await tokenContract.methods
+            .balanceOf(address)
+            .call();
+
+        return new BigNumber(balanceRaw.toString());
     };
 
     transactionRPCFormat = (transaction: Transaction, _v2?: boolean) => {

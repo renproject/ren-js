@@ -3,7 +3,9 @@ import {
     BurnAndReleaseTransaction,
     getRenNetworkDetails,
     LockAndMintTransaction,
+    LockChain,
     Logger,
+    MintChain,
     NullLogger,
     RenNetwork,
     RenNetworkDetails,
@@ -58,7 +60,7 @@ export const generateMintTxHash = (
 
 export class RenVMProvider
     implements AbstractRenVMProvider<RenVMParams, RenVMResponses> {
-    public version = 1;
+    public version = () => 1;
 
     private readonly network: RenNetwork;
 
@@ -95,6 +97,21 @@ export class RenVMProvider
         this.provider = provider;
         this.sendMessage = this.provider.sendMessage;
     }
+
+    public selector = ({
+        asset,
+        from,
+        to,
+    }: {
+        asset: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: LockChain<any, any, any> | MintChain<any, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        to: LockChain<any, any, any> | MintChain<any, any>;
+    }): string => {
+        return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
+            from.name}`;
+    };
 
     public queryBlock = async (
         blockHeight: ParamsQueryBlock["blockHeight"],
@@ -321,6 +338,7 @@ export class RenVMProvider
     public readonly queryMintOrBurn = async <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(
+        _selector: string,
         utxoTxHash: Buffer,
     ): Promise<T> => {
         const response = await this.queryTx(toBase64(utxoTxHash));
@@ -336,6 +354,7 @@ export class RenVMProvider
     public readonly waitForTX = async <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(
+        selector: string,
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
@@ -348,7 +367,10 @@ export class RenVMProvider
             }
 
             try {
-                const result = await this.queryMintOrBurn<T>(utxoTxHash);
+                const result = await this.queryMintOrBurn<T>(
+                    selector,
+                    utxoTxHash,
+                );
                 if (result && result.txStatus === TxStatus.TxStatusDone) {
                     rawResponse = result;
                     break;
@@ -380,6 +402,7 @@ export class RenVMProvider
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (
+        _selector: string,
         asset: string,
     ): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
@@ -416,7 +439,15 @@ export class RenVMProvider
     // In the future, this will be asynchronous. It returns a promise for
     // compatibility.
     // eslint-disable-next-line @typescript-eslint/require-await
-    public getNetwork = async (): Promise<RenNetwork> => {
+    public getNetwork = async (_selector: string): Promise<RenNetwork> => {
         return this.network;
+    };
+
+    public estimateTransactionFee = async (
+        _selector: string,
+        chain: { name: string; legacyName?: string },
+    ): Promise<{ lock: BigNumber; release: BigNumber }> => {
+        const fees = await this.getFees();
+        return fees[chain.legacyName || chain.name];
     };
 }

@@ -33,7 +33,7 @@ describe("Playground", () => {
     longIt("mint", async function() {
         this.timeout(100000000000);
 
-        const from = Chains.Bitcoin();
+        const from = Chains.Filecoin();
         const asset = from.asset;
         // const from = Bitcoin();
         // const asset = "BTC";
@@ -44,12 +44,12 @@ describe("Playground", () => {
 
         // const network = renNetworkToEthereumNetwork(NETWORK as RenNetwork);
 
-        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnetVDot3.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const logLevel = LogLevel.Log;
-        const renJS = new RenJS(RenNetwork.Testnet, { logLevel });
-        // const renJS = new RenJS("testnet")
+        const renJS = new RenJS(RenNetwork.TestnetVDot3, { logLevel });
+        // const renJS = new RenJS("TestnetVDot3")
 
         // Use 0.0001 more than fee.
         let suggestedAmount: number;
@@ -65,7 +65,7 @@ describe("Playground", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Chains.Ethereum(provider, Chains.renTestnet).Account({
+            to: Chains.Ethereum(provider, Chains.renTestnetVDot3).Account({
                 address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
             }),
 

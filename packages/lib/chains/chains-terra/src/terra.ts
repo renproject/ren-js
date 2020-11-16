@@ -55,10 +55,11 @@ export class TerraClass
      * See [[OriginChain.assetIsNative]].
      */
     assetIsNative = (asset: string): boolean => this.assets.indexOf(asset) >= 0;
+    assetIsSupported = this.assetIsNative;
 
-    public readonly assetAssetSupported = (asset: string) => {
+    public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}`);
+            throw new Error(`Unsupported asset ${asset}.`);
         }
     };
 
@@ -70,7 +71,7 @@ export class TerraClass
             case "Luna":
                 return 6;
         }
-        throw new Error(`Unsupported asset ${String(asset)}`);
+        throw new Error(`Unsupported asset ${String(asset)}.`);
     };
 
     /**
@@ -83,9 +84,9 @@ export class TerraClass
         onDeposit: (deposit: TerraDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
         const txs = await terraDev.fetchDeposits(
             address.address,
             this.chainNetwork,
@@ -104,7 +105,7 @@ export class TerraClass
         transaction: TerraTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         transaction = await terraDev.fetchDeposit(
             transaction.hash,
@@ -126,9 +127,9 @@ export class TerraClass
         gHash: Buffer,
     ): Promise<TerraAddress> | TerraAddress => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const address: Key = new (Key as any)(compressedPublicKey);
@@ -141,7 +142,7 @@ export class TerraClass
     };
 
     getPubKeyScript = (asset: string, _publicKey: Buffer, _gHash: Buffer) => {
-        this.assetAssetSupported(asset);
+        this.assertAssetIsSupported(asset);
         return Buffer.from([]);
     };
 
@@ -158,7 +159,7 @@ export class TerraClass
      */
     addressIsValid = (address: TerraAddress): boolean => {
         if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
+            throw new Error(`${this.name} object not initialized.`);
         }
         assertType<string>("string", { address: address.address });
         // TODO

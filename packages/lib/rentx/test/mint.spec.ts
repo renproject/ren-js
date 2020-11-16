@@ -173,8 +173,9 @@ describe("MintMachine", () => {
             });
 
         // mock waiting for the transaction
-        renVMProvider.waitForTX = (_a, cb) => {
-            if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+        renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
+            if (txHash && confirmed && onStatus)
+                onStatus(TxStatus.TxStatusDone);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
@@ -262,7 +263,7 @@ describe("MintMachine", () => {
         let txHash: string;
         let confirmed = false;
         renVMProvider.submitMint = async (..._args) =>
-            new Promise((resolve, reject) => {
+            new Promise((resolve, _reject) => {
                 const backoff = () =>
                     setTimeout(() => {
                         // Only resolve if the tx is actually confirmed
@@ -272,8 +273,9 @@ describe("MintMachine", () => {
                 backoff();
             });
 
-        renVMProvider.waitForTX = (_a, cb) => {
-            if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+        renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
+            if (txHash && confirmed && onStatus)
+                onStatus(TxStatus.TxStatusDone);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };
@@ -381,8 +383,9 @@ describe("MintMachine", () => {
                 }, 200);
             });
 
-        renVMProvider.waitForTX = (_a, cb) => {
-            if (txHash && confirmed && cb) cb(TxStatus.TxStatusDone);
+        renVMProvider.waitForTX = (_selector, _utxoTxHash, onStatus) => {
+            if (txHash && confirmed && onStatus)
+                onStatus(TxStatus.TxStatusDone);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { out: { signature: Buffer.from("signature") } } as any;
         };

@@ -1,7 +1,7 @@
-import { mintMachine as mm } from "./machines/mint";
-import { burnMachine as bm } from "./machines/burn";
-import { mintConfig } from "./configs/genericMint";
 import { burnConfig } from "./configs/genericBurn";
+import { mintConfig } from "./configs/genericMint";
+import { burnMachine as bm } from "./machines/burn";
+import { mintMachine as mm } from "./machines/mint";
 
 export * from "./machines/burn";
 export * from "./machines/mint";

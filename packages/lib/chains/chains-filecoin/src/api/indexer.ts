@@ -120,9 +120,9 @@ export const fetchMessage = async (
         );
     }
 
-    if (messages.length > 0) {
+    if (messages.length > 1) {
         console.warn(
-            `More than Filecoin transaction found with the same transaction ID.`,
+            `More than 1 Filecoin transaction found with the same transaction ID.`,
         );
     }
 

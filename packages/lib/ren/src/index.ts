@@ -2,15 +2,18 @@ import {
     BurnAndReleaseParams,
     DepositCommon,
     LockAndMintParams,
+    LockChain,
     Logger,
     LogLevel,
     LogLevelString,
+    MintChain,
     RenNetwork,
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider, v1, v2 } from "@renproject/rpc";
+import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
 import { Ox, randomNonce, strip0x } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { BurnAndRelease } from "./burnAndRelease";
 import { defaultDepositHandler } from "./defaultDepositHandler";
@@ -109,24 +112,77 @@ export default class RenJS {
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
-        if (
-            providerOrNetwork === RenNetwork.MainnetVDot3 ||
-            providerOrNetwork === RenNetwork.TestnetVDot3 ||
-            providerOrNetwork === RenNetwork.DevnetVDot3
-        ) {
-            providerOrNetwork = new v2.RenVMProvider(providerOrNetwork);
-        }
-
         // Use provided provider, provider URL or default lightnode URL.
         this.renVM =
             providerOrNetwork && typeof providerOrNetwork !== "string"
                 ? providerOrNetwork
-                : new v1.RenVMProvider(
+                : new CombinedProvider(
                       providerOrNetwork || RenNetwork.Mainnet,
-                      undefined,
                       this._logger,
                   );
     }
+
+    public getFees = async ({
+        asset,
+        from,
+        to,
+    }: {
+        asset: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: LockChain<any, any, any> | MintChain<any, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        to: LockChain<any, any, any> | MintChain<any, any>;
+    }): Promise<{
+        lock?: BigNumber;
+        release?: BigNumber;
+        mint: number;
+        burn: number;
+    }> => {
+        if (!from.assetIsSupported(asset)) {
+            throw new Error(`Asset not supported by chain ${from.name}.`);
+        }
+        if (!to.assetIsSupported(asset)) {
+            throw new Error(`Asset not supported by chain ${to.name}.`);
+        }
+
+        let fees;
+
+        if (from.assetIsNative(asset)) {
+            // LockAndMint
+            const mintFees = await (to as MintChain).getFees(asset);
+            const selector = this.renVM.selector({ asset, from, to });
+            const lockFees = await this.renVM.estimateTransactionFee(
+                selector,
+                from,
+            );
+            fees = {
+                ...lockFees,
+                ...mintFees,
+            };
+        } else if (to.assetIsNative(asset)) {
+            // BurnAndRelease
+            const mintFees = await (from as MintChain).getFees(asset);
+            const selector = this.renVM.selector({ asset, from, to });
+            const lockFees = await this.renVM.estimateTransactionFee(
+                selector,
+                to,
+            );
+            fees = {
+                ...lockFees,
+                ...mintFees,
+            };
+        } else {
+            // BurnAndMint
+            const mintFees = await (from as MintChain).getFees(asset);
+            const burnFees = await (to as MintChain).getFees(asset);
+            fees = {
+                mint: mintFees.mint,
+                burn: burnFees.burn,
+            };
+        }
+
+        return fees;
+    };
 
     /**
      * `lockAndMint` initiates the process of bridging an asset from its native
@@ -140,22 +196,12 @@ export default class RenJS {
      * const lockAndMint = renJS.lockAndMint({
      *     asset: "BTC",
      *     from: Bitcoin(),
-     *     to: Ethereum(web3Provider),
+     *     to: Ethereum(web3Provider).Account({
+     *         address: "0x...",
+     *     }),
      *
-     *     // Unique value to generate unique deposit address.
+     *     // Optional - 32-byte unique deposit nonce. Defaults to 0x0.
      *     nonce: RenJS.utils.randomNonce(),
-     *
-     *     // Contract to be called for Ethereum
-     *     contractCalls: [{
-     *         sendTo: "0xb2731C04610C10f2eB6A26ad14E607d44309FC10",
-     *         contractFn: "deposit",
-     *         contractParams: [{
-     *             name: "_msg",
-     *             type: "bytes",
-     *             value: web3.utils.fromAscii(`Depositing BTC`),
-     *         }],
-     *         txConfig: { gas: 500000 }
-     *     }],
      * });
      * ```
      *
@@ -195,8 +241,6 @@ export default class RenJS {
             params,
             this._logger,
         )._initialize();
-
-    public readonly getFees = async () => this.renVM.getFees();
 }
 
 // ////////////////////////////////////////////////////////////////////////// //

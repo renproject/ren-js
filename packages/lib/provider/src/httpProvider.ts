@@ -72,7 +72,7 @@ export class HttpProvider<
             );
             if (response.status !== 200) {
                 throw this.responseError(
-                    "Unexpected status code returned from node",
+                    "Unexpected status code returned from node.",
                     response,
                 );
             }
@@ -80,7 +80,7 @@ export class HttpProvider<
                 throw new Error(response.data.error);
             }
             if (response.data.result === undefined) {
-                throw new Error(`Empty result returned from node`);
+                throw new Error(`Empty result returned from node.`);
             }
             if (
                 typeof this.logger.level !== "number" ||

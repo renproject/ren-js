@@ -1,34 +1,35 @@
-# RenJS and GatewayJS Types
+# RenJS API Docs
 
-These are automatically generated docs for RenJS's and GatewayJS's interfaces, hosted at [renproject.github.io/ren-js](https://renproject.github.io/ren-js/).
+These are automatically generated docs for RenJS's interfaces, hosted at [renproject.github.io/ren-js-docs](https://renproject.github.io/ren-js-docs/).
 
 See [docs.renproject.io/developers](https://docs.renproject.io/developers) for more docs and tutorials.
 
-### Importing RenJS and GatewayJS
+### RenJS
 
-RenJS can be imported using one of:
+-   [[RenJS]]
+    -   [[RenJS.lockAndMint]]
+    -   [[RenJS.burnAndRelease]]
 
-```ts
-import RenJS from "@renproject/gateway";
-const RenJS = require("@renproject/gateway");
-// In browser
-<script src="https://unpkg.com/@renproject/gateway@1.0.6/build/bundled/browser.js"></script>
-```
+### Chains
 
-GatewayJS can be imported similarly:
+The package `@renproject/ren` doesn't come with support for any chains - they must be imported separately.
 
-```ts
-import GatewayJS from "@renproject/gateway";
-const GatewayJS = require("@renproject/gateway");
-// In browser
-<script src="https://unpkg.com/@renproject/gateway@1.0.6/build/bundled/browser.js"></script>
-```
+The `@renproject/chains` package groups together support for BTC, ZEC, BCH, FIL, ETH and BSC.
 
-### Main classes and functions
+For docs on each chain, see:
 
-* [[RenJS]]
-    * [[RenJS.lockAndMint]]
-    * [[RenJS.burnAndRelease]]
-* [[GatewayJS]]
-    * [[GatewayJS.lockAndMint]]
-    * [[GatewayJS.burnAndRelease]]
+-   [[BitcoinClass]]
+-   [[ZcashClass]]
+-   [[BitcoinCashClass]]
+-   [[FilecoinClass]]
+-   [[EthereumClass]]
+-   [[BinanceSmartChainClass]]
+
+### RenTX
+
+-   [[mintMachine]]
+-   [[burnMachine]]
+
+### MultiWallet
+
+-   [[WalletPicker]]

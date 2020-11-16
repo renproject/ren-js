@@ -61,8 +61,8 @@ export const renDevnetVDot3: EthereumConfig = {
     name: "Devnet v0.3",
     ...ethereumConfig.kovan,
     addresses: {
-        GatewayRegistry: "0x5F051E588f39D95bc6c1742f6FA98B103aa0E5c8",
-        BasicAdapter: "0xFABDB1F53Ef8B080332621cBc9F820a39e7A1B83",
+        GatewayRegistry: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
+        BasicAdapter: "0xC8DD18A151FafFCab1B822108e49b4aE3bFff477",
     },
 };
 
@@ -70,8 +70,8 @@ export const renTestnetVDot3: EthereumConfig = {
     name: "Testnet v0.3",
     ...ethereumConfig.rinkeby,
     addresses: {
-        GatewayRegistry: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
-        BasicAdapter: "0xC8DD18A151FafFCab1B822108e49b4aE3bFff477",
+        GatewayRegistry: "0xcF9F36668ad5b28B336B248a67268AFcF1ECbdbF",
+        BasicAdapter: "0x6fA045D176CE69Fdf9837242E8A72e81c2750E64",
     },
 };
 

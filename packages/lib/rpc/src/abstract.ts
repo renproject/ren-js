@@ -2,7 +2,8 @@ import {
     AbiItem,
     BurnAndReleaseTransaction,
     LockAndMintTransaction,
-    Logger,
+    LockChain,
+    MintChain,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -22,10 +23,15 @@ export interface AbstractRenVMProvider<
         [event: string]: any;
     } = {}
 > extends Provider<Requests, Responses> {
-    version: number;
+    selector: (params: {
+        asset: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: LockChain<any, any, any> | MintChain<any, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        to: LockChain<any, any, any> | MintChain<any, any>;
+    }) => string;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getFees: () => Promise<any>;
+    version: (selector: string) => number;
 
     mintTxHash: (params: {
         selector: string;
@@ -94,10 +100,12 @@ export interface AbstractRenVMProvider<
     queryMintOrBurn: <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction
     >(
+        selector: string,
         utxoTxHash: Buffer,
     ) => SyncOrPromise<T>;
 
     waitForTX: <T extends LockAndMintTransaction | BurnAndReleaseTransaction>(
+        selector: string,
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
@@ -109,9 +117,32 @@ export interface AbstractRenVMProvider<
      *
      * @returns The key hash (20 bytes) as a string.
      */
-    selectPublicKey: (assetOrChain: string) => SyncOrPromise<Buffer>;
+    selectPublicKey: (
+        selector: string,
+        assetOrChain: string,
+    ) => SyncOrPromise<Buffer>;
 
-    getNetwork: () => SyncOrPromise<
-        RenNetwork | RenNetworkString | RenNetworkDetails
-    >;
+    /**
+     * Used to query what network a custom provider is connected to. LockAndMint
+     * and BurnAndRelease use this to configure their chain parameters.
+     */
+    getNetwork: (
+        selector: string,
+    ) => SyncOrPromise<RenNetwork | RenNetworkString | RenNetworkDetails>;
+
+    /**
+     * Look up the number of confirmations required by RenVM.
+     */
+    getConfirmationTarget?: (
+        selector: string,
+        chain: { name: string },
+    ) => SyncOrPromise<number | undefined>;
+
+    /**
+     * Return the estimated fee RenVM will use for locking and releasing.
+     */
+    estimateTransactionFee: (
+        selector: string,
+        chain: { name: string; legacyName?: string },
+    ) => SyncOrPromise<{ lock: BigNumber; release: BigNumber }>;
 }

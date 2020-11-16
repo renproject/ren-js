@@ -47,8 +47,10 @@ export class BurnAndRelease<
     MintTransaction = any,
     MintAddress = string
 > {
+    /** The details of the burn, including the amount and recipient. */
     public burnDetails: BurnDetails<MintTransaction> | undefined;
 
+    /** The parameters passed in when calling [[RenJS.burnAndRelease]]. */
     public params: BurnAndReleaseParams<
         LockTransaction,
         LockDeposit,
@@ -56,9 +58,24 @@ export class BurnAndRelease<
         MintTransaction,
         MintAddress
     >;
+
+    /**
+     * The status of the burn, updated automatically.
+     *
+     * ```ts
+     * burnAndRelease.status;
+     * // > "released"
+     * ```
+     */
     public status: BurnAndReleaseStatus;
+
+    /** See [[RenJS.renVM]]. */
     public readonly renVM: AbstractRenVMProvider;
 
+    /**
+     * Internal state of the burn object. Interface may change across minor and
+     * patch releases.
+     */
     public readonly _state: {
         logger: Logger;
         gPubKey?: Buffer;
@@ -67,6 +84,7 @@ export class BurnAndRelease<
         selector: string;
     };
 
+    /** @hidden */
     constructor(
         renVM: AbstractRenVMProvider,
         params: BurnAndReleaseParams<
@@ -124,6 +142,7 @@ export class BurnAndRelease<
         }
     };
 
+    /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
         this._state.renNetwork =
             this._state.renNetwork ||
@@ -169,7 +188,7 @@ export class BurnAndRelease<
      * mint-chain transaction and the RenVM transaction.
      *
      * ```ts
-     * await deposit.refreshStatus();
+     * await burnAndRelease.refreshStatus();
      * // > "released"
      * ```
      */
@@ -245,8 +264,16 @@ export class BurnAndRelease<
     };
 
     /**
-     * txHash calculates the RenVM transaction hash for the burn. This is
-     * used to track the progress of the release in RenVM.
+     * `txHash` returns the RenVM transaction hash, which is distinct from the
+     * lock or mint chain transaction hashes. It can be used to query the
+     * burn-and-release details from RenVM once they've been submitted to it.
+     *
+     * The RenVM txHash is a URL-base64 string.
+     *
+     * ```ts
+     * burnAndRelease.txHash();
+     * // > "QNM87rNDuxx54H7VK7D_NAU0u_mjk09-G25IJZL1QrI"
+     * ```
      */
     public txHash = (): string => {
         const txHash = this.params.txHash;
@@ -354,8 +381,6 @@ export class BurnAndRelease<
     /**
      * submit queries RenVM for the status of the burn until the funds are
      * released.
-     *
-     * @returns {PromiEvent<BurnAndReleaseTransaction, { txHash: [string], status: [TxStatus] }>}
      */
     public release = (): PromiEvent<
         BurnAndReleaseTransaction,

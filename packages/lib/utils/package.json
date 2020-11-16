@@ -51,6 +51,7 @@
         "axios": "^0.20.0",
         "bignumber.js": "^9.0.1",
         "events": "^3.2.0",
+        "keccak": "^3.0.1",
         "immutable": "^4.0.0-rc.12",
         "web3-eth-abi": "^2.0.0-alpha.1"
     },

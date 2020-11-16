@@ -50,8 +50,10 @@ export class EthereumClass extends EthereumBaseChain
     ): SyncOrPromise<OverwritableBurnAndReleaseParams | undefined> =>
         this._getParams ? this._getParams(asset, burnPayload) : undefined;
 
+    /** @category Main */
     public Address = (address: string) => this.Account({ address });
 
+    /** @category Main */
     public Account = ({
         value,
         address,
@@ -145,6 +147,7 @@ export class EthereumClass extends EthereumBaseChain
         return this;
     };
 
+    /** @category Main */
     public Contract = (
         contractCall:
             | ContractCall
@@ -172,6 +175,7 @@ export class EthereumClass extends EthereumBaseChain
         return this;
     };
 
+    /** @category Main */
     public Transaction = (transaction: Transaction) => {
         this._getParams = (_asset: string, _burnPayload?: string) => {
             return {
@@ -181,6 +185,7 @@ export class EthereumClass extends EthereumBaseChain
         return this;
     };
 
+    /** @category Main */
     public BurnNonce = (burnNonce: Buffer | string | number) => {
         this._getParams = (_asset: string, _burnPayload?: string) => {
             return {

@@ -45,6 +45,11 @@ export interface RenJSConfig {
  * 1. [[lockAndMint]] - for transferring assets to Ethereum.
  * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
  *
+ * Also see:
+ * 1. [[getFees]] - for estimating the fees that will be incurred by minting or
+ * burning.
+ * 2. [[defaultDepositHandler]]
+ *
  */
 export default class RenJS {
     // /**
@@ -60,7 +65,8 @@ export default class RenJS {
     public static Networks = RenNetwork;
 
     /**
-     * `utils` exposes helper functions, See [[utils]].
+     * A collection of helper functions. [[utils.randomNonce]] can be be used to
+     * generate a nonce when calling [[RenJS.lockAndMint]].
      */
     public static utils = {
         Ox,
@@ -68,14 +74,32 @@ export default class RenJS {
         randomNonce,
     };
 
+    /**
+     * `RenJS.defaultDepositHandler` can be passed as a deposit callback when
+     * minting. It will handle submitting to RenVM and then to the mint-chain,
+     * as long as a valid provider for the mint-chain is given.
+     *
+     * This is not recommended for front-ends, since it may trigger a wallet
+     * pop-up unexpectedly when the mint is ready to be submitted.
+     *
+     * ```ts
+     * lockAndMint.on("deposit", RenJS.defaultDepositHandler);
+     * ```
+     */
     public static defaultDepositHandler = defaultDepositHandler;
 
-    // Not static
+    /**
+     * @hidden
+     */
     public readonly utils = RenJS.utils;
 
     /**
      * RenVM provider exposing `sendMessage` and other helper functions for
      * interacting with RenVM. See [[AbstractRenVMProvider]].
+     *
+     * ```ts
+     * renJS.renVM.sendMessage("ren_queryNumPeers", {});
+     * ```
      */
     public readonly renVM: AbstractRenVMProvider;
 
@@ -188,6 +212,8 @@ export default class RenJS {
      * `lockAndMint` initiates the process of bridging an asset from its native
      * chain to a host chain.
      *
+     * See [[LockAndMintParams]] for all the options that can be set.
+     *
      * Returns a [[LockAndMint]] object.
      *
      * Example initialization:
@@ -199,9 +225,6 @@ export default class RenJS {
      *     to: Ethereum(web3Provider).Account({
      *         address: "0x...",
      *     }),
-     *
-     *     // Optional - 32-byte unique deposit nonce. Defaults to 0x0.
-     *     nonce: RenJS.utils.randomNonce(),
      * });
      * ```
      *
@@ -224,9 +247,6 @@ export default class RenJS {
     /**
      * `burnAndRelease` submits a burn log to RenVM.
      * Returns a [[BurnAndRelease]] object.
-     *
-     * @param params See [[BurnAndReleaseParams]].
-     * @returns An instance of [[BurnAndRelease]].
      */
     public readonly burnAndRelease = async <
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

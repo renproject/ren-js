@@ -234,6 +234,7 @@ export class FilecoinClass
 
     getBurnPayload: (() => string) | undefined;
 
+    /** @category Main */
     Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });

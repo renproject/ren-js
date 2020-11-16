@@ -2,6 +2,9 @@ import { retryNTimes, SECONDS } from "@renproject/utils";
 
 import { LockAndMintDeposit } from "./lockAndMint";
 
+/**
+ * See [[RenJS.defaultDepositHandler]].
+ */
 const createDepositHandler = (retries = -1) => {
     const fn: ((deposit: LockAndMintDeposit) => Promise<void>) & {
         withRetries: (newRetries: number) => void;
@@ -57,4 +60,7 @@ const createDepositHandler = (retries = -1) => {
     return fn;
 };
 
+/**
+ * See [[RenJS.defaultDepositHandler]].
+ */
 export const defaultDepositHandler = createDepositHandler();

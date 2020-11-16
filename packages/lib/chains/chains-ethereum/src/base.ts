@@ -730,8 +730,9 @@ export class EthereumBaseChain implements MintChain<Transaction, Address> {
      * `assetIsSupported` should return true if the asset is native to the
      * MintChain.
      *
-     * @example
+     * ```ts
      * ethereum.assetIsSupported = asset => asset === "ETH";
+     * ```
      */
     assetIsSupported = async (asset: string): Promise<boolean> => {
         if (this.assetIsNative(asset)) {

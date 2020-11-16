@@ -3,6 +3,9 @@ import { assertType, Callable } from "@renproject/utils";
 
 import { Address, BitcoinBaseChain, Deposit, Transaction } from "./base";
 
+/**
+ * The Bitcoin class adds support for the asset BTC.
+ */
 export class BitcoinClass extends BitcoinBaseChain
     implements LockChain<Transaction, Deposit, Address> {
     getBurnPayload: (() => string) | undefined;
@@ -25,6 +28,12 @@ export class BitcoinClass extends BitcoinBaseChain
         return undefined;
     };
 
+    /**
+     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * available to the burn params.
+     *
+     * @category Main
+     */
     Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });

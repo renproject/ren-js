@@ -9,26 +9,27 @@ export type NumberValue = string | number | BigNumber | BNInterface;
 export type RenTokens = string;
 
 /**
- * The details required to create and/or submit a transaction to Ethereum.
+ * The details required to create and/or submit a transaction to a chain.
  */
 export interface ContractCall {
     /**
-     * The address of the adapter smart contract.
+     * The address of the contract.
      */
     sendTo: string;
 
     /**
-     * The name of the function to be called on the Adapter contract.
+     * The name of the function to be called on the contract.
      */
     contractFn: string;
 
     /**
-     * The parameters to be passed to the adapter contract.
+     * The parameters to be passed to the contract. They can only be defined
+     * using Ethereum types currently.
      */
     contractParams?: EthArgs;
 
     /**
-     * Set transaction options:.
+     * Override chain-specific transaction configuration, such as gas/fees.
      */
     txConfig?: unknown;
 }
@@ -37,16 +38,23 @@ export interface ContractCall {
  * The parameters required for both minting and burning.
  */
 export interface TransferParamsCommon {
+    /**
+     * The asset being minted or burned - e.g. `"BTC"`.
+     */
     asset: string;
 
     /**
-     * Provide the transaction hash returned from RenVM to continue a previous
-     * mint.
+     * A RenVM transaction hash, which can be used to resume an existing mint
+     * or burn.
      */
     txHash?: string;
 
     /**
-     * An option to override the default nonce generated randomly.
+     * A LockAndMint's gateway address can be forced to be unique by providing a
+     * 32-byte nonce. If the nonce is lost between detecting a deposit and
+     * submitting it to RenVM, the deposit's funds can't be recovered.
+     *
+     * The nonce defaults to 0x0.
      */
     nonce?: Buffer | string;
 
@@ -80,7 +88,15 @@ export interface LockAndMintParams<
     MintTransaction = any,
     MintAddress = string
 > extends TransferParamsCommon {
+    /**
+     * The chain that the asset is native to - e.g. `Bitcoin()` for bridging the
+     * asset `"BTC"`.
+     */
     from: LockChain<LockTransaction, LockDeposit, LockAddress>;
+
+    /**
+     * The chain that the asset is being bridged to - e.g. `Ethereum(provider)`.
+     */
     to: MintChain<MintTransaction, MintAddress>;
 }
 
@@ -99,17 +115,24 @@ export interface BurnAndReleaseParams<
     MintTransaction = any,
     MintAddress = string
 > extends TransferParamsCommon {
-    // If a `txHash` is provided, `from` doesn't need to be provided.
+    /**
+     * The chain from which the ren-asset was burned - e.g. `Ethereum(provider)`.
+     */
     from: MintChain<MintTransaction, MintAddress>;
+
+    /**
+     * The asset's native chain to which it's being returned - e.g. `Bitcoin()`
+     * for the asset `"BTC"`.
+     */
     to: LockChain<LockTransaction, LockDeposit, LockAddress>;
 
     /**
-     * The hash of the burn transaction on Ethereum.
+     * The hash of the burn transaction on the MintChain.
      */
     transaction?: MintTransaction;
 
     /**
-     * The ID of the burn emitted in the contract log.
+     * The unique identifier of the burn emitted from the event on the MintChain.
      */
     burnNonce?: Buffer | string | number;
 }

@@ -3,7 +3,7 @@
 // TODO: Improve typings.
 
 import BigNumber from "bignumber.js";
-import { assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
+import { assign, MachineOptions, Receiver, send, Sender, spawn } from "xstate";
 
 import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
@@ -98,74 +98,86 @@ const spawnBurnTransaction = assign<BurnMachineContext, BurnMachineEvent>({
 
 const burnTransactionListener = (context: BurnMachineContext) => (
     callback: Sender<BurnMachineEvent>,
-    _receive: Receiver<any>,
+    receive: Receiver<any>,
 ) => {
     const cleaners: Array<() => void> = [];
     burnAndRelease(context)
-        .then(async (burn) => {
+        .then((burn) => {
+            if (context.autoSubmit) {
+                setTimeout(() => callback("SUBMIT"), 500);
+            }
+
             let tx: GatewayTransaction;
-            const burnRef = burn.burn();
+            const performBurn = async () => {
+                const burnRef = burn.burn();
 
-            const burnListener = (confs: number) => {
-                callback({
-                    type: "CONFIRMATION",
-                    data: { ...tx, sourceTxConfs: confs },
-                });
-            };
-            cleaners.push(() => {
-                burnRef._cancel();
-                burnRef.removeListener("confirmation", burnListener);
-            });
-
-            await burnRef
-                .on("transactionHash", (txHash: string) => {
-                    tx = {
-                        sourceTxHash: txHash,
-                        sourceTxConfs: 0,
-                        sourceTxAmount: Number(context.tx.suggestedAmount),
-                        rawSourceTx: {
-                            amount: String(context.tx.suggestedAmount),
-                            transaction: {},
-                        },
-                    };
+                const burnListener = (confs: number) => {
                     callback({
-                        type: "SUBMITTED",
-                        data: {
-                            ...tx,
-                        },
+                        type: "CONFIRMATION",
+                        data: { ...tx, sourceTxConfs: confs },
                     });
-                })
-                .on("confirmation", burnListener)
-                .catch((error) =>
-                    callback({ type: "BURN_ERROR", data: error }),
-                );
-
-            const releaseListener = (status: string) => {
-                status === "confirming"
-                    ? console.log(`confirming`)
-                    : console.log("status", status);
-            };
-
-            const hashListener = (hash: string) => {
-                callback({
-                    type: "CONFIRMED",
-                    data: { ...tx, destTxHash: hash },
+                };
+                cleaners.push(() => {
+                    burnRef._cancel();
+                    burnRef.removeListener("confirmation", burnListener);
                 });
+
+                await burnRef
+                    .on("transactionHash", (txHash: string) => {
+                        tx = {
+                            sourceTxHash: txHash,
+                            sourceTxConfs: 0,
+                            sourceTxAmount: Number(context.tx.suggestedAmount),
+                            rawSourceTx: {
+                                amount: String(context.tx.suggestedAmount),
+                                transaction: {},
+                            },
+                        };
+                        callback({
+                            type: "SUBMITTED",
+                            data: {
+                                ...tx,
+                            },
+                        });
+                    })
+                    .on("confirmation", burnListener)
+                    .catch((error) =>
+                        callback({ type: "BURN_ERROR", data: error }),
+                    );
+
+                const releaseListener = (status: string) => {
+                    status === "confirming"
+                        ? console.log(`confirming`)
+                        : console.log("status", status);
+                };
+
+                const hashListener = (hash: string) => {
+                    callback({
+                        type: "CONFIRMED",
+                        data: { ...tx, destTxHash: hash },
+                    });
+                };
+
+                const releaseRef = burn.release();
+                cleaners.push(() => {
+                    releaseRef._cancel();
+                    releaseRef.removeListener("status", releaseListener);
+                    releaseRef.removeListener("txHash", hashListener);
+                });
+
+                await releaseRef
+                    .on("status", releaseListener)
+                    .on("txHash", hashListener)
+                    .catch((error) =>
+                        callback({ type: "RELEASE_ERROR", data: error }),
+                    );
             };
 
-            const releaseRef = burn.release();
-            cleaners.push(() => {
-                releaseRef._cancel();
-                releaseRef.removeListener("status", releaseListener);
-                releaseRef.removeListener("txHash", hashListener);
+            receive((event: BurnMachineEvent) => {
+                if (event.type === "SUBMIT") {
+                    performBurn().then().catch(console.error);
+                }
             });
-
-            await releaseRef
-                .on("status", releaseListener)
-                .on("txHash", hashListener)
-                .catch((error) =>
-                    callback({ type: "RELEASE_ERROR", data: error }),
-                );
         })
         .catch(console.error);
 

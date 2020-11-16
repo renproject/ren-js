@@ -45,6 +45,7 @@ describe("BurnMachine", () => {
         const machine = burnMachine.withConfig(burnConfig).withContext({
             tx: mintTransaction,
             sdk: new RenJS("testnet"),
+            autoSubmit: true,
             providers,
             fromChainMap,
             toChainMap,

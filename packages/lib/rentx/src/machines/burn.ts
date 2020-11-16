@@ -11,6 +11,7 @@ import { GatewaySession, GatewayTransaction } from "../types/transaction";
 export interface BurnMachineContext {
     tx: GatewaySession;
     sdk: RenJS;
+    autoSubmit?: boolean;
     providers: any; // The blockchain api providers required for the mintchain
     toChainMap: {
         [key in string]: (context: BurnMachineContext) => LockChain<any>;
@@ -39,6 +40,7 @@ export type BurnMachineEvent =
     | { type: "NOOP" }
     | { type: "RETRY" }
     | { type: "RESTORE" }
+    | { type: "SUBMIT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
     | { type: "RELEASE_ERROR"; data: any }
     | { type: "BURN_ERROR"; data: any }
@@ -85,6 +87,13 @@ export const burnMachine = Machine<
                     },
                 },
                 on: {
+                    SUBMIT: {
+                        actions: send("SUBMIT", {
+                            to: (ctx) => {
+                                return ctx.burnListenerRef?.id || "";
+                            },
+                        }),
+                    },
                     SUBMITTED: {
                         target: "srcSettling",
                         actions: [

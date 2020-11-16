@@ -83,7 +83,7 @@ const main = async () => {
                 `Received ${
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (deposit.depositDetails as any).amount / 1e8
-                } ${deposit.params.asset}`,
+                } ${deposit.params.asset} - ${color(hash)}`,
                 deposit.depositDetails,
             );
 

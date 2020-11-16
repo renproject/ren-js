@@ -36,7 +36,6 @@ import {
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 import { AbiCoder } from "web3-eth-abi";
-import { RenVMProvider, RPCMethod } from "@renproject/rpc/build/main/v2";
 
 interface MintState {
     logger: Logger;
@@ -77,8 +76,28 @@ interface DepositState {
  * `LockAndMint` extends the EventEmitter class, and emits a `"deposit"` event
  * for each new deposit that is observed. Deposits will only be watched for if
  * there is an active listener for the `"deposit"` event.
+ *
+ * A LockAndMint object watches transactions to the [[gatewayAddress]] on the
+ * lock-chain.
+ *
+ * Deposits to the gateway address can be listened to with the `"deposit"`
+ * event using [[on]], which will return [[LockAndMintDeposit]] instances.
+ *
+ * ```ts
+ * console.log(`Deposit to ${JSON.stringify(lockAndMint.gatewayAddress)}`);
+ *
+ * lockAndMint.on("deposit", async (deposit) => {
+ *    console.log(`Received deposit`, deposit);
+ *    await RenJS.defaultDepositHandler(deposit);
+ * });
+ * ```
+ *
+ * @noInheritDoc
  */
 export class LockAndMint<
+    /**
+     * @hidden
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
@@ -91,7 +110,15 @@ export class LockAndMint<
 > extends EventEmitter {
     // Public
 
+    /**
+     * The generated gateway address for the lock-chain. For chains such as BTC
+     * this is a string. For other chains, this may be an object, so the method
+     * of showing this address to users should be implemented on a
+     * chain-by-chain basis.
+     */
     public gatewayAddress: LockAddress | undefined;
+
+    /** The parameters passed in when creating the LockAndMint. */
     public params: LockAndMintParams<
         LockTransaction,
         LockDeposit,
@@ -99,12 +126,19 @@ export class LockAndMint<
         MintTransaction,
         MintAddress
     >;
+
+    /** See [[RenJS.renVM]]. */
     public renVM: AbstractRenVMProvider;
 
+    /**
+     * Internal state of the mint object, including the `gHash` and `pHash`.
+     * Interface may change across minor and patch releases.
+     */
     public _state: MintState & Partial<MintStatePartial>;
 
-    // Private
-    // Deposits represents the lock deposits that have been so far.
+    /**
+     * Deposits represents the lock deposits that have been so far.
+     */
     private deposits: OrderedMap<
         string,
         LockAndMintDeposit<
@@ -118,7 +152,7 @@ export class LockAndMint<
     private readonly getDepositsInstance: number;
 
     /**
-     * Constructor.
+     * @hidden - should be created using [[RenJS.lockAndMint]] instead.
      */
     constructor(
         renVM: AbstractRenVMProvider,
@@ -162,8 +196,8 @@ export class LockAndMint<
     }
 
     /**
-     * Called automatically when calling [[RenJS.lockAndMint]]. It has been split
-     * from the constructor because it's asynchronous.
+     * @hidden - Called automatically when calling [[RenJS.lockAndMint]]. It has
+     * been split from the constructor because it's asynchronous.
      */
     public readonly _initialize = async (): Promise<
         LockAndMint<
@@ -223,8 +257,29 @@ export class LockAndMint<
      * `processDeposit` allows you to manually provide the details of a deposit
      * and returns a [[LockAndMintDeposit]] object.
      *
-     * @param deposit The deposit details in the format expected by the mint
-     * chain.
+     * @param deposit The deposit details in the format defined by the
+     * LockChain. This should be the same format as `deposit.depositDetails` for
+     * a deposit returned from `.on("deposit", ...)`.
+     *
+     * ```ts
+     * lockAndMint
+     *   .processDeposit({
+     *       transaction: {
+     *           cid:
+     *               "bafy2bzacedvu74e7ohjcwlh4fbx7ddf6li42fiuosajob6metcj2qwkgkgof2",
+     *           to: "t1v2ftlxhedyoijv7uqgxfygiziaqz23lgkvks77i",
+     *           amount: (0.01 * 1e8).toString(),
+     *           params: "EzGbvVHf8lb0v8CUfjh8y+tLbZzfIFcnNnt/gh6axmw=",
+     *           confirmations: 1,
+     *           nonce: 7,
+     *       },
+     *       amount: (0.01 * 1e8).toString(),
+     *   })
+     *   .on(deposit => RenJS.defaultDepositHandler)
+     *   .catch(console.error);
+     * ```
+     *
+     * @category Main
      */
     public processDeposit = async (
         deposit: LockDeposit,
@@ -313,12 +368,14 @@ export class LockAndMint<
     };
 
     /**
-     * `on` extends [[EventEmitter.on]], modifying it to immediately return all
-     * previous `"deposit"` events, on top of new events, when a new listener is
-     * created.
+     * `on` creates a new listener to `"deposit"` events, returning
+     * [[LockAndMintDeposit]] instances.
      *
-     * @param event The name of the event to subscribe to.
-     * @param listener The callback called when an event is observed.
+     * `on` extends `EventEmitter.on`, modifying it to immediately return all
+     * previous `"deposit"` events, in addition to new events, when a new
+     * listener is created.
+     *
+     * @category Main
      */
     public on = <Event extends "deposit">(
         event: Event,
@@ -459,6 +516,26 @@ export enum DepositStatus {
     Submitted = "submitted",
 }
 
+/**
+ * A LockAndMintDeposit represents a deposit that has been made to a gateway
+ * address.
+ *
+ * Once it has been detected, the steps required to complete the mint are:
+ * 1. Wait for the transaction to be mined. The number of confirmations here
+ * depends on the asset.
+ * 2. Submit the deposit to RenVM and wait for a signature.
+ * 3. Submit the deposit to the lock-chain.
+ *
+ * Each of these steps can be performed using their respective methods. Each
+ * of these return a PromiEvent, meaning that in addition to being a promise,
+ * they also emit events that can be listened to.
+ *
+ * ```ts
+ * await deposit.confirmed();
+ * await deposit.signed();
+ * await deposit.mint();
+ * ```
+ */
 export class LockAndMintDeposit<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
@@ -470,7 +547,10 @@ export class LockAndMintDeposit<
     MintTransaction = any,
     MintAddress = string
 > {
+    /** The details, including amount, of the deposit. */
     public depositDetails: LockDeposit;
+
+    /** The parameters passed in when calling [[RenJS.lockAndMint]]. */
     public params: LockAndMintParams<
         LockTransaction,
         LockDeposit,
@@ -478,11 +558,28 @@ export class LockAndMintDeposit<
         MintTransaction,
         MintAddress
     >;
-    public renVM: AbstractRenVMProvider;
+
+    /**
+     * The status of the deposit, updated automatically. You can also call
+     * `refreshStatus` to re-fetch this.
+     *
+     * ```ts
+     * deposit.status;
+     * // > "signed"
+     * ```
+     */
     public status: DepositStatus;
 
+    /** See [[RenJS.renVM]]. */
+    public renVM: AbstractRenVMProvider;
+
+    /**
+     * Internal state of the mint object, including the `gHash` and `pHash`.
+     * Interface may change across minor and patch releases.
+     */
     public _state: MintState & MintStatePartial & DepositState;
 
+    /** @hidden */
     constructor(
         depositDetails: LockDeposit,
         params: LockAndMintParams<
@@ -659,6 +756,7 @@ export class LockAndMintDeposit<
         }
     }
 
+    /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
         await this.refreshStatus();
 
@@ -670,11 +768,20 @@ export class LockAndMintDeposit<
     };
 
     /**
-     * The `txHash` is used to track the progress of the release in RenVM.
-     * The type of `txHash` is a function instead of a string to match the
-     * interface of [[BurnAndRelease]].
+     * `txHash` returns the RenVM transaction hash, which is distinct from the
+     * lock or mint chain transaction hashes. It can be used to query the
+     * lock-and-mint details from RenVM  once they've been submitted to it.
+     *
+     * The RenVM txHash is a URL-base64 string.
+     *
+     * ```ts
+     * deposit.txHash();
+     * // > "QNM87rNDuxx54H7VK7D_NAU0u_mjk09-G25IJZL1QrI"
+     * ```
      */
     public txHash = (): string => {
+        // The type of `txHash` is a function instead of a string to match the
+        // interface of BurnAndRelease.
         return this._state.txHash;
     };
 
@@ -789,11 +896,19 @@ export class LockAndMintDeposit<
      * It returns a PromiEvent which emits a `"confirmation"` event with the
      * current and target number of confirmations as the event parameters.
      *
+     * The events emitted by the PromiEvent are:
+     * 1. `"confirmation"` - called when a new confirmation is seen
+     * 2. `"target"` - called immediately to make the target confirmations
+     * available.
+     *
      * ```ts
      * await deposit
      *  .confirmed()
+     *  .on("target", (confs, target) => console.log(`${confs}/${target}`))
      *  .on("confirmation", (confs, target) => console.log(`${confs}/${target}`))
      * ```
+     *
+     * @category Main
      */
     public confirmed = (): PromiEvent<
         LockAndMintDeposit<
@@ -875,6 +990,12 @@ export class LockAndMintDeposit<
      *  .signed()
      *  .on("txHash", (txHash) => console.log(txHash))
      * ```
+     *
+     * The events emitted by the PromiEvent are:
+     * 1. `txHash` - the RenVM transaction hash of the deposit.
+     * 2. `status` - the RenVM status of the transaction, of type [[TxStatus]].
+     *
+     * @category Main
      */
     public signed = (): PromiEvent<
         LockAndMintDeposit<
@@ -983,6 +1104,11 @@ export class LockAndMintDeposit<
      * `mint` submits the RenVM signature to the mint chain.
      *
      * It returns a PromiEvent and the events emitted depend on the mint chain.
+     *
+     * The PromiEvent's events are defined by the mint-chain implementation. For
+     * Ethereum, it emits the same events as a Web3 PromiEvent.
+     *
+     * @category Main
      */
     public mint = (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,8 +1,12 @@
 import { LockChain } from "@renproject/interfaces";
 import { assertType, Callable } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { Address, BitcoinBaseChain, Deposit, Transaction } from "./base";
 
+/**
+ * The Bitcoin class adds support for the asset BTC.
+ */
 export class BitcoinClass extends BitcoinBaseChain
     implements LockChain<Transaction, Deposit, Address> {
     getBurnPayload: (() => string) | undefined;
@@ -25,6 +29,12 @@ export class BitcoinClass extends BitcoinBaseChain
         return undefined;
     };
 
+    /**
+     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * available to the burn params.
+     *
+     * @category Main
+     */
     Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });
@@ -36,6 +46,16 @@ export class BitcoinClass extends BitcoinBaseChain
     burnPayload? = () => {
         return this.getBurnPayload ? this.getBurnPayload() : undefined;
     };
+
+    toSats = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .times(new BigNumber(10).exponentiatedBy(8))
+            .toFixed();
+
+    fromSats = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .dividedBy(new BigNumber(10).exponentiatedBy(8))
+            .toFixed();
 }
 
 // @dev Removes any static fields.

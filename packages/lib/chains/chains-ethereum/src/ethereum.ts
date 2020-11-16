@@ -8,7 +8,7 @@ import {
     RenNetworkString,
     SyncOrPromise,
 } from "@renproject/interfaces";
-import { Callable, Ox, toBigNumber } from "@renproject/utils";
+import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { provider } from "web3-providers";
 
@@ -50,8 +50,10 @@ export class EthereumClass extends EthereumBaseChain
     ): SyncOrPromise<OverwritableBurnAndReleaseParams | undefined> =>
         this._getParams ? this._getParams(asset, burnPayload) : undefined;
 
+    /** @category Main */
     public Address = (address: string) => this.Account({ address });
 
+    /** @category Main */
     public Account = ({
         value,
         address,
@@ -132,7 +134,7 @@ export class EthereumClass extends EthereumBaseChain
                                 {
                                     type: "uint256" as const,
                                     name: "_amount",
-                                    value: toBigNumber(value).toFixed(),
+                                    value: new BigNumber(value).toFixed(),
                                 },
                             ],
                             // txConfig,
@@ -145,6 +147,7 @@ export class EthereumClass extends EthereumBaseChain
         return this;
     };
 
+    /** @category Main */
     public Contract = (
         contractCall:
             | ContractCall
@@ -172,6 +175,7 @@ export class EthereumClass extends EthereumBaseChain
         return this;
     };
 
+    /** @category Main */
     public Transaction = (transaction: Transaction) => {
         this._getParams = (_asset: string, _burnPayload?: string) => {
             return {
@@ -181,6 +185,7 @@ export class EthereumClass extends EthereumBaseChain
         return this;
     };
 
+    /** @category Main */
     public BurnNonce = (burnNonce: Buffer | string | number) => {
         this._getParams = (_asset: string, _burnPayload?: string) => {
             return {
@@ -189,6 +194,16 @@ export class EthereumClass extends EthereumBaseChain
         };
         return this;
     };
+
+    toWei = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .times(new BigNumber(10).exponentiatedBy(18))
+            .toFixed();
+
+    fromWei = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .dividedBy(new BigNumber(10).exponentiatedBy(18))
+            .toFixed();
 }
 
 export type Ethereum = EthereumBaseChain;

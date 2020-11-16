@@ -67,6 +67,7 @@ web3.eth
             tx: burnTransaction,
             sdk: new RenJS("testnet"),
             providers: blockchainProviders,
+            autoSubmit: true,
             fromChainMap,
             toChainMap,
         });

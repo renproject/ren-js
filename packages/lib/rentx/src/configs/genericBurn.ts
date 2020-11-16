@@ -53,10 +53,10 @@ const txCreator = async (
     } = context.tx;
     const decimals = await context.toChainMap[destNetwork](
         context,
-    ).assetDecimals(sourceAsset);
+    ).assetDecimals(sourceAsset.toUpperCase());
 
     const suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals)
-        .decimalPlaces(8)
+        .decimalPlaces(0)
         .toFixed();
     try {
         // TODO: Pass lock and mint chains to getFees.

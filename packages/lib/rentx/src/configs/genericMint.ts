@@ -66,12 +66,12 @@ const txCreator = async (context: GatewayMachineContext) => {
     const { targetAmount, sourceAsset, sourceNetwork } = context.tx;
     const decimals = await context.fromChainMap[sourceNetwork](
         context,
-    ).assetDecimals(sourceAsset);
+    ).assetDecimals(sourceAsset.toUpperCase());
 
     context.tx.suggestedAmount = new BigNumber(
         Number(targetAmount) * 10 ** decimals,
     )
-        .decimalPlaces(8)
+        .decimalPlaces(0)
         .toFixed();
     try {
         // TODO: Pass lock and mint chain objects to getFees.

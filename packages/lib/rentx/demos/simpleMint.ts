@@ -41,16 +41,15 @@ const mintTransaction: GatewaySession = parsedTx || {
 // based on the destination network
 export const toChainMap = {
     binanceSmartChain: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
+        const { destAddress, destNetwork, network } = context.tx;
         const { providers } = context;
-        return new BinanceSmartChain(providers[destNetwork]).Account({
+        return new BinanceSmartChain(providers[destNetwork], network).Account({
             address: destAddress,
         });
     },
     ethereum: (context: GatewayMachineContext) => {
         const { destAddress, destNetwork } = context.tx;
         const { providers } = context;
-        console.log(destNetwork);
 
         return Ethereum(providers[destNetwork]).Account({
             address: destAddress,
@@ -90,7 +89,9 @@ web3.eth
         const service = interpret(machine).onTransition((state) => {
             if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
                 console.log(
-                    "Please deposit BTC to",
+                    "Please deposit",
+                    state.context.tx.suggestedAmount,
+                    "BTC to",
                     state.context.tx.gatewayAddress,
                 );
                 console.log(

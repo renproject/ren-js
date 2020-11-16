@@ -50,16 +50,18 @@ export interface ChainCommon<
     /**
      * The name of the Chain.
      *
-     * @example
+     * ```ts
      * bitcoin.name = "Bitcoin";
+     * ```
      */
     name: string;
 
     /**
      * The name of the Chain used the v0.2 RenVM nodes.
      *
-     * @example
+     * ```ts
      * bitcoin.legacyName = "Btc";
+     * ```
      */
     legacyName?: string;
 
@@ -93,8 +95,9 @@ export interface ChainCommon<
      * Mint-chains should return `false` for assets that have been bridged to
      * it.
      *
-     * @example
+     * ```ts
      * ethereum.assetIsNative = asset => asset === "ETH" ||;
+     * ```
      */
     assetIsNative: (asset: string) => SyncOrPromise<boolean>;
 
@@ -102,8 +105,9 @@ export interface ChainCommon<
      * `assetIsSupported` should return true if the the asset is native to the
      * chain or if the asset can be minted onto the chain.
      *
-     * @example
+     * ```ts
      * ethereum.assetIsSupported = asset => asset === "ETH" || asset === "BTC" || ...;
+     * ```
      */
     assetIsSupported: (asset: string) => SyncOrPromise<boolean>;
 
@@ -112,11 +116,12 @@ export interface ChainCommon<
      *
      * If the asset is not supported, an error should be thrown.
      *
-     * @example
+     * ```ts
      * bitcoin.assetDecimals = asset => {
      *     if (asset === "BTC") { return 8; }
      *     throw new Error(`Unsupported asset ${asset}.`);
      * }
+     * ```
      */
     assetDecimals: (asset: string) => SyncOrPromise<number>;
 
@@ -185,7 +190,15 @@ export type DepositCommon<Transaction = any> = {
 export interface LockChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
+    /**
+     * A deposit contains a transaction to a gateway address, and includes extra
+     * information including an amount field.
+     */
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    /**
+     * The LockChain's address format. This should contain all the information
+     * users need to
+     */
     Address = string
 > extends ChainCommon<Transaction, Address> {
     // Deposits

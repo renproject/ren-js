@@ -212,11 +212,10 @@ const depositListener = (
                 }
 
                 // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                const rawSourceTx: any = deposit.depositDetails.transaction;
+                const rawSourceTx = deposit.depositDetails;
                 const depositState: GatewayTransaction = persistedTx || {
                     sourceTxHash: txHash,
-                    sourceTxAmount: rawSourceTx.amount,
-                    sourceTxVOut: rawSourceTx.vOut,
+                    sourceTxAmount: parseInt(rawSourceTx.amount),
                     sourceTxConfs: 0,
                     rawSourceTx,
                 };
@@ -235,10 +234,7 @@ const depositListener = (
                 switch (event.type) {
                     case "RESTORE":
                         minter
-                            .processDeposit({
-                                transaction: event.data,
-                                amount: event.data.amount,
-                            })
+                            .processDeposit(event.data)
                             .then(() => {})
                             .catch((e) => {
                                 console.error(e);

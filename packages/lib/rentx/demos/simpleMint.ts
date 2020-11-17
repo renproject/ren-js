@@ -87,6 +87,8 @@ web3.eth
         // The machine will detect which state the transaction should be in,
         // and perform the neccessary next actions
         let promptedGatewayAddress = false;
+        let detectedDeposit = false;
+        let signed = false;
         const service = interpret(machine).onTransition((state) => {
             if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
                 console.log(
@@ -103,16 +105,26 @@ web3.eth
                 );
                 promptedGatewayAddress = true;
             }
-            if (state.value === "requestingSignature") {
+            const deposit = Object.values(
+                state.context.tx.transactions || {},
+            )[0];
+
+            if (!detectedDeposit && deposit) {
+                console.log("Detected deposit");
+                console.log(
+                    "Restore with this object",
+                    JSON.stringify(state.context.tx),
+                );
+                detectedDeposit = true;
+            }
+
+            if (!signed && state.value === "requestingSignature") {
                 // implement logic to determine whether deposit is valid
                 // In our case we take the first deposit to be the correct one
                 // and immediately sign
                 console.log("Signing transaction");
                 service.send("SIGN");
             }
-            const deposit = Object.values(
-                state.context.tx.transactions || {},
-            )[0];
             if (deposit?.destTxHash) {
                 // If we have a destination txHash, we have successfully minted BTC
                 console.log(

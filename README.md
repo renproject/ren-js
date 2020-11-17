@@ -8,7 +8,7 @@ The official Javascript SDK for interacting with [RenVM](https://renproject.io).
 
 1. **RenBridge** ([bridge.renproject.io](https://bridge.renproject.io)): Link out to RenBridge if you require users to have renBTC and other bridged assets.
 2. **RenJS** ([`RenJS` repository](./packages/lib/ren)): An SDK for integrating into your own user interface.
-3. **RenTX** ([`RenTX` repository](./packages/lib/rentx)): A wrapper around RenJS to make handling transaction state easier.
+3. **RenTX** ([`RenTX` repository](./packages/lib/ren-tx)): A wrapper around RenJS to make handling transaction state easier.
 4. **Multiwallet** ([`Multiwallet UI` repository](./packages/ui/multiwallet-ui)): A library for handling user wallet connections for various blockchains.
 
 ## Docs

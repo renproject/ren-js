@@ -42,13 +42,13 @@ const lockChainMap = {
 */
 
 export const renLockAndMint = async (context: GatewayMachineContext) => {
-    const { nonce, destNetwork, sourceNetwork, sourceAsset } = context.tx;
+    const { nonce, destChain, sourceChain, sourceAsset } = context.tx;
     const { sdk, fromChainMap, toChainMap } = context;
 
     const mint = await sdk.lockAndMint({
         asset: sourceAsset.toUpperCase(),
-        from: fromChainMap[sourceNetwork](context),
-        to: toChainMap[destNetwork](context),
+        from: fromChainMap[sourceChain](context),
+        to: toChainMap[destChain](context),
         nonce,
     });
 
@@ -63,15 +63,10 @@ const txCreator = async (context: GatewayMachineContext) => {
         context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
     }
 
-    const {
-        targetAmount,
-        sourceAsset,
-        sourceNetwork,
-        destNetwork,
-    } = context.tx;
+    const { targetAmount, sourceAsset, sourceChain, destChain } = context.tx;
 
-    const to = context.toChainMap[destNetwork](context);
-    const from = context.fromChainMap[sourceNetwork](context);
+    const to = context.toChainMap[destChain](context);
+    const from = context.fromChainMap[sourceChain](context);
 
     const decimals = await from.assetDecimals(sourceAsset.toUpperCase());
 

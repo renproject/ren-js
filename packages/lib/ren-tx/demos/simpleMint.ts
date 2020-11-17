@@ -28,9 +28,9 @@ const mintTransaction: GatewaySession = parsedTx || {
     type: "mint",
     network: "testnet",
     sourceAsset: "btc",
-    sourceNetwork: "bitcoin",
+    sourceChain: "bitcoin",
     destAddress: "ethereum address that will receive assets",
-    destNetwork: "ethereum",
+    destChain: "ethereum",
     targetAmount: 0.001,
     userAddress: "address that will sign the transaction",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
@@ -42,17 +42,17 @@ const mintTransaction: GatewaySession = parsedTx || {
 // based on the destination network
 export const toChainMap = {
     binanceSmartChain: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork, network } = context.tx;
+        const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
-        return new BinanceSmartChain(providers[destNetwork], network).Account({
+        return new BinanceSmartChain(providers[destChain], network).Account({
             address: destAddress,
         });
     },
     ethereum: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork, network } = context.tx;
+        const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
 
-        return Ethereum(providers[destNetwork], network).Account({
+        return Ethereum(providers[destChain], network).Account({
             address: destAddress,
         });
     },
@@ -88,7 +88,6 @@ web3.eth
         // and perform the neccessary next actions
         let promptedGatewayAddress = false;
         let detectedDeposit = false;
-        let signed = false;
         const service = interpret(machine).onTransition((state) => {
             if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
                 console.log(
@@ -118,13 +117,14 @@ web3.eth
                 detectedDeposit = true;
             }
 
-            if (!signed && state.value === "requestingSignature") {
+            if (state.value === "requestingSignature") {
                 // implement logic to determine whether deposit is valid
                 // In our case we take the first deposit to be the correct one
                 // and immediately sign
                 console.log("Signing transaction");
                 service.send("SIGN");
             }
+
             if (deposit?.destTxHash) {
                 // If we have a destination txHash, we have successfully minted BTC
                 console.log(

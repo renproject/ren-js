@@ -22,9 +22,9 @@ const burnTransaction: GatewaySession = parsedTx || {
     type: "burn",
     network: "testnet",
     sourceAsset: "btc",
-    sourceNetwork: "ethereum",
+    sourceChain: "ethereum",
     destAddress: "bitcoin address that will receive assets",
-    destNetwork: "bitcoin",
+    destChain: "bitcoin",
     targetAmount: 0.002,
     userAddress: "address that will sign the transaction",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
@@ -38,13 +38,13 @@ export const fromChainMap = {
     ethereum: (context: GatewayMachineContext) => {
         const {
             destAddress,
-            sourceNetwork,
+            sourceChain,
             suggestedAmount,
             network,
         } = context.tx;
         const { providers } = context;
 
-        return Ethereum(providers[sourceNetwork], network).Account({
+        return Ethereum(providers[sourceChain], network).Account({
             address: destAddress,
             value: suggestedAmount,
         });

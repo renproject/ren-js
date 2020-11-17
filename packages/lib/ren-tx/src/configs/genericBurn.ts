@@ -34,8 +34,8 @@ const burnAndRelease = async (context: BurnMachineContext) => {
     const transaction = Object.keys(context.tx.transactions)[0];
     return await context.sdk.burnAndRelease({
         asset: context.tx.sourceAsset.toUpperCase(),
-        to: context.toChainMap[context.tx.destNetwork](context),
-        from: context.fromChainMap[context.tx.sourceNetwork](context),
+        to: context.toChainMap[context.tx.destChain](context),
+        from: context.fromChainMap[context.tx.sourceChain](context),
         ...(transaction ? { transaction } : {}),
     });
 };
@@ -45,14 +45,9 @@ const txCreator = async (
     context: BurnMachineContext,
     // eslint-disable-next-line @typescript-eslint/require-await
 ): Promise<GatewaySession> => {
-    const {
-        targetAmount,
-        sourceAsset,
-        sourceNetwork,
-        destNetwork,
-    } = context.tx;
-    const to = context.toChainMap[destNetwork](context);
-    const from = context.fromChainMap[sourceNetwork](context);
+    const { targetAmount, sourceAsset, sourceChain, destChain } = context.tx;
+    const to = context.toChainMap[destChain](context);
+    const from = context.fromChainMap[sourceChain](context);
     const decimals = await to.assetDecimals(sourceAsset.toUpperCase());
 
     let suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals);

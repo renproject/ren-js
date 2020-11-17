@@ -1,12 +1,12 @@
-# `🤖 @renproject/rentx`
+# `🤖 @renproject/ren-tx`
 
 This implements RenVM transaction lifecycles in [xstate](https://xstate.js.org) state-machines to allow developers to easily trace the state of a transaction, and explicitly know which cases they should handle during processing.
 
 The aim is to provide a declarative interface, that can accept serializable "transaction" objects, that will reactively process the appropriate stages in the transaction lifecycle.
 
-## Differences between RenJS and @renproject/rentx
+## Differences between RenJS and @renproject/ren-tx
 
-|                           | renjs | @renproject/rentx |
+|                           | renjs | @renproject/ren-tx |
 | ------------------------- | ----- | ----------------- |
 | reactive                  | ❌    | ✓                 |
 | serializable transactions | ❌    | ✓                 |
@@ -37,6 +37,7 @@ Each machine requires
 -   `toChainMap` - A mapping of destination networks to builders for their `@renproject/chains` parameters
 
 ### Standalone xstate example
+(see the `/demos` folder for complete examples)
 
 #### Minting
 ```typescript
@@ -63,10 +64,10 @@ const mintTransaction: GatewaySession = {
     type: "mint",
     network: "testnet",
     sourceAsset: "btc",
-    sourceNetwork: "bitcoin",
+    sourceChain: "bitcoin",
     destAddress: "ethereum address that will receive assets",
-    destNetwork: "ethereum",
-    targetAmount: 1,
+    destChain: "ethereum",
+    targetAmount: 0.001,
     userAddress: "address that will sign the transaction",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
@@ -77,18 +78,18 @@ const mintTransaction: GatewaySession = {
 // based on the destination network
 export const toChainMap = {
     binanceSmartChain: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
+        const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
-        return new BinanceSmartChain(providers[destNetwork]).Account({
+        return new BinanceSmartChain(providers[destChain], network).Account({
             address: destAddress,
         });
     },
     ethereum: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
+        const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
-        console.log(destNetwork);
+        console.log(destChain);
 
-        return Ethereum(providers[destNetwork]).Account({
+        return Ethereum(providers[destChain], network).Account({
             address: destAddress,
         });
     },

@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/rentx",
+    "name": "@renproject/ren-tx",
     "version": "2.0.0-alpha-24",
     "description": "XState Statemachines for tracking RenVM transactions reactively",
     "repository": {

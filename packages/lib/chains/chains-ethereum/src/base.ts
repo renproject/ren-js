@@ -104,10 +104,11 @@ export const forwardWeb3Events = <T, TEvents extends Web3Events>(
             dest.emit("eth_confirmation", confNumber, eventReceipt);
         },
     );
-    // eslint-disable-next-line no-void
-    void src.on("error", (error: Error) => {
-        dest.emit("error", error);
-    });
+    // Don't forward - instead these should be listened for and thrown.
+    // // eslint-disable-next-line no-void
+    // void src.on("error", (error: Error) => {
+    //     dest.emit("error", error);
+    // });
 };
 
 /**

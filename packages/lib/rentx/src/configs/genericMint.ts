@@ -107,99 +107,111 @@ const depositListener = (
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
     let cleanup = () => {};
 
+    const targetDeposit = (context as DepositMachineContext).deposit;
+    let listening = false;
+
     renLockAndMint(context)
         .then((minter) => {
             cleanup = () => minter.removeAllListeners();
 
             minter.on("deposit", (deposit) => {
+                // Don't register listeners multiple times
+                if (targetDeposit && listening) return;
+                listening = true;
                 // Register event handlers prior to setup in case events land early
-                receive((event) => {
-                    switch (event.type) {
-                        case "SETTLE":
-                            deposit
-                                .confirmed()
-                                .on("target", (confs, targetConfs) => {
-                                    const confirmedTx = {
-                                        sourceTxConfs: confs,
-                                        sourceTxConfTarget: targetConfs,
-                                    };
-                                    callback({
-                                        type: "CONFIRMATION",
-                                        data: confirmedTx,
-                                    });
-                                })
-                                .on("confirmation", (confs, targetConfs) => {
-                                    const confirmedTx = {
-                                        sourceTxConfs: confs,
-                                        sourceTxConfTarget: targetConfs,
-                                    };
-                                    callback({
-                                        type: "CONFIRMATION",
-                                        data: confirmedTx,
-                                    });
-                                })
-                                .then(() => {
-                                    callback({
-                                        type: "CONFIRMED",
-                                    });
-                                })
-                                .catch(console.error);
-                            break;
-
-                        case "SIGN":
-                            deposit
-                                .signed()
-                                .on("status", (state) => console.log(state))
-                                .then((v) =>
-                                    callback({
-                                        type: "SIGNED",
-                                        data: {
-                                            renResponse:
-                                                v._state.queryTxResult?.out,
-                                            signature:
-                                                v._state.queryTxResult?.out
-                                                    ?.signature,
+                // If we don't have a targetDeposit, we won't handle events
+                targetDeposit &&
+                    receive((event) => {
+                        switch (event.type) {
+                            case "SETTLE":
+                                deposit
+                                    .confirmed()
+                                    .on("target", (confs, targetConfs) => {
+                                        const confirmedTx = {
+                                            sourceTxConfs: confs,
+                                            sourceTxConfTarget: targetConfs,
+                                        };
+                                        callback({
+                                            type: "CONFIRMATION",
+                                            data: confirmedTx,
+                                        });
+                                    })
+                                    .on(
+                                        "confirmation",
+                                        (confs, targetConfs) => {
+                                            const confirmedTx = {
+                                                sourceTxConfs: confs,
+                                                sourceTxConfTarget: targetConfs,
+                                            };
+                                            callback({
+                                                type: "CONFIRMATION",
+                                                data: confirmedTx,
+                                            });
                                         },
-                                    }),
-                                )
-                                .catch((e) => {
-                                    // If a tx has already been minted, we will get an error at this step
-                                    // We can assume that a "utxo spent" error implies that the asset has been minted
-                                    callback({
-                                        type: "SIGN_ERROR",
-                                        data: e,
-                                    });
-                                });
-                            break;
+                                    )
+                                    .then(() => {
+                                        callback({
+                                            type: "CONFIRMED",
+                                        });
+                                    })
+                                    .catch(console.error);
+                                break;
 
-                        case "MINT":
-                            deposit
-                                .mint()
-                                .on("transactionHash", (transactionHash) => {
-                                    const submittedTx = {
-                                        destTxHash: transactionHash,
-                                    };
-                                    callback({
-                                        type: "SUBMITTED",
-                                        data: submittedTx,
+                            case "SIGN":
+                                deposit
+                                    .signed()
+                                    .on("status", (state) => console.log(state))
+                                    .then((v) =>
+                                        callback({
+                                            type: "SIGNED",
+                                            data: {
+                                                renResponse:
+                                                    v._state.queryTxResult?.out,
+                                                signature:
+                                                    v._state.queryTxResult?.out
+                                                        ?.signature,
+                                            },
+                                        }),
+                                    )
+                                    .catch((e) => {
+                                        // If a tx has already been minted, we will get an error at this step
+                                        // We can assume that a "utxo spent" error implies that the asset has been minted
+                                        callback({
+                                            type: "SIGN_ERROR",
+                                            data: e,
+                                        });
                                     });
-                                })
-                                .catch((e) =>
-                                    callback({
-                                        type: "SUBMIT_ERROR",
-                                        data: e,
-                                    }),
-                                );
-                            break;
-                    }
-                });
+                                break;
+
+                            case "MINT":
+                                deposit
+                                    .mint()
+                                    .on(
+                                        "transactionHash",
+                                        (transactionHash) => {
+                                            const submittedTx = {
+                                                destTxHash: transactionHash,
+                                            };
+                                            callback({
+                                                type: "SUBMITTED",
+                                                data: submittedTx,
+                                            });
+                                        },
+                                    )
+                                    .catch((e) =>
+                                        callback({
+                                            type: "SUBMIT_ERROR",
+                                            data: e,
+                                        }),
+                                    );
+                                break;
+                        }
+                    });
 
                 const txHash = deposit.txHash();
                 const persistedTx = context.tx.transactions[txHash];
 
                 // Prevent deposit machine tx listeners from interacting with other deposits
-                const targetDeposit = (context as DepositMachineContext)
-                    .deposit;
                 if (targetDeposit) {
                     if (targetDeposit.sourceTxHash !== txHash) {
                         console.error(

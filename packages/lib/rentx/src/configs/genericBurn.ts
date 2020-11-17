@@ -99,6 +99,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     receive: Receiver<any>,
 ) => {
     const cleaners: Array<() => void> = [];
+    let burning = false;
     burnAndRelease(context)
         .then((burn) => {
             if (context.autoSubmit) {
@@ -109,6 +110,9 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 context.tx.transactions,
             )[0];
             const performBurn = async () => {
+                // Only allow burn to be called once
+                if (burning) return;
+                burning = true;
                 const burnRef = burn.burn();
 
                 const burnListener = (confs: number) => {

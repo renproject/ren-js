@@ -37,6 +37,7 @@
         "clean": "yarn rimraf ./build",
         "test": "yarn tsdx test",
         "prepare": "yarn build",
+        "npmignore": "npmignore -g ../../../.gitignore",
         "prepare-release": "run-s npmignore build",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
     },

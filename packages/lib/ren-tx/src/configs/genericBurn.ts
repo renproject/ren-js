@@ -50,7 +50,9 @@ const txCreator = async (
     const from = context.fromChainMap[sourceChain](context);
     const decimals = await to.assetDecimals(sourceAsset.toUpperCase());
 
-    let suggestedAmount = new BigNumber(Number(targetAmount) * 10 ** decimals);
+    let suggestedAmount = new BigNumber(targetAmount).times(
+        new BigNumber(10).exponentiatedBy(decimals),
+    );
     try {
         const fees = await context.sdk.getFees({
             asset: sourceAsset.toUpperCase(),

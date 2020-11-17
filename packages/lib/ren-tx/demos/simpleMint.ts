@@ -10,6 +10,7 @@ import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import Web3 from "web3";
+import BigNumber from "bignumber.js";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
@@ -27,10 +28,10 @@ const mintTransaction: GatewaySession = parsedTx || {
     type: "mint",
     network: "testnet",
     sourceAsset: "btc",
-    sourceNetwork: "bitcoin",
+    sourceChain: "bitcoin",
     destAddress: "ethereum address that will receive assets",
-    destNetwork: "ethereum",
-    targetAmount: 1,
+    destChain: "ethereum",
+    targetAmount: 0.001,
     userAddress: "address that will sign the transaction",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
@@ -41,18 +42,17 @@ const mintTransaction: GatewaySession = parsedTx || {
 // based on the destination network
 export const toChainMap = {
     binanceSmartChain: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
+        const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
-        return new BinanceSmartChain(providers[destNetwork]).Account({
+        return new BinanceSmartChain(providers[destChain], network).Account({
             address: destAddress,
         });
     },
     ethereum: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
+        const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
-        console.log(destNetwork);
 
-        return Ethereum(providers[destNetwork]).Account({
+        return Ethereum(providers[destChain], network).Account({
             address: destAddress,
         });
     },
@@ -87,10 +87,15 @@ web3.eth
         // The machine will detect which state the transaction should be in,
         // and perform the neccessary next actions
         let promptedGatewayAddress = false;
+        let detectedDeposit = false;
         const service = interpret(machine).onTransition((state) => {
             if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
                 console.log(
-                    "Please deposit BTC to",
+                    "Please deposit",
+                    new BigNumber(state.context.tx.suggestedAmount)
+                        .div(1e8)
+                        .toFixed(),
+                    "BTC to",
                     state.context.tx.gatewayAddress,
                 );
                 console.log(
@@ -99,6 +104,19 @@ web3.eth
                 );
                 promptedGatewayAddress = true;
             }
+            const deposit = Object.values(
+                state.context.tx.transactions || {},
+            )[0];
+
+            if (!detectedDeposit && deposit) {
+                console.log("Detected deposit");
+                console.log(
+                    "Restore with this object",
+                    JSON.stringify(state.context.tx),
+                );
+                detectedDeposit = true;
+            }
+
             if (state.value === "requestingSignature") {
                 // implement logic to determine whether deposit is valid
                 // In our case we take the first deposit to be the correct one
@@ -106,9 +124,7 @@ web3.eth
                 console.log("Signing transaction");
                 service.send("SIGN");
             }
-            const deposit = Object.values(
-                state.context.tx.transactions || {},
-            )[0];
+
             if (deposit?.destTxHash) {
                 // If we have a destination txHash, we have successfully minted BTC
                 console.log(

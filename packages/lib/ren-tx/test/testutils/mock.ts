@@ -18,7 +18,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
     };
 
     const mockLockChain: LockChain = {
-        name: "mockLockChain",
+        name: "Bitcoin",
         assetDecimals: () => 1,
         addressIsValid: () => true,
         transactionID: () =>
@@ -38,6 +38,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
         depositV1HashString: () => "v1HashString",
         legacyName: "Btc",
         assetIsNative: () => true,
+        assetIsSupported: () => true,
         transactionRPCFormat: () => ({
             txid: fromHex(
                 "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
@@ -59,7 +60,7 @@ export const buildMockMintChain = (minted?: boolean) => {
         currentLockConfs: 0,
     };
     const mockMintChain: MintChain = {
-        name: "mockMintChain",
+        name: "Ethereum",
         assetDecimals: () => 1,
         addressIsValid: () => true,
         transactionID: () => "tid" + String(new Date().getTime()),
@@ -106,12 +107,20 @@ export const buildMockMintChain = (minted?: boolean) => {
         },
         // This will skip the deposit process if truthy
         findTransaction: () => minted,
-        contractCalls: () => [
-            {
-                sendTo: "0x0000000000000000000000000000000000000000",
-                contractFn: "nop",
-            },
-        ],
+        getFees: () => ({ burn: 10, mint: 10 }),
+        getBalance: () => new BigNumber(1),
+        assetIsNative: () => true,
+        assetIsSupported: () => true,
+        getMintParams: () => {
+            return {
+                contractCalls: [
+                    {
+                        sendTo: "0x0000000000000000000000000000000000000000",
+                        contractFn: "nop",
+                    },
+                ],
+            };
+        },
     };
     return { mockMintChain, state };
 };

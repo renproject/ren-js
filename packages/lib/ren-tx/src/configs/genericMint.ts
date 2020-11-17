@@ -3,6 +3,7 @@
 // TODO: Improve typings.
 
 import RenJS from "@renproject/ren";
+import BigNumber from "bignumber.js";
 import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 
 import { depositMachine, DepositMachineContext } from "../machines/deposit";
@@ -41,13 +42,13 @@ const lockChainMap = {
 */
 
 export const renLockAndMint = async (context: GatewayMachineContext) => {
-    const { nonce, destNetwork, sourceNetwork, sourceAsset } = context.tx;
+    const { nonce, destChain, sourceChain, sourceAsset } = context.tx;
     const { sdk, fromChainMap, toChainMap } = context;
 
     const mint = await sdk.lockAndMint({
         asset: sourceAsset.toUpperCase(),
-        from: fromChainMap[sourceNetwork](context),
-        to: toChainMap[destNetwork](context),
+        from: fromChainMap[sourceChain](context),
+        to: toChainMap[destChain](context),
         nonce,
     });
 
@@ -62,25 +63,37 @@ const txCreator = async (context: GatewayMachineContext) => {
         context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
     }
 
+    const { targetAmount, sourceAsset, sourceChain, destChain } = context.tx;
+
+    const to = context.toChainMap[destChain](context);
+    const from = context.fromChainMap[sourceChain](context);
+
+    const decimals = await from.assetDecimals(sourceAsset.toUpperCase());
+
+    let suggestedAmount = new BigNumber(targetAmount).times(
+        new BigNumber(10).exponentiatedBy(decimals),
+    );
+
     try {
-        // TODO: Pass lock and mint chain objects to getFees.
-        // const { targetAmount, sourceAsset } = context.tx;
-        // const fees = await context.sdk.getFees();
-        // const fee: number = fees[sourceAsset.toLowerCase()].lock;
-        // context.tx.suggestedAmount = Math.floor(
-        //     fee + (Number(targetAmount) || 0.0001) * 1e8,
-        // );
+        const fees = await context.sdk.getFees({
+            asset: sourceAsset.toUpperCase(),
+            from,
+            to,
+        });
+
+        suggestedAmount = suggestedAmount
+            .plus(fees.lock || 0)
+            .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
     } catch (error) {
         console.error(error);
-        context.tx.suggestedAmount = 0.0008 * 1e8;
     }
+
     const minter = await renLockAndMint(context);
     const gatewayAddress = minter?.gatewayAddress;
     const newTx: GatewaySession = {
         ...context.tx,
+        suggestedAmount: suggestedAmount.decimalPlaces(0).toFixed(),
         gatewayAddress,
-        // Not serializable
-        // params: deposit.params,
     };
     return newTx;
 };
@@ -91,99 +104,111 @@ const depositListener = (
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
     let cleanup = () => {};
 
+    const targetDeposit = (context as DepositMachineContext).deposit;
+    let listening = false;
+
     renLockAndMint(context)
         .then((minter) => {
             cleanup = () => minter.removeAllListeners();
 
             minter.on("deposit", (deposit) => {
+                // Don't register listeners multiple times
+                if (targetDeposit && listening) return;
+                listening = true;
                 // Register event handlers prior to setup in case events land early
-                receive((event) => {
-                    switch (event.type) {
-                        case "SETTLE":
-                            deposit
-                                .confirmed()
-                                .on("target", (confs, targetConfs) => {
-                                    const confirmedTx = {
-                                        sourceTxConfs: confs,
-                                        sourceTxConfTarget: targetConfs,
-                                    };
-                                    callback({
-                                        type: "CONFIRMATION",
-                                        data: confirmedTx,
-                                    });
-                                })
-                                .on("confirmation", (confs, targetConfs) => {
-                                    const confirmedTx = {
-                                        sourceTxConfs: confs,
-                                        sourceTxConfTarget: targetConfs,
-                                    };
-                                    callback({
-                                        type: "CONFIRMATION",
-                                        data: confirmedTx,
-                                    });
-                                })
-                                .then(() => {
-                                    callback({
-                                        type: "CONFIRMED",
-                                    });
-                                })
-                                .catch(console.error);
-                            break;
-
-                        case "SIGN":
-                            deposit
-                                .signed()
-                                .on("status", (state) => console.log(state))
-                                .then((v) =>
-                                    callback({
-                                        type: "SIGNED",
-                                        data: {
-                                            renResponse:
-                                                v._state.queryTxResult?.out,
-                                            signature:
-                                                v._state.queryTxResult?.out
-                                                    ?.signature,
+                // If we don't have a targetDeposit, we won't handle events
+                targetDeposit &&
+                    receive((event) => {
+                        switch (event.type) {
+                            case "SETTLE":
+                                deposit
+                                    .confirmed()
+                                    .on("target", (confs, targetConfs) => {
+                                        const confirmedTx = {
+                                            sourceTxConfs: confs,
+                                            sourceTxConfTarget: targetConfs,
+                                        };
+                                        callback({
+                                            type: "CONFIRMATION",
+                                            data: confirmedTx,
+                                        });
+                                    })
+                                    .on(
+                                        "confirmation",
+                                        (confs, targetConfs) => {
+                                            const confirmedTx = {
+                                                sourceTxConfs: confs,
+                                                sourceTxConfTarget: targetConfs,
+                                            };
+                                            callback({
+                                                type: "CONFIRMATION",
+                                                data: confirmedTx,
+                                            });
                                         },
-                                    }),
-                                )
-                                .catch((e) => {
-                                    // If a tx has already been minted, we will get an error at this step
-                                    // We can assume that a "utxo spent" error implies that the asset has been minted
-                                    callback({
-                                        type: "SIGN_ERROR",
-                                        data: e,
-                                    });
-                                });
-                            break;
+                                    )
+                                    .then(() => {
+                                        callback({
+                                            type: "CONFIRMED",
+                                        });
+                                    })
+                                    .catch(console.error);
+                                break;
 
-                        case "MINT":
-                            deposit
-                                .mint()
-                                .on("transactionHash", (transactionHash) => {
-                                    const submittedTx = {
-                                        destTxHash: transactionHash,
-                                    };
-                                    callback({
-                                        type: "SUBMITTED",
-                                        data: submittedTx,
+                            case "SIGN":
+                                deposit
+                                    .signed()
+                                    .on("status", (state) => console.log(state))
+                                    .then((v) =>
+                                        callback({
+                                            type: "SIGNED",
+                                            data: {
+                                                renResponse:
+                                                    v._state.queryTxResult?.out,
+                                                signature:
+                                                    v._state.queryTxResult?.out
+                                                        ?.signature,
+                                            },
+                                        }),
+                                    )
+                                    .catch((e) => {
+                                        // If a tx has already been minted, we will get an error at this step
+                                        // We can assume that a "utxo spent" error implies that the asset has been minted
+                                        callback({
+                                            type: "SIGN_ERROR",
+                                            data: e,
+                                        });
                                     });
-                                })
-                                .catch((e) =>
-                                    callback({
-                                        type: "SUBMIT_ERROR",
-                                        data: e,
-                                    }),
-                                );
-                            break;
-                    }
-                });
+                                break;
+
+                            case "MINT":
+                                deposit
+                                    .mint()
+                                    .on(
+                                        "transactionHash",
+                                        (transactionHash) => {
+                                            const submittedTx = {
+                                                destTxHash: transactionHash,
+                                            };
+                                            callback({
+                                                type: "SUBMITTED",
+                                                data: submittedTx,
+                                            });
+                                        },
+                                    )
+                                    .catch((e) =>
+                                        callback({
+                                            type: "SUBMIT_ERROR",
+                                            data: e,
+                                        }),
+                                    );
+                                break;
+                        }
+                    });
 
                 const txHash = deposit.txHash();
                 const persistedTx = context.tx.transactions[txHash];
 
                 // Prevent deposit machine tx listeners from interacting with other deposits
-                const targetDeposit = (context as DepositMachineContext)
-                    .deposit;
                 if (targetDeposit) {
                     if (targetDeposit.sourceTxHash !== txHash) {
                         console.error(
@@ -196,11 +221,10 @@ const depositListener = (
                 }
 
                 // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                const rawSourceTx: any = deposit.depositDetails.transaction;
+                const rawSourceTx = deposit.depositDetails;
                 const depositState: GatewayTransaction = persistedTx || {
                     sourceTxHash: txHash,
-                    sourceTxAmount: rawSourceTx.amount,
-                    sourceTxVOut: rawSourceTx.vOut,
+                    sourceTxAmount: parseInt(rawSourceTx.amount),
                     sourceTxConfs: 0,
                     rawSourceTx,
                 };
@@ -219,10 +243,7 @@ const depositListener = (
                 switch (event.type) {
                     case "RESTORE":
                         minter
-                            .processDeposit({
-                                transaction: event.data,
-                                amount: event.data.amount,
-                            })
+                            .processDeposit(event.data)
                             .then(() => {})
                             .catch((e) => {
                                 console.error(e);

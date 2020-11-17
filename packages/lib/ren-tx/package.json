@@ -1,6 +1,6 @@
 {
-    "name": "@renproject/rentx",
-    "version": "2.0.0-y.0",
+    "name": "@renproject/ren-tx",
+    "version": "2.0.0-alpha-24",
     "description": "XState Statemachines for tracking RenVM transactions reactively",
     "repository": {
         "type": "git",
@@ -36,15 +36,17 @@
         "build:module": "tsc -p tsconfig.module.json",
         "clean": "yarn rimraf ./build",
         "test": "yarn tsdx test",
+        "prepare": "yarn build",
+        "prepare-release": "run-s npmignore build",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts"
     },
     "dependencies": {
         "bignumber.js": "^9.0.1"
     },
     "devDependencies": {
-        "@renproject/interfaces": "^2.0.0-alpha.22",
-        "@renproject/ren": "^2.0.0-y.0",
-        "@renproject/rpc": "^2.0.0-y.0",
+        "@renproject/interfaces": "^2.0.0-alpha-24",
+        "@renproject/ren": "^2.0.0-alpha-24",
+        "@renproject/rpc": "^2.0.0-alpha-24",
         "dotenv": "^8.2.0",
         "xstate": "^4.13.0"
     },

@@ -74,18 +74,20 @@ const txCreator = async (context: GatewayMachineContext) => {
         new BigNumber(10).exponentiatedBy(decimals),
     );
 
-    try {
-        const fees = await context.sdk.getFees({
-            asset: sourceAsset.toUpperCase(),
-            from,
-            to,
-        });
+    if (context.autoFees) {
+        try {
+            const fees = await context.sdk.getFees({
+                asset: sourceAsset.toUpperCase(),
+                from,
+                to,
+            });
 
-        suggestedAmount = suggestedAmount
-            .plus(fees.lock || 0)
-            .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
-    } catch (error) {
-        console.error(error);
+            suggestedAmount = suggestedAmount
+                .plus(fees.lock || 0)
+                .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     const minter = await renLockAndMint(context);

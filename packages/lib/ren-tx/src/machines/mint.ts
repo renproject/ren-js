@@ -11,17 +11,47 @@ import { GatewaySession, GatewayTransaction } from "../types/transaction";
 import { depositMachine } from "./deposit";
 
 export interface GatewayMachineContext {
-    tx: GatewaySession; // The session arguments used for instantiating a mint gateway
+    /**
+     * The session arguments used for instantiating a mint gateway
+     */
+    tx: GatewaySession;
+    /**
+     * Automatically add fees to the tx suggestedAmount when creating
+     */
+    autoFees?: boolean;
+    /**
+     * @private
+     * A reference to a deposit hash that is requesting a mint signature /
+     * tx submission
+     */
     signatureRequest?: string | null;
-    depositMachines?: { [key in string]: Actor<typeof depositMachine> }; // Keeps track of child machines that track underlying deposits
-    depositListenerRef?: Actor<any>; // a listener callback that interacts with renjs deposit objects
-    providers: any; // Providers needed for LockChains
+    /**
+     * @private
+     * Keeps track of child machines that track underlying deposits
+     */
+    depositMachines?: { [key in string]: Actor<typeof depositMachine> };
+    /**
+     * @private
+     * a listener callback that interacts with renjs deposit objects
+     */
+    depositListenerRef?: Actor<any>;
+    /**
+     * Providers needed for LockChains
+     */
+    providers: any;
+    /**
+     * Functions to create the "from" param;
+     */
     fromChainMap: {
         [key in string]: (context: GatewayMachineContext) => LockChain<any>;
-    }; // Functions to create the "from" param;
+    };
+
+    /**
+     * Functions to create the "to" RenJS param;
+     */
     toChainMap: {
         [key in string]: (context: GatewayMachineContext) => MintChain<any>;
-    }; // Functions to create the "to" param;
+    };
     sdk: RenJS;
 }
 
@@ -47,6 +77,20 @@ export type GatewayMachineEvent =
     | { type: "ACKNOWLEDGE"; data: any }
     | { type: "RESTORE"; data: GatewayTransaction };
 
+/**
+ * An Xstate machine that, when given a serializable [[GatewaySession]] tx,
+ * will instantiate a RenJS LockAndMint session, provide a gateway address,
+ * listen for deposits, and request a signature once a deposit has reached
+ * the appropriate number of confirmations.
+ *
+ * Given the same [[GatewaySession]] parameters, as long as the tx has not
+ * expired, the machine will restore the transaction to the appropriate
+ * state and enable the completion of in-progress minting transactions.
+ *
+ * The machine allows for multiple deposits to be detected; it is up to the
+ * developer to decide if a detected deposit should be signed or rejected.
+ * See `/demos/simpleMint.ts` for example usage.
+ */
 export const mintMachine = Machine<
     GatewayMachineContext,
     GatewayMachineSchema,

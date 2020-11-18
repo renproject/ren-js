@@ -53,18 +53,21 @@ const txCreator = async (
     let suggestedAmount = new BigNumber(targetAmount).times(
         new BigNumber(10).exponentiatedBy(decimals),
     );
-    try {
-        const fees = await context.sdk.getFees({
-            asset: sourceAsset.toUpperCase(),
-            from,
-            to,
-        });
 
-        suggestedAmount = suggestedAmount
-            .plus(fees.release || 0)
-            .plus(suggestedAmount.multipliedBy(fees.burn * 0.001));
-    } catch (error) {
-        // Ignore error
+    if (context.autoFees) {
+        try {
+            const fees = await context.sdk.getFees({
+                asset: sourceAsset.toUpperCase(),
+                from,
+                to,
+            });
+
+            suggestedAmount = suggestedAmount
+                .plus(fees.release || 0)
+                .plus(suggestedAmount.multipliedBy(fees.burn * 0.001));
+        } catch (error) {
+            // Ignore error
+        }
     }
 
     const newTx: GatewaySession = {

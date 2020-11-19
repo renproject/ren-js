@@ -75,19 +75,20 @@ const txCreator = async (context: GatewayMachineContext) => {
     );
 
     if (context.autoFees) {
-        try {
-            const fees = await context.sdk.getFees({
-                asset: sourceAsset.toUpperCase(),
-                from,
-                to,
-            });
+        // This will throw and be caught by the machine if we fail to get fees
+        // If the user specifies that they want to have fees added,
+        // we should not silently fail, as they will be prompted to deposit
+        // an incorrect amount
 
-            suggestedAmount = suggestedAmount
-                .plus(fees.lock || 0)
-                .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
-        } catch (error) {
-            console.error(error);
-        }
+        const fees = await context.sdk.getFees({
+            asset: sourceAsset.toUpperCase(),
+            from,
+            to,
+        });
+
+        suggestedAmount = suggestedAmount
+            .plus(fees.lock || 0)
+            .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
     }
 
     const minter = await renLockAndMint(context);

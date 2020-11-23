@@ -53,7 +53,12 @@ const txCreator = async (
     let suggestedAmount = new BigNumber(targetAmount).times(
         new BigNumber(10).exponentiatedBy(decimals),
     );
-    try {
+
+    if (context.autoFees) {
+        // This will throw and be caught by the machine if we fail to get fees
+        // If the user specifies that they want to have fees added,
+        // we should not silently fail, as they will not recieve the amount
+        // they expected
         const fees = await context.sdk.getFees({
             asset: sourceAsset.toUpperCase(),
             from,
@@ -63,8 +68,6 @@ const txCreator = async (
         suggestedAmount = suggestedAmount
             .plus(fees.release || 0)
             .plus(suggestedAmount.multipliedBy(fees.burn * 0.001));
-    } catch (error) {
-        // Ignore error
     }
 
     const newTx: GatewaySession = {

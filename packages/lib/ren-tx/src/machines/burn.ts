@@ -9,16 +9,72 @@ import { assert } from "@renproject/utils";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 
 export interface BurnMachineContext {
+    /**
+     * The TX to be processed
+     */
     tx: GatewaySession;
     sdk: RenJS;
+    /**
+     * Automatically add fees to the tx suggestedAmount when creating
+     */
+    autoFees?: boolean;
+    /**
+     * Automatically request burn submission to the host chain provider
+     * (eg. will prompt web3 tx dialog after starting machine)
+     */
     autoSubmit?: boolean;
-    providers: any; // The blockchain api providers required for the mintchain
+
+    /**
+     * The blockchain api providers required for the host chain
+     */
+    providers: any;
+
+    /**
+     * Functions to create the "to" RenJS param, for each native chain that you
+     * want to support
+     *
+     * Example:
+     * ```js
+     * cosnt toChainMap = {
+     *     bitcoin: (context: GatewayMachineContext) =>
+     *         Bitcoin().Address(context.tx.destAddress),
+     * }
+     * ```
+     */
     toChainMap: {
-        [key in string]: (context: BurnMachineContext) => LockChain<any>;
-    }; // Functions to create the "to" param;
+        [key: string]: (context: BurnMachineContext) => LockChain<any>;
+    };
+
+    /**
+     * Functions to create the "from" RenJS param, for each host chain that you
+     * want to support.
+     * Example:
+     * ```js
+     * const fromChainMap = {
+     *     ethereum: (context: GatewayMachineContext) => {
+     *         const {
+     *             destAddress,
+     *             sourceChain,
+     *             suggestedAmount,
+     *             network,
+     *         } = context.tx;
+     *         const { providers } = context;
+     *
+     *         return Ethereum(providers[sourceChain], network).Account({
+     *             address: destAddress,
+     *             value: suggestedAmount,
+     *         });
+     *     },
+     * }
+     * ```
+     */
     fromChainMap: {
-        [key in string]: (context: BurnMachineContext) => MintChain<any>;
-    }; // Functions to create the "from" param;
+        [key: string]: (context: BurnMachineContext) => MintChain<any>;
+    };
+    /**
+     * @private
+     * Tracks the RenJS BurnAndRelease callback
+     */
     burnListenerRef?: Actor<any>;
 }
 
@@ -48,6 +104,21 @@ export type BurnMachineEvent =
     | { type: "CONFIRMED"; data: GatewayTransaction }
     | { type: "RELEASED" };
 
+/**
+ * An Xstate machine that, when given a serializable [[GatewaySession]] tx,
+ * will instantiate a RenJS BurnAndRelease session, prompt the user to submit a
+ * burn transaction (or automatically submit if the `autoSubmit` flag is set),
+ * on the host chain, listen for confirmations, and detect the release transaction
+ * once the native asset has been released.
+ *
+ * Given the same [[GatewaySession]] parameters, as long as the tx has not
+ * expired, the machine will restore the transaction to the appropriate
+ * state and enable the completion of in-progress burning transactions, however
+ * RenVM will generally automatically complete asset releases once the burn
+ * transaction has been submitted to the host chain.
+ *
+ * See `/demos/simpleBurn.ts` for example usage.
+ */
 export const burnMachine = Machine<
     BurnMachineContext,
     BurnMachineSchema,
@@ -109,7 +180,7 @@ export const burnMachine = Machine<
                     },
                 },
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             !Object.keys(state.context.tx.transactions).length
                                 ? true
@@ -124,7 +195,7 @@ export const burnMachine = Machine<
                     RETRY: "created",
                 },
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.tx.error ? true : false,
                             "Error must exist",
@@ -172,7 +243,7 @@ export const burnMachine = Machine<
                     },
                 },
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             Object.keys(state.context.tx.transactions).length
                                 ? true
@@ -187,7 +258,7 @@ export const burnMachine = Machine<
                     RELEASED: "destInitiated",
                 },
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             getFirstTx(state.context.tx).sourceTxConfs >=
                                 (getFirstTx(state.context.tx)
@@ -204,6 +275,7 @@ export const burnMachine = Machine<
             },
         },
     },
+
     {
         guards: {
             isSrcSettling: (ctx, _evt) => {

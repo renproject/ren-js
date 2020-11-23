@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-filecoin",
-    "version": "2.0.0-alpha.25",
+    "version": "2.0.0-alpha.26",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,8 +45,8 @@
     "dependencies": {
         "@glif/filecoin-address": "^1.0.0-lerna.4",
         "@renproject/interfaces": "^2.0.0-alpha.25",
-        "@renproject/rpc": "^2.0.0-alpha.25",
-        "@renproject/utils": "^2.0.0-alpha.25",
+        "@renproject/rpc": "^2.0.0-alpha.26",
+        "@renproject/utils": "^2.0.0-alpha.26",
         "@types/bs58": "^4.0.1",
         "@types/node": ">=10",
         "bchaddrjs": "^0.4.9",

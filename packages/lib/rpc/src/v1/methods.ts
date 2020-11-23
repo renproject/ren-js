@@ -114,16 +114,46 @@ export interface ParamsQueryFees {
     // No parameters.
 }
 
+export interface RenVMBlock {
+    data: Array<ResponseQueryMintTx["tx"] | ResponseQueryBurnTx["tx"]>;
+    hash: string;
+    header: {
+        baseHash: string; // "jEBqPYpfr3r2saZRiv/g5sRMXD69JudwxPCBGnPxUK0";
+        height: number; // 11208465;
+        kind: number; // 1;
+        parentHash: string; // "KMUbHX2iSccz1E9dpGi3Md+Q49TyNQkxcuypKl1SYF0";
+        planRef: string; // "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU";
+        prevStateRef: string; // "9vHrlPdKJfBCVh/tPJx0o0kbWSPfpKbYS5W14IF+QQ4";
+        round: number; // 0;
+        signatories: unknown[]; // [];
+        timestamp: number; // 1605248487;
+        txsRef: string; // "r1Vw9aGBC3r3jK9LxwpmDw31HkK6+R1N5bIyjeDoPfw";
+    };
+    prevState: Array<{
+        name: string; // "bch";
+        type: string; // "ext_btcCompatUTXOs";
+        value: [
+            {
+                amount: string; // "20435191997";
+                ghash: string; // "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+                scriptPubKey: string; // "dqkUX6qVduRay8lmK2q/MjIpt0ipSV2IrA==";
+                txHash: string; // "kb0gbEIVI1Vlwem0YgurOuV/wlLKNaAn3G9Q1bknr0M=";
+                vOut: string; // "1";
+            },
+        ];
+    }>;
+}
+
 // ResponseQueryBlock defines the response of the MethodQueryBlock.
 export interface ResponseQueryBlock {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    block: any; // Block json.RawMessage`json:"block"`
+    block: RenVMBlock; // Block json.RawMessage`json:"block"`
 }
 
 // ResponseQueryBlocks defines the response of the MethodQueryBlocks.
 export interface ResponseQueryBlocks {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    blocks: any; // Blocks json.RawMessage`json:"blocks"`
+    blocks: RenVMBlock[]; // Blocks json.RawMessage`json:"blocks"`
 }
 
 // ResponseSubmitTx defines the response of the MethodSubmitTx.

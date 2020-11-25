@@ -15,8 +15,10 @@ export class BitcoinCashClass extends BitcoinClass {
 
     public readonly asset = "BCH";
     public readonly utils = {
-        // ...super.utils,
-        p2shPrefix: super.utils.p2shPrefix,
+        p2shPrefix: {
+            mainnet: Buffer.from([0x05]),
+            testnet: Buffer.from([0xc4]),
+        },
         getUTXO: BCHHandler.getUTXO,
         getUTXOs: BCHHandler.getUTXOs,
         getTransactions: BCHHandler.getTransactions,

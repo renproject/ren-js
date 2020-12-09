@@ -162,16 +162,37 @@ const depositListener = (
                                     .signed()
                                     .on("status", (state) => console.log(state))
                                     .then((v) =>
-                                        callback({
-                                            type: "SIGNED",
-                                            data: {
-                                                renResponse:
-                                                    v._state.queryTxResult?.out,
-                                                signature:
-                                                    v._state.queryTxResult?.out
-                                                        ?.signature,
-                                            },
-                                        }),
+                                        v._state.queryTxResult &&
+                                        v._state.queryTxResult.out &&
+                                        v._state.queryTxResult.out.revert !==
+                                            undefined
+                                            ? callback({
+                                                  type: "SIGN_ERROR",
+                                                  data: new Error(
+                                                      v._state.queryTxResult.out.revert,
+                                                  ),
+                                              })
+                                            : callback({
+                                                  type: "SIGNED",
+                                                  data: {
+                                                      renResponse:
+                                                          v._state.queryTxResult
+                                                              ?.out,
+                                                      signature:
+                                                          v._state
+                                                              .queryTxResult &&
+                                                          v._state.queryTxResult
+                                                              .out &&
+                                                          v._state.queryTxResult
+                                                              .out.revert ===
+                                                              undefined
+                                                              ? v._state
+                                                                    .queryTxResult
+                                                                    .out
+                                                                    .signature
+                                                              : undefined,
+                                                  },
+                                              }),
                                     )
                                     .catch((e) => {
                                         // If a tx has already been minted, we will get an error at this step

@@ -1,6 +1,6 @@
 import { retryNTimes, SECONDS } from "@renproject/utils";
 
-import { LockAndMintDeposit } from "./lockAndMint";
+import { DepositStatus, LockAndMintDeposit } from "./lockAndMint";
 
 /**
  * See [[RenJS.defaultDepositHandler]].
@@ -31,14 +31,34 @@ const createDepositHandler = (retries = -1) => {
 
         await retryNTimes(
             async () => {
-                deposit._state.logger.log(`Calling .signed`);
-                await deposit.signed().on("status", (status) => {
-                    deposit._state.logger.log(`status: ${status}`);
-                });
+                try {
+                    deposit._state.logger.log(`Calling .signed`);
+                    await deposit
+                        .signed()
+                        .on("txHash", (status) => {
+                            deposit._state.logger.log(`RenVM hash: ${status}`);
+                        })
+                        .on("status", (status) => {
+                            deposit._state.logger.log(`status: ${status}`);
+                        });
+                } catch (error) {
+                    if (deposit.status === DepositStatus.Reverted) {
+                        return;
+                    }
+                    throw error;
+                }
             },
             retries,
             10 * SECONDS,
         );
+
+        if (deposit.status === DepositStatus.Reverted) {
+            throw new Error(
+                `RenVM transaction reverted${
+                    deposit.revertReason ? ": " + deposit.revertReason : ""
+                }`,
+            );
+        }
 
         await retryNTimes(
             async () => {

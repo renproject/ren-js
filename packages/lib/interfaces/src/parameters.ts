@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
 
 import { DepositCommon, LockChain, MintChain } from "./chain";
@@ -78,15 +79,13 @@ export interface TransferParamsCommon {
  * The parameters for a cross-chain transfer onto Ethereum.
  */
 export interface LockAndMintParams<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
         LockTransaction
     >,
-    LockAddress = string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockAddress = any,
     MintTransaction = any,
-    MintAddress = string
+    MintAddress = any
 > extends TransferParamsCommon {
     /**
      * The chain that the asset is native to - e.g. `Bitcoin()` for bridging the
@@ -105,15 +104,13 @@ export interface LockAndMintParams<
  * from Ethereum.
  */
 export interface BurnAndReleaseParams<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
         LockTransaction
     >,
-    LockAddress = string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockAddress = any,
     MintTransaction = any,
-    MintAddress = string
+    MintAddress = any
 > extends TransferParamsCommon {
     /**
      * The chain from which the ren-asset was burned - e.g. `Ethereum(provider)`.

@@ -48,10 +48,10 @@ interface MintStatePartial {
     gHash: Buffer;
     pHash: Buffer;
     targetConfirmations: number | undefined;
-    queryTxResult?: LockAndMintTransaction;
 }
 
 interface DepositState {
+    queryTxResult?: LockAndMintTransaction;
     gHash: Buffer;
     gPubKey: Buffer;
     nHash: Buffer;
@@ -103,10 +103,12 @@ export class LockAndMint<
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
         LockTransaction
     >,
-    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockAddress = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
-    MintAddress = string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintAddress = any
 > extends EventEmitter {
     // Public
 
@@ -514,6 +516,7 @@ export enum DepositStatus {
     Confirmed = "confirmed",
     Signed = "signed",
     Submitted = "submitted",
+    Reverted = "reverted",
 }
 
 /**
@@ -542,10 +545,12 @@ export class LockAndMintDeposit<
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
         LockTransaction
     >,
-    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockAddress = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
-    MintAddress = string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintAddress = any
 > {
     /** The details, including amount, of the deposit. */
     public depositDetails: LockDeposit;
@@ -572,6 +577,8 @@ export class LockAndMintDeposit<
 
     /** See [[RenJS.renVM]]. */
     public renVM: AbstractRenVMProvider;
+
+    public revertReason?: string;
 
     /**
      * Internal state of the mint object, including the `gHash` and `pHash`.
@@ -612,7 +619,6 @@ export class LockAndMintDeposit<
                 gHash: "Buffer",
                 pHash: "Buffer",
                 targetConfirmations: "number | undefined",
-                queryTxResult: "object | undefined",
             },
             { state },
         );
@@ -838,7 +844,16 @@ export class LockAndMintDeposit<
                     queryTxResult &&
                     queryTxResult.txStatus === TxStatus.TxStatusDone
                 ) {
-                    return DepositStatus.Signed;
+                    // Check if transaction was reverted.
+                    if (
+                        queryTxResult.out &&
+                        queryTxResult.out.revert !== undefined
+                    ) {
+                        this.status = DepositStatus.Reverted;
+                        this.revertReason = queryTxResult.out.revert;
+                    } else {
+                        return DepositStatus.Signed;
+                    }
                 }
             } catch (_error) {
                 // Ignore error.
@@ -959,7 +974,6 @@ export class LockAndMintDeposit<
                         `deposit confidence: ${confidence.current} / ${confidence.target}`,
                     );
                 } catch (error) {
-                    console.error(error);
                     this._state.logger.error(
                         `Error fetching transaction confidence: ` +
                             extractError(error),
@@ -1039,6 +1053,17 @@ export class LockAndMintDeposit<
                     }
                     txHash = queryTxResponse.hash;
                 } catch (errorInner) {
+                    // Check for RenVM v0.2 error message.
+                    if (
+                        /insufficient funds/.exec(
+                            String((errorInner || {}).message),
+                        )
+                    ) {
+                        this.status = DepositStatus.Reverted;
+                        this.revertReason = errorInner.message;
+                        throw new Error(this.revertReason);
+                    }
+
                     // Ignore errorInner.
                     this._state.logger.debug(errorInner);
                     throw error;
@@ -1058,16 +1083,21 @@ export class LockAndMintDeposit<
                 () => promiEvent._isCancelled(),
             );
 
-            // Update status.
-            this.status = DepositStatus.Signed;
-
             this._state.queryTxResult = response;
 
-            this._state.logger.debug(
-                "signature:",
-                this._state.queryTxResult.out &&
-                    this._state.queryTxResult.out.signature,
-            );
+            // Update status.
+            if (response.out && response.out.revert !== undefined) {
+                this.status = DepositStatus.Reverted;
+                this.revertReason = response.out.revert;
+                throw new Error(this.revertReason);
+            } else {
+                this.status = DepositStatus.Signed;
+
+                this._state.logger.debug(
+                    "signature:",
+                    response.out && response.out.signature,
+                );
+            }
 
             return this;
         })()
@@ -1090,7 +1120,9 @@ export class LockAndMintDeposit<
         const sigHash =
             this._state.queryTxResult &&
             this._state.queryTxResult.out &&
-            this._state.queryTxResult.out.sighash;
+            this._state.queryTxResult.out.revert === undefined
+                ? this._state.queryTxResult.out.sighash
+                : undefined;
 
         // Check if the signature has already been submitted
         return await this.params.to.findTransaction(

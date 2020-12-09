@@ -77,7 +77,7 @@ describe("Refactor - Burning", () => {
 
         burnAndRelease._state.logger = new SimpleLogger(
             logLevel,
-            blue(`[${burnAndRelease.txHash().slice(0, 6)}] `),
+            blue(`[${burnAndRelease.txHash().slice(0, 6)}]`),
         );
 
         const result = await burnAndRelease

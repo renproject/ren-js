@@ -150,9 +150,9 @@ export class TerraClass
             address.memo,
         );
 
-        for (const tx of txs) {
-            await onDeposit(transactionToDeposit(tx));
-        }
+        await Promise.all(
+            txs.map(async (tx) => onDeposit(transactionToDeposit(tx))),
+        );
     };
 
     /**

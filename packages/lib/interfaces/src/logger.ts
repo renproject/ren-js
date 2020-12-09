@@ -72,28 +72,12 @@ const logLevelName = (level: LogLevelString): string => {
     }
 };
 
-const toString = (value: unknown): string => {
+const toString = (value: unknown): unknown => {
     try {
-        if (typeof value === "string") {
-            return value;
-        }
         if (BigNumber.isBigNumber(value)) {
             return value.toFixed();
         }
-        const seen: unknown[] = [];
-        return JSON.stringify(
-            value,
-            (_key, val: unknown) => {
-                if (val !== null && typeof val === "object") {
-                    if (seen.indexOf(val) >= 0) {
-                        return;
-                    }
-                    seen.push(val);
-                }
-                return val;
-            },
-            "    ",
-        );
+        return value;
     } catch (error) {
         try {
             return String(value);
@@ -103,7 +87,19 @@ const toString = (value: unknown): string => {
     }
 };
 
-type Prefix = (level: LogLevelString) => string;
+type Prefix = (level: LogLevelString) => string | undefined;
+
+const printWithPrefix = (
+    l: typeof console.log,
+    prefix: string | undefined,
+    ...args: unknown[]
+) => {
+    if (prefix) {
+        l(prefix, ...args);
+    } else {
+        l(...args);
+    }
+};
 
 /**
  * SimpleLogger is a implementation of the Logger interface that also supports
@@ -117,7 +113,7 @@ export class SimpleLogger {
 
     public logPrefix: Prefix = () => "";
     public debugPrefix: Prefix = (level: LogLevelString) =>
-        `[RenJS][${logLevelName(level)}] `;
+        `[RenJS][${logLevelName(level)}]`;
 
     constructor(
         level: LogLevelString = LogLevel.Warn,
@@ -142,15 +138,15 @@ export class SimpleLogger {
 
     public trace = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Trace) {
-            if (optionalParams.length) {
-                console.group(
-                    this.debugPrefix(LogLevel.Trace) + toString(message),
-                );
+            if (optionalParams.length && typeof message === "string") {
+                console.group(this.debugPrefix(LogLevel.Trace) + message);
                 console.trace(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
-                console.trace(
-                    this.debugPrefix(LogLevel.Trace) + toString(message),
+                printWithPrefix(
+                    console.trace,
+                    this.debugPrefix(LogLevel.Trace),
+                    toString(message),
                     ...optionalParams.map(toString),
                 );
             }
@@ -159,52 +155,56 @@ export class SimpleLogger {
 
     public debug = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Debug) {
-            if (optionalParams.length) {
-                console.group(
-                    this.debugPrefix(LogLevel.Debug) + toString(message),
-                );
+            if (optionalParams.length && typeof message === "string") {
+                console.group(this.debugPrefix(LogLevel.Debug) + message);
                 console.debug(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
-                console.debug(
-                    this.debugPrefix(LogLevel.Debug) + toString(message),
+                printWithPrefix(
+                    console.debug,
+                    this.debugPrefix(LogLevel.Debug),
+                    toString(message),
                     ...optionalParams.map(toString),
                 );
             }
         }
     };
 
-    public info = (message?: unknown, ...optionalParams: unknown[]): void => {
+    public info = (...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Info) {
-            console.info(
-                this.logPrefix(LogLevel.Debug) + toString(message),
+            printWithPrefix(
+                console.info,
+                this.logPrefix(LogLevel.Info),
                 ...optionalParams.map(toString),
             );
         }
     };
 
-    public log = (message?: unknown, ...optionalParams: unknown[]): void => {
+    public log = (...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Log) {
-            console.log(
-                this.logPrefix(LogLevel.Debug) + toString(message),
+            printWithPrefix(
+                console.log,
+                this.logPrefix(LogLevel.Log),
                 ...optionalParams.map(toString),
             );
         }
     };
 
-    public warn = (message?: unknown, ...optionalParams: unknown[]): void => {
+    public warn = (...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Warn) {
-            console.warn(
-                this.logPrefix(LogLevel.Debug) + toString(message),
+            printWithPrefix(
+                console.warn,
+                this.logPrefix(LogLevel.Warn),
                 ...optionalParams.map(toString),
             );
         }
     };
 
-    public error = (message?: unknown, ...optionalParams: unknown[]): void => {
+    public error = (...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Error) {
-            console.error(
-                this.logPrefix(LogLevel.Debug) + toString(message),
+            printWithPrefix(
+                console.error,
+                this.logPrefix(LogLevel.Error),
                 ...optionalParams.map(toString),
             );
         }

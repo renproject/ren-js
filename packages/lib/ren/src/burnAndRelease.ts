@@ -42,10 +42,12 @@ export class BurnAndRelease<
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
         LockTransaction
     >,
-    LockAddress = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LockAddress = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
-    MintAddress = string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    MintAddress = any
 > {
     /** The details of the burn, including the amount and recipient. */
     public burnDetails: BurnDetails<MintTransaction> | undefined;

@@ -166,9 +166,9 @@ export abstract class BitcoinBaseChain
                       confirmations: 0,
                   });
 
-        for (const tx of txs) {
-            await onDeposit(transactionToDeposit(tx));
-        }
+        await Promise.all(
+            txs.map(async (tx) => onDeposit(transactionToDeposit(tx))),
+        );
 
         return true;
     };

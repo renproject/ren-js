@@ -30,14 +30,18 @@ export type LockAndMintTransaction = RenTransaction<
         };
     },
     // Output
-    {
-        phash: Buffer;
-        amount: string;
-        ghash: Buffer;
-        nhash: Buffer;
-        sighash: Buffer;
-        signature?: Buffer;
-    }
+    | {
+          phash: Buffer;
+          amount: string;
+          ghash: Buffer;
+          nhash: Buffer;
+          sighash: Buffer;
+          signature?: Buffer;
+          revert?: undefined;
+      }
+    | {
+          revert: string;
+      }
 >;
 
 export type BurnAndReleaseTransaction = RenTransaction<
@@ -46,9 +50,13 @@ export type BurnAndReleaseTransaction = RenTransaction<
         ref: string;
         to: string;
         amount: string;
+        revert?: undefined;
     },
     // Output
-    {}
+    | {}
+    | {
+          revert: string;
+      }
 >;
 
 export type RenVMAssetFees = {

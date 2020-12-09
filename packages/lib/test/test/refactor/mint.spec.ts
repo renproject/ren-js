@@ -2,14 +2,19 @@
 
 import * as Chains from "@renproject/chains";
 
-import { LogLevel, SimpleLogger } from "@renproject/interfaces";
+import {
+    LockAndMintParams,
+    LogLevel,
+    SimpleLogger,
+} from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { SECONDS, sleep } from "@renproject/utils";
+import { extractError, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
+import BigNumber from "bignumber.js";
 
 chai.should();
 
@@ -25,34 +30,46 @@ describe("Refactor: mint", () => {
     longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
-        const asset = "BTC";
+        const asset = "FIL";
 
-        const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
+        const account = new CryptoAccount(PRIVATE_KEY, {
+            network: "testnet",
+            apiAddress: "https://lotus-cors-proxy.herokuapp.com/",
+        });
 
         const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS("testnet", { logLevel });
 
-        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        // Use 0.0001 more than fee.
-        let suggestedAmount;
-        try {
-            const fees = await renJS.getFees();
-            const fee: number = fees[asset.toLowerCase()].lock;
-            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
-        } catch (error) {
-            console.error(error);
-            suggestedAmount = 0.0008 * 1e8;
-        }
-
-        const lockAndMint = await renJS.lockAndMint({
+        const params: LockAndMintParams = {
             asset,
-            from: Chains.Bitcoin(),
-            to: Chains.Ethereum(provider).Account({
+            from: Chains.Filecoin(),
+            to: Chains.Ethereum(provider, Chains.renTestnetVDot3).Account({
                 address: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             }),
-        });
+        };
+
+        const assetDecimals = await params.from.assetDecimals(asset);
+
+        // Use 0.0001 more than fee.
+        let suggestedAmount: BigNumber | number;
+        try {
+            const fees = await renJS.getFees(params);
+            suggestedAmount = fees.lock
+                .div(new BigNumber(10).exponentiatedBy(assetDecimals))
+                .plus(0.0001);
+        } catch (error) {
+            console.error("Error fetching fees:", red(extractError(error)));
+            if ((asset as string) === "FIL") {
+                suggestedAmount = 0.2;
+            } else {
+                suggestedAmount = 0.0015;
+            }
+        }
+
+        const lockAndMint = await renJS.lockAndMint(params);
 
         // const lockAndMint = await renJS.lockAndMint({
         //     // Amount of BTC we are sending (in Satoshis)
@@ -86,13 +103,19 @@ describe("Refactor: mint", () => {
 
                 deposit._state.logger = new SimpleLogger(
                     logLevel,
-                    color(`[${hash.slice(0, 6)}] `),
+                    color(`[${hash.slice(0, 6)}]`),
                 );
 
                 deposit._state.logger.log(
                     `Received ${
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (deposit.depositDetails as any).amount / 1e8
+                        new BigNumber((deposit.depositDetails as any).amount)
+                            .div(
+                                new BigNumber(10).exponentiatedBy(
+                                    assetDecimals,
+                                ),
+                            )
+                            .toFixed()
                     } ${asset}`,
                     deposit.depositDetails,
                 );
@@ -102,23 +125,37 @@ describe("Refactor: mint", () => {
                     .catch(deposit._state.logger.error);
             });
 
-            sleep(15 * SECONDS)
+            sleep(60 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
                     if (i === 0) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
-                                suggestedAmount / 1e8,
+                                suggestedAmount.toFixed(),
                             )} ${blue(asset)} to ${blue(
-                                lockAndMint.gatewayAddress,
+                                typeof lockAndMint.gatewayAddress === "string"
+                                    ? lockAndMint.gatewayAddress
+                                    : JSON.stringify(
+                                          lockAndMint.gatewayAddress,
+                                      ),
                             )}`,
                         );
+
+                        const options = { params: undefined };
+                        let address = "";
+                        if (typeof lockAndMint.gatewayAddress === "string") {
+                            address = lockAndMint.gatewayAddress;
+                        } else if ((asset as string) === "FIL") {
+                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                            address = (lockAndMint.gatewayAddress as Chains.FilAddress)
+                                .address;
+                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                            options.params = (lockAndMint.gatewayAddress as Chains.FilAddress).params;
+                        } else {
+                            return;
+                        }
                         account
-                            .sendSats(
-                                lockAndMint.gatewayAddress,
-                                suggestedAmount,
-                                asset,
-                            )
+                            .send(address, suggestedAmount, asset, options)
                             .catch(reject);
                     }
                 })

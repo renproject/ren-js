@@ -120,7 +120,7 @@ describe("Extra params", () => {
 
                 deposit._state.logger = new SimpleLogger(
                     logLevel,
-                    color(`[${hash.slice(0, 6)}] `),
+                    color(`[${hash.slice(0, 6)}]`),
                 );
 
                 deposit._state.logger.log(

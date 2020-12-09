@@ -4,7 +4,8 @@ export const utilsWithChainNetwork = <
     Utils extends MintChainStatic<Transaction, Address, Network>["utils"],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
-    Address = string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Address = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Network = any
 >(

@@ -42,11 +42,8 @@ export type TransactionListener<
  * If a chain has multiple assets (e.g. ETH and ERC20s), it's recommended that a single handler is written that supports
  * all the relevant assets.
  */
-export interface ChainCommon<
-    Transaction = any,
-    Address = string,
-    Network = any
-> extends MintChainStatic<Transaction, Address, Network> {
+export interface ChainCommon<Transaction = any, Address = any, Network = any>
+    extends MintChainStatic<Transaction, Address, Network> {
     /**
      * The name of the Chain.
      *
@@ -183,7 +180,7 @@ export interface LockChain<
      * The LockChain's address format. This should contain all the information
      * users need to
      */
-    Address = string,
+    Address = any,
     /**
      * The LockChain's network options.
      */
@@ -271,7 +268,7 @@ export type OverwritableBurnAndReleaseParams = Omit<
     "from"
 >;
 
-export interface MintChain<Transaction = any, Address = string, Network = any>
+export interface MintChain<Transaction = any, Address = any, Network = any>
     extends ChainCommon<Transaction, Address, Network> {
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
@@ -340,7 +337,7 @@ export interface MintChain<Transaction = any, Address = string, Network = any>
  */
 export interface MintChainStatic<
     Transaction = any,
-    Address = string,
+    Address = any,
     Network = any
 > {
     utils: {

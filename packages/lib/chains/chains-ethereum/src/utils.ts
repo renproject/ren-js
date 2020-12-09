@@ -541,8 +541,16 @@ export const submitToEthereum = async (
     // config?: { [key: string]: unknown },
     logger: Logger = NullLogger,
 ): Promise<EthTransaction> => {
-    if (!mintTx.out || !mintTx.out.signature) {
-        throw new Error(`No signature passed to mint submission.`);
+    if (!mintTx.out) {
+        throw new Error(`No result available from RenVM transaction.`);
+    }
+
+    if (mintTx.out.revert !== undefined) {
+        throw new Error(`Unable to submit reverted RenVM transaction.`);
+    }
+
+    if (!mintTx.out.signature) {
+        throw new Error(`No signature available from RenVM transaction.`);
     }
 
     let tx: PromiEvent<unknown, Web3Events> | undefined;

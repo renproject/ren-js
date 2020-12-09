@@ -64,7 +64,7 @@ const resolveNetwork = (
         | RenNetworkString
         | RenNetworkDetails
         | EthereumConfig,
-): EthereumConfig => {
+): EthereumConfig | undefined => {
     let networkConfig: EthereumConfig | undefined;
     if (renNetwork && (renNetwork as EthereumConfig).addresses) {
         networkConfig = renNetwork as EthereumConfig;
@@ -75,10 +75,6 @@ const resolveNetwork = (
         if (EthereumConfigMap[networkDetails.name]) {
             networkConfig = EthereumConfigMap[networkDetails.name];
         }
-    }
-
-    if (!networkConfig) {
-        throw new Error(`Unknown network ${JSON.stringify(renNetwork)}`);
     }
 
     return networkConfig;
@@ -102,12 +98,18 @@ export class EthereumBaseChain
         addressExplorerLink: (
             address: EthAddress,
             network: NetworkInput = renMainnet,
-        ): string => `${resolveNetwork(network).etherscan}/address/${address}`,
+        ): string =>
+            `${
+                (resolveNetwork(network) || renMainnet).etherscan
+            }/address/${address}`,
 
         transactionExplorerLink: (
             transaction: EthTransaction,
             network: NetworkInput = renMainnet,
-        ): string => `${resolveNetwork(network).etherscan}/tx/${transaction}`,
+        ): string =>
+            `${
+                (resolveNetwork(network) || renMainnet).etherscan
+            }/tx/${transaction}`,
     };
 
     public utils = utilsWithChainNetwork(
@@ -132,6 +134,7 @@ export class EthereumBaseChain
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
+
         const gatewayAddress = await getGatewayAddress(
             this.renNetworkDetails,
             this.web3,
@@ -197,10 +200,26 @@ export class EthereumBaseChain
         if (this.assetIsNative(asset)) {
             return true;
         }
+
+        if (!this.web3 || !this.renNetworkDetails) {
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
+
         // Check that there's a gateway contract for the asset.
         try {
             return !!(await this.getGatewayContractAddress(asset));
         } catch (error) {
+            if (
+                /(Empty address returned)|(Asset not supported on mint-chain)/.exec(
+                    String((error || {}).message),
+                )
+            ) {
+                // Ignore
+            } else {
+                console.warn(error);
+            }
             return false;
         }
     };
@@ -259,6 +278,10 @@ export class EthereumBaseChain
     ): Promise<EthTransaction> => {
         if (!mintTx.out) {
             throw new Error(`No signature passed to mint submission.`);
+        }
+
+        if (mintTx.out.revert !== undefined) {
+            throw new Error(`Unable to submit reverted RenVM transaction.`);
         }
 
         if (!this.web3) {

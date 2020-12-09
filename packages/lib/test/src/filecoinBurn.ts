@@ -46,7 +46,7 @@ const main = async () => {
     // Note - the RenVM txHash is only available after calling `.burn`.
     burnAndRelease._state.logger = new SimpleLogger(
         logLevel,
-        blue(`[${burnAndRelease.txHash().slice(0, 6)}] `),
+        blue(`[${burnAndRelease.txHash().slice(0, 6)}]`),
     );
 
     const result = await burnAndRelease

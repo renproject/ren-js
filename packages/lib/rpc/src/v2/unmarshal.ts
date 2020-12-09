@@ -28,10 +28,6 @@ export const unmarshalMintTx = (
     if (response.tx.out) {
         out = unmarshalTypedPackValue(response.tx.out);
 
-        if (out.revert) {
-            throw new Error(out.revert);
-        }
-
         if (out.sig) {
             const [r, s, v] = [
                 out.sig.slice(0, 32),
@@ -64,9 +60,6 @@ export const unmarshalBurnTx = (
 
     if (response.tx.out) {
         out = unmarshalTypedPackValue(response.tx.out);
-        if (out.revert) {
-            throw new Error(out.revert);
-        }
     }
 
     return {

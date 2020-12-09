@@ -5,6 +5,7 @@ import {
 } from "@glif/filecoin-address";
 import {
     getRenNetworkDetails,
+    LockAndMintParams,
     LockChain,
     MintChainStatic,
     RenNetwork,
@@ -131,7 +132,7 @@ export class FilecoinClass
     getDeposits = async (
         asset: string,
         address: FilAddress,
-        _instanceID: unknown,
+        _instanceID: void,
         onDeposit: (deposit: FilDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
@@ -149,9 +150,9 @@ export class FilecoinClass
             this.chainNetwork,
         );
 
-        for (const tx of txs) {
-            await onDeposit(transactionToDeposit(tx));
-        }
+        await Promise.all(
+            txs.map(async (tx) => onDeposit(transactionToDeposit(tx))),
+        );
     };
 
     /**
@@ -275,3 +276,4 @@ export type Filecoin = FilecoinClass;
 export const Filecoin = Callable(FilecoinClass);
 
 const _: MintChainStatic<FilTransaction, FilAddress, FilNetwork> = Filecoin;
+const __: LockAndMintParams["from"] = Filecoin();

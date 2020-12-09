@@ -29,7 +29,7 @@ export function Callable<TConstructor extends Constructor>(
     type: TConstructor,
 ): CallableConstructor<TConstructor> {
     // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-    function createInstance(
+    function constructor(
         ...args: ConstructorArgs<TConstructor>
     ): ConstructorClass<TConstructor> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -37,6 +37,12 @@ export function Callable<TConstructor extends Constructor>(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    createInstance.prototype = type.prototype;
-    return createInstance as CallableConstructor<TConstructor>;
+    constructor.prototype = type.prototype;
+
+    // TODO: Overwrite static values dynamically.
+    (constructor as any).utils = (type as any).utils;
+    (constructor as any).asset = (type as any).asset;
+    (constructor as any).chain = (type as any).chain;
+
+    return constructor as CallableConstructor<TConstructor>;
 }

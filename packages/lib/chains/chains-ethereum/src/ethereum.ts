@@ -12,11 +12,11 @@ import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { provider } from "web3-providers";
 
-import { Address, EthereumBaseChain, Transaction } from "./base";
+import { EthAddress, EthereumBaseChain, EthTransaction } from "./base";
 import { EthereumConfig } from "./networks";
 
 export class EthereumClass extends EthereumBaseChain
-    implements MintChain<Transaction, Address> {
+    implements MintChain<EthTransaction, EthAddress> {
     public _getParams:
         | ((
               asset: string,
@@ -176,7 +176,7 @@ export class EthereumClass extends EthereumBaseChain
     };
 
     /** @category Main */
-    public Transaction = (transaction: Transaction) => {
+    public Transaction = (transaction: EthTransaction) => {
         this._getParams = (_asset: string, _burnPayload?: string) => {
             return {
                 transaction,
@@ -207,4 +207,5 @@ export class EthereumClass extends EthereumBaseChain
 }
 
 export type Ethereum = EthereumBaseChain;
+// @dev Removes any static fields, except `utils`.
 export const Ethereum = Callable(EthereumClass);

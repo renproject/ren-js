@@ -6,22 +6,26 @@ import {
 import {
     getRenNetworkDetails,
     LockChain,
+    MintChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { assertType, Callable, toBase64, toURLBase64 } from "@renproject/utils";
+import {
+    assertType,
+    Callable,
+    toBase64,
+    toURLBase64,
+    utilsWithChainNetwork,
+} from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
 import elliptic from "elliptic";
 
-import {
-    FilecoinNetwork as FilecoinNetworkImport,
-    FilTransaction,
-} from "./api/deposit";
+import { FilNetwork as FilNetworkImport, FilTransaction } from "./deposit";
 import { fetchDeposits, fetchMessage } from "./api/indexer";
 
-export type FilecoinNetwork = FilecoinNetworkImport;
+export type FilNetwork = FilNetworkImport;
 
 export type FilAddress = {
     address: string; // Filecoin address
@@ -40,21 +44,52 @@ const transactionToDeposit = (transaction: FilTransaction) => ({
 });
 
 export class FilecoinClass
-    implements LockChain<FilTransaction, FilDeposit, FilAddress> {
-    public name = "Filecoin";
+    implements LockChain<FilTransaction, FilDeposit, FilAddress, FilNetwork> {
+    public static chain = "Filecoin";
+    public chain = FilecoinClass.chain;
+    public name = FilecoinClass.chain;
+
     public renNetwork: RenNetworkDetails | undefined;
-    public chainNetwork: FilecoinNetwork | undefined;
+    public chainNetwork: FilNetwork | undefined;
 
     public asset = "FIL";
-    public _addressIsValid = (address: FilAddress, _network: FilecoinNetwork) =>
-        validateAddressString(address.address);
 
-    constructor(network?: FilecoinNetwork) {
+    public static utils = {
+        addressIsValid: (
+            address: FilAddress,
+            _network: FilNetwork = "mainnet",
+        ) => validateAddressString(address.address),
+
+        addressExplorerLink: (
+            address: FilAddress,
+            _network: FilNetwork = "mainnet",
+        ): string => {
+            // TODO: Check network.
+            return `https://filfox.info/en/address/${address.address}`;
+        },
+
+        transactionExplorerLink: (
+            transaction: FilTransaction,
+            _network: FilNetwork = "mainnet",
+        ): string => {
+            // TODO: Check network.
+            return `https://filfox.info/en/message/${transaction.cid}`;
+        },
+    };
+
+    public utils = utilsWithChainNetwork<
+        typeof FilecoinClass["utils"],
+        FilTransaction,
+        FilAddress,
+        FilNetwork
+    >(FilecoinClass.utils, () => this.chainNetwork);
+
+    constructor(network?: FilNetwork) {
         this.chainNetwork = network;
     }
 
     /**
-     * See [[OriginChain.initialize]].
+     * See [[LockChain.initialize]].
      */
     public initialize = (
         renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
@@ -69,7 +104,7 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.assetIsNative]].
+     * See [[LockChain.assetIsNative]].
      */
     assetIsNative = (asset: string): boolean => asset === this.asset;
     assetIsSupported = this.assetIsNative;
@@ -81,7 +116,7 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.assetDecimals]].
+     * See [[LockChain.assetDecimals]].
      */
     assetDecimals = (asset: string): number => {
         if (asset === this.asset) {
@@ -91,12 +126,12 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.getDeposits]].
+     * See [[LockChain.getDeposits]].
      */
     getDeposits = async (
         asset: string,
         address: FilAddress,
-        _instanceID: number,
+        _instanceID: unknown,
         onDeposit: (deposit: FilDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
@@ -120,7 +155,7 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.transactionConfidence]].
+     * See [[LockChain.transactionConfidence]].
      */
     transactionConfidence = async (
         transaction: FilTransaction,
@@ -136,7 +171,7 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.getGatewayAddress]].
+     * See [[LockChain.getGatewayAddress]].
      */
     getGatewayAddress = (
         asset: string,
@@ -182,40 +217,27 @@ export class FilecoinClass
     };
 
     /**
-     * See [[OriginChain.addressStringToBytes]].
+     * See [[LockChain.addressStringToBytes]].
      */
     addressStringToBytes = (address: string): Buffer => {
         return decodeAddress(address).str;
     };
 
     /**
-     * See [[OriginChain.addressIsValid]].
+     * See [[LockChain.addressIsValid]].
      */
     addressIsValid = (address: FilAddress): boolean => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
         assertType<string>("string", { address: address.address });
-        return this._addressIsValid(address, this.chainNetwork);
+        return FilecoinClass.utils.addressIsValid(address, this.chainNetwork);
     };
 
     /**
-     * See [[OriginChain.addressExplorerLink]].
-     */
-    addressExplorerLink = (address: FilAddress): string => {
-        // TODO: Check network.
-        return `https://filfox.info/en/address/${address.address}`;
-    };
-
-    /**
-     * See [[OriginChain.transactionExplorerLink]].
+     * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: FilTransaction) => transaction.cid;
-
-    transactionExplorerLink = (transaction: FilTransaction): string => {
-        // TODO: Check network.
-        return `https://filfox.info/en/message/${transaction.cid}`;
-    };
 
     depositV1HashString = (_deposit: FilDeposit): string => {
         throw new Error(NETWORK_NOT_SUPPORTED);
@@ -248,6 +270,8 @@ export class FilecoinClass
     };
 }
 
-// @dev Removes any static fields.
 export type Filecoin = FilecoinClass;
+// @dev Removes any static fields, except `utils`.
 export const Filecoin = Callable(FilecoinClass);
+
+const _: MintChainStatic<FilTransaction, FilAddress, FilNetwork> = Filecoin;

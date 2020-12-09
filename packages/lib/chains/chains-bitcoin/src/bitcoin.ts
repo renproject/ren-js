@@ -1,33 +1,22 @@
-import { LockChain } from "@renproject/interfaces";
+import { LockChain, MintChainStatic } from "@renproject/interfaces";
 import { assertType, Callable } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
-import { Address, BitcoinBaseChain, Deposit, Transaction } from "./base";
+import {
+    BtcAddress,
+    BitcoinBaseChain,
+    BtcNetwork,
+    BtcDeposit,
+    BtcTransaction,
+} from "./base";
 
 /**
  * The Bitcoin class adds support for the asset BTC.
  */
 export class BitcoinClass extends BitcoinBaseChain
-    implements LockChain<Transaction, Deposit, Address> {
+    implements
+        LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean> {
     getBurnPayload: (() => string) | undefined;
-
-    addressExplorerLink = (address: Address): string | undefined => {
-        if (this.chainNetwork === "mainnet") {
-            return `https://live.blockcypher.com/btc/address/${address}/`;
-        } else if (this.chainNetwork === "testnet") {
-            return `https://live.blockcypher.com/btc-testnet/address/${address}/`;
-        }
-        return undefined;
-    };
-
-    transactionExplorerLink = (tx: Transaction): string | undefined => {
-        if (this.chainNetwork === "mainnet") {
-            return `https://live.blockcypher.com/btc/tx/${tx.txHash}/`;
-        } else if (this.chainNetwork === "testnet") {
-            return `https://live.blockcypher.com/btc-testnet/tx/${tx.txHash}/`;
-        }
-        return undefined;
-    };
 
     /**
      * When burning, you can call `Bitcoin.Address("...")` to make the address
@@ -61,3 +50,5 @@ export class BitcoinClass extends BitcoinBaseChain
 // @dev Removes any static fields.
 export type Bitcoin = BitcoinClass;
 export const Bitcoin = Callable(BitcoinClass);
+
+const _: MintChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Bitcoin;

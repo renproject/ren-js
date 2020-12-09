@@ -396,6 +396,10 @@ export class RenVMProvider
     ): Promise<{ lock: BigNumber; release: BigNumber }> => {
         const renVMState = await this.sendMessage(RPCMethod.QueryState, {});
 
+        if (!renVMState.state[chain.name]) {
+            throw new Error(`No fee details found for ${chain.name}`);
+        }
+
         const { gasLimit, gasCap } = renVMState.state[chain.name];
         const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
 

@@ -1,19 +1,23 @@
-import { Callable } from "@renproject/utils";
+import { MintChainStatic } from "@renproject/interfaces";
+import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib-dogecoin";
 import base58 from "bs58";
 import { DOGEHandler } from "send-crypto/build/main/handlers/DOGE/DOGEHandler";
-import { validate } from "wallet-address-validator";
 
-import { Address, BitcoinNetwork, Transaction } from "./base";
+import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
+import { validateAddress } from "./utils";
 
 export class DogecoinClass extends BitcoinClass {
-    public name = "Dogecoin";
+    public static chain = "Dogecoin";
+    public chain = DogecoinClass.chain;
+    public name = DogecoinClass.chain;
     public legacyName = undefined;
 
+    public static asset = "DOGE";
     public asset = "DOGE";
-    public utils = {
+    public static utils = {
         getUTXO: DOGEHandler.getUTXO,
         getUTXOs: DOGEHandler.getUTXOs,
         getTransactions: DOGEHandler.getTransactions,
@@ -23,28 +27,43 @@ export class DogecoinClass extends BitcoinClass {
         },
         createAddress: createAddress(Networks, Opcode, Script, base58.encode),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
-        addressIsValid: (address: Address, network: BitcoinNetwork) =>
-            validate(address, this.asset.toLowerCase(), network),
+        addressIsValid: (
+            address: BtcAddress,
+            network: BtcNetwork = "mainnet",
+        ) => validateAddress(address, DogecoinClass.asset, network),
+
+        addressExplorerLink: (
+            address: BtcAddress,
+            network: BtcNetwork = "mainnet",
+        ): string | undefined => {
+            if (network === "mainnet") {
+                return `https://sochain.com/address/DOGE/${address}/`;
+            } else if (network === "testnet") {
+                return `https://sochain.com/address/DOGETEST/${address}/`;
+            }
+            return undefined;
+        },
+
+        transactionExplorerLink: (
+            tx: BtcTransaction,
+            network: BtcNetwork = "mainnet",
+        ): string | undefined => {
+            if (network === "mainnet") {
+                return `https://sochain.com/tx/DOGE/${tx.txHash}/`;
+            } else if (network === "testnet") {
+                return `https://sochain.com/tx/DOGETEST/${tx.txHash}/`;
+            }
+            return undefined;
+        },
     };
 
-    addressExplorerLink = (address: Address): string | undefined => {
-        if (this.chainNetwork === "mainnet") {
-            return `https://sochain.com/address/DOGE/${address}/`;
-        } else if (this.chainNetwork === "testnet") {
-            return `https://sochain.com/address/DOGETEST/${address}/`;
-        }
-        return undefined;
-    };
-
-    transactionExplorerLink = (tx: Transaction): string | undefined => {
-        if (this.chainNetwork === "mainnet") {
-            return `https://sochain.com/tx/DOGE/${tx.txHash}/`;
-        } else if (this.chainNetwork === "testnet") {
-            return `https://sochain.com/tx/DOGETEST/${tx.txHash}/`;
-        }
-        return undefined;
-    };
+    public utils = utilsWithChainNetwork(
+        DogecoinClass.utils,
+        () => this.chainNetwork,
+    );
 }
 
 export type Dogecoin = DogecoinClass;
 export const Dogecoin = Callable(DogecoinClass);
+
+const _: MintChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Dogecoin;

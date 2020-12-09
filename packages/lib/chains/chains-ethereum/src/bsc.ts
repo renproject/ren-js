@@ -73,7 +73,9 @@ const resolveBSCNetwork = (
 };
 
 export class BinanceSmartChainClass extends EthereumClass {
-    public name = "BinanceSmartChain";
+    public static chain = "BinanceSmartChain";
+    public chain = BinanceSmartChainClass.chain;
+    public name = BinanceSmartChainClass.chain;
     public legacyName = undefined;
 
     constructor(
@@ -110,4 +112,5 @@ export class BinanceSmartChainClass extends EthereumClass {
 }
 
 export type BinanceSmartChain = BinanceSmartChainClass;
+// @dev Removes any static fields, except `utils`.
 export const BinanceSmartChain = Callable(BinanceSmartChainClass);

@@ -1,11 +1,12 @@
 import {
     getRenNetworkDetails,
     LockChain,
+    MintChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { assertType, Callable } from "@renproject/utils";
+import { assertType, Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { Key } from "@terra-money/terra.js";
 
 import {
@@ -18,25 +19,81 @@ import {
 } from "./api/deposit";
 import { terraDev } from "./api/terraDev";
 
+const resolveNetwork = (network: TerraNetwork | "mainnet" | "testnet") =>
+    network === "mainnet"
+        ? TerraNetwork.Columbus
+        : network === "testnet"
+        ? TerraNetwork.Tequila
+        : network;
+
 /**
  * TerraClass implements the LockChain interface for Terra (https://terra.money)
  * and it's asset LUNA.
  */
 export class TerraClass
-    implements LockChain<TerraTransaction, TerraDeposit, TerraAddress> {
-    public name = "Terra";
+    implements
+        LockChain<TerraTransaction, TerraDeposit, TerraAddress, TerraNetwork> {
+    public static chain = "Terra";
+    public chain = TerraClass.chain;
+    public name = TerraClass.chain;
+
     public renNetwork: RenNetworkDetails | undefined;
     public chainNetwork: TerraNetwork | undefined;
 
     // The assets native to Terra.
     public assets = ["Luna"];
 
+    public static utils = {
+        addressIsValid: (
+            address: TerraAddress,
+            _network:
+                | TerraNetwork
+                | "mainnet"
+                | "testnet" = TerraNetwork.Columbus,
+        ): boolean => {
+            assertType<string>("string", { address: address.address });
+            // TODO
+            return true;
+        },
+
+        addressExplorerLink: (
+            address: TerraAddress,
+            network:
+                | TerraNetwork
+                | "mainnet"
+                | "testnet" = TerraNetwork.Columbus,
+        ): string => {
+            return `https://finder.terra.money/${resolveNetwork(
+                network,
+            )}/account/${address.address}`;
+        },
+
+        transactionExplorerLink: (
+            transaction: TerraTransaction,
+            network:
+                | TerraNetwork
+                | "mainnet"
+                | "testnet" = TerraNetwork.Columbus,
+        ): string => {
+            return `https://finder.terra.money/${resolveNetwork(network)}/tx/${
+                transaction.hash
+            }`;
+        },
+    };
+
+    public utils = utilsWithChainNetwork<
+        typeof TerraClass["utils"],
+        TerraTransaction,
+        TerraAddress,
+        TerraNetwork
+    >(TerraClass.utils, () => this.chainNetwork);
+
     constructor(network?: TerraNetwork) {
         this.chainNetwork = network;
     }
 
     /**
-     * See [[OriginChain.initialize]].
+     * See [[LockChain.initialize]].
      */
     public initialize = (
         renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
@@ -52,7 +109,7 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.assetIsNative]].
+     * See [[LockChain.assetIsNative]].
      */
     assetIsNative = (asset: string): boolean => this.assets.indexOf(asset) >= 0;
     assetIsSupported = this.assetIsNative;
@@ -64,7 +121,7 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.assetDecimals]].
+     * See [[LockChain.assetDecimals]].
      */
     assetDecimals = (asset: string): number => {
         switch (asset) {
@@ -75,12 +132,12 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.getDeposits]].
+     * See [[LockChain.getDeposits]].
      */
     getDeposits = async (
         asset: string,
         address: TerraAddress,
-        _instanceID: number,
+        _instanceID: void,
         onDeposit: (deposit: TerraDeposit) => Promise<void>,
     ): Promise<void> => {
         if (!this.chainNetwork) {
@@ -99,7 +156,7 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.transactionConfidence]].
+     * See [[LockChain.transactionConfidence]].
      */
     transactionConfidence = async (
         transaction: TerraTransaction,
@@ -119,7 +176,7 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.getGatewayAddress]].
+     * See [[LockChain.getGatewayAddress]].
      */
     getGatewayAddress = (
         asset: string,
@@ -147,7 +204,7 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.addressStringToBytes]].
+     * See [[LockChain.addressStringToBytes]].
      */
     addressStringToBytes = (address: string): Buffer => {
         // TODO
@@ -155,32 +212,9 @@ export class TerraClass
     };
 
     /**
-     * See [[OriginChain.addressIsValid]].
-     */
-    addressIsValid = (address: TerraAddress): boolean => {
-        if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized.`);
-        }
-        assertType<string>("string", { address: address.address });
-        // TODO
-        return true;
-    };
-
-    /**
-     * See [[OriginChain.addressExplorerLink]].
-     */
-    addressExplorerLink = (address: TerraAddress): string => {
-        return `https://finder.terra.money/${this.chainNetwork}/account/${address.address}`;
-    };
-
-    /**
-     * See [[OriginChain.transactionExplorerLink]].
+     * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: TerraTransaction) => transaction.hash;
-
-    transactionExplorerLink = (transaction: TerraTransaction): string => {
-        return `https://finder.terra.money/${this.chainNetwork}/tx/${transaction.hash}`;
-    };
 
     depositV1HashString = (_deposit: TerraDeposit): string => {
         throw new Error(UNSUPPORTED_TERRA_NETWORK);
@@ -212,6 +246,8 @@ export class TerraClass
     };
 }
 
-// @dev Removes any static fields.
 export type Terra = TerraClass;
+// @dev Removes any static fields, except `utils`.
 export const Terra = Callable(TerraClass);
+
+const _: MintChainStatic<TerraTransaction, TerraAddress, TerraNetwork> = Terra;

@@ -1,6 +1,9 @@
 import Axios from "axios";
 
-import { FilecoinNetwork, FilTransaction } from "./deposit";
+import {
+    FilNetwork,
+    FilTransaction,
+} from "@renproject/chains-filecoin/src/deposit";
 
 // See https://github.com/renproject/account-chain-indexer
 const INDEXER_URL = `https://account-chain-indexer.herokuapp.com/graphql`;
@@ -8,7 +11,7 @@ const INDEXER_URL = `https://account-chain-indexer.herokuapp.com/graphql`;
 export const fetchDeposits = async (
     address: string,
     paramsFilterBase64: string | undefined = undefined,
-    network: FilecoinNetwork,
+    network: FilNetwork,
     _page = 0,
 ): Promise<FilTransaction[]> => {
     // const network = address.slice(0, 1) === "t" ? "testnet" : "mainnet";
@@ -73,7 +76,7 @@ export const fetchDeposits = async (
 
 export const fetchMessage = async (
     cid: string,
-    network: FilecoinNetwork,
+    network: FilNetwork,
 ): Promise<FilTransaction> => {
     // TODO: Add network parameter.
     const query = `{

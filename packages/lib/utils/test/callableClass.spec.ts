@@ -2,6 +2,7 @@ import { expect } from "earljs";
 
 import { Callable } from "../src/callableClass";
 
+// @dev Removes any static fields, except `utils`.
 const TestClass = Callable(
     class {
         public x: number;

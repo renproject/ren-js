@@ -1,6 +1,7 @@
 export * from "./abi";
 export * from "./assert";
 export * from "./callableClass";
+export * from "./chainUtils";
 export * from "./common";
 export * from "./contractCalls";
 export * from "./hash";

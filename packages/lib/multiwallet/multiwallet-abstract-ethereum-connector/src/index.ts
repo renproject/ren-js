@@ -1,4 +1,4 @@
-import { Address } from "@renproject/chains-ethereum";
+import { EthAddress } from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/interfaces";
 import {
     ConnectorEmitter,
@@ -45,22 +45,25 @@ export type SaneProvider = Exclude<provider, string | null | HttpProvider> & {
 
 export abstract class AbstractEthereumConnector<
     Provider extends SaneProvider = SaneProvider
-> implements ConnectorInterface<Provider, Address> {
+> implements ConnectorInterface<Provider, EthAddress> {
     supportsTestnet = true;
     networkIdMapper = ethNetworkToRenNetwork;
-    emitter: ConnectorEmitter<Provider, Address>;
+    emitter: ConnectorEmitter<Provider, EthAddress>;
     constructor({
         debug = false,
         networkIdMapper = ethNetworkToRenNetwork,
     }: EthereumConnectorOptions) {
         this.networkIdMapper = networkIdMapper;
-        this.emitter = new ConnectorEmitter<Provider, Address>(debug);
+        this.emitter = new ConnectorEmitter<Provider, EthAddress>(debug);
     }
-    abstract activate: ConnectorInterface<Provider, Address>["activate"];
-    abstract getProvider: ConnectorInterface<Provider, Address>["getProvider"];
-    abstract deactivate: ConnectorInterface<Provider, Address>["deactivate"];
+    abstract activate: ConnectorInterface<Provider, EthAddress>["activate"];
+    abstract getProvider: ConnectorInterface<
+        Provider,
+        EthAddress
+    >["getProvider"];
+    abstract deactivate: ConnectorInterface<Provider, EthAddress>["deactivate"];
     // Get the complete connector status in one call
-    async getStatus(): Promise<ConnectorUpdate<Provider, Address>> {
+    async getStatus(): Promise<ConnectorUpdate<Provider, EthAddress>> {
         return {
             account: await this.getAccount(),
             renNetwork: await this.getRenNetwork(),

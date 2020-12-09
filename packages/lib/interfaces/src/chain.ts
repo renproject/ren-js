@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
 
@@ -15,7 +16,6 @@ export type SyncOrPromise<T> = Promise<T> | T;
 
 export type TransactionListener<
     T,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     E extends { [key: string]: any[] }
 > = PromiEvent<
     T,
@@ -43,10 +43,10 @@ export type TransactionListener<
  * all the relevant assets.
  */
 export interface ChainCommon<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
-    Address = string
-> {
+    Address = string,
+    Network = any
+> extends MintChainStatic<Transaction, Address, Network> {
     /**
      * The name of the Chain.
      *
@@ -125,27 +125,13 @@ export interface ChainCommon<
      */
     assetDecimals: (asset: string) => SyncOrPromise<number>;
 
-    // Address and transaction helpers
-
-    addressIsValid: (address: Address) => boolean;
-
-    /**
-     * `addressExplorerLink` should return a URL that can be shown to a user
-     * to access more information about an address.
-     */
-    addressExplorerLink?: (address: Address) => string | undefined;
+    // Transaction helpers
 
     /**
      * `transactionID` should return a string that uniquely represents the
      * transaction.
      */
     transactionID: (transaction: Transaction) => string;
-
-    /**
-     * `transactionExplorerLink` should return a URL that can be shown to a user
-     * to access more information about a transaction.
-     */
-    transactionExplorerLink?: (transaction: Transaction) => string | undefined;
 
     /**
      * `transactionConfidence` should return a target and a current
@@ -171,7 +157,6 @@ export interface ChainCommon<
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DepositCommon<Transaction = any> = {
     transaction: Transaction;
     amount: string;
@@ -188,7 +173,6 @@ export type DepositCommon<Transaction = any> = {
  * BitcoinCash implementations for examples of this.
  */
 export interface LockChain<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     /**
      * A deposit contains a transaction to a gateway address, and includes extra
@@ -199,8 +183,16 @@ export interface LockChain<
      * The LockChain's address format. This should contain all the information
      * users need to
      */
-    Address = string
-> extends ChainCommon<Transaction, Address> {
+    Address = string,
+    /**
+     * The LockChain's network options.
+     */
+    Network = any,
+    /**
+     * GetDeposits can track its progress using a `progress` value.
+     */
+    GetDepositProgress = any
+> extends ChainCommon<Transaction, Address, Network> {
     // Deposits
 
     /**
@@ -213,18 +205,17 @@ export interface LockChain<
     getDeposits: (
         asset: string,
         address: Address,
-        // instanceID allows the chain to internally track it's progress in
-        // searching for deposits for a particular LockAndMint object.
-        // For example - the Bitcoin LockChain will fetch spent deposits
-        // the first time getDeposits is called for a particular instanceID and
-        // address, and only return unspent deposits in successive calls.
-        instanceID: number,
+        // The chain can return back a value that represents its progress. For
+        // example, Bitcoin returns back a single boolean in order to detect if
+        // it's the first time deposits are being fetched, doing a more
+        // extensive query for the first call.
+        progress: GetDepositProgress | undefined,
         onDeposit: (deposit: LockDeposit) => Promise<void>,
         // If a deposit is no longer valid, cancelDeposit should be called with
         // the same details. NOTE: Not implemented yet in RenJS.
         cancelDeposit: (deposit: LockDeposit) => Promise<void>,
         listenerCancelled: () => boolean,
-    ) => SyncOrPromise<void>;
+    ) => SyncOrPromise<GetDepositProgress>;
 
     // Encoding
 
@@ -280,11 +271,8 @@ export type OverwritableBurnAndReleaseParams = Omit<
     "from"
 >;
 
-export interface MintChain<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Transaction = any,
-    Address = string
-> extends ChainCommon<Transaction, Address> {
+export interface MintChain<Transaction = any, Address = string, Network = any>
+    extends ChainCommon<Transaction, Address, Network> {
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
     /**
@@ -345,4 +333,43 @@ export interface MintChain<
         asset: string,
         burnPayload?: string,
     ) => SyncOrPromise<OverwritableBurnAndReleaseParams | undefined>;
+}
+
+/**
+ * Chains should provide a set of static utilities.
+ */
+export interface MintChainStatic<
+    Transaction = any,
+    Address = string,
+    Network = any
+> {
+    utils: {
+        /**
+         *
+         * @param address
+         * @param network
+         */
+        addressIsValid(
+            address: Address,
+            network?: Network | "mainnet" | "testnet",
+        ): boolean;
+
+        /**
+         * `addressExplorerLink` should return a URL that can be shown to a user
+         * to access more information about an address.
+         */
+        addressExplorerLink?: (
+            address: Address,
+            network?: Network | "mainnet" | "testnet",
+        ) => string | undefined;
+
+        /**
+         * `transactionExplorerLink` should return a URL that can be shown to a user
+         * to access more information about a transaction.
+         */
+        transactionExplorerLink?: (
+            transaction: Transaction,
+            network?: Network | "mainnet" | "testnet",
+        ) => string | undefined;
+    };
 }

@@ -1072,6 +1072,13 @@
     core-js-pure "^3.0.0"
     regenerator-runtime "^0.13.4"
 
+"@babel/runtime@7.12.5":
+  version "7.12.5"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.12.5.tgz#410e7e487441e1b360c29be715d870d9b985882e"
+  integrity sha512-plcc+hbExy3McchJCEQG3knOsuh3HH+Prx1P6cLIkET/0dLuQDEnrT+s27Axgc9bqfsmNUNHfscgMUdBpC9xfg==
+  dependencies:
+    regenerator-runtime "^0.13.4"
+
 "@babel/runtime@^7.0.0", "@babel/runtime@^7.1.2", "@babel/runtime@^7.10.2", "@babel/runtime@^7.11.2", "@babel/runtime@^7.3.1", "@babel/runtime@^7.4.4", "@babel/runtime@^7.5.0", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.7.6", "@babel/runtime@^7.8.3", "@babel/runtime@^7.8.4", "@babel/runtime@^7.8.7", "@babel/runtime@^7.9.2":
   version "7.12.1"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.12.1.tgz#b4116a6b6711d010b2dad3b7b6e43bf1b9954740"
@@ -1553,6 +1560,16 @@
     borc "2.1.1"
     leb128 "0.0.5"
 
+"@glif/filecoin-address@^1.1.0-beta.4":
+  version "1.1.0-beta.4"
+  resolved "https://registry.yarnpkg.com/@glif/filecoin-address/-/filecoin-address-1.1.0-beta.4.tgz#a9cd011561c92cef7bcf70429de5bb8104e23e46"
+  integrity sha512-cC/1IBxeufgBL0QEkYTtnJvGd8ZX6aVIn6+9LyyYTBSe1g77yS7DiTzdQWWwOyd2gMkZnR9oqIoCRG2dGDXnYA==
+  dependencies:
+    blakejs "1.1.0"
+    borc "2.1.1"
+    leb128 "0.0.5"
+    uint8arrays "1.1.0"
+
 "@glif/filecoin-message@^1.0.0-beta.5":
   version "1.0.0-beta.5"
   resolved "https://registry.yarnpkg.com/@glif/filecoin-message/-/filecoin-message-1.0.0-beta.5.tgz#1f49f3f0112bf80536ba3c2dfadcbf82f4575de8"
@@ -1576,6 +1593,14 @@
   integrity sha512-+SGQpHufwYF/WQHqA8m8BqVSOq1ulFgiOjIDqZPbKAUw7CjY2FBXGyARYEmaE1RlfMzKvzM8YFX9cSqpbVSzMw==
   dependencies:
     axios "0.19.2"
+
+"@glif/filecoin-rpc-client@^1.1.0-beta.1":
+  version "1.1.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@glif/filecoin-rpc-client/-/filecoin-rpc-client-1.1.0-beta.1.tgz#b0a291fac2f44b4b83928e852b5113f08f0a8bdc"
+  integrity sha512-FQn01H3uV6Y0FW6PKyDXiK5awRol/2Vg1FB4Wk0AfDiQ6LQAw2zBj6g312FzWZ61AMJFM0lH5MT3RITI9Rb8bw==
+  dependencies:
+    "@babel/runtime" "7.12.5"
+    axios "0.21.0"
 
 "@glif/filecoin-wallet-provider@^1.0.0-beta.5":
   version "1.0.0-beta.5"
@@ -5451,6 +5476,13 @@ axios@0.19.2, axios@^0.19.0:
   integrity sha512-fjgm5MvRHLhx+osE2xoekY70AhARk3a6hkN+3Io1jc00jtquGvxYlKlsFUhmUET0V5te6CcZI7lcv2Ym61mjHA==
   dependencies:
     follow-redirects "1.5.10"
+
+axios@0.21.0:
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.0.tgz#26df088803a2350dff2c27f96fef99fe49442aca"
+  integrity sha512-fmkJBknJKoZwem3/IKSSLpkdNXZeBu5Q7GA/aRsr2btgrptmSCxi2oFjZHqGdK9DoTil9PIHlPIZw2EcRJXRvw==
+  dependencies:
+    follow-redirects "^1.10.0"
 
 axios@^0.20.0:
   version "0.20.0"
@@ -20434,7 +20466,7 @@ uint8arrays@1.0.0:
     multibase "^3.0.0"
     web-encoding "^1.0.2"
 
-uint8arrays@^1.0.0, uint8arrays@^1.1.0:
+uint8arrays@1.1.0, uint8arrays@^1.0.0, uint8arrays@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/uint8arrays/-/uint8arrays-1.1.0.tgz#d034aa65399a9fd213a1579e323f0b29f67d0ed2"
   integrity sha512-cLdlZ6jnFczsKf5IH1gPHTtcHtPGho5r4CvctohmQjw8K7Q3gFdfIGHxSTdTaCKrL4w09SsPRJTqRS0drYeszA==

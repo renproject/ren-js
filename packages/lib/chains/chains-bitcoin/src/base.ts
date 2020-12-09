@@ -1,41 +1,56 @@
 import {
     getRenNetworkDetails,
     LockChain,
+    MintChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { assertType, fromHex, hash160, toBase64 } from "@renproject/utils";
+import {
+    assertType,
+    fromHex,
+    hash160,
+    toBase64,
+    utilsWithChainNetwork,
+} from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import base58 from "bs58";
 import { UTXO as SendCryptoUTXO } from "send-crypto";
 import { BTCHandler } from "send-crypto/build/main/handlers/BTC/BTCHandler";
-import { validate } from "wallet-address-validator";
 
 import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
+import { validateAddress } from "./utils";
 
-export type Address = string;
-export type Transaction = SendCryptoUTXO;
-export type Deposit = {
-    transaction: Transaction;
+export type BtcAddress = string;
+export type BtcTransaction = SendCryptoUTXO;
+export type BtcDeposit = {
+    transaction: BtcTransaction;
     amount: string;
 };
-export type BitcoinNetwork = "mainnet" | "testnet" | "regtest";
+export type BtcNetwork = "mainnet" | "testnet" | "regtest";
 
-const transactionToDeposit = (transaction: Transaction) => ({
+const transactionToDeposit = (transaction: BtcTransaction) => ({
     transaction,
     amount: transaction.amount.toString(),
 });
 
 export abstract class BitcoinBaseChain
-    implements LockChain<Transaction, Deposit, Address> {
-    public name = "Bitcoin";
+    implements
+        LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean> {
+    public static chain = "Bitcoin";
+    public chain = BitcoinBaseChain.chain;
+    public name = BitcoinBaseChain.chain;
+
     public legacyName: LockChain["legacyName"] = "Btc";
     public renNetwork: RenNetworkDetails | undefined;
-    public chainNetwork: BitcoinNetwork | undefined;
+    public chainNetwork: BtcNetwork | undefined;
 
+    // Asset
+    public static asset = "BTC";
     public asset = "BTC";
-    public utils = {
+
+    // Utils
+    public static utils = {
         getUTXO: BTCHandler.getUTXO,
         getUTXOs: BTCHandler.getUTXOs,
         getTransactions: BTCHandler.getTransactions,
@@ -45,16 +60,47 @@ export abstract class BitcoinBaseChain
         },
         createAddress: createAddress(Networks, Opcode, Script, base58.encode),
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
-        addressIsValid: (address: Address, network: BitcoinNetwork) =>
-            validate(address, this.asset.toLowerCase(), network),
+        addressIsValid: (
+            address: BtcAddress,
+            network: BtcNetwork = "mainnet",
+        ) => validateAddress(address, BitcoinBaseChain.asset, network),
+
+        addressExplorerLink: (
+            address: BtcAddress,
+            network: BtcNetwork = "mainnet",
+        ): string | undefined => {
+            if (network === "mainnet") {
+                return `https://live.blockcypher.com/btc/address/${address}/`;
+            } else if (network === "testnet") {
+                return `https://live.blockcypher.com/btc-testnet/address/${address}/`;
+            }
+            return undefined;
+        },
+
+        transactionExplorerLink: (
+            tx: BtcTransaction,
+            network: BtcNetwork = "mainnet",
+        ): string | undefined => {
+            if (network === "mainnet") {
+                return `https://live.blockcypher.com/btc/tx/${tx.txHash}/`;
+            } else if (network === "testnet") {
+                return `https://live.blockcypher.com/btc-testnet/tx/${tx.txHash}/`;
+            }
+            return undefined;
+        },
     };
 
-    constructor(network?: BitcoinNetwork) {
+    public utils = utilsWithChainNetwork(
+        BitcoinBaseChain.utils,
+        () => this.chainNetwork,
+    );
+
+    constructor(network?: BtcNetwork) {
         this.chainNetwork = network;
     }
 
     /**
-     * See [[OriginChain.initialize]].
+     * See [[LockChain.initialize]].
      */
     public initialize = (
         renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
@@ -68,7 +114,7 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.assetIsNative]].
+     * See [[LockChain.assetIsNative]].
      */
     assetIsNative = (asset: string): boolean => asset === this.asset;
     assetIsSupported = this.assetIsNative;
@@ -80,7 +126,7 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.assetDecimals]].
+     * See [[LockChain.assetDecimals]].
      */
     assetDecimals = (asset: string): number => {
         if (asset === this.asset) {
@@ -89,21 +135,15 @@ export abstract class BitcoinBaseChain
         throw new Error(`Unsupported asset ${asset}`);
     };
 
-    // Track how many times getDeposits has been called.
-    private readonly getDepositsCountsMap = new Map<
-        number,
-        Map<Address, number>
-    >();
-
     /**
-     * See [[OriginChain.getDeposits]].
+     * See [[LockChain.getDeposits]].
      */
     getDeposits = async (
         asset: string,
-        address: Address,
-        instanceID: number,
-        onDeposit: (deposit: Deposit) => Promise<void>,
-    ): Promise<void> => {
+        address: BtcAddress,
+        progress: boolean | undefined,
+        onDeposit: (deposit: BtcDeposit) => Promise<void>,
+    ): Promise<boolean> => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
         }
@@ -112,15 +152,8 @@ export abstract class BitcoinBaseChain
         }
         this.assertAssetIsSupported(asset);
 
-        // Check how many times getDeposits has been called for the instanceID
-        // nad address.
-        const getDepositsCounts =
-            this.getDepositsCountsMap.get(instanceID) ||
-            new Map<Address, number>();
-        const getDepositsCount = getDepositsCounts.get(address) || 0;
-
         const txs =
-            getDepositsCount === 0 && this.utils.getTransactions
+            !progress && this.utils.getTransactions
                 ? await this.utils.getTransactions(
                       this.chainNetwork === "testnet",
                       {
@@ -137,16 +170,14 @@ export abstract class BitcoinBaseChain
             await onDeposit(transactionToDeposit(tx));
         }
 
-        // Increment getDepositsCount.
-        getDepositsCounts.set(address, getDepositsCount + 1);
-        this.getDepositsCountsMap.set(instanceID, getDepositsCounts);
+        return true;
     };
 
     /**
-     * See [[OriginChain.transactionConfidence]].
+     * See [[LockChain.transactionConfidence]].
      */
     transactionConfidence = async (
-        transaction: Transaction,
+        transaction: BtcTransaction,
     ): Promise<{ current: number; target: number }> => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
@@ -163,13 +194,13 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.getGatewayAddress]].
+     * See [[LockChain.getGatewayAddress]].
      */
     getGatewayAddress = (
         asset: string,
         publicKey: Buffer,
         gHash: Buffer,
-    ): Promise<Address> | Address => {
+    ): Promise<BtcAddress> | BtcAddress => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
         }
@@ -197,33 +228,22 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[OriginChain.addressStringToBytes]].
+     * See [[LockChain.addressStringToBytes]].
      */
     addressStringToBytes = (address: string): Buffer => {
         return base58.decode(address);
     };
 
     /**
-     * See [[OriginChain.addressIsValid]].
+     * See [[LockChain.transactionID]].
      */
-    addressIsValid = (address: Address): boolean => {
-        if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
-        }
-        assertType<string>("string", { address });
-        return this.utils.addressIsValid(address, this.chainNetwork);
-    };
+    transactionID = (transaction: BtcTransaction) => transaction.txHash;
 
-    /**
-     * See [[OriginChain.transactionExplorerLink]].
-     */
-    transactionID = (transaction: Transaction) => transaction.txHash;
-
-    depositV1HashString = ({ transaction }: Deposit): string => {
+    depositV1HashString = ({ transaction }: BtcDeposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
     };
 
-    transactionRPCFormat = (transaction: Transaction, v2?: boolean) => {
+    transactionRPCFormat = (transaction: BtcTransaction, v2?: boolean) => {
         const { txHash, vOut } = transaction;
 
         assertType<string>("string", { txHash });
@@ -237,3 +257,9 @@ export abstract class BitcoinBaseChain
         };
     };
 }
+
+const _: MintChainStatic<
+    BtcTransaction,
+    BtcAddress,
+    BtcNetwork
+> = BitcoinBaseChain;

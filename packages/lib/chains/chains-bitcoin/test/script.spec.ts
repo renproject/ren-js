@@ -8,7 +8,7 @@ import { Bitcoin, BitcoinCash, Dogecoin, Zcash } from "../src";
 describe("Common", () => {
     for (const ChainClass of [Bitcoin, Zcash, BitcoinCash, Dogecoin]) {
         for (const network of [RenNetwork.Mainnet, RenNetwork.Testnet]) {
-            it(ChainClass.constructor.name, async () => {
+            it(ChainClass.asset, async () => {
                 const chain = new ChainClass();
                 chain.initialize(network);
                 const gHash = fromBase64(

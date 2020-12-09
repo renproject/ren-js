@@ -34,28 +34,22 @@ renJS.renVM.queryFees().then(console.log);
 See [Infura](https://infura.io/) to get an Infura key.
 
 ```typescript
-const RenJS = require("@renproject/ren");
-const renJS = new RenJS("testnet"); // or "mainnet"
-const web3 = new Web3("... Ethereum Kovan node or Infura ...");
+import { Bitcoin, Ethereum } from "@renproject/chains";
+import RenJS from "@renproject/ren";
 
-const amount = 0.001;
-
-const lockAndMint = renJS.lockAndMint({
-    sendToken: "BTC", // Bridge BTC to Ethereum
-    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
-    sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
+const lockAndMint = await new RenJS("testnet").lockAndMint({
+    asset: "BTC",
+    from: Bitcoin(),
+    to: Ethereum(web3Provider).Address("0x1234..."),
 });
 
-lockAndMint
-    .gatewayAddress()
-    .then((gatewayAddress) =>
-        console.log(`Deposit ${amount} BTC to ${gatewayAddress}`),
-    );
+console.log(`Deposit BTC to ${lockAndMint.gatewayAddress}`);
 
-lockAndMint
-    .waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
-    .then(console.log)
-    .catch(console.error);
+lockAndMint.on("deposit", async (deposit) => {
+    await deposit.confirmed();
+    await deposit.signed();
+    await deposit.mint();
+});
 ```
 
 ### Bridging BTC from Ethereum back to the Bitcoin chain

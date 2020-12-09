@@ -169,16 +169,16 @@ export default class RenJS {
         mint: number;
         burn: number;
     }> => {
-        if (!from.assetIsSupported(asset)) {
+        if (!(await from.assetIsSupported(asset))) {
             throw new Error(`Asset not supported by chain ${from.name}.`);
         }
-        if (!to.assetIsSupported(asset)) {
+        if (!(await to.assetIsSupported(asset))) {
             throw new Error(`Asset not supported by chain ${to.name}.`);
         }
 
         let fees;
 
-        if (from.assetIsNative(asset)) {
+        if (await from.assetIsNative(asset)) {
             // LockAndMint
             const mintFees = await (to as MintChain).getFees(asset);
             const selector = this.renVM.selector({ asset, from, to });
@@ -190,7 +190,7 @@ export default class RenJS {
                 ...lockFees,
                 ...mintFees,
             };
-        } else if (to.assetIsNative(asset)) {
+        } else if (await to.assetIsNative(asset)) {
             // BurnAndRelease
             const mintFees = await (from as MintChain).getFees(asset);
             const selector = this.renVM.selector({ asset, from, to });

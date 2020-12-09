@@ -1,4 +1,4 @@
-export type FilecoinNetwork = "mainnet" | "testnet" | "devnet";
+export type FilNetwork = "mainnet" | "testnet" | "devnet";
 
 export interface FilTransaction {
     cid: string;

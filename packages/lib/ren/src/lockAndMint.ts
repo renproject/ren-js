@@ -149,7 +149,9 @@ export class LockAndMint<
             MintAddress
         >
     > = OrderedMap();
-    private readonly getDepositsInstance: number;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getDepositsProgress: any | undefined;
 
     /**
      * @hidden - should be created using [[RenJS.lockAndMint]] instead.
@@ -173,8 +175,6 @@ export class LockAndMint<
             logger,
             selector: this.renVM.selector(this.params),
         };
-
-        this.getDepositsInstance = Math.random();
 
         const txHash = this.params.txHash;
 
@@ -492,10 +492,10 @@ export class LockAndMint<
             const cancelDeposit = async () => Promise.resolve();
 
             try {
-                await this.params.from.getDeposits(
+                this.getDepositsProgress = await this.params.from.getDeposits(
                     this.params.asset,
                     this.gatewayAddress,
-                    this.getDepositsInstance,
+                    this.getDepositsProgress,
                     onDeposit,
                     cancelDeposit,
                     listenerCancelled,

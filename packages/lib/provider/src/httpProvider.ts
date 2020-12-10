@@ -72,7 +72,9 @@ export class HttpProvider<
             );
             if (response.status !== 200) {
                 throw this.responseError(
-                    "Unexpected status code returned from node.",
+                    `Unexpected status code ${String(
+                        response.status,
+                    )} returned from node.`,
                     response,
                 );
             }

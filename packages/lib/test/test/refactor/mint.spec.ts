@@ -30,7 +30,7 @@ describe("Refactor: mint", () => {
     longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
-        const asset = "FIL";
+        const asset = "BTC";
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -40,13 +40,13 @@ describe("Refactor: mint", () => {
         const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS("testnet", { logLevel });
 
-        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const params: LockAndMintParams = {
             asset,
-            from: Chains.Filecoin(),
-            to: Chains.Ethereum(provider, Chains.renTestnetVDot3).Account({
+            from: Chains.Bitcoin(),
+            to: Chains.Ethereum(provider, Chains.renTestnet).Account({
                 address: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             }),
         };
@@ -122,10 +122,12 @@ describe("Refactor: mint", () => {
 
                 RenJS.defaultDepositHandler(deposit)
                     .then(resolve)
-                    .catch(deposit._state.logger.error);
+                    .catch((error) =>
+                        deposit._state.logger.error(red("error:"), error),
+                    );
             });
 
-            sleep(60 * SECONDS)
+            sleep(30 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
                     if (i === 0) {

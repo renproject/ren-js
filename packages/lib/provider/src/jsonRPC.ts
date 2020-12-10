@@ -25,5 +25,6 @@ export interface Provider<
         method: Method,
         request: Requests[Method],
         retry?: number,
+        timeout?: number,
     ): Promise<Responses[Method]>;
 }

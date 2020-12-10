@@ -27,6 +27,7 @@ const createDepositHandler = (retries = -1) => {
             },
             retries,
             10 * SECONDS,
+            deposit._state.logger,
         );
 
         await retryNTimes(
@@ -50,6 +51,7 @@ const createDepositHandler = (retries = -1) => {
             },
             retries,
             10 * SECONDS,
+            deposit._state.logger,
         );
 
         if (deposit.status === DepositStatus.Reverted) {
@@ -73,6 +75,7 @@ const createDepositHandler = (retries = -1) => {
             },
             retries,
             10 * SECONDS,
+            deposit._state.logger,
         );
     };
 

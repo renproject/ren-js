@@ -8,6 +8,7 @@ import {
     newPromiEvent,
     NullLogger,
     PromiEvent,
+    RenJSErrors,
     RenNetworkDetails,
     TxStatus,
 } from "@renproject/interfaces";
@@ -758,7 +759,10 @@ export class LockAndMintDeposit<
         {
             // Debug log
             const { to: _to, from: _from, ...restOfParams } = this.params;
-            this._state.logger.debug("lockAndMint created", restOfParams);
+            this._state.logger.debug(
+                "LockAndMintDeposit created",
+                restOfParams,
+            );
         }
     }
 
@@ -1053,14 +1057,17 @@ export class LockAndMintDeposit<
                     }
                     txHash = queryTxResponse.hash;
                 } catch (errorInner) {
-                    // Check for RenVM v0.2 error message.
+                    // If transaction is not found, check for RenVM v0.2 error message.
                     if (
-                        /insufficient funds/.exec(
-                            String((errorInner || {}).message),
-                        )
+                        errorInner.code ===
+                            RenJSErrors.RenVMTransactionNotFound &&
+                        (error.code === RenJSErrors.AmountTooSmall ||
+                            error.code === RenJSErrors.DepositSpentOrNotFound)
                     ) {
                         this.status = DepositStatus.Reverted;
-                        this.revertReason = errorInner.message;
+                        this.revertReason = String(
+                            (error || {}).message,
+                        ).replace(/Node returned status \d+ with reason: /, "");
                         throw new Error(this.revertReason);
                     }
 

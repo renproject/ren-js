@@ -7,6 +7,7 @@ import {
     Logger,
     MintChain,
     NullLogger,
+    RenJSErrors,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -15,6 +16,7 @@ import {
 import { HttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
+    extractError,
     fromBase64,
     keccak256,
     parseV1Selector,
@@ -95,7 +97,33 @@ export class RenVMProvider
         this.network = network as RenNetwork;
         this.logger = logger;
         this.provider = provider;
-        this.sendMessage = this.provider.sendMessage;
+        this.sendMessage = async <Method extends keyof RenVMParams & string>(
+            method: Method,
+            request: RenVMParams[Method],
+            retry = 2,
+            timeout = 120 * SECONDS,
+        ) => {
+            try {
+                return await this.provider.sendMessage(
+                    method,
+                    request,
+                    retry,
+                    timeout,
+                );
+            } catch (error) {
+                const errorString = extractError(error);
+                if (/(tx hash=[a-zA-Z0-9+\/=]+ not found)/.exec(errorString)) {
+                    error.code = RenJSErrors.RenVMTransactionNotFound;
+                }
+                if (/(insufficient funds)/.exec(errorString)) {
+                    error.code = RenJSErrors.AmountTooSmall;
+                }
+                if (/(utxo spent or invalid index)/.exec(errorString)) {
+                    error.code = RenJSErrors.DepositSpentOrNotFound;
+                }
+                throw error;
+            }
+        };
     }
 
     public selector = ({
@@ -251,58 +279,61 @@ export class RenVMProvider
         assertType<Buffer>("Buffer", { nonce, payload, txid });
         assertType<string>("string", { to, token, fn, txindex });
 
-        const response = await this.provider.sendMessage<
-            RPCMethod.MethodSubmitTx
-        >(RPCMethod.MethodSubmitTx, {
-            tx: {
-                to: selector,
-                in: [
-                    //
-                    {
-                        name: "p" as const,
-                        type: RenVMType.ExtEthCompatPayload,
-                        value: {
-                            abi: toBase64(Buffer.from(JSON.stringify(fnABI))),
-                            value: toBase64(payload),
-                            fn: toBase64(Buffer.from(fn)),
+        const response = await this.sendMessage<RPCMethod.MethodSubmitTx>(
+            RPCMethod.MethodSubmitTx,
+            {
+                tx: {
+                    to: selector,
+                    in: [
+                        //
+                        {
+                            name: "p" as const,
+                            type: RenVMType.ExtEthCompatPayload,
+                            value: {
+                                abi: toBase64(
+                                    Buffer.from(JSON.stringify(fnABI)),
+                                ),
+                                value: toBase64(payload),
+                                fn: toBase64(Buffer.from(fn)),
+                            },
                         },
-                    },
-                    // The hash of the payload data
-                    // { name: "phash" as const, type: RenVMType.B32 as const, value: toBase64(pHash) },
-                    // The amount of BTC (in SATs) that has be transferred to the gateway
-                    // { name: "amount" as const, type: "u64", as const value: amount },
-                    // The ERC20 contract address on Ethereum for BTC
-                    {
-                        name: "token" as const,
-                        type: RenVMType.ExtTypeEthCompatAddress,
-                        value: strip0x(token),
-                    },
-                    // The address on the Ethereum blockchain to which BTC will be transferred
-                    {
-                        name: "to" as const,
-                        type: RenVMType.ExtTypeEthCompatAddress,
-                        value: strip0x(to),
-                    },
-                    // The nonce is used to randomize the gateway
-                    {
-                        name: "n" as const,
-                        type: RenVMType.B32,
-                        value: toBase64(nonce),
-                    },
+                        // The hash of the payload data
+                        // { name: "phash" as const, type: RenVMType.B32 as const, value: toBase64(pHash) },
+                        // The amount of BTC (in SATs) that has be transferred to the gateway
+                        // { name: "amount" as const, type: "u64", as const value: amount },
+                        // The ERC20 contract address on Ethereum for BTC
+                        {
+                            name: "token" as const,
+                            type: RenVMType.ExtTypeEthCompatAddress,
+                            value: strip0x(token),
+                        },
+                        // The address on the Ethereum blockchain to which BTC will be transferred
+                        {
+                            name: "to" as const,
+                            type: RenVMType.ExtTypeEthCompatAddress,
+                            value: strip0x(to),
+                        },
+                        // The nonce is used to randomize the gateway
+                        {
+                            name: "n" as const,
+                            type: RenVMType.B32,
+                            value: toBase64(nonce),
+                        },
 
-                    // UTXO
-                    {
-                        name: "utxo" as const,
-                        type: RenVMType.ExtTypeBtcCompatUTXO,
-                        value: {
-                            txHash: toBase64(txid),
-                            vOut: txindex,
+                        // UTXO
+                        {
+                            name: "utxo" as const,
+                            type: RenVMType.ExtTypeBtcCompatUTXO,
+                            value: {
+                                txHash: toBase64(txid),
+                                vOut: txindex,
+                            },
                         },
-                    },
-                ],
+                    ],
+                },
+                tags,
             },
-            tags,
-        });
+        );
 
         return fromBase64(response.tx.hash);
     };
@@ -315,22 +346,19 @@ export class RenVMProvider
         burnNonce: BigNumber;
     }): Promise<Buffer> => {
         const { selector, burnNonce, tags } = params;
-        const response = await this.provider.sendMessage(
-            RPCMethod.MethodSubmitTx,
-            {
-                tx: {
-                    to: selector,
-                    in: [
-                        {
-                            name: "ref",
-                            type: RenVMType.U64,
-                            value: burnNonce.decimalPlaces(0).toFixed(),
-                        },
-                    ],
-                },
-                tags,
+        const response = await this.sendMessage(RPCMethod.MethodSubmitTx, {
+            tx: {
+                to: selector,
+                in: [
+                    {
+                        name: "ref",
+                        type: RenVMType.U64,
+                        value: burnNonce.decimalPlaces(0).toFixed(),
+                    },
+                ],
             },
-        );
+            tags,
+        });
 
         return fromBase64(response.tx.hash);
     };

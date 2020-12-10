@@ -1,3 +1,4 @@
+import { Logger } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import { AbiCoder } from "web3-eth-abi";
 
@@ -155,24 +156,30 @@ export const retryNTimes = async <T>(
     fnCall: () => Promise<T>,
     retries: number,
     timeout: number = 1 * SECONDS, // in ms
+    logger?: Logger,
 ): Promise<T> => {
     let returnError;
+    const errorMessages = new Set();
     for (let i = 0; retries === -1 || i < retries; i++) {
         try {
             return await fnCall();
         } catch (error) {
             // Fix error message.
             const errorMessage = extractError(error);
-            // If error.message is undefined, set it to the extracted error.
-            error.message = error.message || errorMessage;
-            if (errorMessage && errorMessage !== error.message) {
-                error.message += ` (${errorMessage})`;
-            }
+            errorMessages.add(errorMessage);
             returnError = error;
 
-            await sleep(timeout);
+            if (i < retries || retries === -1) {
+                await sleep(timeout);
+                if (logger) {
+                    logger.warn(error);
+                }
+            }
         }
     }
+
+    returnError.message = Array.from(errorMessages).join(", ");
+
     throw returnError;
 };
 

@@ -593,9 +593,6 @@ export const submitToEthereum = async (
                         ? txConfig.gasPrice.toString()
                         : undefined,
             },
-
-            gas: 1000000,
-
             // ...config,
         });
 

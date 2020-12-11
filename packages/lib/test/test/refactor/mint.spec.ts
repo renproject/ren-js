@@ -5,6 +5,7 @@ import * as Chains from "@renproject/chains";
 import {
     LockAndMintParams,
     LogLevel,
+    RenNetwork,
     SimpleLogger,
 } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
@@ -38,15 +39,15 @@ describe("Refactor: mint", () => {
         });
 
         const logLevel: LogLevel = LogLevel.Log;
-        const renJS = new RenJS("testnet", { logLevel });
+        const renJS = new RenJS(RenNetwork.TestnetVDot3, { logLevel });
 
-        const infuraURL = `${Chains.renTestnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const params: LockAndMintParams = {
             asset,
             from: Chains.Bitcoin(),
-            to: Chains.Ethereum(provider, Chains.renTestnet).Account({
+            to: Chains.Ethereum(provider, Chains.renTestnetVDot3).Account({
                 address: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
             }),
         };
@@ -70,19 +71,6 @@ describe("Refactor: mint", () => {
         }
 
         const lockAndMint = await renJS.lockAndMint(params);
-
-        // const lockAndMint = await renJS.lockAndMint({
-        //     // Amount of BTC we are sending (in Satoshis)
-        //     suggestedAmount: 80000,
-
-        //     asset,
-        //     from: Bitcoin(),
-        //     to: Ethereum(provider).Account({
-        //         address: "0x797522Fb74d42bB9fbF6b76dEa24D01A538d5D66",
-        //     }),
-
-        //     nonce: Ox("20".repeat(32)),
-        // });
 
         console.info("gateway address:", lockAndMint.gatewayAddress);
 

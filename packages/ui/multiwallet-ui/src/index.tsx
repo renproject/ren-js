@@ -105,6 +105,12 @@ export interface WalletPickerProps<P, A>
     name: string;
     logo: string;
   }>;
+  /**
+   An optional replacement for the label, which groups wallet options by chains
+   */
+  WalletChainLabel?: React.FC<{
+    chain: string;
+  }>
 }
 
 const useWalletPickerStyles = makeStyles({
@@ -172,6 +178,7 @@ export const WalletPicker = <P, A>({
   ConnectingInfo,
   WrongNetworkInfo,
   WalletEntryButton,
+  WalletChainLabel,
   children,
 }: WalletPickerProps<P, A>): JSX.Element => {
   const defaultClasses = useWalletPickerStyles();
@@ -235,7 +242,7 @@ export const WalletPicker = <P, A>({
               title="Connect a wallet"
             />
             <Box p={2} className={classes.body}>
-              <Typography className={classes.chainTitle}>{chain}</Typography>
+              {WalletChainLabel ? <WalletChainLabel chain={chain} />: <Typography className={classes.chainTitle}>{chain}</Typography>}
               {connectors.map((x) => (
                 <WalletEntry
                   key={x.name}

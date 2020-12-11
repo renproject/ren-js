@@ -32,7 +32,7 @@ export const ethNetworkToRenNetwork = (id: number | string): RenNetwork => {
     }[decodedId];
 };
 
-export interface EthereumConnectorOptions {
+export interface AbstractEthereumConnectorOptions {
     debug?: boolean;
     // Map chain ids to ren network versions
     networkIdMapper?: typeof ethNetworkToRenNetwork;
@@ -52,7 +52,7 @@ export abstract class AbstractEthereumConnector<
     constructor({
         debug = false,
         networkIdMapper = ethNetworkToRenNetwork,
-    }: EthereumConnectorOptions) {
+    }: AbstractEthereumConnectorOptions) {
         this.networkIdMapper = networkIdMapper;
         this.emitter = new ConnectorEmitter<Provider, EthAddress>(debug);
     }

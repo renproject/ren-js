@@ -2,12 +2,13 @@ import { RenNetwork } from "@renproject/interfaces";
 import {
     AbstractEthereumConnector,
     SaneProvider,
-    EthereumConnectorOptions as AbstractOptions,
+    AbstractEthereumConnectorOptions,
 } from "@renproject/multiwallet-abstract-ethereum-connector";
 import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
-export interface EthereumConnectorOptions extends AbstractOptions {
+export interface EthereumConnectorOptions
+    extends AbstractEthereumConnectorOptions {
     debug: boolean;
     rpc: { [chainId: number]: string };
     bridge?: string;

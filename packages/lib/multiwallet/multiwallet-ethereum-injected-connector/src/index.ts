@@ -1,12 +1,13 @@
 import {
     AbstractEthereumConnector,
     SaneProvider,
-    EthereumConnectorOptions as AbstractOptions,
+    AbstractEthereumConnectorOptions,
 } from "@renproject/multiwallet-abstract-ethereum-connector";
 import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 import { SyncOrPromise } from "@renproject/interfaces";
 
-export interface EthereumConnectorOptions extends AbstractOptions {
+export interface EthereumConnectorOptions
+    extends AbstractEthereumConnectorOptions {
     debug: boolean;
 }
 

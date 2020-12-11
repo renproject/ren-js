@@ -1,12 +1,12 @@
 import { RenNetwork } from "@renproject/interfaces";
-import { EthereumConnectorOptions } from "@renproject/multiwallet-abstract-ethereum-connector";
+import { AbstractEthereumConnectorOptions } from "@renproject/multiwallet-abstract-ethereum-connector";
 import {
     EthereumInjectedConnector,
     InjectedProvider,
 } from "@renproject/multiwallet-ethereum-injected-connector";
 
 export interface BinanceSmartChainConnectorOptions
-    extends EthereumConnectorOptions {
+    extends AbstractEthereumConnectorOptions {
     debug: boolean;
 }
 

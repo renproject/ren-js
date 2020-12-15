@@ -55,7 +55,7 @@
         "bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
         "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bs58": "^4.0.1",
-        "send-crypto": "0.2.25",
+        "send-crypto": "0.2.28",
         "wallet-address-validator": "^0.2.4"
     },
     "resolutions": {

@@ -36,7 +36,7 @@ export class InternalPromiEvent<
     public readonly [Symbol.toStringTag]: "Promise";
     public readonly promise: Promise<T>;
     // @ts-ignore no initializer because of proxyHandler
-    public resolve: (value?: T) => void;
+    public resolve: (value: T | PromiseLike<T>) => void;
     // @ts-ignore no initializer because of proxyHandler
     public reject: (reason?: any) => void;
     public eventEmitter: EventEmitter;

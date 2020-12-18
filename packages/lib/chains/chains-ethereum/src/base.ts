@@ -242,6 +242,8 @@ export class EthereumBaseChain
         return transaction;
     };
 
+    transactionFromID = (txid: string | Buffer, _txindex: string) => Ox(txid);
+
     transactionConfidence = async (
         transaction: EthTransaction,
     ): Promise<{ current: number; target: number }> => {
@@ -510,7 +512,7 @@ export class EthereumBaseChain
 
     public getBalance = async (
         asset: string,
-        address: EthAddress,
+        address?: EthAddress,
     ): Promise<BigNumber> => {
         const balanceOfABI: AbiItem = {
             constant: true,

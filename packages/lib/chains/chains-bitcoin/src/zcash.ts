@@ -28,11 +28,11 @@ export class ZcashClass extends BitcoinClass {
         createAddress: createAddress(Networks, Opcode, Script, base58.encode),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ) => validateAddress(address, ZcashClass.asset, network),
         addressExplorerLink: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
             if (network === "mainnet") {
@@ -44,13 +44,15 @@ export class ZcashClass extends BitcoinClass {
         },
 
         transactionExplorerLink: (
-            tx: BtcTransaction,
+            tx: BtcTransaction | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
+            const txHash = typeof tx === "string" ? tx : tx.txHash;
+
             if (network === "mainnet") {
-                return `https://sochain.com/tx/ZEC/${tx.txHash}/`;
+                return `https://sochain.com/tx/ZEC/${txHash}/`;
             } else if (network === "testnet") {
-                return `https://sochain.com/tx/ZECTEST/${tx.txHash}/`;
+                return `https://sochain.com/tx/ZECTEST/${txHash}/`;
             }
             return undefined;
         },

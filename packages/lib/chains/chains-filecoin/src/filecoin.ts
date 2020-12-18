@@ -57,24 +57,31 @@ export class FilecoinClass
 
     public static utils = {
         addressIsValid: (
-            address: FilAddress,
+            address: FilAddress | string,
             _network: FilNetwork = "mainnet",
-        ) => validateAddressString(address.address),
+        ) =>
+            validateAddressString(
+                typeof address === "string" ? address : address.address,
+            ),
 
         addressExplorerLink: (
-            address: FilAddress,
+            address: FilAddress | string,
             _network: FilNetwork = "mainnet",
         ): string => {
             // TODO: Check network.
-            return `https://filfox.info/en/address/${address.address}`;
+            return `https://filfox.info/en/address/${
+                typeof address === "string" ? address : address.address
+            }`;
         },
 
         transactionExplorerLink: (
-            transaction: FilTransaction,
+            transaction: FilTransaction | string,
             _network: FilNetwork = "mainnet",
         ): string => {
             // TODO: Check network.
-            return `https://filfox.info/en/message/${transaction.cid}`;
+            return `https://filfox.info/en/message/${
+                typeof transaction === "string" ? transaction : transaction.cid
+            }`;
         },
     };
 
@@ -225,20 +232,22 @@ export class FilecoinClass
     };
 
     /**
-     * See [[LockChain.addressIsValid]].
+     * See [[LockChain.transactionID]].
      */
-    addressIsValid = (address: FilAddress): boolean => {
+    transactionID = (transaction: FilTransaction): string => transaction.cid;
+
+    transactionFromID = async (
+        txid: string | Buffer,
+        _txindex: string,
+    ): Promise<FilTransaction> => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
-        assertType<string>("string", { address: address.address });
-        return FilecoinClass.utils.addressIsValid(address, this.chainNetwork);
+        return fetchMessage(
+            typeof txid === "string" ? txid : new CID(txid).toString(),
+            this.chainNetwork,
+        );
     };
-
-    /**
-     * See [[LockChain.transactionID]].
-     */
-    transactionID = (transaction: FilTransaction) => transaction.cid;
 
     depositV1HashString = (_deposit: FilDeposit): string => {
         throw new Error(NETWORK_NOT_SUPPORTED);

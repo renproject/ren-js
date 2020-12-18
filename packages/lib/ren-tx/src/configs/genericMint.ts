@@ -301,7 +301,8 @@ const listenerAction = assign<GatewayMachineContext>({
             return c.depositListenerRef;
         }
         const cb = depositListener(c);
-        return spawn(cb, actorName);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return spawn(cb, actorName) as Actor<any>;
     },
 });
 

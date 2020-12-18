@@ -43,11 +43,11 @@ export class BurnAndRelease<
         LockTransaction
     >,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockAddress = any,
+    LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress = any
+    MintAddress extends string | { address: string } = any
 > {
     /** The details of the burn, including the amount and recipient. */
     public burnDetails: BurnDetails<MintTransaction> | undefined;
@@ -459,6 +459,13 @@ export class BurnAndRelease<
                         const sHash = generateSHash(
                             `${this.params.asset}/to${this.params.to.name}`,
                         );
+                        console.log(
+                            "sHash",
+                            `${this.params.asset}/to${this.params.to.name}`,
+                            sHash.toString("hex"),
+                        );
+                        console.log(this.renVM.version(this._state.selector));
+                        console.log(this._state.selector);
 
                         const gHash = generateGHash(
                             [],

@@ -61,12 +61,12 @@ export abstract class BitcoinBaseChain
         createAddress: createAddress(Networks, Opcode, Script, base58.encode),
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ) => validateAddress(address, BitcoinBaseChain.asset, network),
 
         addressExplorerLink: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
             if (network === "mainnet") {
@@ -78,13 +78,15 @@ export abstract class BitcoinBaseChain
         },
 
         transactionExplorerLink: (
-            tx: BtcTransaction,
+            tx: BtcTransaction | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
+            const txHash = typeof tx === "string" ? tx : tx.txHash;
+
             if (network === "mainnet") {
-                return `https://live.blockcypher.com/btc/tx/${tx.txHash}/`;
+                return `https://live.blockcypher.com/btc/tx/${txHash}/`;
             } else if (network === "testnet") {
-                return `https://live.blockcypher.com/btc-testnet/tx/${tx.txHash}/`;
+                return `https://live.blockcypher.com/btc-testnet/tx/${txHash}/`;
             }
             return undefined;
         },
@@ -238,6 +240,13 @@ export abstract class BitcoinBaseChain
      * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: BtcTransaction) => transaction.txHash;
+
+    transactionFromID = async (txid: string | Buffer, txindex: string) =>
+        this.utils.getUTXO(
+            this.chainNetwork === "testnet",
+            typeof txid === "string" ? txid : txid.toString("hex"),
+            parseInt(txindex, 10),
+        );
 
     depositV1HashString = ({ transaction }: BtcDeposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;

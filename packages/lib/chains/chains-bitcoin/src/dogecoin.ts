@@ -28,12 +28,12 @@ export class DogecoinClass extends BitcoinClass {
         createAddress: createAddress(Networks, Opcode, Script, base58.encode),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ) => validateAddress(address, DogecoinClass.asset, network),
 
         addressExplorerLink: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
             if (network === "mainnet") {
@@ -45,13 +45,15 @@ export class DogecoinClass extends BitcoinClass {
         },
 
         transactionExplorerLink: (
-            tx: BtcTransaction,
+            tx: BtcTransaction | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
+            const txHash = typeof tx === "string" ? tx : tx.txHash;
+
             if (network === "mainnet") {
-                return `https://sochain.com/tx/DOGE/${tx.txHash}/`;
+                return `https://sochain.com/tx/DOGE/${txHash}/`;
             } else if (network === "testnet") {
-                return `https://sochain.com/tx/DOGETEST/${tx.txHash}/`;
+                return `https://sochain.com/tx/DOGETEST/${txHash}/`;
             }
             return undefined;
         },

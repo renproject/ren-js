@@ -38,7 +38,7 @@ export class BitcoinCashClass extends BitcoinClass {
         ),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ) =>
             isValidAddress(address) &&
@@ -49,7 +49,7 @@ export class BitcoinCashClass extends BitcoinClass {
                 : true),
 
         addressExplorerLink: (
-            address: BtcAddress,
+            address: BtcAddress | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
             if (network === "mainnet") {
@@ -61,13 +61,15 @@ export class BitcoinCashClass extends BitcoinClass {
         },
 
         transactionExplorerLink: (
-            tx: BtcTransaction,
+            tx: BtcTransaction | string,
             network: BtcNetwork = "mainnet",
         ): string | undefined => {
+            const txHash = typeof tx === "string" ? tx : tx.txHash;
+
             if (network === "mainnet") {
-                return `https://explorer.bitcoin.com/bch/tx/${tx.txHash}`;
+                return `https://explorer.bitcoin.com/bch/tx/${txHash}`;
             } else if (network === "testnet") {
-                return `https://explorer.bitcoin.com/tbch/tx/${tx.txHash}`;
+                return `https://explorer.bitcoin.com/tbch/tx/${txHash}`;
             }
             return undefined;
         },

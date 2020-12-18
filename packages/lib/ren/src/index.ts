@@ -242,7 +242,7 @@ export default class RenJS {
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address = any
+        Address extends string | { address: string } = any
     >(
         params: LockAndMintParams<Transaction, Deposit, Address>,
     ): Promise<LockAndMint<Transaction, Deposit, Address>> =>
@@ -261,7 +261,7 @@ export default class RenJS {
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address = any
+        Address extends string | { address: string } = any
     >(
         params: BurnAndReleaseParams<Transaction, Deposit, Address>,
     ): Promise<BurnAndRelease<Transaction, Deposit, Address>> =>

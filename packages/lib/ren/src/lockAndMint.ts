@@ -105,11 +105,11 @@ export class LockAndMint<
         LockTransaction
     >,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockAddress = any,
+    LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress = any
+    MintAddress extends string | { address: string } = any
 > extends EventEmitter {
     // Public
 
@@ -547,11 +547,11 @@ export class LockAndMintDeposit<
         LockTransaction
     >,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockAddress = any,
+    LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress = any
+    MintAddress extends string | { address: string } = any
 > {
     /** The details, including amount, of the deposit. */
     public depositDetails: LockDeposit;

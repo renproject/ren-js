@@ -53,7 +53,7 @@
         "@renproject/interfaces": "file:../interfaces",
         "@renproject/utils": "file:../utils",
         "@types/node": "^14.0.5",
-        "axios": "^0.19.2",
+        "axios": "^0.21.1",
         "immutable": "^4.0.0-rc.12"
     },
     "config": {

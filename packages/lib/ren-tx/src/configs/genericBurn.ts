@@ -3,7 +3,15 @@
 // TODO: Improve typings.
 
 import BigNumber from "bignumber.js";
-import { assign, MachineOptions, Receiver, send, Sender, spawn } from "xstate";
+import {
+    Actor,
+    assign,
+    MachineOptions,
+    Receiver,
+    send,
+    Sender,
+    spawn,
+} from "xstate";
 
 import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
@@ -90,7 +98,8 @@ const spawnBurnTransaction = assign<BurnMachineContext, BurnMachineEvent>({
             return c.burnListenerRef;
         }
         const cb = burnTransactionListener(c);
-        return spawn(cb, actorName);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return spawn(cb, actorName) as Actor<any>;
     },
 });
 
@@ -179,7 +188,9 @@ const burnTransactionListener = (context: BurnMachineContext) => (
 
             receive((event: BurnMachineEvent) => {
                 if (event.type === "SUBMIT") {
-                    performBurn().then().catch(console.error);
+                    performBurn()
+                        .then()
+                        .catch(console.error);
                 }
             });
         })

@@ -1,3 +1,4 @@
+import bech32 from "bech32";
 import {
     getRenNetworkDetails,
     LockChain,
@@ -6,8 +7,13 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { assertType, Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { Key } from "@terra-money/terra.js";
+import {
+    assertType,
+    Callable,
+    toURLBase64,
+    utilsWithChainNetwork,
+} from "@renproject/utils";
+import { AccAddress, Key } from "@terra-money/terra.js";
 
 import {
     TerraAddress,
@@ -26,6 +32,10 @@ const resolveNetwork = (network: TerraNetwork | "mainnet" | "testnet") =>
         ? TerraNetwork.Tequila
         : network;
 
+export enum TerraAssets {
+    LUNA = "LUNA",
+}
+
 /**
  * TerraClass implements the LockChain interface for Terra (https://terra.money)
  * and it's asset LUNA.
@@ -41,23 +51,24 @@ export class TerraClass
     public chainNetwork: TerraNetwork | undefined;
 
     // The assets native to Terra.
-    public assets = ["Luna"];
+    public assets = [TerraAssets.LUNA];
 
     public static utils = {
         addressIsValid: (
-            address: TerraAddress,
+            addressIn: TerraAddress | string,
             _network:
                 | TerraNetwork
                 | "mainnet"
                 | "testnet" = TerraNetwork.Columbus,
         ): boolean => {
-            assertType<string>("string", { address: address.address });
-            // TODO
-            return true;
+            const address =
+                typeof addressIn === "string" ? addressIn : addressIn.address;
+            assertType<string>("string", { address: address });
+            return AccAddress.validate(address);
         },
 
         addressExplorerLink: (
-            address: TerraAddress,
+            addressIn: TerraAddress | string,
             network:
                 | TerraNetwork
                 | "mainnet"
@@ -65,18 +76,20 @@ export class TerraClass
         ): string => {
             return `https://finder.terra.money/${resolveNetwork(
                 network,
-            )}/account/${address.address}`;
+            )}/account/${
+                typeof addressIn === "string" ? addressIn : addressIn.address
+            }`;
         },
 
         transactionExplorerLink: (
-            transaction: TerraTransaction,
+            transaction: TerraTransaction | string,
             network:
                 | TerraNetwork
                 | "mainnet"
                 | "testnet" = TerraNetwork.Columbus,
         ): string => {
             return `https://finder.terra.money/${resolveNetwork(network)}/tx/${
-                transaction.hash
+                typeof transaction === "string" ? transaction : transaction.hash
             }`;
         },
     };
@@ -111,7 +124,8 @@ export class TerraClass
     /**
      * See [[LockChain.assetIsNative]].
      */
-    assetIsNative = (asset: string): boolean => this.assets.indexOf(asset) >= 0;
+    assetIsNative = (asset: string): boolean =>
+        this.assets.indexOf(asset as TerraAssets) >= 0;
     assetIsSupported = this.assetIsNative;
 
     public readonly assertAssetIsSupported = (asset: string) => {
@@ -125,7 +139,7 @@ export class TerraClass
      */
     assetDecimals = (asset: string): number => {
         switch (asset) {
-            case "Luna":
+            case TerraAssets.LUNA:
                 return 6;
         }
         throw new Error(`Unsupported asset ${String(asset)}.`);
@@ -189,12 +203,13 @@ export class TerraClass
         this.assertAssetIsSupported(asset);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const address: Key = new (Key as any)(compressedPublicKey);
+        // @ts-expect-error `Cannot create an instance of an abstract class`
+        const address: Key = new Key(compressedPublicKey);
 
         return {
             asset,
             address: address.accAddress,
-            memo: gHash.toString("base64"),
+            memo: toURLBase64(gHash),
         };
     };
 
@@ -206,15 +221,25 @@ export class TerraClass
     /**
      * See [[LockChain.addressStringToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer => {
-        // TODO
-        return Buffer.from(address);
-    };
+    addressStringToBytes = (address: string): Buffer =>
+        Buffer.from(bech32.fromWords(bech32.decode(address).words));
 
     /**
      * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: TerraTransaction) => transaction.hash;
+
+    transactionFromID = async (txid: string | Buffer, txindex: string) => {
+        if (!this.chainNetwork) {
+            throw new Error(`${this.name} object not initialized.`);
+        }
+
+        return terraDev.fetchDeposit(
+            typeof txid === "string" ? txid : txid.toString("hex"),
+            parseInt(txindex, 10),
+            this.chainNetwork,
+        );
+    };
 
     depositV1HashString = (_deposit: TerraDeposit): string => {
         throw new Error(UNSUPPORTED_TERRA_NETWORK);

@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 import * as Chains from "@renproject/chains";
+import { Terra } from "@renproject/chains-terra";
 
 import RenJS from "@renproject/ren";
-import { extractError } from "@renproject/utils";
+import { extractError, toReadable, fromReadable } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import { blue, red } from "chalk";
@@ -20,7 +21,7 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it("burning from contract", async function() {
+    it.only("burning from contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
@@ -28,29 +29,48 @@ describe("Refactor - Burning", () => {
         const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
-        // Bitcoin recipient.
-        const asset = "FIL";
+        // Recipient.
+        const asset = "LUNA";
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
-        const to = Chains.Filecoin().Address(recipient);
 
+        const to = Terra().Address(recipient);
         const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
+        const fromAddress = (await from.web3.eth.getAccounts())[0];
 
         const logLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
 
+        const decimals = to.assetDecimals(asset);
+
         // Use 0.0001 more than fee.
-        let suggestedAmount: number | string;
+        let suggestedAmount: BigNumber;
         try {
-            const fees = await renJS.getFees();
-            const fee: number = fees[asset.toLowerCase()].release;
-            suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
+            const fees = await renJS.getFees({
+                asset,
+                from,
+                to,
+            });
+            console.log("fees", fees.release.toString());
+            const fee = fees.release;
+            suggestedAmount = fee.times(1.01);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
-            suggestedAmount = new BigNumber(0.0002)
-                .times(new BigNumber(10).exponentiatedBy(18))
-                .toFixed();
+            suggestedAmount = new BigNumber(0.0002).times(
+                new BigNumber(10).exponentiatedBy(decimals),
+            );
         }
+        console.log("fromAddress", fromAddress);
+
+        console.log(
+            `Burning ${toReadable(
+                suggestedAmount,
+                decimals,
+            ).toFixed()} ${asset} of ${toReadable(
+                await from.getBalance(asset, fromAddress),
+                decimals,
+            ).toFixed()} ${asset}`,
+        );
 
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
@@ -103,15 +123,21 @@ describe("Refactor - Burning", () => {
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const asset = "BTC";
-        const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
 
+        const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
+        const to = Chains.Bitcoin().Address(recipient);
+
         const renJS = new RenJS("testnet");
 
         // Use 0.0001 more than fee.
-        const fees = await renJS.getFees();
+        const fees = await renJS.getFees({
+            asset,
+            to,
+            from,
+        });
         const fee: number = fees[asset.toLowerCase()].release;
         const suggestedAmount = new BigNumber(Math.floor(fee + 0.0001 * 1e8))
             .decimalPlaces(0)
@@ -119,7 +145,7 @@ describe("Refactor - Burning", () => {
 
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
-            to: Chains.Bitcoin().Address(recipient),
+            to,
             from: from.Account({ value: suggestedAmount }),
         });
 

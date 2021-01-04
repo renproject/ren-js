@@ -85,6 +85,18 @@ export const toURLBase64 = (input: Buffer | string): string => {
         .replace(/\=+$/, "");
 };
 
+export const toReadable = (
+    value: number | string | BigNumber,
+    decimals: number | string | BigNumber,
+): BigNumber =>
+    new BigNumber(value).dividedBy(new BigNumber(10).exponentiatedBy(decimals));
+
+export const fromReadable = (
+    value: number | string | BigNumber,
+    decimals: number | string | BigNumber,
+): BigNumber =>
+    new BigNumber(value).times(new BigNumber(10).exponentiatedBy(decimals));
+
 const hasOwnProperty = <T>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     object: any,

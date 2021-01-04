@@ -5,7 +5,7 @@ export const utilsWithChainNetwork = <
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Address = any,
+    Address extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Network = any
 >(
@@ -14,7 +14,7 @@ export const utilsWithChainNetwork = <
 ) => ({
     ...utils,
     addressIsValid: (
-        address: Address,
+        address: string,
         network?: Network | "mainnet" | "testnet",
     ) =>
         utils.addressIsValid(

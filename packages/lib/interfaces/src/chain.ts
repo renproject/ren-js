@@ -42,8 +42,11 @@ export type TransactionListener<
  * If a chain has multiple assets (e.g. ETH and ERC20s), it's recommended that a single handler is written that supports
  * all the relevant assets.
  */
-export interface ChainCommon<Transaction = any, Address = any, Network = any>
-    extends MintChainStatic<Transaction, Address, Network> {
+export interface ChainCommon<
+    Transaction = any,
+    Address extends string | { address: string } = any,
+    Network = any
+> extends MintChainStatic<Transaction, Address, Network> {
     /**
      * The name of the Chain.
      *
@@ -152,6 +155,11 @@ export interface ChainCommon<Transaction = any, Address = any, Network = any>
         txid: Buffer;
         txindex: string;
     };
+
+    transactionFromID: (
+        txid: string | Buffer,
+        txindex: string,
+    ) => SyncOrPromise<Transaction>;
 }
 
 export type DepositCommon<Transaction = any> = {
@@ -180,7 +188,7 @@ export interface LockChain<
      * The LockChain's address format. This should contain all the information
      * users need to
      */
-    Address = any,
+    Address extends string | { address: string } = any,
     /**
      * The LockChain's network options.
      */
@@ -268,8 +276,11 @@ export type OverwritableBurnAndReleaseParams = Omit<
     "from"
 >;
 
-export interface MintChain<Transaction = any, Address = any, Network = any>
-    extends ChainCommon<Transaction, Address, Network> {
+export interface MintChain<
+    Transaction = any,
+    Address extends string | { address: string } = any,
+    Network = any
+> extends ChainCommon<Transaction, Address, Network> {
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
     /**
@@ -337,7 +348,7 @@ export interface MintChain<Transaction = any, Address = any, Network = any>
  */
 export interface MintChainStatic<
     Transaction = any,
-    Address = any,
+    DepositAddress extends string | { address: string } = any,
     Network = any
 > {
     utils: {
@@ -347,7 +358,7 @@ export interface MintChainStatic<
          * @param network
          */
         addressIsValid(
-            address: Address,
+            address: DepositAddress | string,
             network?: Network | "mainnet" | "testnet",
         ): boolean;
 
@@ -356,7 +367,7 @@ export interface MintChainStatic<
          * to access more information about an address.
          */
         addressExplorerLink?: (
-            address: Address,
+            address: DepositAddress | string,
             network?: Network | "mainnet" | "testnet",
         ) => string | undefined;
 
@@ -365,7 +376,7 @@ export interface MintChainStatic<
          * to access more information about a transaction.
          */
         transactionExplorerLink?: (
-            transaction: Transaction,
+            transaction: Transaction | string,
             network?: Network | "mainnet" | "testnet",
         ) => string | undefined;
     };

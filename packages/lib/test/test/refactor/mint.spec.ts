@@ -16,6 +16,8 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
+import { Terra } from "@renproject/chains-terra";
+import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
 
 chai.should();
 
@@ -26,16 +28,21 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
+const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
+
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
-        const asset = "BTC";
+        const asset = "LUNA" as string;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
             apiAddress: "https://lotus-cors-proxy.herokuapp.com/",
+            terra: {
+                URL: "https://tequila-lcd.terra.dev",
+            },
         });
 
         const logLevel: LogLevel = LogLevel.Log;
@@ -46,9 +53,9 @@ describe("Refactor: mint", () => {
 
         const params: LockAndMintParams = {
             asset,
-            from: Chains.Bitcoin(),
+            from: Terra(),
             to: Chains.Ethereum(provider, Chains.renTestnetVDot3).Account({
-                address: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176",
+                address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
             }),
         };
 
@@ -60,10 +67,10 @@ describe("Refactor: mint", () => {
             const fees = await renJS.getFees(params);
             suggestedAmount = fees.lock
                 .div(new BigNumber(10).exponentiatedBy(assetDecimals))
-                .plus(0.0001);
+                .times(2.5);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
-            if ((asset as string) === "FIL") {
+            if (asset === "FIL") {
                 suggestedAmount = 0.2;
             } else {
                 suggestedAmount = 0.0015;
@@ -74,11 +81,15 @@ describe("Refactor: mint", () => {
 
         console.info("gateway address:", lockAndMint.gatewayAddress);
 
-        console.log(
-            `${asset} balance: ${await account.balanceOf(
-                asset,
-            )} ${asset} (${await account.address(asset)})`,
-        );
+        const faucetSupported = FAUCET_ASSETS.indexOf(asset) >= 0;
+
+        if (faucetSupported) {
+            console.log(
+                `${asset} balance: ${await account.balanceOf(
+                    asset,
+                )} ${asset} (${await account.address(asset)})`,
+            );
+        }
 
         await new Promise((resolve, reject) => {
             let i = 0;
@@ -118,7 +129,7 @@ describe("Refactor: mint", () => {
             sleep(30 * SECONDS)
                 .then(() => {
                     // If there's been no deposits, send one.
-                    if (i === 0) {
+                    if (faucetSupported && i === 0) {
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
                                 suggestedAmount.toFixed(),
@@ -131,17 +142,19 @@ describe("Refactor: mint", () => {
                             )}`,
                         );
 
-                        const options = { params: undefined };
+                        const options = { params: undefined, memo: undefined };
                         let address = "";
                         if (typeof lockAndMint.gatewayAddress === "string") {
                             address = lockAndMint.gatewayAddress;
-                        } else if ((asset as string) === "FIL") {
+                        } else if (asset === "FIL" || asset === "LUNA") {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             address = (lockAndMint.gatewayAddress as Chains.FilAddress)
                                 .address;
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             options.params = (lockAndMint.gatewayAddress as Chains.FilAddress).params;
+                            options.memo = (lockAndMint.gatewayAddress as TerraAddress).memo;
                         } else {
+                            console.error(`Unknown address format.`);
                             return;
                         }
                         account

@@ -47,6 +47,10 @@ export interface GatewayTransaction {
      * Provided at the point of submission
      */
     contractParams?: any;
+    /**
+     * Latest error detected during processing a specific transaction
+     */
+    error?: Error;
 }
 
 /**

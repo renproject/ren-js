@@ -30,8 +30,8 @@ export interface DepositMachineContext {
     providers: any;
 
     /**
-    * Functions to create the ren-js "from" param;
-    * */
+     * Functions to create the ren-js "from" param;
+     * */
     fromChainMap: {
         [key in string]: (
             context: Omit<DepositMachineContext, "deposit">,
@@ -39,8 +39,8 @@ export interface DepositMachineContext {
     };
 
     /**
-    * Functions to create the ren-js "to" param;
-    * */
+     * Functions to create the ren-js "to" param;
+     * */
     toChainMap: {
         [key in string]: (
             context: Omit<DepositMachineContext, "deposit">,
@@ -64,8 +64,12 @@ export interface DepositMachineSchema {
         srcConfirmed: {};
         /** renvm has accepted and signed the transaction */
         accepted: {};
+        /** renvm did not accept the tx */
+        errorAccepting: {};
         /** the user is submitting the transaction to mint on the destination chain */
         claiming: {};
+        /** there was an error submitting the tx to the destination chain */
+        errorSubmitting: {};
         /** We have recieved a txHash for the destination chain */
         destInitiated: {};
         /** user has acknowledged that the transaction is completed, so we can stop listening for further deposits */
@@ -106,14 +110,13 @@ export const depositMachine = Machine<
         id: "RenVMDepositTransaction",
         initial: "restoringDeposit",
         states: {
-
             errorRestoring: {
                 entry: [log("restore error")],
                 meta: {
                     test: async (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
-                            "Error must exist",
+                            "error must exist",
                         );
                     },
                 },
@@ -122,7 +125,6 @@ export const depositMachine = Machine<
             restoringDeposit: {
                 entry: ["listenerAction"],
                 on: {
-
                     LISTENING: {
                         actions: send(
                             (context) => {
@@ -199,7 +201,7 @@ export const depositMachine = Machine<
                         },
                     ].reverse(),
                 },
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
             },
 
             srcSettling: {
@@ -248,7 +250,7 @@ export const depositMachine = Machine<
                         },
                     ],
                 },
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
             },
             srcConfirmed: {
                 entry: send("SIGN", {
@@ -256,9 +258,14 @@ export const depositMachine = Machine<
                         `${context.deposit.sourceTxHash}DepositListener`,
                 }),
                 on: {
-                    // TODO: figure out how to handle this case
                     SIGN_ERROR: {
-                        target: "srcConfirmed",
+                        target: "errorAccepting",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                error: evt.data,
+                            }),
+                        }),
                     },
                     SIGNED: {
                         target: "accepted",
@@ -270,7 +277,18 @@ export const depositMachine = Machine<
                         }),
                     },
                 },
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
+            },
+
+            errorAccepting: {
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.deposit.error ? true : false,
+                            "error must exist",
+                        );
+                    },
+                },
             },
             accepted: {
                 entry: sendParent((ctx, _) => {
@@ -291,7 +309,35 @@ export const depositMachine = Machine<
                     },
                     REJECT: "rejected",
                 },
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
+            },
+            errorSubmitting: {
+                entry: sendParent((ctx, _) => {
+                    return {
+                        type: "CLAIMABLE",
+                        data: ctx.deposit,
+                    };
+                }),
+                on: {
+                    CLAIM: {
+                        target: "claiming",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                contractParams: evt.data,
+                            }),
+                        }),
+                    },
+                    REJECT: "rejected",
+                },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.deposit.error ? true : false,
+                            "error must exist",
+                        );
+                    },
+                },
             },
             claiming: {
                 entry: send(
@@ -305,6 +351,23 @@ export const depositMachine = Machine<
                     },
                 ),
                 on: {
+                    SUBMIT_ERROR: [
+                        {
+                            target: "errorSubmitting",
+                            actions: [
+                                assign({
+                                    deposit: (ctx, evt) => ({
+                                        ...ctx.deposit,
+                                        error: evt.data,
+                                    }),
+                                }),
+                                sendParent((ctx, _) => ({
+                                    type: "DEPOSIT_UPDATE",
+                                    data: ctx.deposit,
+                                })),
+                            ],
+                        },
+                    ],
                     SUBMITTED: [
                         {
                             target: "destInitiated",
@@ -323,23 +386,23 @@ export const depositMachine = Machine<
                         },
                     ],
                 },
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
             },
             destInitiated: {
                 on: {
                     ACKNOWLEDGE: "completed",
                 },
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
             },
             rejected: {
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
             },
             completed: {
                 entry: sendParent((ctx, _) => ({
                     type: "DEPOSIT_COMPLETED",
                     data: ctx.deposit,
                 })),
-                meta: { test: async () => { } },
+                meta: { test: async () => {} },
             },
         },
     },

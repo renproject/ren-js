@@ -105,7 +105,7 @@ const txCreator = async (context: GatewayMachineContext) => {
 const depositListener = (
     context: GatewayMachineContext | DepositMachineContext,
 ) => (callback: Sender<any>, receive: Receiver<any>) => {
-    let cleanup = () => { };
+    let cleanup = () => {};
 
     const targetDeposit = (context as DepositMachineContext).deposit;
     let listening = false;
@@ -196,7 +196,7 @@ const depositListener = (
                                               }),
                                     )
                                     .catch((e) => {
-                                        console.error(e)
+                                        console.error("Sign error!", e);
                                         // If a tx has already been minted, we will get an error at this step
                                         // We can assume that a "utxo spent" error implies that the asset has been minted
                                         callback({
@@ -225,8 +225,8 @@ const depositListener = (
                                         callback({
                                             type: "SUBMIT_ERROR",
                                             data: e,
-                                        })
-                                        console.error(e)
+                                        });
+                                        console.error("Submit error!", e);
                                     });
                                 break;
                         }
@@ -271,7 +271,7 @@ const depositListener = (
                     case "RESTORE":
                         minter
                             .processDeposit(event.data)
-                            .then(() => { })
+                            .then(() => {})
                             .catch((e) => {
                                 console.error(e);
                             });

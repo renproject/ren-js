@@ -81,14 +81,34 @@ export interface BurnMachineContext {
 // We have different states for a burn machine, as there can only be one transaction
 export interface BurnMachineSchema {
     states: {
+        /** Tx is resolving which state it should be in based on feedback from renjs */
         restoring: {};
+
+        /** Tx has been initialized by renjs successfully */
         created: {};
+
+        /** We encountered an error initializing the tx. Might be an issue submitting the
+         * burn tx to the host chain */
         createError: {};
+
+        /** Source/host chain is awaiting sufficient confirmations */
         srcSettling: {};
+
+        /** There was an error encountered while processing the burn tx
+         * Could be either from renvm or the host chain */
         errorBurning: {};
+
+        /** Source/host chain has reached sufficient confirmations and tx
+         * can be submitted to renVM for release */
         srcConfirmed: {};
+
+        /** An error occored while processing the release
+         * Should only come from renVM */
         errorReleasing: {};
-        destInitiated: {}; // We only care if the txHash has been issued by renVM
+
+        /** The release tx has successfully been broadcast
+         * We only care if the txHash has been issued by renVM */
+        destInitiated: {};
     };
 }
 

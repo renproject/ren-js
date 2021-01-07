@@ -1,15 +1,15 @@
 /* eslint-disable no-console */
 
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 import {
-    ConnectorEvents,
-    ConnectorInterface,
+  ConnectorEvents,
+  ConnectorInterface,
 } from "@renproject/multiwallet-base-connector";
 import { RenNetwork } from "@renproject/interfaces";
 
@@ -19,7 +19,12 @@ interface MultiwalletConnector<P, A> {
   account?: A;
   error?: Error;
   chain: string;
-  status: "connecting" | "connected" | "disconnected" | "wrong_network";
+  status:
+    | "connecting"
+    | "connected"
+    | "disconnected"
+    | "wrong_network"
+    | "reconnecting";
   // name: string;
 }
 
@@ -51,6 +56,7 @@ const context = createContext<MultiwalletInterface<any, any>>({
 export const ConnectorWatcher = <P, A>({
   connector,
   chain,
+  status,
   update,
   targetNetwork,
 }: MultiwalletConnector<P, A> & {
@@ -86,7 +92,7 @@ export const ConnectorWatcher = <P, A>({
 
   const handleDeactivate = useCallback(
     (reason: string) => {
-      console.log(reason);
+      console.debug(reason);
       update({
         connector,
         chain,
@@ -142,6 +148,18 @@ export const ConnectorWatcher = <P, A>({
     activate();
   }, [activate, targetNetwork]);
 
+  // Re-activate if reconnecting
+  useEffect(() => {
+    if (status === "reconnecting") {
+      update({
+        connector,
+        chain,
+        status: "connecting",
+      });
+      activate();
+    }
+  }, [activate, status]);
+
   return null;
 };
 
@@ -185,9 +203,10 @@ export const MultiwalletProvider = <P, A>({
         // eslint-disable-next-line security/detect-object-injection
         delete enabledChains[chain];
         setEnabledChains({ ...enabledChains });
+        updateConnector({ connector, chain, status: "reconnecting" });
+      } else {
+        updateConnector({ connector, chain, status: "connecting" });
       }
-
-      updateConnector({ connector, chain, status: "connecting" });
     },
     [enabledChains, setEnabledChains, updateConnector]
   );

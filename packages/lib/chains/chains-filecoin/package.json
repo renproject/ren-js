@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-filecoin",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -49,6 +49,7 @@
         "@renproject/rpc": "^2.0.2",
         "@renproject/utils": "^2.0.2",
         "@types/bs58": "^4.0.1",
+        "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "bchaddrjs": "^0.4.9",
         "bignumber.js": "^9.0.1",
@@ -58,8 +59,7 @@
         "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bs58": "^4.0.1",
         "cids": "^1.0.1",
-        "wallet-address-validator": "^0.2.4",
-        "@types/elliptic": "^6.4.12"
+        "wallet-address-validator": "^0.2.4"
     },
     "resolutions": {
         "sha3": "^2.1.2"

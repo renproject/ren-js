@@ -93,6 +93,12 @@ const depositModel = createModel(
     ERROR: {
         cases: [{ error: new Error("error") }],
     },
+    SIGN_ERROR: {
+        cases: [{ data: { message: "an error" } }],
+    },
+    SUBMIT_ERROR: {
+        cases: [{ data: { message: "an error" } }],
+    },
     RESTORED: {},
     CONFIRMATION: {},
     CONFIRMED: {},
@@ -144,6 +150,12 @@ const burnModel = createModel(
     },
     CONFIRMATION: {
         cases: [{ data: { sourceTxHash: "123" } }],
+    },
+    BURN_ERROR: {
+        cases: [{ data: { message: "an error" } }],
+    },
+    RELEASE_ERROR: {
+        cases: [{ data: { message: "an error" } }],
     },
     CONFIRMED: {
         cases: [{ data: { sourceTxHash: "123", sourceTxConfs: 1 } }],

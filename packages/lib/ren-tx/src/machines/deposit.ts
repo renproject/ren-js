@@ -9,37 +9,73 @@ import { assert } from "@renproject/utils";
 
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
 
+/** The context that the deposit machine acts on */
 export interface DepositMachineContext {
-    deposit: GatewayTransaction; // The deposit being tracked
-    tx: GatewaySession; // The parent gateway session being acted on
-    depositListenerRef?: Actor<any>; // The listener for this depoisit
-    providers: any; // The blockchain api providers required for the lockchain/burnchain
+    /** The deposit being tracked */
+    deposit: GatewayTransaction;
+
+    /** The transaction session the deposit is part of */
+    tx: GatewaySession;
+
+    /**
+     * @private
+     * The internal xstate callback actor that recieves and sends events to the ren-js
+     * deposit
+     * */
+    depositListenerRef?: Actor<any>;
+
+    /**
+     * The blockchain providers required for constructing ren-js to/from parameters
+     * */
+    providers: any;
+
+    /**
+     * Functions to create the ren-js "from" param;
+     * */
     fromChainMap: {
         [key in string]: (
             context: Omit<DepositMachineContext, "deposit">,
         ) => LockChain<any>;
-    }; // Functions to create the "from" param;
+    };
+
+    /**
+     * Functions to create the ren-js "to" param;
+     * */
     toChainMap: {
         [key in string]: (
             context: Omit<DepositMachineContext, "deposit">,
         ) => MintChain<any>;
-    }; // Functions to create the "to" param;
+    };
     sdk: RenJS;
 }
 
-// The states a deposit can be in
+/**  The states a deposit can be in */
 export interface DepositMachineSchema {
     states: {
-        restoringDeposit: {}; // We are waiting for ren-js to find the deposit
-        errorRestoring: {}; // We couldn't restore this deposit
-        restoredDeposit: {}; // renjs has found the deposit for the transaction
-        srcSettling: {}; // we are waiting for the source chain to confirm the transaction
-        srcConfirmed: {}; // source chain has confirmed the transaction
-        accepted: {}; // renvm has accepted and signed the transaction
-        claiming: {}; // the user is submitting the transaction to mint on the destination chain
-        destInitiated: {}; // We have recieved a txHash for the destination chain
-        completed: {}; // user has acknowledged that the transaction is completed, so we can stop listening for further deposits
-        rejected: {}; // user does not want to claim this deposit
+        /** We are waiting for ren-js to find the deposit */
+        restoringDeposit: {};
+        /** We couldn't restore this deposit */
+        errorRestoring: {};
+        /** renjs has found the deposit for the transaction */
+        restoredDeposit: {};
+        /** we are waiting for the source chain to confirm the transaction */
+        srcSettling: {};
+        /** source chain has confirmed the transaction */
+        srcConfirmed: {};
+        /** renvm has accepted and signed the transaction */
+        accepted: {};
+        /** renvm did not accept the tx */
+        errorAccepting: {};
+        /** the user is submitting the transaction to mint on the destination chain */
+        claiming: {};
+        /** there was an error submitting the tx to the destination chain */
+        errorSubmitting: {};
+        /** We have recieved a txHash for the destination chain */
+        destInitiated: {};
+        /** user has acknowledged that the transaction is completed, so we can stop listening for further deposits */
+        completed: {};
+        /** user does not want to claim this deposit */
+        rejected: {};
     };
 }
 
@@ -61,9 +97,10 @@ export type DepositMachineEvent =
     | { type: "CLAIM"; data: ContractParams }
     | { type: "REJECT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
+    | { type: "SUBMIT_ERROR"; data: Error }
     | { type: "ACKNOWLEDGE" };
 
-// Statemachine that tracks individual deposits
+/** Statemachine that tracks individual deposits */
 export const depositMachine = Machine<
     DepositMachineContext,
     DepositMachineSchema,
@@ -79,11 +116,12 @@ export const depositMachine = Machine<
                     test: async (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
-                            "Error must exist",
+                            "error must exist",
                         );
                     },
                 },
             },
+
             restoringDeposit: {
                 entry: ["listenerAction"],
                 on: {
@@ -108,6 +146,7 @@ export const depositMachine = Machine<
                             },
                         ),
                     },
+
                     ERROR: [
                         {
                             target: "errorRestoring",
@@ -119,12 +158,14 @@ export const depositMachine = Machine<
                             }),
                         },
                     ],
+
                     DETECTED: [
                         {
                             target: "restoredDeposit",
                         },
                     ],
                 },
+
                 meta: {
                     test: async (_: void, state: any) => {
                         assert(
@@ -217,10 +258,15 @@ export const depositMachine = Machine<
                         `${context.deposit.sourceTxHash}DepositListener`,
                 }),
                 on: {
-                    // TODO: figure out how to handle this case
-                    // SIGN_ERROR: {
-                    //     target: "srcConfirmed",
-                    // },
+                    SIGN_ERROR: {
+                        target: "errorAccepting",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                error: evt.data,
+                            }),
+                        }),
+                    },
                     SIGNED: {
                         target: "accepted",
                         actions: assign({
@@ -232,6 +278,17 @@ export const depositMachine = Machine<
                     },
                 },
                 meta: { test: async () => {} },
+            },
+
+            errorAccepting: {
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.deposit.error ? true : false,
+                            "error must exist",
+                        );
+                    },
+                },
             },
             accepted: {
                 entry: sendParent((ctx, _) => {
@@ -254,6 +311,34 @@ export const depositMachine = Machine<
                 },
                 meta: { test: async () => {} },
             },
+            errorSubmitting: {
+                entry: sendParent((ctx, _) => {
+                    return {
+                        type: "CLAIMABLE",
+                        data: ctx.deposit,
+                    };
+                }),
+                on: {
+                    CLAIM: {
+                        target: "claiming",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                contractParams: evt.data,
+                            }),
+                        }),
+                    },
+                    REJECT: "rejected",
+                },
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            state.context.deposit.error ? true : false,
+                            "error must exist",
+                        );
+                    },
+                },
+            },
             claiming: {
                 entry: send(
                     (ctx) => ({
@@ -266,6 +351,23 @@ export const depositMachine = Machine<
                     },
                 ),
                 on: {
+                    SUBMIT_ERROR: [
+                        {
+                            target: "errorSubmitting",
+                            actions: [
+                                assign({
+                                    deposit: (ctx, evt) => ({
+                                        ...ctx.deposit,
+                                        error: evt.data,
+                                    }),
+                                }),
+                                sendParent((ctx, _) => ({
+                                    type: "DEPOSIT_UPDATE",
+                                    data: ctx.deposit,
+                                })),
+                            ],
+                        },
+                    ],
                     SUBMITTED: [
                         {
                             target: "destInitiated",

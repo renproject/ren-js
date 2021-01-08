@@ -104,7 +104,7 @@ export const mintMachine = Machine<
                 send("RESTORE"),
                 assign({ depositMachines: (_ctx, _evt) => ({}) }),
             ],
-            meta: { test: async () => {} },
+            meta: { test: async () => { } },
             on: {
                 RESTORE: [
                     {
@@ -219,6 +219,9 @@ export const mintMachine = Machine<
                     actions: [
                         assign({
                             tx: (context, evt) => {
+                                // Replace the transaction with the newly
+                                // detected one; the listener will provide
+                                // persisted data if it is already present
                                 if (evt.data?.sourceTxHash) {
                                     context.tx.transactions[
                                         evt.data.sourceTxHash

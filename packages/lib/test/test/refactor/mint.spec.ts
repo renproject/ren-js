@@ -16,8 +16,8 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
-import { Terra } from "@renproject/chains-terra";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
+import { EthereumConfigMap } from "@renproject/chains";
 
 chai.should();
 
@@ -32,10 +32,13 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint to contract", async function() {
+    it.only("mint to contract", async function() {
         this.timeout(100000000000);
 
-        const asset = "LUNA" as string;
+        const network = RenNetwork.TestnetVDot3;
+        const ethNetwork = EthereumConfigMap[network];
+
+        const asset = "FIL" as string;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -46,15 +49,15 @@ describe("Refactor: mint", () => {
         });
 
         const logLevel: LogLevel = LogLevel.Log;
-        const renJS = new RenJS(RenNetwork.TestnetVDot3, { logLevel });
+        const renJS = new RenJS(network, { logLevel });
 
-        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         const params: LockAndMintParams = {
             asset,
-            from: Terra(),
-            to: Chains.Ethereum(provider, Chains.renTestnetVDot3).Account({
+            from: Chains.Filecoin(),
+            to: Chains.Ethereum(provider, ethNetwork).Account({
                 address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
             }),
         };
@@ -81,7 +84,8 @@ describe("Refactor: mint", () => {
 
         console.info("gateway address:", lockAndMint.gatewayAddress);
 
-        const faucetSupported = FAUCET_ASSETS.indexOf(asset) >= 0;
+        const faucetSupported =
+            ethNetwork.isTestnet && FAUCET_ASSETS.indexOf(asset) >= 0;
 
         if (faucetSupported) {
             console.log(

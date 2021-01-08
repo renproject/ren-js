@@ -15,6 +15,8 @@ import {
 import {
     assertType,
     Callable,
+    SECONDS,
+    sleep,
     toBase64,
     toURLBase64,
     utilsWithChainNetwork,
@@ -22,9 +24,11 @@ import {
 import { blake2b } from "blakejs";
 import CID from "cids";
 import elliptic from "elliptic";
+import FilecoinClient from "@glif/filecoin-rpc-client";
 
 import { FilNetwork as FilNetworkImport, FilTransaction } from "./deposit";
-import { fetchDeposits, fetchMessage } from "./api/indexer";
+import { fetchDeposits, fetchMessage } from "./api/lotus";
+import { Filfox } from "./api/explorers/filfox";
 
 export type FilNetwork = FilNetworkImport;
 
@@ -44,8 +48,17 @@ const transactionToDeposit = (transaction: FilTransaction) => ({
     amount: transaction.amount.toString(),
 });
 
+interface ConstructorOptions {
+    apiAddress?: string;
+    token?: string;
+}
+
+const isDefined = <T>(x: T | null | undefined): x is T =>
+    x !== null && x !== undefined;
+
 export class FilecoinClass
-    implements LockChain<FilTransaction, FilDeposit, FilAddress, FilNetwork> {
+    implements
+        LockChain<FilTransaction, FilDeposit, FilAddress, FilNetwork, number> {
     public static chain = "Filecoin";
     public chain = FilecoinClass.chain;
     public name = FilecoinClass.chain;
@@ -54,6 +67,13 @@ export class FilecoinClass
     public chainNetwork: FilNetwork | undefined;
 
     public asset = "FIL";
+
+    public client: FilecoinClient | undefined;
+
+    public clientOptions: ConstructorOptions;
+
+    public noParamsFlag: boolean | undefined;
+    public filfox: Filfox | undefined;
 
     public static utils = {
         addressIsValid: (
@@ -92,8 +112,9 @@ export class FilecoinClass
         FilNetwork
     >(FilecoinClass.utils, () => this.chainNetwork);
 
-    constructor(network?: FilNetwork) {
+    constructor(network?: FilNetwork, options: ConstructorOptions = {}) {
         this.chainNetwork = network;
+        this.clientOptions = options;
     }
 
     /**
@@ -108,6 +129,20 @@ export class FilecoinClass
             this.chainNetwork || this.renNetwork.isTestnet
                 ? "testnet"
                 : "mainnet";
+
+        this.client = new FilecoinClient({
+            apiAddress: isDefined(this.clientOptions.apiAddress)
+                ? this.clientOptions.apiAddress
+                : `https://lotus-cors-proxy.herokuapp.com/${this.chainNetwork}`,
+            token: this.clientOptions.token,
+        });
+
+        if (this.chainNetwork === "mainnet") {
+            this.filfox = new Filfox(this.chainNetwork);
+        }
+
+        this.noParamsFlag = this.renNetwork.isTestnet;
+
         return this;
     };
 
@@ -139,9 +174,9 @@ export class FilecoinClass
     getDeposits = async (
         asset: string,
         address: FilAddress,
-        _instanceID: void,
+        progress: number | undefined,
         onDeposit: (deposit: FilDeposit) => Promise<void>,
-    ): Promise<void> => {
+    ): Promise<number> => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
@@ -151,15 +186,58 @@ export class FilecoinClass
             );
         }
         this.assertAssetIsSupported(asset);
-        const txs = await fetchDeposits(
+
+        // For the first time `getDeposits` is called, fetch transactions from
+        // explorer API. (mainnet only)
+        if (this.filfox && (!progress || progress === 0)) {
+            try {
+                const size = 100;
+                let page = 0;
+
+                while (true) {
+                    const {
+                        deposits,
+                        totalCount,
+                    } = await this.filfox.fetchDeposits(
+                        address.address,
+                        address.params,
+                        page,
+                        size,
+                    );
+
+                    await Promise.all(
+                        (deposits || []).map(async (tx) =>
+                            onDeposit(transactionToDeposit(tx)),
+                        ),
+                    );
+
+                    if (size * (page + 1) >= totalCount) {
+                        break;
+                    }
+
+                    page += 1;
+
+                    await sleep(10 * SECONDS);
+                }
+            } catch (error) {
+                // Ignore error.
+            }
+        }
+
+        let txs: FilTransaction[];
+        ({ txs, progress } = await fetchDeposits(
+            this.client,
             address.address,
             address.params,
             this.chainNetwork,
-        );
+            progress || 0,
+        ));
 
         await Promise.all(
-            txs.map(async (tx) => onDeposit(transactionToDeposit(tx))),
+            (txs || []).map(async (tx) => onDeposit(transactionToDeposit(tx))),
         );
+
+        return progress;
     };
 
     /**
@@ -171,7 +249,11 @@ export class FilecoinClass
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
-        transaction = await fetchMessage(transaction.cid, this.chainNetwork);
+        transaction = await fetchMessage(
+            this.client,
+            transaction.cid,
+            this.chainNetwork,
+        );
         return {
             current: transaction.confirmations,
             target: this.chainNetwork === "mainnet" ? 12 : 6, // NOT FINAL VALUES
@@ -186,18 +268,37 @@ export class FilecoinClass
         compressedPublicKey: Buffer,
         gHash: Buffer,
     ): Promise<FilAddress> | FilAddress => {
-        if (!this.chainNetwork) {
+        if (!this.renNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
         this.assertAssetIsSupported(asset);
 
         const ec = new elliptic.ec("secp256k1");
-        const publicKey = ec
-            .keyFromPublic(compressedPublicKey)
-            .getPublic(false, "hex");
+
+        // Decode compressed RenVM public key.
+        const renVMPublicKey = ec.keyFromPublic(compressedPublicKey);
+
+        // Interpret gHash as a private key.
+        const gHashKey = ec.keyFromPrivate(gHash);
+
+        // If `NO_PARAMS_FLAG` is set, set renVM public key and gHash public key,
+        // and recreate key pair from resulting curve point.
+        const derivedPublicKey = this.noParamsFlag
+            ? ec.keyFromPublic(
+                  (renVMPublicKey
+                      .getPublic()
+                      .add(
+                          gHashKey.getPublic(),
+                      ) as unknown) as elliptic.ec.KeyPair,
+              )
+            : renVMPublicKey;
 
         const payload = Buffer.from(
-            blake2b(Buffer.from(publicKey, "hex"), null, 20),
+            blake2b(
+                Buffer.from(derivedPublicKey.getPublic(false, "hex"), "hex"),
+                null,
+                20,
+            ),
         );
 
         // secp256k1 protocol prefix
@@ -213,9 +314,13 @@ export class FilecoinClass
 
         const address = encodeAddress(networkPrefix, addressObject);
 
+        const params = this.noParamsFlag
+            ? undefined
+            : toBase64(Buffer.from(toURLBase64(gHash)));
+
         return {
             address,
-            params: toBase64(Buffer.from(toURLBase64(gHash))),
+            params,
         };
     };
 
@@ -244,6 +349,7 @@ export class FilecoinClass
             throw new Error(`${this.name} object not initialized.`);
         }
         return fetchMessage(
+            this.client,
             typeof txid === "string" ? txid : new CID(txid).toString(),
             this.chainNetwork,
         );

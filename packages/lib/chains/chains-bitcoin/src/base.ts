@@ -10,19 +10,22 @@ import {
     assertType,
     fromHex,
     hash160,
+    retryNTimes,
     toBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import { Networks, Opcode, Script } from "bitcore-lib";
 import base58 from "bs58";
-import { UTXO as SendCryptoUTXO } from "send-crypto";
-import { BTCHandler } from "send-crypto/build/main/handlers/BTC/BTCHandler";
+import { APIWithPriority, BitcoinAPI, CombinedAPI, UTXO } from "./APIs/API";
+import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
+import { Blockstream } from "./APIs/blockstream";
+import { SoChain, SoChainNetwork } from "./APIs/sochain";
 
 import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
-import { validateAddress } from "./utils";
 
 export type BtcAddress = string;
-export type BtcTransaction = SendCryptoUTXO;
+export type BtcTransaction = UTXO;
 export type BtcDeposit = {
     transaction: BtcTransaction;
     amount: string;
@@ -34,6 +37,9 @@ const transactionToDeposit = (transaction: BtcTransaction) => ({
     amount: transaction.amount.toString(),
 });
 
+/**
+ * A base Bitcoin chain class that is extended by each Bitcoin chain/fork.
+ */
 export abstract class BitcoinBaseChain
     implements
         LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean> {
@@ -49,47 +55,54 @@ export abstract class BitcoinBaseChain
     public static asset = "BTC";
     public asset = "BTC";
 
+    // APIs
+    public withDefaultAPIs = (network: BtcNetwork): this => {
+        switch (network) {
+            case "mainnet":
+                // prettier-ignore
+                return this
+                    .withAPI(Blockstream())
+                    .withAPI(Blockchair())
+                    .withAPI(SoChain(), { priority: 15 });
+            case "testnet":
+                // prettier-ignore
+                return this
+                    .withAPI(Blockstream({ testnet: true }))
+                    .withAPI(Blockchair(BlockchairNetwork.BITCOIN_TESTNET))
+                    .withAPI(SoChain(SoChainNetwork.BTCTEST), { priority: 15 });
+            case "regtest":
+                // Will be supported when Electrum is added as an API.
+                throw new Error(`Regtest is currently not supported.`);
+        }
+    };
+    public api = CombinedAPI();
+    public withAPI = (
+        api: BitcoinAPI | APIWithPriority,
+        { priority = 0 } = {},
+    ) => {
+        this.api.withAPI(api, { priority });
+        return this;
+    };
+
     // Utils
     public static utils = {
-        getUTXO: BTCHandler.getUTXO,
-        getUTXOs: BTCHandler.getUTXOs,
-        getTransactions: BTCHandler.getTransactions,
-        p2shPrefix: {
-            mainnet: Buffer.from([0x05]),
-            testnet: Buffer.from([0xc4]),
-        },
+        p2shPrefix: {} as { [network: string]: Buffer },
         createAddress: createAddress(Networks, Opcode, Script, base58.encode),
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
-            address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
-        ) => validateAddress(address, BitcoinBaseChain.asset, network),
+            _address: BtcAddress | string,
+            _network: BtcNetwork = "mainnet",
+        ): boolean => true,
 
         addressExplorerLink: (
-            address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
-        ): string | undefined => {
-            if (network === "mainnet") {
-                return `https://live.blockcypher.com/btc/address/${address}/`;
-            } else if (network === "testnet") {
-                return `https://live.blockcypher.com/btc-testnet/address/${address}/`;
-            }
-            return undefined;
-        },
+            _address: BtcAddress | string,
+            _network: BtcNetwork = "mainnet",
+        ): string | undefined => undefined,
 
         transactionExplorerLink: (
-            tx: BtcTransaction | string,
-            network: BtcNetwork = "mainnet",
-        ): string | undefined => {
-            const txHash = typeof tx === "string" ? tx : tx.txHash;
-
-            if (network === "mainnet") {
-                return `https://live.blockcypher.com/btc/tx/${txHash}/`;
-            } else if (network === "testnet") {
-                return `https://live.blockcypher.com/btc-testnet/tx/${txHash}/`;
-            }
-            return undefined;
-        },
+            _tx: BtcTransaction | string,
+            _network: BtcNetwork = "mainnet",
+        ): string | undefined => undefined,
     };
 
     public utils = utilsWithChainNetwork(
@@ -112,7 +125,7 @@ export abstract class BitcoinBaseChain
         this.chainNetwork =
             this.chainNetwork ||
             (this.renNetwork.isTestnet ? "testnet" : "mainnet");
-        return this;
+        return this.withDefaultAPIs(this.chainNetwork);
     };
 
     /**
@@ -154,19 +167,25 @@ export abstract class BitcoinBaseChain
         }
         this.assertAssetIsSupported(asset);
 
-        const txs =
-            !progress && this.utils.getTransactions
-                ? await this.utils.getTransactions(
-                      this.chainNetwork === "testnet",
-                      {
-                          address,
-                          confirmations: 0,
-                      },
-                  )
-                : await this.utils.getUTXOs(this.chainNetwork === "testnet", {
-                      address,
-                      confirmations: 0,
-                  });
+        let txs: UTXO[] | undefined;
+
+        if (!progress) {
+            try {
+                txs = await retryNTimes(
+                    async () => this.api.fetchTXs(address),
+                    2,
+                );
+            } catch (error) {
+                // Ignore error and fallback to getUTXOs.
+            }
+        }
+
+        if (!txs) {
+            txs = await retryNTimes(
+                async () => this.api.fetchUTXOs(address),
+                2,
+            );
+        }
 
         await Promise.all(
             txs.map(async (tx) => onDeposit(transactionToDeposit(tx))),
@@ -184,10 +203,10 @@ export abstract class BitcoinBaseChain
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
         }
-        transaction = await this.utils.getUTXO(
-            this.chainNetwork === "testnet",
-            transaction.txHash,
-            transaction.vOut,
+        transaction = await retryNTimes(
+            async () =>
+                this.api.fetchUTXO(transaction.txHash, transaction.vOut),
+            2,
         );
         return {
             current: transaction.confirmations,
@@ -242,8 +261,7 @@ export abstract class BitcoinBaseChain
     transactionID = (transaction: BtcTransaction) => transaction.txHash;
 
     transactionFromID = async (txid: string | Buffer, txindex: string) =>
-        this.utils.getUTXO(
-            this.chainNetwork === "testnet",
+        this.api.fetchUTXO(
             typeof txid === "string" ? txid : txid.toString("hex"),
             parseInt(txindex, 10),
         );
@@ -265,6 +283,38 @@ export abstract class BitcoinBaseChain
             txindex: transaction.vOut.toFixed(),
         };
     };
+
+    // Methods for initializing mints and burns ////////////////////////////////
+
+    getBurnPayload: (() => string) | undefined;
+
+    /**
+     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * available to the burn params.
+     *
+     * @category Main
+     */
+    Address = (address: string): this => {
+        // Type validation
+        assertType<string>("string", { address });
+
+        this.getBurnPayload = () => address;
+        return this;
+    };
+
+    burnPayload? = () => {
+        return this.getBurnPayload ? this.getBurnPayload() : undefined;
+    };
+
+    toSats = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .times(new BigNumber(10).exponentiatedBy(8))
+            .toFixed();
+
+    fromSats = (value: BigNumber | string | number): string =>
+        new BigNumber(value)
+            .dividedBy(new BigNumber(10).exponentiatedBy(8))
+            .toFixed();
 }
 
 const _: MintChainStatic<

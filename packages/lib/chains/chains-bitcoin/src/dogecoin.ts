@@ -2,7 +2,8 @@ import { MintChainStatic } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib-dogecoin";
 import base58 from "bs58";
-import { DOGEHandler } from "send-crypto/build/main/handlers/DOGE/DOGEHandler";
+import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
+import { SoChain, SoChainNetwork } from "./APIs/sochain";
 
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
@@ -15,12 +16,26 @@ export class DogecoinClass extends BitcoinClass {
     public name = DogecoinClass.chain;
     public legacyName = undefined;
 
+    // APIs
+    public withDefaultAPIs = (network: BtcNetwork): this => {
+        switch (network) {
+            case "mainnet":
+                // prettier-ignore
+                return this
+                    .withAPI(Blockchair(BlockchairNetwork.DOGECOIN))
+                    .withAPI(SoChain(SoChainNetwork.DOGE), { priority: 15 });
+            case "testnet":
+                // prettier-ignore
+                return this
+                    .withAPI(SoChain(SoChainNetwork.DOGETEST), { priority: 15 });
+            case "regtest":
+                throw new Error(`Regtest is currently not supported.`);
+        }
+    };
+
     public static asset = "DOGE";
     public asset = "DOGE";
     public static utils = {
-        getUTXO: DOGEHandler.getUTXO,
-        getUTXOs: DOGEHandler.getUTXOs,
-        getTransactions: DOGEHandler.getTransactions,
         p2shPrefix: {
             mainnet: Buffer.from([0x16]),
             testnet: Buffer.from([0xc4]),

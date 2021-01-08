@@ -58,7 +58,8 @@
         "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bs58": "^4.0.1",
         "cids": "^1.0.1",
-        "wallet-address-validator": "^0.2.4"
+        "wallet-address-validator": "^0.2.4",
+        "@types/elliptic": "^6.4.12"
     },
     "resolutions": {
         "sha3": "^2.1.2"

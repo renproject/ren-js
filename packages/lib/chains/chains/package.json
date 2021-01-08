@@ -46,6 +46,7 @@
         "@renproject/chains-bitcoin": "^2.0.2",
         "@renproject/chains-ethereum": "^2.0.2",
         "@renproject/chains-filecoin": "^2.0.2",
+        "@renproject/chains-terra": "^2.0.2",
         "@renproject/interfaces": "^2.0.2",
         "@types/node": ">=10"
     },

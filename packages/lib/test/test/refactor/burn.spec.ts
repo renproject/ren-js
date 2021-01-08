@@ -21,7 +21,7 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.only("burning from contract", async function() {
+    longIt("burning from contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;

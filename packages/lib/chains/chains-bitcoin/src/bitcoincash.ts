@@ -8,7 +8,8 @@ import {
 } from "bchaddrjs";
 import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import base58 from "bs58";
-import { BCHHandler } from "send-crypto/build/main/handlers/BCH/BCHHandler";
+import { BitcoinDotCom } from "./APIs/bitcoinDotCom";
+import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
@@ -20,6 +21,23 @@ export class BitcoinCashClass extends BitcoinClass {
     public name = BitcoinCashClass.chain;
     public legacyName = "Bch";
 
+    // APIs
+    public withDefaultAPIs = (network: BtcNetwork): this => {
+        switch (network) {
+            case "mainnet":
+                // prettier-ignore
+                return this
+                    .withAPI(BitcoinDotCom())
+                    .withAPI(Blockchair(BlockchairNetwork.BITCOIN_CASH));
+            case "testnet":
+                // prettier-ignore
+                return this
+                    .withAPI(BitcoinDotCom({ testnet: true }));
+            case "regtest":
+                throw new Error(`Regtest is currently not supported.`);
+        }
+    };
+
     public static asset = "BCH";
     public asset = "BCH";
     public static utils = {
@@ -27,9 +45,6 @@ export class BitcoinCashClass extends BitcoinClass {
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
         },
-        getUTXO: BCHHandler.getUTXO,
-        getUTXOs: BCHHandler.getUTXOs,
-        getTransactions: BCHHandler.getTransactions,
         createAddress: createAddress(
             Networks,
             Opcode,

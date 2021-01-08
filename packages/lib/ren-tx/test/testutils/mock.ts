@@ -20,7 +20,10 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
     const mockLockChain: LockChain = {
         name: "Bitcoin",
         assetDecimals: () => 1,
-        addressIsValid: () => true,
+        utils: {
+            addressIsValid: () => true,
+        },
+        transactionFromID: () => {},
         transactionID: () =>
             "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
         transactionConfidence,
@@ -62,8 +65,11 @@ export const buildMockMintChain = (minted?: boolean) => {
     const mockMintChain: MintChain = {
         name: "Ethereum",
         assetDecimals: () => 1,
-        addressIsValid: () => true,
         transactionID: () => "tid" + String(new Date().getTime()),
+        utils: {
+            addressIsValid: () => true,
+        },
+        transactionFromID: () => {},
         // transactionID: () =>
         //     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
         transactionConfidence: () => ({ current: 0, target: 1 }),

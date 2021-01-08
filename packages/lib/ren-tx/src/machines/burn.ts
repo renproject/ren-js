@@ -85,7 +85,9 @@ export interface BurnMachineSchema {
         created: {};
         createError: {};
         srcSettling: {};
+        errorBurning: {};
         srcConfirmed: {};
+        errorReleasing: {};
         destInitiated: {}; // We only care if the txHash has been issued by renVM
     };
 }
@@ -139,6 +141,7 @@ export const burnMachine = Machine<
                 },
                 meta: { test: async () => {} },
             },
+
             created: {
                 invoke: {
                     src: "burnCreator",
@@ -190,6 +193,7 @@ export const burnMachine = Machine<
                     },
                 },
             },
+
             createError: {
                 on: {
                     RETRY: "created",
@@ -203,10 +207,33 @@ export const burnMachine = Machine<
                     },
                 },
             },
+            errorBurning: {
+                meta: {
+                    test: (_: void, state: any) => {
+                        assert(
+                            state.context.tx.error ? true : false,
+                            "Error must exist",
+                        );
+                    },
+                },
+            },
+
             srcSettling: {
                 // spawn in case we aren't creating
                 entry: "burnSpawner",
                 on: {
+                    BURN_ERROR: {
+                        target: "errorBurning",
+                        actions: assign({
+                            tx: (ctx, evt) =>
+                                evt.data
+                                    ? {
+                                          ...ctx.tx,
+                                          error: evt.data,
+                                      }
+                                    : ctx.tx,
+                        }),
+                    },
                     SUBMIT: {
                         actions: send("SUBMIT", {
                             to: (ctx) => {
@@ -253,8 +280,31 @@ export const burnMachine = Machine<
                     },
                 },
             },
+            errorReleasing: {
+                meta: {
+                    test: (_: void, state: any) => {
+                        assert(
+                            state.context.tx.error ? true : false,
+                            "Error must exist",
+                        );
+                    },
+                },
+            },
+
             srcConfirmed: {
                 on: {
+                    RELEASE_ERROR: {
+                        target: "errorReleasing",
+                        actions: assign({
+                            tx: (ctx, evt) =>
+                                evt.data
+                                    ? {
+                                          ...ctx.tx,
+                                          error: evt.data,
+                                      }
+                                    : ctx.tx,
+                        }),
+                    },
                     RELEASED: "destInitiated",
                 },
                 meta: {
@@ -270,6 +320,7 @@ export const burnMachine = Machine<
                     },
                 },
             },
+
             destInitiated: {
                 meta: { test: async () => {} },
             },

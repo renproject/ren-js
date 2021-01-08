@@ -118,6 +118,7 @@ const depositListener = (
                 // Don't register listeners multiple times
                 if (targetDeposit && listening) return;
                 listening = true;
+
                 // Register event handlers prior to setup in case events land early
                 // If we don't have a targetDeposit, we won't handle events
                 targetDeposit &&
@@ -195,6 +196,7 @@ const depositListener = (
                                               }),
                                     )
                                     .catch((e) => {
+                                        console.error("Sign error!", e);
                                         // If a tx has already been minted, we will get an error at this step
                                         // We can assume that a "utxo spent" error implies that the asset has been minted
                                         callback({
@@ -219,12 +221,13 @@ const depositListener = (
                                             });
                                         },
                                     )
-                                    .catch((e) =>
+                                    .catch((e) => {
                                         callback({
                                             type: "SUBMIT_ERROR",
                                             data: e,
-                                        }),
-                                    );
+                                        });
+                                        console.error("Submit error!", e);
+                                    });
                                 break;
                         }
                     });
@@ -358,6 +361,7 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                         ...context,
                         deposit: tx[1],
                     };
+
                     // We don't want child machines to have references to siblings
                     delete (machineContext as any).depositMachines;
                     machines[tx[0]] = spawnDepositMachine(

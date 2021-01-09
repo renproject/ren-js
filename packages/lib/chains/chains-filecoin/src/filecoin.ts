@@ -332,9 +332,8 @@ export class FilecoinClass
     /**
      * See [[LockChain.addressStringToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer => {
-        return decodeAddress(address).str;
-    };
+    addressStringToBytes = (address: string): Buffer =>
+        Buffer.from(decodeAddress(address).str);
 
     /**
      * See [[LockChain.transactionID]].

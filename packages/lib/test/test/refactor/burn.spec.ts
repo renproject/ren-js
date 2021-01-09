@@ -11,6 +11,7 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
+import { Filecoin } from "@renproject/chains";
 
 chai.should();
 
@@ -21,7 +22,7 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("burning from contract", async function() {
+    it.only("burning from contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
@@ -30,11 +31,11 @@ describe("Refactor - Burning", () => {
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Recipient.
-        const asset = "LUNA";
+        const asset = "FIL";
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
 
-        const to = Terra().Address(recipient);
+        const to = Filecoin().Address(recipient);
         const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
         const fromAddress = (await from.web3.eth.getAccounts())[0];
 
@@ -60,7 +61,6 @@ describe("Refactor - Burning", () => {
                 new BigNumber(10).exponentiatedBy(decimals),
             );
         }
-        console.log("fromAddress", fromAddress);
 
         console.log(
             `Burning ${toReadable(

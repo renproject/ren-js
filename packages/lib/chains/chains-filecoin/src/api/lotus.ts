@@ -1,154 +1,108 @@
-export const _ = null;
+import FilecoinClient from "@glif/filecoin-rpc-client";
 
-// import FilecoinClient from "@glif/filecoin-rpc-client";
+import {
+    FilNetwork,
+    FilTransaction,
+} from "@renproject/chains-filecoin/src/deposit";
 
-// import { FilNetwork, FilTransaction } from "@renproject/chains-filecoin/src/deposit";
+export const fetchDeposits = async (
+    client: FilecoinClient,
+    address: string,
+    params: string | undefined | null,
+    network: FilNetwork,
+    progress: number,
+): Promise<{ txs: FilTransaction[]; progress: number }> => {
+    const chainHead = await client.request("ChainHead");
+    const height: number = chainHead.Height;
 
-// export const fetchDeposits = async (
-//     client: FilecoinClient,
-//     address: string,
-//     paramsFilterBase64: string | undefined = undefined,
-//     network: FilNetwork,
-// ): Promise<FilTransaction[]> => {
-//     // const network = address.slice(0, 1) === "t" ? "testnet" : "mainnet";
+    const latestTXs: Array<{ "/": string }> = await client.request(
+        "StateListMessages",
+        {
+            Version: 0,
+            To: address,
+            From: null,
+            Nonce: 0,
+            Value: "0",
+            GasPrice: "0",
+            GasLimit: 0,
+            Method: 0,
+            Params: params,
+        },
+        [],
+        progress === 0 ? height - 100 : progress,
+    );
 
-//     const chainHead = await client.request("ChainHead");
-//     const height = chainHead.Height;
+    return {
+        txs: await Promise.all(
+            (latestTXs || []).map(async (cid) =>
+                fetchMessage(client, cid["/"], network, height),
+            ),
+        ),
+        progress: height + 1,
+    };
+};
 
-//     const latestTXs = await client.request(
-//         "StateListMessages",
-//         {
-//             Version: 0,
-//             To: address,
-//             From: null,
-//             Nonce: 0,
-//             Value: "0",
-//             GasPrice: "0",
-//             GasLimit: 0,
-//             Method: 0,
-//             Params: null,
-//         },
-//         [],
-//         height - 100,
-//     );
+export const fetchMessage = async (
+    client: FilecoinClient,
+    cid: string,
+    network: FilNetwork,
+    height?: number,
+): Promise<FilTransaction> => {
+    const [details, receipt, { Height: chainHeight }]: [
+        ChainMessage,
+        StateMsg,
+        { Height: number },
+    ] = await Promise.all([
+        client.request("ChainGetMessage", { "/": cid }),
+        client.request("StateSearchMsg", { "/": cid }),
+        height ? { Height: height } : client.request("ChainHead"),
+    ]);
 
-//     if (latestTXs) {
-//         for (const cid of latestTXs) {
-//             try {
-//                 const transactionDetails = await client.request(
-//                     "ChainGetMessage",
-//                     cid,
-//                 );
+    if (network === "testnet") {
+        details.To = details.To.replace(/^f/, "t");
+        details.From = details.From.replace(/^f/, "t");
+    }
+    const tx: FilTransaction = {
+        cid,
+        amount: details.Value,
+        params: details.Params || "",
+        nonce: details.Nonce,
+        confirmations: receipt ? chainHeight - receipt.Height : 0,
+    };
 
-//                 if (network === "testnet") {
-//                     transactionDetails.To = transactionDetails.To.replace(
-//                         /^f/,
-//                         "t",
-//                     );
-//                     transactionDetails.From = transactionDetails.From.replace(
-//                         /^f/,
-//                         "t",
-//                     );
-//                 }
-//                 const tx: FilTransaction = {
-//                     cid: cid["/"],
-//                     amount: transactionDetails.Value,
-//                     params: transactionDetails.Params,
-//                     nonce: transactionDetails.Nonce,
-//                     confirmations: transactionDetails.
-//                     // to: transactionDetails.To,
-//                     // blocknumber: latestHeight,
-//                 };
-//             } catch (error) {
-//                 console.error(error);
-//             }
-//         }
-//     }
+    return tx;
+};
 
-//     return messages
-//         .map(
-//             (message): FilTransaction => {
-//                 return {
-//                     cid: message.cid,
-//                     // to: message.to,
-//                     amount: message.amount,
-//                     params: message.params,
-//                     confirmations: height ? height - height + 1 : 0,
-//                     nonce: message.nonce,
-//                 };
-//             },
-//         )
-//         .filter(
-//             (message) =>
-//                 !paramsFilterBase64 || message.params === paramsFilterBase64,
-//         );
-// };
+export interface ChainMessage {
+    Version: number; // 0;
+    To: string; // "t1gvyvits5chiahib7cz6uyh6kijgqgycnaiuj47i";
+    From: string; // "t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq";
+    Nonce: number; // 20;
+    Value: string; // "1000000000000000000";
+    GasLimit: number; // 609960;
+    GasFeeCap: string; // "101409";
+    GasPremium: string; // "100355";
+    Method: number; // 0;
+    Params: string | null; // null;
+    CID: {
+        "/": string; // "bafy2bzacebhs4svm2bl5zq5geaxtywctwlo2sys7udbefpggsrouwfcepv5vu";
+    };
+}
 
-// export const fetchMessage = async (
-//     cid: string,
-//     network: FilNetwork,
-// ): Promise<FilTransaction> => {
-//     // TODO: Add network parameter.
-//     const query = `{
-//         messages: FilecoinTransactions(cid: "${cid}") {
-//             cid
-//             params
-//             to
-//             nonce
-//             blocknumber
-//             amount
-//         }
-
-//         height: NetworkHeight(chain: "Filecoin", network: "${network}")
-//     }`;
-
-//     const response = (
-//         await Axios.post<{
-//             errors?: Array<{ message: string }>;
-//             data: {
-//                 messages: Array<{
-//                     cid: string;
-//                     params: string;
-//                     to: string;
-//                     nonce: number;
-//                     blocknumber: number;
-//                     amount: string;
-//                 }>;
-//                 height: number;
-//             };
-//         }>(INDEXER_URL, { query })
-//     ).data;
-
-//     if (response.errors && response.errors.length) {
-//         throw new Error(
-//             `Unable to fetch Filecoin messages: ${response.errors[0].message}`,
-//         );
-//     }
-
-//     const { messages, height } = response.data;
-
-//     if (messages.length === 0) {
-//         throw new Error(
-//             `Error fetching Filecoin transaction: message not found.`,
-//         );
-//     }
-
-//     if (messages.length > 1) {
-//         console.warn(
-//             `More than 1 Filecoin transaction found with the same transaction ID.`,
-//         );
-//     }
-
-//     const message = messages[0];
-
-//     return {
-//         cid: message.cid,
-//         // to: message.to,
-//         amount: message.amount,
-//         params: message.params,
-//         confirmations: message.blocknumber
-//             ? height - message.blocknumber + 1
-//             : 0,
-//         nonce: message.nonce,
-//     };
-// };
+export interface StateMsg {
+    Message: {
+        "/": string; // "bafy2bzaceaq23gg46ii4zowpnzpo33252t5lsdxxfpa5d7cyezsaczqdzefl2";
+    };
+    Receipt: {
+        ExitCode: number; // 0;
+        Return: null; // null;
+        GasUsed: number; // 487968
+    };
+    ReturnDec: null; // null;
+    TipSet: [
+        {
+            "/": string; // "bafy2bzaced6lrvssnkr27dd5akp4zxr2awjxjl73s5meaq42j7sacfwastfpi";
+        },
+    ];
+    Height: number; // 174172;
+}

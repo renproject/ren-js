@@ -459,13 +459,6 @@ export class BurnAndRelease<
                         const sHash = generateSHash(
                             `${this.params.asset}/to${this.params.to.name}`,
                         );
-                        console.log(
-                            "sHash",
-                            `${this.params.asset}/to${this.params.to.name}`,
-                            sHash.toString("hex"),
-                        );
-                        console.log(this.renVM.version(this._state.selector));
-                        console.log(this._state.selector);
 
                         const gHash = generateGHash(
                             [],

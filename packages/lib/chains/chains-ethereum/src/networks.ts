@@ -59,7 +59,7 @@ export const renTestnet: EthereumConfig = {
 
 export const renDevnetVDot3: EthereumConfig = {
     name: "Devnet v0.3",
-    ...ethereumConfig.kovan,
+    ...ethereumConfig.rinkeby,
     addresses: {
         GatewayRegistry: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
         BasicAdapter: "0xC8DD18A151FafFCab1B822108e49b4aE3bFff477",

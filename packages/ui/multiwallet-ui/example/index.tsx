@@ -11,8 +11,8 @@ import { EthereumMEWConnectConnector } from "../../../lib/multiwallet/multiwalle
 import { EthereumWalletConnectConnector } from "../../../lib/multiwallet/multiwallet-ethereum-walletconnect-connector/src/index";
 import { WalletPickerConfig, WalletPickerModal } from "../src";
 import {
-    MultiwalletProvider,
-    useMultiwallet,
+  MultiwalletProvider,
+  useMultiwallet,
 } from "../src/MultiwalletProvider";
 
 const options: WalletPickerConfig<unknown, string> = {
@@ -70,6 +70,9 @@ const WalletDemo: React.FC<{ network: string }> = () => {
               {chain}: Status {connector.status} to {connector.account}
             </Typography>
           </Box>
+          <Button onClick={() => connector.connector.deactivate()}>
+            Disconnect
+          </Button>
         </Paper>
       ))}
     </>

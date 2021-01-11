@@ -191,7 +191,7 @@ export const waitForReceipt = async (
         return;
     });
 
-const parseBurnEvent = (
+export const parseBurnEvent = (
     web3: Web3,
     event: Log,
 ): BurnDetails<EthTransaction> => {

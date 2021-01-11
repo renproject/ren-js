@@ -181,6 +181,21 @@ export const burnMachine = Machine<
                     },
                 },
                 on: {
+                    // When we fail to submit to the host chain, we don't enter the
+                    // settling state, so handle the error here
+                    BURN_ERROR: {
+                        target: "errorBurning",
+                        actions: assign({
+                            tx: (ctx, evt) =>
+                                evt.data
+                                    ? {
+                                          ...ctx.tx,
+                                          error: evt.data,
+                                      }
+                                    : ctx.tx,
+                        }),
+                    },
+
                     SUBMIT: {
                         actions: send("SUBMIT", {
                             to: (ctx) => {
@@ -188,6 +203,7 @@ export const burnMachine = Machine<
                             },
                         }),
                     },
+
                     SUBMITTED: {
                         target: "srcSettling",
                         actions: [
@@ -202,6 +218,7 @@ export const burnMachine = Machine<
                         ],
                     },
                 },
+
                 meta: {
                     test: (_: void, state: any) => {
                         assert(
@@ -254,6 +271,7 @@ export const burnMachine = Machine<
                                     : ctx.tx,
                         }),
                     },
+
                     SUBMIT: {
                         actions: send("SUBMIT", {
                             to: (ctx) => {
@@ -261,6 +279,7 @@ export const burnMachine = Machine<
                             },
                         }),
                     },
+
                     CONFIRMATION: {
                         // update src confs
                         actions: assign({

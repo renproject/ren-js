@@ -81,14 +81,34 @@ export interface BurnMachineContext {
 // We have different states for a burn machine, as there can only be one transaction
 export interface BurnMachineSchema {
     states: {
+        /** Tx is resolving which state it should be in based on feedback from renjs */
         restoring: {};
+
+        /** Tx has been initialized by renjs successfully */
         created: {};
+
+        /** We encountered an error initializing the tx. Might be an issue submitting the
+         * burn tx to the host chain */
         createError: {};
+
+        /** Source/host chain is awaiting sufficient confirmations */
         srcSettling: {};
+
+        /** There was an error encountered while processing the burn tx
+         * Could be either from renvm or the host chain */
         errorBurning: {};
+
+        /** Source/host chain has reached sufficient confirmations and tx
+         * can be submitted to renVM for release */
         srcConfirmed: {};
+
+        /** An error occored while processing the release
+         * Should only come from renVM */
         errorReleasing: {};
-        destInitiated: {}; // We only care if the txHash has been issued by renVM
+
+        /** The release tx has successfully been broadcast
+         * We only care if the txHash has been issued by renVM */
+        destInitiated: {};
     };
 }
 
@@ -161,6 +181,21 @@ export const burnMachine = Machine<
                     },
                 },
                 on: {
+                    // When we fail to submit to the host chain, we don't enter the
+                    // settling state, so handle the error here
+                    BURN_ERROR: {
+                        target: "errorBurning",
+                        actions: assign({
+                            tx: (ctx, evt) =>
+                                evt.data
+                                    ? {
+                                          ...ctx.tx,
+                                          error: evt.data,
+                                      }
+                                    : ctx.tx,
+                        }),
+                    },
+
                     SUBMIT: {
                         actions: send("SUBMIT", {
                             to: (ctx) => {
@@ -168,6 +203,7 @@ export const burnMachine = Machine<
                             },
                         }),
                     },
+
                     SUBMITTED: {
                         target: "srcSettling",
                         actions: [
@@ -182,6 +218,7 @@ export const burnMachine = Machine<
                         ],
                     },
                 },
+
                 meta: {
                     test: (_: void, state: any) => {
                         assert(
@@ -234,6 +271,7 @@ export const burnMachine = Machine<
                                     : ctx.tx,
                         }),
                     },
+
                     SUBMIT: {
                         actions: send("SUBMIT", {
                             to: (ctx) => {
@@ -241,6 +279,7 @@ export const burnMachine = Machine<
                             },
                         }),
                     },
+
                     CONFIRMATION: {
                         // update src confs
                         actions: assign({

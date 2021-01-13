@@ -40,7 +40,7 @@ export type LockAndMintTransaction = RenTransaction<
           revert?: undefined;
       }
     | {
-          revert: string;
+          revert: Buffer;
       }
 >;
 
@@ -50,12 +50,19 @@ export type BurnAndReleaseTransaction = RenTransaction<
         ref: string;
         to: string;
         amount: string;
-        revert?: undefined;
     },
     // Output
-    | {}
     | {
-          revert: string;
+          amount?: BigNumber;
+          txid?: Buffer;
+          outpoint?: {
+              hash: Buffer;
+              index: BigNumber;
+          };
+          revert?: undefined;
+      }
+    | {
+          revert: Buffer;
       }
 >;
 

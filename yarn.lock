@@ -6106,9 +6106,9 @@ bitcore-lib@^8.22.2, bitcore-lib@^8.23.1:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#b848585e65b42c48b98c207e72d7d3006c9a5da0":
+"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#b848585e65b42c48b98c207e72d7d3006c9a5da0":
   version "1.9.1"
-  resolved "https://github.com/ren-forks/bitgo-utxo-lib#b848585e65b42c48b98c207e72d7d3006c9a5da0"
+  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#b848585e65b42c48b98c207e72d7d3006c9a5da0"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"
@@ -18506,10 +18506,10 @@ semver@~5.4.1:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.4.1.tgz#e059c09d8571f0540823733433505d3a2f00b18e"
   integrity sha512-WfG/X9+oATh81XtllIo/I8gOiY9EXRdv1cQdyykeXK17YcUW3EXUAi2To4pcH6nZtJPr7ZOpM5OMyWJZm+8Rsg==
 
-send-crypto@0.2.28:
-  version "0.2.28"
-  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.2.28.tgz#b2d45fe616b9f8dfc21d62e8c4ba824f2a11eeb7"
-  integrity sha512-6AIwSJRPFN45/VNAoa3sjMBf1Aovo2nqb8SQYR/PgwgN4JCTD2l26E2wgp+gINRxs37uYyr3Na183CtEz8/j7g==
+send-crypto@0.2.29:
+  version "0.2.29"
+  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.2.29.tgz#08a156e6235cb8a7ffcd517e516ce4970a5defbd"
+  integrity sha512-dj1XXbBN0293+tEj8JM+Tuw86qUA9R5IhcjeDIxiWrVUbhRi5IL3xVqddvNkrDHQJXVITD5/Cj192c/OdhtI/g==
   dependencies:
     "@glif/filecoin-address" "^1.1.0-beta.4"
     "@glif/filecoin-message" "^1.1.0-beta.4"

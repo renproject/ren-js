@@ -34,6 +34,7 @@ export enum BurnAndReleaseStatus {
     Pending = "pending",
     Burned = "burned",
     Released = "released",
+    Reverted = "reverted",
 }
 
 export class BurnAndRelease<
@@ -85,6 +86,9 @@ export class BurnAndRelease<
         renNetwork?: RenNetworkDetails;
         selector: string;
     };
+
+    public revertReason?: string;
+    public releaseTransaction?: LockTransaction;
 
     /** @hidden */
     constructor(
@@ -386,11 +390,19 @@ export class BurnAndRelease<
      */
     public release = (): PromiEvent<
         BurnAndReleaseTransaction,
-        { txHash: [string]; status: [TxStatus] }
+        {
+            txHash: [string];
+            status: [TxStatus];
+            transaction: [LockTransaction];
+        }
     > => {
         const promiEvent = newPromiEvent<
             BurnAndReleaseTransaction,
-            { txHash: [string]; status: [TxStatus] }
+            {
+                txHash: [string];
+                status: [TxStatus];
+                transaction: [LockTransaction];
+            }
         >();
 
         (async () => {
@@ -538,7 +550,42 @@ export class BurnAndRelease<
                 () => promiEvent._isCancelled(),
             );
 
-            this.status = BurnAndReleaseStatus.Released;
+            if (response.out && response.out.revert !== undefined) {
+                this.status = BurnAndReleaseStatus.Reverted;
+                this.revertReason = response.out.revert.toString();
+                throw new Error(this.revertReason);
+            } else {
+                this.status = BurnAndReleaseStatus.Released;
+
+                if (
+                    response.out &&
+                    this.renVM.version(this._state.selector) >= 2
+                ) {
+                    let transaction: LockTransaction | undefined;
+                    try {
+                        if (response.out.txid) {
+                            const txid = response.out.txid;
+                            transaction = await this.params.to.transactionFromID(
+                                txid,
+                                "",
+                            );
+                        } else if (response.out.outpoint) {
+                            const { hash, index } = response.out.outpoint;
+                            transaction = await this.params.to.transactionFromID(
+                                hash,
+                                index.toFixed(),
+                            );
+                        }
+                    } catch (error) {
+                        // Ignore
+                    }
+
+                    if (transaction) {
+                        this.releaseTransaction = transaction;
+                        promiEvent.emit("transaction", transaction);
+                    }
+                }
+            }
 
             return response;
         })()

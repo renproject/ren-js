@@ -854,7 +854,7 @@ export class LockAndMintDeposit<
                         queryTxResult.out.revert !== undefined
                     ) {
                         this.status = DepositStatus.Reverted;
-                        this.revertReason = queryTxResult.out.revert;
+                        this.revertReason = queryTxResult.out.revert.toString();
                     } else {
                         return DepositStatus.Signed;
                     }
@@ -1095,7 +1095,7 @@ export class LockAndMintDeposit<
             // Update status.
             if (response.out && response.out.revert !== undefined) {
                 this.status = DepositStatus.Reverted;
-                this.revertReason = response.out.revert;
+                this.revertReason = response.out.revert.toString();
                 throw new Error(this.revertReason);
             } else {
                 this.status = DepositStatus.Signed;

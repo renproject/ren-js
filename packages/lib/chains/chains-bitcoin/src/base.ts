@@ -181,10 +181,7 @@ export abstract class BitcoinBaseChain
         }
 
         if (!txs) {
-            txs = await retryNTimes(
-                async () => this.api.fetchUTXOs(address),
-                2,
-            );
+            txs = await this.api.fetchUTXOs(address);
         }
 
         await Promise.all(
@@ -203,10 +200,9 @@ export abstract class BitcoinBaseChain
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized`);
         }
-        transaction = await retryNTimes(
-            async () =>
-                this.api.fetchUTXO(transaction.txHash, transaction.vOut),
-            2,
+        transaction = await this.api.fetchUTXO(
+            transaction.txHash,
+            transaction.vOut,
         );
         return {
             current: transaction.confirmations,

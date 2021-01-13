@@ -12,6 +12,7 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import { Filecoin } from "@renproject/chains";
+import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
 
 chai.should();
 
@@ -52,7 +53,6 @@ describe("Refactor - Burning", () => {
                 from,
                 to,
             });
-            console.log("fees", fees.release.toString());
             const fee = fees.release;
             suggestedAmount = fee.times(1.01);
         } catch (error) {
@@ -111,9 +111,26 @@ describe("Refactor - Burning", () => {
             )
             .on("txHash", (txHash) =>
                 burnAndRelease._state.logger.log(`Ren txHash: ${txHash}`),
-            );
+            )
+            .on("transaction", (transaction) => {
+                burnAndRelease._state.logger.log(
+                    `Release: ${burnAndRelease.params.to.utils.transactionExplorerLink(
+                        transaction,
+                    )}`,
+                );
+            });
 
-        console.log(result.out);
+        if (burnAndRelease.status === BurnAndReleaseStatus.Reverted) {
+            console.error(
+                `RenVM transaction reverted${
+                    burnAndRelease.revertReason
+                        ? ": " + burnAndRelease.revertReason
+                        : ""
+                }`,
+            );
+        }
+
+        console.log(burnAndRelease.releaseTransaction);
     });
 
     longIt("burning from address", async function() {

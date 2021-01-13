@@ -52,6 +52,9 @@ export interface DepositMachineContext {
 /**  The states a deposit can be in */
 export interface DepositMachineSchema {
     states: {
+        /** check if we can skip instantiating the deposit, if we finished the tx
+         * previously  */
+        checkingCompletion: {};
         /** We are waiting for ren-js to find the deposit */
         restoringDeposit: {};
         /** We couldn't restore this deposit */
@@ -85,6 +88,7 @@ interface ContractParams {
 
 export type DepositMachineEvent =
     | { type: "NOOP" }
+    | { type: "CHECK" }
     | { type: "LISTENING" }
     | { type: "DETECTED" }
     | { type: "ERROR"; error: Error }
@@ -108,7 +112,7 @@ export const depositMachine = Machine<
 >(
     {
         id: "RenVMDepositTransaction",
-        initial: "restoringDeposit",
+        initial: "checkingCompletion",
         states: {
             errorRestoring: {
                 entry: [log("restore error")],
@@ -117,6 +121,30 @@ export const depositMachine = Machine<
                         assert(
                             state.context.deposit.error ? true : false,
                             "error must exist",
+                        );
+                    },
+                },
+            },
+
+            checkingCompletion: {
+                entry: [send("CHECK")],
+
+                // If we already have a dest hash, no need to listen
+                on: {
+                    CHECK: [
+                        {
+                            target: "destInitiated",
+                            cond: "isDestInitiated",
+                        },
+                        { target: "restoringDeposit" },
+                    ],
+                },
+
+                meta: {
+                    test: async (_: void, state: any) => {
+                        assert(
+                            !state.context.tx.error ? true : false,
+                            "Error must not exist",
                         );
                     },
                 },

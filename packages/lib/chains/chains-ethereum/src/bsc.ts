@@ -4,11 +4,13 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { Callable } from "@renproject/utils";
+import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { provider } from "web3-providers";
+import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
+import { addressIsValid } from "./utils";
 
 export const renBscTestnet: EthereumConfig = {
     name: "BSC Testnet",
@@ -77,6 +79,30 @@ export class BinanceSmartChainClass extends EthereumClass {
     public chain = BinanceSmartChainClass.chain;
     public name = BinanceSmartChainClass.chain;
     public legacyName = undefined;
+
+    public static utils = {
+        addressIsValid,
+        addressExplorerLink: (
+            address: EthAddress,
+            network: NetworkInput = renBscMainnet,
+        ): string =>
+            `${
+                (resolveBSCNetwork(network) || renBscMainnet).etherscan
+            }/address/${address}`,
+
+        transactionExplorerLink: (
+            transaction: EthTransaction,
+            network: NetworkInput = renBscMainnet,
+        ): string =>
+            `${
+                (resolveBSCNetwork(network) || renBscMainnet).etherscan
+            }/tx/${transaction}`,
+    };
+
+    public utils = utilsWithChainNetwork(
+        BinanceSmartChainClass.utils,
+        () => this.renNetworkDetails,
+    );
 
     constructor(
         web3Provider: provider,

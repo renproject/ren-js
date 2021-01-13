@@ -170,7 +170,7 @@ const depositListener = (
                                             ? callback({
                                                   type: "SIGN_ERROR",
                                                   data: new Error(
-                                                      v._state.queryTxResult.out.revert,
+                                                      v._state.queryTxResult.out.revert.toString(),
                                                   ),
                                               })
                                             : callback({

@@ -88,6 +88,7 @@ const depositModel = createModel(
             },
         } as any),
 ).withEvents({
+    CHECK: {},
     DETECTED: {},
     RESTORE: {},
     ERROR: {
@@ -140,6 +141,7 @@ const burnModel = createModel(
     } as any),
 ).withEvents({
     RESTORE: {},
+    CREATED: {},
     "done.invoke.burnCreator": {
         exec: async () => {},
         cases: [{ data: { ...makeTestContext().tx, transactions: {} } }],

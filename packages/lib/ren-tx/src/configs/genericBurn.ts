@@ -111,6 +111,8 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     let burning = false;
     burnAndRelease(context)
         .then((burn) => {
+            // Ready to recieve SUBMIT
+            callback({ type: "CREATED" });
             if (context.autoSubmit) {
                 setTimeout(() => callback("SUBMIT"), 500);
             }
@@ -127,7 +129,12 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 const burnListener = (confs: number) => {
                     callback({
                         type: "CONFIRMATION",
-                        data: { ...tx, sourceTxConfs: confs },
+                        // FIXME: get propper confirmation target for burning somewhere
+                        data: {
+                            ...tx,
+                            sourceTxConfs: confs,
+                            sourceTxConfTarget: tx.sourceTxConfTarget || 6,
+                        },
                     });
                 };
                 cleaners.push(() => {
@@ -178,23 +185,32 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                     releaseRef.removeListener("txHash", hashListener);
                 });
 
-                await releaseRef
-                    .on("status", releaseListener)
-                    .on("txHash", hashListener)
-                    .catch((error) =>
-                        callback({ type: "RELEASE_ERROR", data: error }),
-                    );
+                try {
+                    const res = await releaseRef
+                        .on("status", releaseListener)
+                        .on("txHash", hashListener);
+                    callback({ type: "RELEASED", data: res });
+                } catch (e) {
+                    callback({ type: "RELEASE_ERROR", data: e });
+                }
             };
 
             receive((event: BurnMachineEvent) => {
                 if (event.type === "SUBMIT") {
                     performBurn()
                         .then()
-                        .catch(console.error);
+                        .catch((e) => {
+                            console.error(e);
+                            callback({ type: "BURN_ERROR", data: e });
+                        });
                 }
             });
         })
-        .catch(console.error);
+        .catch((e) => {
+            console.error(e);
+
+            callback({ type: "BURN_ERROR", data: e });
+        });
 
     return () => {
         for (const cleaner of cleaners) {

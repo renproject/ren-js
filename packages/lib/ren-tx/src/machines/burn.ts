@@ -84,7 +84,10 @@ export interface BurnMachineSchema {
         /** Tx is resolving which state it should be in based on feedback from renjs */
         restoring: {};
 
-        /** Tx has been initialized by renjs successfully */
+        /** Tx is being initialized by renjs */
+        creating: {};
+
+        /** Tx has been initialized by renjs successfully and is ready to be submitted*/
         created: {};
 
         /** We encountered an error initializing the tx. Might be an issue submitting the
@@ -118,13 +121,14 @@ export type BurnMachineEvent =
     | { type: "NOOP" }
     | { type: "RETRY" }
     | { type: "RESTORE" }
+    | { type: "CREATED" }
     | { type: "SUBMIT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
     | { type: "RELEASE_ERROR"; data: any }
     | { type: "BURN_ERROR"; data: any }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "CONFIRMED"; data: GatewayTransaction }
-    | { type: "RELEASED" };
+    | { type: "RELEASED"; data: any };
 
 /**
  * An Xstate machine that, when given a serializable [[GatewaySession]] tx,
@@ -154,15 +158,16 @@ export const burnMachine = Machine<
                 entry: send("RESTORE"),
                 on: {
                     RESTORE: [
+                        { target: "destInitiated", cond: "isDestInitiated" },
                         { target: "srcConfirmed", cond: "isSrcConfirmed" },
                         { target: "srcSettling", cond: "isSrcSettling" },
-                        { target: "created" },
+                        { target: "creating" },
                     ],
                 },
                 meta: { test: async () => {} },
             },
 
-            created: {
+            creating: {
                 invoke: {
                     src: "burnCreator",
                     onDone: {
@@ -180,6 +185,23 @@ export const burnMachine = Machine<
                         }),
                     },
                 },
+                on: {
+                    CREATED: "created",
+                },
+
+                meta: {
+                    test: (_: void, state: any) => {
+                        assert(
+                            !Object.keys(state.context.tx.transactions).length
+                                ? true
+                                : false,
+                            "Should not have a transaction",
+                        );
+                    },
+                },
+            },
+
+            created: {
                 on: {
                     // When we fail to submit to the host chain, we don't enter the
                     // settling state, so handle the error here
@@ -375,6 +397,7 @@ export const burnMachine = Machine<
                 getFirstTx(ctx.tx)?.sourceTxConfs >=
                 (getFirstTx(ctx.tx)?.sourceTxConfTarget ||
                     Number.POSITIVE_INFINITY),
+            isDestInitiated: (ctx, _evt) => !!getFirstTx(ctx.tx)?.destTxHash,
         },
     },
 );

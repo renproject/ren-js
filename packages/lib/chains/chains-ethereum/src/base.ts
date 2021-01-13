@@ -80,7 +80,7 @@ const resolveNetwork = (
     return networkConfig;
 };
 
-type NetworkInput =
+export type NetworkInput =
     | RenNetwork
     | RenNetworkString
     | RenNetworkDetails

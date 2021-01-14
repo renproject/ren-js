@@ -105,12 +105,17 @@ export interface BurnMachineSchema {
          * can be submitted to renVM for release */
         srcConfirmed: {};
 
+        /** RenVM has recieved the tx and provided a hash */
+        // accepted: {};
+
         /** An error occored while processing the release
          * Should only come from renVM */
         errorReleasing: {};
 
         /** The release tx has successfully been broadcast
-         * We only care if the txHash has been issued by renVM */
+         * For network v0.3 we get the release destTxHash
+         * otherwise it will never be provided
+         */
         destInitiated: {};
     };
 }
@@ -341,6 +346,7 @@ export const burnMachine = Machine<
                     },
                 },
             },
+
             errorReleasing: {
                 meta: {
                     test: (_: void, state: any) => {
@@ -382,6 +388,11 @@ export const burnMachine = Machine<
                 },
             },
 
+            // FIXME: not currently used, but should be tracked once migrated to 0.3
+            // accepted: {
+            //     meta: { test: async () => {} },
+            //},
+
             destInitiated: {
                 meta: { test: async () => {} },
             },
@@ -397,7 +408,11 @@ export const burnMachine = Machine<
                 getFirstTx(ctx.tx)?.sourceTxConfs >=
                 (getFirstTx(ctx.tx)?.sourceTxConfTarget ||
                     Number.POSITIVE_INFINITY),
-            isDestInitiated: (ctx, _evt) => !!getFirstTx(ctx.tx)?.destTxHash,
+            // We assume that the renVmHash implies that the dest tx has been initiated
+            isDestInitiated: (ctx, _evt) => !!getFirstTx(ctx.tx)?.renVMHash,
+            // FIXME: once we have migrated to 0.3 for all assets, actually check for
+            // destTxHash
+            // isDestInitiated: (ctx, _evt) => !!getFirstTx(ctx.tx)?.destTxHash,
         },
     },
 );

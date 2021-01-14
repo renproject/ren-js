@@ -68,6 +68,7 @@ export interface GatewayMachineSchema {
 
 export type GatewayMachineEvent =
     | { type: "CLAIMABLE"; data: GatewayTransaction }
+    | { type: "ERROR_LISTENING"; data: any }
     | { type: "DEPOSIT"; data: GatewayTransaction }
     | { type: "DEPOSIT_UPDATE"; data: GatewayTransaction }
     | { type: "DEPOSIT_COMPLETED"; data: GatewayTransaction }
@@ -104,7 +105,7 @@ export const mintMachine = Machine<
                 send("RESTORE"),
                 assign({ depositMachines: (_ctx, _evt) => ({}) }),
             ],
-            meta: { test: async () => { } },
+            meta: { test: async () => {} },
             on: {
                 RESTORE: [
                     {
@@ -168,6 +169,7 @@ export const mintMachine = Machine<
                 },
             },
         },
+
         listening: {
             meta: {
                 test: (_: void, state: any) => {
@@ -182,6 +184,22 @@ export const mintMachine = Machine<
             },
             on: {
                 EXPIRED: "completed",
+                ERROR_LISTENING: {
+                    target: "srcInitializeError",
+                    actions: [
+                        assign({
+                            tx: (context, evt) => {
+                                const newTx = {
+                                    ...context.tx,
+                                    error: evt.data || true,
+                                };
+                                return newTx;
+                            },
+                        }),
+                        log((_ctx, evt) => evt.data),
+                    ],
+                },
+
                 CLAIMABLE: {
                     actions: assign({
                         signatureRequest: (_context, evt) => {
@@ -197,6 +215,7 @@ export const mintMachine = Machine<
                     }),
                     target: "requestingSignature",
                 },
+
                 DEPOSIT_COMPLETED: {
                     target: "completed",
                     cond: "isCompleted",
@@ -215,6 +234,7 @@ export const mintMachine = Machine<
                         }),
                     },
                 ],
+
                 DEPOSIT: {
                     actions: [
                         assign({

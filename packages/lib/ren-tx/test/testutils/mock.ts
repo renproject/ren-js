@@ -36,7 +36,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
                 amount: "1",
             });
         },
-        getGatewayAddress: () => "gatGatewayAddress",
+        getGatewayAddress: () => "gatewayAddress",
         getPubKeyScript: () => Buffer.from("pubkey"),
         depositV1HashString: () => "v1HashString",
         legacyName: "Btc",

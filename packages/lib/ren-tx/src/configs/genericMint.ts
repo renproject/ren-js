@@ -41,6 +41,17 @@ const lockChainMap = {
 };
 */
 
+const hexify = (obj: { [key: string]: any }) => {
+    if (!obj) return;
+    const entries = Object.entries(obj);
+    for (let [k, v] of entries) {
+        if (Buffer.isBuffer(v)) {
+            obj[k] = v.toString("hex");
+        }
+    }
+    return obj;
+};
+
 export const renLockAndMint = async (context: GatewayMachineContext) => {
     const { nonce, destChain, sourceChain, sourceAsset } = context.tx;
     const { sdk, fromChainMap, toChainMap } = context;
@@ -113,6 +124,15 @@ const depositListener = (
     renLockAndMint(context)
         .then((minter) => {
             cleanup = () => minter.removeAllListeners();
+            if (minter.gatewayAddress != context.tx.gatewayAddress) {
+                callback({
+                    type: "ERROR_LISTENING",
+                    data: new Error(
+                        `Incorrect gateway address ${minter.gatewayAddress} != ${context.tx.gatewayAddress}`,
+                    ),
+                });
+                return;
+            }
 
             minter.on("deposit", (deposit) => {
                 // Don't register listeners multiple times
@@ -162,39 +182,50 @@ const depositListener = (
                                 deposit
                                     .signed()
                                     .on("status", (state) => console.log(state))
-                                    .then((v) =>
-                                        v._state.queryTxResult &&
-                                        v._state.queryTxResult.out &&
-                                        v._state.queryTxResult.out.revert !==
-                                            undefined
-                                            ? callback({
-                                                  type: "SIGN_ERROR",
-                                                  data: new Error(
-                                                      v._state.queryTxResult.out.revert.toString(),
-                                                  ),
-                                              })
-                                            : callback({
-                                                  type: "SIGNED",
-                                                  data: {
-                                                      renResponse:
-                                                          v._state.queryTxResult
-                                                              ?.out,
-                                                      signature:
-                                                          v._state
-                                                              .queryTxResult &&
-                                                          v._state.queryTxResult
-                                                              .out &&
-                                                          v._state.queryTxResult
-                                                              .out.revert ===
-                                                              undefined
-                                                              ? v._state
-                                                                    .queryTxResult
-                                                                    .out
-                                                                    .signature
-                                                              : undefined,
-                                                  },
-                                              }),
-                                    )
+                                    .then((v) => {
+                                        if (
+                                            !v._state.queryTxResult ||
+                                            !v._state.queryTxResult.out
+                                        ) {
+                                            console.error(
+                                                "missing response data",
+                                                v._state.queryTxResult,
+                                            );
+                                            callback({
+                                                type: "SIGN_ERROR",
+                                                data: new Error(
+                                                    "No signature!",
+                                                ),
+                                            });
+                                            return;
+                                        }
+                                        if (
+                                            v._state.queryTxResult.out &&
+                                            v._state.queryTxResult.out
+                                                .revert !== undefined
+                                        ) {
+                                            callback({
+                                                type: "SIGN_ERROR",
+                                                data: new Error(
+                                                    v._state.queryTxResult.out.revert.toString(),
+                                                ),
+                                            });
+                                            return;
+                                        } else {
+                                            callback({
+                                                type: "SIGNED",
+                                                data: {
+                                                    renResponse: hexify(
+                                                        v._state.queryTxResult
+                                                            .out,
+                                                    ),
+                                                    signature: v._state.queryTxResult.out.signature?.toString(
+                                                        "hex",
+                                                    ),
+                                                },
+                                            });
+                                        }
+                                    })
                                     .catch((e) => {
                                         console.error("Sign error!", e);
                                         // If a tx has already been minted, we will get an error at this step
@@ -232,7 +263,9 @@ const depositListener = (
                         }
                     });
 
-                const txHash = deposit.txHash();
+                const txHash = deposit.params.from.transactionID(
+                    deposit.depositDetails.transaction,
+                ); //   deposit.txHash();
                 const persistedTx = context.tx.transactions[txHash];
 
                 // Prevent deposit machine tx listeners from interacting with other deposits
@@ -248,9 +281,10 @@ const depositListener = (
                 }
 
                 // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                const rawSourceTx = deposit.depositDetails;
+                const rawSourceTx = deposit.depositDetails.transaction;
                 const depositState: GatewayTransaction = persistedTx || {
                     sourceTxHash: txHash,
+                    renVMHash: deposit.txHash(),
                     sourceTxAmount: parseInt(rawSourceTx.amount),
                     sourceTxConfs: 0,
                     rawSourceTx,

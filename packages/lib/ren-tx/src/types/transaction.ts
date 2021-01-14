@@ -28,6 +28,8 @@ export interface GatewayTransaction {
      * How many confirmations needed to consider the source tx accepted
      */
     sourceTxConfTarget?: number;
+    /* Hash of renVM transaction */
+    renVMHash?: string;
     /**
      * Response to renvm signing request
      */
@@ -42,6 +44,12 @@ export interface GatewayTransaction {
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rawSourceTx: DepositCommon<any>;
+
+    /**
+     * Underlying dest chain tx
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rawDestTx?: any;
     /**
      * Additional parameters for constructing a custom transaction
      * Provided at the point of submission

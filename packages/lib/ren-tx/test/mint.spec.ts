@@ -35,7 +35,7 @@ const makeMintTransaction = (): GatewaySession => ({
     customParams: {},
 });
 
-jest.setTimeout(1000 * 106);
+jest.setTimeout(1000 * 56);
 describe("MintMachine", () => {
     it("should create a tx", async () => {
         const fromChainMap = {
@@ -58,9 +58,12 @@ describe("MintMachine", () => {
             toChainMap,
         });
 
-        const p: Promise<string> = new Promise((resolve) => {
+        const p: Promise<string> = new Promise((resolve, reject) => {
             const service = interpret(machine)
                 .onTransition((state) => {
+                    if (state.context.tx.error) {
+                        reject(state.context.tx.error);
+                    }
                     if (state?.context?.tx?.gatewayAddress) {
                         // we have successfully detected a deposit and spawned
                         // a machine to listen for updates
@@ -106,9 +109,12 @@ describe("MintMachine", () => {
         }, 100);
 
         let prevDepositTx: GatewayTransaction;
-        const p = new Promise((resolve) => {
+        const p = new Promise((resolve, reject) => {
             const service = interpret(machine)
                 .onTransition((state) => {
+                    if (state.context.tx.error) {
+                        reject(state.context.tx.error);
+                    }
                     const depositTx = Object.values(
                         state.context.tx.transactions,
                     )[0];
@@ -195,10 +201,13 @@ describe("MintMachine", () => {
             setConfirmations((confirmations += 1));
         }, 10000);
 
-        const p = new Promise((resolve) => {
+        const p = new Promise((resolve, reject) => {
             let subscribed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
+                    if (state.context.tx.error) {
+                        reject(state.context.tx.error);
+                    }
                     const depositMachine = Object.values(
                         state.context?.depositMachines || {},
                     )[0];
@@ -285,13 +294,13 @@ describe("MintMachine", () => {
                 ...makeMintTransaction(),
                 nonce:
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
-                gatewayAddress: "gatewayaddr",
+                gatewayAddress: "gatewayAddress",
                 transactions: {
-                    ["krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE="]: {
+                    ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 0,
                         sourceTxHash:
-                            "krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE=",
+                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                         rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
@@ -307,10 +316,13 @@ describe("MintMachine", () => {
             setConfirmations((confirmations += 1));
         }, 10000);
 
-        const p = new Promise((resolve) => {
+        const p = new Promise((resolve, reject) => {
             let subscribed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
+                    if (state.context.tx.error) {
+                        reject(state.context.tx.error);
+                    }
                     const depositMachine = Object.values(
                         state.context?.depositMachines || {},
                     )[0];
@@ -397,11 +409,11 @@ describe("MintMachine", () => {
                     "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                 gatewayAddress: "gatewayAddress",
                 transactions: {
-                    ["krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE="]: {
+                    ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 1,
                         sourceTxHash:
-                            "krNFdjFVrEdF2Ob+AxVI6+sB6sEQxvfVt5u7e04WYEE=",
+                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                         rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
@@ -417,10 +429,13 @@ describe("MintMachine", () => {
             setConfirmations((confirmations += 1));
         }, 10000);
 
-        const p = new Promise((resolve) => {
+        const p = new Promise((resolve, reject) => {
             let subscribed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
+                    if (state.context.tx.error) {
+                        reject(state.context.tx.error);
+                    }
                     const depositMachine = Object.values(
                         state.context?.depositMachines || {},
                     )[0];

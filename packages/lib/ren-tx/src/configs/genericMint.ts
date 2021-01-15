@@ -281,7 +281,7 @@ const depositListener = (
                 }
 
                 // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                const rawSourceTx = deposit.depositDetails.transaction;
+                const rawSourceTx = deposit.depositDetails;
                 const depositState: GatewayTransaction = persistedTx || {
                     sourceTxHash: txHash,
                     renVMHash: deposit.txHash(),

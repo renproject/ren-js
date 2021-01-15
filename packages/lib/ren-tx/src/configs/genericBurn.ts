@@ -129,7 +129,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 const burnListener = (confs: number) => {
                     callback({
                         type: "CONFIRMATION",
-                        // FIXME: get propper confirmation target for burning somewhere
+                        // FIXME: get proper confirmation target for burning somewhere
                         data: {
                             ...tx,
                             sourceTxConfs: confs,
@@ -143,6 +143,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 });
 
                 await burnRef
+                    // host chain tx hash
                     .on("transactionHash", (txHash: string) => {
                         tx = {
                             sourceTxHash: txHash,
@@ -174,7 +175,19 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 const hashListener = (hash: string) => {
                     callback({
                         type: "CONFIRMED",
-                        data: { ...tx, destTxHash: hash },
+                        data: { ...tx, renVMHash: hash },
+                    });
+                };
+
+                const transactionListener = (transaction: any) => {
+                    callback({
+                        type: "RELEASED",
+                        data: {
+                            ...tx,
+                            destTxHash: transaction.hash,
+                            // Can be used to construct blockchain explorer link
+                            rawDestTx: transaction,
+                        },
                     });
                 };
 
@@ -182,14 +195,22 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                 cleaners.push(() => {
                     releaseRef._cancel();
                     releaseRef.removeListener("status", releaseListener);
+                    releaseRef.removeListener(
+                        "transaction",
+                        transactionListener,
+                    );
                     releaseRef.removeListener("txHash", hashListener);
                 });
 
                 try {
                     const res = await releaseRef
                         .on("status", releaseListener)
+                        .on("transaction", transactionListener)
                         .on("txHash", hashListener);
-                    callback({ type: "RELEASED", data: res });
+                    callback({
+                        type: "RELEASED",
+                        data: { ...tx, renResponse: res },
+                    });
                 } catch (e) {
                     callback({ type: "RELEASE_ERROR", data: e });
                 }

@@ -318,6 +318,7 @@ export const depositMachine = Machine<
                     },
                 },
             },
+
             accepted: {
                 entry: sendParent((ctx, _) => {
                     return {
@@ -339,6 +340,7 @@ export const depositMachine = Machine<
                 },
                 meta: { test: async () => {} },
             },
+
             errorSubmitting: {
                 entry: sendParent((ctx, _) => {
                     return {
@@ -367,6 +369,7 @@ export const depositMachine = Machine<
                     },
                 },
             },
+
             claiming: {
                 entry: send(
                     (ctx) => ({
@@ -416,12 +419,14 @@ export const depositMachine = Machine<
                 },
                 meta: { test: async () => {} },
             },
+
             destInitiated: {
                 on: {
                     ACKNOWLEDGE: "completed",
                 },
                 meta: { test: async () => {} },
             },
+
             rejected: {
                 meta: { test: async () => {} },
             },
@@ -434,6 +439,7 @@ export const depositMachine = Machine<
             },
         },
     },
+
     {
         guards: {
             isSrcSettling: ({

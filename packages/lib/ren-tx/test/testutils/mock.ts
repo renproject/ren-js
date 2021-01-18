@@ -32,7 +32,11 @@ export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
             await onDeposit({
-                transaction: { amount: "1", txHash: "123" },
+                transaction: {
+                    amount: "1",
+                    txHash:
+                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                },
                 amount: "1",
             });
         },

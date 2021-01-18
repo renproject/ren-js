@@ -201,6 +201,10 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                     );
                     releaseRef.removeListener("txHash", hashListener);
                 });
+                releaseRef.catch((e) => {
+                    console.error("release error", e);
+                    callback({ type: "RELEASE_ERROR", data: new Error(e) });
+                });
 
                 try {
                     const res = await releaseRef
@@ -212,7 +216,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
                         data: { ...tx, renResponse: res },
                     });
                 } catch (e) {
-                    callback({ type: "RELEASE_ERROR", data: e });
+                    callback({ type: "RELEASE_ERROR", data: new Error(e) });
                 }
             };
 

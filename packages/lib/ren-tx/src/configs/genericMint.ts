@@ -3,6 +3,7 @@
 // TODO: Improve typings.
 
 import RenJS from "@renproject/ren";
+import { LockAndMintDeposit } from "@renproject/ren/build/main/lockAndMint";
 import BigNumber from "bignumber.js";
 import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 
@@ -134,7 +135,7 @@ const depositListener = (
                 return;
             }
 
-            minter.on("deposit", (deposit) => {
+            const depositListener = (deposit: LockAndMintDeposit) => {
                 // Don't register listeners multiple times
                 if (targetDeposit && listening) return;
                 listening = true;
@@ -175,7 +176,10 @@ const depositListener = (
                                             type: "CONFIRMED",
                                         });
                                     })
-                                    .catch(console.error);
+                                    .catch((e) => {
+                                        callback({ type: "ERROR", error: e });
+                                        console.error(e);
+                                    });
                                 break;
 
                             case "SIGN":
@@ -265,13 +269,13 @@ const depositListener = (
 
                 const txHash = deposit.params.from.transactionID(
                     deposit.depositDetails.transaction,
-                ); //   deposit.txHash();
+                );
                 const persistedTx = context.tx.transactions[txHash];
 
                 // Prevent deposit machine tx listeners from interacting with other deposits
                 if (targetDeposit) {
                     if (targetDeposit.sourceTxHash !== txHash) {
-                        console.error(
+                        console.debug(
                             "wrong deposit:",
                             targetDeposit.sourceTxHash,
                             txHash,
@@ -281,7 +285,7 @@ const depositListener = (
                 }
 
                 // If we don't have a sourceTxHash, we haven't seen a deposit yet
-                const rawSourceTx = deposit.depositDetails.transaction;
+                const rawSourceTx = deposit.depositDetails;
                 const depositState: GatewayTransaction = persistedTx || {
                     sourceTxHash: txHash,
                     renVMHash: deposit.txHash(),
@@ -298,15 +302,23 @@ const depositListener = (
                 } else {
                     callback("DETECTED");
                 }
-            });
+            };
+
+            minter.on("deposit", depositListener);
 
             receive((event) => {
                 switch (event.type) {
                     case "RESTORE":
                         minter
                             .processDeposit(event.data)
-                            .then(() => {})
+                            .then((r) => {
+                                // Previously the on('deposit') event would have fired when restoring
+                                // Now, we use the promise result to set up the handler as well in
+                                // case the `deposit` event does not fire
+                                depositListener(r);
+                            })
                             .catch((e) => {
+                                callback({ type: "ERROR", error: e });
                                 console.error(e);
                             });
                         break;
@@ -315,7 +327,10 @@ const depositListener = (
 
             callback("LISTENING");
         })
-        .catch(console.error);
+        .catch((e) => {
+            callback({ type: "ERROR", error: e });
+            console.error(e);
+        });
     return () => {
         cleanup();
     };

@@ -126,6 +126,7 @@ export const depositMachine = Machine<
                 },
             },
 
+            // Checking if deposit is completed so that we can skip initialization
             checkingCompletion: {
                 entry: [send("CHECK")],
 
@@ -150,6 +151,7 @@ export const depositMachine = Machine<
                 },
             },
 
+            // Setting up the ren-js listener for this deposit
             restoringDeposit: {
                 entry: ["listenerAction"],
                 on: {
@@ -157,7 +159,7 @@ export const depositMachine = Machine<
                         actions: send(
                             (context) => {
                                 // If we don't have a raw tx, we can't restore
-                                if (context.deposit.rawSourceTx) {
+                                if (context.deposit?.rawSourceTx) {
                                     return {
                                         type: "RESTORE",
                                         data: context.deposit.rawSourceTx,
@@ -204,6 +206,7 @@ export const depositMachine = Machine<
                 },
             },
 
+            // Checking deposit internal state to transition to correct machine state
             restoredDeposit: {
                 entry: [send("RESTORED")],
                 on: {
@@ -280,6 +283,7 @@ export const depositMachine = Machine<
                 },
                 meta: { test: async () => {} },
             },
+
             srcConfirmed: {
                 entry: send("SIGN", {
                     to: (context) =>

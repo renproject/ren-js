@@ -14,6 +14,7 @@ import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
+import { decodeAddress } from "./bchaddrjs";
 
 export class BitcoinCashClass extends BitcoinClass {
     public static chain = "BitcoinCash";
@@ -94,6 +95,19 @@ export class BitcoinCashClass extends BitcoinClass {
         BitcoinCashClass.utils,
         () => this.chainNetwork,
     );
+
+    /**
+     * See [[LockChain.addressStringToBytes]].
+     */
+    addressStringToBytes = (address: string): Buffer => {
+        const buffer = decodeAddress(address);
+        // TODO: Look into RenVM adding 1-byte padding.
+        if (buffer.length === 20) {
+            return Buffer.concat([Buffer.from([0x00]), buffer]);
+        } else {
+            return buffer;
+        }
+    };
 }
 
 export type BitcoinCash = BitcoinCashClass;

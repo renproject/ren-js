@@ -17,7 +17,8 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
-import { EthereumConfigMap } from "@renproject/chains";
+import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
+import Web3 from "web3";
 
 chai.should();
 
@@ -32,13 +33,13 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint to contract", async function() {
+    it.skip("mint to contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
-        const ethNetwork = EthereumConfigMap[network];
+        const ethNetwork = BscConfigMap[network];
 
-        const asset = "FIL" as string;
+        const asset = "BCH" as string;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -51,14 +52,16 @@ describe("Refactor: mint", () => {
         const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
 
-        const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
+        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
+        const infuraURL = ethNetwork.infura; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
+        const ethAddress = (await new Web3(provider).eth.getAccounts())[0];
 
         const params: LockAndMintParams = {
             asset,
-            from: Chains.Filecoin(),
-            to: Chains.Ethereum(provider, ethNetwork).Account({
-                address: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
+            from: Chains.BitcoinCash(),
+            to: Chains.BinanceSmartChain(provider, ethNetwork).Account({
+                address: ethAddress,
             }),
         };
 
@@ -70,7 +73,7 @@ describe("Refactor: mint", () => {
             const fees = await renJS.getFees(params);
             suggestedAmount = fees.lock
                 .div(new BigNumber(10).exponentiatedBy(assetDecimals))
-                .times(2.5);
+                .times(5);
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             if (asset === "FIL") {

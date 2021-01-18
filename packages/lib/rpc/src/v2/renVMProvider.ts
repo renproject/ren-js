@@ -325,7 +325,7 @@ export class RenVMProvider
         _cancelRequested?: () => boolean,
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
-        let rawResponse;
+        let rawResponse: T;
         while (true) {
             if (_cancelRequested && _cancelRequested()) {
                 throw new Error(`waitForTX cancelled.`);

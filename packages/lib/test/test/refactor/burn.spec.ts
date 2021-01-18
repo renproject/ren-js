@@ -11,7 +11,7 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
-import { Filecoin } from "@renproject/chains";
+import { BitcoinCash, BscConfigMap, Filecoin } from "@renproject/chains";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
 
 chai.should();
@@ -27,20 +27,22 @@ describe("Refactor - Burning", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
+        const ethNetwork = BscConfigMap[network];
 
-        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        const infuraURL = ethNetwork.infura; // renBscTestnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Recipient.
-        const asset = "FIL";
+        const asset = "BCH";
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
 
-        const to = Filecoin().Address(recipient);
-        const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
+        const to = BitcoinCash().Address(recipient);
+        const from = Chains.BinanceSmartChain(provider, network);
         const fromAddress = (await from.web3.eth.getAccounts())[0];
 
-        const logLevel = LogLevel.Log;
+        const logLevel = LogLevel.Trace;
         const renJS = new RenJS(network, { logLevel });
 
         const decimals = to.assetDecimals(asset);
@@ -69,7 +71,7 @@ describe("Refactor - Burning", () => {
             ).toFixed()} ${asset} of ${toReadable(
                 await from.getBalance(asset, fromAddress),
                 decimals,
-            ).toFixed()} ${asset}`,
+            ).toFixed()} ${asset} to ${recipient}`,
         );
 
         const burnAndRelease = await renJS.burnAndRelease({

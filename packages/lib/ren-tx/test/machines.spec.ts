@@ -162,6 +162,9 @@ const burnModel = createModel(
     CONFIRMED: {
         cases: [{ data: { sourceTxHash: "123", sourceTxConfs: 1 } }],
     },
+    ACCEPTED: {
+        cases: [{ data: { sourceTxHash: "123", sourceTxConfs: 1 } }],
+    },
     SUBMITTED: {
         cases: [{ data: { sourceTxHash: "123" } }],
     },

@@ -255,6 +255,7 @@ export const mintMachine = Machine<
                 },
             },
         },
+
         requestingSignature: {
             on: {
                 SIGN: {
@@ -268,6 +269,7 @@ export const mintMachine = Machine<
                         },
                     }),
                 },
+
                 DEPOSIT_UPDATE: [
                     {
                         cond: "isRequestCompleted",
@@ -284,6 +286,7 @@ export const mintMachine = Machine<
                     },
                 ],
             },
+
             meta: {
                 test: (_: any, state: any) => {
                     if (

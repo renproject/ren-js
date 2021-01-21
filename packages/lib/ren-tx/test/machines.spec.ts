@@ -36,6 +36,27 @@ mintMachine.config = mintConfig as any;
 mintMachine.context = makeTestContext() as any;
 const mintModel = createModel(mintMachine).withEvents({
     RESTORE: {},
+    CLAIM: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
+    CONFIRMED: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
+    CONFIRMATION: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
+    ERROR: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
+    SIGN_ERROR: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
+    SIGNED: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
+    SUBMITTED: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
     "done.invoke.txCreator": {
         exec: async () => {},
         cases: [
@@ -52,12 +73,15 @@ const mintModel = createModel(mintMachine).withEvents({
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
     EXPIRED: {},
-    CLAIMABLE: {},
+    CLAIMABLE: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
     ACKNOWLEDGE: {},
+    ERROR_LISTENING: {},
 });
 
 describe("MintMachine", function () {
-    const testPlans = mintModel.getShortestPathPlans();
+    const testPlans = mintModel.getSimplePathPlans();
     testPlans.forEach((plan) => {
         describe(plan.description, () => {
             plan.paths.forEach((path) => {
@@ -100,12 +124,16 @@ const depositModel = createModel(
     SUBMIT_ERROR: {
         cases: [{ data: { message: "an error" } }],
     },
-    RESTORED: {},
+    RESTORED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     CONFIRMATION: {},
     CONFIRMED: {},
     REJECT: {},
     SIGNED: {},
-    CLAIM: {},
+    CLAIM: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     SUBMITTED: {},
     ACKNOWLEDGE: {},
 });

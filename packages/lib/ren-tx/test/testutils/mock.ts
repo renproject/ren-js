@@ -7,7 +7,7 @@ const getConfs = (id: number) => {
     return confirmationRegistry[id];
 };
 
-export const buildMockLockChain = (conf = { targetConfirmations: 500 }) => {
+export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
     const id = confirmationRegistry.length;
     confirmationRegistry[id] = 0;
     const transactionConfidence = () => {

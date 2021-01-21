@@ -16,9 +16,9 @@ const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
 const ethProvider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
 const web3 = new Web3(ethProvider);
-
 // Allow for an existing tx to be passed in via CLI
 let parsedTx: GatewaySession;
+
 if (process.argv[2]) {
     parsedTx = JSON.parse(process.argv[2]);
 }
@@ -88,6 +88,7 @@ web3.eth
         // and perform the neccessary next actions
         let promptedGatewayAddress = false;
         let detectedDeposit = false;
+        let claimed = false;
         const service = interpret(machine).onTransition((state) => {
             if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
                 console.log(
@@ -98,12 +99,15 @@ web3.eth
                     "BTC to",
                     state.context.tx.gatewayAddress,
                 );
+
                 console.log(
                     "Restore with this object",
                     JSON.stringify(state.context.tx),
                 );
+
                 promptedGatewayAddress = true;
             }
+
             const deposit = Object.values(
                 state.context.tx.transactions || {},
             )[0];
@@ -117,12 +121,20 @@ web3.eth
                 detectedDeposit = true;
             }
 
-            if (state.value === "requestingSignature") {
+            if (
+                state.context.mintRequests.includes(deposit?.sourceTxHash) &&
+                !claimed
+            ) {
                 // implement logic to determine whether deposit is valid
                 // In our case we take the first deposit to be the correct one
                 // and immediately sign
                 console.log("Signing transaction");
-                service.send("SIGN");
+                claimed = true;
+                service.send({
+                    type: "CLAIM",
+                    data: deposit,
+                    hash: deposit.sourceTxHash,
+                });
             }
 
             if (deposit?.destTxHash) {

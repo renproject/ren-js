@@ -7,10 +7,10 @@ The aim is to provide a declarative interface, that can accept serializable "tra
 ## Differences between RenJS and @renproject/ren-tx
 
 |                           | renjs | @renproject/ren-tx |
-| ------------------------- | ----- | ----------------- |
-| reactive                  | ❌    | ✓                 |
-| serializable transactions | ❌    | ✓                 |
-| finite, explicit states   | ❌    | ✓                 |
+| ------------------------- | ----- | ------------------ |
+| reactive                  | ❌    | ✓                  |
+| serializable transactions | ❌    | ✓                  |
+| finite, explicit states   | ❌    | ✓                  |
 
 ## Concepts
 
@@ -19,7 +19,7 @@ In order to make full use of this library, it is valuable to understand the [con
 At a high level, this package provides
 
 -   `mintMachine` - a machine for instantiating a gateway address and listening for deposits.
--   `depositMachine` - a machine for processing the lifecycle of a gateway deposit, all the way from where it has been detected on the source chain, until it has been confirmed at the destination chain.
+-   `depositMachine` - a machine for processing the lifecycle of a gateway deposit, all the way from detection on the source chain, until confirmation on the destination chain.
 -   `burnMachine` - a machine for processing burn and release transactions.
 
 As well as a standard serializable schema for persisting and restoring transactions, `GatewaySession`
@@ -37,9 +37,11 @@ Each machine requires
 -   `toChainMap` - A mapping of destination networks to builders for their `@renproject/chains` parameters
 
 ### Standalone xstate example
+
 (see the `/demos` folder for complete examples)
 
 #### Minting
+
 ```typescript
 import { interpret } from "xstate";
 import {
@@ -122,6 +124,7 @@ web3.eth.getAccounts().then((accounts) => {
     // The machine will detect which state the transaction should be in,
     // and perform the neccessary next actions
     let promptedGatewayAddress = false;
+    let claimed = false;
     const service = interpret(machine).onTransition((state) => {
         if (!promptedGatewayAddress && state.context.tx.gatewayAddress) {
             console.log(
@@ -130,14 +133,18 @@ web3.eth.getAccounts().then((accounts) => {
             );
             promptedGatewayAddress = true;
         }
-        if (state.value === "requestingSignature") {
+        const deposit = Object.values(state.context.tx.transactions || {})[0];
+        if (
+            state.context.mintRequests.includes(deposit.sourceTxHash) &&
+            !claimed
+        ) {
             // implement logic to determine whether deposit is valid
             // In our case we take the first deposit to be the correct one
             // and immediately sign
             console.log("Signing transaction");
-            service.send("SIGN");
+            claimed;
+            service.send({ type: "CLAIM", hash: deposit.sourceTxHash });
         }
-        const deposit = Object.values(state.context.tx.transactions || {})[0];
         if (deposit?.destTxHash) {
             // If we have a destination txHash, we have successfully minted BTC
             console.log("Your BTC has been minted! TxHash", deposit.destTxHash);

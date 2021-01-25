@@ -51,6 +51,9 @@ const mintModel = createModel(mintMachine).withEvents({
     SIGN_ERROR: {
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
+    SUBMIT_ERROR: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
     SIGNED: {
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },

@@ -157,7 +157,7 @@ export const mintMachine = Machine<
                                 return newTx;
                             },
                         }),
-                        log((_ctx, evt) => evt.data),
+                        log((_ctx, evt) => evt.data, "ERROR"),
                     ],
                 },
             },
@@ -200,7 +200,7 @@ export const mintMachine = Machine<
                                 return newTx;
                             },
                         }),
-                        log((_ctx, evt) => evt.data),
+                        log((_ctx, evt) => evt.data, "ERROR"),
                     ],
                 },
 
@@ -223,6 +223,7 @@ export const mintMachine = Machine<
                 CONFIRMED: { actions: "routeEvent" },
                 ERROR: { actions: "routeEvent" },
                 SIGN_ERROR: { actions: "routeEvent" },
+                SUBMIT_ERROR: { actions: "routeEvent" },
                 SIGNED: { actions: "routeEvent" },
                 SUBMITTED: { actions: "routeEvent" },
 

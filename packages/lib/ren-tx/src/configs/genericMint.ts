@@ -58,7 +58,7 @@ const lockChainMap = {
 const hexify = (obj: { [key: string]: any }) => {
     if (!obj) return;
     const entries = Object.entries(obj);
-    for (let [k, v] of entries) {
+    for (const [k, v] of entries) {
         if (Buffer.isBuffer(v)) {
             obj[k] = v.toString("hex");
         }
@@ -187,7 +187,6 @@ const handleSettle = async (
             },
             error: e,
         });
-        console.error(e);
     }
 };
 
@@ -199,10 +198,9 @@ const handleSign = async (
     try {
         const v = await deposit
             .signed()
-            .on("status", (state) => console.log(state));
+            .on("status", (state) => console.debug(state));
 
         if (!v._state.queryTxResult || !v._state.queryTxResult.out) {
-            console.error("missing response data", v._state.queryTxResult);
             callback({
                 type: "SIGN_ERROR",
                 data: {
@@ -237,7 +235,6 @@ const handleSign = async (
             });
         }
     } catch (e) {
-        console.error("Sign error!", e);
         // If a tx has already been minted, we will get an error at this step
         // We can assume that a "utxo spent" error implies that the asset has been minted
         callback({
@@ -273,7 +270,6 @@ const handleMint = async (
                 data: { sourceTxHash },
                 error: e,
             });
-            console.error("Submit error!", e);
         });
 };
 
@@ -320,20 +316,37 @@ const mintFlow = async (
         const deposit = deposits.get(event.hash);
         if (!deposit) {
             // Theoretically this should never happen
-            throw new Error("missing deposit!: " + event.hash);
+            callback({
+                type: "ERROR",
+                data: event.data,
+                error: new Error(`missing deposit!: ${event.hash}`),
+            });
+            return;
         }
 
-        switch (event.type) {
-            case "SETTLE":
-                handleSettle(event.hash, deposit, callback);
-                break;
-            case "SIGN":
-                handleSign(event.hash, deposit, callback);
-                break;
-            case "MINT":
-                handleMint(event.hash, deposit, callback);
-                break;
-        }
+        const handle = async () => {
+            switch (event.type) {
+                case "SETTLE":
+                    await handleSettle(event.hash, deposit, callback);
+                    break;
+                case "SIGN":
+                    await handleSign(event.hash, deposit, callback);
+                    break;
+                case "MINT":
+                    await handleMint(event.hash, deposit, callback);
+                    break;
+            }
+        };
+
+        handle()
+            .then()
+            .catch((e) =>
+                callback({
+                    type: "ERROR",
+                    data: event.data,
+                    error: e,
+                }),
+            );
     });
 
     receive((event) => {
@@ -353,7 +366,6 @@ const mintFlow = async (
                             data: event.data,
                             error: e,
                         });
-                        console.error(e);
                     });
                 break;
         }
@@ -368,13 +380,12 @@ const depositListener = (context: GatewayMachineContext) => (
     let cleanup = () => {};
 
     initMinter(context, callback)
-        .then((minter) => {
+        .then(async (minter) => {
             cleanup = () => minter.removeAllListeners();
-            mintFlow(context, callback, receive, minter);
+            await mintFlow(context, callback, receive, minter);
         })
         .catch((e) => {
             callback({ type: "ERROR", error: e });
-            console.error(e);
         });
 
     return () => {
@@ -386,7 +397,7 @@ const depositListener = (context: GatewayMachineContext) => (
 // or to a single deposit if present in the context
 const listenerAction = assign<GatewayMachineContext>({
     depositListenerRef: (c: GatewayMachineContext, _e: any) => {
-        let actorName = `${c.tx.id}SessionListener`;
+        const actorName = `${c.tx.id}SessionListener`;
         if (c.depositListenerRef) {
             console.warn("listener already exists");
             return c.depositListenerRef;
@@ -455,16 +466,10 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                 if (machines[evt.data?.sourceTxHash] || !evt.data) {
                     return machines;
                 }
-                const machineContext = {
-                    ...context,
-                    deposit: evt.data,
-                };
 
-                // We don't want child machines to have references to siblings
-                delete (machineContext as any).depositMachines;
                 machines[evt.data.sourceTxHash] = spawnDepositMachine(
-                    machineContext,
-                    `${String(evt.data.sourceTxHash)}`,
+                    { deposit: evt.data },
+                    String(evt.data.sourceTxHash),
                 );
                 return machines;
             },
@@ -485,7 +490,7 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                     delete (machineContext as any).depositMachines;
                     machines[tx[0]] = spawnDepositMachine(
                         machineContext,
-                        `${machineContext.deposit.sourceTxHash}`,
+                        machineContext.deposit.sourceTxHash,
                     );
                 }
                 return machines;

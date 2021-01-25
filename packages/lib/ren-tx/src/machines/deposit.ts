@@ -3,6 +3,7 @@
 
 import { assign, Machine, send, sendParent } from "xstate";
 import { createModel } from "xstate/lib/model";
+import { log } from "xstate/lib/actions";
 import { assert } from "@renproject/utils";
 
 import { GatewayTransaction } from "../types/transaction";
@@ -13,7 +14,7 @@ export interface DepositMachineContext {
     deposit: GatewayTransaction;
 }
 
-/**  The states a deposit can be in */
+/** The states a deposit can be in */
 export interface DepositMachineSchema {
     states: {
         /** check if we can skip instantiating the deposit, if we finished the tx
@@ -113,6 +114,7 @@ export const depositMachine = Machine<
                 },
             },
             errorRestoring: {
+                entry: [log((ctx, _) => ctx.deposit.error, "ERROR")],
                 meta: {
                     test: async (_: void, state: any) => {
                         assert(
@@ -223,6 +225,20 @@ export const depositMachine = Machine<
                             ],
                         },
                     ],
+
+                    ERROR: [
+                        {
+                            actions: [
+                                assign({
+                                    deposit: (ctx, evt) => ({
+                                        ...ctx.deposit,
+                                        error: evt.error,
+                                    }),
+                                }),
+                                log((ctx, _) => ctx.deposit.error, "ERROR"),
+                            ],
+                        },
+                    ],
                 },
                 meta: { test: async () => {} },
             },
@@ -256,6 +272,7 @@ export const depositMachine = Machine<
             },
 
             errorAccepting: {
+                entry: [log((ctx, _) => ctx.deposit.error, "ERROR")],
                 meta: {
                     test: async (_: void, state: any) => {
                         assert(
@@ -289,12 +306,15 @@ export const depositMachine = Machine<
             },
 
             errorSubmitting: {
-                entry: sendParent((ctx, _) => {
-                    return {
-                        type: "CLAIMABLE",
-                        data: ctx.deposit,
-                    };
-                }),
+                entry: [
+                    log((ctx, _) => ctx.deposit.error, "ERROR"),
+                    sendParent((ctx, _) => {
+                        return {
+                            type: "CLAIMABLE",
+                            data: ctx.deposit,
+                        };
+                    }),
+                ],
                 on: {
                     CLAIM: {
                         target: "claiming",
@@ -372,6 +392,7 @@ export const depositMachine = Machine<
             rejected: {
                 meta: { test: async () => {} },
             },
+
             completed: {
                 entry: sendParent((ctx, _) => ({
                     type: "DEPOSIT_COMPLETED",

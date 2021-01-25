@@ -106,7 +106,7 @@ export interface BurnMachineSchema {
         srcConfirmed: {};
 
         /** RenVM has recieved the tx and provided a hash */
-        // accepted: {};
+        accepted: {};
 
         /** An error occored while processing the release
          * Should only come from renVM */
@@ -129,10 +129,12 @@ export type BurnMachineEvent =
     | { type: "CREATED" }
     | { type: "SUBMIT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
+    | { type: "RELEASE" }
     | { type: "RELEASE_ERROR"; data: any }
     | { type: "BURN_ERROR"; data: any }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "CONFIRMED"; data: GatewayTransaction }
+    | { type: "ACCEPTED"; data: GatewayTransaction }
     | { type: "RELEASED"; data: any };
 
 /**
@@ -164,7 +166,9 @@ export const burnMachine = Machine<
                 on: {
                     RESTORE: [
                         { target: "destInitiated", cond: "isDestInitiated" },
-                        { target: "srcConfirmed", cond: "isSrcConfirmed" },
+                        // We can't restore to this state, because the machine needs
+                        // to be initialized
+                        // { target: "srcConfirmed", cond: "isSrcConfirmed" },
                         { target: "srcSettling", cond: "isSrcSettling" },
                         { target: "creating" },
                     ],
@@ -359,6 +363,11 @@ export const burnMachine = Machine<
             },
 
             srcConfirmed: {
+                entry: send("RELEASE", {
+                    to: (ctx) => {
+                        return ctx.burnListenerRef?.id || "";
+                    },
+                }),
                 on: {
                     RELEASE_ERROR: {
                         target: "errorReleasing",
@@ -372,7 +381,19 @@ export const burnMachine = Machine<
                                     : ctx.tx,
                         }),
                     },
-                    RELEASED: "destInitiated",
+                    ACCEPTED: {
+                        actions: [
+                            assign({
+                                tx: (ctx, evt) => ({
+                                    ...ctx.tx,
+                                    transactions: {
+                                        [evt.data.sourceTxHash]: evt.data,
+                                    },
+                                }),
+                            }),
+                        ],
+                        target: "accepted",
+                    },
                 },
                 meta: {
                     test: (_: void, state: any) => {
@@ -388,10 +409,24 @@ export const burnMachine = Machine<
                 },
             },
 
-            // FIXME: not currently used, but should be tracked once migrated to 0.3
-            // accepted: {
-            //     meta: { test: async () => {} },
-            //},
+            accepted: {
+                on: {
+                    RELEASE_ERROR: {
+                        target: "errorReleasing",
+                        actions: assign({
+                            tx: (ctx, evt) =>
+                                evt.data
+                                    ? {
+                                          ...ctx.tx,
+                                          error: evt.data,
+                                      }
+                                    : ctx.tx,
+                        }),
+                    },
+                    RELEASED: "destInitiated",
+                },
+                meta: { test: async () => {} },
+            },
 
             destInitiated: {
                 meta: { test: async () => {} },

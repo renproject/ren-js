@@ -2,16 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Improve typings.
 
+import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
 import BigNumber from "bignumber.js";
-import {
-    Actor,
-    assign,
-    MachineOptions,
-    Receiver,
-    send,
-    Sender,
-    spawn,
-} from "xstate";
+import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 
 import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
@@ -113,128 +106,175 @@ const burnTransactionListener = (context: BurnMachineContext) => (
         .then((burn) => {
             // Ready to recieve SUBMIT
             callback({ type: "CREATED" });
-            if (context.autoSubmit) {
+            if (
+                context.autoSubmit ||
+                // Alway "SUBMIT" if we have submitted previously
+                Object.keys(context.tx.transactions).length > 0
+            ) {
                 setTimeout(() => callback("SUBMIT"), 500);
             }
 
             let tx: GatewayTransaction = Object.values(
                 context.tx.transactions,
             )[0];
+
             const performBurn = async () => {
                 // Only allow burn to be called once
                 if (burning) return;
                 burning = true;
+                // will resume from previous tx if we have the hash
                 const burnRef = burn.burn();
 
-                const burnListener = (confs: number) => {
-                    callback({
-                        type: "CONFIRMATION",
-                        // FIXME: get proper confirmation target for burning somewhere
-                        data: {
-                            ...tx,
-                            sourceTxConfs: confs,
-                            sourceTxConfTarget: tx.sourceTxConfTarget || 6,
-                        },
-                    });
+                const burnListener = async (confs: number) => {
+                    if (confs >= (tx.sourceTxConfTarget || 6)) {
+                        // stop listening for confirmations once confirmed
+                        burnRef.removeListener("confirmation", burnListener);
+
+                        callback({
+                            type: "CONFIRMED",
+                            data: { ...tx, sourceTxConfs: confs },
+                        });
+                    } else {
+                        callback({
+                            type: "CONFIRMATION",
+                            // FIXME: get proper confirmation target for burning somewhere
+                            data: {
+                                ...tx,
+                                sourceTxConfs: confs,
+                                sourceTxConfTarget: tx.sourceTxConfTarget || 6,
+                            },
+                        });
+                    }
                 };
+
                 cleaners.push(() => {
                     burnRef._cancel();
                     burnRef.removeListener("confirmation", burnListener);
                 });
 
-                await burnRef
-                    // host chain tx hash
-                    .on("transactionHash", (txHash: string) => {
-                        tx = {
-                            sourceTxHash: txHash,
-                            sourceTxConfs: 0,
-                            sourceTxAmount: Number(context.tx.suggestedAmount),
-                            rawSourceTx: {
-                                amount: String(context.tx.suggestedAmount),
-                                transaction: {},
-                            },
-                        };
-                        callback({
-                            type: "SUBMITTED",
-                            data: {
-                                ...tx,
-                            },
-                        });
-                    })
-                    .on("confirmation", burnListener)
-                    .catch((error) =>
-                        callback({ type: "BURN_ERROR", data: error }),
-                    );
-
-                const releaseListener = (status: string) => {
-                    status === "confirming"
-                        ? console.log(`confirming`)
-                        : console.log("status", status);
-                };
-
-                const hashListener = (hash: string) => {
-                    callback({
-                        type: "CONFIRMED",
-                        data: { ...tx, renVMHash: hash },
-                    });
-                };
-
-                const transactionListener = (transaction: any) => {
-                    callback({
-                        type: "RELEASED",
-                        data: {
-                            ...tx,
-                            destTxHash: transaction.hash,
-                            // Can be used to construct blockchain explorer link
-                            rawDestTx: transaction,
-                        },
-                    });
-                };
-
-                const releaseRef = burn.release();
-                cleaners.push(() => {
-                    releaseRef._cancel();
-                    releaseRef.removeListener("status", releaseListener);
-                    releaseRef.removeListener(
-                        "transaction",
-                        transactionListener,
-                    );
-                    releaseRef.removeListener("txHash", hashListener);
-                });
-                releaseRef.catch((e) => {
-                    console.error("release error", e);
-                    callback({ type: "RELEASE_ERROR", data: new Error(e) });
-                });
-
                 try {
-                    const res = await releaseRef
-                        .on("status", releaseListener)
-                        .on("transaction", transactionListener)
-                        .on("txHash", hashListener);
-                    callback({
-                        type: "RELEASED",
-                        data: { ...tx, renResponse: res },
-                    });
-                } catch (e) {
-                    callback({ type: "RELEASE_ERROR", data: new Error(e) });
+                    const r = await burnRef
+                        // host chain tx hash
+                        .on("transactionHash", (txHash: string) => {
+                            tx = {
+                                sourceTxHash: txHash,
+                                sourceTxConfs: 0,
+                                sourceTxAmount: Number(
+                                    context.tx.suggestedAmount,
+                                ),
+                                rawSourceTx: {
+                                    amount: String(context.tx.suggestedAmount),
+                                    transaction: {},
+                                },
+                            };
+                            callback({
+                                type: "SUBMITTED",
+                                data: {
+                                    ...tx,
+                                },
+                            });
+                        })
+                        .on("confirmation", burnListener);
+                    if (tx) {
+                        // the burn status is canonical, we should proceed if
+                        // it says we have burned
+                        if (r.status == BurnAndReleaseStatus.Burned) {
+                            // FIXME: ensure that the confs always match
+                            // the target
+                            tx.sourceTxConfs = 7;
+                        }
+
+                        // Always call because we won't get an emission
+                        // if the burn is already done
+                        burnListener(tx.sourceTxConfs);
+                    }
+                } catch (error) {
+                    throw error;
                 }
             };
 
-            receive((event: BurnMachineEvent) => {
+            receive(async (event: BurnMachineEvent) => {
                 if (event.type === "SUBMIT") {
                     performBurn()
                         .then()
                         .catch((e) => {
                             console.error(e);
-                            callback({ type: "BURN_ERROR", data: e });
+                            callback({
+                                type: "BURN_ERROR",
+                                data: e.toString(),
+                            });
                         });
+                }
+                if (event.type === "RELEASE") {
+                    // Only start processing release once confirmed
+                    // Release from renvm status
+                    const releaseListener = (status: string) => {
+                        status === "confirming"
+                            ? console.debug(`confirming`)
+                            : console.debug("status", status);
+                    };
+
+                    // renvm hash status
+                    const hashListener = (hash: string) => {
+                        callback({
+                            type: "ACCEPTED",
+                            data: { ...tx, renVMHash: hash },
+                        });
+                    };
+
+                    const transactionListener = (transaction: any) => {
+                        callback({
+                            type: "RELEASED",
+                            data: {
+                                ...tx,
+                                destTxHash: transaction.hash,
+                                // Can be used to construct blockchain explorer link
+                                rawDestTx: transaction,
+                            },
+                        });
+                    };
+
+                    const releaseRef = burn.release();
+                    cleaners.push(() => {
+                        releaseRef._cancel();
+                        releaseRef.removeListener("status", releaseListener);
+                        releaseRef.removeListener(
+                            "transaction",
+                            transactionListener,
+                        );
+                        releaseRef.removeListener("txHash", hashListener);
+                    });
+
+                    releaseRef.catch((e) => {
+                        console.error("release error", e.toString());
+                        callback({
+                            type: "RELEASE_ERROR",
+                            data: e.toString(),
+                        });
+                    });
+
+                    try {
+                        const res = await releaseRef
+                            .on("status", releaseListener)
+                            .on("transaction", transactionListener)
+                            .on("txHash", hashListener);
+                        callback({
+                            type: "RELEASED",
+                            data: { ...tx, renResponse: res },
+                        });
+                    } catch (e) {
+                        callback({
+                            type: "RELEASE_ERROR",
+                            data: e.toString(),
+                        });
+                    }
                 }
             });
         })
         .catch((e) => {
             console.error(e);
 
-            callback({ type: "BURN_ERROR", data: e });
+            callback({ type: "BURN_ERROR", data: e.toString() });
         });
 
     return () => {

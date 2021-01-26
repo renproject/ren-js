@@ -4,7 +4,7 @@ jobs:
         environment:
             NODE_ENV: development
         docker:
-            - image: circleci/node:10.16
+            - image: circleci/node:14.15
         working_directory: ~/renjs/packages/lib/ren
         steps:
             - checkout:

@@ -1,10 +1,16 @@
 /* eslint-disable no-console */
 
 import RenJS from "@renproject/ren";
-import { interpret } from "xstate";
+import { EventObject, interpret, State } from "xstate";
 import { config as loadDotEnv } from "dotenv";
 
-import { burnConfig, burnMachine, GatewaySession } from "../src";
+import {
+    burnConfig,
+    burnMachine,
+    BurnMachineContext,
+    BurnMachineSchema,
+    GatewaySession,
+} from "../src";
 import { buildMockLockChain, buildMockMintChain } from "./testutils/mock";
 
 loadDotEnv();
@@ -52,9 +58,15 @@ describe("BurnMachine", () => {
         });
         let result: any = {};
 
-        const p = new Promise<any>((resolve) => {
+        const p = new Promise<
+            State<BurnMachineContext, EventObject, BurnMachineSchema>
+        >((resolve, reject) => {
             const service = interpret(machine)
                 .onTransition((state) => {
+                    console.log(state.value);
+                    if ((state.value as string).includes("error")) {
+                        reject(state.value);
+                    }
                     if (state.value === "srcSettling") {
                         // we have successfully created a burn tx
                         result = state;

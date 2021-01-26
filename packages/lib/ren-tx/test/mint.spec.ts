@@ -35,7 +35,7 @@ const makeMintTransaction = (): GatewaySession => ({
     customParams: {},
 });
 
-jest.setTimeout(1000 * 56);
+jest.setTimeout(1000 * 46);
 describe("MintMachine", () => {
     it("should create a tx", async () => {
         const fromChainMap = {
@@ -124,7 +124,7 @@ describe("MintMachine", () => {
                             (prevDepositTx?.sourceTxConfs || 0) <
                             depositTx.sourceTxConfs
                         ) {
-                            resolve();
+                            resolve(true);
                         }
                         prevDepositTx = depositTx;
                     }
@@ -229,7 +229,7 @@ describe("MintMachine", () => {
                             }
 
                             if (innerState?.value === "destInitiated") {
-                                resolve();
+                                resolve(true);
                                 // depositMachine.send({ type: "CLAIM" });
                             }
                         });
@@ -342,7 +342,7 @@ describe("MintMachine", () => {
                             }
 
                             if (innerState?.value === "destInitiated") {
-                                resolve();
+                                resolve(true);
                             }
                         });
                     }
@@ -363,7 +363,7 @@ describe("MintMachine", () => {
         });
     });
 
-    it("should enter a waiting state when a deposit requires interaction", async () => {
+    it("should list deposits that requires interaction", async () => {
         const { mockLockChain, setConfirmations } = buildMockLockChain({
             targetConfirmations: 2,
         });
@@ -431,6 +431,7 @@ describe("MintMachine", () => {
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;
+            let signed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
                     if (state.context.tx.error) {
@@ -439,9 +440,17 @@ describe("MintMachine", () => {
                     const depositMachine = Object.values(
                         state.context?.depositMachines || {},
                     )[0];
-                    if (confirmed) {
-                        if (state.value === "requestingSignature") {
-                            service.send("SIGN");
+                    if (confirmed && !signed) {
+                        const requests = state.context?.mintRequests;
+                        if (requests && requests[0]) {
+                            const tx =
+                                state.context?.tx.transactions[requests[0]];
+                            service.send({
+                                type: "CLAIM",
+                                hash: requests[0],
+                                data: tx,
+                            } as any);
+                            signed = true;
                         }
                     }
                     if (depositMachine && !subscribed) {
@@ -458,7 +467,7 @@ describe("MintMachine", () => {
                                 confirmed = true;
                             }
                             if (innerState?.value === "destInitiated") {
-                                resolve();
+                                resolve(true);
                             }
                         });
                     }

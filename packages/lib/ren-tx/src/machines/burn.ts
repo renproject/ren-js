@@ -7,6 +7,7 @@ import { LockChain, MintChain } from "@renproject/interfaces";
 import { assert } from "@renproject/utils";
 
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
+import { log } from "xstate/lib/actions";
 
 export interface BurnMachineContext {
     /**
@@ -276,6 +277,7 @@ export const burnMachine = Machine<
                 },
             },
             errorBurning: {
+                entry: log((ctx, _evt) => ctx.tx.error, "ERROR"),
                 meta: {
                     test: (_: void, state: any) => {
                         assert(

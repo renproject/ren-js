@@ -1,4 +1,10 @@
-import { LockChain, MintChainStatic } from "@renproject/interfaces";
+import {
+    LockChain,
+    ChainStatic,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
 import { Networks, Opcode, Script } from "bitcore-lib";
@@ -53,6 +59,7 @@ export class BitcoinClass extends BitcoinBaseChain
     };
 
     public static utils = {
+        resolveChainNetwork: BitcoinBaseChain.utils.resolveChainNetwork,
         p2shPrefix: {
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
@@ -61,45 +68,66 @@ export class BitcoinClass extends BitcoinBaseChain
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
-        ) => validateAddress(address, BitcoinBaseChain.asset, network),
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            validateAddress(
+                address,
+                BitcoinBaseChain.asset,
+                Bitcoin.utils.resolveChainNetwork(network),
+            ),
 
         addressExplorerLink: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
-            if (network === "mainnet") {
-                return BlockCypher.Address(
-                    BlockCypherNetwork.BitcoinMainnet,
-                    address,
-                );
-            } else if (network === "testnet") {
-                return BlockCypher.Address(
-                    BlockCypherNetwork.BitcoinTestnet,
-                    address,
-                );
+            switch (Bitcoin.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return BlockCypher.Address(
+                        BlockCypherNetwork.BitcoinMainnet,
+                        address,
+                    );
+                case "testnet":
+                    return BlockCypher.Address(
+                        BlockCypherNetwork.BitcoinTestnet,
+                        address,
+                    );
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
 
         transactionExplorerLink: (
             tx: BtcTransaction | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
             const txHash = typeof tx === "string" ? tx : tx.txHash;
 
-            if (network === "mainnet") {
-                return BlockCypher.Transaction(
-                    BlockCypherNetwork.BitcoinMainnet,
-                    txHash,
-                );
-            } else if (network === "testnet") {
-                return BlockCypher.Transaction(
-                    BlockCypherNetwork.BitcoinTestnet,
-                    txHash,
-                );
+            switch (Bitcoin.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return BlockCypher.Transaction(
+                        BlockCypherNetwork.BitcoinMainnet,
+                        txHash,
+                    );
+                case "testnet":
+                    return BlockCypher.Transaction(
+                        BlockCypherNetwork.BitcoinTestnet,
+                        txHash,
+                    );
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
     };
 
@@ -113,7 +141,7 @@ export class BitcoinClass extends BitcoinBaseChain
 export type Bitcoin = BitcoinClass;
 export const Bitcoin = Callable(BitcoinClass);
 
-const _: MintChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Bitcoin;
+const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Bitcoin;
 
 // Explorers ///////////////////////////////////////////////////////////////////
 

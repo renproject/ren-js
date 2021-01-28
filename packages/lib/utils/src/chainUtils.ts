@@ -1,7 +1,7 @@
-import { MintChainStatic } from "@renproject/interfaces";
+import { ChainStatic } from "@renproject/interfaces";
 
 export const utilsWithChainNetwork = <
-    Utils extends MintChainStatic<Transaction, Address, Network>["utils"],
+    Utils extends ChainStatic<Transaction, Address, Network>["utils"],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Transaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

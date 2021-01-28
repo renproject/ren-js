@@ -60,7 +60,11 @@ export class InternalPromiEvent<
         callback: (...values: EventTypes[Event]) => void | Promise<void>,
     ) => this;
     // @ts-ignore no initializer because of proxyHandler
+    public readonly listenerCount: (event: string | symbol) => number;
+    // @ts-ignore no initializer because of proxyHandler
     public readonly _cancel: () => void;
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly _resume: () => void;
     // @ts-ignore no initializer because of proxyHandler
     public readonly _isCancelled: () => boolean;
     // @ts-ignore no initializer because of proxyHandler
@@ -117,6 +121,12 @@ export class InternalPromiEvent<
 
         if (name === "_isCancelled") {
             return () => this._cancelled === true;
+        }
+
+        if (name === "_resume") {
+            return () => {
+                this._cancelled = false;
+            };
         }
 
         // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-unsafe-member-access

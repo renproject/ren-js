@@ -66,7 +66,7 @@ export interface WalletPickerProps<P, A>
   /**
      Network the wallet should connect to
    */
-  targetNetwork: RenNetwork | string;
+  targetNetwork: RenNetwork | "mainnet" | "testnet";
   /**
      MaterialUI class overrides for the component shown when connecting
    */
@@ -110,7 +110,7 @@ export interface WalletPickerProps<P, A>
    */
   WalletChainLabel?: React.FC<{
     chain: string;
-  }>
+  }>;
 }
 
 const useWalletPickerStyles = makeStyles({
@@ -242,7 +242,11 @@ export const WalletPicker = <P, A>({
               title="Connect a wallet"
             />
             <Box p={2} className={classes.body}>
-              {WalletChainLabel ? <WalletChainLabel chain={chain} />: <Typography className={classes.chainTitle}>{chain}</Typography>}
+              {WalletChainLabel ? (
+                <WalletChainLabel chain={chain} />
+              ) : (
+                <Typography className={classes.chainTitle}>{chain}</Typography>
+              )}
               {connectors.map((x) => (
                 <WalletEntry
                   key={x.name}
@@ -298,6 +302,9 @@ export const WalletPickerModal = <P, A>({
           break;
         case "mainnet":
           setTargetNetwork(RenNetwork.Mainnet);
+          break;
+        default:
+          setTargetNetwork(options.targetNetwork);
       }
     }
   }, [options.targetNetwork, targetNetwork, setTargetNetwork]);

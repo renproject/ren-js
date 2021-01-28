@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-filecoin",
-    "version": "2.0.7",
+    "version": "2.0.8",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,23 +43,16 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@glif/filecoin-address": "^1.1.0-beta.4",
-        "@glif/filecoin-rpc-client": "^1.1.0-beta.1",
-        "@renproject/interfaces": "^2.0.6",
-        "@renproject/rpc": "^2.0.7",
-        "@renproject/utils": "^2.0.6",
-        "@types/bs58": "^4.0.1",
+        "@glif/filecoin-address": "^1.1.0-beta.18",
+        "@glif/filecoin-rpc-client": "^1.1.0-beta.17",
+        "@renproject/interfaces": "^2.0.8",
+        "@renproject/rpc": "^2.0.8",
+        "@renproject/utils": "^2.0.8",
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
-        "bchaddrjs": "^0.4.9",
         "bignumber.js": "^9.0.1",
-        "bitcore-lib": "^8.22.2",
-        "bitcore-lib-cash": "^8.22.2",
-        "bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
-        "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
-        "bs58": "^4.0.1",
-        "cids": "^1.0.1",
-        "wallet-address-validator": "^0.2.4"
+        "cids": "^1.1.5",
+        "elliptic": "^6.5.3"
     },
     "resolutions": {
         "sha3": "^2.1.2"

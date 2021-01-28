@@ -11,7 +11,7 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
-import { BitcoinCash, BscConfigMap, Filecoin } from "@renproject/chains";
+import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
 
 chai.should();
@@ -23,10 +23,11 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.only("burning from contract", async function() {
+    it.skip("burning from contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
+        // const ethNetwork = EthereumConfigMap[network];
         const ethNetwork = BscConfigMap[network];
 
         // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
@@ -34,15 +35,15 @@ describe("Refactor - Burning", () => {
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
         // Recipient.
-        const asset = "BCH";
+        const asset = "BTC";
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
 
-        const to = BitcoinCash().Address(recipient);
+        const to = Chains.Bitcoin().Address(recipient);
         const from = Chains.BinanceSmartChain(provider, network);
         const fromAddress = (await from.web3.eth.getAccounts())[0];
 
-        const logLevel = LogLevel.Trace;
+        const logLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
 
         const decimals = to.assetDecimals(asset);
@@ -77,13 +78,12 @@ describe("Refactor - Burning", () => {
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
             to,
-            from: from.Account({
-                value: suggestedAmount,
-            }),
+            from: from.Account({ value: suggestedAmount }),
         });
 
         let confirmations = 0;
 
+        console.log(`step 1`);
         await burnAndRelease
             .burn()
             .on("confirmation", (confs) => {
@@ -97,17 +97,20 @@ describe("Refactor - Burning", () => {
                 ),
             );
 
+        console.log(`step 2`);
         burnAndRelease._state.logger = new SimpleLogger(
             logLevel,
             blue(`[${burnAndRelease.txHash().slice(0, 6)}]`),
         );
+
+        const targetConfirmations = await burnAndRelease.burnConfirmations();
 
         const result = await burnAndRelease
             .release()
             .on("status", (status) =>
                 status === "confirming"
                     ? burnAndRelease._state.logger.log(
-                          `confirming (${confirmations}/15)`,
+                          `confirming (${confirmations}/${targetConfirmations})`,
                       )
                     : burnAndRelease._state.logger.log(status),
             )

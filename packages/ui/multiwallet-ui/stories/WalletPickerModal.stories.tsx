@@ -1,22 +1,22 @@
-import React from 'react';
-import { Meta, Story } from '@storybook/react';
-import { EventEmitter } from 'events';
+import React from "react";
+import { Meta, Story } from "@storybook/react";
+import { EventEmitter } from "events";
 import {
   MultiwalletProvider,
   WalletPickerModal,
   WalletPickerModalProps,
-} from '../src';
-import { RenNetwork } from '@renproject/interfaces';
+} from "../src";
+import { RenNetwork } from "@renproject/interfaces";
 
 const meta: Meta<typeof WalletPickerModal> = {
-  title: 'WalletPickerModal',
+  title: "WalletPickerModal",
   component: WalletPickerModal,
   argTypes: {
     chain: {
       control: {
-        type: 'text',
+        type: "text",
       },
-      defaultValue: 'ethereum',
+      defaultValue: "ethereum",
     },
   },
   parameters: {
@@ -32,16 +32,16 @@ export const Default = Template.bind({});
 const props: WalletPickerModalProps<any, any> = {
   open: true,
   options: {
-    chain: 'ethereum',
+    chain: "ethereum",
     targetNetwork: RenNetwork.Testnet,
     onClose: () => {},
     config: {
       chains: {
         ethereum: [
           {
-            name: 'metamask',
+            name: "metamask",
             connector: {} as any,
-            logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+            logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
           },
         ],
       },
@@ -63,22 +63,22 @@ const connectingProps: WalletPickerModalProps<any, any> = {
   options: {
     targetNetwork: RenNetwork.Testnet,
     onClose: () => {
-      console.log('close');
+      console.debug("close");
     },
-    chain: 'ethereum',
+    chain: "ethereum",
     config: {
       chains: {
         ethereum: [
           {
             info: ({ acknowledge, onClose }) => (
               <div>
-                Are you sure you want to connect this wallet?{' '}
+                Are you sure you want to connect this wallet?{" "}
                 <button onClick={acknowledge}>Yes</button>
                 <button onClick={onClose}>No</button>
               </div>
             ),
-            name: 'metamask',
-            logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+            name: "metamask",
+            logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
             connector: {
               emitter: new EventEmitter() as any,
               activate: () =>
@@ -102,27 +102,27 @@ const resolvingProps: WalletPickerModalProps<any, any> = {
   options: {
     targetNetwork: RenNetwork.Testnet,
     onClose: () => {
-      console.log('close');
+      console.debug("close");
     },
-    chain: 'ethereum',
+    chain: "ethereum",
     config: {
       chains: {
         ethereum: [
           {
-            name: 'metamask',
-            logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+            name: "metamask",
+            logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
             connector: {
               emitter: new EventEmitter() as any,
-              getAccount: async () => '123',
+              getAccount: async () => "123",
               getProvider: async () => ({}),
-              getRenNetwork: async () => '' as any,
+              getRenNetwork: async () => "" as any,
               supportsTestnet: true,
               deactivate: async () => {},
               activate: () =>
                 new Promise((resolve) => {
-                  console.log('activating');
+                  console.debug("activating");
                   resolve({
-                    account: '123',
+                    account: "123",
                     provider: {},
                     renNetwork: RenNetwork.Testnet,
                   });
@@ -146,29 +146,29 @@ const wrongNetworkProps: WalletPickerModalProps<any, any> = {
   options: {
     targetNetwork: RenNetwork.Mainnet,
     onClose: () => {
-      console.log('close');
+      console.debug("close");
     },
-    chain: 'ethereum',
+    chain: "ethereum",
     config: {
       chains: {
         ethereum: [
           {
-            name: 'metamask',
-            logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+            name: "metamask",
+            logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
             connector: {
               emitter: emitter as any,
-              getAccount: async () => '123',
+              getAccount: async () => "123",
               getProvider: async () => ({}),
-              getRenNetwork: async () => '' as any,
+              getRenNetwork: async () => "" as any,
               supportsTestnet: true,
               deactivate: async () => {
-                emitter.emit('CONNECTOR_DEACTIVATE', 'mock deactivate');
+                emitter.emit("CONNECTOR_DEACTIVATE", "mock deactivate");
               },
               activate: () =>
                 new Promise((resolve) => {
-                  console.log('activating');
+                  console.debug("activating");
                   resolve({
-                    account: '123',
+                    account: "123",
                     provider: {},
                     renNetwork: RenNetwork.Testnet,
                   });

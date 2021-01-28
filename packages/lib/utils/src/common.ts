@@ -236,3 +236,9 @@ export const emptyNonce = (): Buffer => fromHex("00".repeat(32));
 
 export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
     fromHex(new AbiCoder().encodeParameters(types, parameters));
+
+/**
+ * isDefined returns true if the parameter is defined and not null.
+ */
+export const isDefined = <T>(x: T | null | undefined): x is T =>
+    x !== null && x !== undefined;

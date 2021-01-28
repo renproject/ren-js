@@ -1,10 +1,11 @@
 import { Callable } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+import { AxiosError } from "axios";
 
 export interface UTXO {
     readonly txHash: string; // hex string without 0x prefix
     readonly vOut: number;
-    readonly amount: BigNumber; // in sats
+    readonly amount: string; // in sats
     readonly confirmations: number;
 }
 
@@ -29,10 +30,12 @@ export const DEFAULT_TIMEOUT = 30 * SECONDS;
  * @returns a negative value to represent that a should come before b or a
  * positive value to represent that b should come before a.
  */
-export const sortUTXOs = (a: UTXO, b: UTXO): number =>
+export const sortUTXOs = (a: UTXO, b: UTXO): number => {
+    const aAmount = new BigNumber(a.amount);
+    const bAmount = new BigNumber(b.amount);
     // Sort greater values first.
-    !a.amount.isEqualTo(b.amount)
-        ? b.amount.minus(a.amount).toNumber()
+    return !aAmount.isEqualTo(bAmount)
+        ? bAmount.minus(aAmount).toNumber()
         : // If the UTXOs have the same value, sort by number of confirmations.
         a.confirmations !== b.confirmations
         ? a.confirmations - b.confirmations
@@ -40,6 +43,7 @@ export const sortUTXOs = (a: UTXO, b: UTXO): number =>
         a.txHash <= b.txHash
         ? -1
         : 1;
+};
 
 /**
  * fixValue turns a readable value, e.g. `0.0001` BTC, to the value in the smallest
@@ -64,7 +68,7 @@ export const fixValue = (
  */
 export const fixUTXO = (utxo: UTXO, decimals: number): UTXO => ({
     ...utxo,
-    amount: fixValue(utxo.amount, decimals),
+    amount: fixValue(utxo.amount, decimals).toFixed(),
 });
 
 /**
@@ -101,6 +105,12 @@ export class CombinedAPIClass implements BitcoinAPI {
         this.apis = apis.map((api) => withPriority(api, priority));
     }
 
+    /**
+     * Provide a new API to be used with the other APIs.
+     * @param api
+     * @param { priority } Optionally set the priority of the API, where a lower
+     * priority means it will be selected before other APIs.
+     */
     public withAPI = (
         api: BitcoinAPI | APIWithPriority,
         { priority = 0 } = {},
@@ -152,8 +162,9 @@ export class CombinedAPIClass implements BitcoinAPI {
         onAPI: (api: BitcoinAPI) => Promise<T>,
     ) => {
         const apis = this.apis
-            .filter((api) => filter(api.api))
-            .sort((a, b) =>
+            .map((api, index) => ({ api, index }))
+            .filter(({ api }) => filter(api.api))
+            .sort(({ api: a }, { api: b }) =>
                 // Sort by priority, and randomly for the same priority.
                 a.priority !== b.priority
                     ? a.priority - b.priority
@@ -165,10 +176,19 @@ export class CombinedAPIClass implements BitcoinAPI {
         }
 
         let firstError: Error | undefined;
-        for (const api of apis) {
+        const previousIndices = [];
+        for (const { api, index } of apis) {
             try {
-                return await onAPI(api.api);
+                const result = await onAPI(api.api);
+
+                // If any previous API failed, it may be down or rate limited,
+                // so its priority is reduced.
+                for (const previousIndex of previousIndices) {
+                    this.apis[previousIndex].priority -= 5;
+                }
+                return result;
             } catch (error) {
+                previousIndices.push(index);
                 firstError = firstError || error;
             }
         }

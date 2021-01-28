@@ -2,7 +2,7 @@ import bech32 from "bech32";
 import {
     getRenNetworkDetails,
     LockChain,
-    MintChainStatic,
+    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -25,12 +25,17 @@ import {
 } from "./api/deposit";
 import { terraDev } from "./api/terraDev";
 
-const resolveNetwork = (network: TerraNetwork | "mainnet" | "testnet") =>
-    network === "mainnet"
-        ? TerraNetwork.Columbus
-        : network === "testnet"
-        ? TerraNetwork.Tequila
-        : network;
+const resolveTerraNetwork = (
+    network: RenNetwork | RenNetworkString | RenNetworkDetails | TerraNetwork,
+) => {
+    if (network === TerraNetwork.Columbus || network === TerraNetwork.Tequila) {
+        return network;
+    }
+
+    const renNetwork = getRenNetworkDetails(network);
+    // Prioritize the network passed in to the constructor.
+    return renNetwork.isTestnet ? TerraNetwork.Tequila : TerraNetwork.Columbus;
+};
 
 export enum TerraAssets {
     LUNA = "LUNA",
@@ -54,12 +59,14 @@ export class TerraClass
     public assets = [TerraAssets.LUNA];
 
     public static utils = {
+        resolveChainNetwork: resolveTerraNetwork,
         addressIsValid: (
             addressIn: TerraAddress | string,
             _network:
-                | TerraNetwork
-                | "mainnet"
-                | "testnet" = TerraNetwork.Columbus,
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | TerraNetwork = TerraNetwork.Columbus,
         ): boolean => {
             const address =
                 typeof addressIn === "string" ? addressIn : addressIn.address;
@@ -70,11 +77,12 @@ export class TerraClass
         addressExplorerLink: (
             addressIn: TerraAddress | string,
             network:
-                | TerraNetwork
-                | "mainnet"
-                | "testnet" = TerraNetwork.Columbus,
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | TerraNetwork = TerraNetwork.Columbus,
         ): string => {
-            return `https://finder.terra.money/${resolveNetwork(
+            return `https://finder.terra.money/${Terra.utils.resolveChainNetwork(
                 network,
             )}/account/${
                 typeof addressIn === "string" ? addressIn : addressIn.address
@@ -84,11 +92,14 @@ export class TerraClass
         transactionExplorerLink: (
             transaction: TerraTransaction | string,
             network:
-                | TerraNetwork
-                | "mainnet"
-                | "testnet" = TerraNetwork.Columbus,
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | TerraNetwork = TerraNetwork.Columbus,
         ): string => {
-            return `https://finder.terra.money/${resolveNetwork(network)}/tx/${
+            return `https://finder.terra.money/${Terra.utils.resolveChainNetwork(
+                network,
+            )}/tx/${
                 typeof transaction === "string" ? transaction : transaction.hash
             }`;
         },
@@ -275,4 +286,4 @@ export type Terra = TerraClass;
 // @dev Removes any static fields, except `utils`.
 export const Terra = Callable(TerraClass);
 
-const _: MintChainStatic<TerraTransaction, TerraAddress, TerraNetwork> = Terra;
+const _: ChainStatic<TerraTransaction, TerraAddress, TerraNetwork> = Terra;

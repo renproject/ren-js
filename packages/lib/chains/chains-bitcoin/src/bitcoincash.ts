@@ -1,4 +1,9 @@
-import { MintChainStatic } from "@renproject/interfaces";
+import {
+    ChainStatic,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import {
     toCashAddress,
@@ -14,7 +19,7 @@ import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
-import { decodeAddress } from "./bchaddrjs";
+import { decodeBitcoinCashAddress } from "./bchaddrjs";
 
 export class BitcoinCashClass extends BitcoinClass {
     public static chain = "BitcoinCash";
@@ -42,6 +47,7 @@ export class BitcoinCashClass extends BitcoinClass {
     public static asset = "BCH";
     public asset = "BCH";
     public static utils = {
+        resolveChainNetwork: BitcoinClass.utils.resolveChainNetwork,
         p2shPrefix: {
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
@@ -55,39 +61,59 @@ export class BitcoinCashClass extends BitcoinClass {
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
-        ) =>
-            isValidAddress(address) &&
-            (network === "mainnet"
-                ? isMainnetAddress(address)
-                : network === "testnet"
-                ? isTestnetAddress(address)
-                : true),
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) => {
+            const btcNetwork = BitcoinCash.utils.resolveChainNetwork(network);
+            return (
+                isValidAddress(address) &&
+                (btcNetwork === "mainnet"
+                    ? isMainnetAddress(address)
+                    : btcNetwork === "testnet"
+                    ? isTestnetAddress(address)
+                    : true)
+            );
+        },
 
         addressExplorerLink: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
-            if (network === "mainnet") {
-                return `https://explorer.bitcoin.com/bch/address/${address}`;
-            } else if (network === "testnet") {
-                return `https://explorer.bitcoin.com/tbch/address/${address}`;
+            switch (BitcoinCash.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return `https://explorer.bitcoin.com/bch/address/${address}`;
+                case "testnet":
+                    return `https://explorer.bitcoin.com/tbch/address/${address}`;
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
 
         transactionExplorerLink: (
             tx: BtcTransaction | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
             const txHash = typeof tx === "string" ? tx : tx.txHash;
 
-            if (network === "mainnet") {
-                return `https://explorer.bitcoin.com/bch/tx/${txHash}`;
-            } else if (network === "testnet") {
-                return `https://explorer.bitcoin.com/tbch/tx/${txHash}`;
+            switch (BitcoinCash.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return `https://explorer.bitcoin.com/bch/tx/${txHash}`;
+                case "testnet":
+                    return `https://explorer.bitcoin.com/tbch/tx/${txHash}`;
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
     };
 
@@ -99,18 +125,11 @@ export class BitcoinCashClass extends BitcoinClass {
     /**
      * See [[LockChain.addressStringToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer => {
-        const buffer = decodeAddress(address);
-        // TODO: Look into RenVM adding 1-byte padding.
-        if (buffer.length === 20) {
-            return Buffer.concat([Buffer.from([0x00]), buffer]);
-        } else {
-            return buffer;
-        }
-    };
+    addressStringToBytes = (address: string): Buffer =>
+        decodeBitcoinCashAddress(address);
 }
 
 export type BitcoinCash = BitcoinCashClass;
 export const BitcoinCash = Callable(BitcoinCashClass);
 
-const _: MintChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = BitcoinCash;
+const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = BitcoinCash;

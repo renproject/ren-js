@@ -40,7 +40,7 @@ export class BlockstreamClass implements BitcoinAPI {
 
         return {
             txHash,
-            amount: new BigNumber(utxo.vout[vOut].value),
+            amount: utxo.vout[vOut].value.toString(),
             vOut,
             confirmations,
         };
@@ -63,7 +63,7 @@ export class BlockstreamClass implements BitcoinAPI {
         return response.data
             .map((utxo) => ({
                 txHash: utxo.txid,
-                amount: new BigNumber(utxo.value),
+                amount: utxo.value.toString(),
                 vOut: utxo.vout,
                 confirmations: utxo.status.confirmed
                     ? 1 +
@@ -100,7 +100,7 @@ export class BlockstreamClass implements BitcoinAPI {
                 if (vout.scriptpubkey_address === address) {
                     received.push({
                         txHash: tx.txid,
-                        amount: new BigNumber(vout.value),
+                        amount: vout.value.toString(),
                         vOut: i,
                         confirmations: tx.status.confirmed
                             ? 1 +

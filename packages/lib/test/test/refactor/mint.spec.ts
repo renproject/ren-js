@@ -33,11 +33,11 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.skip("mint to contract", async function() {
+    longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
-        const network = RenNetwork.TestnetVDot3;
-        const ethNetwork = BscConfigMap[network];
+        const network = RenNetwork.Testnet;
+        const ethNetwork = EthereumConfigMap[network];
 
         const asset = "BCH" as string;
 
@@ -52,15 +52,15 @@ describe("Refactor: mint", () => {
         const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
 
-        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
-        const infuraURL = ethNetwork.infura; // renBscDevnet.infura
+        const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
+        // const infuraURL = ethNetwork.infura; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
         const ethAddress = (await new Web3(provider).eth.getAccounts())[0];
 
         const params: LockAndMintParams = {
             asset,
             from: Chains.BitcoinCash(),
-            to: Chains.BinanceSmartChain(provider, ethNetwork).Account({
+            to: Chains.Ethereum(provider, ethNetwork).Account({
                 address: ethAddress,
             }),
         };
@@ -124,6 +124,11 @@ describe("Refactor: mint", () => {
                             .toFixed()
                     } ${asset}`,
                     deposit.depositDetails,
+                    deposit.params.from.utils.transactionExplorerLink
+                        ? deposit.params.from.utils.transactionExplorerLink(
+                              deposit.depositDetails.transaction,
+                          )
+                        : "",
                 );
 
                 RenJS.defaultDepositHandler(deposit)

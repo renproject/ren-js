@@ -7,7 +7,7 @@ import {
     getRenNetworkDetails,
     LockAndMintParams,
     LockChain,
-    MintChainStatic,
+    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -20,6 +20,7 @@ import {
     toBase64,
     toURLBase64,
     utilsWithChainNetwork,
+    isDefined,
 } from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
@@ -53,9 +54,6 @@ interface ConstructorOptions {
     token?: string;
 }
 
-const isDefined = <T>(x: T | null | undefined): x is T =>
-    x !== null && x !== undefined;
-
 export class FilecoinClass
     implements
         LockChain<FilTransaction, FilDeposit, FilAddress, FilNetwork, number> {
@@ -76,9 +74,31 @@ export class FilecoinClass
     public filfox: Filfox | undefined;
 
     public static utils = {
+        resolveChainNetwork: (
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | FilNetwork,
+        ): FilNetwork => {
+            if (
+                network === "mainnet" ||
+                network === "testnet" ||
+                network === "devnet"
+            ) {
+                return network;
+            }
+
+            const renNetwork = getRenNetworkDetails(network);
+            return renNetwork.isTestnet ? "testnet" : "mainnet";
+        },
         addressIsValid: (
             address: FilAddress | string,
-            _network: FilNetwork = "mainnet",
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | FilNetwork = "mainnet",
         ) =>
             validateAddressString(
                 typeof address === "string" ? address : address.address,
@@ -86,7 +106,11 @@ export class FilecoinClass
 
         addressExplorerLink: (
             address: FilAddress | string,
-            _network: FilNetwork = "mainnet",
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | FilNetwork = "mainnet",
         ): string => {
             // TODO: Check network.
             return `https://filfox.info/en/address/${
@@ -96,7 +120,11 @@ export class FilecoinClass
 
         transactionExplorerLink: (
             transaction: FilTransaction | string,
-            _network: FilNetwork = "mainnet",
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | FilNetwork = "mainnet",
         ): string => {
             // TODO: Check network.
             return `https://filfox.info/en/message/${
@@ -389,5 +417,5 @@ export type Filecoin = FilecoinClass;
 // @dev Removes any static fields, except `utils`.
 export const Filecoin = Callable(FilecoinClass);
 
-const _: MintChainStatic<FilTransaction, FilAddress, FilNetwork> = Filecoin;
+const _: ChainStatic<FilTransaction, FilAddress, FilNetwork> = Filecoin;
 const __: LockAndMintParams["from"] = Filecoin();

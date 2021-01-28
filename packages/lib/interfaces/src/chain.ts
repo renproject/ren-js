@@ -9,22 +9,21 @@ import {
     ContractCall,
     LockAndMintParams,
 } from "./parameters";
-import { PromiEvent } from "./promiEvent";
 import { LockAndMintTransaction } from "./transaction";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
-export type TransactionListener<
-    T,
-    E extends { [key: string]: any[] }
-> = PromiEvent<
-    T,
-    {
-        txHash: [string];
-        confirmation: [number, number];
-        target: [number, number];
-    } & E
->;
+// export type TransactionListener<
+//     T,
+//     E extends { [key: string]: any[] }
+// > = PromiEvent<
+//     T,
+//     {
+//         txHash: [string];
+//         confirmation: [number, number];
+//         target: [number, number];
+//     } & E
+// >;
 
 /**
  * # Adding chains
@@ -46,7 +45,7 @@ export interface ChainCommon<
     Transaction = any,
     Address extends string | { address: string } = any,
     Network = any
-> extends MintChainStatic<Transaction, Address, Network> {
+> extends ChainStatic<Transaction, Address, Network> {
     /**
      * The name of the Chain.
      *
@@ -159,6 +158,7 @@ export interface ChainCommon<
     transactionFromID: (
         txid: string | Buffer,
         txindex: string,
+        reversed?: boolean,
     ) => SyncOrPromise<Transaction>;
 }
 
@@ -346,12 +346,20 @@ export interface MintChain<
 /**
  * Chains should provide a set of static utilities.
  */
-export interface MintChainStatic<
+export interface ChainStatic<
     Transaction = any,
     DepositAddress extends string | { address: string } = any,
     Network = any
 > {
     utils: {
+        resolveChainNetwork(
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | Network,
+        ): Network;
+
         /**
          *
          * @param address
@@ -359,25 +367,45 @@ export interface MintChainStatic<
          */
         addressIsValid(
             address: DepositAddress | string,
-            network?: Network | "mainnet" | "testnet",
+            network?:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | Network,
         ): boolean;
 
         /**
          * `addressExplorerLink` should return a URL that can be shown to a user
          * to access more information about an address.
+         *
+         * `explorer` can be provided to request a link to a different explorer.
+         * It's up to the chain implementation to choose how to interpret this.
          */
         addressExplorerLink?: (
             address: DepositAddress | string,
-            network?: Network | "mainnet" | "testnet",
+            network?:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | Network,
+            explorer?: string,
         ) => string | undefined;
 
         /**
          * `transactionExplorerLink` should return a URL that can be shown to a user
          * to access more information about a transaction.
+         *
+         * `explorer` can be provided to request a link to a different explorer.
+         * It's up to the chain implementation to choose how to interpret this.
          */
         transactionExplorerLink?: (
             transaction: Transaction | string,
-            network?: Network | "mainnet" | "testnet",
+            network?:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | Network,
+            explorer?: string,
         ) => string | undefined;
     };
 }

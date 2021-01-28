@@ -41,8 +41,8 @@ export class InsightClass implements BitcoinAPI {
             .map((utxo) => ({
                 txHash: utxo.txid,
                 amount: utxo.satoshis
-                    ? new BigNumber(utxo.satoshis)
-                    : fixValue(utxo.amount, 8),
+                    ? utxo.satoshis.toString()
+                    : fixValue(utxo.amount, 8).toFixed(),
                 // script_hex: utxo.scriptPubKey,
                 vOut: utxo.vout,
                 confirmations: utxo.confirmations,
@@ -80,7 +80,7 @@ export class InsightClass implements BitcoinAPI {
                 if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
                     received.push({
                         txHash: tx.txid,
-                        amount: fixValue(parseFloat(vout.value), 8),
+                        amount: fixValue(parseFloat(vout.value), 8).toFixed(),
                         vOut: i,
                         confirmations: tx.confirmations,
                     });
@@ -104,7 +104,7 @@ export class InsightClass implements BitcoinAPI {
         return fixUTXO(
             {
                 txHash,
-                amount: new BigNumber(tx.vout[vOut].value),
+                amount: tx.vout[vOut].value.toString(),
                 vOut,
                 confirmations: tx.confirmations,
             },

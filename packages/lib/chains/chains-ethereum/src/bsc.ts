@@ -51,6 +51,8 @@ export const renBscMainnet: EthereumConfig = {
 
 export const BscConfigMap = {
     [RenNetwork.TestnetVDot3]: renBscTestnet,
+    [RenNetwork.MainnetVDot3]: renBscMainnet,
+    [RenNetwork.DevnetVDot3]: renBscDevnet,
 };
 
 const resolveBSCNetwork = (
@@ -81,13 +83,17 @@ export class BinanceSmartChainClass extends EthereumClass {
     public legacyName = undefined;
 
     public static utils = {
+        resolveChainNetwork: resolveBSCNetwork,
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network: NetworkInput = renBscMainnet,
         ): string =>
             `${
-                (resolveBSCNetwork(network) || renBscMainnet).etherscan
+                (
+                    BinanceSmartChain.utils.resolveChainNetwork(network) ||
+                    renBscMainnet
+                ).etherscan
             }/address/${address}`,
 
         transactionExplorerLink: (
@@ -95,7 +101,10 @@ export class BinanceSmartChainClass extends EthereumClass {
             network: NetworkInput = renBscMainnet,
         ): string =>
             `${
-                (resolveBSCNetwork(network) || renBscMainnet).etherscan
+                (
+                    BinanceSmartChain.utils.resolveChainNetwork(network) ||
+                    renBscMainnet
+                ).etherscan
             }/tx/${transaction}`,
     };
 

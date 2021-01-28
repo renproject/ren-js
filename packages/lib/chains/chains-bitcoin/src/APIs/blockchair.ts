@@ -56,7 +56,7 @@ export class BlockchairClass implements BitcoinAPI {
         return {
             txHash,
             vOut,
-            amount: new BigNumber(tx.outputs[vOut].value),
+            amount: tx.outputs[vOut].value.toString(),
             confirmations,
         };
     };
@@ -82,7 +82,7 @@ export class BlockchairClass implements BitcoinAPI {
         return response.data[address].utxo
             .map((utxo) => ({
                 txHash: utxo.transaction_hash,
-                amount: new BigNumber(utxo.value),
+                amount: utxo.value.toString(),
                 vOut: utxo.index,
                 confirmations:
                     utxo.block_id === -1 ? 0 : latestBlock - utxo.block_id + 1,
@@ -144,11 +144,11 @@ export class BlockchairClass implements BitcoinAPI {
                     ? 0
                     : Math.max(latestBlock - tx.transaction.block_id + 1, 0);
             for (let i = 0; i < tx.outputs.length; i++) {
-                const vout = tx.outputs[i];
-                if (vout.recipient === address) {
+                const output = tx.outputs[i];
+                if (output.recipient === address) {
                     received.push({
                         txHash: tx.transaction.hash,
-                        amount: new BigNumber(vout.value),
+                        amount: output.value.toString(),
                         vOut: i,
                         confirmations: txConfirmations,
                     });

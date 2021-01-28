@@ -66,7 +66,7 @@
         "@renproject/provider": "^2.0.6",
         "@renproject/rpc": "^2.0.7",
         "@renproject/utils": "^2.0.6",
-        "@types/bn.js": "^4.11.6",
+        "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "bn.js": "^5.1.3",

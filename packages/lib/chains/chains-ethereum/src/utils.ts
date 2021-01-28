@@ -21,6 +21,10 @@ import {
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import BlocknativeSdk from "bnc-sdk";
+import {
+    EthereumTransactionData,
+    EthereumTransactionLog,
+} from "bnc-sdk/dist/types/src/interfaces";
 import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
 import Web3 from "web3";
@@ -130,6 +134,7 @@ export const eventTopics = {
 export const waitForReceipt = async (
     web3: Web3,
     txHash: string,
+    logger?: Logger,
 ): Promise<TransactionReceipt> =>
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     new Promise<TransactionReceipt>(async (resolve, reject) => {
@@ -146,8 +151,15 @@ export const waitForReceipt = async (
 
             const { emitter } = blocknative.transaction(txHash);
             emitter.on("txSpeedUp", (state) => {
-                if (state.hash) {
-                    txHash = Ox(state.hash);
+                if (
+                    (state as EthereumTransactionData | EthereumTransactionLog)
+                        .hash
+                ) {
+                    txHash = Ox(
+                        (state as
+                            | EthereumTransactionData
+                            | EthereumTransactionLog).hash,
+                    );
                 }
             });
             emitter.on("txCancel", () => {
@@ -160,6 +172,9 @@ export const waitForReceipt = async (
         // Wait for confirmation
         let receipt: TransactionReceipt | undefined;
         while (!receipt || !receipt.blockHash) {
+            if (logger) {
+                logger.debug(`Fetching transaction receipt: ${txHash}`);
+            }
             receipt = await web3.eth.getTransactionReceipt(txHash);
             if (receipt && receipt.blockHash) {
                 break;
@@ -235,10 +250,11 @@ export const parseBurnEvent = (
 export const extractBurnDetails = async (
     web3: Web3,
     txHash: string,
+    logger?: Logger,
 ): Promise<BurnDetails<EthTransaction>> => {
     assertType<string>("string", { txHash });
 
-    const receipt = await waitForReceipt(web3, txHash);
+    const receipt = await waitForReceipt(web3, txHash, logger);
 
     if (!receipt.logs) {
         throw Error("No events found in transaction");

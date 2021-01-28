@@ -1,4 +1,9 @@
-import { MintChainStatic } from "@renproject/interfaces";
+import {
+    ChainStatic,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib-zcash";
 import base58 from "bs58";
@@ -49,6 +54,7 @@ export class ZcashClass extends BitcoinClass {
     public static asset = "ZEC";
     public asset = "ZEC";
     public static utils = {
+        resolveChainNetwork: BitcoinClass.utils.resolveChainNetwork,
         p2shPrefix: {
             mainnet: Buffer.from([0x1c, 0xbd]),
             testnet: Buffer.from([0x1c, 0xba]),
@@ -57,32 +63,53 @@ export class ZcashClass extends BitcoinClass {
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
-        ) => validateAddress(address, ZcashClass.asset, network),
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            validateAddress(
+                address,
+                ZcashClass.asset,
+                Zcash.utils.resolveChainNetwork(network),
+            ),
         addressExplorerLink: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
-            if (network === "mainnet") {
-                return `https://sochain.com/address/ZEC/${address}/`;
-            } else if (network === "testnet") {
-                return `https://sochain.com/address/ZECTEST/${address}/`;
+            switch (Zcash.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return `https://sochain.com/address/ZEC/${address}/`;
+                case "testnet":
+                    return `https://sochain.com/address/ZECTEST/${address}/`;
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
 
         transactionExplorerLink: (
             tx: BtcTransaction | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
             const txHash = typeof tx === "string" ? tx : tx.txHash;
 
-            if (network === "mainnet") {
-                return `https://sochain.com/tx/ZEC/${txHash}/`;
-            } else if (network === "testnet") {
-                return `https://sochain.com/tx/ZECTEST/${txHash}/`;
+            switch (Zcash.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return `https://sochain.com/tx/ZEC/${txHash}/`;
+                case "testnet":
+                    return `https://sochain.com/tx/ZECTEST/${txHash}/`;
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
     };
 
@@ -92,4 +119,4 @@ export class ZcashClass extends BitcoinClass {
 export type Zcash = ZcashClass;
 export const Zcash = Callable(ZcashClass);
 
-const _: MintChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Zcash;
+const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Zcash;

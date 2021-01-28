@@ -6,7 +6,7 @@ import {
     LockAndMintTransaction,
     Logger,
     MintChain,
-    MintChainStatic,
+    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -59,12 +59,12 @@ export type EthTransaction = string;
 export type EthAddress = string;
 
 const resolveNetwork = (
-    renNetwork?:
+    renNetwork:
         | RenNetwork
         | RenNetworkString
         | RenNetworkDetails
         | EthereumConfig,
-): EthereumConfig | undefined => {
+): EthereumConfig => {
     let networkConfig: EthereumConfig | undefined;
     if (renNetwork && (renNetwork as EthereumConfig).addresses) {
         networkConfig = renNetwork as EthereumConfig;
@@ -75,6 +75,10 @@ const resolveNetwork = (
         if (EthereumConfigMap[networkDetails.name]) {
             networkConfig = EthereumConfigMap[networkDetails.name];
         }
+    }
+
+    if (!networkConfig) {
+        throw new Error(`Unrecognized network ${renNetwork}.`);
     }
 
     return networkConfig;
@@ -94,21 +98,36 @@ export class EthereumBaseChain
     public legacyName: MintChain["legacyName"] = "Eth";
 
     public static utils = {
+        resolveChainNetwork: resolveNetwork,
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
-            network: NetworkInput = renMainnet,
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | NetworkInput = renMainnet,
         ): string =>
             `${
-                (resolveNetwork(network) || renMainnet).etherscan
+                (
+                    EthereumBaseChain.utils.resolveChainNetwork(network) ||
+                    renMainnet
+                ).etherscan
             }/address/${address}`,
 
         transactionExplorerLink: (
             transaction: EthTransaction,
-            network: NetworkInput = renMainnet,
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | NetworkInput = renMainnet,
         ): string =>
             `${
-                (resolveNetwork(network) || renMainnet).etherscan
+                (
+                    EthereumBaseChain.utils.resolveChainNetwork(network) ||
+                    renMainnet
+                ).etherscan
             }/tx/${transaction}`,
     };
 
@@ -157,7 +176,9 @@ export class EthereumBaseChain
             | EthereumConfig,
     ) {
         this.web3 = new Web3(web3Provider);
-        this.renNetworkDetails = resolveNetwork(renNetwork);
+        if (renNetwork) {
+            this.renNetworkDetails = resolveNetwork(renNetwork);
+        }
     }
 
     /**
@@ -449,7 +470,7 @@ export class EthereumBaseChain
             throw new Error(`Unable to find burn from provided parameters.`);
         }
 
-        return extractBurnDetails(this.web3, transaction);
+        return extractBurnDetails(this.web3, transaction, logger);
     };
 
     getFees = async (
@@ -565,8 +586,8 @@ export class EthereumBaseChain
     };
 }
 
-const _: MintChainStatic<
+const _: ChainStatic<
     EthTransaction,
     EthAddress,
-    "mainnet" | "testnet"
+    EthereumConfig
 > = EthereumBaseChain;

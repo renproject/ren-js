@@ -42,7 +42,7 @@ export class SoChainClass implements BitcoinAPI {
         return fixUTXO(
             {
                 txHash: tx.txid,
-                amount: new BigNumber(tx.outputs[vOut].value, 10),
+                amount: tx.outputs[vOut].value.toString(),
                 vOut,
                 confirmations: tx.confirmations,
             },
@@ -62,7 +62,7 @@ export class SoChainClass implements BitcoinAPI {
         return fixUTXOs(
             response.data.data.txs.map((utxo) => ({
                 txHash: utxo.txid,
-                amount: new BigNumber(utxo.value),
+                amount: utxo.value.toString(),
                 // scriptPubKey: utxo.script_hex,
                 vOut: utxo.output_no,
                 confirmations: utxo.confirmations,
@@ -88,7 +88,7 @@ export class SoChainClass implements BitcoinAPI {
         return fixUTXOs(
             response.data.data.txs.map((utxo) => ({
                 txHash: utxo.txid,
-                amount: new BigNumber(utxo.value),
+                amount: utxo.value.toString(),
                 // scriptPubKey: utxo.script_hex,
                 vOut: utxo.output_no,
                 confirmations: utxo.confirmations,

@@ -1,11 +1,11 @@
-import React from 'react';
-import { Meta, Story } from '@storybook/react';
-import { MultiwalletProvider, WalletPicker, WalletPickerProps } from '../src';
-import { makeStyles } from '@material-ui/core/styles';
-import { RenNetwork } from '@renproject/interfaces';
+import React from "react";
+import { Meta, Story } from "@storybook/react";
+import { MultiwalletProvider, WalletPicker, WalletPickerProps } from "../src";
+import { makeStyles } from "@material-ui/core/styles";
+import { RenNetwork } from "@renproject/interfaces";
 
 const meta: Meta<typeof WalletPicker> = {
-  title: 'Welcome',
+  title: "Welcome",
   component: WalletPicker,
   parameters: {
     controls: { expanded: true },
@@ -26,9 +26,9 @@ export const Default = Template.bind({});
 
 const defaultProps: WalletPickerProps<any, any> = {
   onClose: () => {
-    console.log('close');
+    console.debug("close");
   },
-  chain: 'ethereum',
+  chain: "ethereum",
   targetNetwork: RenNetwork.Testnet,
   config: {
     chains: {
@@ -36,13 +36,13 @@ const defaultProps: WalletPickerProps<any, any> = {
         {
           info: ({ acknowledge, onClose }) => (
             <div>
-              Are you sure you want to connect this wallet?{' '}
+              Are you sure you want to connect this wallet?{" "}
               <button onClick={acknowledge}>Yes</button>
               <button onClick={onClose}>No</button>
             </div>
           ),
-          name: 'metamask',
-          logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+          name: "metamask",
+          logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
           connector: {} as any,
         },
       ],
@@ -90,8 +90,8 @@ const customWalletButtonProps: WalletPickerProps<any, any> = {
     chains: {
       ethereum: [
         {
-          name: 'metamask',
-          logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+          name: "metamask",
+          logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
           connector: {} as any,
         },
       ],
@@ -108,7 +108,7 @@ const defaultInfoProps: WalletPickerProps<any, any> = {
   ...defaultProps,
   DefaultInfo: ({ acknowledge }) => (
     <div>
-      Welcome to the selector{' '}
+      Welcome to the selector{" "}
       <button id="acknowledge" onClick={() => acknowledge()}>
         Continue
       </button>
@@ -170,10 +170,10 @@ const usePickerStyles = makeStyles({
     minWidth: 380,
   },
   header: {
-    backgroundColor: '#343434',
-    color: '#fafafa',
-    display: 'flex',
-    justifyContent: 'space-between',
+    backgroundColor: "#343434",
+    color: "#fafafa",
+    display: "flex",
+    justifyContent: "space-between",
   },
 });
 
@@ -182,7 +182,7 @@ const useWalletStyles = makeStyles((t) => ({
     padding: t.spacing(2),
     flexGrow: 1,
     borderRadius: t.spacing(2),
-    backgroundColor: '#444444',
+    backgroundColor: "#444444",
   },
 }));
 
@@ -207,8 +207,8 @@ const classExtensionProps: WalletPickerProps<any, any> = {
     chains: {
       ethereum: [
         {
-          name: 'metamask',
-          logo: 'https://avatars1.githubusercontent.com/u/11744586?s=60&v=4',
+          name: "metamask",
+          logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
           connector: {} as any,
         },
       ],

@@ -42,7 +42,7 @@ export class BitcoinDotComClass implements BitcoinAPI {
         return fixUTXO(
             {
                 txHash,
-                amount: new BigNumber(utxo.vout[vOut].value),
+                amount: utxo.vout[vOut].value.toString(),
                 vOut,
                 confirmations: utxo.confirmations,
             },
@@ -62,7 +62,7 @@ export class BitcoinDotComClass implements BitcoinAPI {
             response.data
                 .map((utxo) => ({
                     txHash: utxo.txid,
-                    amount: new BigNumber(utxo.amount),
+                    amount: utxo.amount.toString(),
                     vOut: utxo.vout,
                     confirmations: utxo.confirmations,
                 }))
@@ -95,7 +95,7 @@ export class BitcoinDotComClass implements BitcoinAPI {
                 if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
                     received.push({
                         txHash: tx.txid,
-                        amount: fixValue(parseFloat(vout.value), 8),
+                        amount: fixValue(parseFloat(vout.value), 8).toFixed(),
                         vOut: i,
                         confirmations: tx.confirmations,
                     });

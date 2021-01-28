@@ -1432,7 +1432,7 @@ declare module "bitcore-lib-zcash" {
     }
 }
 
-declare module "bitcore-lib-dogecoin" {
+declare module "@CoinSpace/bitcore-lib-dogecoin" {
     enum Opcode {
         OP_FALSE = 0,
         OP_0 = 0,

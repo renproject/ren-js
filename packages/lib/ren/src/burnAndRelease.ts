@@ -21,8 +21,10 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
+    isDefined,
     Ox,
     renVMHashToBase64,
+    retryNTimes,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
@@ -80,6 +82,7 @@ export class BurnAndRelease<
      * patch releases.
      */
     public readonly _state: {
+        targetConfirmations: number | undefined;
         logger: Logger;
         gPubKey?: Buffer;
         queryTxResult?: BurnAndReleaseTransaction;
@@ -107,6 +110,7 @@ export class BurnAndRelease<
         this._state = {
             logger,
             selector: this.renVM.selector(this.params),
+            targetConfirmations: undefined,
         };
 
         this.validateParams();
@@ -203,6 +207,28 @@ export class BurnAndRelease<
         return this.status;
     };
 
+    public burnConfirmations = async () => {
+        if (isDefined(this._state.targetConfirmations)) {
+            return this._state.targetConfirmations;
+        }
+
+        const getConfirmationTarget = this.renVM.getConfirmationTarget;
+        if (getConfirmationTarget) {
+            this._state.targetConfirmations = await retryNTimes(
+                async () =>
+                    getConfirmationTarget(
+                        this._state.selector,
+                        this.params.from,
+                    ),
+                2,
+            );
+        } else {
+            this._state.targetConfirmations = 6;
+        }
+
+        return this._state.targetConfirmations;
+    };
+
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
@@ -216,7 +242,10 @@ export class BurnAndRelease<
             MintAddress
         >,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { [event: string]: any }
+        {
+            transactionHash: [string];
+            confirmation: [number, number];
+        }
     > => {
         const promiEvent = newPromiEvent<
             BurnAndRelease<
@@ -227,7 +256,10 @@ export class BurnAndRelease<
                 MintAddress
             >,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            { [event: string]: any }
+            {
+                transactionHash: [string];
+                confirmation: [number, number];
+            }
         >();
 
         (async () => {
@@ -568,16 +600,18 @@ export class BurnAndRelease<
                             transaction = await this.params.to.transactionFromID(
                                 txid,
                                 "",
+                                true,
                             );
                         } else if (response.out.outpoint) {
                             const { hash, index } = response.out.outpoint;
                             transaction = await this.params.to.transactionFromID(
                                 hash,
                                 index.toFixed(),
+                                true,
                             );
                         }
                     } catch (error) {
-                        // Ignore
+                        this._state.logger.debug(error);
                     }
 
                     if (transaction) {

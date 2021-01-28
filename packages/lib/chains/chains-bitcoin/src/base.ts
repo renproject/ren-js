@@ -1,7 +1,7 @@
 import {
     getRenNetworkDetails,
     LockChain,
-    MintChainStatic,
+    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -11,6 +11,7 @@ import {
     fromHex,
     hash160,
     retryNTimes,
+    strip0x,
     toBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
@@ -91,18 +92,49 @@ export abstract class BitcoinBaseChain
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             _address: BtcAddress | string,
-            _network: BtcNetwork = "mainnet",
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): boolean => true,
 
         addressExplorerLink: (
             _address: BtcAddress | string,
-            _network: BtcNetwork = "mainnet",
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => undefined,
 
         transactionExplorerLink: (
             _tx: BtcTransaction | string,
-            _network: BtcNetwork = "mainnet",
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => undefined,
+
+        resolveChainNetwork: (
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork,
+        ): BtcNetwork => {
+            if (
+                network === "mainnet" ||
+                network === "testnet" ||
+                network === "regtest"
+            ) {
+                return network;
+            }
+
+            const renNetwork = getRenNetworkDetails(network);
+            return renNetwork.isTestnet ? "testnet" : "mainnet";
+        },
     };
 
     public utils = utilsWithChainNetwork(
@@ -256,11 +288,29 @@ export abstract class BitcoinBaseChain
      */
     transactionID = (transaction: BtcTransaction) => transaction.txHash;
 
-    transactionFromID = async (txid: string | Buffer, txindex: string) =>
-        this.api.fetchUTXO(
-            typeof txid === "string" ? txid : txid.toString("hex"),
-            parseInt(txindex, 10),
-        );
+    transactionFromID = async (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => {
+        let txidString;
+
+        // RenVM returns TXIDs in the correct byte direction, so they should be
+        // reversed when converting to a string.
+        // See https://learnmeabitcoin.com/technical/txid#why
+        if (reversed) {
+            // Reverse bytes.
+            const bufferTxid =
+                typeof txid === "string"
+                    ? Buffer.from(strip0x(txid), "hex")
+                    : txid;
+            txidString = bufferTxid.reverse().toString("hex");
+        } else {
+            txidString = typeof txid === "string" ? txid : txid.toString("hex");
+        }
+
+        return this.api.fetchUTXO(txidString, parseInt(txindex, 10));
+    };
 
     depositV1HashString = ({ transaction }: BtcDeposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
@@ -313,8 +363,4 @@ export abstract class BitcoinBaseChain
             .toFixed();
 }
 
-const _: MintChainStatic<
-    BtcTransaction,
-    BtcAddress,
-    BtcNetwork
-> = BitcoinBaseChain;
+const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = BitcoinBaseChain;

@@ -1,6 +1,11 @@
-import { MintChainStatic } from "@renproject/interfaces";
+import {
+    ChainStatic,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+} from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { Networks, Opcode, Script } from "bitcore-lib-dogecoin";
+import { Networks, Opcode, Script } from "@CoinSpace/bitcore-lib-dogecoin";
 import base58 from "bs58";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { SoChain, SoChainNetwork } from "./APIs/sochain";
@@ -36,6 +41,7 @@ export class DogecoinClass extends BitcoinClass {
     public static asset = "DOGE";
     public asset = "DOGE";
     public static utils = {
+        resolveChainNetwork: BitcoinClass.utils.resolveChainNetwork,
         p2shPrefix: {
             mainnet: Buffer.from([0x16]),
             testnet: Buffer.from([0xc4]),
@@ -44,33 +50,54 @@ export class DogecoinClass extends BitcoinClass {
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
-        ) => validateAddress(address, DogecoinClass.asset, network),
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            validateAddress(
+                address,
+                DogecoinClass.asset,
+                Dogecoin.utils.resolveChainNetwork(network),
+            ),
 
         addressExplorerLink: (
             address: BtcAddress | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
-            if (network === "mainnet") {
-                return `https://sochain.com/address/DOGE/${address}/`;
-            } else if (network === "testnet") {
-                return `https://sochain.com/address/DOGETEST/${address}/`;
+            switch (Dogecoin.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return `https://sochain.com/address/DOGE/${address}/`;
+                case "testnet":
+                    return `https://sochain.com/address/DOGETEST/${address}/`;
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
 
         transactionExplorerLink: (
             tx: BtcTransaction | string,
-            network: BtcNetwork = "mainnet",
+            network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
         ): string | undefined => {
             const txHash = typeof tx === "string" ? tx : tx.txHash;
 
-            if (network === "mainnet") {
-                return `https://sochain.com/tx/DOGE/${txHash}/`;
-            } else if (network === "testnet") {
-                return `https://sochain.com/tx/DOGETEST/${txHash}/`;
+            switch (Dogecoin.utils.resolveChainNetwork(network)) {
+                case "mainnet":
+                    return `https://sochain.com/tx/DOGE/${txHash}/`;
+                case "testnet":
+                    return `https://sochain.com/tx/DOGETEST/${txHash}/`;
+                case "regtest":
+                    return undefined;
             }
-            return undefined;
         },
     };
 
@@ -83,4 +110,4 @@ export class DogecoinClass extends BitcoinClass {
 export type Dogecoin = DogecoinClass;
 export const Dogecoin = Callable(DogecoinClass);
 
-const _: MintChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Dogecoin;
+const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Dogecoin;

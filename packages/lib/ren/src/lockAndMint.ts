@@ -3,6 +3,7 @@ import {
     DepositCommon,
     getRenNetworkDetails,
     LockAndMintParams,
+    LockAndMintStatus,
     LockAndMintTransaction,
     Logger,
     newPromiEvent,
@@ -11,6 +12,7 @@ import {
     RenJSErrors,
     RenNetworkDetails,
     TxStatus,
+    TxStatusIndex,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider } from "@renproject/rpc";
 import {
@@ -24,10 +26,12 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
+    isDefined,
     overrideContractCalls,
     Ox,
     payloadToMintABI,
     renVMHashToBase64,
+    retryNTimes,
     SECONDS,
     sleep,
     strip0x,
@@ -52,7 +56,9 @@ interface MintStatePartial {
 }
 
 interface DepositState {
+    renTxSubmitted: boolean;
     queryTxResult?: LockAndMintTransaction;
+    queryTxResultTimestamp?: number | undefined;
     gHash: Buffer;
     gPubKey: Buffer;
     nHash: Buffer;
@@ -243,14 +249,19 @@ export class LockAndMint<
         this.wait().catch(console.error);
 
         try {
-            if (this.renVM.getConfirmationTarget) {
-                this._state.targetConfirmations = await this.renVM.getConfirmationTarget(
-                    this._state.selector,
-                    this.params.from,
+            const getConfirmationTarget = this.renVM.getConfirmationTarget;
+            if (getConfirmationTarget) {
+                this._state.targetConfirmations = await retryNTimes(
+                    async () =>
+                        getConfirmationTarget(
+                            this._state.selector,
+                            this.params.from,
+                        ),
+                    2,
                 );
             }
         } catch (error) {
-            // Ignore error.
+            console.error(error);
         }
 
         return this;
@@ -328,8 +339,9 @@ export class LockAndMint<
                 pHash: this._state.pHash,
                 gHash: this._state.gHash,
                 gPubKey: this._state.gPubKey,
-                targetConfirmations:
-                    this._state.targetConfirmations || undefined,
+                targetConfirmations: isDefined(this._state.targetConfirmations)
+                    ? this._state.targetConfirmations
+                    : undefined,
             });
 
             await depositObject._initialize();
@@ -477,7 +489,8 @@ export class LockAndMint<
             const listenerCancelled = () => this.listenerCount("deposit") === 0;
 
             try {
-                // If there are no listeners, continue.
+                // If there are no listeners, continue. TODO: Exit loop entirely
+                // until a lister is added again.
                 if (listenerCancelled()) {
                     await sleep(1 * SECONDS);
                     continue;
@@ -516,9 +529,17 @@ export enum DepositStatus {
     Detected = "detected",
     Confirmed = "confirmed",
     Signed = "signed",
-    Submitted = "submitted",
     Reverted = "reverted",
+    Submitted = "submitted",
 }
+
+export const DepositStatusIndex = {
+    [DepositStatus.Detected]: 0,
+    [DepositStatus.Confirmed]: 1,
+    [DepositStatus.Signed]: 2,
+    [DepositStatus.Reverted]: 3,
+    [DepositStatus.Submitted]: 4,
+};
 
 /**
  * A LockAndMintDeposit represents a deposit that has been made to a gateway
@@ -736,6 +757,7 @@ export class LockAndMintDeposit<
             tags,
             // Will be set in the next statement.
             txHash: "",
+            renTxSubmitted: false,
         };
 
         this._state.txHash = (renVM.version(this._state.selector) >= 2
@@ -803,12 +825,31 @@ export class LockAndMintDeposit<
      * // > { to: "...", hash: "...", status: "done", in: {...}, out: {...} }
      */
     public queryTx = async (): Promise<LockAndMintTransaction> => {
-        const mintTransaction: LockAndMintTransaction = await this.renVM.queryMintOrBurn(
+        if (
+            DepositStatusIndex[this.status] >=
+                DepositStatusIndex[DepositStatus.Signed] &&
+            this._state.queryTxResult
+        ) {
+            return this._state.queryTxResult;
+        }
+
+        const response: LockAndMintTransaction = await this.renVM.queryMintOrBurn(
             this._state.selector,
             fromBase64(this.txHash()),
         );
-        this._state.queryTxResult = mintTransaction;
-        return mintTransaction;
+        this._state.queryTxResult = response;
+
+        // Update status.
+        if (response.out) {
+            if (response.out.revert !== undefined) {
+                this.status = DepositStatus.Reverted;
+                this.revertReason = response.out.revert.toString();
+            } else {
+                this.status = DepositStatus.Signed;
+            }
+        }
+
+        return response;
     };
 
     /**
@@ -822,7 +863,7 @@ export class LockAndMintDeposit<
      */
     public refreshStatus = async (): Promise<DepositStatus> => {
         const status = await (async () => {
-            let queryTxResult;
+            let queryTxResult = undefined;
 
             // Fetch sighash.
             if (this.renVM.version(this._state.selector) === 1) {
@@ -830,6 +871,7 @@ export class LockAndMintDeposit<
                     queryTxResult = await this.queryTx();
                 } catch (_error) {
                     // Ignore error.
+                    queryTxResult = null;
                 }
             }
 
@@ -843,7 +885,10 @@ export class LockAndMintDeposit<
             }
 
             try {
-                queryTxResult = queryTxResult || (await this.queryTx());
+                queryTxResult =
+                    queryTxResult === undefined
+                        ? await this.queryTx()
+                        : queryTxResult;
                 if (
                     queryTxResult &&
                     queryTxResult.txStatus === TxStatus.TxStatusDone
@@ -900,11 +945,9 @@ export class LockAndMintDeposit<
         );
         return {
             current,
-            target:
-                this._state.targetConfirmations ||
-                this._state.targetConfirmations === 0
-                    ? this._state.targetConfirmations
-                    : target,
+            target: isDefined(this._state.targetConfirmations)
+                ? this._state.targetConfirmations
+                : target,
         };
     };
 
@@ -951,12 +994,35 @@ export class LockAndMintDeposit<
         >();
 
         (async () => {
-            this._submitMintTransaction().catch((_error) => {
-                /* ignore error */
-            });
+            // If the transaction has been confirmed according to RenVM, return.
+            const transactionIsConfirmed = () =>
+                DepositStatusIndex[this.status] >=
+                    DepositStatusIndex[DepositStatus.Confirmed] ||
+                (this._state.queryTxResult &&
+                    TxStatusIndex[this._state.queryTxResult.txStatus] >=
+                        TxStatusIndex[TxStatus.TxStatusPending]);
 
+            let iterationCount = 0;
             let currentConfidenceRatio = -Infinity;
-            while (true) {
+            // Continue while the transaction isn't confirmed and the promievent
+            // isn't cancelled.
+            while (!promiEvent._isCancelled() && !transactionIsConfirmed()) {
+                // In the first loop, submit to RenVM immediately.
+                if (iterationCount % 5 === 0) {
+                    try {
+                        if (!this._state.renTxSubmitted) {
+                            await this._submitMintTransaction();
+                        }
+                        await this.queryTx();
+                        if (transactionIsConfirmed()) {
+                            break;
+                        }
+                    } catch (error) {
+                        // Ignore error.
+                        this._state.logger.debug(error);
+                    }
+                }
+
                 try {
                     const confidence = await this.confirmations();
                     const confidenceRatio =
@@ -984,6 +1050,7 @@ export class LockAndMintDeposit<
                     );
                 }
                 await sleep(15 * SECONDS);
+                iterationCount += 1;
             }
 
             // Update status.
@@ -1037,9 +1104,23 @@ export class LockAndMintDeposit<
         >();
 
         (async () => {
-            const utxoTxHash = this.txHash();
+            let txHash = this.txHash();
 
-            let txHash: string;
+            if (
+                DepositStatusIndex[this.status] >=
+                DepositStatusIndex[DepositStatus.Signed]
+            ) {
+                if (this.status === DepositStatus.Reverted) {
+                    throw new Error(
+                        this.revertReason ||
+                            `RenVM transaction ${txHash} reverted.`,
+                    );
+                }
+                return this;
+            }
+
+            promiEvent.emit("txHash", txHash);
+            this._state.logger.debug("RenVM txHash:", txHash);
 
             // Try to submit to RenVM. If that fails, see if they already
             // know about the transaction.
@@ -1052,33 +1133,49 @@ export class LockAndMintDeposit<
                     const queryTxResponse = await this.queryTx();
                     if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
                         throw new Error(
-                            `Transaction ${utxoTxHash} has not been submitted previously.`,
+                            `Transaction ${txHash} has not been submitted previously.`,
                         );
                     }
                     txHash = queryTxResponse.hash;
                 } catch (errorInner) {
+                    let submitted = false;
+
                     // If transaction is not found, check for RenVM v0.2 error message.
                     if (
-                        errorInner.code ===
-                            RenJSErrors.RenVMTransactionNotFound &&
-                        (error.code === RenJSErrors.AmountTooSmall ||
-                            error.code === RenJSErrors.DepositSpentOrNotFound)
+                        errorInner.code === RenJSErrors.RenVMTransactionNotFound
                     ) {
-                        this.status = DepositStatus.Reverted;
-                        this.revertReason = String(
-                            (error || {}).message,
-                        ).replace(/Node returned status \d+ with reason: /, "");
-                        throw new Error(this.revertReason);
+                        if (
+                            error.code === RenJSErrors.AmountTooSmall ||
+                            error.code === RenJSErrors.DepositSpentOrNotFound
+                        ) {
+                            this.status = DepositStatus.Reverted;
+                            this.revertReason = String(
+                                (error || {}).message,
+                            ).replace(
+                                /Node returned status \d+ with reason: /,
+                                "",
+                            );
+                            throw new Error(this.revertReason);
+                        } else {
+                            // Retry submitting 2 more times to reduce chance
+                            // of network issues causing problems.
+                            txHash = await retryNTimes(
+                                () => this._submitMintTransaction(),
+                                2,
+                                5 * SECONDS,
+                            );
+                            submitted = true;
+                        }
                     }
 
                     // Ignore errorInner.
                     this._state.logger.debug(errorInner);
-                    throw error;
+
+                    if (!submitted) {
+                        throw error;
+                    }
                 }
             }
-
-            promiEvent.emit("txHash", txHash);
-            this._state.logger.debug("renVM txHash:", txHash);
 
             const response = await this.renVM.waitForTX<LockAndMintTransaction>(
                 this._state.selector,
@@ -1218,21 +1315,39 @@ export class LockAndMintDeposit<
             throw new Error(`Deposit object must be initialized.`);
         }
 
-        const returnedTxHash = (this.renVM.version(this._state.selector) >= 2
-            ? toURLBase64
-            : toBase64)(
-            await this.renVM.submitMint({
-                ...this._state,
-                token,
-            }),
-        );
-
         const expectedTxHash = this.txHash();
+
+        // Return if the transaction has already been successfully submitted.
+        if (this._state.renTxSubmitted) {
+            return expectedTxHash;
+        }
+
+        // The transaction has already been submitted and accepted.
+        if (this._state.renTxSubmitted) {
+            return expectedTxHash;
+        }
+
+        const encodedHash = await this.renVM.submitMint({
+            ...this._state,
+            token,
+        });
+
+        const returnedTxHash =
+            this.renVM.version(this._state.selector) >= 2
+                ? toURLBase64(encodedHash)
+                : toBase64(encodedHash);
+
+        // Indicate that the tx has been submitted successfully.
+        this._state.renTxSubmitted = true;
+
         if (returnedTxHash !== expectedTxHash) {
             this._state.logger.warn(
                 `Unexpected txHash returned from RenVM. Received: ${returnedTxHash}, expected: ${expectedTxHash}`,
             );
         }
+
+        this._state.renTxSubmitted = true;
+
         return returnedTxHash;
     };
 

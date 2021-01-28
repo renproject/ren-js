@@ -8,7 +8,7 @@ import { assert } from "@renproject/utils";
 import { log } from "xstate/lib/actions";
 
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
-import { depositMachine } from "./deposit";
+import { depositMachine, DepositMachineEvent } from "./deposit";
 
 export interface GatewayMachineContext {
     /**
@@ -20,11 +20,10 @@ export interface GatewayMachineContext {
      */
     autoFees?: boolean;
     /**
-     * @private
-     * A reference to a deposit hash that is requesting a mint signature /
-     * tx submission
+     * A reference to a deposit hashes of transactions that can be
+     * minted on their destination chains
      */
-    signatureRequest?: string | null;
+    mintRequests?: string[];
     /**
      * @private
      * Keeps track of child machines that track underlying deposits
@@ -61,12 +60,12 @@ export interface GatewayMachineSchema {
         creating: {};
         srcInitializeError: {};
         listening: {};
-        requestingSignature: {};
         completed: {};
     };
 }
 
 export type GatewayMachineEvent =
+    | DepositMachineEvent
     | { type: "CLAIMABLE"; data: GatewayTransaction }
     | { type: "ERROR_LISTENING"; data: any }
     | { type: "DEPOSIT"; data: GatewayTransaction }
@@ -74,6 +73,8 @@ export type GatewayMachineEvent =
     | { type: "DEPOSIT_COMPLETED"; data: GatewayTransaction }
     | { type: "REQUEST_SIGNATURE"; data: GatewayTransaction }
     | { type: "SIGN"; data: GatewayTransaction }
+    | { type: "SETTLE"; data: GatewayTransaction }
+    | { type: "MINT"; data: GatewayTransaction }
     | { type: "EXPIRED"; data: GatewayTransaction }
     | { type: "ACKNOWLEDGE"; data: any }
     | { type: "RESTORE"; data: GatewayTransaction };
@@ -103,7 +104,10 @@ export const mintMachine = Machine<
         restoring: {
             entry: [
                 send("RESTORE"),
-                assign({ depositMachines: (_ctx, _evt) => ({}) }),
+                assign({
+                    mintRequests: (_c, _e) => [],
+                    depositMachines: (_ctx, _evt) => ({}),
+                }),
             ],
             meta: { test: async () => {} },
             on: {
@@ -153,7 +157,7 @@ export const mintMachine = Machine<
                                 return newTx;
                             },
                         }),
-                        log((_ctx, evt) => evt.data),
+                        log((_ctx, evt) => evt.data, "ERROR"),
                     ],
                 },
             },
@@ -196,33 +200,77 @@ export const mintMachine = Machine<
                                 return newTx;
                             },
                         }),
-                        log((_ctx, evt) => evt.data),
+                        log((_ctx, evt) => evt.data, "ERROR"),
                     ],
                 },
 
+                RESTORED: {
+                    actions: "broadcast",
+                },
+
+                SETTLE: {
+                    actions: "forwardEvent",
+                },
+                SIGN: {
+                    actions: "forwardEvent",
+                },
+                MINT: {
+                    actions: "forwardEvent",
+                },
+
+                CLAIM: { actions: "routeEvent" },
+                CONFIRMATION: { actions: "routeEvent" },
+                CONFIRMED: { actions: "routeEvent" },
+                ERROR: { actions: "routeEvent" },
+                SIGN_ERROR: { actions: "routeEvent" },
+                SUBMIT_ERROR: { actions: "routeEvent" },
+                SIGNED: { actions: "routeEvent" },
+                SUBMITTED: { actions: "routeEvent" },
+
                 CLAIMABLE: {
                     actions: assign({
-                        signatureRequest: (_context, evt) => {
-                            return evt.data?.sourceTxHash;
+                        mintRequests: (context, evt) => {
+                            const oldRequests = context.mintRequests || [];
+                            const newRequest = evt.data?.sourceTxHash;
+                            if (!newRequest) {
+                                return oldRequests;
+                            }
+
+                            if (oldRequests.includes(newRequest)) {
+                                return oldRequests;
+                            }
+                            return [...oldRequests, newRequest];
                         },
                         tx: (context, evt) => {
-                            if (evt.data?.sourceTxHash) {
+                            if (evt.data.sourceTxHash) {
                                 context.tx.transactions[evt.data.sourceTxHash] =
                                     evt.data;
                             }
                             return context.tx;
                         },
                     }),
-                    target: "requestingSignature",
                 },
 
                 DEPOSIT_COMPLETED: {
                     target: "completed",
                     cond: "isCompleted",
                 },
+
                 DEPOSIT_UPDATE: [
                     {
                         actions: assign({
+                            mintRequests: (ctx, evt) => {
+                                // check if completed
+                                if (evt.data.destTxHash) {
+                                    return (
+                                        ctx.mintRequests?.filter(
+                                            (x) => x !== evt.data.sourceTxHash,
+                                        ) || []
+                                    );
+                                } else {
+                                    return ctx.mintRequests;
+                                }
+                            },
                             tx: (context, evt) => {
                                 if (evt.data?.sourceTxHash) {
                                     context.tx.transactions[
@@ -255,48 +303,7 @@ export const mintMachine = Machine<
                 },
             },
         },
-        requestingSignature: {
-            on: {
-                SIGN: {
-                    target: "listening",
-                    actions: send("CLAIM", {
-                        to: (ctx) => {
-                            if (!ctx.depositMachines) return "";
-                            return ctx.depositMachines[
-                                ctx.signatureRequest || ""
-                            ];
-                        },
-                    }),
-                },
-                DEPOSIT_UPDATE: [
-                    {
-                        cond: "isRequestCompleted",
-                        actions: assign({
-                            signatureRequest: (_ctx, _evt) => null,
-                            tx: (ctx, evt) => {
-                                if (evt.data?.sourceTxHash) {
-                                    ctx.tx.transactions[evt.data.sourceTxHash] =
-                                        evt.data;
-                                }
-                                return ctx.tx;
-                            },
-                        }),
-                    },
-                ],
-            },
-            meta: {
-                test: (_: any, state: any) => {
-                    if (
-                        Object.keys(state.context.tx.transactions || {})
-                            .length === 0
-                    ) {
-                        throw Error(
-                            "A deposit must exist for a signature to be requested",
-                        );
-                    }
-                },
-            },
-        },
+
         completed: {
             meta: {
                 test: (_: any, state: any) => {

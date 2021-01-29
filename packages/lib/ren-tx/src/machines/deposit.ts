@@ -62,7 +62,7 @@ export type DepositMachineEvent =
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "SIGNED"; data: GatewayTransaction }
     | { type: "SIGN_ERROR"; data: Error }
-    | { type: "CLAIM"; data: ContractParams }
+    | { type: "CLAIM"; data: GatewayTransaction; params: ContractParams }
     | { type: "REJECT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
     | { type: "SUBMIT_ERROR"; data: Error }

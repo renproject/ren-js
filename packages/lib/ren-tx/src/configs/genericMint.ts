@@ -175,6 +175,7 @@ const handleSettle = async (
                     data: confirmedTx,
                 });
             });
+
         callback({
             type: "CONFIRMED",
             data: {
@@ -253,9 +254,10 @@ const handleMint = async (
     sourceTxHash: string,
     deposit: LockAndMintDeposit,
     callback: Sender<any>,
+    params: any,
 ) => {
     await deposit
-        .mint()
+        .mint(params)
         .on("confirmation", () => {
             const submittedTx = {
                 sourceTxHash,
@@ -297,7 +299,12 @@ const mintFlow = (
             deposit.depositDetails.transaction,
         );
 
-        deposits.set(txHash, deposit);
+        const trackedDep = deposits.get(txHash);
+        // if we have previously detected the deposit,
+        // don't emit an event
+        if (trackedDep) {
+            return;
+        }
 
         const persistedTx = context.tx.transactions[txHash];
 
@@ -316,9 +323,10 @@ const mintFlow = (
                 type: "DEPOSIT",
                 data: { ...depositState },
             });
+        } else {
+            deposits.set(txHash, deposit);
+            callback({ type: "RESTORED", data: depositState });
         }
-
-        callback({ type: "RESTORED", data: depositState });
     };
 
     minter.on("deposit", depositHandler);
@@ -344,7 +352,12 @@ const mintFlow = (
                     await handleSign(event.hash, deposit, callback);
                     break;
                 case "MINT":
-                    await handleMint(event.hash, deposit, callback);
+                    await handleMint(
+                        event.hash,
+                        deposit,
+                        callback,
+                        event.params,
+                    );
                     break;
             }
         };

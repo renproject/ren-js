@@ -35,7 +35,7 @@ const makeMintTransaction = (): GatewaySession => ({
     customParams: {},
 });
 
-jest.setTimeout(1000 * 46);
+jest.setTimeout(1000 * 66);
 describe("MintMachine", () => {
     it("should create a tx", async () => {
         const fromChainMap = {
@@ -106,7 +106,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 100);
+        }, 1000);
 
         let prevDepositTx: GatewayTransaction;
         const p = new Promise((resolve, reject) => {
@@ -276,8 +276,10 @@ describe("MintMachine", () => {
                 const backoff = () =>
                     setTimeout(() => {
                         // Only resolve if the tx is actually confirmed
-                        if (txHash && confirmed) resolve(Buffer.from(txHash));
-                        backoff();
+                        if (txHash && confirmed)
+                            return resolve(Buffer.from(txHash));
+                        _reject();
+                        // backoff();
                     }, 200);
                 backoff();
             });
@@ -299,13 +301,14 @@ describe("MintMachine", () => {
                     ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 0,
+                        detectedAt: 0,
                         sourceTxHash:
                             "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                         rawSourceTx: { amount: "1", transaction: {} },
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider),
+            sdk: new RenJS(renVMProvider, { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,
@@ -314,7 +317,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 10000);
+        }, 5000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;
@@ -412,6 +415,7 @@ describe("MintMachine", () => {
                     ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
                         sourceTxAmount: 1,
                         sourceTxConfs: 1,
+                        detectedAt: 0,
                         sourceTxHash:
                             "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                         rawSourceTx: { amount: "1", transaction: {} },

@@ -148,6 +148,6 @@ describe("value", () => {
             value("0.0001", "fake" as any)
                 ._readable()
                 .toFixed(),
-        ).toThrow(expect.error(`Unknown unit "fake"`));
+        ).toThrow(`Unknown unit "fake"`);
     });
 });

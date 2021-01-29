@@ -139,7 +139,9 @@ export class SimpleLogger {
     public trace = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Trace) {
             if (optionalParams.length && typeof message === "string") {
-                console.group(this.debugPrefix(LogLevel.Trace) + message);
+                console.group(
+                    (this.debugPrefix(LogLevel.Trace) || "") + message,
+                );
                 console.trace(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
@@ -156,7 +158,9 @@ export class SimpleLogger {
     public debug = (message?: unknown, ...optionalParams: unknown[]): void => {
         if (this.level >= LogLevel.Debug) {
             if (optionalParams.length && typeof message === "string") {
-                console.group(this.debugPrefix(LogLevel.Debug) + message);
+                console.group(
+                    (this.debugPrefix(LogLevel.Debug) || "") + message,
+                );
                 console.debug(...optionalParams.map(toString));
                 console.groupEnd();
             } else {

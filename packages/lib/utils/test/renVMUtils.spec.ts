@@ -31,7 +31,7 @@ describe("renVMUtils", () => {
 
             // Throw an error for an invalid contract:
             expect(() => parseV1Selector("bad contract")).toThrow(
-                new Error(`Invalid Ren Contract "bad contract"`),
+                `Invalid Ren Contract "bad contract"`,
             );
         });
     });

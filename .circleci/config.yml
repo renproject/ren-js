@@ -4,7 +4,7 @@ jobs:
         environment:
             NODE_ENV: development
         docker:
-            - image: circleci/node:10.16
+            - image: circleci/node:14.15
         working_directory: ~/renjs/packages/lib/ren
         steps:
             - checkout:
@@ -35,19 +35,13 @@ jobs:
 
             - run:
                   name: Install yarn and lerna
-                  command: sudo npm install --global yarn && yarn version && sudo npm install --global lerna
+                  command: sudo npm install --force --global yarn  && yarn version && sudo npm install --global --force lerna
                   when: always
 
             - run:
                   name: Lerna - install dependencies
                   path: ~/renjs
                   command: yarn install --network-concurrency 1
-                  when: always
-
-            - run:
-                  name: Lerna - bootstrap
-                  path: ~/renjs
-                  command: yarn run link
                   when: always
 
             - run:

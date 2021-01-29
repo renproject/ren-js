@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.0.8",
+    "version": "2.0.9",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -28,7 +28,7 @@
         "@renproject/chains-terra": "^2.0.8",
         "@renproject/interfaces": "^2.0.8",
         "@renproject/provider": "^2.0.8",
-        "@renproject/ren": "^2.0.8",
+        "@renproject/ren": "^2.0.9",
         "@renproject/rpc": "^2.0.8",
         "@renproject/utils": "^2.0.8",
         "@types/node": ">=10",

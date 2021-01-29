@@ -840,13 +840,11 @@ export class LockAndMintDeposit<
         this._state.queryTxResult = response;
 
         // Update status.
-        if (response.out) {
-            if (response.out.revert !== undefined) {
-                this.status = DepositStatus.Reverted;
-                this.revertReason = response.out.revert.toString();
-            } else {
-                this.status = DepositStatus.Signed;
-            }
+        if (response.out && response.out.revert !== undefined) {
+            this.status = DepositStatus.Reverted;
+            this.revertReason = response.out.revert.toString();
+        } else if (response.out && response.out.signature) {
+            this.status = DepositStatus.Signed;
         }
 
         return response;
@@ -1194,7 +1192,7 @@ export class LockAndMintDeposit<
                 this.status = DepositStatus.Reverted;
                 this.revertReason = response.out.revert.toString();
                 throw new Error(this.revertReason);
-            } else {
+            } else if (response.out && response.out.signature) {
                 this.status = DepositStatus.Signed;
 
                 this._state.logger.debug(

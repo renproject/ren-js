@@ -39,7 +39,7 @@ describe("Refactor: mint", () => {
         const network = RenNetwork.Testnet;
         const ethNetwork = EthereumConfigMap[network];
 
-        const asset = "BCH" as string;
+        const asset = "BTC" as string;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -59,7 +59,7 @@ describe("Refactor: mint", () => {
 
         const params: LockAndMintParams = {
             asset,
-            from: Chains.BitcoinCash(),
+            from: Chains.Bitcoin(),
             to: Chains.Ethereum(provider, ethNetwork).Account({
                 address: ethAddress,
             }),

@@ -33,7 +33,7 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.only("mint to contract", async function() {
+    longIt("mint to contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;

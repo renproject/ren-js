@@ -33,13 +33,13 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint to contract", async function() {
+    it.only("mint to contract", async function() {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
         const ethNetwork = EthereumConfigMap[network];
 
-        const asset = "BCH" as string;
+        const asset = "BTC" as string;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -59,7 +59,7 @@ describe("Refactor: mint", () => {
 
         const params: LockAndMintParams = {
             asset,
-            from: Chains.BitcoinCash(),
+            from: Chains.Bitcoin(),
             to: Chains.Ethereum(provider, ethNetwork).Account({
                 address: ethAddress,
             }),

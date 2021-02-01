@@ -313,7 +313,7 @@ const mintFlow = (
             sourceTxHash: txHash,
             renVMHash: deposit.txHash(),
             sourceTxAmount: parseInt(rawSourceTx.amount),
-            sourceTxConfs: 0,
+            sourceTxConfs: deposit.confirmations || 0,
             rawSourceTx,
             detectedAt: new Date().getTime(),
         };
@@ -334,7 +334,7 @@ const mintFlow = (
     receive((event) => {
         const deposit = deposits.get(event.hash);
         if (!deposit) {
-            // Theoretically this should never happen
+            // This can happen when restoring, and is not an error
             // callback({
             //     type: "ERROR",
             //     data: event.data,

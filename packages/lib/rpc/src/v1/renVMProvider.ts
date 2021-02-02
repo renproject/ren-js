@@ -81,7 +81,7 @@ export class RenVMProvider
                 provider = new HttpProvider<RenVMParams, RenVMResponses>(
                     rpcUrl,
                     logger,
-                ) as Provider<RenVMParams, RenVMResponses>;
+                );
             } catch (error) {
                 if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(

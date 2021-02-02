@@ -79,7 +79,7 @@ module.exports = {
             },
         ],
         "@typescript-eslint/dot-notation": "warn",
-        "no-constant-condition": ["warn", { "checkLoops": false }],
+        "no-constant-condition": ["warn", { checkLoops: false }],
         "no-empty": "warn",
         "id-blacklist": [
             "warn",
@@ -93,27 +93,37 @@ module.exports = {
             "Undefined",
             "undefined",
         ],
-        "@typescript-eslint/quotes": ["warn", "double", {
-            "allowTemplateLiterals": true
-        }],
+        "@typescript-eslint/quotes": [
+            "warn",
+            "double",
+            {
+                allowTemplateLiterals: true,
+            },
+        ],
         "prefer-arrow/prefer-arrow-functions": "warn",
         "@typescript-eslint/no-unused-vars": [
             "warn",
             {
-                "argsIgnorePattern": "^_",
-                "varsIgnorePattern": "^_",
-                "caughtErrorsIgnorePattern": "^_",
-            }
+                argsIgnorePattern: "^_",
+                varsIgnorePattern: "^_",
+                caughtErrorsIgnorePattern: "^_",
+            },
         ],
-        "@typescript-eslint/restrict-template-expressions": ["warn", {
-            allowNumber: true,
-            allowBoolean: true,
-            allowAny: false,
-            allowNullish: false,
-        }],
-        "@typescript-eslint/array-type": ["warn", {
-            default: "array-simple",
-        }],
+        "@typescript-eslint/restrict-template-expressions": [
+            "warn",
+            {
+                allowNumber: true,
+                allowBoolean: true,
+                allowAny: false,
+                allowNullish: false,
+            },
+        ],
+        "@typescript-eslint/array-type": [
+            "warn",
+            {
+                default: "array-simple",
+            },
+        ],
         "@typescript-eslint/no-empty-interface": "off",
 
         // Ignored for now:
@@ -129,12 +139,15 @@ module.exports = {
         "@typescript-eslint/no-inferrable-types": "off",
 
         // Implementation seems to be buggy:
-        "@typescript-eslint/no-unnecessary-condition": ["off", {
-            allowConstantLoopConditions: true
-        }],
+        "@typescript-eslint/no-unnecessary-condition": [
+            "off",
+            {
+                allowConstantLoopConditions: true,
+            },
+        ],
 
         "require-await": "off",
-        "@typescript-eslint/require-await": "error"
+        "@typescript-eslint/require-await": "warn",
 
         // TSLint rules
         // "@typescript-eslint/tslint/config": [

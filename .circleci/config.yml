@@ -60,9 +60,9 @@ jobs:
                       - node_modules
                   key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
 
-           - run: mkdir reports
+            # - run: mkdir reports
 
-           # Run eslint
+            # Run eslint
             - run:
                   name: Run lint
                   command: yarn lint

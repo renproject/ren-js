@@ -21,6 +21,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
         name: "Bitcoin",
         assetDecimals: () => 1,
         utils: {
+            resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
         },
         transactionFromID: () => {},
@@ -71,6 +72,7 @@ export const buildMockMintChain = (minted?: boolean) => {
         assetDecimals: () => 1,
         transactionID: () => "tid" + String(new Date().getTime()),
         utils: {
+            resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
         },
         transactionFromID: () => {},

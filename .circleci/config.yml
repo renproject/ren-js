@@ -84,45 +84,16 @@ jobs:
             # Run eslint
             - run:
                   name: Run linter
-                  command: |
-                      yarn run lint --format junit --out ./reports/eslint/eslint.xml
+                  command: NETWORK="testnet" yarn lerna run cov:check
                   when: always
 
-            # Run coverage report for Code Climate
+            # # Run coverage report for Code Climate
 
-            - run:
-                  name: code-coverage
-                  command: |
-                      mkdir -p coverage
-                      # nyc report requires that nyc has already been run,
-                      # which creates the .nyc_output folder containing necessary data
-                      yarn nyc report --reporter=text-lcov > coverage/lcov.info
-                  when: always
-
-            - run:
-                  name: Networks
-                  command: |
-                      mkdir -p ./reports/networks
-                      node ./test/ci/networks.js $(cat testnet) > ./reports/networks/networks.xml
-                      echo "{\"testnet\": $(cat testnet)} > ./network-status.json
-                  #     node ./test/ci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
-                  #     echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
-                  when: always
-
-            # Upload results
-
-            - store_test_results:
-                  path: reports
-
-            - store_artifacts:
-                  path: ./reports/mocha/test-results.xml
-
-            - store_artifacts:
-                  path: ./reports/eslint/eslint.xml
-
-            - store_artifacts:
-                  path: ./network-status.json
-
-            - store_artifacts: # upload test coverage as artifact
-                  path: ./coverage/lcov.info
-                  prefix: tests
+            # - run:
+            #       name: code-coverage
+            #       command: |
+            #           mkdir -p coverage
+            #           # nyc report requires that nyc has already been run,
+            #           # which creates the .nyc_output folder containing necessary data
+            #           yarn nyc report --reporter=text-lcov > coverage/lcov.info
+            #       when: always

@@ -172,7 +172,7 @@ const decodeCashAddress = (address: string) => {
     throw new InvalidAddressError();
 };
 
-function getTypeBits(type: string) {
+const getTypeBits = (type: string) => {
     switch (type.toLowerCase()) {
         case Type.P2PKH:
             return 0;
@@ -181,7 +181,7 @@ function getTypeBits(type: string) {
         default:
             throw new ValidationError("Invalid type: " + type + ".");
     }
-}
+};
 
 export const decodeBitcoinCashAddress = (address: string): Buffer => {
     try {

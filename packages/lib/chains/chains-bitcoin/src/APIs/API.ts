@@ -106,6 +106,7 @@ export class CombinedAPIClass implements BitcoinAPI {
 
     /**
      * Provide a new API to be used with the other APIs.
+     *
      * @param api
      * @param { priority } Optionally set the priority of the API, where a lower
      * priority means it will be selected before other APIs.

@@ -274,7 +274,7 @@ export const depositMachine = Machine<
             errorAccepting: {
                 entry: [log((ctx, _) => ctx.deposit.error, "ERROR")],
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
                             "error must exist",
@@ -328,7 +328,7 @@ export const depositMachine = Machine<
                     REJECT: "rejected",
                 },
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
                             "error must exist",

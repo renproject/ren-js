@@ -1074,8 +1074,9 @@ export class LockAndMintDeposit<
                     );
                 } catch (error) {
                     this._state.logger.error(
-                        `Error fetching transaction confidence: ` +
-                            extractError(error),
+                        `Error fetching transaction confidence: ${extractError(
+                            error,
+                        )}`,
                     );
                 }
                 await sleep(15 * SECONDS);

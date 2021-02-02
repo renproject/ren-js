@@ -380,7 +380,7 @@ const depositListener = (context: GatewayMachineContext) => (
     let cleanup = () => {};
 
     initMinter(context, callback)
-        .then(async (minter) => {
+        .then((minter) => {
             cleanup = () => minter.removeAllListeners();
             mintFlow(context, callback, receive, minter);
         })

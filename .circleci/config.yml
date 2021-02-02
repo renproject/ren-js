@@ -60,9 +60,15 @@ jobs:
                       - node_modules
                   key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
 
-            - run: mkdir reports
+           - run: mkdir reports
 
-            # Run mocha
+           # Run eslint
+            - run:
+                  name: Run lint
+                  command: yarn lint
+                  when: always
+
+            # Run tests
             - run:
                   name: Run Testnet tests
                   # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
@@ -81,9 +87,9 @@ jobs:
             #       command: NETWORK="devnet" bash ./test/ci/runtest.bash
             #       when: always
 
-            # Run eslint
+            # Run coverage
             - run:
-                  name: Run linter
+                  name: Run coverage
                   command: NETWORK="testnet" yarn lerna run cov:check
                   when: always
 

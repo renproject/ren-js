@@ -76,7 +76,7 @@ export class RenVMProvider
         logger: Logger = NullLogger,
     ) {
         if (!provider) {
-            const rpcUrl = getRenNetworkDetails(network).lightnode;
+            const rpcUrl = (getRenNetworkDetails(network) || {}).lightnode;
             try {
                 provider = new HttpProvider<RenVMParams, RenVMResponses>(
                     rpcUrl,
@@ -86,7 +86,8 @@ export class RenVMProvider
                 if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(
                         `Invalid network or provider URL: "${
-                            getRenNetworkDetails(network).name
+                            (getRenNetworkDetails(network) || {}).name ||
+                            network
                         }"`,
                     );
                 }

@@ -97,11 +97,18 @@ describe("Utils", function () {
         });
     }
 
-    it(`queryTX`, async () => {
-        await new RenJS(NETWORK as RenNetwork).renVM
-            .queryMintOrBurn(Buffer.from([0]))
+    it("queryTX", async () => {
+        const renJS = new RenJS(NETWORK as RenNetwork);
+        const selector = "BTC/toEthereum";
+        await renJS.renVM
+            .queryMintOrBurn(
+                selector,
+                Buffer.from(Array.from(new Array(32)).map((x) => 0)),
+            )
             .should.be.rejectedWith(
-                /tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/,
+                renJS.renVM.version(selector) === 0
+                    ? /tx hash=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= not found/
+                    : /Node returned status 404 with reason: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA not found/,
             );
     });
 

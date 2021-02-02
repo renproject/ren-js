@@ -4,7 +4,7 @@ import { describe, it } from "mocha";
 import { BitcoinCash } from "../src";
 
 describe("BCH", () => {
-    it.only("address to buffer", () => {
+    it("address to buffer", () => {
         const bch = BitcoinCash("testnet");
         console.log(
             bch

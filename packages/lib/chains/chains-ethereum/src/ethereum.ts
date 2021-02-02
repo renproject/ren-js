@@ -15,7 +15,8 @@ import { provider } from "web3-providers";
 import { EthAddress, EthereumBaseChain, EthTransaction } from "./base";
 import { EthereumConfig } from "./networks";
 
-export class EthereumClass extends EthereumBaseChain
+export class EthereumClass
+    extends EthereumBaseChain
     implements MintChain<EthTransaction, EthAddress> {
     public _getParams:
         | ((

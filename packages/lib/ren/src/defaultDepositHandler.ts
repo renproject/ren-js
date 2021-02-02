@@ -20,9 +20,9 @@ const createDepositHandler = (retries = -1) => {
                             deposit._state.logger.log(`Calling .confirmed`);
                             await deposit
                                 .confirmed()
-                                .on("target", (confs, target) => {
+                                .on("target", (target) => {
                                     deposit._state.logger.log(
-                                        `${confs}/${target} confirmations`,
+                                        `Waiting for ${target} confirmations`,
                                     );
                                 })
                                 .on("confirmation", (confs, target) => {
@@ -87,7 +87,7 @@ const createDepositHandler = (retries = -1) => {
                                                     .transactionExplorerLink
                                                     ? deposit.params.to.utils.transactionExplorerLink(
                                                           txHash,
-                                                      )
+                                                      ) || String(txHash)
                                                     : String(txHash)
                                             }`,
                                         );

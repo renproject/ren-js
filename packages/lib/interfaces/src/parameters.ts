@@ -80,9 +80,7 @@ export interface TransferParamsCommon {
  */
 export interface LockAndMintParams<
     LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
-        LockTransaction
-    >,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     LockAddress extends string | { address: string } = any,
     MintTransaction = any,
     MintAddress extends string | { address: string } = any
@@ -105,9 +103,7 @@ export interface LockAndMintParams<
  */
 export interface BurnAndReleaseParams<
     LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
-        LockTransaction
-    >,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     LockAddress extends string | { address: string } = any,
     MintTransaction = any,
     MintAddress extends string | { address: string } = any

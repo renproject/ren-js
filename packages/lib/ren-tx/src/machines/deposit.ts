@@ -105,7 +105,7 @@ export const depositMachine = Machine<
                 },
 
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             !state.context.deposit.error ? true : false,
                             "Error must not exist",
@@ -116,7 +116,7 @@ export const depositMachine = Machine<
             errorRestoring: {
                 entry: [log((ctx, _) => ctx.deposit.error, "ERROR")],
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
                             "Error must exist",
@@ -145,7 +145,7 @@ export const depositMachine = Machine<
                 },
 
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             !state.context.deposit.error ? true : false,
                             "Error must not exist",

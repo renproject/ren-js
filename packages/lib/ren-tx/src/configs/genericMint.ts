@@ -151,10 +151,10 @@ const handleSettle = async (
     try {
         await deposit
             .confirmed()
-            .on("target", (confs, targetConfs) => {
+            .on("target", (targetConfs) => {
                 const confirmedTx = {
                     sourceTxHash,
-                    sourceTxConfs: confs,
+                    sourceTxConfs: 0,
                     sourceTxConfTarget: targetConfs,
                 };
                 callback({
@@ -273,7 +273,7 @@ const handleMint = async (
         });
 };
 
-const mintFlow = async (
+const mintFlow = (
     context: GatewayMachineContext,
     callback: Sender<GatewayMachineEvent>,
     receive: Receiver<any>,
@@ -382,7 +382,7 @@ const depositListener = (context: GatewayMachineContext) => (
     initMinter(context, callback)
         .then(async (minter) => {
             cleanup = () => minter.removeAllListeners();
-            await mintFlow(context, callback, receive, minter);
+            mintFlow(context, callback, receive, minter);
         })
         .catch((e) => {
             callback({ type: "ERROR", error: e });

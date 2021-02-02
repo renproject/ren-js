@@ -34,9 +34,7 @@ const resultOrRaw = <T>(x: { results: T } | T) => {
     return x;
 };
 
-export class EthereumInjectedConnector extends AbstractEthereumConnector<
-    InjectedProvider
-> {
+export class EthereumInjectedConnector extends AbstractEthereumConnector<InjectedProvider> {
     supportsTestnet = true;
     constructor(options: EthereumConnectorOptions) {
         super(options);
@@ -52,9 +50,7 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
         // Await in case a child class's getProvider is asynchronous.
-        const provider = await (this as AbstractEthereumConnector<
-            InjectedProvider
-        >).getProvider();
+        const provider = await (this as AbstractEthereumConnector<InjectedProvider>).getProvider();
 
         if (!provider) {
             throw Error("Missing Provider");
@@ -98,9 +94,7 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector<
 
     cleanup = async () => {
         // Await in case a child class's getProvider is asynchronous.
-        const provider = await (this as AbstractEthereumConnector<
-            InjectedProvider
-        >).getProvider();
+        const provider = await (this as AbstractEthereumConnector<InjectedProvider>).getProvider();
         if (provider.removeListener) {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             provider.removeListener("close", this.deactivate);

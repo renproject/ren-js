@@ -16,11 +16,12 @@ const parseDarknodeMultiaddress = (url: string) => {
 };
 
 export class DarknodeProvider<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Requests extends { [event: string]: any } = {},
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Responses extends { [event: string]: any } = {}
-> extends HttpProvider<Requests, Responses>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Requests extends { [event: string]: any } = {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Responses extends { [event: string]: any } = {}
+    >
+    extends HttpProvider<Requests, Responses>
     implements Provider<Requests, Responses> {
     constructor(multiAddress: string, logger: Logger = NullLogger) {
         super(parseDarknodeMultiaddress(multiAddress), logger);

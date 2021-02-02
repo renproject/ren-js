@@ -1,6 +1,5 @@
 import { Callable } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { AxiosError } from "axios";
 
 export interface UTXO {
     readonly txHash: string; // hex string without 0x prefix

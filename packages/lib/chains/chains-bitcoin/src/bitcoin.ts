@@ -25,7 +25,8 @@ import base58 from "bs58";
 /**
  * The Bitcoin class adds support for the asset BTC.
  */
-export class BitcoinClass extends BitcoinBaseChain
+export class BitcoinClass
+    extends BitcoinBaseChain
     implements
         LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean> {
     public static chain = "Bitcoin";

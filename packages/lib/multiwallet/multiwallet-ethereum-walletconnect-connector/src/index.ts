@@ -18,9 +18,7 @@ export interface EthereumConnectorOptions
 
 export type SaneWalletConnectProvider = WalletConnectProvider & SaneProvider;
 
-export class EthereumWalletConnectConnector extends AbstractEthereumConnector<
-    SaneWalletConnectProvider
-> {
+export class EthereumWalletConnectConnector extends AbstractEthereumConnector<SaneWalletConnectProvider> {
     private readonly rpc: { [chainId: number]: string };
     private readonly bridge?: string;
     private readonly qrcode?: boolean;

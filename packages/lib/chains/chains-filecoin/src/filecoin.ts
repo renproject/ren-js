@@ -52,6 +52,7 @@ const transactionToDeposit = (transaction: FilTransaction) => ({
 interface ConstructorOptions {
     apiAddress?: string;
     token?: string;
+    useParams?: boolean;
 }
 
 export class FilecoinClass
@@ -140,9 +141,13 @@ export class FilecoinClass
         FilNetwork
     >(FilecoinClass.utils, () => this.chainNetwork);
 
-    constructor(network?: FilNetwork, options: ConstructorOptions = {}) {
+    constructor(
+        network?: FilNetwork,
+        { useParams, ...options }: ConstructorOptions = {},
+    ) {
         this.chainNetwork = network;
         this.clientOptions = options;
+        this.noParamsFlag = !useParams;
     }
 
     /**
@@ -168,8 +173,6 @@ export class FilecoinClass
         if (this.chainNetwork === "mainnet") {
             this.filfox = new Filfox(this.chainNetwork);
         }
-
-        this.noParamsFlag = this.renNetwork.isTestnet;
 
         return this;
     };

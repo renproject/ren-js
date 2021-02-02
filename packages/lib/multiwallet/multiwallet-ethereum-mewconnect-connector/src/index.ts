@@ -18,9 +18,7 @@ export type MewProvider = SaneProvider & {
     enable?: () => Promise<void>;
 };
 
-export class EthereumMEWConnectConnector extends AbstractEthereumConnector<
-    MewProvider
-> {
+export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewProvider> {
     private readonly rpc: { [chainId: number]: string };
     private readonly chainId: number;
 

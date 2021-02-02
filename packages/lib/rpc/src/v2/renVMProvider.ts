@@ -63,7 +63,7 @@ export const resolveV2Contract = ({
     ) {
         return `${asset}/from${from.name}`;
     }
-    return `${asset}/from$${from.name}To${to.name}`;
+    return `${asset}/from${from.name}To${to.name}`;
 };
 
 export class RenVMProvider

@@ -14,7 +14,7 @@ chai.should();
 loadDotEnv();
 
 describe("Filecoin", () => {
-    it.skip("mint to contract", async function() {
+    it.skip("mint to contract", async function () {
         this.timeout(100000000000);
 
         const gHash = Buffer.from(
@@ -33,7 +33,7 @@ describe("Filecoin", () => {
 });
 
 describe("Filecoin", () => {
-    it.skip("lotus", async function() {
+    it.skip("lotus", async function () {
         this.timeout(100000000000);
 
         const client = new FilecoinClient({

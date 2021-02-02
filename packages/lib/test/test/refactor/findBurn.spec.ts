@@ -60,7 +60,7 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.skip("mint to contract", async function() {
+    it.skip("mint to contract", async function () {
         const infuraURL = `${Chains.renDevnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
         const web3 = new Web3(provider);

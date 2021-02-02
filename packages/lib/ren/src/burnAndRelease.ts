@@ -468,7 +468,6 @@ export class BurnAndRelease<
 
                     if (this.renVM.version(this._state.selector) >= 2) {
                         assertType<string>("string", { to });
-                        // const selector = resolveV2Contract(selector);
 
                         const { gPubKey } = this._state;
 

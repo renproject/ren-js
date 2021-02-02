@@ -60,7 +60,7 @@ describe("Refactor: fees", () => {
         10,
     );
 
-    it("fees can be fetched", async function() {
+    it("fees can be fetched", async function () {
         this.timeout(100000000000);
 
         const ethTestnetVDot2 = Ethereum(testnetProvider, "testnet");

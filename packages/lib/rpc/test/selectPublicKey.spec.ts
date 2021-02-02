@@ -13,8 +13,10 @@ describe("RenVMProvider", () => {
         const renVMProvider = new RenVMProvider("testnet", {
             sendMessage: () => response,
         } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        Ox(hash160(await renVMProvider.selectPublicKey("BTC"))).should.equal(
-            "0xe771b00d9f6d7125af80281ad778123ba468f1f2",
-        );
+        Ox(
+            hash160(
+                await renVMProvider.selectPublicKey("BTC/toEthereum", "BTC"),
+            ),
+        ).should.equal("0x90081b2120fcd9230001f4026c207bf2633ede35");
     });
 });

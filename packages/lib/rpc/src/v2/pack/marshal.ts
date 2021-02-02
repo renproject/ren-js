@@ -67,8 +67,9 @@ export const marshalUint = (value: number, length: number) => {
             typeof value === "number" ? value : (value as string).toString(),
         ).toArrayLike(Buffer, "be", length);
     } catch (error) {
-        error.message = `Unable to marshal uint${length *
-            8} '${value}': ${String(error.message)}`;
+        error.message = `Unable to marshal uint${
+            length * 8
+        } '${value}': ${String(error.message)}`;
         throw error;
     }
 };

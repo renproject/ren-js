@@ -31,7 +31,7 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 
 describe("Playground", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint", async function() {
+    longIt("mint", async function () {
         this.timeout(100000000000);
 
         const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnetVDot3.infura

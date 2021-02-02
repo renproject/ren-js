@@ -5,7 +5,7 @@ import { BitcoinCash } from "../src";
 
 describe("BCH", () => {
     it.only("address to buffer", () => {
-        const bch = BitcoinCash();
+        const bch = BitcoinCash("testnet");
         console.log(
             bch
                 .addressStringToBytes(

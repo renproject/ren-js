@@ -19,7 +19,7 @@ loadDotEnv();
 
 const NETWORK = process.env.NETWORK;
 
-describe("Utils", function() {
+describe("Utils", function () {
     // Disable test timeout.
     this.timeout(0);
 

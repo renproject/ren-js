@@ -23,7 +23,7 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.skip("burning from contract", async function() {
+    it.skip("burning from contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
@@ -138,7 +138,7 @@ describe("Refactor - Burning", () => {
         console.log(burnAndRelease.releaseTransaction);
     });
 
-    longIt("burning from address", async function() {
+    longIt("burning from address", async function () {
         this.timeout(100000000000);
 
         const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura

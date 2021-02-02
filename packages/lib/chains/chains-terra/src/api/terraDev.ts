@@ -152,13 +152,15 @@ type MessageResponse = TerraDevTx;
 const extractDepositsFromTx = (chainHeight: number) => (
     tx: TerraDevTx,
 ): TerraTransaction[] => {
-    const msgs: Array<TerraDevTx & {
-        to_address: string;
-        from_address: string;
-        amount: string;
-        denom: string;
-        messageIndex: number;
-    }> = [];
+    const msgs: Array<
+        TerraDevTx & {
+            to_address: string;
+            from_address: string;
+            amount: string;
+            denom: string;
+            messageIndex: number;
+        }
+    > = [];
     try {
         const decodedMsgs = tx.tx.value.msg;
         for (let i = 0; i < decodedMsgs.length; i++) {
@@ -205,8 +207,9 @@ const fetchDeposits = async (
 ): Promise<TerraTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
-    const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${page +
-        1}&chainId=${network}`;
+    const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${
+        page + 1
+    }&chainId=${network}`;
 
     const response = (
         await Axios.get<MessagesResponse>(url, {

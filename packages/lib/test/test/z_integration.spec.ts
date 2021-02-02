@@ -55,7 +55,7 @@ loadDotEnv();
 // const NETWORK = process.env.NETWORK;
 // const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
-describe("Cross chain transactions", function() {
+describe("Cross chain transactions", function () {
     // // Disable test timeout.
     this.timeout(0);
     // let provider: HDWalletProvider;

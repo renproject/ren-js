@@ -282,10 +282,7 @@ export class EthereumBaseChain
             const transactionBlock = new BigNumber(
                 receipt.blockNumber.toString(),
             );
-            current = currentBlock
-                .minus(transactionBlock)
-                .plus(1)
-                .toNumber();
+            current = currentBlock.minus(transactionBlock).plus(1).toNumber();
         }
         return {
             current,

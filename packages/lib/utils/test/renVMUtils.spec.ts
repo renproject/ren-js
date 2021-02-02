@@ -1,11 +1,8 @@
 import { LockChain, MintChain } from "@renproject/interfaces";
+import { resolveV2Contract } from "@renproject/rpc/build/main/v2";
 import { expect } from "earljs";
 
-import {
-    parseV1Selector,
-    resolveInToken,
-    resolveOutToken,
-} from "../src/renVMUtils";
+import { parseV1Selector } from "../src/renVMUtils";
 
 describe("renVMUtils", () => {
     context("parseV1Selector", () => {
@@ -39,24 +36,24 @@ describe("renVMUtils", () => {
     context("resolveInToken", () => {
         it("converts transfer parameters to the RenVM contract name", () => {
             expect(
-                resolveInToken({
+                resolveV2Contract({
                     asset: "BTC",
                     from: ({ name: "Btc" } as unknown) as LockChain,
                     to: ({ name: "Eth" } as unknown) as MintChain,
                 }),
-            ).toEqual("BTC0Btc2Eth");
+            ).toEqual("BTC/fromBtcToEth");
         });
     });
 
     context("resolveOutToken", () => {
         it("converts transfer parameters to the RenVM contract name", () => {
             expect(
-                resolveOutToken({
+                resolveV2Contract({
                     asset: "BTC",
                     from: ({ name: "Eth" } as unknown) as MintChain,
                     to: ({ name: "Btc" } as unknown) as LockChain,
                 }),
-            ).toEqual("BTC0Eth2Btc");
+            ).toEqual("BTC/fromEthToBtc");
         });
     });
 });

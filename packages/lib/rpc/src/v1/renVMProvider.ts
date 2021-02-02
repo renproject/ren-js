@@ -137,8 +137,9 @@ export class RenVMProvider
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         to: LockChain<any, any, any> | MintChain<any, any>;
     }): string => {
-        return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
-            from.name}`;
+        return `${asset}0${from.legacyName || from.name}2${
+            to.legacyName || from.name
+        }`;
     };
 
     public queryBlock = async (

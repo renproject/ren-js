@@ -173,10 +173,10 @@ const decodeCashAddress = (address: string) => {
 };
 
 function getTypeBits(type: string) {
-    switch (type) {
-        case "P2PKH":
+    switch (type.toLowerCase()) {
+        case Type.P2PKH:
             return 0;
-        case "P2SH":
+        case Type.P2SH:
             return 8;
         default:
             throw new ValidationError("Invalid type: " + type + ".");

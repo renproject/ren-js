@@ -22,7 +22,7 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Extra params", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint", async function() {
+    longIt("mint", async function () {
         this.timeout(100000000000);
 
         const from = Chains.Bitcoin();

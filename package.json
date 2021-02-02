@@ -5,7 +5,8 @@
         "clean": "lerna run clean --scope @renproject/*",
         "build": "lerna run build --scope @renproject/*",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
-        "lint": "lerna run lint --scope @renproject/*"
+        "lint": "lerna run lint --scope @renproject/*",
+        "test": "lerna run test --scope @renproject/*"
     },
     "devDependencies": {
         "@istanbuljs/nyc-config-typescript": "^1.0.1",

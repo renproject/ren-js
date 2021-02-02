@@ -35,7 +35,7 @@ const makeMintTransaction = (): GatewaySession => ({
     customParams: {},
 });
 
-jest.setTimeout(1000 * 46);
+jest.setTimeout(1000 * 200);
 describe("MintMachine", () => {
     it("should create a tx", async () => {
         const fromChainMap = {

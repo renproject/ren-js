@@ -10,21 +10,21 @@ jobs:
             - checkout:
                   path: ~/renjs
 
-            - run:
-                  name: Start Localnet
-                  background: true
-                  command: |
-                      sudo apt-get update
-                      sudo apt-get -y upgrade
-                      wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
-                      sudo tar -xvf go1.12.6.linux-amd64.tar.gz
-                      sudo mv go /usr/local
-                      echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
-                      source $BASH_ENV
-                      git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
-                      cd darknode
-                      git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-                      go run cmd/localnet/main.go
+            # - run:
+            #       name: Start Localnet
+            #       background: true
+            #       command: |
+            #           sudo apt-get update
+            #           sudo apt-get -y upgrade
+            #           wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
+            #           sudo tar -xvf go1.12.6.linux-amd64.tar.gz
+            #           sudo mv go /usr/local
+            #           echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
+            #           source $BASH_ENV
+            #           git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
+            #           cd darknode
+            #           git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+            #           go run cmd/localnet/main.go
 
             # Download and cache dependencies
             - restore_cache:
@@ -66,20 +66,20 @@ jobs:
             - run:
                   name: Run Testnet tests
                   # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                  command: NETWORK="testnet" bash ./test/ci/runtest.bash
+                  command: NETWORK="testnet" yarn lerna run test
                   when: always
 
-            - run:
-                  name: Run Localnet tests
-                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                  command: NETWORK="localnet" bash ./test/ci/runtest.bash
-                  when: always
+            # - run:
+            #       name: Run Localnet tests
+            #       # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+            #       command: NETWORK="localnet" bash ./test/ci/runtest.bash
+            #       when: always
 
-            - run:
-                  name: Run Devnet tests
-                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                  command: NETWORK="devnet" bash ./test/ci/runtest.bash
-                  when: always
+            # - run:
+            #       name: Run Devnet tests
+            #       # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
+            #       command: NETWORK="devnet" bash ./test/ci/runtest.bash
+            #       when: always
 
             # Run eslint
             - run:
@@ -103,8 +103,10 @@ jobs:
                   name: Networks
                   command: |
                       mkdir -p ./reports/networks
-                      node ./test/ci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
-                      echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
+                      node ./test/ci/networks.js $(cat testnet) > ./reports/networks/networks.xml
+                      echo "{\"testnet\": $(cat testnet)} > ./network-status.json
+                  #     node ./test/ci/networks.js $(cat testnet) $(cat devnet) $(cat localnet) > ./reports/networks/networks.xml
+                  #     echo "{\"testnet\": $(cat testnet), \"devnet\": $(cat devnet), \"localnet\": $(cat localnet)}" > ./network-status.json
                   when: always
 
             # Upload results

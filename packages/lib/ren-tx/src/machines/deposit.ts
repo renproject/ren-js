@@ -13,6 +13,19 @@ export interface DepositMachineContext {
     deposit: GatewayTransaction;
 }
 
+const largest = (x?: number, y?: number): number => {
+    if (!x) {
+        if (y) return y;
+        return 0;
+    }
+    if (!y) {
+        if (x) return x;
+        return 0;
+    }
+    if (x > y) return x;
+    return y;
+};
+
 /** The states a deposit can be in */
 export interface DepositMachineSchema {
     states: {
@@ -58,7 +71,7 @@ export type DepositMachineEvent =
     | { type: "ERROR"; data: GatewayTransaction; error: Error }
     | { type: "RESTORE"; data: GatewayTransaction }
     | { type: "RESTORED"; data: GatewayTransaction }
-    | { type: "CONFIRMED" }
+    | { type: "CONFIRMED"; data: GatewayTransaction }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "SIGNED"; data: GatewayTransaction }
     | { type: "SIGN_ERROR"; data: Error }
@@ -184,16 +197,30 @@ export const depositMachine = Machine<
                         {
                             target: "srcConfirmed",
                             actions: [
+                                assign({
+                                    deposit: ({ deposit }, evt) => {
+                                        if (deposit.sourceTxConfTarget) {
+                                            console.log("confirmed", evt);
+                                            return {
+                                                ...deposit,
+                                                sourceTxConfs: largest(
+                                                    deposit.sourceTxConfs,
+                                                    evt.data.sourceTxConfs,
+                                                ),
+                                                sourceTxConfTarget: largest(
+                                                    deposit.sourceTxConfTarget,
+                                                    evt.data.sourceTxConfTarget,
+                                                ),
+                                            };
+                                        }
+                                        return deposit;
+                                    },
+                                }),
                                 sendParent((ctx, _) => {
                                     return {
                                         type: "DEPOSIT_UPDATE",
                                         data: ctx.deposit,
                                     };
-                                }),
-                                assign({
-                                    deposit: (context, _) => ({
-                                        ...context.deposit,
-                                    }),
                                 }),
                             ],
                         },

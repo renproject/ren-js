@@ -151,7 +151,7 @@ const handleSettle = async (
     callback: Sender<any>,
 ) => {
     try {
-        await deposit
+        const res = await deposit
             .confirmed()
             .on("target", (confs, targetConfs) => {
                 const confirmedTx = {
@@ -179,6 +179,8 @@ const handleSettle = async (
         callback({
             type: "CONFIRMED",
             data: {
+                sourceTxConfTarget: res._state.targetConfirmations,
+                sourceTxConfs: res._state.targetConfirmations,
                 sourceTxHash,
             },
         });
@@ -256,9 +258,10 @@ const handleMint = async (
     callback: Sender<any>,
     params: any,
 ) => {
-    await deposit
-        .mint(params)
-        .on("confirmation", () => {
+    try {
+        const minter = deposit.mint(params);
+
+        const onConfirmation = () => {
             const submittedTx = {
                 sourceTxHash,
             };
@@ -266,8 +269,12 @@ const handleMint = async (
                 type: "ACKNOWLEDGE",
                 data: submittedTx,
             });
-        })
-        .on("transactionHash", (transactionHash) => {
+
+            // only acknowledge once
+            minter.removeListener("confirmation", onConfirmation);
+        };
+
+        await minter.on("transactionHash", (transactionHash) => {
             const submittedTx = {
                 sourceTxHash,
                 destTxHash: transactionHash,
@@ -276,14 +283,16 @@ const handleMint = async (
                 type: "SUBMITTED",
                 data: submittedTx,
             });
-        })
-        .catch((e) => {
-            callback({
-                type: "SUBMIT_ERROR",
-                data: { sourceTxHash },
-                error: e,
-            });
         });
+
+        await minter.on("confirmation", onConfirmation);
+    } catch (e) {
+        callback({
+            type: "SUBMIT_ERROR",
+            data: { sourceTxHash },
+            error: e,
+        });
+    }
 };
 
 const mintFlow = (
@@ -313,7 +322,7 @@ const mintFlow = (
             sourceTxHash: txHash,
             renVMHash: deposit.txHash(),
             sourceTxAmount: parseInt(rawSourceTx.amount),
-            sourceTxConfs: deposit.confirmations || 0,
+            sourceTxConfs: 0,
             rawSourceTx,
             detectedAt: new Date().getTime(),
         };

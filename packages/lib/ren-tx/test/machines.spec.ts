@@ -134,7 +134,9 @@ const depositModel = createModel(
         cases: [{ data: { sourceTxHash: "123" } }],
     },
     CONFIRMATION: {},
-    CONFIRMED: {},
+    CONFIRMED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     REJECT: {},
     SIGNED: {},
     CLAIM: {

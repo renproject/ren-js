@@ -120,6 +120,7 @@ export interface EthArg<
     type: type;
     value: valueType;
     notInPayload?: boolean;
+    onlyInPayload?: boolean;
 }
 
 export type EthArgs = EthArg[];

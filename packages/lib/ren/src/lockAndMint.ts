@@ -218,7 +218,9 @@ export class LockAndMint<
                 2,
             );
         }
-        this._state.targetConfirmations = target || 6;
+        const defaultConfirmations =
+            this._state.renNetwork && this._state.renNetwork.isTestnet ? 2 : 6;
+        this._state.targetConfirmations = target || defaultConfirmations;
 
         return this._state.targetConfirmations;
     };
@@ -969,7 +971,9 @@ export class LockAndMintDeposit<
                 2,
             );
         }
-        this._state.targetConfirmations = target || 6;
+        const defaultConfirmations =
+            this._state.renNetwork && this._state.renNetwork.isTestnet ? 2 : 6;
+        this._state.targetConfirmations = target || defaultConfirmations;
 
         return this._state.targetConfirmations;
     };
@@ -1277,8 +1281,7 @@ export class LockAndMintDeposit<
      * @category Main
      */
     public mint = (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        override?: { [name: string]: any },
+        override?: { [name: string]: unknown },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): PromiEvent<any, { [key: string]: any }> => {
         const promiEvent = newPromiEvent<
@@ -1300,10 +1303,23 @@ export class LockAndMintDeposit<
                 value: (override || {})[key],
             }));
 
-            const contractCalls = overrideContractCalls(
+            // Override contract call parameters that have been passed in to
+            // "mint".
+            let contractCalls = overrideContractCalls(
                 this.params.contractCalls || [],
                 { contractParams: overrideArray },
             );
+
+            // Filter parameters that should be included in the payload hash but
+            // not the contract call.
+            contractCalls = contractCalls.map((call) => ({
+                ...call,
+                contractParams: call.contractParams
+                    ? call.contractParams.filter(
+                          (param) => !param.onlyInPayload,
+                      )
+                    : call.contractParams,
+            }));
 
             const asset = this.params.asset;
 

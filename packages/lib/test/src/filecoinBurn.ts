@@ -17,7 +17,9 @@ const main = async () => {
     const renJS = new RenJS(RenNetwork.TestnetVDot3, { logLevel });
 
     // Initialize Ethereum provider.
-    const infuraURL = `${renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+    const infuraURL = `${renTestnetVDot3.infura}/v3/${
+        process.env.INFURA_KEY || ""
+    }`; // renBscTestnet.infura
     const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
 
     const burnAndRelease = await renJS.burnAndRelease({

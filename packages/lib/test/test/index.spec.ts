@@ -8,17 +8,22 @@ chai.should();
 
 describe("RenJS initialization and exports", () => {
     it("should be able to pass in different networks", async () => {
-        new RenJS().should.be.an.instanceOf(RenJS);
-        (await new RenJS().renVM.getNetwork()).should.equal("mainnet");
-        new RenJS("mainnet").should.be.an.instanceOf(RenJS);
-        new RenJS("chaosnet").should.be.an.instanceOf(RenJS);
-        new RenJS("testnet").should.be.an.instanceOf(RenJS);
-        new RenJS("devnet").should.be.an.instanceOf(RenJS);
+        try {
+            new RenJS().should.be.an.instanceOf(RenJS);
+            (await new RenJS().renVM.getNetwork("BTC0Btc2Eth")).should.equal(
+                "mainnet",
+            );
+            new RenJS("mainnet").should.be.an.instanceOf(RenJS);
+            new RenJS("testnet").should.be.an.instanceOf(RenJS);
 
-        // @ts-expect-error it should reject the parameter `"fake-network"`
-        (() => new RenJS("fake-network")).should.throw(
-            /Invalid network or provider URL: "fake-network"/,
-        );
+            // @ts-expect-error it should reject the parameter `"fake-network"`
+            (() => new RenJS("fake-network")).should.throw(
+                /Invalid network or provider URL: "fake-network"/,
+            );
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     });
 
     it("On uninitialized class", () => {

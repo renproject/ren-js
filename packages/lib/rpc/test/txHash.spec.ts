@@ -5,17 +5,17 @@ import { Ox } from "@renproject/utils";
 import { PackPrimitive, TypedPackValue } from "../src/v2/pack/pack";
 import { hashTransaction } from "../src/v2/transaction";
 
-describe("Pack", () => {
+describe("txHash", () => {
     it("Hash transaction", () => {
         const expected =
-            "c4e423c339ffb1c1bd37b6493a4f209391fb498466bb257fc565ba904804af5a";
+            "0xc4e423c339ffb1c1bd37b6493a4f209391fb498466bb257fc565ba904804af5a";
 
         const packValue: TypedPackValue = {
             t: {
                 struct: [
                     { amount: PackPrimitive.U256 },
-                    { token: PackPrimitive.String },
-                    { to: PackPrimitive.String },
+                    { token: PackPrimitive.Str },
+                    { to: PackPrimitive.Str },
                     { nonce: PackPrimitive.Bytes32 },
                 ],
             },

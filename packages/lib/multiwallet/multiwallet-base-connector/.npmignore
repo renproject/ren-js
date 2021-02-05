@@ -42,4 +42,5 @@ webpack.config.js
 test/
 build/browser*
 build/*.map
+build/docs
 !build

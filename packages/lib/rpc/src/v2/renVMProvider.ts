@@ -63,7 +63,7 @@ export const resolveV2Contract = ({
     ) {
         return `${asset}/from${from.name}`;
     }
-    return `${asset}/from$${from.name}To${to.name}`;
+    return `${asset}/from${from.name}To${to.name}`;
 };
 
 export class RenVMProvider
@@ -82,17 +82,19 @@ export class RenVMProvider
         logger: Logger = NullLogger,
     ) {
         if (!provider || typeof provider === "string") {
-            const rpcUrl = provider || getRenNetworkDetails(network).lightnode;
+            const rpcUrl =
+                provider || (getRenNetworkDetails(network) || {}).lightnode;
             try {
                 provider = new HttpProvider<RenVMParams, RenVMResponses>(
                     rpcUrl,
                     logger,
-                ) as Provider<RenVMParams, RenVMResponses>;
+                );
             } catch (error) {
                 if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(
                         `Invalid network or provider URL: "${
-                            getRenNetworkDetails(network).name
+                            (getRenNetworkDetails(network) || {}).name ||
+                            network
                         }"`,
                     );
                 }

@@ -352,6 +352,7 @@ export interface ChainStatic<
     Network = any
 > {
     utils: {
+        // Map from a RenVM network to the chain's network.
         resolveChainNetwork(
             network:
                 | RenNetwork
@@ -361,6 +362,8 @@ export interface ChainStatic<
         ): Network;
 
         /**
+         * Return a boolean indicating whether the address is valid for the
+         * chain's network.
          *
          * @param address
          * @param network

@@ -153,10 +153,10 @@ const handleSettle = async (
     try {
         const res = await deposit
             .confirmed()
-            .on("target", (confs, targetConfs) => {
+            .on("target", (targetConfs) => {
                 const confirmedTx = {
                     sourceTxHash,
-                    sourceTxConfs: confs,
+                    sourceTxConfs: 0,
                     sourceTxConfTarget: targetConfs,
                 };
                 callback({

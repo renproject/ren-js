@@ -33,13 +33,14 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint to contract", async function() {
+    longIt("mint to contract", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.Testnet;
-        const ethNetwork = EthereumConfigMap[network];
+        const network = RenNetwork.MainnetVDot3;
+        const asset = "FIL" as string;
+        const from = Chains.Filecoin();
 
-        const asset = "BTC" as string;
+        const ethNetwork = EthereumConfigMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -59,7 +60,7 @@ describe("Refactor: mint", () => {
 
         const params: LockAndMintParams = {
             asset,
-            from: Chains.Bitcoin(),
+            from,
             to: Chains.Ethereum(provider, ethNetwork).Account({
                 address: ethAddress,
             }),
@@ -68,30 +69,33 @@ describe("Refactor: mint", () => {
         const assetDecimals = await params.from.assetDecimals(asset);
 
         // Use 0.0001 more than fee.
-        let suggestedAmount: BigNumber | number;
+        let suggestedAmount: BigNumber;
         try {
             const fees = await renJS.getFees(params);
-            suggestedAmount = fees.lock
-                .div(new BigNumber(10).exponentiatedBy(assetDecimals))
-                .times(5);
+            suggestedAmount = fees.lock.div(
+                new BigNumber(10).exponentiatedBy(assetDecimals),
+            );
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             if (asset === "FIL") {
-                suggestedAmount = 0.2;
+                suggestedAmount = new BigNumber(0.2);
             } else {
-                suggestedAmount = 0.0015;
+                suggestedAmount = new BigNumber(0.0015);
             }
         }
 
         const lockAndMint = await renJS.lockAndMint(params);
 
-        console.info("gateway address:", lockAndMint.gatewayAddress);
+        console.info(
+            `Send at least ${suggestedAmount.toFixed()} ${asset} to`,
+            lockAndMint.gatewayAddress,
+        );
 
         const faucetSupported =
             ethNetwork.isTestnet && FAUCET_ASSETS.indexOf(asset) >= 0;
 
         if (faucetSupported) {
-            console.log(
+            console.info(
                 `${asset} balance: ${await account.balanceOf(
                     asset,
                 )} ${asset} (${await account.address(asset)})`,
@@ -142,9 +146,10 @@ describe("Refactor: mint", () => {
                 .then(() => {
                     // If there's been no deposits, send one.
                     if (faucetSupported && i === 0) {
+                        const sendAmount = suggestedAmount.times(5);
                         console.log(
                             `${blue("[faucet]")} Sending ${blue(
-                                suggestedAmount.toFixed(),
+                                sendAmount.toFixed(),
                             )} ${blue(asset)} to ${blue(
                                 typeof lockAndMint.gatewayAddress === "string"
                                     ? lockAndMint.gatewayAddress
@@ -170,7 +175,7 @@ describe("Refactor: mint", () => {
                             return;
                         }
                         account
-                            .send(address, suggestedAmount, asset, options)
+                            .send(address, sendAmount, asset, options)
                             .catch(reject);
                     }
                 })

@@ -10,7 +10,7 @@ const INDEXER_URL = `https://account-chain-indexer.herokuapp.com/graphql`;
 
 export const fetchDeposits = async (
     address: string,
-    paramsFilterBase64: string | undefined = undefined,
+    paramsFilterBase64: string | undefined = "",
     network: FilNetwork,
     _page = 0,
 ): Promise<FilTransaction[]> => {

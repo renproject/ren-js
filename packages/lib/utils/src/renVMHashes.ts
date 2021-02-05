@@ -41,7 +41,7 @@ export const generatePHash = (
     const message = rawEncode(types, values);
     const digest = keccak256(message);
 
-    logger.debug("pHash", toBase64(digest), Ox(message));
+    logger.debug("pHash", toBase64(digest), Ox(message), args);
 
     return digest; // sha3 can accept a Buffer
 };

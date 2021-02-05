@@ -58,6 +58,16 @@ export const EthereumConfigMap = {
 export type EthTransaction = string;
 export type EthAddress = string;
 
+const isEthereumConfig = (
+    renNetwork:
+        | RenNetwork
+        | RenNetworkString
+        | RenNetworkDetails
+        | EthereumConfig,
+): renNetwork is EthereumConfig => {
+    return !!(renNetwork as EthereumConfig).addresses;
+};
+
 const resolveNetwork = (
     renNetwork:
         | RenNetwork
@@ -66,12 +76,10 @@ const resolveNetwork = (
         | EthereumConfig,
 ): EthereumConfig => {
     let networkConfig: EthereumConfig | undefined;
-    if (renNetwork && (renNetwork as EthereumConfig).addresses) {
-        networkConfig = renNetwork as EthereumConfig;
+    if (renNetwork && isEthereumConfig(renNetwork)) {
+        networkConfig = renNetwork;
     } else if (renNetwork) {
-        const networkDetails = getRenNetworkDetails(
-            renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
-        );
+        const networkDetails = getRenNetworkDetails(renNetwork);
         if (EthereumConfigMap[networkDetails.name]) {
             networkConfig = EthereumConfigMap[networkDetails.name];
         }
@@ -282,10 +290,7 @@ export class EthereumBaseChain
             const transactionBlock = new BigNumber(
                 receipt.blockNumber.toString(),
             );
-            current = currentBlock
-                .minus(transactionBlock)
-                .plus(1)
-                .toNumber();
+            current = currentBlock.minus(transactionBlock).plus(1).toNumber();
         }
         return {
             current,

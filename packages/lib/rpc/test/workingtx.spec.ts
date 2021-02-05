@@ -11,7 +11,7 @@ export const submit = {
     method: "ren_submitTx",
     params: {
         tx: {
-            hash: "wXb_k1oavR4DXnYJgSsH1DMuiWfoLwVFupv9E3kPvtQ",
+            hash: "Dch8cmwnwL0QIUrSk2EhBQ3DY4cixzVp_AKYaaZ9Xvc",
             version: "1",
             selector: "BTC/toEthereum",
             in: {
@@ -48,10 +48,10 @@ export const submit = {
                             phash: PackPrimitive.Bytes32,
                         },
                         {
-                            token: PackPrimitive.String,
+                            token: PackPrimitive.Str,
                         },
                         {
-                            to: PackPrimitive.String,
+                            to: PackPrimitive.Str,
                         },
                         {
                             nonce: PackPrimitive.Bytes32,

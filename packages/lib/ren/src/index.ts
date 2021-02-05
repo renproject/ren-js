@@ -14,9 +14,7 @@ import {
 import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
 import {
     fromSmallestUnit,
-    Ox,
     randomNonce,
-    strip0x,
     toSmallestUnit,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";

@@ -48,7 +48,7 @@ export const findBurnByNonce = async (
 };
 
 describe("Refactor: mint", () => {
-    it.skip("mint to contract", async function() {
+    it.skip("mint to contract", async function () {
         this.timeout(100000000000);
 
         const infuraURL = `${Chains.renMainnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura

@@ -76,17 +76,18 @@ export class RenVMProvider
         logger: Logger = NullLogger,
     ) {
         if (!provider) {
-            const rpcUrl = getRenNetworkDetails(network).lightnode;
+            const rpcUrl = (getRenNetworkDetails(network) || {}).lightnode;
             try {
                 provider = new HttpProvider<RenVMParams, RenVMResponses>(
                     rpcUrl,
                     logger,
-                ) as Provider<RenVMParams, RenVMResponses>;
+                );
             } catch (error) {
                 if (/Invalid node URL/.exec(String(error && error.message))) {
                     throw new Error(
                         `Invalid network or provider URL: "${
-                            getRenNetworkDetails(network).name
+                            (getRenNetworkDetails(network) || {}).name ||
+                            network
                         }"`,
                     );
                 }
@@ -137,8 +138,9 @@ export class RenVMProvider
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         to: LockChain<any, any, any> | MintChain<any, any>;
     }): string => {
-        return `${asset}0${from.legacyName || from.name}2${to.legacyName ||
-            from.name}`;
+        return `${asset}0${from.legacyName || from.name}2${
+            to.legacyName || from.name
+        }`;
     };
 
     public queryBlock = async (

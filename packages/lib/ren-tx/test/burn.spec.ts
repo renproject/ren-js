@@ -33,7 +33,7 @@ const mintTransaction: GatewaySession = {
     customParams: {},
 };
 
-jest.setTimeout(1000 * 46);
+jest.setTimeout(1000 * 500);
 describe("BurnMachine", () => {
     it("should create a burn tx", async () => {
         const fromChainMap = {

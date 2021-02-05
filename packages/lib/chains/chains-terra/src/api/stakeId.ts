@@ -81,13 +81,15 @@ type DecodedMsg = TerraMessageTypes["bank/MsgSend"];
 const extractDepositsFromTx = (chainHeight: number) => (
     tx: TerraTx,
 ): TerraTransaction[] => {
-    const msgs: Array<Omit<TerraTx, "msg"> & {
-        to_address: string;
-        from_address: string;
-        amount: string;
-        denom: string;
-        messageIndex: number;
-    }> = [];
+    const msgs: Array<
+        Omit<TerraTx, "msg"> & {
+            to_address: string;
+            from_address: string;
+            amount: string;
+            denom: string;
+            messageIndex: number;
+        }
+    > = [];
     try {
         const decodedMsgs: DecodedMsg[] = JSON.parse(
             Buffer.from(tx.msg, "base64").toString(),

@@ -66,7 +66,7 @@ describe("renVMHashes", () => {
                     ),
                 ),
             ).toEqual(
-                "0x24bac9fd9de6373553c96708216414e9e996cef63ba7f63dcf25af9bf7f3aa99",
+                "0xdf44e2dd785442663437c288ebc86fc3a45d61bacac7351fd273cb5fe1af675e",
             );
         });
     });
@@ -76,6 +76,7 @@ describe("renVMHashes", () => {
             const amount = "0";
             const to = "0x" + "00".repeat(20);
             const tokenIdentifier = "0x" + "00".repeat(20);
+            const selectorHash = "0x" + "00".repeat(32);
             const nHash = Buffer.from("00".repeat(32), "hex");
 
             expect(
@@ -90,13 +91,13 @@ describe("renVMHashes", () => {
                         pHash,
                         amount,
                         to,
-                        tokenIdentifier,
+                        selectorHash,
                         nHash,
                         true,
                     ),
                 ),
             ).toEqual(
-                "0x8ad242e63f483e9d211e41157b7e4e955662d9a8bb634249b1ddee83d2f364cf",
+                "0xdfded4ed5ac76ba7379cfe7b3b0f53e768dca8d45a34854e649cfc3c18cbd9cd",
             );
         });
     });

@@ -27,8 +27,10 @@ export class HttpProvider<
 
     constructor(ipOrMultiaddress: string, logger: Logger = NullLogger) {
         this.logger = logger;
-        // Type validation
-        assertType<string>("string", { ipOrMultiaddress });
+
+        if (typeof ipOrMultiaddress !== "string") {
+            throw new Error(`Invalid node URL ${String(ipOrMultiaddress)}`);
+        }
 
         if (ipOrMultiaddress.indexOf("://") === -1) {
             throw new Error(

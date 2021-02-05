@@ -42,9 +42,7 @@ export enum BurnAndReleaseStatus {
 export class BurnAndRelease<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
-        LockTransaction
-    >,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -207,14 +205,15 @@ export class BurnAndRelease<
         return this.status;
     };
 
-    public burnConfirmations = async () => {
+    public confirmationTarget = async () => {
         if (isDefined(this._state.targetConfirmations)) {
             return this._state.targetConfirmations;
         }
 
+        let target;
         const getConfirmationTarget = this.renVM.getConfirmationTarget;
         if (getConfirmationTarget) {
-            this._state.targetConfirmations = await retryNTimes(
+            target = await retryNTimes(
                 async () =>
                     getConfirmationTarget(
                         this._state.selector,
@@ -222,9 +221,8 @@ export class BurnAndRelease<
                     ),
                 2,
             );
-        } else {
-            this._state.targetConfirmations = 6;
         }
+        this._state.targetConfirmations = target || 6;
 
         return this._state.targetConfirmations;
     };
@@ -468,7 +466,6 @@ export class BurnAndRelease<
 
                     if (this.renVM.version(this._state.selector) >= 2) {
                         assertType<string>("string", { to });
-                        // const selector = resolveV2Contract(selector);
 
                         const { gPubKey } = this._state;
 
@@ -570,9 +567,7 @@ export class BurnAndRelease<
             promiEvent.emit("txHash", txHash);
             this._state.logger.debug("txHash:", txHash);
 
-            const response = await this.renVM.waitForTX<
-                BurnAndReleaseTransaction
-            >(
+            const response = await this.renVM.waitForTX<BurnAndReleaseTransaction>(
                 this._state.selector,
                 fromBase64(txHash),
                 (status) => {

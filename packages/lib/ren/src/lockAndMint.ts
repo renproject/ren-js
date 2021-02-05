@@ -3,7 +3,6 @@ import {
     DepositCommon,
     getRenNetworkDetails,
     LockAndMintParams,
-    LockAndMintStatus,
     LockAndMintTransaction,
     Logger,
     newPromiEvent,
@@ -107,9 +106,7 @@ export class LockAndMint<
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
-        LockTransaction
-    >,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -204,6 +201,28 @@ export class LockAndMint<
         }
     }
 
+    public confirmationTarget = async () => {
+        if (isDefined(this._state.targetConfirmations)) {
+            return this._state.targetConfirmations;
+        }
+
+        let target;
+        const getConfirmationTarget = this.renVM.getConfirmationTarget;
+        if (getConfirmationTarget) {
+            target = await retryNTimes(
+                async () =>
+                    getConfirmationTarget(
+                        this._state.selector,
+                        this.params.from,
+                    ),
+                2,
+            );
+        }
+        this._state.targetConfirmations = target || 6;
+
+        return this._state.targetConfirmations;
+    };
+
     /**
      * @hidden - Called automatically when calling [[RenJS.lockAndMint]]. It has
      * been split from the constructor because it's asynchronous.
@@ -249,17 +268,7 @@ export class LockAndMint<
         this.wait().catch(console.error);
 
         try {
-            const getConfirmationTarget = this.renVM.getConfirmationTarget;
-            if (getConfirmationTarget) {
-                this._state.targetConfirmations = await retryNTimes(
-                    async () =>
-                        getConfirmationTarget(
-                            this._state.selector,
-                            this.params.from,
-                        ),
-                    2,
-                );
-            }
+            this._state.targetConfirmations = await this.confirmationTarget();
         } catch (error) {
             console.error(error);
         }
@@ -409,9 +418,7 @@ export class LockAndMint<
 
     // Private methods /////////////////////////////////////////////////////////
 
-    private readonly generateGatewayAddress = async (): Promise<
-        LockAddress
-    > => {
+    private readonly generateGatewayAddress = async (): Promise<LockAddress> => {
         if (this.gatewayAddress) {
             return this.gatewayAddress;
         }
@@ -564,9 +571,7 @@ export const DepositStatusIndex = {
 export class LockAndMintDeposit<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<
-        LockTransaction
-    >,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -627,9 +632,7 @@ export class LockAndMintDeposit<
                 amount: "string",
             },
             {
-                depositDetails: depositDetails as DepositCommon<
-                    LockTransaction
-                >,
+                depositDetails: depositDetails as DepositCommon<LockTransaction>,
             },
         );
         assertObject(
@@ -949,6 +952,28 @@ export class LockAndMintDeposit<
         };
     };
 
+    public confirmationTarget = async () => {
+        if (isDefined(this._state.targetConfirmations)) {
+            return this._state.targetConfirmations;
+        }
+
+        let target;
+        const getConfirmationTarget = this.renVM.getConfirmationTarget;
+        if (getConfirmationTarget) {
+            target = await retryNTimes(
+                async () =>
+                    getConfirmationTarget(
+                        this._state.selector,
+                        this.params.from,
+                    ),
+                2,
+            );
+        }
+        this._state.targetConfirmations = target || 6;
+
+        return this._state.targetConfirmations;
+    };
+
     /**
      * `confirmed` will return once the deposit has reached the target number of
      * confirmations.
@@ -964,7 +989,7 @@ export class LockAndMintDeposit<
      * ```ts
      * await deposit
      *  .confirmed()
-     *  .on("target", (confs, target) => console.log(`${confs}/${target}`))
+     *  .on("target", (target) => console.log(`Waiting for ${target} confirmations`))
      *  .on("confirmation", (confs, target) => console.log(`${confs}/${target}`))
      * ```
      *
@@ -978,7 +1003,7 @@ export class LockAndMintDeposit<
             MintTransaction,
             MintAddress
         >,
-        { confirmation: [number, number]; target: [number, number] }
+        { confirmation: [number, number]; target: [number] }
     > => {
         const promiEvent = newPromiEvent<
             LockAndMintDeposit<
@@ -988,10 +1013,16 @@ export class LockAndMintDeposit<
                 MintTransaction,
                 MintAddress
             >,
-            { confirmation: [number, number]; target: [number, number] }
+            { confirmation: [number, number]; target: [number] }
         >();
 
         (async () => {
+            try {
+                promiEvent.emit("target", await this.confirmationTarget());
+            } catch (error) {
+                this._state.logger.error(error);
+            }
+
             // If the transaction has been confirmed according to RenVM, return.
             const transactionIsConfirmed = () =>
                 DepositStatusIndex[this.status] >=
@@ -1001,7 +1032,7 @@ export class LockAndMintDeposit<
                         TxStatusIndex[TxStatus.TxStatusPending]);
 
             let iterationCount = 0;
-            let currentConfidenceRatio = -Infinity;
+            let currentConfidenceRatio = 0;
             // Continue while the transaction isn't confirmed and the promievent
             // isn't cancelled.
             while (!promiEvent._isCancelled() && !transactionIsConfirmed()) {
@@ -1030,7 +1061,7 @@ export class LockAndMintDeposit<
                     if (confidenceRatio > currentConfidenceRatio) {
                         currentConfidenceRatio = confidenceRatio;
                         promiEvent.emit(
-                            confidenceRatio === 0 ? "target" : "confirmation",
+                            "confirmation",
                             confidence.current,
                             confidence.target,
                         );
@@ -1043,8 +1074,9 @@ export class LockAndMintDeposit<
                     );
                 } catch (error) {
                     this._state.logger.error(
-                        `Error fetching transaction confidence: ` +
-                            extractError(error),
+                        `Error fetching transaction confidence: ${extractError(
+                            error,
+                        )}`,
                     );
                 }
                 await sleep(15 * SECONDS);
@@ -1158,7 +1190,7 @@ export class LockAndMintDeposit<
                             // Retry submitting 2 more times to reduce chance
                             // of network issues causing problems.
                             txHash = await retryNTimes(
-                                () => this._submitMintTransaction(),
+                                async () => this._submitMintTransaction(),
                                 2,
                                 5 * SECONDS,
                             );

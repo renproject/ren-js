@@ -1,6 +1,5 @@
 import { Callable } from "@renproject/utils";
 import axios from "axios";
-import BigNumber from "bignumber.js";
 
 import {
     fixUTXO,

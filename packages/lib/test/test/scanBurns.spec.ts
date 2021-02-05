@@ -43,7 +43,7 @@ const mintABI = [
 ];
 
 describe.skip("RenJS initialization and exports", () => {
-    it.skip("check burns", async function() {
+    it.skip("check burns", async function () {
         this.timeout(10000000000);
         const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`;
 
@@ -105,7 +105,7 @@ describe.skip("RenJS initialization and exports", () => {
         }
     });
 
-    it("check mints", async function() {
+    it("check mints", async function () {
         this.timeout(10000000000);
         const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`;
 

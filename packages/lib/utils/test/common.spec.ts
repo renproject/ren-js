@@ -176,12 +176,12 @@ describe("common utils", () => {
             expect(await retryNTimes(mustBeCalledNTimes(1), 1)).toEqual(1);
 
             await expect(retryNTimes(mustBeCalledNTimes(2), 1)).toBeRejected(
-                new Error("Error. (Only called 1/2 times)"),
+                "Only called 1/2 times",
             );
 
             await expect(
                 retryNTimes(mustBeCalledNTimes(2, true), 1),
-            ).toBeRejected(new Error("Only called 1/2 times"));
+            ).toBeRejected("Only called 1/2 times");
         });
     });
 

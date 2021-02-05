@@ -203,10 +203,7 @@ export abstract class BitcoinBaseChain
 
         if (!progress) {
             try {
-                txs = await retryNTimes(
-                    async () => this.api.fetchTXs(address),
-                    2,
-                );
+                txs = await retryNTimes(() => this.api.fetchTXs(address), 2);
             } catch (error) {
                 // Ignore error and fallback to getUTXOs.
             }
@@ -288,7 +285,7 @@ export abstract class BitcoinBaseChain
      */
     transactionID = (transaction: BtcTransaction) => transaction.txHash;
 
-    transactionFromID = async (
+    transactionFromID = (
         txid: string | Buffer,
         txindex: string,
         reversed?: boolean,

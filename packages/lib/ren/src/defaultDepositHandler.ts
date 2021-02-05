@@ -20,9 +20,9 @@ const createDepositHandler = (retries = -1) => {
                             deposit._state.logger.log(`Calling .confirmed`);
                             await deposit
                                 .confirmed()
-                                .on("target", (confs, target) => {
+                                .on("target", (target) => {
                                     deposit._state.logger.log(
-                                        `${confs}/${target} confirmations`,
+                                        `Waiting for ${target} confirmations`,
                                     );
                                 })
                                 .on("confirmation", (confs, target) => {
@@ -77,9 +77,7 @@ const createDepositHandler = (retries = -1) => {
                             try {
                                 deposit._state.logger.log(`Calling .mint`);
                                 await deposit
-                                    .mint({
-                                        _extraMsg: "test", // Override value.
-                                    })
+                                    .mint()
                                     .on("transactionHash", (txHash) => {
                                         deposit._state.logger.log(
                                             `txHash: ${
@@ -87,7 +85,7 @@ const createDepositHandler = (retries = -1) => {
                                                     .transactionExplorerLink
                                                     ? deposit.params.to.utils.transactionExplorerLink(
                                                           txHash,
-                                                      )
+                                                      ) || String(txHash)
                                                     : String(txHash)
                                             }`,
                                         );
@@ -95,7 +93,7 @@ const createDepositHandler = (retries = -1) => {
                             } catch (error) {
                                 // Ethereum revert message.
                                 if (
-                                    /execution reverted/.exec(
+                                    /(execution reverted)|(Transaction has been reverted)/.exec(
                                         error.message || String(error),
                                     )
                                 ) {

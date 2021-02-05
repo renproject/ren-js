@@ -1,0 +1,92 @@
+{
+    "name": "@renproject/chains",
+    "version": "1.0.12",
+    "description": "Official Ren JavaScript client",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/renproject/ren-js.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "keywords": [
+        "ren",
+        "ren-js",
+        "renvm",
+        "ren project",
+        "cryptocurrencies",
+        "blockchain",
+        "interoperability"
+    ],
+    "author": "Ren",
+    "license": "GPL-3.0",
+    "bugs": {
+        "url": "https://github.com/renproject/ren-js/issues"
+    },
+    "main": "build/main/index.js",
+    "typings": "build/main/index.d.ts",
+    "module": "build/module/index.js",
+    "scripts": {
+        "describe": "npm-scripts-info",
+        "build": "yarn build:main && yarn build:module",
+        "build:main": "tsc -p tsconfig.json",
+        "build:module": "tsc -p tsconfig.module.json",
+        "fix": "run-s fix:*",
+        "fix:tslint": "tslint --fix --project .",
+        "test": "run-s build test:* lint",
+        "lint": "tslint --project ./ -t stylish --quiet",
+        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "watch": "yarn build:main -- -w",
+        "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
+        "cov:html": "nyc report --reporter=html",
+        "cov:send": "nyc report --reporter=lcov && codecov",
+        "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
+        "doc": "run-s doc:html && open-cli build/docs/index.html",
+        "doc:html": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
+        "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
+        "prepare": "yarn build",
+        "npmignore": "npmignore -g ../../../.gitignore",
+        "prepare-release": "run-s npmignore build doc:html",
+        "link": "yarn link @renproject/interfaces && yarn link"
+    },
+    "dependencies": {
+        "@renproject/interfaces": "file:../interfaces",
+        "@types/bs58": "^4.0.1",
+        "@types/node": "^14.0.5",
+        "bchaddrjs": "^0.4.8",
+        "bitcore-lib": "^8.20.3",
+        "bitcore-lib-cash": "^8.20.3",
+        "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
+        "bs58": "^4.0.1",
+        "wallet-address-validator": "^0.2.4"
+    },
+    "config": {
+        "commitizen": {
+            "path": "cz-conventional-changelog"
+        }
+    },
+    "resolutions": {
+        "sha3": "^2.1.2"
+    },
+    "nyc": {
+        "extension": [
+            ".ts",
+            ".tsx"
+        ],
+        "exclude": [
+            "**/*.d.ts"
+        ],
+        "reporter": [
+            "text",
+            "html"
+        ],
+        "include": [
+            "src"
+        ]
+    },
+    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc",
+    "prettier": {
+        "singleQuote": false,
+        "tabWidth": 4
+    }
+}

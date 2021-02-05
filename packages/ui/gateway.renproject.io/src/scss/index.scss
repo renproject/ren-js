@@ -1,0 +1,15 @@
+:root {
+    font-size: 62.5%;
+}
+
+@import "~@renproject/fonts/fonts";
+
+@import "~@renproject/react-components/src/styles/common";
+
+@import './variables';
+
+@import './addressInput';
+@import './paused';
+@import './container';
+@import './settingsPage';
+@import './_general';

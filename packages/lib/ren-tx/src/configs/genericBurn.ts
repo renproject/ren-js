@@ -257,7 +257,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
             const tx: GatewayTransaction =
                 Object.values(context.tx.transactions)[0] || {};
 
-            tx.sourceTxConfTarget = await burn.burnConfirmations();
+            tx.sourceTxConfTarget = await burn.confirmationTarget();
             tx.sourceTxAmount = Number(context.tx.suggestedAmount);
             tx.rawSourceTx = {
                 amount: String(context.tx.suggestedAmount),
@@ -308,10 +308,9 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     };
 };
 
-export const burnConfig: Partial<MachineOptions<
-    BurnMachineContext,
-    BurnMachineEvent
->> = {
+export const burnConfig: Partial<
+    MachineOptions<BurnMachineContext, BurnMachineEvent>
+> = {
     actions: {
         burnSpawner: spawnBurnTransaction,
     },

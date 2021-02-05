@@ -103,7 +103,7 @@ describe("Refactor - Burning", () => {
             blue(`[${burnAndRelease.txHash().slice(0, 6)}]`),
         );
 
-        const targetConfirmations = await burnAndRelease.burnConfirmations();
+        const targetConfirmations = await burnAndRelease.confirmationTarget();
 
         const result = await burnAndRelease
             .release()

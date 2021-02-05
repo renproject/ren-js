@@ -1,7 +1,7 @@
 {
     "name": "@renproject/ren",
-    "version": "1.0.13",
-    "description": "Official Ren JavaScript client",
+    "version": "2.1.0",
+    "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -10,97 +10,92 @@
         "access": "public"
     },
     "keywords": [
-        "ren",
         "ren-js",
+        "ren",
         "renvm",
         "ren project",
         "cryptocurrencies",
         "blockchain",
-        "interoperability"
+        "ethereum",
+        "bitcoin",
+        "defi"
     ],
     "author": "Ren",
-    "license": "GPL-3.0",
+    "license": "MIT",
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "build/main/index.js",
-    "typings": "build/main/index.d.ts",
-    "module": "build/module/index.js",
-    "bundled": "build/bundled/browser.js",
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
+        "clean": "yarn rimraf ./build",
+        "link": "yarn link",
+        "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
-        "build-all": "yarn build:main && yarn build:module && yarn build:bundled",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../../webpack.config.js --mode production --progress --color",
+        "prettier": "yarn fix:prettier",
+        "lint": "run-s lint:*",
+        "lint:eslint": "eslint src/**/*.ts",
+        "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
-        "fix:tslint": "tslint --fix --project .",
-        "test": "run-s build test:unit lint",
-        "test-all": "ALL_TESTS=true run-s build test:unit lint",
-        "lint": "tslint --project ./ -t stylish --quiet",
-        "#test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "fix:eslint": "yarn lint:eslint --fix",
+        "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
+        "test": "run-s build:main test:* lint",
+        "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
-        "watch": "yarn build:main -- -w",
-        "cov": "run-s build test:unit cov:html && open-cli coverage/index.html",
+        "watch": "run-s build:main && run-s \"build:main -- -w\"",
+        "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
-        "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
+        "cov:check": "nyc report && nyc check-coverage --lines 0 --functions 0 --branches 0",
         "doc": "run-s doc:html && open-cli build/docs/index.html",
         "doc:html-succint": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
-        "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --name \"RenJS Types Documentation\" --readme ./DOCS.md",
+        "doc:html": "typedoc src/,$(ls -p ../*/build/main/*.d.ts ../*/build/main/*/*.d.ts ../multiwallet/*/build/main/*.d.ts ../multiwallet/*/build/main/*/*.d.ts ../chains/*/build/main/*.d.ts ../chains/*/build/main/*/*.d.ts ../../ui/*/dist/*.d.ts ../../ui/*/dist/*/*.d.ts | grep -v \"/ren/\" | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --target ES6 --mode file --out build/docs --includeDeclarations --excludeExternals --excludeNotExported --excludePrivate --excludeProtected --name \"RenJS v2.0.0 Documentation\" --readme ./DOCS.md --theme minimal",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
-        "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
-        "prepare": "yarn build-all",
+        "doc:publish": "gh-pages --repo git@github.com:renproject/ren-js-docs.git -m \"[ci skip] Updates\" -d build/docs",
+        "prepare": "yarn build",
         "npmignore": "npmignore -g ../../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html doc:publish",
-        "link": "yarn link @renproject/chains @renproject/interfaces @renproject/provider @renproject/rpc @renproject/utils && yarn link"
+        "prepare-release": "run-s npmignore build doc:html doc:publish"
     },
     "dependencies": {
-        "@renproject/chains": "file:../chains",
-        "@renproject/contracts": "^0.6.1",
-        "@renproject/interfaces": "file:../interfaces",
-        "@renproject/provider": "file:../provider",
-        "@renproject/rpc": "file:../rpc",
-        "@renproject/utils": "file:../utils",
-        "@types/bs58": "^4.0.1",
-        "@types/node": "^14.0.5",
-        "bignumber.js": "^9.0.0",
-        "bs58": "^4.0.1",
-        "ethereumjs-util": "^7.0.1",
+        "@renproject/interfaces": "^2.1.0",
+        "@renproject/provider": "^2.1.0",
+        "@renproject/rpc": "^2.1.0",
+        "@renproject/utils": "^2.1.0",
+        "@types/bn.js": "^5.1.0",
+        "@types/node": ">=10",
+        "bignumber.js": "^9.0.1",
+        "bn.js": "^5.1.3",
         "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.15",
-        "wallet-address-validator": "^0.2.4",
-        "web3": "^2.0.0-alpha.1",
-        "web3-core": "^2.0.0-alpha.1"
+        "web3-eth-abi": "^2.0.0-alpha.1"
     },
-    "config": {
-        "commitizen": {
-            "path": "cz-conventional-changelog"
-        }
+    "devDependencies": {
+        "gh-pages": "^3.1.0"
     },
     "resolutions": {
         "sha3": "^2.1.2"
     },
     "nyc": {
-        "extension": [
-            ".ts",
-            ".tsx"
-        ],
+        "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [
-            "**/*.d.ts"
-        ],
-        "reporter": [
-            "text",
-            "html"
+            "**/*.d.ts",
+            "**/*.spec.js"
         ],
         "include": [
             "src"
         ]
     },
-    "gitHead": "2159ea39f92855123bd38779a0dc4a83c77ae5cc",
     "prettier": {
+        "printWidth": 80,
+        "semi": true,
         "singleQuote": false,
-        "tabWidth": 4
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "endOfLine": "lf",
+        "arrowParens": "always"
     }
 }

@@ -136,7 +136,9 @@ const initMinter = async (
         callback({
             type: "ERROR_LISTENING",
             data: new Error(
-                `Incorrect gateway address ${minter.gatewayAddress} != ${context.tx.gatewayAddress}`,
+                `Incorrect gateway address ${String(
+                    minter.gatewayAddress,
+                )} != ${context.tx.gatewayAddress}`,
             ),
         });
     }
@@ -149,7 +151,7 @@ const handleSettle = async (
     callback: Sender<any>,
 ) => {
     try {
-        await deposit
+        const res = await deposit
             .confirmed()
             .on("target", (confs, targetConfs) => {
                 const confirmedTx = {
@@ -173,9 +175,12 @@ const handleSettle = async (
                     data: confirmedTx,
                 });
             });
+
         callback({
             type: "CONFIRMED",
             data: {
+                sourceTxConfTarget: res._state.targetConfirmations,
+                sourceTxConfs: res._state.targetConfirmations,
                 sourceTxHash,
             },
         });
@@ -251,10 +256,25 @@ const handleMint = async (
     sourceTxHash: string,
     deposit: LockAndMintDeposit,
     callback: Sender<any>,
+    params: any,
 ) => {
-    await deposit
-        .mint()
-        .on("transactionHash", (transactionHash) => {
+    try {
+        const minter = deposit.mint(params);
+
+        const onConfirmation = () => {
+            const submittedTx = {
+                sourceTxHash,
+            };
+            callback({
+                type: "ACKNOWLEDGE",
+                data: submittedTx,
+            });
+
+            // only acknowledge once
+            minter.removeListener("confirmation", onConfirmation);
+        };
+
+        await minter.on("transactionHash", (transactionHash) => {
             const submittedTx = {
                 sourceTxHash,
                 destTxHash: transactionHash,
@@ -263,17 +283,19 @@ const handleMint = async (
                 type: "SUBMITTED",
                 data: submittedTx,
             });
-        })
-        .catch((e) => {
-            callback({
-                type: "SUBMIT_ERROR",
-                data: { sourceTxHash },
-                error: e,
-            });
         });
+
+        await minter.on("confirmation", onConfirmation);
+    } catch (e) {
+        callback({
+            type: "SUBMIT_ERROR",
+            data: { sourceTxHash },
+            error: e,
+        });
+    }
 };
 
-const mintFlow = async (
+const mintFlow = (
     context: GatewayMachineContext,
     callback: Sender<GatewayMachineEvent>,
     receive: Receiver<any>,
@@ -286,9 +308,12 @@ const mintFlow = async (
             deposit.depositDetails.transaction,
         );
 
-        //        const trackedDeposit = deposits.get(txHash);
-
-        deposits.set(txHash, deposit);
+        const trackedDep = deposits.get(txHash);
+        // if we have previously detected the deposit,
+        // don't emit an event
+        if (trackedDep) {
+            return;
+        }
 
         const persistedTx = context.tx.transactions[txHash];
 
@@ -299,6 +324,7 @@ const mintFlow = async (
             sourceTxAmount: parseInt(rawSourceTx.amount),
             sourceTxConfs: 0,
             rawSourceTx,
+            detectedAt: new Date().getTime(),
         };
 
         if (!persistedTx) {
@@ -306,8 +332,10 @@ const mintFlow = async (
                 type: "DEPOSIT",
                 data: { ...depositState },
             });
+        } else {
+            deposits.set(txHash, deposit);
+            callback({ type: "RESTORED", data: depositState });
         }
-        callback({ type: "RESTORED", data: depositState });
     };
 
     minter.on("deposit", depositHandler);
@@ -315,12 +343,12 @@ const mintFlow = async (
     receive((event) => {
         const deposit = deposits.get(event.hash);
         if (!deposit) {
-            // Theoretically this should never happen
-            callback({
-                type: "ERROR",
-                data: event.data,
-                error: new Error(`missing deposit!: ${event.hash}`),
-            });
+            // This can happen when restoring, and is not an error
+            // callback({
+            //     type: "ERROR",
+            //     data: event.data,
+            //     error: new Error(`missing deposit!: ${String(event.hash)}`),
+            // });
             return;
         }
 
@@ -333,7 +361,12 @@ const mintFlow = async (
                     await handleSign(event.hash, deposit, callback);
                     break;
                 case "MINT":
-                    await handleMint(event.hash, deposit, callback);
+                    await handleMint(
+                        event.hash,
+                        deposit,
+                        callback,
+                        event.params,
+                    );
                     break;
             }
         };
@@ -374,18 +407,19 @@ const mintFlow = async (
 
 // Listen for confirmations on the source chain
 const depositListener = (context: GatewayMachineContext) => (
-    callback: Sender<any>,
+    callback: Sender<GatewayMachineEvent>,
     receive: Receiver<any>,
 ) => {
     let cleanup = () => {};
 
     initMinter(context, callback)
-        .then(async (minter) => {
+        .then((minter) => {
             cleanup = () => minter.removeAllListeners();
-            await mintFlow(context, callback, receive, minter);
+            mintFlow(context, callback, receive, minter);
+            callback({ type: "LISTENING" });
         })
         .catch((e) => {
-            callback({ type: "ERROR", error: e });
+            callback({ type: "ERROR_LISTENING", data: e });
         });
 
     return () => {
@@ -477,23 +511,20 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
 
         depositMachineSpawner: assign({
             depositMachines: (context, _) => {
-                const machines = context.depositMachines || {};
+                const machines: typeof context.depositMachines = {};
                 for (const tx of Object.entries(
                     context.tx.transactions || {},
                 )) {
                     const machineContext = {
-                        ...context,
                         deposit: tx[1],
                     };
 
-                    // We don't want child machines to have references to siblings
-                    delete (machineContext as any).depositMachines;
                     machines[tx[0]] = spawnDepositMachine(
                         machineContext,
                         machineContext.deposit.sourceTxHash,
                     );
                 }
-                return machines;
+                return { ...machines, ...context.depositMachines };
             },
         }),
         listenerAction: listenerAction as any,

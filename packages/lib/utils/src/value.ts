@@ -14,6 +14,7 @@ const toBigNumber = (valueIn: NumberValue): BigNumber =>
 export const toSmallestUnit = (value: NumberValue, decimals: number): string =>
     toBigNumber(value)
         .times(new BigNumber(10).exponentiatedBy(decimals))
+        .decimalPlaces(0)
         .toFixed();
 
 export const fromSmallestUnit = (

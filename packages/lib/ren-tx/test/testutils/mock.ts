@@ -7,7 +7,27 @@ const getConfs = (id: number) => {
     return confirmationRegistry[id];
 };
 
-export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
+const defaultDeposit = {
+    transaction: {
+        amount: "1",
+        txHash:
+            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+    },
+    amount: "1",
+};
+
+export interface MockLockChainParams {
+    targetConfirmations?: number;
+    deposits?: Array<typeof defaultDeposit>;
+}
+
+const defaultMockLockChainConf: Required<MockLockChainParams> = {
+    targetConfirmations: 50,
+    deposits: [defaultDeposit],
+};
+
+export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
+    const conf = { ...defaultMockLockChainConf, ...pconf };
     const id = confirmationRegistry.length;
     confirmationRegistry[id] = 0;
     const transactionConfidence = () => {
@@ -24,24 +44,18 @@ export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
         utils: {
             resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
-            resolveChainNetwork: () => "testnet",
         },
         transactionFromID: () => {},
-        transactionID: () =>
-            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+        transactionID: (tx) => tx.txHash,
         transactionConfidence,
         initialize: () => {
             return mockLockChain;
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
-            await onDeposit({
-                transaction: {
-                    amount: "1",
-                    txHash:
-                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                },
-                amount: "1",
-            });
+            await onDeposit(defaultDeposit);
+            for (let deposit of conf.deposits) {
+                await onDeposit(deposit);
+            }
         },
         getGatewayAddress: () => "gatewayAddress",
         getPubKeyScript: () => Buffer.from("pubkey"),
@@ -49,10 +63,8 @@ export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
         legacyName: "Btc",
         assetIsNative: () => true,
         assetIsSupported: () => true,
-        transactionRPCFormat: () => ({
-            txid: fromHex(
-                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-            ),
+        transactionRPCFormat: (tx) => ({
+            txid: fromHex(tx.txHash),
             txindex: "0",
         }),
         addressStringToBytes: (address: string): Buffer => Buffer.from(address),
@@ -76,7 +88,6 @@ export const buildMockMintChain = (minted?: boolean) => {
         utils: {
             resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
-            resolveChainNetwork: () => "testnet",
         },
         transactionFromID: () => {},
         // transactionID: () =>

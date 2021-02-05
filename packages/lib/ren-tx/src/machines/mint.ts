@@ -187,6 +187,8 @@ export const mintMachine = Machine<
             },
             on: {
                 EXPIRED: "completed",
+                // once we have ren-js listening for deposits,
+                // start the statemachines to determine deposit states
                 LISTENING: { actions: "depositMachineSpawner" },
                 ERROR_LISTENING: {
                     target: "srcInitializeError",
@@ -204,10 +206,7 @@ export const mintMachine = Machine<
                     ],
                 },
 
-                RESTORED: {
-                    actions: "broadcast",
-                },
-
+                // forward messages from child machines to renjs listeners
                 RESTORE: {
                     actions: "forwardEvent",
                 },
@@ -221,6 +220,10 @@ export const mintMachine = Machine<
                     actions: "forwardEvent",
                 },
 
+                // Send messages to child machines
+                RESTORED: {
+                    actions: "routeEvent",
+                },
                 CLAIM: { actions: "routeEvent" },
                 CONFIRMATION: { actions: "routeEvent" },
                 CONFIRMED: { actions: "routeEvent" },

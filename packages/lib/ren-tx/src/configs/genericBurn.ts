@@ -243,7 +243,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     const cleaners: Array<() => void> = [];
     let burning = false;
     burnAndRelease(context)
-        .then((burn) => {
+        .then(async (burn) => {
             // Ready to recieve SUBMIT
             callback({ type: "CREATED" });
             if (
@@ -257,6 +257,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
             const tx: GatewayTransaction =
                 Object.values(context.tx.transactions)[0] || {};
 
+            tx.sourceTxConfTarget = await burn.burnConfirmations();
             tx.sourceTxAmount = Number(context.tx.suggestedAmount);
             tx.rawSourceTx = {
                 amount: String(context.tx.suggestedAmount),

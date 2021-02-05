@@ -76,10 +76,13 @@ const mintModel = createModel(mintMachine).withEvents({
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
     EXPIRED: {},
+    LISTENING: {},
     CLAIMABLE: {
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
-    ACKNOWLEDGE: {},
+    ACKNOWLEDGE: {
+        cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
+    },
     ERROR_LISTENING: {},
 });
 
@@ -131,7 +134,9 @@ const depositModel = createModel(
         cases: [{ data: { sourceTxHash: "123" } }],
     },
     CONFIRMATION: {},
-    CONFIRMED: {},
+    CONFIRMED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     REJECT: {},
     SIGNED: {},
     CLAIM: {

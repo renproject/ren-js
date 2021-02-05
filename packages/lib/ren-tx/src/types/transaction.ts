@@ -59,6 +59,16 @@ export interface GatewayTransaction {
      * Latest error detected during processing a specific transaction
      */
     error?: Error;
+
+    /**
+     * Unix time when deposit was first detected
+     */
+    detectedAt: Number;
+
+    /**
+     * Unix time when mint was successful
+     */
+    completedAt?: Number;
 }
 
 /**
@@ -66,7 +76,7 @@ export interface GatewayTransaction {
  * that can recieve assets to mint on RenVM; or construct the parameters required
  * for burning and releasing from RenVM
  */
-export interface GatewaySession<CustomParams = any> {
+export interface GatewaySession<CustomParams = {}> {
     /**
      * A unique ID to identify the session
      */

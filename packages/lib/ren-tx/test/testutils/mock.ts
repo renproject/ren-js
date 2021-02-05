@@ -11,10 +11,11 @@ export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
     const id = confirmationRegistry.length;
     confirmationRegistry[id] = 0;
     const transactionConfidence = () => {
-        return {
+        const confidence = {
             current: getConfs(id),
             target: conf.targetConfirmations,
         };
+        return confidence;
     };
 
     const mockLockChain: LockChain = {
@@ -22,6 +23,7 @@ export const buildMockLockChain = (conf = { targetConfirmations: 50 }) => {
         assetDecimals: () => 1,
         utils: {
             addressIsValid: () => true,
+            resolveChainNetwork: () => "testnet",
         },
         transactionFromID: () => {},
         transactionID: () =>
@@ -72,6 +74,7 @@ export const buildMockMintChain = (minted?: boolean) => {
         transactionID: () => "tid" + String(new Date().getTime()),
         utils: {
             addressIsValid: () => true,
+            resolveChainNetwork: () => "testnet",
         },
         transactionFromID: () => {},
         // transactionID: () =>

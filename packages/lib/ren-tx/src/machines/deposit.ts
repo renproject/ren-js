@@ -2,7 +2,6 @@
 // TODO: Improve typings.
 
 import { assign, Machine, send, sendParent } from "xstate";
-import { createModel } from "xstate/lib/model";
 import { log } from "xstate/lib/actions";
 import { assert } from "@renproject/utils";
 
@@ -13,6 +12,19 @@ export interface DepositMachineContext {
     /** The deposit being tracked */
     deposit: GatewayTransaction;
 }
+
+const largest = (x?: number, y?: number): number => {
+    if (!x) {
+        if (y) return y;
+        return 0;
+    }
+    if (!y) {
+        if (x) return x;
+        return 0;
+    }
+    if (x > y) return x;
+    return y;
+};
 
 /** The states a deposit can be in */
 export interface DepositMachineSchema {
@@ -59,24 +71,15 @@ export type DepositMachineEvent =
     | { type: "ERROR"; data: GatewayTransaction; error: Error }
     | { type: "RESTORE"; data: GatewayTransaction }
     | { type: "RESTORED"; data: GatewayTransaction }
-    | { type: "CONFIRMED" }
+    | { type: "CONFIRMED"; data: GatewayTransaction }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "SIGNED"; data: GatewayTransaction }
     | { type: "SIGN_ERROR"; data: Error }
-    | { type: "CLAIM"; data: ContractParams }
+    | { type: "CLAIM"; data: GatewayTransaction; params: ContractParams }
     | { type: "REJECT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
     | { type: "SUBMIT_ERROR"; data: Error }
     | { type: "ACKNOWLEDGE" };
-
-const depositModel = createModel<DepositMachineContext, DepositMachineEvent>({
-    deposit: {
-        sourceTxConfs: 0,
-        sourceTxHash: "",
-        sourceTxAmount: 0,
-        rawSourceTx: { amount: "0", transaction: {} },
-    },
-});
 
 /** Statemachine that tracks individual deposits */
 export const depositMachine = Machine<
@@ -86,26 +89,25 @@ export const depositMachine = Machine<
 >(
     {
         id: "RenVMDepositTransaction",
-        context: depositModel.initialContext,
         initial: "checkingCompletion",
         states: {
             // Checking if deposit is completed so that we can skip initialization
             checkingCompletion: {
                 entry: [send("CHECK")],
 
-                // If we already have a dest hash, no need to listen
+                // If we already have completed, no need to listen
                 on: {
                     CHECK: [
                         {
-                            target: "destInitiated",
-                            cond: "isDestInitiated",
+                            target: "completed",
+                            cond: "isCompleted",
                         },
                         { target: "restoringDeposit" },
                     ],
                 },
 
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             !state.context.deposit.error ? true : false,
                             "Error must not exist",
@@ -116,7 +118,7 @@ export const depositMachine = Machine<
             errorRestoring: {
                 entry: [log((ctx, _) => ctx.deposit.error, "ERROR")],
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
                             "Error must exist",
@@ -145,7 +147,7 @@ export const depositMachine = Machine<
                 },
 
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             !state.context.deposit.error ? true : false,
                             "Error must not exist",
@@ -172,10 +174,14 @@ export const depositMachine = Machine<
                             target: "accepted",
                             cond: "isAccepted",
                         },
-                        {
-                            target: "destInitiated",
-                            cond: "isDestInitiated",
-                        },
+                        // We need to call "submit" again in case
+                        // a transaction has been sped up / ran out of gas
+                        // so we revert back to accepted when restored instead
+                        // of waiting on destination initiation
+                        // {
+                        //     target: "destInitiated",
+                        //     cond: "isDestInitiated",
+                        // },
                     ].reverse(),
                 },
                 meta: { test: async () => {} },
@@ -191,16 +197,30 @@ export const depositMachine = Machine<
                         {
                             target: "srcConfirmed",
                             actions: [
+                                assign({
+                                    deposit: ({ deposit }, evt) => {
+                                        if (deposit.sourceTxConfTarget) {
+                                            console.log("confirmed", evt);
+                                            return {
+                                                ...deposit,
+                                                sourceTxConfs: largest(
+                                                    deposit.sourceTxConfs,
+                                                    evt.data.sourceTxConfs,
+                                                ),
+                                                sourceTxConfTarget: largest(
+                                                    deposit.sourceTxConfTarget,
+                                                    evt.data.sourceTxConfTarget,
+                                                ),
+                                            };
+                                        }
+                                        return deposit;
+                                    },
+                                }),
                                 sendParent((ctx, _) => {
                                     return {
                                         type: "DEPOSIT_UPDATE",
                                         data: ctx.deposit,
                                     };
-                                }),
-                                assign({
-                                    deposit: (context, _) => ({
-                                        ...context.deposit,
-                                    }),
                                 }),
                             ],
                         },
@@ -274,7 +294,7 @@ export const depositMachine = Machine<
             errorAccepting: {
                 entry: [log((ctx, _) => ctx.deposit.error, "ERROR")],
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
                             "error must exist",
@@ -328,7 +348,7 @@ export const depositMachine = Machine<
                     REJECT: "rejected",
                 },
                 meta: {
-                    test: async (_: void, state: any) => {
+                    test: (_: void, state: any) => {
                         assert(
                             state.context.deposit.error ? true : false,
                             "error must exist",
@@ -384,7 +404,17 @@ export const depositMachine = Machine<
 
             destInitiated: {
                 on: {
-                    ACKNOWLEDGE: "completed",
+                    ACKNOWLEDGE: {
+                        target: "completed",
+                        actions: [
+                            assign({
+                                deposit: (ctx, _) => ({
+                                    ...ctx.deposit,
+                                    completedAt: new Date().getTime(),
+                                }),
+                            }),
+                        ],
+                    },
                 },
                 meta: { test: async () => {} },
             },
@@ -394,11 +424,24 @@ export const depositMachine = Machine<
             },
 
             completed: {
-                entry: sendParent((ctx, _) => ({
-                    type: "DEPOSIT_COMPLETED",
-                    data: ctx.deposit,
-                })),
-                meta: { test: async () => {} },
+                entry: [
+                    sendParent((ctx, _) => ({
+                        type: "DEPOSIT_COMPLETED",
+                        data: ctx.deposit,
+                    })),
+                    sendParent((ctx, _) => ({
+                        type: "DEPOSIT_UPDATE",
+                        data: ctx.deposit,
+                    })),
+                ],
+                meta: {
+                    test: (_: void, state: any) => {
+                        assert(
+                            state.context.deposit.completedAt ? true : false,
+                            "Must have completedAt timestamp",
+                        );
+                    },
+                },
             },
         },
     },
@@ -416,6 +459,8 @@ export const depositMachine = Machine<
                 renSignature ? true : false,
             isDestInitiated: ({ deposit: { destTxHash } }) =>
                 destTxHash ? true : false,
+            isCompleted: ({ deposit: { completedAt } }) =>
+                completedAt ? true : false,
         },
     },
 );

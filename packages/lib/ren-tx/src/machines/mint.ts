@@ -118,7 +118,6 @@ export const mintMachine = Machine<
                     },
                     {
                         target: "listening",
-                        actions: "depositMachineSpawner",
                         cond: "isCreated",
                     },
                     {
@@ -188,6 +187,7 @@ export const mintMachine = Machine<
             },
             on: {
                 EXPIRED: "completed",
+                LISTENING: { actions: "depositMachineSpawner" },
                 ERROR_LISTENING: {
                     target: "srcInitializeError",
                     actions: [
@@ -208,6 +208,9 @@ export const mintMachine = Machine<
                     actions: "broadcast",
                 },
 
+                RESTORE: {
+                    actions: "forwardEvent",
+                },
                 SETTLE: {
                     actions: "forwardEvent",
                 },
@@ -226,6 +229,7 @@ export const mintMachine = Machine<
                 SUBMIT_ERROR: { actions: "routeEvent" },
                 SIGNED: { actions: "routeEvent" },
                 SUBMITTED: { actions: "routeEvent" },
+                ACKNOWLEDGE: { actions: "routeEvent" },
 
                 CLAIMABLE: {
                     actions: assign({
@@ -251,10 +255,11 @@ export const mintMachine = Machine<
                     }),
                 },
 
-                DEPOSIT_COMPLETED: {
-                    target: "completed",
-                    cond: "isCompleted",
-                },
+                // We only complete when expiring
+                // DEPOSIT_COMPLETED: {
+                //     target: "completed",
+                //     cond: "isCompleted",
+                // },
 
                 DEPOSIT_UPDATE: [
                     {

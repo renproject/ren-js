@@ -77,9 +77,7 @@ const createDepositHandler = (retries = -1) => {
                             try {
                                 deposit._state.logger.log(`Calling .mint`);
                                 await deposit
-                                    .mint({
-                                        _extraMsg: "test", // Override value.
-                                    })
+                                    .mint()
                                     .on("transactionHash", (txHash) => {
                                         deposit._state.logger.log(
                                             `txHash: ${
@@ -95,7 +93,7 @@ const createDepositHandler = (retries = -1) => {
                             } catch (error) {
                                 // Ethereum revert message.
                                 if (
-                                    /execution reverted/.exec(
+                                    /(execution reverted)|(Transaction has been reverted)/.exec(
                                         error.message || String(error),
                                     )
                                 ) {

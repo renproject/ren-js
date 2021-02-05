@@ -1,4 +1,4 @@
-import { AbiInput, AbiItem, EthArg, EthArgs } from "@renproject/interfaces";
+import { AbiItem, EthType } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 

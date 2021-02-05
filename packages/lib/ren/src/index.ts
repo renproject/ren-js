@@ -1,17 +1,26 @@
-import { RenNetworkDetails } from "@renproject/contracts";
 import {
-    Asset, BurnAndReleaseParams, BurnAndReleaseParamsSimple, Chain, LockAndMintParams,
-    LockAndMintParamsSimple, Logger, LogLevel, LogLevelString, RenContract, RenNetwork, RenTokens,
-    SendParams, SimpleLogger, Tokens, UnmarshalledFees,
+    BurnAndReleaseParams,
+    DepositCommon,
+    LockAndMintParams,
+    LockChain,
+    Logger,
+    LogLevel,
+    LogLevelString,
+    MintChain,
+    RenNetwork,
+    RenNetworkString,
+    SimpleLogger,
 } from "@renproject/interfaces";
-import { MultiProvider, Provider } from "@renproject/provider";
-import { RenVMParams, RenVMProvider, RenVMResponses, unmarshalFees } from "@renproject/rpc";
+import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
 import {
-    getGatewayAddress, getTokenAddress, NetworkDetails, resolveSendCall, stringToNetwork, utils,
+    fromSmallestUnit,
+    randomNonce,
+    toSmallestUnit,
 } from "@renproject/utils";
-import Web3 from "web3";
+import BigNumber from "bignumber.js";
 
 import { BurnAndRelease } from "./burnAndRelease";
+import { defaultDepositHandler } from "./defaultDepositHandler";
 import { LockAndMint } from "./lockAndMint";
 
 export interface RenJSConfig {
@@ -20,139 +29,283 @@ export interface RenJSConfig {
 }
 
 /**
- * This is the main exported class.
+ * This is the main exported class from `@renproject/ren`.
  *
  * ```typescript
  * import RenJS from "@renproject/ren";
  * ```
  *
- * It's initialized with a network, which controls both the RenVM network and
- * Ethereum chain to use:
+ * By default, RenJS will connect to the RenVM mainnet network. To connect
+ * to `testnet` or to configure a custom connection, RenJS takes an optional
+ * provider object. See the [[constructor]] for more details.
  *
  * ```typescript
  * new RenJS(); // Same as `new RenJS("mainnet");`
  * new RenJS("testnet");
- * new RenJS({ ...NetworkMainnet, lightnodeURL: "custom lightnode URL" });
+ * new RenJS(custom provider object);
  * ```
- *
- * A second optional parameter lets you provide a RenVM RPC provider or a
- * lightnode URL.
  *
  * It then exposes two main functions:
  * 1. [[lockAndMint]] - for transferring assets to Ethereum.
  * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
+ *
+ * Also see:
+ * 1. [[getFees]] - for estimating the fees that will be incurred by minting or
+ * burning.
+ * 2. [[defaultDepositHandler]]
+ *
  */
 export default class RenJS {
-    // Expose constants so they can be accessed on the RenJS class
-    // e.g. `RenJS.Tokens`
-    public static Tokens = Tokens;
-    public static Networks = RenNetwork;
-    public static NetworkDetails = NetworkDetails;
-    public static Chains = Chain;
-    public static utils: typeof utils = utils;
-
-    // Not static
-    public readonly utils: typeof utils = utils;
-    public readonly renVM: RenVMProvider;
-    public readonly network: RenNetworkDetails;
-
-    private readonly logger: Logger;
+    // /**
+    //  * [STATIC] `Tokens` exposes the tokens that can be passed in to the lockAndMint and
+    //  * burnAndRelease methods.
+    //  */
+    // public static Tokens = Tokens;
 
     /**
-     * Takes a Network object that contains relevant addresses.
-     * @param network One of "mainnet" (or empty), "testnet" or a custom
-     *                Network object.
+     * `Networks` exposes the network options that can be passed in to the RenJS
+     * constructor. `Networks.Mainnet` resolves to the string `"mainnet"`.
      */
-    constructor(network?: RenNetworkDetails | string | null | undefined, providerOrConfig?: string | Provider | RenJSConfig) {
-        this.network = stringToNetwork(network);
+    public static Networks = RenNetwork;
 
-        let provider: string | Provider | undefined;
-        let config: RenJSConfig | undefined;
-        if (providerOrConfig && (typeof providerOrConfig === "string" || (providerOrConfig as Provider).sendMessage)) {
-            provider = providerOrConfig as (string | Provider);
-        } else if (providerOrConfig) {
-            config = providerOrConfig as RenJSConfig;
-        }
+    /**
+     * A collection of helper functions. [[utils.randomNonce]] can be be used to
+     * generate a nonce when calling [[RenJS.lockAndMint]].
+     */
+    public static utils = {
+        randomNonce,
+        toSmallestUnit,
+        fromSmallestUnit,
+        fromAscii: (str: string) => Buffer.from(str),
+    };
 
-        this.logger = (config && config.logger) || new SimpleLogger((config && config.logLevel) || LogLevel.Error);
+    /**
+     * `RenJS.defaultDepositHandler` can be passed as a deposit callback when
+     * minting. It will handle submitting to RenVM and then to the mint-chain,
+     * as long as a valid provider for the mint-chain is given.
+     *
+     * This is not recommended for front-ends, since it may trigger a wallet
+     * pop-up unexpectedly when the mint is ready to be submitted.
+     *
+     * ```ts
+     * lockAndMint.on("deposit", RenJS.defaultDepositHandler);
+     * ```
+     */
+    public static defaultDepositHandler = defaultDepositHandler;
+
+    /**
+     * @hidden
+     */
+    public readonly utils = RenJS.utils;
+
+    /**
+     * RenVM provider exposing `sendMessage` and other helper functions for
+     * interacting with RenVM. See [[AbstractRenVMProvider]].
+     *
+     * ```ts
+     * renJS.renVM.sendMessage("ren_queryNumPeers", {});
+     * ```
+     */
+    public readonly renVM: AbstractRenVMProvider;
+
+    private readonly _logger: Logger;
+
+    /**
+     * Accepts the name of a network, or a network object.
+     *
+     * @param network Provide the name of a network - `"mainnet"` or `"testnet"` - or a network object.
+     * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
+     */
+    constructor(
+        providerOrNetwork?:
+            | RenNetwork
+            | RenNetworkString
+            | AbstractRenVMProvider
+            | null
+            | undefined,
+        config?: RenJSConfig,
+    ) {
+        // const provider: string | Provider | undefined;
+        // let config: RenJSConfig | undefined;
+        // if (
+        //     providerOrConfig &&
+        //     (typeof providerOrConfig === "string" ||
+        //         (providerOrConfig as Provider).sendMessage)
+        // ) {
+        //     provider = providerOrConfig as string | Provider;
+        // } else if (providerOrConfig) {
+        //     config = providerOrConfig as RenJSConfig;
+        // }
+
+        this._logger =
+            (config && config.logger) ||
+            new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         // Use provided provider, provider URL or default lightnode URL.
-        const rpcProvider: Provider<RenVMParams, RenVMResponses> = ((provider && typeof provider !== "string") ?
-            provider :
-            new MultiProvider<RenVMParams, RenVMResponses>(
-                provider ?
-                    [provider] :
-                    [this.network.lightnode],
-                this.logger,
-            )
-        ) as unknown as Provider<RenVMParams, RenVMResponses>;
-
-        this.renVM = new RenVMProvider(rpcProvider, this.logger);
+        this.renVM =
+            providerOrNetwork && typeof providerOrNetwork !== "string"
+                ? providerOrNetwork
+                : new CombinedProvider(
+                      providerOrNetwork || RenNetwork.Mainnet,
+                      this._logger,
+                  );
     }
 
+    public getFees = async ({
+        asset,
+        from,
+        to,
+    }: {
+        asset: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: LockChain<any, any, any> | MintChain<any, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        to: LockChain<any, any, any> | MintChain<any, any>;
+    }): Promise<{
+        lock?: BigNumber;
+        release?: BigNumber;
+        mint: number;
+        burn: number;
+    }> => {
+        if (!(await from.assetIsSupported(asset))) {
+            throw new Error(`Asset not supported by chain ${from.name}.`);
+        }
+        if (!(await to.assetIsSupported(asset))) {
+            throw new Error(`Asset not supported by chain ${to.name}.`);
+        }
+
+        let fees;
+
+        if (await from.assetIsNative(asset)) {
+            // LockAndMint
+            const mintFees = await (to as MintChain).getFees(asset);
+            const selector = this.renVM.selector({ asset, from, to });
+            const lockFees = await this.renVM.estimateTransactionFee(
+                selector,
+                from,
+            );
+            fees = {
+                ...lockFees,
+                ...mintFees,
+            };
+        } else if (await to.assetIsNative(asset)) {
+            // BurnAndRelease
+            const mintFees = await (from as MintChain).getFees(asset);
+            const selector = this.renVM.selector({ asset, from, to });
+            const lockFees = await this.renVM.estimateTransactionFee(
+                selector,
+                to,
+            );
+            fees = {
+                ...lockFees,
+                ...mintFees,
+            };
+        } else {
+            // BurnAndMint
+            const mintFees = await (from as MintChain).getFees(asset);
+            const burnFees = await (to as MintChain).getFees(asset);
+            fees = {
+                mint: mintFees.mint,
+                burn: burnFees.burn,
+            };
+        }
+
+        return fees;
+    };
+
     /**
-     * Submits the commitment and transaction to RenVM, and then submits the
-     * signature to the adapter address.
+     * `lockAndMint` initiates the process of bridging an asset from its native
+     * chain to a host chain.
+     *
+     * See [[LockAndMintParams]] for all the options that can be set.
+     *
+     * Returns a [[LockAndMint]] object.
+     *
+     * Example initialization:
+     *
+     * ```js
+     * const lockAndMint = renJS.lockAndMint({
+     *     asset: "BTC",
+     *     from: Bitcoin(),
+     *     to: Ethereum(web3Provider).Account({
+     *         address: "0x...",
+     *     }),
+     * });
+     * ```
      *
      * @param params See [[LockAndMintParams]].
-     * @returns An instance of [[LockAndMint]].
      */
-    public readonly lockAndMint = (params: LockAndMintParams | LockAndMintParamsSimple | SendParams): LockAndMint => {
-        if ((params as SendParams).sendTo && !(params as LockAndMintParamsSimple).contractFn) {
-            params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as LockAndMintParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as LockAndMintParamsSimple;
-            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
-        }
-        return new LockAndMint(this.renVM, this.network, params, this.logger);
-    }
+    public readonly lockAndMint = async <
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Transaction = any,
+        Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Address extends string | { address: string } = any
+    >(
+        params: LockAndMintParams<Transaction, Deposit, Address>,
+    ): Promise<LockAndMint<Transaction, Deposit, Address>> =>
+        new LockAndMint<Transaction, Deposit, Address>(
+            this.renVM,
+            params,
+            this._logger,
+        )._initialize();
 
     /**
-     * Submits a burn log to RenVM.
-     *
-     * @param params See [[BurnAndReleaseParams]].
-     * @returns An instance of [[BurnAndRelease]].
+     * `burnAndRelease` submits a burn log to RenVM.
+     * Returns a [[BurnAndRelease]] object.
      */
-    public readonly burnAndRelease = (params: BurnAndReleaseParams | BurnAndReleaseParamsSimple | SendParams): BurnAndRelease => {
-        if ((params as SendParams).sendTo && !(params as BurnAndReleaseParamsSimple).contractFn) {
-            params = resolveSendCall(this.network, params as SendParams);
-        } else if ((params as LockAndMintParamsSimple).sendTo) {
-            const { sendTo, contractFn, contractParams, txConfig, ...restOfParams } = params as BurnAndReleaseParamsSimple;
-            params = { ...restOfParams, contractCalls: [{ sendTo, contractFn, contractParams, txConfig }] };
-        }
-        return new BurnAndRelease(this.renVM, this.network, params, this.logger);
-    }
-
-    public readonly getTokenAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getTokenAddress(this.network, web3, token);
-    public readonly getGatewayAddress = (web3: Web3, token: RenTokens | RenContract | Asset | ("BTC" | "ZEC" | "BCH")) => getGatewayAddress(this.network, web3, token);
-
-    public readonly getFees = (): Promise<UnmarshalledFees> => this.renVM.queryFees().then(unmarshalFees);
+    public readonly burnAndRelease = async <
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Transaction = any,
+        Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Address extends string | { address: string } = any
+    >(
+        params: BurnAndReleaseParams<Transaction, Deposit, Address>,
+    ): Promise<BurnAndRelease<Transaction, Deposit, Address>> =>
+        new BurnAndRelease<Transaction, Deposit, Address>(
+            this.renVM,
+            params,
+            this._logger,
+        )._initialize();
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////// //
 // EXPORTS                                                                    //
 // Based on https://github.com/MikeMcl/bignumber.js/blob/master/bignumber.js  //
-////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////// //
 
-// tslint:disable: no-any no-object-mutation strict-type-predicates no-typeof-undefined
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any */
 
-// tslint:disable-next-line: no-string-literal
-(RenJS as any)["default"] = (RenJS as any).RenJS = RenJS;
+(RenJS as any).default = (RenJS as any).RenJS = RenJS;
 
 // AMD
 try {
     // @ts-ignore
-    if (typeof define === "function" && define.amd) { define(() => RenJS); }
-} catch (error) { /* ignore */ }
+    if (typeof define === "function" && define.amd) {
+        // @ts-ignore
+        define(() => RenJS);
+    }
+} catch (error) {
+    /* ignore */
+}
 
 // Node.js and other environments that support module.exports.
-try { // @ts-ignore
-    if (typeof module !== "undefined" && module.exports) { module.exports = RenJS; }
-} catch (error) { /* ignore */ }
+try {
+    // @ts-ignore
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = RenJS;
+    }
+} catch (error) {
+    /* ignore */
+}
 
 // Browser.
 try {
     // @ts-ignore
-    if (typeof window !== "undefined" && window) { (window as any).RenJS = RenJS; }
-} catch (error) { /* ignore */ }
+    if (typeof window !== "undefined" && window) {
+        (window as any).RenJS = RenJS;
+    }
+} catch (error) {
+    /* ignore */
+}

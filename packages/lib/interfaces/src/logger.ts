@@ -1,61 +1,103 @@
-// tslint:disable: no-any no-console
+/* eslint-disable no-console */
 
 import BigNumber from "bignumber.js";
 
-export interface Logger {
-    error(message?: any, ...optionalParams: any[]): void;
-    warn(message?: any, ...optionalParams: any[]): void;
-    log(message?: any, ...optionalParams: any[]): void;
-    info(message?: any, ...optionalParams: any[]): void;
-    debug(message?: any, ...optionalParams: any[]): void;
-    trace(message?: any, ...optionalParams: any[]): void;
-}
-
 export enum LogLevel {
-    Error = "error",
-    Warn = "warn",
-    Log = "log",
-    Info = "info",
-    Debug = "debug",
-    Trace = "trace",
+    Error = 0,
+    Warn = 1,
+    Log = 2,
+    Info = 3,
+    Debug = 4,
+    Trace = 5,
 }
-export type LogLevelString = "error" | "warn" | "log" | "info" | "debug" | "trace" | LogLevel;
 
-const levelValue = (level: LogLevel) => {
+export interface Logger {
+    level?: unknown;
+    error(message?: unknown, ...optionalParams: unknown[]): void;
+    warn(message?: unknown, ...optionalParams: unknown[]): void;
+    log(message?: unknown, ...optionalParams: unknown[]): void;
+    info(message?: unknown, ...optionalParams: unknown[]): void;
+    debug(message?: unknown, ...optionalParams: unknown[]): void;
+    trace(message?: unknown, ...optionalParams: unknown[]): void;
+}
+
+export type LogLevelString =
+    | "error"
+    | "warn"
+    | "log"
+    | "info"
+    | "debug"
+    | "trace"
+    | LogLevel;
+
+const stringToLogLevel = (level: LogLevelString): LogLevel => {
     switch (level) {
-        case LogLevel.Error: return 0;
-        case LogLevel.Warn: return 1;
-        case LogLevel.Log: return 2;
-        case LogLevel.Info: return 3;
-        case LogLevel.Debug: return 4;
-        case LogLevel.Trace: return 5;
+        case "error":
+        case LogLevel.Error:
+            return 0;
+        case "warn":
+        case LogLevel.Warn:
+            return 1;
+        case "warn":
+        case LogLevel.Log:
+            return 2;
+        case "info":
+        case LogLevel.Info:
+            return 3;
+        case "debug":
+        case LogLevel.Debug:
+            return 4;
+        case "trace":
+        case LogLevel.Trace:
+            return 5;
+        default:
+            return 1;
     }
 };
 
-const toString = (value: any) => {
+const logLevelName = (level: LogLevelString): string => {
+    switch (stringToLogLevel(level)) {
+        case LogLevel.Error:
+            return "ERROR";
+        case LogLevel.Warn:
+            return "WARN";
+        case LogLevel.Log:
+            return "WARN";
+        case LogLevel.Info:
+            return "INFO";
+        case LogLevel.Debug:
+            return "DEBUG";
+        case LogLevel.Trace:
+            return "TRACE";
+    }
+};
+
+const toString = (value: unknown): unknown => {
     try {
-        if (typeof value === "string") {
-            return value;
-        }
         if (BigNumber.isBigNumber(value)) {
             return value.toFixed();
         }
-        const seen: any[] = [];
-        return JSON.stringify(value, (_key, val) => {
-            if (val !== null && typeof val === "object") {
-                if (seen.indexOf(val) >= 0) {
-                    return;
-                }
-                seen.push(val);
-            }
-            return val;
-        }, "    ");
+        return value;
     } catch (error) {
         try {
             return String(value);
-        } catch (error) {
+        } catch (errorInner) {
             return "";
         }
+    }
+};
+
+type Prefix = (level: LogLevelString) => string | undefined;
+
+const printWithPrefix = (
+    l: typeof console.log,
+    prefix: string | undefined,
+    ...args: unknown[]
+) => {
+    if (prefix) {
+        l(prefix, ...args);
+    } else {
+        l(...args);
     }
 };
 
@@ -69,49 +111,116 @@ const toString = (value: any) => {
 export class SimpleLogger {
     public level: LogLevel;
 
-    constructor(level: LogLevelString = LogLevel.Warn) {
+    public logPrefix: Prefix = () => "";
+    public debugPrefix: Prefix = (level: LogLevelString) =>
+        `[RenJS][${logLevelName(level)}]`;
+
+    constructor(
+        level: LogLevelString = LogLevel.Warn,
+        logPrefix?: Prefix | string,
+        debugPrefix?: Prefix | string,
+    ) {
         this.level = level as LogLevel;
+        if (logPrefix) {
+            const logPrefixFn =
+                typeof logPrefix === "string" ? () => logPrefix : logPrefix;
+            this.logPrefix = logPrefixFn;
+            this.debugPrefix = logPrefixFn;
+        }
+        if (debugPrefix) {
+            const debugPrefixFn =
+                typeof debugPrefix === "string"
+                    ? () => debugPrefix
+                    : debugPrefix;
+            this.debugPrefix = debugPrefixFn;
+        }
     }
 
-    public trace = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Trace)) {
-            if (optionalParams.length) {
-                console.group(this.prefix(LogLevel.Trace) + toString(message));
+    public trace = (message?: unknown, ...optionalParams: unknown[]): void => {
+        if (this.level >= LogLevel.Trace) {
+            if (optionalParams.length && typeof message === "string") {
+                console.group(
+                    (this.debugPrefix(LogLevel.Trace) || "") + message,
+                );
                 console.trace(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
-                console.trace(this.prefix(LogLevel.Trace) + toString(message), ...optionalParams.map(toString));
+                printWithPrefix(
+                    console.trace,
+                    this.debugPrefix(LogLevel.Trace),
+                    toString(message),
+                    ...optionalParams.map(toString),
+                );
             }
         }
-    }
+    };
 
-    public debug = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Debug)) {
-            if (optionalParams.length) {
-                console.group(this.prefix(LogLevel.Debug) + toString(message));
+    public debug = (message?: unknown, ...optionalParams: unknown[]): void => {
+        if (this.level >= LogLevel.Debug) {
+            if (optionalParams.length && typeof message === "string") {
+                console.group(
+                    (this.debugPrefix(LogLevel.Debug) || "") + message,
+                );
                 console.debug(...optionalParams.map(toString));
                 console.groupEnd();
             } else {
-                console.debug(this.prefix(LogLevel.Debug) + toString(message), ...optionalParams.map(toString));
+                printWithPrefix(
+                    console.debug,
+                    this.debugPrefix(LogLevel.Debug),
+                    toString(message),
+                    ...optionalParams.map(toString),
+                );
             }
         }
-    }
+    };
 
-    public info = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Info)) { console.info(toString(message), ...optionalParams.map(toString)); }
-    }
+    public info = (...optionalParams: unknown[]): void => {
+        if (this.level >= LogLevel.Info) {
+            printWithPrefix(
+                console.info,
+                this.logPrefix(LogLevel.Info),
+                ...optionalParams.map(toString),
+            );
+        }
+    };
 
-    public log = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Log)) { console.log(toString(message), ...optionalParams.map(toString)); }
-    }
+    public log = (...optionalParams: unknown[]): void => {
+        if (this.level >= LogLevel.Log) {
+            printWithPrefix(
+                console.log,
+                this.logPrefix(LogLevel.Log),
+                ...optionalParams.map(toString),
+            );
+        }
+    };
 
-    public warn = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Warn)) { console.warn(toString(message), ...optionalParams.map(toString)); }
-    }
+    public warn = (...optionalParams: unknown[]): void => {
+        if (this.level >= LogLevel.Warn) {
+            printWithPrefix(
+                console.warn,
+                this.logPrefix(LogLevel.Warn),
+                ...optionalParams.map(toString),
+            );
+        }
+    };
 
-    public error = (message?: any, ...optionalParams: any[]): void => {
-        if (levelValue(this.level) >= levelValue(LogLevel.Error)) { console.error(toString(message), ...optionalParams.map(toString)); }
-    }
-
-    private readonly prefix = (level: LogLevel) => `[RenJS][${level.toUpperCase()}] `;
+    public error = (...optionalParams: unknown[]): void => {
+        if (this.level >= LogLevel.Error) {
+            printWithPrefix(
+                console.error,
+                this.logPrefix(LogLevel.Error),
+                ...optionalParams.map(toString),
+            );
+        }
+    };
 }
+
+export const NullLogger: Logger = {
+    level: -1,
+    trace: (_message?: unknown, ..._optionalParams: unknown[]): void => {},
+    debug: (_message?: unknown, ..._optionalParams: unknown[]): void => {},
+    info: (_message?: unknown, ..._optionalParams: unknown[]): void => {},
+    log: (_message?: unknown, ..._optionalParams: unknown[]): void => {},
+    warn: (_message?: unknown, ..._optionalParams: unknown[]): void => {},
+    error: (_message?: unknown, ..._optionalParams: unknown[]): void => {},
+};

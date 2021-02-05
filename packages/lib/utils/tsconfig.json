@@ -6,7 +6,6 @@
         "moduleResolution": "node",
         "module": "commonjs",
         "declaration": true,
-        "inlineSourceMap": true,
         "removeComments": false,
         "esModuleInterop": true,
         "strict": true,
@@ -18,15 +17,9 @@
         "listEmittedFiles": false,
         "listFiles": false,
         "pretty": true,
-        "lib": [
-            "es2017",
-            "dom"
-        ],
-        "types": [],
-        "typeRoots": [
-            "node_modules/@types",
-            "src/types"
-        ],
+        "lib": ["es2017", "dom"],
+        "types": ["mocha"],
+        "typeRoots": ["node_modules/@types", "src/types"],
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,
         "noImplicitThis": true,
@@ -35,13 +28,10 @@
         "suppressImplicitAnyIndexErrors": true,
         "strictPropertyInitialization": true,
         "alwaysStrict": true,
-        "strictFunctionTypes": true
+        "strictFunctionTypes": true,
+        "sourceMap": true
     },
-    "include": [
-        "src/**/*.ts",
-    ],
-    "exclude": [
-        "node_modules/**"
-    ],
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules/**"],
     "compileOnSave": false
 }

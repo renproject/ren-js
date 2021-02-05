@@ -1,76 +1,75 @@
 # `🛠️ RenJS`
 
-There's two official Javascript SDKs for interacting with [RenVM](https://renproject.io):
-
-1. **GatewayJS** ([`gateway-js` repository](https://github.com/renproject/ren-js/tree/master/packages/lib/gateway)): The simplest way to get started, providing a full user experience.
-2. **RenJS** (this repository): A lower-level SDK which can be integrated into your existing user interface.
-
-See the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) to start using RenJS.
-
-## Changelog
-
-See the [Releases](https://github.com/renproject/ren-js/releases) page.
-
-## About
-
-RenJS is a Node.js and browser SDK for bridging BTC, BCH and ZEC to your Ethereum dApp.
-
-<br />
-<hr />
-<br />
+`RenJS` is the official Javascript SDK for interacting with [RenVM](https://renproject.io). See [github.com/renproject/ren-js](https://github.com/renproject/ren-js) for information.
 
 ## Installation
 
 Install RenJS:
 
 ```sh
-yarn add @renproject/ren
+yarn add @renproject/ren@next
 # Or
-npm install --save @renproject/ren
+npm install --save @renproject/ren@next
 ```
 
 ## Usage
 
-Usage is described in the [getting started tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
+Usage is described in the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
 
-Example of bridging BTC into Ethereum (see [Infura](https://infura.io/) for initializing Web3):
+### RenVM network information
 
-```typescript
-const renJS = new RenJS("testnet"); // or "chaosnet"
-const web3 = new Web3("... Ethereum Kovan node or Infura ...");
+```ts
+const RenJS = require("@renproject/ren");
+const renJS = new RenJS();
 
-const amount = 0.001;
+// Print available methods
+console.log(renJS.renVM);
 
-const lockAndMint = renJS.lockAndMint({
-    sendToken: "BTC", // Bridge BTC to Ethereum
-    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
-    sendTo: "0xe520ec7e6C0D2A4f44033E2cC8ab641cb80F5176", // Recipient Ethereum address
-});
-
-const gatewayAddress = lockAndMint.addr();
-console.log(`Deposit ${amount} BTC to ${gatewayAddress}`);
-
-lockAndMint.waitAndSubmit(web3.currentProvider, 0 /* confirmations */)
-    .then(console.log)
-    .catch(console.error);
+// Query fees
+renJS.renVM.queryFees().then(console.log);
 ```
 
-Example of bridging BTC out of Ethereum:
+### Bridging BTC to Ethereum
+
+See [Infura](https://infura.io/) to get an Infura key.
 
 ```typescript
-const renJS = new RenJS("testnet"); // or "chaosnet"
+import { Bitcoin, Ethereum } from "@renproject/chains";
+import RenJS from "@renproject/ren";
+
+const lockAndMint = await new RenJS("testnet").lockAndMint({
+    asset: "BTC",
+    from: Bitcoin(),
+    to: Ethereum(web3Provider).Address("0x1234..."),
+});
+
+console.log(`Deposit BTC to ${lockAndMint.gatewayAddress}`);
+
+lockAndMint.on("deposit", async (deposit) => {
+    await deposit.confirmed();
+    await deposit.signed();
+    await deposit.mint();
+});
+```
+
+### Bridging BTC from Ethereum back to the Bitcoin chain
+
+```typescript
+const RenJS = require("@renproject/ren");
+const renJS = new RenJS("testnet"); // Or "mainnet"
 const web3 = new Web3("... Ethereum Kovan node or Infura ...");
 
 const amount = 0.001;
 
-renJS.burnAndRelease({
-    sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
-    sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
-    sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
-    web3Provider: web3.currentProvider,
-})
+renJS
+    .burnAndRelease({
+        sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
+        sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
+        sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
+        web3Provider: web3.currentProvider,
+    })
     .readFromEthereum()
-    .then(tx => tx.submit())
+    .then((tx) => tx.submit())
     .then(console.log)
     .catch(console.error);
 ```
@@ -88,28 +87,8 @@ renJS.burnAndRelease({
 yarn run build
 # or watch, to rebuild on new changes:
 yarn run watch
-
 ```
 
 ### Running tests
 
-You'll need to:
-
-1. Generate a mnemonic and send ETH (kovan for testnet) (path: `m/44'/60'/0'/0/`)
-2. Generate a private key and send BTC and ZEC (tBTC and TAZ for testnet)
-3. Generate an Infura API key
-
-Create a `.env` file which contains the following exported variables:
-
-```sh
-export MNEMONIC="your mnemonic here"
-export TESTNET_BITCOIN_KEY="your bitcoin private key (encoded in WIF)"
-export INFURA_KEY="your infura key (for it's v3 endpoint)"
-export NETWORK="mainnet or testnet"
-```
-
-Then just run the following command to execute the tests. Make sure there is sufficient Kovan ETH in the linked account before running tests.
-
-```sh
-yarn run test
-```
+See [../test](../test).

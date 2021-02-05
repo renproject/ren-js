@@ -1,169 +1,38 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
-import { TransactionConfig } from "web3-core";
 
-import { AbiInput } from "./abi";
-import { RenContract } from "./renVM";
-import { UTXOIndex } from "./utxo";
+import { DepositCommon, LockChain, MintChain } from "./chain";
+import { EthArgs } from "./ethArgs";
 
-export { TransactionConfig } from "web3-core";
 export type BNInterface = { toString(x?: "hex"): string };
 export type NumberValue = string | number | BigNumber | BNInterface;
 
-export enum RenTokens {
-    BTC = "BTC",
-    ZEC = "ZEC",
-    BCH = "BCH",
-}
-
-// tslint:disable-next-line: no-any
-export type provider = any;
-
-export type EthInt =
-    | "int"
-    | "int8"
-    | "int16"
-    | "int24"
-    | "int32"
-    | "int40"
-    | "int48"
-    | "int56"
-    | "int64"
-    | "int72"
-    | "int80"
-    | "int88"
-    | "int96"
-    | "int104"
-    | "int112"
-    | "int120"
-    | "int128"
-    | "int136"
-    | "int144"
-    | "int152"
-    | "int160"
-    | "int168"
-    | "int176"
-    | "int184"
-    | "int192"
-    | "int200"
-    | "int208"
-    | "int216"
-    | "int224"
-    | "int232"
-    | "int240"
-    | "int248"
-    | "int256";
-export type EthUint =
-    | "uint"
-    | "uint8"
-    | "uint16"
-    | "uint24"
-    | "uint32"
-    | "uint40"
-    | "uint48"
-    | "uint56"
-    | "uint64"
-    | "uint72"
-    | "uint80"
-    | "uint88"
-    | "uint96"
-    | "uint104"
-    | "uint112"
-    | "uint120"
-    | "uint128"
-    | "uint136"
-    | "uint144"
-    | "uint152"
-    | "uint160"
-    | "uint168"
-    | "uint176"
-    | "uint184"
-    | "uint192"
-    | "uint200"
-    | "uint208"
-    | "uint216"
-    | "uint224"
-    | "uint232"
-    | "uint240"
-    | "uint248"
-    | "uint256";
-export type EthByte =
-    | "bytes"
-    | "bytes1"
-    | "bytes2"
-    | "bytes3"
-    | "bytes4"
-    | "bytes5"
-    | "bytes6"
-    | "bytes7"
-    | "bytes8"
-    | "bytes9"
-    | "bytes10"
-    | "bytes11"
-    | "bytes12"
-    | "bytes13"
-    | "bytes14"
-    | "bytes15"
-    | "bytes16"
-    | "bytes17"
-    | "bytes18"
-    | "bytes19"
-    | "bytes20"
-    | "bytes21"
-    | "bytes22"
-    | "bytes23"
-    | "bytes24"
-    | "bytes25"
-    | "bytes26"
-    | "bytes27"
-    | "bytes28"
-    | "bytes29"
-    | "bytes30"
-    | "bytes31"
-    | "bytes32";
-export type EthType =
-    | "address"
-    | "bool"
-    | "string"
-    | "var"
-    | EthInt
-    | EthUint
-    | "byte"
-    | EthByte
-    | string; // tuple
-
-export interface EthArg<name extends string, type extends EthType, valueType> {
-    name: name;
-    type: type;
-    value: valueType; // "8d8126"
-    components?: AbiInput[];
-}
-
-// tslint:disable-next-line: no-any
-export type EthArgs = Array<EthArg<string, EthType, any>>;
+export type RenTokens = string;
 
 /**
- * The details required to create and/or submit a transaction to Ethereum.
+ * The details required to create and/or submit a transaction to a chain.
  */
 export interface ContractCall {
     /**
-     * The address of the adapter smart contract.
+     * The address of the contract.
      */
     sendTo: string;
 
     /**
-     * The name of the function to be called on the Adapter contract.
+     * The name of the function to be called on the contract.
      */
     contractFn: string;
 
     /**
-     * The parameters to be passed to the adapter contract.
+     * The parameters to be passed to the contract. They can only be defined
+     * using Ethereum types currently.
      */
     contractParams?: EthArgs;
 
     /**
-     * Set transaction options:.
+     * Override chain-specific transaction configuration, such as gas/fees.
      */
-    txConfig?: TransactionConfig;
+    txConfig?: unknown;
 }
 
 /**
@@ -171,179 +40,118 @@ export interface ContractCall {
  */
 export interface TransferParamsCommon {
     /**
-     * The token, including the origin and destination chains.
+     * The asset being minted or burned - e.g. `"BTC"`.
      */
-    sendToken: RenContract | "BTC" | "ZEC" | "BCH";
+    asset: string;
 
     /**
-     * A web3 provider must be provided if RenJS is submitting or reading
-     * transactions to/from Ethereum.
-     */
-    web3Provider?: provider; // A Web3 provider
-
-    /**
-     * Provide the transaction hash returned from RenVM to continue a previous
-     * mint.
+     * A RenVM transaction hash, which can be used to resume an existing mint
+     * or burn.
      */
     txHash?: string;
 
     /**
-     * An option to override the default nonce generated randomly.
+     * A LockAndMint's gateway address can be forced to be unique by providing a
+     * 32-byte nonce.
+     *
+     * The nonce should be passed is as a 32-byte Buffer or a 32-byte hex
+     * string, with or without a "0x" prefix.
+     *
+     * It defaults to 0 (32 empty bytes).
+     *
+     * @warning If the nonce is lost between detecting a deposit and
+     * submitting it to RenVM, the deposit's funds can't be recovered.
+     * A nonce should only be provided if it's guaranteed to be stored in
+     * persistent storage before a deposit address is shown to the user.
+     *
+     * @example
+     * ```
+     * nonce: Buffer.from(new Array(32)),
+     * ```
+     *
+     * @example
+     * ```
+     * // Use a nonce based on the number of days since epoch, in order to
+     * // generate a new deposit address each day.
+     * nonce: new BN(Math.floor(Date.now() / 8.64e7))
+     *          .toArrayLike(Buffer, "be", 32),
+     * ```
+     *
+     * @example
+     * ```
+     * // Provide a random 32-byte Buffer. It's important that this isn't lost.
+     * nonce: RenJS.utils.randomNonce(),
+     * ```
      */
-    nonce?: string;
+    nonce?: Buffer | string;
 
     /**
      * Provide optional tags which can be used to look up transfers in the
      * lightnodes.
      */
     tags?: [string]; // Currently, only one tag can be provided.
+
+    /**
+     * Details for submitting one or more transactions. The last one will be
+     * used by the lockAndMint or burnAndRelease.
+     * For minting, the last call's parameters will be augmented with the three
+     * required parameters for minting - the amount, nHash and RenVM signature.
+     * For burning, the last call must involve ren-assets being burnt.
+     */
+    contractCalls?: ContractCall[];
 }
 
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */
-export interface LockAndMintParams extends TransferParamsCommon {
+export interface LockAndMintParams<
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
+    LockAddress extends string | { address: string } = any,
+    MintTransaction = any,
+    MintAddress extends string | { address: string } = any
+> extends TransferParamsCommon {
     /**
-     * The amount of `sendToken` that should be sent.
+     * The chain that the asset is native to - e.g. `Bitcoin()` for bridging the
+     * asset `"BTC"`.
      */
-    suggestedAmount?: NumberValue;
+    from: LockChain<LockTransaction, LockDeposit, LockAddress>;
 
     /**
-     * The number of confirmations to wait before submitting the signature
-     * to Ethereum. If this number is less than the default, the RenVM
-     * transaction is returned when those confirmations have passed, before
-     * the signature is available, and will not be submitted to Ethereum.
+     * The chain that the asset is being bridged to - e.g. `Ethereum(provider)`.
      */
-    confirmations?: number;
-
-    /**
-     * Details for submitting one or more Ethereum transactions. The last one
-     * will be augmented with the three required parameters for minting - the
-     * amount, nHash and RenVM signature.
-     */
-    contractCalls?: ContractCall[];
-
-    /**
-     * Specify which deposit should be send to RenVM instead of waiting for one
-     * to be observed. This deposit must have been sent to the gateway address
-     * of the transfer.
-     */
-    deposit?: UTXOIndex;
-
-    /**
-     * Specify a gateway address. Gateway addresses are based on the RenVM shard
-     * selected to process the transfer. Currently there is only one RenVM
-     * shard, but once sharding is live, this parameter will ensure that the
-     * same address can be used to resume the transfer.
-     */
-    gatewayAddress?: string;
-}
-
-/**
- * A simpler format for providing the parameters required for a lock and mint.
- */
-export interface LockAndMintParamsSimple
-    extends TransferParamsCommon,
-        ContractCall {
-    /**
-     * The amount of `sendToken` that should be sent.
-     */
-    suggestedAmount?: NumberValue;
-
-    /**
-     * The number of confirmations to wait before submitting the signature
-     * to Ethereum. If this number is less than the default, the RenVM
-     * transaction is returned when those confirmations have passed, before
-     * the signature is available, and will not be submitted to Ethereum.
-     */
-    confirmations?: number;
+    to: MintChain<MintTransaction, MintAddress>;
 }
 
 /**
  * BurnAndReleaseParams define the parameters for a cross-chain transfer away
  * from Ethereum.
  */
-export interface BurnAndReleaseParams extends TransferParamsCommon {
+export interface BurnAndReleaseParams<
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
+    LockAddress extends string | { address: string } = any,
+    MintTransaction = any,
+    MintAddress extends string | { address: string } = any
+> extends TransferParamsCommon {
     /**
-     * The hash of the burn transaction on Ethereum.
+     * The chain from which the ren-asset was burned - e.g. `Ethereum(provider)`.
      */
-    ethereumTxHash?: string;
+    from: MintChain<MintTransaction, MintAddress>;
 
     /**
-     * The reference ID of the burn emitted in the contract log.
+     * The asset's native chain to which it's being returned - e.g. `Bitcoin()`
+     * for the asset `"BTC"`.
      */
-    burnReference?: string | number;
+    to: LockChain<LockTransaction, LockDeposit, LockAddress>;
 
     /**
-     * Details for submitting one or more Ethereum transactions. The last one
-     * should trigger a burn event in the relevant Gateway contract.
+     * The hash of the burn transaction on the MintChain.
      */
-    contractCalls?: ContractCall[];
+    transaction?: MintTransaction;
+
+    /**
+     * The unique identifier of the burn emitted from the event on the MintChain.
+     */
+    burnNonce?: Buffer | string | number;
 }
-
-/**
- * A simpler format for providing the parameters required for a burn and
- * release.
- */
-export interface BurnAndReleaseParamsSimple
-    extends TransferParamsCommon,
-        ContractCall {
-    /**
-     * The hash of the burn transaction on Ethereum.
-     */
-    ethereumTxHash?: string;
-
-    /**
-     * The reference ID of the burn emitted in the contract log.
-     */
-    burnReference?: string | number;
-}
-
-/**
- * The parameters for the `send` function - a common interface that aims to
- * abstract away minting and burning into a single cross-chain transfer
- * function.
- */
-export interface SendParams extends TransferParamsCommon {
-    /**
-     * The receiving address. If this address is an Ethereum address, then the
-     * transfer will be a lock and mint - and will be a burn and release
-     * otherwise.
-     */
-    sendTo: string;
-
-    /**
-     * The amount being transferred cross-chain. For sending to an Ethereum
-     * address, this is a suggested amount only. The transfer will continue
-     * even if a different amount is sent to the Gateway address.
-     */
-    sendAmount: NumberValue;
-    suggestedAmount?: NumberValue;
-
-    /**
-     * Set Ethereum transaction options, including the gasPrice.
-     */
-    txConfig?: TransactionConfig;
-
-    /**
-     * For minting, the number of confirmations to wait before submitting the
-     * signature to Ethereum. If this number is less than the default, the RenVM
-     * transaction is returned when those confirmations have passed, before
-     * the signature is available, and will not be submitted to Ethereum.
-     */
-    confirmations?: number;
-}
-
-export type SerializableBurnAndReleaseParams = Exclude<
-    BurnAndReleaseParams,
-    "web3Provider"
->;
-export type SerializableLockAndMintParams = Exclude<
-    LockAndMintParams,
-    "web3Provider"
->;
-
-export type TransferParams = LockAndMintParams | BurnAndReleaseParams;
-export type SerializableTransferParams =
-    | SerializableLockAndMintParams
-    | SerializableBurnAndReleaseParams;

@@ -12,6 +12,7 @@ import {
     GatewaySession,
 } from "../src";
 import { buildMockLockChain, buildMockMintChain } from "./testutils/mock";
+import { SECONDS } from "@renproject/utils";
 
 loadDotEnv();
 const providers = {
@@ -50,7 +51,9 @@ describe("BurnMachine", () => {
 
         const machine = burnMachine.withConfig(burnConfig).withContext({
             tx: mintTransaction,
-            sdk: new RenJS("testnet"),
+            sdk: new RenJS("testnet", {
+                networkDelay: 1 * SECONDS,
+            }),
             autoSubmit: true,
             providers,
             fromChainMap,

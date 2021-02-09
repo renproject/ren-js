@@ -316,6 +316,7 @@ export interface MintChain<
 
         eventEmitter: EventEmitter,
         logger: Logger,
+        networkDelay?: number,
     ) => SyncOrPromise<BurnDetails<Transaction>>;
 
     /**

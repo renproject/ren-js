@@ -40,10 +40,13 @@ import {
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 import { AbiCoder } from "web3-eth-abi";
+import { RenJSConfig } from "./config";
 
 interface MintState {
     logger: Logger;
     selector: string;
+
+    config: RenJSConfig & { networkDelay: number };
 }
 
 interface MintStatePartial {
@@ -171,15 +174,20 @@ export class LockAndMint<
             MintTransaction,
             MintAddress
         >,
-        logger: Logger = NullLogger,
+        config: RenJSConfig = {},
     ) {
         super();
 
         this.params = params;
         this.renVM = renVM;
         this._state = {
-            logger,
+            logger: config.logger || NullLogger,
             selector: this.renVM.selector(this.params),
+
+            config: {
+                ...config,
+                networkDelay: config.networkDelay || 15 * SECONDS,
+            },
         };
 
         const txHash = this.params.txHash;
@@ -529,7 +537,7 @@ export class LockAndMint<
                 this._state.logger.error(extractError(error));
             }
 
-            await sleep(15 * SECONDS);
+            await sleep(this._state.config.networkDelay);
         }
     };
 }
@@ -646,6 +654,7 @@ export class LockAndMintDeposit<
                 gHash: "Buffer",
                 pHash: "Buffer",
                 targetConfirmations: "number | undefined",
+                config: "object",
             },
             { state },
         );
@@ -1083,7 +1092,7 @@ export class LockAndMintDeposit<
                         )}`,
                     );
                 }
-                await sleep(15 * SECONDS);
+                await sleep(this._state.config.networkDelay);
                 iterationCount += 1;
             }
 
@@ -1219,6 +1228,7 @@ export class LockAndMintDeposit<
                     this._state.logger.debug("transaction status:", status);
                 },
                 () => promiEvent._isCancelled(),
+                this._state.config.networkDelay,
             );
 
             this._state.queryTxResult = response;

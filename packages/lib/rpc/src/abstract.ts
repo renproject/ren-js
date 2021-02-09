@@ -109,6 +109,7 @@ export interface AbstractRenVMProvider<
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
+        timeout?: number,
     ) => SyncOrPromise<T>;
 
     /**

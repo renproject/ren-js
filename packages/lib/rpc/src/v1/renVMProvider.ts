@@ -18,6 +18,7 @@ import {
     assertType,
     extractError,
     fromBase64,
+    isDefined,
     keccak256,
     parseV1Selector,
     SECONDS,
@@ -388,6 +389,7 @@ export class RenVMProvider
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
+        timeout?: number,
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
@@ -419,7 +421,7 @@ export class RenVMProvider
                     // TODO: throw unexpected errors
                 }
             }
-            await sleep(15 * SECONDS);
+            await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
         return rawResponse;
     };

@@ -18,6 +18,7 @@ import {
     buildMockMintChain,
     MockLockChainParams,
 } from "./testutils/mock";
+import { SECONDS } from "@renproject/utils";
 
 loadDotEnv();
 const providers = {
@@ -41,7 +42,7 @@ const makeMintTransaction = (): GatewaySession => ({
 
 const buildConfirmingMachine = (
     config: MockLockChainParams = {},
-    sdk = new RenJS("testnet"),
+    sdk = new RenJS("testnet", { networkDelay: 1 * SECONDS }),
 ) => {
     const { mockLockChain, setConfirmations } = buildMockLockChain(config);
 
@@ -233,7 +234,7 @@ describe("MintMachine", () => {
             {
                 targetConfirmations: 2,
             },
-            new RenJS(renVMProvider),
+            new RenJS(renVMProvider, { networkDelay: 1 * SECONDS }),
         );
 
         let confirmations = 0;
@@ -356,7 +357,10 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider, { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider, {
+                networkDelay: 1 * SECONDS,
+                logLevel: "debug",
+            }),
             providers,
             fromChainMap,
             toChainMap,
@@ -499,7 +503,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider),
+            sdk: new RenJS(renVMProvider, { networkDelay: 1 * SECONDS }),
             providers,
             fromChainMap,
             toChainMap,
@@ -622,7 +626,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider, { networkDelay: 1 * SECONDS }), // , { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,

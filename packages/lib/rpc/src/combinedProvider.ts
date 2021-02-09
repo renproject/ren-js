@@ -199,7 +199,7 @@ export class CombinedProvider
         chain: { name: string },
     ) =>
         this.v1 && isV1Selector(selector)
-            ? undefined
+            ? this.v1.getConfirmationTarget(selector, chain)
             : this.v2.getConfirmationTarget(selector, chain);
 
     public estimateTransactionFee = async (

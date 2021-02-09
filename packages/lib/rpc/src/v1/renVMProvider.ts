@@ -475,6 +475,40 @@ export class RenVMProvider
         return this.network;
     };
 
+    public getConfirmationTarget = async (
+        selector: string,
+        _chain: { name: string },
+    ) => {
+        const { asset } = parseV1Selector(selector);
+        switch (this.network) {
+            case "mainnet":
+                switch (asset) {
+                    case "BTC":
+                        return 6;
+                    case "ZEC":
+                        return 24;
+                    case "BCH":
+                        return 15;
+                    case "ETH":
+                        return 30;
+                }
+                break;
+            case "testnet":
+                switch (asset) {
+                    case "BTC":
+                        return 2;
+                    case "ZEC":
+                        return 6;
+                    case "BCH":
+                        return 2;
+                    case "ETH":
+                        return 12;
+                }
+                break;
+        }
+        return undefined;
+    };
+
     public estimateTransactionFee = async (
         _selector: string,
         chain: { name: string; legacyName?: string },

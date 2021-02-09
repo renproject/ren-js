@@ -109,8 +109,8 @@ const performBurn = async (
     // will resume from previous tx if we have the hash
     const burnRef = burn.burn();
 
-    const burnListener = (confs: number) => {
-        if (confs >= (tx.sourceTxConfTarget || 6)) {
+    const burnListener = (confs: number, target: number) => {
+        if (confs >= target) {
             // stop listening for confirmations once confirmed
             burnRef.removeListener("confirmation", burnListener);
 
@@ -121,11 +121,10 @@ const performBurn = async (
         } else {
             callback({
                 type: "CONFIRMATION",
-                // FIXME: get proper confirmation target for burning somewhere
                 data: {
                     ...tx,
                     sourceTxConfs: confs,
-                    sourceTxConfTarget: tx.sourceTxConfTarget || 6,
+                    sourceTxConfTarget: target,
                 },
             });
         }
@@ -152,17 +151,18 @@ const performBurn = async (
             .on("confirmation", burnListener);
 
         if (tx) {
+            // ensure we have a target
+            const target =
+                tx.sourceTxConfTarget || (await burn.confirmationTarget());
             // the burn status is canonical, we should proceed if
             // it says we have burned
             if (r.status == BurnAndReleaseStatus.Burned) {
-                // FIXME: ensure that the confs always match
-                // the target
-                tx.sourceTxConfs = 7;
+                tx.sourceTxConfs = target;
             }
 
             // Always call because we won't get an emission
             // if the burn is already done
-            burnListener(tx.sourceTxConfs);
+            burnListener(tx.sourceTxConfs, target);
         }
     } catch (error) {
         throw error;

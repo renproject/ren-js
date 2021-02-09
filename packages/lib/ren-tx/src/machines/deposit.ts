@@ -239,7 +239,7 @@ export const depositMachine = Machine<
                                         sourceTxConfs:
                                             evt.data?.sourceTxConfs || 0,
                                         sourceTxConfTarget:
-                                            evt.data?.sourceTxConfTarget || 1,
+                                            evt.data?.sourceTxConfTarget,
                                     }),
                                 }),
                             ],
@@ -450,11 +450,15 @@ export const depositMachine = Machine<
         guards: {
             isSrcSettling: ({
                 deposit: { sourceTxConfs, sourceTxConfTarget },
-            }) => (sourceTxConfs || 0) < (sourceTxConfTarget || 1),
+            }) =>
+                (sourceTxConfs || 0) <
+                (sourceTxConfTarget || Number.POSITIVE_INFINITY), // If we don't know the target, keep settling
             isSrcConfirmed: () => false,
             isSrcSettled: ({
                 deposit: { sourceTxConfs, sourceTxConfTarget },
-            }) => (sourceTxConfs || 0) >= (sourceTxConfTarget || 1),
+            }) =>
+                (sourceTxConfs || 0) >=
+                (sourceTxConfTarget || Number.POSITIVE_INFINITY), // If we don't know the target, keep settling
             isAccepted: ({ deposit: { renSignature } }) =>
                 renSignature ? true : false,
             isDestInitiated: ({ deposit: { destTxHash } }) =>

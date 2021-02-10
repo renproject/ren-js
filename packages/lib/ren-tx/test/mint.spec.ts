@@ -42,7 +42,7 @@ const makeMintTransaction = (): GatewaySession => ({
 
 const buildConfirmingMachine = (
     config: MockLockChainParams = {},
-    sdk = new RenJS("testnet", { networkDelay: 1 * SECONDS }),
+    sdk = new RenJS("testnet", { networkDelay: 0.5 * SECONDS }),
 ) => {
     const { mockLockChain, setConfirmations } = buildMockLockChain(config);
 
@@ -242,7 +242,7 @@ describe("MintMachine", () => {
         // We should have at least 2 confirmations by the time the second confirmation event fires
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 10000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;
@@ -358,7 +358,7 @@ describe("MintMachine", () => {
                 },
             },
             sdk: new RenJS(renVMProvider, {
-                networkDelay: 1 * SECONDS,
+                networkDelay: 0.5 * SECONDS,
                 logLevel: "debug",
             }),
             providers,
@@ -369,7 +369,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 5000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;
@@ -503,7 +503,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider, { networkDelay: 1 * SECONDS }),
+            sdk: new RenJS(renVMProvider, { networkDelay: 0.5 * SECONDS }),
             providers,
             fromChainMap,
             toChainMap,
@@ -512,7 +512,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 5000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed: { [key: string]: boolean } = {};
@@ -626,7 +626,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider, { networkDelay: 1 * SECONDS }), // , { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider, { networkDelay: 0.5 * SECONDS }), // , { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,
@@ -635,7 +635,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 10000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;

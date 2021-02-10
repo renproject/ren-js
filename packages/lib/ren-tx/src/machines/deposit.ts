@@ -200,7 +200,6 @@ export const depositMachine = Machine<
                                 assign({
                                     deposit: ({ deposit }, evt) => {
                                         if (deposit.sourceTxConfTarget) {
-                                            console.log("confirmed", evt);
                                             return {
                                                 ...deposit,
                                                 sourceTxConfs: largest(

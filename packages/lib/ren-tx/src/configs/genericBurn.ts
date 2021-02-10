@@ -109,7 +109,10 @@ const performBurn = async (
     // will resume from previous tx if we have the hash
     const burnRef = burn.burn();
 
-    const burnListener = (confs: number, target: number) => {
+    const burnListener = async (
+        confs: number /* actually eth tx target: number */,
+    ) => {
+        const target = await burn.confirmationTarget();
         if (confs >= target) {
             // stop listening for confirmations once confirmed
             burnRef.removeListener("confirmation", burnListener);
@@ -162,7 +165,7 @@ const performBurn = async (
 
             // Always call because we won't get an emission
             // if the burn is already done
-            burnListener(tx.sourceTxConfs, target);
+            burnListener(tx.sourceTxConfs);
         }
     } catch (error) {
         throw error;

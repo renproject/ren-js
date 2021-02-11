@@ -113,7 +113,9 @@ const performBurn = async (
         confs: number /* actually eth tx target: number */,
     ) => {
         const target = await burn.confirmationTarget();
-        if (confs >= target) {
+        // We need to wait for burn details to resolve, which
+        // might not be ready even if we have sufficient confirmations
+        if (confs >= target && burn.burnDetails) {
             // stop listening for confirmations once confirmed
             burnRef.removeListener("confirmation", burnListener);
 

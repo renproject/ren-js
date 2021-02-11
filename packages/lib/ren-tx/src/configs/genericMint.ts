@@ -19,6 +19,7 @@ import {
     send,
     actions,
 } from "xstate";
+import { TransactionReceipt } from "web3-core";
 
 import { depositMachine, DepositMachineContext } from "../machines/deposit";
 import { GatewayMachineContext, GatewayMachineEvent } from "../machines/mint";
@@ -261,14 +262,22 @@ const handleMint = async (
     try {
         const minter = deposit.mint(params);
 
-        const onConfirmation = () => {
+        const onConfirmation = (_: void, receipt: TransactionReceipt) => {
             const submittedTx = {
                 sourceTxHash,
             };
-            callback({
-                type: "ACKNOWLEDGE",
-                data: submittedTx,
-            });
+            if (receipt.status == false) {
+                callback({
+                    type: "SUBMIT_ERROR",
+                    data: { sourceTxHash },
+                    error: "Transaction was reverted",
+                });
+            } else {
+                callback({
+                    type: "ACKNOWLEDGE",
+                    data: submittedTx,
+                });
+            }
 
             // only acknowledge once
             minter.removeListener("confirmation", onConfirmation);
@@ -286,6 +295,7 @@ const handleMint = async (
         });
 
         await minter.on("confirmation", onConfirmation);
+        await minter;
     } catch (e) {
         callback({
             type: "SUBMIT_ERROR",

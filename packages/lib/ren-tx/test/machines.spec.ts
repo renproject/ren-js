@@ -75,6 +75,9 @@ const mintModel = createModel(mintMachine).withEvents({
     DEPOSIT_UPDATE: {
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
+    RESTORED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     EXPIRED: {},
     LISTENING: {},
     CLAIMABLE: {

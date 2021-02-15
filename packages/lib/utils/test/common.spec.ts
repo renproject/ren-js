@@ -28,7 +28,7 @@ describe("common utils", () => {
             const difference = (timeAfter - timeBefore) / 1000;
 
             expect(difference >= 0.1).toEqual(true);
-            expect(difference < 0.11).toEqual(true);
+            expect(difference < 0.15).toEqual(true);
         });
     });
 

@@ -2,7 +2,6 @@ declare module "wallet-address-validator";
 
 // Hack as type resolution breaks in CI at types
 // Refers to ethjs-util 7.0.8
-/// <reference types="node" />
 declare module "ethjs-util" {
     /**
      * @description Returns a `Boolean` on whether or not the a `String` starts with '0x'

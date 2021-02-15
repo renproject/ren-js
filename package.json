@@ -2,7 +2,7 @@
     "name": "root",
     "private": true,
     "scripts": {
-        "clean": "lerna run clean --scope @renproject/*",
+        "clean": "lerna run clean --scope @renproject/* && yarn rimraf ./node_modules",
         "build": "lerna run build --scope @renproject/*",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
         "lint": "lerna run lint --scope @renproject/*",

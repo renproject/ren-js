@@ -93,7 +93,9 @@ export const fromReadable = (
     value: number | string | BigNumber,
     decimals: number | string | BigNumber,
 ): BigNumber =>
-    new BigNumber(value).times(new BigNumber(10).exponentiatedBy(decimals));
+    new BigNumber(value)
+        .times(new BigNumber(10).exponentiatedBy(decimals))
+        .decimalPlaces(0);
 
 const hasOwnProperty = <T>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

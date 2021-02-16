@@ -55,9 +55,7 @@ export const fromBase64 = (base64: Buffer | string): Buffer => {
     assertType<Buffer | string>("Buffer | string", {
         base64,
     });
-    return Buffer.isBuffer(base64)
-        ? base64
-        : Buffer.from(strip0x(base64), "base64");
+    return Buffer.isBuffer(base64) ? base64 : Buffer.from(base64, "base64");
 };
 
 export const toBase64 = (input: Buffer): string => {

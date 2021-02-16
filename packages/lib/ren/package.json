@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren",
-    "version": "2.1.2-alpha.0",
+    "version": "2.1.2-alpha.1",
     "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
     "repository": {
         "type": "git",
@@ -30,7 +30,7 @@
     "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
-        "clean": "yarn rimraf ./build",
+        "clean": "yarn rimraf ./build ./node_modules",
         "link": "yarn link",
         "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
@@ -62,10 +62,10 @@
         "prepare-release": "run-s npmignore build doc:html doc:publish"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.1.2-alpha.0",
-        "@renproject/provider": "^2.1.2-alpha.0",
-        "@renproject/rpc": "^2.1.2-alpha.0",
-        "@renproject/utils": "^2.1.2-alpha.0",
+        "@renproject/interfaces": "^2.1.2-alpha.1",
+        "@renproject/provider": "^2.1.2-alpha.1",
+        "@renproject/rpc": "^2.1.2-alpha.1",
+        "@renproject/utils": "^2.1.2-alpha.1",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
@@ -81,13 +81,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

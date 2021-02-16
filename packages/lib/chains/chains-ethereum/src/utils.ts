@@ -12,6 +12,7 @@ import {
     assertType,
     extractError,
     fromHex,
+    isDefined,
     Ox,
     payloadToABI,
     payloadToMintABI,
@@ -135,6 +136,7 @@ export const waitForReceipt = async (
     web3: Web3,
     txHash: string,
     logger?: Logger,
+    timeout?: number,
 ): Promise<TransactionReceipt> =>
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     new Promise<TransactionReceipt>(async (resolve, reject) => {
@@ -179,7 +181,7 @@ export const waitForReceipt = async (
             if (receipt && receipt.blockHash) {
                 break;
             }
-            await sleep(15 * SECONDS);
+            await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
 
         try {
@@ -251,10 +253,11 @@ export const extractBurnDetails = async (
     web3: Web3,
     txHash: string,
     logger?: Logger,
+    timeout?: number,
 ): Promise<BurnDetails<EthTransaction>> => {
     assertType<string>("string", { txHash });
 
-    const receipt = await waitForReceipt(web3, txHash, logger);
+    const receipt = await waitForReceipt(web3, txHash, logger, timeout);
 
     if (!receipt.logs) {
         throw Error("No events found in transaction");

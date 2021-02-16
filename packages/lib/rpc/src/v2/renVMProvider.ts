@@ -15,6 +15,7 @@ import { HttpProvider, Provider } from "@renproject/provider";
 import {
     assertType,
     fromBase64,
+    isDefined,
     SECONDS,
     sleep,
     toURLBase64,
@@ -325,6 +326,7 @@ export class RenVMProvider
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
+        timeout?: number,
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse: T;
@@ -356,7 +358,7 @@ export class RenVMProvider
                     // TODO: throw unexpected errors
                 }
             }
-            await sleep(15 * SECONDS);
+            await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
         return rawResponse;
     };

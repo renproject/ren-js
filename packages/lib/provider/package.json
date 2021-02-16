@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "2.1.2-alpha.0",
+    "version": "2.1.2-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -18,7 +18,7 @@
     "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
-        "clean": "yarn rimraf ./build",
+        "clean": "yarn rimraf ./build ./node_modules",
         "link": "yarn link",
         "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
@@ -43,8 +43,8 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.1.2-alpha.0",
-        "@renproject/utils": "^2.1.2-alpha.0",
+        "@renproject/interfaces": "^2.1.2-alpha.1",
+        "@renproject/utils": "^2.1.2-alpha.1",
         "@types/node": ">=10",
         "axios": "^0.21.1",
         "immutable": "^4.0.0-rc.12"
@@ -54,13 +54,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

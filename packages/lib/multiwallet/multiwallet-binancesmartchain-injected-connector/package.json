@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-binancesmartchain-injected-connector",
-    "version": "2.1.2-alpha.0",
+    "version": "2.1.2-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -23,7 +23,7 @@
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
-        "clean": "yarn rimraf ./build",
+        "clean": "yarn rimraf ./build ./node_modules",
         "lint:eslint": "eslint src/**/*.ts",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
@@ -41,9 +41,9 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.1.2-alpha.0",
-        "@renproject/multiwallet-abstract-ethereum-connector": "^2.1.2-alpha.0",
-        "@renproject/multiwallet-ethereum-injected-connector": "^2.1.2-alpha.0",
+        "@renproject/interfaces": "^2.1.2-alpha.1",
+        "@renproject/multiwallet-abstract-ethereum-connector": "^2.1.2-alpha.1",
+        "@renproject/multiwallet-ethereum-injected-connector": "^2.1.2-alpha.1",
         "@types/node": ">=10"
     },
     "resolutions": {
@@ -51,13 +51,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

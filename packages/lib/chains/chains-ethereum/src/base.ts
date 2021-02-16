@@ -385,6 +385,7 @@ export class EthereumBaseChain
 
         eventEmitter: EventEmitter,
         logger: Logger,
+        timeout?: number,
     ): Promise<BurnDetails<EthTransaction>> => {
         if (!this.renNetworkDetails || !this.web3) {
             throw new Error(
@@ -475,7 +476,7 @@ export class EthereumBaseChain
             throw new Error(`Unable to find burn from provided parameters.`);
         }
 
-        return extractBurnDetails(this.web3, transaction, logger);
+        return extractBurnDetails(this.web3, transaction, logger, timeout);
     };
 
     getFees = async (

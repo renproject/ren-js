@@ -18,6 +18,7 @@ import {
     buildMockMintChain,
     MockLockChainParams,
 } from "./testutils/mock";
+import { SECONDS } from "@renproject/utils";
 
 loadDotEnv();
 const providers = {
@@ -41,7 +42,7 @@ const makeMintTransaction = (): GatewaySession => ({
 
 const buildConfirmingMachine = (
     config: MockLockChainParams = {},
-    sdk = new RenJS("testnet"),
+    sdk = new RenJS("testnet", { networkDelay: 0.5 * SECONDS }),
 ) => {
     const { mockLockChain, setConfirmations } = buildMockLockChain(config);
 
@@ -67,11 +68,11 @@ const buildConfirmingMachine = (
     let confirmations = 0;
     setInterval(() => {
         setConfirmations((confirmations += 1));
-    }, 1000);
+    }, 1 * SECONDS);
     return { machine, setConfirmations };
 };
 
-jest.setTimeout(1000 * 66);
+jest.setTimeout(SECONDS * 120);
 describe("MintMachine", () => {
     it("should create a tx", async () => {
         const { machine } = buildConfirmingMachine();
@@ -104,7 +105,9 @@ describe("MintMachine", () => {
 
         let prevDepositTx: GatewayTransaction;
         const p = new Promise((resolve, reject) => {
-            const service = interpret(machine)
+            const service = interpret(machine);
+
+            service
                 .onTransition((state) => {
                     if (state.context.tx.error) {
                         reject(state.context.tx.error);
@@ -118,6 +121,7 @@ describe("MintMachine", () => {
                             (prevDepositTx?.sourceTxConfs || 0) <
                             depositTx.sourceTxConfs
                         ) {
+                            service.stop();
                             resolve(true);
                         }
                         prevDepositTx = depositTx;
@@ -160,30 +164,22 @@ describe("MintMachine", () => {
             ],
         });
 
-        let prevDepositTxs: { [key: string]: GatewayTransaction } = {};
         const p = new Promise((resolve, reject) => {
-            const service = interpret(machine)
+            const service = interpret(machine);
+
+            service
                 .onTransition((state) => {
+                    if (!state.changed) return;
+
                     if (state.context.tx.error) {
                         reject(state.context.tx.error);
                     }
-                    let resolved =
-                        Object.values(state.context.tx.transactions).length > 0;
-                    for (let depositTx of Object.values(
+                    const confirmedTxses = Object.values(
                         state.context.tx.transactions,
-                    )) {
-                        if (
-                            resolved &&
-                            (prevDepositTxs[depositTx.sourceTxHash]
-                                ?.sourceTxConfs || 0) < depositTx.sourceTxConfs
-                        ) {
-                        } else {
-                            resolved = false;
-                        }
-                        prevDepositTxs[depositTx.sourceTxHash] = depositTx;
-                    }
+                    ).filter((tx) => tx.sourceTxConfs >= 2).length;
 
-                    if (resolved) {
+                    if (confirmedTxses >= 2) {
+                        service.stop();
                         resolve(true);
                     }
                 })
@@ -233,7 +229,7 @@ describe("MintMachine", () => {
             {
                 targetConfirmations: 2,
             },
-            new RenJS(renVMProvider),
+            new RenJS(renVMProvider, { networkDelay: 1 * SECONDS }),
         );
 
         let confirmations = 0;
@@ -241,7 +237,7 @@ describe("MintMachine", () => {
         // We should have at least 2 confirmations by the time the second confirmation event fires
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 10000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;
@@ -356,7 +352,10 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider, { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider, {
+                networkDelay: 0.5 * SECONDS,
+                logLevel: "debug",
+            }),
             providers,
             fromChainMap,
             toChainMap,
@@ -365,7 +364,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 5000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;
@@ -499,7 +498,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider),
+            sdk: new RenJS(renVMProvider, { networkDelay: 0.5 * SECONDS }),
             providers,
             fromChainMap,
             toChainMap,
@@ -508,7 +507,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 5000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed: { [key: string]: boolean } = {};
@@ -622,7 +621,7 @@ describe("MintMachine", () => {
                     },
                 },
             },
-            sdk: new RenJS(renVMProvider), // , { logLevel: "debug" }),
+            sdk: new RenJS(renVMProvider, { networkDelay: 0.5 * SECONDS }), // , { logLevel: "debug" }),
             providers,
             fromChainMap,
             toChainMap,
@@ -631,7 +630,7 @@ describe("MintMachine", () => {
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
-        }, 10000);
+        }, 1000);
 
         const p = new Promise((resolve, reject) => {
             let subscribed = false;

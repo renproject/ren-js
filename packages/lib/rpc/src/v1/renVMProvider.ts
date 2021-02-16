@@ -18,6 +18,7 @@ import {
     assertType,
     extractError,
     fromBase64,
+    isDefined,
     keccak256,
     parseV1Selector,
     SECONDS,
@@ -388,6 +389,7 @@ export class RenVMProvider
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
+        timeout?: number,
     ): Promise<T> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
         let rawResponse;
@@ -419,7 +421,7 @@ export class RenVMProvider
                     // TODO: throw unexpected errors
                 }
             }
-            await sleep(15 * SECONDS);
+            await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
         return rawResponse;
     };
@@ -471,6 +473,40 @@ export class RenVMProvider
     // eslint-disable-next-line @typescript-eslint/require-await
     public getNetwork = async (_selector: string): Promise<RenNetwork> => {
         return this.network;
+    };
+
+    public getConfirmationTarget = async (
+        selector: string,
+        _chain: { name: string },
+    ) => {
+        const { asset } = parseV1Selector(selector);
+        switch (this.network) {
+            case "mainnet":
+                switch (asset) {
+                    case "BTC":
+                        return 6;
+                    case "ZEC":
+                        return 24;
+                    case "BCH":
+                        return 15;
+                    case "ETH":
+                        return 30;
+                }
+                break;
+            case "testnet":
+                switch (asset) {
+                    case "BTC":
+                        return 2;
+                    case "ZEC":
+                        return 6;
+                    case "BCH":
+                        return 2;
+                    case "ETH":
+                        return 12;
+                }
+                break;
+        }
+        return undefined;
     };
 
     public estimateTransactionFee = async (

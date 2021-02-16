@@ -20,13 +20,9 @@ import {
 import BigNumber from "bignumber.js";
 
 import { BurnAndRelease } from "./burnAndRelease";
+import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
 import { LockAndMint } from "./lockAndMint";
-
-export interface RenJSConfig {
-    logLevel?: LogLevelString;
-    logger?: Logger;
-}
 
 /**
  * This is the main exported class from `@renproject/ren`.
@@ -110,6 +106,8 @@ export default class RenJS {
 
     private readonly _logger: Logger;
 
+    private readonly _config: RenJSConfig;
+
     /**
      * Accepts the name of a network, or a network object.
      *
@@ -137,9 +135,12 @@ export default class RenJS {
         //     config = providerOrConfig as RenJSConfig;
         // }
 
+        this._config = config || {};
         this._logger =
             (config && config.logger) ||
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
+
+        this._config.logger = this._logger;
 
         // Use provided provider, provider URL or default lightnode URL.
         this.renVM =
@@ -247,7 +248,7 @@ export default class RenJS {
         new LockAndMint<Transaction, Deposit, Address>(
             this.renVM,
             params,
-            this._logger,
+            this._config,
         )._initialize();
 
     /**
@@ -266,7 +267,7 @@ export default class RenJS {
         new BurnAndRelease<Transaction, Deposit, Address>(
             this.renVM,
             params,
-            this._logger,
+            this._config,
         )._initialize();
 }
 

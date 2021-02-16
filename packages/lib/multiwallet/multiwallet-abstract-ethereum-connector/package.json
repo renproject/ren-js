@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-abstract-ethereum-connector",
-    "version": "2.1.2-alpha.0",
+    "version": "2.1.2-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -23,7 +23,7 @@
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
-        "clean": "yarn rimraf ./build",
+        "clean": "yarn rimraf ./build ./node_modules",
         "lint": "run-s lint:*",
         "lint:eslint": "eslint src/**/*.ts",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
@@ -42,9 +42,9 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-ethereum": "^2.1.2-alpha.0",
-        "@renproject/interfaces": "^2.1.2-alpha.0",
-        "@renproject/multiwallet-base-connector": "^2.1.2-alpha.0",
+        "@renproject/chains-ethereum": "^2.1.2-alpha.1",
+        "@renproject/interfaces": "^2.1.2-alpha.1",
+        "@renproject/multiwallet-base-connector": "^2.1.2-alpha.1",
         "@types/node": ">=10",
         "web3": "^2.0.0-alpha.1"
     },
@@ -53,13 +53,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

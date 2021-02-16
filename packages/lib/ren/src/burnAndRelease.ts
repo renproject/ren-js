@@ -25,12 +25,14 @@ import {
     Ox,
     renVMHashToBase64,
     retryNTimes,
+    SECONDS,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
 import BN from "bn.js";
 import { EventEmitter } from "events";
 import BigNumber from "bignumber.js";
+import { RenJSConfig } from "./config";
 
 export enum BurnAndReleaseStatus {
     Pending = "pending",
@@ -86,6 +88,7 @@ export class BurnAndRelease<
         queryTxResult?: BurnAndReleaseTransaction;
         renNetwork?: RenNetworkDetails;
         selector: string;
+        config: RenJSConfig & { networkDelay: number };
     };
 
     public revertReason?: string;
@@ -101,14 +104,18 @@ export class BurnAndRelease<
             MintTransaction,
             MintAddress
         >,
-        logger: Logger = NullLogger,
+        config: RenJSConfig = {},
     ) {
         this.params = params;
         this.renVM = renVM;
         this._state = {
-            logger,
+            logger: config.logger || NullLogger,
             selector: this.renVM.selector(this.params),
             targetConfirmations: undefined,
+            config: {
+                ...config,
+                networkDelay: config.networkDelay || 15 * SECONDS,
+            },
         };
 
         this.validateParams();
@@ -287,6 +294,7 @@ export class BurnAndRelease<
                 },
                 (promiEvent as unknown) as EventEmitter,
                 this._state.logger,
+                this._state.config.networkDelay,
             );
 
             this.status = BurnAndReleaseStatus.Burned;
@@ -575,6 +583,7 @@ export class BurnAndRelease<
                     this._state.logger.debug("transaction status:", status);
                 },
                 () => promiEvent._isCancelled(),
+                this._state.config.networkDelay,
             );
 
             if (response.out && response.out.revert !== undefined) {

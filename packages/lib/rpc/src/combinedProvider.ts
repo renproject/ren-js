@@ -151,6 +151,7 @@ export class CombinedProvider
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         cancelRequested?: () => boolean,
+        timeout?: number,
     ): SyncOrPromise<T> =>
         this.v1 && isV1Selector(selector)
             ? this.v1.waitForTX<T>(
@@ -158,12 +159,14 @@ export class CombinedProvider
                   utxoTxHash,
                   onStatus,
                   cancelRequested,
+                  timeout,
               )
             : this.v2.waitForTX<T>(
                   selector,
                   utxoTxHash,
                   onStatus,
                   cancelRequested,
+                  timeout,
               );
 
     /**
@@ -196,7 +199,7 @@ export class CombinedProvider
         chain: { name: string },
     ) =>
         this.v1 && isV1Selector(selector)
-            ? undefined
+            ? this.v1.getConfirmationTarget(selector, chain)
             : this.v2.getConfirmationTarget(selector, chain);
 
     public estimateTransactionFee = async (

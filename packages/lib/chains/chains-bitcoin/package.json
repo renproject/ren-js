@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.1.2-alpha.0",
+    "version": "2.1.2-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -18,7 +18,7 @@
     "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
-        "clean": "yarn rimraf ./build",
+        "clean": "yarn rimraf ./build ./node_modules",
         "link": "yarn link",
         "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
@@ -44,9 +44,9 @@
     },
     "dependencies": {
         "@CoinSpace/bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
-        "@renproject/interfaces": "^2.1.2-alpha.0",
-        "@renproject/rpc": "^2.1.2-alpha.0",
-        "@renproject/utils": "^2.1.2-alpha.0",
+        "@renproject/interfaces": "^2.1.2-alpha.1",
+        "@renproject/rpc": "^2.1.2-alpha.1",
+        "@renproject/utils": "^2.1.2-alpha.1",
         "@types/bs58": "^4.0.1",
         "@types/cashaddrjs": "^0.3.0",
         "@types/node": ">=10",
@@ -65,13 +65,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

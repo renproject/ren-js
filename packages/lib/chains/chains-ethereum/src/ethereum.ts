@@ -199,6 +199,7 @@ export class EthereumClass
     toWei = (value: BigNumber | string | number): string =>
         new BigNumber(value)
             .times(new BigNumber(10).exponentiatedBy(18))
+            .decimalPlaces(0)
             .toFixed();
 
     fromWei = (value: BigNumber | string | number): string =>

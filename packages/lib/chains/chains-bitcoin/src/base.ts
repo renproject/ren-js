@@ -352,6 +352,7 @@ export abstract class BitcoinBaseChain
     toSats = (value: BigNumber | string | number): string =>
         new BigNumber(value)
             .times(new BigNumber(10).exponentiatedBy(8))
+            .decimalPlaces(0)
             .toFixed();
 
     fromSats = (value: BigNumber | string | number): string =>

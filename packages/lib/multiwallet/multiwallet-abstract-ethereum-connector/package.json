@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-abstract-ethereum-connector",
-    "version": "2.1.2-alpha.1",
+    "version": "2.1.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,9 +42,9 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-ethereum": "^2.1.2-alpha.1",
-        "@renproject/interfaces": "^2.1.2-alpha.1",
-        "@renproject/multiwallet-base-connector": "^2.1.2-alpha.1",
+        "@renproject/chains-ethereum": "^2.1.2",
+        "@renproject/interfaces": "^2.1.2",
+        "@renproject/multiwallet-base-connector": "^2.1.2",
         "@types/node": ">=10",
         "web3": "^2.0.0-alpha.1"
     },
@@ -53,8 +53,13 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": ["**/*.d.ts", "**/*.spec.js"],
-        "include": ["src"]
+        "exclude": [
+            "**/*.d.ts",
+            "**/*.spec.js"
+        ],
+        "include": [
+            "src"
+        ]
     },
     "prettier": {
         "printWidth": 80,

@@ -28,6 +28,12 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
     constructor(options: EthereumConnectorOptions) {
         super(options);
         this.chainId = options.chainId;
+        for (let rpc of Object.values(options.rpc)) {
+            console.log(rpc);
+            if (rpc[0] !== "w") {
+                throw new Error("rpc must be websocket (wss://)");
+            }
+        }
         this.rpc = options.rpc;
     }
     handleUpdate = () => {
@@ -102,9 +108,9 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
     // eslint-disable-next-line @typescript-eslint/require-await
     getRenNetwork = async (): Promise<RenNetwork> => {
         if (!this.provider) throw new Error("not initialized");
-        // MEWConnect only support Mainnet
-        return RenNetwork.Mainnet;
-        // return this.networkIdMapper(await this.provider.send("eth_chainId"));
+        return this.networkIdMapper(
+            await this.provider.send("eth_chainId", [])
+        );
     };
 
     async cleanup() {

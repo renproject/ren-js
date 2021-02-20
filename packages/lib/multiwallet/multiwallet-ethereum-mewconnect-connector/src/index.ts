@@ -1,3 +1,4 @@
+import { EthAddress } from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/interfaces";
 import {
     AbstractEthereumConnector,
@@ -28,14 +29,14 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
     constructor(options: EthereumConnectorOptions) {
         super(options);
         this.chainId = options.chainId;
-        for (let rpc of Object.values(options.rpc)) {
-            console.log(rpc);
-            if (rpc[0] !== "w") {
+        for (const rpc of Object.values(options.rpc)) {
+            if (!rpc.startsWith("ws://") && !rpc.startsWith("wss://")) {
                 throw new Error("rpc must be websocket (wss://)");
             }
         }
         this.rpc = options.rpc;
     }
+
     handleUpdate = () => {
         this.getStatus()
             .then((...args) => {
@@ -44,8 +45,10 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
             .catch(async (...args) => this.deactivate(...args));
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    activate: ConnectorInterface<any, any>["activate"] = async () => {
+    activate: ConnectorInterface<
+        MewProvider,
+        EthAddress
+    >["activate"] = async () => {
         // No good typings for injected providers exist...
         const provider = await this.getProvider();
         if (!provider) {
@@ -80,15 +83,14 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
     };
 
     getProvider = async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (this.provider) return this.provider;
         const { Provider } = await import(
             "@myetherwallet/mewconnect-web-client"
         ).then((m) => m?.default ?? m);
         const mewConnectProvider = new Provider({
             windowClosedError: true,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         });
+
         this.mewConnectProvider = mewConnectProvider;
         this.provider = mewConnectProvider.makeWeb3Provider(
             this.chainId,
@@ -105,7 +107,6 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
             .then((accounts: string[]): string => accounts[0]);
     };
     // Cast current ethereum network to Ren network version or throw
-    // eslint-disable-next-line @typescript-eslint/require-await
     getRenNetwork = async (): Promise<RenNetwork> => {
         if (!this.provider) throw new Error("not initialized");
         return this.networkIdMapper(

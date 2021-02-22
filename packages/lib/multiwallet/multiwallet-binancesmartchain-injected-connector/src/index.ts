@@ -35,6 +35,6 @@ export class BinanceSmartChainInjectedConnector extends EthereumInjectedConnecto
     }
 
     getProvider = () => {
-        return (window.BinanceChain || window.ethereum) as InjectedProvider;
+        return window.BinanceChain as InjectedProvider;
     };
 }

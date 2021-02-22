@@ -615,6 +615,7 @@ export class LockAndMintDeposit<
     /** See [[RenJS.renVM]]. */
     public renVM: AbstractRenVMProvider;
 
+    public mintTransaction?: MintTransaction;
     public revertReason?: string;
 
     /**
@@ -888,8 +889,8 @@ export class LockAndMintDeposit<
             }
 
             try {
-                const transactionFound = await this.findTransaction();
-                if (transactionFound) {
+                const transaction = await this.findTransaction();
+                if (transaction) {
                     return DepositStatus.Submitted;
                 }
             } catch (_error) {
@@ -1273,11 +1274,12 @@ export class LockAndMintDeposit<
                 : undefined;
 
         // Check if the signature has already been submitted
-        return await this.params.to.findTransaction(
+        this.mintTransaction = await this.params.to.findTransaction(
             this.params.asset,
             this._state.nHash,
             sigHash,
         );
+        return this.mintTransaction;
     };
 
     /**
@@ -1333,7 +1335,7 @@ export class LockAndMintDeposit<
 
             const asset = this.params.asset;
 
-            const result = await this.params.to.submitMint(
+            this.mintTransaction = await this.params.to.submitMint(
                 asset,
                 contractCalls,
                 this._state.queryTxResult,
@@ -1343,7 +1345,7 @@ export class LockAndMintDeposit<
             // Update status.
             this.status = DepositStatus.Submitted;
 
-            return result;
+            return this.mintTransaction;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

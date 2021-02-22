@@ -87,6 +87,8 @@ export interface ChainCommon<
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
     ) => SyncOrPromise<this>;
 
+    withProvider?: (...args: any[]) => SyncOrPromise<this>;
+
     // Supported assets
 
     /**

@@ -31,47 +31,59 @@ renJS.renVM.queryFees().then(console.log);
 
 ### Bridging BTC to Ethereum
 
-See [Infura](https://infura.io/) to get an Infura key.
+This assumes `window.ethereum` is available (e.g. in a browser with MetaMask installed).
+
+See [hdwallet-provider](https://github.com/trufflesuite/truffle/tree/develop/packages/hdwallet-provider) and [infura.io](https://infura.io) if you are using RenJS using Node.js instead of in a browser.
 
 ```typescript
 import { Bitcoin, Ethereum } from "@renproject/chains";
 import RenJS from "@renproject/ren";
+import ethers from "ethers";
 
-const lockAndMint = await new RenJS("testnet").lockAndMint({
-    asset: "BTC",
-    from: Bitcoin(),
-    to: Ethereum(web3Provider).Address("0x1234..."),
-});
+const mint = async () => {
+    await window.ethereum.enable();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    provider.getSigner();
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
 
-console.log(`Deposit BTC to ${lockAndMint.gatewayAddress}`);
+    const lockAndMint = await new RenJS("testnet").lockAndMint({
+        asset: "BTC",
+        from: Bitcoin(),
+        to: Ethereum(provider.provider).Address(address),
+    });
 
-lockAndMint.on("deposit", async (deposit) => {
-    await deposit.confirmed();
-    await deposit.signed();
-    await deposit.mint();
-});
+    console.log(`Deposit BTC to ${lockAndMint.gatewayAddress}`);
+
+    lockAndMint.on("deposit", RenJS.defaultDepositHandler);
+};
+
+mint().catch(console.error);
 ```
 
 ### Bridging BTC from Ethereum back to the Bitcoin chain
 
 ```typescript
-const RenJS = require("@renproject/ren");
-const renJS = new RenJS("testnet"); // Or "mainnet"
-const web3 = new Web3("... Ethereum Kovan node or Infura ...");
+import { Bitcoin, Ethereum } from "@renproject/chains";
+import RenJS from "@renproject/ren";
+import ethers from "ethers";
 
-const amount = 0.001;
+const burn = async () => {
+    await window.ethereum.enable();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const value = 2000000; // sats
 
-renJS
-    .burnAndRelease({
-        sendToken: "BTC", // Bridge BTC from Ethereum back to Bitcoin's chain
-        sendAmount: RenJS.utils.value(amount, "btc").sats(), // Amount of BTC
-        sendTo: "miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6", // Recipient Bitcoin address
-        web3Provider: web3.currentProvider,
-    })
-    .readFromEthereum()
-    .then((tx) => tx.submit())
-    .then(console.log)
-    .catch(console.error);
+    const burnAndRelease = await new RenJS("testnet").burnAndRelease({
+        asset: "BTC",
+        to: Bitcoin().Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
+        from: Ethereum(provider.provider).Account({ value }),
+    });
+
+    await burnAndRelease.burn();
+    await burnAndRelease.release();
+};
+
+burn().catch(console.error);
 ```
 
 <br />

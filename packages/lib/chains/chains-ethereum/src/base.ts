@@ -144,7 +144,7 @@ export class EthereumBaseChain
         () => this.renNetworkDetails,
     );
 
-    public readonly web3: Web3 | undefined;
+    public web3: Web3 | undefined;
     public renNetworkDetails: EthereumConfig | undefined;
 
     public readonly getTokenContractAddress = async (asset: string) => {
@@ -188,6 +188,11 @@ export class EthereumBaseChain
             this.renNetworkDetails = resolveNetwork(renNetwork);
         }
     }
+
+    public withProvider = (web3Provider: provider) => {
+        this.web3 = new Web3(web3Provider);
+        return this;
+    };
 
     /**
      * See [LockChain.initialize].

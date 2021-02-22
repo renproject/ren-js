@@ -14,6 +14,8 @@ new EthereumMEWConnectConnector({
 });
 ```
 
+Note, must be served on an HTTPS connection in order to work, so local-host testing can be problematic.
+
 ### Parameters
 
 | parameter | type                | description                                        |

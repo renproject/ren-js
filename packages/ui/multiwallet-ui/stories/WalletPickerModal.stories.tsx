@@ -70,11 +70,14 @@ const connectingProps: WalletPickerModalProps<any, any> = {
       chains: {
         ethereum: [
           {
-            info: ({ acknowledge, onClose }) => (
+            info: ({ acknowledge, onClose, onPrev }) => (
               <div>
+                <button onClick={onPrev}>back</button>
                 Are you sure you want to connect this wallet?{" "}
-                <button onClick={acknowledge}>Yes</button>
-                <button onClick={onClose}>No</button>
+                <div>
+                  <button onClick={acknowledge}>Yes</button>
+                  <button onClick={onClose}>No</button>
+                </div>
               </div>
             ),
             name: "metamask",

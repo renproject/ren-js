@@ -33,7 +33,11 @@ export interface ConnectorConfig<P, A> {
   /**
    * A component to be shown before a wallet is activated, for extra context / warnings
    */
-  info?: React.FC<{ acknowledge: () => void; onClose: () => void }>;
+  info?: React.FC<{
+    acknowledge: () => void;
+    onClose: () => void;
+    onPrev: () => void;
+  }>;
 }
 
 export interface WalletPickerConfig<P, A> {
@@ -253,6 +257,7 @@ export const WalletPicker = <P, A>({
                   {...x}
                   classes={walletClasses}
                   onClose={onClose}
+                  onPrev={() => setInfo(undefined)}
                   chain={chain}
                   setInfo={setInfo}
                   WalletEntryButton={WalletEntryButton}
@@ -361,6 +366,7 @@ interface WalletEntryProps<P, A> extends ConnectorConfig<P, A> {
   chain: string;
   classes?: ReturnType<typeof useWalletEntryStyles>;
   onClose: () => void;
+  onPrev: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setInfo: (i: any) => void;
   WalletEntryButton?: WalletPickerProps<P, A>["WalletEntryButton"];
@@ -374,6 +380,7 @@ const WalletEntry = <P, A>({
   info: Info,
   classes,
   onClose,
+  onPrev,
   setInfo,
   WalletEntryButton,
 }: WalletEntryProps<P, A>): JSX.Element => {
@@ -384,6 +391,7 @@ const WalletEntry = <P, A>({
       return setInfo(() => (
         <InfoConstructor
           onClose={onClose}
+          onPrev={onPrev}
           acknowledge={() => {
             setInfo(undefined);
             activateConnector(chain, connector);

@@ -15,6 +15,8 @@ import {
   useMultiwallet,
 } from "../src/MultiwalletProvider";
 
+const INFURA_PROJECT_ID = process.env.REACT_APP_INFURA_PROJECT_ID;
+
 const options: WalletPickerConfig<unknown, string> = {
   chains: {
     ethereum: [
@@ -28,8 +30,8 @@ const options: WalletPickerConfig<unknown, string> = {
         logo: "https://avatars0.githubusercontent.com/u/37784886?s=60&v=4",
         connector: new EthereumWalletConnectConnector({
           rpc: {
-            1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
-            42: `https://kovan.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
+            1: `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
+            42: `https://kovan.infura.io/v3/${INFURA_PROJECT_ID}`,
           },
           qrcode: true,
           debug: true,
@@ -40,8 +42,8 @@ const options: WalletPickerConfig<unknown, string> = {
         logo: "https://avatars0.githubusercontent.com/u/24321658?s=60&v=4",
         connector: new EthereumMEWConnectConnector({
           rpc: {
-            1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
-            42: `wss://kovan.infura.io/ws/v3/${process.env.REACT_APP_INFURA_KEY}`,
+            1: `wss://mainnet.infura.io/ws/v3/${INFURA_PROJECT_ID}`,
+            42: `wss://kovan.infura.io/ws/v3/${INFURA_PROJECT_ID}`,
           },
           chainId: 42,
           debug: true,

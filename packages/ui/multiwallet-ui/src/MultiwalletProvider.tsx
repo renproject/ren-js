@@ -63,6 +63,8 @@ export const ConnectorWatcher = <P, A>({
   update: (update: MultiwalletConnector<P, A>) => void;
   targetNetwork: RenNetwork;
 }): null => {
+  const [activated, setActivated] = useState(false);
+
   const handleUpdate = useCallback(
     ({ provider, account, renNetwork }) => {
       update({
@@ -99,17 +101,20 @@ export const ConnectorWatcher = <P, A>({
         provider: undefined,
         status: "disconnected",
       });
-      connector.emitter.removeAllListeners();
+      // The conneector should clean up after itself
+      //connector.emitter.removeAllListeners();
     },
     [update, chain, connector]
   );
 
-  const activate = useCallback(() => {
+  useEffect(() => {
     // re-activating should not be an issue, this saves us from
     // having to keep track of whether the connector is connected
     // in multiple places
     (async () => {
+      if (activated) return;
       const r = await connector.activate();
+      setActivated(true);
       update({
         connector,
         chain,
@@ -125,7 +130,7 @@ export const ConnectorWatcher = <P, A>({
         error,
       });
     });
-  }, [connector, update, chain, targetNetwork]);
+  }, [activated, setActivated, connector, update, chain, targetNetwork]);
 
   // Register listeners
   useEffect(() => {
@@ -145,8 +150,8 @@ export const ConnectorWatcher = <P, A>({
 
   // Always re-activate if targetNetwork has changed
   useEffect(() => {
-    activate();
-  }, [activate, targetNetwork]);
+    setActivated(false);
+  }, [targetNetwork]);
 
   // Re-activate if reconnecting
   useEffect(() => {
@@ -156,9 +161,9 @@ export const ConnectorWatcher = <P, A>({
         chain,
         status: "connecting",
       });
-      activate();
+      setActivated(false);
     }
-  }, [activate, status]);
+  }, [setActivated, status]);
 
   return null;
 };
@@ -198,7 +203,11 @@ export const MultiwalletProvider = <P, A>({
       // Deactivate the current connector
       if (oldConnector) {
         if (oldConnector.status !== "disconnected") {
-          await oldConnector.connector.deactivate();
+          try {
+            await oldConnector.connector.deactivate();
+          } catch (e) {
+            console.warn("failed to deactivate old connector", e);
+          }
         }
         // eslint-disable-next-line security/detect-object-injection
         delete enabledChains[chain];

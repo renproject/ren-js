@@ -25,7 +25,7 @@ interface MultiwalletConnector<P, A> {
     | "disconnected"
     | "wrong_network"
     | "reconnecting";
-  // name: string;
+  name: string;
 }
 
 export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
@@ -37,7 +37,8 @@ export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
   setTargetNetwork: (n: RenNetwork) => void;
   activateConnector: <P, A>(
     chain: string,
-    connector: ConnectorInterface<P, A>
+    connector: ConnectorInterface<P, A>,
+    name: string
   ) => void;
 }
 
@@ -59,6 +60,7 @@ export const ConnectorWatcher = <P, A>({
   status,
   update,
   targetNetwork,
+  name,
 }: MultiwalletConnector<P, A> & {
   update: (update: MultiwalletConnector<P, A>) => void;
   targetNetwork: RenNetwork;
@@ -66,6 +68,7 @@ export const ConnectorWatcher = <P, A>({
   const handleUpdate = useCallback(
     ({ provider, account, renNetwork }) => {
       update({
+        name,
         connector,
         account,
         chain,
@@ -79,6 +82,7 @@ export const ConnectorWatcher = <P, A>({
   const handleError = useCallback(
     (error) => {
       update({
+        name,
         connector,
         chain,
         error,
@@ -94,6 +98,7 @@ export const ConnectorWatcher = <P, A>({
     (reason: string) => {
       console.debug(reason);
       update({
+        name,
         connector,
         chain,
         provider: undefined,
@@ -111,6 +116,7 @@ export const ConnectorWatcher = <P, A>({
     (async () => {
       const r = await connector.activate();
       update({
+        name,
         connector,
         chain,
         account: r.account,
@@ -119,6 +125,7 @@ export const ConnectorWatcher = <P, A>({
       });
     })().catch((error) => {
       update({
+        name,
         connector,
         chain,
         status: "disconnected",
@@ -152,6 +159,7 @@ export const ConnectorWatcher = <P, A>({
   useEffect(() => {
     if (status === "reconnecting") {
       update({
+        name,
         connector,
         chain,
         status: "connecting",
@@ -184,28 +192,29 @@ export const MultiwalletProvider = <P, A>({
   );
 
   const activateConnector = useCallback(
-    async (chain: string, connector) => {
-      // eslint-disable-next-line security/detect-object-injection
-      const oldConnector = enabledChains[chain];
-      // Don't re-connect if the same connector is already connecting or connected
-      if (
-        oldConnector?.connector === connector &&
-        !["disconnected", "wrong_network"].includes(oldConnector?.status)
-      ) {
-        return;
-      }
+    async (chain: string, connector, name: string) => {
+      // catch insecure connector modification
+      if (enabledChains.hasOwnProperty(chain)) {
+        // eslint-disable-next-line security/detect-object-injection
+        const oldConnector = enabledChains[chain];
+        // Don't re-connect if the same connector is already connecting or connected
+        if (
+          oldConnector.connector === connector &&
+          !["disconnected", "wrong_network"].includes(oldConnector?.status)
+        ) {
+          return;
+        }
 
-      // Deactivate the current connector
-      if (oldConnector) {
+        // Deactivate the current connector
         if (oldConnector.status !== "disconnected") {
           await oldConnector.connector.deactivate();
         }
         // eslint-disable-next-line security/detect-object-injection
         delete enabledChains[chain];
         setEnabledChains({ ...enabledChains });
-        updateConnector({ connector, chain, status: "reconnecting" });
+        updateConnector({ connector, chain, name, status: "reconnecting" });
       } else {
-        updateConnector({ connector, chain, status: "connecting" });
+        updateConnector({ connector, chain, name, status: "connecting" });
       }
     },
     [enabledChains, setEnabledChains, updateConnector]

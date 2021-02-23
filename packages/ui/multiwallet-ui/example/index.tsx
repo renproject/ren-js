@@ -69,7 +69,8 @@ const WalletDemo: React.FC<{ network: string }> = () => {
         <Paper>
           <Box p={2}>
             <Typography key={chain}>
-              {chain}: Status {connector.status} to {connector.account}
+              {chain}: Status {connector.status} to {connector.account} with{" "}
+              {connector.name}
             </Typography>
           </Box>
           <Button onClick={() => connector.connector.deactivate()}>

@@ -1,16 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   MultiwalletProvider,
   useMultiwallet,
-} from '../src/MultiwalletProvider';
+} from "../src/MultiwalletProvider";
 import {
   ConnectorEmitter,
   ConnectorEvents,
   ConnectorInterface,
-} from '@renproject/multiwallet-base-connector';
-import * as ReactDOM from 'react-dom';
-import { act, Simulate } from 'react-dom/test-utils';
-import { RenNetwork } from '@renproject/interfaces';
+} from "@renproject/multiwallet-base-connector";
+import * as ReactDOM from "react-dom";
+import { act, Simulate } from "react-dom/test-utils";
+import { RenNetwork } from "@renproject/interfaces";
 
 const emitter = new ConnectorEmitter(false);
 
@@ -31,8 +31,8 @@ const TestAutoActivate: React.FC<{
   const { activateConnector, enabledChains } = useMultiwallet();
   useEffect(() => {
     // Don't automatically re-connect on disconnection
-    if (enabledChains[chain]?.status === 'disconnected') return;
-    activateConnector(chain, connector);
+    if (enabledChains[chain]?.status === "disconnected") return;
+    activateConnector(chain, connector, "test");
   }, [activateConnector, chain, connector, enabledChains]);
   const enabledChain = enabledChains[chain];
 
@@ -52,7 +52,7 @@ const TestManualActivate: React.FC<{
   const { activateConnector, enabledChains } = useMultiwallet();
   const enabledChain = enabledChains[chain];
   const activate = React.useCallback(() => {
-    activateConnector(chain, connector);
+    activateConnector(chain, connector, id);
   }, [activateConnector, chain, connector]);
 
   return (
@@ -66,7 +66,7 @@ const TestManualActivate: React.FC<{
   );
 };
 
-describe('MultiwalletProvider', () => {
+describe("MultiwalletProvider", () => {
   beforeEach(() => {
     mockConnector = {
       activate: () => new Promise(() => {}),
@@ -78,8 +78,8 @@ describe('MultiwalletProvider', () => {
       emitter,
     };
   });
-  it('Starts connecting when activateConnector is called', async (done) => {
-    const div = document.createElement('div');
+  it("Starts connecting when activateConnector is called", async (done) => {
+    const div = document.createElement("div");
     await act(async () =>
       ReactDOM.render(
         <MultiwalletProvider>
@@ -90,16 +90,16 @@ describe('MultiwalletProvider', () => {
     );
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('connecting');
+      expect(div.innerHTML).toContain("connecting");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 100);
   });
 
-  it('It correctly updates to the connected state', async (done) => {
-    const div = document.createElement('div');
+  it("It correctly updates to the connected state", async (done) => {
+    const div = document.createElement("div");
     mockConnector.activate = async () => ({
-      account: 'test',
+      account: "test",
       provider: {},
       renNetwork: RenNetwork.Mainnet,
     });
@@ -113,16 +113,16 @@ describe('MultiwalletProvider', () => {
     );
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('connected');
+      expect(div.innerHTML).toContain("connected");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 1000);
   });
 
-  it('It correctly handles disconnection events', async (done) => {
-    const div = document.createElement('div');
+  it("It correctly handles disconnection events", async (done) => {
+    const div = document.createElement("div");
     mockConnector.activate = async () => ({
-      account: 'test',
+      account: "test",
       provider: {},
       renNetwork: RenNetwork.Mainnet,
     });
@@ -137,20 +137,20 @@ describe('MultiwalletProvider', () => {
 
     setTimeout(async () => {
       await act(async () => {
-        mockConnector.emitter.emit(ConnectorEvents.DEACTIVATE, 'testing');
+        mockConnector.emitter.emit(ConnectorEvents.DEACTIVATE, "testing");
       });
     }, 1000);
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('disconnected');
+      expect(div.innerHTML).toContain("disconnected");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 2000);
   });
 
-  it('It correctly handles update events', async (done) => {
-    const div = document.createElement('div');
-    let account = 'test';
+  it("It correctly handles update events", async (done) => {
+    const div = document.createElement("div");
+    let account = "test";
     mockConnector.activate = async () => ({
       account,
       provider: {},
@@ -167,7 +167,7 @@ describe('MultiwalletProvider', () => {
 
     setTimeout(async () => {
       await act(async () => {
-        account = 'newAccount';
+        account = "newAccount";
         mockConnector.emitter.emit(ConnectorEvents.UPDATE, {
           account,
         });
@@ -175,16 +175,16 @@ describe('MultiwalletProvider', () => {
     }, 500);
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('newAccount');
+      expect(div.innerHTML).toContain("newAccount");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 2000);
   });
 
-  it('It correctly handles error events', async (done) => {
-    const div = document.createElement('div');
+  it("It correctly handles error events", async (done) => {
+    const div = document.createElement("div");
     mockConnector.activate = async () => ({
-      account: 'test',
+      account: "test",
       provider: {},
       renNetwork: RenNetwork.Mainnet,
     });
@@ -201,23 +201,23 @@ describe('MultiwalletProvider', () => {
       await act(async () => {
         mockConnector.emitter.emit(
           ConnectorEvents.ERROR,
-          new Error('an error')
+          new Error("an error")
         );
       });
     }, 1000);
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('disconnected');
-      expect(div.innerHTML).toContain('an error');
+      expect(div.innerHTML).toContain("disconnected");
+      expect(div.innerHTML).toContain("an error");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 2000);
   });
 
-  it('It correctly handles failed activations', async (done) => {
-    const div = document.createElement('div');
+  it("It correctly handles failed activations", async (done) => {
+    const div = document.createElement("div");
     mockConnector.activate = async () => {
-      throw new Error('failed');
+      throw new Error("failed");
     };
     await act(async () =>
       ReactDOM.render(
@@ -229,17 +229,17 @@ describe('MultiwalletProvider', () => {
     );
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('disconnected');
-      expect(div.innerHTML).toContain('failed');
+      expect(div.innerHTML).toContain("disconnected");
+      expect(div.innerHTML).toContain("failed");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 2000);
   });
 
-  it('It correctly handles connecting with different connectors', async (done) => {
-    const div = document.createElement('div');
+  it("It correctly handles connecting with different connectors", async (done) => {
+    const div = document.createElement("div");
     mockConnector.activate = async () => ({
-      account: 'test',
+      account: "test",
       provider: {},
       renNetwork: RenNetwork.Mainnet,
     });
@@ -262,21 +262,21 @@ describe('MultiwalletProvider', () => {
     );
 
     await act(async () => {
-      const button = div.querySelectorAll('button').item(0);
+      const button = div.querySelectorAll("button").item(0);
       if (!button) return;
       Simulate.click(button);
     });
 
     setTimeout(async () => {
       await act(async () => {
-        const button = div.querySelectorAll('button').item(1);
+        const button = div.querySelectorAll("button").item(1);
         if (!button) return;
         Simulate.click(button);
       });
     }, 1000);
 
     setTimeout(() => {
-      expect(div.innerHTML).toContain('connected');
+      expect(div.innerHTML).toContain("connected");
       ReactDOM.unmountComponentAtNode(div);
       done();
     }, 4900);

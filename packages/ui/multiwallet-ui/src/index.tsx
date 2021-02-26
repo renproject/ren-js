@@ -394,7 +394,7 @@ const WalletEntry = <P, A>({
           onPrev={onPrev}
           acknowledge={() => {
             setInfo(undefined);
-            activateConnector(chain, connector);
+            activateConnector(chain, connector, name);
           }}
         />
       ));
@@ -408,7 +408,7 @@ const WalletEntry = <P, A>({
     if (Info) {
       buildInfo(Info);
     } else {
-      activateConnector(chain, connector);
+      activateConnector(chain, connector, name);
     }
   }, [activateConnector, buildInfo, Info, chain, connector]);
 

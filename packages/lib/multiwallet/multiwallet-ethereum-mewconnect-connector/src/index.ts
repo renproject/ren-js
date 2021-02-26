@@ -9,7 +9,7 @@ import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 
 export interface EthereumConnectorOptions
     extends AbstractEthereumConnectorOptions {
-    debug: boolean;
+    debug?: boolean;
     rpc: { [chainId: number]: string };
     chainId: number;
 }

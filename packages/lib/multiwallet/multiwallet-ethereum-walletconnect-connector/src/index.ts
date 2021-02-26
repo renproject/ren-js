@@ -23,7 +23,6 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
     private readonly bridge?: string;
     private readonly qrcode?: boolean;
     private readonly pollingInterval?: number;
-    private readonly debug?: boolean;
 
     private provider?: SaneWalletConnectProvider;
     supportsTestnet = false;
@@ -31,8 +30,8 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
         super(options);
         this.bridge = options.bridge;
         this.rpc = options.rpc;
-        this.debug = options.debug;
     }
+
     handleUpdate = () => {
         this.getStatus()
             .then((...args) => {

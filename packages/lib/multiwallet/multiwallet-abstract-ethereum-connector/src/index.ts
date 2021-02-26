@@ -46,8 +46,8 @@ export type SaneProvider = Exclude<provider, string | null | HttpProvider> & {
 export abstract class AbstractEthereumConnector<
     Provider extends SaneProvider = SaneProvider
 > implements ConnectorInterface<Provider, EthAddress> {
+    readonly debug?: boolean;
     supportsTestnet = true;
-    debug = false;
     networkIdMapper = ethNetworkToRenNetwork;
     emitter: ConnectorEmitter<Provider, EthAddress>;
     constructor({

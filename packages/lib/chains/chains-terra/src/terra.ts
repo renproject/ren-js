@@ -14,6 +14,8 @@ import {
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import { AccAddress, Key } from "@terra-money/terra.js";
+import { blake2b } from "blakejs";
+import elliptic from "elliptic";
 
 import {
     TerraAddress,
@@ -172,7 +174,6 @@ export class TerraClass
         const txs = await terraDev.fetchDeposits(
             address.address,
             this.chainNetwork,
-            address.memo,
         );
 
         await Promise.all(
@@ -208,19 +209,38 @@ export class TerraClass
         compressedPublicKey: Buffer,
         gHash: Buffer,
     ): Promise<TerraAddress> | TerraAddress => {
-        if (!this.chainNetwork) {
+        if (!this.renNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
         this.assertAssetIsSupported(asset);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ec = new elliptic.ec("secp256k1");
+
+        // Decode compressed RenVM public key.
+        const renVMPublicKey = ec.keyFromPublic(compressedPublicKey);
+
+        // Interpret gHash as a private key.
+        const gHashKey = ec.keyFromPrivate(gHash);
+
+        // If `NO_PARAMS_FLAG` is set, set renVM public key and gHash public key,
+        // and recreate key pair from resulting curve point.
+        const derivedPublicKey = ec.keyFromPublic(
+            (renVMPublicKey
+                .getPublic()
+                .add(gHashKey.getPublic()) as unknown) as elliptic.ec.KeyPair,
+        );
+
+        const newCompressedPublicKey: Buffer = Buffer.from(
+            derivedPublicKey.getPublic().encodeCompressed(),
+        );
+
         // @ts-expect-error `Cannot create an instance of an abstract class`
-        const address: Key = new Key(compressedPublicKey);
+        const address: Key = new Key(newCompressedPublicKey);
 
         return {
             asset,
             address: address.accAddress,
-            memo: toURLBase64(gHash),
+            // memo: toURLBase64(gHash),
         };
     };
 

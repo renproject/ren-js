@@ -18,7 +18,7 @@ export interface TerraAPI {
     fetchDeposits: (
         address: string,
         network: TerraNetwork,
-        memo: string | undefined,
+        memo?: string | undefined,
         page?: number,
     ) => Promise<TerraTransaction[]>;
 
@@ -32,8 +32,8 @@ export interface TerraAPI {
 export type TerraAddress = {
     address: string; // Terra address
     asset?: string; // Asset tied to the pHash in the memo.
-    memo?: string; // Base64 string of the pHash.
 };
+
 export type TerraDeposit = {
     transaction: TerraTransaction;
     amount: string;

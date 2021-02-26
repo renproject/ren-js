@@ -51,6 +51,7 @@
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
+        "blakejs": "^1.1.0",
         "cids": "^1.1.5",
         "elliptic": "^6.5.3"
     },

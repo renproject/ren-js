@@ -141,6 +141,7 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
         if (provider.close) {
             await provider.close();
         }
+        this.provider = undefined;
         this.emitter.emitDeactivate(reason);
     };
 }

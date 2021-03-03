@@ -25,7 +25,7 @@ interface MultiwalletConnector<P, A> {
     | "disconnected"
     | "wrong_network"
     | "reconnecting";
-  // name: string;
+  name: string;
 }
 
 export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
@@ -37,7 +37,8 @@ export interface MultiwalletInterface<PossibleProviders, PossibleAccounts> {
   setTargetNetwork: (n: RenNetwork) => void;
   activateConnector: <P, A>(
     chain: string,
-    connector: ConnectorInterface<P, A>
+    connector: ConnectorInterface<P, A>,
+    name: string
   ) => void;
 }
 
@@ -59,6 +60,7 @@ export const ConnectorWatcher = <P, A>({
   status,
   update,
   targetNetwork,
+  name,
 }: MultiwalletConnector<P, A> & {
   update: (update: MultiwalletConnector<P, A>) => void;
   targetNetwork: RenNetwork;
@@ -66,6 +68,7 @@ export const ConnectorWatcher = <P, A>({
   const handleUpdate = useCallback(
     ({ provider, account, renNetwork }) => {
       update({
+        name,
         connector,
         account,
         chain,
@@ -78,7 +81,9 @@ export const ConnectorWatcher = <P, A>({
 
   const handleError = useCallback(
     (error) => {
+      console.warn(error);
       update({
+        name,
         connector,
         chain,
         error,
@@ -94,12 +99,14 @@ export const ConnectorWatcher = <P, A>({
     (reason: string) => {
       console.debug(reason);
       update({
+        name,
         connector,
         chain,
         provider: undefined,
         status: "disconnected",
       });
-      connector.emitter.removeAllListeners();
+      // The conneector should clean up after itself internally
+      //connector.emitter.removeAllListeners();
     },
     [update, chain, connector]
   );
@@ -111,6 +118,7 @@ export const ConnectorWatcher = <P, A>({
     (async () => {
       const r = await connector.activate();
       update({
+        name,
         connector,
         chain,
         account: r.account,
@@ -118,7 +126,9 @@ export const ConnectorWatcher = <P, A>({
         status: r.renNetwork !== targetNetwork ? "wrong_network" : "connected",
       });
     })().catch((error) => {
+      console.error(error);
       update({
+        name,
         connector,
         chain,
         status: "disconnected",
@@ -130,7 +140,10 @@ export const ConnectorWatcher = <P, A>({
   // Register listeners
   useEffect(() => {
     // remove any hanging listeners in case of a re-connect
-    connector.emitter.removeAllListeners();
+    // FIXME: I think this is uneccessary, and may cause events to be lost
+    //        so lets keep the listeners around and rely on the emitter
+    //        to clean up after itself
+    // connector.emitter.removeAllListeners();
 
     // Immediately add listeners because they may fire before
     // or during activation
@@ -143,22 +156,27 @@ export const ConnectorWatcher = <P, A>({
     };
   }, [connector, handleDeactivate, handleError, handleUpdate]);
 
+  const [previousNetwork, setPreviousNetwork] = useState("");
   // Always re-activate if targetNetwork has changed
   useEffect(() => {
-    activate();
-  }, [activate, targetNetwork]);
+    if (previousNetwork != targetNetwork) {
+      setPreviousNetwork(targetNetwork);
+      activate();
+    }
+  }, [activate, targetNetwork, previousNetwork]);
 
   // Re-activate if reconnecting
   useEffect(() => {
     if (status === "reconnecting") {
       update({
+        name,
         connector,
         chain,
         status: "connecting",
       });
       activate();
     }
-  }, [activate, status]);
+  }, [status]);
 
   return null;
 };
@@ -184,28 +202,32 @@ export const MultiwalletProvider = <P, A>({
   );
 
   const activateConnector = useCallback(
-    async (chain: string, connector) => {
-      // eslint-disable-next-line security/detect-object-injection
-      const oldConnector = enabledChains[chain];
-      // Don't re-connect if the same connector is already connecting or connected
-      if (
-        oldConnector?.connector === connector &&
-        !["disconnected", "wrong_network"].includes(oldConnector?.status)
-      ) {
-        return;
-      }
+    async (chain: string, connector, name: string) => {
+      // catch insecure connector modification
+      if (enabledChains.hasOwnProperty(chain)) {
+        // eslint-disable-next-line security/detect-object-injection
+        const oldConnector = enabledChains[chain];
+        // Don't re-connect if the same connector is already connecting or connected
+        if (
+          oldConnector.name === name &&
+          !["disconnected", "wrong_network"].includes(oldConnector?.status)
+        ) {
+          return;
+        }
 
-      // Deactivate the current connector
-      if (oldConnector) {
+        // Deactivate the current connector
         if (oldConnector.status !== "disconnected") {
-          await oldConnector.connector.deactivate();
+          try {
+            await oldConnector.connector.deactivate();
+          } catch (e) {
+            console.warn("failed to deactivate old connector", e);
+          }
         }
         // eslint-disable-next-line security/detect-object-injection
         delete enabledChains[chain];
-        setEnabledChains({ ...enabledChains });
-        updateConnector({ connector, chain, status: "reconnecting" });
+        updateConnector({ connector, chain, name, status: "reconnecting" });
       } else {
-        updateConnector({ connector, chain, status: "connecting" });
+        updateConnector({ connector, chain, name, status: "connecting" });
       }
     },
     [enabledChains, setEnabledChains, updateConnector]

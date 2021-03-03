@@ -17,7 +17,7 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
-import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
+import { BscConfigMap } from "@renproject/chains";
 import Web3 from "web3";
 
 chai.should();
@@ -37,10 +37,10 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.MainnetVDot3;
-        const asset = "FIL" as string;
-        const from = Chains.Filecoin();
+        const asset = "DGB" as string;
+        const from = Chains.DigiByte();
 
-        const ethNetwork = EthereumConfigMap[network];
+        const ethNetwork = BscConfigMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -53,15 +53,21 @@ describe("Refactor: mint", () => {
         const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
 
-        const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
-        // const infuraURL = ethNetwork.infura; // renBscDevnet.infura
+        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
+        const infuraURL = ethNetwork.infura; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
-        const ethAddress = (await new Web3(provider).eth.getAccounts())[0];
+        const web3 = new Web3(provider);
+        const ethAddress = (await web3.eth.getAccounts())[0];
+        const ethBalance = web3.utils.fromWei(
+            await web3.eth.getBalance(ethAddress),
+            "ether",
+        );
+        console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
 
         const params: LockAndMintParams = {
             asset,
             from,
-            to: Chains.Ethereum(provider, ethNetwork).Account({
+            to: Chains.BinanceSmartChain(provider, ethNetwork).Account({
                 address: ethAddress,
             }),
         };

@@ -249,12 +249,6 @@ export interface LockChain<
         gHash: Buffer,
     ) => SyncOrPromise<Address>;
 
-    getPubKeyScript: (
-        asset: string,
-        publicKey: Buffer,
-        gHash: Buffer,
-    ) => SyncOrPromise<Buffer>;
-
     // Only chains supported by the legacy transaction format (BTC, ZEC & BCH)
     // need to support this. For now, other chains can return an empty string.
     depositV1HashString: (deposit: LockDeposit) => string;

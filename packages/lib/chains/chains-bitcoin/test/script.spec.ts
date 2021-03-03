@@ -24,18 +24,9 @@ describe("Common", () => {
                     hash160(publicKey),
                     gHash,
                 );
-                const script = chain.getPubKeyScript(
-                    chain.asset,
-                    hash160(publicKey),
-                    gHash,
-                );
 
                 if (false as boolean) {
-                    console.log(
-                        `${
-                            chain.name
-                        } ${network}: ${address}, ${script.toString("hex")}`,
-                    );
+                    console.log(`${chain.name} ${network}: ${address}`);
                 }
             });
         }

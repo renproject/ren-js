@@ -46,6 +46,7 @@ export type SaneProvider = Exclude<provider, string | null | HttpProvider> & {
 export abstract class AbstractEthereumConnector<
     Provider extends SaneProvider = SaneProvider
 > implements ConnectorInterface<Provider, EthAddress> {
+    readonly debug?: boolean;
     supportsTestnet = true;
     networkIdMapper = ethNetworkToRenNetwork;
     emitter: ConnectorEmitter<Provider, EthAddress>;
@@ -54,6 +55,7 @@ export abstract class AbstractEthereumConnector<
         networkIdMapper = ethNetworkToRenNetwork,
     }: AbstractEthereumConnectorOptions) {
         this.networkIdMapper = networkIdMapper;
+        this.debug = debug;
         this.emitter = new ConnectorEmitter<Provider, EthAddress>(debug);
     }
     abstract activate: ConnectorInterface<Provider, EthAddress>["activate"];
@@ -64,6 +66,7 @@ export abstract class AbstractEthereumConnector<
     abstract deactivate: ConnectorInterface<Provider, EthAddress>["deactivate"];
     // Get the complete connector status in one call
     async getStatus(): Promise<ConnectorUpdate<Provider, EthAddress>> {
+        if (this.debug) console.debug("getting status");
         return {
             account: await this.getAccount(),
             renNetwork: await this.getRenNetwork(),
@@ -73,6 +76,7 @@ export abstract class AbstractEthereumConnector<
 
     // Get default ethereum account
     async getAccount() {
+        if (this.debug) console.debug("getting account");
         const account = resultOrRaw(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await ((await this.getProvider()) as any).request({
@@ -86,6 +90,7 @@ export abstract class AbstractEthereumConnector<
     }
     // Cast current ethereum network to Ren network version or throw
     async getRenNetwork() {
+        if (this.debug) console.debug("getting chain");
         return this.networkIdMapper(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await resultOrRaw((await this.getProvider()) as any).request({

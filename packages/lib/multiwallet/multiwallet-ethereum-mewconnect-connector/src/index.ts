@@ -9,7 +9,7 @@ import { ConnectorInterface } from "@renproject/multiwallet-base-connector";
 
 export interface EthereumConnectorOptions
     extends AbstractEthereumConnectorOptions {
-    debug: boolean;
+    debug?: boolean;
     rpc: { [chainId: number]: string };
     chainId: number;
 }
@@ -54,6 +54,9 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
         if (!provider) {
             throw Error("Missing Provider");
         }
+        if (!this.mewConnectProvider) {
+            throw Error("Missing MEWConnect Provider");
+        }
         // clear any hanging listeners
         await this.cleanup();
 
@@ -68,7 +71,7 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
             });
         }
 
-        if (this.mewConnectProvider && this.mewConnectProvider.on) {
+        if (this.mewConnectProvider.on) {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             this.mewConnectProvider.on("disconnected", this.deactivate);
         }
@@ -138,6 +141,7 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
         if (provider.close) {
             await provider.close();
         }
+        this.provider = undefined;
         this.emitter.emitDeactivate(reason);
     };
 }

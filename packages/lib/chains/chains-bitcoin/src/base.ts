@@ -88,7 +88,7 @@ export abstract class BitcoinBaseChain
     // Utils
     public static utils = {
         p2shPrefix: {} as { [network: string]: Buffer },
-        createAddress: createAddress(Networks, Opcode, Script, base58.encode),
+        createAddress: createAddress(base58.encode, Networks, Opcode, Script),
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             _address: BtcAddress | string,
@@ -257,19 +257,6 @@ export abstract class BitcoinBaseChain
             hash160(publicKey),
             gHash,
             this.utils.p2shPrefix[isTestnet ? "testnet" : "mainnet"],
-        );
-    };
-
-    getPubKeyScript = (asset: string, publicKey: Buffer, gHash: Buffer) => {
-        if (!this.chainNetwork) {
-            throw new Error(`${this.name} object not initialized`);
-        }
-        this.assertAssetIsSupported(asset);
-        const isTestnet = this.chainNetwork === "testnet";
-        return this.utils.calculatePubKeyScript(
-            isTestnet,
-            hash160(publicKey),
-            gHash,
         );
     };
 

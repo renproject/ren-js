@@ -14,37 +14,39 @@ import * as v2 from "./v2";
  * Eventually, v1 will be removed.
  */
 export const createAddress = (
-    networks: typeof BNetworks,
-    opcode: typeof BOpcode,
-    script: typeof bScript,
     addressToString: (bytes: Buffer) => string,
+    networks?: typeof BNetworks,
+    opcode?: typeof BOpcode,
+    script?: typeof bScript,
 ) => (
     isTestnet: boolean,
     gGubKeyHash: Buffer,
     gHash: Buffer,
     prefix: Buffer,
 ): string => {
-    const v1Address = v1.createAddress(networks, opcode, script)(
-        isTestnet,
-        gGubKeyHash,
-        gHash,
-    );
-
     const v2Address = addressToString(
         v2.createAddress(gGubKeyHash, gHash, prefix),
     );
 
-    if (v1Address !== v2Address) {
-        throw new Error(
-            `Error: Different results returned from gateway address generation with parameters: \
-isTestnet: ${isTestnet}, \
-gPubKey: ${Ox(gGubKeyHash)}, \
-gHash: ${Ox(gHash)}, \
-prefix: ${Ox(prefix)}`,
+    if (networks && opcode && script) {
+        const v1Address = v1.createAddress(networks, opcode, script)(
+            isTestnet,
+            gGubKeyHash,
+            gHash,
         );
+
+        if (v1Address !== v2Address) {
+            throw new Error(
+                `Error: Different results returned from gateway address generation with parameters: \
+    isTestnet: ${isTestnet}, \
+    gPubKey: ${Ox(gGubKeyHash)}, \
+    gHash: ${Ox(gHash)}, \
+    prefix: ${Ox(prefix)}: ${v1Address} vs ${v2Address}`,
+            );
+        }
     }
 
-    return v1Address;
+    return v2Address;
 };
 
 /**
@@ -52,26 +54,28 @@ prefix: ${Ox(prefix)}`,
  *
  */
 export const pubKeyScript = (
-    networks: typeof BNetworks,
-    opcode: typeof BOpcode,
-    script: typeof bScript,
+    networks?: typeof BNetworks,
+    opcode?: typeof BOpcode,
+    script?: typeof bScript,
 ) => (isTestnet: boolean, gPubKey: Buffer, gHash: Buffer) => {
-    const v1PubKeyScript: Buffer = v1.pubKeyScript(networks, opcode, script)(
-        isTestnet,
-        gPubKey,
-        gHash,
-    );
-
     const v2PubKeyScript = v2.pubKeyScript(gPubKey, gHash);
 
-    if (!v1PubKeyScript.equals(v2PubKeyScript)) {
-        throw new Error(
-            `Error: Different results returned from gateway public key generation with parameters: \
+    if (networks && opcode && script) {
+        const v1PubKeyScript: Buffer = v1.pubKeyScript(
+            networks,
+            opcode,
+            script,
+        )(isTestnet, gPubKey, gHash);
+
+        if (!v1PubKeyScript.equals(v2PubKeyScript)) {
+            throw new Error(
+                `Error: Different results returned from gateway public key generation with parameters: \
 isTestnet: ${isTestnet}, \
 gPubKey: ${Ox(gPubKey)}, \
 gHash: ${Ox(gHash)}`,
-        );
+            );
+        }
     }
 
-    return v1PubKeyScript;
+    return v2PubKeyScript;
 };

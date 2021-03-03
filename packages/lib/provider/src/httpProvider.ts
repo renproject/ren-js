@@ -1,10 +1,5 @@
 import { Logger, LogLevel, NullLogger } from "@renproject/interfaces";
-import {
-    assertType,
-    extractError,
-    retryNTimes,
-    SECONDS,
-} from "@renproject/utils";
+import { extractError, retryNTimes, SECONDS } from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
 
 import { JSONRPCResponse, Provider } from "./jsonRPC";

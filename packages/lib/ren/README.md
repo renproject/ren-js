@@ -7,9 +7,9 @@
 Install RenJS:
 
 ```sh
-yarn add @renproject/ren@next
+yarn add @renproject/ren
 # Or
-npm install --save @renproject/ren@next
+npm install --save @renproject/ren
 ```
 
 ## Usage

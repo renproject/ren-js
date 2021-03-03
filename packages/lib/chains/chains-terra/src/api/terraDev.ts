@@ -235,7 +235,8 @@ const fetchDeposits = async (
     const chainHeight = filteredTxs.length > 0 ? await getHeight(network) : 0;
     return filteredTxs
         .map(extractDepositsFromTx(chainHeight))
-        .reduce(concat, []);
+        .reduce(concat, [])
+        .filter((msg) => msg.to === address);
 };
 
 const fetchDeposit = async (

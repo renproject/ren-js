@@ -9,7 +9,7 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 
 export interface EthereumConnectorOptions
     extends AbstractEthereumConnectorOptions {
-    debug: boolean;
+    debug?: boolean;
     rpc: { [chainId: number]: string };
     bridge?: string;
     qrcode?: boolean;
@@ -31,31 +31,43 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
         this.bridge = options.bridge;
         this.rpc = options.rpc;
     }
+
     handleUpdate = () => {
         this.getStatus()
             .then((...args) => {
                 this.emitter.emitUpdate(...args);
             })
-            .catch(async (...args) => this.deactivate(...args));
+            .catch(async (...args) => {
+                console.error("Failed to get status");
+                this.deactivate(...args);
+            });
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
+        if (this.debug) console.debug("activating");
+
+        await this.cleanup();
+        if (this.debug) console.debug("cleaned up old listeners");
+
         // No good typings for injected providers exist...
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const provider: any = await this.getProvider();
+        if (this.debug) console.debug("got provider");
         if (!provider) {
             throw Error("Missing Provider");
         }
-        await this.cleanup();
 
         if (!provider.wc.connected) {
+            if (this.debug) console.debug("creating session");
             await provider.wc.createSession({
                 chainId: Number(Object.keys(this.rpc)[0]),
             });
         }
 
+        if (this.debug) console.debug("enabling");
         await provider.enable().catch((error: Error): void => {
+            console.error(error);
             // TODO ideally this would be a better check
             if (error.message === "User closed modal") {
                 this.emitter.emitError(new Error("User rejected request"));
@@ -63,6 +75,7 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
 
             throw error;
         });
+        if (this.debug) console.debug("enabled");
 
         provider.on("close", this.deactivate);
         provider.on("networkChanged", this.handleUpdate);
@@ -72,11 +85,16 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
     };
 
     getProvider = async () => {
+        if (this.debug) console.debug("getting provider");
         if (this.provider) return this.provider;
+
+        if (this.debug) console.debug("getting module");
         // eslint-disable-next-line @typescript-eslint/no-shadow
         const WalletConnectProvider = await import(
             "@walletconnect/web3-provider"
         ).then((m) => m?.default ?? m);
+
+        if (this.debug) console.debug("building provider");
         this.provider = new WalletConnectProvider({
             bridge: this.bridge,
             rpc: this.rpc,
@@ -118,6 +136,7 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
             provider.removeListener("close", this.deactivate);
         }
         await provider.close();
+        this.provider = undefined;
         this.emitter.emitDeactivate(reason);
     };
 }

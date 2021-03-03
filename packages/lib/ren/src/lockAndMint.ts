@@ -798,6 +798,7 @@ export class LockAndMintDeposit<
             const { to: _to, from: _from, ...restOfParams } = this.params;
             this._state.logger.debug(
                 "LockAndMintDeposit created",
+                depositDetails,
                 restOfParams,
             );
         }

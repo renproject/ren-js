@@ -25,6 +25,7 @@ export class DigiByteClass extends BitcoinClass {
                 // prettier-ignore
                 return this
                     .withAPI(Insight("https://digiexplorer.info/api"))
+                    .withAPI(Insight("https://insight.digibyte.host/api"))
             case "testnet":
                 // prettier-ignore
                 return this

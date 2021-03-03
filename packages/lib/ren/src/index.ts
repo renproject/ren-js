@@ -5,7 +5,6 @@ import {
     LockChain,
     Logger,
     LogLevel,
-    LogLevelString,
     MintChain,
     RenNetwork,
     RenNetworkString,

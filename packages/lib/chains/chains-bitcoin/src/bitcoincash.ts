@@ -53,10 +53,10 @@ export class BitcoinCashClass extends BitcoinClass {
             testnet: Buffer.from([0xc4]),
         },
         createAddress: createAddress(
+            (bytes: Buffer) => toCashAddress(base58.encode(bytes)),
             Networks,
             Opcode,
             Script,
-            (bytes: Buffer) => toCashAddress(base58.encode(bytes)),
         ),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (

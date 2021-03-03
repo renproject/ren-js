@@ -65,7 +65,7 @@ export class BitcoinClass
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
         },
-        createAddress: createAddress(Networks, Opcode, Script, base58.encode),
+        createAddress: createAddress(base58.encode, Networks, Opcode, Script),
         calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             address: BtcAddress | string,

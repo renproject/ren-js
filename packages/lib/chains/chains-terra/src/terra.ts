@@ -244,11 +244,6 @@ export class TerraClass
         };
     };
 
-    getPubKeyScript = (asset: string, _publicKey: Buffer, _gHash: Buffer) => {
-        this.assertAssetIsSupported(asset);
-        return Buffer.from([]);
-    };
-
     /**
      * See [[LockChain.addressStringToBytes]].
      */

@@ -5,21 +5,18 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { Networks, Opcode, Script } from "@CoinSpace/bitcore-lib-dogecoin";
 import base58 from "bs58";
-import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
-import { SoChain, SoChainNetwork } from "./APIs/sochain";
 
+import { Insight } from "./APIs/insight";
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
 import { createAddress, pubKeyScript } from "./script";
 import { validateAddress } from "./utils";
 
-export class DogecoinClass extends BitcoinClass {
-    public static chain = "Dogecoin";
-    public chain = DogecoinClass.chain;
-    public name = DogecoinClass.chain;
-    public legacyName = undefined;
+export class DigiByteClass extends BitcoinClass {
+    public static chain = "DigiByte";
+    public chain = DigiByteClass.chain;
+    public name = DigiByteClass.chain;
 
     // APIs
     public withDefaultAPIs = (network: BtcNetwork): this => {
@@ -27,27 +24,28 @@ export class DogecoinClass extends BitcoinClass {
             case "mainnet":
                 // prettier-ignore
                 return this
-                    .withAPI(Blockchair(BlockchairNetwork.DOGECOIN))
-                    .withAPI(SoChain(SoChainNetwork.DOGE), { priority: 15 });
+                    .withAPI(Insight("https://digiexplorer.info/api"))
             case "testnet":
                 // prettier-ignore
                 return this
-                    .withAPI(SoChain(SoChainNetwork.DOGETEST), { priority: 15 });
+                    .withAPI(Insight("https://testnet.digiexplorer.info/api"));
             case "regtest":
                 throw new Error(`Regtest is currently not supported.`);
         }
     };
 
-    public static asset = "DOGE";
-    public asset = "DOGE";
+    public static asset = "DGB";
+    public asset = DigiByteClass.asset;
+
     public static utils = {
         resolveChainNetwork: BitcoinClass.utils.resolveChainNetwork,
         p2shPrefix: {
-            mainnet: Buffer.from([0x16]),
-            testnet: Buffer.from([0xc4]),
+            // Source: https://github.com/digicontributer/digibyte-js/blob/27156cd1cb4430c4a4959f46e809629846694434/lib/networks.js
+            mainnet: Buffer.from([0x3f]),
+            testnet: Buffer.from([0x8c]),
         },
-        createAddress: createAddress(base58.encode, Networks, Opcode, Script),
-        calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
+        createAddress: createAddress(base58.encode),
+        calculatePubKeyScript: pubKeyScript(),
         addressIsValid: (
             address: BtcAddress | string,
             network:
@@ -58,8 +56,8 @@ export class DogecoinClass extends BitcoinClass {
         ) =>
             validateAddress(
                 address,
-                DogecoinClass.asset,
-                Dogecoin.utils.resolveChainNetwork(network),
+                DigiByteClass.asset,
+                DigiByte.utils.resolveChainNetwork(network),
             ),
 
         addressExplorerLink: (
@@ -70,11 +68,11 @@ export class DogecoinClass extends BitcoinClass {
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
         ): string | undefined => {
-            switch (Dogecoin.utils.resolveChainNetwork(network)) {
+            switch (DigiByte.utils.resolveChainNetwork(network)) {
                 case "mainnet":
-                    return `https://sochain.com/address/DOGE/${address}/`;
+                    return `https://digiexplorer.info/address/${address}`;
                 case "testnet":
-                    return `https://sochain.com/address/DOGETEST/${address}/`;
+                    return `https://testnet.digiexplorer.info/address/${address}`;
                 case "regtest":
                     return undefined;
             }
@@ -90,11 +88,11 @@ export class DogecoinClass extends BitcoinClass {
         ): string | undefined => {
             const txHash = typeof tx === "string" ? tx : tx.txHash;
 
-            switch (Dogecoin.utils.resolveChainNetwork(network)) {
+            switch (DigiByte.utils.resolveChainNetwork(network)) {
                 case "mainnet":
-                    return `https://sochain.com/tx/DOGE/${txHash}/`;
+                    return `https://digiexplorer.info/tx/${txHash}`;
                 case "testnet":
-                    return `https://sochain.com/tx/DOGETEST/${txHash}/`;
+                    return `https://testnet.digiexplorer.info/tx/${txHash}`;
                 case "regtest":
                     return undefined;
             }
@@ -102,12 +100,12 @@ export class DogecoinClass extends BitcoinClass {
     };
 
     public utils = utilsWithChainNetwork(
-        DogecoinClass.utils,
+        DigiByteClass.utils,
         () => this.chainNetwork,
     );
 }
 
-export type Dogecoin = DogecoinClass;
-export const Dogecoin = Callable(DogecoinClass);
+export type DigiByte = DigiByteClass;
+export const DigiByte = Callable(DigiByteClass);
 
-const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = Dogecoin;
+const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = DigiByte;

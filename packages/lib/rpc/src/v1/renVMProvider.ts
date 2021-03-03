@@ -88,7 +88,7 @@ export class RenVMProvider
                     throw new Error(
                         `Invalid network or provider URL: "${
                             (getRenNetworkDetails(network) || {}).name ||
-                            network
+                            String(network)
                         }"`,
                     );
                 }

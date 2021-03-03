@@ -59,7 +59,7 @@ export class ZcashClass extends BitcoinClass {
             mainnet: Buffer.from([0x1c, 0xbd]),
             testnet: Buffer.from([0x1c, 0xba]),
         },
-        createAddress: createAddress(Networks, Opcode, Script, base58.encode),
+        createAddress: createAddress(base58.encode, Networks, Opcode, Script),
         calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
         addressIsValid: (
             address: BtcAddress | string,

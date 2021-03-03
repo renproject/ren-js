@@ -1,4 +1,4 @@
-import { Callable } from "@renproject/utils";
+import { Callable, isDefined } from "@renproject/utils";
 import axios from "axios";
 import https from "https";
 
@@ -36,21 +36,35 @@ export class InsightClass implements BitcoinAPI {
                 ? JSON.parse(response.data)
                 : response.data;
 
-        return data
-            .map((utxo) => ({
-                txHash: utxo.txid,
-                amount: utxo.satoshis
-                    ? utxo.satoshis.toString()
-                    : fixValue(utxo.amount, 8).toFixed(),
-                // script_hex: utxo.scriptPubKey,
-                vOut: utxo.vout,
-                confirmations: utxo.confirmations,
-            }))
-            .filter(
-                (utxo) =>
-                    confirmations === 0 || utxo.confirmations >= confirmations,
+        return (
+            await Promise.all(
+                data
+                    .filter(
+                        (utxo) =>
+                            confirmations === 0 ||
+                            utxo.confirmations >= confirmations,
+                    )
+                    .map((utxo) => ({
+                        txHash: utxo.txid,
+                        amount: isDefined(utxo.satoshis)
+                            ? utxo.satoshis.toString()
+                            : isDefined(utxo.amount)
+                            ? fixValue(utxo.amount, 8).toFixed()
+                            : undefined,
+                        // script_hex: utxo.scriptPubKey,
+                        vOut: utxo.vout,
+                        confirmations: utxo.confirmations || 0,
+                    }))
+                    // If the amount is undefined, fetch the UTXO again.
+                    // This is due to the Digibyte explorer not returning
+                    // amounts correctly when fetching UTXOs.
+                    .map((utxo) =>
+                        isDefined(utxo.amount)
+                            ? (utxo as UTXO)
+                            : this.fetchUTXO(utxo.txHash, utxo.vOut),
+                    ),
             )
-            .sort(sortUTXOs);
+        ).sort(sortUTXOs);
     };
 
     fetchTXs = async (
@@ -81,7 +95,7 @@ export class InsightClass implements BitcoinAPI {
                         txHash: tx.txid,
                         amount: fixValue(parseFloat(vout.value), 8).toFixed(),
                         vOut: i,
-                        confirmations: tx.confirmations,
+                        confirmations: tx.confirmations || 0,
                     });
                 }
             }

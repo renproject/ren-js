@@ -58,7 +58,6 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
             }
         },
         getGatewayAddress: () => "gatewayAddress",
-        getPubKeyScript: () => Buffer.from("pubkey"),
         depositV1HashString: () => "v1HashString",
         legacyName: "Btc",
         assetIsNative: () => true,

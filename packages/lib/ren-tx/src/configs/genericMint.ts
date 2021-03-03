@@ -332,7 +332,7 @@ const mintFlow = (
             sourceTxHash: txHash,
             renVMHash: deposit.txHash(),
             sourceTxAmount: parseInt(rawSourceTx.amount),
-            sourceTxConfs: 0,
+            sourceTxConfs: 0 || parseInt(rawSourceTx.transaction.confirmations),
             rawSourceTx,
             detectedAt: new Date().getTime(),
         };
@@ -404,11 +404,15 @@ const mintFlow = (
                         depositHandler(r);
                     })
                     .catch((e) => {
-                        callback({
-                            type: "ERROR",
-                            data: event.data,
-                            error: e,
-                        });
+                        if (context.tx.transactions[event.data.renVMHash]) {
+                            callback({
+                                type: "ERROR",
+                                data: event.data,
+                                error: e,
+                            });
+                        } else {
+                            throw e;
+                        }
                     });
                 break;
         }

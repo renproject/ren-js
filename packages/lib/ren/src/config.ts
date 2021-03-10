@@ -17,4 +17,12 @@ export interface RenJSConfig {
      * It defaults to `15000` (15 seconds).
      */
     networkDelay?: number;
+
+    /**
+     * `loadCompletedDeposits` whether or not to detect deposits that have
+     * already been minted.
+     *
+     * It defaults to false
+     */
+    loadCompletedDeposits?: boolean;
 }

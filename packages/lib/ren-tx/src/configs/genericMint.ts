@@ -2,9 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Improve typings.
 
-import { DepositCommon } from "@renproject/interfaces";
+import { DepositCommon, LockAndMintTransaction } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import {
+    DepositStatus,
     LockAndMint,
     LockAndMintDeposit,
 } from "@renproject/ren/build/main/lockAndMint";
@@ -328,14 +329,27 @@ const mintFlow = (
         const persistedTx = context.tx.transactions[txHash];
 
         const rawSourceTx = deposit.depositDetails;
-        const depositState: GatewayTransaction = persistedTx || {
-            sourceTxHash: txHash,
-            renVMHash: deposit.txHash(),
-            sourceTxAmount: parseInt(rawSourceTx.amount),
-            sourceTxConfs: 0 || parseInt(rawSourceTx.transaction.confirmations),
-            rawSourceTx,
-            detectedAt: new Date().getTime(),
-        };
+        const depositState: GatewayTransaction = persistedTx
+            ? persistedTx
+            : {
+                  sourceTxHash: txHash,
+                  renVMHash: deposit.txHash(),
+                  renResponse: hexify(
+                      deposit._state.queryTxResult || {},
+                  ) as LockAndMintTransaction,
+                  sourceTxAmount: parseInt(rawSourceTx.amount),
+                  sourceTxConfs:
+                      0 || parseInt(rawSourceTx.transaction.confirmations),
+                  rawSourceTx,
+                  destTxHash: deposit.mintTransaction,
+                  detectedAt: new Date().getTime(),
+              };
+
+        if (deposit.status === DepositStatus.Submitted) {
+            // we don't actually know when the tx completed,
+            // so assume it is now
+            depositState.completedAt = Date.now();
+        }
 
         if (!persistedTx) {
             callback({

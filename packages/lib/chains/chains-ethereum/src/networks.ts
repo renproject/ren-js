@@ -59,7 +59,7 @@ export const renTestnet: EthereumConfig = {
 
 export const renDevnetVDot3: EthereumConfig = {
     name: "Devnet v0.3",
-    ...ethereumConfig.rinkeby,
+    ...ethereumConfig.kovan,
     addresses: {
         GatewayRegistry: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
         BasicAdapter: "0xC8DD18A151FafFCab1B822108e49b4aE3bFff477",
@@ -68,10 +68,10 @@ export const renDevnetVDot3: EthereumConfig = {
 
 export const renTestnetVDot3: EthereumConfig = {
     name: "Testnet v0.3",
-    ...ethereumConfig.rinkeby,
+    ...ethereumConfig.kovan,
     addresses: {
-        GatewayRegistry: "0xcF9F36668ad5b28B336B248a67268AFcF1ECbdbF",
-        BasicAdapter: "0x6fA045D176CE69Fdf9837242E8A72e81c2750E64",
+        GatewayRegistry: "0x557e211EC5fc9a6737d2C6b7a1aDe3e0C11A8D5D",
+        BasicAdapter: "0x7DDFA2e5435027f6e13Ca8Db2f32ebd5551158Bb",
     },
 };
 

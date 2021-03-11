@@ -34,6 +34,7 @@ export interface ConnectorConfig<P, A> {
    * A component to be shown before a wallet is activated, for extra context / warnings
    */
   info?: React.FC<{
+    name: string;
     acknowledge: () => void;
     onClose: () => void;
     onPrev: () => void;
@@ -86,11 +87,19 @@ export interface WalletPickerProps<P, A>
   /**
      An optional component to show before wallets are presented
    */
-  DefaultInfo?: React.FC<{ acknowledge: () => void; onClose: () => void }>;
+  DefaultInfo?: React.FC<{
+    name: string;
+    acknowledge: () => void;
+    onClose: () => void;
+  }>;
   /**
      An optional replacement to show when a wallet is connecting
    */
-  ConnectingInfo?: React.FC<{ chain: string; onClose: () => void }>;
+  ConnectingInfo?: React.FC<{
+    chain: string;
+    name: string;
+    onClose: () => void;
+  }>;
   /**
      An optional replacement to show when a wallet is connected to the wong network
    */
@@ -190,12 +199,16 @@ export const WalletPicker = <P, A>({
 
   const connectors = config.chains[chain];
 
+  // Current wallet being activated
+  const [name, setName] = React.useState("");
+
   // Allow for an information screen to be set before the wallet selection is showed
   const [Info, setInfo] = React.useState(
     DefaultInfo
       ? () => (
           <DefaultInfo
             onClose={onClose}
+            name={name}
             acknowledge={() => setInfo(undefined)}
           />
         )
@@ -207,7 +220,7 @@ export const WalletPicker = <P, A>({
       {Info ||
         (connecting &&
           (ConnectingInfo ? (
-            <ConnectingInfo chain={chain} onClose={onClose} />
+            <ConnectingInfo name={name} chain={chain} onClose={onClose} />
           ) : (
             <>
               <WalletPickerHeader
@@ -215,7 +228,11 @@ export const WalletPicker = <P, A>({
                 onClose={onClose}
                 title="Connecting"
               />
-              <Connecting classes={connectingClasses} chain={chain} />
+              <Connecting
+                name={name}
+                classes={connectingClasses}
+                chain={chain}
+              />
             </>
           ))) ||
         (wrongNetwork &&
@@ -234,6 +251,7 @@ export const WalletPicker = <P, A>({
               />
               <WrongNetwork
                 classes={connectingClasses}
+                name={name}
                 chain={chain}
                 targetNetwork={targetNetwork}
               />
@@ -260,6 +278,7 @@ export const WalletPicker = <P, A>({
                   onPrev={() => setInfo(undefined)}
                   chain={chain}
                   setInfo={setInfo}
+                  setName={setName}
                   WalletEntryButton={WalletEntryButton}
                 />
               ))}
@@ -369,6 +388,7 @@ interface WalletEntryProps<P, A> extends ConnectorConfig<P, A> {
   onPrev: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setInfo: (i: any) => void;
+  setName: (i: string) => void;
   WalletEntryButton?: WalletPickerProps<P, A>["WalletEntryButton"];
 }
 
@@ -382,6 +402,7 @@ const WalletEntry = <P, A>({
   onClose,
   onPrev,
   setInfo,
+  setName,
   WalletEntryButton,
 }: WalletEntryProps<P, A>): JSX.Element => {
   const { activateConnector } = useMultiwallet<P, A>();
@@ -392,6 +413,7 @@ const WalletEntry = <P, A>({
         <InfoConstructor
           onClose={onClose}
           onPrev={onPrev}
+          name={name}
           acknowledge={() => {
             setInfo(undefined);
             activateConnector(chain, connector, name);
@@ -405,6 +427,8 @@ const WalletEntry = <P, A>({
   const defaultClasses = useWalletEntryStyles();
   const combinedClasses = { ...defaultClasses, ...classes };
   const onClick = useCallback(() => {
+    console.log(name);
+    setName(name);
     if (Info) {
       buildInfo(Info);
     } else {
@@ -439,12 +463,15 @@ const useConnectingStyles = makeStyles((t) => ({
 // Element to show when a selected chain is connecting
 const Connecting: React.FC<{
   chain: string;
+  name: string;
   classes?: PaperProps["classes"];
-}> = ({ chain, classes }) => {
+}> = ({ chain, classes, name }) => {
   const defaultClasses = useConnectingStyles();
   return (
     <Paper classes={classes || defaultClasses}>
-      <Typography>Connecting to {chain}</Typography>
+      <Typography>
+        Connecting to {chain}, using {name}
+      </Typography>
     </Paper>
   );
 };
@@ -452,15 +479,16 @@ const Connecting: React.FC<{
 // Element to show when a selected chain is connectted to the wrong network
 const WrongNetwork: React.FC<{
   chain: string;
+  name: string;
   targetNetwork: string;
   classes?: PaperProps["classes"];
-}> = ({ chain, classes, targetNetwork }) => {
+}> = ({ chain, classes, targetNetwork, name }) => {
   const defaultClasses = useConnectingStyles();
   return (
     <Paper classes={classes || defaultClasses}>
       <Typography>
         Connected to {chain} on the wrong network, please connect to{" "}
-        {targetNetwork}
+        {targetNetwork} with {name}
       </Typography>
     </Paper>
   );

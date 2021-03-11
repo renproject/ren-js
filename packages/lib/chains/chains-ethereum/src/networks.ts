@@ -61,8 +61,8 @@ export const renDevnetVDot3: EthereumConfig = {
     name: "Devnet v0.3",
     ...ethereumConfig.kovan,
     addresses: {
-        GatewayRegistry: "0x1CAD87e16b56815d6a0b4Cd91A6639eae86Fc53A",
-        BasicAdapter: "0xC8DD18A151FafFCab1B822108e49b4aE3bFff477",
+        GatewayRegistry: "0x5045E727D9D9AcDe1F6DCae52B078EC30dC95455",
+        BasicAdapter: "0xFABDB1F53Ef8B080332621cBc9F820a39e7A1B83",
     },
 };
 

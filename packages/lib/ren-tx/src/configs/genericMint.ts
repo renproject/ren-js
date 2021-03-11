@@ -341,7 +341,7 @@ const mintFlow = (
                   sourceTxConfs:
                       0 || parseInt(rawSourceTx.transaction.confirmations),
                   rawSourceTx,
-                  destTxHash: deposit.mintTransaction,
+                  destTxHash: deposit?.mintTransaction,
                   detectedAt: new Date().getTime(),
               };
 

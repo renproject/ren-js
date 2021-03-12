@@ -40,7 +40,7 @@ const testcases = [
     },
 ];
 
-describe.only("Address validation", () => {
+describe("Address validation", () => {
     for (const testcase of testcases) {
         for (const network of Object.keys(testcase.addresses)) {
             it(`${testcase.chain.asset} - ${network}`, async () => {

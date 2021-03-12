@@ -1,3 +1,4 @@
+import bech32 from "bech32";
 import {
     getRenNetworkDetails,
     LockChain,
@@ -264,7 +265,17 @@ export abstract class BitcoinBaseChain
      * See [[LockChain.addressStringToBytes]].
      */
     addressStringToBytes = (address: string): Buffer => {
-        return base58.decode(address);
+        try {
+            return base58.decode(address);
+        } catch (error) {
+            try {
+                return Buffer.from(
+                    bech32.fromWords(bech32.decode(address).words.slice(1)),
+                );
+            } catch (internalError) {
+                throw new Error(`Unrecognized address format "${address}".`);
+            }
+        }
     };
 
     /**

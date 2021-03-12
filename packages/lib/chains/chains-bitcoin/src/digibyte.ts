@@ -29,7 +29,7 @@ export class DigiByteClass extends BitcoinClass {
             case "testnet":
                 // prettier-ignore
                 return this
-                    .withAPI(Insight("https://testnet.digiexplorer.info/api"));
+                    .withAPI(Insight("https://testnetexplorer.digibyteservers.io/api"));
             case "regtest":
                 throw new Error(`Regtest is currently not supported.`);
         }
@@ -73,7 +73,7 @@ export class DigiByteClass extends BitcoinClass {
                 case "mainnet":
                     return `https://digiexplorer.info/address/${address}`;
                 case "testnet":
-                    return `https://testnet.digiexplorer.info/address/${address}`;
+                    return `https://testnetexplorer.digibyteservers.io/address/${address}`;
                 case "regtest":
                     return undefined;
             }
@@ -93,7 +93,7 @@ export class DigiByteClass extends BitcoinClass {
                 case "mainnet":
                     return `https://digiexplorer.info/tx/${txHash}`;
                 case "testnet":
-                    return `https://testnet.digiexplorer.info/tx/${txHash}`;
+                    return `https://testnetexplorer.digibyteservers.io/tx/${txHash}`;
                 case "regtest":
                     return undefined;
             }

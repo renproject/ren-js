@@ -17,7 +17,7 @@ import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
-import { BscConfigMap } from "@renproject/chains";
+import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
 import Web3 from "web3";
 
 chai.should();
@@ -36,11 +36,15 @@ describe("Refactor: mint", () => {
     longIt("mint to contract", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.MainnetVDot3;
+        const network = RenNetwork.TestnetVDot3;
         const asset = "DGB" as string;
         const from = Chains.DigiByte();
+        const ToClass = Chains.Ethereum;
 
-        const ethNetwork = BscConfigMap[network];
+        const ethNetwork =
+            ToClass.name === "BinanceSmartChain"
+                ? BscConfigMap[network]
+                : EthereumConfigMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -53,8 +57,10 @@ describe("Refactor: mint", () => {
         const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
 
-        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
-        const infuraURL = ethNetwork.infura; // renBscDevnet.infura
+        const infuraURL =
+            ToClass.name === "BinanceSmartChain"
+                ? ethNetwork.infura
+                : `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
         const web3 = new Web3(provider);
         const ethAddress = (await web3.eth.getAccounts())[0];
@@ -64,10 +70,10 @@ describe("Refactor: mint", () => {
         );
         console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
 
-        const params: LockAndMintParams = {
+        const params = {
             asset,
             from,
-            to: Chains.BinanceSmartChain(provider, ethNetwork).Account({
+            to: ToClass(provider, ethNetwork).Account({
                 address: ethAddress,
             }),
         };
@@ -107,6 +113,17 @@ describe("Refactor: mint", () => {
                 )} ${asset} (${await account.address(asset)})`,
             );
         }
+
+        // lockAndMint.processDeposit({
+        //     transaction: {
+        //         txHash:
+        //             "b6683eae5f54d6dd7bfa8b5820a5b14f526b15efe76daca9700f2d3359ffe73e",
+        //         amount: "159213",
+        //         vOut: 0,
+        //         confirmations: 0,
+        //     },
+        //     amount: "159213",
+        // });
 
         await new Promise((resolve, reject) => {
             let i = 0;
@@ -175,7 +192,7 @@ describe("Refactor: mint", () => {
                                 .address;
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             options.params = (lockAndMint.gatewayAddress as Chains.FilAddress).params;
-                            options.memo = (lockAndMint.gatewayAddress as TerraAddress).memo;
+                            // options.memo = (lockAndMint.gatewayAddress as TerraAddress);
                         } else {
                             console.error(`Unknown address format.`);
                             return;

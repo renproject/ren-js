@@ -70,10 +70,10 @@ const connectingProps: WalletPickerModalProps<any, any> = {
       chains: {
         ethereum: [
           {
-            info: ({ acknowledge, onClose, onPrev }) => (
+            info: ({ acknowledge, onClose, onPrev, name }) => (
               <div>
                 <button onClick={onPrev}>back</button>
-                Are you sure you want to connect this wallet?{" "}
+                Are you sure you want to connect with {name}?{" "}
                 <div>
                   <button onClick={acknowledge}>Yes</button>
                   <button onClick={onClose}>No</button>

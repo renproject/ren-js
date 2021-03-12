@@ -39,6 +39,7 @@ import {
 } from "@renproject/utils";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
+import { config } from "process";
 import { AbiCoder } from "web3-eth-abi";
 import { RenJSConfig } from "./config";
 
@@ -228,7 +229,9 @@ export class LockAndMint<
         }
         const defaultConfirmations =
             this._state.renNetwork && this._state.renNetwork.isTestnet ? 2 : 6;
-        this._state.targetConfirmations = target || defaultConfirmations;
+        this._state.targetConfirmations = isDefined(target)
+            ? target
+            : defaultConfirmations;
 
         return this._state.targetConfirmations;
     };
@@ -366,7 +369,10 @@ export class LockAndMint<
             await depositObject._initialize();
 
             // Check if deposit has already been submitted.
-            if (depositObject.status !== DepositStatus.Submitted) {
+            if (
+                this._state.config.loadCompletedDeposits ||
+                depositObject.status !== DepositStatus.Submitted
+            ) {
                 this.emit("deposit", depositObject);
                 // this.deposits.set(deposit);
                 this._state.logger.debug("new deposit:", deposit);

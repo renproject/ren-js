@@ -229,7 +229,7 @@ export class BurnAndRelease<
                 2,
             );
         }
-        this._state.targetConfirmations = target || 6;
+        this._state.targetConfirmations = isDefined(target) ? target : 6;
 
         return this._state.targetConfirmations;
     };

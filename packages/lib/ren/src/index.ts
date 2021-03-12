@@ -150,6 +150,7 @@ export default class RenJS {
             (providerOrNetwork as AbstractRenVMProvider).sendMessage
                 ? (providerOrNetwork as AbstractRenVMProvider)
                 : new CombinedProvider(
+                      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                       (providerOrNetwork || RenNetwork.Mainnet) as
                           | RenNetwork
                           | RenNetworkString

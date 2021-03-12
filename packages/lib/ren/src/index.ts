@@ -7,6 +7,7 @@ import {
     LogLevel,
     MintChain,
     RenNetwork,
+    RenNetworkDetails,
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
@@ -117,6 +118,7 @@ export default class RenJS {
         providerOrNetwork?:
             | RenNetwork
             | RenNetworkString
+            | RenNetworkDetails
             | AbstractRenVMProvider
             | null
             | undefined,
@@ -143,10 +145,15 @@ export default class RenJS {
 
         // Use provided provider, provider URL or default lightnode URL.
         this.renVM =
-            providerOrNetwork && typeof providerOrNetwork !== "string"
-                ? providerOrNetwork
+            providerOrNetwork &&
+            typeof providerOrNetwork !== "string" &&
+            (providerOrNetwork as AbstractRenVMProvider).sendMessage
+                ? (providerOrNetwork as AbstractRenVMProvider)
                 : new CombinedProvider(
-                      providerOrNetwork || RenNetwork.Mainnet,
+                      (providerOrNetwork || RenNetwork.Mainnet) as
+                          | RenNetwork
+                          | RenNetworkString
+                          | RenNetworkDetails,
                       this._logger,
                   );
     }

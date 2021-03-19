@@ -479,7 +479,7 @@ export class LockAndMint<
         this._state.gHash = gHash;
         this._state.gPubKey = await this.renVM.selectPublicKey(
             this._state.selector,
-            this.renVM.version(this._state.selector) >= 2
+            this.renVM.version(this._state.selector) == 2
                 ? this.params.from.name
                 : this.params.asset,
         );

@@ -188,7 +188,7 @@ export class BurnAndRelease<
             ...this.params,
         };
 
-        if (this.renVM.version(this._state.selector) >= 2) {
+        if (this.renVM.version(this._state.selector) == 2) {
             this._state.gPubKey = await this.renVM.selectPublicKey(
                 this._state.selector,
                 this.params.to.name,

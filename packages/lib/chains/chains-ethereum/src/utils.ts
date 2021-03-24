@@ -32,6 +32,7 @@ import Web3 from "web3";
 import { Log, TransactionConfig, TransactionReceipt } from "web3-core";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 import { EthAddress, EthTransaction } from "./base";
+import { renBscDevnet, renBscMainnet, renBscTestnet } from "./bsc";
 
 import { EthereumConfig } from "./networks";
 
@@ -505,6 +506,18 @@ export const findTransactionBySigHash = async (
             [statusABI],
             gatewayAddress,
         );
+
+        const chainId = parseInt((await web3.eth.net.getId()) + "");
+        let fromBlock = 1;
+        if (
+            [
+                renBscMainnet.networkID,
+                renBscTestnet.networkID,
+                renBscDevnet.networkID,
+            ].includes(chainId)
+        ) {
+            fromBlock = (await web3.eth.getBlockNumber()) - 4999;
+        }
         if (sigHash) {
             // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
             // the contract
@@ -516,7 +529,7 @@ export const findTransactionBySigHash = async (
             }
             const oldMintEvents = await web3.eth.getPastLogs({
                 address: gatewayAddress,
-                fromBlock: "1",
+                fromBlock,
                 toBlock: "latest",
                 // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
                 // address.slice(2), null, null] as any,
@@ -534,7 +547,7 @@ export const findTransactionBySigHash = async (
 
         const newMintEvents = await web3.eth.getPastLogs({
             address: gatewayAddress,
-            fromBlock: "1",
+            fromBlock,
             toBlock: "latest",
             // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
             // address.slice(2), null, null] as any,

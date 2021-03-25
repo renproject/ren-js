@@ -883,21 +883,20 @@ export class LockAndMintDeposit<
      */
     public refreshStatus = async (): Promise<DepositStatus> => {
         const status = await (async () => {
-            let queryTxResult = undefined;
+            let queryTxResult;
 
             // Fetch sighash.
-            if (this.renVM.version(this._state.selector) === 1) {
-                try {
-                    queryTxResult = await this.queryTx();
-                } catch (_error) {
-                    // Ignore error.
-                    queryTxResult = null;
-                }
+            try {
+                queryTxResult = await this.queryTx();
+            } catch (_error) {
+                // Ignore error.
+                queryTxResult = null;
             }
 
             try {
+                // Ensure that
                 const transaction = await this.findTransaction();
-                if (transaction) {
+                if (transaction !== undefined) {
                     return DepositStatus.Submitted;
                 }
             } catch (_error) {

@@ -10,6 +10,7 @@ import {
 } from "@renproject/interfaces";
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
 import { EthAddress, EthereumBaseChain, EthTransaction } from "./base";
@@ -52,16 +53,20 @@ export class EthereumClass
         this._getParams ? this._getParams(asset, burnPayload) : undefined;
 
     /** @category Main */
-    public Address = (address: string) => this.Account({ address });
+    public Address = (address: string, txConfig?: TransactionConfig) =>
+        this.Account({ address }, txConfig);
 
     /** @category Main */
-    public Account = ({
-        value,
-        address,
-    }: {
-        value?: BigNumber | string | number;
-        address?: string;
-    }): this => {
+    public Account = (
+        {
+            value,
+            address,
+        }: {
+            value?: BigNumber | string | number;
+            address?: string;
+        },
+        txConfig?: TransactionConfig,
+    ): this => {
         this._getParams = async (
             asset: string,
             burnPayload?: string,
@@ -100,7 +105,7 @@ export class EthereumClass
                                     value: address,
                                 },
                             ],
-                            // txConfig,
+                            txConfig,
                         },
                     ],
                 };
@@ -138,7 +143,7 @@ export class EthereumClass
                                     value: new BigNumber(value).toFixed(),
                                 },
                             ],
-                            // txConfig,
+                            txConfig,
                         },
                     ],
                 };

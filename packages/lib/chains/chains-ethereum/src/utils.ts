@@ -32,7 +32,6 @@ import Web3 from "web3";
 import { Log, TransactionConfig, TransactionReceipt } from "web3-core";
 import { keccak256 as web3Keccak256 } from "web3-utils";
 import { EthAddress, EthTransaction } from "./base";
-import { renBscDevnet, renBscMainnet, renBscTestnet } from "./bsc";
 
 import { EthereumConfig } from "./networks";
 
@@ -478,7 +477,9 @@ export const findTransactionBySigHash = async (
     asset: string,
     nHash: Buffer,
     sigHash?: Buffer,
+    blockLimit?: number,
 ): Promise<string | undefined> => {
+    let status;
     try {
         const gatewayAddress = await getGatewayAddress(network, web3, asset);
         const statusABI: AbiItem = {
@@ -507,32 +508,25 @@ export const findTransactionBySigHash = async (
             gatewayAddress,
         );
 
-        const chainId = parseInt((await web3.eth.net.getId()) + "");
         let fromBlock = 1;
-        if (
-            [
-                renBscMainnet.networkID,
-                renBscTestnet.networkID,
-                renBscDevnet.networkID,
-            ].includes(chainId)
-        ) {
-            fromBlock = (await web3.eth.getBlockNumber()) - 4999;
+        let toBlock: string | number = "latest";
+        if (blockLimit) {
+            toBlock = new BigNumber(
+                (await web3.eth.getBlockNumber()).toString(),
+            ).toNumber();
+            fromBlock = toBlock - blockLimit + 1;
         }
         if (sigHash) {
             // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
             // the contract
-            const status = await gatewayContract.methods
-                .status(Ox(sigHash))
-                .call();
+            status = await gatewayContract.methods.status(Ox(sigHash)).call();
             if (!status) {
                 return undefined;
             }
             const oldMintEvents = await web3.eth.getPastLogs({
                 address: gatewayAddress,
                 fromBlock,
-                toBlock: "latest",
-                // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
-                // address.slice(2), null, null] as any,
+                toBlock,
                 topics: [
                     eventTopics.LogMint,
                     null,
@@ -548,9 +542,7 @@ export const findTransactionBySigHash = async (
         const newMintEvents = await web3.eth.getPastLogs({
             address: gatewayAddress,
             fromBlock,
-            toBlock: "latest",
-            // topics: [sha3("LogDarknodeRegistered(address,uint256)"), "0x000000000000000000000000" +
-            // address.slice(2), null, null] as any,
+            toBlock,
             topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
         });
         if (newMintEvents.length) {
@@ -560,6 +552,14 @@ export const findTransactionBySigHash = async (
         console.warn(error);
         // Continue with transaction
     }
+
+    if (status) {
+        // The sigHash has already been used, but no transaction was found.
+        // Possible due to a restriction on the number logs that can be fetched,
+        // which is the case on BSC.
+        return "";
+    }
+
     return;
 };
 

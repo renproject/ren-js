@@ -10,7 +10,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid } from "./utils";
+import { addressIsValid, findTransactionBySigHash } from "./utils";
 
 export const renBscTestnet: EthereumConfig = {
     name: "BSC Testnet",
@@ -143,6 +143,26 @@ export class BinanceSmartChainClass extends EthereumClass {
             );
         }
         return this;
+    };
+
+    findTransaction = async (
+        asset: string,
+        nHash: Buffer,
+        sigHash?: Buffer,
+    ): Promise<EthTransaction | undefined> => {
+        if (!this.renNetworkDetails || !this.web3) {
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
+        return findTransactionBySigHash(
+            this.renNetworkDetails,
+            this.web3,
+            asset,
+            nHash,
+            sigHash,
+            5000,
+        );
     };
 }
 

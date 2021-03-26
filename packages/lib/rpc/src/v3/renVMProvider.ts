@@ -183,7 +183,11 @@ export class RenVMProvider
         );
 
     public queryState = async (retry?: number) =>
-        this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
+        this.sendMessage<RPCMethod.QueryBlockState>(
+            RPCMethod.QueryBlockState,
+            {},
+            retry,
+        );
 
     public buildTransaction = ({
         selector,
@@ -376,7 +380,7 @@ export class RenVMProvider
     ): Promise<Buffer> => {
         // Call the ren_queryShards RPC.
         const response = await this.queryState(5);
-        return fromBase64(response.state[asset].shards[0].pubKey);
+        return fromBase64(response.state.v[asset].shards[0].pubKey);
     };
 
     // In the future, this will be asynchronous. It returns a promise for
@@ -398,7 +402,10 @@ export class RenVMProvider
         _selector: string,
         chain: { name: string },
     ): Promise<{ lock: BigNumber; release: BigNumber }> => {
-        const renVMState = await this.sendMessage(RPCMethod.QueryState, {});
+        const renVMState = await this.sendMessage(
+            RPCMethod.QueryBlockState,
+            {},
+        );
 
         if (!renVMState.state[chain.name]) {
             throw new Error(`No fee details found for ${chain.name}`);

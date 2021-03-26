@@ -27,7 +27,7 @@ export enum RPCMethod {
     QueryConfig = "ren_queryConfig",
 
     // MethodQueryState returns the contract state.
-    QueryState = "ren_queryState",
+    QueryBlockState = "ren_queryBlockState",
 }
 
 // Params //////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ export interface ParamsQueryConfig {
 }
 
 // ParamsQueryState defines the parameters of the MethodQueryState.
-export interface ParamsQueryState {
+export interface ParamsQueryBlockState {
     // No parameters.
 }
 
@@ -164,16 +164,18 @@ export interface Shard {
 }
 
 // ResponseQueryState defines the response of the MethodQueryState.
-export interface ResponseQueryState {
+export interface ResponseQueryBlockState {
     state: {
-        [asset: string]: {
-            dustAmount: string; // "0";
-            gasCap: string; // "0";
-            gasLimit: string; // "400";
-            gasPrice: string; // "0";
-            latestHeight: string; // "0";
-            minimumAmount: string; // "547";
-            shards: Shard[];
+        v: {
+            [asset: string]: {
+                dustAmount: string; // "0";
+                gasCap: string; // "0";
+                gasLimit: string; // "400";
+                gasPrice: string; // "0";
+                latestHeight: string; // "0";
+                minimumAmount: string; // "547";
+                shards: Shard[];
+            };
         };
     };
 }
@@ -187,7 +189,7 @@ export type RenVMParams = {
     [RPCMethod.QueryTx]: ParamsQueryTx;
     [RPCMethod.QueryTxs]: ParamsQueryTxs;
     [RPCMethod.QueryConfig]: ParamsQueryConfig;
-    [RPCMethod.QueryState]: ParamsQueryState;
+    [RPCMethod.QueryBlockState]: ParamsQueryBlockState;
 };
 
 export type RenVMResponses = {
@@ -197,7 +199,7 @@ export type RenVMResponses = {
     [RPCMethod.QueryTx]: ResponseQueryTx;
     [RPCMethod.QueryTxs]: ResponseQueryTxs;
     [RPCMethod.QueryConfig]: ResponseQueryConfig;
-    [RPCMethod.QueryState]: ResponseQueryState;
+    [RPCMethod.QueryBlockState]: ResponseQueryBlockState;
 };
 
 // The following lines will throw a type error if RenVMResponses or RenVMParams

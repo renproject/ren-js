@@ -1157,16 +1157,21 @@ export class LockAndMintDeposit<
         (async () => {
             let txHash = this.txHash();
 
+            // If the transaction has been reverted, throw the revert reason.
+            if (this.status === DepositStatus.Reverted) {
+                throw new Error(
+                    this.revertReason ||
+                        `RenVM transaction ${txHash} reverted.`,
+                );
+            }
+
+            // Check if the signature is already available.
             if (
                 DepositStatusIndex[this.status] >=
-                DepositStatusIndex[DepositStatus.Signed]
+                    DepositStatusIndex[DepositStatus.Signed] &&
+                this._state.queryTxResult &&
+                this._state.queryTxResult.out
             ) {
-                if (this.status === DepositStatus.Reverted) {
-                    throw new Error(
-                        this.revertReason ||
-                            `RenVM transaction ${txHash} reverted.`,
-                    );
-                }
                 return this;
             }
 

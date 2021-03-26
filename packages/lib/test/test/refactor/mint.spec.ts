@@ -37,12 +37,12 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
-        const asset = "DGB" as string;
-        const from = Chains.DigiByte();
-        const ToClass = Chains.Ethereum;
+        const asset = "BTC" as string;
+        const from = Chains.Bitcoin();
+        const ToClass = Chains.BinanceSmartChain;
 
         const ethNetwork =
-            ToClass.name === "BinanceSmartChain"
+            ToClass === Chains.BinanceSmartChain
                 ? BscConfigMap[network]
                 : EthereumConfigMap[network];
 
@@ -58,7 +58,7 @@ describe("Refactor: mint", () => {
         const renJS = new RenJS(network, { logLevel });
 
         const infuraURL =
-            ToClass.name === "BinanceSmartChain"
+            ToClass === Chains.BinanceSmartChain
                 ? ethNetwork.infura
                 : `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
         const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
@@ -73,9 +73,14 @@ describe("Refactor: mint", () => {
         const params = {
             asset,
             from,
-            to: ToClass(provider, ethNetwork).Account({
-                address: ethAddress,
-            }),
+            to: ToClass(provider, ethNetwork).Account(
+                {
+                    address: ethAddress,
+                },
+                {
+                    gas: 2000000,
+                },
+            ),
         };
 
         const assetDecimals = await params.from.assetDecimals(asset);

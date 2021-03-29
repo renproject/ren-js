@@ -406,7 +406,7 @@ export class EthereumBaseChain
         const { burnNonce, contractCalls } = burn;
         let { transaction } = burn;
 
-        if (burnNonce) {
+        if (!transaction && burnNonce) {
             return findBurnByNonce(
                 this.renNetworkDetails,
                 this.web3,

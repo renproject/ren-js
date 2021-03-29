@@ -269,9 +269,11 @@ export abstract class BitcoinBaseChain
             return base58.decode(address);
         } catch (error) {
             try {
-                return Buffer.from(
-                    bech32.fromWords(bech32.decode(address).words.slice(1)),
-                );
+                const [type, ...words] = bech32.decode(address).words;
+                return Buffer.concat([
+                    Buffer.from([type]),
+                    Buffer.from(bech32.fromWords(words)),
+                ]);
             } catch (internalError) {
                 throw new Error(`Unrecognized address format "${address}".`);
             }

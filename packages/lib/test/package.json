@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.1.7",
+    "version": "2.1.8",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -24,7 +24,7 @@
         "build:module": "tsc -p tsconfig.module.json"
     },
     "dependencies": {
-        "@renproject/chains": "^2.1.7",
+        "@renproject/chains": "^2.1.8",
         "@renproject/chains-terra": "^2.1.7",
         "@renproject/interfaces": "^2.1.7",
         "@renproject/provider": "^2.1.7",

@@ -221,15 +221,20 @@ const handleSign = async (
             return;
         }
         if (
-            v._state.queryTxResult.out &&
-            v._state.queryTxResult.out.revert !== undefined
+            (v._state.queryTxResult.out &&
+                v._state.queryTxResult.out.revert !== undefined) ||
+            v.revertReason
         ) {
+            deposit.revertReason;
             callback({
                 type: "REVERTED",
                 data: {
                     sourceTxHash,
                 },
-                error: v._state.queryTxResult.out.revert.toString(),
+                error:
+                    v._state.queryTxResult.out.revert?.toString() ||
+                    v.revertReason ||
+                    "",
             });
             return;
         } else {
@@ -246,16 +251,13 @@ const handleSign = async (
         }
     } catch (e) {
         // If error was due to revert - enter reverted state
-        if (
-            deposit._state?.queryTxResult?.out &&
-            deposit._state.queryTxResult.out.revert !== undefined
-        ) {
+        if (deposit.revertReason) {
             callback({
                 type: "REVERTED",
                 data: {
                     sourceTxHash,
                 },
-                error: deposit._state.queryTxResult.out.revert.toString(),
+                error: deposit.revertReason,
             });
             return;
         }

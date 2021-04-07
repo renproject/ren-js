@@ -57,6 +57,7 @@ const lockChainMap = {
 };
 */
 
+// Recursively cast all buffers in an object to hex
 const hexify = (obj: { [key: string]: any }) => {
     if (!obj) return;
     const entries = Object.entries(obj);
@@ -68,6 +69,7 @@ const hexify = (obj: { [key: string]: any }) => {
     return obj;
 };
 
+// Create a LockAndMint instance from a RenTX context
 export const renLockAndMint = async (context: GatewayMachineContext) => {
     const { nonce, destChain, sourceChain, sourceAsset } = context.tx;
     const { sdk, fromChainMap, toChainMap } = context;
@@ -197,6 +199,7 @@ const handleSettle = async (
     }
 };
 
+// Handle signing on RenVM
 const handleSign = async (
     sourceTxHash: string,
     deposit: LockAndMintDeposit,
@@ -222,7 +225,7 @@ const handleSign = async (
             v._state.queryTxResult.out.revert !== undefined
         ) {
             callback({
-                type: "SIGN_ERROR",
+                type: "REVERTED",
                 data: {
                     sourceTxHash,
                 },
@@ -242,6 +245,21 @@ const handleSign = async (
             });
         }
     } catch (e) {
+        // If error was due to revert - enter reverted state
+        if (
+            deposit._state?.queryTxResult?.out &&
+            deposit._state.queryTxResult.out.revert !== undefined
+        ) {
+            callback({
+                type: "REVERTED",
+                data: {
+                    sourceTxHash,
+                },
+                error: deposit._state.queryTxResult.out.revert.toString(),
+            });
+            return;
+        }
+
         // If a tx has already been minted, we will get an error at this step
         // We can assume that a "utxo spent" error implies that the asset has been minted
         callback({
@@ -249,11 +267,13 @@ const handleSign = async (
             data: {
                 sourceTxHash,
             },
-            error: e,
+            // Error must be stringified because full log breaks xstate serialization
+            error: e.toString(),
         });
     }
 };
 
+// Handle minting on destination chain
 const handleMint = async (
     sourceTxHash: string,
     deposit: LockAndMintDeposit,

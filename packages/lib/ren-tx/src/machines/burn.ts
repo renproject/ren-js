@@ -13,7 +13,6 @@ import {
     ConfirmedBurnTransaction,
     ErroringBurnSession,
     ReleasedBurnTransaction,
-    isBurnConfirmed,
     isReleased,
 } from "../types/burn";
 import { LockChainMap, MintChainMap } from "./mint";

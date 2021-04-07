@@ -337,11 +337,16 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    Address = (address: string): this => {
+    Address = (address: string, bytes?: boolean): this => {
         // Type validation
         assertType<string>("string", { address });
 
-        this.getBurnPayload = () => address;
+        if (bytes) {
+            this.getBurnPayload = () =>
+                this.addressStringToBytes(address).toString("hex");
+        } else {
+            this.getBurnPayload = () => address;
+        }
         return this;
     };
 

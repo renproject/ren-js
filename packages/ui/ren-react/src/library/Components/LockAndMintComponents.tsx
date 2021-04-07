@@ -30,10 +30,9 @@ export interface ConfirmingDepositProps<X> {
     targetConfirmations?: number;
 }
 
-const DefaultConfirmingDeposit: React.FC<ConfirmingDepositProps<any>> = ({
-    confirmations,
-    targetConfirmations,
-}) => {
+export const DefaultConfirmingDeposit: React.FC<
+    ConfirmingDepositProps<any>
+> = ({ confirmations, targetConfirmations }) => {
     return (
         <div className="confirmingDeposit">
             Waiting for deposit confirmation {confirmations}/
@@ -42,19 +41,19 @@ const DefaultConfirmingDeposit: React.FC<ConfirmingDepositProps<any>> = ({
     );
 };
 
-interface SigningDepositProps {
+export interface SigningDepositProps {
     deposit: ConfirmingGatewayTransaction<any>;
 }
 
-const DefaultSigningDeposit: React.FC<SigningDepositProps> = () => {
+export const DefaultSigningDeposit: React.FC<SigningDepositProps> = () => {
     return <div className="signingDeposit">Submitting to RenVM...</div>;
 };
 
-interface SubmittingMintDepositProps {
+export interface SubmittingMintDepositProps {
     deposit: SubmittingGatewayTransaction<any>;
 }
 
-const DefaultSubmittingMintDeposit: React.FC<SubmittingMintDepositProps> = () => {
+export const DefaultSubmittingMintDeposit: React.FC<SubmittingMintDepositProps> = () => {
     return (
         <div className="submittingMint">
             Please sign the transaction in your wallet
@@ -62,21 +61,21 @@ const DefaultSubmittingMintDeposit: React.FC<SubmittingMintDepositProps> = () =>
     );
 };
 
-interface MintingDepositProps {
+export interface MintingDepositProps {
     deposit: SubmittingGatewayTransaction<any>;
 }
 
-const DefaultMintingDeposit: React.FC<MintingDepositProps> = () => {
+export const DefaultMintingDeposit: React.FC<MintingDepositProps> = () => {
     return <div className="minting">Minting...</div>;
 };
 
-interface AcceptedDepositProps {
+export interface AcceptedDepositProps {
     deposit: AcceptedGatewayTransaction<any>;
     mint: (params?: any) => void;
     amount: number;
 }
 
-const DefaultAcceptedDeposit: React.FC<AcceptedDepositProps> = ({
+export const DefaultAcceptedDeposit: React.FC<AcceptedDepositProps> = ({
     mint,
     amount,
 }) => {
@@ -87,46 +86,48 @@ const DefaultAcceptedDeposit: React.FC<AcceptedDepositProps> = ({
     );
 };
 
-interface CompletedDepositProps {
+export interface CompletedDepositProps {
     deposit: CompletedGatewayTransaction<any>;
     amount: number;
     tx: string;
 }
 
-const DefaultCompletedDeposit: React.FC<CompletedDepositProps> = ({
+export const DefaultCompletedDeposit: React.FC<CompletedDepositProps> = ({
     amount,
     tx,
 }) => {
     return (
         <div className="acceptedDeposit">
-            Successfully minted {amount}, tx: {tx}
+            Successfully minted {String(amount)}, tx: {String(tx)}
         </div>
     );
 };
 
-interface LoadingDepositProps {
+export interface LoadingDepositProps {
     deposit: GatewayTransaction<any>;
 }
 
-const DefaultLoadingDeposit: React.FC<LoadingDepositProps> = ({}) => {
+export const DefaultLoadingDeposit: React.FC<LoadingDepositProps> = ({}) => {
     return <div className="loadingDeposit">Loading...</div>;
 };
 
-interface RejectedDepositProps {
+export interface RejectedDepositProps {
     deposit: GatewayTransaction<any>;
     reason: string;
 }
 
-const DefaultRejectedDeposit: React.FC<RejectedDepositProps> = ({ reason }) => {
+export const DefaultRejectedDeposit: React.FC<RejectedDepositProps> = ({
+    reason,
+}) => {
     return <div className="rejectedDeposit">Rejected {reason}</div>;
 };
 
-interface ErrorRestoringDepositProps {
+export interface ErrorRestoringDepositProps {
     deposit: GatewayTransaction<any>;
     reason: string;
 }
 
-const DefaultErrorRestoringDeposit: React.FC<ErrorRestoringDepositProps> = ({
+export const DefaultErrorRestoringDeposit: React.FC<ErrorRestoringDepositProps> = ({
     reason,
 }) => {
     return (
@@ -134,13 +135,13 @@ const DefaultErrorRestoringDeposit: React.FC<ErrorRestoringDepositProps> = ({
     );
 };
 
-interface ErrorMintingDepositProps {
+export interface ErrorMintingDepositProps {
     deposit: GatewayTransaction<any>;
     retry: (params?: any) => void;
     reason: string;
 }
 
-const DefaultErrorMintingDeposit: React.FC<ErrorMintingDepositProps> = ({
+export const DefaultErrorMintingDeposit: React.FC<ErrorMintingDepositProps> = ({
     reason,
     retry,
 }) => {
@@ -152,12 +153,12 @@ const DefaultErrorMintingDeposit: React.FC<ErrorMintingDepositProps> = ({
     );
 };
 
-interface ErrorSigningDepositProps {
+export interface ErrorSigningDepositProps {
     deposit: GatewayTransaction<any>;
     reason: string;
 }
 
-const DefaultErrorSigningDeposit: React.FC<ErrorSigningDepositProps> = ({
+export const DefaultErrorSigningDeposit: React.FC<ErrorSigningDepositProps> = ({
     reason,
 }) => {
     return <div className="errorSigningDeposit">Error Signing {reason}</div>;
@@ -180,7 +181,7 @@ export interface DepositProps {
     ErrorSigningDeposit?: React.FC<ErrorSigningDepositProps>;
 }
 
-const DefaultDeposit: React.FC<DepositProps> = ({
+export const DefaultDeposit: React.FC<DepositProps> = ({
     session,
     depositId,
     ConfirmingDeposit = DefaultConfirmingDeposit,
@@ -269,7 +270,7 @@ const DefaultDeposit: React.FC<DepositProps> = ({
     }
 };
 
-interface BasicMintProps {
+export interface BasicMintProps {
     parameters: MintConfigSingle | MintConfigMultiple;
     GatewayInfo?: typeof DefaultGatewayInfo;
     GatewayOpening?: typeof DefaultGatewayOpening;
@@ -277,11 +278,13 @@ interface BasicMintProps {
     GatewayError?: typeof DefaultGatewayError;
 }
 
-interface GatewayOpeningProps {
+export interface GatewayOpeningProps {
     session: GatewaySession<any>;
 }
 
-const DefaultGatewayOpening: React.FC<GatewayOpeningProps> = ({ session }) => {
+export const DefaultGatewayOpening: React.FC<GatewayOpeningProps> = ({
+    session,
+}) => {
     return (
         <div className="gateway-opening">
             Opening Gateway between {session.sourceChain} and{" "}
@@ -290,11 +293,11 @@ const DefaultGatewayOpening: React.FC<GatewayOpeningProps> = ({ session }) => {
     );
 };
 
-interface GatewayInfoProps {
+export interface GatewayInfoProps {
     session: OpenedGatewaySession<any>;
 }
 
-const DefaultGatewayInfo: React.FC<GatewayInfoProps> = ({ session }) => {
+export const DefaultGatewayInfo: React.FC<GatewayInfoProps> = ({ session }) => {
     return (
         <div className="gateway-info">
             Deposit {session.sourceAsset} at {session.gatewayAddress} before{" "}
@@ -303,12 +306,14 @@ const DefaultGatewayInfo: React.FC<GatewayInfoProps> = ({ session }) => {
     );
 };
 
-interface GatewayErrorProps {
+export interface GatewayErrorProps {
     session: ErroringGatewaySession<any>;
     reason: Error;
 }
 
-const DefaultGatewayError: React.FC<GatewayErrorProps> = ({ reason }) => {
+export const DefaultGatewayError: React.FC<GatewayErrorProps> = ({
+    reason,
+}) => {
     return (
         <div className="gateway-error">
             Failed to open gateway {reason.toString()}

@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": false,
+        "target": "es2016",
+        "module": "commonjs",
+        "jsx": "react",
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "removeComments": true,
+        "strictNullChecks": true,
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "lib": ["es2015", "es2016", "dom"],
+        "types": ["node"]
+    },
+    "include": ["index.tsx", "multiwallet.ts"],
+    "exclude": ["node_modules/**"]
+}

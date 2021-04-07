@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/multiwallet-solana-connector",
+    "name": "@renproject/chains-solana",
     "version": "2.1.5",
     "repository": {
         "type": "git",
@@ -18,19 +18,20 @@
     "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
+        "clean": "yarn rimraf ./build ./node_modules",
         "link": "yarn link",
         "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
-        "clean": "yarn rimraf ./build ./node_modules",
+        "prettier": "yarn fix:prettier",
         "lint": "run-s lint:*",
         "lint:eslint": "eslint src/**/*.ts",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
         "fix:eslint": "yarn lint:eslint --fix",
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
-        "test": "run-s test:*",
+        "test": "run-s build:main test:* lint",
         "test:unit": "nyc ../../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -42,14 +43,24 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@project-serum/sol-wallet-adapter": "^0.1.6",
+        "@project-serum/associated-token": "^0.1.1",
+        "@project-serum/borsh": "^0.1.1",
+        "@project-serum/token": "^0.0.1-alpha.3",
         "@renproject/interfaces": "^2.1.5",
-        "@renproject/multiwallet-base-connector": "^2.1.5",
-        "@solana/web3.js": "^1.1.1",
+        "@renproject/utils": "^2.1.5",
+        "@solana/spl-token": "^0.1.4",
+        "@solana/web3.js": "^1.10.1",
+        "@types/bn.js": "^5.1.0",
+        "@types/ethereumjs-util": "^6.1.0",
         "@types/node": ">=10",
-        "@types/ws": "^7.4.0",
-        "@xstate/inspect": "^0.4.1",
-        "ws": "^7.3.1"
+        "bignumber.js": "^9.0.1",
+        "bn.js": "^5.1.3",
+        "bnc-sdk": "^3.0.0",
+        "borsh": "^0.3.1",
+        "bs58": "^4.0.1",
+        "chai-bignumber": "ren-forks/chai-bignumber#afa6f46dcbef0b7e622dc27b9b3354fc67afafbc",
+        "ethereumjs-util": "^6.1.0",
+        "tweetnacl": "^1.0.3"
     },
     "resolutions": {
         "sha3": "^2.1.2"
@@ -69,7 +80,7 @@
         "semi": true,
         "singleQuote": false,
         "tabWidth": 4,
-        "trailingComma": "es5",
+        "trailingComma": "all",
         "endOfLine": "lf",
         "arrowParens": "always"
     }

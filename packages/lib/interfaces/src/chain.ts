@@ -288,12 +288,30 @@ export interface MintChain<
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
         eventEmitter: EventEmitter,
+        lockState: any,
     ) => SyncOrPromise<Transaction>;
 
-    findTransaction: (
+    /**
+     * Finds a transaction by its nonce and optionally signature,
+     * as used in Ethereum based chains
+     */
+    findTransaction?: (
         asset: string,
         nHash: Buffer,
         sigHash?: Buffer,
+    ) => SyncOrPromise<Transaction | undefined>;
+
+    /**
+     * Finds a transaction by its details
+     * as used in Solana
+     */
+    findTransactionByDepositDetails?: (
+        asset: string,
+        sHash: Buffer,
+        nHash: Buffer,
+        pHash: Buffer,
+        to: string,
+        amount: string,
     ) => SyncOrPromise<Transaction | undefined>;
 
     /**

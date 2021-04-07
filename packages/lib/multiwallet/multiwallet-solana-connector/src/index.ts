@@ -11,6 +11,7 @@ export interface SolanaConnectorOptions {
     debug?: boolean;
     network: RenNetwork;
     providerURL: string;
+    clusterURL?: string;
 }
 
 const renNetworkToSolanaNetwork: { [k in RenNetwork]: string } = {
@@ -35,16 +36,17 @@ export class SolanaConnector
     connection: Connection;
     wallet: typeof Wallet;
     providerURL: string;
+    clusterURL: string;
     constructor({
         debug = false,
         network,
         providerURL,
+        clusterURL,
     }: SolanaConnectorOptions) {
         this.debug = debug;
         this.network = network;
-        this.connection = new Connection(
-            renNetworkToSolanaNetwork[this.network]
-        );
+        this.clusterURL = clusterURL || renNetworkToSolanaNetwork[this.network];
+        this.connection = new Connection(this.clusterURL);
         this.providerURL = providerURL;
         this.emitter = new ConnectorEmitter<SolanaProvider, string>(debug);
     }
@@ -58,10 +60,7 @@ export class SolanaConnector
     };
 
     async activate() {
-        this.wallet = new Wallet(
-            this.providerURL,
-            this.connection._rpcEndpoint
-        );
+        this.wallet = new Wallet(this.providerURL, this.clusterURL);
         this.wallet.on("connect", this.handleUpdate);
         // when disconnecting inside an external window,
         // you need to manually bind the function

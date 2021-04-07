@@ -26,6 +26,7 @@ import {
     generatePHash,
     generateSHash,
     isDefined,
+    keccak256,
     overrideContractCalls,
     Ox,
     payloadToMintABI,
@@ -42,6 +43,7 @@ import { OrderedMap } from "immutable";
 import { config } from "process";
 import { AbiCoder } from "web3-eth-abi";
 import { RenJSConfig } from "./config";
+import base58 from "bs58";
 
 interface MintState {
     logger: Logger;
@@ -58,7 +60,7 @@ interface MintStatePartial {
     targetConfirmations: number | undefined;
 }
 
-interface DepositState {
+export interface DepositState {
     renTxSubmitted: boolean;
     queryTxResult?: LockAndMintTransaction;
     queryTxResultTimestamp?: number | undefined;
@@ -456,6 +458,14 @@ export class LockAndMint<
             contractCalls.length - 1
         ];
 
+        // FIXME: dirty hack, but we need to re-write how we deal with
+        // addresses in order to do this cleanly
+        // (need to follow the multichain address pattern)
+        const sendToHex =
+            this.params.to.name == "Solana"
+                ? base58.decode(sendTo).toString("hex")
+                : sendTo;
+
         const tokenGatewayContract =
             this.renVM.version(this._state.selector) >= 2
                 ? Ox(generateSHash(this._state.selector))
@@ -467,10 +477,11 @@ export class LockAndMint<
             contractParams || [],
             this._state.logger,
         );
+        console.log(sendToHex, contractCalls);
 
         const gHash = generateGHash(
             contractParams || [],
-            sendTo,
+            sendToHex,
             tokenGatewayContract,
             fromHex(nonce),
             this.renVM.version(this._state.selector) >= 2,
@@ -1292,20 +1303,37 @@ export class LockAndMintDeposit<
      * ```
      */
     public findTransaction = async (): Promise<MintTransaction | undefined> => {
-        const sigHash =
-            this._state.queryTxResult &&
-            this._state.queryTxResult.out &&
-            this._state.queryTxResult.out.revert === undefined
-                ? this._state.queryTxResult.out.sighash
-                : undefined;
+        if (this.params.to.findTransaction) {
+            const sigHash =
+                this._state.queryTxResult &&
+                this._state.queryTxResult.out &&
+                this._state.queryTxResult.out.revert === undefined
+                    ? this._state.queryTxResult.out.sighash
+                    : undefined;
 
-        // Check if the signature has already been submitted
-        this.mintTransaction = await this.params.to.findTransaction(
-            this.params.asset,
-            this._state.nHash,
-            sigHash,
-        );
-        return this.mintTransaction;
+            // Check if the signature has already been submitted
+            this.mintTransaction = await this.params.to.findTransaction(
+                this.params.asset,
+                this._state.nHash,
+                sigHash,
+            );
+            return this.mintTransaction;
+        }
+        if (
+            this.params.contractCalls &&
+            this.params.to.findTransactionByDepositDetails
+        ) {
+            this.mintTransaction = await this.params.to.findTransactionByDepositDetails(
+                this.params.asset,
+                keccak256(Buffer.from(this._state.selector)),
+                this._state.nHash,
+                this._state.pHash,
+                this.params.contractCalls[0].sendTo,
+                this._state.amount,
+            );
+            return this.mintTransaction;
+        }
+        return undefined;
     };
 
     /**
@@ -1366,6 +1394,7 @@ export class LockAndMintDeposit<
                 contractCalls,
                 this._state.queryTxResult,
                 (promiEvent as unknown) as EventEmitter,
+                this._state,
             );
 
             // Update status.

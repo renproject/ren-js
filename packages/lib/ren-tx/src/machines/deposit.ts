@@ -74,11 +74,12 @@ export type DepositMachineEvent =
     | { type: "CONFIRMED"; data: GatewayTransaction }
     | { type: "CONFIRMATION"; data: GatewayTransaction }
     | { type: "SIGNED"; data: GatewayTransaction }
-    | { type: "SIGN_ERROR"; data: Error }
+    | { type: "SIGN_ERROR"; data: GatewayTransaction; error: Error }
+    | { type: "REVERTED"; data: GatewayTransaction; error: Error }
     | { type: "CLAIM"; data: GatewayTransaction; params: ContractParams }
     | { type: "REJECT" }
     | { type: "SUBMITTED"; data: GatewayTransaction }
-    | { type: "SUBMIT_ERROR"; data: Error }
+    | { type: "SUBMIT_ERROR"; data: GatewayTransaction; error: Error }
     | { type: "ACKNOWLEDGE" };
 
 /** Statemachine that tracks individual deposits */
@@ -273,7 +274,16 @@ export const depositMachine = Machine<
                         actions: assign({
                             deposit: (ctx, evt) => ({
                                 ...ctx.deposit,
-                                error: evt.data,
+                                error: evt.error,
+                            }),
+                        }),
+                    },
+                    REVERTED: {
+                        target: "rejected",
+                        actions: assign({
+                            deposit: (ctx, evt) => ({
+                                ...ctx.deposit,
+                                error: evt.error,
                             }),
                         }),
                     },
@@ -370,7 +380,7 @@ export const depositMachine = Machine<
                                 assign({
                                     deposit: (ctx, evt) => ({
                                         ...ctx.deposit,
-                                        error: evt.data,
+                                        error: evt.error,
                                     }),
                                 }),
                                 sendParent((ctx, _) => ({
@@ -419,6 +429,14 @@ export const depositMachine = Machine<
             },
 
             rejected: {
+                entry: [
+                    sendParent((ctx, _) => {
+                        return {
+                            type: "DEPOSIT_UPDATE",
+                            data: ctx.deposit,
+                        };
+                    }),
+                ],
                 meta: { test: async () => {} },
             },
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Improve typings.
 
-import { assign, Machine, send, sendParent } from "xstate";
+import { assign, createMachine, createSchema, send, sendParent } from "xstate";
 import { log } from "xstate/lib/actions";
 import { assert } from "@renproject/utils";
 
@@ -25,6 +25,30 @@ const largest = (x?: number, y?: number): number => {
     if (x > y) return x;
     return y;
 };
+
+export type DepositMachineTypestate =
+    | {
+          value: "checkingCompletion";
+          context: DepositMachineContext;
+      }
+    | {
+          value: "restoringDeposit";
+          context: DepositMachineContext;
+      }
+    | {
+          value: "errorRestoring";
+          context: DepositMachineContext;
+      }
+    | { value: "restoredDeposit"; context: DepositMachineContext }
+    | { value: "srcSettling"; context: DepositMachineContext }
+    | { value: "srcConfirmed"; context: DepositMachineContext }
+    | { value: "accepted"; context: DepositMachineContext }
+    | { value: "errorAccepting"; context: DepositMachineContext }
+    | { value: "claiming"; context: DepositMachineContext }
+    | { value: "errorSubmitting"; context: DepositMachineContext }
+    | { value: "destInitiated"; context: DepositMachineContext }
+    | { value: "completed"; context: DepositMachineContext }
+    | { value: "rejected"; context: DepositMachineContext };
 
 /** The states a deposit can be in */
 export interface DepositMachineSchema {
@@ -59,7 +83,7 @@ export interface DepositMachineSchema {
     };
 }
 
-interface ContractParams {
+export interface ContractParams {
     [key: string]: any;
 }
 
@@ -83,14 +107,18 @@ export type DepositMachineEvent =
     | { type: "ACKNOWLEDGE" };
 
 /** Statemachine that tracks individual deposits */
-export const depositMachine = Machine<
+export const depositMachine = createMachine<
     DepositMachineContext,
-    DepositMachineSchema,
-    DepositMachineEvent
+    DepositMachineEvent,
+    DepositMachineTypestate
 >(
     {
         id: "RenVMDepositTransaction",
         initial: "checkingCompletion",
+        schema: {
+            events: createSchema<DepositMachineEvent>(),
+            context: createSchema<DepositMachineContext>(),
+        },
         states: {
             // Checking if deposit is completed so that we can skip initialization
             checkingCompletion: {

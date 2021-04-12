@@ -506,7 +506,7 @@ const spawnDepositMachine = (
             sync: true,
             name,
         },
-    ) as Actor<any>;
+    );
 
 export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
     services: {

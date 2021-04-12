@@ -1,14 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Improve typings.
 
-import { Actor, assign, Machine, send } from "xstate";
+import {
+    Actor,
+    assign,
+    Interpreter,
+    Machine,
+    send,
+    SpawnedActorRef,
+    State,
+} from "xstate";
 import RenJS from "@renproject/ren";
 import { LockChain, MintChain } from "@renproject/interfaces";
 import { assert } from "@renproject/utils";
 import { log } from "xstate/lib/actions";
 
 import { GatewaySession, GatewayTransaction } from "../types/transaction";
-import { depositMachine, DepositMachineEvent } from "./deposit";
+import {
+    DepositMachineContext,
+    DepositMachineEvent,
+    DepositMachineSchema,
+    DepositMachineTypestate,
+} from "./deposit";
 
 export interface GatewayMachineContext {
     /**
@@ -28,7 +41,17 @@ export interface GatewayMachineContext {
      * @private
      * Keeps track of child machines that track underlying deposits
      */
-    depositMachines?: { [key in string]: Actor<typeof depositMachine> };
+    depositMachines?: {
+        [key in string]: SpawnedActorRef<
+            DepositMachineEvent,
+            State<
+                DepositMachineContext,
+                DepositMachineEvent,
+                DepositMachineSchema,
+                DepositMachineTypestate
+            >
+        >;
+    };
     /**
      * @private
      * a listener callback that interacts with renjs deposit objects

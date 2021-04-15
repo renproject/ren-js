@@ -10,6 +10,7 @@
         "allowSyntheticDefaultImports": true,
         "strict": true,
         "forceConsistentCasingInFileNames": true,
+        "sourceMap": true,
         "module": "CommonJS",
         "moduleResolution": "node",
         "declaration": true,

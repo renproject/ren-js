@@ -1,6 +1,7 @@
 import {
     BurnAndReleaseParams,
     DepositCommon,
+    getRenNetworkDetails,
     LockAndMintParams,
     LockChain,
     Logger,
@@ -103,6 +104,7 @@ export default class RenJS {
      * ```
      */
     public readonly renVM: AbstractRenVMProvider;
+    public readonly networkName?: string;
 
     private readonly _logger: Logger;
 
@@ -157,6 +159,18 @@ export default class RenJS {
                           | RenNetworkDetails,
                       this._logger,
                   );
+        if (typeof providerOrNetwork === "string") {
+            this.networkName = providerOrNetwork;
+        } else if (
+            providerOrNetwork &&
+            (providerOrNetwork as AbstractRenVMProvider).sendMessage
+        ) {
+            this.networkName = providerOrNetwork as AbstractRenVMProvider;
+        } else {
+            this.networkName = (providerOrNetwork as RenNetworkDetails)
+                .name as RenNetwork;
+            getRenNetworkDetails;
+        }
     }
 
     public getFees = async ({

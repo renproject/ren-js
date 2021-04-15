@@ -1076,6 +1076,13 @@
     "@types/prop-types" "*"
     csstype "^3.0.2"
 
+"@xstate/inspect@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@xstate/inspect/-/inspect-0.4.1.tgz#6b00b945c03280a333de8ddf10e91830c361052d"
+  integrity sha512-tcGBUCVymP8ij0K2fXZckrwrQkmNJL1DgQAM0eSILQKb8iBDN3GeqhYkNCS4HP29EzF2TZL0+k74FPWKaU9Fhw==
+  dependencies:
+    fast-safe-stringify "^2.0.7"
+
 abab@^2.0.0:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/abab/-/abab-2.0.5.tgz#c0b678fb32d60fc1219c784d6a826fe385aeb79a"
@@ -2460,6 +2467,11 @@ fast-levenshtein@~2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
+
+fast-safe-stringify@^2.0.7:
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.0.7.tgz#124aa885899261f68aedb42a7c080de9da608743"
+  integrity sha512-Utm6CdzT+6xsDk2m8S6uL8VHxNwI6Jub+e9NYTcAms28T84pTa25GJQV9j0CY0N1rM8hK4x6grpF2BQf+2qwVA==
 
 fastparse@^1.1.2:
   version "1.1.2"
@@ -5347,6 +5359,11 @@ ws@^6.1.2:
   integrity sha512-GIyAXC2cB7LjvpgMt9EKS2ldqr0MTrORaleiOno6TweZ6r3TKtoFQWay/2PceJ3RuBasOHzXNn5Lrw1X0bEjqA==
   dependencies:
     async-limiter "~1.0.0"
+
+ws@^7.3.1:
+  version "7.4.4"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.4.tgz#383bc9742cb202292c9077ceab6f6047b17f2d59"
+  integrity sha512-Qm8k8ojNQIMx7S+Zp8u/uHOx7Qazv3Yv4q68MiWWWOJhiwG5W3x7iqmRtJo8xxrciZUY4vRxUTJCKuRnF28ZZw==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"

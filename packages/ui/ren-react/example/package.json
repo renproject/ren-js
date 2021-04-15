@@ -8,7 +8,9 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "react-app-polyfill": "^1.0.0"
+    "@xstate/inspect": "^0.4.1",
+    "react-app-polyfill": "^1.0.0",
+    "ws": "^7.3.1"
   },
   "browserslist": [
     "last 1 Chrome versions"

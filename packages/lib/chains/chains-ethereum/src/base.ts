@@ -55,7 +55,7 @@ export const EthereumConfigMap = {
     [RenNetwork.DevnetVDot3]: renDevnetVDot3,
 };
 
-export type EthTransaction = string;
+export type EthTransaction = string | null;
 export type EthAddress = string;
 
 const isEthereumConfig = (
@@ -273,7 +273,7 @@ export class EthereumBaseChain
     };
 
     transactionID = (transaction: EthTransaction): string => {
-        return transaction;
+        return transaction || "";
     };
 
     transactionFromID = (txid: string | Buffer, _txindex: string) => Ox(txid);
@@ -284,6 +284,11 @@ export class EthereumBaseChain
         if (!this.web3 || !this.renNetworkDetails) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
+        if (transaction === null) {
+            throw new Error(
+                `Unable to fetch transaction confidence, transaction hash: ${transaction}`,
             );
         }
         const currentBlock = new BigNumber(
@@ -401,7 +406,7 @@ export class EthereumBaseChain
         const { burnNonce, contractCalls } = burn;
         let { transaction } = burn;
 
-        if (burnNonce) {
+        if (!transaction && burnNonce) {
             return findBurnByNonce(
                 this.renNetworkDetails,
                 this.web3,
@@ -588,7 +593,13 @@ export class EthereumBaseChain
     };
 
     transactionRPCFormat = (transaction: EthTransaction, _v2?: boolean) => {
-        assertType<string>("string", { transaction });
+        assertType<string | null>("string | null", { transaction });
+
+        if (transaction === null) {
+            throw new Error(
+                `Unable to encode transaction, transaction hash: ${transaction}`,
+            );
+        }
 
         return {
             txid: fromHex(transaction),

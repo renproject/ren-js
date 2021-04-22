@@ -78,6 +78,9 @@ const mintModel = createModel(mintMachine).withEvents({
     RESTORED: {
         cases: [{ data: { sourceTxHash: "123" } }],
     },
+    REVERTED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     EXPIRED: {},
     LISTENING: {},
     CLAIMABLE: {
@@ -128,10 +131,10 @@ const depositModel = createModel(
         cases: [{ error: new Error("error") }],
     },
     SIGN_ERROR: {
-        cases: [{ data: { message: "an error" } }],
+        cases: [{ error: { message: "an error" } }],
     },
     SUBMIT_ERROR: {
-        cases: [{ data: { message: "an error" } }],
+        cases: [{ error: { message: "an error" } }],
     },
     RESTORED: {
         cases: [{ data: { sourceTxHash: "123" } }],

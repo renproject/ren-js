@@ -229,6 +229,7 @@ export const mintMachine = Machine<
                 CONFIRMED: { actions: "routeEvent" },
                 ERROR: { actions: "routeEvent" },
                 SIGN_ERROR: { actions: "routeEvent" },
+                REVERTED: { actions: "routeEvent" },
                 SUBMIT_ERROR: { actions: "routeEvent" },
                 SIGNED: { actions: "routeEvent" },
                 SUBMITTED: { actions: "routeEvent" },

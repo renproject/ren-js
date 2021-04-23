@@ -261,7 +261,9 @@ const burnModel = createModel(
     SUBMITTED: {
         cases: [{ data: { sourceTxHash: "123" } }],
     },
-    RELEASED: {},
+    RELEASED: {
+        cases: [{ data: { sourceTxHash: "123", renResponse: {} } }],
+    },
     RETRY: {},
 });
 

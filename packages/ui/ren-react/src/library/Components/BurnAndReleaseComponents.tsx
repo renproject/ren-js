@@ -87,8 +87,16 @@ interface CompletedBurnProps {
     txHash: string;
 }
 
-const DefaultCompletedBurn: React.FC<CompletedBurnProps> = ({ amount }) => {
-    return <div className="completed-burn">Successfully burned {amount}</div>;
+const DefaultCompletedBurn: React.FC<CompletedBurnProps> = ({
+    amount,
+    txHash,
+}) => {
+    return (
+        <div className="completed-burn">
+            Successfully burned {amount}{" "}
+            {txHash ? ` in release tx: ${txHash}` : ""}
+        </div>
+    );
 };
 
 interface ReleasingBurnProps {
@@ -196,16 +204,20 @@ export const BasicBurn: React.FC<BurnProps> = ({
             return (
                 <AcceptedBurn
                     tx={tx}
-                    amount={formatAmount(tx.rawSourceTx.amount)}
+                    amount={formatAmount(tx.sourceTxAmount)}
                 />
             );
         case BurnStates.RELEASED:
-            if (!tx || !isReleased(tx)) throw new Error("invalid state");
+            if (!tx || !isReleased(tx))
+                throw new Error("invalid state " + JSON.stringify(tx));
             return (
                 <CompletedBurn
                     tx={tx}
-                    amount={formatAmount((tx.renResponse?.out as any)?.amount)}
-                    txHash={""}
+                    amount={formatAmount(
+                        (tx.renResponse?.out as any)?.amount ||
+                            tx.sourceTxAmount,
+                    )}
+                    txHash={tx.destTxHash || ""}
                 />
             );
         case BurnStates.ERROR_BURNING:

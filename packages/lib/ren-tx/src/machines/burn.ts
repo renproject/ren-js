@@ -477,13 +477,30 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                                         : ctx.tx,
                             }),
                         },
-                        RELEASED: "destInitiated",
+                        RELEASED: {
+                            target: "destInitiated",
+                            actions: assign({
+                                tx: (ctx, evt) => ({
+                                    ...ctx.tx,
+                                    transaction: evt.data,
+                                }),
+                            }),
+                        },
                     },
                     meta: { test: async () => {} },
                 },
 
                 destInitiated: {
-                    meta: { test: async () => {} },
+                    meta: {
+                        test: (_: void, state: any) => {
+                            assert(
+                                state.context.tx.transaction.renResponse
+                                    ? true
+                                    : false,
+                                "renResponse must exist",
+                            );
+                        },
+                    },
                 },
             },
         },

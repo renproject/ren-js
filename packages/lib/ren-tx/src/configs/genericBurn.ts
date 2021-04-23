@@ -48,11 +48,10 @@ const spawnBurnTransaction = assign<
 
 const extractTx = <X>(
     burn: BurnAndRelease<any, DepositCommon<any>, any, any>,
-): ReleasedBurnTransaction<X> => {
+): ConfirmedBurnTransaction<X> => {
     if (!burn.burnDetails) throw new Error("missing burn");
-    const tx: ReleasedBurnTransaction<X> = {
+    const tx: ConfirmedBurnTransaction<X> = {
         renVMHash: burn.txHash(),
-        renResponse: burn.burnDetails.transaction,
         rawSourceTx: burn.burnDetails.transaction,
         sourceTxConfTarget: 0,
         sourceTxConfs: 0,
@@ -128,27 +127,26 @@ const performBurn = async <X, Y>(
 
         // stop listening for confirmations once confirmed
         burnRef.removeListener("confirmation", burnListener);
-        const data: BurnTransaction = {
-            ...{ ...extractTx(burn), ...context.tx.transaction },
-            sourceTxConfs: target,
-            sourceTxConfTarget: target,
-        };
-        callback({
-            type: "CONFIRMED",
-            data,
-        });
 
-        if (context.tx.transaction) {
-            // the burn status is canonical, we should proceed if
-            // it says we have burned
-            if (r.status == BurnAndReleaseStatus.Burned) {
-                context.tx.transaction.sourceTxConfs = target;
-            }
-
-            // Always call because we won't get an emission
-            // if the burn is already done
-            burnListener(context.tx.transaction.sourceTxConfs);
+        if (
+            r.status == BurnAndReleaseStatus.Burned ||
+            r.status == BurnAndReleaseStatus.Released
+        ) {
+            const data: ConfirmedBurnTransaction<X> = {
+                ...{ ...extractTx(burn), ...context.tx.transaction },
+                sourceTxConfs: target,
+                sourceTxConfTarget: target,
+            };
+            callback({
+                type: "CONFIRMED",
+                data,
+            });
+            return data;
         }
+        if (r.status == BurnAndReleaseStatus.Reverted) {
+            throw new Error(`Burn tx reverted: ${r.revertReason}`);
+        }
+        throw new Error(`Burn interrupted`);
     } catch (error) {
         throw error;
     }
@@ -226,6 +224,7 @@ const performRelease = async <X, Y>(
         const data: ReleasedBurnTransaction<X> = {
             ...tx,
             rawSourceTx: burn.burnDetails.transaction,
+            destTxHash: burn.releaseTransaction,
             renResponse: res,
         };
         callback({
@@ -247,6 +246,7 @@ const burnTransactionListener = <X, Y>(context: BurnMachineContext<X, Y>) => (
 ) => {
     const cleaners: Array<() => void> = [];
     let burning = false;
+    let tx: ConfirmedBurnTransaction<X>;
     burnAndRelease(context)
         .then((burn) => {
             // Ready to recieve SUBMIT
@@ -267,7 +267,7 @@ const burnTransactionListener = <X, Y>(context: BurnMachineContext<X, Y>) => (
                     }
                     burning = true;
                     performBurn(burn, callback, cleaners, context)
-                        .then()
+                        .then((r) => (tx = r))
                         .catch((e) => {
                             console.error(e);
                             callback({

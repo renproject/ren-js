@@ -39,6 +39,7 @@ export interface ReleasedBurnTransaction<BurnType>
      * Response to renvm release request
      */
     renResponse: BurnAndReleaseTransaction;
+    destTxHash?: string;
 }
 
 export const isBurnCompleted = <X, Y>(

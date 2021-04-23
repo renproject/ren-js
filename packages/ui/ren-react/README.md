@@ -14,7 +14,7 @@ npm install --save @renproject/ren @renproject/ren-react @renproject/ren-tx @xst
 
 ## Usage
 
-See the `/example` folder for a working demo
+See the `/example` folder for a working demo. Check `/example/index.html` to swap between the different examples
 
 ### With predefined components
 
@@ -24,7 +24,7 @@ import * as ReactDOM from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 
 import RenJS from "@renproject/ren";
-import { BasicMint, BasicBurn } from "@renproject/ren-react";
+import { BasicMint, BasicBurn, BurnProps } from "@renproject/ren-react";
 import { Ethereum } from "@renproject/chains-ethereum";
 import { Zcash } from "@renproject/chains-bitcoin";
 import Web3 from "web3";
@@ -124,6 +124,10 @@ import {
     useDeposit,
     useLockAndMint,
     useBurnAndRelease,
+    BurnStates,
+    DepositStates,
+    isBurnErroring,
+    isOpen,
 } from "@renproject/ren-react";
 import RenJS from "@renproject/ren";
 import { Ethereum } from "@renproject/chains-ethereum";
@@ -131,12 +135,6 @@ import { Zcash } from "@renproject/chains-bitcoin";
 import Web3 from "web3";
 import { useEffect, useMemo, useState } from "react";
 import { RenNetwork } from "@renproject/interfaces";
-import {
-    BurnStates,
-    DepositStates,
-    isBurnErroring,
-    isOpen,
-} from "@renproject/ren-tx";
 
 const BurnApp = ({ account, provider, destinationAddress, balance }) => {
     const parameters = useMemo(
@@ -213,7 +211,7 @@ const MintApp = ({ account, provider }) => {
             {mint.deposits.map((x) => (
                 <Deposit
                     key={x}
-                    sessionMachine={mint.sessionMachine}
+                    session={mint}
                     depositId={x}
                     currency={mint.session.sourceAsset}
                 />
@@ -223,11 +221,11 @@ const MintApp = ({ account, provider }) => {
 };
 
 const Deposit: React.FC<{
-    sessionMachine: any;
+    session: ReturnType<typeof useLockAndMint>;
     depositId: string;
     currency: string;
-}> = ({ sessionMachine, depositId, currency }) => {
-    const machine = useDeposit(sessionMachine, depositId);
+}> = ({ session, depositId, currency }) => {
+    const machine = useDeposit(session, depositId);
     if (!machine) return <div>Missing deposit...</div>;
     const { state, mint } = machine;
     if (state.matches(DepositStates.CONFIRMING_DEPOSIT)) {

@@ -2,7 +2,6 @@ import {
     mintMachine,
     GatewaySession,
     GatewayMachineContext,
-    GatewayMachineEvent,
     DepositStates,
     GatewayStates,
     buildMintContextWithMap,
@@ -18,7 +17,6 @@ import {
     MintChain,
     RenNetwork,
 } from "@renproject/interfaces";
-import { Interpreter } from "xstate";
 import BigNumber from "bignumber.js/bignumber";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BurnSession } from "@renproject/ren-tx/build/main/types/burn";
@@ -225,15 +223,11 @@ export const useLockAndMint = (
     };
 };
 
-export const useDeposit = <X>(
-    sessionMachine: Interpreter<
-        GatewayMachineContext<X>,
-        any,
-        GatewayMachineEvent<X>
-    >,
+export const useDeposit = (
+    session: ReturnType<typeof useLockAndMint>,
     depositId: string,
 ) => {
-    const depositMachine = useSelector(sessionMachine, (context) => {
+    const depositMachine = useSelector(session.sessionMachine, (context) => {
         if (!context.context.depositMachines) return;
         return context.context.depositMachines[depositId];
     });
@@ -249,12 +243,14 @@ export const useDeposit = <X>(
 
     useEffect(() => {
         (async () => {
-            const assetDecimals = await sessionMachine.state.context
-                .from(sessionMachine.state.context)
-                .assetDecimals(sessionMachine.state.context.tx.sourceAsset);
+            const assetDecimals = await session.sessionMachine.state.context
+                .from(session.sessionMachine.state.context)
+                .assetDecimals(
+                    session.sessionMachine.state.context.tx.sourceAsset,
+                );
             setDecimals(assetDecimals);
         })();
-    }, [setDecimals, sessionMachine.state.context]);
+    }, [setDecimals, session.sessionMachine.state.context]);
 
     const formatAmount = useCallback(
         (amount: string) => {

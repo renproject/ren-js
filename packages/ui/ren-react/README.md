@@ -177,7 +177,7 @@ const BurnApp = ({ account, provider, destinationAddress, balance }) => {
             );
         case BurnStates.RENVM_RELEASING:
             return <div>Submitting to RenVM</div>;
-        case BurnStates.RENVM_RELEASED:
+        case BurnStates.RENVM_ACCEPTED:
             return <div>Releasing</div>;
         case BurnStates.RELEASED:
             return <div>Released</div>;

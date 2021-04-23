@@ -199,7 +199,7 @@ export const BasicBurn: React.FC<BurnProps> = ({
         case BurnStates.RENVM_RELEASING:
             if (!tx || !isBurnConfirmed(tx)) throw new Error("invalid state");
             return <ReleasingBurn tx={tx} />;
-        case BurnStates.RENVM_RELEASED:
+        case BurnStates.RENVM_ACCEPTED:
             if (!tx || !isBurnConfirmed(tx)) throw new Error("invalid state");
             return (
                 <AcceptedBurn

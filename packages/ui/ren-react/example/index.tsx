@@ -8,14 +8,11 @@ import { Ethereum } from "@renproject/chains-ethereum";
 import { Zcash } from "@renproject/chains-bitcoin";
 import Web3 from "web3";
 import { RenNetwork } from "@renproject/interfaces";
-import { inspect } from "@xstate/inspect";
-inspect({ iframe: false });
 
 const BasicBurnApp = ({ account, provider, destinationAddress, balance }) => {
     const parameters = useMemo(
         () => ({
             sdk: new RenJS("testnet"),
-            debug: true,
             burnParams: {
                 sourceAsset: "ZEC",
                 network: RenNetwork.Testnet,

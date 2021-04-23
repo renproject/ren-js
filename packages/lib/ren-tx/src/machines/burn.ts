@@ -76,14 +76,14 @@ export enum BurnStates {
     RENVM_RELEASING = "srcConfirmed",
 
     /** RenVM has recieved the tx and provided a hash */
-    RENVM_RELEASED = "accepted",
+    RENVM_ACCEPTED = "accepted",
 
     /** An error occored while processing the release
      * Should only come from renVM */
     ERROR_RELEASING = "errorReleasing",
 
     /** The release tx has successfully been broadcast
-     * For network v0.3 we get the release destTxHash
+     * For network v0.3+ we get the release destTxHash
      * otherwise it will never be provided
      */
     RELEASED = "destInitiated",

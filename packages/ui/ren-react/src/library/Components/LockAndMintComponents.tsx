@@ -164,7 +164,7 @@ const DefaultErrorSigningDeposit: React.FC<ErrorSigningDepositProps> = ({
 };
 
 export interface DepositProps {
-    sessionMachine: ReturnType<typeof useLockAndMint>["sessionMachine"];
+    session: ReturnType<typeof useLockAndMint>;
     depositId: string;
     currency: string;
     ConfirmingDeposit?: React.FC<ConfirmingDepositProps<any>>;
@@ -181,7 +181,7 @@ export interface DepositProps {
 }
 
 const DefaultDeposit: React.FC<DepositProps> = ({
-    sessionMachine,
+    session,
     depositId,
     ConfirmingDeposit = DefaultConfirmingDeposit,
     SigningDeposit = DefaultSigningDeposit,
@@ -195,7 +195,7 @@ const DefaultDeposit: React.FC<DepositProps> = ({
     ErrorRestoringDeposit = DefaultErrorRestoringDeposit,
     ErrorSigningDeposit = DefaultErrorSigningDeposit,
 }) => {
-    const machine = useDeposit(sessionMachine, depositId);
+    const machine = useDeposit(session, depositId);
     if (!machine) return <div>Missing deposit...</div>;
     const { deposit, value, mint, formatAmount } = machine;
     switch (value) {
@@ -341,7 +341,7 @@ export const BasicMint: React.FC<BasicMintProps> = ({
             {mint.deposits.map((x) => (
                 <Deposit
                     key={x}
-                    sessionMachine={mint.sessionMachine}
+                    session={mint}
                     depositId={x}
                     currency={mint.session.sourceAsset}
                 />

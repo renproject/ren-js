@@ -5,6 +5,10 @@ import {
     useDeposit,
     useLockAndMint,
     useBurnAndRelease,
+    BurnStates,
+    DepositStates,
+    isBurnErroring,
+    isOpen,
 } from "@renproject/ren-react";
 import RenJS from "@renproject/ren";
 import { Ethereum } from "@renproject/chains-ethereum";
@@ -12,12 +16,6 @@ import { Zcash } from "@renproject/chains-bitcoin";
 import Web3 from "web3";
 import { useEffect, useMemo, useState } from "react";
 import { RenNetwork } from "@renproject/interfaces";
-import {
-    BurnStates,
-    DepositStates,
-    isBurnErroring,
-    isOpen,
-} from "@renproject/ren-tx";
 
 const BurnApp = ({ account, provider, destinationAddress, balance }) => {
     const parameters = useMemo(
@@ -58,7 +56,7 @@ const BurnApp = ({ account, provider, destinationAddress, balance }) => {
             );
         case BurnStates.RENVM_RELEASING:
             return <div>Submitting to RenVM</div>;
-        case BurnStates.RENVM_RELEASED:
+        case BurnStates.RENVM_ACCEPTED:
             return <div>Releasing</div>;
         case BurnStates.RELEASED:
             return <div>Released</div>;
@@ -94,7 +92,7 @@ const MintApp = ({ account, provider }) => {
             {mint.deposits.map((x) => (
                 <Deposit
                     key={x}
-                    sessionMachine={mint.sessionMachine}
+                    session={mint}
                     depositId={x}
                     currency={mint.session.sourceAsset}
                 />
@@ -104,11 +102,11 @@ const MintApp = ({ account, provider }) => {
 };
 
 const Deposit: React.FC<{
-    sessionMachine: any;
+    session: ReturnType<typeof useLockAndMint>;
     depositId: string;
     currency: string;
-}> = ({ sessionMachine, depositId, currency }) => {
-    const machine = useDeposit(sessionMachine, depositId);
+}> = ({ session, depositId, currency }) => {
+    const machine = useDeposit(session, depositId);
     if (!machine) return <div>Missing deposit...</div>;
     const { state, mint } = machine;
     if (state.matches(DepositStates.CONFIRMING_DEPOSIT)) {

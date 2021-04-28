@@ -149,7 +149,7 @@ export const useBurnAndRelease = (
     const [decimals, setDecimals] = useState(0);
 
     useEffect(() => {
-        (async () => {
+        void (async () => {
             const assetDecimals = await context
                 .to(context)
                 .assetDecimals(context.tx.sourceAsset);

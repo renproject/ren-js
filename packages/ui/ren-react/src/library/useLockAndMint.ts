@@ -172,8 +172,8 @@ export const useLockAndMint = (
         devTools: config.debug,
     });
 
-    const session = useSelector(machine, (machine) => {
-        return machine.context.tx;
+    const session = useSelector(machine, (x) => {
+        return x.context.tx;
     });
 
     const addDeposit = useCallback(
@@ -198,7 +198,7 @@ export const useLockAndMint = (
     const [decimals, setDecimals] = useState(0);
 
     useEffect(() => {
-        (async () => {
+        void (async () => {
             const assetDecimals = await context
                 .from(context)
                 .assetDecimals(context.tx.sourceAsset);
@@ -242,7 +242,7 @@ export const useDeposit = (
     const [decimals, setDecimals] = useState(0);
 
     useEffect(() => {
-        (async () => {
+        void (async () => {
             const assetDecimals = await session.sessionMachine.state.context
                 .from(session.sessionMachine.state.context)
                 .assetDecimals(

@@ -14,6 +14,7 @@
     },
     "scripts": {
         "prebuild": "rimraf dist",
+        "clean": "yarn rimraf ./dist ./node_modules",
         "build": "rollup -c",
         "watch": "rollup -c --watch",
         "test": "run-s test:unit test:lint test:build",

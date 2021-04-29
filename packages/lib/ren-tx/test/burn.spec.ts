@@ -5,32 +5,28 @@ import { EventObject, interpret, State } from "xstate";
 import { config as loadDotEnv } from "dotenv";
 
 import {
-    burnConfig,
+    buildBurnConfig,
     burnMachine,
     BurnMachineContext,
     BurnMachineSchema,
-    GatewaySession,
+    buildBurnContextWithMap,
 } from "../src";
 import { buildMockLockChain, buildMockMintChain } from "./testutils/mock";
 import { SECONDS } from "@renproject/utils";
+import { BurnSession } from "../src/types/burn";
+import BigNumber from "bignumber.js";
 
 loadDotEnv();
-const providers = {
-    testDestChain: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
-};
 
-const mintTransaction: GatewaySession = {
+const burnTransaction: BurnSession<any, any> = {
     id: "a unique identifier",
-    type: "burn",
     network: "testnet",
     sourceAsset: "renBTC",
     sourceChain: "testSourceChain",
     destAddress: "0x0000000000000000000000000000000000000000",
     destChain: "testDestChain",
-    targetAmount: 1,
+    targetAmount: "1",
     userAddress: "0x0000000000000000000000000000000000000000",
-    expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
-    transactions: {},
     customParams: {},
 };
 
@@ -39,7 +35,34 @@ describe("BurnMachine", () => {
     it("should create a burn tx", async () => {
         const fromChainMap = {
             testSourceChain: () => {
-                return buildMockMintChain().mockMintChain;
+                const chain = buildMockMintChain().mockMintChain;
+                chain.findBurnTransaction = (_p, _d, emitter) => {
+                    setTimeout(() => {
+                        emitter.emit(
+                            "transactionHash",
+                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                        );
+                    }, 500);
+
+                    setInterval(() => {
+                        emitter.emit("confirmation", 1);
+                    }, 1000);
+
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve({
+                                transaction: {
+                                    hash:
+                                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                },
+                                amount: new BigNumber(0),
+                                to: "asd",
+                                nonce: new BigNumber(0),
+                            });
+                        }, 1100);
+                    });
+                };
+                return chain;
             },
         };
 
@@ -49,20 +72,21 @@ describe("BurnMachine", () => {
             },
         };
 
-        const machine = burnMachine.withConfig(burnConfig).withContext({
-            tx: mintTransaction,
-            sdk: new RenJS("testnet", {
-                networkDelay: 1 * SECONDS,
+        const machine = burnMachine.withConfig(buildBurnConfig()).withContext({
+            ...buildBurnContextWithMap({
+                tx: burnTransaction,
+                sdk: new RenJS("testnet", {
+                    networkDelay: 1 * SECONDS,
+                }),
+                fromChainMap,
+                toChainMap,
             }),
             autoSubmit: true,
-            providers,
-            fromChainMap,
-            toChainMap,
         });
         let result: any = {};
 
         const p = new Promise<
-            State<BurnMachineContext, EventObject, BurnMachineSchema>
+            State<BurnMachineContext<any, any>, EventObject, BurnMachineSchema>
         >((resolve, reject) => {
             const service = interpret(machine)
                 .onTransition((state) => {
@@ -73,10 +97,6 @@ describe("BurnMachine", () => {
                     if (state.value === "srcSettling") {
                         // we have successfully created a burn tx
                         result = state;
-                        service.send({
-                            type: "CONFIRMED",
-                            data: { sourceTxHash: "123" },
-                        } as any);
                     }
                     if (state.value === "srcConfirmed") {
                         service.stop();
@@ -98,7 +118,7 @@ describe("BurnMachine", () => {
         });
         return p.then((state) => {
             expect(
-                Object.keys(state.context?.tx?.transactions || {}).length,
+                Object.keys(state.context?.tx.transaction || {}).length,
             ).toBeGreaterThan(0);
         });
     });

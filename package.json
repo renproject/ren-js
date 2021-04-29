@@ -60,6 +60,7 @@
         "webpack-node-externals": "^2.5.2"
     },
     "workspaces": [
+        "packages/ui/ren-react",
         "packages/ui/react-components",
         "packages/ui/multiwallet-ui",
         "packages/ui/ren-js-example",

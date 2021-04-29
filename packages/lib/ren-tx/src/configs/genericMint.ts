@@ -1,15 +1,12 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Improve typings.
 
 import { DepositCommon, LockAndMintTransaction } from "@renproject/interfaces";
-import RenJS from "@renproject/ren";
 import {
     DepositStatus,
     LockAndMint,
     LockAndMintDeposit,
 } from "@renproject/ren/build/main/lockAndMint";
-import BigNumber from "bignumber.js";
 import {
     Actor,
     assign,
@@ -22,40 +19,23 @@ import {
 } from "xstate";
 import { TransactionReceipt } from "web3-core";
 
-import { depositMachine, DepositMachineContext } from "../machines/deposit";
+import {
+    buildDepositMachine,
+    DepositMachineContext,
+    DepositMachineEvent,
+} from "../machines/deposit";
 import { GatewayMachineContext, GatewayMachineEvent } from "../machines/mint";
-import { GatewaySession, GatewayTransaction } from "../types/transaction";
-
-/*
-  Sample mintChainMap / lockChainMap implementations
-  We don't implement these to prevent mandating specific chains
-
-const mintChainMap: {
-    [key in string]: (c: GatewayMachineContext) => MintChain<any>;
-} = {
-    binanceSmartChain: (context: GatewayMachineContext) => {
-        const { destAddress, destNetwork } = context.tx;
-        const { providers } = context;
-        return new BinanceSmartChain(providers[destNetwork]).Account({
-            address: destAddress,
-        }) as MintChain<any>;
-    },
-    ethereum: (context: GatewayMachineContext): MintChain => {
-        const { destAddress, destNetwork } = context.tx;
-        const { providers } = context;
-
-        return Ethereum(providers[destNetwork]).Account({
-            address: destAddress,
-        }) as MintChain<any>;
-    },
-};
-
-const lockChainMap = {
-    bitcoin: () => Bitcoin(),
-    zcash: () => Zcash(),
-    bitcoinCash: () => BitcoinCash(),
-};
-*/
+import {
+    AcceptedGatewayTransaction,
+    AllGatewayTransactions,
+    CompletedGatewayTransaction,
+    ConfirmingGatewayTransaction,
+    GatewayTransaction,
+    isConfirming,
+    isOpen,
+    MintedGatewayTransaction,
+    OpenedGatewaySession,
+} from "../types/mint";
 
 // Recursively cast all buffers in an object to hex
 const hexify = (obj: { [key: string]: any }) => {
@@ -70,73 +50,53 @@ const hexify = (obj: { [key: string]: any }) => {
 };
 
 // Create a LockAndMint instance from a RenTX context
-export const renLockAndMint = async (context: GatewayMachineContext) => {
-    const { nonce, destChain, sourceChain, sourceAsset } = context.tx;
-    const { sdk, fromChainMap, toChainMap } = context;
+export const renLockAndMint = async <X>(context: GatewayMachineContext<X>) => {
+    const { nonce, sourceAsset } = context.tx;
+    const { sdk, to, from } = context;
 
     const mint = await sdk.lockAndMint({
         asset: sourceAsset.toUpperCase(),
-        from: fromChainMap[sourceChain](context),
-        to: toChainMap[destChain](context),
+        from: from(context),
+        to: to(context),
         nonce,
     });
 
     return mint;
 };
 
+// FIXME: These should exist at the RenJS level (gateway validity estimate)
+const getSessionDay = () => Math.floor(Date.now() / 1000 / 60 / 60 / 24);
+// const getSessionExpiry = () => (getSessionDay() + 3) * 60 * 60 * 24 * 1000;
+
 // Format a transaction and get the gateway address
-const txCreator = async (context: GatewayMachineContext) => {
-    // TX may be in a state where the gateway address was provided,
-    // but no deposit was picked up
+const txCreator = async <X>(context: GatewayMachineContext<X>) => {
+    // If no nonce is provided, mock the behavior of a new gateway every day
     if (!context.tx.nonce) {
-        context.tx.nonce = RenJS.utils.randomNonce().toString("hex");
-    }
-
-    const { targetAmount, sourceAsset, sourceChain, destChain } = context.tx;
-
-    const to = context.toChainMap[destChain](context);
-    const from = context.fromChainMap[sourceChain](context);
-
-    const decimals = await from.assetDecimals(sourceAsset.toUpperCase());
-
-    let suggestedAmount = new BigNumber(targetAmount).times(
-        new BigNumber(10).exponentiatedBy(decimals),
-    );
-
-    if (context.autoFees) {
-        // This will throw and be caught by the machine if we fail to get fees
-        // If the user specifies that they want to have fees added,
-        // we should not silently fail, as they will be prompted to deposit
-        // an incorrect amount
-
-        const fees = await context.sdk.getFees({
-            asset: sourceAsset.toUpperCase(),
-            from,
-            to,
-        });
-
-        suggestedAmount = suggestedAmount
-            .plus(fees.lock || 0)
-            .plus(suggestedAmount.multipliedBy(fees.mint * 0.001));
+        const nonce = getSessionDay();
+        context.tx.nonce = Buffer.from(
+            nonce.toString(16).padStart(32),
+        ).toString("hex");
     }
 
     const minter = await renLockAndMint(context);
     const gatewayAddress = minter?.gatewayAddress;
-    const newTx: GatewaySession = {
+    const newTx: OpenedGatewaySession<X> = {
         ...context.tx,
-        suggestedAmount: suggestedAmount.decimalPlaces(0).toFixed(),
         gatewayAddress,
     };
     return newTx;
 };
 
-const initMinter = async (
-    context: GatewayMachineContext,
-    callback: Sender<GatewayMachineEvent>,
+const initMinter = async <X>(
+    context: GatewayMachineContext<X>,
+    callback: Sender<GatewayMachineEvent<X>>,
 ) => {
     const minter = await renLockAndMint(context);
 
-    if (minter.gatewayAddress != context.tx.gatewayAddress) {
+    if (
+        isOpen(context.tx) &&
+        minter.gatewayAddress != context.tx.gatewayAddress
+    ) {
         callback({
             type: "ERROR_LISTENING",
             data: new Error(
@@ -149,10 +109,10 @@ const initMinter = async (
     return minter;
 };
 
-const handleSettle = async (
+const handleSettle = async <X>(
     sourceTxHash: string,
     deposit: LockAndMintDeposit,
-    callback: Sender<any>,
+    callback: Sender<DepositMachineEvent<X>>,
 ) => {
     try {
         const res = await deposit
@@ -200,23 +160,22 @@ const handleSettle = async (
 };
 
 // Handle signing on RenVM
-const handleSign = async (
-    sourceTxHash: string,
+const handleSign = async <X>(
+    tx: ConfirmingGatewayTransaction<X>,
     deposit: LockAndMintDeposit,
-    callback: Sender<any>,
+    callback: Sender<DepositMachineEvent<X>>,
 ) => {
     try {
-        const v = await deposit
-            .signed()
-            .on("status", (state) => console.debug(state));
+        const v = await deposit.signed();
+        // TODO: handle status? .on("status", (state) => {});
 
         if (!v._state.queryTxResult || !v._state.queryTxResult.out) {
             callback({
                 type: "SIGN_ERROR",
                 data: {
-                    sourceTxHash,
+                    ...tx,
                 },
-                error: new Error("No signature!").toString(),
+                error: new Error("No signature!"),
             });
             return;
         }
@@ -225,28 +184,31 @@ const handleSign = async (
                 v._state.queryTxResult.out.revert !== undefined) ||
             v.revertReason
         ) {
-            deposit.revertReason;
             callback({
                 type: "REVERTED",
                 data: {
-                    sourceTxHash,
+                    ...tx,
                 },
-                error:
+                error: new Error(
                     v._state.queryTxResult.out.revert?.toString() ||
-                    v.revertReason ||
-                    "",
+                        v.revertReason ||
+                        "unknown",
+                ),
             });
             return;
         } else {
+            const data: AcceptedGatewayTransaction<X> = {
+                ...tx,
+                renResponse: hexify(
+                    v._state.queryTxResult.out,
+                ) as LockAndMintTransaction,
+                renSignature: v._state.queryTxResult.out.signature?.toString(
+                    "hex",
+                ),
+            };
             callback({
                 type: "SIGNED",
-                data: {
-                    sourceTxHash,
-                    renResponse: hexify(v._state.queryTxResult.out),
-                    signature: v._state.queryTxResult.out.signature?.toString(
-                        "hex",
-                    ),
-                },
+                data,
             });
         }
     } catch (e) {
@@ -255,9 +217,9 @@ const handleSign = async (
             callback({
                 type: "REVERTED",
                 data: {
-                    sourceTxHash,
+                    ...tx,
                 },
-                error: deposit.revertReason,
+                error: new Error(deposit.revertReason),
             });
             return;
         }
@@ -266,21 +228,20 @@ const handleSign = async (
         // We can assume that a "utxo spent" error implies that the asset has been minted
         callback({
             type: "SIGN_ERROR",
-            data: {
-                sourceTxHash,
-            },
+            data: tx,
+
             // Error must be stringified because full log breaks xstate serialization
-            error: e.toString(),
+            error: e,
         });
     }
 };
 
 // Handle minting on destination chain
-const handleMint = async (
+const handleMint = async <X, Y extends { [name: string]: unknown }>(
     sourceTxHash: string,
     deposit: LockAndMintDeposit,
-    callback: Sender<any>,
-    params: any,
+    callback: Sender<DepositMachineEvent<X>>,
+    params?: Y,
 ) => {
     try {
         const minter = deposit.mint(params);
@@ -293,7 +254,7 @@ const handleMint = async (
                 callback({
                     type: "SUBMIT_ERROR",
                     data: { sourceTxHash },
-                    error: "Transaction was reverted",
+                    error: new Error("Transaction was reverted"),
                 });
             } else {
                 callback({
@@ -328,83 +289,133 @@ const handleMint = async (
     }
 };
 
-const mintFlow = (
-    context: GatewayMachineContext,
-    callback: Sender<GatewayMachineEvent>,
-    receive: Receiver<any>,
-    minter: LockAndMint<any, DepositCommon<any>, any, any, any>,
+const resolveDeposit = <X extends { confirmations?: string }>(
+    hash: string,
+    deposit: LockAndMintDeposit<X>,
 ) => {
-    const deposits = new Map<string, LockAndMintDeposit>();
+    const rawSourceTx = deposit.depositDetails; // as DepositCommon<>;
+    const newDepositState: GatewayTransaction<X> = {
+        sourceTxHash: hash,
+        renVMHash: deposit.txHash(),
+        sourceTxAmount: rawSourceTx.amount,
+        sourceTxConfs: parseInt(rawSourceTx.transaction.confirmations || "0"),
+        rawSourceTx,
+        detectedAt: new Date().getTime(),
+    };
+
+    if (!deposit._state.queryTxResult) {
+        return newDepositState;
+    } else {
+        if (deposit._state.queryTxResult.out?.revert) {
+            newDepositState.error = new Error(
+                deposit._state.queryTxResult.out?.revert.toString(),
+            );
+            return newDepositState;
+        } else {
+            const acceptedData: AcceptedGatewayTransaction<X> = {
+                ...newDepositState,
+                sourceTxConfTarget: Number.POSITIVE_INFINITY,
+                renResponse: hexify(
+                    deposit._state.queryTxResult || {},
+                ) as LockAndMintTransaction,
+                renSignature: deposit._state.queryTxResult.out?.signature,
+            };
+
+            if (deposit.status === DepositStatus.Submitted) {
+                const data: CompletedGatewayTransaction<X> = {
+                    ...acceptedData,
+                    destTxAmount:
+                        deposit._state.queryTxResult.out?.amount || "0",
+                    rawDestTx: {},
+                    contractParams: {},
+                    // we don't actually know when the tx completed,
+                    // so assume it is now
+                    completedAt: Date.now(),
+                    destTxHash: deposit.mintTransaction,
+                };
+                return data;
+            } else {
+                return acceptedData;
+            }
+        }
+    }
+};
+
+const mintFlow = <X>(
+    context: GatewayMachineContext<X>,
+    callback: Sender<GatewayMachineEvent<X>>,
+    receive: Receiver<any>,
+    minter: LockAndMint<X, DepositCommon<X>, any, any, any>,
+) => {
+    // Transactions that we have resolved
+    const detectedTransactions = new Map<string, AllGatewayTransactions<X>>();
+    const restoredDeposits = new Map<string, LockAndMintDeposit>();
 
     const depositHandler = (deposit: LockAndMintDeposit) => {
         const txHash = deposit.params.from.transactionID(
             deposit.depositDetails.transaction,
         );
 
-        const trackedDep = deposits.get(txHash);
-        // if we have previously detected the deposit,
+        const restored = restoredDeposits.get(txHash);
+        // if we have previously restored the deposit,
         // don't emit an event
-        if (trackedDep) {
+        if (restored) {
             return;
         }
 
-        const persistedTx = context.tx.transactions[txHash];
+        const persistedTx =
+            context.tx.transactions[txHash] || detectedTransactions.get(txHash);
 
-        const rawSourceTx = deposit.depositDetails;
-        const depositState: GatewayTransaction = persistedTx
-            ? persistedTx
-            : {
-                  sourceTxHash: txHash,
-                  renVMHash: deposit.txHash(),
-                  renResponse: hexify(
-                      deposit._state.queryTxResult || {},
-                  ) as LockAndMintTransaction,
-                  sourceTxAmount: parseInt(rawSourceTx.amount),
-                  sourceTxConfs:
-                      0 || parseInt(rawSourceTx.transaction.confirmations),
-                  rawSourceTx,
-                  destTxHash: deposit?.mintTransaction,
-                  detectedAt: new Date().getTime(),
-              };
+        if (persistedTx) {
+            restoredDeposits.set(txHash, deposit);
+            detectedTransactions.set(txHash, persistedTx);
+            let data = persistedTx;
 
-        if (deposit.status === DepositStatus.Submitted) {
-            // we don't actually know when the tx completed,
-            // so assume it is now
-            depositState.completedAt = Date.now();
+            if (deposit.status === DepositStatus.Submitted) {
+                const completedTx: CompletedGatewayTransaction<X> = {
+                    ...(persistedTx as MintedGatewayTransaction<X>),
+                    destTxHash: deposit.mintTransaction,
+                    completedAt: Date.now(),
+                };
+                data = completedTx;
+            }
+            return callback({ type: "RESTORED", data });
         }
 
-        if (!persistedTx) {
-            callback({
-                type: "DEPOSIT",
-                data: { ...depositState },
-            });
-        } else {
-            deposits.set(txHash, deposit);
-            callback({ type: "RESTORED", data: depositState });
-        }
+        const resolved = resolveDeposit(txHash, deposit);
+        detectedTransactions.set(txHash, resolved);
+
+        callback({
+            type: "DEPOSIT",
+            data: resolved,
+        });
     };
 
     minter.on("deposit", depositHandler);
 
     receive((event) => {
-        const deposit = deposits.get(event.hash);
-        if (!deposit) {
-            // This can happen when restoring, and is not an error
-            // callback({
-            //     type: "ERROR",
-            //     data: event.data,
-            //     error: new Error(`missing deposit!: ${String(event.hash)}`),
-            // });
+        const deposit = restoredDeposits.get(event.hash);
+        if (!deposit) return;
+        const tx = detectedTransactions.get(event.hash);
+        if (!tx || !isConfirming(tx)) {
+            callback({
+                type: "ERROR",
+                data: event.data,
+                error: new Error(`Invalid deposit: ${String(event.hash)}`),
+            });
             return;
         }
 
         const handle = async () => {
             switch (event.type) {
+                case "UPDATE":
+                    detectedTransactions.set(event.hash, event.data);
+                    break;
                 case "SETTLE":
                     await handleSettle(event.hash, deposit, callback);
                     break;
                 case "SIGN":
-                    await handleSign(event.hash, deposit, callback);
+                    await handleSign(tx, deposit, callback);
                     break;
                 case "MINT":
                     await handleMint(
@@ -419,13 +430,14 @@ const mintFlow = (
 
         handle()
             .then()
-            .catch((e) =>
+            .catch((e) => {
+                console.error(e, event.data);
                 callback({
                     type: "ERROR",
                     data: event.data,
                     error: e,
-                }),
-            );
+                });
+            });
     });
 
     receive((event) => {
@@ -440,15 +452,11 @@ const mintFlow = (
                         depositHandler(r);
                     })
                     .catch((e) => {
-                        if (context.tx.transactions[event.data.renVMHash]) {
-                            callback({
-                                type: "ERROR",
-                                data: event.data,
-                                error: e,
-                            });
-                        } else {
-                            throw e;
-                        }
+                        callback({
+                            type: "ERROR",
+                            data: event.data,
+                            error: e,
+                        });
                     });
                 break;
         }
@@ -456,8 +464,8 @@ const mintFlow = (
 };
 
 // Listen for confirmations on the source chain
-const depositListener = (context: GatewayMachineContext) => (
-    callback: Sender<GatewayMachineEvent>,
+const depositListener = <X>(context: GatewayMachineContext<X>) => (
+    callback: Sender<GatewayMachineEvent<X>>,
     receive: Receiver<any>,
 ) => {
     let cleanup = () => {};
@@ -479,8 +487,8 @@ const depositListener = (context: GatewayMachineContext) => (
 
 // Spawn an actor that will listen for either all deposits to a gatewayAddress,
 // or to a single deposit if present in the context
-const listenerAction = assign<GatewayMachineContext>({
-    depositListenerRef: (c: GatewayMachineContext, _e: any) => {
+const listenerAction = assign<GatewayMachineContext<any>>({
+    depositListenerRef: (c: GatewayMachineContext<any>, _e: any) => {
         const actorName = `${c.tx.id}SessionListener`;
         if (c.depositListenerRef) {
             console.warn("listener already exists");
@@ -492,23 +500,27 @@ const listenerAction = assign<GatewayMachineContext>({
     },
 });
 
-const spawnDepositMachine = (
-    machineContext: DepositMachineContext,
+const spawnDepositMachine = <X>(
+    machineContext: DepositMachineContext<AllGatewayTransactions<X>>,
     name: string,
 ) =>
     spawn(
-        depositMachine.withContext(machineContext).withConfig({
-            actions: {
-                listenerAction: listenerAction as any,
-            },
-        }),
+        buildDepositMachine<X>()
+            .withContext(machineContext)
+            .withConfig({
+                actions: {
+                    listenerAction: listenerAction as any,
+                },
+            }),
         {
-            sync: true,
+            // sync: true,
             name,
         },
-    ) as Actor<any>;
+    );
 
-export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
+export const buildMintConfig = <X>(): Partial<
+    MachineOptions<GatewayMachineContext<X>, any>
+> => ({
     services: {
         txCreator,
         depositListener,
@@ -525,7 +537,7 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                 return b;
             },
             {
-                to: (_ctx: GatewayMachineContext) => "depositListener",
+                to: (_ctx: GatewayMachineContext<X>) => "depositListener",
             },
         ),
 
@@ -535,11 +547,15 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
             },
             {
                 to: (
-                    ctx: GatewayMachineContext,
-                    evt: { type: string; data: { sourceTxHash: string } },
+                    ctx: GatewayMachineContext<X>,
+                    evt: { type: string; data?: { sourceTxHash?: string } },
                 ) => {
                     const machines = ctx.depositMachines || {};
-                    return machines[evt.data.sourceTxHash]?.id || "missing";
+                    if (!evt.data)
+                        throw new Error("missing data" + JSON.stringify(evt));
+                    return (
+                        machines[evt.data?.sourceTxHash || ""]?.id || "missing"
+                    );
                 },
             },
         ),
@@ -547,15 +563,19 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
         spawnDepositMachine: assign({
             depositMachines: (context, evt) => {
                 const machines = context.depositMachines || {};
-                if (machines[evt.data?.sourceTxHash] || !evt.data) {
+                if (machines[evt.data?.sourceTxHash || ""] || !evt.data) {
                     return machines;
                 }
 
-                machines[evt.data.sourceTxHash] = spawnDepositMachine(
+                const newMachines: typeof machines = {};
+                for (const machine of Object.entries(machines)) {
+                    newMachines[machine[0]] = machine[1];
+                }
+                newMachines[evt.data.sourceTxHash] = spawnDepositMachine(
                     { deposit: evt.data },
                     String(evt.data.sourceTxHash),
                 );
-                return machines;
+                return newMachines;
             },
         }),
 
@@ -577,16 +597,6 @@ export const mintConfig: Partial<MachineOptions<GatewayMachineContext, any>> = {
                 return { ...machines, ...context.depositMachines };
             },
         }),
-        listenerAction: listenerAction as any,
+        listenerAction: listenerAction, // as any
     },
-
-    guards: {
-        isRequestCompleted: ({ mintRequests }, evt) =>
-            (mintRequests || []).includes(evt.data?.sourceTxHash) &&
-            evt.data.destTxHash,
-        isCompleted: ({ tx }, evt) =>
-            evt.data?.sourceTxAmount >= tx.targetAmount,
-        isExpired: ({ tx }) => tx.expiryTime < new Date().getTime(),
-        isCreated: ({ tx }) => (tx.gatewayAddress ? true : false),
-    },
-};
+});

@@ -8,10 +8,14 @@ import { interpret } from "xstate";
 import { config as loadDotEnv } from "dotenv";
 
 import {
+    AllGatewayTransactions,
+    buildMintMachine,
     GatewaySession,
+    isErroring,
+    isOpen,
+    buildMintConfig,
+    buildMintContextWithMap,
     GatewayTransaction,
-    mintConfig,
-    mintMachine,
 } from "../src";
 import {
     buildMockLockChain,
@@ -21,19 +25,14 @@ import {
 import { SECONDS } from "@renproject/utils";
 
 loadDotEnv();
-const providers = {
-    testDestChain: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
-};
 
-const makeMintTransaction = (): GatewaySession => ({
+const makeMintTransaction = (): GatewaySession<any> => ({
     id: "a unique identifier",
-    type: "mint",
     network: "testnet",
     sourceAsset: "btc",
     sourceChain: "testSourceChain",
     destAddress: "0x0000000000000000000000000000000000000000",
     destChain: "testDestChain",
-    targetAmount: 1,
     userAddress: "0x0000000000000000000000000000000000000000",
     expiryTime: new Date().getTime() + 1000 * 60 * 60 * 24,
     transactions: {},
@@ -46,24 +45,18 @@ const buildConfirmingMachine = (
 ) => {
     const { mockLockChain, setConfirmations } = buildMockLockChain(config);
 
-    const fromChainMap = {
-        testSourceChain: () => {
-            return mockLockChain;
-        },
-    };
-
-    const toChainMap = {
-        testDestChain: () => {
-            return buildMockMintChain().mockMintChain;
-        },
-    };
-    const machine = mintMachine.withConfig(mintConfig).withContext({
-        tx: makeMintTransaction(),
-        sdk,
-        providers,
-        fromChainMap,
-        toChainMap,
-    });
+    const machine = buildMintMachine()
+        .withConfig(buildMintConfig())
+        .withContext({
+            tx: makeMintTransaction(),
+            sdk,
+            from: () => {
+                return mockLockChain;
+            },
+            to: () => {
+                return buildMockMintChain().mockMintChain;
+            },
+        });
 
     let confirmations = 0;
     setInterval(() => {
@@ -80,10 +73,10 @@ describe("MintMachine", () => {
         const p: Promise<string> = new Promise((resolve, reject) => {
             const service = interpret(machine)
                 .onTransition((state) => {
-                    if (state.context.tx.error) {
+                    if (isErroring(state.context.tx)) {
                         reject(state.context.tx.error);
                     }
-                    if (state?.context?.tx?.gatewayAddress) {
+                    if (isOpen(state.context.tx)) {
                         // we have successfully detected a deposit and spawned
                         // a machine to listen for updates
                         resolve(state.context.tx.gatewayAddress);
@@ -103,13 +96,13 @@ describe("MintMachine", () => {
     it("should detect confirmations", async () => {
         const { machine } = buildConfirmingMachine();
 
-        let prevDepositTx: GatewayTransaction;
-        const p = new Promise((resolve, reject) => {
+        let prevDepositTx: AllGatewayTransactions<any>;
+        const p = new Promise<typeof prevDepositTx>((resolve, reject) => {
             const service = interpret(machine);
 
             service
                 .onTransition((state) => {
-                    if (state.context.tx.error) {
+                    if (isErroring(state.context.tx)) {
                         reject(state.context.tx.error);
                     }
                     const depositTx = Object.values(
@@ -122,7 +115,7 @@ describe("MintMachine", () => {
                             depositTx.sourceTxConfs
                         ) {
                             service.stop();
-                            resolve(true);
+                            resolve(depositTx);
                         }
                         prevDepositTx = depositTx;
                     }
@@ -134,10 +127,7 @@ describe("MintMachine", () => {
             service.onStop(() => console.log("Service stopped"));
         });
 
-        return p.then(() => {
-            const depositTx = Object.values(
-                machine.context?.tx?.transactions || {},
-            )[0];
+        return p.then((depositTx) => {
             expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
         });
     });
@@ -171,7 +161,7 @@ describe("MintMachine", () => {
                 .onTransition((state) => {
                     if (!state.changed) return;
 
-                    if (state.context.tx.error) {
+                    if (isErroring(state.context.tx)) {
                         reject(state.context.tx.error);
                     }
                     const confirmedTxses = Object.values(
@@ -239,11 +229,11 @@ describe("MintMachine", () => {
             setConfirmations((confirmations += 1));
         }, 1000);
 
-        const p = new Promise((resolve, reject) => {
+        const p = new Promise<GatewayTransaction<any>>((resolve, reject) => {
             let subscribed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
-                    if (state.context.tx.error) {
+                    if (isErroring(state.context.tx)) {
                         reject(state.context.tx.error);
                     }
                     const depositMachine = Object.values(
@@ -252,7 +242,7 @@ describe("MintMachine", () => {
                     if (depositMachine && !subscribed) {
                         subscribed = true;
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        depositMachine.subscribe((innerState: any) => {
+                        depositMachine.subscribe((innerState) => {
                             if (!txHash) {
                                 txHash =
                                     innerState.context.deposit.sourceTxHash;
@@ -263,11 +253,15 @@ describe("MintMachine", () => {
                             }
 
                             if (innerState?.event?.type === "SIGNED") {
-                                depositMachine.send({ type: "CLAIM" });
+                                depositMachine.send({
+                                    type: "CLAIM",
+                                    data: innerState.context.deposit as any,
+                                    params: {},
+                                });
                             }
 
                             if (innerState?.value === "destInitiated") {
-                                resolve(true);
+                                resolve(innerState.context.deposit);
                                 // depositMachine.send({ type: "CLAIM" });
                             }
                         });
@@ -279,11 +273,8 @@ describe("MintMachine", () => {
             service.start();
             service.onStop(() => console.log("Service stopped"));
         });
-        return p.then(() => {
-            const depositTx = Object.values(
-                machine.context?.tx?.transactions || {},
-            )[0];
-            expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
+        return p.then((tx) => {
+            expect(tx.sourceTxConfs).toBeGreaterThan(0);
         });
     });
 
@@ -329,37 +320,41 @@ describe("MintMachine", () => {
             return { out: { signature: Buffer.from("signature") } } as any;
         };
 
-        const machine = mintMachine.withConfig(mintConfig).withContext({
-            tx: {
-                ...makeMintTransaction(),
-                nonce:
-                    "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
-                gatewayAddress: "gatewayAddress",
-                transactions: {
-                    ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
-                        sourceTxAmount: 1,
-                        sourceTxConfs: 0,
-                        detectedAt: 0,
-                        sourceTxHash:
-                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                        rawSourceTx: {
-                            amount: "1",
-                            transaction: {
-                                txHash:
+        const machine = buildMintMachine()
+            .withConfig(buildMintConfig())
+            .withContext(
+                buildMintContextWithMap({
+                    tx: {
+                        ...makeMintTransaction(),
+                        nonce:
+                            "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
+                        gatewayAddress: "gatewayAddress",
+                        transactions: {
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
+                                renVMHash: "",
+                                sourceTxAmount: "1",
+                                sourceTxConfs: 0,
+                                detectedAt: 0,
+                                sourceTxHash:
                                     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                rawSourceTx: {
+                                    amount: "1",
+                                    transaction: {
+                                        txHash:
+                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    },
+                                },
                             },
                         },
                     },
-                },
-            },
-            sdk: new RenJS(renVMProvider, {
-                networkDelay: 0.5 * SECONDS,
-                logLevel: "debug",
-            }),
-            providers,
-            fromChainMap,
-            toChainMap,
-        });
+                    sdk: new RenJS(renVMProvider, {
+                        networkDelay: 0.5 * SECONDS,
+                        logLevel: "debug",
+                    }),
+                    fromChainMap,
+                    toChainMap,
+                }),
+            );
 
         let confirmations = 0;
         setInterval(() => {
@@ -370,7 +365,7 @@ describe("MintMachine", () => {
             let subscribed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
-                    if (state.context.tx.error) {
+                    if (isErroring(state.context.tx)) {
                         reject(state.context.tx.error);
                     }
                     const depositMachine = Object.values(
@@ -388,7 +383,11 @@ describe("MintMachine", () => {
                             }
 
                             if (innerState?.value === "accepted") {
-                                depositMachine.send({ type: "CLAIM" });
+                                depositMachine.send({
+                                    type: "CLAIM",
+                                    data: innerState.context.deposit,
+                                    params: {},
+                                });
                             }
 
                             if (innerState?.value === "destInitiated") {
@@ -461,100 +460,125 @@ describe("MintMachine", () => {
             return { out: { signature: Buffer.from("signature") } } as any;
         };
 
-        const machine = mintMachine.withConfig(mintConfig).withContext({
-            tx: {
-                ...makeMintTransaction(),
-                nonce:
-                    "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
-                gatewayAddress: "gatewayAddress",
-                transactions: {
-                    ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298"]: {
-                        sourceTxAmount: 2,
-                        sourceTxConfs: 0,
-                        detectedAt: 0,
-                        sourceTxHash:
-                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
-                        rawSourceTx: {
-                            amount: "2",
-                            transaction: {
-                                txHash:
+        const machine = buildMintMachine()
+            .withConfig(buildMintConfig())
+            .withContext(
+                buildMintContextWithMap({
+                    tx: {
+                        ...makeMintTransaction(),
+                        nonce:
+                            "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
+                        gatewayAddress: "gatewayAddress",
+                        transactions: {
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298"]: {
+                                renVMHash: "",
+                                sourceTxAmount: "2",
+                                sourceTxConfs: 0,
+                                detectedAt: 0,
+                                sourceTxHash:
                                     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
+                                rawSourceTx: {
+                                    amount: "2",
+                                    transaction: {
+                                        txHash:
+                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
+                                    },
+                                },
                             },
-                        },
-                    },
-                    ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
-                        sourceTxAmount: 1,
-                        sourceTxConfs: 0,
-                        detectedAt: 0,
-                        sourceTxHash:
-                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                        rawSourceTx: {
-                            amount: "1",
-                            transaction: {
-                                txHash:
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
+                                renVMHash: "",
+                                sourceTxAmount: "1",
+                                sourceTxConfs: 0,
+                                detectedAt: 0,
+                                sourceTxHash:
                                     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                rawSourceTx: {
+                                    amount: "1",
+                                    transaction: {
+                                        txHash:
+                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    },
+                                },
                             },
                         },
                     },
-                },
-            },
-            sdk: new RenJS(renVMProvider, { networkDelay: 0.5 * SECONDS }),
-            providers,
-            fromChainMap,
-            toChainMap,
-        });
+                    sdk: new RenJS(renVMProvider, {
+                        networkDelay: 0.5 * SECONDS,
+                    }),
+                    fromChainMap,
+                    toChainMap,
+                }),
+            );
 
         let confirmations = 0;
         setInterval(() => {
             setConfirmations((confirmations += 1));
         }, 1000);
 
-        const p = new Promise((resolve, reject) => {
-            let subscribed: { [key: string]: boolean } = {};
-            const service = interpret(machine)
-                .onTransition((state) => {
-                    if (state.context.tx.error) {
-                        reject(state.context.tx.error);
-                    }
-                    for (let depositMachine of Object.values(
-                        state.context?.depositMachines || {},
-                    )) {
-                        if (depositMachine && !subscribed[depositMachine.id]) {
-                            subscribed[depositMachine.id] = true;
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            depositMachine.subscribe((innerState: any) => {
-                                if (!txHash)
-                                    txHash =
-                                        innerState.context.deposit.sourceTxHash;
-                                if (innerState?.event?.type === "CONFIRMED") {
-                                    confirmed[depositMachine.id] = true;
-                                }
-
-                                if (innerState?.value === "accepted") {
-                                    depositMachine.send({ type: "CLAIM" });
-                                }
-
-                                if (innerState?.value === "destInitiated") {
-                                    resolve(true);
-                                }
-                            });
+        const p = new Promise<AllGatewayTransactions<any>[]>(
+            async (resolve, reject) => {
+                let subscribed: { [key: string]: boolean } = {};
+                const resolved: AllGatewayTransactions<any>[] = [];
+                const service = interpret(machine)
+                    .onTransition((state) => {
+                        if (isErroring(state.context.tx)) {
+                            reject(state.context.tx.error);
                         }
-                    }
-                })
-                .onStop(() => console.log("Interpreter stopped"));
+                        for (let depositMachine of Object.values(
+                            state.context?.depositMachines || {},
+                        )) {
+                            if (
+                                depositMachine &&
+                                !subscribed[depositMachine.id]
+                            ) {
+                                subscribed[depositMachine.id] = true;
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                depositMachine.subscribe((innerState: any) => {
+                                    if (!txHash)
+                                        txHash =
+                                            innerState.context.deposit
+                                                .sourceTxHash;
+                                    if (
+                                        innerState?.event?.type === "CONFIRMED"
+                                    ) {
+                                        confirmed[depositMachine.id] = true;
+                                    }
 
-            // Start the service
-            service.start();
-            // service.subscribe(((state: any, evt: any) => {}) as any);
-            service.onStop(() => console.log("Service stopped"));
-        });
+                                    if (innerState?.value === "accepted") {
+                                        depositMachine.send({
+                                            type: "CLAIM",
+                                            data: innerState.context.deposit,
+                                            params: {},
+                                        });
+                                    }
 
-        return p.then(() => {
-            for (let depositTxPair of Object.entries(
-                machine.context?.tx?.transactions || {},
-            )) {
-                expect(depositTxPair[1].sourceTxConfs).toBeGreaterThan(0);
-                expect(depositTxPair[1].sourceTxHash).toEqual(depositTxPair[0]);
+                                    if (innerState?.value === "destInitiated") {
+                                        resolved.push(
+                                            innerState.context.deposit,
+                                        );
+                                        if (
+                                            resolved.length ==
+                                            Object.keys(subscribed).length
+                                        ) {
+                                            resolve(resolved);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .onStop(() => console.log("Interpreter stopped"));
+
+                // Start the service
+                service.start();
+                // service.subscribe(((state: any, evt: any) => {}) as any);
+                service.onStop(() => console.log("Service stopped"));
+            },
+        );
+
+        return p.then((txes) => {
+            for (let depositTx of txes) {
+                expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
             }
         });
     });
@@ -598,34 +622,40 @@ describe("MintMachine", () => {
             return { out: { signature: Buffer.from("signature") } } as any;
         };
 
-        const machine = mintMachine.withConfig(mintConfig).withContext({
-            tx: {
-                ...makeMintTransaction(),
-                nonce:
-                    "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
-                gatewayAddress: "gatewayAddress",
-                transactions: {
-                    ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
-                        sourceTxAmount: 1,
-                        sourceTxConfs: 1,
-                        detectedAt: 0,
-                        sourceTxHash:
-                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                        rawSourceTx: {
-                            amount: "1",
-                            transaction: {
-                                txHash:
+        const machine = buildMintMachine()
+            .withConfig(buildMintConfig())
+            .withContext(
+                buildMintContextWithMap({
+                    tx: {
+                        ...makeMintTransaction(),
+                        nonce:
+                            "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
+                        gatewayAddress: "gatewayAddress",
+                        transactions: {
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
+                                renVMHash: "",
+                                sourceTxAmount: "1",
+                                sourceTxConfs: 1,
+                                detectedAt: 0,
+                                sourceTxHash:
                                     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                rawSourceTx: {
+                                    amount: "1",
+                                    transaction: {
+                                        txHash:
+                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    },
+                                },
                             },
                         },
                     },
-                },
-            },
-            sdk: new RenJS(renVMProvider, { networkDelay: 0.5 * SECONDS }), // , { logLevel: "debug" }),
-            providers,
-            fromChainMap,
-            toChainMap,
-        });
+                    sdk: new RenJS(renVMProvider, {
+                        networkDelay: 0.5 * SECONDS,
+                    }), // , { logLevel: "debug" }),
+                    fromChainMap,
+                    toChainMap,
+                }),
+            );
 
         let confirmations = 0;
         setInterval(() => {
@@ -637,7 +667,7 @@ describe("MintMachine", () => {
             let signed = false;
             const service = interpret(machine)
                 .onTransition((state) => {
-                    if (state.context.tx.error) {
+                    if (isErroring(state.context.tx)) {
                         reject(state.context.tx.error);
                     }
                     const depositMachine = Object.values(

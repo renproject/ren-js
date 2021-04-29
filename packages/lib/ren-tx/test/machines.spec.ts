@@ -1,41 +1,55 @@
 import { createModel } from "@xstate/test";
-import { mintMachine, mintConfig, depositMachine, burnConfig } from "../src";
-import { burnMachine } from "../src/machines/burn";
+import {
+    mintMachine,
+    buildMintConfig,
+    buildDepositMachine,
+    buildBurnConfig,
+    DepositMachineContext,
+    DepositMachineEvent,
+    GatewayMachineContext,
+} from "../src";
+import { buildBurnMachine } from "../src/machines/burn";
 
-// const expect = chai.expect;
-
-const makeTestContext = () => ({
+const makeTestContext = (): GatewayMachineContext<any> => ({
     tx: {
         id: "txid",
-        type: "mint",
         sourceAsset: "btc",
         sourceChain: "bitcoin",
         network: "testnet",
         destAddress: "",
         destChain: "ethereum",
-        destAsset: "renBTC",
-        targetAmount: 1,
         userAddress: "",
         expiryTime: new Date().getTime() + 1000 * 60,
+        customParams: {},
         transactions: {
             "123": {
+                renVMHash: "",
+                detectedAt: Date.now(),
                 sourceTxHash: "123",
-                sourceTxAmount: 1,
+                sourceTxAmount: "1",
                 sourceTxConfs: 0,
-                rawSourceTx: {},
+                rawSourceTx: { transaction: {}, amount: "1" },
             },
         },
     },
     sdk: {} as any,
-    providers: {},
-    fromChainMap: { btc: () => ({} as any) },
-    toChainMap: { ethereum: () => ({} as any) },
+    from: () => ({} as any),
+    to: () => ({} as any),
 });
 
-mintMachine.config = mintConfig as any;
-mintMachine.context = makeTestContext() as any;
-const mintModel = createModel(mintMachine).withEvents({
-    RESTORE: {},
+const mintModel = createModel<GatewayMachineContext<any>>(
+    mintMachine.withContext(makeTestContext()),
+).withEvents({
+    RESTORE: {
+        cases: [
+            {
+                data: {
+                    sourceTxHash: "123",
+                    rawSourceTx: { transaction: { txHash: "123" } },
+                },
+            },
+        ],
+    },
     CLAIM: {
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
@@ -71,7 +85,16 @@ const mintModel = createModel(mintMachine).withEvents({
         cases: [{ data: { message: "an error" } }],
     },
     // Unfortunately these break the test generator due to an issue with context mutation
-    // DEPOSIT: { cases: [{ data: { sourceTxHash: "123" } }] },
+    DEPOSIT: {
+        cases: [
+            {
+                data: {
+                    sourceTxHash: "123",
+                    rawSourceTx: { amount: "0", transaction: {} },
+                },
+            },
+        ],
+    },
     DEPOSIT_UPDATE: {
         cases: [{ data: { sourceTxHash: "123", destTxHash: "123" } }],
     },
@@ -98,7 +121,7 @@ describe("MintMachine", function () {
         describe(plan.description, () => {
             plan.paths.forEach((path) => {
                 it(path.description, async () => {
-                    await path.test({});
+                    await path.test({} as any);
                 });
             });
         });
@@ -109,20 +132,27 @@ describe("MintMachine", function () {
     });
 });
 
-const depositModel = createModel(
-    depositMachine
+const depositModel = createModel<
+    DepositMachineEvent<any>,
+    DepositMachineContext<any>
+>(
+    buildDepositMachine()
         .withConfig({
-            actions: { listenerAction: mintConfig.actions?.listenerAction },
+            actions: {
+                listenerAction: buildMintConfig().actions?.listenerAction,
+            },
         } as any)
         .withContext({
-            ...makeTestContext(),
+            // ...makeTestContext(),
             deposit: {
-                sourceTxAmount: 0,
+                renVMHash: "",
+                detectedAt: Date.now(),
+                sourceTxAmount: "0",
                 sourceTxHash: "",
                 sourceTxConfs: 0,
-                rawSourceTx: {},
+                rawSourceTx: { transaction: {}, amount: "0" },
             },
-        } as any),
+        }),
 ).withEvents({
     CHECK: {},
     DETECTED: {},
@@ -137,10 +167,21 @@ const depositModel = createModel(
         cases: [{ error: { message: "an error" } }],
     },
     RESTORED: {
-        cases: [{ data: { sourceTxHash: "123" } }],
+        cases: [
+            {
+                data: {
+                    sourceTxHash: "123",
+                    sourceTxConfs: 0,
+                    sourceTxConfTarget: 1,
+                },
+            },
+        ],
     },
     CONFIRMATION: {},
     CONFIRMED: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
+    REVERTED: {
         cases: [{ data: { sourceTxHash: "123" } }],
     },
     REJECT: {},
@@ -158,7 +199,7 @@ describe("DepositMachine", function () {
         describe(plan.description, () => {
             plan.paths.forEach((path) => {
                 it(path.description, async () => {
-                    await path.test({});
+                    await path.test({} as any);
                 });
             });
         });
@@ -169,18 +210,25 @@ describe("DepositMachine", function () {
     });
 });
 
-const burnContext: any = makeTestContext();
-burnContext.tx.transactions = {};
 const burnModel = createModel(
-    burnMachine.withConfig(burnConfig).withContext({
-        ...burnContext,
-        deposit: {
-            sourceTxAmount: 0,
-            sourceTxHash: "",
-            sourceTxConfs: 0,
-            rawSourceTx: {},
-        },
-    } as any),
+    buildBurnMachine()
+        .withConfig(buildBurnConfig())
+        .withContext({
+            sdk: {} as any,
+            from: () => ({} as any),
+            to: () => ({} as any),
+            tx: {
+                id: "a unique identifier",
+                network: "testnet",
+                sourceAsset: "renBTC",
+                sourceChain: "testSourceChain",
+                destAddress: "0x0000000000000000000000000000000000000000",
+                destChain: "testDestChain",
+                targetAmount: "1",
+                userAddress: "0x0000000000000000000000000000000000000000",
+                customParams: {},
+            },
+        }),
 ).withEvents({
     RESTORE: {},
     CREATED: {},
@@ -196,10 +244,10 @@ const burnModel = createModel(
         cases: [{ data: { sourceTxHash: "123" } }],
     },
     BURN_ERROR: {
-        cases: [{ data: { message: "an error" } }],
+        cases: [{ data: {}, error: { message: "an error" } }],
     },
     RELEASE_ERROR: {
-        cases: [{ data: { message: "an error" } }],
+        cases: [{ data: {}, error: { message: "an error" } }],
     },
     CONFIRMED: {
         cases: [{ data: { sourceTxHash: "123", sourceTxConfs: 1 } }],
@@ -207,10 +255,15 @@ const burnModel = createModel(
     ACCEPTED: {
         cases: [{ data: { sourceTxHash: "123", sourceTxConfs: 1 } }],
     },
+    SUBMIT: {
+        cases: [{ data: { sourceTxHash: "123" } }],
+    },
     SUBMITTED: {
         cases: [{ data: { sourceTxHash: "123" } }],
     },
-    RELEASED: {},
+    RELEASED: {
+        cases: [{ data: { sourceTxHash: "123", renResponse: {} } }],
+    },
     RETRY: {},
 });
 

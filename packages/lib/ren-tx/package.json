@@ -27,6 +27,7 @@
         "url": "https://github.com/renproject/ren-js/issues"
     },
     "main": "build/main/index.js",
+    "module": "build/module/index.js",
     "typings": "build/main/index.d.ts",
     "scripts": {
         "link": "yarn link",
@@ -49,10 +50,10 @@
         "@renproject/ren": "^2.1.7",
         "@renproject/rpc": "^2.1.7",
         "dotenv": "^8.2.0",
-        "xstate": "^4.16.0"
+        "xstate": "^4.17.0"
     },
     "peerDependencies": {
-        "@renproject/ren": "^2.0.7",
-        "xstate": "^4.16.0"
+        "@renproject/ren": "^2.1.7",
+        "xstate": "^4.17.0"
     }
 }

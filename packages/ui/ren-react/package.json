@@ -18,6 +18,9 @@
         "type": "git",
         "url": "https://github.com/renproject/packages/ui/ren-react"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "prebuild": "rimraf dist",
         "clean": "yarn rimraf ./dist ./node_modules",

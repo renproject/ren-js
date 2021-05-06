@@ -50,11 +50,11 @@ export const fetchMessage = async (
 ): Promise<FilTransaction> => {
     const [details, receipt, { Height: chainHeight }]: [
         ChainMessage,
-        StateMsg,
+        StateMsg | undefined,
         { Height: number },
     ] = await Promise.all([
         client.request("ChainGetMessage", { "/": cid }),
-        client.request("StateSearchMsg", { "/": cid }),
+        client.request("StateSearchMsg", { "/": cid }).catch(() => undefined),
         height ? { Height: height } : client.request("ChainHead"),
     ]);
 

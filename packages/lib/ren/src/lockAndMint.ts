@@ -866,7 +866,12 @@ export class LockAndMintDeposit<
             this.status = DepositStatus.Reverted;
             this.revertReason = response.out.revert.toString();
         } else if (response.out && response.out.signature) {
-            this.status = DepositStatus.Signed;
+            if (
+                DepositStatusIndex[this.status] <
+                DepositStatusIndex[DepositStatus.Signed]
+            ) {
+                this.status = DepositStatus.Signed;
+            }
         }
 
         return response;
@@ -1104,7 +1109,12 @@ export class LockAndMintDeposit<
             }
 
             // Update status.
-            this.status = DepositStatus.Confirmed;
+            if (
+                DepositStatusIndex[this.status] <
+                DepositStatusIndex[DepositStatus.Confirmed]
+            ) {
+                this.status = DepositStatus.Confirmed;
+            }
 
             return this;
         })()
@@ -1251,7 +1261,12 @@ export class LockAndMintDeposit<
                 this.revertReason = response.out.revert.toString();
                 throw new Error(this.revertReason);
             } else if (response.out && response.out.signature) {
-                this.status = DepositStatus.Signed;
+                if (
+                    DepositStatusIndex[this.status] <
+                    DepositStatusIndex[DepositStatus.Signed]
+                ) {
+                    this.status = DepositStatus.Signed;
+                }
 
                 this._state.logger.debug(
                     "signature:",

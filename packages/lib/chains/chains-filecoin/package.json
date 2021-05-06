@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-filecoin",
-    "version": "2.1.7",
+    "version": "2.1.9",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,20 +43,20 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@glif/filecoin-address": "^1.1.0-beta.18",
-        "@glif/filecoin-rpc-client": "^1.1.0-beta.17",
-        "@renproject/interfaces": "^2.1.7",
-        "@renproject/rpc": "^2.1.7",
-        "@renproject/utils": "^2.1.7",
+        "@glif/filecoin-address": "^1.1.0",
+        "@glif/filecoin-rpc-client": "^1.1.0",
+        "@renproject/interfaces": "^2.1.9",
+        "@renproject/rpc": "^2.1.9",
+        "@renproject/utils": "^2.1.9",
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "blakejs": "^1.1.0",
-        "cids": "^1.1.5",
-        "elliptic": "^6.5.3"
+        "cids": "^1.1.6",
+        "elliptic": "^6.5.4"
     },
     "resolutions": {
-        "sha3": "^2.1.2"
+        "web-encoding": "^1.1.5"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

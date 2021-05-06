@@ -28,6 +28,11 @@ export const unmarshalMintTx = (
     if (response.tx.out) {
         out = unmarshalTypedPackValue(response.tx.out);
 
+        // Temporary fix to support v0.4.
+        if (out.revert && out.revert.length === 0) {
+            out.revert = undefined;
+        }
+
         if (out.sig) {
             const [r, s, v] = [
                 out.sig.slice(0, 32),

@@ -2,93 +2,39 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Improve typings.
 
-import { DepositCommon } from "@renproject/interfaces";
+import {
+    BurnAndReleaseTransaction,
+    DepositCommon,
+} from "@renproject/interfaces";
 import {
     BurnAndRelease,
     BurnAndReleaseStatus,
 } from "@renproject/ren/build/main/burnAndRelease";
-import BigNumber from "bignumber.js";
 import { Actor, assign, MachineOptions, Receiver, Sender, spawn } from "xstate";
 
 import { BurnMachineContext, BurnMachineEvent } from "../machines/burn";
-import { GatewaySession, GatewayTransaction } from "../types/transaction";
+import {
+    BurnTransaction,
+    CompletedBurnTransaction,
+    ConfirmedBurnTransaction,
+    ReleasedBurnTransaction,
+} from "../types/burn";
 
-/*
-Sample burnChainMap / releaseChainMap implementations
-We don't implement these to prevent mandating specific chains
-
-const burnChainMap: BurnMachineContext["fromChainMap"] = {
-    ethereum: (context): MintChain<any> => {
-        return Ethereum(context.providers.ethereum, RenNetwork.Testnet).Account(
-            {
-                address: context.tx.userAddress,
-                value: context.tx.suggestedAmount,
-            }
-        ) as MintChain<any>;
-    },
-};
-
-const releaseChainMap: BurnMachineContext["toChainMap"] = {
-    bitcoin: (context): LockChain => {
-        return Bitcoin().Address(context.tx.destAddress) as any;
-    },
-};
-*/
-
-const burnAndRelease = async (context: BurnMachineContext) => {
-    const transaction = Object.keys(context.tx.transactions)[0];
+const burnAndRelease = async <X, Y>(context: BurnMachineContext<X, Y>) => {
+    const transaction = context.tx.transaction;
     return await context.sdk.burnAndRelease({
         asset: context.tx.sourceAsset.toUpperCase(),
-        to: context.toChainMap[context.tx.destChain](context),
-        from: context.fromChainMap[context.tx.sourceChain](context),
+        to: context.to(context),
+        from: context.from(context),
         ...(transaction ? { transaction } : {}),
     });
 };
 
-// Format a transaction and prompt the user to sign
-const txCreator = async (
-    context: BurnMachineContext,
-    // eslint-disable-next-line @typescript-eslint/require-await
-): Promise<GatewaySession> => {
-    const { targetAmount, sourceAsset, sourceChain, destChain } = context.tx;
-    const to = context.toChainMap[destChain](context);
-    const from = context.fromChainMap[sourceChain](context);
-    const decimals = await to.assetDecimals(sourceAsset.toUpperCase());
-
-    let suggestedAmount = new BigNumber(targetAmount).times(
-        new BigNumber(10).exponentiatedBy(decimals),
-    );
-
-    if (context.autoFees) {
-        // This will throw and be caught by the machine if we fail to get fees
-        // If the user specifies that they want to have fees added,
-        // we should not silently fail, as they will not recieve the amount
-        // they expected
-        const fees = await context.sdk.getFees({
-            asset: sourceAsset.toUpperCase(),
-            from,
-            to,
-        });
-
-        suggestedAmount = suggestedAmount
-            .plus(fees.release || 0)
-            .plus(suggestedAmount.multipliedBy(fees.burn * 0.001));
-    }
-
-    const newTx: GatewaySession = {
-        ...context.tx,
-        suggestedAmount: suggestedAmount.decimalPlaces(0).toFixed(),
-    };
-    context.tx = newTx;
-
-    return {
-        ...newTx,
-        transactions: {},
-    };
-};
-
-const spawnBurnTransaction = assign<BurnMachineContext, BurnMachineEvent>({
-    burnListenerRef: (c: BurnMachineContext, _e: any) => {
+const spawnBurnTransaction = assign<
+    BurnMachineContext<any, any>,
+    BurnMachineEvent<any, any>
+>({
+    burnListenerRef: <X, Y>(c: BurnMachineContext<X, Y>, _e: any) => {
         const actorName = `${c.tx.id}BurnListener`;
         if (c.burnListenerRef) {
             console.warn("listener already exists");
@@ -100,39 +46,55 @@ const spawnBurnTransaction = assign<BurnMachineContext, BurnMachineEvent>({
     },
 });
 
-const performBurn = async (
+const extractTx = <X>(
     burn: BurnAndRelease<any, DepositCommon<any>, any, any>,
-    callback: Sender<BurnMachineEvent>,
+): ConfirmedBurnTransaction<X> => {
+    if (!burn.burnDetails) throw new Error("missing burn");
+    const tx: ConfirmedBurnTransaction<X> = {
+        renVMHash: burn.txHash(),
+        rawSourceTx: burn.burnDetails.transaction,
+        sourceTxConfTarget: 0,
+        sourceTxConfs: 0,
+        sourceTxHash: burn.burnDetails.transaction.hash,
+        detectedAt: Date.now(),
+        sourceTxAmount: burn.burnDetails.amount.toString(),
+    };
+    return tx;
+};
+
+const performBurn = async <X, Y>(
+    burn: BurnAndRelease<any, DepositCommon<any>, any, any>,
+    callback: Sender<BurnMachineEvent<X, Y>>,
     cleaners: Array<() => void>,
-    tx: GatewayTransaction,
+    context: BurnMachineContext<X, Y>,
 ) => {
     // will resume from previous tx if we have the hash
     const burnRef = burn.burn();
+    let tx: BurnTransaction;
 
-    const burnListener = async (
+    const burnListener = (
         confs: number /* actually eth tx target: number */,
     ) => {
-        const target = await burn.confirmationTarget();
-        // We need to wait for burn details to resolve, which
-        // might not be ready even if we have sufficient confirmations
-        if (confs >= target && burn.burnDetails) {
-            // stop listening for confirmations once confirmed
-            burnRef.removeListener("confirmation", burnListener);
-
-            callback({
-                type: "CONFIRMED",
-                data: { ...tx, sourceTxConfs: confs },
-            });
-        } else {
-            callback({
-                type: "CONFIRMATION",
-                data: {
-                    ...tx,
+        burn.confirmationTarget()
+            .then((target) => {
+                // We need to wait for burn details to resolve, which
+                // might not be ready even if we have sufficient confirmations
+                const data: BurnTransaction = {
+                    ...{
+                        ...tx,
+                        ...context.tx.transaction,
+                    },
                     sourceTxConfs: confs,
                     sourceTxConfTarget: target,
-                },
+                };
+                callback({
+                    type: "CONFIRMATION",
+                    data,
+                });
+            })
+            .catch((e) => {
+                throw e;
             });
-        }
     };
 
     cleaners.push(() => {
@@ -141,44 +103,60 @@ const performBurn = async (
     });
 
     try {
+        // ensure we have a target
+        const target =
+            context.tx.transaction?.sourceTxConfTarget ||
+            (await burn.confirmationTarget());
         const r = await burnRef
             // host chain tx hash
             .on("transactionHash", (txHash: string) => {
-                tx.sourceTxHash = txHash;
-                tx.sourceTxConfs = 0;
+                const data: BurnTransaction = {
+                    sourceTxConfs: 0,
+                    sourceTxConfTarget: target,
+                    sourceTxHash: txHash,
+                    detectedAt: Date.now(),
+                    sourceTxAmount: context.tx.targetAmount,
+                };
+                tx = data;
                 callback({
                     type: "SUBMITTED",
-                    data: {
-                        ...tx,
-                    },
+                    data,
                 });
             })
             .on("confirmation", burnListener);
 
-        if (tx) {
-            // ensure we have a target
-            const target =
-                tx.sourceTxConfTarget || (await burn.confirmationTarget());
-            // the burn status is canonical, we should proceed if
-            // it says we have burned
-            if (r.status == BurnAndReleaseStatus.Burned) {
-                tx.sourceTxConfs = target;
-            }
+        // stop listening for confirmations once confirmed
+        burnRef.removeListener("confirmation", burnListener);
 
-            // Always call because we won't get an emission
-            // if the burn is already done
-            burnListener(tx.sourceTxConfs);
+        if (
+            r.status == BurnAndReleaseStatus.Burned ||
+            r.status == BurnAndReleaseStatus.Released
+        ) {
+            const data: ConfirmedBurnTransaction<X> = {
+                ...{ ...extractTx(burn), ...context.tx.transaction },
+                sourceTxConfs: target,
+                sourceTxConfTarget: target,
+            };
+            callback({
+                type: "CONFIRMED",
+                data,
+            });
+            return data;
         }
+        if (r.status == BurnAndReleaseStatus.Reverted) {
+            throw new Error(`Burn tx reverted: ${r.revertReason}`);
+        }
+        throw new Error(`Burn interrupted`);
     } catch (error) {
         throw error;
     }
 };
 
-const performRelease = async (
+const performRelease = async <X, Y>(
     burn: BurnAndRelease<any, DepositCommon<any>, any, any>,
-    callback: Sender<BurnMachineEvent>,
+    callback: Sender<BurnMachineEvent<X, Y>>,
     cleaners: Array<() => void>,
-    tx: GatewayTransaction,
+    tx: ConfirmedBurnTransaction<X>,
 ) => {
     // Only start processing release once confirmed
     // Release from renvm status
@@ -188,23 +166,34 @@ const performRelease = async (
             : console.debug("status", status);
     };
 
-    // renvm hash status
-    const hashListener = (hash: string) => {
+    const hashListener = (renVMHash: string) => {
+        const data: ConfirmedBurnTransaction<X> = {
+            ...tx,
+            renVMHash,
+        };
         callback({
             type: "ACCEPTED",
-            data: { ...tx, renVMHash: hash },
+            data,
         });
     };
 
-    const transactionListener = (transaction: any) => {
+    let response: BurnAndReleaseTransaction;
+    const transactionListener = (transaction: Y) => {
+        if (!burn.burnDetails) return;
+        const data: CompletedBurnTransaction<X, Y> = {
+            ...tx,
+            rawSourceTx: burn.burnDetails.transaction,
+            destTxHash: ((transaction as unknown) as { hash: string }).hash,
+            // Can be used to construct blockchain explorer link
+            renResponse: response,
+            rawDestTx: transaction,
+            completedAt: Date.now(),
+            destTxAmount: ((transaction as unknown) as { amount: string })
+                .amount,
+        };
         callback({
-            type: "RELEASED",
-            data: {
-                ...tx,
-                destTxHash: transaction.hash,
-                // Can be used to construct blockchain explorer link
-                rawDestTx: transaction,
-            },
+            type: "COMPLETED",
+            data,
         });
     };
 
@@ -220,7 +209,8 @@ const performRelease = async (
         console.error("release error", e);
         callback({
             type: "RELEASE_ERROR",
-            data: e.toString(),
+            data: tx,
+            error: e,
         });
     });
 
@@ -229,72 +219,78 @@ const performRelease = async (
             .on("status", releaseListener)
             .on("transaction", transactionListener)
             .on("txHash", hashListener);
+        if (!burn.burnDetails?.transaction) return;
+        response = res;
+        const data: ReleasedBurnTransaction<X> = {
+            ...tx,
+            rawSourceTx: burn.burnDetails.transaction,
+            destTxHash: burn.releaseTransaction,
+            renResponse: res,
+        };
         callback({
             type: "RELEASED",
-            data: { ...tx, renResponse: res },
+            data,
         });
     } catch (e) {
         callback({
             type: "RELEASE_ERROR",
-            data: e.toString(),
+            data: tx,
+            error: e,
         });
     }
 };
 
-const burnTransactionListener = (context: BurnMachineContext) => (
-    callback: Sender<BurnMachineEvent>,
+const burnTransactionListener = <X, Y>(context: BurnMachineContext<X, Y>) => (
+    callback: Sender<BurnMachineEvent<X, Y>>,
     receive: Receiver<any>,
 ) => {
     const cleaners: Array<() => void> = [];
     let burning = false;
+    let tx: ConfirmedBurnTransaction<X>;
     burnAndRelease(context)
-        .then(async (burn) => {
+        .then((burn) => {
             // Ready to recieve SUBMIT
             callback({ type: "CREATED" });
             if (
                 context.autoSubmit ||
                 // Alway "SUBMIT" if we have submitted previously
-                Object.keys(context.tx.transactions).length > 0
+                context.tx.transaction
             ) {
                 setTimeout(() => callback("SUBMIT"), 500);
             }
 
-            const tx: GatewayTransaction =
-                Object.values(context.tx.transactions)[0] || {};
-
-            tx.sourceTxConfTarget = await burn.confirmationTarget();
-            tx.sourceTxAmount = Number(context.tx.suggestedAmount);
-            tx.rawSourceTx = {
-                amount: String(context.tx.suggestedAmount),
-                transaction: {},
-            };
-
-            receive((event: BurnMachineEvent) => {
+            receive((event) => {
                 if (event.type === "SUBMIT") {
                     // Only burn once
                     if (burning) {
                         return;
                     }
                     burning = true;
-                    performBurn(burn, callback, cleaners, tx)
-                        .then()
+                    performBurn(burn, callback, cleaners, context)
+                        .then((r) => (tx = r))
                         .catch((e) => {
                             console.error(e);
                             callback({
                                 type: "BURN_ERROR",
                                 data: e.toString(),
+                                error: e,
                             });
                         });
                 }
 
                 if (event.type === "RELEASE") {
+                    const tx: ConfirmedBurnTransaction<X> =
+                        (context.tx
+                            .transaction as ConfirmedBurnTransaction<X>) ||
+                        extractTx(burn);
+
                     performRelease(burn, callback, cleaners, tx)
                         .then()
                         .catch((e) => {
-                            console.error(e);
                             callback({
                                 type: "BURN_ERROR",
-                                data: e.toString(),
+                                data: context.tx,
+                                error: e,
                             });
                         });
                 }
@@ -303,7 +299,7 @@ const burnTransactionListener = (context: BurnMachineContext) => (
         .catch((e) => {
             console.error(e);
 
-            callback({ type: "BURN_ERROR", data: e.toString() });
+            callback({ type: "BURN_ERROR", data: {}, error: e });
         });
 
     return () => {
@@ -313,14 +309,13 @@ const burnTransactionListener = (context: BurnMachineContext) => (
     };
 };
 
-export const burnConfig: Partial<
-    MachineOptions<BurnMachineContext, BurnMachineEvent>
-> = {
+export const buildBurnConfig = <X, Y>(): Partial<
+    MachineOptions<BurnMachineContext<X, Y>, BurnMachineEvent<X, Y>>
+> => ({
     actions: {
         burnSpawner: spawnBurnTransaction,
     },
     services: {
-        burnCreator: txCreator,
         burnListener: burnTransactionListener,
     },
-};
+});

@@ -89,7 +89,6 @@ export const toChainMap = {
     ethereum: (context: GatewayMachineContext) => {
         const { destAddress, destChain, network } = context.tx;
         const { providers } = context;
-        console.log(destChain);
 
         return Ethereum(providers[destChain], network).Account({
             address: destAddress,

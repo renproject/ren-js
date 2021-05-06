@@ -203,13 +203,16 @@ const fetchDeposits = async (
     address: string,
     network: TerraNetwork,
     memo: string | undefined = undefined,
-    page = 0,
+    // page = 0,
 ): Promise<TerraTransaction[]> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
-    const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${
-        page + 1
-    }&chainId=${network}`;
+    // const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${
+    //     page + 1
+    // }&chainId=${network}`;
+    const url = `${TERRA_DEV_URL(
+        network,
+    )}/txs?account=${address}&chainId=${network}`;
 
     const response = (
         await Axios.get<MessagesResponse>(url, {

@@ -49,7 +49,7 @@ export class SolanaConnector
         this.emitter = new ConnectorEmitter<SolanaProvider, string>(debug);
     }
 
-    handleUpdate = (args: any) => {
+    handleUpdate = () => {
         this.getStatus()
             .then((...args) => {
                 this.emitter.emitUpdate(...args);

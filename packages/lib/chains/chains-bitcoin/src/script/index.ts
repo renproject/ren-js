@@ -79,3 +79,5 @@ gHash: ${Ox(gHash)}`,
 
     return v2PubKeyScript;
 };
+
+export const pubKeyScriptHash = v2.pubKeyScriptHash;

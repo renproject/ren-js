@@ -30,13 +30,12 @@ export class Script {
 
     toBuffer = () => this.script;
 
-    toScriptHashOut = (): Buffer => {
-        return new Script()
+    toScriptHashOut = (): Buffer =>
+        new Script()
             .addOp(Script.OP.OP_HASH160)
             .addData(hash160(this.toBuffer()))
             .addOp(Script.OP.OP_EQUAL)
             .toBuffer();
-    };
 
     toAddress = (prefix: Buffer): Buffer => {
         // Hash

@@ -253,6 +253,12 @@ export abstract class BitcoinBaseChain
         }
         this.assertAssetIsSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
+        console.log(
+            "pub key!!!",
+            this.utils
+                .calculatePubKeyScript(isTestnet, hash160(publicKey), gHash)
+                .toString("hex"),
+        );
         return this.utils.createAddress(
             isTestnet,
             hash160(publicKey),

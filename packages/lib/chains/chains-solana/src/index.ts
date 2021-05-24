@@ -23,14 +23,13 @@ import {
     SYSVAR_RENT_PUBKEY,
     SYSVAR_INSTRUCTIONS_PUBKEY,
     Secp256k1Program,
-    CreateSecp256k1InstructionWithEthAddressParams,
     SystemProgram,
     sendAndConfirmRawTransaction,
     ConfirmOptions,
+    CreateSecp256k1InstructionWithPublicKeyParams,
 } from "@solana/web3.js";
 import { keccak256 } from "@renproject/utils";
 import elliptic from "elliptic";
-import { publicToAddress } from "ethereumjs-util";
 import base58 from "bs58";
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import {
@@ -49,15 +48,6 @@ import {
 
 // FIXME: Typings are out of date, so lets fall back to good old any
 const ActualToken: any = Token;
-
-const ethAddressFromPubkey = (pubk: Buffer) => {
-    const ec = new elliptic.ec("secp256k1");
-    const key = ec.keyFromPublic(pubk);
-    return publicToAddress(
-        Buffer.from(key.getPublic().encode("hex", false), "hex"),
-        true,
-    );
-};
 
 export type SolTransaction = string;
 export type SolAddress = string;
@@ -435,19 +425,25 @@ export class Solana
         this._logger.debug("mint instruction", JSON.stringify(instruction));
 
         const tx = new Transaction();
-        const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
-            ethAddress: ethAddressFromPubkey(lockState.gPubKey),
+
+        const ec = new elliptic.ec("secp256k1");
+        const key = ec.keyFromPublic(lockState.gPubKey);
+        const secpParams: CreateSecp256k1InstructionWithPublicKeyParams = {
+            publicKey: Buffer.from(
+                key.getPublic().encode("hex", false),
+                "hex",
+            ).slice(1, 65),
             message: renvmMsgSlice,
             signature: sig.slice(0, 64),
             recoveryId: sig[64] - 27,
         };
         this._logger.debug(
             "authority address",
-            secpParams.ethAddress.toString("hex"),
+            secpParams.publicKey.toString("hex"),
         );
         this._logger.debug("secp params", secpParams);
 
-        const secPInstruction = Secp256k1Program.createInstructionWithEthAddress(
+        const secPInstruction = Secp256k1Program.createInstructionWithPublicKey(
             secpParams,
         );
         secPInstruction.data = Buffer.from([0, ...secPInstruction.data]);
@@ -474,7 +470,7 @@ export class Solana
         eventEmitter.emit("transactionHash", base58.encode(signature));
 
         const confirmOpts: ConfirmOptions = {
-            commitment: "confirmed",
+            commitment: "finalized",
         };
 
         const r = await sendAndConfirmRawTransaction(
@@ -818,8 +814,10 @@ export class Solana
             confirmOpts,
         );
 
-        // We unfortunatley cannot send the hash before the program has the tx
-        // because it will fail submission otherwise
+        // We unfortunatley cannot send the hash before the program has the tx.
+        // burnAndRelease status assumes it is burned as soon as hash is available,
+        // and submits the tx at that point; but the lightnode/darknode will fail to validate
+        // because it is not present in the cluster yet
         // FIXME: this is not great, because it will be stuck in state where it is expecting a signature
         eventEmitter.emit("txHash", base58.encode(signed.signature));
 

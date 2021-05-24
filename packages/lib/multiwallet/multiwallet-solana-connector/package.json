@@ -45,24 +45,16 @@
         "@project-serum/sol-wallet-adapter": "^0.1.6",
         "@renproject/interfaces": "^2.1.5",
         "@renproject/multiwallet-base-connector": "^2.1.5",
-        "@solana/web3.js": "^1.1.1",
-        "@types/node": ">=10",
-        "@types/ws": "^7.4.0",
-        "@xstate/inspect": "^0.4.1",
-        "ws": "^7.3.1"
+        "@solana/web3.js": "^1.12.0",
+        "@types/node": ">=10"
     },
     "resolutions": {
         "sha3": "^2.1.2"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

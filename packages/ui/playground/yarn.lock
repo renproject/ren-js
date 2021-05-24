@@ -1214,13 +1214,14 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@solana/web3.js@1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.10.1.tgz#b3e7197a2628c26c54227963741b1788bb67f7ff"
-  integrity sha512-5zepm+AaVfC6uao/WxKT7SlemqgGEp+x7XUv+018RURIx+XEcF+G2ZgjrIbjy5OoXJyfz+wGw8Or2fxsypderA==
+"@solana/web3.js@1.12.0":
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.12.0.tgz#c2ecf4b1c677a8881c698871537ae7bfc7cae7b6"
+  integrity sha512-0jb7EDeocFKQOumScE9Rj4Lry5oVpBap4oGPG2yE3n7Dz4nhFUoEjDbhwEliN75M/4wJV69aPHIm2ZPeJ9rUsQ==
   dependencies:
     "@babel/runtime" "^7.12.5"
     bn.js "^5.0.0"
+    borsh "^0.4.0"
     bs58 "^4.0.1"
     buffer "6.0.1"
     buffer-layout "^1.2.0"
@@ -1326,7 +1327,7 @@
     xhr "^2.2.0"
     xtend "^4.0.1"
 
-"@types/bn.js@^4.11.3":
+"@types/bn.js@^4.11.3", "@types/bn.js@^4.11.5":
   version "4.11.6"
   resolved "https://registry.yarnpkg.com/@types/bn.js/-/bn.js-4.11.6.tgz#c306c70d9358aaea33cd4eda092a742b9505967c"
   integrity sha512-pqr857jrp2kPuO9uRjZ3PwnJTjoQy+fcdxvBTvHm6dkmEL9q+hDD/2j/0ELOBPtPnS8LjCX0gI9nbl8lVkadpg==
@@ -1825,6 +1826,16 @@ boolbase@^1.0.0, boolbase@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
   integrity sha1-aN/1++YMUes3cl6p4+0xDcwed24=
+
+borsh@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/borsh/-/borsh-0.4.0.tgz#9dd6defe741627f1315eac2a73df61421f6ddb9f"
+  integrity sha512-aX6qtLya3K0AkT66CmYWCCDr77qsE9arV05OmdFpmat9qu8Pg9J5tBUPDztAW5fNh/d/MyVG/OYziP52Ndzx1g==
+  dependencies:
+    "@types/bn.js" "^4.11.5"
+    bn.js "^5.0.0"
+    bs58 "^4.0.0"
+    text-encoding-utf-8 "^1.0.2"
 
 brace-expansion@^1.1.7:
   version "1.1.11"
@@ -6303,6 +6314,11 @@ terser@^4.8.0:
     commander "^2.20.0"
     source-map "~0.6.1"
     source-map-support "~0.5.12"
+
+text-encoding-utf-8@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/text-encoding-utf-8/-/text-encoding-utf-8-1.0.2.tgz#585b62197b0ae437e3c7b5d0af27ac1021e10d13"
+  integrity sha512-8bw4MY9WjdsD2aMtO0OzOCY3pXGYNx2d2FfHRVUKkiCPDWjKuOlhLVASS+pD7VkLTVjW268LYJHwsnPFlBpbAg==
 
 through2@^2.0.0, through2@~2.0.3:
   version "2.0.5"

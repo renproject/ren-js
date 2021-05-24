@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren-react",
-    "version": "2.1.9",
+    "version": "2.1.10",
     "description": "Easily create and track RenVM transactions in React",
     "keywords": [
         "renvm",

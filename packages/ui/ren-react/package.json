@@ -2,13 +2,7 @@
     "name": "@renproject/ren-react",
     "version": "2.1.10",
     "description": "Easily create and track RenVM transactions in React",
-    "keywords": [
-        "renvm",
-        "ren",
-        "bitcoin",
-        "web3",
-        "ethereum"
-    ],
+    "keywords": ["renvm", "ren", "bitcoin", "web3", "ethereum"],
     "main": "dist/main/index.js",
     "typings": "dist/main/index.d.ts",
     "module": "dist/modern/index.js",
@@ -23,7 +17,7 @@
     },
     "scripts": {
         "prebuild": "rimraf dist",
-        "clean": "yarn rimraf ./dist ./node_modules",
+        "clean": "yarn rimraf ./example/node_modules ./example/dist ./build ./dist ./node_modules",
         "build": "rollup -c",
         "watch": "rollup -c --watch",
         "test": "run-s test:unit test:lint test:build",
@@ -41,9 +35,7 @@
         }
     },
     "lint-staged": {
-        "src/**/*.{js,jsx}": [
-            "npm run lint:fix"
-        ]
+        "src/**/*.{js,jsx}": ["npm run lint:fix"]
     },
     "devDependencies": {
         "@babel/core": "^7.10.3",
@@ -101,15 +93,9 @@
         "react-dom": "^17.0.1",
         "xstate": "^4.17.0"
     },
-    "files": [
-        "dist"
-    ],
+    "files": ["dist"],
     "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
+        "production": [">0.2%", "not dead", "not op_mini all"],
         "development": [
             "last 1 chrome version",
             "last 1 firefox version",

@@ -2930,18 +2930,10 @@
   resolved "https://registry.yarnpkg.com/@project-serum/associated-token/-/associated-token-0.1.1.tgz#9acf745e84dad21e2ea26e06694704b9d698e532"
   integrity sha512-Zc1wdqragbDiyBVagzIbIsMe37P7fgkArWZPIj+jJjDIoznlmYMK6ASU5mtdDZrPJ7sNABF/lzZ3+jvCCcU+oA==
 
-"@project-serum/borsh@^0.0.1-beta.0":
-  version "0.0.1-beta.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/borsh/-/borsh-0.0.1-beta.0.tgz#8ab465ac23e0d840127c7922f8a1a500b50667d5"
-  integrity sha512-jBrGi0KBMe1UXkItp1JKR8Qtaal4xPrbkIWKzbglqVLRNnG+DiDWpZk8I9XMrSLiAFYTvQp8MIJmwwoWSyN8yQ==
-  dependencies:
-    bn.js "^5.1.2"
-    buffer-layout "^1.2.0"
-
-"@project-serum/borsh@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@project-serum/borsh/-/borsh-0.1.1.tgz#a810aad74e4b458fbd1ab63188f175bee765a8af"
-  integrity sha512-bzCea8KTyc7CNkcMn0V2HW/FdU9pnJUcVRrwLqvJkYeo+mhkXE4AxxWErN3q+UxhEm8ypGIX1OYTKJaTJvj5cQ==
+"@project-serum/borsh@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@project-serum/borsh/-/borsh-0.2.2.tgz#63e558f2d6eb6ab79086bf499dea94da3182498f"
+  integrity sha512-Ms+aWmGVW6bWd3b0+MWwoaYig2QD0F90h0uhr7AzY3dpCb5e2S6RsRW02vFTfa085pY2VLB7nTZNbFECQ1liTg==
   dependencies:
     bn.js "^5.1.2"
     buffer-layout "^1.2.0"
@@ -2953,14 +2945,6 @@
   dependencies:
     bs58 "^4.0.1"
     eventemitter3 "^4.0.4"
-
-"@project-serum/token@^0.0.1-alpha.3":
-  version "0.0.1-alpha.3"
-  resolved "https://registry.yarnpkg.com/@project-serum/token/-/token-0.0.1-alpha.3.tgz#ddf2999315ab068fa956520e8950996650bac30f"
-  integrity sha512-QuEDvp92u4snzK8k+yxgDmz0+I09F37/Bkw2cJdmGA8yulVd+Sy6HnSgUrxIc9qxHPUR7K/uQUuUHn/LmphUeg==
-  dependencies:
-    "@project-serum/borsh" "^0.0.1-beta.0"
-    bn.js "^5.1.3"
 
 "@reach/router@^1.2.1", "@reach/router@^1.3.4":
   version "1.3.4"
@@ -3144,13 +3128,14 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
-"@solana/web3.js@^1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.10.1.tgz#b3e7197a2628c26c54227963741b1788bb67f7ff"
-  integrity sha512-5zepm+AaVfC6uao/WxKT7SlemqgGEp+x7XUv+018RURIx+XEcF+G2ZgjrIbjy5OoXJyfz+wGw8Or2fxsypderA==
+"@solana/web3.js@^1.12.0":
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.12.0.tgz#c2ecf4b1c677a8881c698871537ae7bfc7cae7b6"
+  integrity sha512-0jb7EDeocFKQOumScE9Rj4Lry5oVpBap4oGPG2yE3n7Dz4nhFUoEjDbhwEliN75M/4wJV69aPHIm2ZPeJ9rUsQ==
   dependencies:
     "@babel/runtime" "^7.12.5"
     bn.js "^5.0.0"
+    borsh "^0.4.0"
     bs58 "^4.0.1"
     buffer "6.0.1"
     buffer-layout "^1.2.0"
@@ -6704,7 +6689,7 @@ blake2b-wasm@^1.1.0:
   dependencies:
     nanoassert "^1.0.0"
 
-blake2b@^2.1.2, "blake2b@https://github.com/ren-forks/blake2b#f68a3a2ea0ead89086f96195bc55dc41b4505245":
+blake2b@2.1.3, blake2b@^2.1.2, "blake2b@https://github.com/ren-forks/blake2b#f68a3a2ea0ead89086f96195bc55dc41b4505245":
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/blake2b/-/blake2b-2.1.3.tgz#f5388be424768e7c6327025dad0c3c6d83351bca"
   integrity sha512-pkDss4xFVbMb4270aCyGD3qLv92314Et+FsKzilCLxDz5DuZ2/1g3w4nmBbu6nKApPspnjG7JcwTjGZnduB1yg==
@@ -6820,6 +6805,16 @@ borsh@^0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/borsh/-/borsh-0.3.1.tgz#c31c3a149610e37913deada80e89073fb15cf55b"
   integrity sha512-gJoSTnhwLxN/i2+15Y7uprU8h3CKI+Co4YKZKvrGYUy0FwHWM20x5Sx7eU8Xv4HQqV+7rb4r3P7K1cBIQe3q8A==
+  dependencies:
+    "@types/bn.js" "^4.11.5"
+    bn.js "^5.0.0"
+    bs58 "^4.0.0"
+    text-encoding-utf-8 "^1.0.2"
+
+borsh@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/borsh/-/borsh-0.4.0.tgz#9dd6defe741627f1315eac2a73df61421f6ddb9f"
+  integrity sha512-aX6qtLya3K0AkT66CmYWCCDr77qsE9arV05OmdFpmat9qu8Pg9J5tBUPDztAW5fNh/d/MyVG/OYziP52Ndzx1g==
   dependencies:
     "@types/bn.js" "^4.11.5"
     bn.js "^5.0.0"
@@ -19691,13 +19686,6 @@ sha.js@^2.4.0, sha.js@^2.4.8:
   dependencies:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
-
-sha3@^2.1.2:
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/sha3/-/sha3-2.1.4.tgz#000fac0fe7c2feac1f48a25e7a31b52a6492cc8f"
-  integrity sha512-S8cNxbyb0UGUM2VhRD4Poe5N58gJnJsLJ5vC7FYWGUmGhcsj4++WaIOBFVDxlG0W3To6xBuiRh+i0Qp2oNCOtg==
-  dependencies:
-    buffer "6.0.3"
 
 shallow-clone@^3.0.0:
   version "3.0.1"

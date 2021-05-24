@@ -63,7 +63,6 @@ export const GatewayLayout: Layout<Gateway> = struct([
     array(u8(), 32, "selectors"),
     u64("burn_count"),
 ]);
-console.log("gatewaylayout", GatewayLayout);
 
 export const GatewayRegistryLayout: Layout<GatewayRegistryState> = struct([
     bool("is_initialized"),

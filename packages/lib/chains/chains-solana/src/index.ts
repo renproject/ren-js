@@ -624,7 +624,6 @@ export class Solana
     Account({ amount }: { amount: string | BigNumber }) {
         this._getParams = (burnPayload: string) => {
             const recipientBytes = Buffer.from(burnPayload, "hex");
-            console.log(recipientBytes, burnPayload);
             const params: OverwritableBurnAndReleaseParams = {
                 contractCalls: [
                     {
@@ -658,7 +657,6 @@ export class Solana
     getBurnParams = (_asset: string, burnPayload?: string) => {
         if (!this._getParams || !burnPayload) return undefined;
         return this._getParams(burnPayload);
-        //SyncOrPromise<OverwritableBurnAndReleaseParams | undefined>;
     };
 
     /**

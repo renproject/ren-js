@@ -482,7 +482,6 @@ const depositListener = <X>(context: GatewayMachineContext<X>) => (
         });
 
     return () => {
-        console.log("cleaning up");
         cleanup();
     };
 };

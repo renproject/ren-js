@@ -67,8 +67,6 @@ export const generateGHash = (
     const sHash = fromHex(tokenIdentifier);
     const toBytes = fromHex(to);
 
-    console.log(pHash, sHash, toBytes, nonce);
-
     const encoded = v2
         ? Buffer.concat([pHash, sHash, toBytes, nonce])
         : rawEncode(

@@ -477,7 +477,6 @@ export class LockAndMint<
             contractParams || [],
             this._state.logger,
         );
-        console.log(sendToHex, contractCalls);
 
         const gHash = generateGHash(
             contractParams || [],

@@ -73,6 +73,7 @@ jobs:
                   name: Run Testnet tests
                   # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
                   command: NETWORK="testnet" yarn lerna run test
+                  no_output_timeout: 30m
                   when: always
 
             # - run:

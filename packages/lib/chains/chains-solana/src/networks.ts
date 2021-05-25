@@ -5,18 +5,23 @@ import {
 } from "@renproject/interfaces";
 
 export interface SolNetworkConfig {
-    name: string;
+    name: RenNetwork;
     chain: string;
     isTestnet: boolean;
-    networkID: number;
     chainLabel: string;
     chainExplorer: string;
     endpoint: string;
     addresses: {
         GatewayRegistry: string;
-        BasicAdapter: string;
     };
+    genesisHash: string;
 }
+
+const isSolNetworkConfig = (
+    x: RenNetworkDetails | SolNetworkConfig,
+): x is SolNetworkConfig => {
+    return (x as SolNetworkConfig).genesisHash !== undefined;
+};
 
 export const resolveNetwork = (
     renNetwork:
@@ -25,7 +30,18 @@ export const resolveNetwork = (
         | RenNetworkDetails
         | SolNetworkConfig,
 ) => {
-    switch (renNetwork) {
+    let networkString = "";
+    if (typeof renNetwork !== "string") {
+        if (isSolNetworkConfig(renNetwork)) {
+            return renNetwork;
+        } else {
+            networkString = renNetwork.name;
+        }
+    } else {
+        networkString = renNetwork;
+    }
+
+    switch (networkString) {
         case RenNetwork.Mainnet:
             return renMainnet;
         case RenNetwork.Testnet:
@@ -33,61 +49,58 @@ export const resolveNetwork = (
         case RenNetwork.DevnetVDot3:
             return renDevnet;
     }
+
     return renLocalnet;
 };
 
 export const renMainnet: SolNetworkConfig = {
-    name: "mainnet",
+    name: RenNetwork.MainnetVDot3,
     chain: "mainnet",
     isTestnet: false,
-    networkID: 1,
     chainLabel: "Mainnet",
     chainExplorer: "https://explorer.solana.com/",
     endpoint: "https://testnet.solana.com",
     addresses: {
         GatewayRegistry: "",
-        BasicAdapter: "",
     },
+    genesisHash: "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
 };
 
 export const renTestnet: SolNetworkConfig = {
-    name: "testnet",
+    name: RenNetwork.TestnetVDot3,
     chain: "testnet",
     isTestnet: true,
-    networkID: 2,
     chainLabel: "Testnet",
     endpoint: "https://testnet.solana.com",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
         GatewayRegistry: "3cvX9BpLMJsFTuEWSQBaTcd4TXgAmefqgNSJbufpyWyz",
-        BasicAdapter: "9TaQuUfNMC5rFvdtzhHPk84WaFH3SFnweZn4tw9RriDP",
     },
+    genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };
 
 export const renDevnet: SolNetworkConfig = {
-    name: "devnet",
+    name: RenNetwork.DevnetVDot3,
     chain: "devnet",
     isTestnet: true,
-    networkID: 2,
     chainLabel: "Devnet",
     endpoint: "https://api.devnet.solana.com",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
         GatewayRegistry: "5adtAdnnEWVBXyxW1osiDDAHF9NPkNFVvezU4RWyWukc",
-        BasicAdapter: "9TaQuUfNMC5rFvdtzhHPk84WaFH3SFnweZn4tw9RriDP",
     },
+    genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
 };
 
 export const renLocalnet: SolNetworkConfig = {
-    name: "localnet",
+    name: RenNetwork.Localnet,
     chain: "localnet",
     isTestnet: true,
-    networkID: 1,
     chainLabel: "",
     endpoint: "http://0.0.0.0:8899",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
         GatewayRegistry: "DHpzwsdvAzq61PN9ZwQWg2hzwX8gYNfKAdsNKKtdKDux",
-        BasicAdapter: "FDdKRjbBeFtyu5c66cZghJsTTjDTT1aD3zsgTWMTpaif",
     },
+    genesisHash: "",
 };

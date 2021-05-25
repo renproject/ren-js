@@ -12,9 +12,9 @@ import {
     SimpleLogger,
     OverwritableBurnAndReleaseParams,
 } from "@renproject/interfaces";
-import { EventEmitter } from "events";
-import { BN } from "bn.js";
-import BigNumber from "bignumber.js";
+import { keccak256, sleep } from "@renproject/utils";
+import { AbstractRenVMProvider } from "@renproject/rpc";
+
 import {
     Connection,
     PublicKey,
@@ -28,14 +28,19 @@ import {
     ConfirmOptions,
     CreateSecp256k1InstructionWithPublicKeyParams,
 } from "@solana/web3.js";
-import { keccak256 } from "@renproject/utils";
-import elliptic from "elliptic";
-import base58 from "bs58";
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+
 import {
     createAssociatedTokenAccount,
     getAssociatedTokenAddress,
 } from "@project-serum/associated-token";
+
+import { BN } from "bn.js";
+import BigNumber from "bignumber.js";
+import base58 from "bs58";
+import elliptic from "elliptic";
+import { EventEmitter } from "events";
+
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
 import {
     BurnLogLayout,
@@ -70,10 +75,13 @@ export class Solana
     name: "Solana" = "Solana";
 
     renNetworkDetails: SolNetworkConfig;
+    // Flag to prevent prompting for token account creation multiple times
     private _creatingTokenAccount: boolean = false;
     private _logger: Logger = new SimpleLogger();
+
     constructor(
         readonly provider: SolanaProvider,
+        readonly renVM: AbstractRenVMProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
@@ -82,6 +90,7 @@ export class Solana
         options?: SolOptions,
     ) {
         this.initialize = this.initialize.bind(this);
+        this.waitForInitialization = this.waitForInitialization.bind(this);
         // Default to mainnet if not specified
         if (renNetwork) {
             this.renNetworkDetails = resolveNetwork(renNetwork);
@@ -91,6 +100,7 @@ export class Solana
         if (options) {
             this._logger = options.logger;
         }
+        this.initialize(this.renNetworkDetails?.name as RenNetwork);
     }
 
     public utils: ChainStatic<any, string, any>["utils"] = {
@@ -138,6 +148,9 @@ export class Solana
     renNetwork?: RenNetworkDetails;
 
     gatewayRegistryData?: GatewayRegistryState;
+
+    _initialized?: boolean;
+    _initializationError?: Error;
     /**
      * `initialize` allows RenJS to pass in parameters after the user has
      * initialized the Chain. This allows the user to pass in network
@@ -153,31 +166,51 @@ export class Solana
     initialize = async (
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
     ) => {
-        this.renNetwork = this.utils.resolveChainNetwork(network);
+        try {
+            this.renNetwork = this.utils.resolveChainNetwork(network);
 
-        // Load registry state to find programs
-        const pubk = new PublicKey(
-            this.renNetworkDetails.addresses.GatewayRegistry,
-        );
-        const stateKey = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayRegistryState"))],
-            pubk,
-        );
+            // Load registry state to find programs
+            const pubk = new PublicKey(
+                this.renNetworkDetails.addresses.GatewayRegistry,
+            );
+            const stateKey = await PublicKey.findProgramAddress(
+                [new Uint8Array(Buffer.from("GatewayRegistryState"))],
+                pubk,
+            );
 
-        const gatewayData = await this.provider.connection.getAccountInfo(
-            stateKey[0],
-        );
+            const gatewayData = await this.provider.connection.getAccountInfo(
+                stateKey[0],
+            );
 
-        if (!gatewayData) throw new Error("Failed to load program state");
-        // Persist registry data
-        // TODO: Consider if we want to handle the edge case of programs being
-        // updated during the lifecyle of the chain pbject
-        this.gatewayRegistryData = GatewayRegistryLayout.decode(
-            gatewayData.data,
-        );
+            if (!gatewayData) {
+                throw new Error("Failed to load program state");
+            }
+            // Persist registry data
+            // TODO: Consider if we want to handle the edge case of programs being
+            // updated during the lifecyle of the chain pbject
+            this.gatewayRegistryData = GatewayRegistryLayout.decode(
+                gatewayData.data,
+            );
 
-        return this;
+            return this;
+        } catch (error) {
+            this._initializationError = error;
+            throw this._initializationError;
+        }
     };
+
+    async waitForInitialization() {
+        if (this._initialized === undefined) {
+            return this.initialize(this.renNetworkDetails.name);
+        }
+        while (this._initialized === false) {
+            if (this._initializationError) {
+                throw this._initializationError;
+            }
+            await sleep(100);
+        }
+        return this;
+    }
 
     withProvider = (provider: any) => {
         return { ...this, provider };
@@ -186,6 +219,7 @@ export class Solana
     assetIsNative = (asset: string) => {
         return asset === "SOL";
     };
+
     /**
      * `assetIsSupported` should return true if the the asset is native to the
      * chain or if the asset can be minted onto the chain.
@@ -195,6 +229,7 @@ export class Solana
      * ```
      */
     assetIsSupported = async (asset: string) => {
+        await this.waitForInitialization();
         if (this.assetIsNative(asset)) {
             return true;
         }
@@ -214,6 +249,7 @@ export class Solana
 
     // TODO: check if we can derive the decimals from token metadata
     assetDecimals = async (asset: string) => {
+        await this.waitForInitialization();
         const address = this.resolveTokenGatewayContract(asset);
         if (!address) throw new Error("unsupported asset: " + asset);
         const res = await this.provider.connection.getTokenSupply(
@@ -230,17 +266,33 @@ export class Solana
     };
 
     transactionConfidence = async (transaction: SolTransaction) => {
+        await this.waitForInitialization();
         // NOTE: Solana has a built in submit and wait until target confirmations
         // function; so it might not make sense to use this?
         const tx = await this.provider.connection.getConfirmedTransaction(
             transaction,
         );
 
+        let target = 0;
+        if (this.renVM.getConfirmationTarget) {
+            // Assumes that all confirmations for mints + burns will be the same
+            // for all assets
+            const fetchedTarget = await this.renVM.getConfirmationTarget(
+                "BTC/fromSolana",
+                {
+                    name: this.renNetworkDetails?.name || "",
+                },
+            );
+
+            if (fetchedTarget) {
+                target = fetchedTarget;
+            }
+        }
+
         const currentSlot = await this.provider.connection.getSlot();
         return {
             current: currentSlot - (tx?.slot ?? 0),
-            // TODO: get confirmation target from RPC
-            target: 1,
+            target,
         };
     };
 
@@ -283,6 +335,7 @@ export class Solana
     };
 
     async getSPLTokenPubkey(asset: string) {
+        await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
         const s_hash = keccak256(Buffer.from(`${asset}/toSolana`));
 
@@ -305,6 +358,7 @@ export class Solana
         eventEmitter: EventEmitter,
         lockState: any,
     ) => {
+        await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
         if (mintTx.out?.revert)
             throw new Error("Transaction reverted: " + mintTx.out.revert);
@@ -341,6 +395,7 @@ export class Solana
             n_hash: new Uint8Array(lockState.nHash),
             amount: new BN(lockState.amount),
         };
+
         this._logger.debug(
             "renvmmsg preencode",
             JSON.stringify({
@@ -370,6 +425,7 @@ export class Solana
         const recipientAccount = await this.provider.connection.getAccountInfo(
             recipient,
         );
+
         if (!recipientAccount) {
             throw new Error("Recipient account not found");
         }
@@ -493,6 +549,7 @@ export class Solana
         to: string,
         amount: string,
     ) => {
+        await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
         const renvmmsg = Buffer.from(new Array(136));
         const preencode = {
@@ -522,9 +579,10 @@ export class Solana
         const mintData = await this.provider.connection.getAccountInfo(
             mintLogAccountId[0],
         );
-        this._logger.debug("found mint:", mintData);
 
         if (!mintData) return undefined;
+        this._logger.debug("found mint:", mintData);
+
         const mintLogData = MintLogLayout.decode(mintData.data);
         if (!mintLogData.is_initialized) return undefined;
 
@@ -538,17 +596,29 @@ export class Solana
      * Fetch the mint and burn fees for an asset.
      */
     getFees(_asset: string) {
-        return { burn: 0, mint: 0 };
+        // TODO: add getFees RPC endpoint; use RPC to provide fees
+        return { burn: 15, mint: 15 };
     }
 
     /**
      * Fetch the addresses' balance of the asset's representation on the chain.
      */
-    getBalance(_asset: string, _address: SolAddress) {
-        return new BigNumber(0);
+    async getBalance(asset: string, address: SolAddress) {
+        const tokenMintId = await this.getSPLTokenPubkey(asset);
+
+        const source = await getAssociatedTokenAddress(
+            new PublicKey(address),
+            tokenMintId,
+        );
+        return new BigNumber(
+            (
+                await this.provider.connection.getTokenAccountBalance(source)
+            ).value.amount,
+        );
     }
 
     getMintParams = async (asset: string) => {
+        await this.waitForInitialization();
         if (!this.renNetworkDetails || !this.provider) {
             throw new Error(
                 `Solana must be initialized before calling 'getContractCalls'.`,
@@ -670,6 +740,7 @@ export class Solana
         _logger: Logger,
         _networkDelay?: number,
     ) => {
+        await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
         if (burn.burnNonce) {
             let leNonce: Buffer;

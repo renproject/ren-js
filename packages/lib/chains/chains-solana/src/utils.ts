@@ -3,10 +3,11 @@ import nacl from "tweetnacl";
 import { SolanaProvider } from ".";
 import { SolNetworkConfig } from "./networks";
 
-export const makeLocalProvider = (
+export const makeTestProvider = (
     network: SolNetworkConfig,
+    privatekey: Uint8Array,
 ): SolanaProvider => {
-    const key = nacl.sign.keyPair();
+    const key = nacl.sign.keyPair.fromSecretKey(privatekey);
 
     const pubk = new PublicKey(key.publicKey);
     const provider: SolanaProvider = {
@@ -14,7 +15,10 @@ export const makeLocalProvider = (
         wallet: {
             publicKey: pubk,
             signTransaction: async (x: Transaction) => {
-                const sig = nacl.sign(x.serializeMessage(), key.secretKey);
+                const sig = nacl.sign.detached(
+                    x.serializeMessage(),
+                    key.secretKey,
+                );
                 x.addSignature(pubk, Buffer.from(sig));
                 return x;
             },

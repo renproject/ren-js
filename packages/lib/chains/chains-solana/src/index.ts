@@ -694,7 +694,7 @@ export class Solana
                 contractCalls: [
                     {
                         sendTo: burnPayload,
-                        contractFn: "burn",
+                        contractFn: "",
                         contractParams: [
                             {
                                 name: "amount",
@@ -737,15 +737,15 @@ export class Solana
             contractCalls?: ContractCall[];
         },
         eventEmitter: EventEmitter,
-        _logger: Logger,
+        logger: Logger,
         _networkDelay?: number,
     ) => {
         await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
-        if (burn.burnNonce) {
+        if (burn.burnNonce !== undefined) {
             let leNonce: Buffer;
             if (typeof burn.burnNonce == "number") {
-                leNonce = new BN(burn.burnNonce).toBuffer("le");
+                leNonce = new BN(burn.burnNonce).toBuffer("le", 8);
             } else if (typeof burn.burnNonce == "string") {
                 leNonce = Buffer.from(burn.burnNonce);
             } else {
@@ -774,6 +774,9 @@ export class Solana
                     ),
                 };
                 return burnDetails;
+            } else {
+                this._logger.info("missing burn:", burn.burnNonce);
+                logger.info("missing burn:", burn.burnNonce);
             }
         }
 

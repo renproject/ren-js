@@ -11,6 +11,8 @@ import RenJS from "../../../ren";
 import { BN } from "bn.js";
 import { RenVMProvider } from "@renproject/rpc/build/main/v1";
 import { RenNetwork } from "@renproject/interfaces";
+import { LockAndMintDeposit } from "../../../ren/build/main/lockAndMint";
+import EventEmitter = require("events");
 
 const testPK = Buffer.from(
     "a84252a5fcbb2bfb85a422a4833a79c23ec7906826a0298dd2a0744a4c984631d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
@@ -85,6 +87,51 @@ describe("Solana", () => {
             );
         });
 
+        it("should be able to retrieve a burn", async () => {
+            const solana = new Solana(
+                makeTestProvider(renDevnet, testPK),
+                new RenVMProvider(RenNetwork.DevnetVDot3),
+                renDevnet,
+            );
+            const emitter = new EventEmitter();
+            const burn = await solana.findBurnTransaction(
+                "BTC",
+                { burnNonce: 2 },
+                emitter,
+                console,
+            );
+            expect(burn.amount.toString()).toEqual("200000");
+        });
+
+        it("should be able to construct burn params", async () => {
+            const solana = new Solana(
+                makeTestProvider(renDevnet, testPK),
+                new RenVMProvider(RenNetwork.DevnetVDot3),
+                renDevnet,
+            ).Account({ amount: "20000" });
+            // const emitter = new EventEmitter();
+            const btcAddressHex =
+                "d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94";
+            const params = solana.getBurnParams("BTC", btcAddressHex);
+            expect(params.contractCalls[0]).toLooseEqual({
+                sendTo:
+                    "d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
+                contractFn: "",
+                contractParams: [
+                    {
+                        name: "amount",
+                        value: "20000",
+                        type: "string",
+                    },
+                    {
+                        name: "recipient",
+                        value: Buffer.from(btcAddressHex, "hex"),
+                        type: "bytes",
+                    },
+                ],
+            });
+        });
+
         it("should be able to retrieve a mint", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
@@ -100,6 +147,20 @@ describe("Solana", () => {
                 from: btc,
                 asset: "BTC",
             });
+            const p = new Promise<any>((resolve, reject) =>
+                mint.on("deposit", async (deposit) => {
+                    try {
+                        const d = await deposit.signed();
+                        const m = await deposit.findTransaction();
+                        resolve(m);
+                    } catch (e) {
+                        reject(e);
+                    }
+                }),
+            );
+            expect(await p).toEqual(
+                "35MBhJBFZ8eHDFnGX4mfuxZMZ29CPGssp8Hbs2o8Gwssow27FT9MKjavrqzWp2tjJ5wnmU8HYbbRAvnMCuSzRWxD",
+            );
         });
     });
 });

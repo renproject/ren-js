@@ -39,7 +39,7 @@
     "devDependencies": {
         "chalk": "^4.1.0",
         "dotenv": "^8.2.0",
-        "truffle-hdwallet-provider": "1.0.17",
+        "@truffle/hdwallet-provider": "1.4.0",
         "web3": "^2.0.0-alpha.1"
     },
     "resolutions": {

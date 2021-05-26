@@ -46,6 +46,7 @@
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.2",
         "@renproject/interfaces": "^2.1.5",
+        "@renproject/rpc": "^2.1.5",
         "@renproject/utils": "^2.1.5",
         "@solana/spl-token": "^0.1.4",
         "@solana/web3.js": "^1.12.0",

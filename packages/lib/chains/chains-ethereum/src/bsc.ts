@@ -50,18 +50,21 @@ export const renBscMainnet: EthereumConfig = {
 };
 
 export const BscConfigMap = {
-    [RenNetwork.TestnetVDot3]: renBscTestnet,
     [RenNetwork.MainnetVDot3]: renBscMainnet,
+    [RenNetwork.TestnetVDot3]: renBscTestnet,
     [RenNetwork.DevnetVDot3]: renBscDevnet,
 };
 
 const resolveBSCNetwork = (
-    renNetwork:
+    renNetwork?:
         | RenNetwork
         | RenNetworkString
         | RenNetworkDetails
         | EthereumConfig,
 ) => {
+    if (!renNetwork) {
+        return BscConfigMap[RenNetwork.MainnetVDot3];
+    }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
     } else {
@@ -87,7 +90,7 @@ export class BinanceSmartChainClass extends EthereumClass {
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
-            network: NetworkInput = renBscMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -98,7 +101,7 @@ export class BinanceSmartChainClass extends EthereumClass {
 
         transactionExplorerLink: (
             transaction: EthTransaction,
-            network: NetworkInput = renBscMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -145,6 +148,7 @@ export class BinanceSmartChainClass extends EthereumClass {
         return this;
     };
 
+    // Override findTransaction for BSC to impose 5000 log limit.
     findTransaction = async (
         asset: string,
         nHash: Buffer,

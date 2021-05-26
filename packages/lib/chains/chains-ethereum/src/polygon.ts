@@ -10,7 +10,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid, findTransactionBySigHash } from "./utils";
+import { addressIsValid } from "./utils";
 
 export const renPolygonTestnet: EthereumConfig = {
     name: "Polygon Testnet",
@@ -21,16 +21,8 @@ export const renPolygonTestnet: EthereumConfig = {
     infura: "https://rpc-mumbai.maticvigil.com/",
     etherscan: "https://testnet.ftmscan.com",
     addresses: {
-        GatewayRegistry: "0x838F881876f53a772D2F8E2f8aa2e4a996431495",
-        BasicAdapter: "0x7de1253A8da6620351ec477b38BdC6a55FCd0f85",
-    },
-};
-
-export const renPolygonDevnet: EthereumConfig = {
-    ...renPolygonTestnet,
-    addresses: {
-        GatewayRegistry: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",
-        BasicAdapter: "0x105435a9b0f375B179e5e43A16228C04F01Fb2ee",
+        GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
+        BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
 };
 
@@ -51,27 +43,25 @@ export const renPolygonMainnet: EthereumConfig = {
 export const PolygonConfigMap = {
     [RenNetwork.TestnetVDot3]: renPolygonTestnet,
     [RenNetwork.MainnetVDot3]: renPolygonMainnet,
-    [RenNetwork.DevnetVDot3]: renPolygonDevnet,
 };
 
 const resolvePolygonNetwork = (
-    renNetwork:
+    renNetwork?:
         | RenNetwork
         | RenNetworkString
         | RenNetworkDetails
         | EthereumConfig,
 ) => {
+    if (!renNetwork) {
+        return PolygonConfigMap[RenNetwork.MainnetVDot3];
+    }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
     } else {
         const details = getRenNetworkDetails(
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
-        return details.isTestnet
-            ? details.name === RenNetwork.DevnetVDot3
-                ? renPolygonDevnet
-                : renPolygonTestnet
-            : renPolygonMainnet;
+        return details.isTestnet ? renPolygonTestnet : renPolygonMainnet;
     }
 };
 
@@ -86,7 +76,7 @@ export class PolygonClass extends EthereumClass {
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
-            network: NetworkInput = renPolygonMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -97,7 +87,7 @@ export class PolygonClass extends EthereumClass {
 
         transactionExplorerLink: (
             transaction: EthTransaction,
-            network: NetworkInput = renPolygonMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -142,26 +132,6 @@ export class PolygonClass extends EthereumClass {
             );
         }
         return this;
-    };
-
-    findTransaction = async (
-        asset: string,
-        nHash: Buffer,
-        sigHash?: Buffer,
-    ): Promise<EthTransaction | undefined> => {
-        if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(
-                `${this.name} object not initialized - must provide network to constructor.`,
-            );
-        }
-        return findTransactionBySigHash(
-            this.renNetworkDetails,
-            this.web3,
-            asset,
-            nHash,
-            sigHash,
-            5000,
-        );
     };
 }
 

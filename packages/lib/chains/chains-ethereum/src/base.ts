@@ -69,12 +69,15 @@ const isEthereumConfig = (
 };
 
 const resolveNetwork = (
-    renNetwork:
+    renNetwork?:
         | RenNetwork
         | RenNetworkString
         | RenNetworkDetails
         | EthereumConfig,
 ): EthereumConfig => {
+    if (!renNetwork) {
+        return EthereumConfigMap[RenNetwork.Mainnet];
+    }
     let networkConfig: EthereumConfig | undefined;
     if (renNetwork && isEthereumConfig(renNetwork)) {
         networkConfig = renNetwork;
@@ -110,11 +113,7 @@ export class EthereumBaseChain
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | NetworkInput = renMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -125,11 +124,7 @@ export class EthereumBaseChain
 
         transactionExplorerLink: (
             transaction: EthTransaction,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | NetworkInput = renMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (

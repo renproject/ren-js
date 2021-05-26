@@ -994,7 +994,9 @@ export class LockAndMintDeposit<
         }
         const defaultConfirmations =
             this._state.renNetwork && this._state.renNetwork.isTestnet ? 2 : 6;
-        this._state.targetConfirmations = target || defaultConfirmations;
+        this._state.targetConfirmations = isDefined(target)
+            ? target
+            : defaultConfirmations;
 
         return this._state.targetConfirmations;
     };

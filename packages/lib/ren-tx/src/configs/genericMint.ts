@@ -314,7 +314,8 @@ const resolveDeposit = <X extends { confirmations?: string }>(
         } else {
             const acceptedData: AcceptedGatewayTransaction<X> = {
                 ...newDepositState,
-                sourceTxConfTarget: Number.POSITIVE_INFINITY,
+                // If it is accepted, take whatever the target is for simplicity
+                sourceTxConfTarget: newDepositState.sourceTxConfs,
                 renResponse: hexify(
                     deposit._state.queryTxResult || {},
                 ) as LockAndMintTransaction,

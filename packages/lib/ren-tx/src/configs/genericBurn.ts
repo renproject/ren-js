@@ -21,7 +21,7 @@ import {
 } from "../types/burn";
 
 const burnAndRelease = async <X, Y>(context: BurnMachineContext<X, Y>) => {
-    const transaction = context.tx.transaction;
+    const transaction = context.tx.transaction?.sourceTxHash;
     return await context.sdk.burnAndRelease({
         asset: context.tx.sourceAsset.toUpperCase(),
         to: context.to(context),

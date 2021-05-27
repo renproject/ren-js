@@ -42,10 +42,11 @@ import { extractError, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
+import { provider } from "web3-providers";
 
 chai.should();
 
@@ -62,7 +63,12 @@ describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
     it.skip("mint to contract", async function () {
         const infuraURL = `${Chains.renDevnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
-        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
+        const provider: provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        }) as any;
         const web3 = new Web3(provider);
     });
 });

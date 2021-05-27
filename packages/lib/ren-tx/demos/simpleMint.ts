@@ -13,12 +13,18 @@ import {
 import RenJS from "@renproject/ren";
 import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import Web3 from "web3";
+import { provider } from "web3-providers";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
-const ethProvider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
+const ethProvider: provider = new HDWalletProvider({
+    mnemonic: MNEMONIC || "",
+    providerOrUrl: INFURA_URL,
+    addressIndex: 0,
+    numberOfAddresses: 10,
+}) as any;
 const web3 = new Web3(ethProvider);
 // Allow for an existing tx to be passed in via CLI
 let parsedTx: GatewaySession<any>;
@@ -40,8 +46,9 @@ if (process.argv[2]) {
 //     customParams: {},
 // };
 
-const mintTransaction = JSON.parse(`{"id":"a unique identifier","network":"testnet","sourceAsset":"btc","sourceChain":"bitcoin","destAddress":"0xEA8b2fF0d7f546AFAeAE1771306736357dEFa434","destChain":"ethereum","userAddress":"0xEA8b2fF0d7f546AFAeAE1771306736357dEFa434","expiryTime":1618895431076,"transactions":{"3e59ad8c7f32c4d742087b65f69cbf416fdfdf77b9a86a1bcbc5b8967369ea18":{"sourceTxHash":"3e59ad8c7f32c4d742087b65f69cbf416fdfdf77b9a86a1bcbc5b8967369ea18","renVMHash":"qOs6ySogsFls/WLn7/k5DUU2CWBBULwxQW6WjBQJxpw=","sourceTxAmount":"310000","sourceTxConfs":0,"rawSourceTx":{"transaction":{"txHash":"3e59ad8c7f32c4d742087b65f69cbf416fdfdf77b9a86a1bcbc5b8967369ea18","amount":"310000","vOut":0,"confirmations":0},"amount":"310000"},"detectedAt":1618809102845}},"customParams":{},"nonce":"2020202020202020202020202020202020202020202020202020202034393330","gatewayAddress":"2NDt7z9c7bJwyXpaYoi3yw5y948y7uQNfXa"}`)
-
+const mintTransaction = JSON.parse(
+    `{"id":"a unique identifier","network":"testnet","sourceAsset":"btc","sourceChain":"bitcoin","destAddress":"0xEA8b2fF0d7f546AFAeAE1771306736357dEFa434","destChain":"ethereum","userAddress":"0xEA8b2fF0d7f546AFAeAE1771306736357dEFa434","expiryTime":1618895431076,"transactions":{"3e59ad8c7f32c4d742087b65f69cbf416fdfdf77b9a86a1bcbc5b8967369ea18":{"sourceTxHash":"3e59ad8c7f32c4d742087b65f69cbf416fdfdf77b9a86a1bcbc5b8967369ea18","renVMHash":"qOs6ySogsFls/WLn7/k5DUU2CWBBULwxQW6WjBQJxpw=","sourceTxAmount":"310000","sourceTxConfs":0,"rawSourceTx":{"transaction":{"txHash":"3e59ad8c7f32c4d742087b65f69cbf416fdfdf77b9a86a1bcbc5b8967369ea18","amount":"310000","vOut":0,"confirmations":0},"amount":"310000"},"detectedAt":1618809102845}},"customParams":{},"nonce":"2020202020202020202020202020202020202020202020202020202034393330","gatewayAddress":"2NDt7z9c7bJwyXpaYoi3yw5y948y7uQNfXa"}`,
+);
 
 // A mapping of how to construct parameters for host chains,
 // based on the destination network
@@ -91,7 +98,11 @@ web3.eth
         let promptedGatewayAddress = false;
         let detectedDeposit = false;
         let claimed = false;
-        const service = interpret<GatewayMachineContext<any>, any, GatewayMachineEvent<any>>(machine).onTransition((state) => {
+        const service = interpret<
+            GatewayMachineContext<any>,
+            any,
+            GatewayMachineEvent<any>
+        >(machine).onTransition((state) => {
             if (
                 !promptedGatewayAddress &&
                 isOpen(state.context.tx) &&

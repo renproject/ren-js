@@ -3,13 +3,19 @@ import { burnMachine } from "../";
 import RenJS from "@renproject/ren";
 import { Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin } from "@renproject/chains-bitcoin";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import Web3 from "web3";
 import { BurnSession, isBurnCompleted } from "../build/main/types/burn";
+import { provider } from "web3-providers";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
-const ethProvider = new HDWalletProvider(MNEMONIC, INFURA_URL, 0, 10);
+const ethProvider: provider = new HDWalletProvider({
+    mnemonic: MNEMONIC || "",
+    providerOrUrl: INFURA_URL,
+    addressIndex: 0,
+    numberOfAddresses: 10,
+}) as any;
 const web3 = new Web3(ethProvider);
 
 // Allow for an existing tx to be passed in via CLI

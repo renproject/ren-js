@@ -15,7 +15,7 @@ import {
 import { blue } from "chalk";
 import RenJS from "@renproject/ren";
 import chai from "chai";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 
 chai.should();

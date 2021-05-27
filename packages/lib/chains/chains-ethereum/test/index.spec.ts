@@ -5,12 +5,13 @@ import * as Chains from "@renproject/chains";
 import { BurnDetails } from "@renproject/interfaces";
 import { Ox } from "@renproject/utils";
 import chai from "chai";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import Web3 from "web3";
 import { EthereumConfig, EthTransaction, renMainnet } from "@renproject/chains";
 import BN from "bn.js";
 import { getGatewayAddress, eventTopics, parseBurnEvent } from "../src/utils";
+import { provider } from "web3-providers";
 
 chai.should();
 
@@ -52,7 +53,12 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const infuraURL = `${Chains.renMainnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
-        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
+        const provider: provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        }) as any;
         const web3 = new Web3(provider);
 
         const txHashes: string[] = [

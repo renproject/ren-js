@@ -84,6 +84,7 @@ export class BinanceSmartChainClass extends EthereumClass {
     public chain = BinanceSmartChainClass.chain;
     public name = BinanceSmartChainClass.chain;
     public legacyName = undefined;
+    public logRequestLimit = 5000;
 
     public static utils = {
         resolveChainNetwork: resolveBSCNetwork,
@@ -146,27 +147,6 @@ export class BinanceSmartChainClass extends EthereumClass {
             );
         }
         return this;
-    };
-
-    // Override findTransaction for BSC to impose 5000 log limit.
-    findTransaction = async (
-        asset: string,
-        nHash: Buffer,
-        sigHash?: Buffer,
-    ): Promise<EthTransaction | undefined> => {
-        if (!this.renNetworkDetails || !this.web3) {
-            throw new Error(
-                `${this.name} object not initialized - must provide network to constructor.`,
-            );
-        }
-        return findTransactionBySigHash(
-            this.renNetworkDetails,
-            this.web3,
-            asset,
-            nHash,
-            sigHash,
-            5000,
-        );
     };
 }
 

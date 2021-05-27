@@ -70,6 +70,7 @@ export class PolygonClass extends EthereumClass {
     public chain = PolygonClass.chain;
     public name = PolygonClass.chain;
     public legacyName = undefined;
+    public logRequestLimit = 1000;
 
     public static utils = {
         resolveChainNetwork: resolvePolygonNetwork,

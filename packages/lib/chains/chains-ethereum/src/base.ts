@@ -107,6 +107,7 @@ export class EthereumBaseChain
     public chain = EthereumBaseChain.chain;
     public name = EthereumBaseChain.chain;
     public legacyName: MintChain["legacyName"] = "Eth";
+    public logRequestLimit: number | undefined = undefined;
 
     public static utils = {
         resolveChainNetwork: resolveNetwork,
@@ -361,6 +362,7 @@ export class EthereumBaseChain
             asset,
             nHash,
             sigHash,
+            this.logRequestLimit,
         );
     };
 

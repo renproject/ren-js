@@ -70,6 +70,7 @@ export class PolygonClass extends EthereumClass {
     public chain = PolygonClass.chain;
     public name = PolygonClass.chain;
     public legacyName = undefined;
+    public logRequestLimit = 1000;
 
     public static utils = {
         resolveChainNetwork: resolvePolygonNetwork,
@@ -86,7 +87,7 @@ export class PolygonClass extends EthereumClass {
             }/address/${address}`,
 
         transactionExplorerLink: (
-            transaction: EthTransaction,
+            transaction: EthTransaction | string,
             network?: NetworkInput,
         ): string =>
             `${
@@ -94,7 +95,11 @@ export class PolygonClass extends EthereumClass {
                     Polygon.utils.resolveChainNetwork(network) ||
                     renPolygonMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.transactionHash
+            }`,
     };
 
     public utils = utilsWithChainNetwork(

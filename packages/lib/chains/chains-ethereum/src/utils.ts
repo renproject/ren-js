@@ -242,7 +242,7 @@ export const parseBurnEvent = (
     );
 
     return {
-        transaction: event.transactionHash,
+        transaction: { transactionHash: event.transactionHash },
         amount: new BigNumber(_amount.toString()),
         to: fromHex(_to).toString(),
         nonce: new BigNumber(_n.toString()),
@@ -478,7 +478,7 @@ export const findTransactionBySigHash = async (
     nHash: Buffer,
     sigHash?: Buffer,
     blockLimit?: number,
-): Promise<string | undefined> => {
+): Promise<EthTransaction | undefined> => {
     let status;
     try {
         const gatewayAddress = await getGatewayAddress(network, web3, asset);
@@ -517,12 +517,12 @@ export const findTransactionBySigHash = async (
             fromBlock = toBlock - blockLimit + 1;
         }
         if (sigHash) {
-            // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
-            // the contract
+            // Look up if the signature has been submitted already.
             status = await gatewayContract.methods.status(Ox(sigHash)).call();
             if (!status) {
                 return undefined;
             }
+            // If the status is true, try to find the log.
             const oldMintEvents = await web3.eth.getPastLogs({
                 address: gatewayAddress,
                 fromBlock,
@@ -535,7 +535,9 @@ export const findTransactionBySigHash = async (
                 ] as string[],
             });
             if (oldMintEvents.length) {
-                return oldMintEvents[0].transactionHash;
+                return {
+                    transactionHash: oldMintEvents[0].transactionHash,
+                };
             }
         }
 
@@ -546,7 +548,9 @@ export const findTransactionBySigHash = async (
             topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
         });
         if (newMintEvents.length) {
-            return newMintEvents[0].transactionHash;
+            return {
+                transactionHash: newMintEvents[0].transactionHash,
+            };
         }
     } catch (error) {
         console.warn(error);
@@ -557,7 +561,7 @@ export const findTransactionBySigHash = async (
         // The sigHash has already been used, but no transaction was found.
         // Possible due to a restriction on the number logs that can be fetched,
         // which is the case on BSC.
-        return "";
+        return { transactionHash: "" };
     }
 
     return;
@@ -651,7 +655,7 @@ export const submitToEthereum = async (
         tx.once(
             "confirmation",
             (_confirmations: number, receipt: TransactionReceipt) => {
-                innerResolve(receipt.transactionHash);
+                innerResolve({ transactionHash: receipt.transactionHash });
             },
         ).catch((error: Error) => {
             try {

@@ -55,7 +55,9 @@ export const EthereumConfigMap = {
     [RenNetwork.DevnetVDot3]: renDevnetVDot3,
 };
 
-export type EthTransaction = string | null;
+export interface EthTransaction {
+    transactionHash: string;
+}
 export type EthAddress = string;
 
 const isEthereumConfig = (
@@ -107,6 +109,7 @@ export class EthereumBaseChain
     public chain = EthereumBaseChain.chain;
     public name = EthereumBaseChain.chain;
     public legacyName: MintChain["legacyName"] = "Eth";
+    public logRequestLimit: number | undefined = undefined;
 
     public static utils = {
         resolveChainNetwork: resolveNetwork,
@@ -123,7 +126,7 @@ export class EthereumBaseChain
             }/address/${address}`,
 
         transactionExplorerLink: (
-            transaction: EthTransaction,
+            transaction: EthTransaction | string,
             network?: NetworkInput,
         ): string =>
             `${
@@ -131,7 +134,11 @@ export class EthereumBaseChain
                     EthereumBaseChain.utils.resolveChainNetwork(network) ||
                     renMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.transactionHash
+            }`,
     };
 
     public utils = utilsWithChainNetwork(
@@ -268,10 +275,12 @@ export class EthereumBaseChain
     };
 
     transactionID = (transaction: EthTransaction): string => {
-        return transaction || "";
+        return transaction.transactionHash;
     };
 
-    transactionFromID = (txid: string | Buffer, _txindex: string) => Ox(txid);
+    transactionFromID = (txid: string | Buffer, _txindex: string) => ({
+        transactionHash: Ox(txid),
+    });
 
     transactionConfidence = async (
         transaction: EthTransaction,
@@ -281,15 +290,12 @@ export class EthereumBaseChain
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
-        if (transaction === null) {
-            throw new Error(
-                `Unable to fetch transaction confidence, transaction hash: ${transaction}`,
-            );
-        }
         const currentBlock = new BigNumber(
             (await this.web3.eth.getBlockNumber()).toString(),
         );
-        const receipt = await this.web3.eth.getTransactionReceipt(transaction);
+        const receipt = await this.web3.eth.getTransactionReceipt(
+            transaction.transactionHash,
+        );
         let current = 0;
         if (receipt.blockNumber) {
             const transactionBlock = new BigNumber(
@@ -331,7 +337,7 @@ export class EthereumBaseChain
         if (existingTransaction) {
             await manualPromiEvent(
                 this.web3,
-                existingTransaction,
+                existingTransaction.transactionHash,
                 eventEmitter,
             );
             return existingTransaction;
@@ -361,6 +367,7 @@ export class EthereumBaseChain
             asset,
             nHash,
             sigHash,
+            this.logRequestLimit,
         );
     };
 
@@ -460,19 +467,23 @@ export class EthereumBaseChain
                 if (last) {
                     forwardWeb3Events(tx, eventEmitter);
                 }
-                transaction = await new Promise<string>((resolve, reject) =>
-                    tx.on("transactionHash", resolve).catch((error: Error) => {
-                        try {
-                            if (ignorePromiEventError(error)) {
-                                logger.error(extractError(error));
-                                return;
-                            }
-                        } catch (_error) {
-                            /* Ignore _error */
-                        }
-                        reject(error);
-                    }),
+                const transactionHash = await new Promise<string>(
+                    (resolve, reject) =>
+                        tx
+                            .on("transactionHash", resolve)
+                            .catch((error: Error) => {
+                                try {
+                                    if (ignorePromiEventError(error)) {
+                                        logger.error(extractError(error));
+                                        return;
+                                    }
+                                } catch (_error) {
+                                    /* Ignore _error */
+                                }
+                                reject(error);
+                            }),
                 );
+                transaction = { transactionHash };
                 logger.debug("Transaction hash", transaction);
             }
         }
@@ -481,7 +492,12 @@ export class EthereumBaseChain
             throw new Error(`Unable to find burn from provided parameters.`);
         }
 
-        return extractBurnDetails(this.web3, transaction, logger, timeout);
+        return extractBurnDetails(
+            this.web3,
+            transaction.transactionHash,
+            logger,
+            timeout,
+        );
     };
 
     getFees = async (
@@ -588,16 +604,19 @@ export class EthereumBaseChain
     };
 
     transactionRPCFormat = (transaction: EthTransaction, _v2?: boolean) => {
-        assertType<string | null>("string | null", { transaction });
+        const { transactionHash } = transaction;
+        assertType<string | null>("string | null", {
+            transaction: transactionHash,
+        });
 
-        if (transaction === null) {
+        if (transactionHash === null) {
             throw new Error(
-                `Unable to encode transaction, transaction hash: ${transaction}`,
+                `Unable to encode transaction, transaction hash: ${transactionHash}`,
             );
         }
 
         return {
-            txid: fromHex(transaction),
+            txid: fromHex(transactionHash),
             txindex: "0",
         };
     };

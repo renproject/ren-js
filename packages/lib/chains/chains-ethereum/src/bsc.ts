@@ -84,6 +84,7 @@ export class BinanceSmartChainClass extends EthereumClass {
     public chain = BinanceSmartChainClass.chain;
     public name = BinanceSmartChainClass.chain;
     public legacyName = undefined;
+    public logRequestLimit = 5000;
 
     public static utils = {
         resolveChainNetwork: resolveBSCNetwork,
@@ -100,7 +101,7 @@ export class BinanceSmartChainClass extends EthereumClass {
             }/address/${address}`,
 
         transactionExplorerLink: (
-            transaction: EthTransaction,
+            transaction: EthTransaction | string,
             network?: NetworkInput,
         ): string =>
             `${
@@ -108,7 +109,11 @@ export class BinanceSmartChainClass extends EthereumClass {
                     BinanceSmartChain.utils.resolveChainNetwork(network) ||
                     renBscMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.transactionHash
+            }`,
     };
 
     public utils = utilsWithChainNetwork(

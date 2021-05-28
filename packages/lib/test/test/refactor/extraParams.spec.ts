@@ -8,8 +8,9 @@ import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
+import { provider } from "web3-providers";
 
 chai.should();
 
@@ -38,7 +39,12 @@ describe("Extra params", () => {
         const renJS = new RenJS("testnet", { logLevel });
 
         const infuraURL = `${network.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
+        const provider: provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        }) as any;
 
         let contractAddress: string;
         switch (network.networkID) {

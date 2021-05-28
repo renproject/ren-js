@@ -10,52 +10,51 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid, findTransactionBySigHash } from "./utils";
+import { addressIsValid } from "./utils";
 
-export const renBscTestnet: EthereumConfig = {
-    name: "BSC Testnet",
-    chain: "bscTestnet",
+export const renFantomTestnet: EthereumConfig = {
+    name: "Fantom Testnet",
+    chain: "fantomTestnet",
     isTestnet: true,
-    chainLabel: "BSC Testnet",
-    networkID: 97,
-    infura: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    // etherscan: "https://explorer.binance.org/smart-testnet",
-    etherscan: "https://testnet.bscscan.com",
+    chainLabel: "Fantom Testnet",
+    networkID: 0xfa2,
+    infura: "https://rpc.testnet.fantom.network/",
+    etherscan: "https://testnet.ftmscan.com",
     addresses: {
-        GatewayRegistry: "0x838F881876f53a772D2F8E2f8aa2e4a996431495",
-        BasicAdapter: "0x7de1253A8da6620351ec477b38BdC6a55FCd0f85",
+        GatewayRegistry: "0x1207765B53697a046DCF4AE95bd4dE99ef9D3D3C",
+        BasicAdapter: "0x07deB3917d234f787AEd86E0c88E829277D4a33b",
     },
 };
 
-export const renBscDevnet: EthereumConfig = {
-    ...renBscTestnet,
+export const renFantomDevnet: EthereumConfig = {
+    ...renFantomTestnet,
     addresses: {
-        GatewayRegistry: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",
-        BasicAdapter: "0x105435a9b0f375B179e5e43A16228C04F01Fb2ee",
+        GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
+        BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
 };
 
-export const renBscMainnet: EthereumConfig = {
-    name: "BSC Mainnet",
-    chain: "bscMainnet",
+export const renFantomMainnet: EthereumConfig = {
+    name: "Fantom Mainnet",
+    chain: "fantomMainnet",
     isTestnet: false,
-    chainLabel: "BSC Mainnet",
-    networkID: 56,
-    infura: "https://bsc-dataseed.binance.org/",
-    etherscan: "https://bscscan.com",
+    chainLabel: "Fantom Mainnet",
+    networkID: 250,
+    infura: "https://rpcapi.fantom.network/",
+    etherscan: "https://ftmscan.com",
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
 };
 
-export const BscConfigMap = {
-    [RenNetwork.MainnetVDot3]: renBscMainnet,
-    [RenNetwork.TestnetVDot3]: renBscTestnet,
-    [RenNetwork.DevnetVDot3]: renBscDevnet,
+export const FantomConfigMap = {
+    [RenNetwork.TestnetVDot3]: renFantomTestnet,
+    [RenNetwork.MainnetVDot3]: renFantomMainnet,
+    [RenNetwork.DevnetVDot3]: renFantomDevnet,
 };
 
-const resolveBSCNetwork = (
+const resolveFantomNetwork = (
     renNetwork?:
         | RenNetwork
         | RenNetworkString
@@ -63,7 +62,7 @@ const resolveBSCNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return BscConfigMap[RenNetwork.MainnetVDot3];
+        return FantomConfigMap[RenNetwork.MainnetVDot3];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -73,21 +72,20 @@ const resolveBSCNetwork = (
         );
         return details.isTestnet
             ? details.name === RenNetwork.DevnetVDot3
-                ? renBscDevnet
-                : renBscTestnet
-            : renBscMainnet;
+                ? renFantomDevnet
+                : renFantomTestnet
+            : renFantomMainnet;
     }
 };
 
-export class BinanceSmartChainClass extends EthereumClass {
-    public static chain = "BinanceSmartChain";
-    public chain = BinanceSmartChainClass.chain;
-    public name = BinanceSmartChainClass.chain;
+export class FantomClass extends EthereumClass {
+    public static chain = "Fantom";
+    public chain = FantomClass.chain;
+    public name = FantomClass.chain;
     public legacyName = undefined;
-    public logRequestLimit = 5000;
 
     public static utils = {
-        resolveChainNetwork: resolveBSCNetwork,
+        resolveChainNetwork: resolveFantomNetwork,
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
@@ -95,8 +93,8 @@ export class BinanceSmartChainClass extends EthereumClass {
         ): string =>
             `${
                 (
-                    BinanceSmartChain.utils.resolveChainNetwork(network) ||
-                    renBscMainnet
+                    FantomClass.utils.resolveChainNetwork(network) ||
+                    renFantomMainnet
                 ).etherscan
             }/address/${address}`,
 
@@ -105,15 +103,13 @@ export class BinanceSmartChainClass extends EthereumClass {
             network?: NetworkInput,
         ): string =>
             `${
-                (
-                    BinanceSmartChain.utils.resolveChainNetwork(network) ||
-                    renBscMainnet
-                ).etherscan
+                (Fantom.utils.resolveChainNetwork(network) || renFantomMainnet)
+                    .etherscan
             }/tx/${transaction}`,
     };
 
     public utils = utilsWithChainNetwork(
-        BinanceSmartChainClass.utils,
+        FantomClass.utils,
         () => this.renNetworkDetails,
     );
 
@@ -127,7 +123,7 @@ export class BinanceSmartChainClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolveBSCNetwork(renNetwork));
+        super(web3Provider, resolveFantomNetwork(renNetwork));
     }
 
     initialize = (
@@ -135,7 +131,7 @@ export class BinanceSmartChainClass extends EthereumClass {
     ) => {
         this.renNetworkDetails =
             this.renNetworkDetails ||
-            BscConfigMap[getRenNetworkDetails(renNetwork).name];
+            FantomConfigMap[getRenNetworkDetails(renNetwork).name];
 
         if (!this.renNetworkDetails) {
             throw new Error(
@@ -150,6 +146,6 @@ export class BinanceSmartChainClass extends EthereumClass {
     };
 }
 
-export type BinanceSmartChain = BinanceSmartChainClass;
+export type Fantom = FantomClass;
 // @dev Removes any static fields, except `utils`.
-export const BinanceSmartChain = Callable(BinanceSmartChainClass);
+export const Fantom = Callable(FantomClass);

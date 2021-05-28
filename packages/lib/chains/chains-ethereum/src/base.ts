@@ -69,12 +69,15 @@ const isEthereumConfig = (
 };
 
 const resolveNetwork = (
-    renNetwork:
+    renNetwork?:
         | RenNetwork
         | RenNetworkString
         | RenNetworkDetails
         | EthereumConfig,
 ): EthereumConfig => {
+    if (!renNetwork) {
+        return EthereumConfigMap[RenNetwork.Mainnet];
+    }
     let networkConfig: EthereumConfig | undefined;
     if (renNetwork && isEthereumConfig(renNetwork)) {
         networkConfig = renNetwork;
@@ -104,17 +107,14 @@ export class EthereumBaseChain
     public chain = EthereumBaseChain.chain;
     public name = EthereumBaseChain.chain;
     public legacyName: MintChain["legacyName"] = "Eth";
+    public logRequestLimit: number | undefined = undefined;
 
     public static utils = {
         resolveChainNetwork: resolveNetwork,
         addressIsValid,
         addressExplorerLink: (
             address: EthAddress,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | NetworkInput = renMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -125,11 +125,7 @@ export class EthereumBaseChain
 
         transactionExplorerLink: (
             transaction: EthTransaction,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | NetworkInput = renMainnet,
+            network?: NetworkInput,
         ): string =>
             `${
                 (
@@ -366,6 +362,7 @@ export class EthereumBaseChain
             asset,
             nHash,
             sigHash,
+            this.logRequestLimit,
         );
     };
 

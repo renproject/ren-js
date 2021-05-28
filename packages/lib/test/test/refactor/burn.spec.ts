@@ -8,11 +8,12 @@ import BigNumber from "bignumber.js";
 import chai from "chai";
 import { blue, red } from "chalk";
 import CryptoAccount from "send-crypto";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
+import { provider } from "web3-providers";
 
 chai.should();
 
@@ -32,7 +33,12 @@ describe("Refactor - Burning", () => {
 
         // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
         const infuraURL = ethNetwork.infura; // renBscTestnet.infura
-        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
+        const provider: provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        }) as any;
 
         // Recipient.
         const asset = "BTC";
@@ -142,7 +148,12 @@ describe("Refactor - Burning", () => {
         this.timeout(100000000000);
 
         const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        const provider = new HDWalletProvider(MNEMONIC, infuraURL, 0, 10);
+        const provider: provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        }) as any;
 
         const asset = "BTC";
 

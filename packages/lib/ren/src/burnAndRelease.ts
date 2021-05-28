@@ -26,6 +26,7 @@ import {
     renVMHashToBase64,
     retryNTimes,
     SECONDS,
+    sleep,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
@@ -298,6 +299,22 @@ export class BurnAndRelease<
             );
 
             this.status = BurnAndReleaseStatus.Burned;
+
+            let current = 0,
+                target = 1;
+            while (current < target) {
+                try {
+                    ({
+                        current,
+                        target,
+                    } = await this.params.from.transactionConfidence(
+                        this.burnDetails.transaction,
+                    ));
+                } catch (error) {
+                    console.error(error);
+                }
+                await sleep(10 * SECONDS);
+            }
 
             return this;
         })()

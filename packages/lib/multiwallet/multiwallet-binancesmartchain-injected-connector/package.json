@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-binancesmartchain-injected-connector",
-    "version": "2.2.3",
+    "version": "2.2.4-alpha.3",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,8 +42,8 @@
     },
     "dependencies": {
         "@renproject/interfaces": "^2.2.3",
-        "@renproject/multiwallet-abstract-ethereum-connector": "^2.2.3",
-        "@renproject/multiwallet-ethereum-injected-connector": "^2.2.3",
+        "@renproject/multiwallet-abstract-ethereum-connector": "^2.2.4-alpha.3",
+        "@renproject/multiwallet-ethereum-injected-connector": "^2.2.4-alpha.3",
         "@types/node": ">=10"
     },
     "resolutions": {

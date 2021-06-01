@@ -91,6 +91,17 @@ const performBurn = async <X, Y>(
                     type: "CONFIRMATION",
                     data,
                 });
+                if (target <= confs) {
+                    const data: ConfirmedBurnTransaction<X> = {
+                        ...{ ...extractTx(burn), ...context.tx.transaction },
+                        sourceTxConfs: target,
+                        sourceTxConfTarget: target,
+                    };
+                    callback({
+                        type: "CONFIRMED",
+                        data,
+                    });
+                }
             })
             .catch((e) => {
                 throw e;

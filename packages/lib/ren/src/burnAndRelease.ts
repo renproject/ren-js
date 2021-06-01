@@ -310,6 +310,20 @@ export class BurnAndRelease<
                     } = await this.params.from.transactionConfidence(
                         this.burnDetails.transaction,
                     ));
+                    if (
+                        this._state.targetConfirmations &&
+                        target < this._state.targetConfirmations
+                    ) {
+                        target = this._state.targetConfirmations;
+                    }
+
+                    // Eth based chains only emits until 24 confs;
+                    // keep emitting so that we can update the UI
+                    promiEvent.emit("confirmation", current, target);
+                    // Exit early so that we don't have to sleep if confs are met
+                    if (current >= target) {
+                        break;
+                    }
                 } catch (error) {
                     console.error(error);
                 }

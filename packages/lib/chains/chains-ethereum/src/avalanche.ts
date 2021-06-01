@@ -18,8 +18,8 @@ export const renAvalancheTestnet: EthereumConfig = {
     isTestnet: true,
     chainLabel: "Avalanche Testnet",
     networkID: 80001,
-    infura: "https://rpc-mumbai.maticvigil.com/",
-    etherscan: "https://testnet.ftmscan.com",
+    infura: "https://api.avax-test.network/ext/bc/C/rpc",
+    etherscan: "https://cchain.explorer.avax-test.network/",
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
         BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
@@ -32,8 +32,8 @@ export const renAvalancheMainnet: EthereumConfig = {
     isTestnet: false,
     chainLabel: "Avalanche Mainnet",
     networkID: 137,
-    infura: "https://rpc-mainnet.maticvigil.com/",
-    etherscan: "https://explorer.matic.network",
+    infura: "https://api.avax.network/ext/bc/C/rpc",
+    etherscan: "https://cchain.explorer.avax.network/",
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",

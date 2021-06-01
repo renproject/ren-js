@@ -74,7 +74,7 @@ export const renTestnet: SolNetworkConfig = {
     endpoint: "https://testnet.solana.com",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
-        GatewayRegistry: "3cvX9BpLMJsFTuEWSQBaTcd4TXgAmefqgNSJbufpyWyz",
+        GatewayRegistry: "5adtAdnnEWVBXyxW1osiDDAHF9NPkNFVvezU4RWyWukc",
     },
     genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };

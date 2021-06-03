@@ -24,6 +24,7 @@ export class DigiByteClass extends BitcoinClass {
             case "mainnet":
                 // prettier-ignore
                 return this
+                    .withAPI(Insight("https://multichain-web-proxy.herokuapp.com/digibyte-mainnet"))
                     .withAPI(Insight("https://digiexplorer.info/api"))
                     .withAPI(Insight("https://insight.digibyte.host/api"))
             case "testnet":

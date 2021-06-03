@@ -303,7 +303,7 @@ const resolveDeposit = <X extends { confirmations?: string }>(
         detectedAt: new Date().getTime(),
     };
 
-    if (!deposit._state.queryTxResult) {
+    if (!deposit._state.queryTxResult || !deposit._state.queryTxResult.out) {
         return newDepositState;
     } else {
         if (deposit._state.queryTxResult.out?.revert) {
@@ -312,10 +312,12 @@ const resolveDeposit = <X extends { confirmations?: string }>(
             );
             return newDepositState;
         } else {
+            // only accepted if the queryTxResult has an "out" field
             const acceptedData: AcceptedGatewayTransaction<X> = {
                 ...newDepositState,
-                // If it is accepted, take whatever the target is for simplicity
-                sourceTxConfTarget: newDepositState.sourceTxConfs,
+                sourceTxConfTarget:
+                    deposit._state.targetConfirmations ??
+                    newDepositState.sourceTxConfs,
                 renResponse: hexify(
                     deposit._state.queryTxResult || {},
                 ) as LockAndMintTransaction,

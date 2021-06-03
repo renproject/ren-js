@@ -13,7 +13,7 @@ import { extractError, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
-import HDWalletProvider from "@truffle/hdwallet-provider";
+import HDWalletProvider from "truffle-hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
@@ -43,9 +43,9 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
-        const asset = "LUNA" as string;
-        const from = Chains.Terra();
-        const ToClass = Chains.Polygon;
+        const asset = "DGB" as string;
+        const from = Chains.DigiByte();
+        const ToClass = Chains.BinanceSmartChain;
 
         const ethNetwork =
             ToClass === Chains.BinanceSmartChain
@@ -71,12 +71,12 @@ describe("Refactor: mint", () => {
             ToClass === Chains.Ethereum
                 ? `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}` // renBscDevnet.infura
                 : ethNetwork.infura;
-        const provider: provider = new HDWalletProvider({
-            mnemonic: MNEMONIC || "",
-            providerOrUrl: infuraURL,
-            addressIndex: 0,
-            numberOfAddresses: 10,
-        }) as any;
+        const provider: provider = new HDWalletProvider(
+            MNEMONIC || "",
+            infuraURL,
+            0,
+            10,
+        ) as any;
         const web3 = new Web3(provider);
         const ethAddress = (await web3.eth.getAccounts())[0];
         const ethBalance = web3.utils.fromWei(

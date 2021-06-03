@@ -26,6 +26,7 @@ import {
     renVMHashToBase64,
     retryNTimes,
     SECONDS,
+    sleep,
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
@@ -298,6 +299,36 @@ export class BurnAndRelease<
             );
 
             this.status = BurnAndReleaseStatus.Burned;
+
+            let current = 0,
+                target = 1;
+            while (current < target) {
+                try {
+                    ({
+                        current,
+                        target,
+                    } = await this.params.from.transactionConfidence(
+                        this.burnDetails.transaction,
+                    ));
+                    if (
+                        this._state.targetConfirmations &&
+                        target < this._state.targetConfirmations
+                    ) {
+                        target = this._state.targetConfirmations;
+                    }
+
+                    // Eth based chains only emits until 24 confs;
+                    // keep emitting so that we can update the UI
+                    promiEvent.emit("confirmation", current, target);
+                    // Exit early so that we don't have to sleep if confs are met
+                    if (current >= target) {
+                        break;
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+                await sleep(10 * SECONDS);
+            }
 
             return this;
         })()

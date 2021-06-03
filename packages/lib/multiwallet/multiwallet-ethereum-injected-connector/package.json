@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-ethereum-injected-connector",
-    "version": "2.2.3",
+    "version": "2.3.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -41,8 +41,8 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/multiwallet-abstract-ethereum-connector": "^2.2.3",
-        "@renproject/multiwallet-base-connector": "^2.2.3",
+        "@renproject/multiwallet-abstract-ethereum-connector": "^2.3.0",
+        "@renproject/multiwallet-base-connector": "^2.3.0",
         "@types/node": ">=10"
     },
     "resolutions": {

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren-tx",
-    "version": "2.2.3",
+    "version": "2.3.0",
     "description": "XState Statemachines for tracking RenVM transactions reactively",
     "repository": {
         "type": "git",
@@ -46,9 +46,9 @@
         "bignumber.js": "^9.0.1"
     },
     "devDependencies": {
-        "@renproject/interfaces": "^2.2.3",
-        "@renproject/ren": "^2.2.3",
-        "@renproject/rpc": "^2.2.3",
+        "@renproject/interfaces": "^2.3.0",
+        "@renproject/ren": "^2.3.0",
+        "@renproject/rpc": "^2.3.0",
         "dotenv": "^8.2.0",
         "xstate": "^4.17.0"
     },

@@ -11,6 +11,7 @@ import {
     OverwritableLockAndMintParams,
     SimpleLogger,
     OverwritableBurnAndReleaseParams,
+    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import { keccak256, sleep } from "@renproject/utils";
 import { AbstractRenVMProvider } from "@renproject/rpc";
@@ -71,13 +72,18 @@ interface SolOptions {
 
 export class Solana
     implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
-    public static chain = "Solana";
-    name: "Solana" = "Solana";
+    public static chain = "Solana" as const;
+    public chain = Solana.chain;
+    public name = Solana.chain;
 
-    renNetworkDetails: SolNetworkConfig;
+    public renNetworkDetails: SolNetworkConfig;
     // Flag to prevent prompting for token account creation multiple times
     private _creatingTokenAccount: boolean = false;
     private _logger: Logger = new SimpleLogger();
+
+    public burnPayloadConfig: BurnPayloadConfig = {
+        bytes: true,
+    };
 
     constructor(
         readonly provider: SolanaProvider,

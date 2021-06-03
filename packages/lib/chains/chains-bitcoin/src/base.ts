@@ -6,6 +6,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
@@ -329,7 +330,7 @@ export abstract class BitcoinBaseChain
 
     // Methods for initializing mints and burns ////////////////////////////////
 
-    getBurnPayload: (() => string) | undefined;
+    private burnPayloadGetter: ((bytes?: boolean) => string) | undefined;
 
     /**
      * When burning, you can call `Bitcoin.Address("...")` to make the address
@@ -337,21 +338,24 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    Address = (address: string, bytes?: boolean): this => {
+    Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });
 
-        if (bytes) {
-            this.getBurnPayload = () =>
-                this.addressStringToBytes(address).toString("hex");
-        } else {
-            this.getBurnPayload = () => address;
-        }
+        this.burnPayloadGetter = (bytes?: boolean) =>
+            bytes
+                ? this.addressStringToBytes(address).toString("hex")
+                : address;
+
         return this;
     };
 
-    burnPayload? = () => {
-        return this.getBurnPayload ? this.getBurnPayload() : undefined;
+    burnPayload? = (burnPayloadConfig?: BurnPayloadConfig) => {
+        return this.burnPayloadGetter
+            ? this.burnPayloadGetter(
+                  burnPayloadConfig && burnPayloadConfig.bytes,
+              )
+            : undefined;
     };
 
     toSats = (value: BigNumber | string | number): string =>

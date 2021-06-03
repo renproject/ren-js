@@ -173,7 +173,10 @@ export class BurnAndRelease<
         }
 
         const burnPayload =
-            this.params.to.burnPayload && (await this.params.to.burnPayload());
+            this.params.to.burnPayload &&
+            (await this.params.to.burnPayload(
+                this.params.from.burnPayloadConfig,
+            ));
 
         const overwriteParams =
             this.params.from &&

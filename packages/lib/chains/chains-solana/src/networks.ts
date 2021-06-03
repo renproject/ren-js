@@ -58,8 +58,8 @@ export const renMainnet: SolNetworkConfig = {
     chain: "mainnet",
     isTestnet: false,
     chainLabel: "Mainnet",
-    chainExplorer: "https://explorer.solana.com/",
     endpoint: "https://testnet.solana.com",
+    chainExplorer: "https://explorer.solana.com/",
     addresses: {
         GatewayRegistry: "",
     },

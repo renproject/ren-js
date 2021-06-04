@@ -180,7 +180,7 @@ export class Solana
                 this.renNetworkDetails.addresses.GatewayRegistry,
             );
             const stateKey = await PublicKey.findProgramAddress(
-                [new Uint8Array(Buffer.from("GatewayRegistryState"))],
+                [Buffer.from("GatewayRegistryState")],
                 pubk,
             );
 
@@ -378,7 +378,7 @@ export class Solana
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.1"))],
+            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
             program,
         );
         const s_hash = keccak256(Buffer.from(`${asset}/toSolana`));

@@ -71,7 +71,7 @@ const BasicBurnApp = ({ account, provider, destinationAddress, amount }) => {
             }).Account({
                 amount,
             }),
-            to: Bitcoin().Address(destinationAddress, true),
+            to: Bitcoin().Address(destinationAddress),
         }),
         [provider, account, amount, destinationAddress],
     );
@@ -90,16 +90,10 @@ const CustomDeposit = (props: DepositProps) => (
     />
 );
 
-const BasicMintApp = ({ account, provider }) => {
+const BasicMintApp = ({ sdk, account, provider }) => {
     const parameters = useMemo(
         () => ({
-            sdk: new RenJS(
-                RenNetwork.DevnetVDot3, //localProvider,
-                {
-                    logLevel: "debug",
-                    //loadCompletedDeposits: true,
-                },
-            ),
+            sdk,
             mintParams: {
                 sourceAsset: "BTC",
                 network: RenNetwork.TestnetVDot3,
@@ -107,7 +101,7 @@ const BasicMintApp = ({ account, provider }) => {
             },
 
             debug: true,
-            to: new Solana(provider, RenNetwork.DevnetVDot3, {
+            to: new Solana(provider, sdk, RenNetwork.DevnetVDot3, {
                 logger: console,
             }),
             from: Bitcoin(),
@@ -171,6 +165,8 @@ const App = (): JSX.Element => {
         [setAsset],
     );
     const setClosed = useCallback(() => setOpen(false), [setOpen]);
+
+    const sdk = useMemo(() => new RenJS(RenNetwork.DevnetVDot3));
 
     const [balance, setBalance] = useState<string>();
     useEffect(() => {
@@ -245,6 +241,7 @@ const App = (): JSX.Element => {
                             Connected to {wallets.enabledChains[chain].account}
                         </Typography>
                         <BasicMintApp
+                            sdk={sdk}
                             provider={wallets.enabledChains[chain].provider}
                             account={wallets.enabledChains[chain].account}
                         />

@@ -14,6 +14,7 @@ export interface SolNetworkConfig {
     addresses: {
         GatewayRegistry: string;
     };
+    // used for identifying the network (similar to chainID in eth)
     genesisHash: string;
 }
 
@@ -42,8 +43,10 @@ export const resolveNetwork = (
     }
 
     switch (networkString) {
+        case RenNetwork.MainnetVDot3:
         case RenNetwork.Mainnet:
             return renMainnet;
+        case RenNetwork.TestnetVDot3:
         case RenNetwork.Testnet:
             return renTestnet;
         case RenNetwork.DevnetVDot3:

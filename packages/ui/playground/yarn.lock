@@ -1214,6 +1214,11 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
+"@project-serum/associated-token@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@project-serum/associated-token/-/associated-token-0.1.1.tgz#9acf745e84dad21e2ea26e06694704b9d698e532"
+  integrity sha512-Zc1wdqragbDiyBVagzIbIsMe37P7fgkArWZPIj+jJjDIoznlmYMK6ASU5mtdDZrPJ7sNABF/lzZ3+jvCCcU+oA==
+
 "@solana/web3.js@1.12.0":
   version "1.12.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.12.0.tgz#c2ecf4b1c677a8881c698871537ae7bfc7cae7b6"

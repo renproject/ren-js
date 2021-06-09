@@ -16,7 +16,7 @@ export const multiwalletOptions: WalletPickerConfig<unknown, string> = {
                 connector: new SolanaConnector({
                     debug: true,
                     providerURL: "https://www.sollet.io",
-                    network: RenNetwork.DevnetVDot3,
+                    network: RenNetwork.TestnetVDot3,
                 }),
             },
         ],

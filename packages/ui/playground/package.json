@@ -8,6 +8,7 @@
         "build": "parcel build index.html"
     },
     "dependencies": {
+        "@project-serum/associated-token": "^0.1.1",
         "@solana/web3.js": "1.12.0",
         "@truffle/hdwallet-provider": "^1.4.0",
         "@xstate/inspect": "^0.4.1",
@@ -15,7 +16,9 @@
         "tweetnacl": "^1.0.3",
         "ws": "^7.3.1"
     },
-    "browserslist": ["last 1 Chrome versions"],
+    "browserslist": [
+        "last 1 Chrome versions"
+    ],
     "alias": {
         "react": "../../../node_modules/react",
         "react-dom": "../../../node_modules/react-dom/profiling",

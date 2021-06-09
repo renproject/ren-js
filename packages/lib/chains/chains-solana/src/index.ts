@@ -13,8 +13,7 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
 } from "@renproject/interfaces";
-import { keccak256, sleep } from "@renproject/utils";
-import { AbstractRenVMProvider } from "@renproject/rpc";
+import { keccak256 } from "@renproject/utils";
 
 import {
     Connection,
@@ -77,8 +76,6 @@ export class Solana
     public name = Solana.chain;
 
     public renNetworkDetails: SolNetworkConfig;
-    // Flag to prevent prompting for token account creation multiple times
-    private _creatingTokenAccount: boolean = false;
     private _logger: Logger = new SimpleLogger();
 
     public burnPayloadConfig: BurnPayloadConfig = {
@@ -87,7 +84,6 @@ export class Solana
 
     constructor(
         readonly provider: SolanaProvider,
-        readonly renVM: AbstractRenVMProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
@@ -95,6 +91,9 @@ export class Solana
             | SolNetworkConfig,
         options?: SolOptions,
     ) {
+        if (!this.provider.connection) {
+            throw new Error("No connection to provider");
+        }
         this.initialize = this.initialize.bind(this);
         this.waitForInitialization = this.waitForInitialization.bind(this);
         // Default to mainnet if not specified
@@ -155,8 +154,7 @@ export class Solana
 
     gatewayRegistryData?: GatewayRegistryState;
 
-    _initialized?: boolean;
-    _initializationError?: Error;
+    _initialized?: Promise<true>;
     /**
      * `initialize` allows RenJS to pass in parameters after the user has
      * initialized the Chain. This allows the user to pass in network
@@ -172,50 +170,41 @@ export class Solana
     initialize = async (
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
     ) => {
-        try {
-            this.renNetwork = this.utils.resolveChainNetwork(network);
+        this.renNetwork = this.utils.resolveChainNetwork(network);
 
-            // Load registry state to find programs
-            const pubk = new PublicKey(
-                this.renNetworkDetails.addresses.GatewayRegistry,
-            );
-            const stateKey = await PublicKey.findProgramAddress(
-                [Buffer.from("GatewayRegistryState")],
-                pubk,
-            );
+        // Load registry state to find programs
+        const pubk = new PublicKey(
+            this.renNetworkDetails.addresses.GatewayRegistry,
+        );
+        const stateKey = await PublicKey.findProgramAddress(
+            [Buffer.from("GatewayRegistryState")],
+            pubk,
+        );
 
-            const gatewayData = await this.provider.connection.getAccountInfo(
-                stateKey[0],
-            );
+        const gatewayData = await this.provider.connection.getAccountInfo(
+            stateKey[0],
+        );
 
-            if (!gatewayData) {
-                throw new Error("Failed to load program state");
-            }
-            // Persist registry data
-            // TODO: Consider if we want to handle the edge case of programs being
-            // updated during the lifecyle of the chain pbject
-            this.gatewayRegistryData = GatewayRegistryLayout.decode(
-                gatewayData.data,
-            );
-
-            return this;
-        } catch (error) {
-            this._initializationError = error;
-            throw this._initializationError;
+        if (!gatewayData) {
+            throw new Error("Failed to load program state");
         }
+        // Persist registry data
+        // TODO: Consider if we want to handle the edge case of programs being
+        // updated during the lifecyle of the chain pbject
+        this.gatewayRegistryData = GatewayRegistryLayout.decode(
+            gatewayData.data,
+        );
+
+        return this;
     };
 
     async waitForInitialization() {
         if (this._initialized === undefined) {
-            return this.initialize(this.renNetworkDetails.name);
+            this._initialized = this.initialize(
+                this.renNetworkDetails.name,
+            ).then(() => true);
         }
-        while (this._initialized === false) {
-            if (this._initializationError) {
-                throw this._initializationError;
-            }
-            await sleep(100);
-        }
-        return this;
+        return this._initialized;
     }
 
     withProvider = (provider: any) => {
@@ -279,26 +268,10 @@ export class Solana
             transaction,
         );
 
-        let target = 0;
-        if (this.renVM.getConfirmationTarget) {
-            // Assumes that all confirmations for mints + burns will be the same
-            // for all assets
-            const fetchedTarget = await this.renVM.getConfirmationTarget(
-                "BTC/fromSolana",
-                {
-                    name: this.renNetworkDetails?.name || "",
-                },
-            );
-
-            if (fetchedTarget) {
-                target = fetchedTarget;
-            }
-        }
-
         const currentSlot = await this.provider.connection.getSlot();
         return {
             current: currentSlot - (tx?.slot ?? 0),
-            target,
+            target: this.renNetworkDetails.isTestnet ? 1 : 2,
         };
     };
 
@@ -623,6 +596,11 @@ export class Solana
         );
     }
 
+    /*
+     * Generates the mint parameters.
+     * NOTE: We need to ensure that the destination address is initialized,
+     * so be sure to call createAssociatedTokenAccount(asset) first
+     */
     getMintParams = async (asset: string) => {
         await this.waitForInitialization();
         if (!this.renNetworkDetails || !this.provider) {
@@ -633,6 +611,21 @@ export class Solana
 
         const contract = this.resolveTokenGatewayContract(asset);
         const program = new PublicKey(contract);
+
+        // check that the gpubkey matches
+        const gatewayAccountId = await PublicKey.findProgramAddress(
+            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
+            program,
+        );
+
+        const gatewayInfo = await this.provider.connection.getAccountInfo(
+            gatewayAccountId[0],
+        );
+
+        if (!gatewayInfo) throw new Error("incorrect gateway program address");
+
+        const gatewayState = GatewayLayout.decode(gatewayInfo.data);
+        console.log(gatewayState.renvm_authority);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 
@@ -645,41 +638,6 @@ export class Solana
             this.provider.wallet.publicKey,
             tokenMintId[0],
         );
-        const tokenAccount = await this.provider.connection.getAccountInfo(
-            destination,
-        );
-        if (
-            !this._creatingTokenAccount &&
-            (!tokenAccount || !tokenAccount.data)
-        ) {
-            this._creatingTokenAccount = true;
-            const createTxInstruction = await createAssociatedTokenAccount(
-                this.provider.wallet.publicKey,
-                this.provider.wallet.publicKey,
-                tokenMintId[0],
-            );
-            const createTx = new Transaction();
-            createTx.add(createTxInstruction);
-            createTx.feePayer = this.provider.wallet.publicKey;
-            createTx.recentBlockhash = (
-                await this.provider.connection.getRecentBlockhash()
-            ).blockhash;
-            const signedTx = await this.provider.wallet.signTransaction(
-                createTx,
-            );
-
-            // Only wait until solana has seen the tx
-            const confirmOpts: ConfirmOptions = {
-                commitment: "confirmed",
-            };
-
-            await sendAndConfirmRawTransaction(
-                this.provider.connection,
-                signedTx.serialize(),
-                confirmOpts,
-            );
-            this._creatingTokenAccount = false;
-        }
 
         const calls: OverwritableLockAndMintParams = {
             contractCalls: [
@@ -817,7 +775,7 @@ export class Solana
         );
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.1"))],
+            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
             program,
         );
 
@@ -911,4 +869,51 @@ export class Solana
         };
         return x;
     };
+
+    /*
+     * Solana specific utility for creating a token account for a given user
+     */
+    async createAssociatedTokenAccount(asset: string) {
+        await this.waitForInitialization();
+        const tokenMintId = await this.getSPLTokenPubkey(asset);
+        const destination = await getAssociatedTokenAddress(
+            this.provider.wallet.publicKey,
+            tokenMintId,
+        );
+
+        const tokenAccount = await this.provider.connection.getAccountInfo(
+            destination,
+        );
+
+        if (!tokenAccount || !tokenAccount.data) {
+            const createTxInstruction = await createAssociatedTokenAccount(
+                this.provider.wallet.publicKey,
+                this.provider.wallet.publicKey,
+                tokenMintId,
+            );
+            const createTx = new Transaction();
+            createTx.add(createTxInstruction);
+            createTx.feePayer = this.provider.wallet.publicKey;
+            createTx.recentBlockhash = (
+                await this.provider.connection.getRecentBlockhash()
+            ).blockhash;
+            const signedTx = await this.provider.wallet.signTransaction(
+                createTx,
+            );
+
+            // Only wait until solana has seen the tx
+            const confirmOpts: ConfirmOptions = {
+                commitment: "confirmed",
+            };
+
+            return sendAndConfirmRawTransaction(
+                this.provider.connection,
+                signedTx.serialize(),
+                confirmOpts,
+            );
+        } else {
+            // Already generated, but we aren't guarenteed to get the tx
+            return "";
+        }
+    }
 }

@@ -10,7 +10,7 @@ import { Connection, clusterApiUrl } from "@solana/web3.js";
 export interface SolanaConnectorOptions {
     debug?: boolean;
     network: RenNetwork;
-    providerURL: string;
+    providerURL: string | { postMessage: Function };
     clusterURL?: string;
 }
 
@@ -36,7 +36,7 @@ export class SolanaConnector
     network: RenNetwork;
     connection: Connection;
     wallet: typeof Wallet;
-    providerURL: string;
+    providerURL: string | { postMessage: Function };
     clusterURL: string;
     constructor({
         debug = false,

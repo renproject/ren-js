@@ -29,13 +29,15 @@ import {
 } from "@renproject/multiwallet-ui";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2/renVMProvider";
 import { multiwalletOptions } from "./multiwallet";
+import { lockChainMap, mintChainMap } from "./chainmaps";
 import { inspect } from "@xstate/inspect";
+import { buildMintContextWithMap } from "@renproject/ren-tx";
 inspect({
     iframe: false, // open in new window
 });
 
 const localProvider = new RenVMProvider({
-    name: "devnet-v0.3",
+    name: "testnet-v0.3",
     lightnode: "http://localhost:5000",
     isTestnet: true,
 });
@@ -59,14 +61,14 @@ const ethLocalnetConfig: EthereumConfig = {
 const BasicBurnApp = ({ account, provider, destinationAddress, amount }) => {
     const parameters = useMemo(
         () => ({
-            sdk: new RenJS(RenNetwork.DevnetVDot3),
+            sdk: new RenJS(RenNetwork.TestnetVDot3),
             burnParams: {
                 sourceAsset: "BTC",
                 network: RenNetwork.Testnet,
                 targetAmount: amount,
                 destinationAddress,
             },
-            from: new Solana(provider, RenNetwork.DevnetVDot3, {
+            from: new Solana(provider, RenNetwork.Testnet, {
                 logger: console,
             }).Account({
                 amount,
@@ -90,34 +92,65 @@ const CustomDeposit = (props: DepositProps) => (
     />
 );
 
-const BasicMintApp = ({ sdk, account, provider }) => {
+const BasicMintApp = ({ sdk, chain, account, providers, asset }) => {
+    const solanaMintChain = useMemo(() => {
+        console.log(providers);
+        return (
+            chain === "solana" &&
+            providers[chain] &&
+            new Solana(providers[chain].connector, RenNetwork.TestnetVDot3, {
+                logger: console,
+            })
+        );
+    }, [providers, chain]);
+
+    const [tokenAccountExists, setTokenAccountExists] = useState(false);
+
+    // ensure that the solana mint destination exists
+    useEffect(() => {
+        if (!tokenAccountExists) {
+            solanaMintChain &&
+                solanaMintChain.createAssociatedTokenAccount(asset).then(() => {
+                    setTokenAccountExists(true);
+                });
+        }
+    }, [solanaMintChain, tokenAccountExists, setTokenAccountExists, asset]);
+
     const parameters = useMemo(
         () => ({
             sdk,
             mintParams: {
-                sourceAsset: "BTC",
                 network: RenNetwork.TestnetVDot3,
+                sourceAsset: asset,
                 destinationAddress: account,
             },
-
-            debug: true,
-            to: new Solana(provider, sdk, RenNetwork.DevnetVDot3, {
-                logger: console,
-            }),
-            from: Bitcoin(),
+            sourceChain: source[asset],
+            userAddress: account,
+            destinationChain: chain,
+            toMap: mintChainMap(providers),
+            fromMap: lockChainMap,
+            customParams: {},
         }),
-        [provider, account],
+        [providers, account],
     );
+
     return (
         <Paper style={{ margin: "1em", padding: "1em" }}>
             <Typography component={"div"}>
-                <BasicMint parameters={parameters} Deposit={CustomDeposit} />
+                {tokenAccountExists ? (
+                    <BasicMint
+                        parameters={parameters}
+                        Deposit={CustomDeposit}
+                    />
+                ) : (
+                    <p>Please create a token account for {asset}</p>
+                )}
             </Typography>
         </Paper>
     );
 };
 
-const ConnectToChain = ({ enabledChains, setOpen, setChain }) => {
+const ConnectToChain = ({ setOpen, setChain }) => {
     return (
         <Paper style={{ margin: "1em" }}>
             {Object.keys(multiwalletOptions.chains).map((chain) => (
@@ -138,6 +171,7 @@ const ConnectToChain = ({ enabledChains, setOpen, setChain }) => {
     );
 };
 
+const source = { BTC: "bitcoin", ZEC: "zcash", BCH: "bitcoinCash" };
 const supportedAssets = ["BTC", "ZEC", "BCH"];
 
 const App = (): JSX.Element => {
@@ -166,7 +200,7 @@ const App = (): JSX.Element => {
     );
     const setClosed = useCallback(() => setOpen(false), [setOpen]);
 
-    const sdk = useMemo(() => new RenJS(RenNetwork.DevnetVDot3));
+    const sdk = useMemo(() => new RenJS(RenNetwork.TestnetVDot3), []);
 
     const [balance, setBalance] = useState<string>();
     useEffect(() => {
@@ -191,7 +225,7 @@ const App = (): JSX.Element => {
                     chain,
                     onClose: setClosed,
                     config: multiwalletOptions,
-                    targetNetwork: RenNetwork.DevnetVDot3,
+                    targetNetwork: RenNetwork.TestnetVDot3,
                 }}
             />
             <ConnectToChain
@@ -241,8 +275,10 @@ const App = (): JSX.Element => {
                             Connected to {wallets.enabledChains[chain].account}
                         </Typography>
                         <BasicMintApp
+                            asset={asset}
                             sdk={sdk}
-                            provider={wallets.enabledChains[chain].provider}
+                            chain={chain}
+                            providers={wallets.enabledChains}
                             account={wallets.enabledChains[chain].account}
                         />
                         <div>

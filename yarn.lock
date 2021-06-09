@@ -3097,17 +3097,17 @@
     webpack "^4.44.1"
     webpack-bundle-analyzer "^4.4.0"
 
-"@solana/spl-token@^0.1.4":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.4.tgz#7fc6ba82a7fbb2b0907f7ffc87709488db83ed2a"
-  integrity sha512-W8uSC4ysWVjbKK7lvsIHFxdMIkOCEoOm9tYY9VVpBlUIp4+K5bpPxHXUlxMiHfkKPWAxab6IGUn71VVLg8uq5Q==
+"@solana/spl-token@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.5.tgz#dcb6cb4bd7acb3c6457500502b6e62c75d18d05b"
+  integrity sha512-2rlgKbH3lCTIuxwm4A+R2/t+w3Rt2tJLpGH6jefQQUpM6MyxlQWV+P9pB7+lozuWDOJ7A2OyKkUEt/HlxyHFjw==
   dependencies:
     "@babel/runtime" "^7.10.5"
-    "@solana/web3.js" "^1.9.1"
+    "@solana/web3.js" "^1.12.0"
     bn.js "^5.1.0"
     buffer "6.0.3"
     buffer-layout "^1.2.0"
-    dotenv "8.2.0"
+    dotenv "10.0.0"
 
 "@solana/web3.js@^1.12.0":
   version "1.12.0"
@@ -3129,13 +3129,14 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
-"@solana/web3.js@^1.9.1":
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.11.0.tgz#1cc9a25381687c82e444ad0633f028e050a06753"
-  integrity sha512-kmngWxntzp0HNhWInd7/3g2uqxdOrahvaHOyjilcRe+WCiC777gERz3+eIAbxIYx2zAZPjy02MZzLgoRHccZoQ==
+"@solana/web3.js@^1.17.0":
+  version "1.17.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.17.0.tgz#51775bd17af77132450c22ac175870d4a9721b9b"
+  integrity sha512-PBOHY260CudciLwBgwt1U8upwCS1Jq0BbS6EVyX0tz6Tj14Dp4i87dQNyntentNiGQQ+yWBIk4vJEm+PMCSd/A==
   dependencies:
     "@babel/runtime" "^7.12.5"
     bn.js "^5.0.0"
+    borsh "^0.4.0"
     bs58 "^4.0.1"
     buffer "6.0.1"
     buffer-layout "^1.2.0"
@@ -9419,10 +9420,10 @@ dotenv-webpack@^1.8.0:
   dependencies:
     dotenv-defaults "^1.0.2"
 
-dotenv@8.2.0:
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
-  integrity sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw==
+dotenv@10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-10.0.0.tgz#3d4227b8fb95f81096cdd2b66653fb2c7085ba81"
+  integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
 
 dotenv@^6.2.0:
   version "6.2.0"

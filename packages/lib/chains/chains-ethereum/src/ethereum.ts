@@ -10,8 +10,8 @@ import {
 } from "@renproject/interfaces";
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { TransactionConfig } from "web3-core";
-import { provider } from "web3-providers";
+import { PopulatedTransaction } from "ethers";
+import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
 
 import { EthAddress, EthereumBaseChain, EthTransaction } from "./base";
 import { EthereumConfig } from "./networks";
@@ -31,7 +31,7 @@ export class EthereumClass
         | undefined;
 
     constructor(
-        web3Provider: provider,
+        web3Provider: ExternalProvider | JsonRpcFetchFunc,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
@@ -53,7 +53,7 @@ export class EthereumClass
         this._getParams ? this._getParams(asset, burnPayload) : undefined;
 
     /** @category Main */
-    public Address = (address: string, txConfig?: TransactionConfig) =>
+    public Address = (address: string, txConfig?: PopulatedTransaction) =>
         this.Account({ address }, txConfig);
 
     /** @category Main */
@@ -65,13 +65,13 @@ export class EthereumClass
             value?: BigNumber | string | number;
             address?: string;
         },
-        txConfig?: TransactionConfig,
+        txConfig?: PopulatedTransaction,
     ): this => {
         this._getParams = async (
             asset: string,
             burnPayload?: string,
         ): Promise<{ contractCalls: ContractCall[] }> => {
-            if (!this.renNetworkDetails || !this.web3) {
+            if (!this.renNetworkDetails || !this.provider) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'.`,
                 );
@@ -82,10 +82,10 @@ export class EthereumClass
                     throw new Error(`Must provide Ethereum recipient address.`);
                 }
 
-                // Resolve .ens name
-                if (/.*\.ens/.exec(address)) {
-                    address = await this.web3.eth.ens.getAddress(address);
-                }
+                // // Resolve .ens name
+                // if (/.*\.ens/.exec(address)) {
+                //     address = await this.provider.eth.ens.getAddress(address);
+                // }
 
                 return {
                     contractCalls: [

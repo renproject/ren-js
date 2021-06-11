@@ -24,7 +24,7 @@ import {
     PolygonConfigMap,
 } from "@renproject/chains";
 import Web3 from "web3";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 

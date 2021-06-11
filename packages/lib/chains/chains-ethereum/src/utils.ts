@@ -18,6 +18,7 @@ import {
     payloadToMintABI,
     SECONDS,
     sleep,
+    keccak256,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -28,10 +29,9 @@ import {
 } from "bnc-sdk/dist/types/src/interfaces";
 import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
-import Web3 from "web3";
-import { Log, TransactionConfig, TransactionReceipt } from "web3-core";
-import { keccak256 as web3Keccak256 } from "web3-utils";
 import { EthAddress, EthTransaction } from "./base";
+import { Provider, TransactionReceipt } from "@ethersproject/providers";
+import ethers, { PopulatedTransaction } from "ethers";
 
 import { EthereumConfig } from "./networks";
 
@@ -111,7 +111,7 @@ export const eventTopics = {
      *  );
      * ```
      */
-    LogBurn: web3Keccak256("LogBurn(bytes,uint256,uint256,bytes)"),
+    LogBurn: Ox(keccak256(Buffer.from("LogBurn(bytes,uint256,uint256,bytes)"))),
     /**
      * ```js
      * event LogMint(
@@ -122,7 +122,9 @@ export const eventTopics = {
      * );
      * ```
      */
-    LogMint: web3Keccak256("LogMint(address,uint256,uint256,bytes32)"),
+    LogMint: Ox(
+        keccak256(Buffer.from("LogMint(address,uint256,uint256,bytes32)")),
+    ),
 };
 
 /**
@@ -133,7 +135,7 @@ export const eventTopics = {
  * @param txHash The hash of the transaction being read.
  */
 export const waitForReceipt = async (
-    web3: Web3,
+    provider: Provider,
     txHash: string,
     logger?: Logger,
     timeout?: number,
@@ -148,7 +150,7 @@ export const waitForReceipt = async (
             // Initialize Blocknative SDK.
             blocknative = new BlocknativeSdk({
                 dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
-                networkId: await web3.eth.net.getId(),
+                networkId: (await provider.getNetwork()).chainId,
             });
 
             const { emitter } = blocknative.transaction(txHash);
@@ -177,7 +179,7 @@ export const waitForReceipt = async (
             if (logger) {
                 logger.debug(`Fetching transaction receipt: ${txHash}`);
             }
-            receipt = await web3.eth.getTransactionReceipt(txHash);
+            receipt = await provider.getTransactionReceipt(txHash);
             if (receipt && receipt.blockHash) {
                 break;
             }
@@ -195,7 +197,7 @@ export const waitForReceipt = async (
         }
 
         // Status might be undefined - so check against `false` explicitly.
-        if (receipt.status === false) {
+        if (receipt.status === 0) {
             reject(
                 new Error(
                     `Transaction was reverted. { "transactionHash": "${txHash}" }`,
@@ -208,38 +210,48 @@ export const waitForReceipt = async (
         return;
     });
 
-export const parseBurnEvent = (
-    web3: Web3,
-    event: Log,
-): BurnDetails<EthTransaction> => {
+export const parseBurnEvent = (event: {
+    transactionHash: string;
+    topics: Array<string>;
+    data: string;
+}): BurnDetails<EthTransaction> => {
     assert(event.topics[0] === eventTopics.LogBurn);
 
-    const { _to, _amount, _n } = web3.eth.abi.decodeLog(
-        [
+    const burnLogABI = {
+        anonymous: false,
+        inputs: [
             {
                 indexed: false,
+                internalType: "bytes",
                 name: "_to",
                 type: "bytes",
             },
             {
                 indexed: false,
+                internalType: "uint256",
                 name: "_amount",
                 type: "uint256",
             },
             {
                 indexed: true,
+                internalType: "uint256",
                 name: "_n",
                 type: "uint256",
             },
             {
                 indexed: true,
+                internalType: "bytes",
                 name: "_indexedTo",
                 type: "bytes",
             },
         ],
-        event.data,
-        event.topics.slice(1) as string[],
-    );
+        name: "LogBurn",
+        type: "event",
+    };
+    const burnLogDecoder = new ethers.utils.Interface([burnLogABI]);
+    const decodedLog = burnLogDecoder.parseLog(event);
+
+    const { _to, _amount, _n } = decodedLog.args;
 
     return {
         transaction: event.transactionHash,
@@ -250,14 +262,14 @@ export const parseBurnEvent = (
 };
 
 export const extractBurnDetails = async (
-    web3: Web3,
+    provider: Provider,
     txHash: string,
     logger?: Logger,
     timeout?: number,
 ): Promise<BurnDetails<EthTransaction>> => {
     assertType<string>("string", { txHash });
 
-    const receipt = await waitForReceipt(web3, txHash, logger, timeout);
+    const receipt = await waitForReceipt(provider, txHash, logger, timeout);
 
     if (!receipt.logs) {
         throw Error("No events found in transaction");
@@ -265,7 +277,7 @@ export const extractBurnDetails = async (
 
     const burnDetails = receipt.logs
         .filter((event) => event.topics[0] === eventTopics.LogBurn)
-        .map((event) => parseBurnEvent(web3, event));
+        .map((event) => parseBurnEvent(event));
 
     if (burnDetails.length > 1) {
         // WARNING: More than one burn found.
@@ -280,7 +292,7 @@ export const extractBurnDetails = async (
 
 export const getGatewayAddress = async (
     network: EthereumConfig,
-    web3: Web3,
+    provider: Provider,
     asset: string,
 ): Promise<string> => {
     try {
@@ -305,11 +317,16 @@ export const getGatewayAddress = async (
             stateMutability: "view",
             type: "function",
         };
-        const registry = new web3.eth.Contract(
-            [getGatewayBySymbol],
+        const registry = new ethers.Contract(
             network.addresses.GatewayRegistry,
+            [getGatewayBySymbol],
+            provider,
         );
-        const registryAddress: string = await registry.methods
+        // const registry = new web3.eth.Contract(
+        //     [getGatewayBySymbol],
+        //     network.addresses.GatewayRegistry,
+        // );
+        const registryAddress: string = await registry
             .getGatewayBySymbol(asset)
             .call();
         if (!registryAddress) {
@@ -326,17 +343,17 @@ export const getGatewayAddress = async (
 
 export const findBurnByNonce = async (
     network: EthereumConfig,
-    web3: Web3,
+    provider: Provider,
     asset: string,
     nonce: Buffer | string | number,
 ): Promise<BurnDetails<EthTransaction>> => {
-    const gatewayAddress = await getGatewayAddress(network, web3, asset);
+    const gatewayAddress = await getGatewayAddress(network, provider, asset);
 
     const nonceBuffer = Buffer.isBuffer(nonce)
         ? nonce
         : new BN(nonce).toArrayLike(Buffer, "be", 32);
 
-    const burnEvents = await web3.eth.getPastLogs({
+    const burnEvents = await provider.getLogs({
         address: gatewayAddress,
         fromBlock: "1",
         toBlock: "latest",
@@ -350,27 +367,27 @@ export const findBurnByNonce = async (
         // WARNING: More than one burn with the same nonce.
     }
 
-    return parseBurnEvent(web3, burnEvents[0]);
+    return parseBurnEvent(burnEvents[0]);
 };
 
-export const defaultAccountError = "No accounts found in Web3 wallet.";
-export const withDefaultAccount = async (
-    web3: Web3,
-    config: TransactionConfig,
-): Promise<TransactionConfig> => {
-    if (!config.from) {
-        if (web3.eth.defaultAccount) {
-            config.from = web3.eth.defaultAccount;
-        } else {
-            const accounts = await web3.eth.getAccounts();
-            if (accounts.length === 0) {
-                throw new Error(defaultAccountError);
-            }
-            config.from = accounts[0];
-        }
-    }
-    return config;
-};
+// export const defaultAccountError = "No accounts found in Web3 wallet.";
+// export const withDefaultAccount = async (
+//     web3: Web3,
+//     config: PopulatedTransaction,
+// ): Promise<PopulatedTransaction> => {
+//     if (!config.from) {
+//         if (web3.eth.defaultAccount) {
+//             config.from = web3.eth.defaultAccount;
+//         } else {
+//             const accounts = await web3.eth.getAccounts();
+//             if (accounts.length === 0) {
+//                 throw new Error(defaultAccountError);
+//             }
+//             config.from = accounts[0];
+//         }
+//     }
+//     return config;
+// };
 
 /**
  * Bind a promiEvent to an Ethereum transaction hash, sending confirmation
@@ -382,17 +399,17 @@ export const withDefaultAccount = async (
  * @param promiEvent The existing promiEvent to forward events to.
  */
 export const manualPromiEvent = async (
-    web3: Web3,
+    provider: Provider,
     txHash: string,
     promiEvent: EventEmitter, // PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>
 ) => {
     assertType<string>("string", { txHash });
 
-    const receipt = await web3.eth.getTransactionReceipt(txHash);
+    const receipt = await provider.getTransactionReceipt(txHash);
     promiEvent.emit("transactionHash", txHash);
 
     const emitConfirmation = async () => {
-        const currentBlock = await web3.eth.getBlockNumber();
+        const currentBlock = await provider.getBlockNumber();
         promiEvent.emit(
             "confirmation",
             Math.max(0, currentBlock - receipt.blockNumber),
@@ -426,7 +443,7 @@ export const manualPromiEvent = async (
 
 export const getTokenAddress = async (
     network: EthereumConfig,
-    web3: Web3,
+    provider: Provider,
     asset: string,
 ): Promise<string> => {
     try {
@@ -452,11 +469,12 @@ export const getTokenAddress = async (
             type: "function",
         };
 
-        const registry = new web3.eth.Contract(
-            [getTokenBySymbolABI],
+        const registry = new ethers.Contract(
             network.addresses.GatewayRegistry,
+            [getTokenBySymbolABI],
+            provider,
         );
-        const tokenAddress: string = await registry.methods
+        const tokenAddress: string = await registry
             .getTokenBySymbol(asset)
             .call();
         if (!tokenAddress) {
@@ -473,7 +491,7 @@ export const getTokenAddress = async (
 
 export const findTransactionBySigHash = async (
     network: EthereumConfig,
-    web3: Web3,
+    provider: Provider,
     asset: string,
     nHash: Buffer,
     sigHash?: Buffer,
@@ -481,7 +499,11 @@ export const findTransactionBySigHash = async (
 ): Promise<string | undefined> => {
     let status;
     try {
-        const gatewayAddress = await getGatewayAddress(network, web3, asset);
+        const gatewayAddress = await getGatewayAddress(
+            network,
+            provider,
+            asset,
+        );
         const statusABI: AbiItem = {
             constant: true,
             inputs: [
@@ -503,27 +525,28 @@ export const findTransactionBySigHash = async (
             stateMutability: "view",
             type: "function",
         };
-        const gatewayContract = new web3.eth.Contract(
-            [statusABI],
+        const gatewayContract = new ethers.Contract(
             gatewayAddress,
+            [statusABI],
+            provider,
         );
 
         let fromBlock = 1;
         let toBlock: string | number = "latest";
         if (blockLimit) {
             toBlock = new BigNumber(
-                (await web3.eth.getBlockNumber()).toString(),
+                (await provider.getBlockNumber()).toString(),
             ).toNumber();
             fromBlock = toBlock - blockLimit + 1;
         }
         if (sigHash) {
             // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
             // the contract
-            status = await gatewayContract.methods.status(Ox(sigHash)).call();
+            status = await gatewayContract.status(Ox(sigHash)).call();
             if (!status) {
                 return undefined;
             }
-            const oldMintEvents = await web3.eth.getPastLogs({
+            const oldMintEvents = await provider.getLogs({
                 address: gatewayAddress,
                 fromBlock,
                 toBlock,
@@ -539,7 +562,7 @@ export const findTransactionBySigHash = async (
             }
         }
 
-        const newMintEvents = await web3.eth.getPastLogs({
+        const newMintEvents = await provider.getLogs({
             address: gatewayAddress,
             fromBlock,
             toBlock,
@@ -564,7 +587,7 @@ export const findTransactionBySigHash = async (
 };
 
 export const submitToEthereum = async (
-    web3: Web3,
+    provider: Provider,
 
     contractCalls: ContractCall[],
     mintTx: LockAndMintTransaction,
@@ -606,14 +629,14 @@ export const submitToEthereum = async (
             ? payloadToMintABI(contractFn, contractParams || [])
             : payloadToABI(contractFn, contractParams || []);
 
-        const contract = new web3.eth.Contract(ABI, sendTo);
+        const contract = new ethers.Contract(sendTo, ABI, provider);
 
         const txConfig =
             typeof contractCall === "object"
-                ? (contractCall.txConfig as TransactionConfig)
+                ? (contractCall.txConfig as PopulatedTransaction)
                 : {};
 
-        const config = await withDefaultAccount(web3, {
+        const config = {
             ...txConfig,
             ...{
                 value:
@@ -626,7 +649,7 @@ export const submitToEthereum = async (
                         : undefined,
             },
             // ...config,
-        });
+        };
 
         logger.debug(
             "Calling Ethereum contract",
@@ -636,7 +659,7 @@ export const submitToEthereum = async (
             config,
         );
 
-        tx = contract.methods[contractFn](...callParams).send(config);
+        tx = contract[contractFn](...callParams).send(config);
 
         if (last && tx !== undefined) {
             forwardWeb3Events(tx, eventEmitter);

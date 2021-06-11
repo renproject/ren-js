@@ -3,14 +3,14 @@
 import * as Chains from "@renproject/chains";
 
 import { LogLevel, SimpleLogger } from "@renproject/interfaces";
-import RenJS, { defaultDepositHandler } from "@renproject/ren";
+import RenJS from "@renproject/ren";
 import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 
@@ -137,7 +137,7 @@ describe("Extra params", () => {
                     deposit.depositDetails,
                 );
 
-                defaultDepositHandler(deposit)
+                RenJS.defaultDepositHandler(deposit)
                     .then(resolve)
                     .catch(deposit._state.logger.error);
             });

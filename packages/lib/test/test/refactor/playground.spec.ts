@@ -19,7 +19,7 @@ import { config as loadDotEnv } from "dotenv";
 import { DepositStatus } from "@renproject/ren/build/main/lockAndMint";
 import { expect } from "earljs";
 import BigNumber from "bignumber.js";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 

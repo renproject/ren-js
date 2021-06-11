@@ -5,8 +5,8 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { provider } from "web3-providers";
 import { EthAddress, EthTransaction, NetworkInput } from "./base";
+import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
@@ -114,7 +114,7 @@ export class FantomClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider: provider,
+        web3Provider: ExternalProvider | JsonRpcFetchFunc,
         renNetwork:
             | RenNetwork
             | RenNetworkString

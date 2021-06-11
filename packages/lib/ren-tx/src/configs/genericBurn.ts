@@ -298,6 +298,7 @@ const burnTransactionListener = <X, Y>(context: BurnMachineContext<X, Y>) => (
                     performRelease(burn, callback, cleaners, tx)
                         .then()
                         .catch((e) => {
+                            console.error(e);
                             callback({
                                 type: "BURN_ERROR",
                                 data: context.tx,

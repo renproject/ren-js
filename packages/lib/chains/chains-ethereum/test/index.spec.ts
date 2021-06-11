@@ -7,11 +7,11 @@ import { Ox } from "@renproject/utils";
 import chai from "chai";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
-import Web3 from "web3";
 import { EthereumConfig, EthTransaction, renMainnet } from "@renproject/chains";
 import BN from "bn.js";
 import { getGatewayAddress, eventTopics, parseBurnEvent } from "../src/utils";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
+import ethers from "ethers";
 
 chai.should();
 
@@ -19,47 +19,47 @@ loadDotEnv();
 
 const MNEMONIC = process.env.MNEMONIC;
 
-export const findBurnByNonce = async (
-    network: EthereumConfig,
-    web3: Web3,
-    asset: string,
-    nonce: Buffer | string | number,
-): Promise<BurnDetails<EthTransaction>> => {
-    const gatewayAddress = await getGatewayAddress(network, web3, asset);
+// export const findBurnByNonce = async (
+//     network: EthereumConfig,
+//     web3: Web3,
+//     asset: string,
+//     nonce: Buffer | string | number,
+// ): Promise<BurnDetails<EthTransaction>> => {
+//     const gatewayAddress = await getGatewayAddress(network, web3, asset);
 
-    const nonceBuffer = Buffer.isBuffer(nonce)
-        ? nonce
-        : new BN(nonce).toArrayLike(Buffer, "be", 32);
+//     const nonceBuffer = Buffer.isBuffer(nonce)
+//         ? nonce
+//         : new BN(nonce).toArrayLike(Buffer, "be", 32);
 
-    const burnEvents = await web3.eth.getPastLogs({
-        address: gatewayAddress,
-        fromBlock: "1",
-        toBlock: "latest",
-        topics: [eventTopics.LogBurn, Ox(nonceBuffer)] as string[],
-    });
+//     const burnEvents = await web3.eth.getPastLogs({
+//         address: gatewayAddress,
+//         fromBlock: "1",
+//         toBlock: "latest",
+//         topics: [eventTopics.LogBurn, Ox(nonceBuffer)] as string[],
+//     });
 
-    if (!burnEvents.length) {
-        throw Error(`Burn not found for nonce ${Ox(nonceBuffer)}`);
-    }
-    if (burnEvents.length > 1) {
-        // WARNING: More than one burn with the same nonce.
-    }
+//     if (!burnEvents.length) {
+//         throw Error(`Burn not found for nonce ${Ox(nonceBuffer)}`);
+//     }
+//     if (burnEvents.length > 1) {
+//         // WARNING: More than one burn with the same nonce.
+//     }
 
-    return parseBurnEvent(web3, burnEvents[0]);
-};
+//     return parseBurnEvent(web3, burnEvents[0]);
+// };
 
 describe("Refactor: mint", () => {
     it.skip("mint to contract", async function () {
         this.timeout(100000000000);
 
         const infuraURL = `${Chains.renMainnet.infura}/v3/${process.env.INFURA_KEY}`; // renBscDevnet.infura
-        const provider: provider = new HDWalletProvider({
+        const provider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,
-        }) as any;
-        const web3 = new Web3(provider);
+        });
+        const ethersProvider = new ethers.providers.Web3Provider(provider);
 
         const txHashes: string[] = [
             "0x066e377aaa55c68db08d1a00c3431886efb24c317d83fc244547d2aba926e506",

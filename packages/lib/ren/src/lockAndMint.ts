@@ -251,6 +251,7 @@ export class LockAndMint<
             MintAddress
         >
     > => {
+        console.log("inside _initialize!");
         this._state.renNetwork =
             this._state.renNetwork ||
             getRenNetworkDetails(
@@ -330,6 +331,7 @@ export class LockAndMint<
             MintAddress
         >
     > => {
+        console.log("inside processDeposit! 1");
         if (
             !this._state.renNetwork ||
             !this._state.pHash ||
@@ -342,8 +344,12 @@ export class LockAndMint<
             );
         }
 
+        console.log("inside processDeposit! 2");
+
         const depositID = this.params.from.transactionID(deposit.transaction);
         let depositObject = this.deposits.get(depositID);
+
+        console.log("inside processDeposit! 3");
 
         // If the confidence has increased.
         if (
@@ -368,7 +374,11 @@ export class LockAndMint<
                     : undefined,
             });
 
+            console.log("inside processDeposit! 5");
+
             await depositObject._initialize();
+
+            console.log("inside processDeposit! 6");
 
             // Check if deposit has already been submitted.
             if (
@@ -822,11 +832,13 @@ export class LockAndMintDeposit<
 
     /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
-        await this.refreshStatus();
+        // await this.refreshStatus();
 
+        console.log("calling resolveTokenGatewayContract!");
         this._state.token = await this.params.to.resolveTokenGatewayContract(
             this.params.asset,
         );
+        console.log("called resolveTokenGatewayContract!");
 
         return this;
     };

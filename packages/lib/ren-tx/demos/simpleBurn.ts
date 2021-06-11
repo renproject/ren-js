@@ -5,8 +5,8 @@ import { Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import Web3 from "web3";
-import { BurnSession, isBurnCompleted } from "../build/main/types/burn";
-import { provider } from "web3-providers";
+import { BurnSession } from "../build/main/types/burn";
+import { provider } from "web3-core";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;

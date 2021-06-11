@@ -14,7 +14,6 @@ import {
     BurnPayloadConfig,
 } from "@renproject/interfaces";
 import { keccak256, sleep } from "@renproject/utils";
-import { AbstractRenVMProvider } from "@renproject/rpc";
 
 import {
     Connection,
@@ -87,7 +86,6 @@ export class Solana
 
     constructor(
         readonly provider: SolanaProvider,
-        readonly renVM: AbstractRenVMProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
@@ -279,26 +277,11 @@ export class Solana
             transaction,
         );
 
-        let target = 0;
-        if (this.renVM.getConfirmationTarget) {
-            // Assumes that all confirmations for mints + burns will be the same
-            // for all assets
-            const fetchedTarget = await this.renVM.getConfirmationTarget(
-                "BTC/fromSolana",
-                {
-                    name: this.renNetworkDetails?.name || "",
-                },
-            );
-
-            if (fetchedTarget) {
-                target = fetchedTarget;
-            }
-        }
-
         const currentSlot = await this.provider.connection.getSlot();
         return {
             current: currentSlot - (tx?.slot ?? 0),
-            target,
+            // Gets overridden in RenJS.
+            target: 1,
         };
     };
 

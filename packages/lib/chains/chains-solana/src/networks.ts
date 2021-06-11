@@ -43,8 +43,10 @@ export const resolveNetwork = (
 
     switch (networkString) {
         case RenNetwork.Mainnet:
+        case RenNetwork.MainnetVDot3:
             return renMainnet;
         case RenNetwork.Testnet:
+        case RenNetwork.TestnetVDot3:
             return renTestnet;
         case RenNetwork.DevnetVDot3:
             return renDevnet;

@@ -21,9 +21,12 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
-import Web3 from "web3";
-import { TransactionConfig } from "web3-core";
-import { provider } from "web3-providers";
+import ethers, { PopulatedTransaction } from "ethers";
+import {
+    Provider,
+    ExternalProvider,
+    JsonRpcFetchFunc,
+} from "@ethersproject/providers";
 
 import {
     EthereumConfig,
@@ -44,7 +47,6 @@ import {
     ignorePromiEventError,
     manualPromiEvent,
     submitToEthereum,
-    withDefaultAccount,
 } from "./utils";
 
 export const EthereumConfigMap = {
@@ -140,19 +142,19 @@ export class EthereumBaseChain
         () => this.renNetworkDetails,
     );
 
-    public web3: Web3 | undefined;
+    public provider: Provider | undefined;
     public renNetworkDetails: EthereumConfig | undefined;
 
     public readonly getTokenContractAddress = async (asset: string) => {
-        if (!this.web3 || !this.renNetworkDetails) {
+        if (!this.provider || !this.renNetworkDetails) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
-        return getTokenAddress(this.renNetworkDetails, this.web3, asset);
+        return getTokenAddress(this.renNetworkDetails, this.provider, asset);
     };
     public readonly getGatewayContractAddress = async (token: string) => {
-        if (!this.web3 || !this.renNetworkDetails) {
+        if (!this.provider || !this.renNetworkDetails) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -160,7 +162,7 @@ export class EthereumBaseChain
 
         const gatewayAddress = await getGatewayAddress(
             this.renNetworkDetails,
-            this.web3,
+            this.provider,
             token,
         );
 
@@ -172,21 +174,23 @@ export class EthereumBaseChain
     };
 
     constructor(
-        web3Provider: provider,
+        web3Provider: ExternalProvider | JsonRpcFetchFunc,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
     ) {
-        this.web3 = new Web3(web3Provider);
+        this.provider = new ethers.providers.Web3Provider(web3Provider);
+        // this.provider = new Web3(web3Provider);
         if (renNetwork) {
             this.renNetworkDetails = resolveNetwork(renNetwork);
         }
     }
 
-    public withProvider = (web3Provider: provider) => {
-        this.web3 = new Web3(web3Provider);
+    public withProvider = (web3Provider: ExternalProvider) => {
+        this.provider = new ethers.providers.Web3Provider(web3Provider);
+        // this.provider = new Web3(web3Provider);
         return this;
     };
 
@@ -231,7 +235,7 @@ export class EthereumBaseChain
             return true;
         }
 
-        if (!this.web3 || !this.renNetworkDetails) {
+        if (!this.provider || !this.renNetworkDetails) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -262,7 +266,7 @@ export class EthereumBaseChain
      
      */
     assetDecimals = async (asset: string): Promise<number> => {
-        if (!this.web3) {
+        if (!this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -288,12 +292,13 @@ export class EthereumBaseChain
             type: "function",
         };
 
-        const tokenContract = new this.web3.eth.Contract(
-            [decimalsABI],
+        const tokenContract = new ethers.Contract(
             tokenAddress,
+            [decimalsABI],
+            this.provider,
         );
 
-        const decimalsRaw = await await tokenContract.methods.decimals().call();
+        const decimalsRaw = await await tokenContract.decimals().call();
         return new BigNumber(decimalsRaw).toNumber();
     };
 
@@ -306,7 +311,7 @@ export class EthereumBaseChain
     transactionConfidence = async (
         transaction: EthTransaction,
     ): Promise<{ current: number; target: number }> => {
-        if (!this.web3 || !this.renNetworkDetails) {
+        if (!this.provider || !this.renNetworkDetails) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -317,9 +322,9 @@ export class EthereumBaseChain
             );
         }
         const currentBlock = new BigNumber(
-            (await this.web3.eth.getBlockNumber()).toString(),
+            (await this.provider.getBlockNumber()).toString(),
         );
-        const receipt = await this.web3.eth.getTransactionReceipt(transaction);
+        const receipt = await this.provider.getTransactionReceipt(transaction);
         let current = 0;
         if (receipt.blockNumber) {
             const transactionBlock = new BigNumber(
@@ -347,7 +352,7 @@ export class EthereumBaseChain
             throw new Error(`Unable to submit reverted RenVM transaction.`);
         }
 
-        if (!this.web3) {
+        if (!this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -360,7 +365,7 @@ export class EthereumBaseChain
         );
         if (existingTransaction) {
             await manualPromiEvent(
-                this.web3,
+                this.provider,
                 existingTransaction,
                 eventEmitter,
             );
@@ -368,7 +373,7 @@ export class EthereumBaseChain
         }
 
         return await submitToEthereum(
-            this.web3,
+            this.provider,
             contractCalls,
             mintTx,
             eventEmitter,
@@ -380,14 +385,14 @@ export class EthereumBaseChain
         nHash: Buffer,
         sigHash?: Buffer,
     ): Promise<EthTransaction | undefined> => {
-        if (!this.renNetworkDetails || !this.web3) {
+        if (!this.renNetworkDetails || !this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
         return findTransactionBySigHash(
             this.renNetworkDetails,
-            this.web3,
+            this.provider,
             asset,
             nHash,
             sigHash,
@@ -396,13 +401,13 @@ export class EthereumBaseChain
     };
 
     resolveTokenGatewayContract = async (asset: string): Promise<string> => {
-        if (!this.renNetworkDetails || !this.web3) {
+        if (!this.renNetworkDetails || !this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
         return Ox(
-            await getTokenAddress(this.renNetworkDetails, this.web3, asset),
+            await getTokenAddress(this.renNetworkDetails, this.provider, asset),
         );
     };
 
@@ -423,7 +428,7 @@ export class EthereumBaseChain
         logger: Logger,
         timeout?: number,
     ): Promise<BurnDetails<EthTransaction>> => {
-        if (!this.renNetworkDetails || !this.web3) {
+        if (!this.renNetworkDetails || !this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -435,7 +440,7 @@ export class EthereumBaseChain
         if (!transaction && burnNonce) {
             return findBurnByNonce(
                 this.renNetworkDetails,
-                this.web3,
+                this.provider,
                 asset,
                 burnNonce.toString(),
             );
@@ -458,14 +463,18 @@ export class EthereumBaseChain
                     ...(contractParams || []).map((value) => value.value),
                 ];
                 const ABI = payloadToABI(contractFn, contractParams);
-                const contract = new this.web3.eth.Contract(ABI, sendTo);
+                const contract = new ethers.Contract(
+                    sendTo,
+                    ABI,
+                    this.provider,
+                );
 
                 const txConfig =
                     typeof contractCall === "object"
-                        ? (contractCall.txConfig as TransactionConfig)
+                        ? (contractCall.txConfig as PopulatedTransaction)
                         : {};
 
-                const config = await withDefaultAccount(this.web3, {
+                const config = {
                     ...txConfig,
                     ...{
                         value:
@@ -477,7 +486,7 @@ export class EthereumBaseChain
                                 ? txConfig.gasPrice.toString()
                                 : undefined,
                     },
-                });
+                };
                 logger.debug(
                     "Calling Ethereum contract",
                     contractFn,
@@ -485,9 +494,7 @@ export class EthereumBaseChain
                     ...callParams,
                     config,
                 );
-                const tx = contract.methods[contractFn](...callParams).send(
-                    config,
-                );
+                const tx = contract[contractFn](...callParams).send(config);
                 if (last) {
                     forwardWeb3Events(tx, eventEmitter);
                 }
@@ -512,7 +519,7 @@ export class EthereumBaseChain
             throw new Error(`Unable to find burn from provided parameters.`);
         }
 
-        return extractBurnDetails(this.web3, transaction, logger, timeout);
+        return extractBurnDetails(this.provider, transaction, logger, timeout);
     };
 
     getFees = async (
@@ -521,7 +528,7 @@ export class EthereumBaseChain
         burn: number;
         mint: number;
     }> => {
-        if (!this.web3) {
+        if (!this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -560,12 +567,13 @@ export class EthereumBaseChain
             type: "function",
         };
 
-        const gatewayContract = new this.web3.eth.Contract(
-            [mintFeeABI, burnFeeABI],
+        const gatewayContract = new ethers.Contract(
             gatewayAddress,
+            [mintFeeABI, burnFeeABI],
+            this.provider,
         );
-        const mintFee = await gatewayContract.methods.mintFee().call();
-        const burnFee = await gatewayContract.methods.burnFee().call();
+        const mintFee = await gatewayContract.mintFee().call();
+        const burnFee = await gatewayContract.burnFee().call();
 
         return {
             mint: new BigNumber(mintFee.toString()).toNumber(),
@@ -599,21 +607,20 @@ export class EthereumBaseChain
             type: "function",
         };
 
-        if (!this.web3) {
+        if (!this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
         const tokenAddress = await this.getTokenContractAddress(asset);
 
-        const tokenContract = new this.web3.eth.Contract(
-            [balanceOfABI],
+        const tokenContract = new ethers.Contract(
             tokenAddress,
+            [balanceOfABI],
+            this.provider,
         );
 
-        const balanceRaw = await await tokenContract.methods
-            .balanceOf(address)
-            .call();
+        const balanceRaw = await await tokenContract.balanceOf(address).call();
 
         return new BigNumber(balanceRaw.toString());
     };

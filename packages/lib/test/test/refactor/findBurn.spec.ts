@@ -46,7 +46,7 @@ import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 

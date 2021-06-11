@@ -104,16 +104,41 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
     };
 
     // Get default web3 account
-    getAccount = async () => {
-        return (await this.getProvider())
-            .send("eth_accounts", [])
-            .then((accounts: string[]): string => accounts[0]);
-    };
+    getAccount = async () =>
+        new Promise((resolve, reject) =>
+            this.getProvider()
+                .then((provider) =>
+                    provider.send!(
+                        {
+                            method: "eth_accounts",
+                            id: 67,
+                            params: [],
+                            jsonrpc: "2.0",
+                        },
+                        (error, result) =>
+                            error ? reject(error) : resolve(result?.result[0])
+                    )
+                )
+                .catch(reject)
+        );
+
     // Cast current ethereum network to Ren network version or throw
     getRenNetwork = async (): Promise<RenNetwork> => {
-        if (!this.provider) throw new Error("not initialized");
+        const provider = this.provider;
+        if (!provider) throw new Error("not initialized");
         return this.networkIdMapper(
-            await this.provider.send("eth_chainId", [])
+            await new Promise((resolve, reject) =>
+                provider.send!(
+                    {
+                        method: "eth_chainId",
+                        id: 67,
+                        params: [],
+                        jsonrpc: "2.0",
+                    },
+                    (error, result) =>
+                        error ? reject(error) : resolve(result?.result)
+                )
+            )
         );
     };
 

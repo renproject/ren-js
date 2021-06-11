@@ -245,8 +245,7 @@ export class Solana
     // TODO: check if we can derive the decimals from token metadata
     assetDecimals = async (asset: string) => {
         await this.waitForInitialization();
-        const address = this.resolveTokenGatewayContract(asset);
-        if (!address) throw new Error("unsupported asset: " + asset);
+        const address = await this.getSPLTokenPubkey(asset);
         const res = await this.provider.connection.getTokenSupply(
             new PublicKey(address),
         );
@@ -351,7 +350,7 @@ export class Solana
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
+            [new Uint8Array(Buffer.from("GatewayStateV0.1.3"))],
             program,
         );
         const s_hash = keccak256(Buffer.from(`${asset}/toSolana`));
@@ -614,7 +613,7 @@ export class Solana
 
         // check that the gpubkey matches
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
+            [new Uint8Array(Buffer.from("GatewayStateV0.1.3"))],
             program,
         );
 
@@ -771,11 +770,11 @@ export class Solana
             this.provider.wallet.publicKey,
             [],
             amount,
-            9,
+            await this.assetDecimals(asset),
         );
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
+            [new Uint8Array(Buffer.from("GatewayStateV0.1.3"))],
             program,
         );
 

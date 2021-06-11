@@ -77,7 +77,7 @@ export const renTestnet: SolNetworkConfig = {
     endpoint: "https://testnet.solana.com",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
-        GatewayRegistry: "5adtAdnnEWVBXyxW1osiDDAHF9NPkNFVvezU4RWyWukc",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };
@@ -90,7 +90,7 @@ export const renDevnet: SolNetworkConfig = {
     endpoint: "https://api.devnet.solana.com",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
-        GatewayRegistry: "5adtAdnnEWVBXyxW1osiDDAHF9NPkNFVvezU4RWyWukc",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
 };
@@ -103,7 +103,7 @@ export const renLocalnet: SolNetworkConfig = {
     endpoint: "http://0.0.0.0:8899",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
-        GatewayRegistry: "DHpzwsdvAzq61PN9ZwQWg2hzwX8gYNfKAdsNKKtdKDux",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "",
 };

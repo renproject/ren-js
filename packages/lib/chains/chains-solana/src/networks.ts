@@ -61,10 +61,10 @@ export const renMainnet: SolNetworkConfig = {
     chain: "mainnet",
     isTestnet: false,
     chainLabel: "Mainnet",
-    endpoint: "https://testnet.solana.com",
+    endpoint: "https://ren.rpcpool.com/",
     chainExplorer: "https://explorer.solana.com/",
     addresses: {
-        GatewayRegistry: "",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
 };

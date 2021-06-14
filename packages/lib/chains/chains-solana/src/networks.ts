@@ -7,6 +7,7 @@ import {
 export interface SolNetworkConfig {
     name: RenNetwork;
     chain: string;
+    lightnode: string;
     isTestnet: boolean;
     chainLabel: string;
     chainExplorer: string;
@@ -62,7 +63,8 @@ export const renMainnet: SolNetworkConfig = {
     isTestnet: false,
     chainLabel: "Mainnet",
     endpoint: "https://ren.rpcpool.com/",
-    chainExplorer: "https://explorer.solana.com/",
+    chainExplorer: "https://explorer.solana.com",
+    lightnode: "https://lightnode-mainnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
@@ -75,7 +77,8 @@ export const renTestnet: SolNetworkConfig = {
     isTestnet: true,
     chainLabel: "Testnet",
     endpoint: "https://testnet.solana.com",
-    chainExplorer: "https://explorer.solana.com/",
+    chainExplorer: "https://explorer.solana.com",
+    lightnode: "https://lightnode-testnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
@@ -88,7 +91,8 @@ export const renDevnet: SolNetworkConfig = {
     isTestnet: true,
     chainLabel: "Devnet",
     endpoint: "https://api.devnet.solana.com",
-    chainExplorer: "https://explorer.solana.com/",
+    chainExplorer: "https://explorer.solana.com",
+    lightnode: "https://lightnode-devnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
@@ -101,7 +105,8 @@ export const renLocalnet: SolNetworkConfig = {
     isTestnet: true,
     chainLabel: "",
     endpoint: "http://0.0.0.0:8899",
-    chainExplorer: "https://explorer.solana.com/",
+    lightnode: "http://0.0.0.0:5000",
+    chainExplorer: "https://explorer.solana.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },

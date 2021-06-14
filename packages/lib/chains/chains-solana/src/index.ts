@@ -13,7 +13,7 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
 } from "@renproject/interfaces";
-import { keccak256 } from "@renproject/utils";
+import { Callable, keccak256 } from "@renproject/utils";
 
 import {
     Connection,
@@ -69,7 +69,7 @@ interface SolOptions {
     logger: Logger;
 }
 
-export class Solana
+class SolanaClass
     implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
     public static chain = "Solana" as const;
     public chain = Solana.chain;
@@ -108,7 +108,7 @@ export class Solana
         this.initialize(this.renNetworkDetails?.name as RenNetwork);
     }
 
-    public utils: ChainStatic<any, string, any>["utils"] = {
+    public static utils = {
         resolveChainNetwork: resolveNetwork,
         addressIsValid: (a: any) => {
             try {
@@ -127,7 +127,7 @@ export class Solana
                 | SolNetworkConfig,
         ): string => {
             const resolvedNetwork =
-                this.utils.resolveChainNetwork(network) || renMainnet;
+                SolanaClass.utils.resolveChainNetwork(network) || renMainnet;
 
             return `${resolvedNetwork.chainExplorer}/address/${address}?cluster=${resolvedNetwork.chain}`;
         },
@@ -141,11 +141,13 @@ export class Solana
                 | SolNetworkConfig = renMainnet,
         ): string => {
             const resolvedNetwork =
-                this.utils.resolveChainNetwork(network) || renMainnet;
+                SolanaClass.utils.resolveChainNetwork(network) || renMainnet;
 
             return `${resolvedNetwork.chainExplorer}/tx/${transaction}?cluster=${resolvedNetwork.chain}`;
         },
     };
+
+    public utils = SolanaClass.utils as any;
 
     /**
      * Should be set by `constructor` or `initialize`.
@@ -170,7 +172,7 @@ export class Solana
     initialize = async (
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
     ) => {
-        this.renNetwork = this.utils.resolveChainNetwork(network);
+        this.renNetwork = SolanaClass.utils.resolveChainNetwork(network);
 
         // Load registry state to find programs
         const pubk = new PublicKey(
@@ -916,3 +918,7 @@ export class Solana
         }
     }
 }
+
+export type Solana = SolanaClass;
+// @dev Removes any static fields, except `utils`.
+export const Solana = Callable(SolanaClass);

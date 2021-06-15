@@ -373,7 +373,7 @@ class SolanaClass
             p_hash: new Uint8Array(lockState.pHash),
             to: new Uint8Array(base58.decode(contractCalls[0].sendTo)),
             n_hash: new Uint8Array(lockState.nHash),
-            amount: new BN(lockState.amount),
+            amount: new BN(mintTx.out.amount.toString()),
         };
 
         this._logger.debug(
@@ -383,13 +383,14 @@ class SolanaClass
                 p_hash: lockState.pHash,
                 to: base58.decode(contractCalls[0].sendTo),
                 n_hash: lockState.nHash,
-                amount: new BN(lockState.amount),
+                amount: new BN(mintTx.out.amount.toString()),
             }),
         );
 
         const renvmMsgSlice = Buffer.from([
+            0,
             ...preencode.p_hash,
-            ...preencode.amount.toArray("le", 8),
+            ...preencode.amount.toArray("le", 32),
             ...preencode.s_hash,
             ...preencode.to,
             ...preencode.n_hash,
@@ -482,7 +483,7 @@ class SolanaClass
         const secPInstruction = Secp256k1Program.createInstructionWithPublicKey(
             secpParams,
         );
-        secPInstruction.data = Buffer.from([0, ...secPInstruction.data]);
+        secPInstruction.data = Buffer.from([...secPInstruction.data]);
         tx.add(instruction, secPInstruction);
         tx.recentBlockhash = (
             await this.provider.connection.getRecentBlockhash("max")
@@ -872,10 +873,12 @@ class SolanaClass
     };
 
     /*
-     * Solana specific utility for creating a token account for a given user
+     * Solana specific utility for checking whether a token account has been
+     * instantiated for the selected asset
      */
-    async createAssociatedTokenAccount(asset: string) {
+    async getAssociatedTokenAccount(asset: string) {
         await this.waitForInitialization();
+
         const tokenMintId = await this.getSPLTokenPubkey(asset);
         const destination = await getAssociatedTokenAddress(
             this.provider.wallet.publicKey,
@@ -887,6 +890,22 @@ class SolanaClass
         );
 
         if (!tokenAccount || !tokenAccount.data) {
+            return false;
+        }
+        return destination;
+    }
+
+    /*
+     * Solana specific utility for creating a token account for a given user
+     */
+    async createAssociatedTokenAccount(asset: string) {
+        await this.waitForInitialization();
+        const tokenMintId = await this.getSPLTokenPubkey(asset);
+        const existingTokenAccount = await this.getAssociatedTokenAccount(
+            asset,
+        );
+
+        if (!existingTokenAccount) {
             const createTxInstruction = await createAssociatedTokenAccount(
                 this.provider.wallet.publicKey,
                 this.provider.wallet.publicKey,

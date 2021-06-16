@@ -40,7 +40,9 @@ export const mintChainMap = (providers) => {
         ...ethChains,
         solana: (context: GatewayMachineContext<any>) => {
             const { destChain, network } = context.tx;
-            return new Solana(providers[destChain].connector, network);
+            return new Solana(providers[destChain].connector, network, {
+                logger: console,
+            });
         },
     };
 };

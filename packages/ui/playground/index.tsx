@@ -136,7 +136,7 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
 
     const parameters = useMemo(
         () => ({
-            sdk: new RenJS(network),
+            sdk: new RenJS(network, { loadCompletedDeposits: true }),
             mintParams: {
                 network,
                 sourceAsset: asset,
@@ -224,7 +224,7 @@ const App = (): JSX.Element => {
         keyof ReturnType<typeof multiwalletOptions>["chains"]
     >("solana");
     const [asset, setAsset] = useState("BTC");
-    const [network, setNetwork] = useState(renNetworks[0]);
+    const [network, setNetwork] = useState(renNetworks[1]);
 
     const wallets = useMultiwallet();
     const [open, setOpen] = useState(false);

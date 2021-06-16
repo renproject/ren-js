@@ -1395,7 +1395,6 @@ export class LockAndMintDeposit<
                 contractCalls,
                 this._state.queryTxResult,
                 (promiEvent as unknown) as EventEmitter,
-                this._state,
             );
 
             // Update status.

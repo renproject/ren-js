@@ -4,7 +4,6 @@ import {
     LockAndMintTransaction,
     Logger,
     MintChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -14,7 +13,6 @@ import {
     BurnPayloadConfig,
 } from "@renproject/interfaces";
 import { Callable, keccak256 } from "@renproject/utils";
-
 import {
     Connection,
     PublicKey,
@@ -27,6 +25,7 @@ import {
     sendAndConfirmRawTransaction,
     ConfirmOptions,
     CreateSecp256k1InstructionWithPublicKeyParams,
+    CreateSecp256k1InstructionWithEthAddressParams,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 
@@ -38,15 +37,17 @@ import {
 import { BN } from "bn.js";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
-import elliptic from "elliptic";
 import { EventEmitter } from "events";
 
+import { createInstructionWithEthAddress2 } from "./util";
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
 import {
     BurnLogLayout,
     GatewayLayout,
+    GatewayStateKey,
     GatewayRegistryLayout,
     GatewayRegistryState,
+    GatewayRegistryStateKey,
     MintLogLayout,
     RenVmMsgLayout,
 } from "./layouts";
@@ -179,7 +180,7 @@ class SolanaClass
             this.renNetworkDetails.addresses.GatewayRegistry,
         );
         const stateKey = await PublicKey.findProgramAddress(
-            [Buffer.from("GatewayRegistryState")],
+            [Buffer.from(GatewayRegistryStateKey)],
             pubk,
         );
 
@@ -336,7 +337,6 @@ class SolanaClass
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
         eventEmitter: EventEmitter,
-        lockState: any,
     ) => {
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
@@ -352,7 +352,7 @@ class SolanaClass
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.3"))],
+            [new Uint8Array(Buffer.from(GatewayStateKey))],
             program,
         );
         const s_hash = keccak256(Buffer.from(`${asset}/toSolana`));
@@ -367,35 +367,41 @@ class SolanaClass
             program,
         );
 
-        const renvmmsg = Buffer.from(new Array(136));
+        const renvmmsg = Buffer.from(new Array(160));
         const preencode = {
-            s_hash: new Uint8Array(s_hash),
-            p_hash: new Uint8Array(lockState.pHash),
+            p_hash: new Uint8Array(
+                Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
+            ),
+            amount: new Uint8Array(
+                new BN(mintTx.out.amount.toString()).toArray("be", 32),
+            ),
+            token: new Uint8Array(Buffer.from(s_hash.toString("hex"), "hex")),
             to: new Uint8Array(base58.decode(contractCalls[0].sendTo)),
-            n_hash: new Uint8Array(lockState.nHash),
-            amount: new BN(mintTx.out.amount.toString()),
+            n_hash: new Uint8Array(
+                Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
+            ),
         };
 
         this._logger.debug(
             "renvmmsg preencode",
             JSON.stringify({
                 s_hash,
-                p_hash: lockState.pHash,
+                p_hash: mintTx.out.phash,
                 to: base58.decode(contractCalls[0].sendTo),
-                n_hash: lockState.nHash,
+                n_hash: mintTx.out.nhash,
                 amount: new BN(mintTx.out.amount.toString()),
             }),
         );
 
         const renvmMsgSlice = Buffer.from([
-            0,
             ...preencode.p_hash,
-            ...preencode.amount.toArray("le", 32),
-            ...preencode.s_hash,
+            ...preencode.amount,
+            ...preencode.token,
             ...preencode.to,
             ...preencode.n_hash,
         ]);
         RenVmMsgLayout.encode(preencode, renvmmsg);
+        this._logger.debug("renvmmsg encoded", renvmmsg);
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
@@ -461,29 +467,31 @@ class SolanaClass
         });
         this._logger.debug("mint instruction", JSON.stringify(instruction));
 
+        const gatewayInfo = await this.provider.connection.getAccountInfo(
+            gatewayAccountId[0],
+        );
+
+        if (!gatewayInfo) throw new Error("incorrect gateway program address");
+
+        const gatewayState = GatewayLayout.decode(gatewayInfo.data);
+
         const tx = new Transaction();
 
-        const ec = new elliptic.ec("secp256k1");
-        const key = ec.keyFromPublic(lockState.gPubKey);
-        const secpParams: CreateSecp256k1InstructionWithPublicKeyParams = {
-            publicKey: Buffer.from(
-                key.getPublic().encode("hex", false),
-                "hex",
-            ).slice(1, 65),
+        const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
+            ethAddress: Buffer.from(gatewayState.renvm_authority),
             message: renvmMsgSlice,
             signature: sig.slice(0, 64),
             recoveryId: sig[64] - 27,
         };
         this._logger.debug(
             "authority address",
-            secpParams.publicKey.toString("hex"),
+            secpParams.ethAddress.toString("hex"),
         );
         this._logger.debug("secp params", secpParams);
 
-        const secPInstruction = Secp256k1Program.createInstructionWithPublicKey(
-            secpParams,
-        );
+        const secPInstruction = createInstructionWithEthAddress2(secpParams);
         secPInstruction.data = Buffer.from([...secPInstruction.data]);
+
         tx.add(instruction, secPInstruction);
         tx.recentBlockhash = (
             await this.provider.connection.getRecentBlockhash("max")
@@ -505,6 +513,7 @@ class SolanaClass
         if (!signature) throw new Error("failed to sign");
         // FIXME: we need to generalize these events
         eventEmitter.emit("transactionHash", base58.encode(signature));
+        this._logger.debug("signed with signature", signature);
 
         const confirmOpts: ConfirmOptions = {
             commitment: "finalized",
@@ -516,7 +525,7 @@ class SolanaClass
             confirmOpts,
         );
 
-        this._logger.debug("sent and confirmed", signature);
+        this._logger.debug("sent and confirmed", r);
         eventEmitter.emit("confirmation", {}, { status: true });
 
         return r;
@@ -532,25 +541,18 @@ class SolanaClass
     ) => {
         await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
-        const renvmmsg = Buffer.from(new Array(136));
+        const renvmmsg = Buffer.from(new Array(160));
+
         const preencode = {
-            s_hash: new Uint8Array(sHash),
+            token: new Uint8Array(sHash),
             p_hash: new Uint8Array(pHash),
             to: new Uint8Array(base58.decode(to)),
             n_hash: new Uint8Array(nHash),
-            amount: new BN(amount),
+            amount: new Uint8Array(new BN(amount).toArray("be", 32)),
         };
         this._logger.debug("find preencode", preencode);
-        RenVmMsgLayout.encode(
-            {
-                s_hash: new Uint8Array(sHash),
-                p_hash: new Uint8Array(pHash),
-                to: new Uint8Array(base58.decode(to)),
-                n_hash: new Uint8Array(nHash),
-                amount: new BN(amount),
-            },
-            renvmmsg,
-        );
+        RenVmMsgLayout.encode(preencode, renvmmsg);
+        console.log("find encoded", renvmmsg);
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
@@ -614,9 +616,9 @@ class SolanaClass
         const contract = this.resolveTokenGatewayContract(asset);
         const program = new PublicKey(contract);
 
-        // check that the gpubkey matches
+        // TODO: check that the gpubkey matches
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.3"))],
+            [new Uint8Array(Buffer.from(GatewayStateKey))],
             program,
         );
 
@@ -627,7 +629,7 @@ class SolanaClass
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
         const gatewayState = GatewayLayout.decode(gatewayInfo.data);
-        console.log(gatewayState.renvm_authority);
+        console.debug(gatewayState.renvm_authority);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 
@@ -777,7 +779,7 @@ class SolanaClass
         );
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.3"))],
+            [new Uint8Array(Buffer.from(GatewayStateKey))],
             program,
         );
 

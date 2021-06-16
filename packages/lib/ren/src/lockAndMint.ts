@@ -1322,7 +1322,9 @@ export class LockAndMintDeposit<
         }
         if (
             this.params.contractCalls &&
-            this.params.to.findTransactionByDepositDetails
+            this.params.to.findTransactionByDepositDetails &&
+            this._state.queryTxResult?.out &&
+            this._state.queryTxResult.out.revert === undefined
         ) {
             this.mintTransaction = await this.params.to.findTransactionByDepositDetails(
                 this.params.asset,
@@ -1330,7 +1332,7 @@ export class LockAndMintDeposit<
                 this._state.nHash,
                 this._state.pHash,
                 this.params.contractCalls[0].sendTo,
-                this._state.amount,
+                this._state.queryTxResult.out.amount,
             );
             return this.mintTransaction;
         }

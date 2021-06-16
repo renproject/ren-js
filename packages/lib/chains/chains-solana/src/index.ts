@@ -245,7 +245,6 @@ class SolanaClass
         return false;
     };
 
-    // TODO: check if we can derive the decimals from token metadata
     assetDecimals = async (asset: string) => {
         await this.waitForInitialization();
         const address = await this.getSPLTokenPubkey(asset);
@@ -327,6 +326,54 @@ class SolanaClass
         return tokenMintId[0];
     }
 
+    constructRenVMMsg = (
+        p_hash: Buffer,
+        amount: string,
+        token: Buffer,
+        to: string,
+        n_hash: Buffer,
+    ) => {
+        try {
+            const renvmmsg = Buffer.from(new Array(160));
+            const preencode = {
+                p_hash: new Uint8Array(p_hash),
+                amount: new Uint8Array(
+                    new BN(amount.toString()).toArray("be", 32),
+                ),
+                token: new Uint8Array(token),
+                to: new Uint8Array(base58.decode(to)),
+                n_hash: new Uint8Array(n_hash),
+            };
+
+            this._logger.debug(
+                "renvmmsg preencode",
+                JSON.stringify({
+                    s_hash: token,
+                    p_hash,
+                    to: base58.decode(to),
+                    n_hash,
+                    amount: new Uint8Array(
+                        new BN(amount.toString()).toArray("be", 32),
+                    ),
+                }),
+            );
+
+            const renvmMsgSlice = Buffer.from([
+                ...preencode.p_hash,
+                ...preencode.amount,
+                ...preencode.token,
+                ...preencode.to,
+                ...preencode.n_hash,
+            ]);
+            RenVmMsgLayout.encode(preencode, renvmmsg);
+            this._logger.debug("renvmmsg encoded", renvmmsg);
+            return [renvmmsg, renvmMsgSlice];
+        } catch (e) {
+            this._logger.debug("failed to encoded renvmmsg", e);
+            throw e;
+        }
+    };
+
     /**
      * `submitMint` should take the completed mint transaction from RenVM and
      * submit its signature to the mint chain to finalize the mint.
@@ -367,46 +414,20 @@ class SolanaClass
             program,
         );
 
-        const renvmmsg = Buffer.from(new Array(160));
-        const preencode = {
-            p_hash: new Uint8Array(
-                Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
-            ),
-            amount: new Uint8Array(
-                new BN(mintTx.out.amount.toString()).toArray("be", 32),
-            ),
-            token: new Uint8Array(Buffer.from(s_hash.toString("hex"), "hex")),
-            to: new Uint8Array(base58.decode(contractCalls[0].sendTo)),
-            n_hash: new Uint8Array(
-                Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
-            ),
-        };
-
-        this._logger.debug(
-            "renvmmsg preencode",
-            JSON.stringify({
-                s_hash,
-                p_hash: mintTx.out.phash,
-                to: base58.decode(contractCalls[0].sendTo),
-                n_hash: mintTx.out.nhash,
-                amount: new BN(mintTx.out.amount.toString()),
-            }),
+        const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
+            Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
+            mintTx.out.amount.toString(),
+            Buffer.from(s_hash.toString("hex"), "hex"),
+            contractCalls[0].sendTo,
+            Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
         );
-
-        const renvmMsgSlice = Buffer.from([
-            ...preencode.p_hash,
-            ...preencode.amount,
-            ...preencode.token,
-            ...preencode.to,
-            ...preencode.n_hash,
-        ]);
-        RenVmMsgLayout.encode(preencode, renvmmsg);
-        this._logger.debug("renvmmsg encoded", renvmmsg);
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
             program,
         );
+        this._logger.debug("mint log account", mintLogAccountId[0].toString());
+
         const recipient = new PublicKey(contractCalls[0].sendTo);
 
         const recipientAccount = await this.provider.connection.getAccountInfo(
@@ -541,18 +562,14 @@ class SolanaClass
     ) => {
         await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
-        const renvmmsg = Buffer.from(new Array(160));
 
-        const preencode = {
-            token: new Uint8Array(sHash),
-            p_hash: new Uint8Array(pHash),
-            to: new Uint8Array(base58.decode(to)),
-            n_hash: new Uint8Array(nHash),
-            amount: new Uint8Array(new BN(amount).toArray("be", 32)),
-        };
-        this._logger.debug("find preencode", preencode);
-        RenVmMsgLayout.encode(preencode, renvmmsg);
-        console.log("find encoded", renvmmsg);
+        const [renvmmsg] = this.constructRenVMMsg(
+            pHash,
+            amount,
+            sHash,
+            to,
+            nHash,
+        );
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
@@ -563,7 +580,13 @@ class SolanaClass
             mintLogAccountId[0],
         );
 
-        if (!mintData) return undefined;
+        if (!mintData) {
+            this._logger.debug(
+                "no mint for mint:",
+                mintLogAccountId[0].toString(),
+            );
+            return undefined;
+        }
         this._logger.debug("found mint:", mintData);
 
         const mintLogData = MintLogLayout.decode(mintData.data);

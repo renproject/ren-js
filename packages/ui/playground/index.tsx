@@ -17,7 +17,7 @@ import {
     BasicBurn,
     DefaultDeposit,
     DepositProps,
-} from "../../ui/ren-react";
+} from "../../ui/ren-react/src/library/index";
 import { Ethereum, EthereumConfig } from "../../lib/chains/chains-ethereum/src";
 import { Solana } from "../../lib/chains/chains-solana/src";
 import { Bitcoin } from "../../lib/chains/chains-bitcoin";
@@ -121,16 +121,15 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
 
     // ensure that the solana mint destination exists
     useEffect(() => {
-        if (!tokenAccountExists) {
-            solanaMintChain &&
-                solanaMintChain
-                    .createAssociatedTokenAccount(asset)
-                    .then(() => {
-                        setTokenAccountExists(true);
-                    })
-                    .catch((e) =>
-                        setTokenAccountError("Failed to create token account"),
-                    );
+        if (!tokenAccountExists && solanaMintChain) {
+            solanaMintChain
+                .createAssociatedTokenAccount(asset)
+                .then(() => {
+                    setTokenAccountExists(true);
+                })
+                .catch((e) =>
+                    setTokenAccountError("Failed to create token account"),
+                );
         }
     }, [solanaMintChain, tokenAccountExists, setTokenAccountExists, asset]);
 

@@ -27,16 +27,18 @@ import {
 export interface ConfirmingDepositProps<X> {
     deposit: ConfirmingGatewayTransaction<X>;
     confirmations: number;
+    explorerLink?: string;
     targetConfirmations?: number;
 }
 
 export const DefaultConfirmingDeposit: React.FC<
     ConfirmingDepositProps<any>
-> = ({ confirmations, targetConfirmations }) => {
+> = ({ confirmations, targetConfirmations, explorerLink }) => {
     return (
         <div className="confirmingDeposit">
             Waiting for deposit confirmation {confirmations}/
             {targetConfirmations || "?"}
+            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
         </div>
     );
 };
@@ -90,15 +92,18 @@ export interface CompletedDepositProps {
     deposit: CompletedGatewayTransaction<any>;
     amount: number;
     tx: string;
+    explorerLink?: string;
 }
 
 export const DefaultCompletedDeposit: React.FC<CompletedDepositProps> = ({
     amount,
     tx,
+    explorerLink,
 }) => {
     return (
         <div className="acceptedDeposit">
             Successfully minted {String(amount)}, tx: {String(tx)}
+            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
         </div>
     );
 };
@@ -198,7 +203,14 @@ export const DefaultDeposit: React.FC<DepositProps> = ({
 }) => {
     const machine = useDeposit(session, depositId);
     if (!machine) return <div>Missing deposit...</div>;
-    const { deposit, value, mint, formatAmount } = machine;
+    const {
+        deposit,
+        value,
+        mint,
+        formatAmount,
+        mintExplorerLink,
+        depositExplorerLink,
+    } = machine;
     switch (value) {
         case DepositStates.CONFIRMING_DEPOSIT:
             if (!isConfirming(deposit)) throw new Error("inconsistent state");
@@ -206,6 +218,7 @@ export const DefaultDeposit: React.FC<DepositProps> = ({
                 <ConfirmingDeposit
                     deposit={deposit}
                     targetConfirmations={deposit.sourceTxConfTarget}
+                    explorerLink={depositExplorerLink}
                     confirmations={deposit.sourceTxConfs || 0}
                 />
             );
@@ -234,6 +247,7 @@ export const DefaultDeposit: React.FC<DepositProps> = ({
                     deposit={deposit}
                     amount={(deposit.renResponse?.out as any)?.amount}
                     tx={deposit.destTxHash || ""}
+                    explorerLink={mintExplorerLink}
                 />
             );
         case DepositStates.ERROR_MINTING:

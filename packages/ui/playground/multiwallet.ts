@@ -1,4 +1,4 @@
-import { SolanaConnector } from "@renproject/multiwallet-solana-connector";
+import { SolanaConnector } from "../../lib/multiwallet/multiwallet-solana-connector/src/index";
 import { BinanceSmartChainInjectedConnector } from "../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index";
 import { EthereumInjectedConnector } from "../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index";
 /* import { EthereumMEWConnectConnector } from "../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index";

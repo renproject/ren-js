@@ -8,6 +8,7 @@ import {
     LockChainMap,
     MintChainMap,
     isAccepted,
+    isMinted,
 } from "@renproject/ren-tx";
 import RenJS from "@renproject/ren";
 import { useActor, useMachine, useSelector } from "@xstate/react";
@@ -240,17 +241,49 @@ export const useDeposit = (
     }, [state.context.deposit, send]);
 
     const [decimals, setDecimals] = useState(0);
+    const [depositExplorerLink, setDepositExplorerLink] = useState<string>();
+    const [mintExplorerLink, setMintExplorerLink] = useState<string>();
 
     useEffect(() => {
         void (async () => {
-            const assetDecimals = await session.sessionMachine.state.context
-                .from(session.sessionMachine.state.context)
-                .assetDecimals(
-                    session.sessionMachine.state.context.tx.sourceAsset,
+            const fromChain = session.sessionMachine.state.context.from(
+                session.sessionMachine.state.context,
+            );
+
+            const toChain = session.sessionMachine.state.context.to(
+                session.sessionMachine.state.context,
+            );
+
+            const currentTx =
+                session.sessionMachine.state.context.tx.transactions[depositId];
+
+            if (isMinted(currentTx)) {
+                console.log("dest txhash", currentTx.destTxHash);
+                setMintExplorerLink(
+                    toChain.utils?.transactionExplorerLink &&
+                        toChain.utils.transactionExplorerLink(
+                            currentTx.destTxHash,
+                        ),
                 );
+            }
+
+            const assetDecimals = await fromChain.assetDecimals(
+                session.sessionMachine.state.context.tx.sourceAsset,
+            );
             setDecimals(assetDecimals);
+            setDepositExplorerLink(
+                fromChain.utils?.transactionExplorerLink &&
+                    fromChain.utils?.transactionExplorerLink(
+                        currentTx.rawSourceTx.transaction,
+                    ),
+            );
         })();
-    }, [setDecimals, session.sessionMachine.state.context]);
+    }, [
+        setDecimals,
+        session.sessionMachine.state.context.from,
+        state.context.deposit.rawSourceTx,
+        (state.context.deposit as any).rawDestTx,
+    ]);
 
     const formatAmount = useCallback(
         (amount: string) => {
@@ -262,6 +295,8 @@ export const useDeposit = (
     return {
         state,
         formatAmount,
+        depositExplorerLink,
+        mintExplorerLink,
         value: state.value as DepositStates,
         deposit: state.context.deposit,
         mint,

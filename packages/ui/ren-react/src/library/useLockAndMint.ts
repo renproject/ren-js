@@ -258,7 +258,6 @@ export const useDeposit = (
                 session.sessionMachine.state.context.tx.transactions[depositId];
 
             if (isMinted(currentTx)) {
-                console.log("dest txhash", currentTx.destTxHash);
                 setMintExplorerLink(
                     toChain.utils?.transactionExplorerLink &&
                         toChain.utils.transactionExplorerLink(

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/interfaces",
-    "version": "2.2.3",
+    "version": "2.3.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

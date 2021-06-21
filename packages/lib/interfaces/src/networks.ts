@@ -6,6 +6,7 @@ export enum RenNetwork {
     MainnetVDot3 = "mainnet-v0.3",
     TestnetVDot3 = "testnet-v0.3",
     DevnetVDot3 = "devnet-v0.3",
+    Localnet = "localnet",
 }
 
 export interface RenNetworkDetails {
@@ -39,6 +40,11 @@ const renDevnetVDot3: RenNetworkDetails = {
     lightnode: "https://lightnode-devnet.herokuapp.com/",
     isTestnet: true,
 };
+const renLocalnet: RenNetworkDetails = {
+    name: RenNetwork.Localnet,
+    lightnode: "http://localhost:5000",
+    isTestnet: true,
+};
 
 export const getRenNetworkDetails = (
     renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
@@ -59,6 +65,9 @@ export const getRenNetworkDetails = (
         case RenNetwork.DevnetVDot3:
         case RenNetwork.DevnetVDot3 as "devnet-v0.3":
             return renDevnetVDot3;
+        case RenNetwork.Localnet:
+        case RenNetwork.Localnet as "localnet":
+            return renLocalnet;
         default:
             return renNetwork;
     }
@@ -69,7 +78,8 @@ export type RenNetworkString =
     | "testnet"
     | "mainnet-v0.3"
     | "testnet-v0.3"
-    | "devnet-v0.3";
+    | "devnet-v0.3"
+    | "localnet";
 
 export const RenNetworks = [
     RenNetwork.Mainnet,
@@ -77,4 +87,5 @@ export const RenNetworks = [
     RenNetwork.MainnetVDot3,
     RenNetwork.TestnetVDot3,
     RenNetwork.DevnetVDot3,
+    RenNetwork.Localnet,
 ];

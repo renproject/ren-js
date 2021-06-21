@@ -261,11 +261,40 @@ export class EthereumBaseChain
      *
      
      */
-    assetDecimals = (asset: string): number => {
+    assetDecimals = async (asset: string): Promise<number> => {
+        if (!this.web3) {
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
         if (asset === "ETH") {
             return 18;
         }
-        throw new Error(`Unsupported asset ${asset}.`);
+        const tokenAddress = await this.getTokenContractAddress(asset);
+
+        const decimalsABI: AbiItem = {
+            constant: true,
+            inputs: [],
+            name: "decimals",
+            outputs: [
+                {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                },
+            ],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+        };
+
+        const tokenContract = new this.web3.eth.Contract(
+            [decimalsABI],
+            tokenAddress,
+        );
+
+        const decimalsRaw = await await tokenContract.methods.decimals().call();
+        return new BigNumber(decimalsRaw).toNumber();
     };
 
     transactionID = (transaction: EthTransaction): string => {

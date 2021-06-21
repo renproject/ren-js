@@ -267,18 +267,19 @@ const handleMint = async <X, Y extends { [name: string]: unknown }>(
             minter.removeListener("confirmation", onConfirmation);
         };
 
-        await minter.on("transactionHash", (transactionHash) => {
-            const submittedTx = {
-                sourceTxHash,
-                destTxHash: transactionHash,
-            };
-            callback({
-                type: "SUBMITTED",
-                data: submittedTx,
-            });
-        });
-
-        await minter.on("confirmation", onConfirmation);
+        await Promise.all([
+            minter.on("transactionHash", (transactionHash) => {
+                const submittedTx = {
+                    sourceTxHash,
+                    destTxHash: transactionHash,
+                };
+                callback({
+                    type: "SUBMITTED",
+                    data: submittedTx,
+                });
+            }),
+            minter.on("confirmation", onConfirmation),
+        ]);
         await minter;
     } catch (e) {
         callback({

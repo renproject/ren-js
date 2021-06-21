@@ -25,6 +25,10 @@ export type SyncOrPromise<T> = Promise<T> | T;
 //     } & E
 // >;
 
+export interface BurnPayloadConfig {
+    bytes?: boolean;
+}
+
 /**
  * # Adding chains
  * Once a chain has been added to the [multichain repo](https://github.com/renproject/multichain) and accepted by the
@@ -253,7 +257,9 @@ export interface LockChain<
     // need to support this. For now, other chains can return an empty string.
     depositV1HashString: (deposit: LockDeposit) => string;
 
-    burnPayload?: () => SyncOrPromise<string | undefined>;
+    burnPayload?: (
+        burnPayloadConfig?: BurnPayloadConfig,
+    ) => SyncOrPromise<string | undefined>;
 }
 
 export interface BurnDetails<Transaction> {
@@ -290,10 +296,27 @@ export interface MintChain<
         eventEmitter: EventEmitter,
     ) => SyncOrPromise<Transaction>;
 
-    findTransaction: (
+    /**
+     * Finds a transaction by its nonce and optionally signature,
+     * as used in Ethereum based chains
+     */
+    findTransaction?: (
         asset: string,
         nHash: Buffer,
         sigHash?: Buffer,
+    ) => SyncOrPromise<Transaction | undefined>;
+
+    /**
+     * Finds a transaction by its details
+     * as used in Solana
+     */
+    findTransactionByDepositDetails?: (
+        asset: string,
+        sHash: Buffer,
+        nHash: Buffer,
+        pHash: Buffer,
+        to: string,
+        amount: string,
     ) => SyncOrPromise<Transaction | undefined>;
 
     /**
@@ -338,6 +361,8 @@ export interface MintChain<
         asset: string,
         burnPayload?: string,
     ) => SyncOrPromise<OverwritableBurnAndReleaseParams | undefined>;
+
+    burnPayloadConfig?: BurnPayloadConfig;
 }
 
 /**

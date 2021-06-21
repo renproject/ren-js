@@ -26,10 +26,14 @@ export const ethNetworkToRenNetwork = (id: number | string): RenNetwork => {
             decodedId = Buffer.from(id.split("0x").pop() || "", "hex")[0];
         }
     }
-    return {
+    const network = {
         1: RenNetwork.Mainnet,
         42: RenNetwork.Testnet,
     }[decodedId];
+    if (!network) {
+        throw new Error("Unknown Ethereum network");
+    }
+    return network;
 };
 
 export interface AbstractEthereumConnectorOptions {

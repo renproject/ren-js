@@ -11,7 +11,10 @@ import { useMachine } from "@xstate/react";
 import { LockChain, MintChain, RenNetwork } from "@renproject/interfaces";
 import BigNumber from "bignumber.js/bignumber";
 import { useCallback, useEffect, useState } from "react";
-import { BurnSession } from "@renproject/ren-tx/build/main/types/burn";
+import {
+    BurnSession,
+    isBurnCompleted,
+} from "@renproject/ren-tx/build/main/types/burn";
 import { idFromParams } from "./useLockAndMint";
 
 interface BurnParams {
@@ -147,12 +150,41 @@ export const useBurnAndRelease = (
     }, [machine.send]);
 
     const [decimals, setDecimals] = useState(0);
+    const [burnExplorerLink, setBurnExplorerLink] = useState<string>();
+    const [releaseExplorerLink, setReleaseExplorerLink] = useState<string>();
 
     useEffect(() => {
         void (async () => {
-            const assetDecimals = await context
-                .to(context)
-                .assetDecimals(context.tx.sourceAsset);
+            const fromChain = state.context.from(state.context);
+
+            const toChain = state.context.to(state.context);
+
+            const currentTx = state.context.tx.transaction;
+
+            if (currentTx) {
+                setBurnExplorerLink(
+                    fromChain.utils?.transactionExplorerLink &&
+                        fromChain.utils.transactionExplorerLink(
+                            currentTx.sourceTxHash ||
+                                (currentTx as any).rawSourceTx,
+                            state.context.tx.network,
+                        ),
+                );
+            }
+
+            if (currentTx && isBurnCompleted(currentTx)) {
+                setReleaseExplorerLink(
+                    toChain.utils?.transactionExplorerLink &&
+                        toChain.utils.transactionExplorerLink(
+                            currentTx.destTxHash,
+                            state.context.tx.network,
+                        ),
+                );
+            }
+
+            const assetDecimals = await toChain.assetDecimals(
+                state.context.tx.sourceAsset,
+            );
             setDecimals(assetDecimals);
         })();
     }, [setDecimals, context]);
@@ -168,6 +200,8 @@ export const useBurnAndRelease = (
         machine,
         state,
         formatAmount,
+        burnExplorerLink,
+        releaseExplorerLink,
         value: state.value as BurnStates,
         session: state.context.tx,
         tx: state.context.tx.transaction,

@@ -255,7 +255,13 @@ export class TerraClass
      */
     transactionID = (transaction: TerraTransaction) => transaction.hash;
 
-    transactionFromID = async (txid: string | Buffer, txindex: string) => {
+    transactionIDFromRPCFormat = (txid: string | Buffer, _txindex: string) =>
+        typeof txid === "string" ? txid : txid.toString("hex");
+
+    transactionFromRPCFormat = async (
+        txid: string | Buffer,
+        txindex: string,
+    ) => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
@@ -266,6 +272,11 @@ export class TerraClass
             this.chainNetwork,
         );
     };
+    /**
+     * @deprecated renamed to `transactionFromRPCFormat`
+     */
+    transactionFromID = (txid: string | Buffer, txindex: string) =>
+        this.transactionFromRPCFormat(txid, txindex);
 
     depositV1HashString = (_deposit: TerraDeposit): string => {
         throw new Error(UNSUPPORTED_TERRA_NETWORK);

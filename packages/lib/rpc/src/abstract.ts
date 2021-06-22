@@ -45,6 +45,7 @@ export interface AbstractRenVMProvider<
         pHash: Buffer;
         to: string;
         outputHashFormat: string;
+        transactionVersion?: number;
     }) => Buffer;
 
     submitMint: (params: {
@@ -62,6 +63,7 @@ export interface AbstractRenVMProvider<
         fn: string;
         fnABI: AbiItem[];
         tags: [string] | [];
+        transactionVersion?: number;
     }) => SyncOrPromise<Buffer>;
 
     burnTxHash?: (params: {

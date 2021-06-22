@@ -301,7 +301,16 @@ export class EthereumBaseChain
         return transaction || "";
     };
 
-    transactionFromID = (txid: string | Buffer, _txindex: string) => Ox(txid);
+    transactionIDFromRPCFormat = (txid: string | Buffer, txindex: string) =>
+        this.transactionID(this.transactionFromRPCFormat(txid, txindex));
+
+    transactionFromRPCFormat = (txid: string | Buffer, _txindex: string) =>
+        Ox(txid);
+    /**
+     * @deprecated renamed to `transactionFromRPCFormat`
+     */
+    transactionFromID = (txid: string | Buffer, txindex: string) =>
+        this.transactionFromRPCFormat(txid, txindex);
 
     transactionConfidence = async (
         transaction: EthTransaction,

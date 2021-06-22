@@ -371,8 +371,9 @@ export class RenVMProvider
     >(
         _selector: string,
         utxoTxHash: Buffer,
+        retries?: number,
     ): Promise<T> => {
-        const response = await this.queryTx(toBase64(utxoTxHash));
+        const response = await this.queryTx(toBase64(utxoTxHash), retries);
         // Unmarshal transaction.
         const { asset, from } = parseV1Selector(response.tx.to);
         if (asset.toUpperCase() === from.toUpperCase()) {

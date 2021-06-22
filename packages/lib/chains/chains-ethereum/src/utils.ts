@@ -464,9 +464,9 @@ export const getTokenAddress = async (
         }
         return tokenAddress;
     } catch (error) {
-        (error || {}).message = `Error looking up ${asset} token address${
-            error.message ? `: ${String(error.message)}` : "."
-        }`;
+        (error || {}).message = `Error looking up ${asset} token address on ${
+            network.chainLabel
+        }${error.message ? `: ${String(error.message)}` : "."}`;
         throw error;
     }
 };
@@ -516,6 +516,17 @@ export const findTransactionBySigHash = async (
             ).toNumber();
             fromBlock = toBlock - blockLimit + 1;
         }
+
+        const newMintEvents = await web3.eth.getPastLogs({
+            address: gatewayAddress,
+            fromBlock,
+            toBlock,
+            topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
+        });
+        if (newMintEvents.length) {
+            return newMintEvents[0].transactionHash;
+        }
+
         if (sigHash) {
             // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
             // the contract
@@ -537,16 +548,6 @@ export const findTransactionBySigHash = async (
             if (oldMintEvents.length) {
                 return oldMintEvents[0].transactionHash;
             }
-        }
-
-        const newMintEvents = await web3.eth.getPastLogs({
-            address: gatewayAddress,
-            fromBlock,
-            toBlock,
-            topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
-        });
-        if (newMintEvents.length) {
-            return newMintEvents[0].transactionHash;
         }
     } catch (error) {
         console.warn(error);

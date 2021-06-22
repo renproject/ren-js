@@ -115,7 +115,7 @@ export interface ResponseSubmitTx {
 export interface ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
-        version: "1";
+        version: "0" | "1";
         hash: string;
         selector: string;
         in: TypedPackValue;

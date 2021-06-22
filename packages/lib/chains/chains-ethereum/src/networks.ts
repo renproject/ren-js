@@ -16,7 +16,7 @@ const ethereumConfig = {
     mainnet: {
         chain: "main",
         isTestnet: false,
-        chainLabel: "Mainnet",
+        chainLabel: "Ethereum",
         networkID: 1,
         infura: "https://mainnet.infura.io",
         etherscan: "https://etherscan.io",

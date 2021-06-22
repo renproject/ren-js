@@ -4,6 +4,7 @@ import { AbiItem } from "./abi";
 import { Base64String, TxStatus } from "./types";
 
 export interface RenTransaction<Input, Output> {
+    version?: number;
     hash: Base64String;
     txStatus: TxStatus;
     to: string;

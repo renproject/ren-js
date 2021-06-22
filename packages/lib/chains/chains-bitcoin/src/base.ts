@@ -286,13 +286,11 @@ export abstract class BitcoinBaseChain
      */
     transactionID = (transaction: BtcTransaction) => transaction.txHash;
 
-    transactionFromID = (
+    transactionIDFromRPCFormat = (
         txid: string | Buffer,
-        txindex: string,
+        _txindex: string,
         reversed?: boolean,
     ) => {
-        let txidString;
-
         // RenVM returns TXIDs in the correct byte direction, so they should be
         // reversed when converting to a string.
         // See https://learnmeabitcoin.com/technical/txid#why
@@ -302,13 +300,32 @@ export abstract class BitcoinBaseChain
                 typeof txid === "string"
                     ? Buffer.from(strip0x(txid), "hex")
                     : txid;
-            txidString = bufferTxid.reverse().toString("hex");
+            return bufferTxid.reverse().toString("hex");
         } else {
-            txidString = typeof txid === "string" ? txid : txid.toString("hex");
+            return typeof txid === "string" ? txid : txid.toString("hex");
         }
+    };
 
+    transactionFromRPCFormat = (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => {
+        let txidString = this.transactionIDFromRPCFormat(
+            txid,
+            txindex,
+            reversed,
+        );
         return this.api.fetchUTXO(txidString, parseInt(txindex, 10));
     };
+    /**
+     * @deprecated renamed to `transactionFromRPCFormat`
+     */
+    transactionFromID = (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => this.transactionFromRPCFormat(txid, txindex, reversed);
 
     depositV1HashString = ({ transaction }: BtcDeposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;

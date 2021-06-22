@@ -40,7 +40,6 @@ import {
 } from "@renproject/utils";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
-import { config } from "process";
 import { AbiCoder } from "web3-eth-abi";
 import { RenJSConfig } from "./config";
 import base58 from "bs58";
@@ -357,16 +356,24 @@ export class LockAndMint<
                 LockAddress,
                 MintTransaction,
                 MintAddress
-            >(deposit, this.params, this.renVM, {
-                ...this._state,
-                renNetwork: this._state.renNetwork,
-                pHash: this._state.pHash,
-                gHash: this._state.gHash,
-                gPubKey: this._state.gPubKey,
-                targetConfirmations: isDefined(this._state.targetConfirmations)
-                    ? this._state.targetConfirmations
-                    : undefined,
-            });
+            >(
+                deposit,
+                this.params,
+                this.renVM,
+                {
+                    ...this._state,
+                    renNetwork: this._state.renNetwork,
+                    pHash: this._state.pHash,
+                    gHash: this._state.gHash,
+                    gPubKey: this._state.gPubKey,
+                    targetConfirmations: isDefined(
+                        this._state.targetConfirmations,
+                    )
+                        ? this._state.targetConfirmations
+                        : undefined,
+                },
+                this.gatewayAddress,
+            );
 
             await depositObject._initialize();
 
@@ -466,33 +473,41 @@ export class LockAndMint<
                 ? base58.decode(sendTo).toString("hex")
                 : sendTo;
 
-        const tokenGatewayContract =
-            this.renVM.version(this._state.selector) >= 2
-                ? Ox(generateSHash(this._state.selector))
-                : await this.params.to.resolveTokenGatewayContract(
-                      this.params.asset,
-                  );
-
         this._state.pHash = generatePHash(
             contractParams || [],
             this._state.logger,
         );
+
+        // Check if the transaction is either a v0.2 transaction, or has the
+        // version set to `0` in a v0.4 transaction.
+        // See [RenJSConfig.transactionVersion]
+        const v0Transaction =
+            this.renVM.version(this._state.selector) === 1 ||
+            this._state.config.transactionVersion === 0;
+
+        const tokenGatewayContract = !v0Transaction
+            ? Ox(generateSHash(this._state.selector))
+            : await this.params.to.resolveTokenGatewayContract(
+                  this.params.asset,
+              );
 
         const gHash = generateGHash(
             contractParams || [],
             sendToHex,
             tokenGatewayContract,
             fromHex(nonce),
-            this.renVM.version(this._state.selector) >= 2,
+            !v0Transaction,
             this._state.logger,
         );
         this._state.gHash = gHash;
-        this._state.gPubKey = await this.renVM.selectPublicKey(
-            this._state.selector,
-            this.renVM.version(this._state.selector) >= 2
-                ? this.params.from.name
-                : this.params.asset,
-        );
+        this._state.gPubKey =
+            this._state.config.gPubKey ||
+            (await this.renVM.selectPublicKey(
+                this._state.selector,
+                this.renVM.version(this._state.selector) >= 2
+                    ? this.params.from.name
+                    : this.params.asset,
+            ));
         this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
 
         const gatewayAddress = await this.params.from.getGatewayAddress(
@@ -634,6 +649,8 @@ export class LockAndMintDeposit<
     public mintTransaction?: MintTransaction;
     public revertReason?: string;
 
+    public gatewayAddress: LockAddress | undefined;
+
     /**
      * Internal state of the mint object, including the `gHash` and `pHash`.
      * Interface may change across minor and patch releases.
@@ -652,6 +669,7 @@ export class LockAndMintDeposit<
         >,
         renVM: AbstractRenVMProvider,
         state: MintState & MintStatePartial,
+        gatewayAddress?: LockAddress,
     ) {
         assertObject(
             {
@@ -679,6 +697,7 @@ export class LockAndMintDeposit<
         this.depositDetails = depositDetails;
         this.params = params;
         this.renVM = renVM;
+        this.gatewayAddress = gatewayAddress;
         // this._state = state;
 
         // `processDeposit` will call `refreshStatus` which will set the proper
@@ -737,18 +756,25 @@ export class LockAndMintDeposit<
             throw new Error("Providing multiple tags is not supported yet.");
         }
 
-        const { pHash } = state;
+        const { pHash, config } = state;
+
+        // Check if the transaction is either a v0.2 transaction, or has the
+        // version set to `0` in a v0.4 transaction.
+        // See [RenJSConfig.transactionVersion]
+        const v0Transaction =
+            this.renVM.version(state.selector) === 1 ||
+            config.transactionVersion === 0;
 
         const transactionDetails = this.params.from.transactionRPCFormat(
             this.depositDetails.transaction,
-            renVM.version(state.selector) >= 2,
+            !v0Transaction,
         );
 
         const nHash = generateNHash(
             fromHex(nonce),
             transactionDetails.txid,
             transactionDetails.txindex,
-            renVM.version(state.selector) >= 2,
+            !v0Transaction,
         );
 
         const outputHashFormat =
@@ -797,6 +823,9 @@ export class LockAndMintDeposit<
             this.renVM.mintTxHash({
                 ...this._state,
                 outputHashFormat,
+
+                // See [RenJSConfig.transactionVersion]
+                transactionVersion: config.transactionVersion,
             }),
         );
 
@@ -1193,7 +1222,8 @@ export class LockAndMintDeposit<
                 this._state.queryTxResult &&
                 this._state.queryTxResult.out
             ) {
-                return this;
+                // NO_COMMIT
+                // return this;
             }
 
             promiEvent.emit("txHash", txHash);
@@ -1323,7 +1353,8 @@ export class LockAndMintDeposit<
         if (
             this.params.contractCalls &&
             this.params.to.findTransactionByDepositDetails &&
-            this._state.queryTxResult?.out &&
+            this._state.queryTxResult &&
+            this._state.queryTxResult.out &&
             this._state.queryTxResult.out.revert === undefined
         ) {
             this.mintTransaction = await this.params.to.findTransactionByDepositDetails(
@@ -1445,6 +1476,9 @@ export class LockAndMintDeposit<
         const encodedHash = await this.renVM.submitMint({
             ...this._state,
             token,
+
+            // See [RenJSConfig.transactionVersion]
+            transactionVersion: this._state.config.transactionVersion,
         });
 
         const returnedTxHash =

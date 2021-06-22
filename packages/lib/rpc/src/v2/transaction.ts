@@ -112,6 +112,7 @@ export type MintParams = RPCValue<
     typeof mintParamsType,
     // Values
     {
+        amount: RenVMValue<RenVMType.U256>;
         ghash: RenVMValue<RenVMType.B32>; // "x0gTBzbXmM1Xdwk-B8PHJ4sgY2T_NcrWsxK6MJ2xYos",
         gpubkey: RenVMValue<RenVMType.B>; // "8Qnq",
         nhash: RenVMValue<RenVMType.B32>; // "a_46LkThVhVYlkIxBXaInubuEmYcfDNk45EBl60prhA",
@@ -119,21 +120,9 @@ export type MintParams = RPCValue<
         payload: RenVMValue<RenVMType.B>; // "I_9MVtYiO4NlH7lwIx8",
         phash: RenVMValue<RenVMType.B32>; // "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ",
         to: RenVMValue<RenVMType.Str>; // "򝊞􋄛𧚞󥫨򨚘󳽈򤙳񙓻򳳱􎖫򗣌𻄭񑦁򏬰񆆅򒒛􊗓𧜿򇞣􁓹",
-    } & (
-        | {
-              output: {
-                  outpoint: {
-                      hash: RenVMValue<RenVMType.B>; // "_yJG1tKIALMrvaSes9BB4dYx5eCN8OK5V_PEM4N3R10",
-                      index: RenVMValue<RenVMType.U32>; // "2288363171"
-                  };
-                  pubKeyScript: RenVMValue<RenVMType.B>; // "8SsHPc0wCbrItrmmFOsebOtGwd8YOSDTFyaGT7UZHRVGCtEjv0_N17kNJ5RqF8nxzbddbqELUOjxZe3n_llGksd7sEMbQg",
-                  value: RenVMValue<RenVMType.U256>; // "503863382662879832"
-              };
-          }
-        | {
-              txid: string;
-          }
-    )
+        txid: RenVMValue<RenVMType.B>;
+        txindex: RenVMValue<RenVMType.U32>;
+    }
 >;
 
 export type MintTransactionInput = TransactionInput<MintParams>;

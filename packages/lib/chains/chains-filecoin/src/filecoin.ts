@@ -366,7 +366,12 @@ export class FilecoinClass
      */
     transactionID = (transaction: FilTransaction): string => transaction.cid;
 
-    transactionFromID = async (
+    transactionIDFromRPCFormat = (
+        txid: string | Buffer,
+        _txindex: string,
+    ): string => (typeof txid === "string" ? txid : new CID(txid).toString());
+
+    transactionFromRPCFormat = async (
         txid: string | Buffer,
         _txindex: string,
     ): Promise<FilTransaction> => {
@@ -379,6 +384,11 @@ export class FilecoinClass
             this.chainNetwork,
         );
     };
+    /**
+     * @deprecated renamed to `transactionFromRPCFormat`
+     */
+    transactionFromID = (txid: string | Buffer, txindex: string) =>
+        this.transactionFromRPCFormat(txid, txindex);
 
     depositV1HashString = (_deposit: FilDeposit): string => {
         throw new Error(NETWORK_NOT_SUPPORTED);

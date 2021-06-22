@@ -161,11 +161,37 @@ export interface ChainCommon<
         txindex: string;
     };
 
+    /**
+     * `transactionIDFromRPCFormat` accepts a txid and txindex and returns the
+     * transactionID as returned from `transactionID`.
+     */
+    transactionIDFromRPCFormat: (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => string;
+
+    transactionFromRPCFormat: (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => SyncOrPromise<Transaction>;
+    /**
+     * @deprecated renamed to `transactionFromRPCFormat`
+     */
     transactionFromID: (
         txid: string | Buffer,
         txindex: string,
         reversed?: boolean,
     ) => SyncOrPromise<Transaction>;
+
+    transactionRPCFormatExplorerLink?: (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+        network?: RenNetwork | RenNetworkString | RenNetworkDetails | Network,
+        explorer?: string,
+    ) => string | undefined;
 }
 
 export type DepositCommon<Transaction = any> = {
@@ -392,6 +418,22 @@ export interface ChainStatic<
          */
         addressIsValid(
             address: DepositAddress | string,
+            network?:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | Network,
+        ): boolean;
+
+        /**
+         * Return a boolean indicating whether the transaction is valid for the
+         * chain's network.
+         *
+         * @param address
+         * @param network
+         */
+        transactionIsValid(
+            address: Transaction | string,
             network?:
                 | RenNetwork
                 | RenNetworkString

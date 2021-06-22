@@ -196,6 +196,7 @@ export class RenVMProvider
         payload,
         pHash,
         to,
+        transactionVersion,
     }: {
         selector: string;
         gHash: Buffer;
@@ -207,6 +208,7 @@ export class RenVMProvider
         payload: Buffer;
         pHash: Buffer;
         to: string;
+        transactionVersion?: number;
     }): MintTransactionInput => {
         assertType<Buffer>("Buffer", {
             gHash,
@@ -218,7 +220,9 @@ export class RenVMProvider
             txid: output.txid,
         });
         assertType<string>("string", { to, amount, txindex: output.txindex });
-        const version = "1";
+        const version = isDefined(transactionVersion)
+            ? String(transactionVersion)
+            : "1";
         const txIn = {
             t: mintParamsType(),
             v: {
@@ -254,6 +258,7 @@ export class RenVMProvider
         payload: Buffer;
         pHash: Buffer;
         to: string;
+        transactionVersion?: number;
     }): Buffer => {
         return fromBase64(this.buildTransaction(params).hash);
     };
@@ -269,6 +274,7 @@ export class RenVMProvider
         payload: Buffer;
         pHash: Buffer;
         to: string;
+        transactionVersion?: number;
     }): Promise<Buffer> => {
         const tx = this.buildTransaction(params);
         await this.submitTx(tx);
@@ -289,9 +295,13 @@ export class RenVMProvider
     >(
         _selector: string,
         renVMTxHash: Buffer,
+        retries?: number,
     ): Promise<T> => {
         try {
-            const response = await this.queryTx(toURLBase64(renVMTxHash));
+            const response = await this.queryTx(
+                toURLBase64(renVMTxHash),
+                retries,
+            );
 
             // Unmarshal transaction.
             // TODO: Improve mint/burn detection. Currently checks if the format

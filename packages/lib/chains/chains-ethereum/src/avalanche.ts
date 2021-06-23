@@ -10,7 +10,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid } from "./utils";
+import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renAvalancheTestnet: EthereumConfig = {
     name: "Avalanche Testnet",
@@ -75,6 +75,7 @@ export class AvalancheClass extends EthereumClass {
     public static utils = {
         resolveChainNetwork: resolveAvalancheNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,

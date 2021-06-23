@@ -13,6 +13,7 @@ import {
     extractError,
     fromHex,
     isDefined,
+    isHex,
     Ox,
     payloadToABI,
     payloadToMintABI,
@@ -680,3 +681,6 @@ export const addressIsValid = (address: EthAddress): boolean => {
     }
     return false;
 };
+
+export const transactionIsValid = (transaction: EthTransaction): boolean =>
+    transaction !== null && isHex(transaction, { length: 32, prefix: true });

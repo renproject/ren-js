@@ -161,6 +161,8 @@ export interface ChainCommon<
         txindex: string;
     };
 
+    transactionRPCTxidFromID: (transactionID: string, v2?: boolean) => Buffer;
+
     /**
      * `transactionIDFromRPCFormat` accepts a txid and txindex and returns the
      * transactionID as returned from `transactionID`.

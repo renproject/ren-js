@@ -10,7 +10,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid, findTransactionBySigHash } from "./utils";
+import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renBscTestnet: EthereumConfig = {
     name: "BSC Testnet",
@@ -89,6 +89,7 @@ export class BinanceSmartChainClass extends EthereumClass {
     public static utils = {
         resolveChainNetwork: resolveBSCNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,

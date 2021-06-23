@@ -35,6 +35,7 @@ import {
 } from "./networks";
 import {
     addressIsValid,
+    transactionIsValid,
     extractBurnDetails,
     findBurnByNonce,
     findTransactionBySigHash,
@@ -112,6 +113,7 @@ export class EthereumBaseChain
     public static utils = {
         resolveChainNetwork: resolveNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,
@@ -641,6 +643,9 @@ export class EthereumBaseChain
             txindex: "0",
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        fromHex(transactionID);
 }
 
 const _: ChainStatic<

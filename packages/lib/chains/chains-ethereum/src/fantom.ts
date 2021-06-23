@@ -10,7 +10,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid } from "./utils";
+import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renFantomTestnet: EthereumConfig = {
     name: "Fantom Testnet",
@@ -87,6 +87,7 @@ export class FantomClass extends EthereumClass {
     public static utils = {
         resolveChainNetwork: resolveFantomNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,

@@ -10,6 +10,7 @@ import {
 import {
     assertType,
     Callable,
+    isHex,
     toURLBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
@@ -74,6 +75,22 @@ export class TerraClass
                 typeof addressIn === "string" ? addressIn : addressIn.address;
             assertType<string>("string", { address: address });
             return AccAddress.validate(address);
+        },
+
+        transactionIsValid: (
+            transaction: TerraTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | TerraNetwork = TerraNetwork.Columbus,
+        ): boolean => {
+            return isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.hash,
+                { length: 32 },
+            );
         },
 
         addressExplorerLink: (
@@ -292,6 +309,9 @@ export class TerraClass
             txindex: "0",
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        Buffer.from(transactionID, "hex");
 
     getBurnPayload: (() => string) | undefined;
 

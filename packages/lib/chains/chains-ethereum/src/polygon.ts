@@ -10,7 +10,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
-import { addressIsValid } from "./utils";
+import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renPolygonTestnet: EthereumConfig = {
     name: "Polygon Testnet",
@@ -75,6 +75,7 @@ export class PolygonClass extends EthereumClass {
     public static utils = {
         resolveChainNetwork: resolvePolygonNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,

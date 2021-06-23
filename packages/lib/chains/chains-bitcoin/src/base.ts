@@ -99,7 +99,16 @@ export abstract class BitcoinBaseChain
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): boolean => true,
+        ): boolean => true, // Implemented by each Bitcoin fork.
+
+        transactionIsValid: (
+            _transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ): boolean => true, // Implemented by each Bitcoin fork.
 
         addressExplorerLink: (
             _address: BtcAddress | string,
@@ -108,7 +117,7 @@ export abstract class BitcoinBaseChain
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): string | undefined => undefined,
+        ): string | undefined => undefined, // Implemented by each Bitcoin fork.
 
         transactionExplorerLink: (
             _tx: BtcTransaction | string,
@@ -117,7 +126,7 @@ export abstract class BitcoinBaseChain
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): string | undefined => undefined,
+        ): string | undefined => undefined, // Implemented by each Bitcoin fork.
 
         resolveChainNetwork: (
             network:
@@ -344,6 +353,9 @@ export abstract class BitcoinBaseChain
             txindex: transaction.vOut.toFixed(),
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string, v2?: boolean): Buffer =>
+        v2 ? fromHex(transactionID).reverse() : fromHex(transactionID);
 
     // Methods for initializing mints and burns ////////////////////////////////
 

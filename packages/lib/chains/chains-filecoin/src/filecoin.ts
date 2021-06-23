@@ -21,6 +21,7 @@ import {
     toURLBase64,
     utilsWithChainNetwork,
     isDefined,
+    doesntError,
 } from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
@@ -104,6 +105,27 @@ export class FilecoinClass
             validateAddressString(
                 typeof address === "string" ? address : address.address,
             ),
+
+        transactionIsValid: doesntError(
+            (
+                transaction: FilTransaction | string,
+                _network:
+                    | RenNetwork
+                    | RenNetworkString
+                    | RenNetworkDetails
+                    | FilNetwork = "mainnet",
+            ) => {
+                const transactionString =
+                    typeof transaction === "string"
+                        ? transaction
+                        : transaction.cid;
+                const cid = new CID(transactionString);
+                return (
+                    transactionString === cid.toString() &&
+                    cid.bytes.length === 38
+                );
+            },
+        ),
 
         addressExplorerLink: (
             address: FilAddress | string,
@@ -404,6 +426,9 @@ export class FilecoinClass
             txindex: transaction.nonce.toFixed(),
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        Buffer.from(new CID(transactionID).bytes);
 
     getBurnPayload: (() => string) | undefined;
 

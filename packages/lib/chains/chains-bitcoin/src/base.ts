@@ -272,9 +272,9 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer => {
+    addressToBytes = (address: BtcAddress | string): Buffer => {
         try {
             return base58.decode(address);
         } catch (error) {
@@ -289,6 +289,11 @@ export abstract class BitcoinBaseChain
             }
         }
     };
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
+
+    addressToString = (address: BtcAddress | string) => address;
 
     /**
      * See [[LockChain.transactionID]].
@@ -328,13 +333,10 @@ export abstract class BitcoinBaseChain
         return this.api.fetchUTXO(txidString, parseInt(txindex, 10));
     };
     /**
-     * @deprecated renamed to `transactionFromRPCFormat`
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
      */
-    transactionFromID = (
-        txid: string | Buffer,
-        txindex: string,
-        reversed?: boolean,
-    ) => this.transactionFromRPCFormat(txid, txindex, reversed);
+    transactionFromID = this.transactionFromRPCFormat;
 
     depositV1HashString = ({ transaction }: BtcDeposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
@@ -372,9 +374,7 @@ export abstract class BitcoinBaseChain
         assertType<string>("string", { address });
 
         this.burnPayloadGetter = (bytes?: boolean) =>
-            bytes
-                ? this.addressStringToBytes(address).toString("hex")
-                : address;
+            bytes ? this.addressToBytes(address).toString("hex") : address;
 
         return this;
     };

@@ -179,7 +179,8 @@ export interface ChainCommon<
         reversed?: boolean,
     ) => SyncOrPromise<Transaction>;
     /**
-     * @deprecated renamed to `transactionFromRPCFormat`
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
      */
     transactionFromID: (
         txid: string | Buffer,
@@ -259,12 +260,19 @@ export interface LockChain<
     // Encoding
 
     /**
-     * `addressBytes` should return the bytes representation of the address.
+     * `addressToBytes` should return the bytes representation of the address.
      *
      * @dev Must be compatible with the matching RenVM multichain LockChain's
      * `decodeAddress` method.
      */
+    addressToBytes: (address: Address | string) => Buffer;
+
+    /**
+     * @deprecated Renamed to addressToBytes.
+     */
     addressStringToBytes: (address: string) => Buffer;
+
+    addressToString: (address: Address | string) => string;
 
     // RenVM specific utils
 

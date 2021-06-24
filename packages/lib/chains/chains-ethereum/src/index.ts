@@ -5,3 +5,4 @@ export * from "./fantom";
 export * from "./polygon";
 export * from "./avalanche";
 export * from "./networks";
+export * from "./types";

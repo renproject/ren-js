@@ -33,6 +33,7 @@ import {
     renTestnet,
     renTestnetVDot3,
 } from "./networks";
+import { EthAddress, EthTransaction } from "./types";
 import {
     addressIsValid,
     transactionIsValid,
@@ -55,9 +56,6 @@ export const EthereumConfigMap = {
     [RenNetwork.TestnetVDot3]: renTestnetVDot3,
     [RenNetwork.DevnetVDot3]: renDevnetVDot3,
 };
-
-export type EthTransaction = string | null;
-export type EthAddress = string;
 
 const isEthereumConfig = (
     renNetwork:
@@ -109,6 +107,13 @@ export class EthereumBaseChain
     public name = EthereumBaseChain.chain;
     public legacyName: MintChain["legacyName"] = "Eth";
     public logRequestLimit: number | undefined = undefined;
+
+    public static configMap: {
+        [network in RenNetwork]?: EthereumConfig;
+    } = EthereumConfigMap;
+    public configMap: {
+        [network in RenNetwork]?: EthereumConfig;
+    } = EthereumConfigMap;
 
     public static utils = {
         resolveChainNetwork: resolveNetwork,
@@ -309,10 +314,10 @@ export class EthereumBaseChain
     transactionFromRPCFormat = (txid: string | Buffer, _txindex: string) =>
         Ox(txid);
     /**
-     * @deprecated renamed to `transactionFromRPCFormat`
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
      */
-    transactionFromID = (txid: string | Buffer, txindex: string) =>
-        this.transactionFromRPCFormat(txid, txindex);
+    transactionFromID = this.transactionFromRPCFormat;
 
     transactionConfidence = async (
         transaction: EthTransaction,

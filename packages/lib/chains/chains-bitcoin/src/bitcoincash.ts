@@ -138,10 +138,13 @@ export class BitcoinCashClass extends BitcoinClass {
     );
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer =>
+    addressToBytes = (address: BtcAddress | string): Buffer =>
         decodeBitcoinCashAddress(address);
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
 }
 
 export type BitcoinCash = BitcoinCashClass;

@@ -6,10 +6,11 @@ import {
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { provider } from "web3-providers";
-import { EthAddress, EthTransaction, NetworkInput } from "./base";
+import { NetworkInput } from "./base";
 
 import { EthereumClass } from "./ethereum";
-import { EthereumConfig } from "./networks";
+import { EthereumConfig, StandardExplorer } from "./networks";
+import { EthAddress, EthTransaction } from "./types";
 import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renAvalancheTestnet: EthereumConfig = {
@@ -18,12 +19,18 @@ export const renAvalancheTestnet: EthereumConfig = {
     isTestnet: true,
     chainLabel: "Avalanche Testnet",
     networkID: 80001,
-    infura: "https://api.avax-test.network/ext/bc/C/rpc",
-    etherscan: "https://cchain.explorer.avax-test.network/",
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
         BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
+
+    publicProvider: () => `https://api.avax-test.network/ext/bc/C/rpc`,
+    explorer: StandardExplorer("https://cchain.explorer.avax-test.network"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://api.avax-test.network/ext/bc/C/rpc",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://cchain.explorer.avax-test.network",
 };
 
 export const renAvalancheMainnet: EthereumConfig = {
@@ -32,12 +39,18 @@ export const renAvalancheMainnet: EthereumConfig = {
     isTestnet: false,
     chainLabel: "Avalanche Mainnet",
     networkID: 137,
-    infura: "https://api.avax.network/ext/bc/C/rpc",
-    etherscan: "https://cchain.explorer.avax.network/",
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
+
+    publicProvider: () => `https://api.avax.network/ext/bc/C/rpc`,
+    explorer: StandardExplorer("https://cchain.explorer.avax.network"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://api.avax.network/ext/bc/C/rpc",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://cchain.explorer.avax.network",
 };
 
 export const AvalancheConfigMap = {
@@ -71,6 +84,9 @@ export class AvalancheClass extends EthereumClass {
     public name = AvalancheClass.chain;
     public legacyName = undefined;
     // public logRequestLimit = 1000;
+
+    public static configMap = AvalancheConfigMap;
+    public configMap = AvalancheConfigMap;
 
     public static utils = {
         resolveChainNetwork: resolveAvalancheNetwork,

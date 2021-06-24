@@ -6,10 +6,11 @@ import {
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { provider } from "web3-providers";
-import { EthAddress, EthTransaction, NetworkInput } from "./base";
+import { NetworkInput } from "./base";
+import { EthAddress, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
-import { EthereumConfig } from "./networks";
+import { EthereumConfig, StandardExplorer } from "./networks";
 import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renBscTestnet: EthereumConfig = {
@@ -18,13 +19,18 @@ export const renBscTestnet: EthereumConfig = {
     isTestnet: true,
     chainLabel: "BSC Testnet",
     networkID: 97,
-    infura: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    // etherscan: "https://explorer.binance.org/smart-testnet",
-    etherscan: "https://testnet.bscscan.com",
     addresses: {
         GatewayRegistry: "0x838F881876f53a772D2F8E2f8aa2e4a996431495",
         BasicAdapter: "0x7de1253A8da6620351ec477b38BdC6a55FCd0f85",
     },
+
+    publicProvider: () => `https://data-seed-prebsc-1-s1.binance.org:8545/`,
+    explorer: StandardExplorer("https://testnet.bscscan.com"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://testnet.bscscan.com",
 };
 
 export const renBscDevnet: EthereumConfig = {
@@ -41,12 +47,18 @@ export const renBscMainnet: EthereumConfig = {
     isTestnet: false,
     chainLabel: "BSC Mainnet",
     networkID: 56,
-    infura: "https://bsc-dataseed.binance.org/",
-    etherscan: "https://bscscan.com",
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
+
+    publicProvider: () => `https://bsc-dataseed.binance.org`,
+    explorer: StandardExplorer("https://bscscan.com"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://bsc-dataseed.binance.org",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://bscscan.com",
 };
 
 export const BscConfigMap = {
@@ -85,6 +97,9 @@ export class BinanceSmartChainClass extends EthereumClass {
     public name = BinanceSmartChainClass.chain;
     public legacyName = undefined;
     public logRequestLimit = 5000;
+
+    public static configMap = BscConfigMap;
+    public configMap = BscConfigMap;
 
     public static utils = {
         resolveChainNetwork: resolveBSCNetwork,

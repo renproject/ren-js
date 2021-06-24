@@ -262,10 +262,22 @@ export class TerraClass
     };
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer =>
-        Buffer.from(bech32.fromWords(bech32.decode(address).words));
+    addressToBytes = (address: TerraAddress | string): Buffer =>
+        Buffer.from(
+            bech32.fromWords(
+                bech32.decode(
+                    typeof address === "string" ? address : address.address,
+                ).words,
+            ),
+        );
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
+
+    addressToString = (address: TerraAddress | string): string =>
+        typeof address === "string" ? address : address.address;
 
     /**
      * See [[LockChain.transactionID]].
@@ -290,10 +302,10 @@ export class TerraClass
         );
     };
     /**
-     * @deprecated renamed to `transactionFromRPCFormat`
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
      */
-    transactionFromID = (txid: string | Buffer, txindex: string) =>
-        this.transactionFromRPCFormat(txid, txindex);
+    transactionFromID = this.transactionFromRPCFormat;
 
     depositV1HashString = (_deposit: TerraDeposit): string => {
         throw new Error(UNSUPPORTED_TERRA_NETWORK);

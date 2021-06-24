@@ -57,6 +57,7 @@ interface MintStatePartial {
     gHash: Buffer;
     pHash: Buffer;
     targetConfirmations: number | undefined;
+    token?: string;
 }
 
 export interface DepositState {
@@ -73,7 +74,6 @@ export interface DepositState {
     pHash: Buffer;
     to: string;
     fn: string;
-    token?: string;
     fnABI: AbiItem[];
     tags: [] | [string];
     txHash: string;
@@ -366,6 +366,7 @@ export class LockAndMint<
                     pHash: this._state.pHash,
                     gHash: this._state.gHash,
                     gPubKey: this._state.gPubKey,
+                    token: this._state.token,
                     targetConfirmations: isDefined(
                         this._state.targetConfirmations,
                     )
@@ -461,7 +462,7 @@ export class LockAndMint<
         }
 
         // Last contract call
-        const { contractParams, sendTo } = contractCalls[
+        const { contractParams, sendTo, contractFn } = contractCalls[
             contractCalls.length - 1
         ];
 
@@ -517,6 +518,67 @@ export class LockAndMint<
         );
         this.gatewayAddress = gatewayAddress;
         this._state.logger.debug("gateway address:", this.gatewayAddress);
+
+        const filteredContractParams = contractParams
+            ? contractParams.filter(
+                  (contractParam) => !contractParam.notInPayload,
+              )
+            : contractParams;
+
+        const encodedParameters = new AbiCoder().encodeParameters(
+            (filteredContractParams || []).map((i) => i.type),
+            (filteredContractParams || []).map((i) => i.value),
+        );
+
+        const fnABI = payloadToMintABI(
+            contractFn,
+            filteredContractParams || [],
+        );
+
+        if (this.params.tags && this.params.tags.length > 1) {
+            throw new Error("Providing multiple tags is not supported yet.");
+        }
+
+        const tags: [string] | [] =
+            this.params.tags && this.params.tags.length
+                ? [this.params.tags[0]]
+                : [];
+
+        this._state.token = await this.params.to.resolveTokenGatewayContract(
+            this.params.asset,
+        );
+
+        if (this.renVM.submitGatewayDetails) {
+            try {
+                await this.renVM.submitGatewayDetails(
+                    this.params.from.addressToString(gatewayAddress),
+                    {
+                        ...(this._state as MintState & MintStatePartial),
+                        token: this._state.token,
+                        nHash: Buffer.from(
+                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "base64",
+                        ),
+                        payload: fromHex(encodedParameters),
+                        nonce: fromHex(nonce),
+                        fn: contractFn,
+                        fnABI,
+                        to:
+                            this.renVM.version(this._state.selector) >= 2
+                                ? strip0x(sendTo)
+                                : Ox(sendTo),
+                        tags,
+
+                        // See [RenJSConfig.transactionVersion]
+                        transactionVersion: this._state.config
+                            .transactionVersion,
+                    },
+                    5,
+                );
+            } catch (error) {
+                // Ignore error.
+            }
+        }
 
         return this.gatewayAddress;
     };
@@ -726,10 +788,6 @@ export class LockAndMintDeposit<
               )
             : undefined;
 
-        if (!nonce) {
-            throw new Error("Unable to submit to RenVM without nonce.");
-        }
-
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
                 `Unable to submit to RenVM without contract call details.`,
@@ -751,10 +809,6 @@ export class LockAndMintDeposit<
             (filteredContractParams || []).map((i) => i.type),
             (filteredContractParams || []).map((i) => i.value),
         );
-
-        if (this.params.tags && this.params.tags.length > 1) {
-            throw new Error("Providing multiple tags is not supported yet.");
-        }
 
         const { pHash, config } = state;
 
@@ -786,6 +840,10 @@ export class LockAndMintDeposit<
             contractFn,
             filteredContractParams || [],
         );
+
+        if (this.params.tags && this.params.tags.length > 1) {
+            throw new Error("Providing multiple tags is not supported yet.");
+        }
 
         const tags: [string] | [] =
             this.params.tags && this.params.tags.length
@@ -852,11 +910,6 @@ export class LockAndMintDeposit<
     /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
         await this.refreshStatus();
-
-        this._state.token = await this.params.to.resolveTokenGatewayContract(
-            this.params.asset,
-        );
-
         return this;
     };
 

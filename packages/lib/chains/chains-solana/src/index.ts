@@ -318,10 +318,10 @@ class SolanaClass
         return base58.encode(txid);
     };
     /**
-     * @deprecated renamed to `transactionFromRPCFormat`
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
      */
-    transactionFromID = (txid: string | Buffer, txindex: string) =>
-        this.transactionFromRPCFormat(txid, txindex);
+    transactionFromID = this.transactionFromRPCFormat;
 
     resolveTokenGatewayContract = (asset: string) => {
         if (!this.gatewayRegistryData) {

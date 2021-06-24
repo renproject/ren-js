@@ -49,7 +49,6 @@
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "bn.js": "^5.1.3",
-        "bnc-sdk": "^3.0.0",
         "chai-bignumber": "ren-forks/chai-bignumber#afa6f46dcbef0b7e622dc27b9b3354fc67afafbc",
         "ethereumjs-util": "^7.0.8",
         "wallet-address-validator": "^0.2.4",

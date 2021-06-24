@@ -13,18 +13,13 @@ import { extractError, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
-import HDWalletProvider from "truffle-hdwallet-provider";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
-import {
-    BscConfigMap,
-    EthereumConfigMap,
-    FantomConfigMap,
-    PolygonConfigMap,
-} from "@renproject/chains";
 import Web3 from "web3";
 import { provider } from "web3-providers";
+import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 
 chai.should();
 
@@ -42,19 +37,12 @@ describe("Refactor: mint", () => {
     it.only("mint to contract", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.TestnetVDot3;
-        const asset = "DGB" as string;
-        const from = Chains.DigiByte();
-        const ToClass = Chains.BinanceSmartChain;
+        const network = RenNetwork.Testnet;
+        const ToClass = Chains.Ethereum;
+        const from = Chains.Zcash();
+        const asset = from.asset;
 
-        const ethNetwork =
-            ToClass === Chains.BinanceSmartChain
-                ? BscConfigMap[network]
-                : ToClass === Chains.Fantom
-                ? FantomConfigMap[network]
-                : ToClass === Chains.Polygon
-                ? PolygonConfigMap[network]
-                : EthereumConfigMap[network];
+        const ethNetwork = ToClass.configMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -65,18 +53,17 @@ describe("Refactor: mint", () => {
         });
 
         const logLevel: LogLevel = LogLevel.Log;
-        const renJS = new RenJS(network, { logLevel });
+        const renJS = new RenJS(new RenVMProvider(network), { logLevel });
 
-        const infuraURL =
-            ToClass === Chains.Ethereum
-                ? `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}` // renBscDevnet.infura
-                : ethNetwork.infura;
-        const provider: provider = new HDWalletProvider(
-            MNEMONIC || "",
-            infuraURL,
-            0,
-            10,
-        ) as any;
+        const infuraURL = ethNetwork.publicProvider({
+            infura: process.env.INFURA_KEY,
+        });
+        const provider: provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        }) as any;
         const web3 = new Web3(provider);
         const ethAddress = (await web3.eth.getAccounts())[0];
         const ethBalance = web3.utils.fromWei(

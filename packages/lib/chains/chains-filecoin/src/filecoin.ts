@@ -378,10 +378,20 @@ export class FilecoinClass
     };
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer =>
-        Buffer.from(decodeAddress(address).str);
+    addressToBytes = (address: FilAddress | string): Buffer =>
+        Buffer.from(
+            decodeAddress(
+                typeof address === "string" ? address : address.address,
+            ).str,
+        );
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
+
+    addressToString = (address: FilAddress | string): string =>
+        typeof address === "string" ? address : address.address;
 
     /**
      * See [[LockChain.transactionID]].
@@ -407,10 +417,10 @@ export class FilecoinClass
         );
     };
     /**
-     * @deprecated renamed to `transactionFromRPCFormat`
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
      */
-    transactionFromID = (txid: string | Buffer, txindex: string) =>
-        this.transactionFromRPCFormat(txid, txindex);
+    transactionFromID = this.transactionFromRPCFormat;
 
     depositV1HashString = (_deposit: FilDeposit): string => {
         throw new Error(NETWORK_NOT_SUPPORTED);

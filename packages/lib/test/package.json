@@ -37,7 +37,8 @@
         "send-crypto": "0.2.29"
     },
     "devDependencies": {
-        "@truffle/hdwallet-provider": "1.4.0",
+        "@truffle/hdwallet-provider": "1.4.1",
+        "truffle-hdwallet-provider": "^1.0.17",
         "chalk": "^4.1.0",
         "dotenv": "^8.2.0",
         "web3": "^2.0.0-alpha.1"

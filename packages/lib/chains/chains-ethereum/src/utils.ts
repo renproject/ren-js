@@ -21,11 +21,11 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
-import BlocknativeSdk from "bnc-sdk";
-import {
-    EthereumTransactionData,
-    EthereumTransactionLog,
-} from "bnc-sdk/dist/types/src/interfaces";
+// import BlocknativeSdk from "bnc-sdk";
+// import {
+//     EthereumTransactionData,
+//     EthereumTransactionLog,
+// } from "bnc-sdk/dist/types/src/interfaces";
 import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
 import Web3 from "web3";
@@ -142,34 +142,34 @@ export const waitForReceipt = async (
     new Promise<TransactionReceipt>(async (resolve, reject) => {
         assertType<string>("string", { txHash });
 
-        let blocknative;
+        // let blocknative;
 
-        try {
-            // Initialize Blocknative SDK.
-            blocknative = new BlocknativeSdk({
-                dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
-                networkId: await web3.eth.net.getId(),
-            });
+        // try {
+        //     // Initialize Blocknative SDK.
+        //     blocknative = new BlocknativeSdk({
+        //         dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
+        //         networkId: await web3.eth.net.getId(),
+        //     });
 
-            const { emitter } = blocknative.transaction(txHash);
-            emitter.on("txSpeedUp", (state) => {
-                if (
-                    (state as EthereumTransactionData | EthereumTransactionLog)
-                        .hash
-                ) {
-                    txHash = Ox(
-                        (state as
-                            | EthereumTransactionData
-                            | EthereumTransactionLog).hash,
-                    );
-                }
-            });
-            emitter.on("txCancel", () => {
-                reject(new Error("Ethereum transaction was cancelled."));
-            });
-        } catch (error) {
-            // Ignore blocknative error.
-        }
+        //     const { emitter } = blocknative.transaction(txHash);
+        //     emitter.on("txSpeedUp", (state) => {
+        //         if (
+        //             (state as EthereumTransactionData | EthereumTransactionLog)
+        //                 .hash
+        //         ) {
+        //             txHash = Ox(
+        //                 (state as
+        //                     | EthereumTransactionData
+        //                     | EthereumTransactionLog).hash,
+        //             );
+        //         }
+        //     });
+        //     emitter.on("txCancel", () => {
+        //         reject(new Error("Ethereum transaction was cancelled."));
+        //     });
+        // } catch (error) {
+        //     // Ignore blocknative error.
+        // }
 
         // Wait for confirmation
         let receipt: TransactionReceipt | undefined;
@@ -184,15 +184,15 @@ export const waitForReceipt = async (
             await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
 
-        try {
-            // Destroy blocknative SDK.
-            if (blocknative) {
-                blocknative.unsubscribe(txHash);
-                blocknative.destroy();
-            }
-        } catch (error) {
-            // Ignore blocknative error.
-        }
+        // try {
+        //     // Destroy blocknative SDK.
+        //     if (blocknative) {
+        //         blocknative.unsubscribe(txHash);
+        //         blocknative.destroy();
+        //     }
+        // } catch (error) {
+        //     // Ignore blocknative error.
+        // }
 
         // Status might be undefined - so check against `false` explicitly.
         if (receipt.status === false) {

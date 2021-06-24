@@ -19,7 +19,7 @@ export const renPolygonTestnet: EthereumConfig = {
     chainLabel: "Polygon Testnet",
     networkID: 80001,
     infura: "https://rpc-mumbai.maticvigil.com/",
-    etherscan: "https://testnet.ftmscan.com",
+    etherscan: "https://explorer-mumbai.maticvigil.com",
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
         BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",

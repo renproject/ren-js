@@ -106,7 +106,7 @@ class SolanaClass
         if (options) {
             this._logger = options.logger;
         }
-        this.initialize(this.renNetworkDetails?.name as RenNetwork);
+        this.initialize(this.renNetworkDetails!.name as RenNetwork);
     }
 
     public static utils = {
@@ -236,7 +236,8 @@ class SolanaClass
             keccak256(Buffer.from(`${asset}/toSolana`)),
         );
         if (
-            this.gatewayRegistryData?.selectors.find(
+            this.gatewayRegistryData &&
+            this.gatewayRegistryData.selectors.find(
                 (x) => x.toString() === sHash.toString(),
             )
         ) {
@@ -271,7 +272,7 @@ class SolanaClass
 
         const currentSlot = await this.provider.connection.getSlot();
         return {
-            current: currentSlot - (tx?.slot ?? 0),
+            current: currentSlot - (tx && tx.slot ? tx.slot : 0),
             target: this.renNetworkDetails.isTestnet ? 1 : 2,
         };
     };
@@ -302,14 +303,16 @@ class SolanaClass
             keccak256(Buffer.from(`${asset}/toSolana`)),
         );
         let idx = -1;
-        const contract = this.gatewayRegistryData?.selectors.find(
-            (x, i) =>
-                x.toString() === sHash.toString() &&
-                (() => {
-                    idx = i;
-                    return true;
-                })(),
-        );
+        const contract = this.gatewayRegistryData
+            ? this.gatewayRegistryData.selectors.find(
+                  (x, i) =>
+                      x.toString() === sHash.toString() &&
+                      (() => {
+                          idx = i;
+                          return true;
+                      })(),
+              )
+            : undefined;
         if (!contract) throw new Error("unsupported asset");
         return this.gatewayRegistryData.gateways[idx].toBase58();
     };
@@ -387,9 +390,10 @@ class SolanaClass
     ) => {
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
-        if (mintTx.out?.revert)
+        if (mintTx.out && mintTx.out.revert)
             throw new Error("Transaction reverted: " + mintTx.out.revert);
-        if (!mintTx.out?.signature) throw new Error("Missing signature");
+        if (!mintTx.out || !mintTx.out.signature)
+            throw new Error("Missing signature");
         let sig = mintTx.out.signature;
         // FIXME: Not sure why this happens when retrieving the tx by polling for submission result
         if (typeof sig === "string") {

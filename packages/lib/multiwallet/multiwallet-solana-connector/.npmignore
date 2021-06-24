@@ -1,10 +1,13 @@
 *.env
+.cache
 
 node_modules
 
 lerna-debug.log
 yarn-error.log
 
+.yarn
+.cache
 /.project
 /.settings/
 
@@ -19,6 +22,7 @@ reports
 # IDE specific
 .vscode
 .idea
+.dir-locals.el
 
 .DS_Store
 
@@ -32,6 +36,12 @@ dist
 
 package-lock.json
 .npmrc
+.yarnrc
+.yarn/
+
+# FIXME: settle on cannonical and use
+.editorconfig
+
 
 # npmignore - content above this line is automatically generated and modifications may be omitted
 # see npmjs.com/npmignore for more details.

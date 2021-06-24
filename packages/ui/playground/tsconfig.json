@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowSyntheticDefaultImports": false,
-        "target": "es2016",
+        "target": "es2019",
         "module": "commonjs",
         "jsx": "react",
         "moduleResolution": "node",
@@ -12,7 +12,7 @@
         "strictNullChecks": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "lib": ["es2015", "es2016", "dom"],
+        "lib": ["es2015", "es2019", "es2016", "dom"],
         "types": ["node"]
     },
     "include": ["index.tsx", "multiwallet.ts"],

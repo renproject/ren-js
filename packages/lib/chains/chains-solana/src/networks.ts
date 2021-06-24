@@ -7,6 +7,7 @@ import {
 export interface SolNetworkConfig {
     name: RenNetwork;
     chain: string;
+    lightnode: string;
     isTestnet: boolean;
     chainLabel: string;
     chainExplorer: string;
@@ -14,6 +15,7 @@ export interface SolNetworkConfig {
     addresses: {
         GatewayRegistry: string;
     };
+    // used for identifying the network (similar to chainID in eth)
     genesisHash: string;
 }
 
@@ -42,9 +44,11 @@ export const resolveNetwork = (
     }
 
     switch (networkString) {
+        case RenNetwork.MainnetVDot3:
         case RenNetwork.Mainnet:
         case RenNetwork.MainnetVDot3:
             return renMainnet;
+        case RenNetwork.TestnetVDot3:
         case RenNetwork.Testnet:
         case RenNetwork.TestnetVDot3:
             return renTestnet;
@@ -60,10 +64,11 @@ export const renMainnet: SolNetworkConfig = {
     chain: "mainnet",
     isTestnet: false,
     chainLabel: "Mainnet",
-    endpoint: "https://testnet.solana.com",
-    chainExplorer: "https://explorer.solana.com/",
+    endpoint: "https://ren.rpcpool.com/",
+    chainExplorer: "https://explorer.solana.com",
+    lightnode: "https://lightnode-mainnet.herokuapp.com",
     addresses: {
-        GatewayRegistry: "",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
 };
@@ -74,9 +79,10 @@ export const renTestnet: SolNetworkConfig = {
     isTestnet: true,
     chainLabel: "Testnet",
     endpoint: "https://testnet.solana.com",
-    chainExplorer: "https://explorer.solana.com/",
+    chainExplorer: "https://explorer.solana.com",
+    lightnode: "https://lightnode-testnet.herokuapp.com",
     addresses: {
-        GatewayRegistry: "5adtAdnnEWVBXyxW1osiDDAHF9NPkNFVvezU4RWyWukc",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };
@@ -87,9 +93,10 @@ export const renDevnet: SolNetworkConfig = {
     isTestnet: true,
     chainLabel: "Devnet",
     endpoint: "https://api.devnet.solana.com",
-    chainExplorer: "https://explorer.solana.com/",
+    chainExplorer: "https://explorer.solana.com",
+    lightnode: "https://lightnode-devnet.herokuapp.com",
     addresses: {
-        GatewayRegistry: "5adtAdnnEWVBXyxW1osiDDAHF9NPkNFVvezU4RWyWukc",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
 };
@@ -100,9 +107,10 @@ export const renLocalnet: SolNetworkConfig = {
     isTestnet: true,
     chainLabel: "",
     endpoint: "http://0.0.0.0:8899",
-    chainExplorer: "https://explorer.solana.com/",
+    lightnode: "http://0.0.0.0:5000",
+    chainExplorer: "https://explorer.solana.com",
     addresses: {
-        GatewayRegistry: "DHpzwsdvAzq61PN9ZwQWg2hzwX8gYNfKAdsNKKtdKDux",
+        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "",
 };

@@ -8,7 +8,8 @@
         "build": "parcel build index.html"
     },
     "dependencies": {
-        "@solana/web3.js": "1.12.0",
+        "@project-serum/associated-token": "^0.1.1",
+        "@solana/web3.js": "1.17.0",
         "@truffle/hdwallet-provider": "^1.4.0",
         "@xstate/inspect": "^0.4.1",
         "react-app-polyfill": "^1.0.0",

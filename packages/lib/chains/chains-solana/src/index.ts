@@ -4,7 +4,6 @@ import {
     LockAndMintTransaction,
     Logger,
     MintChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
@@ -13,8 +12,7 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
 } from "@renproject/interfaces";
-import { keccak256, sleep } from "@renproject/utils";
-
+import { Callable, keccak256 } from "@renproject/utils";
 import {
     Connection,
     PublicKey,
@@ -27,6 +25,7 @@ import {
     sendAndConfirmRawTransaction,
     ConfirmOptions,
     CreateSecp256k1InstructionWithPublicKeyParams,
+    CreateSecp256k1InstructionWithEthAddressParams,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 
@@ -38,15 +37,17 @@ import {
 import { BN } from "bn.js";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
-import elliptic from "elliptic";
 import { EventEmitter } from "events";
 
+import { createInstructionWithEthAddress2 } from "./util";
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
 import {
     BurnLogLayout,
     GatewayLayout,
+    GatewayStateKey,
     GatewayRegistryLayout,
     GatewayRegistryState,
+    GatewayRegistryStateKey,
     MintLogLayout,
     RenVmMsgLayout,
 } from "./layouts";
@@ -69,15 +70,13 @@ interface SolOptions {
     logger: Logger;
 }
 
-export class Solana
+class SolanaClass
     implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
     public static chain = "Solana" as const;
     public chain = Solana.chain;
     public name = Solana.chain;
 
     public renNetworkDetails: SolNetworkConfig;
-    // Flag to prevent prompting for token account creation multiple times
-    private _creatingTokenAccount: boolean = false;
     private _logger: Logger = new SimpleLogger();
 
     public burnPayloadConfig: BurnPayloadConfig = {
@@ -93,6 +92,9 @@ export class Solana
             | SolNetworkConfig,
         options?: SolOptions,
     ) {
+        if (!this.provider.connection) {
+            throw new Error("No connection to provider");
+        }
         this.initialize = this.initialize.bind(this);
         this.waitForInitialization = this.waitForInitialization.bind(this);
         // Default to mainnet if not specified
@@ -107,7 +109,7 @@ export class Solana
         this.initialize(this.renNetworkDetails?.name as RenNetwork);
     }
 
-    public utils: ChainStatic<any, string, any>["utils"] = {
+    public static utils = {
         resolveChainNetwork: resolveNetwork,
         addressIsValid: (a: any) => {
             try {
@@ -126,7 +128,7 @@ export class Solana
                 | SolNetworkConfig,
         ): string => {
             const resolvedNetwork =
-                this.utils.resolveChainNetwork(network) || renMainnet;
+                SolanaClass.utils.resolveChainNetwork(network) || renMainnet;
 
             return `${resolvedNetwork.chainExplorer}/address/${address}?cluster=${resolvedNetwork.chain}`;
         },
@@ -140,11 +142,13 @@ export class Solana
                 | SolNetworkConfig = renMainnet,
         ): string => {
             const resolvedNetwork =
-                this.utils.resolveChainNetwork(network) || renMainnet;
+                SolanaClass.utils.resolveChainNetwork(network) || renMainnet;
 
             return `${resolvedNetwork.chainExplorer}/tx/${transaction}?cluster=${resolvedNetwork.chain}`;
         },
     };
+
+    public utils = SolanaClass.utils as any;
 
     /**
      * Should be set by `constructor` or `initialize`.
@@ -153,8 +157,7 @@ export class Solana
 
     gatewayRegistryData?: GatewayRegistryState;
 
-    _initialized?: boolean;
-    _initializationError?: Error;
+    _initialized?: Promise<true>;
     /**
      * `initialize` allows RenJS to pass in parameters after the user has
      * initialized the Chain. This allows the user to pass in network
@@ -170,50 +173,41 @@ export class Solana
     initialize = async (
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
     ) => {
-        try {
-            this.renNetwork = this.utils.resolveChainNetwork(network);
+        this.renNetwork = SolanaClass.utils.resolveChainNetwork(network);
 
-            // Load registry state to find programs
-            const pubk = new PublicKey(
-                this.renNetworkDetails.addresses.GatewayRegistry,
-            );
-            const stateKey = await PublicKey.findProgramAddress(
-                [Buffer.from("GatewayRegistryState")],
-                pubk,
-            );
+        // Load registry state to find programs
+        const pubk = new PublicKey(
+            this.renNetworkDetails.addresses.GatewayRegistry,
+        );
+        const stateKey = await PublicKey.findProgramAddress(
+            [Buffer.from(GatewayRegistryStateKey)],
+            pubk,
+        );
 
-            const gatewayData = await this.provider.connection.getAccountInfo(
-                stateKey[0],
-            );
+        const gatewayData = await this.provider.connection.getAccountInfo(
+            stateKey[0],
+        );
 
-            if (!gatewayData) {
-                throw new Error("Failed to load program state");
-            }
-            // Persist registry data
-            // TODO: Consider if we want to handle the edge case of programs being
-            // updated during the lifecyle of the chain pbject
-            this.gatewayRegistryData = GatewayRegistryLayout.decode(
-                gatewayData.data,
-            );
-
-            return this;
-        } catch (error) {
-            this._initializationError = error;
-            throw this._initializationError;
+        if (!gatewayData) {
+            throw new Error("Failed to load program state");
         }
+        // Persist registry data
+        // TODO: Consider if we want to handle the edge case of programs being
+        // updated during the lifecyle of the chain pbject
+        this.gatewayRegistryData = GatewayRegistryLayout.decode(
+            gatewayData.data,
+        );
+
+        return this;
     };
 
     async waitForInitialization() {
         if (this._initialized === undefined) {
-            return this.initialize(this.renNetworkDetails.name);
+            this._initialized = this.initialize(
+                this.renNetworkDetails.name,
+            ).then(() => true);
         }
-        while (this._initialized === false) {
-            if (this._initializationError) {
-                throw this._initializationError;
-            }
-            await sleep(100);
-        }
-        return this;
+        return this._initialized;
     }
 
     withProvider = (provider: any) => {
@@ -251,11 +245,9 @@ export class Solana
         return false;
     };
 
-    // TODO: check if we can derive the decimals from token metadata
     assetDecimals = async (asset: string) => {
         await this.waitForInitialization();
-        const address = this.resolveTokenGatewayContract(asset);
-        if (!address) throw new Error("unsupported asset: " + asset);
+        const address = await this.getSPLTokenPubkey(asset);
         const res = await this.provider.connection.getTokenSupply(
             new PublicKey(address),
         );
@@ -280,8 +272,7 @@ export class Solana
         const currentSlot = await this.provider.connection.getSlot();
         return {
             current: currentSlot - (tx?.slot ?? 0),
-            // Gets overridden in RenJS.
-            target: 1,
+            target: this.renNetworkDetails.isTestnet ? 1 : 2,
         };
     };
 
@@ -335,6 +326,54 @@ export class Solana
         return tokenMintId[0];
     }
 
+    constructRenVMMsg = (
+        p_hash: Buffer,
+        amount: string,
+        token: Buffer,
+        to: string,
+        n_hash: Buffer,
+    ) => {
+        try {
+            const renvmmsg = Buffer.from(new Array(160));
+            const preencode = {
+                p_hash: new Uint8Array(p_hash),
+                amount: new Uint8Array(
+                    new BN(amount.toString()).toArray("be", 32),
+                ),
+                token: new Uint8Array(token),
+                to: new Uint8Array(base58.decode(to)),
+                n_hash: new Uint8Array(n_hash),
+            };
+
+            this._logger.debug(
+                "renvmmsg preencode",
+                JSON.stringify({
+                    s_hash: token,
+                    p_hash,
+                    to: base58.decode(to),
+                    n_hash,
+                    amount: new Uint8Array(
+                        new BN(amount.toString()).toArray("be", 32),
+                    ),
+                }),
+            );
+
+            const renvmMsgSlice = Buffer.from([
+                ...preencode.p_hash,
+                ...preencode.amount,
+                ...preencode.token,
+                ...preencode.to,
+                ...preencode.n_hash,
+            ]);
+            RenVmMsgLayout.encode(preencode, renvmmsg);
+            this._logger.debug("renvmmsg encoded", renvmmsg);
+            return [renvmmsg, renvmMsgSlice];
+        } catch (e) {
+            this._logger.debug("failed to encoded renvmmsg", e);
+            throw e;
+        }
+    };
+
     /**
      * `submitMint` should take the completed mint transaction from RenVM and
      * submit its signature to the mint chain to finalize the mint.
@@ -345,7 +384,6 @@ export class Solana
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
         eventEmitter: EventEmitter,
-        lockState: any,
     ) => {
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
@@ -361,7 +399,7 @@ export class Solana
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.2"))],
+            [new Uint8Array(Buffer.from(GatewayStateKey))],
             program,
         );
         const s_hash = keccak256(Buffer.from(`${asset}/toSolana`));
@@ -376,39 +414,20 @@ export class Solana
             program,
         );
 
-        const renvmmsg = Buffer.from(new Array(136));
-        const preencode = {
-            s_hash: new Uint8Array(s_hash),
-            p_hash: new Uint8Array(lockState.pHash),
-            to: new Uint8Array(base58.decode(contractCalls[0].sendTo)),
-            n_hash: new Uint8Array(lockState.nHash),
-            amount: new BN(lockState.amount),
-        };
-
-        this._logger.debug(
-            "renvmmsg preencode",
-            JSON.stringify({
-                s_hash,
-                p_hash: lockState.pHash,
-                to: base58.decode(contractCalls[0].sendTo),
-                n_hash: lockState.nHash,
-                amount: new BN(lockState.amount),
-            }),
+        const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
+            Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
+            mintTx.out.amount.toString(),
+            Buffer.from(s_hash.toString("hex"), "hex"),
+            contractCalls[0].sendTo,
+            Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
         );
-
-        const renvmMsgSlice = Buffer.from([
-            ...preencode.p_hash,
-            ...preencode.amount.toArray("le", 8),
-            ...preencode.s_hash,
-            ...preencode.to,
-            ...preencode.n_hash,
-        ]);
-        RenVmMsgLayout.encode(preencode, renvmmsg);
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
             program,
         );
+        this._logger.debug("mint log account", mintLogAccountId[0].toString());
+
         const recipient = new PublicKey(contractCalls[0].sendTo);
 
         const recipientAccount = await this.provider.connection.getAccountInfo(
@@ -469,29 +488,31 @@ export class Solana
         });
         this._logger.debug("mint instruction", JSON.stringify(instruction));
 
+        const gatewayInfo = await this.provider.connection.getAccountInfo(
+            gatewayAccountId[0],
+        );
+
+        if (!gatewayInfo) throw new Error("incorrect gateway program address");
+
+        const gatewayState = GatewayLayout.decode(gatewayInfo.data);
+
         const tx = new Transaction();
 
-        const ec = new elliptic.ec("secp256k1");
-        const key = ec.keyFromPublic(lockState.gPubKey);
-        const secpParams: CreateSecp256k1InstructionWithPublicKeyParams = {
-            publicKey: Buffer.from(
-                key.getPublic().encode("hex", false),
-                "hex",
-            ).slice(1, 65),
+        const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
+            ethAddress: Buffer.from(gatewayState.renvm_authority),
             message: renvmMsgSlice,
             signature: sig.slice(0, 64),
             recoveryId: sig[64] - 27,
         };
         this._logger.debug(
             "authority address",
-            secpParams.publicKey.toString("hex"),
+            secpParams.ethAddress.toString("hex"),
         );
         this._logger.debug("secp params", secpParams);
 
-        const secPInstruction = Secp256k1Program.createInstructionWithPublicKey(
-            secpParams,
-        );
-        secPInstruction.data = Buffer.from([0, ...secPInstruction.data]);
+        const secPInstruction = createInstructionWithEthAddress2(secpParams);
+        secPInstruction.data = Buffer.from([...secPInstruction.data]);
+
         tx.add(instruction, secPInstruction);
         tx.recentBlockhash = (
             await this.provider.connection.getRecentBlockhash("max")
@@ -513,6 +534,7 @@ export class Solana
         if (!signature) throw new Error("failed to sign");
         // FIXME: we need to generalize these events
         eventEmitter.emit("transactionHash", base58.encode(signature));
+        this._logger.debug("signed with signature", signature);
 
         const confirmOpts: ConfirmOptions = {
             commitment: "finalized",
@@ -524,7 +546,7 @@ export class Solana
             confirmOpts,
         );
 
-        this._logger.debug("sent and confirmed", signature);
+        this._logger.debug("sent and confirmed", r);
         eventEmitter.emit("confirmation", {}, { status: true });
 
         return r;
@@ -540,24 +562,13 @@ export class Solana
     ) => {
         await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
-        const renvmmsg = Buffer.from(new Array(136));
-        const preencode = {
-            s_hash: new Uint8Array(sHash),
-            p_hash: new Uint8Array(pHash),
-            to: new Uint8Array(base58.decode(to)),
-            n_hash: new Uint8Array(nHash),
-            amount: new BN(amount),
-        };
-        this._logger.debug("find preencode", preencode);
-        RenVmMsgLayout.encode(
-            {
-                s_hash: new Uint8Array(sHash),
-                p_hash: new Uint8Array(pHash),
-                to: new Uint8Array(base58.decode(to)),
-                n_hash: new Uint8Array(nHash),
-                amount: new BN(amount),
-            },
-            renvmmsg,
+
+        const [renvmmsg] = this.constructRenVMMsg(
+            pHash,
+            amount,
+            sHash,
+            to,
+            nHash,
         );
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
@@ -569,7 +580,13 @@ export class Solana
             mintLogAccountId[0],
         );
 
-        if (!mintData) return undefined;
+        if (!mintData) {
+            this._logger.debug(
+                "no mint for mint:",
+                mintLogAccountId[0].toString(),
+            );
+            return undefined;
+        }
         this._logger.debug("found mint:", mintData);
 
         const mintLogData = MintLogLayout.decode(mintData.data);
@@ -606,6 +623,11 @@ export class Solana
         );
     }
 
+    /*
+     * Generates the mint parameters.
+     * NOTE: We need to ensure that the destination address is initialized,
+     * so be sure to call createAssociatedTokenAccount(asset) first
+     */
     getMintParams = async (asset: string) => {
         await this.waitForInitialization();
         if (!this.renNetworkDetails || !this.provider) {
@@ -616,6 +638,21 @@ export class Solana
 
         const contract = this.resolveTokenGatewayContract(asset);
         const program = new PublicKey(contract);
+
+        // TODO: check that the gpubkey matches
+        const gatewayAccountId = await PublicKey.findProgramAddress(
+            [new Uint8Array(Buffer.from(GatewayStateKey))],
+            program,
+        );
+
+        const gatewayInfo = await this.provider.connection.getAccountInfo(
+            gatewayAccountId[0],
+        );
+
+        if (!gatewayInfo) throw new Error("incorrect gateway program address");
+
+        const gatewayState = GatewayLayout.decode(gatewayInfo.data);
+        console.debug(gatewayState.renvm_authority);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 
@@ -628,41 +665,6 @@ export class Solana
             this.provider.wallet.publicKey,
             tokenMintId[0],
         );
-        const tokenAccount = await this.provider.connection.getAccountInfo(
-            destination,
-        );
-        if (
-            !this._creatingTokenAccount &&
-            (!tokenAccount || !tokenAccount.data)
-        ) {
-            this._creatingTokenAccount = true;
-            const createTxInstruction = await createAssociatedTokenAccount(
-                this.provider.wallet.publicKey,
-                this.provider.wallet.publicKey,
-                tokenMintId[0],
-            );
-            const createTx = new Transaction();
-            createTx.add(createTxInstruction);
-            createTx.feePayer = this.provider.wallet.publicKey;
-            createTx.recentBlockhash = (
-                await this.provider.connection.getRecentBlockhash()
-            ).blockhash;
-            const signedTx = await this.provider.wallet.signTransaction(
-                createTx,
-            );
-
-            // Only wait until solana has seen the tx
-            const confirmOpts: ConfirmOptions = {
-                commitment: "confirmed",
-            };
-
-            await sendAndConfirmRawTransaction(
-                this.provider.connection,
-                signedTx.serialize(),
-                confirmOpts,
-            );
-            this._creatingTokenAccount = false;
-        }
 
         const calls: OverwritableLockAndMintParams = {
             contractCalls: [
@@ -796,11 +798,11 @@ export class Solana
             this.provider.wallet.publicKey,
             [],
             amount,
-            9,
+            await this.assetDecimals(asset),
         );
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from("GatewayStateV0.1.1"))],
+            [new Uint8Array(Buffer.from(GatewayStateKey))],
             program,
         );
 
@@ -894,4 +896,73 @@ export class Solana
         };
         return x;
     };
+
+    /*
+     * Solana specific utility for checking whether a token account has been
+     * instantiated for the selected asset
+     */
+    async getAssociatedTokenAccount(asset: string) {
+        await this.waitForInitialization();
+
+        const tokenMintId = await this.getSPLTokenPubkey(asset);
+        const destination = await getAssociatedTokenAddress(
+            this.provider.wallet.publicKey,
+            tokenMintId,
+        );
+
+        const tokenAccount = await this.provider.connection.getAccountInfo(
+            destination,
+        );
+
+        if (!tokenAccount || !tokenAccount.data) {
+            return false;
+        }
+        return destination;
+    }
+
+    /*
+     * Solana specific utility for creating a token account for a given user
+     */
+    async createAssociatedTokenAccount(asset: string) {
+        await this.waitForInitialization();
+        const tokenMintId = await this.getSPLTokenPubkey(asset);
+        const existingTokenAccount = await this.getAssociatedTokenAccount(
+            asset,
+        );
+
+        if (!existingTokenAccount) {
+            const createTxInstruction = await createAssociatedTokenAccount(
+                this.provider.wallet.publicKey,
+                this.provider.wallet.publicKey,
+                tokenMintId,
+            );
+            const createTx = new Transaction();
+            createTx.add(createTxInstruction);
+            createTx.feePayer = this.provider.wallet.publicKey;
+            createTx.recentBlockhash = (
+                await this.provider.connection.getRecentBlockhash()
+            ).blockhash;
+            const signedTx = await this.provider.wallet.signTransaction(
+                createTx,
+            );
+
+            // Only wait until solana has seen the tx
+            const confirmOpts: ConfirmOptions = {
+                commitment: "confirmed",
+            };
+
+            return sendAndConfirmRawTransaction(
+                this.provider.connection,
+                signedTx.serialize(),
+                confirmOpts,
+            );
+        } else {
+            // Already generated, but we aren't guarenteed to get the tx
+            return "";
+        }
+    }
 }
+
+export type Solana = SolanaClass;
+// @dev Removes any static fields, except `utils`.
+export const Solana = Callable(SolanaClass);

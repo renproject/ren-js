@@ -294,7 +294,6 @@ export interface MintChain<
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
         eventEmitter: EventEmitter,
-        lockState: any,
     ) => SyncOrPromise<Transaction>;
 
     /**

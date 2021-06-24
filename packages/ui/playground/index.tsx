@@ -17,7 +17,7 @@ import {
     BasicBurn,
     DefaultDeposit,
     DepositProps,
-} from "../../ui/ren-react";
+} from "../../ui/ren-react/src/library/index";
 import { Ethereum, EthereumConfig } from "../../lib/chains/chains-ethereum/src";
 import { Solana } from "../../lib/chains/chains-solana/src";
 import { Bitcoin } from "../../lib/chains/chains-bitcoin";
@@ -29,13 +29,15 @@ import {
 } from "@renproject/multiwallet-ui";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2/renVMProvider";
 import { multiwalletOptions } from "./multiwallet";
+import { chainStringToRenChain, lockChainMap, mintChainMap } from "./chainmaps";
 import { inspect } from "@xstate/inspect";
+
 inspect({
     iframe: false, // open in new window
 });
 
 const localProvider = new RenVMProvider({
-    name: "devnet-v0.3",
+    name: "testnet-v0.3",
     lightnode: "http://localhost:5000",
     isTestnet: true,
 });
@@ -56,22 +58,32 @@ const ethLocalnetConfig: EthereumConfig = {
     },
 };
 
-const BasicBurnApp = ({ account, provider, destinationAddress, amount }) => {
+const source = { BTC: "bitcoin", ZEC: "zcash", BCH: "bitcoinCash" };
+const supportedAssets = ["BTC", "ZEC", "BCH"];
+const renNetworks = [...Object.values(RenNetwork)];
+
+const BasicBurnApp = ({
+    network,
+    account,
+    provider,
+    destinationAddress,
+    amount,
+}) => {
     const parameters = useMemo(
         () => ({
-            sdk: new RenJS(RenNetwork.DevnetVDot3),
+            sdk: new RenJS(network),
             burnParams: {
                 sourceAsset: "BTC",
-                network: RenNetwork.Testnet,
+                network,
                 targetAmount: amount,
                 destinationAddress,
             },
-            from: new Solana(provider, RenNetwork.DevnetVDot3, {
+            from: new Solana(provider, network, {
                 logger: console,
             }).Account({
                 amount,
             }),
-            to: Bitcoin().Address(destinationAddress),
+            to: Bitcoin(network).Address(destinationAddress),
         }),
         [provider, account, amount, destinationAddress],
     );
@@ -90,63 +102,131 @@ const CustomDeposit = (props: DepositProps) => (
     />
 );
 
-const BasicMintApp = ({ sdk, account, provider }) => {
+const BasicMintApp = ({ network, chain, account, providers, asset }) => {
+    const [tokenAccountExists, setTokenAccountExists] = useState(false);
+    const [tokenAccountError, setTokenAccountError] = useState<string>();
+
+    const solanaMintChain = useMemo(() => {
+        if (chain !== "solana") {
+            setTokenAccountExists(true);
+            return;
+        }
+        return (
+            providers[chain] &&
+            new Solana(providers[chain].connector, network, {
+                logger: console,
+            })
+        );
+    }, [providers, chain]);
+
+    // ensure that the solana mint destination exists
+    useEffect(() => {
+        if (!tokenAccountExists && solanaMintChain) {
+            solanaMintChain
+                .createAssociatedTokenAccount(asset)
+                .then(() => {
+                    setTokenAccountExists(true);
+                })
+                .catch((e) =>
+                    setTokenAccountError("Failed to create token account"),
+                );
+        }
+    }, [solanaMintChain, tokenAccountExists, setTokenAccountExists, asset]);
+
     const parameters = useMemo(
         () => ({
-            sdk,
+            sdk: new RenJS(network, { loadCompletedDeposits: true }),
             mintParams: {
-                sourceAsset: "BTC",
-                network: RenNetwork.TestnetVDot3,
+                network,
+                sourceAsset: asset,
                 destinationAddress: account,
             },
-
-            debug: true,
-            to: new Solana(provider, sdk, RenNetwork.DevnetVDot3, {
-                logger: console,
-            }),
-            from: Bitcoin(),
+            sourceChain: source[asset],
+            userAddress: account,
+            destinationChain: chain,
+            toMap: mintChainMap(providers),
+            fromMap: lockChainMap,
+            customParams: {},
         }),
-        [provider, account],
+        [providers, account],
     );
+
     return (
         <Paper style={{ margin: "1em", padding: "1em" }}>
             <Typography component={"div"}>
-                <BasicMint parameters={parameters} Deposit={CustomDeposit} />
+                {tokenAccountExists ? (
+                    <BasicMint
+                        parameters={parameters}
+                        Deposit={CustomDeposit}
+                    />
+                ) : tokenAccountError ? (
+                    <p>{tokenAccountError}</p>
+                ) : (
+                    <p>Please create a token account for {asset}</p>
+                )}
             </Typography>
         </Paper>
     );
 };
 
-const ConnectToChain = ({ enabledChains, setOpen, setChain }) => {
+const ConnectToChain = ({ setOpen, setChain }) => {
     return (
         <Paper style={{ margin: "1em" }}>
-            {Object.keys(multiwalletOptions.chains).map((chain) => (
-                <Button
-                    variant="contained"
-                    style={{ margin: "1em", marginRight: "0" }}
-                    color="primary"
-                    key={chain}
-                    onClick={() => {
-                        setChain(chain);
-                        setOpen(true);
-                    }}
-                >
-                    Connect To {chain}
-                </Button>
-            ))}
+            {Object.keys(multiwalletOptions(RenNetwork.Mainnet).chains).map(
+                (chain) => (
+                    <Button
+                        variant="contained"
+                        style={{ margin: "1em", marginRight: "0" }}
+                        color="primary"
+                        key={chain}
+                        onClick={() => {
+                            setChain(chain);
+                            setOpen(true);
+                        }}
+                    >
+                        Connect To {chain}
+                    </Button>
+                ),
+            )}
         </Paper>
     );
 };
 
-const supportedAssets = ["BTC", "ZEC", "BCH"];
+const DropdownSelect = ({ name, value, setValue, values }) => {
+    const selectValue = useCallback(
+        (e: React.ChangeEvent<any>) => setValue(e.target.value),
+        [setValue],
+    );
+    return (
+        <Paper
+            style={{
+                padding: "1em",
+                display: "flex",
+                alignItems: "center",
+                gap: "1em",
+            }}
+        >
+            <Typography>Select {name}:</Typography>
+            <Select value={value} onChange={selectValue}>
+                {values.map((v) => (
+                    <MenuItem key={v} value={v}>
+                        {v}
+                    </MenuItem>
+                ))}
+            </Select>
+        </Paper>
+    );
+};
 
 const App = (): JSX.Element => {
-    const [open, setOpen] = useState(false);
     const [chain, setChain] = useState<
-        keyof typeof multiwalletOptions["chains"]
+        keyof ReturnType<typeof multiwalletOptions>["chains"]
     >("solana");
     const [asset, setAsset] = useState("BTC");
+    const [network, setNetwork] = useState(renNetworks[1]);
+
     const wallets = useMultiwallet();
+    const [open, setOpen] = useState(false);
     const [address, setAddress] = useState<string>("");
     const updateAddress = useCallback(
         (e: React.ChangeEvent<any>) => setAddress(e.target.value),
@@ -160,26 +240,25 @@ const App = (): JSX.Element => {
         [setAmount],
     );
 
-    const selectAsset = useCallback(
-        (e: React.ChangeEvent<any>) => setAsset(e.target.value),
-        [setAsset],
-    );
     const setClosed = useCallback(() => setOpen(false), [setOpen]);
 
-    const sdk = useMemo(() => new RenJS(RenNetwork.DevnetVDot3));
-
-    const [balance, setBalance] = useState<string>();
+    const [balances, setBalances] = useState<{ [chain: string]: string }>({});
     useEffect(() => {
-        if (Object.keys(wallets.enabledChains).includes("ethereum")) {
-            const provider = wallets.enabledChains["ethereum"].provider as any;
-            const account = wallets.enabledChains["ethereum"].account as string;
+        Object.entries(wallets.enabledChains).map(([chain, connector]) => {
+            const provider = connector.provider as any;
+            const account = connector.account as string;
 
             if (!provider || !account) return;
-            Ethereum(provider, ethLocalnetConfig)
+            new chainStringToRenChain[chain](provider, network)
                 .getBalance(asset, account)
-                .then((v) => setBalance(v.minus(1000).toString()));
-        }
-    }, [wallets, setBalance]);
+                .then((value) =>
+                    setBalances((balances) => ({
+                        ...balances,
+                        [chain]: value.toString(),
+                    })),
+                );
+        });
+    }, [wallets, setBalances]);
 
     return (
         <Container
@@ -190,8 +269,8 @@ const App = (): JSX.Element => {
                 options={{
                     chain,
                     onClose: setClosed,
-                    config: multiwalletOptions,
-                    targetNetwork: RenNetwork.DevnetVDot3,
+                    config: multiwalletOptions(network),
+                    targetNetwork: network,
                 }}
             />
             <ConnectToChain
@@ -199,58 +278,56 @@ const App = (): JSX.Element => {
                 setOpen={setOpen}
                 setChain={setChain}
             />
-            <Paper
-                style={{
-                    padding: "1em",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1em",
-                }}
+            <Container
+                style={{ display: "flex", flexDirection: "row", gap: "1em" }}
             >
-                <Typography>Select Asset:</Typography>
-                <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select"
+                <DropdownSelect
+                    name={"Asset"}
                     value={asset}
-                    onChange={selectAsset}
-                >
-                    {supportedAssets.map((asset) => (
-                        <MenuItem key={asset} value={asset}>
-                            {asset}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </Paper>
+                    setValue={setAsset}
+                    values={supportedAssets}
+                />
+                <DropdownSelect
+                    name={"Network"}
+                    value={network}
+                    setValue={setNetwork}
+                    values={renNetworks}
+                />
+            </Container>
+
             {Object.keys(wallets.enabledChains)
                 .filter(
                     (chain) =>
                         wallets.enabledChains[chain].provider &&
                         wallets.enabledChains[chain].account,
                 )
-                .map((chain) => [
-                    chain,
-                    chain
-                        .split("")
-                        .map((x, i) => (!i ? x.toUpperCase() : x))
-                        .join(""),
-                ])
-                .map(([chain, fChain]) => (
+                .map((chain) => (
                     <Paper key={chain} style={{ padding: "1em" }}>
-                        <Typography variant="h4">Mint To {fChain}</Typography>{" "}
+                        <Typography
+                            variant="h4"
+                            style={{ textTransform: "capitalize" }}
+                        >
+                            Mint To {chain}
+                        </Typography>{" "}
                         <Typography>
                             Connected to {wallets.enabledChains[chain].account}
                         </Typography>
                         <BasicMintApp
-                            sdk={sdk}
-                            provider={wallets.enabledChains[chain].provider}
+                            asset={asset}
+                            network={network}
+                            chain={chain}
+                            providers={wallets.enabledChains}
                             account={wallets.enabledChains[chain].account}
                         />
                         <div>
-                            <Typography variant="h4">
-                                Burn from {fChain}
+                            <Typography
+                                style={{ textTransform: "capitalize" }}
+                                variant="h4"
+                            >
+                                Burn from {chain}
                             </Typography>
                             <Typography>
-                                {asset} Balance: {balance}
+                                {asset} Balance: {balances[chain]}
                             </Typography>
                             <Input
                                 placeholder="recipient address"
@@ -270,6 +347,7 @@ const App = (): JSX.Element => {
                                     provider={
                                         wallets.enabledChains[chain].provider
                                     }
+                                    network={network}
                                     account={
                                         wallets.enabledChains[chain].account
                                     }

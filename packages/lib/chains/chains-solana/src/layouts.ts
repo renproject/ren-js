@@ -31,16 +31,16 @@ export const MintLogLayout: Layout<MintLog> = struct([bool("is_initialized")]);
 
 export interface RenVmMsg {
     p_hash: Uint8Array;
-    amount: any; // Should be BN, but its type is private :$
-    s_hash: Uint8Array;
+    amount: Uint8Array; // Should be BN, but its type is private :$
+    token: Uint8Array;
     to: Uint8Array;
     n_hash: Uint8Array;
 }
 
 export const RenVmMsgLayout: Layout<RenVmMsg> = struct([
     array(u8(), 32, "p_hash"),
-    u64("amount"),
-    array(u8(), 32, "s_hash"),
+    array(u8(), 32, "amount"),
+    array(u8(), 32, "token"),
     array(u8(), 32, "to"),
     array(u8(), 32, "n_hash"),
 ]);
@@ -55,6 +55,8 @@ export interface Gateway {
     /// The number of burn operations that have happened so far. This is incremented whenever Ren
     /// tokens on Solana are burned.
     burn_count: any; // Should be BN, but type is private
+    /// The number of decimals in the underlying asset.
+    underlying_decimals: any;
 }
 
 export const GatewayLayout: Layout<Gateway> = struct([
@@ -62,7 +64,10 @@ export const GatewayLayout: Layout<Gateway> = struct([
     array(u8(), 20, "renvm_authority"),
     array(u8(), 32, "selectors"),
     u64("burn_count"),
+    u8("underlying_decimals"),
 ]);
+
+export const GatewayStateKey = "GatewayStateV0.1.4";
 
 export const GatewayRegistryLayout: Layout<GatewayRegistryState> = struct([
     bool("is_initialized"),
@@ -83,3 +88,5 @@ export interface GatewayRegistryState {
     /// RenVM gateway program addresses.
     gateways: PublicKey[];
 }
+
+export const GatewayRegistryStateKey = "GatewayRegistryState";

@@ -19,10 +19,12 @@ const bscNetworkToRenNetworkMapper = (id: number | string) => {
             decodedId = Buffer.from(id.split("0x").pop() || "", "hex")[0];
         }
     }
-    return {
-        97: RenNetwork.Testnet,
-        56: RenNetwork.Mainnet,
-    }[decodedId];
+    return (
+        {
+            97: RenNetwork.Testnet,
+            56: RenNetwork.Mainnet,
+        }[decodedId] || RenNetwork.Mainnet
+    );
 };
 
 export class BinanceSmartChainInjectedConnector extends EthereumInjectedConnector {

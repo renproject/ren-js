@@ -17,16 +17,19 @@ export interface ConfirmingBurnProps {
     tx: BurnTransaction;
     confirmations: number;
     targetConfirmations?: number;
+    explorerLink?: string;
 }
 
 const DefaultConfirmingBurn: React.FC<ConfirmingBurnProps> = ({
     confirmations,
     targetConfirmations,
+    explorerLink,
 }) => {
     return (
         <div className="confirmingBurn">
             Waiting for burn confirmation {confirmations}/
             {targetConfirmations || "?"}
+            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
         </div>
     );
 };
@@ -75,26 +78,45 @@ const DefaultSubmittingBurn: React.FC<SubmittingBurnProps> = () => {
 interface AcceptedBurnProps {
     tx: BurnTransaction;
     amount: number;
+    burnExplorerLink?: string;
+    releaseExplorerLink?: string;
 }
 
-const DefaultAcceptedBurn: React.FC<AcceptedBurnProps> = ({ amount }) => {
-    return <div className="acceptedBurn">Burned {amount}</div>;
+const DefaultAcceptedBurn: React.FC<AcceptedBurnProps> = ({
+    amount,
+    burnExplorerLink,
+    releaseExplorerLink,
+}) => {
+    return (
+        <div className="acceptedBurn">
+            Burned {amount}
+            {burnExplorerLink && (
+                <a href={burnExplorerLink}>Burn Explorer Link</a>
+            )}
+            {releaseExplorerLink && (
+                <a href={burnExplorerLink}>Release Explorer Link</a>
+            )}
+        </div>
+    );
 };
 
 interface CompletedBurnProps {
     tx: BurnTransaction;
     amount: number;
     txHash: string;
+    explorerLink?: string;
 }
 
 const DefaultCompletedBurn: React.FC<CompletedBurnProps> = ({
     amount,
     txHash,
+    explorerLink,
 }) => {
     return (
         <div className="completed-burn">
             Successfully burned {amount}{" "}
             {txHash ? ` in release tx: ${txHash}` : ""}
+            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
         </div>
     );
 };
@@ -172,7 +194,15 @@ export const BasicBurn: React.FC<BurnProps> = ({
 }) => {
     const machine = useBurnAndRelease(parameters);
     if (!machine) return <div>Missing burn...</div>;
-    const { burn, value, tx, session, formatAmount } = machine;
+    const {
+        burn,
+        value,
+        tx,
+        session,
+        formatAmount,
+        burnExplorerLink,
+        releaseExplorerLink,
+    } = machine;
     switch (value) {
         case BurnStates.CREATING:
             return <CreatingBurn session={session} />;
@@ -194,6 +224,7 @@ export const BasicBurn: React.FC<BurnProps> = ({
                     tx={tx}
                     targetConfirmations={tx.sourceTxConfTarget}
                     confirmations={tx.sourceTxConfs || 0}
+                    explorerLink={burnExplorerLink}
                 />
             );
         case BurnStates.RENVM_RELEASING:
@@ -205,6 +236,8 @@ export const BasicBurn: React.FC<BurnProps> = ({
                 <AcceptedBurn
                     tx={tx}
                     amount={formatAmount(tx.sourceTxAmount)}
+                    burnExplorerLink={burnExplorerLink}
+                    releaseExplorerLink={releaseExplorerLink}
                 />
             );
         case BurnStates.RELEASED:
@@ -218,6 +251,7 @@ export const BasicBurn: React.FC<BurnProps> = ({
                             tx.sourceTxAmount,
                     )}
                     txHash={tx.destTxHash || ""}
+                    explorerLink={releaseExplorerLink}
                 />
             );
         case BurnStates.ERROR_BURNING:

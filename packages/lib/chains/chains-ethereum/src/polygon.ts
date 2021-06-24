@@ -11,6 +11,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
 import { addressIsValid } from "./utils";
+import { Signer } from "ethers";
 
 export const renPolygonTestnet: EthereumConfig = {
     name: "Polygon Testnet",
@@ -105,6 +106,7 @@ export class PolygonClass extends EthereumClass {
 
     constructor(
         web3Provider: ExternalProvider | JsonRpcFetchFunc,
+        signer: Signer,
         renNetwork:
             | RenNetwork
             | RenNetworkString
@@ -113,7 +115,7 @@ export class PolygonClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolvePolygonNetwork(renNetwork));
+        super(web3Provider, signer, resolvePolygonNetwork(renNetwork));
     }
 
     initialize = (

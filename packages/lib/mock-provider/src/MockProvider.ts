@@ -30,8 +30,8 @@ import {
     randomBytes,
     toURLBase64,
 } from "@renproject/utils";
-import { ecsign, privateToAddress } from "ethereumjs-util";
-import { AbiCoder } from "web3-eth-abi";
+import { ecrecover, ecsign, privateToAddress } from "ethereumjs-util";
+import AbiCoder from "web3-eth-abi";
 import BigNumber from "bignumber.js";
 import { ChainCommon, TxStatus } from "@renproject/interfaces";
 import elliptic from "elliptic";
@@ -84,27 +84,32 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         method: Method,
         request: RenVMParams[Method],
     ): Promise<RenVMResponses[Method]> {
-        switch (method) {
-            case RPCMethod.SubmitTx:
-                return this.handle_submitTx(
-                    request as ParamsSubmitTx<
-                        MintTransactionInput | BurnTransactionInput
-                    >,
-                ) as RenVMResponses[Method];
-            case RPCMethod.QueryTx:
-                return this.handle_queryTx(
-                    request as ParamsQueryTx,
-                ) as RenVMResponses[Method];
-            case RPCMethod.QueryConfig:
-                return this.handle_queryConfig(
-                    request,
-                ) as RenVMResponses[Method];
-            case RPCMethod.QueryState:
-                return this.handle_queryState(
-                    request,
-                ) as RenVMResponses[Method];
+        try {
+            switch (method) {
+                case RPCMethod.SubmitTx:
+                    return this.handle_submitTx(
+                        request as ParamsSubmitTx<
+                            MintTransactionInput | BurnTransactionInput
+                        >,
+                    ) as RenVMResponses[Method];
+                case RPCMethod.QueryTx:
+                    return this.handle_queryTx(
+                        request as ParamsQueryTx,
+                    ) as RenVMResponses[Method];
+                case RPCMethod.QueryConfig:
+                    return this.handle_queryConfig(
+                        request,
+                    ) as RenVMResponses[Method];
+                case RPCMethod.QueryState:
+                    return this.handle_queryState(
+                        request,
+                    ) as RenVMResponses[Method];
+            }
+            throw new Error(`Method ${method} not supported.`);
+        } catch (error) {
+            console.trace(error);
+            throw error;
         }
-        throw new Error(`Method ${method} not supported.`);
     }
 
     public handle_submitTx = (
@@ -121,18 +126,18 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         const amountIn = (inputs as any).amount;
         const sHash = keccak256(Buffer.from(selector));
 
+        const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+
         // Generate signature
-        const sigParams = ((AbiCoder as unknown) as AbiCoder).encodeParameters(
+        const sigParams = ((AbiCoder as any) as AbiCoder.AbiCoder).encodeParameters(
             ["bytes32", "uint256", "bytes32", "address", "bytes32"],
-            [pHash, amountIn, sHash, to, nHash],
+            [pHash, amountOut, sHash, Ox(to), nHash],
         );
         const sigHash = keccak256(fromHex(sigParams));
         const sig = ecsign(sigHash, this.privateKeyBuffer);
         const sigOut = toURLBase64(
             Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]),
         );
-
-        const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
 
         const completedTransaction: ResponseQueryTx = {
             ...request,

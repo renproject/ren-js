@@ -11,6 +11,7 @@ import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
 import { addressIsValid } from "./utils";
+import { Signer } from "ethers";
 
 export const renFantomTestnet: EthereumConfig = {
     name: "Fantom Testnet",
@@ -115,6 +116,7 @@ export class FantomClass extends EthereumClass {
 
     constructor(
         web3Provider: ExternalProvider | JsonRpcFetchFunc,
+        signer: Signer,
         renNetwork:
             | RenNetwork
             | RenNetworkString
@@ -123,7 +125,7 @@ export class FantomClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolveFantomNetwork(renNetwork));
+        super(web3Provider, signer, resolveFantomNetwork(renNetwork));
     }
 
     initialize = (

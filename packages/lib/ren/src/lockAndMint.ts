@@ -41,7 +41,7 @@ import {
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 import { config } from "process";
-import { AbiCoder } from "web3-eth-abi";
+import AbiCoder from "web3-eth-abi";
 import { RenJSConfig } from "./config";
 import base58 from "bs58";
 
@@ -251,7 +251,6 @@ export class LockAndMint<
             MintAddress
         >
     > => {
-        console.log("inside _initialize!");
         this._state.renNetwork =
             this._state.renNetwork ||
             getRenNetworkDetails(
@@ -331,7 +330,6 @@ export class LockAndMint<
             MintAddress
         >
     > => {
-        console.log("inside processDeposit! 1");
         if (
             !this._state.renNetwork ||
             !this._state.pHash ||
@@ -344,12 +342,8 @@ export class LockAndMint<
             );
         }
 
-        console.log("inside processDeposit! 2");
-
         const depositID = this.params.from.transactionID(deposit.transaction);
         let depositObject = this.deposits.get(depositID);
-
-        console.log("inside processDeposit! 3");
 
         // If the confidence has increased.
         if (
@@ -374,11 +368,7 @@ export class LockAndMint<
                     : undefined,
             });
 
-            console.log("inside processDeposit! 5");
-
             await depositObject._initialize();
-
-            console.log("inside processDeposit! 6");
 
             // Check if deposit has already been submitted.
             if (
@@ -738,7 +728,7 @@ export class LockAndMintDeposit<
               )
             : contractParams;
 
-        const encodedParameters = new AbiCoder().encodeParameters(
+        const encodedParameters = ((AbiCoder as any) as AbiCoder.AbiCoder).encodeParameters(
             (filteredContractParams || []).map((i) => i.type),
             (filteredContractParams || []).map((i) => i.value),
         );
@@ -834,11 +824,9 @@ export class LockAndMintDeposit<
     public readonly _initialize = async (): Promise<this> => {
         // await this.refreshStatus();
 
-        console.log("calling resolveTokenGatewayContract!");
         this._state.token = await this.params.to.resolveTokenGatewayContract(
             this.params.asset,
         );
-        console.log("called resolveTokenGatewayContract!");
 
         return this;
     };
@@ -1211,11 +1199,16 @@ export class LockAndMintDeposit<
             promiEvent.emit("txHash", txHash);
             this._state.logger.debug("RenVM txHash:", txHash);
 
+            console.trace("___");
+
             // Try to submit to RenVM. If that fails, see if they already
             // know about the transaction.
             try {
                 txHash = await this._submitMintTransaction();
+                console.trace("___");
             } catch (error) {
+                console.error(error);
+                console.trace("___");
                 // this.logger.error(error);
                 try {
                     // Check if the darknodes have already seen the transaction
@@ -1265,6 +1258,7 @@ export class LockAndMintDeposit<
                     }
                 }
             }
+            console.trace("___");
 
             const response = await this.renVM.waitForTX<LockAndMintTransaction>(
                 this._state.selector,
@@ -1276,15 +1270,18 @@ export class LockAndMintDeposit<
                 () => promiEvent._isCancelled(),
                 this._state.config.networkDelay,
             );
+            console.trace("___");
 
             this._state.queryTxResult = response;
 
             // Update status.
             if (response.out && response.out.revert !== undefined) {
+                console.trace("___");
                 this.status = DepositStatus.Reverted;
                 this.revertReason = response.out.revert.toString();
                 throw new Error(this.revertReason);
             } else if (response.out && response.out.signature) {
+                console.trace("___");
                 if (
                     DepositStatusIndex[this.status] <
                     DepositStatusIndex[DepositStatus.Signed]
@@ -1297,6 +1294,7 @@ export class LockAndMintDeposit<
                     response.out && response.out.signature,
                 );
             }
+            console.trace("___");
 
             return this;
         })()

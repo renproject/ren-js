@@ -11,6 +11,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
 import { addressIsValid, findTransactionBySigHash } from "./utils";
+import { Signer } from "ethers";
 
 export const renBscTestnet: EthereumConfig = {
     name: "BSC Testnet",
@@ -119,6 +120,7 @@ export class BinanceSmartChainClass extends EthereumClass {
 
     constructor(
         web3Provider: ExternalProvider | JsonRpcFetchFunc,
+        signer: Signer,
         renNetwork:
             | RenNetwork
             | RenNetworkString
@@ -127,7 +129,7 @@ export class BinanceSmartChainClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolveBSCNetwork(renNetwork));
+        super(web3Provider, signer, resolveBSCNetwork(renNetwork));
     }
 
     initialize = (

@@ -56,19 +56,19 @@ export class CombinedProvider
             case RenNetwork.Mainnet:
             case RenNetwork.Mainnet as "mainnet":
             case RenNetwork.MainnetVDot3:
-            case RenNetwork.MainnetVDot3 as "mainnet-v0.3":
+            case "mainnet-v0.3":
                 v1Network = RenNetwork.Mainnet;
                 v2Network = RenNetwork.MainnetVDot3;
                 break;
             case RenNetwork.Testnet:
             case RenNetwork.Testnet as "testnet":
             case RenNetwork.TestnetVDot3:
-            case RenNetwork.TestnetVDot3 as "testnet-v0.3":
+            case "testnet-v0.3":
                 v1Network = RenNetwork.Testnet;
                 v2Network = RenNetwork.TestnetVDot3;
                 break;
             case RenNetwork.DevnetVDot3:
-            case RenNetwork.DevnetVDot3 as "devnet-v0.3":
+            case "devnet-v0.3":
                 v2Network = RenNetwork.DevnetVDot3;
                 break;
             default:

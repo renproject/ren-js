@@ -11,6 +11,7 @@ import { EthAddress, EthTransaction, NetworkInput } from "./base";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig } from "./networks";
 import { addressIsValid } from "./utils";
+import { Signer } from "ethers";
 
 export const renAvalancheTestnet: EthereumConfig = {
     name: "Avalanche Testnet",
@@ -105,6 +106,7 @@ export class AvalancheClass extends EthereumClass {
 
     constructor(
         web3Provider: ExternalProvider | JsonRpcFetchFunc,
+        signer: Signer,
         renNetwork:
             | RenNetwork
             | RenNetworkString
@@ -113,7 +115,7 @@ export class AvalancheClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolveAvalancheNetwork(renNetwork));
+        super(web3Provider, signer, resolveAvalancheNetwork(renNetwork));
     }
 
     initialize = (

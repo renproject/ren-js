@@ -47,6 +47,7 @@
         "@renproject/utils": "^2.3.0",
         "@renproject/rpc": "^2.3.0",
         "@renproject/provider": "^2.3.0",
+        "@renproject/chains-bitcoin": "^2.3.0",
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "axios": "^0.21.1",

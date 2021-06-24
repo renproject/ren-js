@@ -59,7 +59,9 @@ describe("Refactor: mint", () => {
             addressIndex: 0,
             numberOfAddresses: 10,
         });
-        const ethersProvider = new ethers.providers.Web3Provider(provider);
+        const ethersProvider = new ethers.providers.Web3Provider(
+            provider as any,
+        );
 
         const txHashes: string[] = [
             "0x066e377aaa55c68db08d1a00c3431886efb24c317d83fc244547d2aba926e506",

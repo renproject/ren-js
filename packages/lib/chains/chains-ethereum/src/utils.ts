@@ -30,8 +30,14 @@ import {
 import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
 import { EthAddress, EthTransaction } from "./base";
-import { Provider, TransactionReceipt } from "@ethersproject/providers";
-import ethers, { PopulatedTransaction } from "ethers";
+import {
+    Provider,
+    TransactionReceipt,
+    TransactionResponse,
+    Web3Provider,
+} from "@ethersproject/providers";
+import { PopulatedTransaction } from "ethers";
+import * as ethers from "ethers";
 
 import { EthereumConfig } from "./networks";
 
@@ -326,9 +332,9 @@ export const getGatewayAddress = async (
         //     [getGatewayBySymbol],
         //     network.addresses.GatewayRegistry,
         // );
-        const registryAddress: string = await registry
-            .getGatewayBySymbol(asset)
-            .call();
+        const registryAddress: string = Ox(
+            await registry.getGatewayBySymbol(asset),
+        );
         if (!registryAddress) {
             throw new Error(`Empty address returned.`);
         }
@@ -474,9 +480,7 @@ export const getTokenAddress = async (
             [getTokenBySymbolABI],
             provider,
         );
-        const tokenAddress: string = await registry
-            .getTokenBySymbol(asset)
-            .call();
+        const tokenAddress: string = Ox(await registry.getTokenBySymbol(asset));
         if (!tokenAddress) {
             throw new Error(`Empty address returned.`);
         }
@@ -539,10 +543,21 @@ export const findTransactionBySigHash = async (
             ).toNumber();
             fromBlock = toBlock - blockLimit + 1;
         }
+
+        const newMintEvents = await provider.getLogs({
+            address: gatewayAddress,
+            fromBlock,
+            toBlock,
+            topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
+        });
+        if (newMintEvents.length) {
+            return newMintEvents[0].transactionHash;
+        }
+
         if (sigHash) {
             // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
             // the contract
-            status = await gatewayContract.status(Ox(sigHash)).call();
+            status = await gatewayContract.status(Ox(sigHash));
             if (!status) {
                 return undefined;
             }
@@ -561,16 +576,6 @@ export const findTransactionBySigHash = async (
                 return oldMintEvents[0].transactionHash;
             }
         }
-
-        const newMintEvents = await provider.getLogs({
-            address: gatewayAddress,
-            fromBlock,
-            toBlock,
-            topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
-        });
-        if (newMintEvents.length) {
-            return newMintEvents[0].transactionHash;
-        }
     } catch (error) {
         console.warn(error);
         // Continue with transaction
@@ -587,7 +592,7 @@ export const findTransactionBySigHash = async (
 };
 
 export const submitToEthereum = async (
-    provider: Provider,
+    signer: ethers.Signer,
 
     contractCalls: ContractCall[],
     mintTx: LockAndMintTransaction,
@@ -608,7 +613,7 @@ export const submitToEthereum = async (
         throw new Error(`No signature available from RenVM transaction.`);
     }
 
-    let tx: PromiEvent<unknown, Web3Events> | undefined;
+    let tx: TransactionResponse | undefined;
 
     for (let i = 0; i < contractCalls.length; i++) {
         const contractCall = contractCalls[i];
@@ -629,7 +634,7 @@ export const submitToEthereum = async (
             ? payloadToMintABI(contractFn, contractParams || [])
             : payloadToABI(contractFn, contractParams || []);
 
-        const contract = new ethers.Contract(sendTo, ABI, provider);
+        const contract = new ethers.Contract(sendTo, ABI, signer);
 
         const txConfig =
             typeof contractCall === "object"
@@ -659,35 +664,45 @@ export const submitToEthereum = async (
             config,
         );
 
-        tx = contract[contractFn](...callParams).send(config);
+        tx = await contract[contractFn](...callParams, config);
 
-        if (last && tx !== undefined) {
-            forwardWeb3Events(tx, eventEmitter);
-        }
+        // if (last && tx !== undefined) {
+        //     forwardWeb3Events(tx, eventEmitter);
+        // }
     }
 
-    return await new Promise<EthTransaction>((innerResolve, reject) => {
-        if (tx === undefined) {
-            throw new Error(`Must provide contract call.`);
-        }
+    if (tx === undefined) {
+        throw new Error(`Must provide contract call.`);
+    }
 
-        tx.once(
-            "confirmation",
-            (_confirmations: number, receipt: TransactionReceipt) => {
-                innerResolve(receipt.transactionHash);
-            },
-        ).catch((error: Error) => {
-            try {
-                if (ignorePromiEventError(error)) {
-                    logger.error(extractError(error));
-                    return;
-                }
-            } catch (_error) {
-                /* Ignore _error */
-            }
-            reject(error);
-        });
-    });
+    eventEmitter.emit("txHash", tx.hash);
+
+    const receipt: TransactionReceipt = await tx.wait();
+
+    return receipt.transactionHash;
+
+    // return await new Promise<EthTransaction>((innerResolve, reject) => {
+    //     if (tx === undefined) {
+    //         throw new Error(`Must provide contract call.`);
+    //     }
+
+    //     tx.once(
+    //         "confirmation",
+    //         (_confirmations: number, receipt: TransactionReceipt) => {
+    //             innerResolve(receipt.transactionHash);
+    //         },
+    //     ).catch((error: Error) => {
+    //         try {
+    //             if (ignorePromiEventError(error)) {
+    //                 logger.error(extractError(error));
+    //                 return;
+    //             }
+    //         } catch (_error) {
+    //             /* Ignore _error */
+    //         }
+    //         reject(error);
+    //     });
+    // });
 };
 
 export const addressIsValid = (address: EthAddress): boolean => {

@@ -15,17 +15,20 @@ import {
     assertType,
     extractError,
     fromHex,
+    isDefined,
     Ox,
     payloadToABI,
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
-import ethers, { PopulatedTransaction } from "ethers";
+import * as ethers from "ethers";
+import { PopulatedTransaction } from "ethers";
 import {
     Provider,
     ExternalProvider,
     JsonRpcFetchFunc,
+    Web3Provider,
 } from "@ethersproject/providers";
 
 import {
@@ -142,7 +145,8 @@ export class EthereumBaseChain
         () => this.renNetworkDetails,
     );
 
-    public provider: Provider | undefined;
+    public provider: Web3Provider | undefined;
+    public signer: ethers.Signer | undefined;
     public renNetworkDetails: EthereumConfig | undefined;
 
     public readonly getTokenContractAddress = async (asset: string) => {
@@ -175,21 +179,31 @@ export class EthereumBaseChain
 
     constructor(
         web3Provider: ExternalProvider | JsonRpcFetchFunc,
+        signer: ethers.Signer,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
     ) {
-        this.provider = new ethers.providers.Web3Provider(web3Provider);
+        this.provider = (web3Provider as any)._isProvider
+            ? (web3Provider as any)
+            : new ethers.providers.Web3Provider(web3Provider);
+        this.signer = signer;
         // this.provider = new Web3(web3Provider);
         if (renNetwork) {
             this.renNetworkDetails = resolveNetwork(renNetwork);
         }
     }
 
-    public withProvider = (web3Provider: ExternalProvider) => {
-        this.provider = new ethers.providers.Web3Provider(web3Provider);
+    public withProvider = (
+        web3Provider: ExternalProvider,
+        signer: ethers.Signer,
+    ) => {
+        this.provider = (web3Provider as any)._isProvider
+            ? (web3Provider as any)
+            : new ethers.providers.Web3Provider(web3Provider);
+        this.signer = signer;
         // this.provider = new Web3(web3Provider);
         return this;
     };
@@ -298,7 +312,7 @@ export class EthereumBaseChain
             this.provider,
         );
 
-        const decimalsRaw = await await tokenContract.decimals().call();
+        const decimalsRaw = await await tokenContract.decimals();
         return new BigNumber(decimalsRaw).toNumber();
     };
 
@@ -352,7 +366,7 @@ export class EthereumBaseChain
             throw new Error(`Unable to submit reverted RenVM transaction.`);
         }
 
-        if (!this.provider) {
+        if (!this.provider || !this.signer) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
@@ -363,7 +377,9 @@ export class EthereumBaseChain
             mintTx.out.nhash,
             mintTx.out.sighash,
         );
-        if (existingTransaction) {
+        if (existingTransaction === "") {
+            return "";
+        } else if (existingTransaction) {
             await manualPromiEvent(
                 this.provider,
                 existingTransaction,
@@ -373,7 +389,7 @@ export class EthereumBaseChain
         }
 
         return await submitToEthereum(
-            this.provider,
+            this.signer,
             contractCalls,
             mintTx,
             eventEmitter,
@@ -424,7 +440,7 @@ export class EthereumBaseChain
             contractCalls?: ContractCall[];
         },
 
-        eventEmitter: EventEmitter,
+        _eventEmitter: EventEmitter,
         logger: Logger,
         timeout?: number,
     ): Promise<BurnDetails<EthTransaction>> => {
@@ -463,11 +479,7 @@ export class EthereumBaseChain
                     ...(contractParams || []).map((value) => value.value),
                 ];
                 const ABI = payloadToABI(contractFn, contractParams);
-                const contract = new ethers.Contract(
-                    sendTo,
-                    ABI,
-                    this.provider,
-                );
+                const contract = new ethers.Contract(sendTo, ABI, this.signer);
 
                 const txConfig =
                     typeof contractCall === "object"
@@ -494,23 +506,25 @@ export class EthereumBaseChain
                     ...callParams,
                     config,
                 );
-                const tx = contract[contractFn](...callParams).send(config);
-                if (last) {
-                    forwardWeb3Events(tx, eventEmitter);
-                }
-                transaction = await new Promise<string>((resolve, reject) =>
-                    tx.on("transactionHash", resolve).catch((error: Error) => {
-                        try {
-                            if (ignorePromiEventError(error)) {
-                                logger.error(extractError(error));
-                                return;
-                            }
-                        } catch (_error) {
-                            /* Ignore _error */
-                        }
-                        reject(error);
-                    }),
-                );
+                const tx = await contract[contractFn](...callParams, config);
+                const receipt = await tx.wait();
+                transaction = receipt.transactionHash;
+                // if (last) {
+                //     forwardWeb3Events(tx, eventEmitter);
+                // }
+                // transaction = await new Promise<string>((resolve, reject) =>
+                //     tx.on("transactionHash", resolve).catch((error: Error) => {
+                //         try {
+                //             if (ignorePromiEventError(error)) {
+                //                 logger.error(extractError(error));
+                //                 return;
+                //             }
+                //         } catch (_error) {
+                //             /* Ignore _error */
+                //         }
+                //         reject(error);
+                //     }),
+                // );
                 logger.debug("Transaction hash", transaction);
             }
         }
@@ -572,8 +586,8 @@ export class EthereumBaseChain
             [mintFeeABI, burnFeeABI],
             this.provider,
         );
-        const mintFee = await gatewayContract.mintFee().call();
-        const burnFee = await gatewayContract.burnFee().call();
+        const mintFee = await gatewayContract.mintFee();
+        const burnFee = await gatewayContract.burnFee();
 
         return {
             mint: new BigNumber(mintFee.toString()).toNumber(),
@@ -620,7 +634,7 @@ export class EthereumBaseChain
             this.provider,
         );
 
-        const balanceRaw = await await tokenContract.balanceOf(address).call();
+        const balanceRaw = await await tokenContract.balanceOf(address);
 
         return new BigNumber(balanceRaw.toString());
     };

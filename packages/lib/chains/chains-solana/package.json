@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "2.4.1",
+    "version": "2.4.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

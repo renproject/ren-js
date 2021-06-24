@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "2.4.1",
+    "version": "2.4.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -46,7 +46,7 @@
         "@renproject/chains-bitcoin": "^2.4.0",
         "@renproject/chains-ethereum": "^2.4.1",
         "@renproject/chains-filecoin": "^2.4.0",
-        "@renproject/chains-solana": "^2.4.1",
+        "@renproject/chains-solana": "^2.4.2",
         "@renproject/chains-terra": "^2.4.0",
         "@renproject/interfaces": "^2.4.0",
         "@types/node": ">=10"

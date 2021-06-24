@@ -1,7 +1,7 @@
 {
   "name": "@renproject/multiwallet-ui",
   "author": "renproject",
-  "version": "2.4.0",
+  "version": "2.4.3-alpha.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -28,8 +28,8 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@renproject/interfaces": "^2.4.0",
-    "@renproject/multiwallet-base-connector": "^2.4.0"
+    "@renproject/interfaces": "^2.4.3-alpha.0",
+    "@renproject/multiwallet-base-connector": "^2.4.3-alpha.0"
   },
   "peerDependencies": {
     "@material-ui/core": "^4.11.0",

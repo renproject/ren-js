@@ -1,6 +1,6 @@
 {
     "name": "@renproject/mock-provider",
-    "version": "2.3.0",
+    "version": "2.4.3-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,18 +43,18 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.3.0",
-        "@renproject/utils": "^2.3.0",
-        "@renproject/rpc": "^2.3.0",
-        "@renproject/provider": "^2.3.0",
-        "@renproject/chains-bitcoin": "^2.3.0",
+        "@renproject/chains-bitcoin": "^2.4.3-alpha.0",
+        "@renproject/interfaces": "^2.4.3-alpha.0",
+        "@renproject/provider": "^2.4.3-alpha.0",
+        "@renproject/rpc": "^2.4.3-alpha.0",
+        "@renproject/utils": "^2.4.3-alpha.0",
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "axios": "^0.21.1",
         "bignumber.js": "^9.0.1",
+        "elliptic": "^6.5.4",
         "ethereumjs-util": "^7.0.10",
-        "immutable": "^4.0.0-rc.12",
-        "elliptic": "^6.5.4"
+        "immutable": "^4.0.0-rc.12"
     },
     "resolutions": {
         "sha3": "^2.1.2"

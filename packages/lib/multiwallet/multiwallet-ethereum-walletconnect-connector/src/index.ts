@@ -92,7 +92,7 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
         // eslint-disable-next-line @typescript-eslint/no-shadow
         const WalletConnectProvider = await import(
             "@walletconnect/web3-provider"
-        ).then((m) => m?.default ?? m);
+        ).then((m) => (m ? m.default || m : m));
 
         if (this.debug) console.debug("building provider");
         this.provider = new WalletConnectProvider({

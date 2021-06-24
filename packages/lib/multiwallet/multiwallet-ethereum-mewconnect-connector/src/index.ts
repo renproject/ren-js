@@ -89,7 +89,7 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
         if (this.provider) return this.provider;
         const { Provider } = await import(
             "@myetherwallet/mewconnect-web-client"
-        ).then((m) => m?.default ?? m);
+        ).then((m) => (m && m.default ? m.default : m));
         const mewConnectProvider = new Provider({
             windowClosedError: true,
         });

@@ -1333,7 +1333,8 @@ export class LockAndMintDeposit<
         if (
             this.params.contractCalls &&
             this.params.to.findTransactionByDepositDetails &&
-            this._state.queryTxResult?.out &&
+            this._state.queryTxResult &&
+            this._state.queryTxResult.out &&
             this._state.queryTxResult.out.revert === undefined
         ) {
             this.mintTransaction = await this.params.to.findTransactionByDepositDetails(

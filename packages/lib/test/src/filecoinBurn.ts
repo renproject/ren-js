@@ -45,9 +45,10 @@ const main = async () => {
         })
         .on("transactionHash", (txHash) =>
             burnAndRelease._state.logger.log(
-                `${burnAndRelease.params.from?.name} transactionHash: ${String(
-                    txHash,
-                )}`,
+                `${
+                    burnAndRelease.params.from &&
+                    burnAndRelease.params.from.name
+                } transactionHash: ${String(txHash)}`,
             ),
         );
 

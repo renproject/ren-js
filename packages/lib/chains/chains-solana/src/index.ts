@@ -12,7 +12,7 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
 } from "@renproject/interfaces";
-import { Callable, doesntError, isDefined, keccak256 } from "@renproject/utils";
+import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
     Connection,
     PublicKey,
@@ -109,12 +109,7 @@ class SolanaClass
         if (options) {
             this._logger = options.logger;
         }
-        this.initialize(
-            this.renNetworkDetails
-                ? (this.renNetworkDetails.name as RenNetwork)
-                : // TODO: Avoid `!`
-                  undefined!,
-        );
+        this.initialize(this.renNetworkDetails!.name as RenNetwork);
     }
 
     public static utils = {
@@ -290,7 +285,7 @@ class SolanaClass
 
         const currentSlot = await this.provider.connection.getSlot();
         return {
-            current: currentSlot - (tx && isDefined(tx.slot) ? tx.slot : 0),
+            current: currentSlot - (tx && tx.slot ? tx.slot : 0),
             target: this.renNetworkDetails.isTestnet ? 1 : 2,
         };
     };

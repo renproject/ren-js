@@ -27,12 +27,12 @@ const renTestnet: RenNetworkDetails = {
 };
 const renMainnetVDot3: RenNetworkDetails = {
     name: RenNetwork.MainnetVDot3,
-    lightnode: "https://lightnode-new-mainnet.herokuapp.com/",
+    lightnode: "https://lightnode-mainnet.herokuapp.com/",
     isTestnet: false,
 };
 const renTestnetVDot3: RenNetworkDetails = {
     name: RenNetwork.TestnetVDot3,
-    lightnode: "https://lightnode-new-testnet.herokuapp.com/",
+    lightnode: "https://lightnode-testnet.herokuapp.com/",
     isTestnet: true,
 };
 const renDevnetVDot3: RenNetworkDetails = {

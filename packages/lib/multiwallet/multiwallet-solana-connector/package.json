@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-solana-connector",
-    "version": "2.3.1-alpha.2",
+    "version": "2.4.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,8 +43,8 @@
     },
     "dependencies": {
         "@project-serum/sol-wallet-adapter": "^0.1.6",
-        "@renproject/interfaces": "^2.3.1-alpha.2",
-        "@renproject/multiwallet-base-connector": "^2.3.1-alpha.2",
+        "@renproject/interfaces": "^2.4.0",
+        "@renproject/multiwallet-base-connector": "^2.4.0",
         "@solana/web3.js": "^1.17.0",
         "@types/node": ">=10"
     },
@@ -53,8 +53,13 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": ["**/*.d.ts", "**/*.spec.js"],
-        "include": ["src"]
+        "exclude": [
+            "**/*.d.ts",
+            "**/*.spec.js"
+        ],
+        "include": [
+            "src"
+        ]
     },
     "prettier": {
         "printWidth": 80,

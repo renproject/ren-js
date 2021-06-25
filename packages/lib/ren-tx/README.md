@@ -150,7 +150,7 @@ web3.eth.getAccounts().then((accounts) => {
             claimed;
             service.send({ type: "CLAIM", hash: deposit.sourceTxHash });
         }
-        if (deposit?.destTxHash) {
+        if (deposit && deposit.destTxHash) {
             // If we have a destination txHash, we have successfully minted BTC
             console.log("Your BTC has been minted! TxHash", deposit.destTxHash);
             service.stop();

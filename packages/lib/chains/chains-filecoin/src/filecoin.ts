@@ -207,7 +207,7 @@ export class FilecoinClass
 
     public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}.`);
+            throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
     };
 
@@ -218,7 +218,7 @@ export class FilecoinClass
         if (asset === this.asset) {
             return 18;
         }
-        throw new Error(`Unsupported asset ${asset}.`);
+        throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
     };
 
     /**

@@ -179,7 +179,7 @@ export abstract class BitcoinBaseChain
 
     public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}.`);
+            throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
     };
 
@@ -190,7 +190,7 @@ export abstract class BitcoinBaseChain
         if (asset === this.asset) {
             return 8;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
     };
 
     /**

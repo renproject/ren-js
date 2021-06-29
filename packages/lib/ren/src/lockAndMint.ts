@@ -148,7 +148,7 @@ export class LockAndMint<
     public _state: MintState & Partial<MintStatePartial>;
 
     /**
-     * Deposits represents the lock deposits that have been so far.
+     * Deposits represents the lock deposits that have been detected so far.
      */
     private deposits: OrderedMap<
         string,
@@ -549,34 +549,34 @@ export class LockAndMint<
         );
 
         if (this.renVM.submitGatewayDetails) {
-            try {
-                await this.renVM.submitGatewayDetails(
-                    this.params.from.addressToString(gatewayAddress),
-                    {
-                        ...(this._state as MintState & MintStatePartial),
-                        token: this._state.token,
-                        nHash: Buffer.from(
-                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            "base64",
-                        ),
-                        payload: fromHex(encodedParameters),
-                        nonce: fromHex(nonce),
-                        fn: contractFn,
-                        fnABI,
-                        to:
-                            this.renVM.version(this._state.selector) >= 2
-                                ? strip0x(sendTo)
-                                : Ox(sendTo),
-                        tags,
+            const promise = this.renVM.submitGatewayDetails(
+                this.params.from.addressToString(gatewayAddress),
+                {
+                    ...(this._state as MintState & MintStatePartial),
+                    token: this._state.token,
+                    nHash: Buffer.from(
+                        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "base64",
+                    ),
+                    payload: fromHex(encodedParameters),
+                    nonce: fromHex(nonce),
+                    fn: contractFn,
+                    fnABI,
+                    to:
+                        this.renVM.version(this._state.selector) >= 2
+                            ? strip0x(sendTo)
+                            : Ox(sendTo),
+                    tags,
 
-                        // See [RenJSConfig.transactionVersion]
-                        transactionVersion: this._state.config
-                            .transactionVersion,
-                    },
-                    5,
-                );
-            } catch (error) {
-                // Ignore error.
+                    // See [RenJSConfig.transactionVersion]
+                    transactionVersion: this._state.config.transactionVersion,
+                },
+                5,
+            );
+            if ((promise as any).catch) {
+                (promise as Promise<any>).catch((_error) => {
+                    // Ignore error.
+                });
             }
         }
 

@@ -9,5 +9,6 @@ describe("@renproject/chains", () => {
         expect(Chains.BitcoinCash).not.toEqual(undefined);
         expect(Chains.Zcash).not.toEqual(undefined);
         expect(Chains.BinanceSmartChain).not.toEqual(undefined);
+        expect(Chains.Solana).not.toEqual(undefined);
     });
 });

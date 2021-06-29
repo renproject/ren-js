@@ -41,6 +41,7 @@ export const unmarshalMintTx = (
             ];
             out.signature = signatureToBuffer(fixSignatureSimple(r, s, v));
             out.nhash = inValue.nhash;
+            out.phash = inValue.phash;
         }
     }
 

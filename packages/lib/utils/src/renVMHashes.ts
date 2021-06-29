@@ -64,9 +64,11 @@ export const generateGHash = (
     assertType<string>("string", { to, token: tokenIdentifier });
 
     const pHash = generatePHash(payload, logger);
+    const sHash = fromHex(tokenIdentifier);
+    const toBytes = fromHex(to);
 
     const encoded = v2
-        ? Buffer.concat([pHash, fromHex(tokenIdentifier), fromHex(to), nonce])
+        ? Buffer.concat([pHash, sHash, toBytes, nonce])
         : rawEncode(
               ["bytes32", "address", "address", "bytes32"],
               [pHash, tokenIdentifier, to, nonce],

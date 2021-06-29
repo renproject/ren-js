@@ -427,7 +427,6 @@ const WalletEntry = <P, A>({
   const defaultClasses = useWalletEntryStyles();
   const combinedClasses = { ...defaultClasses, ...classes };
   const onClick = useCallback(() => {
-    console.log(name);
     setName(name);
     if (Info) {
       buildInfo(Info);

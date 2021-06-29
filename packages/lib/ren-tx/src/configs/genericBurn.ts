@@ -55,7 +55,8 @@ const extractTx = <X>(
         rawSourceTx: burn.burnDetails.transaction,
         sourceTxConfTarget: 0,
         sourceTxConfs: 0,
-        sourceTxHash: burn.burnDetails.transaction.hash,
+        sourceTxHash:
+            burn.burnDetails.transaction.hash || burn.burnDetails.transaction,
         detectedAt: Date.now(),
         sourceTxAmount: burn.burnDetails.amount.toString(),
     };

@@ -1,10 +1,9 @@
-import "react-app-polyfill/ie11";
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { Box, Button, Container, Paper, Typography } from "@material-ui/core";
 
+import { SolanaConnector } from "../../../lib/multiwallet/multiwallet-solana-connector/src/index";
 import { BinanceSmartChainInjectedConnector } from "../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index";
 import { EthereumInjectedConnector } from "../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index";
 import { EthereumMEWConnectConnector } from "../../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index";
@@ -14,11 +13,23 @@ import {
   MultiwalletProvider,
   useMultiwallet,
 } from "../src/MultiwalletProvider";
+import { RenNetwork } from "@renproject/interfaces";
 
 const INFURA_PROJECT_ID = process.env.REACT_APP_INFURA_PROJECT_ID;
 
 const options: WalletPickerConfig<unknown, string> = {
   chains: {
+    solana: [
+      {
+        name: "Sollet.io",
+        logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
+        connector: new SolanaConnector({
+          debug: true,
+          providerURL: "https://www.sollet.io",
+          network: RenNetwork.Testnet,
+        }),
+      },
+    ],
     ethereum: [
       {
         name: "Metamask",
@@ -128,6 +139,16 @@ const App = () => {
                 }}
               >
                 Request BSC
+              </Button>
+              <Button
+                color="primary"
+                variant="outlined"
+                onClick={() => {
+                  setChain("solana");
+                  setOpen(true);
+                }}
+              >
+                Request Solana
               </Button>
             </Box>
           </Box>

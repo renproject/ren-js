@@ -39,8 +39,8 @@ describe("Refactor: mint", () => {
 
         const network = RenNetwork.Testnet;
         const ToClass = Chains.Ethereum;
-        const from = Chains.Zcash();
-        const asset = from.asset;
+        const from = Chains.Terra();
+        const asset = "LUNA"; // from.asset;
 
         const ethNetwork = ToClass.configMap[network];
 
@@ -96,6 +96,7 @@ describe("Refactor: mint", () => {
             );
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
+            console.error(error);
             if (asset === "FIL") {
                 suggestedAmount = new BigNumber(0.2);
             } else {

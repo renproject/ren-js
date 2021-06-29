@@ -35,6 +35,8 @@ import {
     RenVMResponses,
     RPCMethod,
 } from "./methods";
+import { BlockState } from "./methods/ren_queryBlockState";
+import { unmarshalTypedPackValue } from "./pack/pack";
 import {
     hashTransaction,
     mintParamsType,
@@ -495,21 +497,47 @@ export class RenVMProvider
     };
 
     public estimateTransactionFee = async (
-        _selector: string,
-        chain: { name: string },
-    ): Promise<{ lock: BigNumber; release: BigNumber }> => {
-        const renVMState = await this.sendMessage(RPCMethod.QueryState, {});
+        asset: string,
+        _lockChain: { name: string },
+        hostChain: { name: string },
+    ): Promise<{
+        lock: BigNumber;
+        release: BigNumber;
+        mint: number;
+        burn: number;
+    }> => {
+        const renVMState = await this.sendMessage(
+            RPCMethod.QueryBlockState,
+            {},
+        );
 
-        if (!renVMState.state[chain.name]) {
-            throw new Error(`No fee details found for ${chain.name}`);
+        const blockState: BlockState = unmarshalTypedPackValue(
+            renVMState.state,
+        );
+
+        if (!blockState[asset]) {
+            throw new Error(`No fee details found for ${asset}`);
         }
 
-        const { gasLimit, gasCap } = renVMState.state[chain.name];
+        const { gasLimit, gasCap } = blockState[asset];
         const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
+
+        const mintAndBurnFees = blockState[asset].fees.chains.filter(
+            (fee) => fee.chain === hostChain.name,
+        )[0];
 
         return {
             lock: fee,
             release: fee,
+
+            mint:
+                mintAndBurnFees && mintAndBurnFees.mintFee
+                    ? mintAndBurnFees.mintFee.toNumber()
+                    : 15,
+            burn:
+                mintAndBurnFees && mintAndBurnFees.burnFee
+                    ? mintAndBurnFees.burnFee.toNumber()
+                    : 15,
         };
     };
 }

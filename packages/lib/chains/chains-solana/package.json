@@ -49,7 +49,7 @@
         "@renproject/rpc": "^2.4.0",
         "@renproject/utils": "^2.4.0",
         "@solana/spl-token": "^0.1.5",
-        "@solana/web3.js": "^1.17.0",
+        "@solana/web3.js": "^1.19.0",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
@@ -64,13 +64,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

@@ -40,7 +40,6 @@ import {
 } from "@renproject/utils";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
-import { config } from "process";
 import { AbiCoder } from "web3-eth-abi";
 import { RenJSConfig } from "./config";
 import base58 from "bs58";
@@ -58,6 +57,7 @@ interface MintStatePartial {
     gHash: Buffer;
     pHash: Buffer;
     targetConfirmations: number | undefined;
+    token?: string;
 }
 
 export interface DepositState {
@@ -74,7 +74,6 @@ export interface DepositState {
     pHash: Buffer;
     to: string;
     fn: string;
-    token?: string;
     fnABI: AbiItem[];
     tags: [] | [string];
     txHash: string;
@@ -149,7 +148,7 @@ export class LockAndMint<
     public _state: MintState & Partial<MintStatePartial>;
 
     /**
-     * Deposits represents the lock deposits that have been so far.
+     * Deposits represents the lock deposits that have been detected so far.
      */
     private deposits: OrderedMap<
         string,
@@ -357,16 +356,25 @@ export class LockAndMint<
                 LockAddress,
                 MintTransaction,
                 MintAddress
-            >(deposit, this.params, this.renVM, {
-                ...this._state,
-                renNetwork: this._state.renNetwork,
-                pHash: this._state.pHash,
-                gHash: this._state.gHash,
-                gPubKey: this._state.gPubKey,
-                targetConfirmations: isDefined(this._state.targetConfirmations)
-                    ? this._state.targetConfirmations
-                    : undefined,
-            });
+            >(
+                deposit,
+                this.params,
+                this.renVM,
+                {
+                    ...this._state,
+                    renNetwork: this._state.renNetwork,
+                    pHash: this._state.pHash,
+                    gHash: this._state.gHash,
+                    gPubKey: this._state.gPubKey,
+                    token: this._state.token,
+                    targetConfirmations: isDefined(
+                        this._state.targetConfirmations,
+                    )
+                        ? this._state.targetConfirmations
+                        : undefined,
+                },
+                this.gatewayAddress,
+            );
 
             await depositObject._initialize();
 
@@ -454,7 +462,7 @@ export class LockAndMint<
         }
 
         // Last contract call
-        const { contractParams, sendTo } = contractCalls[
+        const { contractParams, sendTo, contractFn } = contractCalls[
             contractCalls.length - 1
         ];
 
@@ -466,33 +474,41 @@ export class LockAndMint<
                 ? base58.decode(sendTo).toString("hex")
                 : sendTo;
 
-        const tokenGatewayContract =
-            this.renVM.version(this._state.selector) >= 2
-                ? Ox(generateSHash(this._state.selector))
-                : await this.params.to.resolveTokenGatewayContract(
-                      this.params.asset,
-                  );
-
         this._state.pHash = generatePHash(
             contractParams || [],
             this._state.logger,
         );
+
+        // Check if the transaction is either a v0.2 transaction, or has the
+        // version set to `0` in a v0.4 transaction.
+        // See [RenJSConfig.transactionVersion]
+        const v0Transaction =
+            this.renVM.version(this._state.selector) === 1 ||
+            this._state.config.transactionVersion === 0;
+
+        const tokenGatewayContract = !v0Transaction
+            ? Ox(generateSHash(this._state.selector))
+            : await this.params.to.resolveTokenGatewayContract(
+                  this.params.asset,
+              );
 
         const gHash = generateGHash(
             contractParams || [],
             sendToHex,
             tokenGatewayContract,
             fromHex(nonce),
-            this.renVM.version(this._state.selector) >= 2,
+            !v0Transaction,
             this._state.logger,
         );
         this._state.gHash = gHash;
-        this._state.gPubKey = await this.renVM.selectPublicKey(
-            this._state.selector,
-            this.renVM.version(this._state.selector) >= 2
-                ? this.params.from.name
-                : this.params.asset,
-        );
+        this._state.gPubKey =
+            this._state.config.gPubKey ||
+            (await this.renVM.selectPublicKey(
+                this._state.selector,
+                this.renVM.version(this._state.selector) >= 2
+                    ? this.params.from.name
+                    : this.params.asset,
+            ));
         this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
 
         const gatewayAddress = await this.params.from.getGatewayAddress(
@@ -502,6 +518,67 @@ export class LockAndMint<
         );
         this.gatewayAddress = gatewayAddress;
         this._state.logger.debug("gateway address:", this.gatewayAddress);
+
+        const filteredContractParams = contractParams
+            ? contractParams.filter(
+                  (contractParam) => !contractParam.notInPayload,
+              )
+            : contractParams;
+
+        const encodedParameters = new AbiCoder().encodeParameters(
+            (filteredContractParams || []).map((i) => i.type),
+            (filteredContractParams || []).map((i) => i.value),
+        );
+
+        const fnABI = payloadToMintABI(
+            contractFn,
+            filteredContractParams || [],
+        );
+
+        if (this.params.tags && this.params.tags.length > 1) {
+            throw new Error("Providing multiple tags is not supported yet.");
+        }
+
+        const tags: [string] | [] =
+            this.params.tags && this.params.tags.length
+                ? [this.params.tags[0]]
+                : [];
+
+        this._state.token = await this.params.to.resolveTokenGatewayContract(
+            this.params.asset,
+        );
+
+        if (this.renVM.submitGatewayDetails) {
+            const promise = this.renVM.submitGatewayDetails(
+                this.params.from.addressToString(gatewayAddress),
+                {
+                    ...(this._state as MintState & MintStatePartial),
+                    token: this._state.token,
+                    nHash: Buffer.from(
+                        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "base64",
+                    ),
+                    payload: fromHex(encodedParameters),
+                    nonce: fromHex(nonce),
+                    fn: contractFn,
+                    fnABI,
+                    to:
+                        this.renVM.version(this._state.selector) >= 2
+                            ? strip0x(sendTo)
+                            : Ox(sendTo),
+                    tags,
+
+                    // See [RenJSConfig.transactionVersion]
+                    transactionVersion: this._state.config.transactionVersion,
+                },
+                5,
+            );
+            if ((promise as any).catch) {
+                (promise as Promise<any>).catch((_error) => {
+                    // Ignore error.
+                });
+            }
+        }
 
         return this.gatewayAddress;
     };
@@ -634,6 +711,8 @@ export class LockAndMintDeposit<
     public mintTransaction?: MintTransaction;
     public revertReason?: string;
 
+    public gatewayAddress: LockAddress | undefined;
+
     /**
      * Internal state of the mint object, including the `gHash` and `pHash`.
      * Interface may change across minor and patch releases.
@@ -652,6 +731,7 @@ export class LockAndMintDeposit<
         >,
         renVM: AbstractRenVMProvider,
         state: MintState & MintStatePartial,
+        gatewayAddress?: LockAddress,
     ) {
         assertObject(
             {
@@ -679,6 +759,7 @@ export class LockAndMintDeposit<
         this.depositDetails = depositDetails;
         this.params = params;
         this.renVM = renVM;
+        this.gatewayAddress = gatewayAddress;
         // this._state = state;
 
         // `processDeposit` will call `refreshStatus` which will set the proper
@@ -707,10 +788,6 @@ export class LockAndMintDeposit<
               )
             : undefined;
 
-        if (!nonce) {
-            throw new Error("Unable to submit to RenVM without nonce.");
-        }
-
         if (!contractCalls || !contractCalls.length) {
             throw new Error(
                 `Unable to submit to RenVM without contract call details.`,
@@ -733,22 +810,25 @@ export class LockAndMintDeposit<
             (filteredContractParams || []).map((i) => i.value),
         );
 
-        if (this.params.tags && this.params.tags.length > 1) {
-            throw new Error("Providing multiple tags is not supported yet.");
-        }
+        const { pHash, config } = state;
 
-        const { pHash } = state;
+        // Check if the transaction is either a v0.2 transaction, or has the
+        // version set to `0` in a v0.4 transaction.
+        // See [RenJSConfig.transactionVersion]
+        const v0Transaction =
+            this.renVM.version(state.selector) === 1 ||
+            config.transactionVersion === 0;
 
         const transactionDetails = this.params.from.transactionRPCFormat(
             this.depositDetails.transaction,
-            renVM.version(state.selector) >= 2,
+            !v0Transaction,
         );
 
         const nHash = generateNHash(
             fromHex(nonce),
             transactionDetails.txid,
             transactionDetails.txindex,
-            renVM.version(state.selector) >= 2,
+            !v0Transaction,
         );
 
         const outputHashFormat =
@@ -760,6 +840,10 @@ export class LockAndMintDeposit<
             contractFn,
             filteredContractParams || [],
         );
+
+        if (this.params.tags && this.params.tags.length > 1) {
+            throw new Error("Providing multiple tags is not supported yet.");
+        }
 
         const tags: [string] | [] =
             this.params.tags && this.params.tags.length
@@ -797,6 +881,9 @@ export class LockAndMintDeposit<
             this.renVM.mintTxHash({
                 ...this._state,
                 outputHashFormat,
+
+                // See [RenJSConfig.transactionVersion]
+                transactionVersion: config.transactionVersion,
             }),
         );
 
@@ -823,11 +910,6 @@ export class LockAndMintDeposit<
     /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
         await this.refreshStatus();
-
-        this._state.token = await this.params.to.resolveTokenGatewayContract(
-            this.params.asset,
-        );
-
         return this;
     };
 
@@ -1193,7 +1275,8 @@ export class LockAndMintDeposit<
                 this._state.queryTxResult &&
                 this._state.queryTxResult.out
             ) {
-                return this;
+                // NO_COMMIT
+                // return this;
             }
 
             promiEvent.emit("txHash", txHash);
@@ -1446,6 +1529,9 @@ export class LockAndMintDeposit<
         const encodedHash = await this.renVM.submitMint({
             ...this._state,
             token,
+
+            // See [RenJSConfig.transactionVersion]
+            transactionVersion: this._state.config.transactionVersion,
         });
 
         const returnedTxHash =

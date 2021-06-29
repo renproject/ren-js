@@ -1,24 +1,70 @@
+import { EthAddress, EthTransaction } from "./types";
+
+export const StandardExplorer = (baseUrl: string) => ({
+    address: (address: EthAddress | string) =>
+        `${baseUrl.replace(/\/$/, "")}/address/${address}`,
+    transaction: (transaction: EthTransaction | string) =>
+        `${baseUrl.replace(/\/$/, "")}/tx/${transaction}`,
+});
+
 export interface EthereumConfig {
     name: string;
     chain: string;
     isTestnet: boolean;
     networkID: number;
+
+    /** A title-cased label for the chain. */
     chainLabel: string;
-    infura: string;
-    etherscan: string;
+
+    /**
+     * A method for getting a public provider as a URI. Accepts an optional
+     * map of provider API keys, as documented by each network.
+     *
+     * Note that this isn't used by RenJS internally.
+     */
+    publicProvider: (keys?: {
+        infura?: string;
+        [key: string]: string | undefined;
+    }) => string;
+
+    /**
+     * The base URI of an explorer, which should follow the below standard:
+     * (1) an address's page should be at $BASE_URL/address/$ADDRESS
+     * (2) a transaction's page should be ase $BASE_URL/tx/$TRANSACTION_HASH
+     *
+     * Used when calling `Ethereum.utils.addressExplorerLink` and
+     * `Ethereum.utils.transactionExplorerLink`.
+     */
+    explorer: {
+        address: (address: EthAddress | string) => string;
+        transaction: (transaction: EthTransaction | string) => string;
+    };
+
     addresses: {
         GatewayRegistry: string;
         BasicAdapter: string;
     };
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: string;
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: string;
 }
 
 const ethereumConfig = {
     mainnet: {
         chain: "main",
         isTestnet: false,
-        chainLabel: "Mainnet",
+        chainLabel: "Ethereum",
         networkID: 1,
+
+        publicProvider: ({ infura }: { infura?: string } = {}) =>
+            `https://mainnet.infura.io/v3/${infura}`,
+        explorer: StandardExplorer("https://etherscan.io"),
+
+        /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
         infura: "https://mainnet.infura.io",
+        /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
         etherscan: "https://etherscan.io",
     },
     kovan: {
@@ -26,7 +72,14 @@ const ethereumConfig = {
         isTestnet: true,
         chainLabel: "Kovan",
         networkID: 42,
+
+        publicProvider: ({ infura }: { infura?: string } = {}) =>
+            `https://kovan.infura.io/v3/${infura}`,
+        explorer: StandardExplorer("https://kovan.etherscan.io"),
+
+        /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
         infura: "https://kovan.infura.io",
+        /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
         etherscan: "https://kovan.etherscan.io",
     },
     rinkeby: {
@@ -34,7 +87,14 @@ const ethereumConfig = {
         isTestnet: true,
         chainLabel: "Rinkeby",
         networkID: 4,
+
+        publicProvider: ({ infura }: { infura?: string } = {}) =>
+            `https://rinkeby.infura.io/v3/${infura}`,
+        explorer: StandardExplorer("https://rinkeby.etherscan.io"),
+
+        /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
         infura: "https://rinkeby.infura.io",
+        /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
         etherscan: "https://rinkeby.etherscan.io",
     },
 };

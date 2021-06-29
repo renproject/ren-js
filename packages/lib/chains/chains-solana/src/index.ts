@@ -12,7 +12,7 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
 } from "@renproject/interfaces";
-import { Callable, keccak256 } from "@renproject/utils";
+import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
     Connection,
     PublicKey,
@@ -83,8 +83,10 @@ class SolanaClass
         bytes: true,
     };
 
+    public provider: SolanaProvider;
+
     constructor(
-        readonly provider: SolanaProvider,
+        provider: SolanaProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
@@ -92,6 +94,7 @@ class SolanaClass
             | SolNetworkConfig,
         options?: SolOptions,
     ) {
+        this.provider = provider;
         if (!this.provider.connection) {
             throw new Error("No connection to provider");
         }
@@ -111,14 +114,23 @@ class SolanaClass
 
     public static utils = {
         resolveChainNetwork: resolveNetwork,
-        addressIsValid: (a: any) => {
-            try {
-                base58.decode(a);
-                return true;
-            } catch (_e) {
-                return false;
-            }
-        },
+
+        /**
+         * A Solana address is a base58-encoded 32-byte ed25519 public key.
+         */
+        addressIsValid: doesntError(
+            (address: SolAddress | string) =>
+                base58.decode(address).length === 32,
+        ),
+
+        /**
+         * A Solana transaction's ID is a base58-encoded 64-byte signature.
+         */
+        transactionIsValid: doesntError(
+            (transaction: SolTransaction | string) =>
+                base58.decode(transaction).length === 64,
+        ),
+
         addressExplorerLink: (
             address: SolAddress,
             network:
@@ -211,7 +223,8 @@ class SolanaClass
     }
 
     withProvider = (provider: any) => {
-        return { ...this, provider };
+        this.provider = provider;
+        return this;
     };
 
     assetIsNative = (asset: string) => {
@@ -285,7 +298,13 @@ class SolanaClass
         };
     };
 
-    transactionFromID = (
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        base58.decode(transactionID);
+
+    transactionIDFromRPCFormat = (txid: string | Buffer, txindex: string) =>
+        this.transactionID(this.transactionFromRPCFormat(txid, txindex));
+
+    transactionFromRPCFormat = (
         txid: string | Buffer,
         _txindex: string,
         _reversed?: boolean,
@@ -293,6 +312,11 @@ class SolanaClass
         if (typeof txid == "string") return txid;
         return base58.encode(txid);
     };
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
+    transactionFromID = this.transactionFromRPCFormat;
 
     resolveTokenGatewayContract = (asset: string) => {
         if (!this.gatewayRegistryData) {
@@ -303,16 +327,16 @@ class SolanaClass
             keccak256(Buffer.from(`${asset}/toSolana`)),
         );
         let idx = -1;
-        const contract = this.gatewayRegistryData
-            ? this.gatewayRegistryData.selectors.find(
-                  (x, i) =>
-                      x.toString() === sHash.toString() &&
-                      (() => {
-                          idx = i;
-                          return true;
-                      })(),
-              )
-            : undefined;
+        const contract =
+            this.gatewayRegistryData &&
+            this.gatewayRegistryData.selectors.find(
+                (x, i) =>
+                    x.toString() === sHash.toString() &&
+                    (() => {
+                        idx = i;
+                        return true;
+                    })(),
+            );
         if (!contract) throw new Error("unsupported asset");
         return this.gatewayRegistryData.gateways[idx].toBase58();
     };

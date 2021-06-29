@@ -99,7 +99,16 @@ export abstract class BitcoinBaseChain
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): boolean => true,
+        ): boolean => true, // Implemented by each Bitcoin fork.
+
+        transactionIsValid: (
+            _transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ): boolean => true, // Implemented by each Bitcoin fork.
 
         addressExplorerLink: (
             _address: BtcAddress | string,
@@ -108,7 +117,7 @@ export abstract class BitcoinBaseChain
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): string | undefined => undefined,
+        ): string | undefined => undefined, // Implemented by each Bitcoin fork.
 
         transactionExplorerLink: (
             _tx: BtcTransaction | string,
@@ -117,7 +126,7 @@ export abstract class BitcoinBaseChain
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): string | undefined => undefined,
+        ): string | undefined => undefined, // Implemented by each Bitcoin fork.
 
         resolveChainNetwork: (
             network:
@@ -170,7 +179,7 @@ export abstract class BitcoinBaseChain
 
     public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}.`);
+            throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
     };
 
@@ -181,7 +190,7 @@ export abstract class BitcoinBaseChain
         if (asset === this.asset) {
             return 8;
         }
-        throw new Error(`Unsupported asset ${asset}`);
+        throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
     };
 
     /**
@@ -263,9 +272,9 @@ export abstract class BitcoinBaseChain
     };
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer => {
+    addressToBytes = (address: BtcAddress | string): Buffer => {
         try {
             return base58.decode(address);
         } catch (error) {
@@ -281,18 +290,21 @@ export abstract class BitcoinBaseChain
         }
     };
 
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
+
+    addressToString = (address: BtcAddress | string) => address;
+
     /**
      * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: BtcTransaction) => transaction.txHash;
 
-    transactionFromID = (
+    transactionIDFromRPCFormat = (
         txid: string | Buffer,
-        txindex: string,
+        _txindex: string,
         reversed?: boolean,
     ) => {
-        let txidString;
-
         // RenVM returns TXIDs in the correct byte direction, so they should be
         // reversed when converting to a string.
         // See https://learnmeabitcoin.com/technical/txid#why
@@ -302,13 +314,29 @@ export abstract class BitcoinBaseChain
                 typeof txid === "string"
                     ? Buffer.from(strip0x(txid), "hex")
                     : txid;
-            txidString = bufferTxid.reverse().toString("hex");
+            return bufferTxid.reverse().toString("hex");
         } else {
-            txidString = typeof txid === "string" ? txid : txid.toString("hex");
+            return typeof txid === "string" ? txid : txid.toString("hex");
         }
+    };
 
+    transactionFromRPCFormat = (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => {
+        let txidString = this.transactionIDFromRPCFormat(
+            txid,
+            txindex,
+            reversed,
+        );
         return this.api.fetchUTXO(txidString, parseInt(txindex, 10));
     };
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
+    transactionFromID = this.transactionFromRPCFormat;
 
     depositV1HashString = ({ transaction }: BtcDeposit): string => {
         return `${toBase64(fromHex(transaction.txHash))}_${transaction.vOut}`;
@@ -328,6 +356,9 @@ export abstract class BitcoinBaseChain
         };
     };
 
+    transactionRPCTxidFromID = (transactionID: string, v2?: boolean): Buffer =>
+        v2 ? fromHex(transactionID).reverse() : fromHex(transactionID);
+
     // Methods for initializing mints and burns ////////////////////////////////
 
     private burnPayloadGetter: ((bytes?: boolean) => string) | undefined;
@@ -343,9 +374,7 @@ export abstract class BitcoinBaseChain
         assertType<string>("string", { address });
 
         this.burnPayloadGetter = (bytes?: boolean) =>
-            bytes
-                ? this.addressStringToBytes(address).toString("hex")
-                : address;
+            bytes ? this.addressToBytes(address).toString("hex") : address;
 
         return this;
     };

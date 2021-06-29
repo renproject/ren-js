@@ -1,10 +1,18 @@
 import { TxStatus } from "@renproject/interfaces";
 
 import { TypedPackValue } from "./pack/pack";
-import { BurnTransactionInput, MintTransactionInput } from "./transaction";
+import {
+    BurnTransactionInput,
+    MintTransactionInput,
+    SubmitGatewayInput,
+} from "./transaction";
 import { RenVMType, RenVMValue } from "./value";
 
 export enum RPCMethod {
+    // MethodSubmitGateway submits the details of a gateway to the lightnode,
+    // used for recovering mints that didn't get submitted to RenVM.
+    SubmitGateway = "ren_submitGateway",
+
     // MethodSubmitTx submits a new transaction to the Darknode for acceptance
     // into the transaction pool.
     SubmitTx = "ren_submitTx",
@@ -40,22 +48,10 @@ export interface ParamsQueryTxs {
     tags: Array<RenVMValue<RenVMType.B32>>;
 }
 
-// ParamsQueryBlock defines the parameters of the MethodQueryBlock.
-export interface ParamsQueryBlock {
-    // BlockHeight of the block that will be returned. A nil value can be used
-    // to request the latest block.
-    blockHeight: number;
-}
-
-// ParamsQueryBlocks defines the parameters of the MethodQueryBlocks.
-export interface ParamsQueryBlocks {
-    // BlockHeight of the youngest block that will be returned in the list. A
-    // nil value can be used to request a list of the latest blocks.
-    blockHeight: number;
-    // N defines the maximum number of ancestor blocks that will be returned. A
-    // nil value can be used to request the maximum allowed number of blocks.
-    n: number;
-}
+export type ParamsSubmitGateway = {
+    gateway: string;
+    tx: SubmitGatewayInput;
+};
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
 export interface ParamsSubmitTx<
@@ -76,6 +72,23 @@ export interface ParamsQueryTx {
     txHash: string;
 }
 
+// ParamsQueryBlock defines the parameters of the MethodQueryBlock.
+export interface ParamsQueryBlock {
+    // BlockHeight of the block that will be returned. A nil value can be used
+    // to request the latest block.
+    blockHeight: number;
+}
+
+// ParamsQueryBlocks defines the parameters of the MethodQueryBlocks.
+export interface ParamsQueryBlocks {
+    // BlockHeight of the youngest block that will be returned in the list. A
+    // nil value can be used to request a list of the latest blocks.
+    blockHeight: number;
+    // N defines the maximum number of ancestor blocks that will be returned. A
+    // nil value can be used to request the maximum allowed number of blocks.
+    n: number;
+}
+
 // ParamsQueryConfig defines the parameters of the MethodQueryConfig.
 export interface ParamsQueryConfig {
     // No parameters.
@@ -88,17 +101,8 @@ export interface ParamsQueryState {
 
 // Responses ///////////////////////////////////////////////////////////////////
 
-// ResponseQueryBlock defines the response of the MethodQueryBlock.
-export interface ResponseQueryBlock {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    block: any; // Block json.RawMessage`json:"block"`
-}
-
-// ResponseQueryBlocks defines the response of the MethodQueryBlocks.
-export interface ResponseQueryBlocks {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    blocks: any; // Blocks json.RawMessage`json:"blocks"`
-}
+// ResponseSubmitTx defines the response of the MethodSubmitTx.
+export interface ResponseSubmitTx {}
 
 // ResponseSubmitTx defines the response of the MethodSubmitTx.
 export interface ResponseSubmitTx {
@@ -111,11 +115,14 @@ export interface ResponseSubmitTx {
     };
 }
 
+// ResponseSubmitGateway defines the response of the MethodSubmitGateway.
+export interface ResponseSubmitGateway {}
+
 // ResponseQueryTx defines the response of the MethodQueryTx.
 export interface ResponseQueryTx {
     // Tx       abi.Tx`json:"tx"`
     tx: {
-        version: "1";
+        version: "0" | "1";
         hash: string;
         selector: string;
         in: TypedPackValue;
@@ -133,6 +140,18 @@ export interface ResponseQueryTxs {
         in: TypedPackValue;
         out?: TypedPackValue;
     }>;
+}
+
+// ResponseQueryBlock defines the response of the MethodQueryBlock.
+export interface ResponseQueryBlock {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    block: any; // Block json.RawMessage`json:"block"`
+}
+
+// ResponseQueryBlocks defines the response of the MethodQueryBlocks.
+export interface ResponseQueryBlocks {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    blocks: any; // Blocks json.RawMessage`json:"blocks"`
 }
 
 // ResponseQueryConfig defines the response of the MethodQueryConfig.
@@ -175,21 +194,23 @@ export interface ResponseQueryState {
 // /////////////////////////////////////////////////////////////////////////////
 
 export type RenVMParams = {
-    [RPCMethod.QueryBlock]: ParamsQueryBlock;
-    [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
     [RPCMethod.SubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
+    [RPCMethod.SubmitGateway]: ParamsSubmitGateway;
     [RPCMethod.QueryTx]: ParamsQueryTx;
     [RPCMethod.QueryTxs]: ParamsQueryTxs;
+    [RPCMethod.QueryBlock]: ParamsQueryBlock;
+    [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
     [RPCMethod.QueryConfig]: ParamsQueryConfig;
     [RPCMethod.QueryState]: ParamsQueryState;
 };
 
 export type RenVMResponses = {
-    [RPCMethod.QueryBlock]: ResponseQueryBlock;
-    [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
     [RPCMethod.SubmitTx]: ResponseSubmitTx;
+    [RPCMethod.SubmitGateway]: ResponseSubmitGateway;
     [RPCMethod.QueryTx]: ResponseQueryTx;
     [RPCMethod.QueryTxs]: ResponseQueryTxs;
+    [RPCMethod.QueryBlock]: ResponseQueryBlock;
+    [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
     [RPCMethod.QueryConfig]: ResponseQueryConfig;
     [RPCMethod.QueryState]: ResponseQueryState;
 };

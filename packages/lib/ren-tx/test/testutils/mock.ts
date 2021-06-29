@@ -66,7 +66,9 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
             txid: fromHex(tx.txHash),
             txindex: "0",
         }),
+        addressToBytes: (address: string): Buffer => Buffer.from(address),
         addressStringToBytes: (address: string): Buffer => Buffer.from(address),
+        addressToString: (address: string): string => address,
     };
     return {
         mockLockChain,

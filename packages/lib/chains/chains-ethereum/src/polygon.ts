@@ -6,11 +6,12 @@ import {
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { provider } from "web3-providers";
-import { EthAddress, EthTransaction, NetworkInput } from "./base";
+import { NetworkInput } from "./base";
+import { EthAddress, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
-import { EthereumConfig } from "./networks";
-import { addressIsValid } from "./utils";
+import { EthereumConfig, StandardExplorer } from "./networks";
+import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renPolygonTestnet: EthereumConfig = {
     name: "Polygon Testnet",
@@ -18,12 +19,18 @@ export const renPolygonTestnet: EthereumConfig = {
     isTestnet: true,
     chainLabel: "Polygon Testnet",
     networkID: 80001,
-    infura: "https://rpc-mumbai.maticvigil.com/",
-    etherscan: "https://explorer-mumbai.maticvigil.com",
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
         BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
+
+    publicProvider: () => `https://rpc-mumbai.maticvigil.com`,
+    explorer: StandardExplorer("https://explorer-mumbai.maticvigil.com"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://rpc-mumbai.maticvigil.com",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://explorer-mumbai.maticvigil.com",
 };
 
 export const renPolygonMainnet: EthereumConfig = {
@@ -32,12 +39,18 @@ export const renPolygonMainnet: EthereumConfig = {
     isTestnet: false,
     chainLabel: "Polygon Mainnet",
     networkID: 137,
-    infura: "https://rpc-mainnet.maticvigil.com/",
-    etherscan: "https://explorer.matic.network",
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
+
+    publicProvider: () => `https://rpc-mainnet.maticvigil.com`,
+    explorer: StandardExplorer("https://polygonscan.com"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://rpc-mainnet.maticvigil.com",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://polygonscan.com",
 };
 
 export const PolygonConfigMap = {
@@ -72,9 +85,13 @@ export class PolygonClass extends EthereumClass {
     public legacyName = undefined;
     public logRequestLimit = 1000;
 
+    public static configMap = PolygonConfigMap;
+    public configMap = PolygonConfigMap;
+
     public static utils = {
         resolveChainNetwork: resolvePolygonNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,

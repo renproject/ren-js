@@ -4,7 +4,7 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { Callable, utilsWithChainNetwork } from "@renproject/utils";
+import { Callable, isHex, utilsWithChainNetwork } from "@renproject/utils";
 import { Networks, Opcode, Script } from "bitcore-lib-zcash";
 import base58 from "bs58";
 import { Insight } from "./APIs/insight";
@@ -74,6 +74,22 @@ export class ZcashClass extends BitcoinClass {
                 ZcashClass.asset,
                 Zcash.utils.resolveChainNetwork(network),
             ),
+
+        transactionIsValid: (
+            transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.txHash,
+                { length: 32 },
+            ),
+
         addressExplorerLink: (
             address: BtcAddress | string,
             network:

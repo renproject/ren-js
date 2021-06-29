@@ -242,3 +242,74 @@ export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
  */
 export const isDefined = <T>(x: T | null | undefined): x is T =>
     x !== null && x !== undefined;
+
+const assert = (input: boolean, reason?: string) => {
+    if (!input) {
+        throw new Error(reason || `Assertion failed.`);
+    }
+};
+
+export const doesntError = <T extends any[]>(
+    f: (...p: T) => boolean | void,
+) => {
+    return (...p: T) => {
+        try {
+            return f(...p) === undefined || true ? true : false;
+        } catch (error) {
+            return false;
+        }
+    };
+};
+
+export const isBase64 = doesntError(
+    (
+        input: string,
+        options: {
+            length?: number;
+        } = {},
+    ) => {
+        const buffer = Buffer.from(input, "base64");
+        assert(
+            options.length === undefined || buffer.length === options.length,
+            `Expected ${options.length} bytes.`,
+        );
+        assert(buffer.toString("base64") === input);
+    },
+);
+
+export const isURLBase64 = doesntError(
+    (
+        input: string,
+        options: {
+            length?: number;
+        } = {},
+    ) => {
+        const buffer = Buffer.from(input, "base64");
+        assert(
+            options.length === undefined || buffer.length === options.length,
+            `Expected ${options.length} bytes.`,
+        );
+        assert(toURLBase64(buffer) === input);
+    },
+);
+
+export const isHex = doesntError(
+    (
+        input: string,
+        options: {
+            prefix?: true;
+            length?: number;
+        } = {},
+    ) => {
+        if (options.prefix) {
+            assert(input.slice(0, 2) === "0x");
+            input = input.slice(2);
+        }
+        const buffer = Buffer.from(input, "hex");
+        assert(
+            options.length === undefined || buffer.length === options.length,
+            `Expected ${options.length} bytes.`,
+        );
+        assert(buffer.toString("hex") === input);
+    },
+);

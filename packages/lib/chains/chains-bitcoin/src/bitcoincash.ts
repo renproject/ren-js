@@ -4,7 +4,7 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { Callable, utilsWithChainNetwork } from "@renproject/utils";
+import { Callable, isHex, utilsWithChainNetwork } from "@renproject/utils";
 import {
     toCashAddress,
     isMainnetAddress,
@@ -78,6 +78,21 @@ export class BitcoinCashClass extends BitcoinClass {
             );
         },
 
+        transactionIsValid: (
+            transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.txHash,
+                { length: 32 },
+            ),
+
         addressExplorerLink: (
             address: BtcAddress | string,
             network:
@@ -123,10 +138,13 @@ export class BitcoinCashClass extends BitcoinClass {
     );
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer =>
+    addressToBytes = (address: BtcAddress | string): Buffer =>
         decodeBitcoinCashAddress(address);
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
 }
 
 export type BitcoinCash = BitcoinCashClass;

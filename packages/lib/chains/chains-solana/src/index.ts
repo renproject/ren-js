@@ -620,10 +620,10 @@ class SolanaClass
         const mintLogData = MintLogLayout.decode(mintData.data);
         if (!mintLogData.is_initialized) return undefined;
 
-        const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
+        const mintSigs = await this.provider.connection.getSignaturesForAddress(
             mintLogAccountId[0],
         );
-        return mintSigs[0].signature;
+        return mintSigs[0]?.signature || "";
     };
 
     /**

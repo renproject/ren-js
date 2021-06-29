@@ -511,14 +511,27 @@ export class RenVMProvider
     };
 
     public estimateTransactionFee = async (
-        _selector: string,
-        chain: { name: string; legacyName?: string },
-    ): Promise<{ lock: BigNumber; release: BigNumber }> => {
-        const fees = await this.getFees();
-        return fees[
-            chain.legacyName
-                ? chain.legacyName.toLowerCase()
-                : chain.name.toLowerCase()
-        ];
+        _asset: string,
+        _lockChain: { name: string; legacyName?: string },
+        hostChain: { name: string; legacyName?: string },
+    ): Promise<{
+        lock: BigNumber;
+        release: BigNumber;
+        mint: number;
+        burn: number;
+    }> => {
+        const allFees = await this.getFees();
+        const fees =
+            allFees[
+                hostChain.legacyName
+                    ? hostChain.legacyName.toLowerCase()
+                    : hostChain.name.toLowerCase()
+            ];
+
+        return {
+            ...fees,
+            mint: 25,
+            burn: 15,
+        };
     };
 }

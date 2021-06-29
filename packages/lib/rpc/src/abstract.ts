@@ -171,7 +171,13 @@ export interface AbstractRenVMProvider<
      * Return the estimated fee RenVM will use for locking and releasing.
      */
     estimateTransactionFee: (
-        selector: string,
-        chain: { name: string; legacyName?: string },
-    ) => SyncOrPromise<{ lock: BigNumber; release: BigNumber }>;
+        asset: string,
+        lockChain: { name: string; legacyName?: string },
+        hostChain: { name: string; legacyName?: string },
+    ) => SyncOrPromise<{
+        lock: BigNumber;
+        release: BigNumber;
+        mint: number;
+        burn: number;
+    }>;
 }

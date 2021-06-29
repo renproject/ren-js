@@ -185,43 +185,16 @@ export default class RenJS {
             throw new Error(`Asset not supported by chain ${to.name}.`);
         }
 
-        let fees;
-
         if (await from.assetIsNative(asset)) {
             // LockAndMint
-            const mintFees = await (to as MintChain).getFees(asset);
-            const selector = this.renVM.selector({ asset, from, to });
-            const lockFees = await this.renVM.estimateTransactionFee(
-                selector,
-                from,
-            );
-            fees = {
-                ...lockFees,
-                ...mintFees,
-            };
+            return await this.renVM.estimateTransactionFee(asset, from, to);
         } else if (await to.assetIsNative(asset)) {
             // BurnAndRelease
-            const mintFees = await (from as MintChain).getFees(asset);
-            const selector = this.renVM.selector({ asset, from, to });
-            const lockFees = await this.renVM.estimateTransactionFee(
-                selector,
-                to,
-            );
-            fees = {
-                ...lockFees,
-                ...mintFees,
-            };
+            return await this.renVM.estimateTransactionFee(asset, to, from);
         } else {
             // BurnAndMint
-            const mintFees = await (from as MintChain).getFees(asset);
-            const burnFees = await (to as MintChain).getFees(asset);
-            fees = {
-                mint: mintFees.mint,
-                burn: burnFees.burn,
-            };
+            return await this.renVM.estimateTransactionFee(asset, from, to);
         }
-
-        return fees;
     };
 
     /**

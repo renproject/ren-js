@@ -1,4 +1,8 @@
 import { TxStatus } from "@renproject/interfaces";
+import {
+    ParamsQueryBlockState,
+    ResponseQueryBlockState,
+} from "./methods/ren_queryBlockState";
 
 import { TypedPackValue } from "./pack/pack";
 import {
@@ -36,6 +40,9 @@ export enum RPCMethod {
 
     // MethodQueryState returns the contract state.
     QueryState = "ren_queryState",
+
+    // MethodQueryBlockState returns the contract state.
+    QueryBlockState = "ren_queryBlockState",
 }
 
 // Params //////////////////////////////////////////////////////////////////////
@@ -202,6 +209,7 @@ export type RenVMParams = {
     [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
     [RPCMethod.QueryConfig]: ParamsQueryConfig;
     [RPCMethod.QueryState]: ParamsQueryState;
+    [RPCMethod.QueryBlockState]: ParamsQueryBlockState;
 };
 
 export type RenVMResponses = {
@@ -213,6 +221,7 @@ export type RenVMResponses = {
     [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
     [RPCMethod.QueryConfig]: ResponseQueryConfig;
     [RPCMethod.QueryState]: ResponseQueryState;
+    [RPCMethod.QueryBlockState]: ResponseQueryBlockState;
 };
 
 // The following lines will throw a type error if RenVMResponses or RenVMParams

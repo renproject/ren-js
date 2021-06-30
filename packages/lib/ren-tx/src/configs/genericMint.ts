@@ -79,7 +79,9 @@ const txCreator = async <X>(context: GatewayMachineContext<X>) => {
     }
 
     const minter = await renLockAndMint(context);
-    const gatewayAddress = minter?.gatewayAddress;
+    const gatewayAddress = context
+        .from(context)
+        .addressToString(minter?.gatewayAddress);
     const newTx: OpenedGatewaySession<X> = {
         ...context.tx,
         gatewayAddress,
@@ -93,10 +95,11 @@ const initMinter = async <X>(
 ) => {
     const minter = await renLockAndMint(context);
 
-    if (
-        isOpen(context.tx) &&
-        minter.gatewayAddress != context.tx.gatewayAddress
-    ) {
+    const gatewayAddress = context
+        .from(context)
+        .addressToString(minter?.gatewayAddress);
+
+    if (isOpen(context.tx) && gatewayAddress != context.tx.gatewayAddress) {
         callback({
             type: "ERROR_LISTENING",
             data: new Error(

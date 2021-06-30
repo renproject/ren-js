@@ -70,7 +70,7 @@ interface SolOptions {
     logger: Logger;
 }
 
-class SolanaClass
+export class SolanaClass
     implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
     public static chain = "Solana" as const;
     public chain = Solana.chain;
@@ -623,7 +623,7 @@ class SolanaClass
         const mintSigs = await this.provider.connection.getSignaturesForAddress(
             mintLogAccountId[0],
         );
-        return mintSigs[0]?.signature || "";
+        return (mintSigs[0] && mintSigs[0].signature) || "";
     };
 
     /**

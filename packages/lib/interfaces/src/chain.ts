@@ -161,11 +161,40 @@ export interface ChainCommon<
         txindex: string;
     };
 
+    transactionRPCTxidFromID: (transactionID: string, v2?: boolean) => Buffer;
+
+    /**
+     * `transactionIDFromRPCFormat` accepts a txid and txindex and returns the
+     * transactionID as returned from `transactionID`.
+     */
+    transactionIDFromRPCFormat: (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => string;
+
+    transactionFromRPCFormat: (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+    ) => SyncOrPromise<Transaction>;
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
     transactionFromID: (
         txid: string | Buffer,
         txindex: string,
         reversed?: boolean,
     ) => SyncOrPromise<Transaction>;
+
+    transactionRPCFormatExplorerLink?: (
+        txid: string | Buffer,
+        txindex: string,
+        reversed?: boolean,
+        network?: RenNetwork | RenNetworkString | RenNetworkDetails | Network,
+        explorer?: string,
+    ) => string | undefined;
 }
 
 export type DepositCommon<Transaction = any> = {
@@ -231,12 +260,19 @@ export interface LockChain<
     // Encoding
 
     /**
-     * `addressBytes` should return the bytes representation of the address.
+     * `addressToBytes` should return the bytes representation of the address.
      *
      * @dev Must be compatible with the matching RenVM multichain LockChain's
      * `decodeAddress` method.
      */
+    addressToBytes: (address: Address | string) => Buffer;
+
+    /**
+     * @deprecated Renamed to addressToBytes.
+     */
     addressStringToBytes: (address: string) => Buffer;
+
+    addressToString: (address: Address | string) => string;
 
     // RenVM specific utils
 
@@ -392,6 +428,22 @@ export interface ChainStatic<
          */
         addressIsValid(
             address: DepositAddress | string,
+            network?:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | Network,
+        ): boolean;
+
+        /**
+         * Return a boolean indicating whether the transaction is valid for the
+         * chain's network.
+         *
+         * @param address
+         * @param network
+         */
+        transactionIsValid(
+            address: Transaction | string,
             network?:
                 | RenNetwork
                 | RenNetworkString

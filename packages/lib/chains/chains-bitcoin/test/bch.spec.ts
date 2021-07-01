@@ -8,7 +8,7 @@ describe("BCH", () => {
         const bch = BitcoinCash("testnet");
         console.log(
             bch
-                .addressStringToBytes(
+                .addressToBytes(
                     "bchtest:pq35hhjj35we555szq8xsa47ry093mkasudz8aetvr",
                 )
                 .toString("hex"),

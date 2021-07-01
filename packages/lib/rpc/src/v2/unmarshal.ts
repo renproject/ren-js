@@ -46,6 +46,9 @@ export const unmarshalMintTx = (
     }
 
     return {
+        version: response.tx.version
+            ? parseInt(response.tx.version)
+            : undefined,
         hash: response.tx.hash,
         txStatus: response.txStatus,
         to: response.tx.selector,
@@ -69,6 +72,9 @@ export const unmarshalBurnTx = (
     }
 
     return {
+        version: response.tx.version
+            ? parseInt(response.tx.version)
+            : undefined,
         hash: response.tx.hash,
         to: response.tx.selector,
         in: unmarshalTypedPackValue(response.tx.in),

@@ -13,8 +13,9 @@ import BigNumber from "bignumber.js";
 import { TransactionConfig } from "web3-core";
 import { provider } from "web3-providers";
 
-import { EthAddress, EthereumBaseChain, EthTransaction } from "./base";
+import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
+import { EthAddress, EthTransaction } from "./types";
 
 export class EthereumClass
     extends EthereumBaseChain

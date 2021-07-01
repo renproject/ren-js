@@ -8,25 +8,8 @@ jobs:
         steps:
             - checkout
 
-            # - run:
-            #       name: Start Localnet
-            #       background: true
-            #       command: |
-            #           sudo apt-get update
-            #           sudo apt-get -y upgrade
-            #           wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
-            #           sudo tar -xvf go1.12.6.linux-amd64.tar.gz
-            #           sudo mv go /usr/local
-            #           echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
-            #           source $BASH_ENV
-            #           git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
-            #           cd darknode
-            #           git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-            #           go run cmd/localnet/main.go
-
             - restore_cache:
                   keys:
-                      # when lock file changes, use increasingly general patterns to restore cache
                       - yarn-packages-v1-{{ checksum "yarn.lock" }}
                       - yarn-packages-v1-
 
@@ -35,43 +18,23 @@ jobs:
                   command: yarn install --network-concurrency 1
                   when: always
 
-            - run:
-                  name: Build
-                  command: yarn build
-                  when: always
-
             - save_cache:
                   paths:
                       - ~/.cache/yarn
                   key: yarn-packages-v1-{{ checksum "yarn.lock" }}
 
-            # Run eslint
+            - run:
+                  name: Build
+                  command: yarn build
+                  when: always
+
             - run:
                   name: Run lint
                   command: yarn lint
                   when: always
 
-            # Run tests
             - run:
                   name: Run tests
-                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
                   command: NETWORK="testnet" yarn test
                   no_output_timeout: 30m
                   when: always
-
-            # Run coverage
-            - run:
-                  name: Run coverage
-                  command: NETWORK="testnet" yarn lerna run cov:check
-                  when: always
-
-            # # Run coverage report for Code Climate
-
-            # - run:
-            #       name: code-coverage
-            #       command: |
-            #           mkdir -p coverage
-            #           # nyc report requires that nyc has already been run,
-            #           # which creates the .nyc_output folder containing necessary data
-            #           yarn nyc report --reporter=text-lcov > coverage/lcov.info
-            #       when: always

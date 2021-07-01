@@ -433,7 +433,7 @@ describe("MintMachine", () => {
             "testnet",
         );
         let txHash: string;
-        let confirmed: { [key: string]: boolean } = {};
+        const confirmed: { [key: string]: boolean } = {};
         renVMProvider.submitMint = async (..._args) =>
             new Promise((resolve, reject) => {
                 const backoff = () =>

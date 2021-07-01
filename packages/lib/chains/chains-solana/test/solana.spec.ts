@@ -83,7 +83,7 @@ describe("Solana", () => {
             );
         });
 
-        it.only("should be able to retrieve a burn", async () => {
+        it("should be able to retrieve a burn", async () => {
             const solana = new Solana(
                 makeTestProvider(renMainnet, testPK),
                 renMainnet,

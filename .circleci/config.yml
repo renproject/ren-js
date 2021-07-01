@@ -22,12 +22,12 @@ jobs:
             #           git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
             #           go run cmd/localnet/main.go
 
-            # Download and cache dependencies
             - restore_cache:
                   keys:
-                      - v1-dependencies-{{ checksum "yarn.lock" }}
-                      # fallback to using the latest cache if no exact match is found
-                      - v1-dependencies-
+                      # when lock file changes, use increasingly general patterns to restore cache
+                      - yarn-packages-v1-{{ .Branch }}-{{ checksum "yarn.lock" }}
+                      - yarn-packages-v1-{{ .Branch }}-
+                      - yarn-packages-v1-
 
             - run:
                   name: Install yarn and lerna
@@ -46,8 +46,8 @@ jobs:
 
             - save_cache:
                   paths:
-                      - node_modules
-                  key: v1-dependencies-{{ checksum "yarn.lock" }}
+                      - ~/.cache/yarn
+                  key: yarn-packages-v1-{{ .Branch }}-{{ checksum "yarn.lock" }}
 
             # Run eslint
             - run:

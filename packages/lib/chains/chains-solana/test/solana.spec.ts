@@ -2,7 +2,7 @@
 
 import { expect } from "earljs";
 import { Solana } from "../src/index";
-import { renDevnet } from "../src/networks";
+import { renMainnet } from "../src/networks";
 import { RenVmMsgLayout } from "../src/layouts";
 
 import { makeTestProvider } from "../src/utils";
@@ -39,16 +39,16 @@ describe("Solana", () => {
     describe("Chain initialization", () => {
         it("should initialize with a nodejs provider", () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             );
             expect(solana.renNetworkDetails.isTestnet).toEqual(true);
         });
 
         it("should be able to check if an asset is supported", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             );
             // await solana.initialize("devnet");
             const res = await solana.assetIsSupported("BTC");
@@ -57,8 +57,8 @@ describe("Solana", () => {
 
         it("should be able to return the program address for an asset", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             );
             await solana.initialize("testnet");
             const res = solana.resolveTokenGatewayContract("BTC");
@@ -67,8 +67,8 @@ describe("Solana", () => {
 
         it("should be able to generate a gateway address", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             );
             const btc = new Bitcoin();
             const renjs = new RenJS(RenNetwork.DevnetVDot3);
@@ -83,10 +83,10 @@ describe("Solana", () => {
             );
         });
 
-        it("should be able to retrieve a burn", async () => {
+        it.only("should be able to retrieve a burn", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             );
             const emitter = new EventEmitter();
             const burn = await solana.findBurnTransaction(
@@ -95,13 +95,17 @@ describe("Solana", () => {
                 emitter,
                 console,
             );
-            expect(burn.amount.toString()).toEqual("2327798057397125120");
+            // Just check 4 characters to avoid including random user's BTC
+            // address.
+            expect(burn.to.length).toEqual(34);
+            expect(burn.to.slice(0, 4)).toEqual("3JBN");
+            expect(burn.amount.toString()).toEqual("50000");
         });
 
         it("should be able to construct burn params", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             ).Account({ amount: "20000" });
             // const emitter = new EventEmitter();
             const btcAddressHex =
@@ -128,8 +132,8 @@ describe("Solana", () => {
 
         it("should be able to retrieve a mint", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renMainnet, testPK),
+                renMainnet,
             );
             const btc = new Bitcoin();
             const renjs = new RenJS("devnet-v0.3", {

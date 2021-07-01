@@ -13,11 +13,12 @@ import BN from "bn.js";
 import { PublicKey } from "@solana/web3.js";
 
 export interface BurnLog {
-    // amount gets decoded into four u64s in big-endian (be) order.
-    amount_be_section_1: BN;
-    amount_be_section_2: BN;
-    amount_be_section_3: BN;
-    amount_be_section_4: BN;
+    // amount gets decoded into four u64s. Each u64 is little-endian, but
+    // section_1 is the most significant section.
+    amount_section_1: BN;
+    amount_section_2: BN;
+    amount_section_3: BN;
+    amount_section_4: BN;
 
     recipient_len: Number;
     recipient: Uint8Array;
@@ -25,10 +26,10 @@ export interface BurnLog {
 
 export const BurnLogLayout: Layout<BurnLog> = struct([
     // amount's type is `spl_math::uint::U256`, which borsh doesn't support.
-    u64("amount_be_section_1"),
-    u64("amount_be_section_2"),
-    u64("amount_be_section_3"),
-    u64("amount_be_section_4"),
+    u64("amount_section_1"),
+    u64("amount_section_2"),
+    u64("amount_section_3"),
+    u64("amount_section_4"),
 
     u8("recipient_len"),
     array(u8(), 32, "recipient"),

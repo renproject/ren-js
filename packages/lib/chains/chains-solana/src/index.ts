@@ -788,25 +788,25 @@ export class SolanaClass
                 // Concatenate four u64s into a u256 value.
                 const burnAmount = new BN(
                     Buffer.concat([
-                        new BN(burnData.amount_be_section_1).toArrayLike(
+                        new BN(burnData.amount_section_1).toArrayLike(
                             Buffer,
-                            "be",
-                            64,
+                            "le",
+                            8,
                         ),
-                        new BN(burnData.amount_be_section_2).toArrayLike(
+                        new BN(burnData.amount_section_2).toArrayLike(
                             Buffer,
-                            "be",
-                            64,
+                            "le",
+                            8,
                         ),
-                        new BN(burnData.amount_be_section_3).toArrayLike(
+                        new BN(burnData.amount_section_3).toArrayLike(
                             Buffer,
-                            "be",
-                            64,
+                            "le",
+                            8,
                         ),
-                        new BN(burnData.amount_be_section_4).toArrayLike(
+                        new BN(burnData.amount_section_4).toArrayLike(
                             Buffer,
-                            "be",
-                            64,
+                            "le",
+                            8,
                         ),
                     ]),
                 );

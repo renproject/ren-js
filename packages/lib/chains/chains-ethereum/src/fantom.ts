@@ -81,6 +81,7 @@ const resolveFantomNetwork = (
         return renNetwork as EthereumConfig;
     } else {
         const details = getRenNetworkDetails(
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
         return details.isTestnet

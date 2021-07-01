@@ -11,7 +11,7 @@ import {
     buildMockMintChain,
 } from "@renproject/ren-tx/test/testutils/mock";
 import BigNumber from "bignumber.js";
-import { RenVMProvider } from "../../../../lib/node_modules/@renproject/rpc/build/main/v2";
+import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 
 let parameters: BurnConfigSingle;
 let mockLock = buildMockLockChain();

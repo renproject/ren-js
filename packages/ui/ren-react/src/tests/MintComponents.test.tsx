@@ -17,6 +17,7 @@ let mockMint = buildMockMintChain();
 
 describe("Test Mint", () => {
     beforeEach(() => {
+        jest.setTimeout(20 * 1000);
         jest.useFakeTimers();
 
         mockLock = buildMockLockChain();

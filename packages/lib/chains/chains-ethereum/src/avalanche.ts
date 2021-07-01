@@ -112,7 +112,7 @@ export class AvalancheClass extends EthereumClass {
                     Avalanche.utils.resolveChainNetwork(network) ||
                     renAvalancheMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

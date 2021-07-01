@@ -125,7 +125,7 @@ export class BinanceSmartChainClass extends EthereumClass {
                     BinanceSmartChain.utils.resolveChainNetwork(network) ||
                     renBscMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

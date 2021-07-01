@@ -479,6 +479,7 @@ export class RenVMProvider
     public getConfirmationTarget = async (
         selector: string,
         _chain: { name: string },
+        // eslint-disable-next-line @typescript-eslint/require-await
     ) => {
         const { asset } = parseV1Selector(selector);
         switch (this.network) {

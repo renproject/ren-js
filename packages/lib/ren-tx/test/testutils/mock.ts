@@ -49,8 +49,6 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
         transactionRPCTxidFromID: () => Buffer.from(""),
         transactionIDFromRPCFormat: () => "",
         transactionFromRPCFormat: () => "",
-        addressToString: (x) => x,
-        addressToBytes: () => Buffer.from([]),
         transactionFromID: () => {},
         transactionID: (tx) => tx.txHash,
         transactionConfidence,
@@ -59,7 +57,7 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
             await onDeposit(defaultDeposit);
-            for (let deposit of conf.deposits) {
+            for (const deposit of conf.deposits) {
                 await onDeposit(deposit);
             }
         },

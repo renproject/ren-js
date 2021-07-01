@@ -48,14 +48,18 @@ export const Ox = (
 
 export const fromHex = (hex: Buffer | string): Buffer => {
     assertType<Buffer | string>("Buffer | string", { hex });
-    return Buffer.isBuffer(hex) ? hex : Buffer.from(strip0x(hex), "hex");
+    return Buffer.isBuffer(hex)
+        ? Buffer.from(hex)
+        : Buffer.from(strip0x(hex), "hex");
 };
 
 export const fromBase64 = (base64: Buffer | string): Buffer => {
     assertType<Buffer | string>("Buffer | string", {
         base64,
     });
-    return Buffer.isBuffer(base64) ? base64 : Buffer.from(base64, "base64");
+    return Buffer.isBuffer(base64)
+        ? Buffer.from(base64)
+        : Buffer.from(base64, "base64");
 };
 
 export const toBase64 = (input: Buffer): string => {
@@ -76,7 +80,7 @@ export const toURLBase64 = (input: Buffer | string): string => {
         input,
     });
 
-    return (Buffer.isBuffer(input) ? input : fromHex(input))
+    return (Buffer.isBuffer(input) ? Buffer.from(input) : fromHex(input))
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
@@ -110,7 +114,6 @@ const invalidError = (errorMessage: string) =>
     errorMessage === "null" ||
     errorMessage === "undefined";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const extractError = (error: unknown): string => {
     if (error && typeof error === "object") {
         if (hasOwnProperty(error, "response") && error.response) {
@@ -249,12 +252,13 @@ const assert = (input: boolean, reason?: string) => {
     }
 };
 
-export const doesntError = <T extends any[]>(
+export const doesntError = <T extends unknown[]>(
     f: (...p: T) => boolean | void,
 ) => {
     return (...p: T) => {
         try {
-            return f(...p) === undefined || true ? true : false;
+            const response = f(...p);
+            return response === undefined || response === true ? true : false;
         } catch (error) {
             return false;
         }
@@ -271,7 +275,7 @@ export const isBase64 = doesntError(
         const buffer = Buffer.from(input, "base64");
         assert(
             options.length === undefined || buffer.length === options.length,
-            `Expected ${options.length} bytes.`,
+            `Expected ${String(options.length)} bytes.`,
         );
         assert(buffer.toString("base64") === input);
     },
@@ -287,7 +291,7 @@ export const isURLBase64 = doesntError(
         const buffer = Buffer.from(input, "base64");
         assert(
             options.length === undefined || buffer.length === options.length,
-            `Expected ${options.length} bytes.`,
+            `Expected ${String(options.length)} bytes.`,
         );
         assert(toURLBase64(buffer) === input);
     },
@@ -308,7 +312,7 @@ export const isHex = doesntError(
         const buffer = Buffer.from(input, "hex");
         assert(
             options.length === undefined || buffer.length === options.length,
-            `Expected ${options.length} bytes.`,
+            `Expected ${String(options.length)} bytes.`,
         );
         assert(buffer.toString("hex") === input);
     },

@@ -313,19 +313,20 @@ export abstract class BitcoinBaseChain
             const bufferTxid =
                 typeof txid === "string"
                     ? Buffer.from(strip0x(txid), "hex")
-                    : txid;
+                    : // Create new buffer because `reverse` is in-place.
+                      Buffer.from(txid);
             return bufferTxid.reverse().toString("hex");
         } else {
             return typeof txid === "string" ? txid : txid.toString("hex");
         }
     };
 
-    transactionFromRPCFormat = (
+    transactionFromRPCFormat = async (
         txid: string | Buffer,
         txindex: string,
         reversed?: boolean,
     ) => {
-        let txidString = this.transactionIDFromRPCFormat(
+        const txidString = this.transactionIDFromRPCFormat(
             txid,
             txindex,
             reversed,

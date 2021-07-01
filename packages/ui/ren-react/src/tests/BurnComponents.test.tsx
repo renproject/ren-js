@@ -11,6 +11,7 @@ import {
     buildMockMintChain,
 } from "@renproject/ren-tx/test/testutils/mock";
 import BigNumber from "bignumber.js";
+import { RenVMProvider } from "../../../../lib/node_modules/@renproject/rpc/build/main/v2";
 
 let parameters: BurnConfigSingle;
 let mockLock = buildMockLockChain();
@@ -23,7 +24,7 @@ describe("Test Mint", () => {
         mockLock = buildMockLockChain();
         mockMint = buildMockMintChain();
         parameters = {
-            sdk: new RenJS("testnet"),
+            sdk: new RenJS(new RenVMProvider("testnet")),
             burnParams: {
                 sourceAsset: "BTC",
                 network: "testnet",
@@ -80,8 +81,8 @@ describe("Test Mint", () => {
             }, 500);
 
             setInterval(() => {
-                emitter.emit("confirmation", 1);
-            }, 1000);
+                emitter.emit("confirmation", 6);
+            }, 100);
 
             return new Promise((resolve) => {
                 setTimeout(() => {

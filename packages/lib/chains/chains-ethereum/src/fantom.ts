@@ -122,7 +122,7 @@ export class FantomClass extends EthereumClass {
             `${
                 (Fantom.utils.resolveChainNetwork(network) || renFantomMainnet)
                     .etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

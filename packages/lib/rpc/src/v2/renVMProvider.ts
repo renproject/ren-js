@@ -523,7 +523,7 @@ export class RenVMProvider
         const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
 
         const mintAndBurnFees = blockState[asset].fees.chains.filter(
-            (fee) => fee.chain === hostChain.name,
+            (chainFees) => chainFees.chain === hostChain.name,
         )[0];
 
         return {

@@ -6,7 +6,9 @@
         "build": "lerna run build --scope @renproject/*",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
         "lint": "lerna run lint --scope @renproject/*",
-        "test": "lerna run test --scope @renproject/*"
+        "test": "lerna run test --scope @renproject/*",
+        "test-no-bail": "lerna run test --no-bail --scope @renproject/*",
+        "cov": "lerna run cov --scope @renproject/*"
     },
     "devDependencies": {
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -84,5 +86,8 @@
         "trailingComma": "all",
         "endOfLine": "lf",
         "arrowParens": "always"
+    },
+    "eslintConfig": {
+        "extends": "./.eslintrc.js"
     }
 }

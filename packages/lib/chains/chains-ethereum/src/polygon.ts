@@ -112,7 +112,7 @@ export class PolygonClass extends EthereumClass {
                     Polygon.utils.resolveChainNetwork(network) ||
                     renPolygonMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

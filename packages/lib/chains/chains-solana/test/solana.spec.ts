@@ -26,8 +26,8 @@ describe("Solana", () => {
             RenVmMsgLayout.encode(
                 {
                     p_hash: new Uint8Array([0]),
-                    amount: new BN(0),
-                    s_hash: new Uint8Array([0]),
+                    amount: new BN(0).toArrayLike(Buffer, "be"),
+                    token: new Uint8Array([0]),
                     to: new Uint8Array([0]),
                     n_hash: new Uint8Array([0]),
                 },
@@ -40,7 +40,6 @@ describe("Solana", () => {
         it("should initialize with a nodejs provider", () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             );
             expect(solana.renNetworkDetails.isTestnet).toEqual(true);
@@ -49,7 +48,6 @@ describe("Solana", () => {
         it("should be able to check if an asset is supported", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             );
             // await solana.initialize("devnet");
@@ -60,18 +58,16 @@ describe("Solana", () => {
         it("should be able to return the program address for an asset", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             );
             await solana.initialize("testnet");
             const res = solana.resolveTokenGatewayContract("BTC");
-            expect(res).toEqual("Fw87wZPnQ9YMwZs5o9qP9FeqaciqcWNdH7Z4a6mKURkw");
+            expect(res).toEqual("BTC5yiRuonJKcQvD9j9QwYKPx4MCGbvkWfvHFyBJG6RY");
         });
 
         it("should be able to generate a gateway address", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             );
             const btc = new Bitcoin();
@@ -83,30 +79,28 @@ describe("Solana", () => {
             });
             //FIXME: this will stop working once shards shuffle
             expect(mint.gatewayAddress).toEqual(
-                "2N82BTVW2whJXhzD42GuPCtb5zSgRzhfcBe",
+                "2N2fCiskRfm4FVWg5eg9mAiRVCEewqUicGL",
             );
         });
 
-        it("should be able to retrieve a burn", async () => {
+        it.only("should be able to retrieve a burn", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             );
             const emitter = new EventEmitter();
             const burn = await solana.findBurnTransaction(
                 "BTC",
-                { burnNonce: 2 },
+                { burnNonce: 1 },
                 emitter,
                 console,
             );
-            expect(burn.amount.toString()).toEqual("200000");
+            expect(burn.amount.toString()).toEqual("2327798057397125120");
         });
 
         it("should be able to construct burn params", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             ).Account({ amount: "20000" });
             // const emitter = new EventEmitter();
@@ -135,7 +129,6 @@ describe("Solana", () => {
         it("should be able to retrieve a mint", async () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
-                new RenVMProvider(RenNetwork.DevnetVDot3),
                 renDevnet,
             );
             const btc = new Bitcoin();
@@ -148,14 +141,12 @@ describe("Solana", () => {
                 asset: "BTC",
             });
             const p = new Promise<any>((resolve, reject) =>
-                mint.on("deposit", async (deposit) => {
-                    try {
-                        const d = await deposit.signed();
+                mint.on("deposit", (deposit) => {
+                    (async () => {
+                        // const d = await deposit.signed();
                         const m = await deposit.findTransaction();
                         resolve(m);
-                    } catch (e) {
-                        reject(e);
-                    }
+                    })().catch(reject);
                 }),
             );
             expect(await p).toEqual(

@@ -784,10 +784,44 @@ export class SolanaClass
                 const txes = await this.provider.connection.getConfirmedSignaturesForAddress2(
                     burnId[0],
                 );
+
+                // Concatenate four u64s into a u256 value.
+                const burnAmount = new BN(
+                    Buffer.concat([
+                        new BN(burnData.amount_be_section_1).toArrayLike(
+                            Buffer,
+                            "be",
+                            64,
+                        ),
+                        new BN(burnData.amount_be_section_2).toArrayLike(
+                            Buffer,
+                            "be",
+                            64,
+                        ),
+                        new BN(burnData.amount_be_section_3).toArrayLike(
+                            Buffer,
+                            "be",
+                            64,
+                        ),
+                        new BN(burnData.amount_be_section_4).toArrayLike(
+                            Buffer,
+                            "be",
+                            64,
+                        ),
+                    ]),
+                );
+
+                // Convert borsh `Number` to built-in number
+                const recipientLength = parseInt(
+                    burnData.recipient_len.toString(),
+                );
+
                 const burnDetails: BurnDetails<SolTransaction> = {
                     transaction: txes[0].signature,
-                    amount: burnData.amount,
-                    to: base58.encode(burnData.recipient),
+                    amount: new BigNumber(burnAmount.toString()),
+                    to: base58.encode(
+                        burnData.recipient.slice(0, recipientLength),
+                    ),
                     nonce: new BigNumber(
                         new BN(leNonce, undefined, "le").toString(),
                     ),

@@ -52,7 +52,7 @@ describe("Test Mint", () => {
     it("should create a gateway address", async () => {
         const { findByText } = renderComponent();
         const gatewayInfo = await findByText(/Deposit.*/, undefined, {
-            timeout: 9900,
+            timeout: 19900,
         });
         expect(gatewayInfo.textContent).toContain("gatewayAddress");
     });
@@ -60,7 +60,7 @@ describe("Test Mint", () => {
     it("should wait for confirmations", async () => {
         const { findByText } = renderComponent();
         const gatewayInfo = await findByText(/.*confirmation.*/, undefined, {
-            timeout: 9900,
+            timeout: 19900,
         });
         expect(gatewayInfo.textContent).toContain("/");
     });
@@ -69,7 +69,7 @@ describe("Test Mint", () => {
         const { findByText } = renderComponent();
         mockLock.setConfirmations(10);
         const gatewayInfo = await findByText(/Submitting.*/, undefined, {
-            timeout: 9900,
+            timeout: 19900,
         });
         expect(gatewayInfo.textContent).toContain("Submitting to RenVM...");
     });

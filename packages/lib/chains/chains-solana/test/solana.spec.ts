@@ -140,17 +140,18 @@ describe("Solana", () => {
                 from: btc,
                 asset: "BTC",
             });
-            const p = new Promise<any>((resolve, reject) =>
-                mint.on("deposit", (deposit) => {
-                    (async () => {
-                        // const d = await deposit.signed();
-                        const m = await deposit.findTransaction();
-                        resolve(m);
-                    })().catch(reject);
-                }),
+            // Check that the gateway address hasn't changed, which would make
+            // the test fail.
+            expect(mint.gatewayAddress).toEqual(
+                "2N2fCiskRfm4FVWg5eg9mAiRVCEewqUicGL",
             );
+            const p = new Promise<string>((resolve, reject) => {
+                mint.on("deposit", (deposit) => {
+                    deposit.findTransaction().then(resolve).catch(reject);
+                });
+            });
             expect(await p).toEqual(
-                "35MBhJBFZ8eHDFnGX4mfuxZMZ29CPGssp8Hbs2o8Gwssow27FT9MKjavrqzWp2tjJ5wnmU8HYbbRAvnMCuSzRWxD",
+                "2djL6ztDQKpKwzf29jAqEuo6gyMrky1NFyVN8vGNvh2JsfGHkfW8eG7afp8mquFgbpzbaUgAfxUvq4U33JBXgsaA",
             );
         });
     });

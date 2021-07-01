@@ -620,10 +620,26 @@ export class SolanaClass
         const mintLogData = MintLogLayout.decode(mintData.data);
         if (!mintLogData.is_initialized) return undefined;
 
-        const mintSigs = await this.provider.connection.getSignaturesForAddress(
-            mintLogAccountId[0],
-        );
-        return (mintSigs[0] && mintSigs[0].signature) || "";
+        try {
+            const mintSigs = await this.provider.connection.getSignaturesForAddress(
+                mintLogAccountId[0],
+            );
+            return mintSigs[0]?.signature || "";
+        } catch (error) {
+            // If getSignaturesForAddress threw an error, the network may be
+            // on a version before 1.7, so this second method should be tried.
+            // Once all relevant networks have been updated, this can be removed.
+            try {
+                const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
+                    mintLogAccountId[0],
+                );
+                return mintSigs[0].signature;
+            } catch (errorInner) {
+                // If both threw, throw the error returned from
+                // `getSignaturesForAddress`.
+                throw error;
+            }
+        }
     };
 
     /**

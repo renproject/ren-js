@@ -5,11 +5,7 @@ jobs:
             NODE_ENV: development
         docker:
             - image: circleci/node:14.15
-        working_directory: ~/renjs/packages/lib/ren
         steps:
-            - checkout:
-                  path: ~/renjs
-
             # - run:
             #       name: Start Localnet
             #       background: true
@@ -29,7 +25,7 @@ jobs:
             # Download and cache dependencies
             - restore_cache:
                   keys:
-                      - v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}-{{ checksum "yarn.lock" }}
+                      - v1-dependencies-{{ checksum "yarn.lock" }}
                       # fallback to using the latest cache if no exact match is found
                       - v1-dependencies-
 
@@ -40,28 +36,18 @@ jobs:
 
             - run:
                   name: Lerna - install dependencies
-                  path: ~/renjs
                   command: yarn install --network-concurrency 1
                   when: always
 
             - run:
                   name: Lerna - build
-                  path: ~/renjs
-                  command: yarn run build
-                  when: always
-
-            - run:
-                  name: Install dependencies
-                  command: yarn install --network-concurrency 1
+                  command: yarn build
                   when: always
 
             - save_cache:
                   paths:
                       - node_modules
-                      - ~/renjs/node_modules
-                  key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}-{{ checksum "yarn.lock" }}
-
-            # - run: mkdir reports
+                  key: v1-dependencies-{{ checksum "yarn.lock" }}
 
             # Run eslint
             - run:
@@ -71,23 +57,11 @@ jobs:
 
             # Run tests
             - run:
-                  name: Run Testnet tests
+                  name: Run tests
                   # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                  command: NETWORK="testnet" yarn lerna run test
+                  command: NETWORK="testnet" yarn test
                   no_output_timeout: 30m
                   when: always
-
-            # - run:
-            #       name: Run Localnet tests
-            #       # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-            #       command: NETWORK="localnet" bash ./test/ci/runtest.bash
-            #       when: always
-
-            # - run:
-            #       name: Run Devnet tests
-            #       # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-            #       command: NETWORK="devnet" bash ./test/ci/runtest.bash
-            #       when: always
 
             # Run coverage
             - run:

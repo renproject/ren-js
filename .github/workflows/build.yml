@@ -15,19 +15,9 @@ jobs:
               uses: actions/setup-node@v1
               with:
                   node-version: ${{ matrix.node-version }}
+                  cache: "yarn"
             - uses: actions/checkout@v1
-            # - name: Cache node modules
-            #   uses: actions/cache@v1
-            #   id: cache
-            #   with:
-            #       path: node_modules
-            #       key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
-            #       restore-keys: |
-            #           ${{ runner.OS }}-build-${{ env.cache-name }}-
-            #           ${{ runner.OS }}-build-
-            #           ${{ runner.OS }}-
             - name: Install dependencies
-              #  if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   yarn install --network-concurrency 1
             - name: Lint

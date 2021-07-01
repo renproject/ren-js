@@ -27,29 +27,23 @@ jobs:
             - restore_cache:
                   keys:
                       # when lock file changes, use increasingly general patterns to restore cache
-                      - yarn-packages-v1-{{ .Branch }}-{{ checksum "yarn.lock" }}
-                      - yarn-packages-v1-{{ .Branch }}-
+                      - yarn-packages-v1-{{ checksum "yarn.lock" }}
                       - yarn-packages-v1-
 
             - run:
-                  name: Install yarn and lerna
-                  command: sudo npm install --force --global yarn  && yarn version && sudo npm install --global --force lerna
-                  when: always
-
-            - run:
-                  name: Lerna - install dependencies
+                  name: Install dependencies
                   command: yarn install --network-concurrency 1
                   when: always
 
             - run:
-                  name: Lerna - build
+                  name: Build
                   command: yarn build
                   when: always
 
             - save_cache:
                   paths:
                       - ~/.cache/yarn
-                  key: yarn-packages-v1-{{ .Branch }}-{{ checksum "yarn.lock" }}
+                  key: yarn-packages-v1-{{ checksum "yarn.lock" }}
 
             # Run eslint
             - run:

@@ -680,7 +680,6 @@ export class SolanaClass
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
         const gatewayState = GatewayLayout.decode(gatewayInfo.data);
-        console.debug(gatewayState.renvm_authority);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 

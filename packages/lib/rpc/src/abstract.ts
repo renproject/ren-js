@@ -45,24 +45,49 @@ export interface AbstractRenVMProvider<
         pHash: Buffer;
         to: string;
         outputHashFormat: string;
+        transactionVersion?: number;
     }) => Buffer;
 
-    submitMint: (params: {
-        selector: string;
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        output: { txindex: string; txid: Buffer };
-        amount: string;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-        token: string;
-        fn: string;
-        fnABI: AbiItem[];
-        tags: [string] | [];
-    }) => SyncOrPromise<Buffer>;
+    submitGatewayDetails?: (
+        gateway: string,
+        params: {
+            selector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+            token: string;
+            fn: string;
+            fnABI: AbiItem[];
+            tags: [string] | [];
+            transactionVersion?: number;
+        },
+        retries?: number,
+    ) => SyncOrPromise<string>;
+
+    submitMint: (
+        params: {
+            selector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txindex: string; txid: Buffer };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+            token: string;
+            fn: string;
+            fnABI: AbiItem[];
+            tags: [string] | [];
+            transactionVersion?: number;
+        },
+        retries?: number,
+    ) => SyncOrPromise<Buffer>;
 
     burnTxHash?: (params: {
         // v2
@@ -78,24 +103,27 @@ export interface AbstractRenVMProvider<
         to: string;
     }) => Buffer;
 
-    submitBurn: (params: {
-        selector: string;
-        tags: [string] | [];
+    submitBurn: (
+        params: {
+            selector: string;
+            tags: [string] | [];
 
-        // v1
-        burnNonce: BigNumber;
+            // v1
+            burnNonce: BigNumber;
 
-        // v2
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        output: { txid: Buffer; txindex: string };
-        amount: string;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-    }) => SyncOrPromise<Buffer>;
+            // v2
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txid: Buffer; txindex: string };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        },
+        retries?: number,
+    ) => SyncOrPromise<Buffer>;
 
     queryMintOrBurn: <
         T extends LockAndMintTransaction | BurnAndReleaseTransaction
@@ -143,7 +171,13 @@ export interface AbstractRenVMProvider<
      * Return the estimated fee RenVM will use for locking and releasing.
      */
     estimateTransactionFee: (
-        selector: string,
-        chain: { name: string; legacyName?: string },
-    ) => SyncOrPromise<{ lock: BigNumber; release: BigNumber }>;
+        asset: string,
+        lockChain: { name: string; legacyName?: string },
+        hostChain: { name: string; legacyName?: string },
+    ) => SyncOrPromise<{
+        lock: BigNumber;
+        release: BigNumber;
+        mint: number;
+        burn: number;
+    }>;
 }

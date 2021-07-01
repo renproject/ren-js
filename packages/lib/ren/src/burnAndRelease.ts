@@ -403,7 +403,7 @@ export class BurnAndRelease<
 
             const gHash = generateGHash(
                 [],
-                Ox(this.params.to.addressStringToBytes(to)),
+                Ox(this.params.to.addressToBytes(to)),
                 Ox(sHash),
                 nonceBuffer,
                 this.renVM.version(this._state.selector) >= 2,
@@ -545,7 +545,7 @@ export class BurnAndRelease<
 
                         const gHash = generateGHash(
                             [],
-                            Ox(this.params.to.addressStringToBytes(to)),
+                            Ox(this.params.to.addressToBytes(to)),
                             Ox(sHash),
                             nonceBuffer,
                             this.renVM.version(this._state.selector) >= 2,
@@ -635,14 +635,14 @@ export class BurnAndRelease<
                     try {
                         if (response.out.txid) {
                             const txid = response.out.txid;
-                            transaction = await this.params.to.transactionFromID(
+                            transaction = await this.params.to.transactionFromRPCFormat(
                                 txid,
                                 "",
                                 true,
                             );
                         } else if (response.out.outpoint) {
                             const { hash, index } = response.out.outpoint;
-                            transaction = await this.params.to.transactionFromID(
+                            transaction = await this.params.to.transactionFromRPCFormat(
                                 hash,
                                 index.toFixed(),
                                 true,

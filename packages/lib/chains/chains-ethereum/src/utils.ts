@@ -13,6 +13,7 @@ import {
     extractError,
     fromHex,
     isDefined,
+    isHex,
     Ox,
     payloadToABI,
     payloadToMintABI,
@@ -31,7 +32,7 @@ import { EventEmitter } from "events";
 import Web3 from "web3";
 import { Log, TransactionConfig, TransactionReceipt } from "web3-core";
 import { keccak256 as web3Keccak256 } from "web3-utils";
-import { EthAddress, EthTransaction } from "./base";
+import { EthAddress, EthTransaction } from "./types";
 
 import { EthereumConfig } from "./networks";
 
@@ -464,9 +465,9 @@ export const getTokenAddress = async (
         }
         return tokenAddress;
     } catch (error) {
-        (error || {}).message = `Error looking up ${asset} token address${
-            error.message ? `: ${String(error.message)}` : "."
-        }`;
+        (error || {}).message = `Error looking up ${asset} token address on ${
+            network.chainLabel
+        }${error.message ? `: ${String(error.message)}` : "."}`;
         throw error;
     }
 };
@@ -516,6 +517,17 @@ export const findTransactionBySigHash = async (
             ).toNumber();
             fromBlock = toBlock - blockLimit + 1;
         }
+
+        const newMintEvents = await web3.eth.getPastLogs({
+            address: gatewayAddress,
+            fromBlock,
+            toBlock,
+            topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
+        });
+        if (newMintEvents.length) {
+            return newMintEvents[0].transactionHash;
+        }
+
         if (sigHash) {
             // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
             // the contract
@@ -537,16 +549,6 @@ export const findTransactionBySigHash = async (
             if (oldMintEvents.length) {
                 return oldMintEvents[0].transactionHash;
             }
-        }
-
-        const newMintEvents = await web3.eth.getPastLogs({
-            address: gatewayAddress,
-            fromBlock,
-            toBlock,
-            topics: [eventTopics.LogMint, null, null, Ox(nHash)] as string[],
-        });
-        if (newMintEvents.length) {
-            return newMintEvents[0].transactionHash;
         }
     } catch (error) {
         console.warn(error);
@@ -679,3 +681,6 @@ export const addressIsValid = (address: EthAddress): boolean => {
     }
     return false;
 };
+
+export const transactionIsValid = (transaction: EthTransaction): boolean =>
+    transaction !== null && isHex(transaction, { length: 32, prefix: true });

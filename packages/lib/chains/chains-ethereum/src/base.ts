@@ -33,8 +33,10 @@ import {
     renTestnet,
     renTestnetVDot3,
 } from "./networks";
+import { EthAddress, EthTransaction } from "./types";
 import {
     addressIsValid,
+    transactionIsValid,
     extractBurnDetails,
     findBurnByNonce,
     findTransactionBySigHash,
@@ -54,9 +56,6 @@ export const EthereumConfigMap = {
     [RenNetwork.TestnetVDot3]: renTestnetVDot3,
     [RenNetwork.DevnetVDot3]: renDevnetVDot3,
 };
-
-export type EthTransaction = string | null;
-export type EthAddress = string;
 
 const isEthereumConfig = (
     renNetwork:
@@ -109,9 +108,17 @@ export class EthereumBaseChain
     public legacyName: MintChain["legacyName"] = "Eth";
     public logRequestLimit: number | undefined = undefined;
 
+    public static configMap: {
+        [network in RenNetwork]?: EthereumConfig;
+    } = EthereumConfigMap;
+    public configMap: {
+        [network in RenNetwork]?: EthereumConfig;
+    } = EthereumConfigMap;
+
     public static utils = {
         resolveChainNetwork: resolveNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,
@@ -301,7 +308,16 @@ export class EthereumBaseChain
         return transaction || "";
     };
 
-    transactionFromID = (txid: string | Buffer, _txindex: string) => Ox(txid);
+    transactionIDFromRPCFormat = (txid: string | Buffer, txindex: string) =>
+        this.transactionID(this.transactionFromRPCFormat(txid, txindex));
+
+    transactionFromRPCFormat = (txid: string | Buffer, _txindex: string) =>
+        Ox(txid);
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
+    transactionFromID = this.transactionFromRPCFormat;
 
     transactionConfidence = async (
         transaction: EthTransaction,
@@ -632,6 +648,9 @@ export class EthereumBaseChain
             txindex: "0",
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        fromHex(transactionID);
 }
 
 const _: ChainStatic<

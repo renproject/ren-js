@@ -5,7 +5,7 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { Callable, utilsWithChainNetwork } from "@renproject/utils";
+import { Callable, isHex, utilsWithChainNetwork } from "@renproject/utils";
 import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
 import { Networks, Opcode, Script } from "bitcore-lib";
 
@@ -79,6 +79,21 @@ export class BitcoinClass
                 address,
                 BitcoinBaseChain.asset,
                 Bitcoin.utils.resolveChainNetwork(network),
+            ),
+
+        transactionIsValid: (
+            transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.txHash,
+                { length: 32 },
             ),
 
         addressExplorerLink: (

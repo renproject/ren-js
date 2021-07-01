@@ -43,6 +43,7 @@ export function Callable<TConstructor extends Constructor>(
     (constructor as any).utils = (type as any).utils;
     (constructor as any).asset = (type as any).asset;
     (constructor as any).chain = (type as any).chain;
+    (constructor as any).configMap = (type as any).configMap;
 
     return constructor as CallableConstructor<TConstructor>;
 }

@@ -29,15 +29,20 @@ import {
     ParamsQueryTx,
     ParamsQueryTxs,
     ParamsSubmitBurn,
+    ParamsSubmitGateway,
     ParamsSubmitMint,
     RenVMParams,
     RenVMResponses,
     RPCMethod,
 } from "./methods";
+import { BlockState } from "./methods/ren_queryBlockState";
+import { unmarshalTypedPackValue } from "./pack/pack";
 import {
     hashTransaction,
     mintParamsType,
     MintTransactionInput,
+    SubmitGatewayInput,
+    submitGatewayType,
 } from "./transaction";
 import { unmarshalBurnTx, unmarshalMintTx } from "./unmarshal";
 
@@ -140,6 +145,17 @@ export class RenVMProvider
             retry,
         );
 
+    public submitGateway = async (
+        gateway: ParamsSubmitGateway["gateway"],
+        tx: ParamsSubmitGateway["tx"],
+        retry?: number,
+    ) =>
+        this.sendMessage<RPCMethod.SubmitGateway>(
+            RPCMethod.SubmitGateway,
+            { gateway, tx },
+            retry,
+        );
+
     public submitTx = async (
         tx: ParamsSubmitBurn["tx"] | ParamsSubmitMint["tx"],
         retry?: number,
@@ -185,6 +201,59 @@ export class RenVMProvider
     public queryState = async (retry?: number) =>
         this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
 
+    public buildGateway = ({
+        selector,
+        gHash,
+        gPubKey,
+        nHash,
+        nonce,
+        payload,
+        pHash,
+        to,
+        transactionVersion,
+    }: {
+        selector: string;
+        gHash: Buffer;
+        gPubKey: Buffer;
+        nHash: Buffer;
+        nonce: Buffer;
+        payload: Buffer;
+        pHash: Buffer;
+        to: string;
+        transactionVersion?: number;
+    }): SubmitGatewayInput => {
+        assertType<Buffer>("Buffer", {
+            gHash,
+            gPubKey,
+            nHash,
+            nonce,
+            payload,
+            pHash,
+        });
+        assertType<string>("string", { to });
+        const version = isDefined(transactionVersion)
+            ? String(transactionVersion)
+            : "1";
+        const txIn = {
+            t: submitGatewayType(),
+            v: {
+                ghash: toURLBase64(gHash),
+                gpubkey: toURLBase64(gPubKey),
+                nhash: toURLBase64(nHash),
+                nonce: toURLBase64(nonce),
+                payload: toURLBase64(payload),
+                phash: toURLBase64(pHash),
+                to,
+            },
+        };
+        return {
+            selector: selector,
+            version,
+            // TODO: Fix types
+            in: (txIn as unknown) as SubmitGatewayInput["in"],
+        };
+    };
+
     public buildTransaction = ({
         selector,
         gHash,
@@ -196,6 +265,7 @@ export class RenVMProvider
         payload,
         pHash,
         to,
+        transactionVersion,
     }: {
         selector: string;
         gHash: Buffer;
@@ -207,6 +277,7 @@ export class RenVMProvider
         payload: Buffer;
         pHash: Buffer;
         to: string;
+        transactionVersion?: number;
     }): MintTransactionInput => {
         assertType<Buffer>("Buffer", {
             gHash,
@@ -218,7 +289,9 @@ export class RenVMProvider
             txid: output.txid,
         });
         assertType<string>("string", { to, amount, txindex: output.txindex });
-        const version = "1";
+        const version = isDefined(transactionVersion)
+            ? String(transactionVersion)
+            : "1";
         const txIn = {
             t: mintParamsType(),
             v: {
@@ -254,25 +327,50 @@ export class RenVMProvider
         payload: Buffer;
         pHash: Buffer;
         to: string;
+        transactionVersion?: number;
     }): Buffer => {
         return fromBase64(this.buildTransaction(params).hash);
     };
 
-    public submitMint = async (params: {
-        selector: string;
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        output: { txindex: string; txid: Buffer };
-        amount: string;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-    }): Promise<Buffer> => {
+    public submitMint = async (
+        params: {
+            selector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            output: { txindex: string; txid: Buffer };
+            amount: string;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+            transactionVersion?: number;
+        },
+        retries?: number,
+    ): Promise<Buffer> => {
         const tx = this.buildTransaction(params);
-        await this.submitTx(tx);
+        await this.submitTx(tx, retries);
         return fromBase64(tx.hash);
+    };
+
+    public submitGatewayDetails = async (
+        gateway: string,
+        params: {
+            selector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+            transactionVersion?: number;
+        },
+        retries?: number,
+    ): Promise<string> => {
+        const tx = this.buildGateway(params);
+        await this.submitGateway(gateway, tx, retries);
+        return gateway;
     };
 
     public burnTxHash = this.mintTxHash;
@@ -289,9 +387,13 @@ export class RenVMProvider
     >(
         _selector: string,
         renVMTxHash: Buffer,
+        retries?: number,
     ): Promise<T> => {
         try {
-            const response = await this.queryTx(toURLBase64(renVMTxHash));
+            const response = await this.queryTx(
+                toURLBase64(renVMTxHash),
+                retries,
+            );
 
             // Unmarshal transaction.
             // TODO: Improve mint/burn detection. Currently checks if the format
@@ -395,21 +497,47 @@ export class RenVMProvider
     };
 
     public estimateTransactionFee = async (
-        _selector: string,
-        chain: { name: string },
-    ): Promise<{ lock: BigNumber; release: BigNumber }> => {
-        const renVMState = await this.sendMessage(RPCMethod.QueryState, {});
+        asset: string,
+        _lockChain: { name: string },
+        hostChain: { name: string },
+    ): Promise<{
+        lock: BigNumber;
+        release: BigNumber;
+        mint: number;
+        burn: number;
+    }> => {
+        const renVMState = await this.sendMessage(
+            RPCMethod.QueryBlockState,
+            {},
+        );
 
-        if (!renVMState.state[chain.name]) {
-            throw new Error(`No fee details found for ${chain.name}`);
+        const blockState: BlockState = unmarshalTypedPackValue(
+            renVMState.state,
+        );
+
+        if (!blockState[asset]) {
+            throw new Error(`No fee details found for ${asset}`);
         }
 
-        const { gasLimit, gasCap } = renVMState.state[chain.name];
+        const { gasLimit, gasCap } = blockState[asset];
         const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
+
+        const mintAndBurnFees = blockState[asset].fees.chains.filter(
+            (fee) => fee.chain === hostChain.name,
+        )[0];
 
         return {
             lock: fee,
             release: fee,
+
+            mint:
+                mintAndBurnFees && mintAndBurnFees.mintFee
+                    ? mintAndBurnFees.mintFee.toNumber()
+                    : 15,
+            burn:
+                mintAndBurnFees && mintAndBurnFees.burnFee
+                    ? mintAndBurnFees.burnFee.toNumber()
+                    : 15,
         };
     };
 }

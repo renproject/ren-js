@@ -1,6 +1,5 @@
 import BigNumber from "bignumber.js";
 import chai from "chai";
-import chaiBigNumber from "chai-bignumber";
 import { decode } from "bs58";
 // import {
 //     btcAddressFrom,
@@ -11,7 +10,6 @@ import { decode } from "bs58";
 // } from "@renproject/chains";
 import RenJS from "@renproject/ren";
 
-chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
 // describe("btc.ts", () => {

@@ -1,11 +1,9 @@
 // import { renMainnet, renTestnet } from "@renproject/chains";
 import BigNumber from "bignumber.js";
 import chai from "chai";
-import chaiBigNumber from "chai-bignumber";
 
 // import RenJS from "@renproject/ren";
 
-chai.use(chaiBigNumber(BigNumber));
 chai.should();
 
 describe("mercury.ts", () => {

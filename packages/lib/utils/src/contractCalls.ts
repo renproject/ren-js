@@ -1,5 +1,9 @@
 import { ContractCall, EthArg } from "@renproject/interfaces";
 
+export enum OverrideContractCallError {
+    OverrideArrayLengthError = `Contract call override must be same length as contract calls array.`,
+}
+
 const overrideContractCall = (
     contractCall: ContractCall,
     override: ContractCallOverride,
@@ -55,9 +59,7 @@ export const overrideContractCalls = (
     override: ContractCallOverride | ContractCallOverride[],
 ): ContractCall[] => {
     if (Array.isArray(override) && override.length !== contractCalls.length) {
-        throw new Error(
-            `Contract call override must be same length as contract calls array.`,
-        );
+        throw new Error(OverrideContractCallError.OverrideArrayLengthError);
     }
 
     return contractCalls.map((contractCall, i) => {

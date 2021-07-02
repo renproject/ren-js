@@ -252,6 +252,9 @@ const assert = (input: boolean, reason?: string) => {
     }
 };
 
+/**
+ * Returns false if the method throws or returns false - returns true otherwise.
+ */
 export const doesntError = <T extends unknown[]>(
     f: (...p: T) => boolean | void,
 ) => {
@@ -265,6 +268,9 @@ export const doesntError = <T extends unknown[]>(
     };
 };
 
+/**
+ * Returns true if the
+ */
 export const isBase64 = doesntError(
     (
         input: string,

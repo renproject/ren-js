@@ -6,6 +6,8 @@ import {
     fromBase64,
     fromBigNumber,
     fromHex,
+    fromReadable,
+    isDefined,
     Ox,
     randomBytes,
     randomNonce,
@@ -15,6 +17,7 @@ import {
     sleep,
     strip0x,
     toBase64,
+    toReadable,
     toURLBase64,
 } from "../src/common";
 
@@ -107,6 +110,22 @@ describe("common utils", () => {
         });
     });
 
+    context("toReadable", () => {
+        it("converts amounts from a sub-unit to the base unit", () => {
+            expect(toReadable(10, 1).toNumber()).toEqual(1);
+            expect(toReadable(10, 0).toNumber()).toEqual(10);
+            expect(toReadable(10, 2).toNumber()).toEqual(0.1);
+        });
+    });
+
+    context("fromReadable", () => {
+        it("converts amounts from the base unit to a sub-unit", () => {
+            expect(fromReadable(1, 1).toNumber()).toEqual(10);
+            expect(fromReadable(10, 0).toNumber()).toEqual(10);
+            expect(fromReadable(0.1, 2).toNumber()).toEqual(10);
+        });
+    });
+
     context("extractError", () => {
         it("should be able to extract errors from various objects", () => {
             const testcases = [
@@ -152,36 +171,60 @@ describe("common utils", () => {
     });
 
     context("retryNTimes", () => {
-        it("retries the correct number of times", async () => {
-            const mustBeCalledNTimes = (n: number, badError = false) => {
-                let i = 0;
-                // eslint-disable-next-line @typescript-eslint/require-await
-                return async () => {
-                    i += 1;
-                    if (i < n) {
-                        const error = new Error("Error.");
-                        (error as {
-                            data?: string;
-                        }).data = `Only called ${i}/${n} times`;
-                        if (badError) {
-                            (error as { message?: string }).message = undefined;
-                        }
-                        throw error;
+        const mustBeCalledNTimes = (n: number, badError = false) => {
+            let i = 0;
+            // eslint-disable-next-line @typescript-eslint/require-await
+            return async () => {
+                i += 1;
+                if (i < n) {
+                    const error = new Error("Error.");
+                    (error as {
+                        data?: string;
+                    }).data = `Only called ${i}/${n} times`;
+                    if (badError) {
+                        (error as { message?: string }).message = undefined;
                     }
-                    return i;
-                };
+                    throw error;
+                }
+                return i;
             };
+        };
 
-            expect(await retryNTimes(mustBeCalledNTimes(2), 2)).toEqual(2);
-            expect(await retryNTimes(mustBeCalledNTimes(1), 1)).toEqual(1);
+        it("retries the correct number of times", async () => {
+            expect(await retryNTimes(mustBeCalledNTimes(2), 2, 0)).toEqual(2);
+            expect(await retryNTimes(mustBeCalledNTimes(1), 1, 0)).toEqual(1);
 
-            await expect(retryNTimes(mustBeCalledNTimes(2), 1)).toBeRejected(
+            expect(await retryNTimes(mustBeCalledNTimes(2), -1, 0)).toEqual(2);
+
+            let logged = false;
+            const logger = {
+                ...console,
+                warn: () => {
+                    logged = true;
+                },
+            };
+            expect(
+                await retryNTimes(mustBeCalledNTimes(2), 2, 0, logger),
+            ).toEqual(2);
+            expect(logged).toEqual(true);
+
+            await expect(retryNTimes(mustBeCalledNTimes(2), 1, 0)).toBeRejected(
                 "Only called 1/2 times",
             );
 
             await expect(
-                retryNTimes(mustBeCalledNTimes(2, true), 1),
+                retryNTimes(mustBeCalledNTimes(2, true), 1, 0),
             ).toBeRejected("Only called 1/2 times");
+        });
+
+        it("should use provided timeout", async () => {
+            const timeout = 0.1 * 1000;
+            const t1 = Date.now();
+            expect(
+                await retryNTimes(mustBeCalledNTimes(2), 2, timeout),
+            ).toEqual(2);
+            const t2 = Date.now();
+            expect(t2 - t1).toBeGreaterThanOrEqualTo(timeout);
         });
     });
 
@@ -226,4 +269,22 @@ describe("common utils", () => {
             );
         });
     });
+
+    context("isDefined", () => {
+        it("should correctly check if input is not null or undefined", () => {
+            // Should only return false for these values.
+            expect(isDefined(null)).toEqual(false);
+            expect(isDefined(undefined)).toEqual(false);
+
+            // Should return true for every other value.
+            expect(isDefined(true)).toEqual(true);
+            expect(isDefined(false)).toEqual(true);
+            expect(isDefined(0)).toEqual(true);
+            expect(isDefined({})).toEqual(true);
+            expect(isDefined("")).toEqual(true);
+            expect(isDefined(-1)).toEqual(true);
+        });
+    });
+
+    context("toHex", () => {});
 });

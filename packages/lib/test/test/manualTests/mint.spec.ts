@@ -17,12 +17,6 @@ import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
-import {
-    BscConfigMap,
-    EthereumConfigMap,
-    FantomConfigMap,
-    PolygonConfigMap,
-} from "@renproject/chains";
 import Web3 from "web3";
 import { provider } from "web3-core";
 
@@ -39,7 +33,7 @@ const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.only("mint to contract", async function () {
+    longIt("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
@@ -47,14 +41,7 @@ describe("Refactor: mint", () => {
         const from = Chains.Zcash();
         const asset = "ZEC";
 
-        const ethNetwork =
-            ToClass === Chains.BinanceSmartChain
-                ? BscConfigMap[network]
-                : ToClass === Chains.Fantom
-                ? FantomConfigMap[network]
-                : ToClass === Chains.Polygon
-                ? PolygonConfigMap[network]
-                : EthereumConfigMap[network];
+        const ethNetwork = ToClass.configMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -65,14 +52,13 @@ describe("Refactor: mint", () => {
         });
 
         const logLevel: LogLevel = LogLevel.Log;
-        const renJS = new RenJS(network, { logLevel });
+        const renJS = new RenJS(new RenVMProvider(network), { logLevel });
 
-        const infuraURL =
-            ToClass === Chains.Ethereum
-                ? `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}` // renBscDevnet.infura
-                : ethNetwork.infura;
+        const infuraURL = ethNetwork.publicProvider({
+            infura: process.env.INFURA_KEY,
+        });
         const provider: provider = new HDWalletProvider({
-            mnemonic: process.env.MNEMONIC || "",
+            mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,

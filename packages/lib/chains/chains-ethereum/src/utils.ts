@@ -10,9 +10,9 @@ import {
 import {
     assert,
     assertType,
-    extractError,
     fromHex,
     isDefined,
+    isHex,
     Ox,
     payloadToABI,
     payloadToMintABI,
@@ -29,12 +29,11 @@ import BN from "bn.js";
 // } from "bnc-sdk/dist/types/src/interfaces";
 import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
 import { EventEmitter } from "events";
-import { EthAddress, EthTransaction } from "./base";
+import { EthAddress, EthTransaction } from "./types";
 import {
     Provider,
     TransactionReceipt,
     TransactionResponse,
-    Web3Provider,
 } from "@ethersproject/providers";
 import { PopulatedTransaction } from "ethers";
 import * as ethers from "ethers";
@@ -356,7 +355,7 @@ export const findBurnByNonce = async (
     const gatewayAddress = await getGatewayAddress(network, provider, asset);
 
     const nonceBuffer = Buffer.isBuffer(nonce)
-        ? nonce
+        ? Buffer.from(nonce)
         : new BN(nonce).toArrayLike(Buffer, "be", 32);
 
     const burnEvents = await provider.getLogs({
@@ -486,9 +485,9 @@ export const getTokenAddress = async (
         }
         return tokenAddress;
     } catch (error) {
-        (error || {}).message = `Error looking up ${asset} token address${
-            error.message ? `: ${String(error.message)}` : "."
-        }`;
+        (error || {}).message = `Error looking up ${asset} token address on ${
+            network.chainLabel
+        }${error.message ? `: ${String(error.message)}` : "."}`;
         throw error;
     }
 };
@@ -638,7 +637,8 @@ export const submitToEthereum = async (
 
         const txConfig =
             typeof contractCall === "object"
-                ? (contractCall.txConfig as PopulatedTransaction)
+                ? // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                  (contractCall.txConfig as PopulatedTransaction)
                 : {};
 
         const config = {
@@ -717,3 +717,6 @@ export const addressIsValid = (address: EthAddress): boolean => {
     }
     return false;
 };
+
+export const transactionIsValid = (transaction: EthTransaction): boolean =>
+    transaction !== null && isHex(transaction, { length: 32, prefix: true });

@@ -183,6 +183,7 @@ const assertArray = <T = unknown>(
 ): objects is { [value: string]: T[] } => {
     const type = isArrayType(arrayType);
     if (!type) {
+        /* istanbul ignore next */ /* also checked when assertArray is called */
         throw new Error(`Invalid array type ${arrayType}`);
     }
 

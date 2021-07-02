@@ -22,7 +22,10 @@ import BigNumber from "bignumber.js";
 import { BurnAndRelease } from "./burnAndRelease";
 import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
-import { LockAndMint } from "./lockAndMint";
+import { LockAndMint, DepositStatus, LockAndMintDeposit } from "./lockAndMint";
+
+export { BurnAndRelease } from "./burnAndRelease";
+export { LockAndMint, DepositStatus, LockAndMintDeposit } from "./lockAndMint";
 
 /**
  * This is the main exported class from `@renproject/ren`.
@@ -182,43 +185,16 @@ export default class RenJS {
             throw new Error(`Asset not supported by chain ${to.name}.`);
         }
 
-        let fees;
-
         if (await from.assetIsNative(asset)) {
             // LockAndMint
-            const mintFees = await (to as MintChain).getFees(asset);
-            const selector = this.renVM.selector({ asset, from, to });
-            const lockFees = await this.renVM.estimateTransactionFee(
-                selector,
-                from,
-            );
-            fees = {
-                ...lockFees,
-                ...mintFees,
-            };
+            return await this.renVM.estimateTransactionFee(asset, from, to);
         } else if (await to.assetIsNative(asset)) {
             // BurnAndRelease
-            const mintFees = await (from as MintChain).getFees(asset);
-            const selector = this.renVM.selector({ asset, from, to });
-            const lockFees = await this.renVM.estimateTransactionFee(
-                selector,
-                to,
-            );
-            fees = {
-                ...lockFees,
-                ...mintFees,
-            };
+            return await this.renVM.estimateTransactionFee(asset, to, from);
         } else {
             // BurnAndMint
-            const mintFees = await (from as MintChain).getFees(asset);
-            const burnFees = await (to as MintChain).getFees(asset);
-            fees = {
-                mint: mintFees.mint,
-                burn: burnFees.burn,
-            };
+            return await this.renVM.estimateTransactionFee(asset, from, to);
         }
-
-        return fees;
     };
 
     /**
@@ -251,12 +227,12 @@ export default class RenJS {
         Address extends string | { address: string } = any
     >(
         params: LockAndMintParams<Transaction, Deposit, Address>,
+        config?: RenJSConfig,
     ): Promise<LockAndMint<Transaction, Deposit, Address>> =>
-        new LockAndMint<Transaction, Deposit, Address>(
-            this.renVM,
-            params,
-            this._config,
-        )._initialize();
+        new LockAndMint<Transaction, Deposit, Address>(this.renVM, params, {
+            ...this._config,
+            ...config,
+        })._initialize();
 
     /**
      * `burnAndRelease` submits a burn log to RenVM.
@@ -270,12 +246,12 @@ export default class RenJS {
         Address extends string | { address: string } = any
     >(
         params: BurnAndReleaseParams<Transaction, Deposit, Address>,
+        config?: RenJSConfig,
     ): Promise<BurnAndRelease<Transaction, Deposit, Address>> =>
-        new BurnAndRelease<Transaction, Deposit, Address>(
-            this.renVM,
-            params,
-            this._config,
-        )._initialize();
+        new BurnAndRelease<Transaction, Deposit, Address>(this.renVM, params, {
+            ...this._config,
+            ...config,
+        })._initialize();
 }
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -286,6 +262,10 @@ export default class RenJS {
 /* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any */
 
 (RenJS as any).default = (RenJS as any).RenJS = RenJS;
+(RenJS as any).LockAndMint = LockAndMint;
+(RenJS as any).BurnAndRelease = BurnAndRelease;
+(RenJS as any).DepositStatus = DepositStatus;
+(RenJS as any).LockAndMintDeposit = LockAndMintDeposit;
 
 // AMD
 try {

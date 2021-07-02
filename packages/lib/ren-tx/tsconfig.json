@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES2016",
-        "lib": ["DOM", "es2017", "esnext"],
+        "lib": ["DOM", "es2017", "es2020"],
         "outDir": "build/main",
         "rootDir": "src",
         "allowJs": true,

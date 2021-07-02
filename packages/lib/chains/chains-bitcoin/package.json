@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.4.3-alpha.0",
+    "version": "2.4.4",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -31,7 +31,7 @@
         "fix": "run-s fix:*",
         "fix:eslint": "yarn lint:eslint --fix",
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
-        "test": "run-s build:main test:* lint",
+        "test": "run-s test:* lint",
         "test:unit": "nyc ../../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -44,9 +44,9 @@
     },
     "dependencies": {
         "@CoinSpace/bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
-        "@renproject/interfaces": "^2.4.3-alpha.0",
-        "@renproject/rpc": "^2.4.3-alpha.0",
-        "@renproject/utils": "^2.4.3-alpha.0",
+        "@renproject/interfaces": "^2.4.4",
+        "@renproject/rpc": "^2.4.4",
+        "@renproject/utils": "^2.4.4",
         "@types/bs58": "^4.0.1",
         "@types/cashaddrjs": "^0.3.0",
         "@types/node": ">=10",

@@ -21,6 +21,7 @@ import {
     toURLBase64,
     utilsWithChainNetwork,
     isDefined,
+    doesntError,
 } from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
@@ -105,6 +106,27 @@ export class FilecoinClass
                 typeof address === "string" ? address : address.address,
             ),
 
+        transactionIsValid: doesntError(
+            (
+                transaction: FilTransaction | string,
+                _network:
+                    | RenNetwork
+                    | RenNetworkString
+                    | RenNetworkDetails
+                    | FilNetwork = "mainnet",
+            ) => {
+                const transactionString =
+                    typeof transaction === "string"
+                        ? transaction
+                        : transaction.cid;
+                const cid = new CID(transactionString);
+                return (
+                    transactionString === cid.toString() &&
+                    cid.bytes.length === 38
+                );
+            },
+        ),
+
         addressExplorerLink: (
             address: FilAddress | string,
             _network:
@@ -185,7 +207,7 @@ export class FilecoinClass
 
     public readonly assertAssetIsSupported = (asset: string) => {
         if (!this.assetIsNative(asset)) {
-            throw new Error(`Unsupported asset ${asset}.`);
+            throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
     };
 
@@ -196,7 +218,7 @@ export class FilecoinClass
         if (asset === this.asset) {
             return 18;
         }
-        throw new Error(`Unsupported asset ${asset}.`);
+        throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
     };
 
     /**
@@ -356,17 +378,32 @@ export class FilecoinClass
     };
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer =>
-        Buffer.from(decodeAddress(address).str);
+    addressToBytes = (address: FilAddress | string): Buffer =>
+        Buffer.from(
+            decodeAddress(
+                typeof address === "string" ? address : address.address,
+            ).str,
+        );
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
+
+    addressToString = (address: FilAddress | string): string =>
+        typeof address === "string" ? address : address.address;
 
     /**
      * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: FilTransaction): string => transaction.cid;
 
-    transactionFromID = async (
+    transactionIDFromRPCFormat = (
+        txid: string | Buffer,
+        _txindex: string,
+    ): string => (typeof txid === "string" ? txid : new CID(txid).toString());
+
+    transactionFromRPCFormat = async (
         txid: string | Buffer,
         _txindex: string,
     ): Promise<FilTransaction> => {
@@ -379,6 +416,11 @@ export class FilecoinClass
             this.chainNetwork,
         );
     };
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
+    transactionFromID = this.transactionFromRPCFormat;
 
     depositV1HashString = (_deposit: FilDeposit): string => {
         throw new Error(NETWORK_NOT_SUPPORTED);
@@ -394,6 +436,9 @@ export class FilecoinClass
             txindex: transaction.nonce.toFixed(),
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        Buffer.from(new CID(transactionID).bytes);
 
     getBurnPayload: (() => string) | undefined;
 

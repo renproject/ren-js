@@ -4,7 +4,7 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { Callable, utilsWithChainNetwork } from "@renproject/utils";
+import { Callable, isHex, utilsWithChainNetwork } from "@renproject/utils";
 import { Networks, Opcode, Script } from "@CoinSpace/bitcore-lib-dogecoin";
 import base58 from "bs58";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
@@ -60,6 +60,21 @@ export class DogecoinClass extends BitcoinClass {
                 address,
                 DogecoinClass.asset,
                 Dogecoin.utils.resolveChainNetwork(network),
+            ),
+
+        transactionIsValid: (
+            transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.txHash,
+                { length: 32 },
             ),
 
         addressExplorerLink: (

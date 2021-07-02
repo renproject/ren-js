@@ -203,10 +203,13 @@ export class CombinedProvider
             : this.v2.getConfirmationTarget(selector, chain);
 
     public estimateTransactionFee = async (
-        selector: string,
-        chain: { name: string },
-    ): Promise<{ lock: BigNumber; release: BigNumber }> =>
-        this.v1 && isV1Selector(selector)
-            ? this.v1.estimateTransactionFee(selector, chain)
-            : this.v2.estimateTransactionFee(selector, chain);
+        asset: string,
+        lockChain: { name: string },
+        hostChain: { name: string },
+    ): Promise<{
+        lock: BigNumber;
+        release: BigNumber;
+        mint: number;
+        burn: number;
+    }> => this.v2.estimateTransactionFee(asset, lockChain, hostChain);
 }

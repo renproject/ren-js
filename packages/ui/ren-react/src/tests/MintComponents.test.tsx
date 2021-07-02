@@ -15,8 +15,11 @@ let parameters: MintConfigSingle;
 let mockLock = buildMockLockChain();
 let mockMint = buildMockMintChain();
 
+const TIMEOUT = 100 * 1000;
+
 describe("Test Mint", () => {
     beforeEach(() => {
+        jest.setTimeout(TIMEOUT);
         jest.useFakeTimers();
 
         mockLock = buildMockLockChain();
@@ -51,7 +54,7 @@ describe("Test Mint", () => {
     it("should create a gateway address", async () => {
         const { findByText } = renderComponent();
         const gatewayInfo = await findByText(/Deposit.*/, undefined, {
-            timeout: 4900,
+            timeout: TIMEOUT,
         });
         expect(gatewayInfo.textContent).toContain("gatewayAddress");
     });
@@ -59,7 +62,7 @@ describe("Test Mint", () => {
     it("should wait for confirmations", async () => {
         const { findByText } = renderComponent();
         const gatewayInfo = await findByText(/.*confirmation.*/, undefined, {
-            timeout: 4900,
+            timeout: TIMEOUT,
         });
         expect(gatewayInfo.textContent).toContain("/");
     });
@@ -68,7 +71,7 @@ describe("Test Mint", () => {
         const { findByText } = renderComponent();
         mockLock.setConfirmations(10);
         const gatewayInfo = await findByText(/Submitting.*/, undefined, {
-            timeout: 4900,
+            timeout: TIMEOUT,
         });
         expect(gatewayInfo.textContent).toContain("Submitting to RenVM...");
     });

@@ -4,8 +4,9 @@ import { keccak256 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import Web3 from "web3";
-import { renTestnet, waitForReceipt } from "@renproject/chains";
+import { renTestnet } from "@renproject/chains";
 import { config as loadDotEnv } from "dotenv";
+import { waitForReceipt } from "../src/utils";
 
 chai.should();
 
@@ -42,7 +43,7 @@ const mintABI = [
     { type: "bytes32", name: "_signedMessageHash", indexed: true },
 ];
 
-describe.skip("RenJS initialization and exports", () => {
+describe.skip("Look for mints and burn events", () => {
     it.skip("check burns", async function () {
         this.timeout(10000000000);
         const infuraURL = `${renTestnet.infura}/v3/${process.env.INFURA_KEY}`;

@@ -5,12 +5,13 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { EthAddress, EthTransaction, NetworkInput } from "./base";
+import { NetworkInput } from "./base";
+import { EthAddress, EthTransaction } from "./types";
 import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
 
 import { EthereumClass } from "./ethereum";
-import { EthereumConfig } from "./networks";
-import { addressIsValid } from "./utils";
+import { EthereumConfig, StandardExplorer } from "./networks";
+import { addressIsValid, transactionIsValid } from "./utils";
 import { Signer } from "ethers";
 
 export const renFantomTestnet: EthereumConfig = {
@@ -19,12 +20,18 @@ export const renFantomTestnet: EthereumConfig = {
     isTestnet: true,
     chainLabel: "Fantom Testnet",
     networkID: 0xfa2,
-    infura: "https://rpc.testnet.fantom.network/",
-    etherscan: "https://testnet.ftmscan.com",
     addresses: {
         GatewayRegistry: "0x1207765B53697a046DCF4AE95bd4dE99ef9D3D3C",
         BasicAdapter: "0x07deB3917d234f787AEd86E0c88E829277D4a33b",
     },
+
+    publicProvider: () => `https://rpc.testnet.fantom.network/`,
+    explorer: StandardExplorer("https://testnet.ftmscan.com"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://rpc.testnet.fantom.network/",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://testnet.ftmscan.com",
 };
 
 export const renFantomDevnet: EthereumConfig = {
@@ -41,12 +48,18 @@ export const renFantomMainnet: EthereumConfig = {
     isTestnet: false,
     chainLabel: "Fantom Mainnet",
     networkID: 250,
-    infura: "https://rpcapi.fantom.network/",
-    etherscan: "https://ftmscan.com",
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
+
+    publicProvider: () => `https://rpcapi.fantom.network`,
+    explorer: StandardExplorer("https://ftmscan.com"),
+
+    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
+    infura: "https://rpcapi.fantom.network",
+    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
+    etherscan: "https://ftmscan.com",
 };
 
 export const FantomConfigMap = {
@@ -69,6 +82,7 @@ const resolveFantomNetwork = (
         return renNetwork as EthereumConfig;
     } else {
         const details = getRenNetworkDetails(
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
         return details.isTestnet
@@ -85,9 +99,13 @@ export class FantomClass extends EthereumClass {
     public name = FantomClass.chain;
     public legacyName = undefined;
 
+    public static configMap = FantomConfigMap;
+    public configMap = FantomConfigMap;
+
     public static utils = {
         resolveChainNetwork: resolveFantomNetwork,
         addressIsValid,
+        transactionIsValid,
         addressExplorerLink: (
             address: EthAddress,
             network?: NetworkInput,
@@ -106,7 +124,7 @@ export class FantomClass extends EthereumClass {
             `${
                 (Fantom.utils.resolveChainNetwork(network) || renFantomMainnet)
                     .etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

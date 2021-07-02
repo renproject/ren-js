@@ -44,7 +44,11 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
         utils: {
             resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
+            transactionIsValid: () => true,
         },
+        transactionRPCTxidFromID: () => Buffer.from(""),
+        transactionIDFromRPCFormat: () => "",
+        transactionFromRPCFormat: () => "",
         transactionFromID: () => {},
         transactionID: (tx) => tx.txHash,
         transactionConfidence,
@@ -53,7 +57,7 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
         },
         getDeposits: async (_a, _b, _c, onDeposit) => {
             await onDeposit(defaultDeposit);
-            for (let deposit of conf.deposits) {
+            for (const deposit of conf.deposits) {
                 await onDeposit(deposit);
             }
         },
@@ -66,7 +70,9 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
             txid: fromHex(tx.txHash),
             txindex: "0",
         }),
+        addressToBytes: (address: string): Buffer => Buffer.from(address),
         addressStringToBytes: (address: string): Buffer => Buffer.from(address),
+        addressToString: (address: string): string => address,
     };
     return {
         mockLockChain,
@@ -87,7 +93,11 @@ export const buildMockMintChain = (minted?: boolean) => {
         utils: {
             resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
+            transactionIsValid: () => true,
         },
+        transactionRPCTxidFromID: () => Buffer.from(""),
+        transactionIDFromRPCFormat: () => "",
+        transactionFromRPCFormat: () => "",
         transactionFromID: () => {},
         // transactionID: () =>
         //     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",

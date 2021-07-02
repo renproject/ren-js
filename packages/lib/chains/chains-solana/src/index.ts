@@ -12,7 +12,7 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
 } from "@renproject/interfaces";
-import { Callable, keccak256 } from "@renproject/utils";
+import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
     Connection,
     PublicKey,
@@ -70,7 +70,7 @@ interface SolOptions {
     logger: Logger;
 }
 
-class SolanaClass
+export class SolanaClass
     implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
     public static chain = "Solana" as const;
     public chain = Solana.chain;
@@ -83,8 +83,10 @@ class SolanaClass
         bytes: true,
     };
 
+    public provider: SolanaProvider;
+
     constructor(
-        readonly provider: SolanaProvider,
+        provider: SolanaProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
@@ -92,6 +94,7 @@ class SolanaClass
             | SolNetworkConfig,
         options?: SolOptions,
     ) {
+        this.provider = provider;
         if (!this.provider.connection) {
             throw new Error("No connection to provider");
         }
@@ -111,14 +114,23 @@ class SolanaClass
 
     public static utils = {
         resolveChainNetwork: resolveNetwork,
-        addressIsValid: (a: any) => {
-            try {
-                base58.decode(a);
-                return true;
-            } catch (_e) {
-                return false;
-            }
-        },
+
+        /**
+         * A Solana address is a base58-encoded 32-byte ed25519 public key.
+         */
+        addressIsValid: doesntError(
+            (address: SolAddress | string) =>
+                base58.decode(address).length === 32,
+        ),
+
+        /**
+         * A Solana transaction's ID is a base58-encoded 64-byte signature.
+         */
+        transactionIsValid: doesntError(
+            (transaction: SolTransaction | string) =>
+                base58.decode(transaction).length === 64,
+        ),
+
         addressExplorerLink: (
             address: SolAddress,
             network:
@@ -211,7 +223,8 @@ class SolanaClass
     }
 
     withProvider = (provider: any) => {
-        return { ...this, provider };
+        this.provider = provider;
+        return this;
     };
 
     assetIsNative = (asset: string) => {
@@ -285,7 +298,13 @@ class SolanaClass
         };
     };
 
-    transactionFromID = (
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        base58.decode(transactionID);
+
+    transactionIDFromRPCFormat = (txid: string | Buffer, txindex: string) =>
+        this.transactionID(this.transactionFromRPCFormat(txid, txindex));
+
+    transactionFromRPCFormat = (
         txid: string | Buffer,
         _txindex: string,
         _reversed?: boolean,
@@ -293,6 +312,11 @@ class SolanaClass
         if (typeof txid == "string") return txid;
         return base58.encode(txid);
     };
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
+    transactionFromID = this.transactionFromRPCFormat;
 
     resolveTokenGatewayContract = (asset: string) => {
         if (!this.gatewayRegistryData) {
@@ -303,16 +327,16 @@ class SolanaClass
             keccak256(Buffer.from(`${asset}/toSolana`)),
         );
         let idx = -1;
-        const contract = this.gatewayRegistryData
-            ? this.gatewayRegistryData.selectors.find(
-                  (x, i) =>
-                      x.toString() === sHash.toString() &&
-                      (() => {
-                          idx = i;
-                          return true;
-                      })(),
-              )
-            : undefined;
+        const contract =
+            this.gatewayRegistryData &&
+            this.gatewayRegistryData.selectors.find(
+                (x, i) =>
+                    x.toString() === sHash.toString() &&
+                    (() => {
+                        idx = i;
+                        return true;
+                    })(),
+            );
         if (!contract) throw new Error("unsupported asset");
         return this.gatewayRegistryData.gateways[idx].toBase58();
     };
@@ -596,10 +620,26 @@ class SolanaClass
         const mintLogData = MintLogLayout.decode(mintData.data);
         if (!mintLogData.is_initialized) return undefined;
 
-        const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
-            mintLogAccountId[0],
-        );
-        return mintSigs[0].signature;
+        try {
+            const mintSigs = await this.provider.connection.getSignaturesForAddress(
+                mintLogAccountId[0],
+            );
+            return mintSigs[0]?.signature || "";
+        } catch (error) {
+            // If getSignaturesForAddress threw an error, the network may be
+            // on a version before 1.7, so this second method should be tried.
+            // Once all relevant networks have been updated, this can be removed.
+            try {
+                const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
+                    mintLogAccountId[0],
+                );
+                return mintSigs[0].signature;
+            } catch (errorInner) {
+                // If both threw, throw the error returned from
+                // `getSignaturesForAddress`.
+                throw error;
+            }
+        }
     };
 
     /**
@@ -656,7 +696,6 @@ class SolanaClass
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
         const gatewayState = GatewayLayout.decode(gatewayInfo.data);
-        console.debug(gatewayState.renvm_authority);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 
@@ -760,10 +799,44 @@ class SolanaClass
                 const txes = await this.provider.connection.getConfirmedSignaturesForAddress2(
                     burnId[0],
                 );
+
+                // Concatenate four u64s into a u256 value.
+                const burnAmount = new BN(
+                    Buffer.concat([
+                        new BN(burnData.amount_section_1).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                        new BN(burnData.amount_section_2).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                        new BN(burnData.amount_section_3).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                        new BN(burnData.amount_section_4).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                    ]),
+                );
+
+                // Convert borsh `Number` to built-in number
+                const recipientLength = parseInt(
+                    burnData.recipient_len.toString(),
+                );
+
                 const burnDetails: BurnDetails<SolTransaction> = {
                     transaction: txes[0].signature,
-                    amount: burnData.amount,
-                    to: base58.encode(burnData.recipient),
+                    amount: new BigNumber(burnAmount.toString()),
+                    to: base58.encode(
+                        burnData.recipient.slice(0, recipientLength),
+                    ),
                     nonce: new BigNumber(
                         new BN(leNonce, undefined, "le").toString(),
                     ),

@@ -13,8 +13,9 @@ import BigNumber from "bignumber.js";
 import { PopulatedTransaction, Signer } from "ethers";
 import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
 
-import { EthAddress, EthereumBaseChain, EthTransaction } from "./base";
+import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
+import { EthAddress, EthTransaction } from "./types";
 
 export class EthereumClass
     extends EthereumBaseChain

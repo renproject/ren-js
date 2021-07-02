@@ -24,15 +24,15 @@ const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.skip("burning from contract", async function () {
+    longIt("burning from contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.TestnetVDot3;
-        // const ethNetwork = EthereumConfigMap[network];
-        const ethNetwork = BscConfigMap[network];
+        const ethNetwork = EthereumConfigMap[network];
+        // const ethNetwork = BscConfigMap[network];
 
-        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        const infuraURL = ethNetwork.infura; // renBscTestnet.infura
+        const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        // const infuraURL = ethNetwork.infura; // renBscTestnet.infura
         const provider: provider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
@@ -46,7 +46,7 @@ describe("Refactor - Burning", () => {
         const recipient = await account.address(asset);
 
         const to = Chains.Bitcoin().Address(recipient);
-        const from = Chains.BinanceSmartChain(provider, network);
+        const from = Chains.Ethereum(provider, network);
         const fromAddress = (await from.web3.eth.getAccounts())[0];
 
         const logLevel = LogLevel.Log;

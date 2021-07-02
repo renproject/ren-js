@@ -4,7 +4,7 @@ import {
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
-import { randomBytes, utilsWithChainNetwork } from "@renproject/utils";
+import { isHex, randomBytes, utilsWithChainNetwork } from "@renproject/utils";
 import base58 from "bs58";
 
 import {
@@ -88,6 +88,21 @@ export class MockChain extends BitcoinClass {
                 address,
                 MockChain.asset,
                 MockChain.utils.resolveChainNetwork(network),
+            ),
+
+        transactionIsValid: (
+            transaction: BtcTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | BtcNetwork = "mainnet",
+        ) =>
+            isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.txHash,
+                { length: 32 },
             ),
 
         addressExplorerLink: (

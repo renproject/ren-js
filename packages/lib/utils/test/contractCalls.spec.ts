@@ -1,33 +1,53 @@
 import { ContractCall } from "@renproject/interfaces";
 import { expect } from "earljs";
 
-import { overrideContractCalls } from "../src/contractCalls";
+import {
+    OverrideContractCallError,
+    overrideContractCalls,
+} from "../src/contractCalls";
 
 describe("overrideContractCalls", () => {
-    it("can override contract calls", () => {
-        const testCase: ContractCall = {
-            sendTo: "1",
-            contractFn: "1",
-            contractParams: [
-                {
-                    name: "1",
-                    type: "uint256",
-                    value: "1",
-                },
-                {
-                    name: "2",
-                    type: "uint256",
-                    value: "2",
-                },
-            ],
-            txConfig: { gas: 1 },
-        };
+    const testCase: ContractCall = {
+        sendTo: "1",
+        contractFn: "1",
+        contractParams: [
+            {
+                name: "1",
+                type: "uint256",
+                value: "1",
+            },
+            {
+                name: "2",
+                type: "uint256",
+                value: "2",
+            },
+        ],
+        txConfig: { gas: 1 },
+    };
 
+    it("can override contract calls", () => {
         expect(
             overrideContractCalls([testCase], {
                 sendTo: "2",
             }),
         ).toEqual([{ ...testCase, sendTo: "2" }]);
+
+        expect(
+            overrideContractCalls(
+                [testCase, testCase],
+                [
+                    {
+                        sendTo: "2",
+                    },
+                    {
+                        sendTo: "3",
+                    },
+                ],
+            ),
+        ).toEqual([
+            { ...testCase, sendTo: "2" },
+            { ...testCase, sendTo: "3" },
+        ]);
 
         expect(
             overrideContractCalls([testCase], {
@@ -62,5 +82,18 @@ describe("overrideContractCalls", () => {
                 ],
             },
         ]);
+    });
+
+    it("checks for invalid inputs", () => {
+        expect(() =>
+            overrideContractCalls(
+                [testCase, testCase],
+                [
+                    {
+                        sendTo: "2",
+                    },
+                ],
+            ),
+        ).toThrow(OverrideContractCallError.OverrideArrayLengthError);
     });
 });

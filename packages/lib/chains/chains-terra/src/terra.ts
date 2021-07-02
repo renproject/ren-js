@@ -10,6 +10,7 @@ import {
 import {
     assertType,
     Callable,
+    isHex,
     toURLBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
@@ -74,6 +75,22 @@ export class TerraClass
                 typeof addressIn === "string" ? addressIn : addressIn.address;
             assertType<string>("string", { address: address });
             return AccAddress.validate(address);
+        },
+
+        transactionIsValid: (
+            transaction: TerraTransaction | string,
+            _network:
+                | RenNetwork
+                | RenNetworkString
+                | RenNetworkDetails
+                | TerraNetwork = TerraNetwork.Columbus,
+        ): boolean => {
+            return isHex(
+                typeof transaction === "string"
+                    ? transaction
+                    : transaction.hash,
+                { length: 32 },
+            );
         },
 
         addressExplorerLink: (
@@ -245,17 +262,35 @@ export class TerraClass
     };
 
     /**
-     * See [[LockChain.addressStringToBytes]].
+     * See [[LockChain.addressToBytes]].
      */
-    addressStringToBytes = (address: string): Buffer =>
-        Buffer.from(bech32.fromWords(bech32.decode(address).words));
+    addressToBytes = (address: TerraAddress | string): Buffer =>
+        Buffer.from(
+            bech32.fromWords(
+                bech32.decode(
+                    typeof address === "string" ? address : address.address,
+                ).words,
+            ),
+        );
+
+    /** @deprecated. Renamed to addressToBytes. */
+    addressStringToBytes = this.addressToBytes;
+
+    addressToString = (address: TerraAddress | string): string =>
+        typeof address === "string" ? address : address.address;
 
     /**
      * See [[LockChain.transactionID]].
      */
     transactionID = (transaction: TerraTransaction) => transaction.hash;
 
-    transactionFromID = async (txid: string | Buffer, txindex: string) => {
+    transactionIDFromRPCFormat = (txid: string | Buffer, _txindex: string) =>
+        typeof txid === "string" ? txid : txid.toString("hex");
+
+    transactionFromRPCFormat = async (
+        txid: string | Buffer,
+        txindex: string,
+    ) => {
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
@@ -266,6 +301,11 @@ export class TerraClass
             this.chainNetwork,
         );
     };
+    /**
+     * @deprecated Renamed to `transactionFromRPCFormat`.
+     * Will be removed in 3.0.0.
+     */
+    transactionFromID = this.transactionFromRPCFormat;
 
     depositV1HashString = (_deposit: TerraDeposit): string => {
         throw new Error(UNSUPPORTED_TERRA_NETWORK);
@@ -281,6 +321,9 @@ export class TerraClass
             txindex: "0",
         };
     };
+
+    transactionRPCTxidFromID = (transactionID: string): Buffer =>
+        Buffer.from(transactionID, "hex");
 
     getBurnPayload: (() => string) | undefined;
 

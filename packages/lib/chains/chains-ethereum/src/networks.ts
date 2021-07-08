@@ -4,7 +4,7 @@ export const StandardExplorer = (baseUrl: string) => ({
     address: (address: EthAddress | string) =>
         `${baseUrl.replace(/\/$/, "")}/address/${address}`,
     transaction: (transaction: EthTransaction | string) =>
-        `${baseUrl.replace(/\/$/, "")}/tx/${transaction}`,
+        `${baseUrl.replace(/\/$/, "")}/tx/${transaction || ""}`,
 });
 
 export interface EthereumConfig {
@@ -59,7 +59,7 @@ const ethereumConfig = {
         networkID: 1,
 
         publicProvider: ({ infura }: { infura?: string } = {}) =>
-            `https://mainnet.infura.io/v3/${infura}`,
+            `https://mainnet.infura.io/v3/${infura || ""}`,
         explorer: StandardExplorer("https://etherscan.io"),
 
         /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
@@ -74,7 +74,7 @@ const ethereumConfig = {
         networkID: 42,
 
         publicProvider: ({ infura }: { infura?: string } = {}) =>
-            `https://kovan.infura.io/v3/${infura}`,
+            `https://kovan.infura.io/v3/${infura || ""}`,
         explorer: StandardExplorer("https://kovan.etherscan.io"),
 
         /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
@@ -89,7 +89,7 @@ const ethereumConfig = {
         networkID: 4,
 
         publicProvider: ({ infura }: { infura?: string } = {}) =>
-            `https://rinkeby.infura.io/v3/${infura}`,
+            `https://rinkeby.infura.io/v3/${infura || ""}`,
         explorer: StandardExplorer("https://rinkeby.etherscan.io"),
 
         /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */

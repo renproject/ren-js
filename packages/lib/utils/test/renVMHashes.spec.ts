@@ -1,11 +1,13 @@
 import { EthArgs, LogLevel, SimpleLogger } from "@renproject/interfaces";
 import { expect } from "earljs";
 
-import { fromHex, Ox } from "../src/common";
+import { Ox } from "../src/common";
 import {
     generateBurnTxHash,
     generateGHash,
+    generateNHash,
     generatePHash,
+    generateSHash,
     generateSighash,
     renVMHashToBase64,
 } from "../src/renVMHashes";
@@ -13,8 +15,25 @@ import {
 describe("renVMHashes", () => {
     const payload: EthArgs = [{ name: "payload", type: "uint256", value: 1 }];
 
+    context("generateSHash", () => {
+        it("hashes correctly", () => {
+            expect(Ox(generateSHash("BTC/toEthereum"))).toEqual(
+                "0x1fb79ec5bb04cf1aa8eb8fdeda8d3f986e5ebaba72d0e12048cec0a95188fe5e",
+            );
+            expect(Ox(generateSHash("ZEC/toBSC"))).toEqual(
+                "0x3a3ff3e90668ea5ba2cd0bccf89f5002c959f7555337c7258c0d09204ef45bdf",
+            );
+        });
+
+        it("removes from chain for host-to-host", () => {
+            expect(Ox(generateSHash("BTC/fromBSCToEthereum"))).toEqual(
+                Ox(generateSHash("BTC/toEthereum")),
+            );
+        });
+    });
+
     context("generatePHash", () => {
-        it("...", () => {
+        it("hashes correctly", () => {
             expect(Ox(generatePHash(payload))).toEqual(
                 "0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6",
             );
@@ -26,8 +45,9 @@ describe("renVMHashes", () => {
             );
         });
     });
+
     context("generateGHash", () => {
-        it("...", () => {
+        it("hashes correctly", () => {
             const to = "0x" + "00".repeat(20);
             const tokenIdentifier = "0x" + "00".repeat(20);
             const nonce = Buffer.from("00".repeat(32), "hex");
@@ -70,8 +90,25 @@ describe("renVMHashes", () => {
             );
         });
     });
+
+    context("generateNHash", () => {
+        const nonce = Buffer.from("00".repeat(32), "hex");
+        const txid = Buffer.from("00".repeat(32), "hex");
+        const txindex = "1";
+        it("v1", () => {
+            expect(Ox(generateNHash(nonce, txid, txindex, false))).toEqual(
+                "0xcbfe4baa920060fc34aa65135b74b83fa81df36f6e21d90c8301c8810d2c89d9",
+            );
+        });
+        it("v2", () => {
+            expect(Ox(generateNHash(nonce, txid, txindex, true))).toEqual(
+                "0xb92afca8929110484eee9b91373c9ed41205b90ce83867e5e9363041a70cfe3e",
+            );
+        });
+    });
+
     context("generateSighash", () => {
-        it("...", () => {
+        it("hashes correctly", () => {
             const pHash = Buffer.from("00".repeat(32), "hex");
             const amount = "0";
             const to = "0x" + "00".repeat(20);
@@ -101,23 +138,41 @@ describe("renVMHashes", () => {
             );
         });
     });
+
     context("renVMHashToBase64", () => {
-        it("...", () => {
-            expect(renVMHashToBase64("00".repeat(32))).toEqual(
+        it("v1", () => {
+            expect(renVMHashToBase64("00".repeat(32), false)).toEqual(
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
             );
-            expect(renVMHashToBase64(Ox("00".repeat(32)))).toEqual(
+            expect(renVMHashToBase64(Ox("00".repeat(32)), false)).toEqual(
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
             );
             expect(
                 renVMHashToBase64(
                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                    false,
                 ),
             ).toEqual("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
         });
+
+        it("v2", () => {
+            expect(renVMHashToBase64("00".repeat(32), true)).toEqual(
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            );
+            expect(renVMHashToBase64(Ox("00".repeat(32)), true)).toEqual(
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            );
+            expect(
+                renVMHashToBase64(
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                    true,
+                ),
+            ).toEqual("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        });
     });
+
     context("generateBurnTxHash", () => {
-        it("...", () => {
+        it("hashes correctly", () => {
             generateBurnTxHash("BTC0Btc2Eth", "id");
             const logger = new SimpleLogger(LogLevel.Error);
             generateBurnTxHash("BTC0Btc2Eth", "id", logger);

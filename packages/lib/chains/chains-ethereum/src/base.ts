@@ -88,7 +88,11 @@ const resolveNetwork = (
     }
 
     if (!networkConfig) {
-        throw new Error(`Unrecognized network ${renNetwork}.`);
+        throw new Error(
+            `Unrecognized network ${
+                typeof renNetwork === "string" ? renNetwork : renNetwork.name
+            }.`,
+        );
     }
 
     return networkConfig;
@@ -139,7 +143,7 @@ export class EthereumBaseChain
                     EthereumBaseChain.utils.resolveChainNetwork(network) ||
                     renMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(
@@ -329,7 +333,7 @@ export class EthereumBaseChain
         }
         if (transaction === null) {
             throw new Error(
-                `Unable to fetch transaction confidence, transaction hash: ${transaction}`,
+                `Unable to fetch transaction confidence, transaction hash is 'null'.`,
             );
         }
         const currentBlock = new BigNumber(
@@ -639,7 +643,7 @@ export class EthereumBaseChain
 
         if (transaction === null) {
             throw new Error(
-                `Unable to encode transaction, transaction hash: ${transaction}`,
+                `Unable to encode transaction, transaction hash is 'null'.`,
             );
         }
 

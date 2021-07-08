@@ -573,8 +573,8 @@ export class LockAndMint<
                 },
                 5,
             );
-            if ((promise as any).catch) {
-                (promise as Promise<any>).catch((_error) => {
+            if ((promise as { catch?: unknown }).catch) {
+                (promise as Promise<unknown>).catch((_error) => {
                     // Ignore error.
                 });
             }

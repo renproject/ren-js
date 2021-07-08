@@ -5,50 +5,13 @@ jobs:
             NODE_ENV: development
         docker:
             - image: circleci/node:14.15
-        working_directory: ~/renjs/packages/lib/ren
         steps:
-            - checkout:
-                  path: ~/renjs
+            - checkout
 
-            # - run:
-            #       name: Start Localnet
-            #       background: true
-            #       command: |
-            #           sudo apt-get update
-            #           sudo apt-get -y upgrade
-            #           wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
-            #           sudo tar -xvf go1.12.6.linux-amd64.tar.gz
-            #           sudo mv go /usr/local
-            #           echo 'export PATH="/usr/local/go/bin:$PATH"' >> $BASH_ENV
-            #           source $BASH_ENV
-            #           git clone "https://${GITHUB_TOKEN}@github.com/renproject/darknode"
-            #           cd darknode
-            #           git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-            #           go run cmd/localnet/main.go
-
-            # Download and cache dependencies
             - restore_cache:
                   keys:
-                      - v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
-                      # fallback to using the latest cache if no exact match is found
-                      - v1-dependencies-
-
-            - run:
-                  name: Install yarn and lerna
-                  command: sudo npm install --force --global yarn  && yarn version && sudo npm install --global --force lerna
-                  when: always
-
-            - run:
-                  name: Lerna - install dependencies
-                  path: ~/renjs
-                  command: yarn install --network-concurrency 1
-                  when: always
-
-            - run:
-                  name: Lerna - build
-                  path: ~/renjs
-                  command: yarn run build
-                  when: always
+                      - yarn-packages-v1-{{ checksum "yarn.lock" }}
+                      - yarn-packages-v1-
 
             - run:
                   name: Install dependencies
@@ -58,49 +21,20 @@ jobs:
             - save_cache:
                   paths:
                       - node_modules
-                  key: v1-dependencies-{{ checksum "~/renjs/yarn.lock" }}
+                  key: yarn-packages-v1-{{ checksum "yarn.lock" }}
 
-            # - run: mkdir reports
+            - run:
+                  name: Build
+                  command: yarn build
+                  when: always
 
-            # Run eslint
             - run:
                   name: Run lint
                   command: yarn lint
                   when: always
 
-            # Run tests
             - run:
-                  name: Run Testnet tests
-                  # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-                  command: NETWORK="testnet" yarn lerna run test
+                  name: Run tests
+                  command: NETWORK="testnet" yarn test
                   no_output_timeout: 30m
                   when: always
-
-            # - run:
-            #       name: Run Localnet tests
-            #       # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-            #       command: NETWORK="localnet" bash ./test/ci/runtest.bash
-            #       when: always
-
-            # - run:
-            #       name: Run Devnet tests
-            #       # command: yarn run test --reporter mocha-junit-reporter --reporter-options mochaFile=reports/mocha/test-results.xml
-            #       command: NETWORK="devnet" bash ./test/ci/runtest.bash
-            #       when: always
-
-            # Run coverage
-            - run:
-                  name: Run coverage
-                  command: NETWORK="testnet" yarn lerna run cov:check
-                  when: always
-
-            # # Run coverage report for Code Climate
-
-            # - run:
-            #       name: code-coverage
-            #       command: |
-            #           mkdir -p coverage
-            #           # nyc report requires that nyc has already been run,
-            #           # which creates the .nyc_output folder containing necessary data
-            #           yarn nyc report --reporter=text-lcov > coverage/lcov.info
-            #       when: always

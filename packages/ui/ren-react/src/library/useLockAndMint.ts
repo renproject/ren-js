@@ -21,7 +21,7 @@ import {
 import BigNumber from "bignumber.js/bignumber";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BurnSession } from "@renproject/ren-tx/build/main/types/burn";
-import { UTXO } from "../../../../lib/chains/chains-bitcoin/build/main/APIs/API";
+import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
 
 interface MintParams {
     /**

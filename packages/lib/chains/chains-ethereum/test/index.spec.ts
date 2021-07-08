@@ -28,7 +28,7 @@ export const findBurnByNonce = async (
     const gatewayAddress = await getGatewayAddress(network, web3, asset);
 
     const nonceBuffer = Buffer.isBuffer(nonce)
-        ? nonce
+        ? Buffer.from(nonce)
         : new BN(nonce).toArrayLike(Buffer, "be", 32);
 
     const burnEvents = await web3.eth.getPastLogs({

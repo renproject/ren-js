@@ -620,10 +620,26 @@ export class SolanaClass
         const mintLogData = MintLogLayout.decode(mintData.data);
         if (!mintLogData.is_initialized) return undefined;
 
-        const mintSigs = await this.provider.connection.getSignaturesForAddress(
-            mintLogAccountId[0],
-        );
-        return (mintSigs[0] && mintSigs[0].signature) || "";
+        try {
+            const mintSigs = await this.provider.connection.getSignaturesForAddress(
+                mintLogAccountId[0],
+            );
+            return mintSigs[0]?.signature || "";
+        } catch (error) {
+            // If getSignaturesForAddress threw an error, the network may be
+            // on a version before 1.7, so this second method should be tried.
+            // Once all relevant networks have been updated, this can be removed.
+            try {
+                const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
+                    mintLogAccountId[0],
+                );
+                return mintSigs[0].signature;
+            } catch (errorInner) {
+                // If both threw, throw the error returned from
+                // `getSignaturesForAddress`.
+                throw error;
+            }
+        }
     };
 
     /**
@@ -680,7 +696,6 @@ export class SolanaClass
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
         const gatewayState = GatewayLayout.decode(gatewayInfo.data);
-        console.debug(gatewayState.renvm_authority);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 
@@ -784,10 +799,44 @@ export class SolanaClass
                 const txes = await this.provider.connection.getConfirmedSignaturesForAddress2(
                     burnId[0],
                 );
+
+                // Concatenate four u64s into a u256 value.
+                const burnAmount = new BN(
+                    Buffer.concat([
+                        new BN(burnData.amount_section_1).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                        new BN(burnData.amount_section_2).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                        new BN(burnData.amount_section_3).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                        new BN(burnData.amount_section_4).toArrayLike(
+                            Buffer,
+                            "le",
+                            8,
+                        ),
+                    ]),
+                );
+
+                // Convert borsh `Number` to built-in number
+                const recipientLength = parseInt(
+                    burnData.recipient_len.toString(),
+                );
+
                 const burnDetails: BurnDetails<SolTransaction> = {
                     transaction: txes[0].signature,
-                    amount: burnData.amount,
-                    to: base58.encode(burnData.recipient),
+                    amount: new BigNumber(burnAmount.toString()),
+                    to: base58.encode(
+                        burnData.recipient.slice(0, recipientLength),
+                    ),
                     nonce: new BigNumber(
                         new BN(leNonce, undefined, "le").toString(),
                     ),

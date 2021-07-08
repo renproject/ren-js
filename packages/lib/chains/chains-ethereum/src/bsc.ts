@@ -81,6 +81,7 @@ const resolveBSCNetwork = (
         return renNetwork as EthereumConfig;
     } else {
         const details = getRenNetworkDetails(
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
         return details.isTestnet
@@ -125,7 +126,7 @@ export class BinanceSmartChainClass extends EthereumClass {
                     BinanceSmartChain.utils.resolveChainNetwork(network) ||
                     renBscMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

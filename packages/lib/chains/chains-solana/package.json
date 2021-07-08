@@ -31,7 +31,7 @@
         "fix": "run-s fix:*",
         "fix:eslint": "yarn lint:eslint --fix",
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
-        "test": "run-s build:main test:* lint",
+        "test": "run-s test:* lint",
         "test:unit": "nyc ../../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
@@ -56,7 +56,6 @@
         "bn.js": "^5.1.3",
         "borsh": "^0.3.1",
         "bs58": "^4.0.1",
-        "chai-bignumber": "ren-forks/chai-bignumber#afa6f46dcbef0b7e622dc27b9b3354fc67afafbc",
         "tweetnacl": "^1.0.3"
     },
     "resolutions": {

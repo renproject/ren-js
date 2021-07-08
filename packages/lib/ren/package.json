@@ -44,7 +44,7 @@
         "fix": "run-s fix:*",
         "fix:eslint": "yarn lint:eslint --fix",
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
-        "test": "run-s build:main test:* lint",
+        "test": "run-s test:* lint",
         "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",

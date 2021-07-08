@@ -55,5 +55,8 @@
     "peerDependencies": {
         "@renproject/ren": "^2.1.7",
         "xstate": "^4.17.0"
+    },
+    "jest": {
+        "testTimeout": 20000
     }
 }

@@ -44,7 +44,13 @@ export const buildMockLockChain = (pconf: MockLockChainParams = {}) => {
         utils: {
             resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
+            transactionIsValid: () => true,
         },
+        transactionRPCTxidFromID: () => Buffer.from(""),
+        transactionIDFromRPCFormat: () => "",
+        transactionFromRPCFormat: () => "",
+        addressToString: (x) => x,
+        addressToBytes: () => Buffer.from([]),
         transactionFromID: () => {},
         transactionID: (tx) => tx.txHash,
         transactionConfidence,
@@ -89,7 +95,11 @@ export const buildMockMintChain = (minted?: boolean) => {
         utils: {
             resolveChainNetwork: (network) => network,
             addressIsValid: () => true,
+            transactionIsValid: () => true,
         },
+        transactionRPCTxidFromID: () => Buffer.from(""),
+        transactionIDFromRPCFormat: () => "",
+        transactionFromRPCFormat: () => "",
         transactionFromID: () => {},
         // transactionID: () =>
         //     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",

@@ -37,4 +37,9 @@ export interface RenJSConfig {
      * Allow overriding the gPubKey.
      */
     gPubKey?: Buffer;
+
+    /**
+     * Ensure the V2 RPC is used for all assets
+     */
+    forceV2RPC?: Buffer;
 }

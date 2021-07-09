@@ -237,7 +237,7 @@ export default class RenJS {
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address extends string | { address: string } = any
+        Address extends string | { address: string } = any,
     >(
         params: LockAndMintParams<Transaction, Deposit, Address>,
         config?: RenJSConfig,
@@ -256,7 +256,7 @@ export default class RenJS {
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address extends string | { address: string } = any
+        Address extends string | { address: string } = any,
     >(
         params: BurnAndReleaseParams<Transaction, Deposit, Address>,
         config?: RenJSConfig,

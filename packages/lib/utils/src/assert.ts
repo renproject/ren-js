@@ -48,7 +48,7 @@ export const assert = (
 export const assertType = <
     // Type extends string,
     // T = Type extends "Buffer" ? Buffer : any
-    T = unknown
+    T = unknown,
 >(
     type: string,
     objects: {
@@ -58,7 +58,7 @@ export const assertType = <
     if (isArrayType(type)) {
         return assertArray(
             type,
-            (objects as unknown) as { [value: string]: T[] },
+            objects as unknown as { [value: string]: T[] },
         );
     }
     if (isUnionType(type)) {

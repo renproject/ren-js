@@ -39,7 +39,7 @@ describe("renVMHashes", () => {
             );
             const logger = new SimpleLogger(LogLevel.Error);
             expect(
-                Ox(generatePHash(([payload] as unknown) as EthArgs, logger)),
+                Ox(generatePHash([payload] as unknown as EthArgs, logger)),
             ).toEqual(
                 "0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6",
             );

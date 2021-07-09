@@ -21,7 +21,7 @@ export interface AbstractRenVMProvider<
     Responses extends {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [event: string]: any;
-    } = {}
+    } = {},
 > extends Provider<Requests, Responses> {
     selector: (params: {
         asset: string;
@@ -126,7 +126,7 @@ export interface AbstractRenVMProvider<
     ) => SyncOrPromise<Buffer>;
 
     queryMintOrBurn: <
-        T extends LockAndMintTransaction | BurnAndReleaseTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction,
     >(
         selector: string,
         utxoTxHash: Buffer,

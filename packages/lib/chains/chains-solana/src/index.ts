@@ -71,7 +71,8 @@ interface SolOptions {
 }
 
 export class SolanaClass
-    implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
+    implements MintChain<SolTransaction, SolAddress, SolNetworkConfig>
+{
     public static chain = "Solana" as const;
     public chain = Solana.chain;
     public name = Solana.chain;
@@ -547,9 +548,8 @@ export class SolanaClass
         ).blockhash;
         tx.feePayer = this.provider.wallet.publicKey;
 
-        const simulationResult = await this.provider.connection.simulateTransaction(
-            tx,
-        );
+        const simulationResult =
+            await this.provider.connection.simulateTransaction(tx);
         if (simulationResult.value.err) {
             throw new Error(
                 "transaction simulation failed: " +
@@ -621,18 +621,20 @@ export class SolanaClass
         if (!mintLogData.is_initialized) return undefined;
 
         try {
-            const mintSigs = await this.provider.connection.getSignaturesForAddress(
-                mintLogAccountId[0],
-            );
+            const mintSigs =
+                await this.provider.connection.getSignaturesForAddress(
+                    mintLogAccountId[0],
+                );
             return mintSigs[0]?.signature || "";
         } catch (error) {
             // If getSignaturesForAddress threw an error, the network may be
             // on a version before 1.7, so this second method should be tried.
             // Once all relevant networks have been updated, this can be removed.
             try {
-                const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
-                    mintLogAccountId[0],
-                );
+                const mintSigs =
+                    await this.provider.connection.getConfirmedSignaturesForAddress2(
+                        mintLogAccountId[0],
+                    );
                 return mintSigs[0].signature;
             } catch (errorInner) {
                 // If both threw, throw the error returned from
@@ -796,9 +798,10 @@ export class SolanaClass
             );
             if (burnInfo) {
                 const burnData = BurnLogLayout.decode(burnInfo.data);
-                const txes = await this.provider.connection.getConfirmedSignaturesForAddress2(
-                    burnId[0],
-                );
+                const txes =
+                    await this.provider.connection.getConfirmedSignaturesForAddress2(
+                        burnId[0],
+                    );
 
                 // Concatenate four u64s into a u256 value.
                 const burnAmount = new BN(

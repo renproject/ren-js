@@ -178,9 +178,11 @@ describe("common utils", () => {
                 i += 1;
                 if (i < n) {
                     const error = new Error("Error.");
-                    (error as {
-                        data?: string;
-                    }).data = `Only called ${i}/${n} times`;
+                    (
+                        error as {
+                            data?: string;
+                        }
+                    ).data = `Only called ${i}/${n} times`;
                     if (badError) {
                         (error as { message?: string }).message = undefined;
                     }

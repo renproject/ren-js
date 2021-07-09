@@ -149,53 +149,53 @@ interface MessagesResponse {
 
 type MessageResponse = TerraDevTx;
 
-const extractDepositsFromTx = (chainHeight: number) => (
-    tx: TerraDevTx,
-): TerraTransaction[] => {
-    const msgs: Array<
-        TerraDevTx & {
-            to_address: string;
-            from_address: string;
-            amount: string;
-            denom: string;
-            messageIndex: number;
-        }
-    > = [];
-    try {
-        const decodedMsgs = tx.tx.value.msg;
-        for (let i = 0; i < decodedMsgs.length; i++) {
-            const msg = decodedMsgs[i];
-            if (msg.type === "bank/MsgSend") {
-                for (const amount of msg.value.amount) {
-                    msgs.push({
-                        ...tx,
-                        messageIndex: i,
-                        to_address: msg.value.to_address,
-                        from_address: msg.value.from_address,
-                        ...amount,
-                    });
+const extractDepositsFromTx =
+    (chainHeight: number) =>
+    (tx: TerraDevTx): TerraTransaction[] => {
+        const msgs: Array<
+            TerraDevTx & {
+                to_address: string;
+                from_address: string;
+                amount: string;
+                denom: string;
+                messageIndex: number;
+            }
+        > = [];
+        try {
+            const decodedMsgs = tx.tx.value.msg;
+            for (let i = 0; i < decodedMsgs.length; i++) {
+                const msg = decodedMsgs[i];
+                if (msg.type === "bank/MsgSend") {
+                    for (const amount of msg.value.amount) {
+                        msgs.push({
+                            ...tx,
+                            messageIndex: i,
+                            to_address: msg.value.to_address,
+                            from_address: msg.value.from_address,
+                            ...amount,
+                        });
+                    }
                 }
             }
+        } catch (_error) {
+            return [];
         }
-    } catch (_error) {
-        return [];
-    }
 
-    return msgs.map((msg) => {
-        return {
-            hash: msg.txhash,
-            messageIndex: msg.messageIndex,
-            from: msg.from_address,
-            to: msg.to_address,
-            denomination: msg.denom,
-            amount: msg.amount,
-            memo: msg.tx.value.memo,
-            confirmations: msg.height
-                ? chainHeight - parseInt(msg.height, 10)
-                : msg.height, // TODO
-        };
-    });
-};
+        return msgs.map((msg) => {
+            return {
+                hash: msg.txhash,
+                messageIndex: msg.messageIndex,
+                from: msg.from_address,
+                to: msg.to_address,
+                denomination: msg.denom,
+                amount: msg.amount,
+                memo: msg.tx.value.memo,
+                confirmations: msg.height
+                    ? chainHeight - parseInt(msg.height, 10)
+                    : msg.height, // TODO
+            };
+        });
+    };
 
 const concat = <T>(x: T[], y: T[]) => x.concat(y);
 

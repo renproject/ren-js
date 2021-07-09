@@ -7,7 +7,7 @@ export const utilsWithChainNetwork = <
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Address extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Network = any
+    Network = any,
 >(
     utils: Utils,
     getClassNetwork: () => Network | undefined,

@@ -30,9 +30,8 @@ export const generatePHash = (
     logger: Logger = NullLogger,
 ): Buffer => {
     // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = (Array.isArray(zip[0])
-        ? ((zip[0] as unknown) as EthArgs)
-        : zip
+    const args = (
+        Array.isArray(zip[0]) ? (zip[0] as unknown as EthArgs) : zip
     ).filter((arg) => !arg.notInPayload);
 
     const types = args.map((param) => param.type);

@@ -103,7 +103,7 @@ export type RenVMValue<Type extends RenVMType> = Type extends RenVMType.Address
 export interface RenVMArg<
     Name extends string,
     Type extends RenVMType,
-    Value extends RenVMValue<Type> = RenVMValue<Type>
+    Value extends RenVMValue<Type> = RenVMValue<Type>,
 > {
     name: Name;
     type: Type;

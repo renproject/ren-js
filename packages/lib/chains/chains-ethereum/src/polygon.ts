@@ -5,7 +5,7 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 import { NetworkInput } from "./base";
 import { EthAddress, EthTransaction } from "./types";
 

@@ -41,20 +41,15 @@
         "chalk": "^4.1.0",
         "dotenv": "^8.2.0",
         "truffle-hdwallet-provider": "^1.0.17",
-        "web3": "^2.0.0-alpha.1"
+        "web3": "^3.0.0-rc.5"
     },
     "resolutions": {
         "sha3": "^2.1.2"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

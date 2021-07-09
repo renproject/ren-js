@@ -41,5 +41,5 @@ export interface RenJSConfig {
     /**
      * Ensure the V2 RPC is used for all assets
      */
-    forceV2RPC?: Buffer;
+    useV2TransactionFormat?: boolean;
 }

@@ -11,7 +11,7 @@ import Web3 from "web3";
 import { EthereumConfig, EthTransaction, renMainnet } from "@renproject/chains";
 import BN from "bn.js";
 import { getGatewayAddress, eventTopics, parseBurnEvent } from "../src/utils";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 

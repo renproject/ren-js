@@ -10,7 +10,7 @@ import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 

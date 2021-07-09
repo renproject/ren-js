@@ -40,7 +40,7 @@ import {
 } from "@renproject/utils";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
-import { AbiCoder } from "web3-eth-abi";
+import AbiCoder from "web3-eth-abi";
 import { RenJSConfig } from "./config";
 import base58 from "bs58";
 
@@ -117,7 +117,7 @@ export class LockAndMint<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress extends string | { address: string } = any
+    MintAddress extends string | { address: string } = any,
 > extends EventEmitter {
     // Public
 
@@ -159,7 +159,16 @@ export class LockAndMint<
             MintTransaction,
             MintAddress
         >
-    > = OrderedMap();
+    > = OrderedMap<
+        string,
+        LockAndMintDeposit<
+            LockTransaction,
+            LockDeposit,
+            LockAddress,
+            MintTransaction,
+            MintAddress
+        >
+    >();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDepositsProgress: any | undefined;
@@ -444,144 +453,150 @@ export class LockAndMint<
 
     // Private methods /////////////////////////////////////////////////////////
 
-    private readonly generateGatewayAddress = async (): Promise<LockAddress> => {
-        if (this.gatewayAddress) {
-            return this.gatewayAddress;
-        }
-
-        const { nonce, contractCalls } = this.params;
-
-        if (!nonce) {
-            throw new Error(
-                `Must call 'initialize' before calling 'generateGatewayAddress'.`,
-            );
-        }
-
-        if (!contractCalls) {
-            throw new Error(`Must provide contract call details.`);
-        }
-
-        // Last contract call
-        const { contractParams, sendTo, contractFn } = contractCalls[
-            contractCalls.length - 1
-        ];
-
-        // FIXME: dirty hack, but we need to re-write how we deal with
-        // addresses in order to do this cleanly
-        // (need to follow the multichain address pattern)
-        const sendToHex =
-            this.params.to.name == "Solana"
-                ? base58.decode(sendTo).toString("hex")
-                : sendTo;
-
-        this._state.pHash = generatePHash(
-            contractParams || [],
-            this._state.logger,
-        );
-
-        // Check if the transaction is either a v0.2 transaction, or has the
-        // version set to `0` in a v0.4 transaction.
-        // See [RenJSConfig.transactionVersion]
-        const v0Transaction =
-            this.renVM.version(this._state.selector) === 1 ||
-            this._state.config.transactionVersion === 0;
-
-        const tokenGatewayContract = !v0Transaction
-            ? Ox(generateSHash(this._state.selector))
-            : await this.params.to.resolveTokenGatewayContract(
-                  this.params.asset,
-              );
-
-        const gHash = generateGHash(
-            contractParams || [],
-            sendToHex,
-            tokenGatewayContract,
-            fromHex(nonce),
-            !v0Transaction,
-            this._state.logger,
-        );
-        this._state.gHash = gHash;
-        this._state.gPubKey =
-            this._state.config.gPubKey ||
-            (await this.renVM.selectPublicKey(
-                this._state.selector,
-                this.renVM.version(this._state.selector) >= 2
-                    ? this.params.from.name
-                    : this.params.asset,
-            ));
-        this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
-
-        const gatewayAddress = await this.params.from.getGatewayAddress(
-            this.params.asset,
-            this._state.gPubKey,
-            gHash,
-        );
-        this.gatewayAddress = gatewayAddress;
-        this._state.logger.debug("gateway address:", this.gatewayAddress);
-
-        const filteredContractParams = contractParams
-            ? contractParams.filter(
-                  (contractParam) => !contractParam.notInPayload,
-              )
-            : contractParams;
-
-        const encodedParameters = new AbiCoder().encodeParameters(
-            (filteredContractParams || []).map((i) => i.type),
-            (filteredContractParams || []).map((i) => i.value),
-        );
-
-        const fnABI = payloadToMintABI(
-            contractFn,
-            filteredContractParams || [],
-        );
-
-        if (this.params.tags && this.params.tags.length > 1) {
-            throw new Error("Providing multiple tags is not supported yet.");
-        }
-
-        const tags: [string] | [] =
-            this.params.tags && this.params.tags.length
-                ? [this.params.tags[0]]
-                : [];
-
-        this._state.token = await this.params.to.resolveTokenGatewayContract(
-            this.params.asset,
-        );
-
-        if (this.renVM.submitGatewayDetails) {
-            const promise = this.renVM.submitGatewayDetails(
-                this.params.from.addressToString(gatewayAddress),
-                {
-                    ...(this._state as MintState & MintStatePartial),
-                    token: this._state.token,
-                    nHash: Buffer.from(
-                        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                        "base64",
-                    ),
-                    payload: fromHex(encodedParameters),
-                    nonce: fromHex(nonce),
-                    fn: contractFn,
-                    fnABI,
-                    to:
-                        this.renVM.version(this._state.selector) >= 2
-                            ? strip0x(sendTo)
-                            : Ox(sendTo),
-                    tags,
-
-                    // See [RenJSConfig.transactionVersion]
-                    transactionVersion: this._state.config.transactionVersion,
-                },
-                5,
-            );
-            if ((promise as { catch?: unknown }).catch) {
-                (promise as Promise<unknown>).catch((_error) => {
-                    // Ignore error.
-                });
+    private readonly generateGatewayAddress =
+        async (): Promise<LockAddress> => {
+            if (this.gatewayAddress) {
+                return this.gatewayAddress;
             }
-        }
 
-        return this.gatewayAddress;
-    };
+            const { nonce, contractCalls } = this.params;
+
+            if (!nonce) {
+                throw new Error(
+                    `Must call 'initialize' before calling 'generateGatewayAddress'.`,
+                );
+            }
+
+            if (!contractCalls) {
+                throw new Error(`Must provide contract call details.`);
+            }
+
+            // Last contract call
+            const { contractParams, sendTo, contractFn } =
+                contractCalls[contractCalls.length - 1];
+
+            // FIXME: dirty hack, but we need to re-write how we deal with
+            // addresses in order to do this cleanly
+            // (need to follow the multichain address pattern)
+            const sendToHex =
+                this.params.to.name == "Solana"
+                    ? base58.decode(sendTo).toString("hex")
+                    : sendTo;
+
+            this._state.pHash = generatePHash(
+                contractParams || [],
+                this._state.logger,
+            );
+
+            // Check if the transaction is either a v0.2 transaction, or has the
+            // version set to `0` in a v0.4 transaction.
+            // See [RenJSConfig.transactionVersion]
+            const v0Transaction =
+                this.renVM.version(this._state.selector) === 1 ||
+                this._state.config.transactionVersion === 0;
+
+            const tokenGatewayContract = !v0Transaction
+                ? Ox(generateSHash(this._state.selector))
+                : await this.params.to.resolveTokenGatewayContract(
+                      this.params.asset,
+                  );
+
+            const gHash = generateGHash(
+                contractParams || [],
+                sendToHex,
+                tokenGatewayContract,
+                fromHex(nonce),
+                !v0Transaction,
+                this._state.logger,
+            );
+            this._state.gHash = gHash;
+            this._state.gPubKey =
+                this._state.config.gPubKey ||
+                (await this.renVM.selectPublicKey(
+                    this._state.selector,
+                    this.renVM.version(this._state.selector) >= 2
+                        ? this.params.from.name
+                        : this.params.asset,
+                ));
+            this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
+
+            const gatewayAddress = await this.params.from.getGatewayAddress(
+                this.params.asset,
+                this._state.gPubKey,
+                gHash,
+            );
+            this.gatewayAddress = gatewayAddress;
+            this._state.logger.debug("gateway address:", this.gatewayAddress);
+
+            const filteredContractParams = contractParams
+                ? contractParams.filter(
+                      (contractParam) => !contractParam.notInPayload,
+                  )
+                : contractParams;
+
+            const encodedParameters = (
+                AbiCoder as unknown as AbiCoder.AbiCoder
+            ).encodeParameters(
+                (filteredContractParams || []).map((i) => i.type),
+                (filteredContractParams || []).map((i) => i.value),
+            );
+
+            const fnABI = payloadToMintABI(
+                contractFn,
+                filteredContractParams || [],
+            );
+
+            if (this.params.tags && this.params.tags.length > 1) {
+                throw new Error(
+                    "Providing multiple tags is not supported yet.",
+                );
+            }
+
+            const tags: [string] | [] =
+                this.params.tags && this.params.tags.length
+                    ? [this.params.tags[0]]
+                    : [];
+
+            this._state.token =
+                await this.params.to.resolveTokenGatewayContract(
+                    this.params.asset,
+                );
+
+            if (this.renVM.submitGatewayDetails) {
+                const promise = this.renVM.submitGatewayDetails(
+                    this.params.from.addressToString(gatewayAddress),
+                    {
+                        ...(this._state as MintState & MintStatePartial),
+                        token: this._state.token,
+                        nHash: Buffer.from(
+                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "base64",
+                        ),
+                        payload: fromHex(encodedParameters),
+                        nonce: fromHex(nonce),
+                        fn: contractFn,
+                        fnABI,
+                        to:
+                            this.renVM.version(this._state.selector) >= 2
+                                ? strip0x(sendTo)
+                                : Ox(sendTo),
+                        tags,
+
+                        // See [RenJSConfig.transactionVersion]
+                        transactionVersion:
+                            this._state.config.transactionVersion,
+                    },
+                    5,
+                );
+                if ((promise as { catch?: unknown }).catch) {
+                    (promise as Promise<unknown>).catch((_error) => {
+                        // Ignore error.
+                    });
+                }
+            }
+
+            return this.gatewayAddress;
+        };
 
     private readonly wait = async (): Promise<never> => {
         if (
@@ -680,7 +695,7 @@ export class LockAndMintDeposit<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress extends string | { address: string } = any
+    MintAddress extends string | { address: string } = any,
 > {
     /** The details, including amount, of the deposit. */
     public depositDetails: LockDeposit;
@@ -739,7 +754,8 @@ export class LockAndMintDeposit<
                 amount: "string",
             },
             {
-                depositDetails: depositDetails as DepositCommon<LockTransaction>,
+                depositDetails:
+                    depositDetails as DepositCommon<LockTransaction>,
             },
         );
         assertObject(
@@ -795,9 +811,8 @@ export class LockAndMintDeposit<
         }
 
         // Last contract call
-        const { contractParams, sendTo, contractFn } = contractCalls[
-            contractCalls.length - 1
-        ];
+        const { contractParams, sendTo, contractFn } =
+            contractCalls[contractCalls.length - 1];
 
         const filteredContractParams = contractParams
             ? contractParams.filter(
@@ -805,7 +820,9 @@ export class LockAndMintDeposit<
               )
             : contractParams;
 
-        const encodedParameters = new AbiCoder().encodeParameters(
+        const encodedParameters = (
+            AbiCoder as unknown as AbiCoder.AbiCoder
+        ).encodeParameters(
             (filteredContractParams || []).map((i) => i.type),
             (filteredContractParams || []).map((i) => i.value),
         );
@@ -875,9 +892,9 @@ export class LockAndMintDeposit<
             renTxSubmitted: false,
         };
 
-        this._state.txHash = (renVM.version(this._state.selector) >= 2
-            ? toURLBase64
-            : toBase64)(
+        this._state.txHash = (
+            renVM.version(this._state.selector) >= 2 ? toURLBase64 : toBase64
+        )(
             this.renVM.mintTxHash({
                 ...this._state,
                 outputHashFormat,
@@ -947,10 +964,11 @@ export class LockAndMintDeposit<
             return this._state.queryTxResult;
         }
 
-        const response: LockAndMintTransaction = await this.renVM.queryMintOrBurn(
-            this._state.selector,
-            fromBase64(this.txHash()),
-        );
+        const response: LockAndMintTransaction =
+            await this.renVM.queryMintOrBurn(
+                this._state.selector,
+                fromBase64(this.txHash()),
+            );
         this._state.queryTxResult = response;
 
         // Update status.
@@ -1053,12 +1071,10 @@ export class LockAndMintDeposit<
         current: number;
         target: number;
     }> => {
-        const {
-            current,
-            target,
-        } = await this.params.from.transactionConfidence(
-            this.depositDetails.transaction,
-        );
+        const { current, target } =
+            await this.params.from.transactionConfidence(
+                this.depositDetails.transaction,
+            );
         return {
             current,
             target: isDefined(this._state.targetConfirmations)
@@ -1410,14 +1426,15 @@ export class LockAndMintDeposit<
             this._state.queryTxResult.out &&
             this._state.queryTxResult.out.revert === undefined
         ) {
-            this.mintTransaction = await this.params.to.findTransactionByDepositDetails(
-                this.params.asset,
-                keccak256(Buffer.from(this._state.selector)),
-                this._state.nHash,
-                this._state.pHash,
-                this.params.contractCalls[0].sendTo,
-                this._state.queryTxResult.out.amount,
-            );
+            this.mintTransaction =
+                await this.params.to.findTransactionByDepositDetails(
+                    this.params.asset,
+                    keccak256(Buffer.from(this._state.selector)),
+                    this._state.nHash,
+                    this._state.pHash,
+                    this.params.contractCalls[0].sendTo,
+                    this._state.queryTxResult.out.amount,
+                );
             return this.mintTransaction;
         }
         return undefined;
@@ -1480,7 +1497,7 @@ export class LockAndMintDeposit<
                 asset,
                 contractCalls,
                 this._state.queryTxResult,
-                (promiEvent as unknown) as EventEmitter,
+                promiEvent as unknown as EventEmitter,
             );
 
             // Update status.

@@ -5,7 +5,7 @@ import {
     ConnectorInterface,
     ConnectorUpdate,
 } from "@renproject/multiwallet-base-connector";
-import { HttpProvider, provider } from "web3-providers";
+import { HttpProvider, provider } from "web3-core";
 
 const isResults = <T>(x: { results: T } | T): x is { results: T } =>
     (x as { results: T }).results !== undefined;
@@ -49,7 +49,8 @@ export type SaneProvider = Exclude<provider, string | null | HttpProvider> & {
 
 export abstract class AbstractEthereumConnector<
     Provider extends SaneProvider = SaneProvider
-> implements ConnectorInterface<Provider, EthAddress> {
+> implements ConnectorInterface<Provider, EthAddress>
+{
     readonly debug?: boolean;
     supportsTestnet = true;
     networkIdMapper = ethNetworkToRenNetwork;

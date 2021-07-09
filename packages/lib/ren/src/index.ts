@@ -146,8 +146,8 @@ export default class RenJS {
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         this._config.logger = this._logger;
-        const defaultProvider =
-            config && config.forceV2RPC
+        const defaultProvider = () =>
+            config && config.useV2TransactionFormat
                 ? new RenVMProvider(
                       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                       (providerOrNetwork || RenNetwork.Mainnet) as
@@ -172,7 +172,7 @@ export default class RenJS {
             typeof providerOrNetwork !== "string" &&
             (providerOrNetwork as AbstractRenVMProvider).sendMessage
                 ? (providerOrNetwork as AbstractRenVMProvider)
-                : defaultProvider;
+                : defaultProvider();
     }
 
     public getFees = async ({

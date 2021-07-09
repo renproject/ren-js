@@ -41,7 +41,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@myetherwallet/mewconnect-web-client": "^2.1.23-beta.1",
+        "@myetherwallet/mewconnect-web-client": "^2.1.23-beta.9",
         "@renproject/interfaces": "^2.4.4",
         "@renproject/multiwallet-abstract-ethereum-connector": "^2.4.4",
         "@renproject/multiwallet-base-connector": "^2.4.4",
@@ -52,13 +52,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

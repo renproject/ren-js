@@ -114,7 +114,7 @@ export interface EthArg<
     name extends string = string,
     type extends EthType = EthType,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    valueType = any
+    valueType = any,
 > {
     name: name;
     type: type;

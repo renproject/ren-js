@@ -15,7 +15,7 @@ import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import Web3 from "web3";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;

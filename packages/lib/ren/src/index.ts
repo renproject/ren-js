@@ -12,6 +12,7 @@ import {
     SimpleLogger,
 } from "@renproject/interfaces";
 import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
+import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 import {
     fromSmallestUnit,
     randomNonce,
@@ -145,13 +146,17 @@ export default class RenJS {
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         this._config.logger = this._logger;
-
-        // Use provided provider, provider URL or default lightnode URL.
-        this.renVM =
-            providerOrNetwork &&
-            typeof providerOrNetwork !== "string" &&
-            (providerOrNetwork as AbstractRenVMProvider).sendMessage
-                ? (providerOrNetwork as AbstractRenVMProvider)
+        const defaultProvider = () =>
+            config && config.useV2TransactionFormat
+                ? new RenVMProvider(
+                      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                      (providerOrNetwork || RenNetwork.Mainnet) as
+                          | RenNetwork
+                          | RenNetworkString
+                          | RenNetworkDetails,
+                      undefined,
+                      this._logger,
+                  )
                 : new CombinedProvider(
                       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                       (providerOrNetwork || RenNetwork.Mainnet) as
@@ -160,6 +165,14 @@ export default class RenJS {
                           | RenNetworkDetails,
                       this._logger,
                   );
+
+        // Use provided provider, provider URL or default lightnode URL.
+        this.renVM =
+            providerOrNetwork &&
+            typeof providerOrNetwork !== "string" &&
+            (providerOrNetwork as AbstractRenVMProvider).sendMessage
+                ? (providerOrNetwork as AbstractRenVMProvider)
+                : defaultProvider();
     }
 
     public getFees = async ({
@@ -224,7 +237,7 @@ export default class RenJS {
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address extends string | { address: string } = any
+        Address extends string | { address: string } = any,
     >(
         params: LockAndMintParams<Transaction, Deposit, Address>,
         config?: RenJSConfig,
@@ -243,7 +256,7 @@ export default class RenJS {
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address extends string | { address: string } = any
+        Address extends string | { address: string } = any,
     >(
         params: BurnAndReleaseParams<Transaction, Deposit, Address>,
         config?: RenJSConfig,

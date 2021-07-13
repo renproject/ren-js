@@ -63,37 +63,36 @@ export type Marshalled<Type extends PackType> = Type extends PackPrimitive.Bool
     ? any
     : never;
 
-export type Unmarshalled<
-    Type extends PackType
-> = Type extends PackPrimitive.Bool
-    ? boolean
-    : Type extends PackPrimitive.U8
-    ? BigNumber
-    : Type extends PackPrimitive.U16
-    ? BigNumber
-    : Type extends PackPrimitive.U32
-    ? BigNumber
-    : Type extends PackPrimitive.U64
-    ? BigNumber
-    : Type extends PackPrimitive.U128
-    ? BigNumber
-    : Type extends PackPrimitive.U256
-    ? BigNumber
-    : Type extends PackPrimitive.Str
-    ? string
-    : Type extends PackPrimitive.Bytes
-    ? Buffer
-    : Type extends PackPrimitive.Bytes32
-    ? Buffer
-    : Type extends PackPrimitive.Bytes65
-    ? Buffer
-    : Type extends PackNilType
-    ? undefined
-    : Type extends "list"
-    ? Array<any>
-    : Type extends "struct"
-    ? any
-    : never;
+export type Unmarshalled<Type extends PackType> =
+    Type extends PackPrimitive.Bool
+        ? boolean
+        : Type extends PackPrimitive.U8
+        ? BigNumber
+        : Type extends PackPrimitive.U16
+        ? BigNumber
+        : Type extends PackPrimitive.U32
+        ? BigNumber
+        : Type extends PackPrimitive.U64
+        ? BigNumber
+        : Type extends PackPrimitive.U128
+        ? BigNumber
+        : Type extends PackPrimitive.U256
+        ? BigNumber
+        : Type extends PackPrimitive.Str
+        ? string
+        : Type extends PackPrimitive.Bytes
+        ? Buffer
+        : Type extends PackPrimitive.Bytes32
+        ? Buffer
+        : Type extends PackPrimitive.Bytes65
+        ? Buffer
+        : Type extends PackNilType
+        ? undefined
+        : Type extends "list"
+        ? Array<any>
+        : Type extends "struct"
+        ? any
+        : never;
 
 export type PackTypeDefinition =
     | PackPrimitive
@@ -171,7 +170,7 @@ export const unmarshalPackValue = (
     value: unknown,
 ) => {
     if (Array.isArray(value)) {
-        return unmarshalPackArray((type as any) as PackArrayType, value);
+        return unmarshalPackArray(type as any as PackArrayType, value);
     } else if (typeof type === "object") {
         return unmarshalPackStruct(type, value as object);
     } else if (typeof type === "string") {

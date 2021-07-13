@@ -38,8 +38,8 @@ describe("renVMUtils", () => {
             expect(
                 resolveV2Contract({
                     asset: "BTC",
-                    from: ({ name: "Btc" } as unknown) as LockChain,
-                    to: ({ name: "Eth" } as unknown) as MintChain,
+                    from: { name: "Btc" } as unknown as LockChain,
+                    to: { name: "Eth" } as unknown as MintChain,
                 }),
             ).toEqual("BTC/fromBtcToEth");
         });
@@ -50,8 +50,8 @@ describe("renVMUtils", () => {
             expect(
                 resolveV2Contract({
                     asset: "BTC",
-                    from: ({ name: "Eth" } as unknown) as MintChain,
-                    to: ({ name: "Btc" } as unknown) as LockChain,
+                    from: { name: "Eth" } as unknown as MintChain,
+                    to: { name: "Btc" } as unknown as LockChain,
                 }),
             ).toEqual("BTC/fromEthToBtc");
         });

@@ -45,45 +45,45 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
             .catch(async (...args) => this.deactivate(...args));
     };
 
-    activate: ConnectorInterface<
-        MewProvider,
-        EthAddress
-    >["activate"] = async () => {
-        // No good typings for injected providers exist...
-        const provider = await this.getProvider();
-        if (!provider) {
-            throw Error("Missing Provider");
-        }
-        if (!this.mewConnectProvider) {
-            throw Error("Missing MEWConnect Provider");
-        }
-        // clear any hanging listeners
-        await this.cleanup();
+    activate: ConnectorInterface<MewProvider, EthAddress>["activate"] =
+        async () => {
+            // No good typings for injected providers exist...
+            const provider = await this.getProvider();
+            if (!provider) {
+                throw Error("Missing Provider");
+            }
+            if (!this.mewConnectProvider) {
+                throw Error("Missing MEWConnect Provider");
+            }
+            // clear any hanging listeners
+            await this.cleanup();
 
-        if (provider.enable) {
-            await provider.enable().catch((error: Error): void => {
-                // TODO ideally this would be a better check
-                if (error.message === "User closed modal") {
-                    this.emitter.emitError(new Error("User rejected request"));
-                }
+            if (provider.enable) {
+                await provider.enable().catch((error: Error): void => {
+                    // TODO ideally this would be a better check
+                    if (error.message === "User closed modal") {
+                        this.emitter.emitError(
+                            new Error("User rejected request")
+                        );
+                    }
 
-                throw error;
-            });
-        }
+                    throw error;
+                });
+            }
 
-        if (this.mewConnectProvider.on) {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            this.mewConnectProvider.on("disconnected", this.deactivate);
-        }
-        if (provider.on) {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            provider.on("close", this.deactivate);
-            provider.on("networkChanged", this.handleUpdate);
-            provider.on("accountsChanged", this.handleUpdate);
-            provider.on("chainChanged", this.handleUpdate);
-        }
-        return this.getStatus();
-    };
+            if (this.mewConnectProvider.on) {
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                this.mewConnectProvider.on("disconnected", this.deactivate);
+            }
+            if (provider.on) {
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                provider.on("close", this.deactivate);
+                provider.on("networkChanged", this.handleUpdate);
+                provider.on("accountsChanged", this.handleUpdate);
+                provider.on("chainChanged", this.handleUpdate);
+            }
+            return this.getStatus();
+        };
 
     getProvider = async () => {
         if (this.provider) return this.provider;
@@ -105,15 +105,41 @@ export class EthereumMEWConnectConnector extends AbstractEthereumConnector<MewPr
 
     // Get default web3 account
     getAccount = async () => {
-        return (await this.getProvider())
-            .send("eth_accounts", [])
-            .then((accounts: string[]): string => accounts[0]);
+        const send = (await this.getProvider()).send;
+        if (!send) throw new Error("missing send");
+        const params = {
+            jsonrpc: "",
+            method: "eth_accounts",
+            params: [],
+        };
+        return new Promise((resolve, reject) =>
+            send(params, (err, res) =>
+                err || !res || res.error
+                    ? reject(err || res?.error || "no response")
+                    : resolve(res.result[0])
+            )
+        );
     };
     // Cast current ethereum network to Ren network version or throw
     getRenNetwork = async (): Promise<RenNetwork> => {
         if (!this.provider) throw new Error("not initialized");
+        const send = this.provider.send;
+        if (!send) throw new Error("missing send");
+
+        const params = {
+            jsonrpc: "",
+            method: "eth_chainId",
+            params: [],
+        };
         return this.networkIdMapper(
-            await this.provider.send("eth_chainId", [])
+            await new Promise((resolve, reject) =>
+                send(params, (err, res) =>
+                    err || !res || res.error
+                        ? reject(err || res?.error || "no response")
+                        : resolve(res.result)
+                )
+            )
+            //   await this.provider.send("eth_chainId", [])
         );
     };
 

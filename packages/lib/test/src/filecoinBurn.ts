@@ -6,7 +6,7 @@ import { blue } from "chalk";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 // Load environment variables.
 loadDotEnv();

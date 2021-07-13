@@ -168,9 +168,9 @@ export class BlockchairClass implements BitcoinAPI {
         const response = await axios.post<{
             data: { transaction_hash: string };
         }>(url, { data: txHex }, { timeout: DEFAULT_TIMEOUT });
-        if (((response.data as unknown) as BlockchairError).error) {
+        if ((response.data as unknown as BlockchairError).error) {
             throw new Error(
-                ((response.data as unknown) as BlockchairError).error,
+                (response.data as unknown as BlockchairError).error,
             );
         }
         return response.data.data.transaction_hash;

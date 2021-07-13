@@ -4,22 +4,19 @@
 type Constructor = new (...args: any[]) => any;
 
 // Extracts argument types from class constructor
-type ConstructorArgs<
-    TConstructor extends Constructor
-> = TConstructor extends new (...args: infer TArgs) => any ? TArgs : never;
+type ConstructorArgs<TConstructor extends Constructor> =
+    TConstructor extends new (...args: infer TArgs) => any ? TArgs : never;
 
 // Extracts class instance type from class constructor
-type ConstructorClass<
-    TConstructor extends Constructor
-> = TConstructor extends new (...args: any[]) => infer TClass ? TClass : never;
+type ConstructorClass<TConstructor extends Constructor> =
+    TConstructor extends new (...args: any[]) => infer TClass ? TClass : never;
 
 // This is what we want: to be able to create new class instances either with or without "new" keyword
-export type CallableConstructor<
-    TConstructor extends Constructor
-> = TConstructor &
-    ((
-        ...args: ConstructorArgs<TConstructor>
-    ) => ConstructorClass<TConstructor>);
+export type CallableConstructor<TConstructor extends Constructor> =
+    TConstructor &
+        ((
+            ...args: ConstructorArgs<TConstructor>
+        ) => ConstructorClass<TConstructor>);
 
 // export const Callable = <TConstructor extends Constructor>(t: TConstructor) =>
 //     t as CallableConstructor<TConstructor>;

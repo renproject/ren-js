@@ -30,7 +30,8 @@ const isV1Selector = (selector: string) => {
 };
 
 export class CombinedProvider
-    implements AbstractRenVMProvider<RenVMParams, RenVMResponses> {
+    implements AbstractRenVMProvider<RenVMParams, RenVMResponses>
+{
     public v1?: V1Provider;
     public v2: V2Provider;
     public sendMessage: AbstractRenVMProvider["sendMessage"];
@@ -137,7 +138,7 @@ export class CombinedProvider
             : this.v2.submitBurn(params);
 
     queryMintOrBurn = <
-        T extends LockAndMintTransaction | BurnAndReleaseTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction,
     >(
         selector: string,
         utxoTxHash: Buffer,

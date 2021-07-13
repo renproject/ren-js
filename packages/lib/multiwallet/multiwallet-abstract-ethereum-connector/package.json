@@ -46,7 +46,7 @@
         "@renproject/interfaces": "^2.4.5-alpha.0",
         "@renproject/multiwallet-base-connector": "^2.4.5-alpha.0",
         "@types/node": ">=10",
-        "web3": "^2.0.0-alpha.1"
+        "web3": "^3.0.0-rc.5"
     },
     "resolutions": {
         "sha3": "^2.1.2"

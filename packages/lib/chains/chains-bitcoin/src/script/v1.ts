@@ -20,18 +20,22 @@ const UTXOGatewayScript = (
         .add(opcode.OP_CHECKSIG)
         .toScriptHashOut();
 
-export const createAddress = (
-    networks: typeof BNetworks,
-    opcode: typeof BOpcode,
-    script: typeof bScript,
-) => (isTestnet: boolean, gPubKeyHash: Buffer, gHash: Buffer): string =>
-    UTXOGatewayScript(opcode, script, gPubKeyHash, gHash)
-        .toAddress(isTestnet ? networks.testnet : networks.mainnet)
-        .toString();
+export const createAddress =
+    (
+        networks: typeof BNetworks,
+        opcode: typeof BOpcode,
+        script: typeof bScript,
+    ) =>
+    (isTestnet: boolean, gPubKeyHash: Buffer, gHash: Buffer): string =>
+        UTXOGatewayScript(opcode, script, gPubKeyHash, gHash)
+            .toAddress(isTestnet ? networks.testnet : networks.mainnet)
+            .toString();
 
-export const pubKeyScript = (
-    _networks: typeof BNetworks,
-    opcode: typeof BOpcode,
-    script: typeof bScript,
-) => (_isTestnet: boolean, gPubKeyHash: Buffer, gHash: Buffer) =>
-    UTXOGatewayScript(opcode, script, gPubKeyHash, gHash).toBuffer();
+export const pubKeyScript =
+    (
+        _networks: typeof BNetworks,
+        opcode: typeof BOpcode,
+        script: typeof bScript,
+    ) =>
+    (_isTestnet: boolean, gPubKeyHash: Buffer, gHash: Buffer) =>
+        UTXOGatewayScript(opcode, script, gPubKeyHash, gHash).toBuffer();

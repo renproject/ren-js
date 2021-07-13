@@ -109,7 +109,7 @@ export interface LockAndMintParams<
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     LockAddress extends string | { address: string } = any,
     MintTransaction = any,
-    MintAddress extends string | { address: string } = any
+    MintAddress extends string | { address: string } = any,
 > extends TransferParamsCommon {
     /**
      * The chain that the asset is native to - e.g. `Bitcoin()` for bridging the
@@ -132,7 +132,7 @@ export interface BurnAndReleaseParams<
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     LockAddress extends string | { address: string } = any,
     MintTransaction = any,
-    MintAddress extends string | { address: string } = any
+    MintAddress extends string | { address: string } = any,
 > extends TransferParamsCommon {
     /**
      * The chain from which the ren-asset was burned - e.g. `Ethereum(provider)`.

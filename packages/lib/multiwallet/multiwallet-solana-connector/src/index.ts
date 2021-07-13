@@ -29,7 +29,8 @@ interface SolanaProvider {
 }
 
 export class SolanaConnector
-    implements ConnectorInterface<SolanaProvider, string> {
+    implements ConnectorInterface<SolanaProvider, string>
+{
     readonly debug?: boolean;
     supportsTestnet = true;
     emitter: ConnectorEmitter<SolanaProvider, string>;
@@ -44,7 +45,6 @@ export class SolanaConnector
         providerURL,
         clusterURL,
     }: SolanaConnectorOptions) {
-        this.debug = debug;
         this.network = network;
         this.clusterURL = clusterURL || renNetworkToSolanaNetwork[this.network];
         this.connection = new Connection(this.clusterURL);
@@ -84,17 +84,15 @@ export class SolanaConnector
 
     // Get the complete connector status in one call
     async getStatus(): Promise<ConnectorUpdate<SolanaProvider, string>> {
-        if (this.debug) console.debug("getting status");
         return {
             account: await this.getAccount(),
-            renNetwork: await this.getRenNetwork(),
+            renNetwork: this.getRenNetwork(),
             provider: await this.getProvider(),
         };
     }
 
     // Get default wallet pubkey
     async getAccount() {
-        if (this.debug) console.debug("getting account");
         const account = (await this.getProvider()).wallet.publicKey.toBase58();
         if (!account) {
             throw new Error("Not activated");
@@ -102,8 +100,7 @@ export class SolanaConnector
         return account;
     }
     // Provide network selected during construction
-    async getRenNetwork() {
-        if (this.debug) console.debug("getting chain");
+    getRenNetwork() {
         return this.network;
     }
 }

@@ -13,7 +13,7 @@ import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 
 chai.should();
 

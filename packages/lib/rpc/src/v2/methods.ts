@@ -62,7 +62,7 @@ export type ParamsSubmitGateway = {
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
 export interface ParamsSubmitTx<
-    T extends MintTransactionInput | BurnTransactionInput
+    T extends MintTransactionInput | BurnTransactionInput,
 > {
     // Tx being submitted.
     tx: T;

@@ -28,7 +28,8 @@ import base58 from "bs58";
 export class BitcoinClass
     extends BitcoinBaseChain
     implements
-        LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean> {
+        LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean>
+{
     public static chain = "Bitcoin";
     public chain = BitcoinClass.chain;
     public name = BitcoinClass.chain;

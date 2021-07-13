@@ -50,7 +50,8 @@ export enum TerraAssets {
  */
 export class TerraClass
     implements
-        LockChain<TerraTransaction, TerraDeposit, TerraAddress, TerraNetwork> {
+        LockChain<TerraTransaction, TerraDeposit, TerraAddress, TerraNetwork>
+{
     public static chain = "Terra";
     public chain = TerraClass.chain;
     public name = TerraClass.chain;
@@ -242,9 +243,9 @@ export class TerraClass
         // If `NO_PARAMS_FLAG` is set, set renVM public key and gHash public key,
         // and recreate key pair from resulting curve point.
         const derivedPublicKey = ec.keyFromPublic(
-            (renVMPublicKey
+            renVMPublicKey
                 .getPublic()
-                .add(gHashKey.getPublic()) as unknown) as elliptic.ec.KeyPair,
+                .add(gHashKey.getPublic()) as unknown as elliptic.ec.KeyPair,
         );
 
         const newCompressedPublicKey: Buffer = Buffer.from(

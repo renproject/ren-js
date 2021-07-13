@@ -18,7 +18,7 @@ import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
 import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
 import Web3 from "web3";
-import { provider } from "web3-providers";
+import { provider } from "web3-core";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 
 chai.should();
@@ -196,10 +196,13 @@ describe("Refactor: mint", () => {
                             address = lockAndMint.gatewayAddress;
                         } else if (asset === "FIL" || asset === "LUNA") {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                            address = (lockAndMint.gatewayAddress as Chains.FilAddress)
-                                .address;
+                            address = (
+                                lockAndMint.gatewayAddress as Chains.FilAddress
+                            ).address;
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                            options.params = (lockAndMint.gatewayAddress as Chains.FilAddress).params;
+                            options.params = (
+                                lockAndMint.gatewayAddress as Chains.FilAddress
+                            ).params;
                             // options.memo = (lockAndMint.gatewayAddress as TerraAddress);
                         } else {
                             console.error(`Unknown address format.`);

@@ -352,7 +352,7 @@ const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
     const { lock, release, ...tokens } = fees;
 
     // TODO: Fix type errors.
-    return ({
+    return {
         lock: decodeNumber(lock),
         release: decodeNumber(release),
         ...Object.keys(tokens).reduce(
@@ -365,7 +365,7 @@ const unmarshalAssetFees = (fees: Fees): RenVMAssetFees => {
             }),
             {},
         ),
-    } as unknown) as RenVMAssetFees;
+    } as unknown as RenVMAssetFees;
 };
 
 export const unmarshalFees = (response: ResponseQueryFees): RenVMFees => {

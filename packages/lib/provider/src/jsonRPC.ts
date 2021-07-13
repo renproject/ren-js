@@ -19,7 +19,7 @@ export interface Provider<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Responses extends { [event: string]: any } = {}
+    Responses extends { [event: string]: any } = {},
 > {
     sendMessage<Method extends keyof Requests & string>(
         method: Method,

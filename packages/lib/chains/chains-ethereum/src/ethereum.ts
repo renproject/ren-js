@@ -10,8 +10,7 @@ import {
 } from "@renproject/interfaces";
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { TransactionConfig } from "web3-core";
-import { provider } from "web3-providers";
+import { TransactionConfig, provider } from "web3-core";
 
 import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
@@ -19,7 +18,8 @@ import { EthAddress, EthTransaction } from "./types";
 
 export class EthereumClass
     extends EthereumBaseChain
-    implements MintChain<EthTransaction, EthAddress> {
+    implements MintChain<EthTransaction, EthAddress>
+{
     public _getParams:
         | ((
               asset: string,

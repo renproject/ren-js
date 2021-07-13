@@ -239,7 +239,7 @@ export const parseBurnEvent = (
             },
         ],
         event.data,
-        event.topics.slice(1) as string[],
+        event.topics.slice(1),
     );
 
     return {

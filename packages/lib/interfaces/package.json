@@ -48,17 +48,12 @@
     "dependencies": {
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
-        "web3-core": "^2.0.0-alpha.1"
+        "web3-core": "^3.0.0-rc.5"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

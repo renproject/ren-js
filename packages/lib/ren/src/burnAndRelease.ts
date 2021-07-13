@@ -51,7 +51,7 @@ export class BurnAndRelease<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress extends string | { address: string } = any
+    MintAddress extends string | { address: string } = any,
 > {
     /** The details of the burn, including the amount and recipient. */
     public burnDetails: BurnDetails<MintTransaction> | undefined;
@@ -282,12 +282,8 @@ export class BurnAndRelease<
                 );
             }
 
-            const {
-                asset,
-                transaction,
-                burnNonce,
-                contractCalls,
-            } = this.params;
+            const { asset, transaction, burnNonce, contractCalls } =
+                this.params;
 
             this.burnDetails = await this.params.from.findBurnTransaction(
                 asset,
@@ -296,7 +292,7 @@ export class BurnAndRelease<
                     burnNonce,
                     contractCalls,
                 },
-                (promiEvent as unknown) as EventEmitter,
+                promiEvent as unknown as EventEmitter,
                 this._state.logger,
                 this._state.config.networkDelay,
             );
@@ -307,12 +303,10 @@ export class BurnAndRelease<
                 target = 1;
             while (current < target) {
                 try {
-                    ({
-                        current,
-                        target,
-                    } = await this.params.from.transactionConfidence(
-                        this.burnDetails.transaction,
-                    ));
+                    ({ current, target } =
+                        await this.params.from.transactionConfidence(
+                            this.burnDetails.transaction,
+                        ));
                     if (
                         this._state.targetConfirmations &&
                         target < this._state.targetConfirmations
@@ -448,10 +442,11 @@ export class BurnAndRelease<
      * queryTx requests the status of the burn from RenVM.
      */
     public queryTx = async (): Promise<BurnAndReleaseTransaction> => {
-        const burnTransaction: BurnAndReleaseTransaction = await this.renVM.queryMintOrBurn(
-            this._state.selector,
-            fromBase64(this.txHash()),
-        );
+        const burnTransaction: BurnAndReleaseTransaction =
+            await this.renVM.queryMintOrBurn(
+                this._state.selector,
+                fromBase64(this.txHash()),
+            );
         this._state.queryTxResult = burnTransaction;
         return burnTransaction;
     };
@@ -519,13 +514,11 @@ export class BurnAndRelease<
 
                         const payload = Buffer.from([]);
                         const pHash = generatePHash([], this._state.logger);
-                        const {
-                            txid,
-                            txindex,
-                        } = this.params.from.transactionRPCFormat(
-                            transaction,
-                            true,
-                        );
+                        const { txid, txindex } =
+                            this.params.from.transactionRPCFormat(
+                                transaction,
+                                true,
+                            );
                         const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
                             Buffer,
                             "be",
@@ -609,16 +602,17 @@ export class BurnAndRelease<
             promiEvent.emit("txHash", txHash);
             this._state.logger.debug("txHash:", txHash);
 
-            const response = await this.renVM.waitForTX<BurnAndReleaseTransaction>(
-                this._state.selector,
-                fromBase64(txHash),
-                (status) => {
-                    promiEvent.emit("status", status);
-                    this._state.logger.debug("transaction status:", status);
-                },
-                () => promiEvent._isCancelled(),
-                this._state.config.networkDelay,
-            );
+            const response =
+                await this.renVM.waitForTX<BurnAndReleaseTransaction>(
+                    this._state.selector,
+                    fromBase64(txHash),
+                    (status) => {
+                        promiEvent.emit("status", status);
+                        this._state.logger.debug("transaction status:", status);
+                    },
+                    () => promiEvent._isCancelled(),
+                    this._state.config.networkDelay,
+                );
 
             if (response.out && response.out.revert !== undefined) {
                 this.status = BurnAndReleaseStatus.Reverted;
@@ -635,18 +629,20 @@ export class BurnAndRelease<
                     try {
                         if (response.out.txid) {
                             const txid = response.out.txid;
-                            transaction = await this.params.to.transactionFromRPCFormat(
-                                txid,
-                                "",
-                                true,
-                            );
+                            transaction =
+                                await this.params.to.transactionFromRPCFormat(
+                                    txid,
+                                    "",
+                                    true,
+                                );
                         } else if (response.out.outpoint) {
                             const { hash, index } = response.out.outpoint;
-                            transaction = await this.params.to.transactionFromRPCFormat(
-                                hash,
-                                index.toFixed(),
-                                true,
-                            );
+                            transaction =
+                                await this.params.to.transactionFromRPCFormat(
+                                    hash,
+                                    index.toFixed(),
+                                    true,
+                                );
                         }
                     } catch (error) {
                         this._state.logger.debug(error);

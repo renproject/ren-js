@@ -31,7 +31,7 @@ import { EventEmitter } from "events";
 export class InternalPromiEvent<
     T,
     // eslint-disable-next-line @typescript-eslint/ban-types
-    EventTypes extends { [event: string]: any[] } = {}
+    EventTypes extends { [event: string]: any[] } = {},
 > {
     public readonly [Symbol.toStringTag]: "Promise";
     public readonly promise: Promise<T>;
@@ -143,10 +143,10 @@ export class InternalPromiEvent<
 export type PromiEvent<
     T,
     // eslint-disable-next-line @typescript-eslint/ban-types
-    EventTypes extends { [event: string]: any[] } = {}
+    EventTypes extends { [event: string]: any[] } = {},
 > = InternalPromiEvent<T, EventTypes> & Promise<T>;
 export const newPromiEvent = <
     T,
     // eslint-disable-next-line @typescript-eslint/ban-types
-    EventTypes extends { [event: string]: any[] } = {}
+    EventTypes extends { [event: string]: any[] } = {},
 >() => new InternalPromiEvent<T, EventTypes>() as PromiEvent<T, EventTypes>;

@@ -58,7 +58,8 @@ interface ConstructorOptions {
 
 export class FilecoinClass
     implements
-        LockChain<FilTransaction, FilDeposit, FilAddress, FilNetwork, number> {
+        LockChain<FilTransaction, FilDeposit, FilAddress, FilNetwork, number>
+{
     public static chain = "Filecoin";
     public chain = FilecoinClass.chain;
     public name = FilecoinClass.chain;
@@ -248,15 +249,13 @@ export class FilecoinClass
                 let page = 0;
 
                 while (true) {
-                    const {
-                        deposits,
-                        totalCount,
-                    } = await this.filfox.fetchDeposits(
-                        address.address,
-                        address.params,
-                        page,
-                        size,
-                    );
+                    const { deposits, totalCount } =
+                        await this.filfox.fetchDeposits(
+                            address.address,
+                            address.params,
+                            page,
+                            size,
+                        );
 
                     await Promise.all(
                         (deposits || []).map(async (tx) =>
@@ -338,11 +337,11 @@ export class FilecoinClass
         // and recreate key pair from resulting curve point.
         const derivedPublicKey = this.noParamsFlag
             ? ec.keyFromPublic(
-                  (renVMPublicKey
+                  renVMPublicKey
                       .getPublic()
                       .add(
                           gHashKey.getPublic(),
-                      ) as unknown) as elliptic.ec.KeyPair,
+                      ) as unknown as elliptic.ec.KeyPair,
               )
             : renVMPublicKey;
 

@@ -189,18 +189,33 @@ export class EthereumBaseChain
     };
 
     constructor(
-        web3Provider: ExternalProvider | JsonRpcFetchFunc,
-        signer: ethers.Signer,
+        web3Provider:
+            | ExternalProvider
+            | JsonRpcFetchFunc
+            | {
+                  provider: Web3Provider;
+                  signer: ethers.Signer;
+              },
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
     ) {
-        this.provider = (web3Provider as any)._isProvider
-            ? (web3Provider as any)
-            : new ethers.providers.Web3Provider(web3Provider);
-        this.signer = signer;
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        if ((web3Provider as any).signer && (web3Provider as any).provider) {
+            this.provider = (web3Provider as any).provider;
+            this.signer = (web3Provider as any).signer;
+        } else {
+            const provider = (web3Provider as any)._isProvider
+                ? (web3Provider as any)
+                : new ethers.providers.Web3Provider(
+                      web3Provider as ExternalProvider | JsonRpcFetchFunc,
+                  );
+            this.provider = provider;
+            this.signer = provider.getSigner();
+        }
+        /* eslint-enable @typescript-eslint/no-explicit-any */
         // this.provider = new Web3(web3Provider);
         if (renNetwork) {
             this.renNetworkDetails = resolveNetwork(renNetwork);

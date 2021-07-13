@@ -84,7 +84,7 @@ export const toURLBase64 = (input: Buffer | string): string => {
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
-        .replace(/\=+$/, "");
+        .replace(/=+$/, "");
 };
 
 export const toReadable = (

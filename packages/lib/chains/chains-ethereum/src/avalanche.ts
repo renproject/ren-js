@@ -5,7 +5,11 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
+import {
+    ExternalProvider,
+    JsonRpcFetchFunc,
+    Web3Provider,
+} from "@ethersproject/providers";
 import { NetworkInput } from "./base";
 import { EthAddress, EthTransaction } from "./types";
 
@@ -123,8 +127,13 @@ export class AvalancheClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider: ExternalProvider | JsonRpcFetchFunc,
-        signer: Signer,
+        web3Provider:
+            | ExternalProvider
+            | JsonRpcFetchFunc
+            | {
+                  provider: Web3Provider;
+                  signer: Signer;
+              },
         renNetwork:
             | RenNetwork
             | RenNetworkString
@@ -132,8 +141,8 @@ export class AvalancheClass extends EthereumClass {
             | EthereumConfig,
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
-        // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, signer, resolveAvalancheNetwork(renNetwork));
+        // is a web3Provider and the second the RenVM network.
+        super(web3Provider, resolveAvalancheNetwork(renNetwork));
     }
 
     initialize = (

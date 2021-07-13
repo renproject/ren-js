@@ -7,7 +7,11 @@ import {
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { NetworkInput } from "./base";
 import { EthAddress, EthTransaction } from "./types";
-import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
+import {
+    ExternalProvider,
+    JsonRpcFetchFunc,
+    Web3Provider,
+} from "@ethersproject/providers";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
@@ -133,8 +137,13 @@ export class FantomClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider: ExternalProvider | JsonRpcFetchFunc,
-        signer: Signer,
+        web3Provider:
+            | ExternalProvider
+            | JsonRpcFetchFunc
+            | {
+                  provider: Web3Provider;
+                  signer: Signer;
+              },
         renNetwork:
             | RenNetwork
             | RenNetworkString
@@ -142,8 +151,8 @@ export class FantomClass extends EthereumClass {
             | EthereumConfig,
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
-        // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, signer, resolveFantomNetwork(renNetwork));
+        // is a web3Provider and the second the RenVM network.
+        super(web3Provider, resolveFantomNetwork(renNetwork));
     }
 
     initialize = (

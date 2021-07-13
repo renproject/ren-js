@@ -67,8 +67,8 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
     private transactions: Map<string, ResponseQueryTx>;
     private supportedChains: Array<string>;
 
-    constructor() {
-        this.privateKeyBuffer = randomBytes(32);
+    constructor(privateKey?: Buffer) {
+        this.privateKeyBuffer = privateKey || randomBytes(32);
         this.transactions = new Map();
         this.supportedChains = [];
     }

@@ -19,6 +19,7 @@ import {
     pubKeyScript,
 } from "@renproject/chains-bitcoin/build/main/script";
 import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
+import BigNumber from "bignumber.js";
 
 export class MockChain extends BitcoinClass {
     public static chain = "MockChain";
@@ -26,9 +27,10 @@ export class MockChain extends BitcoinClass {
     public name = MockChain.chain;
     public mempool: (UTXO & { to: string })[];
 
-    constructor(network: BtcNetwork = "testnet") {
+    constructor(asset: string, network: BtcNetwork = "testnet") {
         super(network);
         this.mempool = [];
+        this.asset = asset;
     }
 
     public fetchUTXO = async (txHash: string, vOut: number): Promise<UTXO> => {
@@ -49,7 +51,7 @@ export class MockChain extends BitcoinClass {
         );
     };
 
-    public addUTXO = (to: string, amount: number): UTXO => {
+    public addUTXO = (to: string, amount: BigNumber | number): UTXO => {
         const tx = {
             to,
             txHash: randomBytes(32).toString("hex"),

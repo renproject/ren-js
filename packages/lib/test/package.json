@@ -40,7 +40,10 @@
         "@truffle/hdwallet-provider": "1.4.1",
         "chalk": "^4.1.0",
         "dotenv": "^8.2.0",
-        "web3": "^1.3.6"
+        "web3": "^1.3.6",
+        "@renproject/gateway-sol": "^1.0.10",
+        "hardhat": "2.4.1",
+        "@nomiclabs/hardhat-ethers": "^2.0.2"
     },
     "resolutions": {
         "sha3": "^2.1.2"

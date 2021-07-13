@@ -11,7 +11,11 @@ import {
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { PopulatedTransaction, Signer } from "ethers";
-import { ExternalProvider, JsonRpcFetchFunc } from "@ethersproject/providers";
+import {
+    ExternalProvider,
+    JsonRpcFetchFunc,
+    Web3Provider,
+} from "@ethersproject/providers";
 
 import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
@@ -32,15 +36,20 @@ export class EthereumClass
         | undefined;
 
     constructor(
-        web3Provider: ExternalProvider | JsonRpcFetchFunc,
-        signer: Signer,
+        web3Provider:
+            | ExternalProvider
+            | JsonRpcFetchFunc
+            | {
+                  provider: Web3Provider;
+                  signer: Signer;
+              },
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
     ) {
-        super(web3Provider, signer, renNetwork);
+        super(web3Provider, renNetwork);
     }
 
     public getMintParams = (

@@ -72,6 +72,7 @@ const resolveAvalancheNetwork = (
         return renNetwork as EthereumConfig;
     } else {
         const details = getRenNetworkDetails(
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
         return details.isTestnet ? renAvalancheTestnet : renAvalancheMainnet;
@@ -112,7 +113,7 @@ export class AvalancheClass extends EthereumClass {
                     Avalanche.utils.resolveChainNetwork(network) ||
                     renAvalancheMainnet
                 ).etherscan
-            }/tx/${transaction}`,
+            }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(

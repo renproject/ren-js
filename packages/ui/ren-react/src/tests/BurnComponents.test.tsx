@@ -11,6 +11,7 @@ import {
     buildMockMintChain,
 } from "@renproject/ren-tx/test/testutils/mock";
 import BigNumber from "bignumber.js";
+import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 
 let parameters: BurnConfigSingle;
 let mockLock = buildMockLockChain();
@@ -18,12 +19,13 @@ let mockMint = buildMockMintChain();
 
 describe("Test Mint", () => {
     beforeEach(() => {
+        jest.setTimeout(20 * 1000);
         jest.useFakeTimers();
 
         mockLock = buildMockLockChain();
         mockMint = buildMockMintChain();
         parameters = {
-            sdk: new RenJS("testnet"),
+            sdk: new RenJS(new RenVMProvider("testnet")),
             burnParams: {
                 sourceAsset: "BTC",
                 network: "testnet",
@@ -45,7 +47,7 @@ describe("Test Mint", () => {
     it("should have correct className with default props", async () => {
         const { findByText } = renderComponent();
         const Burn = await findByText(/Creating Burn.*/, undefined, {
-            timeout: 4900,
+            timeout: 19900,
         });
         expect(Burn.textContent).toContain("Creating");
     });
@@ -53,7 +55,7 @@ describe("Test Mint", () => {
     it("should prompt burn details", async () => {
         const { findByText } = renderComponent();
         const Burn = await findByText(/Burn.*/, undefined, {
-            timeout: 4900,
+            timeout: 19900,
         });
         expect(Burn.textContent).toContain("Burn");
     });
@@ -64,7 +66,7 @@ describe("Test Mint", () => {
             /.*submit transaction in your wallet.*/,
             undefined,
             {
-                timeout: 4900,
+                timeout: 19900,
             },
         );
         expect(gatewayInfo.textContent).toContain("Please");
@@ -80,8 +82,8 @@ describe("Test Mint", () => {
             }, 500);
 
             setInterval(() => {
-                emitter.emit("confirmation", 1);
-            }, 1000);
+                emitter.emit("confirmation", 6);
+            }, 2000);
 
             return new Promise((resolve) => {
                 setTimeout(() => {
@@ -99,7 +101,7 @@ describe("Test Mint", () => {
         };
         const { findByText } = renderComponent();
         const gatewayInfo = await findByText(/Error Releasing.*/, undefined, {
-            timeout: 4900,
+            timeout: 19900,
         });
         expect(gatewayInfo.textContent).toContain("unknown");
     });

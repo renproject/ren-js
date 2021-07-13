@@ -3,11 +3,11 @@ import * as ReactDOM from "react-dom";
 
 import { Box, Button, Container, Paper, Typography } from "@material-ui/core";
 
-import { SolanaConnector } from "../../../lib/multiwallet/multiwallet-solana-connector/src/index";
-import { BinanceSmartChainInjectedConnector } from "../../../lib/multiwallet/multiwallet-binancesmartchain-injected-connector/src/index";
-import { EthereumInjectedConnector } from "../../../lib/multiwallet/multiwallet-ethereum-injected-connector/src/index";
-import { EthereumMEWConnectConnector } from "../../../lib/multiwallet/multiwallet-ethereum-mewconnect-connector/src/index";
-import { EthereumWalletConnectConnector } from "../../../lib/multiwallet/multiwallet-ethereum-walletconnect-connector/src/index";
+import { SolanaConnector } from "@renproject/multiwallet-solana-connector/src/index";
+import { BinanceSmartChainInjectedConnector } from "@renproject/multiwallet-binancesmartchain-injected-connector/src/index";
+import { EthereumInjectedConnector } from "@renproject/multiwallet-ethereum-injected-connector/src/index";
+import { EthereumMEWConnectConnector } from "@renproject/multiwallet-ethereum-mewconnect-connector/src/index";
+import { EthereumWalletConnectConnector } from "@renproject/multiwallet-ethereum-walletconnect-connector/src/index";
 import { WalletPickerConfig, WalletPickerModal } from "../src";
 import {
   MultiwalletProvider,

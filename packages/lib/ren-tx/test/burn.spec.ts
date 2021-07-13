@@ -42,11 +42,11 @@ describe("BurnMachine", () => {
                             "transactionHash",
                             "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                         );
-                    }, 500);
+                    }, 100);
 
                     setInterval(() => {
-                        emitter.emit("confirmation", 1);
-                    }, 1000);
+                        emitter.emit("confirmation", 6);
+                    }, 100);
 
                     return new Promise((resolve) => {
                         setTimeout(() => {
@@ -59,7 +59,7 @@ describe("BurnMachine", () => {
                                 to: "asd",
                                 nonce: new BigNumber(0),
                             });
-                        }, 1100);
+                        }, 100);
                     });
                 };
                 return chain;

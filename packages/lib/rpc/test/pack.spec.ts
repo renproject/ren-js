@@ -11,7 +11,7 @@ describe("Pack", () => {
         const amount =
             "51423850459342719531259112406474019285406140697150570331000675381551947991775";
         const nonce = "H8AmOgjiSt8ULnuw1mDzPMJogHDOS2J1uNELrDma0xg";
-        const to = "􂜇𚧦󫰀";
+        const to = "1234";
 
         const result = unmarshalPackValue(burnParamsType, {
             amount,
@@ -22,7 +22,7 @@ describe("Pack", () => {
         expect(result).toEqual({
             amount: new BigNumber(amount),
             nonce: fromBase64(nonce),
-            to: Buffer.from(to),
+            to,
         });
     });
 
@@ -36,7 +36,7 @@ describe("Pack", () => {
         const amount = "503863382662879832";
         const payload = "I_9MVtYiO4NlH7lwIx8";
         const phash = "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ";
-        const to = "򝊞􋄛𧚞󥫨򨚘󳽈򤙳񙓻򳳱􎖫򗣌𻄭񑦁򏬰񆆅򒒛􊗓𧜿򇞣􁓹";
+        const to = "1234";
 
         const result = unmarshalPackValue(mintParamsType(), {
             ghash,
@@ -61,7 +61,7 @@ describe("Pack", () => {
             amount: new BigNumber(amount),
             payload: fromBase64(payload),
             phash: fromBase64(phash),
-            to: Buffer.from(to),
+            to: to,
         });
     });
 });

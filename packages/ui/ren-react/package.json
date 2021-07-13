@@ -26,10 +26,9 @@
         "clean": "yarn rimraf ./example/node_modules ./example/dist ./build ./dist ./node_modules",
         "build": "rollup -c",
         "watch": "rollup -c --watch",
-        "test": "run-s test:unit test:lint test:build",
+        "test": "run-s test:unit test:lint",
         "test:unit": "tsdx test",
         "test:lint": "eslint src/**/*.ts",
-        "test:build": "run-s build",
         "lint:fix": "prettier-eslint '**/*.{ts,tsx}' --write",
         "prepublish": "yarn build"
     },
@@ -115,5 +114,8 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
+    },
+    "jest": {
+        "testTimeout": 20000
     }
 }

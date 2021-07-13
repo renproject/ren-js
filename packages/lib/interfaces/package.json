@@ -1,6 +1,6 @@
 {
     "name": "@renproject/interfaces",
-    "version": "2.4.4",
+    "version": "2.4.5-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -52,8 +52,13 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": ["**/*.d.ts", "**/*.spec.js"],
-        "include": ["src"]
+        "exclude": [
+            "**/*.d.ts",
+            "**/*.spec.js"
+        ],
+        "include": [
+            "src"
+        ]
     },
     "prettier": {
         "printWidth": 80,

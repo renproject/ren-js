@@ -625,7 +625,7 @@ export class SolanaClass
                 await this.provider.connection.getSignaturesForAddress(
                     mintLogAccountId[0],
                 );
-            return mintSigs[0]?.signature || "";
+            return (mintSigs[0] && mintSigs[0].signature) || "";
         } catch (error) {
             // If getSignaturesForAddress threw an error, the network may be
             // on a version before 1.7, so this second method should be tried.

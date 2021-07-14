@@ -23627,7 +23627,7 @@ web3-core-subscriptions@3.0.0-rc.5:
     underscore "1.12.1"
     web3-core-helpers "3.0.0-rc.5"
 
-web3-core@3.0.0-rc.5, web3-core@^1.3.0, web3-core@^3.0.0-rc.5:
+web3-core@3.0.0-rc.5, web3-core@^1.3.0, web3-core@^1.4.0:
   version "3.0.0-rc.5"
   resolved "https://registry.yarnpkg.com/web3-core/-/web3-core-3.0.0-rc.5.tgz#d8f7bc6a8693820f83020f37dcb51be4ced3047e"
   integrity sha512-syY0W3YXEHa3SnsP6LphI7IBk3TRAAmPIu+oUPTrT/aZfYlTCKqfGOVRr67A/xP/vuauVmtrtsRQ5DJviE5DgA==
@@ -23640,7 +23640,7 @@ web3-core@3.0.0-rc.5, web3-core@^1.3.0, web3-core@^3.0.0-rc.5:
     web3-core-requestmanager "3.0.0-rc.5"
     web3-utils "3.0.0-rc.5"
 
-web3-eth-abi@3.0.0-rc.5, web3-eth-abi@^3.0.0-rc.5:
+web3-eth-abi@3.0.0-rc.5, web3-eth-abi@^1.4.0:
   version "3.0.0-rc.5"
   resolved "https://registry.yarnpkg.com/web3-eth-abi/-/web3-eth-abi-3.0.0-rc.5.tgz#42773b991bc7f34642224de1d7637566d2176ebd"
   integrity sha512-hdMTXwmq9vQE4kPMkK+vk9Lx1HqVejU2c+K9GOMNxM6H6YVZNYv6xDxOzOdnATBO+2eFyJOGe088xtfSU356tw==
@@ -23868,7 +23868,7 @@ web3-providers-ws@3.0.0-rc.5:
     web3-core-helpers "3.0.0-rc.5"
     websocket "^1.0.32"
 
-web3-utils@1.2.4, web3-utils@1.3.4, web3-utils@3.0.0-rc.5, web3-utils@^1.3.0, web3-utils@^3.0.0-rc.5:
+web3-utils@1.2.4, web3-utils@1.3.4, web3-utils@3.0.0-rc.5, web3-utils@^1.3.0, web3-utils@^1.4.0:
   version "3.0.0-rc.5"
   resolved "https://registry.yarnpkg.com/web3-utils/-/web3-utils-3.0.0-rc.5.tgz#f23fb03ee968f9cbbfdd50a5855759d968f2f4c9"
   integrity sha512-TwYrNKXCrJJy7/ZRwZpipMf6Aq/ygsHbdvgXgCd/gJ18SYR9f8wn14zHHoZ8Xg7Sk3sDtf+A+lGPA6Y1mxzfGw==
@@ -23882,7 +23882,7 @@ web3-utils@1.2.4, web3-utils@1.3.4, web3-utils@3.0.0-rc.5, web3-utils@^1.3.0, we
     underscore "1.12.1"
     utf8 "3.0.0"
 
-web3@1.2.1, web3@1.2.11, web3@1.2.4, web3@3.0.0-rc.5, web3@^1.3.0, web3@^3.0.0-rc.5:
+web3@1.2.1, web3@1.2.11, web3@1.2.4, web3@3.0.0-rc.5, web3@^1.3.0, web3@^1.4.0, web3@^3.0.0-rc.5:
   version "3.0.0-rc.5"
   resolved "https://registry.yarnpkg.com/web3/-/web3-3.0.0-rc.5.tgz#6ae6df82211950aefd1ed4af456f3371d9a974ec"
   integrity sha512-7coUvnBj5x0F3MsnNXB9KGKY7MA80eleHFmDqeYpj3QuDETh5XHLQbfypFQ4EKJfrmPAdxNlX/iMFI65qrFz/A==

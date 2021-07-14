@@ -41,7 +41,7 @@
         "chalk": "^4.1.0",
         "dotenv": "^8.2.0",
         "truffle-hdwallet-provider": "^1.0.17",
-        "web3": "^3.0.0-rc.5"
+        "web3": "^1.4.0"
     },
     "resolutions": {
         "sha3": "^2.1.2"

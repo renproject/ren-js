@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "2.4.5-alpha.3",
+    "version": "2.4.5",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,9 +45,9 @@
     "dependencies": {
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.2",
-        "@renproject/interfaces": "^2.4.5-alpha.3",
-        "@renproject/rpc": "^2.4.5-alpha.3",
-        "@renproject/utils": "^2.4.5-alpha.3",
+        "@renproject/interfaces": "^2.4.5",
+        "@renproject/rpc": "^2.4.5",
+        "@renproject/utils": "^2.4.5",
         "@solana/spl-token": "^0.1.5",
         "@solana/web3.js": "^1.19.0",
         "@types/bn.js": "^5.1.0",

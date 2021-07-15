@@ -31,7 +31,7 @@ type extractGeneric<Type> = Type extends AllGatewayTransactions<infer X>
     : never;
 /** The context that the deposit machine acts on */
 export interface DepositMachineContext<
-    Deposit extends AllGatewayTransactions<extractGeneric<Deposit>>
+    Deposit extends AllGatewayTransactions<extractGeneric<Deposit>>,
 > {
     /** The deposit being tracked */
     deposit: Deposit;
@@ -209,9 +209,10 @@ export const buildDepositMachine = <X>() =>
             initial: DepositStates.CHECKING_COMPLETION,
             schema: {
                 events: createSchema<DepositMachineEvent<X>>(),
-                context: createSchema<
-                    DepositMachineContext<AllGatewayTransactions<X>>
-                >(),
+                context:
+                    createSchema<
+                        DepositMachineContext<AllGatewayTransactions<X>>
+                    >(),
             },
             states: {
                 // Checking if deposit is completed so that we can skip initialization
@@ -541,6 +542,23 @@ export const buildDepositMachine = <X>() =>
 
                 destInitiated: {
                     on: {
+                        SUBMIT_ERROR: [
+                            {
+                                target: "errorSubmitting",
+                                actions: [
+                                    assign({
+                                        deposit: (ctx, evt) => ({
+                                            ...ctx.deposit,
+                                            error: evt.error,
+                                        }),
+                                    }),
+                                    sendParent((ctx, _) => ({
+                                        type: "DEPOSIT_UPDATE",
+                                        data: ctx.deposit,
+                                    })),
+                                ],
+                            },
+                        ],
                         ACKNOWLEDGE: {
                             target: "completed",
                             actions: [

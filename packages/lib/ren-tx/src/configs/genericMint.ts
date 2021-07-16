@@ -205,9 +205,8 @@ const handleSign = async <X>(
                 renResponse: hexify(
                     v._state.queryTxResult.out,
                 ) as LockAndMintTransaction,
-                renSignature: v._state.queryTxResult.out.signature?.toString(
-                    "hex",
-                ),
+                renSignature:
+                    v._state.queryTxResult.out.signature?.toString("hex"),
             };
             callback({
                 type: "SIGNED",
@@ -471,26 +470,25 @@ const mintFlow = <X>(
 };
 
 // Listen for confirmations on the source chain
-const depositListener = <X>(context: GatewayMachineContext<X>) => (
-    callback: Sender<GatewayMachineEvent<X>>,
-    receive: Receiver<any>,
-) => {
-    let cleanup = () => {};
+const depositListener =
+    <X>(context: GatewayMachineContext<X>) =>
+    (callback: Sender<GatewayMachineEvent<X>>, receive: Receiver<any>) => {
+        let cleanup = () => {};
 
-    initMinter(context, callback)
-        .then((minter) => {
-            cleanup = () => minter.removeAllListeners();
-            mintFlow(context, callback, receive, minter);
-            callback({ type: "LISTENING" });
-        })
-        .catch((e) => {
-            callback({ type: "ERROR_LISTENING", data: e });
-        });
+        initMinter(context, callback)
+            .then((minter) => {
+                cleanup = () => minter.removeAllListeners();
+                mintFlow(context, callback, receive, minter);
+                callback({ type: "LISTENING" });
+            })
+            .catch((e) => {
+                callback({ type: "ERROR_LISTENING", data: e });
+            });
 
-    return () => {
-        cleanup();
+        return () => {
+            cleanup();
+        };
     };
-};
 
 // Spawn an actor that will listen for either all deposits to a gatewayAddress,
 // or to a single deposit if present in the context

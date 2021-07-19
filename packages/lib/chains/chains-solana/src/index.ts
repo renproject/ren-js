@@ -66,6 +66,34 @@ export interface SolanaProvider {
     };
 }
 
+const x =
+    (a: string): (() => string) =>
+    () =>
+        a;
+
+const encodeAddress = (asset: string): ((b: Buffer) => Promise<string>) => {
+    switch (asset) {
+        case "BTC":
+        case "ZEC":
+        case "BCH":
+        case "DOGE":
+            return async (bytes) => base58.encode(bytes);
+        case "LUNA":
+            return async (bytes: Buffer) => {
+                const { Terra } = await import("@renproject/chains-terra");
+                return new Terra().bytesToAddress(bytes);
+            };
+        case "FIL":
+            return async (bytes: Buffer) => {
+                const { Filecoin } = await import(
+                    "@renproject/chains-filecoin"
+                );
+                return new Filecoin().bytesToAddress(bytes);
+            };
+    }
+    throw new Error("Unknown asset: " + asset);
+};
+
 interface SolOptions {
     logger: Logger;
 }
@@ -725,7 +753,13 @@ export class SolanaClass
 
     Account({ amount }: { amount: string | BigNumber }) {
         this._getParams = (burnPayload: string) => {
-            const recipientBytes = Buffer.from(burnPayload, "hex");
+            let recipientBytes = Buffer.from(burnPayload, "hex");
+            if (recipientBytes.length == 0) {
+                recipientBytes = Buffer.from(burnPayload);
+            }
+            if (recipientBytes.length == 0) {
+                throw new Error("failed to get recpient");
+            }
             const params: OverwritableBurnAndReleaseParams = {
                 contractCalls: [
                     {
@@ -971,7 +1005,7 @@ export class SolanaClass
         const x: BurnDetails<SolTransaction> = {
             transaction: res,
             amount: new BigNumber(amount),
-            to: base58.encode(recipient),
+            to: await encodeAddress(asset)(recipient),
             nonce: new BigNumber(nonceBN.toString()),
         };
         return x;

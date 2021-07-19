@@ -386,6 +386,11 @@ export class FilecoinClass
             ).str,
         );
 
+    /**
+     * See [[LockChain.addressToBytes]].
+     */
+    bytesToAddress = (address: Buffer): string => encodeAddress(address);
+
     /** @deprecated. Renamed to addressToBytes. */
     addressStringToBytes = this.addressToBytes;
 

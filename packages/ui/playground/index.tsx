@@ -74,6 +74,7 @@ const source = {
     FIL: "filecoin",
     DGB: "digiByte",
     DOGE: "dogecoin",
+    LUNA: "terra",
 };
 const supportedAssets = ["BTC", "ZEC", "BCH", "FIL", "LUNA", "DGB", "DOGE"];
 const renNetworks = [...Object.values(RenNetwork)];

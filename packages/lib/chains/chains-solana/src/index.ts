@@ -71,7 +71,10 @@ const x =
     () =>
         a;
 
-const encodeAddress = (asset: string): ((b: Buffer) => Promise<string>) => {
+const encodeAddress = (
+    asset: string,
+    network: "mainnet" | "testnet",
+): ((b: Buffer) => Promise<string>) => {
     switch (asset) {
         case "BTC":
         case "ZEC":
@@ -88,7 +91,7 @@ const encodeAddress = (asset: string): ((b: Buffer) => Promise<string>) => {
                 const { Filecoin } = await import(
                     "@renproject/chains-filecoin"
                 );
-                return new Filecoin().bytesToAddress(bytes);
+                return new Filecoin(network).bytesToAddress(bytes);
             };
     }
     throw new Error("Unknown asset: " + asset);
@@ -1005,7 +1008,10 @@ export class SolanaClass
         const x: BurnDetails<SolTransaction> = {
             transaction: res,
             amount: new BigNumber(amount),
-            to: await encodeAddress(asset)(recipient),
+            to: await encodeAddress(
+                asset,
+                this.renNetwork?.isTestnet ? "testnet" : "mainnet",
+            )(recipient),
             nonce: new BigNumber(nonceBN.toString()),
         };
         return x;

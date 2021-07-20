@@ -11,6 +11,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
@@ -353,6 +354,22 @@ export class FilecoinClass
             ),
         );
 
+        const address = this.encodeFilecoinAddress(payload);
+
+        const params = this.noParamsFlag
+            ? undefined
+            : toBase64(Buffer.from(toURLBase64(gHash)));
+
+        return {
+            address,
+            params,
+        };
+    };
+
+    encodeFilecoinAddress = (payload: Buffer) => {
+        if (payload.length === 21) {
+            payload = Buffer.from(payload.slice(1, 21));
+        }
         // secp256k1 protocol prefix
         const protocol = 1;
         // network prefix
@@ -364,16 +381,7 @@ export class FilecoinClass
             payload: () => payload,
         };
 
-        const address = encodeAddress(networkPrefix, addressObject);
-
-        const params = this.noParamsFlag
-            ? undefined
-            : toBase64(Buffer.from(toURLBase64(gHash)));
-
-        return {
-            address,
-            params,
-        };
+        return encodeAddress(networkPrefix, addressObject);
     };
 
     /**
@@ -389,7 +397,8 @@ export class FilecoinClass
     /**
      * See [[LockChain.addressToBytes]].
      */
-    bytesToAddress = (address: Buffer): string => encodeAddress(address);
+    bytesToAddress = (address: Buffer): string =>
+        this.encodeFilecoinAddress(address);
 
     /** @deprecated. Renamed to addressToBytes. */
     addressStringToBytes = this.addressToBytes;
@@ -444,19 +453,22 @@ export class FilecoinClass
     transactionRPCTxidFromID = (transactionID: string): Buffer =>
         Buffer.from(new CID(transactionID).bytes);
 
-    getBurnPayload: (() => string) | undefined;
+    getBurnPayload: ((bytes?: boolean) => string) | undefined;
 
     /** @category Main */
     Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });
 
-        this.getBurnPayload = () => address;
+        this.getBurnPayload = (bytes) =>
+            bytes ? this.addressToBytes(address).toString("hex") : address;
         return this;
     };
 
-    burnPayload? = () => {
-        return this.getBurnPayload ? this.getBurnPayload() : undefined;
+    burnPayload? = (config?: BurnPayloadConfig) => {
+        return this.getBurnPayload
+            ? this.getBurnPayload(config?.bytes)
+            : undefined;
     };
 }
 

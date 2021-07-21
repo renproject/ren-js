@@ -20,11 +20,9 @@ import {
     TransactionInstruction,
     SYSVAR_RENT_PUBKEY,
     SYSVAR_INSTRUCTIONS_PUBKEY,
-    Secp256k1Program,
     SystemProgram,
     sendAndConfirmRawTransaction,
     ConfirmOptions,
-    CreateSecp256k1InstructionWithPublicKeyParams,
     CreateSecp256k1InstructionWithEthAddressParams,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
@@ -53,6 +51,7 @@ import {
 } from "./layouts";
 
 // FIXME: Typings are out of date, so lets fall back to good old any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ActualToken: any = Token;
 
 export type SolTransaction = string;
@@ -110,7 +109,7 @@ export class SolanaClass
         if (options) {
             this._logger = options.logger;
         }
-        this.initialize(this.renNetworkDetails!.name as RenNetwork);
+        this.initialize(this.renNetworkDetails.name).catch(console.error);
     }
 
     public static utils = {
@@ -161,6 +160,7 @@ export class SolanaClass
         },
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public utils = SolanaClass.utils as any;
 
     /**
@@ -223,6 +223,7 @@ export class SolanaClass
         return this._initialized;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withProvider = (provider: any) => {
         this.provider = provider;
         return this;
@@ -416,7 +417,9 @@ export class SolanaClass
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
         if (mintTx.out && mintTx.out.revert)
-            throw new Error("Transaction reverted: " + mintTx.out.revert);
+            throw new Error(
+                `Transaction reverted: ${mintTx.out.revert.toString()}`,
+            );
         if (!mintTx.out || !mintTx.out.signature)
             throw new Error("Missing signature");
         let sig = mintTx.out.signature;
@@ -696,8 +699,6 @@ export class SolanaClass
         );
 
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
-
-        const gatewayState = GatewayLayout.decode(gatewayInfo.data);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 

@@ -1,3 +1,5 @@
+import { AbiInput } from "./abi";
+
 export type EthInt =
     | "int"
     | "int8"
@@ -108,7 +110,9 @@ export type EthType =
     | EthInt
     | EthUint
     | "byte"
-    | EthByte;
+    | EthByte
+    // Added to support tuples.
+    | string;
 
 export interface EthArg<
     name extends string = string,
@@ -119,6 +123,7 @@ export interface EthArg<
     name: name;
     type: type;
     value: valueType;
+    components?: AbiInput[];
 
     /**
      * `notInPayload` indicates that the parameter should be used when calling

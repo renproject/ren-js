@@ -53,7 +53,8 @@
         "bignumber.js": "^9.0.1",
         "blakejs": "^1.1.0",
         "cids": "^1.1.6",
-        "elliptic": "^6.5.4"
+        "elliptic": "^6.5.4",
+        "lowercase-keys": "^2.0.0"
     },
     "resolutions": {
         "web-encoding": "^1.1.5"

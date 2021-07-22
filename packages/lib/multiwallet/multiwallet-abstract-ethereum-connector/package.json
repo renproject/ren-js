@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-abstract-ethereum-connector",
-    "version": "2.5.0-alpha.0",
+    "version": "2.5.0-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,7 +42,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-ethereum": "^2.5.0-alpha.0",
+        "@renproject/chains-ethereum": "^2.5.0-alpha.1",
         "@renproject/interfaces": "^2.5.0-alpha.0",
         "@renproject/multiwallet-base-connector": "^2.5.0-alpha.0",
         "@types/node": ">=10",

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/mock-provider",
-    "version": "2.5.0-alpha.0",
+    "version": "2.5.0-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,11 +43,11 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^2.5.0-alpha.0",
+        "@renproject/chains-bitcoin": "^2.5.0-alpha.1",
         "@renproject/interfaces": "^2.5.0-alpha.0",
-        "@renproject/provider": "^2.5.0-alpha.0",
-        "@renproject/rpc": "^2.5.0-alpha.0",
-        "@renproject/utils": "^2.5.0-alpha.0",
+        "@renproject/provider": "^2.5.0-alpha.1",
+        "@renproject/rpc": "^2.5.0-alpha.1",
+        "@renproject/utils": "^2.5.0-alpha.1",
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "axios": "^0.21.1",

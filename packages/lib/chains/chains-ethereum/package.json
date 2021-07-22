@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-ethereum",
-    "version": "2.5.0-alpha.0",
+    "version": "2.5.0-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,7 +45,7 @@
     "dependencies": {
         "@ethersproject/providers": "^5.3.0",
         "@renproject/interfaces": "^2.5.0-alpha.0",
-        "@renproject/utils": "^2.5.0-alpha.0",
+        "@renproject/utils": "^2.5.0-alpha.1",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",

@@ -17,11 +17,12 @@ import {
     BasicBurn,
     DefaultDeposit,
     DepositProps,
+    BurnConfigMultiple,
+    MintConfigMultiple,
 } from "../../ui/ren-react/src/library/index";
-import { Ethereum, EthereumConfig } from "../../lib/chains/chains-ethereum/src";
+import { EthereumConfig } from "../../lib/chains/chains-ethereum/src";
 import { Solana } from "../../lib/chains/chains-solana/src";
-import { Bitcoin } from "../../lib/chains/chains-bitcoin";
-import { RenNetwork } from "@renproject/interfaces";
+import { MintChain, RenNetwork } from "@renproject/interfaces";
 import {
     WalletPickerModal,
     MultiwalletProvider,
@@ -29,7 +30,13 @@ import {
 } from "@renproject/multiwallet-ui";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2/renVMProvider";
 import { multiwalletOptions } from "./multiwallet";
-import { chainStringToRenChain, lockChainMap, mintChainMap } from "./chainmaps";
+import {
+    burnChainMap,
+    chainStringToRenChain,
+    lockChainMap,
+    mintChainMap,
+    releaseChainMap,
+} from "./chainmaps";
 import { inspect } from "@xstate/inspect";
 
 inspect({
@@ -51,6 +58,8 @@ const ethLocalnetConfig: EthereumConfig = {
     chainLabel: "Localnet",
     networkID: 1337,
     infura: "http://localhost:8545",
+    publicProvider: () => "",
+    explorer: { address: () => "", transaction: () => "" },
     etherscan: "https://etherscan.io",
     addresses: {
         GatewayRegistry: "0x0Bb909b7c3817F8fB7188e8fbaA2763028956E30",
@@ -58,34 +67,47 @@ const ethLocalnetConfig: EthereumConfig = {
     },
 };
 
-const source = { BTC: "bitcoin", ZEC: "zcash", BCH: "bitcoinCash" };
-const supportedAssets = ["BTC", "ZEC", "BCH"];
+const source = {
+    BTC: "bitcoin",
+    ZEC: "zcash",
+    BCH: "bitcoinCash",
+    FIL: "filecoin",
+    DGB: "digiByte",
+    DOGE: "dogecoin",
+    LUNA: "terra",
+};
+const supportedAssets = ["BTC", "ZEC", "BCH", "FIL", "LUNA", "DGB", "DOGE"];
 const renNetworks = [...Object.values(RenNetwork)];
 
 const BasicBurnApp = ({
     network,
     account,
-    provider,
+    sourceChain,
+    sourceAsset,
+    destinationChain,
+    providers,
     destinationAddress,
     amount,
 }) => {
-    const parameters = useMemo(
+    const parameters: BurnConfigMultiple = useMemo(
         () => ({
-            sdk: new RenJS(network, { useV2TransactionFormat: true }),
+            debug: true,
+            sdk: new RenJS(network, { useV2TransactionFormat: true }) as any,
             burnParams: {
-                sourceAsset: "BTC",
+                sourceAsset,
                 network,
                 targetAmount: amount,
                 destinationAddress,
             },
-            from: new Solana(provider, network, {
-                logger: console,
-            }).Account({
-                amount,
-            }),
-            to: Bitcoin(network).Address(destinationAddress),
+            network,
+            sourceChain,
+            destinationChain,
+            userAddress: account,
+            customParams: {},
+            fromMap: burnChainMap(providers),
+            toMap: releaseChainMap,
         }),
-        [provider, account, amount, destinationAddress],
+        [providers, account, amount, destinationAddress],
     );
     return (
         <Typography component="div">
@@ -133,17 +155,18 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
         }
     }, [solanaMintChain, tokenAccountExists, setTokenAccountExists, asset]);
 
-    const parameters = useMemo(
+    const parameters: MintConfigMultiple = useMemo(
         () => ({
             sdk: new RenJS(network, {
                 loadCompletedDeposits: true,
                 useV2TransactionFormat: true,
-            }),
+            }) as any,
             mintParams: {
                 network,
                 sourceAsset: asset,
                 destinationAddress: account,
             },
+            debug: true,
             sourceChain: source[asset],
             userAddress: account,
             destinationChain: chain,
@@ -172,25 +195,23 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
     );
 };
 
-const ConnectToChain = ({ setOpen, setChain }) => {
+const ConnectToChain = ({ setOpen, setChain, network }) => {
     return (
         <Paper style={{ margin: "1em" }}>
-            {Object.keys(multiwalletOptions(RenNetwork.Mainnet).chains).map(
-                (chain) => (
-                    <Button
-                        variant="contained"
-                        style={{ margin: "1em", marginRight: "0" }}
-                        color="primary"
-                        key={chain}
-                        onClick={() => {
-                            setChain(chain);
-                            setOpen(true);
-                        }}
-                    >
-                        Connect To {chain}
-                    </Button>
-                ),
-            )}
+            {Object.keys(multiwalletOptions(network).chains).map((chain) => (
+                <Button
+                    variant="contained"
+                    style={{ margin: "1em", marginRight: "0" }}
+                    color="primary"
+                    key={chain}
+                    onClick={() => {
+                        setChain(chain);
+                        setOpen(true);
+                    }}
+                >
+                    Connect To {chain}
+                </Button>
+            ))}
         </Paper>
     );
 };
@@ -222,9 +243,10 @@ const DropdownSelect = ({ name, value, setValue, values }) => {
 };
 
 const App = (): JSX.Element => {
-    const [chain, setChain] = useState<
-        keyof ReturnType<typeof multiwalletOptions>["chains"]
-    >("solana");
+    const [chain, setChain] =
+        useState<keyof ReturnType<typeof multiwalletOptions>["chains"]>(
+            "solana",
+        );
     const [asset, setAsset] = useState("BTC");
     const [network, setNetwork] = useState(renNetworks[1]);
 
@@ -246,22 +268,37 @@ const App = (): JSX.Element => {
     const setClosed = useCallback(() => setOpen(false), [setOpen]);
 
     const [balances, setBalances] = useState<{ [chain: string]: string }>({});
+    const [decimals, setDecimals] = useState<{
+        [chain: string]: { [asset: string]: number };
+    }>({});
     useEffect(() => {
-        Object.entries(wallets.enabledChains).map(([chain, connector]) => {
-            const provider = connector.provider as any;
-            const account = connector.account as string;
+        Object.entries(wallets.enabledChains).map(
+            async ([chain, connector]) => {
+                const provider = connector.provider as any;
+                const account = connector.account as string;
 
-            if (!provider || !account) return;
-            new chainStringToRenChain[chain](provider, network)
-                .getBalance(asset, account)
-                .then((value) =>
-                    setBalances((balances) => ({
-                        ...balances,
-                        [chain]: value.toString(),
-                    })),
+                if (!provider || !account) return;
+                const mintChain: MintChain = chainStringToRenChain[chain](
+                    provider,
+                    network,
                 );
-        });
-    }, [wallets, setBalances]);
+                const balance = await mintChain.getBalance(asset, account);
+                setBalances((balances) => ({
+                    ...balances,
+                    [chain]: balance.toString(),
+                }));
+
+                const decimals = await mintChain.assetDecimals(asset);
+                setDecimals((oldDecimals) => ({
+                    ...oldDecimals,
+                    [chain]: {
+                        ...oldDecimals[chain],
+                        [asset]: decimals,
+                    },
+                }));
+            },
+        );
+    }, [wallets, setBalances, setDecimals]);
 
     return (
         <Container
@@ -277,8 +314,8 @@ const App = (): JSX.Element => {
                 }}
             />
             <ConnectToChain
-                enabledChains={wallets.enabledChains}
                 setOpen={setOpen}
+                network={network}
                 setChain={setChain}
             />
             <Container
@@ -330,7 +367,9 @@ const App = (): JSX.Element => {
                                 Burn from {chain}
                             </Typography>
                             <Typography>
-                                {asset} Balance: {balances[chain]}
+                                {asset} Balance:{" "}
+                                {Number(balances[chain]) /
+                                    10 ** (decimals[chain] || {})[asset]}
                             </Typography>
                             <Input
                                 placeholder="recipient address"
@@ -347,10 +386,11 @@ const App = (): JSX.Element => {
                             />
                             {address.length > 0 && (
                                 <BasicBurnApp
-                                    provider={
-                                        wallets.enabledChains[chain].provider
-                                    }
+                                    providers={wallets.enabledChains}
                                     network={network}
+                                    sourceChain={chain}
+                                    sourceAsset={asset}
+                                    destinationChain={source[asset]}
                                     account={
                                         wallets.enabledChains[chain].account
                                     }

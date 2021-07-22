@@ -17,8 +17,8 @@ export interface SolanaConnectorOptions {
 const renNetworkToSolanaNetwork: { [k in RenNetwork]: string } = {
     [RenNetwork.DevnetVDot3]: clusterApiUrl("devnet"),
     [RenNetwork.Mainnet]: clusterApiUrl("mainnet-beta"),
-    [RenNetwork.Testnet]: clusterApiUrl("testnet"),
-    [RenNetwork.TestnetVDot3]: clusterApiUrl("testnet"),
+    [RenNetwork.Testnet]: clusterApiUrl("devnet"),
+    [RenNetwork.TestnetVDot3]: clusterApiUrl("devnet"),
     [RenNetwork.MainnetVDot3]: clusterApiUrl("mainnet-beta"),
     [RenNetwork.Localnet]: "http://localhost:8899",
 };

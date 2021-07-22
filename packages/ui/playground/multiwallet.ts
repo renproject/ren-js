@@ -51,11 +51,24 @@ export const multiwalletOptions = (
     network: RenNetwork,
 ): WalletPickerConfig<unknown, string> => ({
     chains: {
+        avalance: [
+            {
+                name: "Metamask",
+                logo: "https://avatars2.githubusercontent.com/u/45615063?s=60&v=4",
+                connector: (() => {
+                    const connector = new EthereumInjectedConnector({
+                        networkIdMapper: avalancheNetworkToRenNetwork,
+                        debug: true,
+                    });
+                    connector.getProvider = () => (window as any).ethereum;
+                    return connector;
+                })(),
+            },
+        ],
         solana: [
             {
                 name: "Sollet.io",
-                logo:
-                    "https://avatars1.githubusercontent.com/u/69240779?s=60&v=4",
+                logo: "https://avatars1.githubusercontent.com/u/69240779?s=60&v=4",
                 connector: new SolanaConnector({
                     debug: true,
                     providerURL: "https://www.sollet.io",
@@ -64,8 +77,7 @@ export const multiwalletOptions = (
             },
             {
                 name: "Phantom",
-                logo:
-                    "https://avatars1.githubusercontent.com/u/78782331?s=60&v=4",
+                logo: "https://avatars1.githubusercontent.com/u/78782331?s=60&v=4",
                 connector: new SolanaConnector({
                     debug: true,
                     providerURL: (window as any).solana,
@@ -76,8 +88,7 @@ export const multiwalletOptions = (
         moonbeam: [
             {
                 name: "Metamask",
-                logo:
-                    "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
+                logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
                 connector: new EthereumInjectedConnector({
                     debug: true,
                     networkIdMapper: () => RenNetwork.Testnet,
@@ -87,8 +98,7 @@ export const multiwalletOptions = (
         polygon: [
             {
                 name: "Metamask",
-                logo:
-                    "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
+                logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
                 connector: new EthereumInjectedConnector({
                     debug: true,
                     networkIdMapper: polygonNetworkToRenNetwork,
@@ -98,8 +108,7 @@ export const multiwalletOptions = (
         fantom: [
             {
                 name: "Metamask",
-                logo:
-                    "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
+                logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
                 connector: new EthereumInjectedConnector({
                     debug: true,
                     networkIdMapper: fantomNetworkToRenNetwork,
@@ -109,8 +118,7 @@ export const multiwalletOptions = (
         ethereum: [
             {
                 name: "Metamask",
-                logo:
-                    "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
+                logo: "https://avatars1.githubusercontent.com/u/11744586?s=60&v=4",
                 connector: new EthereumInjectedConnector({
                     debug: true,
                     networkIdMapper: ethNetworkToRenNetwork,
@@ -143,11 +151,10 @@ export const multiwalletOptions = (
              *     }),
              * }, */
         ],
-        bsc: [
+        binanceSmartChain: [
             {
                 name: "BinanceSmartWallet",
-                logo:
-                    "https://avatars2.githubusercontent.com/u/45615063?s=60&v=4",
+                logo: "https://avatars2.githubusercontent.com/u/45615063?s=60&v=4",
                 connector: new BinanceSmartChainInjectedConnector({
                     debug: true,
                 }),

@@ -6,6 +6,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
@@ -274,6 +275,14 @@ export class TerraClass
             ),
         );
 
+    /**
+     * See [[LockChain.bytesToAddress]].
+     */
+    bytesToAddress = (address: Buffer): string => {
+        const words = bech32.toWords(address);
+        return bech32.encode("terra", words);
+    };
+
     /** @deprecated. Renamed to addressToBytes. */
     addressStringToBytes = this.addressToBytes;
 
@@ -326,18 +335,21 @@ export class TerraClass
     transactionRPCTxidFromID = (transactionID: string): Buffer =>
         Buffer.from(transactionID, "hex");
 
-    getBurnPayload: (() => string) | undefined;
+    getBurnPayload: ((bytes?: boolean) => string) | undefined;
 
     Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });
 
-        this.getBurnPayload = () => address;
+        this.getBurnPayload = (bytes) =>
+            bytes ? this.addressToBytes(address).toString("hex") : address;
         return this;
     };
 
-    burnPayload? = () => {
-        return this.getBurnPayload ? this.getBurnPayload() : undefined;
+    burnPayload? = (config?: BurnPayloadConfig) => {
+        return this.getBurnPayload
+            ? this.getBurnPayload(config?.bytes)
+            : undefined;
     };
 }
 

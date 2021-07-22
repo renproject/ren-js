@@ -11,6 +11,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
@@ -353,18 +354,7 @@ export class FilecoinClass
             ),
         );
 
-        // secp256k1 protocol prefix
-        const protocol = 1;
-        // network prefix
-        const networkPrefix = this.chainNetwork === "testnet" ? "t" : "f";
-
-        const addressObject = {
-            str: Buffer.concat([Buffer.from([protocol]), payload]),
-            protocol: () => protocol,
-            payload: () => payload,
-        };
-
-        const address = encodeAddress(networkPrefix, addressObject);
+        const address = this.encodeFilecoinAddress(payload);
 
         const params = this.noParamsFlag
             ? undefined
@@ -376,6 +366,24 @@ export class FilecoinClass
         };
     };
 
+    encodeFilecoinAddress = (payload: Buffer) => {
+        if (payload.length === 21) {
+            payload = Buffer.from(payload.slice(1, 21));
+        }
+        // secp256k1 protocol prefix
+        const protocol = 1;
+        // network prefix
+        const networkPrefix = this.chainNetwork === "testnet" ? "t" : "f";
+
+        const addressObject = {
+            str: Buffer.concat([Buffer.from([protocol]), payload]),
+            protocol: () => protocol,
+            payload: () => payload,
+        };
+
+        return encodeAddress(networkPrefix, addressObject);
+    };
+
     /**
      * See [[LockChain.addressToBytes]].
      */
@@ -385,6 +393,12 @@ export class FilecoinClass
                 typeof address === "string" ? address : address.address,
             ).str,
         );
+
+    /**
+     * See [[LockChain.addressToBytes]].
+     */
+    bytesToAddress = (address: Buffer): string =>
+        this.encodeFilecoinAddress(address);
 
     /** @deprecated. Renamed to addressToBytes. */
     addressStringToBytes = this.addressToBytes;
@@ -439,19 +453,22 @@ export class FilecoinClass
     transactionRPCTxidFromID = (transactionID: string): Buffer =>
         Buffer.from(new CID(transactionID).bytes);
 
-    getBurnPayload: (() => string) | undefined;
+    getBurnPayload: ((bytes?: boolean) => string) | undefined;
 
     /** @category Main */
     Address = (address: string): this => {
         // Type validation
         assertType<string>("string", { address });
 
-        this.getBurnPayload = () => address;
+        this.getBurnPayload = (bytes) =>
+            bytes ? this.addressToBytes(address).toString("hex") : address;
         return this;
     };
 
-    burnPayload? = () => {
-        return this.getBurnPayload ? this.getBurnPayload() : undefined;
+    burnPayload? = (config?: BurnPayloadConfig) => {
+        return this.getBurnPayload
+            ? this.getBurnPayload(config?.bytes)
+            : undefined;
     };
 }
 

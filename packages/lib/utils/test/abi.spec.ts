@@ -1,5 +1,5 @@
-import { payloadToABI, payloadToMintABI } from "@renproject/utils";
-import chai from "chai";
+import { payloadToABI, payloadToMintABI } from "../src/abi";
+import chai, { expect } from "chai";
 
 chai.should();
 
@@ -18,8 +18,8 @@ describe("abi.ts", () => {
         ];
 
         payloadToABI("functionName", [
-            { name: "_spender", type: "address" },
-            { name: "_value", type: "uint256" },
+            { name: "_spender", type: "address", value: "ethereum.eth" },
+            { name: "_value", type: "uint256", value: 1 },
         ]).should.deep.eq(expectedABI);
     });
 
@@ -43,8 +43,25 @@ describe("abi.ts", () => {
         ];
 
         payloadToMintABI("functionName", [
-            { name: "_spender", type: "address" },
-            { name: "_value", type: "uint256" },
+            { name: "_spender", type: "address", value: "ethereum.eth" },
+            { name: "_value", type: "uint256", value: 1 },
         ]).should.deep.eq(expectedABI);
+    });
+
+    it("fixTuple", () => {
+        expect(
+            payloadToABI("methodWithTuple", [
+                {
+                    type: "tuple(address,uint256,address,bytes)",
+                    name: "param",
+                    value: [
+                        "0x0000000000000000000000000000000000000000",
+                        0,
+                        "0x0000000000000000000000000000000000000000",
+                        Buffer.from([0]),
+                    ],
+                },
+            ])[0].inputs[0].components.length,
+        ).to.equal(4);
     });
 });

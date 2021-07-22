@@ -152,7 +152,7 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                     v: {
                         amount: amountOut,
                         hash: request.tx.hash,
-                        revert: "",
+                        revert: undefined,
                         sig: sigOut,
                         sighash: toURLBase64(sigHash),
                         txid: "",
@@ -195,7 +195,7 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         _request: ParamsQueryState,
     ): ResponseQueryState => {
         const ec = new elliptic.ec("secp256k1");
-        let k = ec.keyFromPrivate(this.privateKeyBuffer);
+        const k = ec.keyFromPrivate(this.privateKeyBuffer);
         const key = Buffer.concat([
             Buffer.from([3]),
             k.getPublic().getX().toArrayLike(Buffer, "be", 32),

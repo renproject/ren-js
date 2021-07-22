@@ -1,9 +1,9 @@
 {
     "extends": "./tsconfig",
     "compilerOptions": {
-        "target": "es2020",
+        "target": "es6",
         "outDir": "build/module",
-        "module": "es2020"
+        "module": "es6"
     },
     "exclude": ["node_modules/**"]
 }

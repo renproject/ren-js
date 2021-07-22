@@ -91,10 +91,10 @@ describe("Refactor: mint", () => {
             "0xe00c4124f7f85a15031480c641c414193b0bdbbd7a8b5933d09663b0ffb79615",
         ];
 
-        for (const txHash of txHashes) {
-            const receipt = await web3.eth.getTransactionReceipt(txHash);
-            console.log(txHash, receipt.from, receipt.to);
-        }
+        // for (const txHash of txHashes) {
+        //     const receipt = await web3.eth.getTransactionReceipt(txHash);
+        //     console.log(txHash, receipt.from, receipt.to);
+        // }
 
         // for (const nonce of nonces) {
         //     console.log(

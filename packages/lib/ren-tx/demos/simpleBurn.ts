@@ -5,7 +5,7 @@ import { Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import Web3 from "web3";
-import { BurnSession } from "../build/main/types/burn";
+import { BurnSession, isBurnCompleted } from "../build/main/types/burn";
 import { provider } from "web3-core";
 
 const MNEMONIC = process.env.MNEMONIC;
@@ -66,7 +66,7 @@ web3.eth
                 shownRestore = true;
             }
             const burnTx = state.context.tx.transaction;
-            if (isCompleted(burnTx)) {
+            if (isBurnCompleted(burnTx)) {
                 // If we have a destination txHash, we have successfully released BTC
                 console.log(
                     "Your BTC has been released! TxHash",

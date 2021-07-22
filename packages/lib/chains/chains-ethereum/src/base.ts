@@ -110,7 +110,8 @@ export type NetworkInput =
     | EthereumConfig;
 
 export class EthereumBaseChain
-    implements MintChain<EthTransaction, EthAddress, EthereumConfig> {
+    implements MintChain<EthTransaction, EthAddress, EthereumConfig>
+{
     public static chain = "Ethereum";
     public chain = EthereumBaseChain.chain;
     public name = EthereumBaseChain.chain;
@@ -693,8 +694,5 @@ export class EthereumBaseChain
         fromHex(transactionID);
 }
 
-const _: ChainStatic<
-    EthTransaction,
-    EthAddress,
-    EthereumConfig
-> = EthereumBaseChain;
+const _: ChainStatic<EthTransaction, EthAddress, EthereumConfig> =
+    EthereumBaseChain;

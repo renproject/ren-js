@@ -27,12 +27,12 @@ const MNEMONIC = process.env.MNEMONIC;
 //         const infuraURL = ethNetwork.publicProvider({
 //             infura: process.env.INFURA_KEY,
 //         });
-//         const ethereumProvider = (new HDWalletProvider({
+//         const ethereumProvider: provider = new HDWalletProvider({
 //             mnemonic: MNEMONIC || "",
 //             providerOrUrl: infuraURL,
 //             addressIndex: 0,
 //             numberOfAddresses: 10,
-//         }) as unknown) as any;
+//         }) as unknown as provider;
 
 //         const renJS = new RenJS("mainnet");
 //         const fees = await renJS.getFees({

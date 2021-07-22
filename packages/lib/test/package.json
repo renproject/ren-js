@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.4.4",
+    "version": "2.4.6",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -24,13 +24,13 @@
         "build:module": "tsc -p tsconfig.module.json"
     },
     "dependencies": {
-        "@renproject/chains": "^2.4.4",
-        "@renproject/chains-terra": "^2.4.4",
-        "@renproject/interfaces": "^2.4.4",
-        "@renproject/provider": "^2.4.4",
-        "@renproject/ren": "^2.4.4",
-        "@renproject/rpc": "^2.4.4",
-        "@renproject/utils": "^2.4.4",
+        "@renproject/chains": "^2.4.6",
+        "@renproject/chains-terra": "^2.4.6",
+        "@renproject/interfaces": "^2.4.6",
+        "@renproject/provider": "^2.4.6",
+        "@renproject/ren": "^2.4.6",
+        "@renproject/rpc": "^2.4.6",
+        "@renproject/utils": "^2.4.6",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.12",
@@ -40,7 +40,7 @@
         "@truffle/hdwallet-provider": "1.4.1",
         "chalk": "^4.1.0",
         "dotenv": "^8.2.0",
-        "web3": "^1.3.6",
+        "web3": "^1.4.0",
         "@renproject/gateway-sol": "^1.0.10",
         "hardhat": "2.4.1",
         "@nomiclabs/hardhat-ethers": "^2.0.2"

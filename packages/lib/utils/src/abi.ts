@@ -1,4 +1,4 @@
-import { AbiItem, EthType } from "@renproject/interfaces";
+import { AbiInput, AbiItem, EthArg, EthType } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 
@@ -24,9 +24,48 @@ const mintABITemplate: AbiItem = {
     type: "function",
 };
 
+const tupleRegex = /tuple\(([a-zA-Z0-9]+)(?:,([a-zA-Z0-9]+))*\)/;
+
+/**
+ * If the type of an Ethereum arg matches `tuple(...)`, then it needs to include
+ * a `components` array that provides the name and type of each of the tuple's
+ * values. If it wasn't included, `fixTuple` will create the components array.
+ */
+const fixTuple = (argument: {
+    type: string;
+    name: string;
+    value: unknown;
+    components?: AbiInput[];
+}) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { value, ...args } = argument;
+    try {
+        // If type is `tuple(...)` but components haven't been
+        // been passed in, add them.
+        const match = args && args.type && tupleRegex.exec(args.type);
+        if (match && !argument.components) {
+            const types = match.slice(1);
+            const components: AbiInput[] = [];
+            for (let i = 0; i < types.length; i++) {
+                components[i] = {
+                    name: String(i),
+                    type: types[i] as EthType,
+                };
+            }
+            return {
+                ...args,
+                components,
+            };
+        }
+    } catch (error) {
+        console.error(error);
+    }
+    return args;
+};
+
 export const payloadToABI = (
     methodName: string,
-    payload: Array<{ type: string; name: string }> | undefined,
+    payload: Array<{ type: string; name: string; value: unknown }> | undefined,
 ): AbiItem[] => {
     // Type validation
     assertType<string>("string", { methodName });
@@ -39,9 +78,10 @@ export const payloadToABI = (
             name: methodName,
             type: "function",
             inputs: [
-                ...(payload || []).map((value) => ({
+                ...(payload || []).map(fixTuple).map((value) => ({
                     type: value.type as EthType,
                     name: value.name,
+                    components: value.components,
                 })),
             ],
             outputs: [],
@@ -51,7 +91,7 @@ export const payloadToABI = (
 
 export const payloadToMintABI = (
     methodName: string,
-    payload: Array<{ type: string; name: string }> | undefined,
+    payload: Array<{ type: string; name: string; value: unknown }> | undefined,
 ): AbiItem[] => {
     // Type validation
     assertType<string>("string", { methodName });
@@ -64,9 +104,10 @@ export const payloadToMintABI = (
             ...mintABITemplate,
             name: methodName,
             inputs: [
-                ...(payload || []).map((value) => ({
+                ...(payload || []).map(fixTuple).map((value) => ({
                     type: value.type as EthType,
                     name: value.name,
+                    components: value.components,
                 })),
                 ...(mintABITemplate.inputs ? mintABITemplate.inputs : []),
             ],

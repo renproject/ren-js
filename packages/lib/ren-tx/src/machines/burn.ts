@@ -374,6 +374,18 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                     // spawn in case we aren't creating
                     entry: "burnSpawner",
                     on: {
+                        BURN_ERROR: {
+                            target: "errorBurning",
+                            actions: assign({
+                                tx: (ctx, evt) =>
+                                    evt.data
+                                        ? {
+                                              ...ctx.tx,
+                                              error: evt.error,
+                                          }
+                                        : ctx.tx,
+                            }),
+                        },
                         // In case we restored and didn't submit
                         SUBMIT: {
                             actions: send("SUBMIT", {

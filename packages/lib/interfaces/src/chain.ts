@@ -48,7 +48,7 @@ export interface BurnPayloadConfig {
 export interface ChainCommon<
     Transaction = any,
     Address extends string | { address: string } = any,
-    Network = any
+    Network = any,
 > extends ChainStatic<Transaction, Address, Network> {
     /**
      * The name of the Chain.
@@ -231,7 +231,7 @@ export interface LockChain<
     /**
      * GetDeposits can track its progress using a `progress` value.
      */
-    GetDepositProgress = any
+    GetDepositProgress = any,
 > extends ChainCommon<Transaction, Address, Network> {
     // Deposits
 
@@ -317,7 +317,7 @@ export type OverwritableBurnAndReleaseParams = Omit<
 export interface MintChain<
     Transaction = any,
     Address extends string | { address: string } = any,
-    Network = any
+    Network = any,
 > extends ChainCommon<Transaction, Address, Network> {
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
@@ -377,9 +377,7 @@ export interface MintChain<
     /**
      * Fetch the mint and burn fees for an asset.
      */
-    getFees(
-        asset: string,
-    ): SyncOrPromise<{
+    getFees(asset: string): SyncOrPromise<{
         burn: number;
         mint: number;
     }>;
@@ -407,7 +405,7 @@ export interface MintChain<
 export interface ChainStatic<
     Transaction = any,
     DepositAddress extends string | { address: string } = any,
-    Network = any
+    Network = any,
 > {
     utils: {
         // Map from a RenVM network to the chain's network.

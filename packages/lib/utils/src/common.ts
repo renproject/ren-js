@@ -239,7 +239,7 @@ export const emptyNonce = (): Buffer => fromHex("00".repeat(32));
 
 export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
     fromHex(
-        ((AbiCoder as any) as AbiCoder.AbiCoder).encodeParameters(
+        ((AbiCoder as unknown) as AbiCoder.AbiCoder).encodeParameters(
             types,
             parameters,
         ),

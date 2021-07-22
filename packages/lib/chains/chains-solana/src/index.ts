@@ -20,11 +20,9 @@ import {
     TransactionInstruction,
     SYSVAR_RENT_PUBKEY,
     SYSVAR_INSTRUCTIONS_PUBKEY,
-    Secp256k1Program,
     SystemProgram,
     sendAndConfirmRawTransaction,
     ConfirmOptions,
-    CreateSecp256k1InstructionWithPublicKeyParams,
     CreateSecp256k1InstructionWithEthAddressParams,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
@@ -53,6 +51,7 @@ import {
 } from "./layouts";
 
 // FIXME: Typings are out of date, so lets fall back to good old any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ActualToken: any = Token;
 
 export type SolTransaction = string;
@@ -71,7 +70,8 @@ interface SolOptions {
 }
 
 export class SolanaClass
-    implements MintChain<SolTransaction, SolAddress, SolNetworkConfig> {
+    implements MintChain<SolTransaction, SolAddress, SolNetworkConfig>
+{
     public static chain = "Solana" as const;
     public chain = Solana.chain;
     public name = Solana.chain;
@@ -109,7 +109,7 @@ export class SolanaClass
         if (options) {
             this._logger = options.logger;
         }
-        this.initialize(this.renNetworkDetails!.name as RenNetwork);
+        this.initialize(this.renNetworkDetails.name).catch(console.error);
     }
 
     public static utils = {
@@ -160,6 +160,7 @@ export class SolanaClass
         },
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public utils = SolanaClass.utils as any;
 
     /**
@@ -222,6 +223,7 @@ export class SolanaClass
         return this._initialized;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withProvider = (provider: any) => {
         this.provider = provider;
         return this;
@@ -415,7 +417,9 @@ export class SolanaClass
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
         if (mintTx.out && mintTx.out.revert)
-            throw new Error("Transaction reverted: " + mintTx.out.revert);
+            throw new Error(
+                `Transaction reverted: ${mintTx.out.revert.toString()}`,
+            );
         if (!mintTx.out || !mintTx.out.signature)
             throw new Error("Missing signature");
         let sig = mintTx.out.signature;
@@ -547,9 +551,8 @@ export class SolanaClass
         ).blockhash;
         tx.feePayer = this.provider.wallet.publicKey;
 
-        const simulationResult = await this.provider.connection.simulateTransaction(
-            tx,
-        );
+        const simulationResult =
+            await this.provider.connection.simulateTransaction(tx);
         if (simulationResult.value.err) {
             throw new Error(
                 "transaction simulation failed: " +
@@ -621,18 +624,20 @@ export class SolanaClass
         if (!mintLogData.is_initialized) return undefined;
 
         try {
-            const mintSigs = await this.provider.connection.getSignaturesForAddress(
-                mintLogAccountId[0],
-            );
-            return mintSigs[0]?.signature || "";
+            const mintSigs =
+                await this.provider.connection.getSignaturesForAddress(
+                    mintLogAccountId[0],
+                );
+            return (mintSigs[0] && mintSigs[0].signature) || "";
         } catch (error) {
             // If getSignaturesForAddress threw an error, the network may be
             // on a version before 1.7, so this second method should be tried.
             // Once all relevant networks have been updated, this can be removed.
             try {
-                const mintSigs = await this.provider.connection.getConfirmedSignaturesForAddress2(
-                    mintLogAccountId[0],
-                );
+                const mintSigs =
+                    await this.provider.connection.getConfirmedSignaturesForAddress2(
+                        mintLogAccountId[0],
+                    );
                 return mintSigs[0].signature;
             } catch (errorInner) {
                 // If both threw, throw the error returned from
@@ -694,8 +699,6 @@ export class SolanaClass
         );
 
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
-
-        const gatewayState = GatewayLayout.decode(gatewayInfo.data);
 
         const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
 
@@ -796,9 +799,10 @@ export class SolanaClass
             );
             if (burnInfo) {
                 const burnData = BurnLogLayout.decode(burnInfo.data);
-                const txes = await this.provider.connection.getConfirmedSignaturesForAddress2(
-                    burnId[0],
-                );
+                const txes =
+                    await this.provider.connection.getConfirmedSignaturesForAddress2(
+                        burnId[0],
+                    );
 
                 // Concatenate four u64s into a u256 value.
                 const burnAmount = new BN(

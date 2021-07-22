@@ -2,7 +2,12 @@
 
 // import * as Chains from "@renproject/chains";
 
-// import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
+// import {
+//     LockAndMintParams,
+//     LogLevel,
+//     RenNetwork,
+//     SimpleLogger,
+// } from "@renproject/interfaces";
 // import RenJS from "@renproject/ren";
 // import { extractError, SECONDS, sleep } from "@renproject/utils";
 // import chai from "chai";
@@ -11,10 +16,10 @@
 // import HDWalletProvider from "@truffle/hdwallet-provider";
 // import { config as loadDotEnv } from "dotenv";
 // import BigNumber from "bignumber.js";
+// import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
 // import Web3 from "web3";
 // import { provider } from "web3-core";
 // import { RenVMProvider } from "@renproject/rpc/build/main/v2";
-// import ethers from "ethers";
 
 // chai.should();
 
@@ -32,10 +37,10 @@
 //     longIt("mint to contract", async function () {
 //         this.timeout(100000000000);
 
-//         const network = RenNetwork.TestnetVDot3;
-//         const ToClass = Chains.Polygon;
-//         const from = Chains.Zcash();
-//         const asset = "ZEC";
+//         const network = RenNetwork.Testnet;
+//         const ToClass = Chains.Ethereum;
+//         const from = Chains.Terra();
+//         const asset = "LUNA"; // from.asset;
 
 //         const ethNetwork = ToClass.configMap[network];
 
@@ -53,13 +58,13 @@
 //         const infuraURL = ethNetwork.publicProvider({
 //             infura: process.env.INFURA_KEY,
 //         });
-//         const hdWalletProvider: provider = new HDWalletProvider({
+//         const provider: provider = new HDWalletProvider({
 //             mnemonic: MNEMONIC || "",
 //             providerOrUrl: infuraURL,
 //             addressIndex: 0,
 //             numberOfAddresses: 10,
 //         }) as any;
-//         const web3 = new Web3(hdWalletProvider);
+//         const web3 = new Web3(provider);
 //         const ethAddress = (await web3.eth.getAccounts())[0];
 //         const ethBalance = web3.utils.fromWei(
 //             await web3.eth.getBalance(ethAddress),
@@ -67,26 +72,20 @@
 //         );
 //         console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
 
-//         const provider = new ethers.providers.Web3Provider(
-//             hdWalletProvider as any,
-//         );
-//         const signer = provider.getSigner();
-
 //         const params = {
 //             asset,
 //             from,
-//             to: ToClass(
+//             to: ToClass(provider, ethNetwork).Account(
 //                 {
-//                     provider,
-//                     signer,
+//                     address: ethAddress,
 //                 },
-//                 ethNetwork,
-//             ).Account({
-//                 address: ethAddress,
-//             }),
+//                 {
+//                     gas: 2000000,
+//                 },
+//             ),
 //         };
 
-//         const assetDecimals = params.from.assetDecimals(asset);
+//         const assetDecimals = await params.from.assetDecimals(asset);
 
 //         // Use 0.0001 more than fee.
 //         let suggestedAmount: BigNumber;
@@ -97,7 +96,8 @@
 //             );
 //         } catch (error) {
 //             console.error("Error fetching fees:", red(extractError(error)));
-//             if ((asset as string) === "FIL") {
+//             console.error(error);
+//             if (asset === "FIL") {
 //                 suggestedAmount = new BigNumber(0.2);
 //             } else {
 //                 suggestedAmount = new BigNumber(0.0015);
@@ -194,15 +194,15 @@
 //                         let address = "";
 //                         if (typeof lockAndMint.gatewayAddress === "string") {
 //                             address = lockAndMint.gatewayAddress;
-//                         } else if (
-//                             (asset as string) === "FIL" ||
-//                             (asset as string) === "LUNA"
-//                         ) {
+//                         } else if (asset === "FIL" || asset === "LUNA") {
 //                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-//                             address = (lockAndMint.gatewayAddress as Chains.FilAddress)
-//                                 .address;
+//                             address = (
+//                                 lockAndMint.gatewayAddress as Chains.FilAddress
+//                             ).address;
 //                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-//                             options.params = (lockAndMint.gatewayAddress as Chains.FilAddress).params;
+//                             options.params = (
+//                                 lockAndMint.gatewayAddress as Chains.FilAddress
+//                             ).params;
 //                             // options.memo = (lockAndMint.gatewayAddress as TerraAddress);
 //                         } else {
 //                             console.error(`Unknown address format.`);

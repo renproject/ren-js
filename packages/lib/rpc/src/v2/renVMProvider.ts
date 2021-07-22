@@ -73,7 +73,8 @@ export const resolveV2Contract = ({
 };
 
 export class RenVMProvider
-    implements AbstractRenVMProvider<RenVMParams, RenVMResponses> {
+    implements AbstractRenVMProvider<RenVMParams, RenVMResponses>
+{
     public version = () => 2;
 
     private readonly network: RenNetwork;
@@ -257,7 +258,7 @@ export class RenVMProvider
             selector: selector,
             version,
             // TODO: Fix types
-            in: (txIn as unknown) as SubmitGatewayInput["in"],
+            in: txIn as unknown as SubmitGatewayInput["in"],
         };
     };
 
@@ -319,7 +320,7 @@ export class RenVMProvider
             selector: selector,
             version,
             // TODO: Fix types
-            in: (txIn as unknown) as MintTransactionInput["in"],
+            in: txIn as unknown as MintTransactionInput["in"],
         };
     };
 
@@ -390,7 +391,7 @@ export class RenVMProvider
      * @param renVMTxHash The transaction hash as a Buffer.
      */
     public readonly queryMintOrBurn = async <
-        T extends LockAndMintTransaction | BurnAndReleaseTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction,
     >(
         _selector: string,
         renVMTxHash: Buffer,
@@ -429,7 +430,7 @@ export class RenVMProvider
      * loop.
      */
     public readonly waitForTX = async <
-        T extends LockAndMintTransaction | BurnAndReleaseTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction,
     >(
         selector: string,
         utxoTxHash: Buffer,

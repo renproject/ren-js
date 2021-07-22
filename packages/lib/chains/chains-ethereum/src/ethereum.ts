@@ -23,7 +23,8 @@ import { EthAddress, EthTransaction } from "./types";
 
 export class EthereumClass
     extends EthereumBaseChain
-    implements MintChain<EthTransaction, EthAddress> {
+    implements MintChain<EthTransaction, EthAddress>
+{
     public _getParams:
         | ((
               asset: string,

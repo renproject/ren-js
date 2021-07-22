@@ -71,7 +71,7 @@ const BasicBurnApp = ({
 }) => {
     const parameters = useMemo(
         () => ({
-            sdk: new RenJS(network),
+            sdk: new RenJS(network, { useV2TransactionFormat: true }),
             burnParams: {
                 sourceAsset: "BTC",
                 network,
@@ -135,7 +135,10 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
 
     const parameters = useMemo(
         () => ({
-            sdk: new RenJS(network, { loadCompletedDeposits: true }),
+            sdk: new RenJS(network, {
+                loadCompletedDeposits: true,
+                useV2TransactionFormat: true,
+            }),
             mintParams: {
                 network,
                 sourceAsset: asset,

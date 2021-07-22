@@ -15,8 +15,9 @@ export class HttpProvider<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Responses extends { [event: string]: any } = {}
-> implements Provider<Requests, Responses> {
+    Responses extends { [event: string]: any } = {},
+> implements Provider<Requests, Responses>
+{
     public readonly nodeURL: string;
     public readonly logger: Logger;
 

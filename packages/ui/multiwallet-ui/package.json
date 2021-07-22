@@ -1,7 +1,7 @@
 {
   "name": "@renproject/multiwallet-ui",
   "author": "renproject",
-  "version": "2.4.4",
+  "version": "2.4.6",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -28,8 +28,8 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@renproject/interfaces": "^2.4.4",
-    "@renproject/multiwallet-base-connector": "^2.4.4"
+    "@renproject/interfaces": "^2.4.6",
+    "@renproject/multiwallet-base-connector": "^2.4.6"
   },
   "peerDependencies": {
     "@material-ui/core": "^4.11.0",
@@ -83,5 +83,8 @@
     "tsdx": "^0.14.0",
     "tslib": "^2.0.1",
     "typescript": "^4.0.5"
+  },
+  "jest": {
+    "testTimeout": 20000
   }
 }

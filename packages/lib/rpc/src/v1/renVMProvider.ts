@@ -62,7 +62,8 @@ export const generateMintTxHash = (
 };
 
 export class RenVMProvider
-    implements AbstractRenVMProvider<RenVMParams, RenVMResponses> {
+    implements AbstractRenVMProvider<RenVMParams, RenVMResponses>
+{
     public version = () => 1;
 
     private readonly network: RenNetwork;
@@ -367,7 +368,7 @@ export class RenVMProvider
     };
 
     public readonly queryMintOrBurn = async <
-        T extends LockAndMintTransaction | BurnAndReleaseTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction,
     >(
         _selector: string,
         utxoTxHash: Buffer,
@@ -384,7 +385,7 @@ export class RenVMProvider
     };
 
     public readonly waitForTX = async <
-        T extends LockAndMintTransaction | BurnAndReleaseTransaction
+        T extends LockAndMintTransaction | BurnAndReleaseTransaction,
     >(
         selector: string,
         utxoTxHash: Buffer,

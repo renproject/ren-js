@@ -108,8 +108,7 @@ describe("Solana", () => {
                 "d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94";
             const params = solana.getBurnParams("BTC", btcAddressHex);
             expect(params.contractCalls[0]).toLooseEqual({
-                sendTo:
-                    "d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
+                sendTo: "d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
                 contractFn: "",
                 contractParams: [
                     {

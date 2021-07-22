@@ -56,18 +56,16 @@ export const fetchDeposits = async (
     const { messages, height } = response.data;
 
     return messages
-        .map(
-            (message): FilTransaction => {
-                return {
-                    cid: message.cid,
-                    // to: message.to,
-                    amount: message.amount,
-                    params: message.params,
-                    confirmations: height ? height - height + 1 : 0,
-                    nonce: message.nonce,
-                };
-            },
-        )
+        .map((message): FilTransaction => {
+            return {
+                cid: message.cid,
+                // to: message.to,
+                amount: message.amount,
+                params: message.params,
+                confirmations: height ? height - height + 1 : 0,
+                nonce: message.nonce,
+            };
+        })
         .filter(
             (message) =>
                 !paramsFilterBase64 || message.params === paramsFilterBase64,

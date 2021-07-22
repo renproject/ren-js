@@ -30,7 +30,7 @@ import {
     randomBytes,
     toURLBase64,
 } from "@renproject/utils";
-import { ecrecover, ecsign, privateToAddress } from "ethereumjs-util";
+import { ecsign, privateToAddress } from "ethereumjs-util";
 import AbiCoder from "web3-eth-abi";
 import BigNumber from "bignumber.js";
 import { ChainCommon, TxStatus } from "@renproject/interfaces";
@@ -80,10 +80,10 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         this.supportedChains.push(chain.name);
     };
 
-    async sendMessage<Method extends keyof RenVMParams & string>(
+    sendMessage<Method extends keyof RenVMParams & string>(
         method: Method,
         request: RenVMParams[Method],
-    ): Promise<RenVMResponses[Method]> {
+    ): RenVMResponses[Method] {
         try {
             switch (method) {
                 case RPCMethod.SubmitTx:
@@ -107,7 +107,6 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
             }
             throw new Error(`Method ${method} not supported.`);
         } catch (error) {
-            console.trace(error);
             throw error;
         }
     }
@@ -129,7 +128,9 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
 
         // Generate signature
-        const sigParams = ((AbiCoder as any) as AbiCoder.AbiCoder).encodeParameters(
+        const sigParams = (
+            AbiCoder as any as AbiCoder.AbiCoder
+        ).encodeParameters(
             ["bytes32", "uint256", "bytes32", "address", "bytes32"],
             [pHash, amountOut, sHash, Ox(to), nHash],
         );

@@ -23,7 +23,6 @@ import {
 import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
 import * as ethers from "ethers";
-import { PopulatedTransaction } from "ethers";
 import {
     Provider,
     ExternalProvider,
@@ -52,6 +51,7 @@ import {
     ignorePromiEventError,
     manualPromiEvent,
     submitToEthereum,
+    EthereumTransactionConfig,
 } from "./utils";
 
 export const EthereumConfigMap = {
@@ -519,7 +519,7 @@ export class EthereumBaseChain
 
                 const txConfig =
                     typeof contractCall === "object"
-                        ? (contractCall.txConfig as PopulatedTransaction)
+                        ? (contractCall.txConfig as EthereumTransactionConfig)
                         : {};
 
                 const config = {

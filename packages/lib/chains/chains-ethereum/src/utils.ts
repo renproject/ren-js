@@ -35,10 +35,14 @@ import {
     TransactionReceipt,
     TransactionResponse,
 } from "@ethersproject/providers";
-import { PopulatedTransaction } from "ethers";
+import { Overrides } from "ethers";
 import * as ethers from "ethers";
 
 import { EthereumConfig } from "./networks";
+
+export interface EthereumTransactionConfig extends Overrides {
+    value?: ethers.BigNumberish | Promise<ethers.BigNumberish>;
+}
 
 export type Web3Events = {
     transactionHash: [string];
@@ -378,8 +382,8 @@ export const findBurnByNonce = async (
 // export const defaultAccountError = "No accounts found in Web3 wallet.";
 // export const withDefaultAccount = async (
 //     web3: Web3,
-//     config: PopulatedTransaction,
-// ): Promise<PopulatedTransaction> => {
+//     config: EthereumTransactionConfig,
+// ): Promise<EthereumTransactionConfig> => {
 //     if (!config.from) {
 //         if (web3.eth.defaultAccount) {
 //             config.from = web3.eth.defaultAccount;
@@ -638,7 +642,7 @@ export const submitToEthereum = async (
         const txConfig =
             typeof contractCall === "object"
                 ? // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                  (contractCall.txConfig as PopulatedTransaction)
+                  (contractCall.txConfig as EthereumTransactionConfig)
                 : {};
 
         const config = {

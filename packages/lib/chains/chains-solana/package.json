@@ -48,6 +48,8 @@
         "@renproject/interfaces": "^2.4.6",
         "@renproject/rpc": "^2.4.6",
         "@renproject/utils": "^2.4.6",
+        "@renproject/chains-terra": "^2.4.6",
+        "@renproject/chains-filecoin": "^2.4.6",
         "@solana/spl-token": "^0.1.5",
         "@solana/web3.js": "^1.19.0",
         "@types/bn.js": "^5.1.0",

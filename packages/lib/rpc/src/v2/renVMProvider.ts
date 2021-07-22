@@ -9,6 +9,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    SyncOrPromise,
     TxStatus,
 } from "@renproject/interfaces";
 import { HttpProvider, Provider } from "@renproject/provider";
@@ -118,7 +119,7 @@ export class RenVMProvider
         request: RenVMParams[Method],
         retry?: number,
         timeout?: number,
-    ): Promise<RenVMResponses[Method]> => {
+    ): SyncOrPromise<RenVMResponses[Method]> => {
         return this.provider.sendMessage(method, request, retry, timeout);
     };
 

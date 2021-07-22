@@ -1,5 +1,4 @@
 import chai from "chai";
-import { describe, it } from "mocha";
 import RenJS from "@renproject/ren";
 
 chai.should();

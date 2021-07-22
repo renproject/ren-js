@@ -10,7 +10,7 @@ import {
 } from "@renproject/interfaces";
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { PopulatedTransaction, Signer } from "ethers";
+import { Signer } from "ethers";
 import {
     ExternalProvider,
     JsonRpcFetchFunc,
@@ -20,6 +20,7 @@ import {
 import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
 import { EthAddress, EthTransaction } from "./types";
+import { EthereumTransactionConfig } from "./utils";
 
 export class EthereumClass
     extends EthereumBaseChain
@@ -65,7 +66,7 @@ export class EthereumClass
         this._getParams ? this._getParams(asset, burnPayload) : undefined;
 
     /** @category Main */
-    public Address = (address: string, txConfig?: PopulatedTransaction) =>
+    public Address = (address: string, txConfig?: EthereumTransactionConfig) =>
         this.Account({ address }, txConfig);
 
     /** @category Main */
@@ -77,7 +78,7 @@ export class EthereumClass
             value?: BigNumber | string | number;
             address?: string;
         },
-        txConfig?: PopulatedTransaction,
+        txConfig?: EthereumTransactionConfig,
     ): this => {
         this._getParams = async (
             asset: string,

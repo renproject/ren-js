@@ -348,7 +348,7 @@ export class TerraClass
 
     burnPayload? = (config?: BurnPayloadConfig) => {
         return this.getBurnPayload
-            ? this.getBurnPayload(config?.bytes)
+            ? this.getBurnPayload(config && config.bytes)
             : undefined;
     };
 }

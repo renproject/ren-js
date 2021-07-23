@@ -183,9 +183,8 @@ export class FilecoinClass
         this.renNetwork = getRenNetworkDetails(renNetwork);
         // Prioritize the network passed in to the constructor.
         this.chainNetwork =
-            this.chainNetwork || this.renNetwork.isTestnet
-                ? "testnet"
-                : "mainnet";
+            this.chainNetwork ||
+            (this.renNetwork.isTestnet ? "testnet" : "mainnet");
 
         this.client = new FilecoinClient({
             apiAddress: isDefined(this.clientOptions.apiAddress)
@@ -467,7 +466,7 @@ export class FilecoinClass
 
     burnPayload? = (config?: BurnPayloadConfig) => {
         return this.getBurnPayload
-            ? this.getBurnPayload(config?.bytes)
+            ? this.getBurnPayload(config && config.bytes)
             : undefined;
     };
 }

@@ -1011,7 +1011,9 @@ export class SolanaClass
             amount: new BigNumber(amount),
             to: await encodeAddress(
                 asset,
-                this.renNetwork?.isTestnet ? "testnet" : "mainnet",
+                this.renNetwork && this.renNetwork.isTestnet
+                    ? "testnet"
+                    : "mainnet",
             )(recipient),
             nonce: new BigNumber(nonceBN.toString()),
         };

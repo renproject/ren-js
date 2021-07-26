@@ -46,6 +46,8 @@
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.2",
         "@renproject/interfaces": "^2.4.6",
+        "@renproject/chains-terra": "^2.4.6",
+        "@renproject/chains-filecoin": "^2.4.6",
         "@renproject/rpc": "^2.4.6",
         "@renproject/utils": "^2.4.6",
         "@solana/spl-token": "^0.1.5",
@@ -63,13 +65,8 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": [
-            "**/*.d.ts",
-            "**/*.spec.js"
-        ],
-        "include": [
-            "src"
-        ]
+        "exclude": ["**/*.d.ts", "**/*.spec.js"],
+        "include": ["src"]
     },
     "prettier": {
         "printWidth": 80,

@@ -76,7 +76,7 @@ export const renTestnet: SolNetworkConfig = {
     chain: "testnet",
     isTestnet: true,
     chainLabel: "Testnet",
-    endpoint: "https://api.devnet.solana.com",
+    endpoint: "https://api.testnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
     lightnode: "https://lightnode-testnet.herokuapp.com",
     addresses: {

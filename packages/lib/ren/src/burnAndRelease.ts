@@ -421,7 +421,11 @@ export class BurnAndRelease<
                         txid,
                         txindex,
                     },
-                    amount: amount.toFixed(),
+                    // FIXME: needed until we support different asset decimals between chains
+                    amount:
+                        this._state.selector === "FIL/fromSolana"
+                            ? amount.multipliedBy(10 ** 9).toFixed()
+                            : amount.toFixed(),
                     payload,
                     pHash,
                     to: to.toString(),
@@ -558,7 +562,11 @@ export class BurnAndRelease<
                                     txid,
                                     txindex,
                                 },
-                                amount: amount.toFixed(),
+                                // FIXME: hack until we support differing decimals between burn + release chains
+                                amount:
+                                    this._state.selector === "FIL/fromSolana"
+                                        ? amount.multipliedBy(10 ** 9).toFixed()
+                                        : amount.toFixed(),
                                 payload,
                                 pHash,
                                 to: to.toString(),

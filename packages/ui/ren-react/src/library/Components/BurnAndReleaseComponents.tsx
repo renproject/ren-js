@@ -29,7 +29,11 @@ const DefaultConfirmingBurn: React.FC<ConfirmingBurnProps> = ({
         <div className="confirmingBurn">
             Waiting for burn confirmation {confirmations}/
             {targetConfirmations || "?"}
-            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
+            {explorerLink && (
+                <div>
+                    <a href={explorerLink}>Explorer Link</a>
+                </div>
+            )}
         </div>
     );
 };
@@ -91,10 +95,14 @@ const DefaultAcceptedBurn: React.FC<AcceptedBurnProps> = ({
         <div className="acceptedBurn">
             Burned {amount}
             {burnExplorerLink && (
-                <a href={burnExplorerLink}>Burn Explorer Link</a>
+                <div>
+                    <a href={burnExplorerLink}>Burn Explorer Link</a>
+                </div>
             )}
             {releaseExplorerLink && (
-                <a href={burnExplorerLink}>Release Explorer Link</a>
+                <div>
+                    <a href={burnExplorerLink}>Release Explorer Link</a>
+                </div>
             )}
         </div>
     );
@@ -116,7 +124,11 @@ const DefaultCompletedBurn: React.FC<CompletedBurnProps> = ({
         <div className="completed-burn">
             Successfully burned {amount}{" "}
             {txHash ? ` in release tx: ${txHash}` : ""}
-            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
+            {explorerLink && (
+                <div>
+                    <a href={explorerLink}>Explorer Link</a>
+                </div>
+            )}
         </div>
     );
 };

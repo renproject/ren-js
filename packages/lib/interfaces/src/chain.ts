@@ -268,6 +268,14 @@ export interface LockChain<
     addressToBytes: (address: Address | string) => Buffer;
 
     /**
+     * `bytesToAddress` should return the string representation of the address.
+     *
+     * @dev Must be compatible with the matching RenVM multichain LockChain's
+     * `encodeAddress` method.
+     */
+    bytesToAddress: (bytes: Buffer) => Address | string;
+
+    /**
      * @deprecated Renamed to addressToBytes.
      */
     addressStringToBytes: (address: string) => Buffer;

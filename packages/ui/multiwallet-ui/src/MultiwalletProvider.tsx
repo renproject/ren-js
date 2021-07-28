@@ -106,7 +106,7 @@ export const ConnectorWatcher = <P, A>({
         status: "disconnected",
       });
       // The conneector should clean up after itself internally
-      //connector.emitter.removeAllListeners();
+      // connector.emitter.removeAllListeners();
     },
     [update, chain, connector]
   );

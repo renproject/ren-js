@@ -291,6 +291,14 @@ export abstract class BitcoinBaseChain
         }
     };
 
+    /**
+     * See [[LockChain.bytesToAddress]].
+     */
+    bytesToAddress = (address: Buffer): string => {
+        const words = bech32.toWords(address);
+        return bech32.encode("", words);
+    };
+
     /** @deprecated. Renamed to addressToBytes. */
     addressStringToBytes = this.addressToBytes;
 

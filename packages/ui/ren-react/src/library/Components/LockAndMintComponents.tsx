@@ -31,17 +31,20 @@ export interface ConfirmingDepositProps<X> {
     targetConfirmations?: number;
 }
 
-export const DefaultConfirmingDeposit: React.FC<
-    ConfirmingDepositProps<any>
-> = ({ confirmations, targetConfirmations, explorerLink }) => {
-    return (
-        <div className="confirmingDeposit">
-            Waiting for deposit confirmation {confirmations}/
-            {targetConfirmations || "?"}
-            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
-        </div>
-    );
-};
+export const DefaultConfirmingDeposit: React.FC<ConfirmingDepositProps<any>> =
+    ({ confirmations, targetConfirmations, explorerLink }) => {
+        return (
+            <div className="confirmingDeposit">
+                Waiting for deposit confirmation {confirmations}/
+                {targetConfirmations || "?"}
+                {explorerLink && (
+                    <div>
+                        <a href={explorerLink}>Explorer Link</a>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
 export interface SigningDepositProps {
     deposit: ConfirmingGatewayTransaction<any>;
@@ -55,13 +58,14 @@ export interface SubmittingMintDepositProps {
     deposit: SubmittingGatewayTransaction<any>;
 }
 
-export const DefaultSubmittingMintDeposit: React.FC<SubmittingMintDepositProps> = () => {
-    return (
-        <div className="submittingMint">
-            Please sign the transaction in your wallet
-        </div>
-    );
-};
+export const DefaultSubmittingMintDeposit: React.FC<SubmittingMintDepositProps> =
+    () => {
+        return (
+            <div className="submittingMint">
+                Please sign the transaction in your wallet
+            </div>
+        );
+    };
 
 export interface MintingDepositProps {
     deposit: SubmittingGatewayTransaction<any>;
@@ -103,7 +107,11 @@ export const DefaultCompletedDeposit: React.FC<CompletedDepositProps> = ({
     return (
         <div className="acceptedDeposit">
             Successfully minted {String(amount)}, tx: {String(tx)}
-            {explorerLink && <a href={explorerLink}>Explorer Link</a>}
+            {explorerLink && (
+                <div>
+                    <a href={explorerLink}>Explorer Link</a>
+                </div>
+            )}
         </div>
     );
 };
@@ -132,13 +140,14 @@ export interface ErrorRestoringDepositProps {
     reason: string;
 }
 
-export const DefaultErrorRestoringDeposit: React.FC<ErrorRestoringDepositProps> = ({
-    reason,
-}) => {
-    return (
-        <div className="errorRestoringDeposit">Error Restoring {reason}</div>
-    );
-};
+export const DefaultErrorRestoringDeposit: React.FC<ErrorRestoringDepositProps> =
+    ({ reason }) => {
+        return (
+            <div className="errorRestoringDeposit">
+                Error Restoring {reason}
+            </div>
+        );
+    };
 
 export interface ErrorMintingDepositProps {
     deposit: GatewayTransaction<any>;
@@ -245,7 +254,9 @@ export const DefaultDeposit: React.FC<DepositProps> = ({
             return (
                 <CompletedDeposit
                     deposit={deposit}
-                    amount={(deposit.renResponse?.out as any)?.amount}
+                    amount={formatAmount(
+                        (deposit.renResponse?.out as any)?.amount,
+                    )}
                     tx={deposit.destTxHash || ""}
                     explorerLink={mintExplorerLink}
                 />

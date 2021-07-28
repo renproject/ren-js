@@ -183,9 +183,8 @@ export class FilecoinClass
         this.renNetwork = getRenNetworkDetails(renNetwork);
         // Prioritize the network passed in to the constructor.
         this.chainNetwork =
-            this.chainNetwork || this.renNetwork.isTestnet
-                ? "testnet"
-                : "mainnet";
+            this.chainNetwork ||
+            (this.renNetwork.isTestnet ? "testnet" : "mainnet");
 
         this.client = new FilecoinClient({
             apiAddress: isDefined(this.clientOptions.apiAddress)

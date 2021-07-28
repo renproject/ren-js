@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { EthAddress } from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/interfaces";
 import {

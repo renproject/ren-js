@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "2.4.7",
+    "version": "2.4.8-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,12 +43,12 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^2.4.7",
-        "@renproject/chains-ethereum": "^2.4.7",
-        "@renproject/chains-filecoin": "^2.4.7",
-        "@renproject/chains-solana": "^2.4.7",
-        "@renproject/chains-terra": "^2.4.7",
-        "@renproject/interfaces": "^2.4.7",
+        "@renproject/chains-bitcoin": "^2.4.8-alpha.0",
+        "@renproject/chains-ethereum": "^2.4.8-alpha.0",
+        "@renproject/chains-filecoin": "^2.4.8-alpha.0",
+        "@renproject/chains-solana": "^2.4.8-alpha.0",
+        "@renproject/chains-terra": "^2.4.8-alpha.0",
+        "@renproject/interfaces": "^2.4.8-alpha.0",
         "@types/node": ">=10"
     },
     "resolutions": {

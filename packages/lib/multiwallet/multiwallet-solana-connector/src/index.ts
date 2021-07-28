@@ -82,7 +82,8 @@ export class SolanaConnector
     deactivate() {
         if (!this.emitter) return;
         this.emitter.emitDeactivate();
-        this.wallet.disconnect();
+        // if this fails, we can't do much
+        this.wallet.disconnect() as any;
     }
 
     // Get the complete connector status in one call

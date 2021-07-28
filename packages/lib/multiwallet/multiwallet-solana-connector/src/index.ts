@@ -57,7 +57,7 @@ export class SolanaConnector
             .then((...args) => {
                 this.emitter.emitUpdate(...args);
             })
-            .catch(async () => this.deactivate());
+            .catch(() => this.deactivate());
     };
 
     async activate() {
@@ -72,11 +72,12 @@ export class SolanaConnector
             renNetwork: this.network,
         };
     }
-    async getProvider() {
+
+    getProvider() {
         return { connection: this.connection, wallet: this.wallet };
     }
 
-    async deactivate() {
+    deactivate() {
         if (!this.emitter) return;
         this.emitter.emitDeactivate();
         this.wallet.disconnect();
@@ -87,18 +88,19 @@ export class SolanaConnector
         return {
             account: await this.getAccount(),
             renNetwork: this.getRenNetwork(),
-            provider: await this.getProvider(),
+            provider: this.getProvider(),
         };
     }
 
     // Get default wallet pubkey
-    async getAccount() {
-        const account = (await this.getProvider()).wallet.publicKey.toBase58();
+    getAccount() {
+        const account = this.getProvider().wallet.publicKey.toBase58();
         if (!account) {
             throw new Error("Not activated");
         }
         return account;
     }
+
     // Provide network selected during construction
     getRenNetwork() {
         return this.network;

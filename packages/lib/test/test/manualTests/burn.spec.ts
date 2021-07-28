@@ -14,6 +14,8 @@ import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
 import { provider } from "web3-core";
+import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
+import { renMainnet } from "@renproject/chains-solana/build/main/networks";
 
 chai.should();
 
@@ -22,32 +24,43 @@ loadDotEnv();
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 
+const testPK = Buffer.from(
+    "a84252a5fcbb2bfb85a422a4833a79c23ec7906826a0298dd2a0744a4c984631d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
+    "hex",
+);
+
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("burning from contract", async function () {
+    it.skip("burning from contract", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.TestnetVDot3;
-        const ethNetwork = EthereumConfigMap[network];
-        // const ethNetwork = BscConfigMap[network];
+        const network = RenNetwork.Mainnet;
+        const FromClass = Chains.Solana;
+        const ToClass = Chains.Terra;
+        const asset = "LUNA";
 
-        const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        // const infuraURL = ethNetwork.infura; // renBscTestnet.infura
-        const provider: provider = new HDWalletProvider({
-            mnemonic: MNEMONIC || "",
-            providerOrUrl: infuraURL,
-            addressIndex: 0,
-            numberOfAddresses: 10,
-        }) as any;
+        // const ethNetwork = FromClass.configMap[network];
+
+        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
+        // // const infuraURL = ethNetwork.infura; // renBscTestnet.infura
+        // const provider: provider = new HDWalletProvider({
+        //     mnemonic: MNEMONIC || "",
+        //     providerOrUrl: infuraURL,
+        //     addressIndex: 0,
+        //     numberOfAddresses: 10,
+        // }) as any;
+
+        const provider = makeTestProvider(renMainnet, testPK);
+        const fromAddress = provider.wallet.publicKey.toString();
+        const from = new FromClass(provider, renMainnet);
 
         // Recipient.
-        const asset = "BTC";
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
 
-        const to = Chains.Bitcoin().Address(recipient);
-        const from = Chains.Ethereum(provider, network);
-        const fromAddress = (await from.web3.eth.getAccounts())[0];
+        const to = ToClass().Address(recipient);
+        // const from = FromClass(provider, network);
+        // const fromAddress = (await from.web3.eth.getAccounts())[0];
 
         const logLevel = LogLevel.Log;
         const renJS = new RenJS(network, { logLevel });
@@ -71,20 +84,23 @@ describe("Refactor - Burning", () => {
             );
         }
 
-        console.log(
-            `Burning ${toReadable(
-                suggestedAmount,
-                decimals,
-            ).toFixed()} ${asset} of ${toReadable(
-                await from.getBalance(asset, fromAddress),
-                decimals,
-            ).toFixed()} ${asset} to ${recipient}`,
-        );
+        // console.log(
+        //     `Burning ${toReadable(
+        //         suggestedAmount,
+        //         decimals,
+        //     ).toFixed()} ${asset} of ${toReadable(
+        //         await from.getBalance(asset, fromAddress),
+        //         decimals,
+        //     ).toFixed()} ${asset} to ${recipient}`,
+        // );
 
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
             to,
-            from: from.Account({ value: suggestedAmount }),
+            from: from.Account({ amount: suggestedAmount }),
+            // transaction:
+            // "4AhRGqgBnZwXv66MPh9XoDMzHgNAy7o6AKyVJSNWUe5RFo2fEyPiEm9XuMJw19rgG4BWpkxSWNrqoPn6jYJ9yV35",
+            // burnNonce: 2,
         });
 
         let confirmations = 0;

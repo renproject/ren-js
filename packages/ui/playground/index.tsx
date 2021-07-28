@@ -139,20 +139,26 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
                 logger: console,
             })
         );
-    }, [providers, chain]);
+    }, [providers, chain, network]);
 
     // ensure that the solana mint destination exists
     useEffect(() => {
+        let canceled = false;
         if (!tokenAccountExists && solanaMintChain) {
             solanaMintChain
                 .createAssociatedTokenAccount(asset)
                 .then(() => {
+                    if (canceled) return;
                     setTokenAccountExists(true);
                 })
-                .catch((e) =>
-                    setTokenAccountError("Failed to create token account"),
-                );
+                .catch((e) => {
+                    if (canceled) return;
+                    setTokenAccountError("Failed to create token account");
+                });
         }
+        return () => {
+            canceled = true;
+        };
     }, [solanaMintChain, tokenAccountExists, setTokenAccountExists, asset]);
 
     const parameters: MintConfigMultiple = useMemo(
@@ -174,7 +180,7 @@ const BasicMintApp = ({ network, chain, account, providers, asset }) => {
             fromMap: lockChainMap,
             customParams: {},
         }),
-        [providers, account],
+        [providers, account, network, asset, source, lockChainMap],
     );
 
     return (
@@ -336,11 +342,12 @@ const App = (): JSX.Element => {
             </Container>
 
             {Object.keys(wallets.enabledChains)
-                .filter(
-                    (chain) =>
+                .filter((chain) => {
+                    return (
                         wallets.enabledChains[chain].provider &&
-                        wallets.enabledChains[chain].account,
-                )
+                        wallets.enabledChains[chain].account
+                    );
+                })
                 .map((chain) => (
                     <Paper key={chain} style={{ padding: "1em" }}>
                         <Typography

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "2.4.6",
+    "version": "2.4.8-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,11 +45,11 @@
     "dependencies": {
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.2",
-        "@renproject/interfaces": "^2.4.6",
-        "@renproject/chains-terra": "^2.4.6",
-        "@renproject/chains-filecoin": "^2.4.6",
-        "@renproject/rpc": "^2.4.6",
-        "@renproject/utils": "^2.4.6",
+        "@renproject/chains-filecoin": "^2.4.8-alpha.0",
+        "@renproject/chains-terra": "^2.4.8-alpha.0",
+        "@renproject/interfaces": "^2.4.8-alpha.0",
+        "@renproject/rpc": "^2.4.8-alpha.0",
+        "@renproject/utils": "^2.4.8-alpha.0",
         "@solana/spl-token": "^0.1.5",
         "@solana/web3.js": "^1.19.0",
         "@types/bn.js": "^5.1.0",
@@ -65,8 +65,13 @@
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
-        "exclude": ["**/*.d.ts", "**/*.spec.js"],
-        "include": ["src"]
+        "exclude": [
+            "**/*.d.ts",
+            "**/*.spec.js"
+        ],
+        "include": [
+            "src"
+        ]
     },
     "prettier": {
         "printWidth": 80,

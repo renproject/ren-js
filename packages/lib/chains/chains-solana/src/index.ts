@@ -70,10 +70,7 @@ const x =
     () =>
         a;
 
-const encodeAddress = (
-    asset: string,
-    network: "mainnet" | "testnet",
-): ((b: Buffer) => Promise<string>) => {
+const encodeAddress = (asset: string): ((b: Buffer) => Promise<string>) => {
     switch (asset) {
         case "BTC":
         case "ZEC":
@@ -90,7 +87,9 @@ const encodeAddress = (
                 const { Filecoin } = await import(
                     "@renproject/chains-filecoin"
                 );
-                return new Filecoin(network).bytesToAddress(bytes);
+                // Lightnodes only accept mainnet encoded addresses atm
+                const fc = new Filecoin("mainnet");
+                return fc.bytesToAddress(bytes);
             };
     }
     throw new Error("Unknown asset: " + asset);
@@ -1011,9 +1010,7 @@ export class SolanaClass
             amount: new BigNumber(amount),
             to: await encodeAddress(
                 asset,
-                this.renNetwork && this.renNetwork.isTestnet
-                    ? "testnet"
-                    : "mainnet",
+                // this.renNetwork?.isTestnet ? "testnet" : "mainnet",
             )(recipient),
             nonce: new BigNumber(nonceBN.toString()),
         };

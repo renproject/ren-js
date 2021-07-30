@@ -84,7 +84,7 @@ export const renTestnet: SolNetworkConfig = {
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
-    genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
+    genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
 };
 
 export const renDevnet: SolNetworkConfig = {
@@ -92,13 +92,13 @@ export const renDevnet: SolNetworkConfig = {
     chain: "devnet",
     isTestnet: true,
     chainLabel: "Devnet",
-    endpoint: "https://api.devnet.solana.com",
+    endpoint: "https://api.testnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
     lightnode: "https://lightnode-devnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
-    genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+    genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };
 
 export const renLocalnet: SolNetworkConfig = {

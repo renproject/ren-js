@@ -4,7 +4,7 @@ import chai, { expect } from "chai";
 chai.should();
 
 describe("abi.ts", () => {
-    it("payloadToABI", async () => {
+    it("payloadToABI", () => {
         const expectedABI = [
             {
                 name: "functionName",
@@ -23,7 +23,7 @@ describe("abi.ts", () => {
         ]).should.deep.eq(expectedABI);
     });
 
-    it("payloadToMintABI", async () => {
+    it("payloadToMintABI", () => {
         const expectedABI = [
             {
                 constant: false,

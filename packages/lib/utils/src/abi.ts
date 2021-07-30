@@ -1,4 +1,4 @@
-import { AbiInput, AbiItem, EthArg, EthType } from "@renproject/interfaces";
+import { AbiInput, AbiItem } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 
@@ -81,7 +81,11 @@ export const payloadToABI = (
                 ...(payload || []).map(fixTuple).map((value) => ({
                     type: value.type,
                     name: value.name,
-                    components: value.components,
+                    ...(value.components
+                        ? {
+                              components: value.components,
+                          }
+                        : undefined),
                 })),
             ],
             outputs: [],
@@ -107,7 +111,11 @@ export const payloadToMintABI = (
                 ...(payload || []).map(fixTuple).map((value) => ({
                     type: value.type,
                     name: value.name,
-                    components: value.components,
+                    ...(value.components
+                        ? {
+                              components: value.components,
+                          }
+                        : undefined),
                 })),
                 ...(mintABITemplate.inputs ? mintABITemplate.inputs : []),
             ],

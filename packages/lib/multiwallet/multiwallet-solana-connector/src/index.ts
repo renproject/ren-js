@@ -50,7 +50,6 @@ export class SolanaConnector
         this.connection = new Connection(this.clusterURL);
         this.providerURL = providerURL;
         this.emitter = new ConnectorEmitter<SolanaProvider, string>(debug);
-        console.log(this.providerURL, this.clusterURL);
         this.wallet = new Wallet(this.providerURL, this.clusterURL);
     }
 
@@ -100,7 +99,7 @@ export class SolanaConnector
         const account = this.getProvider().wallet.publicKey?.toBase58();
         if (!account) {
             this.deactivate();
-            console.log("missing account");
+            console.error("missing account");
             throw new Error("Not activated");
         }
         return account;

@@ -1,10 +1,10 @@
-import { payloadToABI, payloadToMintABI } from "@renproject/utils";
+import { payloadToABI, payloadToMintABI } from "../src/abi";
 import chai from "chai";
 
 chai.should();
 
 describe("abi.ts", () => {
-    it("payloadToABI", async () => {
+    it("payloadToABI", () => {
         const expectedABI = [
             {
                 name: "functionName",
@@ -18,12 +18,12 @@ describe("abi.ts", () => {
         ];
 
         payloadToABI("functionName", [
-            { name: "_spender", type: "address" },
-            { name: "_value", type: "uint256" },
+            { name: "_spender", type: "address", value: "ethereum.eth" },
+            { name: "_value", type: "uint256", value: 1 },
         ]).should.deep.eq(expectedABI);
     });
 
-    it("payloadToMintABI", async () => {
+    it("payloadToMintABI", () => {
         const expectedABI = [
             {
                 constant: false,
@@ -43,8 +43,8 @@ describe("abi.ts", () => {
         ];
 
         payloadToMintABI("functionName", [
-            { name: "_spender", type: "address" },
-            { name: "_value", type: "uint256" },
+            { name: "_spender", type: "address", value: "ethereum.eth" },
+            { name: "_value", type: "uint256", value: 1 },
         ]).should.deep.eq(expectedABI);
     });
 });

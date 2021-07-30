@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren",
-    "version": "2.4.6",
+    "version": "2.4.7",
     "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
     "repository": {
         "type": "git",
@@ -46,7 +46,7 @@
         "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
         "test": "run-s test:* lint",
         "test-all": "ALL_TESTS=true run-s build:main test:unit lint",
-        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
         "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
@@ -62,10 +62,10 @@
         "prepare-release": "run-s npmignore build doc:html doc:publish"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.4.6",
-        "@renproject/provider": "^2.4.6",
-        "@renproject/rpc": "^2.4.6",
-        "@renproject/utils": "^2.4.6",
+        "@renproject/interfaces": "^2.4.7",
+        "@renproject/provider": "^2.4.7",
+        "@renproject/rpc": "^2.4.7",
+        "@renproject/utils": "^2.4.7",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",

@@ -16,10 +16,10 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
-import { TerraAddress } from "@renproject/chains-terra/build/main/api/deposit";
 import Web3 from "web3";
 import { provider } from "web3-core";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2";
+import BN from "bn.js";
 
 chai.should();
 
@@ -29,8 +29,15 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
+import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
+import {
+    renDevnet,
+    renTestnet,
+} from "@renproject/chains-solana/build/main/networks";
 
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
+
+const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
@@ -38,10 +45,21 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const ToClass = Chains.Ethereum;
         const from = Chains.Terra();
         const asset = "LUNA"; // from.asset;
 
+        // const toChain = new Chains.Solana(
+        //     makeTestProvider(renDevnet, testPK),
+        //     renDevnet,
+        // );
+
+        // if ((toChain as any).createAssociatedTokenAccount) {
+        //     await (toChain as any).createAssociatedTokenAccount(asset);
+        // }
+
+        // const to = toChain;
+
+        const ToClass = Chains.Ethereum;
         const ethNetwork = ToClass.configMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {
@@ -71,18 +89,14 @@ describe("Refactor: mint", () => {
             "ether",
         );
         console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
+        const to = ToClass(provider, ethNetwork).Account({
+            address: ethAddress,
+        });
 
-        const params = {
+        const params: LockAndMintParams = {
             asset,
             from,
-            to: ToClass(provider, ethNetwork).Account(
-                {
-                    address: ethAddress,
-                },
-                {
-                    gas: 2000000,
-                },
-            ),
+            to,
         };
 
         const assetDecimals = await params.from.assetDecimals(asset);
@@ -97,7 +111,7 @@ describe("Refactor: mint", () => {
         } catch (error) {
             console.error("Error fetching fees:", red(extractError(error)));
             console.error(error);
-            if (asset === "FIL") {
+            if ((asset as string) === "FIL") {
                 suggestedAmount = new BigNumber(0.2);
             } else {
                 suggestedAmount = new BigNumber(0.0015);
@@ -112,7 +126,7 @@ describe("Refactor: mint", () => {
         );
 
         const faucetSupported =
-            ethNetwork.isTestnet && FAUCET_ASSETS.indexOf(asset) >= 0;
+            network === RenNetwork.Testnet && FAUCET_ASSETS.indexOf(asset) >= 0;
 
         if (faucetSupported) {
             console.info(
@@ -194,7 +208,10 @@ describe("Refactor: mint", () => {
                         let address = "";
                         if (typeof lockAndMint.gatewayAddress === "string") {
                             address = lockAndMint.gatewayAddress;
-                        } else if (asset === "FIL" || asset === "LUNA") {
+                        } else if (
+                            (asset as string) === "FIL" ||
+                            (asset as string) === "LUNA"
+                        ) {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             address = (
                                 lockAndMint.gatewayAddress as Chains.FilAddress

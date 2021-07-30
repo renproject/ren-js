@@ -9,7 +9,7 @@ import {
     isCompleted,
     buildMintConfig,
     GatewayMachineEvent,
-} from "../"; //"@renproject/rentx";
+} from "../"; // "@renproject/rentx";
 import RenJS from "@renproject/ren";
 import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
@@ -151,7 +151,7 @@ web3.eth
                     type: "CLAIM",
                     data: { ...deposit, contractParams: {} },
                     params: {},
-                    //hash: deposit.sourceTxHash,
+                    // hash: deposit.sourceTxHash,
                 });
             }
 

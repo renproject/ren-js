@@ -67,6 +67,9 @@ export const renFantomMainnet: EthereumConfig = {
 };
 
 export const FantomConfigMap = {
+    [RenNetwork.Testnet]: renFantomTestnet,
+    [RenNetwork.Mainnet]: renFantomMainnet,
+
     [RenNetwork.TestnetVDot3]: renFantomTestnet,
     [RenNetwork.MainnetVDot3]: renFantomMainnet,
     [RenNetwork.DevnetVDot3]: renFantomDevnet,

@@ -59,6 +59,9 @@ export const renAvalancheMainnet: EthereumConfig = {
 };
 
 export const AvalancheConfigMap = {
+    [RenNetwork.Testnet]: renAvalancheTestnet,
+    [RenNetwork.Mainnet]: renAvalancheMainnet,
+
     [RenNetwork.TestnetVDot3]: renAvalancheTestnet,
     [RenNetwork.MainnetVDot3]: renAvalancheMainnet,
 };

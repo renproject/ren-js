@@ -5,68 +5,65 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
+import { NetworkInput } from "./base";
+import { EthAddress, EthTransaction } from "./types";
 import {
     ExternalProvider,
     JsonRpcFetchFunc,
     Web3Provider,
 } from "@ethersproject/providers";
-import { NetworkInput } from "./base";
-import { EthAddress, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
 import { addressIsValid, transactionIsValid } from "./utils";
 import { Signer } from "ethers";
 
-export const renPolygonTestnet: EthereumConfig = {
-    name: "Polygon Testnet",
-    chain: "polygonTestnet",
+export const renArbitrumTestnet: EthereumConfig = {
+    name: "Arbitrum Testnet",
+    chain: "ArbitrumTestnet",
     isTestnet: true,
-    chainLabel: "Polygon Testnet",
-    networkID: 80001,
+    chainLabel: "Arbitrum Testnet",
+    networkID: 421611,
     addresses: {
-        GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
-        BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
+        GatewayRegistry: "0x5eEBf6c199a9Db26dabF621fB8c43D58C62DF2bd",
+        BasicAdapter: "0x1156663dFab56A9BAdd844e12eDD69eC96Dd0eFb",
     },
 
-    publicProvider: () => `https://rpc-mumbai.maticvigil.com`,
-    explorer: StandardExplorer("https://explorer-mumbai.maticvigil.com"),
+    publicProvider: () => `https://rinkeby.arbitrum.io/rpc`,
+    explorer: StandardExplorer("https://rinkeby-explorer.arbitrum.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
-    infura: "https://rpc-mumbai.maticvigil.com",
+    infura: "https://rinkeby.arbitrum.io/rpc",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://explorer-mumbai.maticvigil.com",
+    etherscan: "https://rinkeby-explorer.arbitrum.io",
 };
 
-export const renPolygonMainnet: EthereumConfig = {
-    name: "Polygon Mainnet",
-    chain: "polygonMainnet",
+export const renArbitrumMainnet: EthereumConfig = {
+    name: "Arbitrum Mainnet",
+    chain: "ArbitrumMainnet",
     isTestnet: false,
-    chainLabel: "Polygon Mainnet",
-    networkID: 137,
+    chainLabel: "Arbitrum Mainnet",
+    networkID: 42161,
     addresses: {
-        GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
-        BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
+        GatewayRegistry: "",
+        BasicAdapter: "",
     },
 
-    publicProvider: () => `https://rpc-mainnet.maticvigil.com`,
-    explorer: StandardExplorer("https://polygonscan.com"),
+    publicProvider: () => `https://arb1.arbitrum.io/rpc`,
+    explorer: StandardExplorer("https://explorer.arbitrum.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
-    infura: "https://rpc-mainnet.maticvigil.com",
+    infura: "https://arb1.arbitrum.io/rpc",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://polygonscan.com",
+    etherscan: "https://explorer.arbitrum.io",
 };
 
-export const PolygonConfigMap = {
-    [RenNetwork.Testnet]: renPolygonTestnet,
-    [RenNetwork.Mainnet]: renPolygonMainnet,
-
-    [RenNetwork.TestnetVDot3]: renPolygonTestnet,
-    [RenNetwork.MainnetVDot3]: renPolygonMainnet,
+export const ArbitrumConfigMap = {
+    [RenNetwork.TestnetVDot3]: renArbitrumTestnet,
+    [RenNetwork.MainnetVDot3]: renArbitrumMainnet,
 };
 
-const resolvePolygonNetwork = (
+const resolveArbitrumNetwork = (
     renNetwork?:
         | RenNetwork
         | RenNetworkString
@@ -74,7 +71,7 @@ const resolvePolygonNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return PolygonConfigMap[RenNetwork.MainnetVDot3];
+        return ArbitrumConfigMap[RenNetwork.MainnetVDot3];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -83,22 +80,21 @@ const resolvePolygonNetwork = (
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
-        return details.isTestnet ? renPolygonTestnet : renPolygonMainnet;
+        return details.isTestnet ? renArbitrumTestnet : renArbitrumMainnet;
     }
 };
 
-export class PolygonClass extends EthereumClass {
-    public static chain = "Polygon";
-    public chain = PolygonClass.chain;
-    public name = PolygonClass.chain;
+export class ArbitrumClass extends EthereumClass {
+    public static chain = "Arbitrum";
+    public chain = ArbitrumClass.chain;
+    public name = ArbitrumClass.chain;
     public legacyName = undefined;
-    public logRequestLimit = 1000;
 
-    public static configMap = PolygonConfigMap;
-    public configMap = PolygonConfigMap;
+    public static configMap = ArbitrumConfigMap;
+    public configMap = ArbitrumConfigMap;
 
     public static utils = {
-        resolveChainNetwork: resolvePolygonNetwork,
+        resolveChainNetwork: resolveArbitrumNetwork,
         addressIsValid,
         transactionIsValid,
         addressExplorerLink: (
@@ -107,8 +103,8 @@ export class PolygonClass extends EthereumClass {
         ): string =>
             `${
                 (
-                    Polygon.utils.resolveChainNetwork(network) ||
-                    renPolygonMainnet
+                    ArbitrumClass.utils.resolveChainNetwork(network) ||
+                    renArbitrumMainnet
                 ).etherscan
             }/address/${address}`,
 
@@ -118,14 +114,14 @@ export class PolygonClass extends EthereumClass {
         ): string =>
             `${
                 (
-                    Polygon.utils.resolveChainNetwork(network) ||
-                    renPolygonMainnet
+                    Arbitrum.utils.resolveChainNetwork(network) ||
+                    renArbitrumMainnet
                 ).etherscan
             }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(
-        PolygonClass.utils,
+        ArbitrumClass.utils,
         () => this.renNetworkDetails,
     );
 
@@ -145,7 +141,7 @@ export class PolygonClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network.
-        super(web3Provider, resolvePolygonNetwork(renNetwork));
+        super(web3Provider, resolveArbitrumNetwork(renNetwork));
     }
 
     initialize = (
@@ -153,7 +149,7 @@ export class PolygonClass extends EthereumClass {
     ) => {
         this.renNetworkDetails =
             this.renNetworkDetails ||
-            PolygonConfigMap[getRenNetworkDetails(renNetwork).name];
+            ArbitrumConfigMap[getRenNetworkDetails(renNetwork).name];
 
         if (!this.renNetworkDetails) {
             throw new Error(
@@ -168,6 +164,6 @@ export class PolygonClass extends EthereumClass {
     };
 }
 
-export type Polygon = PolygonClass;
+export type Arbitrum = ArbitrumClass;
 // @dev Removes any static fields, except `utils`.
-export const Polygon = Callable(PolygonClass);
+export const Arbitrum = Callable(ArbitrumClass);

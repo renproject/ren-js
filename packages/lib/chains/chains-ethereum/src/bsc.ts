@@ -67,6 +67,9 @@ export const renBscMainnet: EthereumConfig = {
 };
 
 export const BscConfigMap = {
+    [RenNetwork.Mainnet]: renBscMainnet,
+    [RenNetwork.Testnet]: renBscTestnet,
+
     [RenNetwork.MainnetVDot3]: renBscMainnet,
     [RenNetwork.TestnetVDot3]: renBscTestnet,
     [RenNetwork.DevnetVDot3]: renBscDevnet,

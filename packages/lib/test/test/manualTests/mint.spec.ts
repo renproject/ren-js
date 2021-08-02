@@ -45,8 +45,8 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const from = Chains.Filecoin();
-        const asset = "FIL"; // from.asset;
+        const from = Chains.Terra();
+        const asset = "LUNA"; // from.asset;
 
         // const toChain = new Chains.Solana(
         //     makeTestProvider(renDevnet, testPK),
@@ -59,7 +59,7 @@ describe("Refactor: mint", () => {
 
         // const to = toChain;
 
-        const ToClass = Chains.Ethereum;
+        const ToClass = Chains.Arbitrum;
         const ethNetwork = ToClass.configMap[network];
 
         const account = new CryptoAccount(PRIVATE_KEY, {

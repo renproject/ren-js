@@ -11,9 +11,6 @@ import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
-import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-import { renMainnet } from "@renproject/chains-solana/build/main/networks";
-import { renTestnetGoerli } from "@renproject/chains";
 
 chai.should();
 

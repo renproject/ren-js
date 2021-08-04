@@ -23,7 +23,7 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
-import { renTestnetGoerli } from "@renproject/chains";
+import { renGoerli } from "@renproject/chains";
 
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
@@ -35,8 +35,8 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const from = Chains.Terra();
-        const asset = "LUNA"; // from.asset;
+        const from = Chains.Bitcoin();
+        const asset = "BTC"; // from.asset;
 
         // const toChain = new Chains.Solana(
         //     makeTestProvider(renDevnet, testPK),
@@ -50,7 +50,7 @@ describe("Refactor: mint", () => {
         // const to = toChain;
 
         const ToClass = Goerli;
-        const ethNetwork = renTestnetGoerli;
+        const ethNetwork = renGoerli;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",

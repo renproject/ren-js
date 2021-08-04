@@ -12,12 +12,8 @@ import {
     BtcNetwork,
     BtcTransaction,
     BitcoinClass,
-    validateAddress,
 } from "@renproject/chains-bitcoin";
-import {
-    createAddress,
-    pubKeyScript,
-} from "@renproject/chains-bitcoin/build/main/script";
+import { validateAddress } from "@renproject/chains-bitcoin/build/main/utils";
 import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
 import BigNumber from "bignumber.js";
 
@@ -25,7 +21,7 @@ export class MockChain extends BitcoinClass {
     public static chain = "MockChain";
     public chain = MockChain.chain;
     public name = MockChain.chain;
-    public mempool: (UTXO & { to: string })[];
+    public mempool: Array<UTXO & { to: string }>;
 
     constructor(asset: string, network: BtcNetwork = "testnet") {
         super(network);
@@ -33,6 +29,7 @@ export class MockChain extends BitcoinClass {
         this.asset = asset;
     }
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     public fetchUTXO = async (txHash: string, vOut: number): Promise<UTXO> => {
         const utxo = this.mempool.find(
             (x) => x.txHash === txHash && x.vOut === vOut,
@@ -45,6 +42,7 @@ export class MockChain extends BitcoinClass {
     public fetchUTXOs = async (
         address: string,
         confirmations?: number,
+        // eslint-disable-next-line @typescript-eslint/require-await
     ): Promise<UTXO[]> => {
         return this.mempool.filter(
             (x) => x.to === address && x.confirmations >= (confirmations || 0),
@@ -76,8 +74,7 @@ export class MockChain extends BitcoinClass {
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
         },
-        createAddress: createAddress(base58.encode),
-        calculatePubKeyScript: pubKeyScript(),
+        addressBufferToString: base58.encode as (bytes: Buffer) => string,
         addressIsValid: (
             address: BtcAddress | string,
             network:

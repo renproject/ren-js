@@ -22,7 +22,6 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
-import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
 import { EthAddress, EthTransaction } from "./types";
 import { Provider, TransactionReceipt } from "@ethersproject/providers";
 import { Overrides } from "ethers";
@@ -518,13 +517,12 @@ export const addressIsValid = (address: EthAddress): boolean => {
     if (/^.+\.eth$/.exec(address)) {
         return true;
     }
-    if (/^0x[a-f0-9]{40}$/.exec(address)) {
-        return isValidAddress(address);
+    try {
+        ethers.utils.getAddress(address);
+        return true;
+    } catch (_error) {
+        return false;
     }
-    if (/^0x[a-fA-F0-9]{40}$/.exec(address)) {
-        return isValidChecksumAddress(address);
-    }
-    return false;
 };
 
 export const transactionIsValid = (transaction: EthTransaction): boolean =>

@@ -65,7 +65,7 @@ export const responseQueryParamsType: PackStructType = {
 export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
     private privateKeyBuffer;
     private transactions: Map<string, ResponseQueryTx>;
-    private supportedChains: Array<string>;
+    private supportedChains: string[];
 
     constructor(privateKey?: Buffer) {
         this.privateKeyBuffer = privateKey || randomBytes(32);
@@ -122,6 +122,7 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         const nHash = fromBase64(inputs.nhash);
         const to = fromHex(inputs.to);
         // TODO: Add amount to typings.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const amountIn = (inputs as any).amount;
         const sHash = keccak256(Buffer.from(selector));
 
@@ -170,8 +171,9 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
     };
 
     public handle_queryTx = (request: ParamsQueryTx): ResponseQueryTx => {
-        if (this.transactions.has(request.txHash)) {
-            return this.transactions.get(request.txHash)!;
+        const tx = this.transactions.get(request.txHash);
+        if (tx) {
+            return tx;
         } else {
             throw new Error(`Transaction ${request.txHash} not found.`);
         }

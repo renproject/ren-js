@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
 import { RenNetwork } from "@renproject/interfaces";
-import { fromBase64, fromHex, hash160 } from "@renproject/utils";
 import { describe, it } from "mocha";
 import { expect } from "chai";
 
-import { Bitcoin, BitcoinCash, DigiByte, Dogecoin, Zcash } from "../src";
+import { Bitcoin, DigiByte } from "../src";
 
 const testcases = [
     {
@@ -43,7 +42,7 @@ const testcases = [
 describe("Address validation", () => {
     for (const testcase of testcases) {
         for (const network of Object.keys(testcase.addresses)) {
-            it(`${testcase.chain.asset} - ${network}`, async () => {
+            it(`${testcase.chain.asset} - ${network}`, () => {
                 for (const address of (testcase.addresses || { [network]: [] })[
                     network
                 ]) {
@@ -52,7 +51,10 @@ describe("Address validation", () => {
                             address,
                             network as RenNetwork,
                         ),
-                    ).to.equal(true, `Expected ${address} to be valid.`);
+                    ).to.equal(
+                        true,
+                        `Expected ${String(address)} to be valid.`,
+                    );
                 }
                 for (const address of (testcase.failing || { [network]: [] })[
                     network
@@ -62,7 +64,10 @@ describe("Address validation", () => {
                             address,
                             network as RenNetwork,
                         ),
-                    ).to.equal(false, `Expected ${address} to be invalid.`);
+                    ).to.equal(
+                        false,
+                        `Expected ${String(address)} to be invalid.`,
+                    );
                 }
             });
         }

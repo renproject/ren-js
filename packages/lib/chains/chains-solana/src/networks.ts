@@ -44,13 +44,11 @@ export const resolveNetwork = (
     }
 
     switch (networkString) {
-        case RenNetwork.MainnetVDot3:
         case RenNetwork.Mainnet:
             return renMainnet;
-        case RenNetwork.TestnetVDot3:
         case RenNetwork.Testnet:
             return renTestnet;
-        case RenNetwork.DevnetVDot3:
+        case RenNetwork.Devnet:
             return renDevnet;
     }
 
@@ -58,7 +56,7 @@ export const resolveNetwork = (
 };
 
 export const renMainnet: SolNetworkConfig = {
-    name: RenNetwork.MainnetVDot3,
+    name: RenNetwork.Mainnet,
     chain: "mainnet",
     isTestnet: false,
     chainLabel: "Mainnet",
@@ -72,31 +70,31 @@ export const renMainnet: SolNetworkConfig = {
 };
 
 export const renTestnet: SolNetworkConfig = {
-    name: RenNetwork.TestnetVDot3,
+    name: RenNetwork.Testnet,
     chain: "testnet",
     isTestnet: true,
     chainLabel: "Testnet",
-    endpoint: "https://api.testnet.solana.com",
+    endpoint: "https://api.devnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
     lightnode: "https://lightnode-testnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
-    genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
+    genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
 };
 
 export const renDevnet: SolNetworkConfig = {
-    name: RenNetwork.DevnetVDot3,
+    name: RenNetwork.Devnet,
     chain: "devnet",
     isTestnet: true,
     chainLabel: "Devnet",
-    endpoint: "https://api.devnet.solana.com",
+    endpoint: "https://api.testnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
     lightnode: "https://lightnode-devnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
-    genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+    genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };
 
 export const renLocalnet: SolNetworkConfig = {

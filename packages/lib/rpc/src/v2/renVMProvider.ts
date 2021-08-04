@@ -9,6 +9,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    SyncOrPromise,
     TxStatus,
 } from "@renproject/interfaces";
 import { HttpProvider, Provider } from "@renproject/provider";
@@ -80,7 +81,6 @@ export class RenVMProvider
     private readonly network: RenNetwork;
 
     public readonly provider: Provider<RenVMParams, RenVMResponses>;
-    sendMessage: RenVMProvider["provider"]["sendMessage"];
     private readonly logger: Logger;
 
     constructor(
@@ -112,8 +112,16 @@ export class RenVMProvider
         this.network = network as RenNetwork;
         this.logger = logger;
         this.provider = provider;
-        this.sendMessage = this.provider.sendMessage;
     }
+
+    public sendMessage = <Method extends keyof RenVMParams & string>(
+        method: Method,
+        request: RenVMParams[Method],
+        retry?: number,
+        timeout?: number,
+    ): SyncOrPromise<RenVMResponses[Method]> => {
+        return this.provider.sendMessage(method, request, retry, timeout);
+    };
 
     public selector = (params: {
         asset: string;

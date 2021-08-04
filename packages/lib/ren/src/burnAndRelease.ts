@@ -31,7 +31,6 @@ import {
     toURLBase64,
 } from "@renproject/utils";
 import BN from "bn.js";
-import { EventEmitter } from "events";
 import BigNumber from "bignumber.js";
 import { RenJSConfig } from "./config";
 
@@ -285,23 +284,41 @@ export class BurnAndRelease<
             const { asset, transaction, burnNonce, contractCalls } =
                 this.params;
 
-            this.burnDetails = await this.params.from.findBurnTransaction(
-                asset,
-                {
+            let findBurnError: Error | undefined;
+            try {
+                this.burnDetails = await this.params.from.findBurn(
+                    asset,
+                    promiEvent,
                     transaction,
                     burnNonce,
-                    contractCalls,
-                },
-                promiEvent as unknown as EventEmitter,
-                this._state.logger,
-                this._state.config.networkDelay,
-            );
+                );
+            } catch (error) {
+                findBurnError = error;
+            }
+
+            if (!this.burnDetails && contractCalls) {
+                try {
+                    this.burnDetails = await this.params.from.submitBurn(
+                        asset,
+                        promiEvent,
+                        contractCalls,
+                        { networkDelay: this._state.config.networkDelay },
+                    );
+                } catch (error) {
+                    findBurnError = findBurnError || error;
+                }
+            }
+
+            if (!this.burnDetails) {
+                throw findBurnError || new Error(`Must provide burn details.`);
+            }
 
             this.status = BurnAndReleaseStatus.Burned;
 
             let current = 0,
                 target = 1;
             while (current < target) {
+                console.log("current, target", current, target);
                 try {
                     ({ current, target } =
                         await this.params.from.transactionConfidence(
@@ -421,7 +438,11 @@ export class BurnAndRelease<
                         txid,
                         txindex,
                     },
-                    amount: amount.toFixed(),
+                    // FIXME: needed until we support different asset decimals between chains
+                    amount:
+                        this._state.selector === "FIL/fromSolana"
+                            ? amount.multipliedBy(10 ** 9).toFixed()
+                            : amount.toFixed(),
                     payload,
                     pHash,
                     to: to.toString(),
@@ -558,7 +579,11 @@ export class BurnAndRelease<
                                     txid,
                                     txindex,
                                 },
-                                amount: amount.toFixed(),
+                                // FIXME: hack until we support differing decimals between burn + release chains
+                                amount:
+                                    this._state.selector === "FIL/fromSolana"
+                                        ? amount.multipliedBy(10 ** 9).toFixed()
+                                        : amount.toFixed(),
                                 payload,
                                 pHash,
                                 to: to.toString(),

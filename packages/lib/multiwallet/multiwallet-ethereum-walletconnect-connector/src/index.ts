@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { RenNetwork } from "@renproject/interfaces";
 import {
     AbstractEthereumConnector,
@@ -37,9 +39,9 @@ export class EthereumWalletConnectConnector extends AbstractEthereumConnector<Sa
             .then((...args) => {
                 this.emitter.emitUpdate(...args);
             })
-            .catch(async (...args) => {
+            .catch((...args) => {
                 console.error("Failed to get status");
-                this.deactivate(...args);
+                void this.deactivate(...args);
             });
     };
 

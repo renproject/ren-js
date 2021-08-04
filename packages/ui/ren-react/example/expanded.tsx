@@ -13,9 +13,9 @@ import {
 import RenJS from "@renproject/ren";
 import { Ethereum } from "@renproject/chains-ethereum";
 import { Zcash } from "@renproject/chains-bitcoin";
-import Web3 from "web3";
 import { useEffect, useMemo, useState } from "react";
 import { RenNetwork } from "@renproject/interfaces";
+import { ethers } from "ethers";
 
 const BurnApp = ({ account, provider, destinationAddress, balance }) => {
     const parameters = useMemo(
@@ -165,8 +165,10 @@ const WithProvider = () => {
     const [account, setAccount] = useState<string>();
     useEffect(() => {
         (window as any).ethereum.enable().then(async () => {
-            const web3 = new Web3((window as any).ethereum);
-            setAccount((await web3.eth.personal.getAccounts())[0]);
+            const ethProvider = new ethers.providers.Web3Provider(
+                (window as any).ethereum,
+            );
+            setAccount((await ethProvider.listAccounts())[0]);
             setProvider((window as any).ethereum);
         });
     }, []);
@@ -174,7 +176,7 @@ const WithProvider = () => {
     const [balance, setBalance] = useState<string>();
     useEffect(() => {
         if (!provider) return;
-        Ethereum(provider, "testnet")
+        void Ethereum(provider, "testnet")
             .getBalance("ZEC", account)
             .then((v) => setBalance(v.minus(1000).toString()));
     }, [provider, setBalance]);

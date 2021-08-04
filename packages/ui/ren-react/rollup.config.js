@@ -55,7 +55,7 @@ export default [
             external(),
             resolve(),
             commonjs({
-                //include: ['node_modules/**']
+                // include: ['node_modules/**']
             }),
             babel({
                 exclude: "node_modules/**",

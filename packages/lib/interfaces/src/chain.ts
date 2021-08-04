@@ -2,32 +2,25 @@
 import BigNumber from "bignumber.js";
 import { EventEmitter } from "events";
 
-import { Logger } from "./logger";
 import { RenNetwork, RenNetworkDetails, RenNetworkString } from "./networks";
 import {
     BurnAndReleaseParams,
     ContractCall,
     LockAndMintParams,
 } from "./parameters";
+import { EventEmitterTyped } from "./promiEvent";
 import { LockAndMintTransaction } from "./transaction";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
-// export type TransactionListener<
-//     T,
-//     E extends { [key: string]: any[] }
-// > = PromiEvent<
-//     T,
-//     {
-//         txHash: [string];
-//         confirmation: [number, number];
-//         target: [number, number];
-//     } & E
-// >;
-
 export interface BurnPayloadConfig {
     bytes?: boolean;
 }
+
+/**
+ * NOTE: The following interfaces are not final and are subject to change
+ * across patch and minor versions.
+ */
 
 /**
  * # Adding chains
@@ -268,6 +261,14 @@ export interface LockChain<
     addressToBytes: (address: Address | string) => Buffer;
 
     /**
+     * `bytesToAddress` should return the string representation of the address.
+     *
+     * @dev Must be compatible with the matching RenVM multichain LockChain's
+     * `encodeAddress` method.
+     */
+    bytesToAddress: (bytes: Buffer) => Address | string;
+
+    /**
      * @deprecated Renamed to addressToBytes.
      */
     addressStringToBytes: (address: string) => Buffer;
@@ -329,14 +330,17 @@ export interface MintChain<
         asset: string,
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
-        eventEmitter: EventEmitter,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+            confirmation: [number, { status: number }];
+        }>,
     ) => SyncOrPromise<Transaction>;
 
     /**
      * Finds a transaction by its nonce and optionally signature,
      * as used in Ethereum based chains
      */
-    findTransaction?: (
+    findMint?: (
         asset: string,
         nHash: Buffer,
         sigHash?: Buffer,
@@ -346,7 +350,7 @@ export interface MintChain<
      * Finds a transaction by its details
      * as used in Solana
      */
-    findTransactionByDepositDetails?: (
+    findMintByDepositDetails?: (
         asset: string,
         sHash: Buffer,
         nHash: Buffer,
@@ -359,19 +363,31 @@ export interface MintChain<
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    findBurnTransaction: (
+    findBurn: (
         asset: string,
-
-        // Once of the following should not be undefined.
-        burn: {
-            transaction?: Transaction;
-            burnNonce?: Buffer | string | number;
-            contractCalls?: ContractCall[];
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+        }>,
+        transaction?: Transaction,
+        burnNonce?: Buffer | string | number,
+        config?: {
+            networkDelay?: number;
         },
+    ) => SyncOrPromise<BurnDetails<Transaction> | undefined>;
 
-        eventEmitter: EventEmitter,
-        logger: Logger,
-        networkDelay?: number,
+    /**
+     * Read a burn reference from an Ethereum transaction - or submit a
+     * transaction first if the transaction details have been provided.
+     */
+    submitBurn: (
+        asset: string,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+        }>,
+        contractCalls: ContractCall[],
+        config?: {
+            networkDelay?: number;
+        },
     ) => SyncOrPromise<BurnDetails<Transaction>>;
 
     /**

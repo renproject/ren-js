@@ -2,7 +2,6 @@
 
 import { Bitcoin, Ethereum } from "@renproject/chains";
 
-import { provider } from "web3-core";
 import RenJS from "@renproject/ren";
 import chai, { expect } from "chai";
 import { config as loadDotEnv } from "dotenv";
@@ -27,12 +26,12 @@ describe("Fees", () => {
         const infuraURL = ethNetwork.publicProvider({
             infura: process.env.INFURA_KEY,
         });
-        const ethereumProvider: provider = new HDWalletProvider({
+        const ethereumProvider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,
-        }) as unknown as provider;
+        });
 
         const renJS = new RenJS("mainnet");
         const fees = await renJS.getFees({

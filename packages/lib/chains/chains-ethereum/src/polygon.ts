@@ -1,13 +1,14 @@
 import {
     getRenNetworkDetails,
+    Logger,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { provider } from "web3-core";
+
 import { NetworkInput } from "./base";
-import { EthAddress, EthTransaction } from "./types";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
@@ -54,8 +55,8 @@ export const renPolygonMainnet: EthereumConfig = {
 };
 
 export const PolygonConfigMap = {
-    [RenNetwork.TestnetVDot3]: renPolygonTestnet,
-    [RenNetwork.MainnetVDot3]: renPolygonMainnet,
+    [RenNetwork.Testnet]: renPolygonTestnet,
+    [RenNetwork.Mainnet]: renPolygonMainnet,
 };
 
 const resolvePolygonNetwork = (
@@ -66,7 +67,7 @@ const resolvePolygonNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return PolygonConfigMap[RenNetwork.MainnetVDot3];
+        return PolygonConfigMap[RenNetwork.Mainnet];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -122,16 +123,19 @@ export class PolygonClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider: provider,
+        web3Provider: EthProvider,
         renNetwork:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
-        // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolvePolygonNetwork(renNetwork));
+        // is a web3Provider and the second the RenVM network.
+        super(web3Provider, resolvePolygonNetwork(renNetwork), config);
     }
 
     initialize = (

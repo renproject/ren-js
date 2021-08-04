@@ -17,7 +17,7 @@ import {
     send,
     actions,
 } from "xstate";
-import { TransactionReceipt } from "web3-core";
+import { TransactionReceipt } from "@ethersproject/providers";
 
 import {
     buildDepositMachine,
@@ -248,11 +248,11 @@ const handleMint = async <X, Y extends { [name: string]: unknown }>(
     try {
         const minter = deposit.mint(params);
 
-        const onConfirmation = (_: void, receipt: TransactionReceipt) => {
+        const onConfirmation = (_: number, receipt: { status: number }) => {
             const submittedTx = {
                 sourceTxHash,
             };
-            if (receipt.status == false) {
+            if (receipt.status === 0) {
                 callback({
                     type: "SUBMIT_ERROR",
                     data: { sourceTxHash },

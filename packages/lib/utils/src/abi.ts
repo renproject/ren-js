@@ -1,4 +1,4 @@
-import { AbiInput, AbiItem, EthArg, EthType } from "@renproject/interfaces";
+import { AbiInput, AbiItem } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 
@@ -24,7 +24,7 @@ const mintABITemplate: AbiItem = {
     type: "function",
 };
 
-const tupleRegex = /tuple\(([a-zA-Z0-9]+)(?:,([a-zA-Z0-9]+))*\)/;
+const tupleRegex = /tuple\(([a-zA-Z0-9]+(,[a-zA-Z0-9]+)*)\)/;
 
 /**
  * If the type of an Ethereum arg matches `tuple(...)`, then it needs to include
@@ -44,12 +44,12 @@ const fixTuple = (argument: {
         // been passed in, add them.
         const match = args && args.type && tupleRegex.exec(args.type);
         if (match && !argument.components) {
-            const types = match.slice(1);
+            const types = match[1].split(",");
             const components: AbiInput[] = [];
             for (let i = 0; i < types.length; i++) {
                 components[i] = {
                     name: String(i),
-                    type: types[i] as EthType,
+                    type: types[i],
                 };
             }
             return {
@@ -77,11 +77,16 @@ export const payloadToABI = (
         {
             name: methodName,
             type: "function",
+            stateMutability: "nonpayable",
             inputs: [
                 ...(payload || []).map(fixTuple).map((value) => ({
-                    type: value.type as EthType,
+                    type: value.type,
                     name: value.name,
-                    components: value.components,
+                    ...(value.components
+                        ? {
+                              components: value.components,
+                          }
+                        : undefined),
                 })),
             ],
             outputs: [],
@@ -105,9 +110,13 @@ export const payloadToMintABI = (
             name: methodName,
             inputs: [
                 ...(payload || []).map(fixTuple).map((value) => ({
-                    type: value.type as EthType,
+                    type: value.type,
                     name: value.name,
-                    components: value.components,
+                    ...(value.components
+                        ? {
+                              components: value.components,
+                          }
+                        : undefined),
                 })),
                 ...(mintABITemplate.inputs ? mintABITemplate.inputs : []),
             ],

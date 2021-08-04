@@ -2,15 +2,15 @@
 
 import { expect } from "earljs";
 import { Solana } from "../src/index";
-import { renDevnet } from "../src/networks";
+import { renDevnet, renTestnet } from "../src/networks";
 import { RenVmMsgLayout } from "../src/layouts";
 
 import { makeTestProvider } from "../src/utils";
 import { Bitcoin } from "../../chains";
-import RenJS from "../../../ren";
+import RenJS, { LockAndMintDeposit } from "../../../ren";
 import { BN } from "bn.js";
-import { RenNetwork } from "@renproject/interfaces";
-import EventEmitter = require("events");
+import { EventEmitterTyped, RenNetwork } from "@renproject/interfaces";
+import EventEmitter from "events";
 
 const testPK = Buffer.from(
     "a84252a5fcbb2bfb85a422a4833a79c23ec7906826a0298dd2a0744a4c984631d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
@@ -69,13 +69,13 @@ describe("Solana", () => {
                 renDevnet,
             );
             const btc = new Bitcoin();
-            const renjs = new RenJS(RenNetwork.DevnetVDot3);
+            const renjs = new RenJS(RenNetwork.Devnet);
             const mint = await renjs.lockAndMint({
                 to: solana,
                 from: btc,
                 asset: "BTC",
             });
-            //FIXME: this will stop working once shards shuffle
+            // FIXME: this will stop working once shards shuffle
             expect(mint.gatewayAddress).toEqual(
                 "2N2fCiskRfm4FVWg5eg9mAiRVCEewqUicGL",
             );
@@ -83,22 +83,19 @@ describe("Solana", () => {
 
         it("should be able to retrieve a burn", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renTestnet, testPK),
+                renTestnet,
             );
-            const emitter = new EventEmitter();
-            const burn = await solana.findBurnTransaction(
-                "BTC",
-                { burnNonce: 1 },
-                emitter,
-                console,
-            );
-            // Testnet Bitcoin address owned by Ren.
-            expect(burn.to).toEqual("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6");
+
+            const emitter = new EventEmitter() as EventEmitterTyped<{
+                transactionHash: [string];
+            }>;
+            const burn = await solana.findBurn("BTC", emitter, undefined, 1);
+            expect(burn.to).toEqual("2N6vHZjmFufphgEGvSttCW1SGbbpvHPGfGA");
             expect(burn.amount.toString()).toEqual("20000");
         });
 
-        it("should be able to construct burn params", async () => {
+        it("should be able to construct burn params", () => {
             const solana = new Solana(
                 makeTestProvider(renDevnet, testPK),
                 renDevnet,
@@ -127,30 +124,33 @@ describe("Solana", () => {
 
         it("should be able to retrieve a mint", async () => {
             const solana = new Solana(
-                makeTestProvider(renDevnet, testPK),
-                renDevnet,
+                makeTestProvider(renTestnet, testPK),
+                renTestnet,
             );
             const btc = new Bitcoin();
-            const renjs = new RenJS("devnet-v0.3", {
+            const asset = btc.asset;
+            const renjs = new RenJS(RenNetwork.Testnet, {
                 loadCompletedDeposits: true,
             });
             const mint = await renjs.lockAndMint({
                 to: solana,
                 from: btc,
-                asset: "BTC",
+                asset,
             });
-            // Check that the gateway address hasn't changed, which would make
-            // the test fail.
+            // Check that the gateway address hasn't changed. If the address has
+            // changed, a new deposit should be sent to the address.
             expect(mint.gatewayAddress).toEqual(
-                "2N2fCiskRfm4FVWg5eg9mAiRVCEewqUicGL",
+                "2N7sNkACtgHGqy2DFRpJGtLyU6js8pQ6FAB",
             );
-            const p = new Promise<string>((resolve, reject) => {
-                mint.on("deposit", (deposit) => {
-                    deposit.findTransaction().then(resolve).catch(reject);
-                });
-            });
+            // await solana.createAssociatedTokenAccount(asset);
+            const deposit = await new Promise<LockAndMintDeposit>((resolve) =>
+                mint.on("deposit", resolve),
+            );
+            // await deposit.signed();
+            // await deposit.mint();
+            const p = await deposit.findTransaction();
             expect(await p).toEqual(
-                "2djL6ztDQKpKwzf29jAqEuo6gyMrky1NFyVN8vGNvh2JsfGHkfW8eG7afp8mquFgbpzbaUgAfxUvq4U33JBXgsaA",
+                "2JNepYFanD3JLxv8U4kRCkR9MbqhmobTskoWZJoK4KL1dp9xJTUfpNrXAyQtckRQdr64onspr6Du4uDUBk1TVhjd",
             );
         });
     });

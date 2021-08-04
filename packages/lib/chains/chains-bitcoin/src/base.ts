@@ -18,14 +18,13 @@ import {
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { Networks, Opcode, Script } from "bitcore-lib";
 import base58 from "bs58";
 import { APIWithPriority, BitcoinAPI, CombinedAPI, UTXO } from "./APIs/API";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { Blockstream } from "./APIs/blockstream";
 import { SoChain, SoChainNetwork } from "./APIs/sochain";
 
-import { createAddress, pubKeyScript as calculatePubKeyScript } from "./script";
+import { createAddressBuffer, calculatePubKeyScript } from "./script/index";
 
 export type BtcAddress = string;
 export type BtcTransaction = UTXO;
@@ -91,8 +90,7 @@ export abstract class BitcoinBaseChain
     // Utils
     public static utils = {
         p2shPrefix: {} as { [network: string]: Buffer },
-        createAddress: createAddress(base58.encode, Networks, Opcode, Script),
-        calculatePubKeyScript: calculatePubKeyScript(Networks, Opcode, Script),
+        addressBufferToString: base58.encode as (bytes: Buffer) => string,
         addressIsValid: (
             _address: BtcAddress | string,
             _network:
@@ -264,11 +262,12 @@ export abstract class BitcoinBaseChain
         }
         this.assertAssetIsSupported(asset);
         const isTestnet = this.chainNetwork === "testnet";
-        return this.utils.createAddress(
-            isTestnet,
-            hash160(publicKey),
-            gHash,
-            this.utils.p2shPrefix[isTestnet ? "testnet" : "mainnet"],
+        return this.utils.addressBufferToString(
+            createAddressBuffer(
+                hash160(publicKey),
+                gHash,
+                this.utils.p2shPrefix[isTestnet ? "testnet" : "mainnet"],
+            ),
         );
     };
 
@@ -289,6 +288,14 @@ export abstract class BitcoinBaseChain
                 throw new Error(`Unrecognized address format "${address}".`);
             }
         }
+    };
+
+    /**
+     * See [[LockChain.bytesToAddress]].
+     */
+    bytesToAddress = (address: Buffer): string => {
+        const words = bech32.toWords(address);
+        return bech32.encode("", words);
     };
 
     /** @deprecated. Renamed to addressToBytes. */

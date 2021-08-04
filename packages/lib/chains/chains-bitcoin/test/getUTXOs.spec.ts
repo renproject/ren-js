@@ -1,5 +1,4 @@
 // import { renMainnet, renTestnet } from "@renproject/chains";
-import BigNumber from "bignumber.js";
 import chai from "chai";
 
 // import RenJS from "@renproject/ren";

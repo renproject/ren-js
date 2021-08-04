@@ -20,7 +20,8 @@ export type InjectedProvider = SaneProvider & {
     enable: () => Promise<void>;
     on: (
         name: string,
-        listener: (...args: unknown[]) => SyncOrPromise<void>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        listener: (...args: any[]) => SyncOrPromise<void>,
     ) => void;
 };
 
@@ -50,7 +51,9 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector<Injecte
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activate: ConnectorInterface<any, any>["activate"] = async () => {
         // Await in case a child class's getProvider is asynchronous.
-        const provider = await (this as AbstractEthereumConnector<InjectedProvider>).getProvider();
+        const provider = await (
+            this as AbstractEthereumConnector<InjectedProvider>
+        ).getProvider();
 
         if (!provider) {
             throw Error("Missing Provider");
@@ -94,7 +97,9 @@ export class EthereumInjectedConnector extends AbstractEthereumConnector<Injecte
 
     cleanup = async () => {
         // Await in case a child class's getProvider is asynchronous.
-        const provider = await (this as AbstractEthereumConnector<InjectedProvider>).getProvider();
+        const provider = await (
+            this as AbstractEthereumConnector<InjectedProvider>
+        ).getProvider();
         if (provider.removeListener) {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             provider.removeListener("close", this.deactivate);

@@ -23,7 +23,7 @@ const SECP256K1_INSTRUCTION_LAYOUT = BufferLayout.struct([
     BufferLayout.u8("recoveryId"),
 ]);
 
-export const toBuffer = (arr: Buffer | Uint8Array | Array<number>): Buffer => {
+export const toBuffer = (arr: Buffer | Uint8Array | number[]): Buffer => {
     if (arr instanceof Buffer) {
         return arr;
     } else if (arr instanceof Uint8Array) {
@@ -37,9 +37,9 @@ export const toBuffer = (arr: Buffer | Uint8Array | Array<number>): Buffer => {
  *
  * We need to add an extra byte to the ethAddress to match our secp offset
  * */
-export function createInstructionWithEthAddress2(
+export const createInstructionWithEthAddress2 = (
     params: CreateSecp256k1InstructionWithEthAddressParams,
-): TransactionInstruction {
+): TransactionInstruction => {
     const { ethAddress: rawAddress, message, signature, recoveryId } = params;
     let ethAddress;
     if (typeof rawAddress === "string") {
@@ -51,17 +51,18 @@ export function createInstructionWithEthAddress2(
     } else {
         ethAddress = rawAddress;
     }
+    const ethAddressLength: number = ethAddress.length;
     assert(
         ethAddress.length === ETHEREUM_ADDRESS_BYTES,
-        `Address must be ${ETHEREUM_ADDRESS_BYTES} bytes but received ${ethAddress.length} bytes`,
+        `Address must be ${ETHEREUM_ADDRESS_BYTES} bytes but received ${ethAddressLength} bytes`,
     );
     const dataStart = 1 + SIGNATURE_OFFSETS_SERIALIZED_SIZE;
     const ethAddressOffset = dataStart + 1;
-    const signatureOffset = ethAddressOffset + ethAddress.length;
+    const signatureOffset = ethAddressOffset + ethAddressLength;
     const messageDataOffset = signatureOffset + signature.length + 1;
     const numSignatures = 1;
     const instructionData = Buffer.alloc(
-        SECP256K1_INSTRUCTION_LAYOUT.span + message.length,
+        Number(SECP256K1_INSTRUCTION_LAYOUT.span) + message.length,
     );
     SECP256K1_INSTRUCTION_LAYOUT.encode(
         {
@@ -85,4 +86,4 @@ export function createInstructionWithEthAddress2(
         programId: Secp256k1Program.programId,
         data: instructionData,
     });
-}
+};

@@ -1,6 +1,4 @@
-import BigNumber from "bignumber.js";
 import chai from "chai";
-import { decode } from "bs58";
 // import {
 //     btcAddressFrom,
 //     btcAddressToHex,
@@ -8,7 +6,6 @@ import { decode } from "bs58";
 //     createBTCAddress,
 //     createZECAddress,
 // } from "@renproject/chains";
-import RenJS from "@renproject/ren";
 
 chai.should();
 

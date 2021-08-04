@@ -43,7 +43,6 @@ import ethers from "ethers";
 const mint = async () => {
     await window.ethereum.enable();
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    provider.getSigner();
     const signer = provider.getSigner();
     const address = await signer.getAddress();
 

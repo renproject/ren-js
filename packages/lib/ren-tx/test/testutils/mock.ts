@@ -101,7 +101,7 @@ export const buildMockMintChain = (minted?: boolean) => {
         transactionFromID: () => {},
         // transactionID: () =>
         //     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-        transactionConfidence: () => ({ current: 0, target: 1 }),
+        transactionConfidence: () => ({ current: 6, target: 6 }),
         initialize: () => {
             return mockMintChain;
         },
@@ -122,13 +122,30 @@ export const buildMockMintChain = (minted?: boolean) => {
                 );
             }, 100);
         },
-        findBurnTransaction: (_p, _d, emitter) => {
+        submitBurn: (_asset, emitter) => {
             setTimeout(() => {
                 emitter.emit(
                     "transactionHash",
                     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 );
-            }, 1000);
+            }, 14500);
+
+            return {
+                transaction: {
+                    hash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                },
+                amount: new BigNumber(0),
+                to: "asd",
+                nonce: new BigNumber(0),
+            };
+        },
+        findBurn: (_asset, emitter) => {
+            setTimeout(() => {
+                emitter.emit(
+                    "transactionHash",
+                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                );
+            }, 14500);
 
             return {
                 transaction: {
@@ -140,7 +157,7 @@ export const buildMockMintChain = (minted?: boolean) => {
             };
         },
         // This will skip the deposit process if truthy
-        findTransaction: () => minted,
+        findMint: () => minted,
         getFees: () => ({ burn: 10, mint: 10 }),
         getBalance: () => new BigNumber(1),
         assetIsNative: () => true,

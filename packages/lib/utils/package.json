@@ -53,8 +53,7 @@
         "create-hash": "1.2.0",
         "events": "^3.2.0",
         "immutable": "^4.0.0-rc.12",
-        "keccak": "^3.0.1",
-        "web3-eth-abi": "^1.4.0"
+        "keccak": "^3.0.1"
     },
     "resolutions": {
         "sha3": "^2.1.2"

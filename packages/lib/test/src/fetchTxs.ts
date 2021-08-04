@@ -9,7 +9,7 @@ const logLevel = LogLevel.Log;
 const emptyBytes = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
 const main = async () => {
-    const renJS = new RenJS(RenNetwork.MainnetVDot3, { logLevel });
+    const renJS = new RenJS(RenNetwork.Mainnet, { logLevel });
 
     let n = 330683;
     while (n > 0) {

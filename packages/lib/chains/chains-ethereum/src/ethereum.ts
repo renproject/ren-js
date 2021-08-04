@@ -1,5 +1,6 @@
 import {
     ContractCall,
+    Logger,
     MintChain,
     OverwritableBurnAndReleaseParams,
     OverwritableLockAndMintParams,
@@ -10,16 +11,10 @@ import {
 } from "@renproject/interfaces";
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { Signer } from "ethers";
-import {
-    ExternalProvider,
-    JsonRpcFetchFunc,
-    Web3Provider,
-} from "@ethersproject/providers";
 
 import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
-import { EthAddress, EthTransaction } from "./types";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 import { EthereumTransactionConfig } from "./utils";
 
 export class EthereumClass
@@ -38,20 +33,17 @@ export class EthereumClass
         | undefined;
 
     constructor(
-        web3Provider:
-            | ExternalProvider
-            | JsonRpcFetchFunc
-            | {
-                  provider: Web3Provider;
-                  signer: Signer;
-              },
+        web3Provider: EthProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
-        super(web3Provider, renNetwork);
+        super(web3Provider, renNetwork, config);
     }
 
     public getMintParams = (

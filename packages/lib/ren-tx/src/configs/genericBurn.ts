@@ -195,13 +195,12 @@ const performRelease = async <X, Y>(
         const data: CompletedBurnTransaction<X, Y> = {
             ...tx,
             rawSourceTx: burn.burnDetails.transaction,
-            destTxHash: ((transaction as unknown) as { hash: string }).hash,
+            destTxHash: (transaction as unknown as { hash: string }).hash,
             // Can be used to construct blockchain explorer link
             renResponse: response,
             rawDestTx: transaction,
             completedAt: Date.now(),
-            destTxAmount: ((transaction as unknown) as { amount: string })
-                .amount,
+            destTxAmount: (transaction as unknown as { amount: string }).amount,
         };
         callback({
             type: "COMPLETED",
@@ -252,75 +251,74 @@ const performRelease = async <X, Y>(
     }
 };
 
-const burnTransactionListener = <X, Y>(context: BurnMachineContext<X, Y>) => (
-    callback: Sender<BurnMachineEvent<X, Y>>,
-    receive: Receiver<any>,
-) => {
-    const cleaners: Array<() => void> = [];
-    let burning = false;
-    let tx: ConfirmedBurnTransaction<X>;
-    burnAndRelease(context)
-        .then((burn) => {
-            // Ready to recieve SUBMIT
-            callback({ type: "CREATED" });
-            if (
-                context.autoSubmit ||
-                // Alway "SUBMIT" if we have submitted previously
-                context.tx.transaction
-            ) {
-                setTimeout(() => callback("SUBMIT"), 500);
-            }
+const burnTransactionListener =
+    <X, Y>(context: BurnMachineContext<X, Y>) =>
+    (callback: Sender<BurnMachineEvent<X, Y>>, receive: Receiver<any>) => {
+        const cleaners: Array<() => void> = [];
+        let burning = false;
+        let tx: ConfirmedBurnTransaction<X>;
+        burnAndRelease(context)
+            .then((burn) => {
+                // Ready to recieve SUBMIT
+                callback({ type: "CREATED" });
+                if (
+                    context.autoSubmit ||
+                    // Alway "SUBMIT" if we have submitted previously
+                    context.tx.transaction
+                ) {
+                    setTimeout(() => callback("SUBMIT"), 500);
+                }
 
-            receive((event) => {
-                if (event.type === "SUBMIT") {
-                    // Only burn once
-                    if (burning) {
-                        return;
+                receive((event) => {
+                    if (event.type === "SUBMIT") {
+                        // Only burn once
+                        if (burning) {
+                            return;
+                        }
+                        burning = true;
+                        performBurn(burn, callback, cleaners, context)
+                            .then((r) => (tx = r))
+                            .catch((e) => {
+                                console.error(e);
+                                callback({
+                                    type: "BURN_ERROR",
+                                    data: e.toString(),
+                                    error: e,
+                                });
+                            });
                     }
-                    burning = true;
-                    performBurn(burn, callback, cleaners, context)
-                        .then((r) => (tx = r))
-                        .catch((e) => {
-                            console.error(e);
-                            callback({
-                                type: "BURN_ERROR",
-                                data: e.toString(),
-                                error: e,
-                            });
-                        });
-                }
 
-                if (event.type === "RELEASE") {
-                    const tx: ConfirmedBurnTransaction<X> =
-                        (context.tx
-                            .transaction as ConfirmedBurnTransaction<X>) ||
-                        extractTx(burn);
+                    if (event.type === "RELEASE") {
+                        const tx: ConfirmedBurnTransaction<X> =
+                            (context.tx
+                                .transaction as ConfirmedBurnTransaction<X>) ||
+                            extractTx(burn);
 
-                    performRelease(burn, callback, cleaners, tx)
-                        .then()
-                        .catch((e) => {
-                            console.error(e);
-                            callback({
-                                type: "BURN_ERROR",
-                                data: context.tx,
-                                error: e,
+                        performRelease(burn, callback, cleaners, tx)
+                            .then()
+                            .catch((e) => {
+                                console.error(e);
+                                callback({
+                                    type: "BURN_ERROR",
+                                    data: context.tx,
+                                    error: e,
+                                });
                             });
-                        });
-                }
+                    }
+                });
+            })
+            .catch((e) => {
+                console.error(e);
+
+                callback({ type: "BURN_ERROR", data: {}, error: e });
             });
-        })
-        .catch((e) => {
-            console.error(e);
 
-            callback({ type: "BURN_ERROR", data: {}, error: e });
-        });
-
-    return () => {
-        for (const cleaner of cleaners) {
-            cleaner();
-        }
+        return () => {
+            for (const cleaner of cleaners) {
+                cleaner();
+            }
+        };
     };
-};
 
 export const buildBurnConfig = <X, Y>(): Partial<
     MachineOptions<BurnMachineContext<X, Y>, BurnMachineEvent<X, Y>>

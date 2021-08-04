@@ -13,52 +13,32 @@ import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
 import { addressIsValid, transactionIsValid } from "./utils";
 
-export const renArbitrumTestnet: EthereumConfig = {
-    name: "Arbitrum Testnet",
-    chain: "ArbitrumTestnet",
+export const renGoerli: EthereumConfig = {
+    name: "Görli Testnet",
+    chain: "goerliTestnet",
     isTestnet: true,
-    chainLabel: "Arbitrum Testnet",
-    networkID: 421611,
+    chainLabel: "Görli Testnet",
+    networkID: 6284,
     addresses: {
-        GatewayRegistry: "0x5eEBf6c199a9Db26dabF621fB8c43D58C62DF2bd",
-        BasicAdapter: "0x1156663dFab56A9BAdd844e12eDD69eC96Dd0eFb",
+        GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
+        BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
 
-    publicProvider: () => `https://rinkeby.arbitrum.io/rpc`,
-    explorer: StandardExplorer("https://rinkeby-explorer.arbitrum.io"),
+    publicProvider: ({ infura }: { infura?: string } = {}) =>
+        `https://goerli.infura.io/v3/${infura || ""}`,
+    explorer: StandardExplorer("https://goerli.etherscan.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
-    infura: "https://rinkeby.arbitrum.io/rpc",
+    infura: "https://goerli.infura.io",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://rinkeby-explorer.arbitrum.io",
+    etherscan: "https://goerli.etherscan.io",
 };
 
-export const renArbitrumMainnet: EthereumConfig = {
-    name: "Arbitrum Mainnet",
-    chain: "ArbitrumMainnet",
-    isTestnet: false,
-    chainLabel: "Arbitrum Mainnet",
-    networkID: 42161,
-    addresses: {
-        GatewayRegistry: "",
-        BasicAdapter: "",
-    },
-
-    publicProvider: () => `https://arb1.arbitrum.io/rpc`,
-    explorer: StandardExplorer("https://explorer.arbitrum.io"),
-
-    /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
-    infura: "https://arb1.arbitrum.io/rpc",
-    /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://explorer.arbitrum.io",
+export const GoerliConfigMap = {
+    [RenNetwork.Testnet]: renGoerli,
 };
 
-export const ArbitrumConfigMap = {
-    [RenNetwork.Testnet]: renArbitrumTestnet,
-    [RenNetwork.Mainnet]: renArbitrumMainnet,
-};
-
-const resolveArbitrumNetwork = (
+const resolveGoerliNetwork = (
     renNetwork?:
         | RenNetwork
         | RenNetworkString
@@ -66,7 +46,7 @@ const resolveArbitrumNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return ArbitrumConfigMap[RenNetwork.Mainnet];
+        return renGoerli;
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -75,21 +55,25 @@ const resolveArbitrumNetwork = (
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
-        return details.isTestnet ? renArbitrumTestnet : renArbitrumMainnet;
+        if (!details.isTestnet) {
+            throw new Error(`Goerli not supported on mainnet.`);
+        }
+        return renGoerli;
     }
 };
 
-export class ArbitrumClass extends EthereumClass {
-    public static chain = "Arbitrum";
-    public chain = ArbitrumClass.chain;
-    public name = ArbitrumClass.chain;
+export class GoerliClass extends EthereumClass {
+    public static chain = "Goerli";
+    public chain = GoerliClass.chain;
+    public name = GoerliClass.chain;
     public legacyName = undefined;
+    // public logRequestLimit = 1000;
 
-    public static configMap = ArbitrumConfigMap;
-    public configMap = ArbitrumConfigMap;
+    public static configMap = GoerliConfigMap;
+    public configMap = GoerliConfigMap;
 
     public static utils = {
-        resolveChainNetwork: resolveArbitrumNetwork,
+        resolveChainNetwork: resolveGoerliNetwork,
         addressIsValid,
         transactionIsValid,
         addressExplorerLink: (
@@ -97,10 +81,8 @@ export class ArbitrumClass extends EthereumClass {
             network?: NetworkInput,
         ): string =>
             `${
-                (
-                    ArbitrumClass.utils.resolveChainNetwork(network) ||
-                    renArbitrumMainnet
-                ).etherscan
+                (Goerli.utils.resolveChainNetwork(network) || renGoerli)
+                    .etherscan
             }/address/${address}`,
 
         transactionExplorerLink: (
@@ -108,15 +90,13 @@ export class ArbitrumClass extends EthereumClass {
             network?: NetworkInput,
         ): string =>
             `${
-                (
-                    Arbitrum.utils.resolveChainNetwork(network) ||
-                    renArbitrumMainnet
-                ).etherscan
+                (Goerli.utils.resolveChainNetwork(network) || renGoerli)
+                    .etherscan
             }/tx/${transaction || ""}`,
     };
 
     public utils = utilsWithChainNetwork(
-        ArbitrumClass.utils,
+        GoerliClass.utils,
         () => this.renNetworkDetails,
     );
 
@@ -133,7 +113,7 @@ export class ArbitrumClass extends EthereumClass {
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network.
-        super(web3Provider, resolveArbitrumNetwork(renNetwork), config);
+        super(web3Provider, resolveGoerliNetwork(renNetwork), config);
     }
 
     initialize = (
@@ -141,7 +121,7 @@ export class ArbitrumClass extends EthereumClass {
     ) => {
         this.renNetworkDetails =
             this.renNetworkDetails ||
-            ArbitrumConfigMap[getRenNetworkDetails(renNetwork).name];
+            GoerliConfigMap[getRenNetworkDetails(renNetwork).name];
 
         if (!this.renNetworkDetails) {
             throw new Error(
@@ -156,6 +136,6 @@ export class ArbitrumClass extends EthereumClass {
     };
 }
 
-export type Arbitrum = ArbitrumClass;
+export type Goerli = GoerliClass;
 // @dev Removes any static fields, except `utils`.
-export const Arbitrum = Callable(ArbitrumClass);
+export const Goerli = Callable(GoerliClass);

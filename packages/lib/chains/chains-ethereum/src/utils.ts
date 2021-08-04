@@ -2,10 +2,10 @@ import {
     AbiItem,
     BurnDetails,
     ContractCall,
+    EventEmitterTyped,
     LockAndMintTransaction,
     Logger,
     NullLogger,
-    PromiEvent,
 } from "@renproject/interfaces";
 import {
     assert,
@@ -22,19 +22,9 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
-// import BlocknativeSdk from "bnc-sdk";
-// import {
-//     EthereumTransactionData,
-//     EthereumTransactionLog,
-// } from "bnc-sdk/dist/types/src/interfaces";
 import { isValidAddress, isValidChecksumAddress } from "ethereumjs-util";
-import { EventEmitter } from "events";
 import { EthAddress, EthTransaction } from "./types";
-import {
-    Provider,
-    TransactionReceipt,
-    TransactionResponse,
-} from "@ethersproject/providers";
+import { Provider, TransactionReceipt } from "@ethersproject/providers";
 import { Overrides } from "ethers";
 import * as ethers from "ethers";
 
@@ -43,67 +33,6 @@ import { EthereumConfig } from "./networks";
 export interface EthereumTransactionConfig extends Overrides {
     value?: ethers.BigNumberish | Promise<ethers.BigNumberish>;
 }
-
-export type Web3Events = {
-    transactionHash: [string];
-    receipt: [TransactionReceipt];
-    confirmation: [number, TransactionReceipt];
-    error: [Error];
-};
-
-export type RenWeb3Events = {
-    eth_transactionHash: [string];
-    eth_receipt: [TransactionReceipt];
-    eth_confirmation: [number, TransactionReceipt];
-    error: [Error];
-};
-
-export const ignorePromiEventError = (error: Error): boolean => {
-    try {
-        return !!(
-            error &&
-            error.message &&
-            (/Invalid block number/.exec(error.message) ||
-                /Timeout exceeded during the transaction confirmation process./.exec(
-                    error.message,
-                ))
-        );
-    } catch (innerError) {
-        return false;
-    }
-};
-
-/**
- * Forward the events emitted by a Web3 PromiEvent to another PromiEvent.
- */
-export const forwardWeb3Events = <T, TEvents extends Web3Events>(
-    src: PromiEvent<T, TEvents>,
-    dest: EventEmitter,
-): void => {
-    // eslint-disable-next-line no-void
-    void src.on("transactionHash", (eventReceipt: string) => {
-        dest.emit("transactionHash", eventReceipt);
-        dest.emit("eth_transactionHash", eventReceipt);
-    });
-    // eslint-disable-next-line no-void
-    void src.on("receipt", (eventReceipt: TransactionReceipt) => {
-        dest.emit("receipt", eventReceipt);
-        dest.emit("eth_receipt", eventReceipt);
-    });
-    // eslint-disable-next-line no-void
-    void src.on(
-        "confirmation",
-        (confNumber: number, eventReceipt: TransactionReceipt) => {
-            dest.emit("confirmation", confNumber, eventReceipt);
-            dest.emit("eth_confirmation", confNumber, eventReceipt);
-        },
-    );
-    // Don't forward - instead these should be listened for and thrown.
-    // // eslint-disable-next-line no-void
-    // void src.on("error", (error: Error) => {
-    //     dest.emit("error", error);
-    // });
-};
 
 /**
  * eventTopics contains the Ethereum event identifiers (the first log topic) for
@@ -153,35 +82,6 @@ export const waitForReceipt = async (
     new Promise<TransactionReceipt>(async (resolve, reject) => {
         assertType<string>("string", { txHash });
 
-        // let blocknative;
-
-        // try {
-        //     // Initialize Blocknative SDK.
-        //     blocknative = new BlocknativeSdk({
-        //         dappId: "6b3d07f1-b158-4cf1-99ec-919b11fe3654", // Public RenJS key.
-        //         networkId: await web3.eth.net.getId(),
-        //     });
-
-        //     const { emitter } = blocknative.transaction(txHash);
-        //     emitter.on("txSpeedUp", (state) => {
-        //         if (
-        //             (state as EthereumTransactionData | EthereumTransactionLog)
-        //                 .hash
-        //         ) {
-        //             txHash = Ox(
-        //                 (state as
-        //                     | EthereumTransactionData
-        //                     | EthereumTransactionLog).hash,
-        //             );
-        //         }
-        //     });
-        //     emitter.on("txCancel", () => {
-        //         reject(new Error("Ethereum transaction was cancelled."));
-        //     });
-        // } catch (error) {
-        //     // Ignore blocknative error.
-        // }
-
         // Wait for confirmation
         let receipt: TransactionReceipt | undefined;
         while (!receipt || !receipt.blockHash) {
@@ -194,16 +94,6 @@ export const waitForReceipt = async (
             }
             await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
-
-        // try {
-        //     // Destroy blocknative SDK.
-        //     if (blocknative) {
-        //         blocknative.unsubscribe(txHash);
-        //         blocknative.destroy();
-        //     }
-        // } catch (error) {
-        //     // Ignore blocknative error.
-        // }
 
         // Status might be undefined - so check against `false` explicitly.
         if (receipt.status === 0) {
@@ -221,7 +111,7 @@ export const waitForReceipt = async (
 
 export const parseBurnEvent = (event: {
     transactionHash: string;
-    topics: Array<string>;
+    topics: string[];
     data: string;
 }): BurnDetails<EthTransaction> => {
     assert(event.topics[0] === eventTopics.LogBurn);
@@ -260,7 +150,7 @@ export const parseBurnEvent = (event: {
     const burnLogDecoder = new ethers.utils.Interface([burnLogABI]);
     const decodedLog = burnLogDecoder.parseLog(event);
 
-    const { _to, _amount, _n } = decodedLog.args;
+    const [_to, _amount, _n] = decodedLog.args;
 
     return {
         transaction: event.transactionHash,
@@ -379,77 +269,6 @@ export const findBurnByNonce = async (
     return parseBurnEvent(burnEvents[0]);
 };
 
-// export const defaultAccountError = "No accounts found in Web3 wallet.";
-// export const withDefaultAccount = async (
-//     web3: Web3,
-//     config: EthereumTransactionConfig,
-// ): Promise<EthereumTransactionConfig> => {
-//     if (!config.from) {
-//         if (web3.eth.defaultAccount) {
-//             config.from = web3.eth.defaultAccount;
-//         } else {
-//             const accounts = await web3.eth.getAccounts();
-//             if (accounts.length === 0) {
-//                 throw new Error(defaultAccountError);
-//             }
-//             config.from = accounts[0];
-//         }
-//     }
-//     return config;
-// };
-
-/**
- * Bind a promiEvent to an Ethereum transaction hash, sending confirmation
- * events. Web3 may export a similar function, which should be used instead if
- * it exists.
- *
- * @param web3 A Web3 instance for watching for confirmations.
- * @param txHash The Ethereum transaction has as a hex string.
- * @param promiEvent The existing promiEvent to forward events to.
- */
-export const manualPromiEvent = async (
-    provider: Provider,
-    txHash: string,
-    promiEvent: EventEmitter, // PromiEvent<TransactionReceipt, Web3Events & RenWeb3Events>
-) => {
-    assertType<string>("string", { txHash });
-
-    const receipt = await provider.getTransactionReceipt(txHash);
-    promiEvent.emit("transactionHash", txHash);
-
-    const emitConfirmation = async () => {
-        const currentBlock = await provider.getBlockNumber();
-        promiEvent.emit(
-            "confirmation",
-            Math.max(0, currentBlock - receipt.blockNumber),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            receipt as any,
-        );
-    };
-
-    // The following section should be revised to properly
-    // register the event emitter to the transaction's
-    // confirmations, so that on("confirmation") works
-    // as expected. This code branch only occurs if a
-    // completed transfer is passed to RenJS again, which
-    // should not usually happen.
-
-    // Emit confirmation now and in 1s, since a common use
-    // case may be to have the following code, which doesn't
-    // work if we emit the txHash and confirmations
-    // with no time in between:
-    //
-    // ```js
-    // const txHash = await new Promise((resolve, reject) => lockAndMint.on("transactionHash", resolve).catch(reject));
-    // lockAndMint.on("confirmation", () => { /* do something */ });
-    // ```
-    await emitConfirmation();
-    setTimeout(() => {
-        emitConfirmation().catch(console.error);
-    }, 1000);
-    return receipt;
-};
-
 export const getTokenAddress = async (
     network: EthereumConfig,
     provider: Provider,
@@ -496,7 +315,7 @@ export const getTokenAddress = async (
     }
 };
 
-export const findTransactionBySigHash = async (
+export const findMintBySigHash = async (
     network: EthereumConfig,
     provider: Provider,
     asset: string,
@@ -599,7 +418,10 @@ export const submitToEthereum = async (
 
     contractCalls: ContractCall[],
     mintTx: LockAndMintTransaction,
-    eventEmitter: EventEmitter,
+    eventEmitter: EventEmitterTyped<{
+        transactionHash: [string];
+        confirmation: [number, { status: number }];
+    }>,
 
     // config?: { [key: string]: unknown },
     logger: Logger = NullLogger,
@@ -616,7 +438,7 @@ export const submitToEthereum = async (
         throw new Error(`No signature available from RenVM transaction.`);
     }
 
-    let tx: TransactionResponse | undefined;
+    let transaction: string | undefined;
 
     for (let i = 0; i < contractCalls.length; i++) {
         const contractCall = contractCalls[i];
@@ -668,45 +490,28 @@ export const submitToEthereum = async (
             config,
         );
 
-        tx = await contract[contractFn](...callParams, config);
+        const tx = await contract[contractFn](...callParams, config);
 
-        // if (last && tx !== undefined) {
-        //     forwardWeb3Events(tx, eventEmitter);
-        // }
+        if (last) {
+            eventEmitter.emit("transactionHash", tx.hash);
+        }
+        const receipt = await tx.wait();
+
+        if (last) {
+            eventEmitter.emit("confirmation", 1, { status: 1 });
+        }
+
+        transaction = receipt.transactionHash;
+        if (logger) {
+            logger.debug("Transaction hash", transaction);
+        }
     }
 
-    if (tx === undefined) {
+    if (transaction === undefined) {
         throw new Error(`Must provide contract call.`);
     }
 
-    eventEmitter.emit("txHash", tx.hash);
-
-    const receipt: TransactionReceipt = await tx.wait();
-
-    return receipt.transactionHash;
-
-    // return await new Promise<EthTransaction>((innerResolve, reject) => {
-    //     if (tx === undefined) {
-    //         throw new Error(`Must provide contract call.`);
-    //     }
-
-    //     tx.once(
-    //         "confirmation",
-    //         (_confirmations: number, receipt: TransactionReceipt) => {
-    //             innerResolve(receipt.transactionHash);
-    //         },
-    //     ).catch((error: Error) => {
-    //         try {
-    //             if (ignorePromiEventError(error)) {
-    //                 logger.error(extractError(error));
-    //                 return;
-    //             }
-    //         } catch (_error) {
-    //             /* Ignore _error */
-    //         }
-    //         reject(error);
-    //     });
-    // });
+    return transaction;
 };
 
 export const addressIsValid = (address: EthAddress): boolean => {

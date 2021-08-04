@@ -1,13 +1,9 @@
 /* eslint-disable no-console */
 
 import * as Chains from "@renproject/chains";
+import { Ethereum, Goerli } from "@renproject/chains-ethereum";
 
-import {
-    LockAndMintParams,
-    LogLevel,
-    RenNetwork,
-    SimpleLogger,
-} from "@renproject/interfaces";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { extractError, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
@@ -16,8 +12,6 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
-import Web3 from "web3";
-import { provider } from "web3-core";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 import { ethers } from "ethers";
 
@@ -29,15 +23,11 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
-import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-import {
-    renDevnet,
-    renTestnet,
-} from "@renproject/chains-solana/build/main/networks";
+import { renTestnetGoerli } from "@renproject/chains";
 
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
-const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
+// const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
@@ -59,8 +49,8 @@ describe("Refactor: mint", () => {
 
         // const to = toChain;
 
-        const ToClass = Chains.Arbitrum;
-        const ethNetwork = ToClass.configMap[network];
+        const ToClass = Goerli;
+        const ethNetwork = renTestnetGoerli;
 
         const account = new CryptoAccount(PRIVATE_KEY, {
             network: "testnet",
@@ -76,32 +66,31 @@ describe("Refactor: mint", () => {
         const infuraURL = ethNetwork.publicProvider({
             infura: process.env.INFURA_KEY,
         });
-        const hdWalletProvider: provider = new HDWalletProvider({
+        const hdWalletProvider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,
-        }) as any;
-        const web3 = new Web3(hdWalletProvider);
-        const ethAddress = (await web3.eth.getAccounts())[0];
-        const ethBalance = web3.utils.fromWei(
-            await web3.eth.getBalance(ethAddress),
-            "ether",
+        });
+
+        const provider = new ethers.providers.Web3Provider(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            hdWalletProvider as any,
         );
+        const signer = provider.getSigner();
+
+        const ethAddress = (await provider.listAccounts())[0];
+        const balance = await provider.getBalance(ethAddress);
+        const ethBalance = ethers.utils.formatEther(balance);
         console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
         // const to = ToClass(provider, ethNetwork).Account({
         //     address: ethAddress,
         // });
 
-        const provider = new ethers.providers.Web3Provider(
-            hdWalletProvider as any,
-        );
-        const signer = provider.getSigner();
-
         const params = {
             asset,
             from,
-            to: ToClass(web3.currentProvider, ethNetwork).Account(
+            to: ToClass({ provider, signer }, ethNetwork).Account(
                 {
                     address: ethAddress,
                 },

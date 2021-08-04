@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { interpret } from "xstate";
 import {
     mintMachine,
@@ -14,18 +16,17 @@ import RenJS from "@renproject/ren";
 import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "@truffle/hdwallet-provider";
-import Web3 from "web3";
-import { provider } from "web3-core";
+import ethers from "ethers";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
-const ethProvider: provider = new HDWalletProvider({
+const hdWalletProvider = new HDWalletProvider({
     mnemonic: MNEMONIC || "",
     providerOrUrl: INFURA_URL,
     addressIndex: 0,
     numberOfAddresses: 10,
-}) as any;
-const web3 = new Web3(ethProvider);
+});
+const ethProvider = new ethers.providers.Web3Provider(hdWalletProvider);
 // Allow for an existing tx to be passed in via CLI
 let parsedTx: GatewaySession<any>;
 
@@ -56,7 +57,7 @@ export const toChainMap = {
     binanceSmartChain: (context: GatewayMachineContext<any>) => {
         const { destAddress, network } = context.tx;
         // const { providers } = context;
-        return new BinanceSmartChain(ethProvider, network).Account({
+        return new BinanceSmartChain(hdWalletProvider, network).Account({
             address: destAddress,
         });
     },
@@ -64,7 +65,7 @@ export const toChainMap = {
         const { destAddress, network } = context.tx;
         // const { providers } = context;
 
-        return Ethereum(ethProvider, network).Account({
+        return Ethereum(hdWalletProvider, network).Account({
             address: destAddress,
         });
     },
@@ -78,8 +79,8 @@ export const fromChainMap = {
     bitcoinCash: () => BitcoinCash(),
 };
 
-web3.eth
-    .getAccounts()
+ethProvider
+    .listAccounts()
     .then((accounts) => {
         mintTransaction.destAddress = accounts[0];
         mintTransaction.userAddress = accounts[0];

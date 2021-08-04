@@ -1,22 +1,17 @@
 import {
     getRenNetworkDetails,
+    Logger,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 import { NetworkInput } from "./base";
-import { EthAddress, EthTransaction } from "./types";
-import {
-    ExternalProvider,
-    JsonRpcFetchFunc,
-    Web3Provider,
-} from "@ethersproject/providers";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
 import { addressIsValid, transactionIsValid } from "./utils";
-import { Signer } from "ethers";
 
 export const renFantomTestnet: EthereumConfig = {
     name: "Fantom Testnet",
@@ -69,10 +64,7 @@ export const renFantomMainnet: EthereumConfig = {
 export const FantomConfigMap = {
     [RenNetwork.Testnet]: renFantomTestnet,
     [RenNetwork.Mainnet]: renFantomMainnet,
-
-    [RenNetwork.TestnetVDot3]: renFantomTestnet,
-    [RenNetwork.MainnetVDot3]: renFantomMainnet,
-    [RenNetwork.DevnetVDot3]: renFantomDevnet,
+    [RenNetwork.Devnet]: renFantomDevnet,
 };
 
 const resolveFantomNetwork = (
@@ -83,7 +75,7 @@ const resolveFantomNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return FantomConfigMap[RenNetwork.MainnetVDot3];
+        return FantomConfigMap[RenNetwork.Mainnet];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -93,7 +85,7 @@ const resolveFantomNetwork = (
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
         return details.isTestnet
-            ? details.name === RenNetwork.DevnetVDot3
+            ? details.name === RenNetwork.Devnet
                 ? renFantomDevnet
                 : renFantomTestnet
             : renFantomMainnet;
@@ -140,22 +132,19 @@ export class FantomClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider:
-            | ExternalProvider
-            | JsonRpcFetchFunc
-            | {
-                  provider: Web3Provider;
-                  signer: Signer;
-              },
+        web3Provider: EthProvider,
         renNetwork:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network.
-        super(web3Provider, resolveFantomNetwork(renNetwork));
+        super(web3Provider, resolveFantomNetwork(renNetwork), config);
     }
 
     initialize = (

@@ -8,7 +8,7 @@ import { RenNetwork } from "@renproject/interfaces";
 
 const networkMapping: Record<number, RenNetwork[]> = {
     1: [RenNetwork.Mainnet],
-    42: [RenNetwork.Testnet, RenNetwork.TestnetVDot3],
+    42: [RenNetwork.Testnet],
 };
 
 export const renNetworkToEthNetwork = (id: RenNetwork): number | undefined => {

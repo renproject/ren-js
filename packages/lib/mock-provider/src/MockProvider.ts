@@ -31,10 +31,10 @@ import {
     toURLBase64,
 } from "@renproject/utils";
 import { ecsign, privateToAddress } from "ethereumjs-util";
-import AbiCoder from "web3-eth-abi";
 import BigNumber from "bignumber.js";
 import { ChainCommon, TxStatus } from "@renproject/interfaces";
 import elliptic from "elliptic";
+import { defaultAbiCoder } from "ethers/lib/utils";
 
 export const responseQueryParamsType: PackStructType = {
     struct: [
@@ -128,9 +128,7 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
 
         // Generate signature
-        const sigParams = (
-            AbiCoder as any as AbiCoder.AbiCoder
-        ).encodeParameters(
+        const sigParams = defaultAbiCoder.encode(
             ["bytes32", "uint256", "bytes32", "address", "bytes32"],
             [pHash, amountOut, sHash, Ox(to), nHash],
         );

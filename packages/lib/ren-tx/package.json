@@ -10,14 +10,13 @@
         "access": "public"
     },
     "keywords": [
-        "ren-js",
-        "ren",
         "renvm",
-        "ren project",
-        "cryptocurrencies",
-        "blockchain",
-        "ethereum",
+        "ren",
         "bitcoin",
+        "dogecoin",
+        "web3",
+        "ethereum",
+        "solana",
         "defi",
         "xstate"
     ],

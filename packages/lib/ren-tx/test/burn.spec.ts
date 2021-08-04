@@ -18,6 +18,7 @@ import BigNumber from "bignumber.js";
 
 loadDotEnv();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const burnTransaction: BurnSession<any, any> = {
     id: "a unique identifier",
     network: "testnet",
@@ -36,7 +37,7 @@ describe("BurnMachine", () => {
         const fromChainMap = {
             testSourceChain: () => {
                 const chain = buildMockMintChain().mockMintChain;
-                chain.findBurnTransaction = (_p, _d, emitter) => {
+                chain.submitBurn = async (_p, _d, emitter) => {
                     setTimeout(() => {
                         emitter.emit(
                             "transactionHash",
@@ -52,8 +53,7 @@ describe("BurnMachine", () => {
                         setTimeout(() => {
                             resolve({
                                 transaction: {
-                                    hash:
-                                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    hash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                                 },
                                 amount: new BigNumber(0),
                                 to: "asd",
@@ -83,9 +83,11 @@ describe("BurnMachine", () => {
             }),
             autoSubmit: true,
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let result: any = {};
 
         const p = new Promise<
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             State<BurnMachineContext<any, any>, EventObject, BurnMachineSchema>
         >((resolve, reject) => {
             const service = interpret(machine)
@@ -108,8 +110,9 @@ describe("BurnMachine", () => {
 
             // Start the service
             service.start();
-            service.subscribe(((state: any, evt: any) => {
-                /* */
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            service.subscribe(((_state: any, _evt: any) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             }) as any);
             service.onStop(() => {
                 resolve(result);

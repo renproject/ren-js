@@ -12,6 +12,16 @@
   "publishConfig": {
     "access": "public"
   },
+  "keywords": [
+    "renvm",
+    "ren",
+    "bitcoin",
+    "dogecoin",
+    "web3",
+    "ethereum",
+    "solana",
+    "defi"
+  ],
   "engines": {
     "node": ">=10"
   },

@@ -10,46 +10,33 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    EventEmitterTyped,
 } from "@renproject/interfaces";
 import {
     assertType,
-    extractError,
     fromHex,
-    isDefined,
     Ox,
     payloadToABI,
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { EventEmitter } from "events";
 import * as ethers from "ethers";
 import {
-    Provider,
-    ExternalProvider,
     JsonRpcFetchFunc,
     Web3Provider,
+    ExternalProvider,
 } from "@ethersproject/providers";
 
-import {
-    EthereumConfig,
-    renDevnetVDot3,
-    renMainnet,
-    renMainnetVDot3,
-    renTestnet,
-    renTestnetVDot3,
-} from "./networks";
-import { EthAddress, EthTransaction } from "./types";
+import { EthereumConfig, renDevnet, renMainnet, renTestnet } from "./networks";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 import {
     addressIsValid,
     transactionIsValid,
     extractBurnDetails,
     findBurnByNonce,
-    findTransactionBySigHash,
-    forwardWeb3Events,
+    findMintBySigHash,
     getGatewayAddress,
     getTokenAddress,
-    ignorePromiEventError,
-    manualPromiEvent,
     submitToEthereum,
     EthereumTransactionConfig,
 } from "./utils";
@@ -57,9 +44,7 @@ import {
 export const EthereumConfigMap = {
     [RenNetwork.Mainnet]: renMainnet,
     [RenNetwork.Testnet]: renTestnet,
-    [RenNetwork.MainnetVDot3]: renMainnetVDot3,
-    [RenNetwork.TestnetVDot3]: renTestnetVDot3,
-    [RenNetwork.DevnetVDot3]: renDevnetVDot3,
+    [RenNetwork.Devnet]: renDevnet,
 };
 
 const isEthereumConfig = (
@@ -117,6 +102,7 @@ export class EthereumBaseChain
     public name = EthereumBaseChain.chain;
     public legacyName: MintChain["legacyName"] = "Eth";
     public logRequestLimit: number | undefined = undefined;
+    private logger: Logger | undefined;
 
     public static configMap: {
         [network in RenNetwork]?: EthereumConfig;
@@ -190,20 +176,41 @@ export class EthereumBaseChain
     };
 
     constructor(
-        web3Provider:
-            | ExternalProvider
-            | JsonRpcFetchFunc
-            | {
-                  provider: Web3Provider;
-                  signer: ethers.Signer;
-              },
+        web3Provider: EthProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
-        /* eslint-disable @typescript-eslint/no-explicit-any */
+        if (web3Provider) {
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            if (
+                (web3Provider as any).signer &&
+                (web3Provider as any).provider
+            ) {
+                this.provider = (web3Provider as any).provider;
+                this.signer = (web3Provider as any).signer;
+            } else {
+                const provider = (web3Provider as any)._isProvider
+                    ? (web3Provider as any)
+                    : new ethers.providers.Web3Provider(
+                          web3Provider as ExternalProvider | JsonRpcFetchFunc,
+                      );
+                this.provider = provider;
+                this.signer = provider.getSigner();
+            }
+        }
+        if (renNetwork) {
+            this.renNetworkDetails = resolveNetwork(renNetwork);
+        }
+        this.logger = config.logger;
+    }
+
+    public withProvider = (web3Provider: EthProvider) => {
         if ((web3Provider as any).signer && (web3Provider as any).provider) {
             this.provider = (web3Provider as any).provider;
             this.signer = (web3Provider as any).signer;
@@ -216,22 +223,6 @@ export class EthereumBaseChain
             this.provider = provider;
             this.signer = provider.getSigner();
         }
-        /* eslint-enable @typescript-eslint/no-explicit-any */
-        // this.provider = new Web3(web3Provider);
-        if (renNetwork) {
-            this.renNetworkDetails = resolveNetwork(renNetwork);
-        }
-    }
-
-    public withProvider = (
-        web3Provider: ExternalProvider,
-        signer: ethers.Signer,
-    ) => {
-        this.provider = (web3Provider as any)._isProvider
-            ? (web3Provider as any)
-            : new ethers.providers.Web3Provider(web3Provider);
-        this.signer = signer;
-        // this.provider = new Web3(web3Provider);
         return this;
     };
 
@@ -392,7 +383,10 @@ export class EthereumBaseChain
         asset: string,
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
-        eventEmitter: EventEmitter,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+            confirmation: [number, { status: number }];
+        }>,
     ): Promise<EthTransaction> => {
         if (!mintTx.out) {
             throw new Error(`No signature passed to mint submission.`);
@@ -408,7 +402,7 @@ export class EthereumBaseChain
             );
         }
 
-        const existingTransaction = await this.findTransaction(
+        const existingTransaction = await this.findMint(
             asset,
             mintTx.out.nhash,
             mintTx.out.sighash,
@@ -416,11 +410,8 @@ export class EthereumBaseChain
         if (existingTransaction === "") {
             return "";
         } else if (existingTransaction) {
-            await manualPromiEvent(
-                this.provider,
-                existingTransaction,
-                eventEmitter,
-            );
+            eventEmitter.emit("transactionHash", existingTransaction);
+            eventEmitter.emit("confirmation", 1, { status: 1 });
             return existingTransaction;
         }
 
@@ -432,7 +423,7 @@ export class EthereumBaseChain
         );
     };
 
-    findTransaction = async (
+    findMint = async (
         asset: string,
         nHash: Buffer,
         sigHash?: Buffer,
@@ -442,7 +433,7 @@ export class EthereumBaseChain
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
-        return findTransactionBySigHash(
+        return findMintBySigHash(
             this.renNetworkDetails,
             this.provider,
             asset,
@@ -467,27 +458,102 @@ export class EthereumBaseChain
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    findBurnTransaction = async (
-        asset: string,
-        // Once of the following should not be undefined.
-        burn: {
-            transaction?: EthTransaction;
-            burnNonce?: Buffer | string | number;
-            contractCalls?: ContractCall[];
-        },
-
-        _eventEmitter: EventEmitter,
-        logger: Logger,
-        timeout?: number,
+    submitBurn = async (
+        _asset: string,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+        }>,
+        contractCalls: ContractCall[],
+        config: { networkDelay?: number } = {},
     ): Promise<BurnDetails<EthTransaction>> => {
         if (!this.renNetworkDetails || !this.provider) {
             throw new Error(
                 `${this.name} object not initialized - must provide network to constructor.`,
             );
         }
+        // Make a call to the provided contract and Pass on the
+        // transaction hash.
+        let transaction: EthTransaction | undefined;
+        for (let i = 0; i < contractCalls.length; i++) {
+            const contractCall = contractCalls[i];
+            const last = i === contractCalls.length - 1;
+            const { contractParams, contractFn, sendTo } = contractCall;
+            const callParams = [
+                ...(contractParams || []).map((value) => value.value),
+            ];
+            const ABI = payloadToABI(contractFn, contractParams);
+            const contract = new ethers.Contract(sendTo, ABI, this.signer);
 
-        const { burnNonce, contractCalls } = burn;
-        let { transaction } = burn;
+            let txConfig =
+                typeof contractCall === "object"
+                    ? (contractCall.txConfig as EthereumTransactionConfig)
+                    : {};
+
+            txConfig = {
+                ...txConfig,
+                ...{
+                    value:
+                        txConfig && txConfig.value
+                            ? txConfig.value.toString()
+                            : undefined,
+                    gasPrice:
+                        txConfig && txConfig.gasPrice
+                            ? txConfig.gasPrice.toString()
+                            : undefined,
+                },
+            };
+            if (this.logger) {
+                this.logger.debug(
+                    "Calling Ethereum contract",
+                    contractFn,
+                    sendTo,
+                    ...callParams,
+                    txConfig,
+                );
+            }
+            const tx = await contract[contractFn](...callParams, txConfig);
+            if (last) {
+                eventEmitter.emit("transactionHash", tx.hash);
+            }
+            const receipt = await tx.wait();
+
+            transaction = receipt.transactionHash;
+            if (this.logger) {
+                this.logger.debug("Transaction hash", transaction);
+            }
+        }
+
+        if (!transaction) {
+            throw new Error(`Unable to find burn from provided parameters.`);
+        }
+
+        return extractBurnDetails(
+            this.provider,
+            transaction,
+            this.logger,
+            config.networkDelay,
+        );
+    };
+
+    /**
+     * Read a burn reference from an Ethereum transaction - or submit a
+     * transaction first if the transaction details have been provided.
+     */
+    findBurn = async (
+        asset: string,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+        }>,
+        // Once of the following should not be undefined.
+        transaction?: EthTransaction,
+        burnNonce?: Buffer | string | number,
+        config: { networkDelay?: number } = {},
+    ): Promise<BurnDetails<EthTransaction> | undefined> => {
+        if (!this.renNetworkDetails || !this.provider) {
+            throw new Error(
+                `${this.name} object not initialized - must provide network to constructor.`,
+            );
+        }
 
         if (!transaction && burnNonce) {
             return findBurnByNonce(
@@ -498,78 +564,18 @@ export class EthereumBaseChain
             );
         }
 
-        // There are three parameter configs:
-        // Situation (1): A `burnNonce` is provided
-        // Situation (2): Contract call details are provided
-        // Situation (3): A transaction is provided
-
-        // Handle situation (2)
-        // Make a call to the provided contract and Pass on the
-        // transaction hash.
-        if (!transaction && contractCalls) {
-            for (let i = 0; i < contractCalls.length; i++) {
-                const contractCall = contractCalls[i];
-                const last = i === contractCalls.length - 1;
-                const { contractParams, contractFn, sendTo } = contractCall;
-                const callParams = [
-                    ...(contractParams || []).map((value) => value.value),
-                ];
-                const ABI = payloadToABI(contractFn, contractParams);
-                const contract = new ethers.Contract(sendTo, ABI, this.signer);
-
-                const txConfig =
-                    typeof contractCall === "object"
-                        ? (contractCall.txConfig as EthereumTransactionConfig)
-                        : {};
-
-                const config = {
-                    ...txConfig,
-                    ...{
-                        value:
-                            txConfig && txConfig.value
-                                ? txConfig.value.toString()
-                                : undefined,
-                        gasPrice:
-                            txConfig && txConfig.gasPrice
-                                ? txConfig.gasPrice.toString()
-                                : undefined,
-                    },
-                };
-                logger.debug(
-                    "Calling Ethereum contract",
-                    contractFn,
-                    sendTo,
-                    ...callParams,
-                    config,
-                );
-                const tx = await contract[contractFn](...callParams, config);
-                const receipt = await tx.wait();
-                transaction = receipt.transactionHash;
-                // if (last) {
-                //     forwardWeb3Events(tx, eventEmitter);
-                // }
-                // transaction = await new Promise<string>((resolve, reject) =>
-                //     tx.on("transactionHash", resolve).catch((error: Error) => {
-                //         try {
-                //             if (ignorePromiEventError(error)) {
-                //                 logger.error(extractError(error));
-                //                 return;
-                //             }
-                //         } catch (_error) {
-                //             /* Ignore _error */
-                //         }
-                //         reject(error);
-                //     }),
-                // );
-                logger.debug("Transaction hash", transaction);
-            }
-        }
-
         if (!transaction) {
-            throw new Error(`Unable to find burn from provided parameters.`);
+            return undefined;
         }
 
-        return extractBurnDetails(this.provider, transaction, logger, timeout);
+        eventEmitter.emit("transactionHash", transaction);
+
+        return extractBurnDetails(
+            this.provider,
+            transaction,
+            this.logger,
+            config.networkDelay,
+        );
     };
 
     getFees = async (

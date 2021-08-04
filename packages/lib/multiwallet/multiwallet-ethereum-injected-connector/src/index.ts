@@ -20,7 +20,8 @@ export type InjectedProvider = SaneProvider & {
     enable: () => Promise<void>;
     on: (
         name: string,
-        listener: (...args: unknown[]) => SyncOrPromise<void>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        listener: (...args: any[]) => SyncOrPromise<void>,
     ) => void;
 };
 

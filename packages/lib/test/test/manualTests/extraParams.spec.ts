@@ -10,7 +10,6 @@ import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
-import { provider } from "web3-core";
 
 chai.should();
 
@@ -38,13 +37,15 @@ describe("Extra params", () => {
         const network = Chains.renTestnet;
         const renJS = new RenJS("testnet", { logLevel });
 
-        const infuraURL = `${network.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        const provider: provider = new HDWalletProvider({
+        const infuraURL = network.publicProvider({
+            infura: process.env.INFURA_KEY,
+        });
+        const provider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,
-        }) as any;
+        });
 
         let contractAddress: string;
         switch (network.networkID) {
@@ -58,10 +59,37 @@ describe("Extra params", () => {
                 throw new Error(`Network not supported: ${network.name}`);
         }
 
+        const to = Chains.Ethereum(provider, network).Contract({
+            sendTo: contractAddress,
+            contractFn: "mintExtra",
+            contractParams: [
+                {
+                    type: "string",
+                    name: "_symbol",
+                    value: asset,
+                },
+                {
+                    type: "address",
+                    name: "_recipient",
+                    value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
+                },
+                {
+                    type: "string",
+                    name: "_extraMsg",
+                    value: "", // Default value
+                    notInPayload: true,
+                },
+            ],
+        });
+
         // Use 0.0001 more than fee.
         let suggestedAmount: number;
         try {
-            const fees = await renJS.getFees();
+            const fees = await renJS.getFees({
+                asset,
+                from,
+                to,
+            });
             const fee: number = fees[asset.toLowerCase()].lock;
             suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
         } catch (error) {
@@ -72,28 +100,7 @@ describe("Extra params", () => {
         const lockAndMint = await renJS.lockAndMint({
             asset,
             from,
-            to: Chains.Ethereum(provider, network).Contract({
-                sendTo: contractAddress,
-                contractFn: "mintExtra",
-                contractParams: [
-                    {
-                        type: "string",
-                        name: "_symbol",
-                        value: asset,
-                    },
-                    {
-                        type: "address",
-                        name: "_recipient",
-                        value: "0xFB87bCF203b78d9B67719b7EEa3b6B65A208961B",
-                    },
-                    {
-                        type: "string",
-                        name: "_extraMsg",
-                        value: "", // Default value
-                        notInPayload: true,
-                    },
-                ],
-            }),
+            to,
 
             nonce: Ox("00".repeat(32)),
         });

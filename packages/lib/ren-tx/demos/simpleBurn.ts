@@ -1,22 +1,23 @@
+/* eslint-disable no-console */
+
 import { interpret } from "xstate";
 import { burnMachine } from "../";
 import RenJS from "@renproject/ren";
 import { Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "@truffle/hdwallet-provider";
-import Web3 from "web3";
 import { BurnSession, isBurnCompleted } from "../build/main/types/burn";
-import { provider } from "web3-core";
+import ethers from "ethers";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
-const ethProvider: provider = new HDWalletProvider({
+const hdWalletProvider = new HDWalletProvider({
     mnemonic: MNEMONIC || "",
     providerOrUrl: INFURA_URL,
     addressIndex: 0,
     numberOfAddresses: 10,
-}) as any;
-const web3 = new Web3(ethProvider);
+});
+const ethProvider = new ethers.providers.Web3Provider(hdWalletProvider);
 
 // Allow for an existing tx to be passed in via CLI
 let parsedTx: BurnSession<any, any>;
@@ -36,8 +37,8 @@ const burnTransaction: BurnSession<any, any> = parsedTx || {
     customParams: {},
 };
 
-web3.eth
-    .getAccounts()
+ethProvider
+    .listAccounts()
     .then((accounts) => {
         burnTransaction.destAddress =
             "tb1qryn92xs8gxwhwcnf95rgyy5388tav6quex9pvh";
@@ -48,7 +49,7 @@ web3.eth
             autoSubmit: true,
             to: () => Bitcoin().Address(burnTransaction.destAddress),
             from: () =>
-                Ethereum(ethProvider, burnTransaction.network).Account({
+                Ethereum(hdWalletProvider, burnTransaction.network).Account({
                     address: burnTransaction.destAddress,
                     value: burnTransaction.targetAmount,
                 }),

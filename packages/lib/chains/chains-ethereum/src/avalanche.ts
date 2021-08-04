@@ -1,22 +1,17 @@
 import {
     getRenNetworkDetails,
+    Logger,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import {
-    ExternalProvider,
-    JsonRpcFetchFunc,
-    Web3Provider,
-} from "@ethersproject/providers";
 import { NetworkInput } from "./base";
-import { EthAddress, EthTransaction } from "./types";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
 import { addressIsValid, transactionIsValid } from "./utils";
-import { Signer } from "ethers";
 
 export const renAvalancheTestnet: EthereumConfig = {
     name: "Avalanche Testnet",
@@ -61,9 +56,6 @@ export const renAvalancheMainnet: EthereumConfig = {
 export const AvalancheConfigMap = {
     [RenNetwork.Testnet]: renAvalancheTestnet,
     [RenNetwork.Mainnet]: renAvalancheMainnet,
-
-    [RenNetwork.TestnetVDot3]: renAvalancheTestnet,
-    [RenNetwork.MainnetVDot3]: renAvalancheMainnet,
 };
 
 const resolveAvalancheNetwork = (
@@ -74,7 +66,7 @@ const resolveAvalancheNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return AvalancheConfigMap[RenNetwork.MainnetVDot3];
+        return AvalancheConfigMap[RenNetwork.Mainnet];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -130,22 +122,19 @@ export class AvalancheClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider:
-            | ExternalProvider
-            | JsonRpcFetchFunc
-            | {
-                  provider: Web3Provider;
-                  signer: Signer;
-              },
+        web3Provider: EthProvider,
         renNetwork:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
         // is a web3Provider and the second the RenVM network.
-        super(web3Provider, resolveAvalancheNetwork(renNetwork));
+        super(web3Provider, resolveAvalancheNetwork(renNetwork), config);
     }
 
     initialize = (

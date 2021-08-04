@@ -14,28 +14,30 @@ import {
 import { Terra } from "@renproject/chains-terra";
 import { Filecoin } from "@renproject/chains-filecoin";
 import {
-    Ethereum,
-    BinanceSmartChain,
-    Fantom,
-    Polygon,
     Avalanche,
+    BinanceSmartChain,
+    Ethereum,
+    Fantom,
+    Goerli,
+    Polygon,
 } from "@renproject/chains-ethereum";
 import { Solana } from "@renproject/chains-solana";
 
 const Chains = {
+    Avalanche,
+    BinanceSmartChain,
     Bitcoin,
     BitcoinCash,
-    Zcash,
     DigiByte,
     Dogecoin,
-    Terra,
-    Filecoin,
     Ethereum,
-    BinanceSmartChain,
     Fantom,
+    Filecoin,
+    Goerli,
     Polygon,
-    Avalanche,
     Solana,
+    Terra,
+    Zcash,
 };
 
 export default Chains;

@@ -6,8 +6,11 @@
         "renvm",
         "ren",
         "bitcoin",
+        "dogecoin",
         "web3",
-        "ethereum"
+        "ethereum",
+        "solana",
+        "defi"
     ],
     "main": "dist/main/index.js",
     "typings": "dist/main/index.d.ts",

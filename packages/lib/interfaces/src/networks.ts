@@ -47,9 +47,6 @@ const renLocalnet: RenNetworkDetails = {
     lightnode: "http://localhost:5000",
     isTestnet: true,
 };
-const renMainnetVDot3 = renMainnet;
-const renTestnetVDot3 = renTestnet;
-const renDevnetVDot3 = renDevnet;
 
 export const getRenNetworkDetails = (
     renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
@@ -57,19 +54,16 @@ export const getRenNetworkDetails = (
     switch (renNetwork) {
         case RenNetwork.Mainnet:
         case RenNetwork.Mainnet as "mainnet":
+        case "mainnet-v0.3":
             return renMainnet;
         case RenNetwork.Testnet:
         case RenNetwork.Testnet as "testnet":
-            return renTestnet;
-        case RenNetwork.MainnetVDot3:
-        case "mainnet-v0.3":
-            return renMainnetVDot3;
-        case RenNetwork.TestnetVDot3:
         case "testnet-v0.3":
-            return renTestnetVDot3;
-        case RenNetwork.DevnetVDot3:
+            return renTestnet;
+        case RenNetwork.Devnet:
+        case RenNetwork.Devnet as "devnet":
         case "devnet-v0.3":
-            return renDevnetVDot3;
+            return renDevnet;
         case RenNetwork.Localnet:
         case RenNetwork.Localnet as "localnet":
             return renLocalnet;
@@ -78,13 +72,7 @@ export const getRenNetworkDetails = (
     }
 };
 
-export type RenNetworkString =
-    | "mainnet"
-    | "testnet"
-    | "mainnet-v0.3"
-    | "testnet-v0.3"
-    | "devnet-v0.3"
-    | "localnet";
+export type RenNetworkString = "mainnet" | "testnet" | "devnet" | "localnet";
 
 export const RenNetworks = [
     RenNetwork.Mainnet,

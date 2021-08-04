@@ -11,6 +11,8 @@ import {
     SimpleLogger,
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
+    EventEmitterTyped,
+    SyncOrPromise,
 } from "@renproject/interfaces";
 import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
@@ -35,7 +37,6 @@ import {
 import { BN } from "bn.js";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
-import { EventEmitter } from "events";
 
 import { createInstructionWithEthAddress2 } from "./util";
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
@@ -65,18 +66,15 @@ export interface SolanaProvider {
     };
 }
 
-const x =
-    (a: string): (() => string) =>
-    () =>
-        a;
-
-const encodeAddress = (asset: string): ((b: Buffer) => Promise<string>) => {
+const encodeAddress = (
+    asset: string,
+): ((b: Buffer) => SyncOrPromise<string>) => {
     switch (asset) {
         case "BTC":
         case "ZEC":
         case "BCH":
         case "DOGE":
-            return async (bytes) => base58.encode(bytes);
+            return (bytes) => base58.encode(bytes);
         case "LUNA":
             return async (bytes: Buffer) => {
                 const { Terra } = await import("@renproject/chains-terra");
@@ -442,7 +440,10 @@ export class SolanaClass
         asset: string,
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
-        eventEmitter: EventEmitter,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+            confirmation: [number, { status: number }];
+        }>,
     ) => {
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
@@ -593,7 +594,7 @@ export class SolanaClass
 
         const signature = signed.signature;
         if (!signature) throw new Error("failed to sign");
-        // FIXME: we need to generalize these events
+
         eventEmitter.emit("transactionHash", base58.encode(signature));
         this._logger.debug("signed with signature", signature);
 
@@ -608,12 +609,12 @@ export class SolanaClass
         );
 
         this._logger.debug("sent and confirmed", r);
-        eventEmitter.emit("confirmation", {}, { status: true });
+        eventEmitter.emit("confirmation", 1, { status: 1 });
 
         return r;
     };
 
-    findTransactionByDepositDetails = async (
+    findMintByDepositDetails = async (
         asset: string,
         sHash: Buffer,
         nHash: Buffer,
@@ -802,104 +803,115 @@ export class SolanaClass
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    findBurnTransaction = async (
+    findBurn = async (
         asset: string,
-        burn: {
-            transaction?: SolTransaction;
-            burnNonce?: Buffer | string | number;
-            contractCalls?: ContractCall[];
-        },
-        eventEmitter: EventEmitter,
-        logger: Logger,
-        _networkDelay?: number,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+        }>,
+        _transaction?: SolTransaction,
+        burnNonce?: Buffer | string | number,
     ) => {
         await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
-        if (burn.burnNonce !== undefined) {
-            let leNonce: Buffer;
-            if (typeof burn.burnNonce == "number") {
-                leNonce = new BN(burn.burnNonce).toBuffer("le", 8);
-            } else if (typeof burn.burnNonce == "string") {
-                leNonce = Buffer.from(burn.burnNonce);
-            } else {
-                leNonce = burn.burnNonce;
-            }
 
-            const burnId = await PublicKey.findProgramAddress(
-                [leNonce],
-                program,
-            );
-
-            const burnInfo = await this.provider.connection.getAccountInfo(
-                burnId[0],
-            );
-            if (burnInfo) {
-                const burnData = BurnLogLayout.decode(burnInfo.data);
-                const txes =
-                    await this.provider.connection.getConfirmedSignaturesForAddress2(
-                        burnId[0],
-                    );
-
-                // Concatenate four u64s into a u256 value.
-                const burnAmount = new BN(
-                    Buffer.concat([
-                        new BN(burnData.amount_section_1).toArrayLike(
-                            Buffer,
-                            "le",
-                            8,
-                        ),
-                        new BN(burnData.amount_section_2).toArrayLike(
-                            Buffer,
-                            "le",
-                            8,
-                        ),
-                        new BN(burnData.amount_section_3).toArrayLike(
-                            Buffer,
-                            "le",
-                            8,
-                        ),
-                        new BN(burnData.amount_section_4).toArrayLike(
-                            Buffer,
-                            "le",
-                            8,
-                        ),
-                    ]),
-                );
-
-                // Convert borsh `Number` to built-in number
-                const recipientLength = parseInt(
-                    burnData.recipient_len.toString(),
-                );
-
-                const burnDetails: BurnDetails<SolTransaction> = {
-                    transaction: txes[0].signature,
-                    amount: new BigNumber(burnAmount.toString()),
-                    to: base58.encode(
-                        burnData.recipient.slice(0, recipientLength),
-                    ),
-                    nonce: new BigNumber(
-                        new BN(leNonce, undefined, "le").toString(),
-                    ),
-                };
-                return burnDetails;
-            } else {
-                this._logger.info("missing burn:", burn.burnNonce);
-                logger.info("missing burn:", burn.burnNonce);
-            }
+        if (burnNonce === undefined) {
+            return undefined;
         }
+
+        let leNonce: Buffer;
+        if (typeof burnNonce == "number") {
+            leNonce = new BN(burnNonce).toBuffer("le", 8);
+        } else if (typeof burnNonce == "string") {
+            leNonce = Buffer.from(burnNonce);
+        } else {
+            leNonce = burnNonce;
+        }
+
+        const burnId = await PublicKey.findProgramAddress([leNonce], program);
+
+        const burnInfo = await this.provider.connection.getAccountInfo(
+            burnId[0],
+        );
+        if (burnInfo) {
+            const burnData = BurnLogLayout.decode(burnInfo.data);
+            const txes =
+                await this.provider.connection.getConfirmedSignaturesForAddress2(
+                    burnId[0],
+                );
+
+            // Concatenate four u64s into a u256 value.
+            const burnAmount = new BN(
+                Buffer.concat([
+                    new BN(burnData.amount_section_1).toArrayLike(
+                        Buffer,
+                        "le",
+                        8,
+                    ),
+                    new BN(burnData.amount_section_2).toArrayLike(
+                        Buffer,
+                        "le",
+                        8,
+                    ),
+                    new BN(burnData.amount_section_3).toArrayLike(
+                        Buffer,
+                        "le",
+                        8,
+                    ),
+                    new BN(burnData.amount_section_4).toArrayLike(
+                        Buffer,
+                        "le",
+                        8,
+                    ),
+                ]),
+            );
+
+            // Convert borsh `Number` to built-in number
+            const recipientLength = parseInt(burnData.recipient_len.toString());
+
+            const burnDetails: BurnDetails<SolTransaction> = {
+                transaction: txes[0].signature,
+                amount: new BigNumber(burnAmount.toString()),
+                to: base58.encode(burnData.recipient.slice(0, recipientLength)),
+                nonce: new BigNumber(
+                    new BN(leNonce, undefined, "le").toString(),
+                ),
+            };
+
+            eventEmitter.emit("transactionHash", burnDetails.transaction);
+
+            return burnDetails;
+        }
+
+        this._logger.info("missing burn:", burnNonce);
+        return undefined;
+    };
+
+    /**
+     * Read a burn reference from an Ethereum transaction - or submit a
+     * transaction first if the transaction details have been provided.
+     */
+    submitBurn = async (
+        asset: string,
+        eventEmitter: EventEmitterTyped<{
+            transactionHash: [string];
+        }>,
+        contractCalls: ContractCall[],
+    ) => {
+        await this.waitForInitialization();
+        const program = new PublicKey(this.resolveTokenGatewayContract(asset));
 
         // We didn't find a burn, so create one instead
         if (
-            !burn.contractCalls ||
-            !burn.contractCalls[0] ||
-            !burn.contractCalls[0].contractParams
+            !contractCalls ||
+            !contractCalls[0] ||
+            !contractCalls[0].contractParams
         )
             throw new Error("missing burn calls");
 
-        this._logger.debug("burn contract calls:", burn.contractCalls);
+        this._logger.debug("burn contract calls:", contractCalls);
 
-        const amount = burn.contractCalls[0].contractParams[0].value;
-        const recipient: Buffer = burn.contractCalls[0].contractParams[1].value;
+        const amount = contractCalls[0].contractParams[0].value;
+        const recipient: Buffer = contractCalls[0].contractParams[1].value;
 
         const tokenMintId = await this.getSPLTokenPubkey(asset);
 
@@ -1001,9 +1013,7 @@ export class SolanaClass
         // and submits the tx at that point; but the lightnode/darknode will fail to validate
         // because it is not present in the cluster yet
         // FIXME: this is not great, because it will be stuck in state where it is expecting a signature
-        eventEmitter.emit("txHash", base58.encode(signed.signature));
-
-        eventEmitter.emit("confirmation", base58.encode(signed.signature));
+        eventEmitter.emit("transactionHash", base58.encode(signed.signature));
 
         const x: BurnDetails<SolTransaction> = {
             transaction: res,

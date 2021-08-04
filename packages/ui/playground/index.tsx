@@ -359,13 +359,15 @@ const App = (): JSX.Element => {
                         <Typography>
                             Connected to {wallets.enabledChains[chain].account}
                         </Typography>
-                        <BasicMintApp
-                            asset={asset}
-                            network={network}
-                            chain={chain}
-                            providers={wallets.enabledChains}
-                            account={wallets.enabledChains[chain].account}
-                        />
+                        {address.length > 0 && (
+                            <BasicMintApp
+                                asset={asset}
+                                network={network}
+                                chain={chain}
+                                providers={wallets.enabledChains}
+                                account={address}
+                            />
+                        )}
                         <div>
                             <Typography
                                 style={{ textTransform: "capitalize" }}

@@ -15,9 +15,12 @@
         "react-app-polyfill": "^1.0.0",
         "tweetnacl": "^1.0.3",
         "web3-utils": "3.0.0-rc.5",
-        "ws": "^7.3.1"
+        "ws": "^7.3.1",
+        "xstate": "^4.23.1"
     },
-    "browserslist": ["last 1 Chrome versions"],
+    "browserslist": [
+        "last 1 Chrome versions"
+    ],
     "alias": {
         "react": "../../../node_modules/react",
         "react-dom": "../../../node_modules/react-dom/profiling",

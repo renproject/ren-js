@@ -11,6 +11,7 @@ import {
     SimpleLogger,
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
+    EventEmitterTyped,
 } from "@renproject/interfaces";
 import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
@@ -412,7 +413,7 @@ export class SolanaClass
         asset: string,
         contractCalls: ContractCall[],
         mintTx: LockAndMintTransaction,
-        eventEmitter: EventEmitter,
+        eventEmitter: EventEmitterTyped<any>,
     ) => {
         await this.waitForInitialization();
         this._logger.debug("submitting mintTx:", mintTx);
@@ -446,29 +447,27 @@ export class SolanaClass
             program,
         );
 
+        let recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
+        let recipientWalletAddress =
+            contractCalls[0] &&
+            contractCalls[0].contractParams &&
+            contractCalls[0].contractParams[0]?.value;
+        await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
+
         const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
             Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
             mintTx.out.amount.toString(),
             Buffer.from(s_hash.toString("hex"), "hex"),
-            contractCalls[0].sendTo,
+            recipientTokenAccount.toString(),
             Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
         );
+        debugger;
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
             program,
         );
         this._logger.debug("mint log account", mintLogAccountId[0].toString());
-
-        const recipient = new PublicKey(contractCalls[0].sendTo);
-
-        const recipientAccount = await this.provider.connection.getAccountInfo(
-            recipient,
-        );
-
-        if (!recipientAccount) {
-            throw new Error("Recipient account not found");
-        }
 
         const instruction = new TransactionInstruction({
             keys: [
@@ -480,7 +479,7 @@ export class SolanaClass
                 { pubkey: gatewayAccountId[0], isSigner, isWritable },
                 { pubkey: tokenMintId, isSigner, isWritable: true },
                 {
-                    pubkey: recipient,
+                    pubkey: recipientTokenAccount,
                     isSigner,
                     isWritable: true,
                 },
@@ -674,8 +673,6 @@ export class SolanaClass
 
     /*
      * Generates the mint parameters.
-     * NOTE: We need to ensure that the destination address is initialized,
-     * so be sure to call createAssociatedTokenAccount(asset) first
      */
     getMintParams = async (asset: string) => {
         await this.waitForInitialization();
@@ -702,22 +699,15 @@ export class SolanaClass
 
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
-        const s_hash = keccak256(Buffer.from(asset + "/toSolana"));
-
-        const tokenMintId = await PublicKey.findProgramAddress(
-            [s_hash],
-            program,
-        );
-
         let recipient = this.provider.wallet.publicKey;
 
         if (params?.contractCalls) {
             recipient = new PublicKey(params.contractCalls[0].sendTo);
         }
 
-        const destination = await getAssociatedTokenAddress(
-            recipient,
-            tokenMintId[0],
+        const destination = await this.getAssociatedTokenAccount(
+            asset,
+            recipient.toString(),
         );
 
         const calls: OverwritableLockAndMintParams = {
@@ -725,7 +715,13 @@ export class SolanaClass
                 {
                     sendTo: destination.toString(),
                     contractFn: "mint",
-                    contractParams: [],
+                    contractParams: [
+                        {
+                            name: "recipient",
+                            type: "string",
+                            value: recipient.toString(),
+                        },
+                    ],
                 },
             ],
         };
@@ -1003,20 +999,29 @@ export class SolanaClass
      * Solana specific utility for checking whether a token account has been
      * instantiated for the selected asset
      */
-    async getAssociatedTokenAccount(asset: string) {
+    async getAssociatedTokenAccount(asset: string, address?: string) {
         await this.waitForInitialization();
+
+        const targetAddress = address
+            ? new PublicKey(address)
+            : this.provider.wallet.publicKey;
 
         const tokenMintId = await this.getSPLTokenPubkey(asset);
         const destination = await getAssociatedTokenAddress(
-            this.provider.wallet.publicKey,
+            targetAddress,
             tokenMintId,
         );
 
-        const tokenAccount = await this.provider.connection.getAccountInfo(
-            destination,
-        );
+        try {
+            const tokenAccount = await this.provider.connection.getAccountInfo(
+                destination,
+            );
 
-        if (!tokenAccount || !tokenAccount.data) {
+            if (!tokenAccount || !tokenAccount.data) {
+                return false;
+            }
+        } catch (e) {
+            console.log(e);
             return false;
         }
         return destination;
@@ -1024,18 +1029,26 @@ export class SolanaClass
 
     /*
      * Solana specific utility for creating a token account for a given user
+     * @param asset The symbol of the token you wish to create an account for
+     * @param address? If provided, will create the token account for the given solana address,
+     *                 otherwise, use the address of the wallet connected to the provider
      */
-    async createAssociatedTokenAccount(asset: string) {
+    async createAssociatedTokenAccount(asset: string, address?: string) {
         await this.waitForInitialization();
         const tokenMintId = await this.getSPLTokenPubkey(asset);
+        const targetAddress = address
+            ? new PublicKey(address)
+            : this.provider.wallet.publicKey;
+
         const existingTokenAccount = await this.getAssociatedTokenAccount(
             asset,
+            address,
         );
 
         if (!existingTokenAccount) {
             const createTxInstruction = await createAssociatedTokenAccount(
                 this.provider.wallet.publicKey,
-                this.provider.wallet.publicKey,
+                targetAddress,
                 tokenMintId,
             );
             const createTx = new Transaction();
@@ -1053,11 +1066,18 @@ export class SolanaClass
                 commitment: "confirmed",
             };
 
-            return sendAndConfirmRawTransaction(
-                this.provider.connection,
-                signedTx.serialize(),
-                confirmOpts,
-            );
+            try {
+                const res = await sendAndConfirmRawTransaction(
+                    this.provider.connection,
+                    signedTx.serialize(),
+                    confirmOpts,
+                );
+
+                return res;
+            } catch (e) {
+                console.log(e);
+                throw e;
+            }
         } else {
             // Already generated, but we aren't guarenteed to get the tx
             return "";

@@ -66,33 +66,6 @@ export interface SolanaProvider {
     };
 }
 
-const encodeAddress = (
-    asset: string,
-): ((b: Buffer) => SyncOrPromise<string>) => {
-    switch (asset) {
-        case "BTC":
-        case "ZEC":
-        case "BCH":
-        case "DOGE":
-            return (bytes) => base58.encode(bytes);
-        case "LUNA":
-            return async (bytes: Buffer) => {
-                const { Terra } = await import("@renproject/chains-terra");
-                return new Terra().bytesToAddress(bytes);
-            };
-        case "FIL":
-            return async (bytes: Buffer) => {
-                const { Filecoin } = await import(
-                    "@renproject/chains-filecoin"
-                );
-                // Lightnodes only accept mainnet encoded addresses atm
-                const fc = new Filecoin("mainnet");
-                return fc.bytesToAddress(bytes);
-            };
-    }
-    throw new Error("Unknown asset: " + asset);
-};
-
 interface SolOptions {
     logger: Logger;
 }
@@ -108,7 +81,7 @@ export class SolanaClass
     private _logger: Logger = new SimpleLogger();
 
     public burnPayloadConfig: BurnPayloadConfig = {
-        bytes: true,
+        bytes: false,
     };
 
     public provider: SolanaProvider;
@@ -716,6 +689,8 @@ export class SolanaClass
             );
         }
 
+        const params = this._getParams && this._getParams();
+
         const contract = this.resolveTokenGatewayContract(asset);
         const program = new PublicKey(contract);
 
@@ -738,8 +713,14 @@ export class SolanaClass
             program,
         );
 
+        let recipient = this.provider.wallet.publicKey;
+
+        if (params?.contractCalls) {
+            recipient = new PublicKey(params.contractCalls[0].sendTo);
+        }
+
         const destination = await getAssociatedTokenAddress(
-            this.provider.wallet.publicKey,
+            recipient,
             tokenMintId[0],
         );
 
@@ -755,43 +736,48 @@ export class SolanaClass
         return calls;
     };
 
-    Account({ amount }: { amount: string | BigNumber }) {
-        this._getParams = (burnPayload: string) => {
-            let recipientBytes = Buffer.from(burnPayload, "hex");
-            if (recipientBytes.length == 0) {
-                recipientBytes = Buffer.from(burnPayload);
-            }
-            if (recipientBytes.length == 0) {
-                throw new Error("failed to get recpient");
+    Account({
+        amount,
+        value,
+        address,
+    }: {
+        amount?: string | BigNumber;
+        value?: string | BigNumber;
+        address?: string;
+    }) {
+        this._getParams = (burnPayload?: string) => {
+            const recipient = burnPayload || address;
+            if (!recipient) {
+                throw new Error("missing recipient");
             }
             const params: OverwritableBurnAndReleaseParams = {
                 contractCalls: [
                     {
-                        sendTo: burnPayload,
+                        sendTo: recipient,
                         contractFn: "",
                         contractParams: [
                             {
                                 name: "amount",
-                                value: amount,
+                                value: amount || value,
                                 type: "string",
                             },
                             {
                                 name: "recipient",
-                                value: recipientBytes,
-                                type: "bytes",
+                                value: recipient,
+                                type: "string",
                             },
                         ],
                     },
                 ],
             };
-            this._logger.debug("burn params:", params);
+            this._logger.debug("solana params:", params);
             return params;
         };
         return this;
     }
 
     _getParams:
-        | ((burnPayload: string) => OverwritableBurnAndReleaseParams)
+        | ((burnPayload?: string) => OverwritableBurnAndReleaseParams)
         | undefined;
 
     getBurnParams = (_asset: string, burnPayload?: string) => {
@@ -1018,10 +1004,7 @@ export class SolanaClass
         const x: BurnDetails<SolTransaction> = {
             transaction: res,
             amount: new BigNumber(amount),
-            to: await encodeAddress(
-                asset,
-                // this.renNetwork?.isTestnet ? "testnet" : "mainnet",
-            )(recipient),
+            to: recipient.toString(),
             nonce: new BigNumber(nonceBN.toString()),
         };
         return x;

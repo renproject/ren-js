@@ -75,15 +75,19 @@ export const multiwalletOptions = (
                     network,
                 }),
             },
-            {
-                name: "Phantom",
-                logo: "https://avatars1.githubusercontent.com/u/78782331?s=60&v=4",
-                connector: new SolanaConnector({
-                    debug: true,
-                    providerURL: (window as any).solana,
-                    network,
-                }),
-            },
+            ...[
+                {
+                    name: "Phantom",
+                    logo: "https://avatars1.githubusercontent.com/u/78782331?s=60&v=4",
+                    connector:
+                        (window as any).solana &&
+                        new SolanaConnector({
+                            debug: true,
+                            providerURL: (window as any).solana,
+                            network,
+                        }),
+                },
+            ].filter((x) => (window as any).solana),
         ],
         moonbeam: [
             {

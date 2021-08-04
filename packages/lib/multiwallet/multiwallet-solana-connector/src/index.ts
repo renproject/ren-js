@@ -4,7 +4,7 @@ import {
     ConnectorInterface,
     ConnectorUpdate,
 } from "@renproject/multiwallet-base-connector";
-import Wallet from "@project-serum/sol-wallet-adapter";
+import Wallet from "@project-serum/sol-wallet-adapter/dist/esm/index";
 import { Connection, clusterApiUrl } from "@solana/web3.js";
 
 export interface SolanaConnectorOptions {
@@ -23,7 +23,7 @@ const renNetworkToSolanaNetwork: { [k in RenNetwork]: string } = {
 
 interface SolanaProvider {
     connection: Connection;
-    wallet: typeof Wallet;
+    wallet: Wallet;
 }
 
 export class SolanaConnector
@@ -34,7 +34,7 @@ export class SolanaConnector
     emitter: ConnectorEmitter<SolanaProvider, string>;
     network: RenNetwork;
     connection: Connection;
-    wallet: typeof Wallet;
+    wallet: Wallet;
     providerURL: string | { postMessage: Function };
     clusterURL: string;
     constructor({
@@ -48,6 +48,7 @@ export class SolanaConnector
         this.connection = new Connection(this.clusterURL);
         this.providerURL = providerURL;
         this.emitter = new ConnectorEmitter<SolanaProvider, string>(debug);
+        this.wallet = new Wallet(this.providerURL, this.clusterURL);
     }
 
     handleUpdate = () => {
@@ -59,13 +60,13 @@ export class SolanaConnector
     };
 
     async activate() {
-        this.wallet = new Wallet(this.providerURL, this.clusterURL);
         this.wallet.on("connect", this.handleUpdate);
         // when disconnecting inside an external window,
         // you need to manually bind the function
         this.wallet.on("disconnect", this.deactivate.bind(this));
         await this.wallet.connect();
         return {
+            account: this.getAccount(),
             provider: { connection: this.connection, wallet: this.wallet },
             renNetwork: this.network,
         };
@@ -78,13 +79,14 @@ export class SolanaConnector
     deactivate() {
         if (!this.emitter) return;
         this.emitter.emitDeactivate();
-        this.wallet.disconnect();
+        // if this fails, we can't do much
+        this.wallet.disconnect() as any;
     }
 
     // Get the complete connector status in one call
     async getStatus(): Promise<ConnectorUpdate<SolanaProvider, string>> {
         return {
-            account: await this.getAccount(),
+            account: this.getAccount(),
             renNetwork: this.getRenNetwork(),
             provider: this.getProvider(),
         };
@@ -92,8 +94,10 @@ export class SolanaConnector
 
     // Get default wallet pubkey
     getAccount() {
-        const account = this.getProvider().wallet.publicKey.toBase58();
+        const account = this.getProvider().wallet.publicKey?.toBase58();
         if (!account) {
+            this.deactivate();
+            console.error("missing account");
             throw new Error("Not activated");
         }
         return account;

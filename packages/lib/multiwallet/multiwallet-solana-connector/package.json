@@ -42,10 +42,10 @@
         "prepare-release": "run-s npmignore build"
     },
     "peerDependencies": {
-        "@solana/web3.js": "^1.19.0"
+        "@solana/web3.js": "^1.22.0"
     },
     "dependencies": {
-        "@project-serum/sol-wallet-adapter": "^0.1.6",
+        "@project-serum/sol-wallet-adapter": "^0.2.5",
         "@renproject/interfaces": "^2.5.0-alpha.2",
         "@renproject/multiwallet-base-connector": "^2.5.0-alpha.2",
         "@types/node": ">=10"

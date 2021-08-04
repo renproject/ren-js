@@ -66,9 +66,9 @@ export interface Gateway {
     selector_hash: Uint8Array;
     /// The number of burn operations that have happened so far. This is incremented whenever Ren
     /// tokens on Solana are burned.
-    burn_count: any; // Should be BN, but type is private
+    burn_count: BN;
     /// The number of decimals in the underlying asset.
-    underlying_decimals: any;
+    underlying_decimals: BN;
 }
 
 export const GatewayLayout: Layout<Gateway> = struct([
@@ -94,7 +94,7 @@ export interface GatewayRegistryState {
     /// Owner is the pubkey that's allowed to write data to the registry state.
     owner: PublicKey;
     /// Number of selectors/gateway addresses stored in the registry.
-    count: any; // Should be BN, but its type is private :$
+    count: BN;
     /// RenVM selector hashes.
     selectors: Uint8Array[];
     /// RenVM gateway program addresses.

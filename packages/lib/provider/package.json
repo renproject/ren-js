@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "2.4.7",
+    "version": "2.5.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,11 +43,11 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.4.7",
-        "@renproject/utils": "^2.4.7",
+        "@renproject/interfaces": "^2.5.0",
+        "@renproject/utils": "^2.5.0",
         "@types/node": ">=10",
         "axios": "^0.21.1",
-        "immutable": "^4.0.0-rc.12"
+        "immutable": "^4.0.0-rc.14"
     },
     "resolutions": {
         "sha3": "^2.1.2"

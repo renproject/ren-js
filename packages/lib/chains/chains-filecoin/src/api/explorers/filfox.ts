@@ -75,66 +75,30 @@ export class Filfox {
         };
     };
 
-    // fetchMessage = async (cid: string): Promise<FilTransaction> => {
-    //     const heightURL = `${FILFOX_URL}tipset/recent?count=1`;
+    fetchMessage = async (cid: string): Promise<FilTransaction> => {
+        const messagesURL = `${FILFOX_URL}message/${cid}`;
 
-    //     const heightResponse = (
-    //         await Axios.get<FilscanHeight | FilscanError>(heightURL, {
-    //             timeout: 60 * SECONDS,
-    //         })
-    //     ).data;
+        const message = (
+            await Axios.get<FilscanMessage>(messagesURL, {
+                timeout: 60 * SECONDS,
+            })
+        ).data;
 
-    //     if (!Array.isArray(heightResponse)) {
-    //         throw new Error(
-    //             `Unable to fetch latest Filecoin height: ${heightResponse.error}`,
-    //         );
-    //     }
+        if (message.error !== undefined && message.error !== "") {
+            throw new Error(
+                `Unable to fetch Filecoin messages: ${String(message.error)}`,
+            );
+        }
 
-    //     const height = heightResponse[0].height;
-
-    //     const messagesURL = `${FILFOX_URL}message/${cid}`;
-
-    //     const messagesResponse = (
-    //         await Axios.get<FilscanAddressMessages | FilscanError>(
-    //             messagesURL,
-    //             {
-    //                 timeout: 60 * SECONDS,
-    //             },
-    //         )
-    //     ).data;
-
-    //     if (messagesResponse.error !== undefined) {
-    //         throw new Error(
-    //             `Unable to fetch Filecoin messages: ${messagesResponse.error}`,
-    //         );
-    //     }
-
-    //     const { messages, totalCount } = messagesResponse;
-
-    //     return {
-    //         deposits: messages
-    //             .filter((message) => message.to === address)
-    //             .map(
-    //                 (message): FilTransaction => {
-    //                     return {
-    //                         cid: message.cid,
-    //                         // to: message.to,
-    //                         amount: message.value,
-    //                         params: message.params,
-    //                         confirmations: height - message.height,
-    //                         nonce: message.nonce,
-    //                     };
-    //                 },
-    //             )
-    //             .filter(
-    //                 (message) =>
-    //                     paramsFilterBase64 === undefined ||
-    //                     paramsFilterBase64 === null ||
-    //                     message.params === paramsFilterBase64,
-    //             ),
-    //         totalCount,
-    //     };
-    // };
+        return {
+            cid: message.cid,
+            // to: message.to,
+            amount: message.value,
+            params: message.params,
+            confirmations: message.confirmations,
+            nonce: message.nonce,
+        };
+    };
 }
 
 interface FilscanSuccess {
@@ -147,6 +111,7 @@ interface FilscanMessage {
     cid: "bafy2bzacebhc5rzrtquqjghkgpob6hxgsbz4iqzx73erjj3tu53zgsa62uoy6";
     height: 388742;
     timestamp: 1609968660;
+    confirmations: number;
     blocks: [
         "bafy2bzaceagf6axftesnfjndfpmpqx2h3a5mqmwjgoe66amfz2knd6snrb36w",
         "bafy2bzaceazsjqudhddqw6guaofx5rkpjmqsftkihlytyc4ds52kzbfhd5a7w",
@@ -171,7 +136,7 @@ interface FilscanMessage {
     decodedParams: "6f5a35513344574163497644656a6333317a52545750636b764d59753839616f6d504a72515659394a5a67";
     decodedReturnValue: "";
     size: 121;
-    error: "";
+    error: string; // "";
     baseFee: "4992497173";
     fee: {
         baseFeeBurn: "2741220437784764";

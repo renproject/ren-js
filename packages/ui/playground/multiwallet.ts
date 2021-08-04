@@ -8,7 +8,7 @@ import { RenNetwork } from "@renproject/interfaces";
 
 const networkMapping: Record<number, RenNetwork[]> = {
     1: [RenNetwork.Mainnet],
-    42: [RenNetwork.Testnet, RenNetwork.TestnetVDot3],
+    42: [RenNetwork.Testnet],
 };
 
 export const renNetworkToEthNetwork = (id: RenNetwork): number | undefined => {
@@ -75,15 +75,19 @@ export const multiwalletOptions = (
                     network,
                 }),
             },
-            {
-                name: "Phantom",
-                logo: "https://avatars1.githubusercontent.com/u/78782331?s=60&v=4",
-                connector: new SolanaConnector({
-                    debug: true,
-                    providerURL: (window as any).solana,
-                    network,
-                }),
-            },
+            ...[
+                {
+                    name: "Phantom",
+                    logo: "https://avatars1.githubusercontent.com/u/78782331?s=60&v=4",
+                    connector:
+                        (window as any).solana &&
+                        new SolanaConnector({
+                            debug: true,
+                            providerURL: (window as any).solana,
+                            network,
+                        }),
+                },
+            ].filter((x) => (window as any).solana),
         ],
         moonbeam: [
             {

@@ -28,11 +28,35 @@
 
 import { EventEmitter } from "events";
 
+export class EventEmitterTyped<
+    EventTypes extends { [event: string]: any[] } = {},
+> {
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly emit: <Event extends keyof EventTypes>(
+        event: Event,
+        ...args: EventTypes[Event]
+    ) => boolean; // EventEmitter["emit"]
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly removeListener: EventEmitter["removeListener"];
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly on: <Event extends keyof EventTypes>(
+        event: Event,
+        callback: (...values: EventTypes[Event]) => void | Promise<void>,
+    ) => this;
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly once: <Event extends keyof EventTypes>(
+        event: Event,
+        callback: (...values: EventTypes[Event]) => void | Promise<void>,
+    ) => this;
+    // @ts-ignore no initializer because of proxyHandler
+    public readonly listenerCount: (event: string | symbol) => number;
+}
+
 export class InternalPromiEvent<
     T,
     // eslint-disable-next-line @typescript-eslint/ban-types
     EventTypes extends { [event: string]: any[] } = {},
-> {
+> extends EventEmitterTyped<EventTypes> {
     public readonly [Symbol.toStringTag]: "Promise";
     public readonly promise: Promise<T>;
     // @ts-ignore no initializer because of proxyHandler
@@ -78,6 +102,7 @@ export class InternalPromiEvent<
      * @constructor
      */
     constructor() {
+        super();
         this.promise = new Promise<T>((resolve, reject) => {
             this.resolve = resolve;
             this.reject = reject;

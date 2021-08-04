@@ -1,13 +1,13 @@
 /* eslint-disable no-console */
 
-import { EthAddress } from "@renproject/chains-ethereum";
+import { EthAddress, EthProviderCompat } from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/interfaces";
 import {
     ConnectorEmitter,
     ConnectorInterface,
     ConnectorUpdate,
 } from "@renproject/multiwallet-base-connector";
-import { HttpProvider, provider } from "web3-core";
+import { ExternalProvider } from "@ethersproject/providers/lib/web3-provider";
 
 const isResults = <T>(x: { results: T } | T): x is { results: T } =>
     (x as { results: T }).results !== undefined;
@@ -44,7 +44,10 @@ export interface AbstractEthereumConnectorOptions {
     networkIdMapper?: typeof ethNetworkToRenNetwork;
 }
 
-export type SaneProvider = Exclude<provider, string | null | HttpProvider> & {
+export type SaneProvider = (
+    | Exclude<EthProviderCompat, string>
+    | ExternalProvider
+) & {
     removeListener?: (name: string, listener: unknown) => void;
     close?: () => Promise<void>;
 };

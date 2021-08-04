@@ -6,7 +6,6 @@ import { Filecoin } from "../src";
 
 import FilecoinClient from "@glif/filecoin-rpc-client";
 
-import { FilNetwork, FilTransaction } from "../src/deposit";
 import { fetchDeposits } from "../src/api/lotus";
 
 chai.should();

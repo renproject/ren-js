@@ -1,5 +1,6 @@
 import {
     ContractCall,
+    Logger,
     MintChain,
     OverwritableBurnAndReleaseParams,
     OverwritableLockAndMintParams,
@@ -10,11 +11,11 @@ import {
 } from "@renproject/interfaces";
 import { Callable, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { TransactionConfig, provider } from "web3-core";
 
 import { EthereumBaseChain } from "./base";
 import { EthereumConfig } from "./networks";
-import { EthAddress, EthTransaction } from "./types";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
+import { EthereumTransactionConfig } from "./utils";
 
 export class EthereumClass
     extends EthereumBaseChain
@@ -32,14 +33,17 @@ export class EthereumClass
         | undefined;
 
     constructor(
-        web3Provider: provider,
+        web3Provider: EthProvider,
         renNetwork?:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
-        super(web3Provider, renNetwork);
+        super(web3Provider, renNetwork, config);
     }
 
     public getMintParams = (
@@ -54,7 +58,7 @@ export class EthereumClass
         this._getParams ? this._getParams(asset, burnPayload) : undefined;
 
     /** @category Main */
-    public Address = (address: string, txConfig?: TransactionConfig) =>
+    public Address = (address: string, txConfig?: EthereumTransactionConfig) =>
         this.Account({ address }, txConfig);
 
     /** @category Main */
@@ -66,13 +70,13 @@ export class EthereumClass
             value?: BigNumber | string | number;
             address?: string;
         },
-        txConfig?: TransactionConfig,
+        txConfig?: EthereumTransactionConfig,
     ): this => {
         this._getParams = async (
             asset: string,
             burnPayload?: string,
         ): Promise<{ contractCalls: ContractCall[] }> => {
-            if (!this.renNetworkDetails || !this.web3) {
+            if (!this.renNetworkDetails || !this.provider) {
                 throw new Error(
                     `Ethereum must be initialized before calling 'getContractCalls'.`,
                 );
@@ -83,10 +87,10 @@ export class EthereumClass
                     throw new Error(`Must provide Ethereum recipient address.`);
                 }
 
-                // Resolve .ens name
-                if (/.*\.ens/.exec(address)) {
-                    address = await this.web3.eth.ens.getAddress(address);
-                }
+                // // Resolve .ens name
+                // if (/.*\.ens/.exec(address)) {
+                //     address = await this.provider.eth.ens.getAddress(address);
+                // }
 
                 return {
                     contractCalls: [

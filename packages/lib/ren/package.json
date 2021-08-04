@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren",
-    "version": "2.5.0-alpha.1",
+    "version": "2.5.0-alpha.2",
     "description": "Official Ren JavaScript SDK for bridging crypto assets cross-chain.",
     "repository": {
         "type": "git",
@@ -61,16 +61,16 @@
         "prepare-release": "run-s npmignore build doc:html doc:publish"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.5.0-alpha.0",
-        "@renproject/provider": "^2.5.0-alpha.1",
-        "@renproject/rpc": "^2.5.0-alpha.1",
-        "@renproject/utils": "^2.5.0-alpha.1",
+        "@renproject/interfaces": "^2.5.0-alpha.2",
+        "@renproject/provider": "^2.5.0-alpha.2",
+        "@renproject/rpc": "^2.5.0-alpha.2",
+        "@renproject/utils": "^2.5.0-alpha.2",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "bn.js": "^5.2.0",
-        "immutable": "^4.0.0-rc.14",
-        "ethers": "^5.4.3"
+        "ethers": "^5.4.3",
+        "immutable": "^4.0.0-rc.14"
     },
     "devDependencies": {
         "gh-pages": "^3.1.0"

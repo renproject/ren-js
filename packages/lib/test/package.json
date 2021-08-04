@@ -33,8 +33,8 @@
         "@renproject/utils": "^2.5.0-alpha.1",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
-        "immutable": "^4.0.0-rc.12",
-        "send-crypto": "0.2.29"
+        "immutable": "^4.0.0-rc.14",
+        "send-crypto": "^0.2.32"
     },
     "devDependencies": {
         "@nomiclabs/hardhat-ethers": "^2.0.2",

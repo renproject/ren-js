@@ -54,7 +54,8 @@
         "bignumber.js": "^9.0.1",
         "elliptic": "^6.5.4",
         "ethereumjs-util": "^7.0.10",
-        "immutable": "^4.0.0-rc.12"
+        "immutable": "^4.0.0-rc.14",
+        "ethers": "^5.4.3"
     },
     "resolutions": {
         "sha3": "^2.1.2"

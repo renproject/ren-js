@@ -91,7 +91,8 @@
         "rollup": "^2.36.2",
         "rollup-plugin-peer-deps-external": "^2.2.2",
         "webpack": "^5.15.0",
-        "xstate": "^4.17.0"
+        "xstate": "^4.17.0",
+        "ethers": "^5.4.3"
     },
     "peerDependencies": {
         "@renproject/chains-bitcoin": "^2.1.7",

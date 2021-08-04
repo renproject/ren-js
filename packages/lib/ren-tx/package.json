@@ -49,7 +49,8 @@
         "@renproject/ren": "^2.5.0-alpha.1",
         "@renproject/rpc": "^2.5.0-alpha.1",
         "dotenv": "^8.2.0",
-        "xstate": "^4.17.0"
+        "xstate": "^4.17.0",
+        "ethers": "^5.4.3"
     },
     "peerDependencies": {
         "@renproject/ren": "^2.1.7",

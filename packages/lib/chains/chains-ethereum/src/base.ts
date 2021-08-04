@@ -331,7 +331,7 @@ export class EthereumBaseChain
         );
 
         const decimalsRaw = await tokenContract.decimals();
-        return new BigNumber(decimalsRaw).toNumber();
+        return new BigNumber(decimalsRaw.toString()).toNumber();
     };
 
     transactionID = (transaction: EthTransaction): string => {

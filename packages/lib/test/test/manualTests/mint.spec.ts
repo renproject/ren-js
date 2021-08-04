@@ -35,8 +35,8 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const from = Chains.Bitcoin();
-        const asset = "BTC"; // from.asset;
+        const from = Chains.Terra();
+        const asset = "LUNA"; // from.asset;
 
         // const toChain = new Chains.Solana(
         //     makeTestProvider(renDevnet, testPK),
@@ -52,7 +52,7 @@ describe("Refactor: mint", () => {
         const ToClass = Goerli;
         const ethNetwork = renGoerli;
 
-        const account = new CryptoAccount(PRIVATE_KEY, {
+        const account = new CryptoAccount(Buffer.from(PRIVATE_KEY, "hex"), {
             network: "testnet",
             apiAddress: "https://lotus-cors-proxy.herokuapp.com/",
             terra: {

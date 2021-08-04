@@ -330,7 +330,7 @@ export class EthereumBaseChain
             this.provider,
         );
 
-        const decimalsRaw = await await tokenContract.decimals();
+        const decimalsRaw = await tokenContract.decimals();
         return new BigNumber(decimalsRaw).toNumber();
     };
 

@@ -7846,9 +7846,9 @@ bitcoin-ops@^1.3.0:
   resolved "https://registry.yarnpkg.com/bitcoin-ops/-/bitcoin-ops-1.4.1.tgz#e45de620398e22fd4ca6023de43974ff42240278"
   integrity sha512-pef6gxZFztEhaE9RY9HmWVmiIHqCb2OyS4HPKkpc6CIiiOa3Qmuoylxc5P2EkU3w+5eTSifI9SEZC88idAIGow==
 
-"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#b848585e65b42c48b98c207e72d7d3006c9a5da0":
+"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#b848585e65b42c48b98c207e72d7d3006c9a5da0":
   version "1.9.1"
-  resolved "https://github.com/ren-forks/bitgo-utxo-lib#b848585e65b42c48b98c207e72d7d3006c9a5da0"
+  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#b848585e65b42c48b98c207e72d7d3006c9a5da0"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"
@@ -21966,10 +21966,10 @@ semver@~5.4.1:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.4.1.tgz#e059c09d8571f0540823733433505d3a2f00b18e"
   integrity sha512-WfG/X9+oATh81XtllIo/I8gOiY9EXRdv1cQdyykeXK17YcUW3EXUAi2To4pcH6nZtJPr7ZOpM5OMyWJZm+8Rsg==
 
-send-crypto@^0.2.32:
-  version "0.2.32"
-  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.2.32.tgz#7790e7707b5ef5c3ac25484acbd47a5632839c98"
-  integrity sha512-aKttHfAwh6moVYkN2Utsui+On7czEv5Jz3WO/JZAKN+T38H1wm2IwKS5FAzEalQIm445kLsQSrRY+7i7y/208Q==
+send-crypto@^0.2.33:
+  version "0.2.33"
+  resolved "https://registry.yarnpkg.com/send-crypto/-/send-crypto-0.2.33.tgz#831c569cef4786bd2ce9f5273dcd7a4e0253f309"
+  integrity sha512-uGXtMMf1Bp2IpRWG0yP/XsrP8DqPMMnOkmiEaXdepjt2MdCowmsy31zzbn+nlMTgC9JC0MsmP1a372dxIzxj7A==
   dependencies:
     "@babel/runtime" "^7.14.8"
     "@glif/filecoin-address" "^1.1.0"

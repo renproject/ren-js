@@ -29,6 +29,8 @@ import * as ethers from "ethers";
 
 import { EthereumConfig } from "./networks";
 
+const EMPTY_ADDRESS = "0x" + "00".repeat(20);
+
 export interface EthereumTransactionConfig extends Overrides {
     value?: ethers.BigNumberish | Promise<ethers.BigNumberish>;
 }
@@ -227,7 +229,7 @@ export const getGatewayAddress = async (
         const registryAddress: string = Ox(
             await registry.getGatewayBySymbol(asset),
         );
-        if (!registryAddress) {
+        if (!registryAddress || registryAddress === EMPTY_ADDRESS) {
             throw new Error(`Empty address returned.`);
         }
         return registryAddress;
@@ -302,7 +304,7 @@ export const getTokenAddress = async (
             provider,
         );
         const tokenAddress: string = Ox(await registry.getTokenBySymbol(asset));
-        if (!tokenAddress) {
+        if (!tokenAddress || tokenAddress === EMPTY_ADDRESS) {
             throw new Error(`Empty address returned.`);
         }
         return tokenAddress;

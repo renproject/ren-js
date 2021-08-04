@@ -40,8 +40,8 @@ export const renArbitrumMainnet: EthereumConfig = {
     chainLabel: "Arbitrum Mainnet",
     networkID: 42161,
     addresses: {
-        GatewayRegistry: "",
-        BasicAdapter: "",
+        GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
+        BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
 
     publicProvider: () => `https://arb1.arbitrum.io/rpc`,

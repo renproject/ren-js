@@ -66,33 +66,6 @@ export interface SolanaProvider {
     };
 }
 
-const encodeAddress = (
-    asset: string,
-): ((b: Buffer) => SyncOrPromise<string>) => {
-    switch (asset) {
-        case "BTC":
-        case "ZEC":
-        case "BCH":
-        case "DOGE":
-            return (bytes) => base58.encode(bytes);
-        case "LUNA":
-            return async (bytes: Buffer) => {
-                const { Terra } = await import("@renproject/chains-terra");
-                return new Terra().bytesToAddress(bytes);
-            };
-        case "FIL":
-            return async (bytes: Buffer) => {
-                const { Filecoin } = await import(
-                    "@renproject/chains-filecoin"
-                );
-                // Lightnodes only accept mainnet encoded addresses atm
-                const fc = new Filecoin("mainnet");
-                return fc.bytesToAddress(bytes);
-            };
-    }
-    throw new Error("Unknown asset: " + asset);
-};
-
 interface SolOptions {
     logger: Logger;
 }

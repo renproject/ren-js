@@ -877,7 +877,7 @@ export class SolanaClass
         this._logger.debug("burn contract calls:", contractCalls);
 
         const amount = contractCalls[0].contractParams[0].value;
-        const recipient: Buffer = contractCalls[0].contractParams[1].value;
+        const recipient = Buffer.from(contractCalls[0].contractParams[1].value);
 
         const tokenMintId = await this.getSPLTokenPubkey(asset);
 

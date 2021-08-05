@@ -425,7 +425,7 @@ export class RenVMProvider
             }
             await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
-        return rawResponse;
+        return rawResponse as T;
     };
 
     /**

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.4.8-alpha.0",
+    "version": "2.5.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,18 +43,14 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@CoinSpace/bitcore-lib-dogecoin": "CoinSpace/bitcore-lib-dogecoin",
-        "@renproject/interfaces": "^2.4.8-alpha.0",
-        "@renproject/rpc": "^2.4.8-alpha.0",
-        "@renproject/utils": "^2.4.8-alpha.0",
+        "@renproject/interfaces": "^2.5.0",
+        "@renproject/rpc": "^2.5.0",
+        "@renproject/utils": "^2.5.0",
         "@types/bs58": "^4.0.1",
         "@types/cashaddrjs": "^0.3.0",
         "@types/node": ">=10",
         "bchaddrjs": "^0.5.2",
         "bignumber.js": "^9.0.1",
-        "bitcore-lib": "^8.24.2",
-        "bitcore-lib-cash": "^8.24.2",
-        "bitcore-lib-zcash": "zcash-hackworks/bitcore-lib-zcash",
         "bs58": "^4.0.1",
         "bs58check": "^2.1.2",
         "cashaddrjs": "^0.4.4",

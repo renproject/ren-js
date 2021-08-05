@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 import * as Chains from "@renproject/chains";
-import { Terra } from "@renproject/chains-terra";
 
 import RenJS from "@renproject/ren";
-import { extractError, toReadable, fromReadable } from "@renproject/utils";
+import { extractError } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import { blue, red } from "chalk";
@@ -11,11 +10,7 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
-import { BscConfigMap, EthereumConfigMap } from "@renproject/chains";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
-import { provider } from "web3-core";
-import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-import { renMainnet } from "@renproject/chains-solana/build/main/networks";
 
 chai.should();
 
@@ -31,28 +26,30 @@ const testPK = Buffer.from(
 
 describe("Refactor - Burning", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.skip("burning from contract", async function () {
+    longIt("burning from contract", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.Mainnet;
-        const FromClass = Chains.Solana;
+        const network = RenNetwork.Testnet;
+        const FromClass = Chains.Goerli;
         const ToClass = Chains.Terra;
         const asset = "LUNA";
 
-        // const ethNetwork = FromClass.configMap[network];
+        const ethNetwork = FromClass.configMap[network];
 
-        // const infuraURL = `${ethNetwork.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        // // const infuraURL = ethNetwork.infura; // renBscTestnet.infura
-        // const provider: provider = new HDWalletProvider({
-        //     mnemonic: MNEMONIC || "",
-        //     providerOrUrl: infuraURL,
-        //     addressIndex: 0,
-        //     numberOfAddresses: 10,
-        // }) as any;
+        const infuraURL = ethNetwork.publicProvider({
+            infura: process.env.INFURA_KEY,
+        });
+        // const infuraURL = ethNetwork.infura; // renBscTestnet.infura
+        const provider = new HDWalletProvider({
+            mnemonic: MNEMONIC || "",
+            providerOrUrl: infuraURL,
+            addressIndex: 0,
+            numberOfAddresses: 10,
+        });
 
-        const provider = makeTestProvider(renMainnet, testPK);
-        const fromAddress = provider.wallet.publicKey.toString();
-        const from = new FromClass(provider, renMainnet);
+        // const provider = makeTestProvider(renMainnet, testPK);
+        // const fromAddress = provider.wallet.publicKey.toString();
+        const from = new FromClass(provider, ethNetwork);
 
         // Recipient.
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
@@ -97,7 +94,7 @@ describe("Refactor - Burning", () => {
         const burnAndRelease = await renJS.burnAndRelease({
             asset,
             to,
-            from: from.Account({ amount: suggestedAmount }),
+            from: from.Account({ value: suggestedAmount }),
             // transaction:
             // "4AhRGqgBnZwXv66MPh9XoDMzHgNAy7o6AKyVJSNWUe5RFo2fEyPiEm9XuMJw19rgG4BWpkxSWNrqoPn6jYJ9yV35",
             // burnNonce: 2,
@@ -127,7 +124,7 @@ describe("Refactor - Burning", () => {
 
         const targetConfirmations = await burnAndRelease.confirmationTarget();
 
-        const result = await burnAndRelease
+        await burnAndRelease
             .release()
             .on("status", (status) =>
                 status === "confirming"
@@ -163,20 +160,23 @@ describe("Refactor - Burning", () => {
     longIt("burning from address", async function () {
         this.timeout(100000000000);
 
-        const infuraURL = `${Chains.renTestnetVDot3.infura}/v3/${process.env.INFURA_KEY}`; // renBscTestnet.infura
-        const provider: provider = new HDWalletProvider({
+        const ethNetwork = Chains.renTestnet;
+        const infuraURL = ethNetwork.publicProvider({
+            infura: process.env.INFURA_KEY,
+        });
+        const provider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,
-        }) as any;
+        });
 
         const asset = "BTC";
 
         const account = new CryptoAccount(PRIVATE_KEY, { network: "testnet" });
         const recipient = await account.address(asset);
 
-        const from = Chains.Ethereum(provider, Chains.renTestnetVDot3);
+        const from = Chains.Ethereum(provider, Chains.renTestnet);
         const to = Chains.Bitcoin().Address(recipient);
 
         const renJS = new RenJS("testnet");

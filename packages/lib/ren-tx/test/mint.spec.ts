@@ -26,6 +26,7 @@ import { SECONDS } from "@renproject/utils";
 
 loadDotEnv();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeMintTransaction = (): GatewaySession<any> => ({
     id: "a unique identifier",
     network: "testnet",
@@ -96,6 +97,7 @@ describe("MintMachine", () => {
     it("should detect confirmations", async () => {
         const { machine } = buildConfirmingMachine();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let prevDepositTx: AllGatewayTransactions<any>;
         const p = new Promise<typeof prevDepositTx>((resolve, reject) => {
             const service = interpret(machine);
@@ -138,16 +140,14 @@ describe("MintMachine", () => {
                 {
                     transaction: {
                         amount: "2",
-                        txHash:
-                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
+                        txHash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
                     },
                     amount: "2",
                 },
                 {
                     transaction: {
                         amount: "1",
-                        txHash:
-                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                        txHash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                     },
                     amount: "1",
                 },
@@ -181,7 +181,7 @@ describe("MintMachine", () => {
         });
 
         return p.then(() => {
-            for (let depositTx of Object.values(
+            for (const depositTx of Object.values(
                 machine.context?.tx?.transactions || {},
             )) {
                 expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
@@ -229,6 +229,7 @@ describe("MintMachine", () => {
             setConfirmations((confirmations += 1));
         }, 1000);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const p = new Promise<GatewayTransaction<any>>((resolve, reject) => {
             let subscribed = false;
             const service = interpret(machine)
@@ -255,6 +256,7 @@ describe("MintMachine", () => {
                             if (innerState?.event?.type === "SIGNED") {
                                 depositMachine.send({
                                     type: "CLAIM",
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     data: innerState.context.deposit as any,
                                     params: {},
                                 });
@@ -326,25 +328,24 @@ describe("MintMachine", () => {
                 buildMintContextWithMap({
                     tx: {
                         ...makeMintTransaction(),
-                        nonce:
-                            "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
+                        nonce: "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                         gatewayAddress: "gatewayAddress",
                         transactions: {
-                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
-                                renVMHash: "",
-                                sourceTxAmount: "1",
-                                sourceTxConfs: 0,
-                                detectedAt: 0,
-                                sourceTxHash:
-                                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                                rawSourceTx: {
-                                    amount: "1",
-                                    transaction: {
-                                        txHash:
-                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]:
+                                {
+                                    renVMHash: "",
+                                    sourceTxAmount: "1",
+                                    sourceTxConfs: 0,
+                                    detectedAt: 0,
+                                    sourceTxHash:
+                                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    rawSourceTx: {
+                                        amount: "1",
+                                        transaction: {
+                                            txHash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                        },
                                     },
                                 },
-                            },
                         },
                     },
                     sdk: new RenJS(renVMProvider, {
@@ -466,40 +467,39 @@ describe("MintMachine", () => {
                 buildMintContextWithMap({
                     tx: {
                         ...makeMintTransaction(),
-                        nonce:
-                            "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
+                        nonce: "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                         gatewayAddress: "gatewayAddress",
                         transactions: {
-                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298"]: {
-                                renVMHash: "",
-                                sourceTxAmount: "2",
-                                sourceTxConfs: 0,
-                                detectedAt: 0,
-                                sourceTxHash:
-                                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
-                                rawSourceTx: {
-                                    amount: "2",
-                                    transaction: {
-                                        txHash:
-                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298"]:
+                                {
+                                    renVMHash: "",
+                                    sourceTxAmount: "2",
+                                    sourceTxConfs: 0,
+                                    detectedAt: 0,
+                                    sourceTxHash:
+                                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
+                                    rawSourceTx: {
+                                        amount: "2",
+                                        transaction: {
+                                            txHash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6298",
+                                        },
                                     },
                                 },
-                            },
-                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
-                                renVMHash: "",
-                                sourceTxAmount: "1",
-                                sourceTxConfs: 0,
-                                detectedAt: 0,
-                                sourceTxHash:
-                                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                                rawSourceTx: {
-                                    amount: "1",
-                                    transaction: {
-                                        txHash:
-                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]:
+                                {
+                                    renVMHash: "",
+                                    sourceTxAmount: "1",
+                                    sourceTxConfs: 0,
+                                    detectedAt: 0,
+                                    sourceTxHash:
+                                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    rawSourceTx: {
+                                        amount: "1",
+                                        transaction: {
+                                            txHash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                        },
                                     },
                                 },
-                            },
                         },
                     },
                     sdk: new RenJS(renVMProvider, {
@@ -515,16 +515,18 @@ describe("MintMachine", () => {
             setConfirmations((confirmations += 1));
         }, 1000);
 
-        const p = new Promise<AllGatewayTransactions<any>[]>(
-            async (resolve, reject) => {
-                let subscribed: { [key: string]: boolean } = {};
-                const resolved: AllGatewayTransactions<any>[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p = new Promise<Array<AllGatewayTransactions<any>>>(
+            (resolve, reject) => {
+                const subscribed: { [key: string]: boolean } = {};
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const resolved: Array<AllGatewayTransactions<any>> = [];
                 const service = interpret(machine)
                     .onTransition((state) => {
                         if (isErroring(state.context.tx)) {
                             reject(state.context.tx.error);
                         }
-                        for (let depositMachine of Object.values(
+                        for (const depositMachine of Object.values(
                             state.context?.depositMachines || {},
                         )) {
                             if (
@@ -577,7 +579,7 @@ describe("MintMachine", () => {
         );
 
         return p.then((txes) => {
-            for (let depositTx of txes) {
+            for (const depositTx of txes) {
                 expect(depositTx.sourceTxConfs).toBeGreaterThan(0);
             }
         });
@@ -628,25 +630,24 @@ describe("MintMachine", () => {
                 buildMintContextWithMap({
                     tx: {
                         ...makeMintTransaction(),
-                        nonce:
-                            "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
+                        nonce: "82097a6ec9591b770b8a2db129e067602e842c3d3a088cfc67770e7e2312af93",
                         gatewayAddress: "gatewayAddress",
                         transactions: {
-                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]: {
-                                renVMHash: "",
-                                sourceTxAmount: "1",
-                                sourceTxConfs: 1,
-                                detectedAt: 0,
-                                sourceTxHash:
-                                    "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
-                                rawSourceTx: {
-                                    amount: "1",
-                                    transaction: {
-                                        txHash:
-                                            "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                            ["0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299"]:
+                                {
+                                    renVMHash: "",
+                                    sourceTxAmount: "1",
+                                    sourceTxConfs: 1,
+                                    detectedAt: 0,
+                                    sourceTxHash:
+                                        "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                    rawSourceTx: {
+                                        amount: "1",
+                                        transaction: {
+                                            txHash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                                        },
                                     },
                                 },
-                            },
                         },
                     },
                     sdk: new RenJS(renVMProvider, {
@@ -682,6 +683,7 @@ describe("MintMachine", () => {
                                 type: "CLAIM",
                                 hash: requests[0],
                                 data: tx,
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             } as any);
                             signed = true;
                         }

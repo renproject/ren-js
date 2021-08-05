@@ -1,3 +1,5 @@
+import { SyncOrPromise } from "@renproject/interfaces";
+
 export type JSONRPCResponse<T> =
     | {
           jsonrpc: string;
@@ -26,5 +28,5 @@ export interface Provider<
         request: Requests[Method],
         retry?: number,
         timeout?: number,
-    ): Promise<Responses[Method]>;
+    ): SyncOrPromise<Responses[Method]>;
 }

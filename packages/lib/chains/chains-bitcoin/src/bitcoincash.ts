@@ -11,14 +11,12 @@ import {
     isTestnetAddress,
     isValidAddress,
 } from "bchaddrjs";
-import { Networks, Opcode, Script } from "bitcore-lib-cash";
 import base58 from "bs58";
 import { BitcoinDotCom } from "./APIs/bitcoinDotCom";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
-import { createAddress, pubKeyScript } from "./script";
 import { decodeBitcoinCashAddress } from "./bchaddrjs";
 
 export class BitcoinCashClass extends BitcoinClass {
@@ -52,13 +50,8 @@ export class BitcoinCashClass extends BitcoinClass {
             mainnet: Buffer.from([0x05]),
             testnet: Buffer.from([0xc4]),
         },
-        createAddress: createAddress(
-            (bytes: Buffer) => toCashAddress(base58.encode(bytes)),
-            Networks,
-            Opcode,
-            Script,
-        ),
-        calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
+        addressBufferToString: (bytes: Buffer) =>
+            toCashAddress(base58.encode(bytes)),
         addressIsValid: (
             address: BtcAddress | string,
             network:

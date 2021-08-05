@@ -17,7 +17,7 @@ let parameters: BurnConfigSingle;
 let mockLock = buildMockLockChain();
 let mockMint = buildMockMintChain();
 
-describe("Test Mint", () => {
+describe("Test Burn", () => {
     beforeEach(() => {
         jest.setTimeout(20 * 1000);
         jest.useFakeTimers();
@@ -73,24 +73,23 @@ describe("Test Mint", () => {
     });
 
     it("should fail to release an invalid burn", async () => {
-        mockMint.mockMintChain.findBurnTransaction = (_p, _d, emitter) => {
+        mockMint.mockMintChain.findBurn = async (_asset, emitter) => {
             setTimeout(() => {
                 emitter.emit(
                     "transactionHash",
                     "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                 );
-            }, 500);
+            }, 4500);
 
             setInterval(() => {
-                emitter.emit("confirmation", 6);
+                (emitter as any).emit("confirmation", 6, 6);
             }, 2000);
 
             return new Promise((resolve) => {
                 setTimeout(() => {
                     resolve({
                         transaction: {
-                            hash:
-                                "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
+                            hash: "0xb5252f4b08fda457234a6da6fd77c3b23adf8b3f4e020615b876b28aa7ee6299",
                         },
                         amount: new BigNumber(0),
                         to: "asd",

@@ -1,6 +1,6 @@
 import { Logger } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
-import AbiCoder from "web3-eth-abi";
+import { defaultAbiCoder } from "ethers/lib/utils";
 
 import { assertType } from "./assert";
 
@@ -84,7 +84,7 @@ export const toURLBase64 = (input: Buffer | string): string => {
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
-        .replace(/\=+$/, "");
+        .replace(/=+$/, "");
 };
 
 export const toReadable = (
@@ -237,14 +237,8 @@ export const randomNonce = (): Buffer => randomBytes(32);
 
 export const emptyNonce = (): Buffer => fromHex("00".repeat(32));
 
-export const rawEncode = (types: string[], parameters: unknown[]): Buffer => {
-    return fromHex(
-        (AbiCoder as unknown as AbiCoder.AbiCoder).encodeParameters(
-            types,
-            parameters,
-        ),
-    );
-};
+export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
+    fromHex(defaultAbiCoder.encode(types, parameters));
 
 /**
  * isDefined returns true if the parameter is defined and not null.

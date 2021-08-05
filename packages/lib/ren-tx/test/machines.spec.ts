@@ -10,6 +10,7 @@ import {
 } from "../src";
 import { buildBurnMachine } from "../src/machines/burn";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeTestContext = (): GatewayMachineContext<any> => ({
     tx: {
         id: "txid",
@@ -32,11 +33,15 @@ const makeTestContext = (): GatewayMachineContext<any> => ({
             },
         },
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sdk: {} as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from: () => ({} as any),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     to: () => ({} as any),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mintModel = createModel<GatewayMachineContext<any>>(
     mintMachine.withContext(makeTestContext()),
 ).withEvents({
@@ -115,12 +120,13 @@ const mintModel = createModel<GatewayMachineContext<any>>(
     ERROR_LISTENING: {},
 });
 
-describe("MintMachine", function () {
+describe("MintMachine", () => {
     const testPlans = mintModel.getSimplePathPlans();
     testPlans.forEach((plan) => {
         describe(plan.description, () => {
             plan.paths.forEach((path) => {
                 it(path.description, async () => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     await path.test({} as any);
                 });
             });
@@ -133,7 +139,9 @@ describe("MintMachine", function () {
 });
 
 const depositModel = createModel<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DepositMachineEvent<any>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DepositMachineContext<any>
 >(
     buildDepositMachine()
@@ -141,6 +149,7 @@ const depositModel = createModel<
             actions: {
                 listenerAction: buildMintConfig().actions?.listenerAction,
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .withContext({
             // ...makeTestContext(),
@@ -193,12 +202,13 @@ const depositModel = createModel<
     ACKNOWLEDGE: {},
 });
 
-describe("DepositMachine", function () {
+describe("DepositMachine", () => {
     const testPlans = depositModel.getShortestPathPlans();
     testPlans.forEach((plan) => {
         describe(plan.description, () => {
             plan.paths.forEach((path) => {
                 it(path.description, async () => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     await path.test({} as any);
                 });
             });
@@ -214,8 +224,11 @@ const burnModel = createModel(
     buildBurnMachine()
         .withConfig(buildBurnConfig())
         .withContext({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             sdk: {} as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             from: () => ({} as any),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             to: () => ({} as any),
             tx: {
                 id: "a unique identifier",
@@ -267,7 +280,7 @@ const burnModel = createModel(
     RETRY: {},
 });
 
-describe("BurnMachine", function () {
+describe("BurnMachine", () => {
     const testPlans = burnModel.getShortestPathPlans();
     testPlans.forEach((plan) => {
         describe(plan.description, () => {

@@ -5,14 +5,12 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, isHex, utilsWithChainNetwork } from "@renproject/utils";
-import { Networks, Opcode, Script } from "bitcore-lib-zcash";
 import base58 from "bs58";
 import { Insight } from "./APIs/insight";
 import { SoChain, SoChainNetwork } from "./APIs/sochain";
 
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
-import { createAddress, pubKeyScript } from "./script";
 import { validateAddress } from "./utils";
 
 enum InsightEndpoints {
@@ -59,8 +57,7 @@ export class ZcashClass extends BitcoinClass {
             mainnet: Buffer.from([0x1c, 0xbd]),
             testnet: Buffer.from([0x1c, 0xba]),
         },
-        createAddress: createAddress(base58.encode, Networks, Opcode, Script),
-        calculatePubKeyScript: pubKeyScript(Networks, Opcode, Script),
+        addressBufferToString: base58.encode,
         addressIsValid: (
             address: BtcAddress | string,
             network:

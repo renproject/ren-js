@@ -301,11 +301,7 @@ export class FilecoinClass
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
-        transaction = await fetchMessage(
-            this.client,
-            transaction.cid,
-            this.chainNetwork,
-        );
+        transaction = await this.transactionFromRPCFormat(transaction.cid, "");
         return {
             current: transaction.confirmations,
             target: this.chainNetwork === "mainnet" ? 12 : 6, // NOT FINAL VALUES
@@ -422,11 +418,19 @@ export class FilecoinClass
         if (!this.chainNetwork) {
             throw new Error(`${this.name} object not initialized.`);
         }
-        return fetchMessage(
-            this.client,
-            typeof txid === "string" ? txid : new CID(txid).toString(),
-            this.chainNetwork,
-        );
+        const cid = typeof txid === "string" ? txid : new CID(txid).toString();
+        try {
+            return await fetchMessage(this.client, cid, this.chainNetwork);
+        } catch (error) {
+            if (this.filfox) {
+                try {
+                    return await this.filfox.fetchMessage(cid);
+                } catch (errorInner) {
+                    console.error("!!!", errorInner);
+                }
+            }
+            throw error;
+        }
     };
     /**
      * @deprecated Renamed to `transactionFromRPCFormat`.
@@ -466,7 +470,7 @@ export class FilecoinClass
 
     burnPayload? = (config?: BurnPayloadConfig) => {
         return this.getBurnPayload
-            ? this.getBurnPayload(config?.bytes)
+            ? this.getBurnPayload(config && config.bytes)
             : undefined;
     };
 }

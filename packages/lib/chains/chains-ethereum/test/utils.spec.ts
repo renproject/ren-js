@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { BinanceSmartChain } from "@renproject/chains";
+import { BinanceSmartChain } from "../src/bsc";
 
 import chai from "chai";
 chai.should();

@@ -1,12 +1,24 @@
 export enum RenNetwork {
     Mainnet = "mainnet",
     Testnet = "testnet",
+    Devnet = "devnet",
+    Localnet = "localnet",
 
     // Staging
-    MainnetVDot3 = "mainnet-v0.3",
-    TestnetVDot3 = "testnet-v0.3",
-    DevnetVDot3 = "devnet-v0.3",
-    Localnet = "localnet",
+    /**
+     * @deprecated Replaced by Mainnet
+     */
+    MainnetVDot3 = "mainnet",
+
+    /**
+     * @deprecated Replaced by Testnet
+     */
+    TestnetVDot3 = "testnet",
+
+    /**
+     * @deprecated Replaced by Devnet
+     */
+    DevnetVDot3 = "devnet",
 }
 
 export interface RenNetworkDetails {
@@ -25,18 +37,8 @@ const renTestnet: RenNetworkDetails = {
     lightnode: "https://lightnode-testnet.herokuapp.com",
     isTestnet: true,
 };
-const renMainnetVDot3: RenNetworkDetails = {
-    name: RenNetwork.MainnetVDot3,
-    lightnode: "https://lightnode-mainnet.herokuapp.com/",
-    isTestnet: false,
-};
-const renTestnetVDot3: RenNetworkDetails = {
-    name: RenNetwork.TestnetVDot3,
-    lightnode: "https://lightnode-testnet.herokuapp.com/",
-    isTestnet: true,
-};
-const renDevnetVDot3: RenNetworkDetails = {
-    name: RenNetwork.DevnetVDot3,
+const renDevnet: RenNetworkDetails = {
+    name: RenNetwork.Devnet,
     lightnode: "https://lightnode-devnet.herokuapp.com/",
     isTestnet: true,
 };
@@ -52,19 +54,16 @@ export const getRenNetworkDetails = (
     switch (renNetwork) {
         case RenNetwork.Mainnet:
         case RenNetwork.Mainnet as "mainnet":
+        case "mainnet-v0.3":
             return renMainnet;
         case RenNetwork.Testnet:
         case RenNetwork.Testnet as "testnet":
+        case "testnet-v0.3":
             return renTestnet;
-        case RenNetwork.MainnetVDot3:
-        case RenNetwork.MainnetVDot3 as "mainnet-v0.3":
-            return renMainnetVDot3;
-        case RenNetwork.TestnetVDot3:
-        case RenNetwork.TestnetVDot3 as "testnet-v0.3":
-            return renTestnetVDot3;
-        case RenNetwork.DevnetVDot3:
-        case RenNetwork.DevnetVDot3 as "devnet-v0.3":
-            return renDevnetVDot3;
+        case RenNetwork.Devnet:
+        case RenNetwork.Devnet as "devnet":
+        case "devnet-v0.3":
+            return renDevnet;
         case RenNetwork.Localnet:
         case RenNetwork.Localnet as "localnet":
             return renLocalnet;
@@ -73,19 +72,11 @@ export const getRenNetworkDetails = (
     }
 };
 
-export type RenNetworkString =
-    | "mainnet"
-    | "testnet"
-    | "mainnet-v0.3"
-    | "testnet-v0.3"
-    | "devnet-v0.3"
-    | "localnet";
+export type RenNetworkString = "mainnet" | "testnet" | "devnet" | "localnet";
 
 export const RenNetworks = [
     RenNetwork.Mainnet,
     RenNetwork.Testnet,
-    RenNetwork.MainnetVDot3,
-    RenNetwork.TestnetVDot3,
-    RenNetwork.DevnetVDot3,
+    RenNetwork.Devnet,
     RenNetwork.Localnet,
 ];

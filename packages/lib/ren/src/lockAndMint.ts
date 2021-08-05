@@ -40,9 +40,10 @@ import {
 } from "@renproject/utils";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
-import AbiCoder from "web3-eth-abi";
-import { RenJSConfig } from "./config";
 import base58 from "bs58";
+import { defaultAbiCoder } from "ethers/lib/utils";
+
+import { RenJSConfig } from "./config";
 
 interface MintState {
     logger: Logger;
@@ -534,9 +535,7 @@ export class LockAndMint<
                   )
                 : contractParams;
 
-            const encodedParameters = (
-                AbiCoder as unknown as AbiCoder.AbiCoder
-            ).encodeParameters(
+            const encodedParameters = defaultAbiCoder.encode(
                 (filteredContractParams || []).map((i) => i.type),
                 (filteredContractParams || []).map((i) => i.value),
             );
@@ -589,9 +588,7 @@ export class LockAndMint<
                     5,
                 );
                 if ((promise as { catch?: unknown }).catch) {
-                    (promise as Promise<unknown>).catch((_error) => {
-                        // Ignore error.
-                    });
+                    (promise as Promise<unknown>).catch(console.error);
                 }
             }
 
@@ -820,9 +817,7 @@ export class LockAndMintDeposit<
               )
             : contractParams;
 
-        const encodedParameters = (
-            AbiCoder as unknown as AbiCoder.AbiCoder
-        ).encodeParameters(
+        const encodedParameters = defaultAbiCoder.encode(
             (filteredContractParams || []).map((i) => i.type),
             (filteredContractParams || []).map((i) => i.value),
         );
@@ -927,6 +922,7 @@ export class LockAndMintDeposit<
     /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
         await this.refreshStatus();
+
         return this;
     };
 
@@ -1303,6 +1299,7 @@ export class LockAndMintDeposit<
             try {
                 txHash = await this._submitMintTransaction();
             } catch (error) {
+                console.error(error);
                 // this.logger.error(error);
                 try {
                     // Check if the darknodes have already seen the transaction
@@ -1403,7 +1400,7 @@ export class LockAndMintDeposit<
      * ```
      */
     public findTransaction = async (): Promise<MintTransaction | undefined> => {
-        if (this.params.to.findTransaction) {
+        if (this.params.to.findMint) {
             const sigHash =
                 this._state.queryTxResult &&
                 this._state.queryTxResult.out &&
@@ -1412,7 +1409,7 @@ export class LockAndMintDeposit<
                     : undefined;
 
             // Check if the signature has already been submitted
-            this.mintTransaction = await this.params.to.findTransaction(
+            this.mintTransaction = await this.params.to.findMint(
                 this.params.asset,
                 this._state.nHash,
                 sigHash,
@@ -1421,13 +1418,13 @@ export class LockAndMintDeposit<
         }
         if (
             this.params.contractCalls &&
-            this.params.to.findTransactionByDepositDetails &&
+            this.params.to.findMintByDepositDetails &&
             this._state.queryTxResult &&
             this._state.queryTxResult.out &&
             this._state.queryTxResult.out.revert === undefined
         ) {
             this.mintTransaction =
-                await this.params.to.findTransactionByDepositDetails(
+                await this.params.to.findMintByDepositDetails(
                     this.params.asset,
                     keccak256(Buffer.from(this._state.selector)),
                     this._state.nHash,
@@ -1453,12 +1450,21 @@ export class LockAndMintDeposit<
     public mint = (
         override?: { [name: string]: unknown },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ): PromiEvent<any, { [key: string]: any }> => {
+    ): PromiEvent<
+        MintTransaction,
+        {
+            transactionHash: [string];
+            confirmation: [number, { status: number }];
+        }
+    > => {
         const promiEvent = newPromiEvent<
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            any,
+            MintTransaction,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            { [key: string]: any }
+            {
+                transactionHash: [string];
+                confirmation: [number, { status: number }];
+            }
         >();
 
         (async () => {
@@ -1497,7 +1503,7 @@ export class LockAndMintDeposit<
                 asset,
                 contractCalls,
                 this._state.queryTxResult,
-                promiEvent as unknown as EventEmitter,
+                promiEvent,
             );
 
             // Update status.

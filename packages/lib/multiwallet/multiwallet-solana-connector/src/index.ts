@@ -15,11 +15,9 @@ export interface SolanaConnectorOptions {
 }
 
 const renNetworkToSolanaNetwork: { [k in RenNetwork]: string } = {
-    [RenNetwork.DevnetVDot3]: clusterApiUrl("devnet"),
+    [RenNetwork.Devnet]: clusterApiUrl("devnet"),
     [RenNetwork.Mainnet]: clusterApiUrl("mainnet-beta"),
     [RenNetwork.Testnet]: clusterApiUrl("devnet"),
-    [RenNetwork.TestnetVDot3]: clusterApiUrl("devnet"),
-    [RenNetwork.MainnetVDot3]: clusterApiUrl("mainnet-beta"),
     [RenNetwork.Localnet]: "http://localhost:8899",
 };
 
@@ -50,7 +48,6 @@ export class SolanaConnector
         this.connection = new Connection(this.clusterURL);
         this.providerURL = providerURL;
         this.emitter = new ConnectorEmitter<SolanaProvider, string>(debug);
-        console.log(this.providerURL, this.clusterURL);
         this.wallet = new Wallet(this.providerURL, this.clusterURL);
     }
 
@@ -100,7 +97,7 @@ export class SolanaConnector
         const account = this.getProvider().wallet.publicKey?.toBase58();
         if (!account) {
             this.deactivate();
-            console.log("missing account");
+            console.error("missing account");
             throw new Error("Not activated");
         }
         return account;

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/interfaces",
-    "version": "2.4.8-alpha.0",
+    "version": "2.5.1-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -47,8 +47,7 @@
     },
     "dependencies": {
         "@types/node": ">=10",
-        "bignumber.js": "^9.0.1",
-        "web3-core": "^1.4.0"
+        "bignumber.js": "^9.0.1"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

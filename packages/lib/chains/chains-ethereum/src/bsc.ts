@@ -1,14 +1,14 @@
 import {
     getRenNetworkDetails,
+    Logger,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { provider } from "web3-core";
-import { NetworkInput } from "./base";
-import { EthAddress, EthTransaction } from "./types";
 
+import { NetworkInput } from "./base";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
 import { addressIsValid, transactionIsValid } from "./utils";
@@ -62,9 +62,9 @@ export const renBscMainnet: EthereumConfig = {
 };
 
 export const BscConfigMap = {
-    [RenNetwork.MainnetVDot3]: renBscMainnet,
-    [RenNetwork.TestnetVDot3]: renBscTestnet,
-    [RenNetwork.DevnetVDot3]: renBscDevnet,
+    [RenNetwork.Mainnet]: renBscMainnet,
+    [RenNetwork.Testnet]: renBscTestnet,
+    [RenNetwork.Devnet]: renBscDevnet,
 };
 
 const resolveBSCNetwork = (
@@ -75,7 +75,7 @@ const resolveBSCNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return BscConfigMap[RenNetwork.MainnetVDot3];
+        return BscConfigMap[RenNetwork.Mainnet];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -85,7 +85,7 @@ const resolveBSCNetwork = (
             renNetwork as RenNetwork | RenNetworkString | RenNetworkDetails,
         );
         return details.isTestnet
-            ? details.name === RenNetwork.DevnetVDot3
+            ? details.name === RenNetwork.Devnet
                 ? renBscDevnet
                 : renBscTestnet
             : renBscMainnet;
@@ -135,16 +135,19 @@ export class BinanceSmartChainClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider: provider,
+        web3Provider: EthProvider,
         renNetwork:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
-        // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolveBSCNetwork(renNetwork));
+        // is a web3Provider and the second the RenVM network.
+        super(web3Provider, resolveBSCNetwork(renNetwork), config);
     }
 
     initialize = (

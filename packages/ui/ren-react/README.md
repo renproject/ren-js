@@ -27,7 +27,7 @@ import RenJS from "@renproject/ren";
 import { BasicMint, BasicBurn, BurnProps } from "@renproject/ren-react";
 import { Ethereum } from "@renproject/chains-ethereum";
 import { Zcash } from "@renproject/chains-bitcoin";
-import Web3 from "web3";
+import ethers from "ethers";
 import { RenNetwork } from "@renproject/interfaces";
 
 const BasicBurnApp = ({ account, provider, destinationAddress, balance }) => {
@@ -73,8 +73,10 @@ const WithProvider = () => {
     const [account, setAccount] = useState<string>();
     useEffect(() => {
         (window as any).ethereum.enable().then(async () => {
-            const web3 = new Web3((window as any).ethereum);
-            setAccount((await web3.eth.personal.getAccounts())[0]);
+            const ethProvider = new ethers.providers.Web3Provider(
+                (window as any).ethereum,
+            );
+            setAccount((await ethProvider.listAccounts())[0]);
             setProvider((window as any).ethereum);
         });
     }, []);
@@ -132,7 +134,7 @@ import {
 import RenJS from "@renproject/ren";
 import { Ethereum } from "@renproject/chains-ethereum";
 import { Zcash } from "@renproject/chains-bitcoin";
-import Web3 from "web3";
+import ethers from "ethers";
 import { useEffect, useMemo, useState } from "react";
 import { RenNetwork } from "@renproject/interfaces";
 
@@ -284,8 +286,10 @@ const WithProvider = () => {
     const [account, setAccount] = useState<string>();
     useEffect(() => {
         (window as any).ethereum.enable().then(async () => {
-            const web3 = new Web3((window as any).ethereum);
-            setAccount((await web3.eth.personal.getAccounts())[0]);
+            const ethProvider = new ethers.providers.Web3Provider(
+                (window as any).ethereum,
+            );
+            setAccount((await ethProvider.listAccounts())[0]);
             setProvider((window as any).ethereum);
         });
     }, []);

@@ -54,18 +54,17 @@ import RenJS from "@renproject/ren";
 import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
 import { Bitcoin, BitcoinCash, Zcash } from "@renproject/chains-bitcoin";
 import HDWalletProvider from "@truffle/hdwallet-provider";
-import Web3 from "web3";
-import { provider } from "web3-core";
+import ethers from "ethers";
 
 const MNEMONIC = process.env.MNEMONIC;
 const INFURA_URL = process.env.INFURA_URL;
-const ethProvider: provider = new HDWalletProvider({
+const hdWalletProvider = new HDWalletProvider({
     mnemonic: MNEMONIC || "",
     providerOrUrl: infuraURL,
     addressIndex: 0,
     numberOfAddresses: 10,
-}) as any;
-const web3 = new Web3(ethProvider);
+});
+const ethProvider = new ethers.providers.Web3Provider(hdWalletProvider);
 
 const mintTransaction: GatewaySession = {
     id: "a unique identifier",
@@ -111,10 +110,10 @@ export const fromChainMap = {
 };
 
 const blockchainProviders = {
-    ethereum: ethProvider,
+    ethereum: hdWalletProvider,
 };
 
-web3.eth.getAccounts().then((accounts) => {
+ethProvider.listAccounts().then((accounts) => {
     mintTransaction.destAddress = accounts[0];
     mintTransaction.userAddress = accounts[0];
     const machine = mintMachine.withConfig(mintConfig).withContext({

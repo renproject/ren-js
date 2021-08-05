@@ -10,7 +10,6 @@ import base58 from "bs58";
 import { Insight } from "./APIs/insight";
 import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
 import { BitcoinClass } from "./bitcoin";
-import { createAddress, pubKeyScript } from "./script";
 import { validateAddress } from "./utils";
 
 export class DigiByteClass extends BitcoinClass {
@@ -46,8 +45,7 @@ export class DigiByteClass extends BitcoinClass {
             mainnet: Buffer.from([0x3f]),
             testnet: Buffer.from([0x8c]),
         },
-        createAddress: createAddress(base58.encode),
-        calculatePubKeyScript: pubKeyScript(),
+        addressBufferToString: base58.encode,
         addressIsValid: (
             address: BtcAddress | string,
             network:

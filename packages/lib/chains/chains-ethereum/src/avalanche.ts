@@ -1,16 +1,16 @@
 import {
     getRenNetworkDetails,
+    Logger,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { provider } from "web3-core";
 import { NetworkInput } from "./base";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
-import { EthAddress, EthTransaction } from "./types";
 import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renAvalancheTestnet: EthereumConfig = {
@@ -54,8 +54,8 @@ export const renAvalancheMainnet: EthereumConfig = {
 };
 
 export const AvalancheConfigMap = {
-    [RenNetwork.TestnetVDot3]: renAvalancheTestnet,
-    [RenNetwork.MainnetVDot3]: renAvalancheMainnet,
+    [RenNetwork.Testnet]: renAvalancheTestnet,
+    [RenNetwork.Mainnet]: renAvalancheMainnet,
 };
 
 const resolveAvalancheNetwork = (
@@ -66,7 +66,7 @@ const resolveAvalancheNetwork = (
         | EthereumConfig,
 ) => {
     if (!renNetwork) {
-        return AvalancheConfigMap[RenNetwork.MainnetVDot3];
+        return AvalancheConfigMap[RenNetwork.Mainnet];
     }
     if ((renNetwork as EthereumConfig).addresses) {
         return renNetwork as EthereumConfig;
@@ -122,16 +122,19 @@ export class AvalancheClass extends EthereumClass {
     );
 
     constructor(
-        web3Provider: provider,
+        web3Provider: EthProvider,
         renNetwork:
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
             | EthereumConfig,
+        config: {
+            logger?: Logger;
+        } = {},
     ) {
         // To be compatible with the Ethereum chain class, the first parameter
-        // is a web3Provider and the second the RenVM network. However,
-        super(web3Provider, resolveAvalancheNetwork(renNetwork));
+        // is a web3Provider and the second the RenVM network.
+        super(web3Provider, resolveAvalancheNetwork(renNetwork), config);
     }
 
     initialize = (

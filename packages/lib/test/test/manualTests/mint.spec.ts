@@ -1,13 +1,9 @@
 /* eslint-disable no-console */
 
 import * as Chains from "@renproject/chains";
+import { Ethereum, Goerli } from "@renproject/chains-ethereum";
 
-import {
-    LockAndMintParams,
-    LogLevel,
-    RenNetwork,
-    SimpleLogger,
-} from "@renproject/interfaces";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { extractError, SECONDS, sleep } from "@renproject/utils";
 import chai from "chai";
@@ -16,10 +12,8 @@ import CryptoAccount from "send-crypto";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
 import BigNumber from "bignumber.js";
-import Web3 from "web3";
-import { provider } from "web3-core";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2";
-import BN from "bn.js";
+import { ethers } from "ethers";
 
 chai.should();
 
@@ -29,19 +23,15 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
-import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-import {
-    renDevnet,
-    renTestnet,
-} from "@renproject/chains-solana/build/main/networks";
+import { renGoerli } from "@renproject/chains";
 
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
-const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
+// const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint to contract", async function () {
+    it.only("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -59,10 +49,10 @@ describe("Refactor: mint", () => {
 
         // const to = toChain;
 
-        const ToClass = Chains.Ethereum;
-        const ethNetwork = ToClass.configMap[network];
+        const ToClass = Goerli;
+        const ethNetwork = renGoerli;
 
-        const account = new CryptoAccount(PRIVATE_KEY, {
+        const account = new CryptoAccount(Buffer.from(PRIVATE_KEY, "hex"), {
             network: "testnet",
             apiAddress: "https://lotus-cors-proxy.herokuapp.com/",
             terra: {
@@ -70,36 +60,47 @@ describe("Refactor: mint", () => {
             },
         });
 
-        const logLevel: LogLevel = LogLevel.Log;
+        const logLevel: LogLevel = LogLevel.Trace;
         const renJS = new RenJS(new RenVMProvider(network), { logLevel });
 
         const infuraURL = ethNetwork.publicProvider({
             infura: process.env.INFURA_KEY,
         });
-        const provider: provider = new HDWalletProvider({
+        const hdWalletProvider = new HDWalletProvider({
             mnemonic: MNEMONIC || "",
             providerOrUrl: infuraURL,
             addressIndex: 0,
             numberOfAddresses: 10,
-        }) as any;
-        const web3 = new Web3(provider);
-        const ethAddress = (await web3.eth.getAccounts())[0];
-        const ethBalance = web3.utils.fromWei(
-            await web3.eth.getBalance(ethAddress),
-            "ether",
-        );
-        console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
-        const to = ToClass(provider, ethNetwork).Account({
-            address: ethAddress,
         });
 
-        const params: LockAndMintParams = {
+        const provider = new ethers.providers.Web3Provider(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            hdWalletProvider as any,
+        );
+        const signer = provider.getSigner();
+
+        const ethAddress = (await provider.listAccounts())[0];
+        const balance = await provider.getBalance(ethAddress);
+        const ethBalance = ethers.utils.formatEther(balance);
+        console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
+        // const to = ToClass(provider, ethNetwork).Account({
+        //     address: ethAddress,
+        // });
+
+        const params = {
             asset,
             from,
-            to,
+            to: ToClass({ provider, signer }, ethNetwork).Account(
+                {
+                    address: ethAddress,
+                },
+                // {
+                //     gasLimit: 2000000,
+                // },
+            ),
         };
 
-        const assetDecimals = await params.from.assetDecimals(asset);
+        const assetDecimals = params.from.assetDecimals(asset);
 
         // Use 0.0001 more than fee.
         let suggestedAmount: BigNumber;

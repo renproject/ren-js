@@ -44,13 +44,11 @@ export const resolveNetwork = (
     }
 
     switch (networkString) {
-        case RenNetwork.MainnetVDot3:
         case RenNetwork.Mainnet:
             return renMainnet;
-        case RenNetwork.TestnetVDot3:
         case RenNetwork.Testnet:
             return renTestnet;
-        case RenNetwork.DevnetVDot3:
+        case RenNetwork.Devnet:
             return renDevnet;
     }
 
@@ -58,7 +56,7 @@ export const resolveNetwork = (
 };
 
 export const renMainnet: SolNetworkConfig = {
-    name: RenNetwork.MainnetVDot3,
+    name: RenNetwork.Mainnet,
     chain: "mainnet",
     isTestnet: false,
     chainLabel: "Mainnet",
@@ -72,7 +70,7 @@ export const renMainnet: SolNetworkConfig = {
 };
 
 export const renTestnet: SolNetworkConfig = {
-    name: RenNetwork.TestnetVDot3,
+    name: RenNetwork.Testnet,
     chain: "testnet",
     isTestnet: true,
     chainLabel: "Testnet",
@@ -86,7 +84,7 @@ export const renTestnet: SolNetworkConfig = {
 };
 
 export const renDevnet: SolNetworkConfig = {
-    name: RenNetwork.DevnetVDot3,
+    name: RenNetwork.Devnet,
     chain: "devnet",
     isTestnet: true,
     chainLabel: "Devnet",

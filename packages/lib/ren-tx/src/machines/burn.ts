@@ -274,7 +274,12 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                             target: "errorBurning",
                             actions: assign({
                                 tx: (ctx, evt) =>
-                                    evt.data
+                                    evt.error
+                                        ? {
+                                              ...ctx.tx,
+                                              error: evt.error,
+                                          }
+                                        : evt.data
                                         ? {
                                               ...ctx.tx,
                                               error: evt.data,
@@ -320,10 +325,15 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                             target: "errorBurning",
                             actions: assign({
                                 tx: (ctx, evt) =>
-                                    evt.data
+                                    evt.error
                                         ? {
                                               ...ctx.tx,
                                               error: evt.error,
+                                          }
+                                        : evt.data
+                                        ? {
+                                              ...ctx.tx,
+                                              error: evt.data,
                                           }
                                         : ctx.tx,
                             }),

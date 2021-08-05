@@ -234,7 +234,6 @@ export const randomBytes = (bytes: number): Buffer => {
  * Returns a random 32 byte Buffer.
  */
 export const randomNonce = (): Buffer => randomBytes(32);
-
 export const emptyNonce = (): Buffer => fromHex("00".repeat(32));
 
 export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>

@@ -13,7 +13,7 @@ import {
     TxStatus,
     TxStatusIndex,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider } from "@renproject/rpc";
+import { RenVMProvider } from "@renproject/rpc";
 import {
     assertObject,
     assertType,
@@ -58,7 +58,6 @@ interface MintStatePartial {
     gHash: Buffer;
     pHash: Buffer;
     targetConfirmations: number | undefined;
-    token?: string;
 }
 
 export interface DepositState {
@@ -74,8 +73,6 @@ export interface DepositState {
     payload: Buffer;
     pHash: Buffer;
     to: string;
-    fn: string;
-    fnABI: AbiItem[];
     tags: [] | [string];
     txHash: string;
 }
@@ -140,7 +137,7 @@ export class LockAndMint<
     >;
 
     /** See [[RenJS.renVM]]. */
-    public renVM: AbstractRenVMProvider;
+    public renVM: RenVMProvider;
 
     /**
      * Internal state of the mint object, including the `gHash` and `pHash`.
@@ -178,7 +175,7 @@ export class LockAndMint<
      * @hidden - should be created using [[RenJS.lockAndMint]] instead.
      */
     constructor(
-        renVM: AbstractRenVMProvider,
+        renVM: RenVMProvider,
         params: LockAndMintParams<
             LockTransaction,
             LockDeposit,
@@ -376,7 +373,6 @@ export class LockAndMint<
                     pHash: this._state.pHash,
                     gHash: this._state.gHash,
                     gPubKey: this._state.gPubKey,
-                    token: this._state.token,
                     targetConfirmations: isDefined(
                         this._state.targetConfirmations,
                     )
@@ -473,7 +469,7 @@ export class LockAndMint<
             }
 
             // Last contract call
-            const { contractParams, sendTo, contractFn } =
+            const { contractParams, sendTo } =
                 contractCalls[contractCalls.length - 1];
 
             // FIXME: dirty hack, but we need to re-write how we deal with
@@ -489,25 +485,16 @@ export class LockAndMint<
                 this._state.logger,
             );
 
-            // Check if the transaction is either a v0.2 transaction, or has the
-            // version set to `0` in a v0.4 transaction.
-            // See [RenJSConfig.transactionVersion]
-            const v0Transaction =
-                this.renVM.version(this._state.selector) === 1 ||
-                this._state.config.transactionVersion === 0;
-
-            const tokenGatewayContract = !v0Transaction
-                ? Ox(generateSHash(this._state.selector))
-                : await this.params.to.resolveTokenGatewayContract(
-                      this.params.asset,
-                  );
+            const tokenGatewayContract = Ox(
+                generateSHash(this._state.selector),
+            );
 
             const gHash = generateGHash(
                 contractParams || [],
                 sendToHex,
                 tokenGatewayContract,
                 fromHex(nonce),
-                !v0Transaction,
+                true,
                 this._state.logger,
             );
             this._state.gHash = gHash;
@@ -515,9 +502,7 @@ export class LockAndMint<
                 this._state.config.gPubKey ||
                 (await this.renVM.selectPublicKey(
                     this._state.selector,
-                    this.renVM.version(this._state.selector) >= 2
-                        ? this.params.from.name
-                        : this.params.asset,
+                    this.params.from.name,
                 ));
             this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
 
@@ -540,50 +525,30 @@ export class LockAndMint<
                 (filteredContractParams || []).map((i) => i.value),
             );
 
-            const fnABI = payloadToMintABI(
-                contractFn,
-                filteredContractParams || [],
-            );
-
             if (this.params.tags && this.params.tags.length > 1) {
                 throw new Error(
                     "Providing multiple tags is not supported yet.",
                 );
             }
 
-            const tags: [string] | [] =
-                this.params.tags && this.params.tags.length
-                    ? [this.params.tags[0]]
-                    : [];
-
-            this._state.token =
-                await this.params.to.resolveTokenGatewayContract(
-                    this.params.asset,
-                );
+            // const tags: [string] | [] =
+            //     this.params.tags && this.params.tags.length
+            //         ? [this.params.tags[0]]
+            //         : [];
 
             if (this.renVM.submitGatewayDetails) {
                 const promise = this.renVM.submitGatewayDetails(
                     this.params.from.addressToString(gatewayAddress),
                     {
                         ...(this._state as MintState & MintStatePartial),
-                        token: this._state.token,
                         nHash: Buffer.from(
                             "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
                             "base64",
                         ),
                         payload: fromHex(encodedParameters),
                         nonce: fromHex(nonce),
-                        fn: contractFn,
-                        fnABI,
-                        to:
-                            this.renVM.version(this._state.selector) >= 2
-                                ? strip0x(sendTo)
-                                : Ox(sendTo),
-                        tags,
-
-                        // See [RenJSConfig.transactionVersion]
-                        transactionVersion:
-                            this._state.config.transactionVersion,
+                        to: strip0x(sendTo),
+                        // tags,
                     },
                     5,
                 );
@@ -718,7 +683,7 @@ export class LockAndMintDeposit<
     public status: DepositStatus;
 
     /** See [[RenJS.renVM]]. */
-    public renVM: AbstractRenVMProvider;
+    public renVM: RenVMProvider;
 
     public mintTransaction?: MintTransaction;
     public revertReason?: string;
@@ -741,7 +706,7 @@ export class LockAndMintDeposit<
             MintTransaction,
             MintAddress
         >,
-        renVM: AbstractRenVMProvider,
+        renVM: RenVMProvider,
         state: MintState & MintStatePartial,
         gatewayAddress?: LockAddress,
     ) {
@@ -795,10 +760,7 @@ export class LockAndMintDeposit<
 
         const deposit = this.depositDetails;
         const providedTxHash = this.params.txHash
-            ? renVMHashToBase64(
-                  this.params.txHash,
-                  this.renVM.version(state.selector) >= 2,
-              )
+            ? renVMHashToBase64(this.params.txHash, true)
             : undefined;
 
         if (!contractCalls || !contractCalls.length) {
@@ -808,7 +770,7 @@ export class LockAndMintDeposit<
         }
 
         // Last contract call
-        const { contractParams, sendTo, contractFn } =
+        const { contractParams, sendTo } =
             contractCalls[contractCalls.length - 1];
 
         const filteredContractParams = contractParams
@@ -822,35 +784,18 @@ export class LockAndMintDeposit<
             (filteredContractParams || []).map((i) => i.value),
         );
 
-        const { pHash, config } = state;
-
-        // Check if the transaction is either a v0.2 transaction, or has the
-        // version set to `0` in a v0.4 transaction.
-        // See [RenJSConfig.transactionVersion]
-        const v0Transaction =
-            this.renVM.version(state.selector) === 1 ||
-            config.transactionVersion === 0;
+        const { pHash } = state;
 
         const transactionDetails = this.params.from.transactionRPCFormat(
             this.depositDetails.transaction,
-            !v0Transaction,
+            true,
         );
 
         const nHash = generateNHash(
             fromHex(nonce),
             transactionDetails.txid,
             transactionDetails.txindex,
-            !v0Transaction,
-        );
-
-        const outputHashFormat =
-            renVM.version(state.selector) >= 2
-                ? ""
-                : this.params.from.depositV1HashString(deposit);
-
-        const fnABI = payloadToMintABI(
-            contractFn,
-            filteredContractParams || [],
+            true,
         );
 
         if (this.params.tags && this.params.tags.length > 1) {
@@ -870,32 +815,21 @@ export class LockAndMintDeposit<
             nonce: fromHex(nonce),
             output: this.params.from.transactionRPCFormat(
                 deposit.transaction,
-                renVM.version(state.selector) >= 2, // v2
+                true,
             ),
             amount: deposit.amount,
             payload: fromHex(encodedParameters),
             pHash,
-            to:
-                renVM.version(state.selector) >= 2
-                    ? strip0x(sendTo)
-                    : Ox(sendTo),
-            fn: contractFn,
-            fnABI,
+            to: strip0x(sendTo),
             tags,
             // Will be set in the next statement.
             txHash: "",
             renTxSubmitted: false,
         };
 
-        this._state.txHash = (
-            renVM.version(this._state.selector) >= 2 ? toURLBase64 : toBase64
-        )(
+        this._state.txHash = toURLBase64(
             this.renVM.mintTxHash({
                 ...this._state,
-                outputHashFormat,
-
-                // See [RenJSConfig.transactionVersion]
-                transactionVersion: config.transactionVersion,
             }),
         );
 
@@ -1531,12 +1465,6 @@ export class LockAndMintDeposit<
      * @param config Set `config.submit` to `true` to submit the transaction.
      */
     private _submitMintTransaction = async (): Promise<string> => {
-        const { token } = this._state;
-
-        if (!token) {
-            throw new Error(`Deposit object must be initialized.`);
-        }
-
         const expectedTxHash = this.txHash();
 
         // Return if the transaction has already been successfully submitted.
@@ -1551,16 +1479,9 @@ export class LockAndMintDeposit<
 
         const encodedHash = await this.renVM.submitMint({
             ...this._state,
-            token,
-
-            // See [RenJSConfig.transactionVersion]
-            transactionVersion: this._state.config.transactionVersion,
         });
 
-        const returnedTxHash =
-            this.renVM.version(this._state.selector) >= 2
-                ? toURLBase64(encodedHash)
-                : toBase64(encodedHash);
+        const returnedTxHash = toURLBase64(encodedHash);
 
         // Indicate that the tx has been submitted successfully.
         this._state.renTxSubmitted = true;
@@ -1589,14 +1510,5 @@ export class LockAndMintDeposit<
             },
             { params: this.params },
         );
-
-        if (this.params.contractCalls) {
-            this.params.contractCalls.map((contractCall) => {
-                assertType<string>("string", {
-                    sendTo: contractCall.sendTo,
-                    contractFn: contractCall.contractFn,
-                });
-            });
-        }
     };
 }

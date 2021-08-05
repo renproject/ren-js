@@ -23,7 +23,6 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
-import { AbstractRenVMProvider } from "../abstract";
 import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
@@ -73,11 +72,7 @@ export const resolveV2Contract = ({
     return `${asset}/from${from.name}To${to.name}`;
 };
 
-export class RenVMProvider
-    implements AbstractRenVMProvider<RenVMParams, RenVMResponses>
-{
-    public version = () => 2;
-
+export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
     private readonly network: RenNetwork;
 
     public readonly provider: Provider<RenVMParams, RenVMResponses>;

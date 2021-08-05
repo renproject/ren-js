@@ -11,19 +11,12 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider, CombinedProvider } from "@renproject/rpc";
-import { RenVMProvider } from "@renproject/rpc/build/main/v2";
-import {
-    fromSmallestUnit,
-    randomNonce,
-    toSmallestUnit,
-} from "@renproject/utils";
+import { RenVMProvider } from "@renproject/rpc";
 import BigNumber from "bignumber.js";
 
-import { BurnAndRelease } from "./burnAndRelease";
 import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
-import { LockAndMint, DepositStatus, LockAndMintDeposit } from "./lockAndMint";
+import { LockAndMint } from "./lockAndMint";
 
 export { BurnAndRelease } from "./burnAndRelease";
 export { LockAndMint, DepositStatus, LockAndMintDeposit } from "./lockAndMint";
@@ -69,17 +62,6 @@ export default class RenJS {
     public static Networks = RenNetwork;
 
     /**
-     * A collection of helper functions. [[utils.randomNonce]] can be be used to
-     * generate a nonce when calling [[RenJS.lockAndMint]].
-     */
-    public static utils = {
-        randomNonce,
-        toSmallestUnit,
-        fromSmallestUnit,
-        fromAscii: (str: string) => Buffer.from(str),
-    };
-
-    /**
      * `RenJS.defaultDepositHandler` can be passed as a deposit callback when
      * minting. It will handle submitting to RenVM and then to the mint-chain,
      * as long as a valid provider for the mint-chain is given.
@@ -94,11 +76,6 @@ export default class RenJS {
     public static defaultDepositHandler = defaultDepositHandler;
 
     /**
-     * @hidden
-     */
-    public readonly utils = RenJS.utils;
-
-    /**
      * RenVM provider exposing `sendMessage` and other helper functions for
      * interacting with RenVM. See [[AbstractRenVMProvider]].
      *
@@ -106,7 +83,7 @@ export default class RenJS {
      * renJS.renVM.sendMessage("ren_queryNumPeers", {});
      * ```
      */
-    public readonly renVM: AbstractRenVMProvider;
+    public readonly renVM: RenVMProvider;
 
     private readonly _logger: Logger;
 
@@ -123,7 +100,7 @@ export default class RenJS {
             | RenNetwork
             | RenNetworkString
             | RenNetworkDetails
-            | AbstractRenVMProvider
+            | RenVMProvider
             | null
             | undefined,
         config?: RenJSConfig,
@@ -147,31 +124,21 @@ export default class RenJS {
 
         this._config.logger = this._logger;
         const defaultProvider = () =>
-            config && config.useV2TransactionFormat
-                ? new RenVMProvider(
-                      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                      (providerOrNetwork || RenNetwork.Mainnet) as
-                          | RenNetwork
-                          | RenNetworkString
-                          | RenNetworkDetails,
-                      undefined,
-                      this._logger,
-                  )
-                : new CombinedProvider(
-                      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                      (providerOrNetwork || RenNetwork.Mainnet) as
-                          | RenNetwork
-                          | RenNetworkString
-                          | RenNetworkDetails,
-                      this._logger,
-                  );
-
+            new RenVMProvider(
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                (providerOrNetwork || RenNetwork.Mainnet) as
+                    | RenNetwork
+                    | RenNetworkString
+                    | RenNetworkDetails,
+                undefined,
+                this._logger,
+            );
         // Use provided provider, provider URL or default lightnode URL.
         this.renVM =
             providerOrNetwork &&
             typeof providerOrNetwork !== "string" &&
-            (providerOrNetwork as AbstractRenVMProvider).sendMessage
-                ? (providerOrNetwork as AbstractRenVMProvider)
+            (providerOrNetwork as RenVMProvider).sendMessage
+                ? (providerOrNetwork as RenVMProvider)
                 : defaultProvider();
     }
 
@@ -232,7 +199,7 @@ export default class RenJS {
      *
      * @param params See [[LockAndMintParams]].
      */
-    public readonly lockAndMint = async <
+    public readonly move = async <
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Transaction = any,
         Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
@@ -246,67 +213,28 @@ export default class RenJS {
             ...this._config,
             ...config,
         })._initialize();
+}
+
+/** The parameters for a lock-and-mint RenVM transaction. */
+export interface MoveParameters<
+    LockTransaction = any,
+    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
+    MintTransaction = any,
+    MintAddress extends string | { address: string } = any,
+> {
+    /** The asset being minted, e.g. `"BTC"`. */
+    asset: string;
 
     /**
-     * `burnAndRelease` submits a burn log to RenVM.
-     * Returns a [[BurnAndRelease]] object.
+     * The chain that the asset is native to.
      */
-    public readonly burnAndRelease = async <
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Transaction = any,
-        Deposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Address extends string | { address: string } = any,
-    >(
-        params: BurnAndReleaseParams<Transaction, Deposit, Address>,
-        config?: RenJSConfig,
-    ): Promise<BurnAndRelease<Transaction, Deposit, Address>> =>
-        new BurnAndRelease<Transaction, Deposit, Address>(this.renVM, params, {
-            ...this._config,
-            ...config,
-        })._initialize();
-}
+    from: LockChain<LockTransaction, LockDeposit>;
 
-// ////////////////////////////////////////////////////////////////////////// //
-// EXPORTS                                                                    //
-// Based on https://github.com/MikeMcl/bignumber.js/blob/master/bignumber.js  //
-// ////////////////////////////////////////////////////////////////////////// //
+    /**
+     * The chain that the asset is being bridged to - e.g. `Ethereum(provider)`.
+     */
+    to: MintChain<MintTransaction, MintAddress>;
 
-/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any */
-
-(RenJS as any).default = (RenJS as any).RenJS = RenJS;
-(RenJS as any).LockAndMint = LockAndMint;
-(RenJS as any).BurnAndRelease = BurnAndRelease;
-(RenJS as any).DepositStatus = DepositStatus;
-(RenJS as any).LockAndMintDeposit = LockAndMintDeposit;
-
-// AMD
-try {
-    // @ts-ignore
-    if (typeof define === "function" && define.amd) {
-        // @ts-ignore
-        define(() => RenJS);
-    }
-} catch (error) {
-    /* ignore */
-}
-
-// Node.js and other environments that support module.exports.
-try {
-    // @ts-ignore
-    if (typeof module !== "undefined" && module.exports) {
-        module.exports = RenJS;
-    }
-} catch (error) {
-    /* ignore */
-}
-
-// Browser.
-try {
-    // @ts-ignore
-    if (typeof window !== "undefined" && window) {
-        (window as any).RenJS = RenJS;
-    }
-} catch (error) {
-    /* ignore */
+    /** An optional 32-byte buffer to generate unique gateway addresses. */
+    nonce?: Buffer;
 }

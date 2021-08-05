@@ -11,12 +11,11 @@ import {
     RenNetworkDetails,
     TxStatus,
 } from "@renproject/interfaces";
-import { AbstractRenVMProvider } from "@renproject/rpc";
+import { RenVMProvider } from "@renproject/rpc";
 import {
     assertObject,
     assertType,
     fromBase64,
-    generateBurnTxHash,
     generateGHash,
     generateNHash,
     generatePHash,
@@ -27,11 +26,9 @@ import {
     retryNTimes,
     SECONDS,
     sleep,
-    toBase64,
     toURLBase64,
 } from "@renproject/utils";
 import BN from "bn.js";
-import BigNumber from "bignumber.js";
 import { RenJSConfig } from "./config";
 
 export enum BurnAndReleaseStatus {
@@ -75,7 +72,7 @@ export class BurnAndRelease<
     public status: BurnAndReleaseStatus;
 
     /** See [[RenJS.renVM]]. */
-    public readonly renVM: AbstractRenVMProvider;
+    public readonly renVM: RenVMProvider;
 
     /**
      * Internal state of the burn object. Interface may change across minor and
@@ -96,7 +93,7 @@ export class BurnAndRelease<
 
     /** @hidden */
     constructor(
-        renVM: AbstractRenVMProvider,
+        renVM: RenVMProvider,
         params: BurnAndReleaseParams<
             LockTransaction,
             LockDeposit,
@@ -146,15 +143,6 @@ export class BurnAndRelease<
             },
             { params: this.params },
         );
-
-        if (this.params.contractCalls) {
-            this.params.contractCalls.map((contractCall) => {
-                assertType<string>("string", {
-                    sendTo: contractCall.sendTo,
-                    contractFn: contractCall.contractFn,
-                });
-            });
-        }
     };
 
     /** @hidden */
@@ -191,12 +179,10 @@ export class BurnAndRelease<
             ...this.params,
         };
 
-        if (this.renVM.version(this._state.selector) >= 2) {
-            this._state.gPubKey = await this.renVM.selectPublicKey(
-                this._state.selector,
-                this.params.to.name,
-            );
-        }
+        this._state.gPubKey = await this.renVM.selectPublicKey(
+            this._state.selector,
+            this.params.to.name,
+        );
 
         return this;
     };
@@ -241,7 +227,7 @@ export class BurnAndRelease<
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    public burn = (): PromiEvent<
+    public burnt = (): PromiEvent<
         BurnAndRelease<
             LockTransaction,
             LockDeposit,
@@ -367,10 +353,7 @@ export class BurnAndRelease<
     public txHash = (): string => {
         const txHash = this.params.txHash;
         if (txHash) {
-            return renVMHashToBase64(
-                txHash,
-                this.renVM.version(this._state.selector) >= 2,
-            );
+            return renVMHashToBase64(txHash, true);
         }
 
         if (!this.params.from) {
@@ -383,80 +366,67 @@ export class BurnAndRelease<
             throw new Error("Must call `burn` before calling `txHash`.");
         }
 
-        if (
-            this.renVM.version(this._state.selector) >= 2 &&
-            this.renVM.burnTxHash
-        ) {
-            const { transaction, amount, to, nonce } = this.burnDetails;
+        const { transaction, amount, to, nonce } = this.burnDetails;
 
-            const payload = Buffer.from([]);
-            const pHash = generatePHash([], this._state.logger);
-            const { txid, txindex } = this.params.from.transactionRPCFormat(
-                transaction,
-                true,
-            );
-            const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
-                Buffer,
-                "be",
-                32,
-            );
+        const payload = Buffer.from([]);
+        const pHash = generatePHash([], this._state.logger);
+        const { txid, txindex } = this.params.from.transactionRPCFormat(
+            transaction,
+            true,
+        );
+        const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
+            Buffer,
+            "be",
+            32,
+        );
 
-            const nHash = generateNHash(
-                nonceBuffer,
-                txid,
-                txindex,
-                this.renVM.version(this._state.selector) >= 2,
-                this._state.logger,
-            );
-            const sHash = generateSHash(
-                `${this.params.asset}/to${this.params.to.name}`,
-            );
+        const nHash = generateNHash(
+            nonceBuffer,
+            txid,
+            txindex,
+            true,
+            this._state.logger,
+        );
+        const sHash = generateSHash(
+            `${this.params.asset}/to${this.params.to.name}`,
+        );
 
-            const gHash = generateGHash(
-                [],
-                Ox(this.params.to.addressToBytes(to)),
-                Ox(sHash),
-                nonceBuffer,
-                this.renVM.version(this._state.selector) >= 2,
-                this._state.logger,
-            );
+        const gHash = generateGHash(
+            [],
+            Ox(this.params.to.addressToBytes(to)),
+            Ox(sHash),
+            nonceBuffer,
+            true,
+            this._state.logger,
+        );
 
-            const { gPubKey } = this._state;
+        const { gPubKey } = this._state;
 
-            if (!gPubKey) {
-                throw new Error(`BurnAndRelease object must be initialized.`);
-            }
-
-            return toURLBase64(
-                this.renVM.burnTxHash({
-                    selector: this._state.selector,
-                    gHash,
-                    gPubKey,
-                    nHash,
-                    nonce: nonceBuffer,
-                    output: {
-                        txid,
-                        txindex,
-                    },
-                    // FIXME: needed until we support different asset decimals between chains
-                    amount:
-                        this._state.selector === "FIL/fromSolana"
-                            ? amount.multipliedBy(10 ** 9).toFixed()
-                            : amount.toFixed(),
-                    payload,
-                    pHash,
-                    to: to.toString(),
-                }),
-            );
-        } else {
-            return toBase64(
-                generateBurnTxHash(
-                    this._state.selector,
-                    this.burnDetails.nonce.toFixed(),
-                    this._state.logger,
-                ),
-            );
+        if (!gPubKey) {
+            throw new Error(`BurnAndRelease object must be initialized.`);
         }
+
+        return toURLBase64(
+            this.renVM.burnTxHash({
+                selector: this._state.selector,
+                gHash,
+                gPubKey,
+                nHash,
+                nonce: nonceBuffer,
+                output: {
+                    txid,
+                    txindex,
+                },
+                // FIXME: needed until we support different asset decimals between chains
+                amount:
+                    this._state.selector === "FIL/fromSolana"
+                        ? amount.multipliedBy(10 ** 9).toFixed()
+                        : amount.toFixed(),
+                payload,
+                pHash,
+                to: to.toString(),
+            }),
+        );
     };
 
     /**
@@ -522,96 +492,72 @@ export class BurnAndRelease<
                 try {
                     let returnedTxHash: string;
 
-                    if (this.renVM.version(this._state.selector) >= 2) {
-                        assertType<string>("string", { to });
+                    assertType<string>("string", { to });
 
-                        const { gPubKey } = this._state;
+                    const { gPubKey } = this._state;
 
-                        if (!gPubKey) {
-                            throw new Error(
-                                `BurnAndRelease object must be initialized.`,
-                            );
-                        }
-
-                        const payload = Buffer.from([]);
-                        const pHash = generatePHash([], this._state.logger);
-                        const { txid, txindex } =
-                            this.params.from.transactionRPCFormat(
-                                transaction,
-                                true,
-                            );
-                        const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
-                            Buffer,
-                            "be",
-                            32,
-                        );
-
-                        const nHash = generateNHash(
-                            nonceBuffer,
-                            txid,
-                            txindex,
-                            this.renVM.version(this._state.selector) >= 2,
-                            this._state.logger,
-                        );
-                        const sHash = generateSHash(
-                            `${this.params.asset}/to${this.params.to.name}`,
-                        );
-
-                        const gHash = generateGHash(
-                            [],
-                            Ox(this.params.to.addressToBytes(to)),
-                            Ox(sHash),
-                            nonceBuffer,
-                            this.renVM.version(this._state.selector) >= 2,
-                            this._state.logger,
-                        );
-
-                        returnedTxHash = toURLBase64(
-                            await this.renVM.submitBurn({
-                                selector: this._state.selector,
-                                tags,
-
-                                gHash,
-                                gPubKey,
-                                nHash,
-                                nonce: nonceBuffer,
-                                output: {
-                                    txid,
-                                    txindex,
-                                },
-                                // FIXME: hack until we support differing decimals between burn + release chains
-                                amount:
-                                    this._state.selector === "FIL/fromSolana"
-                                        ? amount.multipliedBy(10 ** 9).toFixed()
-                                        : amount.toFixed(),
-                                payload,
-                                pHash,
-                                to: to.toString(),
-
-                                // from v1
-                                burnNonce: new BigNumber(0),
-                            }),
-                        );
-                    } else {
-                        returnedTxHash = toBase64(
-                            await this.renVM.submitBurn({
-                                selector: this._state.selector,
-                                tags,
-                                burnNonce: nonce,
-
-                                // for v2
-                                gHash: Buffer.from([]),
-                                gPubKey: Buffer.from([]),
-                                nHash: Buffer.from([]),
-                                nonce: Buffer.from([]),
-                                output: { txid: Buffer.from([]), txindex: "" },
-                                amount: "",
-                                payload: Buffer.from([]),
-                                pHash: Buffer.from([]),
-                                to: "",
-                            }),
+                    if (!gPubKey) {
+                        throw new Error(
+                            `BurnAndRelease object must be initialized.`,
                         );
                     }
+
+                    const payload = Buffer.from([]);
+                    const pHash = generatePHash([], this._state.logger);
+                    const { txid, txindex } =
+                        this.params.from.transactionRPCFormat(
+                            transaction,
+                            true,
+                        );
+                    const nonceBuffer = new BN(nonce.toFixed()).toArrayLike(
+                        Buffer,
+                        "be",
+                        32,
+                    );
+
+                    const nHash = generateNHash(
+                        nonceBuffer,
+                        txid,
+                        txindex,
+                        true,
+                        this._state.logger,
+                    );
+                    const sHash = generateSHash(
+                        `${this.params.asset}/to${this.params.to.name}`,
+                    );
+
+                    const gHash = generateGHash(
+                        [],
+                        Ox(this.params.to.addressToBytes(to)),
+                        Ox(sHash),
+                        nonceBuffer,
+                        true,
+                        this._state.logger,
+                    );
+
+                    returnedTxHash = toURLBase64(
+                        await this.renVM.submitBurn({
+                            selector: this._state.selector,
+                            // tags,
+
+                            gHash,
+                            gPubKey,
+                            nHash,
+                            nonce: nonceBuffer,
+                            output: {
+                                txid,
+                                txindex,
+                            },
+                            // FIXME: hack until we support differing decimals between burn + release chains
+                            amount:
+                                this._state.selector === "FIL/fromSolana"
+                                    ? amount.multipliedBy(10 ** 9).toFixed()
+                                    : amount.toFixed(),
+                            payload,
+                            pHash,
+                            to: to.toString(),
+                        }),
+                    );
                     if (txHash && txHash !== returnedTxHash) {
                         this._state.logger.warn(
                             `Unexpected txHash returned from RenVM. Received: ${returnedTxHash}, expected: ${txHash}`,
@@ -646,10 +592,7 @@ export class BurnAndRelease<
             } else {
                 this.status = BurnAndReleaseStatus.Released;
 
-                if (
-                    response.out &&
-                    this.renVM.version(this._state.selector) >= 2
-                ) {
+                if (response.out) {
                     let transaction: LockTransaction | undefined;
                     try {
                         if (response.out.txid) {

@@ -27,19 +27,7 @@ export interface RenJSConfig {
     loadCompletedDeposits?: boolean;
 
     /**
-     * RenVM supports two v0.4 transaction versions for bridging BTC, ZEC and
-     * BCH to and from Ethereum. The changes include how the gHash and nHash are
-     * calculated, and the `version` field in the submitTx.
-     */
-    transactionVersion?: number;
-
-    /**
      * Allow overriding the gPubKey.
      */
     gPubKey?: Buffer;
-
-    /**
-     * Ensure the V2 RPC is used for all assets
-     */
-    useV2TransactionFormat?: boolean;
 }

@@ -144,17 +144,3 @@ export const renVMHashToBase64 = (txHash: string, v2?: boolean) => {
     // Already base64. For v2, ensure it's in URL-base64 format.
     return v2 ? toURLBase64(fromBase64(txHash)) : txHash;
 };
-
-export const generateBurnTxHash = (
-    selector: string,
-    encodedID: string,
-    logger: Logger = NullLogger,
-): Buffer => {
-    // Type validation
-    assertType<string>("string", { encodedID });
-
-    const message = `txHash_${selector}_${encodedID}`;
-    const digest = keccak256(Buffer.from(message));
-    logger.debug("Burn txHash", toBase64(digest), message);
-    return digest;
-};

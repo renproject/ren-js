@@ -43,9 +43,7 @@
         }
     },
     "lint-staged": {
-        "src/**/*.{js,jsx}": [
-            "npm run lint:fix"
-        ]
+        "src/**/*.{js,jsx}": ["npm run lint:fix"]
     },
     "devDependencies": {
         "@babel/core": "^7.10.3",
@@ -83,7 +81,6 @@
         "gh-pages": "3.1.0",
         "lint-staged": "^10.2.11",
         "prettier": "^2.2.1",
-        "prettier-eslint-cli": "^5.0.0",
         "react": "^17.0.1",
         "react-dom": "^17.0.1",
         "react-test-renderer": "^17.0.1",
@@ -104,15 +101,9 @@
         "react-dom": "^17.0.1",
         "xstate": "^4.17.0"
     },
-    "files": [
-        "dist"
-    ],
+    "files": ["dist"],
     "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
+        "production": [">0.2%", "not dead", "not op_mini all"],
         "development": [
             "last 1 chrome version",
             "last 1 firefox version",

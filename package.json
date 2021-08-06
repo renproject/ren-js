@@ -76,6 +76,9 @@
             "path": "cz-conventional-changelog"
         }
     },
+    "resolutions": {
+        "@typescript-eslint/eslint-plugin": "^4.29.0"
+    },
     "prettier": {
         "printWidth": 80,
         "semi": true,

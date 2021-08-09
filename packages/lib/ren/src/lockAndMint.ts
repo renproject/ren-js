@@ -951,7 +951,7 @@ export class LockAndMintDeposit<
      * await deposit.queryTx();
      * // > { to: "...", hash: "...", status: "done", in: {...}, out: {...} }
      */
-    public queryTx = async (): Promise<LockAndMintTransaction> => {
+    public queryTx = async (retries = 2): Promise<LockAndMintTransaction> => {
         if (
             DepositStatusIndex[this.status] >=
                 DepositStatusIndex[DepositStatus.Signed] &&
@@ -964,6 +964,7 @@ export class LockAndMintDeposit<
             await this.renVM.queryMintOrBurn(
                 this._state.selector,
                 fromBase64(this.txHash()),
+                retries,
             );
         this._state.queryTxResult = response;
 
@@ -998,14 +999,14 @@ export class LockAndMintDeposit<
 
             // Fetch sighash.
             try {
-                queryTxResult = await this.queryTx();
+                queryTxResult = await this.queryTx(1);
             } catch (_error) {
                 // Ignore error.
                 queryTxResult = null;
             }
 
             try {
-                // Ensure that
+                // Check if the transaction has been submitted to the mint-chain.
                 const transaction = await this.findTransaction();
                 if (transaction !== undefined) {
                     return DepositStatus.Submitted;
@@ -1017,7 +1018,7 @@ export class LockAndMintDeposit<
             try {
                 queryTxResult =
                     queryTxResult === undefined
-                        ? await this.queryTx()
+                        ? await this.queryTx(1)
                         : queryTxResult;
                 if (
                     queryTxResult &&

@@ -112,10 +112,11 @@ export class CombinedProvider
     >(
         selector: string,
         utxoTxHash: Buffer,
+        retries?: number,
     ): SyncOrPromise<T> =>
         this.v1 && isV1Selector(selector)
-            ? this.v1.queryMintOrBurn<T>(selector, utxoTxHash)
-            : this.v2.queryMintOrBurn<T>(selector, utxoTxHash);
+            ? this.v1.queryMintOrBurn<T>(selector, utxoTxHash, retries)
+            : this.v2.queryMintOrBurn<T>(selector, utxoTxHash, retries);
 
     waitForTX = <T extends LockAndMintTransaction | BurnAndReleaseTransaction>(
         selector: string,

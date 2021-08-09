@@ -130,6 +130,7 @@ export interface AbstractRenVMProvider<
     >(
         selector: string,
         utxoTxHash: Buffer,
+        retries?: number,
     ) => SyncOrPromise<T>;
 
     waitForTX: <T extends LockAndMintTransaction | BurnAndReleaseTransaction>(

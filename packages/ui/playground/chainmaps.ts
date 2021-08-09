@@ -56,10 +56,10 @@ export const mintChainMap = (providers) => {
     return {
         ...ethChains,
         solana: (context: GatewayMachineContext<any>) => {
-            const { destChain, network } = context.tx;
+            const { destChain, destAddress, network } = context.tx;
             return new Solana(providers[destChain].connector, network, {
                 logger: console,
-            });
+            }).Account({ address: destAddress });
         },
     };
 };
@@ -73,6 +73,7 @@ export const burnChainMap = (providers) => {
                 return new ChainClass(
                     providers[sourceChain].provider,
                     network,
+                    { logger: console },
                 ).Account({
                     address: destAddress,
                     amount, //  mintchains don't need amount

@@ -15,7 +15,7 @@ import { RenNetwork } from "@renproject/interfaces";
 const emitter = new ConnectorEmitter(false);
 
 let mockConnector: ConnectorInterface<any, any> = {
-  activate: () => new Promise(() => {}),
+  activate: async () => new Promise(() => {}),
   supportsTestnet: true,
   getProvider: async () => {},
   getAccount: async () => {},
@@ -69,7 +69,7 @@ const TestManualActivate: React.FC<{
 describe("MultiwalletProvider", () => {
   beforeEach(() => {
     mockConnector = {
-      activate: () => new Promise(() => {}),
+      activate: async () => new Promise(() => {}),
       supportsTestnet: true,
       getProvider: async () => {},
       getAccount: async () => {},
@@ -135,8 +135,8 @@ describe("MultiwalletProvider", () => {
       )
     );
 
-    setTimeout(async () => {
-      await act(async () => {
+    setTimeout(() => {
+      act(() => {
         mockConnector.emitter.emit(ConnectorEvents.DEACTIVATE, "testing");
       });
     }, 1000);
@@ -165,8 +165,8 @@ describe("MultiwalletProvider", () => {
       )
     );
 
-    setTimeout(async () => {
-      await act(async () => {
+    setTimeout(() => {
+      act(() => {
         account = "newAccount";
         mockConnector.emitter.emit(ConnectorEvents.UPDATE, {
           account,
@@ -183,12 +183,12 @@ describe("MultiwalletProvider", () => {
 
   it("It correctly handles error events", async (done) => {
     const div = document.createElement("div");
-    mockConnector.activate = async () => ({
+    mockConnector.activate = () => ({
       account: "test",
       provider: {},
       renNetwork: RenNetwork.Mainnet,
     });
-    await act(async () =>
+    act(() =>
       ReactDOM.render(
         <MultiwalletProvider>
           <TestAutoActivate chain="chain2" connector={{ ...mockConnector }} />
@@ -197,8 +197,8 @@ describe("MultiwalletProvider", () => {
       )
     );
 
-    setTimeout(async () => {
-      await act(async () => {
+    setTimeout(() => {
+      act(() => {
         mockConnector.emitter.emit(
           ConnectorEvents.ERROR,
           new Error("an error")
@@ -216,10 +216,10 @@ describe("MultiwalletProvider", () => {
 
   it("It correctly handles failed activations", async (done) => {
     const div = document.createElement("div");
-    mockConnector.activate = async () => {
+    mockConnector.activate = () => {
       throw new Error("failed");
     };
-    await act(async () =>
+    act(() =>
       ReactDOM.render(
         <MultiwalletProvider>
           <TestAutoActivate chain="chain2" connector={{ ...mockConnector }} />
@@ -238,12 +238,12 @@ describe("MultiwalletProvider", () => {
 
   it("It correctly handles connecting with different connectors", async (done) => {
     const div = document.createElement("div");
-    mockConnector.activate = async () => ({
+    mockConnector.activate = () => ({
       account: "test",
       provider: {},
       renNetwork: RenNetwork.Mainnet,
     });
-    await act(async () =>
+    act(() =>
       ReactDOM.render(
         <MultiwalletProvider>
           <TestManualActivate
@@ -261,14 +261,14 @@ describe("MultiwalletProvider", () => {
       )
     );
 
-    await act(async () => {
+    act(() => {
       const button = div.querySelectorAll("button").item(0);
       if (!button) return;
       Simulate.click(button);
     });
 
-    setTimeout(async () => {
-      await act(async () => {
+    setTimeout(() => {
+      act(() => {
         const button = div.querySelectorAll("button").item(1);
         if (!button) return;
         Simulate.click(button);

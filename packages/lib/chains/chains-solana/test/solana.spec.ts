@@ -115,8 +115,8 @@ describe("Solana", () => {
                     },
                     {
                         name: "recipient",
-                        value: Buffer.from(btcAddressHex, "hex"),
-                        type: "bytes",
+                        value: btcAddressHex,
+                        type: "string",
                     },
                 ],
             });

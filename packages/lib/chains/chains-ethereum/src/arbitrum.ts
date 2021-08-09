@@ -85,6 +85,8 @@ export class ArbitrumClass extends EthereumClass {
     public name = ArbitrumClass.chain;
     public legacyName = undefined;
 
+    public logRequestLimit = 20000;
+
     public static configMap = ArbitrumConfigMap;
     public configMap = ArbitrumConfigMap;
 

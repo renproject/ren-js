@@ -73,6 +73,7 @@ export const burnChainMap = (providers) => {
                 return new ChainClass(
                     providers[sourceChain].provider,
                     network,
+                    { logger: console },
                 ).Account({
                     address: destAddress,
                     amount, //  mintchains don't need amount

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren-react",
-    "version": "2.5.1-alpha.0",
+    "version": "2.5.1",
     "description": "Easily create and track RenVM transactions in React",
     "keywords": [
         "renvm",
@@ -43,7 +43,9 @@
         }
     },
     "lint-staged": {
-        "src/**/*.{js,jsx}": ["npm run lint:fix"]
+        "src/**/*.{js,jsx}": [
+            "npm run lint:fix"
+        ]
     },
     "devDependencies": {
         "@babel/core": "^7.10.3",
@@ -51,9 +53,9 @@
         "@babel/preset-react": "^7.10.1",
         "@babel/preset-typescript": "^7.13.0",
         "@open-wc/webpack-import-meta-loader": "^0.4.7",
-        "@renproject/chains-bitcoin": "^2.5.1-alpha.0",
-        "@renproject/chains-ethereum": "^2.5.1-alpha.0",
-        "@renproject/ren": "^2.5.1-alpha.0",
+        "@renproject/chains-bitcoin": "^2.5.1",
+        "@renproject/chains-ethereum": "^2.5.1",
+        "@renproject/ren": "^2.5.1",
         "@rollup/plugin-alias": "^3.1.1",
         "@rollup/plugin-babel": "^5.3.0",
         "@rollup/plugin-commonjs": "^18.0.0",
@@ -101,9 +103,15 @@
         "react-dom": "^17.0.1",
         "xstate": "^4.17.0"
     },
-    "files": ["dist"],
+    "files": [
+        "dist"
+    ],
     "browserslist": {
-        "production": [">0.2%", "not dead", "not op_mini all"],
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
         "development": [
             "last 1 chrome version",
             "last 1 firefox version",

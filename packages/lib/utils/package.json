@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "2.5.1-alpha.0",
+    "version": "2.5.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,7 +43,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.5.1-alpha.0",
+        "@renproject/interfaces": "^2.5.1",
         "@types/create-hash": "1.2.2",
         "@types/events": "3.0.0",
         "@types/keccak": "^3.0.1",

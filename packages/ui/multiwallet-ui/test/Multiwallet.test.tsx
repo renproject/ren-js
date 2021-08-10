@@ -108,7 +108,7 @@ describe("MultiwalletModal", () => {
       });
     } catch (e) {
       // success
-      expect(e.message).toContain("Multiwallet not ready");
+      expect((e as Error).message).toContain("Multiwallet not ready");
     } finally {
       ReactDOM.unmountComponentAtNode(div);
     }
@@ -139,15 +139,15 @@ describe("MultiwalletModal", () => {
   it("should close if connected", async () => {
     const div = document.createElement("div");
     const activatingSpy = jest.spyOn(
-      Resolving.args?.options?.config?.chains.ethereum[0].connector as any,
+      Resolving.args?.options?.config?.chains.ethereum[0].connector,
       "activate"
     );
-    const closeSpy = jest.spyOn(Resolving.args?.options as any, "onClose");
+    const closeSpy = jest.spyOn(Resolving.args?.options, "onClose");
 
     ReactDOM.render(<Resolving {...Resolving.args} />, div);
     await act(
-      () =>
-        new Promise<void>(async (resolve) => {
+      async () =>
+        new Promise<void>((resolve) => {
           setTimeout(() => {
             // Modal does not render in div
             const button = window.document.body
@@ -174,15 +174,15 @@ describe("MultiwalletModal", () => {
   it("should warn of wrong network", async () => {
     const div = document.createElement("div");
     const activatingSpy = jest.spyOn(
-      WrongNetwork.args?.options?.config?.chains.ethereum[0].connector as any,
+      WrongNetwork.args?.options?.config?.chains.ethereum[0].connector,
       "activate"
     );
-    const closeSpy = jest.spyOn(WrongNetwork.args?.options as any, "onClose");
+    const closeSpy = jest.spyOn(WrongNetwork.args?.options, "onClose");
 
     ReactDOM.render(<WrongNetwork {...WrongNetwork.args} />, div);
     await act(
-      () =>
-        new Promise<void>(async (resolve) => {
+      async () =>
+        new Promise<void>((resolve) => {
           setTimeout(() => {
             // Modal does not render in div
             const button = window.document.body
@@ -208,8 +208,8 @@ describe("MultiwalletModal", () => {
 
     // cancel connection request
     await act(
-      () =>
-        new Promise<void>(async (resolve) => {
+      async () =>
+        new Promise<void>((resolve) => {
           setTimeout(() => {
             const button = window.document.body
               .querySelectorAll("button")

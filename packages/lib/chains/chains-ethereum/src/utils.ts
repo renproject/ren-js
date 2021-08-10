@@ -19,6 +19,8 @@ import {
     SECONDS,
     sleep,
     keccak256,
+    rawEncode,
+    toBase64,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -28,6 +30,7 @@ import { Overrides } from "ethers";
 import * as ethers from "ethers";
 
 import { EthereumConfig } from "./networks";
+import { EthArgs } from "./abi";
 
 const EMPTY_ADDRESS = "0x" + "00".repeat(20);
 
@@ -529,3 +532,15 @@ export const addressIsValid = (address: EthAddress): boolean => {
 
 export const transactionIsValid = (transaction: EthTransaction): boolean =>
     transaction !== null && isHex(transaction, { length: 32, prefix: true });
+
+export const encodePayload = (zip: EthArgs): Buffer => {
+    // Check if they called as hashPayload([...]) instead of hashPayload(...)
+    const args = (
+        Array.isArray(zip[0]) ? (zip[0] as unknown as EthArgs) : zip
+    ).filter((arg) => !arg.notInPayload);
+
+    const types = args.map((param) => param.type);
+    const values = args.map((param): unknown => param.value);
+
+    return rawEncode(types, values);
+};

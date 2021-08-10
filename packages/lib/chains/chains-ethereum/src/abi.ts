@@ -1,3 +1,5 @@
+import { assertType } from "@renproject/utils";
+
 export type AbiType = "function" | "constructor" | "event" | "fallback";
 export type StateMutabilityType = "pure" | "view" | "nonpayable" | "payable";
 
@@ -176,3 +178,226 @@ export interface EthArg<
 }
 
 export type EthArgs = EthArg[];
+
+const mintABITemplate: AbiItem = {
+    constant: false,
+    inputs: [
+        {
+            name: "_amount",
+            type: "uint256",
+        },
+        {
+            name: "_nHash",
+            type: "bytes32",
+        },
+        {
+            name: "_sig",
+            type: "bytes",
+        },
+    ],
+    outputs: [],
+    payable: true,
+    stateMutability: "payable",
+    type: "function",
+};
+
+const tupleRegex = /tuple\(([a-zA-Z0-9]+(,[a-zA-Z0-9]+)*)\)/;
+
+/**
+ * If the type of an Ethereum arg matches `tuple(...)`, then it needs to include
+ * a `components` array that provides the name and type of each of the tuple's
+ * values. If it wasn't included, `fixTuple` will create the components array.
+ */
+const fixTuple = (argument: {
+    type: string;
+    name: string;
+    value: unknown;
+    components?: AbiInput[];
+}) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { value, ...args } = argument;
+    try {
+        // If type is `tuple(...)` but components haven't been
+        // been passed in, add them.
+        const match = args && args.type && tupleRegex.exec(args.type);
+        if (match && !argument.components) {
+            const types = match[1].split(",");
+            const components: AbiInput[] = [];
+            for (let i = 0; i < types.length; i++) {
+                components[i] = {
+                    name: String(i),
+                    type: types[i],
+                };
+            }
+            return {
+                ...args,
+                components,
+            };
+        }
+    } catch (error) {
+        console.error(error);
+    }
+    return args;
+};
+
+export const payloadToABI = (
+    methodName: string,
+    payload: Array<{ type: string; name: string; value: unknown }> | undefined,
+): AbiItem[] => {
+    // Type validation
+    assertType<string>("string", { methodName });
+    (payload || []).map(({ type, name }) =>
+        assertType<string>("string", { type, name }),
+    );
+
+    return [
+        {
+            name: methodName,
+            type: "function",
+            stateMutability: "nonpayable",
+            inputs: [
+                ...(payload || []).map(fixTuple).map((value) => ({
+                    type: value.type,
+                    name: value.name,
+                    ...(value.components
+                        ? {
+                              components: value.components,
+                          }
+                        : undefined),
+                })),
+            ],
+            outputs: [],
+        },
+    ];
+};
+
+export const payloadToMintABI = (
+    methodName: string,
+    payload: Array<{ type: string; name: string; value: unknown }> | undefined,
+): AbiItem[] => {
+    // Type validation
+    assertType<string>("string", { methodName });
+    (payload || []).map(({ type, name }) =>
+        assertType<string>("string", { type, name }),
+    );
+
+    return [
+        {
+            ...mintABITemplate,
+            name: methodName,
+            inputs: [
+                ...(payload || []).map(fixTuple).map((value) => ({
+                    type: value.type,
+                    name: value.name,
+                    ...(value.components
+                        ? {
+                              components: value.components,
+                          }
+                        : undefined),
+                })),
+                ...(mintABITemplate.inputs ? mintABITemplate.inputs : []),
+            ],
+        },
+    ];
+};
+
+/**
+ * The details required to create and/or submit a transaction to a chain.
+ */
+export interface ContractCall {
+    /**
+     * The address of the contract.
+     */
+    sendTo: string;
+
+    /**
+     * The name of the function to be called on the contract.
+     */
+    contractFn: string;
+
+    /**
+     * The parameters to be passed to the contract. They can only be defined
+     * using Ethereum types currently.
+     */
+    contractParams?: EthArgs;
+
+    /**
+     * Override chain-specific transaction configuration, such as gas/fees.
+     */
+    txConfig?: unknown;
+}
+
+export enum OverrideContractCallError {
+    OverrideArrayLengthError = `Contract call override must be same length as contract calls array.`,
+}
+
+const overrideContractCall = (
+    contractCall: ContractCall,
+    override: ContractCallOverride,
+) => {
+    const overrideParams = (override.contractParams || []).reduce(
+        (acc, param) => {
+            if (param.name) {
+                acc[param.name] = param;
+            }
+            return acc;
+        },
+        {},
+    );
+
+    let txConfig;
+    if (
+        typeof contractCall.txConfig === "object" &&
+        typeof override.txConfig === "object"
+    ) {
+        txConfig = {
+            ...contractCall.txConfig,
+            ...override.txConfig,
+        };
+    } else {
+        txConfig = override.txConfig || contractCall.txConfig;
+    }
+
+    return {
+        ...contractCall,
+        ...override,
+
+        // Clone txConfig
+        txConfig,
+
+        // Clone contractParams
+        contractParams: (contractCall.contractParams || []).map(
+            (contractParam) => ({
+                ...contractParam,
+                ...overrideParams[contractParam.name],
+            }),
+        ),
+    };
+};
+
+export type ContractCallOverride = Partial<
+    Omit<ContractCall, "contractParams"> & {
+        contractParams: Array<Partial<EthArg>>;
+    }
+>;
+
+export const overrideContractCalls = (
+    contractCalls: ContractCall[],
+    override: ContractCallOverride | ContractCallOverride[],
+): ContractCall[] => {
+    if (Array.isArray(override) && override.length !== contractCalls.length) {
+        throw new Error(OverrideContractCallError.OverrideArrayLengthError);
+    }
+
+    return contractCalls.map((contractCall, i) => {
+        const contractCallOverride = Array.isArray(override)
+            ? // If override is an array, there should be an array for each call.
+              override[i]
+            : // If there's only one override, apply it to the last contract call.
+            i === contractCalls.length - 1
+            ? override
+            : // Default to empty object.
+              {};
+        return overrideContractCall(contractCall, contractCallOverride);
+    });
+};

@@ -1,8 +1,4 @@
 import {
-    BurnAndReleaseTransaction,
-    LockAndMintTransaction,
-} from "@renproject/interfaces";
-import {
     assert,
     fixSignatureSimple,
     signatureToBuffer,
@@ -10,6 +6,10 @@ import {
 
 import { ResponseQueryTx } from "./methods";
 import { unmarshalTypedPackValue } from "./pack/pack";
+import {
+    BurnAndReleaseTransaction,
+    LockAndMintTransaction,
+} from "./unmarshalledTypes";
 
 export const unmarshalMintTx = (
     response: ResponseQueryTx,

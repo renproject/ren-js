@@ -1,4 +1,4 @@
-import { EthArgs, Logger, NullLogger } from "@renproject/interfaces";
+import { Logger, NullLogger } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 import {
@@ -26,21 +26,12 @@ import { keccak256 } from "./hash";
  * @param zip An array (or spread) of parameters with with types defined.
  */
 export const generatePHash = (
-    zip: EthArgs,
+    payload: Buffer,
     logger: Logger = NullLogger,
 ): Buffer => {
-    // Check if they called as hashPayload([...]) instead of hashPayload(...)
-    const args = (
-        Array.isArray(zip[0]) ? (zip[0] as unknown as EthArgs) : zip
-    ).filter((arg) => !arg.notInPayload);
+    const digest = keccak256(payload);
 
-    const types = args.map((param) => param.type);
-    const values = args.map((param): unknown => param.value);
-
-    const message = rawEncode(types, values);
-    const digest = keccak256(message);
-
-    logger.debug("pHash", toBase64(digest), Ox(message), args);
+    logger.debug("pHash", toBase64(digest), Ox(payload));
 
     return digest; // sha3 can accept a Buffer
 };
@@ -51,7 +42,7 @@ export const generateSHash = (selector: string): Buffer => {
 };
 
 export const generateGHash = (
-    payload: EthArgs,
+    payload: Buffer,
     to: string,
     tokenIdentifier: string,
     nonce: Buffer,

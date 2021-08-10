@@ -1,7 +1,5 @@
 import {
-    BurnAndReleaseTransaction,
     getRenNetworkDetails,
-    LockAndMintTransaction,
     LockChain,
     Logger,
     MintChain,
@@ -45,6 +43,10 @@ import {
     submitGatewayType,
 } from "./transaction";
 import { unmarshalBurnTx, unmarshalMintTx } from "./unmarshal";
+import {
+    BurnAndReleaseTransaction,
+    LockAndMintTransaction,
+} from "./unmarshalledTypes";
 
 export const resolveV2Contract = ({
     asset,
@@ -53,9 +55,9 @@ export const resolveV2Contract = ({
 }: {
     asset: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    from: LockChain<any, any, any> | MintChain<any, any>;
+    from: LockChain<any, any> | MintChain<any, any>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    to: LockChain<any, any, any> | MintChain<any, any>;
+    to: LockChain<any, any> | MintChain<any, any>;
 }): string => {
     if (
         (from as LockChain).assetIsNative &&
@@ -121,9 +123,9 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
     public selector = (params: {
         asset: string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        from: LockChain<any, any, any> | MintChain<any, any>;
+        from: LockChain<any, any> | MintChain<any, any>;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        to: LockChain<any, any, any> | MintChain<any, any>;
+        to: LockChain<any, any> | MintChain<any, any>;
     }): string => {
         return resolveV2Contract(params);
     };

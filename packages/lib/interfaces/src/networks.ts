@@ -2,23 +2,6 @@ export enum RenNetwork {
     Mainnet = "mainnet",
     Testnet = "testnet",
     Devnet = "devnet",
-    Localnet = "localnet",
-
-    // Staging
-    /**
-     * @deprecated Replaced by Mainnet
-     */
-    MainnetVDot3 = "mainnet",
-
-    /**
-     * @deprecated Replaced by Testnet
-     */
-    TestnetVDot3 = "testnet",
-
-    /**
-     * @deprecated Replaced by Devnet
-     */
-    DevnetVDot3 = "devnet",
 }
 
 export interface RenNetworkDetails {
@@ -42,11 +25,6 @@ const renDevnet: RenNetworkDetails = {
     lightnode: "https://lightnode-devnet.herokuapp.com/",
     isTestnet: true,
 };
-const renLocalnet: RenNetworkDetails = {
-    name: RenNetwork.Localnet,
-    lightnode: "http://localhost:5000",
-    isTestnet: true,
-};
 
 export const getRenNetworkDetails = (
     renNetwork: RenNetwork | RenNetworkString | RenNetworkDetails,
@@ -64,19 +42,15 @@ export const getRenNetworkDetails = (
         case RenNetwork.Devnet as "devnet":
         case "devnet-v0.3":
             return renDevnet;
-        case RenNetwork.Localnet:
-        case RenNetwork.Localnet as "localnet":
-            return renLocalnet;
         default:
             return renNetwork;
     }
 };
 
-export type RenNetworkString = "mainnet" | "testnet" | "devnet" | "localnet";
+export type RenNetworkString = "mainnet" | "testnet" | "devnet";
 
 export const RenNetworks = [
     RenNetwork.Mainnet,
     RenNetwork.Testnet,
     RenNetwork.Devnet,
-    RenNetwork.Localnet,
 ];

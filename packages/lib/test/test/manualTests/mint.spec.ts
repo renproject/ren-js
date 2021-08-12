@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 import * as Chains from "@renproject/chains";
-import { Ethereum, Goerli } from "@renproject/chains-ethereum";
+import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
 
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
@@ -35,8 +35,8 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const from = Chains.Terra();
-        const asset = "LUNA"; // from.asset;
+        const from = Chains.Filecoin();
+        const asset = "FIL"; // from.asset;
 
         // const toChain = new Chains.Solana(
         //     makeTestProvider(renDevnet, testPK),
@@ -49,12 +49,12 @@ describe("Refactor: mint", () => {
 
         // const to = toChain;
 
-        const ToClass = Goerli;
-        const ethNetwork = renGoerli;
+        const ToClass = Arbitrum;
+        const ethNetwork = Arbitrum.configMap[network];
 
         const account = new CryptoAccount(Buffer.from(PRIVATE_KEY, "hex"), {
             network: "testnet",
-            apiAddress: "https://lotus-cors-proxy.herokuapp.com/",
+            apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
             terra: {
                 URL: "https://tequila-lcd.terra.dev",
             },
@@ -183,9 +183,10 @@ describe("Refactor: mint", () => {
 
                 RenJS.defaultDepositHandler(deposit)
                     .then(resolve)
-                    .catch((error) =>
-                        deposit._state.logger.error(red("error:"), error),
-                    );
+                    .catch((error) => {
+                        deposit._state.logger.error(red("error:"), error);
+                        console.error(error);
+                    });
             });
 
             sleep(30 * SECONDS)
@@ -215,11 +216,11 @@ describe("Refactor: mint", () => {
                         ) {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             address = (
-                                lockAndMint.gatewayAddress as Chains.FilAddress
+                                lockAndMint.gatewayAddress as unknown as Chains.FilAddress
                             ).address;
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             options.params = (
-                                lockAndMint.gatewayAddress as Chains.FilAddress
+                                lockAndMint.gatewayAddress as unknown as Chains.FilAddress
                             ).params;
                             // options.memo = (lockAndMint.gatewayAddress as TerraAddress);
                         } else {

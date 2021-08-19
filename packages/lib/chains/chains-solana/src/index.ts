@@ -12,7 +12,6 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
     EventEmitterTyped,
-    SyncOrPromise,
 } from "@renproject/interfaces";
 import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
@@ -472,6 +471,7 @@ export class SolanaClass
         );
         this._logger.debug("mint log account", mintLogAccountId[0].toString());
 
+        //TODO: we may want to just return this for custom integrations - users should be able to add this instruction to their application's instruction set for composition
         const instruction = new TransactionInstruction({
             keys: [
                 {
@@ -522,6 +522,7 @@ export class SolanaClass
         });
         this._logger.debug("mint instruction", JSON.stringify(instruction));
 
+        // To get the current gateway pubkey
         const gatewayInfo = await this.provider.connection.getAccountInfo(
             gatewayAccountId[0],
         );
@@ -532,6 +533,7 @@ export class SolanaClass
 
         const tx = new Transaction();
 
+        // The instruction to check the signature
         const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
             ethAddress: Buffer.from(gatewayState.renvm_authority),
             message: renvmMsgSlice,
@@ -548,6 +550,7 @@ export class SolanaClass
         secPInstruction.data = Buffer.from([...secPInstruction.data]);
 
         tx.add(instruction, secPInstruction);
+
         tx.recentBlockhash = (
             await this.provider.connection.getRecentBlockhash("max")
         ).blockhash;
@@ -566,6 +569,7 @@ export class SolanaClass
         const signature = signed.signature;
         if (!signature) throw new Error("failed to sign");
 
+        // FIXME: this follows eth's events, generalize this
         eventEmitter.emit("transactionHash", base58.encode(signature));
         this._logger.debug("signed with signature", signature);
 
@@ -573,14 +577,23 @@ export class SolanaClass
             commitment: "finalized",
         };
 
-        const r = await sendAndConfirmRawTransaction(
-            this.provider.connection,
-            signed.serialize(),
-            confirmOpts,
-        );
+        const sendPromise = new Promise<string>(async (resolve, reject) => {
+            setTimeout(() => {
+                reject("no confirmations before timeout");
+            }, 20000);
 
+            const r = await sendAndConfirmRawTransaction(
+                this.provider.connection,
+                signed.serialize(),
+                confirmOpts,
+            );
+            // FIXME: this follows eth's events, generalize this
+            eventEmitter.emit("confirmation", 1, { status: 1 });
+            resolve(r);
+        });
+
+        const r = await sendPromise;
         this._logger.debug("sent and confirmed", r);
-        eventEmitter.emit("confirmation", 1, { status: 1 });
 
         return r;
     };

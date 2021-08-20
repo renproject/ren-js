@@ -119,6 +119,7 @@
         ]
     },
     "jest": {
-        "testTimeout": 20000
+        "testTimeout": 20000,
+        "testEnvironment": "jsdom"
     }
 }

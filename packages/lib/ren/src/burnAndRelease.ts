@@ -310,7 +310,6 @@ export class BurnAndRelease<
             let current = 0,
                 target = 1;
             while (current < target) {
-                console.log("current, target", current, target);
                 try {
                     ({ current, target } =
                         await this.params.from.transactionConfidence(

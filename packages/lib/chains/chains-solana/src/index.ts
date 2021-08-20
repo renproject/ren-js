@@ -449,11 +449,12 @@ export class SolanaClass
             program,
         );
 
-        let recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
-        let recipientWalletAddress =
+        const recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
+        const recipientWalletAddress =
             contractCalls[0] &&
             contractCalls[0].contractParams &&
-            contractCalls[0].contractParams[0]?.value;
+            contractCalls[0].contractParams[0] &&
+            contractCalls[0].contractParams[0].value;
         await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
 
         const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
@@ -715,16 +716,24 @@ export class SolanaClass
 
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
-        let recipient = this.provider.wallet.publicKey;
-
-        if (params?.contractCalls) {
-            recipient = new PublicKey(params.contractCalls[0].sendTo);
-        }
+        const recipient =
+            params && params.contractCalls
+                ? new PublicKey(params.contractCalls[0].sendTo)
+                : this.provider.wallet.publicKey;
 
         const destination = await this.getAssociatedTokenAccount(
             asset,
             recipient.toString(),
         );
+
+        if (!destination) {
+            // Once there's better documentation around
+            // createAssociatedTokenAccount for developers, the error message
+            // can be made more user-friendly.
+            throw new Error(
+                `No associated token account for ${recipient.toString()} - 'createAssociatedTokenAccount' needs to be called.`,
+            );
+        }
 
         const calls: OverwritableLockAndMintParams = {
             contractCalls: [
@@ -1022,7 +1031,10 @@ export class SolanaClass
      * Solana specific utility for checking whether a token account has been
      * instantiated for the selected asset
      */
-    async getAssociatedTokenAccount(asset: string, address?: string) {
+    async getAssociatedTokenAccount(
+        asset: string,
+        address?: string,
+    ): Promise<PublicKey | false> {
         await this.waitForInitialization();
 
         const targetAddress = address
@@ -1044,7 +1056,7 @@ export class SolanaClass
                 return false;
             }
         } catch (e) {
-            console.log(e);
+            console.error(e);
             return false;
         }
         return destination;

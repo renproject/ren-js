@@ -12,7 +12,6 @@ import {
     OverwritableBurnAndReleaseParams,
     BurnPayloadConfig,
     EventEmitterTyped,
-    SyncOrPromise,
 } from "@renproject/interfaces";
 import { Callable, doesntError, keccak256 } from "@renproject/utils";
 import {
@@ -450,11 +449,12 @@ export class SolanaClass
             program,
         );
 
-        let recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
-        let recipientWalletAddress =
+        const recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
+        const recipientWalletAddress =
             contractCalls[0] &&
             contractCalls[0].contractParams &&
-            contractCalls[0].contractParams[0]?.value;
+            contractCalls[0].contractParams[0] &&
+            contractCalls[0].contractParams[0].value;
         await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
 
         const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
@@ -472,6 +472,7 @@ export class SolanaClass
         );
         this._logger.debug("mint log account", mintLogAccountId[0].toString());
 
+        //TODO: we may want to just return this for custom integrations - users should be able to add this instruction to their application's instruction set for composition
         const instruction = new TransactionInstruction({
             keys: [
                 {
@@ -522,6 +523,7 @@ export class SolanaClass
         });
         this._logger.debug("mint instruction", JSON.stringify(instruction));
 
+        // To get the current gateway pubkey
         const gatewayInfo = await this.provider.connection.getAccountInfo(
             gatewayAccountId[0],
         );
@@ -532,6 +534,7 @@ export class SolanaClass
 
         const tx = new Transaction();
 
+        // The instruction to check the signature
         const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
             ethAddress: Buffer.from(gatewayState.renvm_authority),
             message: renvmMsgSlice,
@@ -548,6 +551,7 @@ export class SolanaClass
         secPInstruction.data = Buffer.from([...secPInstruction.data]);
 
         tx.add(instruction, secPInstruction);
+
         tx.recentBlockhash = (
             await this.provider.connection.getRecentBlockhash("max")
         ).blockhash;
@@ -566,6 +570,7 @@ export class SolanaClass
         const signature = signed.signature;
         if (!signature) throw new Error("failed to sign");
 
+        // FIXME: this follows eth's events, generalize this
         eventEmitter.emit("transactionHash", base58.encode(signature));
         this._logger.debug("signed with signature", signature);
 
@@ -573,14 +578,23 @@ export class SolanaClass
             commitment: "finalized",
         };
 
-        const r = await sendAndConfirmRawTransaction(
-            this.provider.connection,
-            signed.serialize(),
-            confirmOpts,
-        );
+        const sendPromise = new Promise<string>(async (resolve, reject) => {
+            setTimeout(() => {
+                reject("no confirmations before timeout");
+            }, 20000);
 
+            const r = await sendAndConfirmRawTransaction(
+                this.provider.connection,
+                signed.serialize(),
+                confirmOpts,
+            );
+            // FIXME: this follows eth's events, generalize this
+            eventEmitter.emit("confirmation", 1, { status: 1 });
+            resolve(r);
+        });
+
+        const r = await sendPromise;
         this._logger.debug("sent and confirmed", r);
-        eventEmitter.emit("confirmation", 1, { status: 1 });
 
         return r;
     };
@@ -702,16 +716,24 @@ export class SolanaClass
 
         if (!gatewayInfo) throw new Error("incorrect gateway program address");
 
-        let recipient = this.provider.wallet.publicKey;
-
-        if (params?.contractCalls) {
-            recipient = new PublicKey(params.contractCalls[0].sendTo);
-        }
+        const recipient =
+            params && params.contractCalls
+                ? new PublicKey(params.contractCalls[0].sendTo)
+                : this.provider.wallet.publicKey;
 
         const destination = await this.getAssociatedTokenAccount(
             asset,
             recipient.toString(),
         );
+
+        if (!destination) {
+            // Once there's better documentation around
+            // createAssociatedTokenAccount for developers, the error message
+            // can be made more user-friendly.
+            throw new Error(
+                `No associated token account for ${recipient.toString()} - 'createAssociatedTokenAccount' needs to be called.`,
+            );
+        }
 
         const calls: OverwritableLockAndMintParams = {
             contractCalls: [
@@ -1009,7 +1031,10 @@ export class SolanaClass
      * Solana specific utility for checking whether a token account has been
      * instantiated for the selected asset
      */
-    async getAssociatedTokenAccount(asset: string, address?: string) {
+    async getAssociatedTokenAccount(
+        asset: string,
+        address?: string,
+    ): Promise<PublicKey | false> {
         await this.waitForInitialization();
 
         const targetAddress = address
@@ -1031,7 +1056,7 @@ export class SolanaClass
                 return false;
             }
         } catch (e) {
-            console.log(e);
+            console.error(e);
             return false;
         }
         return destination;

@@ -148,6 +148,9 @@ module.exports = {
         "require-await": "off",
         "@typescript-eslint/require-await": "warn",
 
+        // Often causing issues in CI.
+        "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+
         // TSLint rules
         // "@typescript-eslint/tslint/config": [
         //     "warn",

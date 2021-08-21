@@ -81,7 +81,6 @@ export class BurnAndRelease<
     public readonly _state: {
         targetConfirmations: number | undefined;
         logger: Logger;
-        gPubKey?: Buffer;
         queryTxResult?: BurnAndReleaseTransaction;
         renNetwork?: RenNetworkDetails;
         selector: string;
@@ -178,11 +177,6 @@ export class BurnAndRelease<
             ...overwriteParams,
             ...this.params,
         };
-
-        this._state.gPubKey = await this.renVM.selectPublicKey(
-            this._state.selector,
-            this.params.to.name,
-        );
 
         return this;
     };
@@ -304,7 +298,6 @@ export class BurnAndRelease<
             let current = 0,
                 target = 1;
             while (current < target) {
-                console.log("current, target", current, target);
                 try {
                     ({ current, target } =
                         await this.params.from.transactionConfidence(
@@ -400,17 +393,11 @@ export class BurnAndRelease<
             this._state.logger,
         );
 
-        const { gPubKey } = this._state;
-
-        if (!gPubKey) {
-            throw new Error(`BurnAndRelease object must be initialized.`);
-        }
-
         return toURLBase64(
             this.renVM.burnTxHash({
                 selector: this._state.selector,
                 gHash,
-                gPubKey,
+                gPubKey: Buffer.from([]),
                 nHash,
                 nonce: nonceBuffer,
                 output: {
@@ -490,17 +477,7 @@ export class BurnAndRelease<
                 const { transaction, amount, to, nonce } = this.burnDetails;
 
                 try {
-                    let returnedTxHash: string;
-
                     assertType<string>("string", { to });
-
-                    const { gPubKey } = this._state;
-
-                    if (!gPubKey) {
-                        throw new Error(
-                            `BurnAndRelease object must be initialized.`,
-                        );
-                    }
 
                     const payload = Buffer.from([]);
                     const pHash = generatePHash([], this._state.logger);
@@ -535,13 +512,13 @@ export class BurnAndRelease<
                         this._state.logger,
                     );
 
-                    returnedTxHash = toURLBase64(
+                    const returnedTxHash = toURLBase64(
                         await this.renVM.submitBurn({
                             selector: this._state.selector,
                             // tags,
 
                             gHash,
-                            gPubKey,
+                            gPubKey: Buffer.from([]),
                             nHash,
                             nonce: nonceBuffer,
                             output: {

@@ -351,12 +351,8 @@ export class LockAndMint<
         const depositID = this.params.from.transactionID(deposit.transaction);
         let depositObject = this.deposits.get(depositID);
 
-        // If the confidence has increased.
-        if (
-            !depositObject
-            // || (existingConfidenceRatio !== undefined &&
-            // confidenceRatio > existingConfidenceRatio)
-        ) {
+        // If the transaction hasn't been seen before.
+        if (!depositObject) {
             depositObject = new LockAndMintDeposit<
                 LockTransaction,
                 LockDeposit,
@@ -381,6 +377,8 @@ export class LockAndMint<
                 },
                 this.gatewayAddress,
             );
+
+            this.deposits = this.deposits.set(depositID, depositObject);
 
             await depositObject._initialize();
 
@@ -1269,7 +1267,7 @@ export class LockAndMintDeposit<
                             // of network issues causing problems.
                             txHash = await retryNTimes(
                                 async () => this._submitMintTransaction(),
-                                2,
+                                5,
                                 5 * SECONDS,
                             );
                             submitted = true;

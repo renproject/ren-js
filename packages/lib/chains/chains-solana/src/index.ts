@@ -13,7 +13,13 @@ import {
     BurnPayloadConfig,
     EventEmitterTyped,
 } from "@renproject/interfaces";
-import { Callable, doesntError, keccak256 } from "@renproject/utils";
+import {
+    Callable,
+    doesntError,
+    keccak256,
+    SECONDS,
+    sleep,
+} from "@renproject/utils";
 import {
     Connection,
     PublicKey,
@@ -37,7 +43,7 @@ import { BN } from "bn.js";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
 
-import { createInstructionWithEthAddress2 } from "./util";
+import { confirmTransaction, createInstructionWithEthAddress2 } from "./util";
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
 import {
     BurnLogLayout,
@@ -580,31 +586,22 @@ export class SolanaClass
         eventEmitter.emit("transactionHash", base58.encode(signature));
         this._logger.debug("signed with signature", signature);
 
-        const confirmOpts: ConfirmOptions = {
-            commitment: "finalized",
-        };
+        // Should be the same as `signature`.
+        const confirmedSignature = await sendAndConfirmRawTransaction(
+            this.provider.connection,
+            signed.serialize(),
+            { commitment: "confirmed" },
+        );
 
-        const sendPromise = new Promise<string>((resolve, reject) => {
-            (async () => {
-                setTimeout(() => {
-                    reject("no confirmations before timeout");
-                }, 20000);
+        // FIXME: this follows eth's events, generalize this
+        eventEmitter.emit("confirmation", 1, { status: 1 });
 
-                const r = await sendAndConfirmRawTransaction(
-                    this.provider.connection,
-                    signed.serialize(),
-                    confirmOpts,
-                );
-                // FIXME: this follows eth's events, generalize this
-                eventEmitter.emit("confirmation", 1, { status: 1 });
-                resolve(r);
-            })().catch(reject);
-        });
+        // Wait up to 20 seconds for the transaction to be finalized.
+        await confirmTransaction(this.provider.connection, confirmedSignature);
 
-        const r = await sendPromise;
-        this._logger.debug("sent and confirmed", r);
+        this._logger.debug("sent and confirmed", confirmedSignature);
 
-        return r;
+        return confirmedSignature;
     };
 
     findMintByDepositDetails = async (
@@ -1106,19 +1103,28 @@ export class SolanaClass
                 createTx,
             );
 
-            // Only wait until solana has seen the tx
+            // This was previously "confirmed" but that resulted in
+            // `getAssociatedTokenAccount` failing if called too quickly after
+            // `createAssociatedTokenAccount`.
             const confirmOpts: ConfirmOptions = {
-                commitment: "confirmed",
+                commitment: "finalized",
             };
 
             try {
-                const res = await sendAndConfirmRawTransaction(
+                // Should be the same as `signature`.
+                const confirmedSignature = await sendAndConfirmRawTransaction(
                     this.provider.connection,
                     signedTx.serialize(),
                     confirmOpts,
                 );
 
-                return res;
+                // Wait up to 20 seconds for the transaction to be finalized.
+                await confirmTransaction(
+                    this.provider.connection,
+                    confirmedSignature,
+                );
+
+                return confirmedSignature;
             } catch (e) {
                 console.log(e);
                 throw e;

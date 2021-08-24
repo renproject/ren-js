@@ -1,8 +1,10 @@
-import { assert } from "@renproject/utils";
+import { assert, SECONDS } from "@renproject/utils";
 import {
+    Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
     Secp256k1Program,
     TransactionInstruction,
+    TransactionSignature,
 } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
 
@@ -86,4 +88,22 @@ export const createInstructionWithEthAddress2 = (
         programId: Secp256k1Program.programId,
         data: instructionData,
     });
+};
+
+/**
+ * Wait for a transaction to be confirmed, and then wait up to 20 seconds for it
+ * to be finalized. Some wallets don't seem to return if you wait for a
+ * transaction to be finalized, so we return after 20 seconds.
+ */
+export const confirmTransaction = async (
+    connection: Connection,
+    signature: TransactionSignature,
+) => {
+    await connection.confirmTransaction(signature, "confirmed");
+
+    // Wait up to 20 seconds for the transaction to be finalized.
+    await Promise.race([
+        connection.confirmTransaction(signature, "finalized"),
+        20 * SECONDS,
+    ]);
 };

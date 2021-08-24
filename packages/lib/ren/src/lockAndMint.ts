@@ -510,17 +510,32 @@ export class LockAndMint<
             );
             this._state.gHash = gHash;
             this._state.gPubKey =
-                this._state.config.gPubKey ||
-                (await this.renVM.selectPublicKey(
-                    this._state.selector,
-                    this.renVM.version(this._state.selector) >= 2
-                        ? this.params.from.name
-                        : this.params.asset,
-                ));
+                this._state.config.gPubKey &&
+                this._state.config.gPubKey.length > 0
+                    ? this._state.config.gPubKey
+                    : await this.renVM.selectPublicKey(
+                          this._state.selector,
+                          this.renVM.version(this._state.selector) >= 2
+                              ? this.params.from.name
+                              : this.params.asset,
+                      );
+            this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
+
             if (!this._state.gPubKey || this._state.gPubKey.length === 0) {
                 throw new Error("Unable to fetch RenVM shard public key.");
             }
-            this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
+
+            if (!gHash || gHash.length === 0) {
+                throw new Error(
+                    "Invalid gateway hash being passed to gateway address generation.",
+                );
+            }
+
+            if (!this.params.asset || this.params.asset.length === 0) {
+                throw new Error(
+                    "Invalid asset being passed to gateway address generation.",
+                );
+            }
 
             const gatewayAddress = await this.params.from.getGatewayAddress(
                 this.params.asset,

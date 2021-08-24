@@ -517,6 +517,9 @@ export class LockAndMint<
                         ? this.params.from.name
                         : this.params.asset,
                 ));
+            if (!this._state.gPubKey || this._state.gPubKey.length === 0) {
+                throw new Error("Unable to fetch RenVM shard public key.");
+            }
             this._state.logger.debug("gPubKey:", Ox(this._state.gPubKey));
 
             const gatewayAddress = await this.params.from.getGatewayAddress(

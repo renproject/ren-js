@@ -23,6 +23,7 @@ import {
     utilsWithChainNetwork,
     isDefined,
     doesntError,
+    retryNTimes,
 } from "@renproject/utils";
 import { blake2b } from "blakejs";
 import CID from "cids";
@@ -30,7 +31,7 @@ import elliptic from "elliptic";
 import FilecoinClient from "@glif/filecoin-rpc-client";
 
 import { FilNetwork as FilNetworkImport, FilTransaction } from "./deposit";
-import { fetchDeposits, fetchMessage } from "./api/lotus";
+import { fetchDeposits, fetchMessage, getHeight } from "./api/lotus";
 import { Filfox } from "./api/explorers/filfox";
 
 export type FilNetwork = FilNetworkImport;
@@ -189,7 +190,7 @@ export class FilecoinClass
         this.client = new FilecoinClient({
             apiAddress: isDefined(this.clientOptions.apiAddress)
                 ? this.clientOptions.apiAddress
-                : `https://lotus-cors-proxy.herokuapp.com/${this.chainNetwork}`,
+                : `https://multichain-web-proxy.herokuapp.com/${this.chainNetwork}`,
             token: this.clientOptions.token,
         });
 
@@ -241,21 +242,40 @@ export class FilecoinClass
         }
         this.assertAssetIsSupported(asset);
 
-        // For the first time `getDeposits` is called, fetch transactions from
-        // explorer API. (mainnet only)
-        if (this.filfox && (!progress || progress === 0)) {
+        let height: number = 0;
+        try {
+            height = await getHeight(this.client);
+        } catch (error) {
+            console.error(error);
+        }
+
+        const logLimit = 100;
+        const fromBlock = height - logLimit;
+        const logsToCatchUp = height - (progress || 0);
+
+        // If there's too many logs to catch-up on, fetch the transactions from
+        // Filfox (mainnet only)
+        if (this.filfox && logsToCatchUp > logLimit) {
             try {
                 const size = 100;
                 let page = 0;
 
                 while (true) {
-                    const { deposits, totalCount } =
-                        await this.filfox.fetchDeposits(
-                            address.address,
-                            address.params,
-                            page,
-                            size,
-                        );
+                    const { deposits, totalCount } = await retryNTimes(
+                        async () => {
+                            if (!this.filfox) {
+                                throw new Error(`Filfox not defined.`);
+                            }
+                            return this.filfox.fetchDeposits(
+                                address.address,
+                                address.params,
+                                page,
+                                size,
+                            );
+                        },
+                        5,
+                        5 * SECONDS,
+                    );
 
                     await Promise.all(
                         (deposits || []).map(async (tx) =>
@@ -274,22 +294,24 @@ export class FilecoinClass
             } catch (error) {
                 // Ignore error.
             }
+        } else {
+            const txs: FilTransaction[] = await fetchDeposits(
+                this.client,
+                address.address,
+                address.params,
+                this.chainNetwork,
+                fromBlock,
+                height,
+            );
+
+            await Promise.all(
+                (txs || []).map(async (tx) =>
+                    onDeposit(transactionToDeposit(tx)),
+                ),
+            );
         }
 
-        let txs: FilTransaction[];
-        ({ txs, progress } = await fetchDeposits(
-            this.client,
-            address.address,
-            address.params,
-            this.chainNetwork,
-            progress || 0,
-        ));
-
-        await Promise.all(
-            (txs || []).map(async (tx) => onDeposit(transactionToDeposit(tx))),
-        );
-
-        return progress;
+        return height;
     };
 
     /**
@@ -426,7 +448,7 @@ export class FilecoinClass
                 try {
                     return await this.filfox.fetchMessage(cid);
                 } catch (errorInner) {
-                    console.error("!!!", errorInner);
+                    console.error(errorInner);
                 }
             }
             throw error;

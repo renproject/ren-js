@@ -60,6 +60,14 @@ export class SolanaConnector
     };
 
     async activate() {
+        // await Promise.all([
+        //     new Promise((resolve, reject) => {
+        //         this.wallet.on("connect", resolve);
+        //         this.wallet.on("disconnect", reject);
+        //     }),
+        //     this.wallet.connect(),
+        // ]);
+
         this.wallet.on("connect", this.handleUpdate);
         // when disconnecting inside an external window,
         // you need to manually bind the function

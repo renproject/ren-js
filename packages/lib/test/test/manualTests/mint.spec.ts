@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 import * as Chains from "@renproject/chains";
-import { Ethereum, Goerli } from "@renproject/chains-ethereum";
+import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
 
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
@@ -24,37 +24,42 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 import { renGoerli } from "@renproject/chains";
+import { renTestnet } from "@renproject/chains-solana/build/main/networks";
+import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
 
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
-// const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
+const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.only("mint to contract", async function () {
+    longIt("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
         const from = Chains.Terra();
         const asset = "LUNA"; // from.asset;
 
-        // const toChain = new Chains.Solana(
-        //     makeTestProvider(renDevnet, testPK),
-        //     renDevnet,
-        // );
+        const toChain = new Chains.Solana(
+            makeTestProvider(renTestnet, testPK),
+            renTestnet,
+        );
 
-        // if ((toChain as any).createAssociatedTokenAccount) {
-        //     await (toChain as any).createAssociatedTokenAccount(asset);
-        // }
+        console.log(toChain.provider.wallet.publicKey.toString());
 
-        // const to = toChain;
+        if ((toChain as any).createAssociatedTokenAccount) {
+            console.log("Calling createAssociatedTokenAccount...");
+            await (toChain as any).createAssociatedTokenAccount(asset);
+        }
 
-        const ToClass = Goerli;
-        const ethNetwork = renGoerli;
+        const to = toChain;
+
+        // const ToClass = Arbitrum;
+        // const ethNetwork = Arbitrum.configMap[network];
 
         const account = new CryptoAccount(Buffer.from(PRIVATE_KEY, "hex"), {
             network: "testnet",
-            apiAddress: "https://lotus-cors-proxy.herokuapp.com/",
+            apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
             terra: {
                 URL: "https://tequila-lcd.terra.dev",
             },
@@ -63,41 +68,41 @@ describe("Refactor: mint", () => {
         const logLevel: LogLevel = LogLevel.Trace;
         const renJS = new RenJS(new RenVMProvider(network), { logLevel });
 
-        const infuraURL = ethNetwork.publicProvider({
-            infura: process.env.INFURA_KEY,
-        });
-        const hdWalletProvider = new HDWalletProvider({
-            mnemonic: MNEMONIC || "",
-            providerOrUrl: infuraURL,
-            addressIndex: 0,
-            numberOfAddresses: 10,
-        });
+        // const infuraURL = ethNetwork.publicProvider({
+        //     infura: process.env.INFURA_KEY,
+        // });
+        // const hdWalletProvider = new HDWalletProvider({
+        //     mnemonic: MNEMONIC || "",
+        //     providerOrUrl: infuraURL,
+        //     addressIndex: 0,
+        //     numberOfAddresses: 10,
+        // });
 
-        const provider = new ethers.providers.Web3Provider(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            hdWalletProvider as any,
-        );
-        const signer = provider.getSigner();
+        // const provider = new ethers.providers.Web3Provider(
+        //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        //     hdWalletProvider as any,
+        // );
+        // const signer = provider.getSigner();
 
-        const ethAddress = (await provider.listAccounts())[0];
-        const balance = await provider.getBalance(ethAddress);
-        const ethBalance = ethers.utils.formatEther(balance);
-        console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
+        // const ethAddress = (await provider.listAccounts())[0];
+        // const balance = await provider.getBalance(ethAddress);
+        // const ethBalance = ethers.utils.formatEther(balance);
+        // console.log(`Mint address: ${ethAddress}, balance: ${ethBalance}`);
         // const to = ToClass(provider, ethNetwork).Account({
         //     address: ethAddress,
         // });
+        // ToClass({ provider, signer }, ethNetwork).Account(
+        //     {
+        //         address: ethAddress,
+        //     }
+        // {
+        //     gasLimit: 2000000,
+        // },
 
         const params = {
             asset,
             from,
-            to: ToClass({ provider, signer }, ethNetwork).Account(
-                {
-                    address: ethAddress,
-                },
-                // {
-                //     gasLimit: 2000000,
-                // },
-            ),
+            to,
         };
 
         const assetDecimals = params.from.assetDecimals(asset);
@@ -183,9 +188,10 @@ describe("Refactor: mint", () => {
 
                 RenJS.defaultDepositHandler(deposit)
                     .then(resolve)
-                    .catch((error) =>
-                        deposit._state.logger.error(red("error:"), error),
-                    );
+                    .catch((error) => {
+                        deposit._state.logger.error(red("error:"), error);
+                        console.error(error);
+                    });
             });
 
             sleep(30 * SECONDS)
@@ -215,11 +221,11 @@ describe("Refactor: mint", () => {
                         ) {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             address = (
-                                lockAndMint.gatewayAddress as Chains.FilAddress
+                                lockAndMint.gatewayAddress as unknown as Chains.FilAddress
                             ).address;
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             options.params = (
-                                lockAndMint.gatewayAddress as Chains.FilAddress
+                                lockAndMint.gatewayAddress as unknown as Chains.FilAddress
                             ).params;
                             // options.memo = (lockAndMint.gatewayAddress as TerraAddress);
                         } else {

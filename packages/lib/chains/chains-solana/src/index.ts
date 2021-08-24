@@ -66,7 +66,8 @@ export interface SolanaProvider {
 }
 
 interface SolOptions {
-    logger: Logger;
+    logger?: Logger;
+    useEmptyPayload?: boolean;
 }
 
 export class SolanaClass
@@ -78,6 +79,7 @@ export class SolanaClass
 
     public renNetworkDetails: SolNetworkConfig;
     private _logger: Logger = new SimpleLogger();
+    private _useEmptyPayload: boolean = false;
 
     public burnPayloadConfig: BurnPayloadConfig = {
         bytes: false,
@@ -106,8 +108,11 @@ export class SolanaClass
         } else {
             this.renNetworkDetails = renMainnet;
         }
-        if (options) {
+        if (options && options.logger) {
             this._logger = options.logger;
+        }
+        if (options && options.useEmptyPayload) {
+            this._useEmptyPayload = true;
         }
         this.initialize(this.renNetworkDetails.name).catch(console.error);
     }
@@ -742,6 +747,7 @@ export class SolanaClass
                             name: "recipient",
                             type: "string",
                             value: recipient.toString(),
+                            notInPayload: this._useEmptyPayload,
                         },
                     ],
                 },

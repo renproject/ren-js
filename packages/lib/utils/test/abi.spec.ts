@@ -13,6 +13,7 @@ describe("abi.ts", () => {
                     { type: "address", name: "_spender" },
                     { type: "uint256", name: "_value" },
                 ],
+                stateMutability: "nonpayable",
                 outputs: [],
             },
         ];

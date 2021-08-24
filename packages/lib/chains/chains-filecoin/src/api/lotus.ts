@@ -5,16 +5,19 @@ import {
     FilTransaction,
 } from "@renproject/chains-filecoin/src/deposit";
 
+export const getHeight = async (client: FilecoinClient): Promise<number> => {
+    const chainHead = await client.request("ChainHead");
+    return chainHead.Height;
+};
+
 export const fetchDeposits = async (
     client: FilecoinClient,
     address: string,
     params: string | undefined | null,
     network: FilNetwork,
-    progress: number,
-): Promise<{ txs: FilTransaction[]; progress: number }> => {
-    const chainHead = await client.request("ChainHead");
-    const height: number = chainHead.Height;
-
+    fromHeight: number,
+    latestHeight: number,
+): Promise<FilTransaction[]> => {
     const latestTXs: Array<{ "/": string }> = await client.request(
         "StateListMessages",
         {
@@ -29,17 +32,14 @@ export const fetchDeposits = async (
             Params: params,
         },
         [],
-        progress === 0 ? height - 100 : progress,
+        fromHeight,
     );
 
-    return {
-        txs: await Promise.all(
-            (latestTXs || []).map(async (cid) =>
-                fetchMessage(client, cid["/"], network, height),
-            ),
+    return await Promise.all(
+        (latestTXs || []).map(async (cid) =>
+            fetchMessage(client, cid["/"], network, latestHeight),
         ),
-        progress: height + 1,
-    };
+    );
 };
 
 export const fetchMessage = async (

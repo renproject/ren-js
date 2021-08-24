@@ -426,7 +426,7 @@ export class FilecoinClass
                 try {
                     return await this.filfox.fetchMessage(cid);
                 } catch (errorInner) {
-                    console.error("!!!", errorInner);
+                    console.error(errorInner);
                 }
             }
             throw error;

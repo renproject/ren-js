@@ -450,12 +450,15 @@ export class SolanaClass
             program,
         );
 
-        let recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
-        let recipientWalletAddress =
-            contractCalls[0] &&
-            contractCalls[0].contractParams &&
-            contractCalls[0].contractParams[0]?.value;
-        await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
+        const recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
+
+        // To get to this point, the token account should already exist.
+        // const recipientWalletAddress =
+        //     contractCalls[0] &&
+        //     contractCalls[0].contractParams &&
+        //     contractCalls[0].contractParams[0] &&
+        //     contractCalls[0].contractParams[0].value;
+        // await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
 
         const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
             Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
@@ -464,7 +467,6 @@ export class SolanaClass
             recipientTokenAccount.toString(),
             Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
         );
-        debugger;
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
@@ -573,11 +575,22 @@ export class SolanaClass
             commitment: "finalized",
         };
 
-        const r = await sendAndConfirmRawTransaction(
-            this.provider.connection,
-            signed.serialize(),
-            confirmOpts,
-        );
+        const sendPromise = new Promise<string>((resolve, reject) => {
+            (async () => {
+                setTimeout(() => {
+                    reject("no confirmations before timeout");
+                }, 20000);
+
+                const r = await sendAndConfirmRawTransaction(
+                    this.provider.connection,
+                    signed.serialize(),
+                    confirmOpts,
+                );
+                // FIXME: this follows eth's events, generalize this
+                eventEmitter.emit("confirmation", 1, { status: 1 });
+                resolve(r);
+            })().catch(reject);
+        });
 
         this._logger.debug("sent and confirmed", r);
         eventEmitter.emit("confirmation", 1, { status: 1 });
@@ -687,20 +700,14 @@ export class SolanaClass
 
         const params = this._getParams && this._getParams();
 
-        const contract = this.resolveTokenGatewayContract(asset);
-        const program = new PublicKey(contract);
-
-        // TODO: check that the gpubkey matches
-        const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from(GatewayStateKey))],
-            program,
-        );
-
-        const gatewayInfo = await this.provider.connection.getAccountInfo(
-            gatewayAccountId[0],
-        );
-
-        if (!gatewayInfo) throw new Error("incorrect gateway program address");
+        if (
+            params &&
+            params.contractCalls &&
+            params.contractCalls.length > 0 &&
+            params.contractCalls[0].contractFn === "mint"
+        ) {
+            return params;
+        }
 
         let recipient = this.provider.wallet.publicKey;
 
@@ -766,6 +773,13 @@ export class SolanaClass
                 ],
             };
             this._logger.debug("solana params:", params);
+            return params;
+        };
+        return this;
+    }
+
+    Params(params: OverwritableBurnAndReleaseParams) {
+        this._getParams = () => {
             return params;
         };
         return this;

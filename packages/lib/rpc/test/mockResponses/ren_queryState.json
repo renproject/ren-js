@@ -1,0 +1,127 @@
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "state": {
+            "Bitcoin": {
+                "address": "19iqYbeATe4RxghQZJnYVFU4mjUUu76EA6",
+                "dust": "546",
+                "gasCap": "20",
+                "gasLimit": "400",
+                "gasPrice": "20",
+                "latestChainHash": "",
+                "latestChainHeight": "697467",
+                "minimumAmount": "547",
+                "output": {
+                    "outpoint": {
+                        "hash": "9ORLDmvrtW8ZENxkXrrYmRbUaqUZiQkJEispSr1SdmA",
+                        "index": "0"
+                    },
+                    "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                    "value": "1794622211980"
+                },
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            },
+            "BitcoinCash": {
+                "address": "qp0649tku3dvhjtx9d4t7v3j9xm5322ft5qqtl36wz",
+                "dust": "546",
+                "gasCap": "2",
+                "gasLimit": "400",
+                "gasPrice": "2",
+                "latestChainHash": "",
+                "latestChainHeight": "702217",
+                "minimumAmount": "547",
+                "output": {
+                    "outpoint": {
+                        "hash": "iUKcROAhDi14o1HZRwAp1dikQMcxG_r5lVthmIv-OZs",
+                        "index": "1"
+                    },
+                    "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                    "value": "68336137270"
+                },
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            },
+            "DigiByte": {
+                "address": "DDrw5raom3xiVgt1Htn731dfesCnHVnsY7",
+                "dust": "546",
+                "gasCap": "196",
+                "gasLimit": "400",
+                "gasPrice": "196",
+                "latestChainHash": "",
+                "latestChainHeight": "13527107",
+                "minimumAmount": "547",
+                "output": {
+                    "outpoint": {
+                        "hash": "lgZpLV4WJB_3YrK8ZSelhjl1rPjYNV0haeanW6BQy0s",
+                        "index": "1"
+                    },
+                    "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                    "value": "2343374110508592"
+                },
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            },
+            "Dogecoin": {
+                "address": "DDrw5raom3xiVgt1Htn731dfesCnHVnsY7",
+                "dust": "100000000",
+                "gasCap": "1434622",
+                "gasLimit": "400",
+                "gasPrice": "1434622",
+                "latestChainHash": "",
+                "latestChainHeight": "3868629",
+                "minimumAmount": "100000001",
+                "output": {
+                    "outpoint": {
+                        "hash": "novxdFijVn2R2d01YserFK0qn_SZwBJANRNhQh8Je4E",
+                        "index": "1"
+                    },
+                    "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                    "value": "2639911398744937"
+                },
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            },
+            "Filecoin": {
+                "address": "f1xsgdh5pocq6piq5j5usjg4lntojvzcckwfwhf4q",
+                "gasCap": "5549435712",
+                "gasLimit": "2200000",
+                "gasPrice": "200558",
+                "gnonces": [],
+                "latestChainHash": "",
+                "latestChainHeight": "1051275",
+                "minimumAmount": "1",
+                "nonce": "84",
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            },
+            "Terra": {
+                "address": "terra1t74f2ahytt9uje3td2lnyv3fkay2jj2akj7ytv",
+                "gasCap": "2",
+                "gasLimit": "150000",
+                "gasPrice": "2",
+                "gnonces": [],
+                "latestChainHash": "",
+                "latestChainHeight": "4265910",
+                "minimumAmount": "1",
+                "nonce": "241",
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            },
+            "Zcash": {
+                "address": "t1SbSYw4JRxr2ZKkJVjbfd4Zz2PfZmjp4kh",
+                "dust": "546",
+                "gasCap": "200",
+                "gasLimit": "400",
+                "gasPrice": "200",
+                "latestChainHash": "",
+                "latestChainHeight": "1366725",
+                "minimumAmount": "547",
+                "output": {
+                    "outpoint": {
+                        "hash": "fIyhdPmifuMQ6jwvkcwpY_qTWylS6qfBBUI8HBOhId8",
+                        "index": "0"
+                    },
+                    "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                    "value": "1164537125776"
+                },
+                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn"
+            }
+        }
+    }
+}

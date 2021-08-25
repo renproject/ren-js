@@ -5,18 +5,17 @@ import { RenVMProvider } from "../src/v1";
 
 chai.should();
 
-describe("RenVMProvider", () => {
+describe("RenVMProvider v1", () => {
     it("selectPublicKey", async () => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const response: unknown = require("./selectPublicKey.json");
+        const response: unknown = require("./mockResponses/selectPublicKey.json");
 
         const renVMProvider = new RenVMProvider("testnet", {
             sendMessage: () => response,
         } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
         Ox(
-            hash160(
-                await renVMProvider.selectPublicKey("BTC/toEthereum", "BTC"),
-            ),
+            hash160(await renVMProvider.selectPublicKey("", "BTC")),
         ).should.equal("0x90081b2120fcd9230001f4026c207bf2633ede35");
     });
 });

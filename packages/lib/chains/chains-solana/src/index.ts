@@ -43,7 +43,7 @@ import { BN } from "bn.js";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
 
-import { confirmTransaction, createInstructionWithEthAddress2 } from "./util";
+import { finalizeTransaction, createInstructionWithEthAddress2 } from "./util";
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
 import {
     BurnLogLayout,
@@ -597,7 +597,7 @@ export class SolanaClass
         eventEmitter.emit("confirmation", 1, { status: 1 });
 
         // Wait up to 20 seconds for the transaction to be finalized.
-        await confirmTransaction(this.provider.connection, confirmedSignature);
+        await finalizeTransaction(this.provider.connection, confirmedSignature);
 
         this._logger.debug("sent and confirmed", confirmedSignature);
 
@@ -1009,10 +1009,10 @@ export class SolanaClass
         }
 
         const confirmOpts: ConfirmOptions = {
-            commitment: "finalized",
+            commitment: "confirmed",
         };
 
-        const res = await sendAndConfirmRawTransaction(
+        const confirmedSignature = await sendAndConfirmRawTransaction(
             this.provider.connection,
             signed.serialize(),
             confirmOpts,
@@ -1025,8 +1025,11 @@ export class SolanaClass
         // FIXME: this is not great, because it will be stuck in state where it is expecting a signature
         eventEmitter.emit("transactionHash", base58.encode(signed.signature));
 
+        // Wait up to 20 seconds for the transaction to be finalized.
+        await finalizeTransaction(this.provider.connection, confirmedSignature);
+
         const x: BurnDetails<SolTransaction> = {
-            transaction: res,
+            transaction: confirmedSignature,
             amount: new BigNumber(amount),
             to: recipient.toString(),
             nonce: new BigNumber(nonceBN.toString()),
@@ -1107,7 +1110,7 @@ export class SolanaClass
             // `getAssociatedTokenAccount` failing if called too quickly after
             // `createAssociatedTokenAccount`.
             const confirmOpts: ConfirmOptions = {
-                commitment: "finalized",
+                commitment: "confirmed",
             };
 
             try {
@@ -1119,7 +1122,7 @@ export class SolanaClass
                 );
 
                 // Wait up to 20 seconds for the transaction to be finalized.
-                await confirmTransaction(
+                await finalizeTransaction(
                     this.provider.connection,
                     confirmedSignature,
                 );

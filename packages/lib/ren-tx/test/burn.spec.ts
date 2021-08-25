@@ -37,7 +37,7 @@ describe("BurnMachine", () => {
         const fromChainMap = {
             testSourceChain: () => {
                 const chain = buildMockMintChain().mockMintChain;
-                chain.submitBurn = async (_p, _d, emitter) => {
+                chain.submitBurn = async (_p, emitter) => {
                     setTimeout(() => {
                         emitter.emit(
                             "transactionHash",
@@ -46,7 +46,8 @@ describe("BurnMachine", () => {
                     }, 100);
 
                     setInterval(() => {
-                        emitter.emit("confirmation", 6);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        emitter.emit("confirmation" as any, 6);
                     }, 100);
 
                     return new Promise((resolve) => {

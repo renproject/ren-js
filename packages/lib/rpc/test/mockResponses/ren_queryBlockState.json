@@ -1,0 +1,2134 @@
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "state": {
+            "t": {
+                "struct": [
+                    {
+                        "BCH": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "outpoint": {
+                                                                    "struct": [
+                                                                        {
+                                                                            "hash": "bytes"
+                                                                        },
+                                                                        {
+                                                                            "index": "u32"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "value": "u256"
+                                                            },
+                                                            {
+                                                                "pubKeyScript": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "BTC": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "outpoint": {
+                                                                    "struct": [
+                                                                        {
+                                                                            "hash": "bytes"
+                                                                        },
+                                                                        {
+                                                                            "index": "u32"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "value": "u256"
+                                                            },
+                                                            {
+                                                                "pubKeyScript": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "DGB": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "outpoint": {
+                                                                    "struct": [
+                                                                        {
+                                                                            "hash": "bytes"
+                                                                        },
+                                                                        {
+                                                                            "index": "u32"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "value": "u256"
+                                                            },
+                                                            {
+                                                                "pubKeyScript": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "DOGE": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "outpoint": {
+                                                                    "struct": [
+                                                                        {
+                                                                            "hash": "bytes"
+                                                                        },
+                                                                        {
+                                                                            "index": "u32"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "value": "u256"
+                                                            },
+                                                            {
+                                                                "pubKeyScript": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "FIL": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "nonce": "u256"
+                                                            },
+                                                            {
+                                                                "gnonces": {
+                                                                    "list": {
+                                                                        "struct": [
+                                                                            {
+                                                                                "address": "string"
+                                                                            },
+                                                                            {
+                                                                                "nonce": "u256"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "LUNA": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "nonce": "u256"
+                                                            },
+                                                            {
+                                                                "gnonces": {
+                                                                    "list": {
+                                                                        "struct": [
+                                                                            {
+                                                                                "address": "string"
+                                                                            },
+                                                                            {
+                                                                                "nonce": "u256"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "System": {
+                            "struct": [
+                                {
+                                    "epoch": {
+                                        "struct": [
+                                            {
+                                                "hash": "bytes32"
+                                            },
+                                            {
+                                                "number": "u64"
+                                            },
+                                            {
+                                                "numNodes": "u64"
+                                            },
+                                            {
+                                                "timestamp": "u64"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "nodes": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "id": "bytes32"
+                                                },
+                                                {
+                                                    "enteredAt": "u64"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "shards": {
+                                        "struct": [
+                                            {
+                                                "primary": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "shard": "bytes32"
+                                                            },
+                                                            {
+                                                                "pubKey": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "secondary": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "shard": "bytes32"
+                                                            },
+                                                            {
+                                                                "pubKey": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "tertiary": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "shard": "bytes32"
+                                                            },
+                                                            {
+                                                                "pubKey": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "signatories": {
+                                        "list": "bytes32"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "ZEC": {
+                            "struct": [
+                                {
+                                    "latestHeight": "u256"
+                                },
+                                {
+                                    "gasCap": "u256"
+                                },
+                                {
+                                    "gasLimit": "u256"
+                                },
+                                {
+                                    "gasPrice": "u256"
+                                },
+                                {
+                                    "minimumAmount": "u256"
+                                },
+                                {
+                                    "dustAmount": "u256"
+                                },
+                                {
+                                    "shards": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "shard": "bytes32"
+                                                },
+                                                {
+                                                    "pubKey": "bytes"
+                                                },
+                                                {
+                                                    "queue": {
+                                                        "list": {
+                                                            "struct": [
+                                                                {
+                                                                    "hash": "bytes32"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "state": {
+                                                        "struct": [
+                                                            {
+                                                                "outpoint": {
+                                                                    "struct": [
+                                                                        {
+                                                                            "hash": "bytes"
+                                                                        },
+                                                                        {
+                                                                            "index": "u32"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "value": "u256"
+                                                            },
+                                                            {
+                                                                "pubKeyScript": "bytes"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "minted": {
+                                        "list": {
+                                            "struct": [
+                                                {
+                                                    "chain": "string"
+                                                },
+                                                {
+                                                    "amount": "u256"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "fees": {
+                                        "struct": [
+                                            {
+                                                "reserved": {
+                                                    "struct": [
+                                                        {
+                                                            "fund": "u256"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "unassigned": "u256"
+                                            },
+                                            {
+                                                "unclaimed": "u256"
+                                            },
+                                            {
+                                                "epochs": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "epoch": "u64"
+                                                            },
+                                                            {
+                                                                "amount": "u256"
+                                                            },
+                                                            {
+                                                                "numNodes": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "nodes": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "node": "bytes32"
+                                                            },
+                                                            {
+                                                                "amountClaimed": "u256"
+                                                            },
+                                                            {
+                                                                "nonce": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "chains": {
+                                                    "list": {
+                                                        "struct": [
+                                                            {
+                                                                "chain": "string"
+                                                            },
+                                                            {
+                                                                "mintFee": "u64"
+                                                            },
+                                                            {
+                                                                "burnFee": "u64"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "v": {
+                "BCH": {
+                    "dustAmount": "546",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "55871429",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "44453900",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "21865167",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "30530",
+                                "node": "DGpSSZp8vXFd46fXVlVKms4UNkkAAAAAAAAAAAAAAAA",
+                                "nonce": "0"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "1678676"
+                        },
+                        "unassigned": "24005936",
+                        "unclaimed": "67997743"
+                    },
+                    "gasCap": "2",
+                    "gasLimit": "400",
+                    "gasPrice": "2",
+                    "latestHeight": "702217",
+                    "minimumAmount": "547",
+                    "minted": [
+                        {
+                            "amount": "4991701",
+                            "chain": "Arbitrum"
+                        },
+                        {
+                            "amount": "10692049",
+                            "chain": "Avalanche"
+                        },
+                        {
+                            "amount": "228814435",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "57676517267",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "9920358529",
+                            "chain": "Fantom"
+                        },
+                        {
+                            "amount": "47242783",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "21008541",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "outpoint": {
+                                    "hash": "iUKcROAhDi14o1HZRwAp1dikQMcxG_r5lVthmIv-OZs",
+                                    "index": "1"
+                                },
+                                "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                                "value": "68336137270"
+                            }
+                        }
+                    ]
+                },
+                "BTC": {
+                    "dustAmount": "546",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "2307547827",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "2044321576",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "1507751662",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "2326260",
+                                "node": "ABpZYZ3a3ttDr2pGCuA-NOmuU-oAAAAAAAAAAAAAAAA",
+                                "nonce": "1"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "115756103"
+                        },
+                        "unassigned": "1708236785",
+                        "unclaimed": "3667829341"
+                    },
+                    "gasCap": "20",
+                    "gasLimit": "400",
+                    "gasPrice": "20",
+                    "latestHeight": "697467",
+                    "minimumAmount": "547",
+                    "minted": [
+                        {
+                            "amount": "73900986",
+                            "chain": "Avalanche"
+                        },
+                        {
+                            "amount": "40119168046",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "1420886517641",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "39629163993",
+                            "chain": "Fantom"
+                        },
+                        {
+                            "amount": "143799369950",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "138668006101",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "outpoint": {
+                                    "hash": "9ORLDmvrtW8ZENxkXrrYmRbUaqUZiQkJEispSr1SdmA",
+                                    "index": "0"
+                                },
+                                "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                                "value": "1794622211980"
+                            }
+                        }
+                    ]
+                },
+                "DGB": {
+                    "dustAmount": "546",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "1546370262711",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "1482879811219",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "1293092501216",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "2222517105",
+                                "node": "HEIEBsbV-cUxEsNBHh2b6sCpX0gAAAAAAAAAAAAAAAA",
+                                "nonce": "0"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "99275864473"
+                        },
+                        "unassigned": "1392368365690",
+                        "unclaimed": "2875248176908"
+                    },
+                    "gasCap": "196",
+                    "gasLimit": "400",
+                    "gasPrice": "196",
+                    "latestHeight": "13527107",
+                    "minimumAmount": "547",
+                    "minted": [
+                        {
+                            "amount": "74820064956",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "1705038645807964",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "175339488",
+                            "chain": "Fantom"
+                        },
+                        {
+                            "amount": "634525892025966",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "19703030",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "outpoint": {
+                                    "hash": "lgZpLV4WJB_3YrK8ZSelhjl1rPjYNV0haeanW6BQy0s",
+                                    "index": "1"
+                                },
+                                "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                                "value": "2343374110508592"
+                            }
+                        }
+                    ]
+                },
+                "DOGE": {
+                    "dustAmount": "100000000",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "3082025282716",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "2247869520351",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "1817358960331",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "2855542287",
+                                "node": "ABpZYZ3a3ttDr2pGCuA-NOmuU-oAAAAAAAAAAAAAAAA",
+                                "nonce": "0"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "139525889815"
+                        },
+                        "unassigned": "1995054693347",
+                        "unclaimed": "4204754370497"
+                    },
+                    "gasCap": "1434622",
+                    "gasLimit": "400",
+                    "gasPrice": "1434622",
+                    "latestHeight": "3868629",
+                    "minimumAmount": "100000001",
+                    "minted": [
+                        {
+                            "amount": "566387023204",
+                            "chain": "Avalanche"
+                        },
+                        {
+                            "amount": "2920814938819",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "2048208220988216",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "40262123243",
+                            "chain": "Fantom"
+                        },
+                        {
+                            "amount": "483922664016023",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "97710891243517",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "outpoint": {
+                                    "hash": "novxdFijVn2R2d01YserFK0qn_SZwBJANRNhQh8Je4E",
+                                    "index": "1"
+                                },
+                                "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                                "value": "2639911398744937"
+                            }
+                        }
+                    ]
+                },
+                "FIL": {
+                    "dustAmount": "0",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "74520235548826814854",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "55694475119430122723",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "57886928376332393678",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "69744095281512109",
+                                "node": "ABpZYZ3a3ttDr2pGCuA-NOmuU-oAAAAAAAAAAAAAAAA",
+                                "nonce": "0"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "4444210178994831128"
+                        },
+                        "unassigned": "62343222481241302607",
+                        "unclaimed": "118025613674757347529"
+                    },
+                    "gasCap": "5549435712",
+                    "gasLimit": "2200000",
+                    "gasPrice": "200558",
+                    "latestHeight": "1051275",
+                    "minimumAmount": "1",
+                    "minted": [
+                        {
+                            "amount": "989720035141885000",
+                            "chain": "Arbitrum"
+                        },
+                        {
+                            "amount": "905182617475902357",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "107400571683395791744292",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "9896683471122700",
+                            "chain": "Fantom"
+                        },
+                        {
+                            "amount": "7732577812003627400",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "31799763058258200",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "gnonces": [
+                                    {
+                                        "address": "f126cod5o3vequakjzwefkc27pu4c55cssy3jpz4q",
+                                        "nonce": "1"
+                                    }
+                                ],
+                                "nonce": "84"
+                            }
+                        }
+                    ]
+                },
+                "LUNA": {
+                    "dustAmount": "0",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "12591",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "225334378",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "571368416",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "406875",
+                                "node": "R-7y4QDp2XvgosUmu_uGwYHi880AAAAAAAAAAAAAAAA",
+                                "nonce": "0"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "43866230"
+                        },
+                        "unassigned": "633027836",
+                        "unclaimed": "840569024"
+                    },
+                    "gasCap": "2",
+                    "gasLimit": "150000",
+                    "gasPrice": "2",
+                    "latestHeight": "4265910",
+                    "minimumAmount": "1",
+                    "minted": [
+                        {
+                            "amount": "4066870",
+                            "chain": "Arbitrum"
+                        },
+                        {
+                            "amount": "9376394",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "7430192",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "0",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "281240604794",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "gnonces": [
+                                    {
+                                        "address": "terra107drtjkz99m427jr3yg0s323x7pck6z0quj043",
+                                        "nonce": "1"
+                                    }
+                                ],
+                                "nonce": "241"
+                            }
+                        }
+                    ]
+                },
+                "System": {
+                    "epoch": {
+                        "hash": "xVzzA6T3wfbLjf9KwWsxbX9quaS4EIdIJmwEE9G_9NI",
+                        "numNodes": "1940",
+                        "number": "5",
+                        "timestamp": "1629762371"
+                    },
+                    "nodes": [
+                        {
+                            "enteredAt": "1",
+                            "id": "ABpZYZ3a3ttDr2pGCuA-NOmuU-oAAAAAAAAAAAAAAAA"
+                        }
+                    ],
+                    "shards": {
+                        "primary": [
+                            {
+                                "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                                "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M"
+                            }
+                        ],
+                        "secondary": [],
+                        "tertiary": []
+                    },
+                    "signatories": [
+                        "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M"
+                    ]
+                },
+                "ZEC": {
+                    "dustAmount": "546",
+                    "fees": {
+                        "chains": [
+                            {
+                                "burnFee": "15",
+                                "chain": "Arbitrum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Avalanche",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "BinanceSmartChain",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Ethereum",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Fantom",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Polygon",
+                                "mintFee": "15"
+                            },
+                            {
+                                "burnFee": "15",
+                                "chain": "Solana",
+                                "mintFee": "15"
+                            }
+                        ],
+                        "epochs": [
+                            {
+                                "amount": "0",
+                                "epoch": "0",
+                                "numNodes": "0"
+                            },
+                            {
+                                "amount": "0",
+                                "epoch": "1",
+                                "numNodes": "1742"
+                            },
+                            {
+                                "amount": "1453481849",
+                                "epoch": "2",
+                                "numNodes": "1830"
+                            },
+                            {
+                                "amount": "1033681283",
+                                "epoch": "3",
+                                "numNodes": "1919"
+                            },
+                            {
+                                "amount": "653368707",
+                                "epoch": "4",
+                                "numNodes": "1974"
+                            }
+                        ],
+                        "nodes": [
+                            {
+                                "amountClaimed": "1663895",
+                                "node": "AwgSxwmy1a94h_93uQ1lGNw80P8AAAAAAAAAAAAAAAA",
+                                "nonce": "1"
+                            }
+                        ],
+                        "reserved": {
+                            "fund": "50161719"
+                        },
+                        "unassigned": "705423714",
+                        "unclaimed": "1737211709"
+                    },
+                    "gasCap": "200",
+                    "gasLimit": "400",
+                    "gasPrice": "200",
+                    "latestHeight": "1366725",
+                    "minimumAmount": "547",
+                    "minted": [
+                        {
+                            "amount": "9905120",
+                            "chain": "Arbitrum"
+                        },
+                        {
+                            "amount": "41931965",
+                            "chain": "Avalanche"
+                        },
+                        {
+                            "amount": "10908871405",
+                            "chain": "BinanceSmartChain"
+                        },
+                        {
+                            "amount": "1110472765985",
+                            "chain": "Ethereum"
+                        },
+                        {
+                            "amount": "40974208789",
+                            "chain": "Fantom"
+                        },
+                        {
+                            "amount": "421147576",
+                            "chain": "Polygon"
+                        },
+                        {
+                            "amount": "74895294",
+                            "chain": "Solana"
+                        }
+                    ],
+                    "shards": [
+                        {
+                            "pubKey": "A6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn",
+                            "queue": [],
+                            "shard": "VL08_cTaD3rpaiqUU4P8UpffrnThqhm926nKCEcil-M",
+                            "state": {
+                                "outpoint": {
+                                    "hash": "fIyhdPmifuMQ6jwvkcwpY_qTWylS6qfBBUI8HBOhId8",
+                                    "index": "0"
+                                },
+                                "pubKeyScript": "dqkUX6qVduRay8lmK2q_MjIpt0ipSV2IrA",
+                                "value": "1164537125776"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

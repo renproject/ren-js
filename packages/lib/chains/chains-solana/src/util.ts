@@ -95,12 +95,10 @@ export const createInstructionWithEthAddress2 = (
  * to be finalized. Some wallets don't seem to return if you wait for a
  * transaction to be finalized, so we return after 20 seconds.
  */
-export const confirmTransaction = async (
+export const finalizeTransaction = async (
     connection: Connection,
     signature: TransactionSignature,
 ) => {
-    await connection.confirmTransaction(signature, "confirmed");
-
     // Wait up to 20 seconds for the transaction to be finalized.
     await Promise.race([
         connection.confirmTransaction(signature, "finalized"),

@@ -204,8 +204,18 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
             retry,
         );
 
+    /**
+     * @deprecated - use `queryBlockState` instead.
+     */
     public queryState = async (retry?: number) =>
         this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
+
+    public queryBlockState = async (retry?: number) =>
+        this.sendMessage<RPCMethod.QueryBlockState>(
+            RPCMethod.QueryBlockState,
+            {},
+            retry,
+        );
 
     public buildGateway = ({
         selector,
@@ -479,12 +489,29 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
      * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectPublicKey = async (
-        _selector: string,
-        chain: string,
+        selector: string,
+        _chain: string,
     ): Promise<Buffer> => {
-        // Call the ren_queryShards RPC.
-        const response = await this.queryState(5);
-        return fromBase64(response.state[chain].pubKey);
+        const asset = selector.split("/")[0];
+
+        // Call the ren_queryBlockState RPC.
+        const renVMState = await this.queryBlockState(5);
+
+        const blockState: BlockState = unmarshalTypedPackValue(
+            renVMState.state,
+        );
+
+        if (!blockState[asset]) {
+            throw new Error(`No RenVM block state found for ${asset}.`);
+        }
+
+        const pubKey = blockState[asset].shards[0].pubKey;
+
+        if (!pubKey || pubKey.length === 0) {
+            throw new Error(`Unable to fetch RenVM public key for ${asset}.`);
+        }
+
+        return fromBase64(pubKey);
     };
 
     // In the future, this will be asynchronous. It returns a promise for
@@ -512,10 +539,7 @@ export class RenVMProvider implements Provider<RenVMParams, RenVMResponses> {
         mint: number;
         burn: number;
     }> => {
-        const renVMState = await this.sendMessage(
-            RPCMethod.QueryBlockState,
-            {},
-        );
+        const renVMState = await this.queryBlockState();
 
         const blockState: BlockState = unmarshalTypedPackValue(
             renVMState.state,

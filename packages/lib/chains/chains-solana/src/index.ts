@@ -13,7 +13,13 @@ import {
     BurnPayloadConfig,
     EventEmitterTyped,
 } from "@renproject/interfaces";
-import { Callable, doesntError, keccak256 } from "@renproject/utils";
+import {
+    Callable,
+    doesntError,
+    keccak256,
+    SECONDS,
+    sleep,
+} from "@renproject/utils";
 import {
     Connection,
     PublicKey,
@@ -37,7 +43,7 @@ import { BN } from "bn.js";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
 
-import { createInstructionWithEthAddress2 } from "./util";
+import { finalizeTransaction, createInstructionWithEthAddress2 } from "./util";
 import { renMainnet, resolveNetwork, SolNetworkConfig } from "./networks";
 import {
     BurnLogLayout,
@@ -66,7 +72,8 @@ export interface SolanaProvider {
 }
 
 interface SolOptions {
-    logger: Logger;
+    logger?: Logger;
+    includeAddressInPayload?: boolean;
 }
 
 export class SolanaClass
@@ -78,6 +85,7 @@ export class SolanaClass
 
     public renNetworkDetails: SolNetworkConfig;
     private _logger: Logger = new SimpleLogger();
+    private _includeAddressInPayload: boolean = false;
 
     public burnPayloadConfig: BurnPayloadConfig = {
         bytes: false,
@@ -106,8 +114,11 @@ export class SolanaClass
         } else {
             this.renNetworkDetails = renMainnet;
         }
-        if (options) {
+        if (options && options.logger) {
             this._logger = options.logger;
+        }
+        if (options && options.includeAddressInPayload) {
+            this._includeAddressInPayload = true;
         }
         this.initialize(this.renNetworkDetails.name).catch(console.error);
     }
@@ -450,12 +461,14 @@ export class SolanaClass
         );
 
         const recipientTokenAccount = new PublicKey(contractCalls[0].sendTo);
-        const recipientWalletAddress =
-            contractCalls[0] &&
-            contractCalls[0].contractParams &&
-            contractCalls[0].contractParams[0] &&
-            contractCalls[0].contractParams[0].value;
-        await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
+
+        // To get to this point, the token account should already exist.
+        // const recipientWalletAddress =
+        //     contractCalls[0] &&
+        //     contractCalls[0].contractParams &&
+        //     contractCalls[0].contractParams[0] &&
+        //     contractCalls[0].contractParams[0].value;
+        // await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
 
         const [renvmmsg, renvmMsgSlice] = this.constructRenVMMsg(
             Buffer.from(mintTx.out.phash.toString("hex"), "hex"),
@@ -464,7 +477,6 @@ export class SolanaClass
             recipientTokenAccount.toString(),
             Buffer.from(mintTx.out.nhash.toString("hex"), "hex"),
         );
-        debugger;
 
         const mintLogAccountId = await PublicKey.findProgramAddress(
             [keccak256(renvmmsg)],
@@ -574,29 +586,22 @@ export class SolanaClass
         eventEmitter.emit("transactionHash", base58.encode(signature));
         this._logger.debug("signed with signature", signature);
 
-        const confirmOpts: ConfirmOptions = {
-            commitment: "finalized",
-        };
+        // Should be the same as `signature`.
+        const confirmedSignature = await sendAndConfirmRawTransaction(
+            this.provider.connection,
+            signed.serialize(),
+            { commitment: "confirmed" },
+        );
 
-        const sendPromise = new Promise<string>(async (resolve, reject) => {
-            setTimeout(() => {
-                reject("no confirmations before timeout");
-            }, 20000);
+        // FIXME: this follows eth's events, generalize this
+        eventEmitter.emit("confirmation", 1, { status: 1 });
 
-            const r = await sendAndConfirmRawTransaction(
-                this.provider.connection,
-                signed.serialize(),
-                confirmOpts,
-            );
-            // FIXME: this follows eth's events, generalize this
-            eventEmitter.emit("confirmation", 1, { status: 1 });
-            resolve(r);
-        });
+        // Wait up to 20 seconds for the transaction to be finalized.
+        await finalizeTransaction(this.provider.connection, confirmedSignature);
 
-        const r = await sendPromise;
-        this._logger.debug("sent and confirmed", r);
+        this._logger.debug("sent and confirmed", confirmedSignature);
 
-        return r;
+        return confirmedSignature;
     };
 
     findMintByDepositDetails = async (
@@ -701,20 +706,14 @@ export class SolanaClass
 
         const params = this._getParams && this._getParams();
 
-        const contract = this.resolveTokenGatewayContract(asset);
-        const program = new PublicKey(contract);
-
-        // TODO: check that the gpubkey matches
-        const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from(GatewayStateKey))],
-            program,
-        );
-
-        const gatewayInfo = await this.provider.connection.getAccountInfo(
-            gatewayAccountId[0],
-        );
-
-        if (!gatewayInfo) throw new Error("incorrect gateway program address");
+        if (
+            params &&
+            params.contractCalls &&
+            params.contractCalls.length > 0 &&
+            params.contractCalls[0].contractFn === "mint"
+        ) {
+            return params;
+        }
 
         const recipient =
             params && params.contractCalls
@@ -745,6 +744,7 @@ export class SolanaClass
                             name: "recipient",
                             type: "string",
                             value: recipient.toString(),
+                            notInPayload: !this._includeAddressInPayload,
                         },
                     ],
                 },
@@ -788,6 +788,13 @@ export class SolanaClass
                 ],
             };
             this._logger.debug("solana params:", params);
+            return params;
+        };
+        return this;
+    }
+
+    Params(params: OverwritableBurnAndReleaseParams) {
+        this._getParams = () => {
             return params;
         };
         return this;
@@ -1002,10 +1009,10 @@ export class SolanaClass
         }
 
         const confirmOpts: ConfirmOptions = {
-            commitment: "finalized",
+            commitment: "confirmed",
         };
 
-        const res = await sendAndConfirmRawTransaction(
+        const confirmedSignature = await sendAndConfirmRawTransaction(
             this.provider.connection,
             signed.serialize(),
             confirmOpts,
@@ -1018,8 +1025,11 @@ export class SolanaClass
         // FIXME: this is not great, because it will be stuck in state where it is expecting a signature
         eventEmitter.emit("transactionHash", base58.encode(signed.signature));
 
+        // Wait up to 20 seconds for the transaction to be finalized.
+        await finalizeTransaction(this.provider.connection, confirmedSignature);
+
         const x: BurnDetails<SolTransaction> = {
-            transaction: res,
+            transaction: confirmedSignature,
             amount: new BigNumber(amount),
             to: recipient.toString(),
             nonce: new BigNumber(nonceBN.toString()),
@@ -1096,19 +1106,28 @@ export class SolanaClass
                 createTx,
             );
 
-            // Only wait until solana has seen the tx
+            // This was previously "confirmed" but that resulted in
+            // `getAssociatedTokenAccount` failing if called too quickly after
+            // `createAssociatedTokenAccount`.
             const confirmOpts: ConfirmOptions = {
                 commitment: "confirmed",
             };
 
             try {
-                const res = await sendAndConfirmRawTransaction(
+                // Should be the same as `signature`.
+                const confirmedSignature = await sendAndConfirmRawTransaction(
                     this.provider.connection,
                     signedTx.serialize(),
                     confirmOpts,
                 );
 
-                return res;
+                // Wait up to 20 seconds for the transaction to be finalized.
+                await finalizeTransaction(
+                    this.provider.connection,
+                    confirmedSignature,
+                );
+
+                return confirmedSignature;
             } catch (e) {
                 console.log(e);
                 throw e;

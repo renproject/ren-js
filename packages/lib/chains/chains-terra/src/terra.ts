@@ -146,9 +146,10 @@ export class TerraClass
         this.renNetwork = getRenNetworkDetails(renNetwork);
         // Prioritize the network passed in to the constructor.
         this.chainNetwork =
-            this.chainNetwork || this.renNetwork.isTestnet
+            this.chainNetwork ||
+            (this.renNetwork.isTestnet
                 ? TerraNetwork.Tequila
-                : TerraNetwork.Columbus;
+                : TerraNetwork.Columbus);
 
         return this;
     };

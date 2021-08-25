@@ -1,6 +1,6 @@
 {
     "name": "@renproject/ren-react",
-    "version": "2.5.2-alpha.0",
+    "version": "2.5.3",
     "description": "Easily create and track RenVM transactions in React",
     "keywords": [
         "renvm",
@@ -53,9 +53,9 @@
         "@babel/preset-react": "^7.10.1",
         "@babel/preset-typescript": "^7.13.0",
         "@open-wc/webpack-import-meta-loader": "^0.4.7",
-        "@renproject/chains-bitcoin": "^2.5.1",
-        "@renproject/chains-ethereum": "^2.5.1",
-        "@renproject/ren": "^2.5.2-alpha.0",
+        "@renproject/chains-bitcoin": "^2.5.2",
+        "@renproject/chains-ethereum": "^2.5.2",
+        "@renproject/ren": "^2.5.3",
         "@rollup/plugin-alias": "^3.1.1",
         "@rollup/plugin-babel": "^5.3.0",
         "@rollup/plugin-commonjs": "^18.0.0",

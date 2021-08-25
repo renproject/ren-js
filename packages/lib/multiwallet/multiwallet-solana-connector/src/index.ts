@@ -18,7 +18,6 @@ const renNetworkToSolanaNetwork: { [k in RenNetwork]: string } = {
     [RenNetwork.Devnet]: clusterApiUrl("devnet"),
     [RenNetwork.Mainnet]: clusterApiUrl("mainnet-beta"),
     [RenNetwork.Testnet]: clusterApiUrl("devnet"),
-    [RenNetwork.Localnet]: "http://localhost:8899",
 };
 
 interface SolanaProvider {

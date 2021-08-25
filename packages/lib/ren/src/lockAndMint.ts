@@ -1,9 +1,6 @@
 import {
-    AbiItem,
     DepositCommon,
     getRenNetworkDetails,
-    LockAndMintParams,
-    LockAndMintTransaction,
     Logger,
     newPromiEvent,
     NullLogger,
@@ -16,7 +13,6 @@ import {
 import { RenVMProvider } from "@renproject/rpc";
 import {
     assertObject,
-    assertType,
     emptyNonce,
     extractError,
     fromBase64,
@@ -27,15 +23,12 @@ import {
     generateSHash,
     isDefined,
     keccak256,
-    overrideContractCalls,
     Ox,
-    payloadToMintABI,
     renVMHashToBase64,
     retryNTimes,
     SECONDS,
     sleep,
     strip0x,
-    toBase64,
     toURLBase64,
 } from "@renproject/utils";
 import { EventEmitter } from "events";
@@ -44,6 +37,8 @@ import base58 from "bs58";
 import { defaultAbiCoder } from "ethers/lib/utils";
 
 import { RenJSConfig } from "./config";
+import { LockAndMintTransaction } from "@renproject/rpc/build/main/unmarshalledTypes";
+import { LockAndMintParams } from "./params";
 
 interface MintState {
     logger: Logger;
@@ -113,7 +108,7 @@ export class LockAndMint<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LockAddress extends string | { address: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintTransaction = any,
+    MintTransaction = string | { address: string },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintAddress extends string | { address: string } = any,
 > extends EventEmitter {
@@ -131,7 +126,6 @@ export class LockAndMint<
     public params: LockAndMintParams<
         LockTransaction,
         LockDeposit,
-        LockAddress,
         MintTransaction,
         MintAddress
     >;
@@ -153,7 +147,6 @@ export class LockAndMint<
         LockAndMintDeposit<
             LockTransaction,
             LockDeposit,
-            LockAddress,
             MintTransaction,
             MintAddress
         >
@@ -162,7 +155,6 @@ export class LockAndMint<
         LockAndMintDeposit<
             LockTransaction,
             LockDeposit,
-            LockAddress,
             MintTransaction,
             MintAddress
         >
@@ -651,11 +643,7 @@ export class LockAndMintDeposit<
     LockTransaction = any,
     LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockAddress extends string | { address: string } = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MintTransaction = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress extends string | { address: string } = any,
 > {
     /** The details, including amount, of the deposit. */
     public depositDetails: LockDeposit;
@@ -664,9 +652,7 @@ export class LockAndMintDeposit<
     public params: LockAndMintParams<
         LockTransaction,
         LockDeposit,
-        LockAddress,
-        MintTransaction,
-        MintAddress
+        MintTransaction
     >;
 
     /**
@@ -1407,34 +1393,12 @@ export class LockAndMintDeposit<
                 );
             }
 
-            const overrideArray = Object.keys(override || {}).map((key) => ({
-                name: key,
-                value: (override || {})[key],
-            }));
-
-            // Override contract call parameters that have been passed in to
-            // "mint".
-            let contractCalls = overrideContractCalls(
-                this.params.contractCalls || [],
-                { contractParams: overrideArray },
-            );
-
-            // Filter parameters that should be included in the payload hash but
-            // not the contract call.
-            contractCalls = contractCalls.map((call) => ({
-                ...call,
-                contractParams: call.contractParams
-                    ? call.contractParams.filter(
-                          (param) => !param.onlyInPayload,
-                      )
-                    : call.contractParams,
-            }));
-
             const asset = this.params.asset;
 
             this.mintTransaction = await this.params.to.submitMint(
                 asset,
-                contractCalls,
+                this.params.contractCalls,
+                override,
                 this._state.queryTxResult,
                 promiEvent,
             );

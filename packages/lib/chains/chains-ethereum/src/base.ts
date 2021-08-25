@@ -1,24 +1,14 @@
 import {
-    AbiItem,
     BurnDetails,
-    ContractCall,
     getRenNetworkDetails,
-    LockAndMintTransaction,
     Logger,
     MintChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
     EventEmitterTyped,
 } from "@renproject/interfaces";
-import {
-    assertType,
-    fromHex,
-    Ox,
-    payloadToABI,
-    utilsWithChainNetwork,
-} from "@renproject/utils";
+import { assertType, fromHex, Ox } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import * as ethers from "ethers";
 import {
@@ -40,6 +30,7 @@ import {
     submitToEthereum,
     EthereumTransactionConfig,
 } from "./utils";
+import { overrideContractCalls } from "./abi";
 
 export const EthereumConfigMap = {
     [RenNetwork.Mainnet]: renMainnet,
@@ -100,7 +91,6 @@ export class EthereumBaseChain
     public static chain = "Ethereum";
     public chain = EthereumBaseChain.chain;
     public name = EthereumBaseChain.chain;
-    public legacyName: MintChain["legacyName"] = "Eth";
     public logRequestLimit: number | undefined = undefined;
     private logger: Logger | undefined;
 
@@ -111,37 +101,24 @@ export class EthereumBaseChain
         [network in RenNetwork]?: EthereumConfig;
     } = EthereumConfigMap;
 
-    public static utils = {
-        resolveChainNetwork: resolveNetwork,
-        addressIsValid,
-        transactionIsValid,
-        addressExplorerLink: (
-            address: EthAddress,
-            network?: NetworkInput,
-        ): string =>
-            `${
-                (
-                    EthereumBaseChain.utils.resolveChainNetwork(network) ||
-                    renMainnet
-                ).etherscan
-            }/address/${address}`,
+    public resolveChainNetwork = resolveNetwork;
+    public addressIsValid = addressIsValid;
+    public transactionIsValid = transactionIsValid;
+    public addressExplorerLink = (
+        address: EthAddress,
+        network?: NetworkInput,
+    ): string =>
+        (this.resolveChainNetwork(network) || renMainnet).explorer.address(
+            address,
+        );
 
-        transactionExplorerLink: (
-            transaction: EthTransaction,
-            network?: NetworkInput,
-        ): string =>
-            `${
-                (
-                    EthereumBaseChain.utils.resolveChainNetwork(network) ||
-                    renMainnet
-                ).etherscan
-            }/tx/${transaction || ""}`,
-    };
-
-    public utils = utilsWithChainNetwork(
-        EthereumBaseChain.utils,
-        () => this.renNetworkDetails,
-    );
+    public transactionExplorerLink = (
+        transaction: EthTransaction,
+        network?: NetworkInput,
+    ): string =>
+        (this.resolveChainNetwork(network) || renMainnet).explorer.transaction(
+            transaction,
+        );
 
     public provider: Web3Provider | undefined;
     public signer: ethers.Signer | undefined;
@@ -382,6 +359,7 @@ export class EthereumBaseChain
     submitMint = async (
         asset: string,
         contractCalls: ContractCall[],
+        override: { [name: string]: unknown },
         mintTx: LockAndMintTransaction,
         eventEmitter: EventEmitterTyped<{
             transactionHash: [string];
@@ -414,6 +392,26 @@ export class EthereumBaseChain
             eventEmitter.emit("confirmation", 1, { status: 1 });
             return existingTransaction;
         }
+
+        const overrideArray = Object.keys(override || {}).map((key) => ({
+            name: key,
+            value: (override || {})[key],
+        }));
+
+        // Override contract call parameters that have been passed in to
+        // "mint".
+        contractCalls = overrideContractCalls(contractCalls || [], {
+            contractParams: overrideArray,
+        });
+
+        // Filter parameters that should be included in the payload hash but
+        // not the contract call.
+        contractCalls = contractCalls.map((call) => ({
+            ...call,
+            contractParams: call.contractParams
+                ? call.contractParams.filter((param) => !param.onlyInPayload)
+                : call.contractParams,
+        }));
 
         return await submitToEthereum(
             this.signer,

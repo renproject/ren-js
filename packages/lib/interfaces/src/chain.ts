@@ -117,6 +117,7 @@ export interface LockChain<
      * information including an amount field.
      */
     LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
+    GatewayAddress extends { address: string } = { address: string },
 > extends ChainCommon<Transaction> {
     /**
      * Generate a gateway address deterministically from a shard's public key
@@ -126,16 +127,20 @@ export interface LockChain<
         asset: string,
         shardPublicKey: Buffer,
         gHash: Buffer,
-    ) => SyncOrPromise<string>;
+    ) => SyncOrPromise<GatewayAddress>;
 
     /** Watch for deposits made to the provided address. */
     watchForDeposits: (
-        asset: string,
+        asset: GatewayAddress,
         address: string,
         onDeposit: (deposit: LockDeposit) => Promise<void>,
         removeDeposit: (deposit: LockDeposit) => Promise<void>,
         listenerCancelled: () => boolean,
     ) => Promise<void>;
+
+    // submitLock: (
+
+    // )
 
     /**
      * Allow the chain to specify a payload for minting to the chain or for
@@ -170,9 +175,12 @@ export interface MintChain<
         asset: string,
         to: string,
         payload: Buffer,
-        r: Buffer,
-        s: Buffer,
-        v: Buffer,
+        override: { [name: string]: unknown },
+        signature: {
+            r: Buffer;
+            s: Buffer;
+            v: Buffer;
+        },
         eventEmitter: EventEmitterTyped<{
             transactionHash: [string];
             confirmation: [number, { status: number }];

@@ -43,8 +43,7 @@ const transactionToDeposit = (transaction: BtcTransaction) => ({
  * A base Bitcoin chain class that is extended by each Bitcoin chain/fork.
  */
 export abstract class BitcoinBaseChain
-    implements
-        LockChain<BtcTransaction, BtcDeposit, BtcAddress, BtcNetwork, boolean>
+    implements LockChain<BtcTransaction, BtcDeposit>
 {
     public static chain = "Bitcoin";
     public chain = BitcoinBaseChain.chain;

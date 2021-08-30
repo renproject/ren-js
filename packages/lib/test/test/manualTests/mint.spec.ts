@@ -65,7 +65,7 @@ describe("Refactor: mint", () => {
             },
         });
 
-        const logLevel: LogLevel = LogLevel.Trace;
+        const logLevel: LogLevel = LogLevel.Log;
         const renJS = new RenJS(new RenVMProvider(network), { logLevel });
 
         // const infuraURL = ethNetwork.publicProvider({

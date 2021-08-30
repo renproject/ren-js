@@ -26,12 +26,12 @@ export const renPolygonTestnet: EthereumConfig = {
     },
 
     publicProvider: () => `https://rpc-mumbai.maticvigil.com`,
-    explorer: StandardExplorer("https://explorer-mumbai.maticvigil.com"),
+    explorer: StandardExplorer("https://mumbai.polygonscan.com"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
     infura: "https://rpc-mumbai.maticvigil.com",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://explorer-mumbai.maticvigil.com",
+    etherscan: "https://mumbai.polygonscan.com/",
 };
 
 export const renPolygonMainnet: EthereumConfig = {

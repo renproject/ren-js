@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-ethereum",
-    "version": "2.5.2",
+    "version": "2.5.5",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

@@ -2,6 +2,9 @@ import { fromBase64 } from "@renproject/utils";
 import BN from "bn.js";
 
 import {
+    isPackListType,
+    isPackStructType,
+    PackListType,
     PackPrimitive,
     PackStructType,
     PackType,
@@ -94,6 +97,7 @@ export const marshalPackStructType = (type: PackStructType) => {
     const length = marshalU32(type.struct.length);
 
     return Buffer.concat([
+        Buffer.from([marshalPackType("struct")]),
         length,
         ...type.struct.map((field) => {
             const keys = Object.keys(field);
@@ -113,12 +117,18 @@ export const marshalPackStructType = (type: PackStructType) => {
     ]);
 };
 
+export const marshalPackListType = (type: PackListType) => {
+    return Buffer.concat([
+        Buffer.from([marshalPackType("list")]),
+        marshalPackTypeDefinition(type.list),
+    ]);
+};
+
 export const marshalPackTypeDefinition = (type: PackTypeDefinition): Buffer => {
-    if (typeof type === "object") {
-        return Buffer.concat([
-            Buffer.from([marshalPackType("struct")]),
-            marshalPackStructType(type),
-        ]);
+    if (isPackStructType(type)) {
+        return marshalPackStructType(type);
+    } else if (isPackListType(type)) {
+        return marshalPackListType(type);
     } else if (typeof type === "string") {
         return Buffer.from([marshalPackType(type)]);
     }
@@ -194,13 +204,31 @@ export const marshalPackStruct = (type: PackStructType, value: any): Buffer => {
     );
 };
 
+export const marshalListStruct = (type: PackListType, value: any[]): Buffer => {
+    const subtype = type.list;
+    return Buffer.concat(
+        value.map((element, i) => {
+            try {
+                return marshalPackValue(subtype, element);
+            } catch (error) {
+                error.message = `Unable to marshal array element #${i}: ${String(
+                    error.message,
+                )}`;
+                throw error;
+            }
+        }),
+    );
+};
+
 export const marshalPackValue = (
     type: PackTypeDefinition,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
 ): Buffer => {
-    if (typeof type === "object") {
+    if (isPackStructType(type)) {
         return marshalPackStruct(type, value);
+    } else if (isPackListType(type)) {
+        return marshalListStruct(type, value);
     } else if (typeof type === "string") {
         if (type === "nil") return Buffer.from([]);
         return marshalPackPrimitive(type, value);

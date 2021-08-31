@@ -231,7 +231,6 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                 },
                 {
                     shards: {
-                        // @ts-expect-error list not in pack type yet
                         list: {
                             struct: [
                                 {
@@ -282,7 +281,6 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                 },
                 {
                     minted: {
-                        // @ts-expect-error list not in pack type yet
                         list: {
                             struct: [
                                 {
@@ -315,7 +313,6 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                             },
                             {
                                 epochs: {
-                                    // @ts-expect-error list not in pack type yet
                                     list: {
                                         struct: [
                                             {
@@ -333,7 +330,6 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                             },
                             {
                                 nodes: {
-                                    // @ts-expect-error list not in pack type yet
                                     list: {
                                         struct: [
                                             {
@@ -352,7 +348,6 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                             },
                             {
                                 chains: {
-                                    // @ts-expect-error list not in pack type yet
                                     list: {
                                         struct: [
                                             {
@@ -380,13 +375,11 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                     ({
                         dustAmount: "546",
                         fees: {
-                            chains: this.supportedChains.map((chain) => [
-                                {
-                                    chain: chain,
-                                    burnFee: "15",
-                                    mintFee: "15",
-                                },
-                            ]),
+                            chains: this.supportedChains.map((chain) => ({
+                                chain: chain,
+                                burnFee: "15",
+                                mintFee: "15",
+                            })),
                             epochs: [],
                             nodes: [],
                             reserved: {

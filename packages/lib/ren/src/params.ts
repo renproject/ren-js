@@ -3,11 +3,7 @@ import { DepositCommon, LockChain, MintChain } from "@renproject/interfaces";
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */
-export interface LockAndMintParams<
-    LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
-    MintTransaction = any,
-> {
+export interface LockAndMintParams {
     /**
      * The asset being minted or burned - e.g. `"BTC"`.
      */
@@ -17,12 +13,12 @@ export interface LockAndMintParams<
      * The chain that the asset is native to - e.g. `Bitcoin()` for bridging the
      * asset `"BTC"`.
      */
-    from: LockChain<LockTransaction, LockDeposit>;
+    from: LockChain;
 
     /**
      * The chain that the asset is being bridged to - e.g. `Ethereum(provider)`.
      */
-    to: MintChain<MintTransaction>;
+    to: MintChain;
 
     /**
      * A LockAndMint's gateway address can be forced to be unique by providing a
@@ -72,9 +68,8 @@ export interface LockAndMintParams<
  */
 export interface BurnAndReleaseParams<
     LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
     MintTransaction = any,
-    MintAddress extends string | { address: string } = any,
+    GatewayAddress extends string | { address: string } = any,
 > {
     /**
      * The asset being minted or burned - e.g. `"BTC"`.
@@ -84,13 +79,13 @@ export interface BurnAndReleaseParams<
     /**
      * The chain from which the ren-asset was burned - e.g. `Ethereum(provider)`.
      */
-    from: MintChain<MintTransaction, MintAddress>;
+    from: MintChain<MintTransaction, GatewayAddress>;
 
     /**
      * The asset's native chain to which it's being returned - e.g. `Bitcoin()`
      * for the asset `"BTC"`.
      */
-    to: LockChain<LockTransaction, LockDeposit>;
+    to: LockChain<LockTransaction>;
 
     /**
      * Provide optional tags which can be used to look up transfers in the

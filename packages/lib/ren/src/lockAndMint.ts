@@ -1,5 +1,7 @@
 import {
+    ChainTransaction,
     DepositCommon,
+    DetailedChainTransaction,
     getRenNetworkDetails,
     Logger,
     newPromiEvent,
@@ -98,20 +100,7 @@ export interface DepositState {
  *
  * @noInheritDoc
  */
-export class LockAndMint<
-    /**
-     * @hidden
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockAddress extends string | { address: string } = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintTransaction = string | { address: string },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintAddress extends string | { address: string } = any,
-> extends EventEmitter {
+export class LockAndMint extends EventEmitter {
     // Public
 
     /**
@@ -120,15 +109,10 @@ export class LockAndMint<
      * of showing this address to users should be implemented on a
      * chain-by-chain basis.
      */
-    public gatewayAddress: LockAddress | undefined;
+    public gatewayAddress: () => string;
 
     /** The parameters passed in when creating the LockAndMint. */
-    public params: LockAndMintParams<
-        LockTransaction,
-        LockDeposit,
-        MintTransaction,
-        MintAddress
-    >;
+    public params: LockAndMintParams;
 
     /** See [[RenJS.renVM]]. */
     public renVM: RenVMProvider;
@@ -144,20 +128,10 @@ export class LockAndMint<
      */
     private deposits: OrderedMap<
         string,
-        LockAndMintDeposit<
-            LockTransaction,
-            LockDeposit,
-            MintTransaction,
-            MintAddress
-        >
+        LockAndMintDeposit<LockTransaction, MintTransaction, GatewayAddress>
     > = OrderedMap<
         string,
-        LockAndMintDeposit<
-            LockTransaction,
-            LockDeposit,
-            MintTransaction,
-            MintAddress
-        >
+        LockAndMintDeposit<LockTransaction, MintTransaction, MintAddress>
     >();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -320,13 +294,7 @@ export class LockAndMint<
     public processDeposit = async (
         deposit: LockDeposit,
     ): Promise<
-        LockAndMintDeposit<
-            LockTransaction,
-            LockDeposit,
-            LockAddress,
-            MintTransaction,
-            MintAddress
-        >
+        LockAndMintDeposit<LockTransaction, MintTransaction, GatewayAddress>
     > => {
         if (
             !this._state.renNetwork ||
@@ -657,21 +625,13 @@ export const DepositStatusIndex = {
  * ```
  */
 export class LockAndMintDeposit<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LockTransaction = any,
-    LockDeposit extends DepositCommon<LockTransaction> = DepositCommon<LockTransaction>,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    MintTransaction = any,
+    GatewayAddress extends string | { address: string } = string,
 > {
     /** The details, including amount, of the deposit. */
-    public depositDetails: LockDeposit;
+    public depositDetails: DetailedChainTransaction;
 
     /** The parameters passed in when calling [[RenJS.lockAndMint]]. */
-    public params: LockAndMintParams<
-        LockTransaction,
-        LockDeposit,
-        MintTransaction
-    >;
+    public params: LockAndMintParams;
 
     /**
      * The status of the deposit, updated automatically. You can also call
@@ -687,10 +647,10 @@ export class LockAndMintDeposit<
     /** See [[RenJS.renVM]]. */
     public renVM: RenVMProvider;
 
-    public mintTransaction?: MintTransaction;
+    public mintTransaction?: ChainTransaction;
     public revertReason?: string;
 
-    public gatewayAddress: LockAddress | undefined;
+    public gatewayAddress: GatewayAddress | undefined;
 
     /**
      * Internal state of the mint object, including the `gHash` and `pHash`.
@@ -700,17 +660,11 @@ export class LockAndMintDeposit<
 
     /** @hidden */
     constructor(
-        depositDetails: LockDeposit,
-        params: LockAndMintParams<
-            LockTransaction,
-            LockDeposit,
-            LockAddress,
-            MintTransaction,
-            MintAddress
-        >,
+        depositDetails: DepositCommon<ChainTransaction>,
+        params: LockAndMintParams,
         renVM: RenVMProvider,
         state: MintState & MintStatePartial,
-        gatewayAddress?: LockAddress,
+        gatewayAddress?: GatewayAddress,
     ) {
         assertObject(
             {
@@ -719,7 +673,7 @@ export class LockAndMintDeposit<
             },
             {
                 depositDetails:
-                    depositDetails as DepositCommon<LockTransaction>,
+                    depositDetails,
             },
         );
         assertObject(
@@ -746,31 +700,16 @@ export class LockAndMintDeposit<
         // status.
         this.status = DepositStatus.Detected;
 
-        const { txHash, contractCalls, nonce } = this.params;
+        const { nonce } = this.params;
 
         if (!nonce) {
             throw new Error(`No nonce passed in to LockAndMintDeposit.`);
         }
 
-        if (!txHash && (!contractCalls || !contractCalls.length)) {
-            throw new Error(
-                `Must provide Ren transaction hash or contract call details.`,
-            );
-        }
-
         this.validateParams();
 
         const deposit = this.depositDetails;
-        const providedTxHash = this.params.txHash
-            ? renVMHashToBase64(this.params.txHash, true)
-            : undefined;
-
-        if (!contractCalls || !contractCalls.length) {
-            throw new Error(
-                `Unable to submit to RenVM without contract call details.`,
-            );
-        }
-
+        
         // Last contract call
         const { contractParams, sendTo } =
             contractCalls[contractCalls.length - 1];

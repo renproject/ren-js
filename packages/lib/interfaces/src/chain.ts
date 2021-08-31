@@ -4,6 +4,23 @@ import { EventEmitterTyped } from "./promiEvent";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
+export interface ChainTransaction {
+    txid: string;
+    txindex: number;
+}
+
+export interface DetailedChainTransaction extends ChainTransaction {
+    amount: string;
+    to: string;
+}
+
+export interface BurnDetails {
+    transaction: ChainTransaction;
+    amount: BigNumber;
+    to: string;
+    nonce: BigNumber;
+}
+
 /**
  * # Adding chains #
  *
@@ -25,7 +42,7 @@ export type SyncOrPromise<T> = Promise<T> | T;
  * across patch and minor versions.
  */
 
-export interface ChainCommon<Transaction = any> {
+export interface ChainCommon {
     /** A  */
     name: string;
 
@@ -42,7 +59,9 @@ export interface ChainCommon<Transaction = any> {
     assetDecimals: (asset: string) => SyncOrPromise<number>;
 
     /** Return a transactions current number of confirmations. */
-    transactionConfidence: (transaction: Transaction) => SyncOrPromise<number>;
+    transactionConfidence: (
+        transaction: ChainTransaction,
+    ) => SyncOrPromise<number>;
 
     /** Fetch the address's asset balance. */
     getBalance(asset: string, address: string): SyncOrPromise<BigNumber>;
@@ -51,16 +70,18 @@ export interface ChainCommon<Transaction = any> {
     validateAddress(address: string): boolean;
 
     /** Check if the transaction's format is valid. */
-    validateTransaction(transaction: Transaction): boolean;
+    validateTransaction(transaction: ChainTransaction): boolean;
 
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 
     /** Return a URL to the transaction's page on an explorer. */
-    transactionExplorerLink: (transaction: Transaction) => string | undefined;
+    transactionExplorerLink: (
+        transaction: ChainTransaction,
+    ) => string | undefined;
 
     /** Convert a transaction to a standard format for displaying to users. */
-    transactionReadable: (transaction: Transaction) => string;
+    transactionReadable: (transaction: ChainTransaction) => string;
 
     /** Convert an asset's amount to its smallest unit. */
     toSmallestUnit: (
@@ -81,24 +102,7 @@ export interface ChainCommon<Transaction = any> {
 
     /** Convert an address from the bytes representation as used by RenVM. */
     bytesToAddress: (bytes: Buffer) => string;
-
-    /** Convert a transaction to its txid and txindex as used by RenVM. */
-    transactionToIdAndIndex: (transaction: Transaction) => {
-        txid: Buffer;
-        txindex: string;
-    };
-
-    /** Convert a transaction from its txid and txindex as used by RenVM. */
-    transactionFromIdAndIndex: (
-        txid: Buffer,
-        txindex: string,
-    ) => SyncOrPromise<Transaction>;
 }
-
-export type DepositCommon<Transaction = any> = {
-    transaction: Transaction;
-    amount: string;
-};
 
 /**
  * LockChain is a chain with one or more native assets that can be locked in a
@@ -110,15 +114,7 @@ export type DepositCommon<Transaction = any> = {
  * Bitcoin LockChain and overwrite methods as necessary. See the ZCash and
  * BitcoinCash implementations for examples of this.
  */
-export interface LockChain<
-    Transaction = any,
-    /**
-     * A deposit contains a transaction to a gateway address, and includes extra
-     * information including an amount field.
-     */
-    LockDeposit extends DepositCommon<Transaction> = DepositCommon<Transaction>,
-    GatewayAddress extends { address: string } = { address: string },
-> extends ChainCommon<Transaction> {
+export interface LockChain extends ChainCommon {
     /**
      * Generate a gateway address deterministically from a shard's public key
      * and a gateway hash.
@@ -127,14 +123,14 @@ export interface LockChain<
         asset: string,
         shardPublicKey: Buffer,
         gHash: Buffer,
-    ) => SyncOrPromise<GatewayAddress>;
+    ) => SyncOrPromise<string>;
 
     /** Watch for deposits made to the provided address. */
     watchForDeposits: (
-        asset: GatewayAddress,
+        asset: string,
         address: string,
-        onDeposit: (deposit: LockDeposit) => Promise<void>,
-        removeDeposit: (deposit: LockDeposit) => Promise<void>,
+        onDeposit: (deposit: DetailedChainTransaction) => Promise<void>,
+        removeDeposit: (deposit: DetailedChainTransaction) => Promise<void>,
         listenerCancelled: () => boolean,
     ) => Promise<void>;
 
@@ -152,18 +148,8 @@ export interface LockChain<
     };
 }
 
-export interface BurnDetails<Transaction> {
-    transaction: Transaction;
-    amount: BigNumber;
-    to: string;
-    nonce: BigNumber;
-}
-
-export interface MintChain<
-    Transaction = any,
-    MintConfig = any,
-    BurnConfig = any,
-> extends ChainCommon<Transaction> {
+export interface MintChain<MintConfig = any, BurnConfig = any>
+    extends ChainCommon {
     resolveTokenGatewayContract: (asset: string) => SyncOrPromise<string>;
 
     /**
@@ -185,7 +171,7 @@ export interface MintChain<
             transactionHash: [string];
             confirmation: [number, { status: number }];
         }>,
-    ) => SyncOrPromise<Transaction>;
+    ) => SyncOrPromise<ChainTransaction>;
 
     /**
      * Finds a transaction by its nonce and optionally signature,
@@ -199,7 +185,7 @@ export interface MintChain<
         to: string,
         amount: string,
         sigHash?: Buffer,
-    ) => SyncOrPromise<Transaction | undefined>;
+    ) => SyncOrPromise<ChainTransaction | undefined>;
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
@@ -212,7 +198,7 @@ export interface MintChain<
             transactionHash: [string];
             confirmation: [number, { status: number }];
         }>,
-    ) => SyncOrPromise<BurnDetails<Transaction> | undefined>;
+    ) => SyncOrPromise<{} | undefined>;
 
     getPayload: (asset: string) => {
         to: string;

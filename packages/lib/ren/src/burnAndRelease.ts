@@ -295,26 +295,37 @@ export class BurnAndRelease<
 
             this.status = BurnAndReleaseStatus.Burned;
 
-            let current = 0,
-                target = 1;
-            while (current < target) {
+            let confirmationTarget = 1;
+            let confirmationTargetError = false;
+            try {
+                confirmationTarget = await this.confirmationTarget();
+            } catch (error) {
+                console.error(error);
+                confirmationTargetError = true;
+            }
+
+            let currentConfirmations = 0;
+            while (currentConfirmations < confirmationTarget) {
                 try {
-                    ({ current, target } =
+                    let target;
+                    ({ current: currentConfirmations, target } =
                         await this.params.from.transactionConfidence(
                             this.burnDetails.transaction,
                         ));
-                    if (
-                        this._state.targetConfirmations &&
-                        target < this._state.targetConfirmations
-                    ) {
-                        target = this._state.targetConfirmations;
+
+                    if (confirmationTargetError) {
+                        confirmationTarget = target;
                     }
 
                     // Eth based chains only emits until 24 confs;
                     // keep emitting so that we can update the UI
-                    promiEvent.emit("confirmation", current, target);
+                    promiEvent.emit(
+                        "confirmation",
+                        currentConfirmations,
+                        confirmationTarget,
+                    );
                     // Exit early so that we don't have to sleep if confs are met
-                    if (current >= target) {
+                    if (currentConfirmations >= confirmationTarget) {
                         break;
                     }
                 } catch (error) {

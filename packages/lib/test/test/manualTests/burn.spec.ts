@@ -105,8 +105,11 @@ describe("Refactor - Burning", () => {
         console.log(`step 1`);
         await burnAndRelease
             .burn()
-            .on("confirmation", (confs) => {
-                confirmations = confs;
+            .on("confirmation", (conf, target) => {
+                burnAndRelease._state.logger.log(
+                    `confirming (${conf}/${target})`,
+                );
+                confirmations = conf;
             })
             .on("transactionHash", (txHash) =>
                 burnAndRelease._state.logger.log(

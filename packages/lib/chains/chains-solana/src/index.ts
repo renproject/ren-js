@@ -17,6 +17,7 @@ import {
     Callable,
     doesntError,
     keccak256,
+    retryNTimes,
     SECONDS,
     sleep,
 } from "@renproject/utils";
@@ -565,12 +566,14 @@ export class SolanaClass
         tx.add(instruction, secPInstruction);
 
         tx.recentBlockhash = (
-            await this.provider.connection.getRecentBlockhash("max")
+            await this.provider.connection.getRecentBlockhash("confirmed")
         ).blockhash;
         tx.feePayer = this.provider.wallet.publicKey;
 
-        const simulationResult =
-            await this.provider.connection.simulateTransaction(tx);
+        const simulationResult = await retryNTimes(
+            async () => this.provider.connection.simulateTransaction(tx),
+            5,
+        );
         if (simulationResult.value.err) {
             throw new Error(
                 "transaction simulation failed: " +
@@ -630,6 +633,7 @@ export class SolanaClass
 
         const mintData = await this.provider.connection.getAccountInfo(
             mintLogAccountId[0],
+            "processed",
         );
 
         if (!mintData) {
@@ -648,6 +652,8 @@ export class SolanaClass
             const mintSigs =
                 await this.provider.connection.getSignaturesForAddress(
                     mintLogAccountId[0],
+                    undefined,
+                    "confirmed",
                 );
             return (mintSigs[0] && mintSigs[0].signature) || "";
         } catch (error) {
@@ -658,6 +664,8 @@ export class SolanaClass
                 const mintSigs =
                     await this.provider.connection.getConfirmedSignaturesForAddress2(
                         mintLogAccountId[0],
+                        undefined,
+                        "confirmed",
                     );
                 return mintSigs[0].signature;
             } catch (errorInner) {
@@ -1060,6 +1068,7 @@ export class SolanaClass
         try {
             const tokenAccount = await this.provider.connection.getAccountInfo(
                 destination,
+                "processed",
             );
 
             if (!tokenAccount || !tokenAccount.data) {

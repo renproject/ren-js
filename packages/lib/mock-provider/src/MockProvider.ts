@@ -123,51 +123,82 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         request: ParamsSubmitTx<MintTransactionInput | BurnTransactionInput>,
     ): ResponseSubmitTx => {
         const selector = request.tx.selector;
-
         const inputs = (request.tx.in as MintParams).v;
 
         const pHash = fromBase64(inputs.phash);
         const nHash = fromBase64(inputs.nhash);
         const to = fromHex(inputs.to);
-        // TODO: Add amount to typings.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const amountIn = (inputs as any).amount;
-        const sHash = keccak256(Buffer.from(selector));
 
-        const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+        let completedTransaction: ResponseQueryTx;
+        if (/\/from/.exec(selector)) {
+            // BURN //
 
-        // Generate signature
-        const sigParams = defaultAbiCoder.encode(
-            ["bytes32", "uint256", "bytes32", "address", "bytes32"],
-            [pHash, amountOut, sHash, Ox(to), nHash],
-        );
-        const sigHash = keccak256(fromHex(sigParams));
-        const sig = ecsign(sigHash, this.privateKeyBuffer);
-        const sigOut = toURLBase64(
-            Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]),
-        );
+            const amountIn = inputs.amount;
 
-        const completedTransaction: ResponseQueryTx = {
-            ...request,
-            txStatus: TxStatus.TxStatusDone,
-            tx: {
-                ...request.tx,
-                version: "1",
-                in: request.tx.in as TypedPackValue,
-                out: {
-                    t: responseQueryParamsType,
-                    v: {
-                        amount: amountOut,
-                        hash: request.tx.hash,
-                        revert: undefined,
-                        sig: sigOut,
-                        sighash: toURLBase64(sigHash),
-                        txid: "",
-                        txindex: "0",
+            const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+
+            completedTransaction = {
+                ...request,
+                txStatus: TxStatus.TxStatusDone,
+                tx: {
+                    ...request.tx,
+                    version: "1",
+                    in: request.tx.in as TypedPackValue,
+                    out: {
+                        t: responseQueryParamsType,
+                        v: {
+                            amount: amountOut,
+                            hash: request.tx.hash,
+                            revert: undefined,
+                            sig: "",
+                            sighash: "",
+                            txid: "",
+                            txindex: "0",
+                        },
                     },
                 },
-            },
-        };
+            };
+        } else {
+            // MINT //
+
+            const amountIn = inputs.amount;
+            const sHash = keccak256(Buffer.from(selector));
+
+            const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+
+            // Generate signature
+            const sigParams = defaultAbiCoder.encode(
+                ["bytes32", "uint256", "bytes32", "address", "bytes32"],
+                [pHash, amountOut, sHash, Ox(to), nHash],
+            );
+            const sigHash = keccak256(fromHex(sigParams));
+            const sig = ecsign(sigHash, this.privateKeyBuffer);
+            const sigOut = toURLBase64(
+                Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]),
+            );
+
+            completedTransaction = {
+                ...request,
+                txStatus: TxStatus.TxStatusDone,
+                tx: {
+                    ...request.tx,
+                    version: "1",
+                    in: request.tx.in as TypedPackValue,
+                    out: {
+                        t: responseQueryParamsType,
+                        v: {
+                            amount: amountOut,
+                            hash: request.tx.hash,
+                            revert: undefined,
+                            sig: sigOut,
+                            sighash: toURLBase64(sigHash),
+                            txid: "",
+                            txindex: "0",
+                        },
+                    },
+                },
+            };
+        }
 
         this.transactions.set(
             completedTransaction.tx.hash,

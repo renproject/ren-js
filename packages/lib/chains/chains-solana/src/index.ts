@@ -19,7 +19,6 @@ import {
     keccak256,
     retryNTimes,
     SECONDS,
-    sleep,
 } from "@renproject/utils";
 import {
     Connection,
@@ -728,9 +727,11 @@ export class SolanaClass
                 ? new PublicKey(params.contractCalls[0].sendTo)
                 : this.provider.wallet.publicKey;
 
-        const destination = await this.getAssociatedTokenAccount(
-            asset,
-            recipient.toString(),
+        const destination = await retryNTimes(
+            async () =>
+                this.getAssociatedTokenAccount(asset, recipient.toString()),
+            5,
+            3 * SECONDS,
         );
 
         if (!destination) {

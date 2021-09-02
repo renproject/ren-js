@@ -17,6 +17,7 @@ import {
     Callable,
     doesntError,
     keccak256,
+    retryNTimes,
     SECONDS,
     sleep,
 } from "@renproject/utils";
@@ -565,12 +566,14 @@ export class SolanaClass
         tx.add(instruction, secPInstruction);
 
         tx.recentBlockhash = (
-            await this.provider.connection.getRecentBlockhash("max")
+            await this.provider.connection.getRecentBlockhash("confirmed")
         ).blockhash;
         tx.feePayer = this.provider.wallet.publicKey;
 
-        const simulationResult =
-            await this.provider.connection.simulateTransaction(tx);
+        const simulationResult = await retryNTimes(
+            async () => this.provider.connection.simulateTransaction(tx),
+            5,
+        );
         if (simulationResult.value.err) {
             throw new Error(
                 "transaction simulation failed: " +

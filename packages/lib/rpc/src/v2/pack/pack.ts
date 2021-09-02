@@ -19,12 +19,22 @@ export interface PackStructType {
     struct: Array<{ [name: string]: PackTypeDefinition }>;
 }
 
-export interface PackArrayType {
+export const isPackStructType = (type: any): type is PackStructType => {
+    return (
+        typeof type === "object" &&
+        (type as PackStructType).struct !== undefined
+    );
+};
+
+export interface PackListType {
     list: PackTypeDefinition;
 }
 
-// Not implemented.
-export type PackListType = never;
+export const isPackListType = (type: any): type is PackListType => {
+    return (
+        typeof type === "object" && (type as PackListType).list !== undefined
+    );
+};
 
 export type PackNilType = "nil";
 
@@ -156,12 +166,12 @@ export const unmarshalPackStruct = (type: PackStructType, value: object) => {
 };
 
 /**
- * Unmarshals a pack array.
+ * Unmarshals a pack list.
  */
-export const unmarshalPackArray = (
-    type: PackArrayType,
-    value: Array<any>,
-): Array<any> => {
+export const unmarshalPackList = <T extends unknown>(
+    type: PackListType,
+    value: T[],
+): T[] => {
     return value.map((element) => unmarshalPackValue(type.list, element));
 };
 
@@ -169,17 +179,26 @@ export const unmarshalPackValue = (
     type: PackTypeDefinition,
     value: unknown,
 ) => {
-    if (Array.isArray(value)) {
-        return unmarshalPackArray(type as any as PackArrayType, value);
-    } else if (typeof type === "object") {
+    if (isPackListType(type)) {
+        return unmarshalPackList(type, value as unknown[]);
+    } else if (isPackStructType(type)) {
         return unmarshalPackStruct(type, value as object);
     } else if (typeof type === "string") {
         if (type === "nil") return null;
         return unmarshalPackPrimitive(type, value);
     }
+    let valueString: string;
+    try {
+        valueString = JSON.stringify(value);
+    } catch (_error) {
+        valueString = String(value);
+    }
+    if (valueString.length > 20) {
+        valueString = `${valueString.slice(0, 17)}...`;
+    }
     throw new Error(
         `Unknown value type ${String(type)}${
-            !type ? ` for value ${String(value)}` : ""
+            !type ? ` for value ${valueString}` : ""
         }.`,
     );
 };

@@ -19,7 +19,6 @@ import {
     keccak256,
     retryNTimes,
     SECONDS,
-    sleep,
 } from "@renproject/utils";
 import {
     Connection,
@@ -633,6 +632,7 @@ export class SolanaClass
 
         const mintData = await this.provider.connection.getAccountInfo(
             mintLogAccountId[0],
+            "processed",
         );
 
         if (!mintData) {
@@ -651,6 +651,8 @@ export class SolanaClass
             const mintSigs =
                 await this.provider.connection.getSignaturesForAddress(
                     mintLogAccountId[0],
+                    undefined,
+                    "confirmed",
                 );
             return (mintSigs[0] && mintSigs[0].signature) || "";
         } catch (error) {
@@ -661,6 +663,8 @@ export class SolanaClass
                 const mintSigs =
                     await this.provider.connection.getConfirmedSignaturesForAddress2(
                         mintLogAccountId[0],
+                        undefined,
+                        "confirmed",
                     );
                 return mintSigs[0].signature;
             } catch (errorInner) {
@@ -723,9 +727,11 @@ export class SolanaClass
                 ? new PublicKey(params.contractCalls[0].sendTo)
                 : this.provider.wallet.publicKey;
 
-        const destination = await this.getAssociatedTokenAccount(
-            asset,
-            recipient.toString(),
+        const destination = await retryNTimes(
+            async () =>
+                this.getAssociatedTokenAccount(asset, recipient.toString()),
+            5,
+            3 * SECONDS,
         );
 
         if (!destination) {
@@ -1063,6 +1069,7 @@ export class SolanaClass
         try {
             const tokenAccount = await this.provider.connection.getAccountInfo(
                 destination,
+                "processed",
             );
 
             if (!tokenAccount || !tokenAccount.data) {

@@ -255,7 +255,7 @@ export class FilecoinClass
 
         // If there's too many logs to catch-up on, fetch the transactions from
         // Filfox (mainnet only)
-        if (this.filfox && logsToCatchUp > logLimit) {
+        if (this.filfox && (logsToCatchUp > logLimit || height === 0)) {
             try {
                 const size = 100;
                 let page = 0;

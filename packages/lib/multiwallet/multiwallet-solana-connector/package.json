@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-solana-connector",
-    "version": "2.5.2",
+    "version": "2.5.7-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

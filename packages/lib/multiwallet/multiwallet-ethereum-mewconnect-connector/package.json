@@ -41,7 +41,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@myetherwallet/mewconnect-web-client": "^2.1.23-beta.9",
+        "@myetherwallet/mewconnect-web-client": "^2.2.0-beta.11",
         "@renproject/interfaces": "^2.5.2",
         "@renproject/multiwallet-abstract-ethereum-connector": "^2.5.5",
         "@renproject/multiwallet-base-connector": "^2.5.2",

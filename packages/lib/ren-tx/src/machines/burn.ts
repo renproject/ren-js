@@ -317,6 +317,9 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                             );
                         },
                     },
+                    on: {
+                        RETRY: "created",
+                    },
                 },
 
                 submittingBurn: {

@@ -2,7 +2,7 @@
 
 These are automatically generated docs for RenJS's interfaces, hosted at [renproject.github.io/ren-js-docs](https://renproject.github.io/ren-js-docs/).
 
-See [docs.renproject.io/developers](https://docs.renproject.io/developers) for more docs and tutorials.
+See [https://renproject.github.io/ren-client-docs/ren-js](https://https://renproject.github.io/ren-client-docs/ren-js) for more docs and tutorials.
 
 ### RenJS - @renproject/ren
 

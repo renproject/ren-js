@@ -14,7 +14,7 @@ npm install --save @renproject/ren
 
 ## Usage
 
-Usage is described in the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started).
+Usage is described in the [Getting Started Tutorial](https://renproject.github.io/ren-client-docs/ren-js/tutorial/overview).
 
 ### RenVM network information
 

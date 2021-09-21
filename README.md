@@ -13,7 +13,7 @@ The official Javascript SDK for interacting with [RenVM](https://renproject.io).
 
 ## Docs
 
-_See [./packages/lib/ren/README.md](./packages/lib/ren/README.md) for basic usage, and the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) for a guide on bridging assets._
+_See [./packages/lib/ren/README.md](./packages/lib/ren/README.md) for basic usage, and the [Getting Started Tutorial](https://renproject.github.io/ren-client-docs/ren-js/tutorial/overview) for a guide on bridging assets._
 
 ### Changelog
 

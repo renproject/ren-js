@@ -131,9 +131,9 @@ export interface BurnMachineSchema {
 
 export type BurnMachineEvent<X, Y> =
     | { type: "NOOP" }
-    | { type: "RETRY" }
     | { type: "RESTORE" }
     | { type: "CREATED" }
+    | { type: "RETRY" }
     // Submit to renvm
     | { type: "SUBMIT" }
     // Burn Submitted
@@ -317,6 +317,14 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                             );
                         },
                     },
+                    // NOTE: this is sensitive; as a burn /might/ have been created,
+                    // but we have just failed to listen for the event.
+                    // It will always be safer to ask the user to check if funds have left
+                    // their wallet and start a new tx in this case
+                    //
+                    // on: {
+                    //     RETRY: "created",
+                    // },
                 },
 
                 submittingBurn: {
@@ -437,6 +445,9 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
                             );
                         },
                     },
+                    on: {
+                        RETRY: "srcConfirmed",
+                    },
                 },
 
                 srcConfirmed: {
@@ -486,6 +497,8 @@ export const buildBurnMachine = <BurnType, ReleaseType>() =>
 
                 accepted: {
                     on: {
+                        // handle submitting to release chain
+                        SUBMIT: {},
                         RELEASE_ERROR: {
                             target: "errorReleasing",
                             actions: assign({

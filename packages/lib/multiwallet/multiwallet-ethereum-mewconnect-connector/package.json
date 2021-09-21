@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-ethereum-mewconnect-connector",
-    "version": "2.5.5",
+    "version": "2.5.7",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

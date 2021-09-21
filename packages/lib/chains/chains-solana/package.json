@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "2.5.7-alpha.0",
+    "version": "2.5.7",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,7 +45,7 @@
     "dependencies": {
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.2",
-        "@renproject/chains-filecoin": "^2.5.6",
+        "@renproject/chains-filecoin": "^2.5.7",
         "@renproject/chains-terra": "^2.5.6",
         "@renproject/interfaces": "^2.5.2",
         "@renproject/rpc": "^2.5.6",

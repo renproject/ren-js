@@ -73,6 +73,18 @@ export interface WalletPickerProps<P, A>
    */
   targetNetwork: RenNetwork | "mainnet" | "testnet";
   /**
+   Title for "Wrong Network" modal
+   */
+  wrongNetworkTitle?: string;
+  /**
+   Title for "Connecting" modal
+   */
+  connectingTitle?: string;
+  /**
+   Title for "Connect Wallet" modal
+   */
+  connectWalletTitle?: string;
+  /**
      MaterialUI class overrides for the component shown when connecting
    */
   connectingClasses?: PaperProps["classes"];
@@ -192,6 +204,9 @@ export const WalletPicker = <P, A>({
   WrongNetworkInfo,
   WalletEntryButton,
   WalletChainLabel,
+  connectingTitle = "Connecting",
+  wrongNetworkTitle = "Wrong Network",
+  connectWalletTitle = "Connect a wallet",
   children,
 }: WalletPickerProps<P, A>): JSX.Element => {
   const defaultClasses = useWalletPickerStyles();
@@ -226,7 +241,7 @@ export const WalletPicker = <P, A>({
               <WalletPickerHeader
                 classes={classes}
                 onClose={onClose}
-                title="Connecting"
+                title={connectingTitle}
               />
               <Connecting
                 name={name}
@@ -247,7 +262,7 @@ export const WalletPicker = <P, A>({
               <WalletPickerHeader
                 classes={classes}
                 onClose={onClose}
-                title="Wrong Network"
+                title={wrongNetworkTitle}
               />
               <WrongNetwork
                 classes={connectingClasses}
@@ -261,7 +276,7 @@ export const WalletPicker = <P, A>({
             <WalletPickerHeader
               classes={classes}
               onClose={onClose}
-              title="Connect a wallet"
+              title={connectWalletTitle}
             />
             <Box p={2} className={classes.body}>
               {WalletChainLabel ? (

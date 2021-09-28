@@ -7,13 +7,13 @@ The official Javascript SDK for interacting with [RenVM](https://renproject.io).
 ## Integration options
 
 1. **RenBridge** ([bridge.renproject.io](https://bridge.renproject.io)): Link out to RenBridge if you require users to have renBTC and other bridged assets.
-2. **RenJS** ([`RenJS` repository](./packages/lib/ren)): An SDK for integrating into your own user interface.
-3. **RenTX** ([`RenTX` repository](./packages/lib/ren-tx)): A wrapper around RenJS to make handling transaction state easier.
+2. **RenJS** ([`RenJS` repository](./packages/ren)): An SDK for integrating into your own user interface.
+3. **RenTX** ([`RenTX` repository](./packages/ren-tx)): A wrapper around RenJS to make handling transaction state easier.
 4. **Multiwallet** ([`Multiwallet UI` repository](./packages/ui/multiwallet-ui)): A library for handling user wallet connections for various blockchains.
 
 ## Docs
 
-_See [./packages/lib/ren/README.md](./packages/lib/ren/README.md) for basic usage, and the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) for a guide on bridging assets._
+_See [./packages/ren/README.md](./packages/ren/README.md) for basic usage, and the [Getting Started Tutorial](https://docs.renproject.io/developers/tutorial/getting-started) for a guide on bridging assets._
 
 ### Changelog
 
@@ -37,8 +37,20 @@ yarn link @renproject/ren
 
 ## Package list
 
-See [./packages/README.md](./packages/README.md).
+-   [`ren`](./ren) - Javascript SDK for interacting with RenVM.
+-   [`interfaces`](./interfaces) - Typescript definitions.
+-   [`utils`](./utils) - Helper functions used by the other packages.
+-   [`provider`](./provider) - JSON-RPC provider.
+-   [`mock-provider`](./mock-provider) - For testing without a RenVM instance.
+-   [`test`](./test) - Integration tests (not published)
+-   chains - Packages for adding support for blockchains and assets.
+-   -   [`chains-bitcoin`](./chains/chains-bitcoin)
+-   -   [`chains-terra`](./chains/chains-terra)
+-   -   [`chains-filecoin`](./chains/chains-filecoin)
+-   -   [`chains-ethereum`](./chains/chains-ethereum)
+-   -   [`chains-solana`](./chains/chains-solana)
+-   -   [`chains`](./chains/chains)
 
 ## Adding chains
 
-See [./packages/lib/chains/chains/README.md](./packages/lib/chains/chains/README.md).
+See [./packages/chains/chains/README.md](./packages/chains/chains/README.md).

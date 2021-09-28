@@ -16,10 +16,10 @@ module.exports = {
     parserOptions: {
         project: [
             "./tsconfig.json",
-            "./packages/lib/*/tsconfig.json",
+            "./packages/*/tsconfig.json",
             "./packages/ui/*/tsconfig.json",
-            "./packages/lib/chains/*/tsconfig.json",
-            "./packages/lib/multiwallet/*/tsconfig.json",
+            "./packages/chains/*/tsconfig.json",
+            "./packages/multiwallet/*/tsconfig.json",
         ],
         sourceType: "module",
     },

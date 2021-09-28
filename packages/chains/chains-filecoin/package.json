@@ -1,0 +1,81 @@
+{
+    "name": "@renproject/chains-filecoin",
+    "version": "2.5.6",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/renproject/ren-js.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "author": "Ren",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/renproject/ren-js/issues"
+    },
+    "main": "./build/main/index.js",
+    "typings": "./build/main/index.d.ts",
+    "module": "./build/module/index.js",
+    "scripts": {
+        "describe": "npm-scripts-info",
+        "clean": "yarn rimraf ./build ./node_modules",
+        "link": "yarn link",
+        "unlink": "yarn unlink",
+        "build": "yarn build:main && yarn build:module",
+        "build:main": "tsc -p tsconfig.json",
+        "build:module": "tsc -p tsconfig.module.json",
+        "prettier": "yarn fix:prettier",
+        "lint": "run-s lint:*",
+        "lint:eslint": "eslint src/**/*.ts",
+        "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
+        "fix": "run-s fix:*",
+        "fix:eslint": "yarn lint:eslint --fix",
+        "fix:prettier": "prettier --write './(src|test)/**/*.ts*'",
+        "test": "run-s test:* lint",
+        "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
+        "watch": "run-s build:main && run-s \"build:main -- -w\"",
+        "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
+        "cov:html": "nyc report --reporter=html",
+        "cov:send": "nyc report --reporter=lcov && codecov",
+        "cov:check": "nyc report && nyc check-coverage --lines 0 --functions 0 --branches 0",
+        "prepare": "yarn build",
+        "npmignore": "npmignore -g ../../../.gitignore",
+        "prepare-release": "run-s npmignore build"
+    },
+    "dependencies": {
+        "@glif/filecoin-address": "^1.1.0",
+        "@glif/filecoin-rpc-client": "^1.1.0",
+        "@renproject/interfaces": "^2.5.2",
+        "@renproject/provider": "^2.5.6",
+        "@renproject/utils": "^2.5.2",
+        "@types/elliptic": "^6.4.12",
+        "@types/node": ">=10",
+        "bignumber.js": "^9.0.1",
+        "blakejs": "^1.1.0",
+        "cids": "^1.1.6",
+        "elliptic": "^6.5.4",
+        "lowercase-keys": "^2.0.0"
+    },
+    "resolutions": {
+        "web-encoding": "^1.1.5"
+    },
+    "nyc": {
+        "extends": "@istanbuljs/nyc-config-typescript",
+        "exclude": [
+            "**/*.d.ts",
+            "**/*.spec.js"
+        ],
+        "include": [
+            "src"
+        ]
+    },
+    "prettier": {
+        "printWidth": 80,
+        "semi": true,
+        "singleQuote": false,
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "endOfLine": "lf",
+        "arrowParens": "always"
+    }
+}

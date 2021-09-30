@@ -6,17 +6,17 @@ export enum RenNetwork {
 
     // Staging
     /**
-     * @deprecated Replaced by Mainnet
+     * @deprecated Replaced by Mainnet - will be removed in v3
      */
     MainnetVDot3 = "mainnet",
 
     /**
-     * @deprecated Replaced by Testnet
+     * @deprecated Replaced by Testnet - will be removed in v3
      */
     TestnetVDot3 = "testnet",
 
     /**
-     * @deprecated Replaced by Devnet
+     * @deprecated Replaced by Devnet - will be removed in v3
      */
     DevnetVDot3 = "devnet",
 }

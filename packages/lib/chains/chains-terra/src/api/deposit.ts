@@ -1,6 +1,6 @@
 export enum TerraNetwork {
-    Tequila = "tequila-0004",
-    Columbus = "columbus-4",
+    Tequila = "bombay-12",
+    Columbus = "columbus-5",
 }
 
 export interface TerraTransaction {

@@ -3,7 +3,6 @@ import Axios from "axios";
 import { SECONDS } from "@renproject/utils";
 
 import { TerraAPI, TerraNetwork, TerraTransaction } from "./deposit";
-import { getHeight } from "./height";
 
 const TERRA_DEV_URL = (network: TerraNetwork) => {
     let prefix;
@@ -17,7 +16,7 @@ const TERRA_DEV_URL = (network: TerraNetwork) => {
         default:
             throw new Error(`Terra network ${String(network)} not supported.`);
     }
-    return `https://${String(prefix)}.terra.dev/v1`;
+    return `https://${String(prefix)}.terra.dev`;
 };
 
 interface TerraDevTx {
@@ -213,7 +212,7 @@ const fetchDeposits = async (
     // }&chainId=${network}`;
     const url = `${TERRA_DEV_URL(
         network,
-    )}/txs?account=${address}&chainId=${network}`;
+    )}/v1/txs?account=${address}&chainId=${network}`;
 
     const response = (
         await Axios.get<MessagesResponse>(url, {
@@ -250,7 +249,7 @@ const fetchDeposit = async (
 ): Promise<TerraTransaction> => {
     // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
 
-    const url = `${TERRA_DEV_URL(network)}/tx/${hash}`;
+    const url = `${TERRA_DEV_URL(network)}/v1/tx/${hash}`;
     const tx = (
         await Axios.get<MessageResponse>(url, {
             timeout: 60 * SECONDS,
@@ -267,6 +266,21 @@ const fetchDeposit = async (
     // Fetch current height of the chain. Skip if no messages were found.
     const chainHeight = await getHeight(network);
     return extractDepositsFromTx(chainHeight)(tx)[messageIndex];
+};
+
+export const getHeight = async (network: TerraNetwork): Promise<number> => {
+    const url = `${TERRA_DEV_URL(network)}/blocks/latest`;
+    const response = (
+        await Axios.get<{ block: { header: { height: string } } }>(url, {
+            timeout: 60 * SECONDS,
+        })
+    ).data;
+
+    if (response === null) {
+        throw new Error(`Unable to fetch latest Terra block.`);
+    }
+
+    return parseInt(response.block.header.height, 10);
 };
 
 export const terraDev: TerraAPI = {

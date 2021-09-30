@@ -1,8 +1,9 @@
-import { SECONDS } from "@renproject/utils";
 import Axios from "axios";
 
+import { SECONDS } from "@renproject/utils";
+
 import { TerraAPI, TerraNetwork, TerraTransaction } from "./deposit";
-import { getHeight } from "./height";
+import { getHeight } from "./terraDev";
 
 const STAKE_ID_URL = (network: TerraNetwork) => {
     let prefix;

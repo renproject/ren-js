@@ -6,11 +6,11 @@ import {
     RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { NetworkInput } from "./base";
-import { EthAddress, EthProvider, EthTransaction } from "./types";
 
+import { NetworkInput } from "./base";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renArbitrumTestnet: EthereumConfig = {
@@ -45,12 +45,12 @@ export const renArbitrumMainnet: EthereumConfig = {
     },
 
     publicProvider: () => `https://arb1.arbitrum.io/rpc`,
-    explorer: StandardExplorer("https://explorer.arbitrum.io"),
+    explorer: StandardExplorer("https://arbiscan.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
     infura: "https://arb1.arbitrum.io/rpc",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://explorer.arbitrum.io",
+    etherscan: "https://arbiscan.io",
 };
 
 export const ArbitrumConfigMap = {

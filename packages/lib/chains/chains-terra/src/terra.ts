@@ -1,5 +1,4 @@
 import bech32 from "bech32";
-import { blake2b } from "blakejs";
 import elliptic from "elliptic";
 
 import {
@@ -15,7 +14,6 @@ import {
     assertType,
     Callable,
     isHex,
-    toURLBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import { AccAddress, Key } from "@terra-money/terra.js";

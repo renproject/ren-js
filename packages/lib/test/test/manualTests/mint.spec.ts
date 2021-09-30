@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
 import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
 import { config as loadDotEnv } from "dotenv";
@@ -11,7 +12,12 @@ import * as Chains from "@renproject/chains";
 import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
 import { renTestnet } from "@renproject/chains-solana/build/main/networks";
 import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
+import {
+    LockAndMintParams,
+    LogLevel,
+    RenNetwork,
+    SimpleLogger,
+} from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 import { extractError, SECONDS, sleep } from "@renproject/utils";
@@ -31,7 +37,7 @@ const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    longIt("mint to contract", async function () {
+    it.only("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -97,13 +103,14 @@ describe("Refactor: mint", () => {
         //     gasLimit: 2000000,
         // },
 
-        const params = {
+        const params: LockAndMintParams = {
             asset,
             from,
             to,
+            nonce: new BN(1).toArrayLike(Buffer, "be", 32),
         };
 
-        const assetDecimals = params.from.assetDecimals(asset);
+        const assetDecimals = await params.from.assetDecimals(asset);
 
         // Use 0.0001 more than fee.
         let suggestedAmount: BigNumber;
@@ -232,6 +239,11 @@ describe("Refactor: mint", () => {
                         }
                         account
                             .send(address, sendAmount, asset, options)
+                            .then((tx) => {
+                                console.log(
+                                    `${blue("[faucet]")} Transaction: ${tx}`,
+                                );
+                            })
                             .catch(reject);
                     }
                 })

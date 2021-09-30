@@ -13,8 +13,8 @@ export const getHeight = async (network: TerraNetwork): Promise<number> => {
         case TerraNetwork.Columbus:
             prefix = "lcd";
             break;
-        case TerraNetwork.Tequila:
-            prefix = "tequila-lcd";
+        case TerraNetwork.Bombay:
+            prefix = "bombay-lcd";
             break;
         default:
             throw new Error(`Terra network ${String(network)} not supported.`);

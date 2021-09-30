@@ -1,5 +1,6 @@
-import { SECONDS } from "@renproject/utils";
 import Axios from "axios";
+
+import { SECONDS } from "@renproject/utils";
 
 import { TerraAPI, TerraNetwork, TerraTransaction } from "./deposit";
 import { getHeight } from "./height";
@@ -10,8 +11,8 @@ const TERRA_DEV_URL = (network: TerraNetwork) => {
         case TerraNetwork.Columbus:
             prefix = "fcd";
             break;
-        case TerraNetwork.Tequila:
-            prefix = "tequila-fcd";
+        case TerraNetwork.Bombay:
+            prefix = "bombay-fcd";
             break;
         default:
             throw new Error(`Terra network ${String(network)} not supported.`);

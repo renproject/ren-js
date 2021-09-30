@@ -1,12 +1,15 @@
 import bech32 from "bech32";
+import { blake2b } from "blakejs";
+import elliptic from "elliptic";
+
 import {
+    BurnPayloadConfig,
+    ChainStatic,
     getRenNetworkDetails,
     LockChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
-    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
@@ -16,8 +19,6 @@ import {
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import { AccAddress, Key } from "@terra-money/terra.js";
-import { blake2b } from "blakejs";
-import elliptic from "elliptic";
 
 import {
     TerraAddress,
@@ -32,13 +33,13 @@ import { terraDev } from "./api/terraDev";
 const resolveTerraNetwork = (
     network: RenNetwork | RenNetworkString | RenNetworkDetails | TerraNetwork,
 ) => {
-    if (network === TerraNetwork.Columbus || network === TerraNetwork.Tequila) {
+    if (network === TerraNetwork.Columbus || network === TerraNetwork.Bombay) {
         return network;
     }
 
     const renNetwork = getRenNetworkDetails(network);
     // Prioritize the network passed in to the constructor.
-    return renNetwork.isTestnet ? TerraNetwork.Tequila : TerraNetwork.Columbus;
+    return renNetwork.isTestnet ? TerraNetwork.Bombay : TerraNetwork.Columbus;
 };
 
 export enum TerraAssets {
@@ -148,7 +149,7 @@ export class TerraClass
         this.chainNetwork =
             this.chainNetwork ||
             (this.renNetwork.isTestnet
-                ? TerraNetwork.Tequila
+                ? TerraNetwork.Bombay
                 : TerraNetwork.Columbus);
 
         return this;

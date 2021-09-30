@@ -1,19 +1,21 @@
 /* eslint-disable no-console */
 
-import * as Chains from "@renproject/chains";
-import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
-
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
-import RenJS from "@renproject/ren";
-import { extractError, SECONDS, sleep } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import chai from "chai";
 import { blue, cyan, green, magenta, red, yellow } from "chalk";
-import CryptoAccount from "send-crypto";
-import HDWalletProvider from "@truffle/hdwallet-provider";
 import { config as loadDotEnv } from "dotenv";
-import BigNumber from "bignumber.js";
-import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 import { ethers } from "ethers";
+import CryptoAccount from "send-crypto";
+
+import * as Chains from "@renproject/chains";
+import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
+import { renTestnet } from "@renproject/chains-solana/build/main/networks";
+import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
+import RenJS from "@renproject/ren";
+import { RenVMProvider } from "@renproject/rpc/build/main/v2";
+import { extractError, SECONDS, sleep } from "@renproject/utils";
+import HDWalletProvider from "@truffle/hdwallet-provider";
 
 chai.should();
 
@@ -23,10 +25,6 @@ const colors = [green, magenta, yellow, cyan, blue, red];
 
 const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
-import { renGoerli } from "@renproject/chains";
-import { renTestnet } from "@renproject/chains-solana/build/main/networks";
-import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
 const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
@@ -61,7 +59,7 @@ describe("Refactor: mint", () => {
             network: "testnet",
             apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
             terra: {
-                URL: "https://tequila-lcd.terra.dev",
+                URL: "https://bombay-lcd.terra.dev",
             },
         });
 

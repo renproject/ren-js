@@ -1,5 +1,5 @@
 export enum TerraNetwork {
-    Tequila = "bombay-12",
+    Bombay = "bombay-12",
     Columbus = "columbus-5",
 }
 

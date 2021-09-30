@@ -813,7 +813,10 @@ export class SolanaClass
         | ((burnPayload?: string) => OverwritableBurnAndReleaseParams)
         | undefined;
 
-    getBurnParams = (_asset: string, burnPayload?: string) => {
+    getBurnParams = (
+        _asset: string,
+        burnPayload?: string,
+    ): OverwritableBurnAndReleaseParams | undefined => {
         if (!this._getParams || !burnPayload) return undefined;
         return this._getParams(burnPayload);
     };
@@ -829,7 +832,7 @@ export class SolanaClass
         }>,
         _transaction?: SolTransaction,
         burnNonce?: Buffer | string | number,
-    ) => {
+    ): Promise<BurnDetails<SolTransaction> | undefined> => {
         await this.waitForInitialization();
         const program = new PublicKey(this.resolveTokenGatewayContract(asset));
 

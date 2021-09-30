@@ -1,38 +1,39 @@
+import { blake2b } from "blakejs";
+import CID from "cids";
+import elliptic from "elliptic";
+
 import {
     decode as decodeAddress,
     encode as encodeAddress,
     validateAddressString,
 } from "@glif/filecoin-address";
+import FilecoinClient from "@glif/filecoin-rpc-client";
 import {
+    BurnPayloadConfig,
+    ChainStatic,
     getRenNetworkDetails,
     LockAndMintParams,
     LockChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
-    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
     Callable,
+    doesntError,
+    isDefined,
+    retryNTimes,
     SECONDS,
     sleep,
     toBase64,
     toURLBase64,
     utilsWithChainNetwork,
-    isDefined,
-    doesntError,
-    retryNTimes,
 } from "@renproject/utils";
-import { blake2b } from "blakejs";
-import CID from "cids";
-import elliptic from "elliptic";
-import FilecoinClient from "@glif/filecoin-rpc-client";
 
-import { FilNetwork as FilNetworkImport, FilTransaction } from "./deposit";
-import { fetchDeposits, fetchMessage, getHeight } from "./api/lotus";
 import { Filfox } from "./api/explorers/filfox";
+import { fetchDeposits, fetchMessage, getHeight } from "./api/lotus";
+import { FilNetwork as FilNetworkImport, FilTransaction } from "./deposit";
 
 export type FilNetwork = FilNetworkImport;
 
@@ -471,7 +472,7 @@ export class FilecoinClass
 
         return {
             txid: Buffer.from(new CID(transaction.cid).bytes),
-            txindex: transaction.nonce.toFixed(),
+            txindex: "0",
         };
     };
 

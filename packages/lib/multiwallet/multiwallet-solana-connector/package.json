@@ -1,6 +1,6 @@
 {
     "name": "@renproject/multiwallet-solana-connector",
-    "version": "2.5.2",
+    "version": "2.5.7-alpha.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,7 +42,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "peerDependencies": {
-        "@solana/web3.js": "^1.22.0"
+        "@solana/web3.js": "^1.24.1"
     },
     "dependencies": {
         "@project-serum/sol-wallet-adapter": "^0.2.5",

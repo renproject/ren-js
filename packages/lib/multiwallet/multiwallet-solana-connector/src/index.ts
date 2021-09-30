@@ -5,7 +5,7 @@ import {
     ConnectorUpdate,
 } from "@renproject/multiwallet-base-connector";
 import Wallet from "@project-serum/sol-wallet-adapter/dist/esm/index";
-import { Connection, clusterApiUrl } from "@solana/web3.js";
+import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
 
 export interface SolanaConnectorOptions {
     debug?: boolean;
@@ -60,21 +60,51 @@ export class SolanaConnector
     };
 
     async activate() {
-        // await Promise.all([
-        //     new Promise((resolve, reject) => {
-        //         this.wallet.on("connect", resolve);
-        //         this.wallet.on("disconnect", reject);
-        //     }),
-        //     this.wallet.connect(),
-        // ]);
+        const solana =
+            typeof this.providerURL === "object"
+                ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (this.providerURL as any)
+                : this.wallet;
 
         this.wallet.on("connect", this.handleUpdate);
         // when disconnecting inside an external window,
         // you need to manually bind the function
         this.wallet.on("disconnect", this.deactivate.bind(this));
         await this.wallet.connect();
+
+        // // console.log(await this.wallet.connect());
+        const [publicKey, _] = await Promise.all([
+            new Promise((resolve, reject) => {
+                solana.on("connect", (pk: PublicKey) => {
+                    resolve(pk);
+                });
+                solana.on("disconnect", (d: unknown) => {
+                    this.deactivate.bind(this);
+                    reject(d);
+                });
+            }),
+            (async () => {
+                return await solana.connect();
+            })(),
+        ]);
+
+        // Send conencted message to @solana/sol-wallet-adapter
+        this.wallet.handleMessage({
+            data: {
+                id: 67,
+                method: "connected",
+                params: {
+                    autoApprove: false,
+                    publicKey: (publicKey as PublicKey).toBase58(),
+                },
+            },
+            source: window,
+        } as any);
+
         return {
-            account: this.getAccount(),
+            account: publicKey
+                ? (publicKey as PublicKey).toBase58()
+                : this.getAccount(),
             provider: { connection: this.connection, wallet: this.wallet },
             renNetwork: this.network,
         };

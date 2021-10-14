@@ -8,18 +8,18 @@ module.exports = {
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
         "prettier",
+        "plugin:jsdoc/recommended",
 
         // Ignored for now.
         // "plugin:security/recommended",
     ],
     parser: "@typescript-eslint/parser",
     parserOptions: {
+        createDefaultProgram: true,
         project: [
             "./tsconfig.json",
             "./packages/*/tsconfig.json",
-            "./packages/ui/*/tsconfig.json",
             "./packages/chains/*/tsconfig.json",
-            "./packages/multiwallet/*/tsconfig.json",
         ],
         sourceType: "module",
     },
@@ -31,6 +31,7 @@ module.exports = {
         "eslint-plugin-jsdoc",
         "@typescript-eslint",
         "security",
+        "jsdoc",
     ],
     rules: {
         "jsdoc/newline-after-description": "warn",
@@ -123,7 +124,28 @@ module.exports = {
                 default: "array-simple",
             },
         ],
-        "@typescript-eslint/no-empty-interface": "off",
+
+        "jsdoc/no-types": 1,
+        "jsdoc/require-param-type": 0,
+        "jsdoc/require-property-type": 0,
+        "jsdoc/require-returns-type": 0,
+        "jsdoc/require-jsdoc": [
+            "warn",
+            {
+                publicOnly: true,
+                require: {
+                    ArrowFunctionExpression: true,
+                    ClassDeclaration: true,
+                    ClassExpression: true,
+                    FunctionDeclaration: true,
+                    FunctionExpression: true,
+                    MethodDefinition: true,
+                },
+            },
+        ],
+        // Disabled until require-jsdoc warnings are fixed.
+        "jsdoc/require-param": 0,
+        "jsdoc/require-returns": 0,
 
         // Ignored for now:
         "import/no-extraneous-dependencies": "off",
@@ -136,6 +158,7 @@ module.exports = {
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/unbound-method": "off",
         "@typescript-eslint/no-inferrable-types": "off",
+        "@typescript-eslint/no-empty-interface": "off",
 
         // Implementation seems to be buggy:
         "@typescript-eslint/no-unnecessary-condition": [

@@ -1,5 +1,4 @@
 export * from "./assert";
-export * from "./callableClass";
 export * from "./common";
 export * from "./hash";
 export * from "./renVMHashes";

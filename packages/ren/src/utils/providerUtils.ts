@@ -40,7 +40,8 @@ export const waitForTX = async (
             } else if (onStatus && result && result.txStatus) {
                 onStatus(result.txStatus);
             }
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             if (
                 /(not found)|(not available)/.exec(
                     String((error || {}).message),
@@ -66,19 +67,19 @@ export const getRenVMSelector = async ({
 }: {
     asset: string;
     from: {
-        name: string;
+        chain: string;
         assetIsNative: (asset: string) => SyncOrPromise<boolean>;
     };
     to: {
-        name: string;
+        chain: string;
         assetIsNative: (asset: string) => SyncOrPromise<boolean>;
     };
 }): Promise<string> => {
     if (await from.assetIsNative(asset)) {
-        return `${asset}/to${to.name}`;
+        return `${asset}/to${to.chain}`;
     }
     if (await to.assetIsNative(asset)) {
-        return `${asset}/from${from.name}`;
+        return `${asset}/from${from.chain}`;
     }
-    return `${asset}/from${from.name}To${to.name}`;
+    return `${asset}/from${from.chain}To${to.chain}`;
 };

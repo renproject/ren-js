@@ -1,5 +1,5 @@
-export { BtcAddress, BtcTransaction, BtcDeposit, BtcNetwork } from "./base";
-
+export * from "./utils/types";
+export * from "./base";
 export * from "./bitcoin";
 export * from "./zcash";
 export * from "./bitcoincash";

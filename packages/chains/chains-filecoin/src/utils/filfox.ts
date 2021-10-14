@@ -1,23 +1,23 @@
-import { SECONDS } from "@renproject/utils";
 import Axios from "axios";
-import { FilNetwork, FilTransaction } from "../../deposit";
 
-const FILFOX_URL = "https://filfox.info/api/v1/";
+import { SECONDS } from "@renproject/utils";
+
+import { FilTransaction } from "./deposit";
 
 export class Filfox {
-    constructor(network: FilNetwork = "mainnet") {
-        if (network !== "mainnet") {
-            throw new Error(`Network ${network} not supported by Filscan.`);
-        }
+    public filfoxApi: string;
+
+    constructor(filfoxApi: string) {
+        this.filfoxApi = filfoxApi;
     }
 
     fetchDeposits = async (
         address: string,
-        paramsFilterBase64: string | undefined = undefined,
+        // paramsFilterBase64: string | undefined = undefined,
         page = 0,
         size = 100,
     ): Promise<{ deposits: FilTransaction[]; totalCount: number }> => {
-        const heightURL = `${FILFOX_URL}tipset/recent?count=1`;
+        const heightURL = `${this.filfoxApi}tipset/recent?count=1`;
 
         const heightResponse = (
             await Axios.get<FilscanHeight | FilscanError>(heightURL, {
@@ -33,7 +33,7 @@ export class Filfox {
 
         const height = heightResponse[0].height;
 
-        const messagesURL = `${FILFOX_URL}address/${address}/messages?pageSize=${size}&page=${page}&detailed`;
+        const messagesURL = `${this.filfoxApi}address/${address}/messages?pageSize=${size}&page=${page}&detailed`;
 
         const messagesResponse = (
             await Axios.get<FilscanAddressMessages | FilscanError>(
@@ -64,19 +64,19 @@ export class Filfox {
                         confirmations: height - message.height,
                         nonce: message.nonce,
                     };
-                })
-                .filter(
-                    (message) =>
-                        paramsFilterBase64 === undefined ||
-                        paramsFilterBase64 === null ||
-                        message.params === paramsFilterBase64,
-                ),
+                }),
+            // .filter(
+            //     (message) =>
+            //         paramsFilterBase64 === undefined ||
+            //         paramsFilterBase64 === null ||
+            //         message.params === paramsFilterBase64,
+            // ),
             totalCount,
         };
     };
 
     fetchMessage = async (cid: string): Promise<FilTransaction> => {
-        const messagesURL = `${FILFOX_URL}message/${cid}`;
+        const messagesURL = `${this.filfoxApi}message/${cid}`;
 
         const message = (
             await Axios.get<FilscanMessage>(messagesURL, {

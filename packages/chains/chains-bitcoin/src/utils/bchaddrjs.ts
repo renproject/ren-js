@@ -21,8 +21,8 @@
 // SOFTWARE.
 
 import { InvalidAddressError } from "bchaddrjs";
-import cashaddr, { ValidationError } from "cashaddrjs";
 import bs58check from "bs58check";
+import cashaddr, { ValidationError } from "cashaddrjs";
 
 enum Format {
     Legacy = "legacy",
@@ -117,7 +117,8 @@ const decodeBase58Address = (address: string) => {
                     type: Type.P2SH,
                 };
         }
-    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         // Ignore error.
     }
     throw new InvalidAddressError();
@@ -145,7 +146,8 @@ const decodeCashAddressWithPrefix = (address: string) => {
                     type: type,
                 };
         }
-    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         // Ignore error.
     }
     throw new InvalidAddressError();
@@ -155,7 +157,8 @@ const decodeCashAddress = (address: string) => {
     if (address.indexOf(":") !== -1) {
         try {
             return decodeCashAddressWithPrefix(address);
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             // Ignore error.
         }
     } else {
@@ -164,7 +167,8 @@ const decodeCashAddress = (address: string) => {
             try {
                 const prefix = prefixes[i];
                 return decodeCashAddressWithPrefix(prefix + ":" + address);
-            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
                 // Ignore error.
             }
         }
@@ -186,7 +190,8 @@ const getTypeBits = (type: string) => {
 export const decodeBitcoinCashAddress = (address: string): Buffer => {
     try {
         return Buffer.from(decodeBase58Address(address).hash);
-    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         // Ignore error.
     }
     try {
@@ -195,7 +200,8 @@ export const decodeBitcoinCashAddress = (address: string): Buffer => {
             Buffer.from([getTypeBits(type)]),
             Buffer.from(hash),
         ]);
-    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         // Ignore error.
     }
     throw new InvalidAddressError();

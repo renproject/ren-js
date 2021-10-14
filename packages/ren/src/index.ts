@@ -20,8 +20,8 @@ export { Gateway as LockAndMint } from "./gateway";
 const estimateTransactionFee = async (
     renVM: RenVMProvider,
     asset: string,
-    _lockChain: { name: string },
-    hostChain: { name: string },
+    _lockChain: { chain: string },
+    hostChain: { chain: string },
 ): Promise<{
     lock: BigNumber;
     release: BigNumber;
@@ -40,7 +40,7 @@ const estimateTransactionFee = async (
     const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
 
     const mintAndBurnFees = blockState[asset].fees.chains.filter(
-        (chainFees) => chainFees.chain === hostChain.name,
+        (chainFees) => chainFees.chain === hostChain.chain,
     )[0];
 
     return {
@@ -157,7 +157,7 @@ export default class RenJS {
     // eslint-disable-next-line @typescript-eslint/array-type
     public withChains = <T extends Chain[]>(...chains: T): this => {
         for (const chain of chains) {
-            this.chains[chain.name] = chain;
+            this.chains[chain.chain] = chain;
         }
         return this;
     };
@@ -186,10 +186,10 @@ export default class RenJS {
         burn: number;
     }> => {
         if (!(await from.assetIsSupported(asset))) {
-            throw new Error(`Asset not supported by chain ${from.name}.`);
+            throw new Error(`Asset not supported by chain ${from.chain}.`);
         }
         if (!(await to.assetIsSupported(asset))) {
-            throw new Error(`Asset not supported by chain ${to.name}.`);
+            throw new Error(`Asset not supported by chain ${to.chain}.`);
         }
 
         if (await to.assetIsNative(asset)) {

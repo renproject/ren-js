@@ -1,126 +1,72 @@
+import { RenNetwork } from "@renproject/interfaces";
+
+import { Blockbook } from "./APIs/blockbook";
+import { BitcoinBaseChain } from "./base";
 import {
-    ChainStatic,
-    RenNetwork,
-    RenNetworkDetails,
-    RenNetworkString,
-} from "@renproject/interfaces";
-import { Callable, isHex, utilsWithChainNetwork } from "@renproject/utils";
-import base58 from "bs58";
+    BitcoinNetworkConfig,
+    BitcoinNetworkConfigMap,
+    BitcoinNetworkInput,
+} from "./utils/types";
+import {
+    resolveBitcoinNetworkConfig,
+    StandardBitcoinExplorer,
+} from "./utils/utils";
 
-import { Insight } from "./APIs/insight";
-import { BtcAddress, BtcNetwork, BtcTransaction } from "./base";
-import { BitcoinClass } from "./bitcoin";
-import { validateAddress } from "./utils";
+export const DigiByteMainnet: BitcoinNetworkConfig = {
+    label: "DigiByte",
 
-export class DigiByteClass extends BitcoinClass {
+    selector: "DigiByte",
+    nativeAsset: {
+        name: "DigiByte",
+        symbol: "DGB",
+        decimals: 8,
+    },
+    explorer: StandardBitcoinExplorer("https://digiexplorer.info/"),
+    p2shPrefix: Buffer.from([0x3f]),
+    providers: [
+        new Blockbook(
+            "https://multichain-web-proxy.herokuapp.com/digibyte-mainnet",
+        ),
+        new Blockbook("https://digiexplorer.info/api"),
+        new Blockbook("https://insight.digibyte.host/api"), // TODO: test again, currently broken
+    ],
+    // validateAddress: (address: string) =>
+    //     validateAddress(address, "DGB", "mainnet"),
+};
+
+export const DigiByteTestnet: BitcoinNetworkConfig = {
+    label: "DigiByte Testnet",
+
+    selector: "DigiByte",
+    nativeAsset: {
+        name: "Testnet DigiByte",
+        symbol: "DGB",
+        decimals: 8,
+    },
+    isTestnet: true,
+    explorer: StandardBitcoinExplorer(
+        "`https://testnetexplorer.digibyteservers.io/",
+    ),
+    p2shPrefix: Buffer.from([0x8c]),
+    providers: [
+        new Blockbook("https://testnetexplorer.digibyteservers.io/api"),
+    ],
+    // validateAddress: (address: string) =>
+    //     validateAddress(address, "DGB", "testnet"),
+};
+
+export const DigiByteConfigMap: BitcoinNetworkConfigMap = {
+    [RenNetwork.Mainnet]: DigiByteMainnet,
+    [RenNetwork.Testnet]: DigiByteTestnet,
+    [RenNetwork.Devnet]: DigiByteTestnet,
+};
+
+export class DigiByte extends BitcoinBaseChain {
     public static chain = "DigiByte";
-    public chain = DigiByteClass.chain;
-    public name = DigiByteClass.chain;
+    public static configMap = DigiByteConfigMap;
+    public configMap = DigiByteConfigMap;
 
-    // APIs
-    public withDefaultAPIs = (network: BtcNetwork): this => {
-        switch (network) {
-            case "mainnet":
-                // prettier-ignore
-                return this
-                    .withAPI(Insight("https://multichain-web-proxy.herokuapp.com/digibyte-mainnet"))
-                    .withAPI(Insight("https://digiexplorer.info/api"))
-                    .withAPI(Insight("https://insight.digibyte.host/api"))
-            case "testnet":
-                // prettier-ignore
-                return this
-                    .withAPI(Insight("https://testnetexplorer.digibyteservers.io/api"));
-            case "regtest":
-                throw new Error(`Regtest is currently not supported.`);
-        }
-    };
-
-    public static asset = "DGB";
-    public asset = DigiByteClass.asset;
-
-    public static utils = {
-        resolveChainNetwork: BitcoinClass.utils.resolveChainNetwork,
-        p2shPrefix: {
-            // Source: https://github.com/digicontributer/digibyte-js/blob/27156cd1cb4430c4a4959f46e809629846694434/lib/networks.js
-            mainnet: Buffer.from([0x3f]),
-            testnet: Buffer.from([0x8c]),
-        },
-        addressBufferToString: base58.encode,
-        addressIsValid: (
-            address: BtcAddress | string,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | BtcNetwork = "mainnet",
-        ) =>
-            validateAddress(
-                address,
-                DigiByteClass.asset,
-                DigiByte.utils.resolveChainNetwork(network),
-            ),
-
-        transactionIsValid: (
-            transaction: BtcTransaction | string,
-            _network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | BtcNetwork = "mainnet",
-        ) =>
-            isHex(
-                typeof transaction === "string"
-                    ? transaction
-                    : transaction.txHash,
-                { length: 32 },
-            ),
-
-        addressExplorerLink: (
-            address: BtcAddress | string,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | BtcNetwork = "mainnet",
-        ): string | undefined => {
-            switch (DigiByte.utils.resolveChainNetwork(network)) {
-                case "mainnet":
-                    return `https://digiexplorer.info/address/${address}`;
-                case "testnet":
-                    return `https://testnetexplorer.digibyteservers.io/address/${address}`;
-                case "regtest":
-                    return undefined;
-            }
-        },
-
-        transactionExplorerLink: (
-            tx: BtcTransaction | string,
-            network:
-                | RenNetwork
-                | RenNetworkString
-                | RenNetworkDetails
-                | BtcNetwork = "mainnet",
-        ): string | undefined => {
-            const txHash = typeof tx === "string" ? tx : tx.txHash;
-
-            switch (DigiByte.utils.resolveChainNetwork(network)) {
-                case "mainnet":
-                    return `https://digiexplorer.info/tx/${txHash}`;
-                case "testnet":
-                    return `https://testnetexplorer.digibyteservers.io/tx/${txHash}`;
-                case "regtest":
-                    return undefined;
-            }
-        },
-    };
-
-    public utils = utilsWithChainNetwork(
-        DigiByteClass.utils,
-        () => this.chainNetwork,
-    );
+    constructor(network: BitcoinNetworkInput) {
+        super(resolveBitcoinNetworkConfig(DigiByte.configMap, network));
+    }
 }
-
-export type DigiByte = DigiByteClass;
-export const DigiByte = Callable(DigiByteClass);
-
-const _: ChainStatic<BtcTransaction, BtcAddress, BtcNetwork> = DigiByte;

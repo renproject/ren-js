@@ -92,7 +92,8 @@ describe("Extra params", () => {
             });
             const fee: number = fees[asset.toLowerCase()].lock;
             suggestedAmount = Math.floor(fee + 0.0001 * 1e8);
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = 0.0015 * 1e8;
         }

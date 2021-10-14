@@ -38,7 +38,7 @@
         "build:bundled": "cross-env NODE_ENV=production webpack --config ../../webpack.config.js --mode production --progress --color",
         "prettier": "yarn fix:prettier",
         "lint": "run-s lint:*",
-        "lint:eslint": "eslint src/**/*.ts",
+        "lint:eslint": "eslint --config ../../.eslintrc.js src",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
         "fix:eslint": "yarn lint:eslint --fix",

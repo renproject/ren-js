@@ -1,26 +1,32 @@
 import { RenNetwork } from "@renproject/interfaces";
 
-import { Ethereum, EthereumClassConfig } from "./ethereum";
+import { EthereumBaseChain, EthereumClassConfig } from "./base";
 import { EthProvider, EvmNetworkConfig, EvmNetworkInput } from "./utils/types";
-import { StandardExplorer } from "./utils/utils";
+import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const goerliConfig: EvmNetworkConfig = {
-    name: "Görli",
-    networkID: 6284,
-    isTestnet: true,
-    rpcUrl: ({ infura }: { infura?: string } = {}) =>
-        `https://goerli.infura.io/v3/${infura || ""}`,
-    explorer: StandardExplorer("https://goerli.etherscan.io"),
+    selector: "Goerli",
+
+    network: {
+        chainId: "0x5",
+        chainName: "Ethereum Testnet Görli",
+        nativeCurrency: { name: "Görli Ether", symbol: "GOR", decimals: 18 },
+        rpcUrls: [
+            "https://rpc.goerli.mudit.blog/",
+            "https://rpc.slock.it/goerli ",
+            "https://goerli.prylabs.net/",
+        ],
+        blockExplorerUrls: ["https://goerli.infura.io"],
+    },
+
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
         BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
 };
 
-export class Goerli extends Ethereum {
+export class Goerli extends EthereumBaseChain {
     public static chain = "Goerli";
-    public name = Goerli.chain;
-    public feeAsset: string = "goerliETH";
 
     public static configMap = {
         [RenNetwork.Testnet]: goerliConfig,
@@ -28,12 +34,14 @@ export class Goerli extends Ethereum {
     public configMap = Goerli.configMap;
 
     constructor(
-        renNetwork: EvmNetworkInput,
+        network: EvmNetworkInput,
         web3Provider: EthProvider,
-        config?: EthereumClassConfig,
+        config: EthereumClassConfig = {},
     ) {
-        super(renNetwork, web3Provider, {
-            ...config,
-        });
+        super(
+            resolveEvmNetworkConfig(Goerli.configMap, network),
+            web3Provider,
+            config,
+        );
     }
 }

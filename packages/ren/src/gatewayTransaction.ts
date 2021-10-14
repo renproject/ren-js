@@ -32,6 +32,7 @@ import { defaultRenJSConfig, RenJSConfig } from "./config";
 import { waitForTX } from "./utils/providerUtils";
 
 export enum TransactionStatus {
+    FetchingStatus = "fetching-status",
     Detected = "detected",
     Confirmed = "confirmed",
     Signed = "signed",
@@ -144,7 +145,7 @@ export class GatewayTransaction<
 
         // `processDeposit` will call `refreshStatus` which will set the proper
         // status.
-        this.status = TransactionStatus.Detected;
+        this.status = TransactionStatus.FetchingStatus;
 
         this.selector = this.params.selector;
 
@@ -186,7 +187,7 @@ export class GatewayTransaction<
         if (this.outputType === OutputType.Mint) {
             if (!isContractChain(toChain)) {
                 throw new Error(
-                    `Cannot mint to non-contract chain ${toChain.name}.`,
+                    `Cannot mint to non-contract chain ${toChain.chain}.`,
                 );
             }
             payload = await toChain.getOutputPayload(
@@ -217,7 +218,7 @@ export class GatewayTransaction<
             }),
         );
 
-        await this.refreshStatus();
+        this.refreshStatus(true).catch(this._config.logger.error);
 
         return this;
     };
@@ -276,8 +277,10 @@ export class GatewayTransaction<
      * // > "signed"
      * ```
      */
-    public refreshStatus = async (): Promise<TransactionStatus> => {
-        const status = await (async () => {
+    public refreshStatus = async (
+        initializing?: boolean,
+    ): Promise<TransactionStatus> => {
+        const getStatus = async (): Promise<TransactionStatus> => {
             let queryTxResult;
 
             // Fetch sighash.
@@ -334,9 +337,23 @@ export class GatewayTransaction<
             }
 
             return TransactionStatus.Detected;
-        })();
-        this.status = status;
-        return status;
+        };
+        if (initializing) {
+            // TODO: Throw an error after a certain amount of retries, and
+            // update status accordingly.
+            while (true) {
+                try {
+                    this.status = await getStatus();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any) {
+                    this._config.logger.error(error);
+                    await sleep(this._config.networkDelay);
+                }
+            }
+        } else {
+            this.status = await getStatus();
+        }
+        return this.status;
     };
 
     public in = {
@@ -360,7 +377,7 @@ export class GatewayTransaction<
                 this.params.inputTransaction,
             );
             return {
-                current,
+                current: current.toNumber(),
                 target: await this.in.confirmationTarget(),
             };
         },
@@ -372,7 +389,7 @@ export class GatewayTransaction<
 
             this.in.targetConfirmations =
                 await this.renVM.getConfirmationTarget(
-                    this.params.fromChain.name,
+                    this.params.fromChain.chain,
                 );
 
             return this.in.targetConfirmations;
@@ -412,7 +429,8 @@ export class GatewayTransaction<
                         "target",
                         await this.in.confirmationTarget(),
                     );
-                } catch (error) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any) {
                     this._config.logger.error(error);
                 }
 
@@ -442,7 +460,8 @@ export class GatewayTransaction<
                             if (transactionIsConfirmed()) {
                                 break;
                             }
-                        } catch (error) {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        } catch (error: any) {
                             // Ignore error.
                             this._config.logger.debug(error);
                         }
@@ -468,7 +487,8 @@ export class GatewayTransaction<
                         this._config.logger.debug(
                             `deposit confidence: ${confidence.current} / ${confidence.target}`,
                         );
-                    } catch (error) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } catch (error: any) {
                         this._config.logger.error(
                             `Error fetching transaction confidence: ${extractError(
                                 error,
@@ -552,7 +572,8 @@ export class GatewayTransaction<
             // know about the transaction.
             try {
                 txHash = await this._submitMintTransaction();
-            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
                 console.error(error);
                 // this.logger.error(error);
                 try {
@@ -564,7 +585,8 @@ export class GatewayTransaction<
                         );
                     }
                     txHash = queryTxResponse.tx.hash;
-                } catch (errorInner) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (errorInner: any) {
                     let submitted = false;
 
                     // If transaction is not found, check for RenVM v0.2 error message.
@@ -873,7 +895,7 @@ export class GatewayTransaction<
         } = this.params;
 
         if (!isContractChain(to)) {
-            throw new Error(`Cannot mint to non-contract chain ${to.name}.`);
+            throw new Error(`Cannot mint to non-contract chain ${to.chain}.`);
         }
 
         const payload = await to.getOutputPayload(

@@ -14,9 +14,14 @@ export enum OutputType {
     Release = "release",
 }
 
+// A NumericString should be a valid numeric value, represented by a string to
+// avoid precision issues, while still being JSON-encodable.
+export type NumericString = string;
+
 export interface ChainTransaction {
     txid: string;
-    txindex: string;
+
+    txindex: NumericString;
 }
 
 export interface InputChainTransaction extends ChainTransaction {
@@ -50,11 +55,10 @@ export interface InputChainTransaction extends ChainTransaction {
  */
 
 export interface ChainCommon {
-    name: string;
-
-    feeAsset: string;
+    chain: string;
 
     /** Override the chain's provider. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withProvider?: (...args: any[]) => SyncOrPromise<this>;
 
     /** Return true if the asset originates from the chain. */
@@ -69,7 +73,7 @@ export interface ChainCommon {
     /** Return a transactions current number of confirmations. */
     transactionConfidence: (
         transaction: ChainTransaction,
-    ) => SyncOrPromise<number>;
+    ) => SyncOrPromise<BigNumber>;
 
     /** Fetch the address's asset balance. */
     getBalance(asset: string, address: string): SyncOrPromise<BigNumber>;

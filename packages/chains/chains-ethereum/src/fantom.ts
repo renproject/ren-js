@@ -1,14 +1,20 @@
 import { RenNetwork } from "@renproject/interfaces";
 
-import { Ethereum, EthereumClassConfig } from "./ethereum";
+import { EthereumBaseChain, EthereumClassConfig } from "./base";
 import { EthProvider, EvmNetworkConfig, EvmNetworkInput } from "./utils/types";
-import { StandardExplorer } from "./utils/utils";
+import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const fantomMainnetConfig: EvmNetworkConfig = {
-    name: "Fantom Mainnet",
-    networkID: 250,
-    rpcUrl: () => `https://rpcapi.fantom.network`,
-    explorer: StandardExplorer("https://ftmscan.com"),
+    selector: "Fantom",
+
+    network: {
+        chainId: "0xfa",
+        chainName: "Fantom Opera",
+        nativeCurrency: { name: "Fantom", symbol: "FTM", decimals: 18 },
+        rpcUrls: ["https://rpc.ftm.tools"],
+        blockExplorerUrls: ["https://ftmscan.com"],
+    },
+
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
@@ -16,11 +22,16 @@ export const fantomMainnetConfig: EvmNetworkConfig = {
 };
 
 export const fantomTestnetConfig: EvmNetworkConfig = {
-    name: "Fantom Testnet",
-    networkID: 0xfa2,
-    isTestnet: true,
-    rpcUrl: () => `https://rpc.testnet.fantom.network/`,
-    explorer: StandardExplorer("https://testnet.ftmscan.com"),
+    selector: "Fantom",
+
+    network: {
+        chainId: "0xfa2",
+        chainName: "Fantom Testnet",
+        nativeCurrency: { name: "Fantom", symbol: "FTM", decimals: 18 },
+        rpcUrls: ["https://rpc.testnet.fantom.network"],
+        blockExplorerUrls: ["https://testnet.ftmscan.com/"],
+    },
+
     addresses: {
         GatewayRegistry: "0x1207765B53697a046DCF4AE95bd4dE99ef9D3D3C",
         BasicAdapter: "0x07deB3917d234f787AEd86E0c88E829277D4a33b",
@@ -35,10 +46,8 @@ export const fantomDevnetConfig: EvmNetworkConfig = {
     },
 };
 
-export class Fantom extends Ethereum {
+export class Fantom extends EthereumBaseChain {
     public static chain = "Fantom";
-    public name = Fantom.chain;
-    public feeAsset: string = "FTM";
 
     public static configMap = {
         [RenNetwork.Testnet]: fantomTestnetConfig,
@@ -47,12 +56,14 @@ export class Fantom extends Ethereum {
     public configMap = Fantom.configMap;
 
     constructor(
-        renNetwork: EvmNetworkInput,
+        network: EvmNetworkInput,
         web3Provider: EthProvider,
-        config?: EthereumClassConfig,
+        config: EthereumClassConfig = {},
     ) {
-        super(renNetwork, web3Provider, {
-            ...config,
-        });
+        super(
+            resolveEvmNetworkConfig(Fantom.configMap, network),
+            web3Provider,
+            config,
+        );
     }
 }

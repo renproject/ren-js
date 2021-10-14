@@ -25,9 +25,9 @@ const createDepositHandler = (retries = -1) => {
                                         `Waiting for ${target} confirmations`,
                                     );
                                 })
-                                .on("confirmation", (confs, target) => {
+                                .on("confirmation", (confirmations, target) => {
                                     gateway._config.logger.log(
-                                        `${confs}/${target} confirmations`,
+                                        `${confirmations}/${target} confirmations`,
                                     );
                                 });
                         },
@@ -56,7 +56,8 @@ const createDepositHandler = (retries = -1) => {
                                             `status: ${status}`,
                                         );
                                     });
-                            } catch (error) {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            } catch (error: any) {
                                 if (
                                     gateway.status ===
                                     TransactionStatus.Reverted
@@ -81,10 +82,13 @@ const createDepositHandler = (retries = -1) => {
                                 gateway._config.logger.log(`Calling .mint`);
                                 const transaction = await gateway.out.submit();
                                 gateway._config.logger.log(
-                                    `txHash: ${gateway.params.toChain.transactionExplorerLink(
-                                        transaction,
-                                    )}`,
+                                    `txHash: ${
+                                        gateway.params.toChain.transactionExplorerLink(
+                                            transaction,
+                                        ) || ""
+                                    }`,
                                 );
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             } catch (error: any) {
                                 // Ethereum revert message.
                                 if (

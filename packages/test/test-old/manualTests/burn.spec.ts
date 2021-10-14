@@ -74,7 +74,8 @@ describe("Refactor - Burning", () => {
             });
             const fee = fees.release;
             suggestedAmount = fee.times(1.01);
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             console.error("Error fetching fees:", red(extractError(error)));
             suggestedAmount = new BigNumber(0.0002).times(
                 new BigNumber(10).exponentiatedBy(decimals),

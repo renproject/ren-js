@@ -1,9 +1,8 @@
-import { Callable } from "@renproject/utils";
 import axios from "axios";
 
-import { sortUTXOs, UTXO, DEFAULT_TIMEOUT, BitcoinAPI } from "./API";
+import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
 
-export class BlockstreamClass implements BitcoinAPI {
+export class Blockstream implements BitcoinAPI {
     public testnet: boolean;
     public apiKey: string | undefined;
 
@@ -17,77 +16,51 @@ export class BlockstreamClass implements BitcoinAPI {
             this.apiKey ? `?key=${this.apiKey}` : ""
         }`;
 
-    fetchUTXO = async (txHash: string, vOut: number): Promise<UTXO> => {
-        const utxo = (
-            await axios.get<BlockstreamTX>(this.getAPIUrl(`/tx/${txHash}`), {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data;
-
-        const heightResponse = (
+    fetchHeight = async (): Promise<string> =>
+        (
             await axios.get<string>(this.getAPIUrl(`/blocks/tip/height`), {
                 timeout: DEFAULT_TIMEOUT,
             })
+        ).data.toString();
+
+    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+        const utxo = (
+            await axios.get<BlockstreamTX>(this.getAPIUrl(`/tx/${txid}`), {
+                timeout: DEFAULT_TIMEOUT,
+            })
         ).data;
 
-        const confirmations = utxo.status.confirmed
-            ? Math.max(
-                  1 + parseInt(heightResponse, 10) - utxo.status.block_height,
-                  0,
-              )
-            : 0;
-
         return {
-            txHash,
-            amount: utxo.vout[vOut].value.toString(),
-            vOut,
-            confirmations,
+            txid,
+            amount: utxo.vout[parseInt(txindex, 10)].value.toString(),
+            txindex,
+            height: utxo.status.confirmed
+                ? utxo.status.block_height.toString()
+                : null,
         };
     };
 
-    fetchUTXOs = async (
-        address: string,
-        confirmations: number = 0,
-    ): Promise<UTXO[]> => {
+    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const response = await axios.get<BlockstreamUTXO[]>(
             this.getAPIUrl(`/address/${address}/utxo`),
             { timeout: DEFAULT_TIMEOUT },
         );
 
-        const heightResponse = await axios.get<string>(
-            this.getAPIUrl(`/blocks/tip/height`),
-            { timeout: DEFAULT_TIMEOUT },
-        );
-
         return response.data
             .map((utxo) => ({
-                txHash: utxo.txid,
+                txid: utxo.txid,
                 amount: utxo.value.toString(),
-                vOut: utxo.vout,
-                confirmations: utxo.status.confirmed
-                    ? 1 +
-                      parseInt(heightResponse.data, 10) -
-                      utxo.status.block_height
-                    : 0,
+                txindex: utxo.vout.toString(),
+                height: utxo.status.confirmed
+                    ? utxo.status.block_height.toString()
+                    : null,
             }))
-            .filter(
-                (utxo) =>
-                    confirmations === 0 || utxo.confirmations >= confirmations,
-            )
             .sort(sortUTXOs);
     };
 
-    fetchTXs = async (
-        address: string,
-        confirmations: number = 0,
-    ): Promise<UTXO[]> => {
+    fetchTXs = async (address: string): Promise<UTXO[]> => {
         const response = await axios.get<BlockstreamTX[]>(
             this.getAPIUrl(`/address/${address}/txs`),
-            { timeout: DEFAULT_TIMEOUT },
-        );
-
-        const heightResponse = await axios.get<string>(
-            this.getAPIUrl(`/blocks/tip/height`),
             { timeout: DEFAULT_TIMEOUT },
         );
 
@@ -98,25 +71,18 @@ export class BlockstreamClass implements BitcoinAPI {
                 const vout = tx.vout[i];
                 if (vout.scriptpubkey_address === address) {
                     received.push({
-                        txHash: tx.txid,
+                        txid: tx.txid,
                         amount: vout.value.toString(),
-                        vOut: i,
-                        confirmations: tx.status.confirmed
-                            ? 1 +
-                              parseInt(heightResponse.data, 10) -
-                              tx.status.block_height
-                            : 0,
+                        txindex: i.toString(),
+                        height: tx.status.confirmed
+                            ? tx.status.block_height.toString()
+                            : null,
                     });
                 }
             }
         }
 
-        return received
-            .filter(
-                (utxo) =>
-                    confirmations === 0 || utxo.confirmations >= confirmations,
-            )
-            .sort(sortUTXOs);
+        return received.sort(sortUTXOs);
     };
 
     broadcastTransaction = async (txHex: string): Promise<string> => {
@@ -130,10 +96,6 @@ export class BlockstreamClass implements BitcoinAPI {
         return response.data;
     };
 }
-
-// @dev Removes any static fields.
-export type Blockstream = BlockstreamClass;
-export const Blockstream = Callable(BlockstreamClass);
 
 interface BlockstreamUTXO<vout = number> {
     status:

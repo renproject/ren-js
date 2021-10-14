@@ -22,7 +22,6 @@ import {
     SimpleLogger,
 } from "@renproject/interfaces";
 import {
-    Callable,
     doesntError,
     keccak256,
     retryNTimes,
@@ -75,7 +74,7 @@ interface SolOptions {
     includeAddressInPayload?: boolean;
 }
 
-export class SolanaClass
+export class Solana
     implements MintChain<SolTransaction, SolAddress, SolNetworkConfig>
 {
     public static chain = "Solana" as const;
@@ -150,7 +149,7 @@ export class SolanaClass
                 | SolNetworkConfig,
         ): string => {
             const resolvedNetwork =
-                SolanaClass.utils.resolveChainNetwork(network) || renMainnet;
+                Solana.utils.resolveChainNetwork(network) || renMainnet;
 
             return `${resolvedNetwork.chainExplorer}/address/${address}?cluster=${resolvedNetwork.chain}`;
         },
@@ -164,14 +163,14 @@ export class SolanaClass
                 | SolNetworkConfig = renMainnet,
         ): string => {
             const resolvedNetwork =
-                SolanaClass.utils.resolveChainNetwork(network) || renMainnet;
+                Solana.utils.resolveChainNetwork(network) || renMainnet;
 
             return `${resolvedNetwork.chainExplorer}/tx/${transaction}?cluster=${resolvedNetwork.chain}`;
         },
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public utils = SolanaClass.utils as any;
+    public utils = Solana.utils as any;
 
     /**
      * Should be set by `constructor` or `initialize`.
@@ -196,7 +195,7 @@ export class SolanaClass
     initialize = async (
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
     ) => {
-        this.renNetwork = SolanaClass.utils.resolveChainNetwork(network);
+        this.renNetwork = Solana.utils.resolveChainNetwork(network);
 
         // Load registry state to find programs
         const pubk = new PublicKey(
@@ -655,7 +654,8 @@ export class SolanaClass
                     "confirmed",
                 );
             return (mintSigs[0] && mintSigs[0].signature) || "";
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             // If getSignaturesForAddress threw an error, the network may be
             // on a version before 1.7, so this second method should be tried.
             // Once all relevant networks have been updated, this can be removed.
@@ -1148,7 +1148,3 @@ export class SolanaClass
         }
     }
 }
-
-export type Solana = SolanaClass;
-// @dev Removes any static fields, except `utils`.
-export const Solana = Callable(SolanaClass);

@@ -1,4 +1,8 @@
-export type FilNetwork = "mainnet" | "testnet" | "devnet";
+export enum FilNetwork {
+    Mainnet = "mainnet",
+    Testnet = "testnet",
+    Devnet = "devnet",
+}
 
 export interface FilTransaction {
     cid: string;

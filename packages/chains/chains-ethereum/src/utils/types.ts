@@ -18,37 +18,48 @@ import { EthArg } from "./abi";
 export interface EthereumTransactionConfig extends PayableOverrides {}
 
 export interface EvmNetworkConfig {
-    name: string;
-
+    selector: string;
     isTestnet?: boolean;
-    networkID: number;
-
-    /**
-     * A method for getting a public provider as a URI. Accepts an optional
-     * map of provider API keys, as documented by each network.
-     *
-     * Note that this isn't used by RenJS internally.
-     */
-    rpcUrl: (keys?: {
-        infura?: string;
-        [key: string]: string | undefined;
-    }) => string;
-
-    explorer: {
-        url: string;
-        address: (address: string) => string;
-        transaction: (transaction: string) => string;
-    };
+    logRequestLimit?: number;
 
     addresses: {
         GatewayRegistry: string;
         BasicAdapter: string;
     };
+
+    // See https://eips.ethereum.org/EIPS/eip-3085
+    network: {
+        // The integer ID of the chain as a hexadecimal string.
+        chainId: string;
+
+        // One or more URLs pointing to block explorer web sites for the chain.
+        blockExplorerUrls: string[];
+
+        // A human-readable name for the chain.
+        chainName: string;
+
+        // One or more URLs pointing to reasonably sized images that can be used
+        // to visually identify the chain.
+        iconUrls?: string[];
+
+        // The native currency of the chain.
+        nativeCurrency: {
+            name: string;
+            symbol: string;
+            decimals: number;
+        };
+
+        // One or more URLs pointing to RPC endpoints that can be used to
+        // communicate with the chain.
+        // Each chain may define variables that will be replaced using the
+        // notation `${VARIABLE_NAME}`, such as `${INFURA_API_KEY}`.
+        rpcUrls: string[];
+    };
 }
 
 export type EvmNetworkInput = RenNetwork | RenNetworkString | EvmNetworkConfig;
 
-export const isEvmConfig = (
+export const isEvmNetworkConfig = (
     renNetwork: EvmNetworkInput,
 ): renNetwork is EvmNetworkConfig => {
     return !!(renNetwork as EvmNetworkConfig).addresses;

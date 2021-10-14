@@ -58,7 +58,8 @@ const createGatewayRegistryFetcher =
                 );
             }
             return registryAddress;
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             if (error instanceof Error) {
                 error.message = `Error looking up ${asset} ${lookup}${
                     error.message ? `: ${String(error.message)}` : "."

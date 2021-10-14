@@ -1,15 +1,17 @@
-import { Callable } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
+// Numeric fields are represented as strings in case any Bitcoin chain has
+// txindexes, amounts or heights that can't be represented using a 64-bit float.
 export interface UTXO {
-    readonly txHash: string; // hex string without 0x prefix
-    readonly vOut: number;
-    readonly amount: string; // in sats
-    readonly confirmations: number;
+    txid: string;
+    txindex: string;
+    amount: string;
+    height: string | null;
 }
 
 export interface BitcoinAPI {
-    fetchUTXO?: (txHash: string, vOut: number) => Promise<UTXO>;
+    fetchHeight?: () => Promise<string>;
+    fetchUTXO?: (txid: string, txindex: string) => Promise<UTXO>;
     fetchUTXOs?: (address: string, confirmations?: number) => Promise<UTXO[]>;
     fetchTXs?: (address: string, confirmations?: number) => Promise<UTXO[]>;
     broadcastTransaction?: (hex: string) => Promise<string>;
@@ -20,28 +22,46 @@ const SECONDS = 1000;
 export const DEFAULT_TIMEOUT = 30 * SECONDS;
 
 /**
- * sortUTXOs compares two UTXOs by amount, then confirmations and then hash.
- *
- * @example
- * sortUTXOs({amount: 1, confirmations: 1}, {amount: 2, confirmations: 0});
- * // -1, representing that the first parameter should be ordered first.
+ * sortUTXOs compares two UTXOs by height, then amount, then txid, then txindex.
  *
  * @returns a negative value to represent that a should come before b or a
- * positive value to represent that b should come before a.
+ * positive value to represent that b should come before a, or 0 if a and b are
+ * equal.
  */
 export const sortUTXOs = (a: UTXO, b: UTXO): number => {
+    const aHeight = a.height ? new BigNumber(a.height) : null;
+    const bHeight = b.height ? new BigNumber(b.height) : null;
+
+    // Compare heights first
+    if (aHeight) {
+        if (bHeight) {
+            if (!aHeight.isEqualTo(bHeight))
+                return bHeight.minus(aHeight).toNumber();
+        } else {
+            return -1;
+        }
+    } else if (bHeight) {
+        return 1;
+    }
+
+    // If the heights are the same (same number of both null), compare amounts.
     const aAmount = new BigNumber(a.amount);
     const bAmount = new BigNumber(b.amount);
-    // Sort greater values first.
-    return !aAmount.isEqualTo(bAmount)
-        ? bAmount.minus(aAmount).toNumber()
-        : // If the UTXOs have the same value, sort by number of confirmations.
-        a.confirmations !== b.confirmations
-        ? a.confirmations - b.confirmations
-        : // Fallback so sorting by txHash alphabetically.
-        a.txHash <= b.txHash
-        ? -1
-        : 1;
+    if (aAmount.isEqualTo(bAmount)) {
+        return bAmount.minus(aAmount).toNumber();
+    }
+
+    // If the heights and amounts are equal, compare txid.
+    if (a.txid !== b.txid) {
+        return a.txid <= b.txid ? -1 : 1;
+    }
+
+    // Fall back to the txindex. If the txid and txindex are the same for both
+    // transactions, then the two transactions represent the same transfer, and
+    // the returned value is `0`.
+    const aTxindex = new BigNumber(a.txindex);
+    const bTxindex = new BigNumber(b.txindex);
+    return bTxindex.minus(aTxindex).toNumber();
 };
 
 /**
@@ -65,15 +85,15 @@ export const fixValue = (
 /**
  * fixUTXO calls {{fixValue}} on the value of the UTXO.
  */
-export const fixUTXO = (utxo: UTXO, decimals: number): UTXO => ({
-    ...utxo,
-    amount: fixValue(utxo.amount, decimals).toFixed(),
+export const fixUTXO = (tx: UTXO, decimals: number): UTXO => ({
+    ...tx,
+    amount: fixValue(tx.amount, decimals).toFixed(),
 });
 
 /**
  * fixUTXOs maps over an array of UTXOs and calls {{fixValue}}.
  */
-export const fixUTXOs = (utxos: readonly UTXO[], decimals: number) =>
+export const fixUTXOs = (utxos: UTXO[], decimals: number) =>
     utxos.map((utxo) => fixUTXO(utxo, decimals));
 
 export interface APIWithPriority {
@@ -94,7 +114,7 @@ const withPriority = (api: BitcoinAPI | APIWithPriority, defaultPriority = 0) =>
         ? (api as APIWithPriority)
         : { api: api as BitcoinAPI, priority: defaultPriority };
 
-export class CombinedAPIClass implements BitcoinAPI {
+export class CombinedAPI implements BitcoinAPI {
     apis: APIWithPriority[];
 
     constructor(
@@ -119,12 +139,20 @@ export class CombinedAPIClass implements BitcoinAPI {
         return this;
     };
 
-    public fetchUTXO = async (txHash: string, vOut: number): Promise<UTXO> =>
+    public fetchHeight = async (): Promise<string> =>
+        this.forEachAPI(
+            // Filter APIs with `fetchHeight`.
+            (api) => api.fetchHeight !== undefined,
+            // Call `fetchHeight` on the API.
+            async (api) => notNull(api.fetchHeight)(),
+        );
+
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> =>
         this.forEachAPI(
             // Filter APIs with `fetchUTXO`.
             (api) => api.fetchUTXO !== undefined,
             // Call `fetchUTXO` on the API.
-            async (api) => notNull(api.fetchUTXO)(txHash, vOut),
+            async (api) => notNull(api.fetchUTXO)(txid, txindex),
         );
 
     public fetchUTXOs = async (
@@ -187,7 +215,8 @@ export class CombinedAPIClass implements BitcoinAPI {
                     this.apis[previousIndex].priority -= 5;
                 }
                 return result;
-            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
                 previousIndices.push(index);
                 firstError = firstError || error;
             }
@@ -195,7 +224,3 @@ export class CombinedAPIClass implements BitcoinAPI {
         throw firstError;
     };
 }
-
-// @dev Removes any static fields.
-export type CombinedAPI = CombinedAPIClass;
-export const CombinedAPI = Callable(CombinedAPIClass);

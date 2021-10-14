@@ -1,5 +1,3 @@
-import { Chain } from "@renproject/interfaces";
-
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */

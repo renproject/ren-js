@@ -1,5 +1,5 @@
 {
-    "name": "@renproject/chains-solana",
+    "name": "@renproject/chains-terra",
     "version": "2.5.6",
     "repository": {
         "type": "git",
@@ -18,7 +18,6 @@
     "module": "./build/module/index.js",
     "scripts": {
         "describe": "npm-scripts-info",
-        "clean": "yarn rimraf ./build ./node_modules",
         "link": "yarn link",
         "unlink": "yarn unlink",
         "build": "yarn build:main && yarn build:module",
@@ -26,7 +25,7 @@
         "build:module": "tsc -p tsconfig.module.json",
         "prettier": "yarn fix:prettier",
         "lint": "run-s lint:*",
-        "lint:eslint": "eslint src/**/*.ts",
+        "lint:eslint": "eslint --config ../../.eslintrc.js src",
         "lint:prettier": "prettier --check './(src|test)/**/*.ts*'",
         "fix": "run-s fix:*",
         "fix:eslint": "yarn lint:eslint --fix",
@@ -43,22 +42,16 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@project-serum/associated-token": "^0.1.1",
-        "@project-serum/borsh": "^0.2.2",
-        "@renproject/chains-filecoin": "^2.5.6",
-        "@renproject/chains-terra": "^2.5.6",
         "@renproject/interfaces": "^2.5.2",
         "@renproject/provider": "^2.5.6",
         "@renproject/utils": "^2.5.2",
-        "@solana/spl-token": "^0.1.5",
-        "@solana/web3.js": "^1.19.0",
-        "@types/bn.js": "^5.1.0",
+        "@terra-money/terra.js": "1.3.6",
+        "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
+        "bech32": "^1.1.4",
         "bignumber.js": "^9.0.1",
-        "bn.js": "^5.2.0",
-        "borsh": "^0.3.1",
-        "bs58": "^4.0.1",
-        "tweetnacl": "^1.0.3"
+        "blakejs": "^1.1.0",
+        "elliptic": "^6.5.3"
     },
     "resolutions": {
         "sha3": "^2.1.2"

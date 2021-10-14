@@ -27,9 +27,9 @@ export const getEVMChain = <EVM extends Ethereum>(
     C: EVMConstructor<EVM>,
     network: RenNetwork,
 ): EVM => {
-    const rpcUrl = C.configMap[network].rpcUrl({
-        infura: process.env.INFURA_KEY,
-    });
+    const rpcUrl = C.configMap[network].network.rpcUrls[0]
+        .replace("${INFURA_API_KEY}", process.env.INFURA_KEY)
+        .replace("${ALCHEMY_API_KEY}", process.env.ALCHEMY_KEY);
 
     const provider = new providers.JsonRpcProvider(rpcUrl);
     const signer = Wallet.fromMnemonic(MNEMONIC).connect(provider);
@@ -111,7 +111,8 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //     suggestedAmount = fees.lock.div(
 //         new BigNumber(10).exponentiatedBy(assetDecimals),
 //     );
-// } catch (error) {
+//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// } catch (error: any) {
 //     console.error("Error fetching fees:", red(extractError(error)));
 //     console.error(error);
 //     if ((asset as string) === "FIL") {

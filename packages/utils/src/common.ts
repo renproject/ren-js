@@ -39,10 +39,18 @@ export const strip0x = (hex: string): string => {
  * @param hex The hex value to be prefixed.
  */
 export const Ox = (
-    hex: Buffer | string,
+    hex: Buffer | string | number,
     { prefix } = { prefix: "0x" },
 ): string => {
-    const hexString = typeof hex === "string" ? hex : hex.toString("hex");
+    let hexString =
+        typeof hex === "number"
+            ? hex.toString(16)
+            : typeof hex === "string"
+            ? hex
+            : hex.toString("hex");
+    if (hexString.length % 2 === 1) {
+        hexString = "0" + hexString;
+    }
     return hexString.substring(0, 2) === prefix
         ? hexString
         : `${prefix}${hexString}`;
@@ -180,7 +188,8 @@ export const retryNTimes = async <T>(
     for (let i = 0; retries === -1 || i < retries; i++) {
         try {
             return await fnCall();
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             // Fix error message.
             const errorMessage = extractError(error);
             errorMessages.add(errorMessage);
@@ -223,7 +232,8 @@ export const randomBytes = (bytes: number): Buffer => {
             }
             return fromHex(str);
         }
-    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         // Ignore error
     }
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -264,7 +274,8 @@ export const doesntError = <T extends unknown[]>(
         try {
             const response = f(...p);
             return response === undefined || response === true ? true : false;
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             return false;
         }
     };

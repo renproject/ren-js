@@ -115,7 +115,8 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                     ) as RenVMResponses[Method];
             }
             throw new Error(`Method ${method} not supported.`);
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             throw error;
         }
     }

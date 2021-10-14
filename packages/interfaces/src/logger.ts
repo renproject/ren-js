@@ -78,7 +78,8 @@ const toString = (value: unknown): unknown => {
             return value.toFixed();
         }
         return value;
-    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         try {
             return String(value);
         } catch (errorInner) {

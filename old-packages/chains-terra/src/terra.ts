@@ -1,23 +1,23 @@
 import bech32 from "bech32";
+import { blake2b } from "blakejs";
+import elliptic from "elliptic";
+
 import {
+    BurnPayloadConfig,
+    ChainStatic,
     getRenNetworkDetails,
     LockChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
-    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
-    Callable,
     isHex,
     toURLBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
 import { AccAddress, Key } from "@terra-money/terra.js";
-import { blake2b } from "blakejs";
-import elliptic from "elliptic";
 
 import {
     TerraAddress,
@@ -46,16 +46,16 @@ export enum TerraAssets {
 }
 
 /**
- * TerraClass implements the LockChain interface for Terra (https://terra.money)
+ * Terra implements the LockChain interface for Terra (https://terra.money)
  * and it's asset LUNA.
  */
-export class TerraClass
+export class Terra
     implements
         LockChain<TerraTransaction, TerraDeposit, TerraAddress, TerraNetwork>
 {
     public static chain = "Terra";
-    public chain = TerraClass.chain;
-    public name = TerraClass.chain;
+    public chain = Terra.chain;
+    public name = Terra.chain;
 
     public renNetwork: RenNetworkDetails | undefined;
     public chainNetwork: TerraNetwork | undefined;
@@ -127,11 +127,11 @@ export class TerraClass
     };
 
     public utils = utilsWithChainNetwork<
-        typeof TerraClass["utils"],
+        typeof Terra["utils"],
         TerraTransaction,
         TerraAddress,
         TerraNetwork
-    >(TerraClass.utils, () => this.chainNetwork);
+    >(Terra.utils, () => this.chainNetwork);
 
     constructor(network?: TerraNetwork) {
         this.chainNetwork = network;
@@ -353,9 +353,3 @@ export class TerraClass
             : undefined;
     };
 }
-
-export type Terra = TerraClass;
-// @dev Removes any static fields, except `utils`.
-export const Terra = Callable(TerraClass);
-
-const _: ChainStatic<TerraTransaction, TerraAddress, TerraNetwork> = Terra;

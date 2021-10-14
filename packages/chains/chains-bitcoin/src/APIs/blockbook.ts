@@ -1,5 +1,4 @@
 import axios from "axios";
-import BigNumber from "bignumber.js";
 import https from "https";
 
 import { isDefined } from "@renproject/utils";
@@ -13,7 +12,7 @@ import {
     UTXO,
 } from "./API";
 
-export class Insight implements BitcoinAPI {
+export class Blockbook implements BitcoinAPI {
     public url: string;
 
     constructor(url: string) {
@@ -22,16 +21,13 @@ export class Insight implements BitcoinAPI {
 
     fetchHeight = async (): Promise<string> =>
         (
-            await axios.get<{ height: number }>(`${this.url}/sync`, {
+            await axios.get<{ bestHeight: number }>(`${this.url}`, {
                 timeout: DEFAULT_TIMEOUT,
             })
-        ).data.height.toString();
+        ).data.bestHeight.toString();
 
-    fetchUTXOs = async (
-        address: string,
-        confirmations: number = 0,
-    ): Promise<UTXO[]> => {
-        const url = `${this.url}/addr/${address}/utxo`;
+    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
+        const url = `${this.url}/utxo/${address}`;
         const response = await axios.get<FetchUTXOResult>(url, {
             // TODO: Remove when certificate is fixed.
             httpsAgent: new https.Agent({
@@ -45,30 +41,20 @@ export class Insight implements BitcoinAPI {
                 ? JSON.parse(response.data)
                 : response.data;
 
-        const height = new BigNumber(await this.fetchHeight());
-
         return (
             await Promise.all(
                 data
-                    .filter(
-                        (utxo) =>
-                            confirmations === 0 ||
-                            utxo.confirmations >= confirmations,
-                    )
                     .map((utxo) => ({
                         txid: utxo.txid,
-                        txindex: utxo.vout.toString(),
                         amount: isDefined(utxo.satoshis)
                             ? utxo.satoshis.toString()
                             : isDefined(utxo.amount)
                             ? fixValue(utxo.amount, 8).toFixed()
                             : undefined,
+                        txindex: utxo.vout.toString(),
                         height:
-                            utxo.confirmations && utxo.confirmations > 0
-                                ? height
-                                      .minus(utxo.confirmations)
-                                      .plus(1)
-                                      .toFixed()
+                            utxo.height && utxo.height > 0
+                                ? utxo.height.toString()
                                 : null,
                     }))
                     // If the amount is undefined, fetch the UTXO again.
@@ -83,42 +69,41 @@ export class Insight implements BitcoinAPI {
         ).sort(sortUTXOs);
     };
 
-    fetchTXs = async (address: string): Promise<UTXO[]> => {
-        const url = `${this.url}/txs/?address=${address}`;
-        const response = await axios.get<FetchTXsResult>(url, {
-            // TODO: Remove when certificate is fixed.
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-            }),
-            timeout: DEFAULT_TIMEOUT,
-        });
+    // fetchTXs = async (address: string): Promise<Array<{ tx: InputChainTransaction, height: string }>> => {
+    //     const url = `${this.url}/txs/?address=${address}`;
+    //     const response = await axios.get<FetchTXsResult>(url, {
+    //         // TODO: Remove when certificate is fixed.
+    //         httpsAgent: new https.Agent({
+    //             rejectUnauthorized: false,
+    //         }),
+    //         timeout: DEFAULT_TIMEOUT,
+    //     });
 
-        const data: FetchTXsResult =
-            typeof response.data === "string"
-                ? JSON.parse(response.data)
-                : response.data;
+    //     const data: FetchTXsResult =
+    //         typeof response.data === "string"
+    //             ? JSON.parse(response.data)
+    //             : response.data;
 
-        const received: UTXO[] = [];
+    //     const received: Array<{ tx: InputChainTransaction, height: number | null }> = [];
 
-        for (const tx of data.txs) {
-            for (let i = 0; i < tx.vout.length; i++) {
-                const vout = tx.vout[i];
-                if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
-                    received.push({
-                        txid: tx.txid,
-                        txindex: i.toString(),
-                        amount: fixValue(parseFloat(vout.value), 8).toFixed(),
-                        height:
-                            tx.blockheight && tx.blockheight > 0
-                                ? tx.blockheight.toString()
-                                : null,
-                    });
-                }
-            }
-        }
+    //     for (const tx of data.txs) {
+    //         for (let i = 0; i < tx.vout.length; i++) {
+    //             const vout = tx.vout[i];
+    //             if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
+    //                 received.push({
+    //                     txid: tx.txid,
+    //                     amount: fixValue(parseFloat(vout.value), 8).toFixed(),
+    //                     txindex: i.toString(),
+    //                     height: tx.blockheight
+    //                         ? tx.blockheight
+    //                         : null,
+    //                 });
+    //             }
+    //         }
+    //     }
 
-        return received.sort(sortUTXOs);
-    };
+    //     return received.sort(sortUTXOs);
+    // };
 
     fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.url}/tx/${txid}`;
@@ -216,12 +201,10 @@ export interface FetchTXsResult {
 }
 
 type FetchUTXOResult = ReadonlyArray<{
-    address: string;
-    txid: string;
-    vout: number;
-    scriptPubKey: string;
-    amount: number;
-    satoshis: number;
-    confirmations: number;
-    ts: number;
+    txid: string; // "ba53af50677ba259e2c5bd0915a0e42fce10003df786fe94d2030b02a5fa8dfe"
+    vout: number; // 0
+    amount: string; // "486.71772246"
+    satoshis: number; // 48671772246
+    height: number; // 13769953
+    confirmations: number; // 9
 }>;

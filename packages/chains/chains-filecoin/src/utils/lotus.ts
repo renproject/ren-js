@@ -1,9 +1,6 @@
 import FilecoinClient from "@glif/filecoin-rpc-client";
 
-import {
-    FilNetwork,
-    FilTransaction,
-} from "@renproject/chains-filecoin/src/deposit";
+import { FilTransaction } from "./deposit";
 
 export const getHeight = async (client: FilecoinClient): Promise<number> => {
     const chainHead = await client.request("ChainHead");
@@ -13,8 +10,8 @@ export const getHeight = async (client: FilecoinClient): Promise<number> => {
 export const fetchDeposits = async (
     client: FilecoinClient,
     address: string,
-    params: string | undefined | null,
-    network: FilNetwork,
+    // params: string | undefined | null,
+    addressPrefix: string,
     fromHeight: number,
     latestHeight: number,
 ): Promise<FilTransaction[]> => {
@@ -29,7 +26,7 @@ export const fetchDeposits = async (
             GasPrice: "0",
             GasLimit: 0,
             Method: 0,
-            Params: params,
+            Params: undefined,
         },
         [],
         fromHeight,
@@ -37,7 +34,7 @@ export const fetchDeposits = async (
 
     return await Promise.all(
         (latestTXs || []).map(async (cid) =>
-            fetchMessage(client, cid["/"], network, latestHeight),
+            fetchMessage(client, cid["/"], addressPrefix, latestHeight),
         ),
     );
 };
@@ -45,7 +42,7 @@ export const fetchDeposits = async (
 export const fetchMessage = async (
     client: FilecoinClient,
     cid: string,
-    network: FilNetwork,
+    addressPrefix: string,
     height?: number,
 ): Promise<FilTransaction> => {
     const [details, receipt, { Height: chainHeight }]: [
@@ -58,10 +55,10 @@ export const fetchMessage = async (
         height ? { Height: height } : client.request("ChainHead"),
     ]);
 
-    if (network === "testnet") {
-        details.To = details.To.replace(/^f/, "t");
-        details.From = details.From.replace(/^f/, "t");
-    }
+    // Fix addresses.
+    details.To = details.To.replace(/^f/, addressPrefix);
+    details.From = details.From.replace(/^f/, addressPrefix);
+
     const tx: FilTransaction = {
         cid,
         amount: details.Value,

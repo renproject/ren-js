@@ -1,38 +1,66 @@
 import { RenNetwork } from "@renproject/interfaces";
 
-import { Ethereum, EthereumClassConfig } from "./ethereum";
+import { EthereumBaseChain, EthereumClassConfig } from "./base";
 import { EthProvider, EvmNetworkConfig, EvmNetworkInput } from "./utils/types";
-import { StandardExplorer } from "./utils/utils";
+import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const arbitrumMainnetConfig: EvmNetworkConfig = {
-    name: "Arbitrum",
-    networkID: 42161,
+    selector: "Arbitrum",
+
+    network: {
+        chainId: "0xa4b1",
+        chainName: "Arbitrum One",
+        nativeCurrency: { name: "Ether", symbol: "AETH", decimals: 18 },
+        rpcUrls: [
+            "https://arb1.arbitrum.io/rpc",
+            "https://arbitrum-mainnet.infura.io/v3/${INFURA_API_KEY}",
+            "https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+            "wss://arb1.arbitrum.io/ws",
+        ],
+        blockExplorerUrls: [
+            "https://arbiscan.io",
+            "https://explorer.arbitrum.io",
+        ],
+    },
+
+    logRequestLimit: 20000,
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
-
-    rpcUrl: () => `https://arb1.arbitrum.io/rpc`,
-    explorer: StandardExplorer("https://explorer.arbitrum.io"),
 };
 
 export const arbitrumTestnetConfig: EvmNetworkConfig = {
-    name: "Arbitrum Testnet",
-    networkID: 421611,
+    selector: "Arbitrum",
     isTestnet: true,
+
+    network: {
+        chainId: "0x66eeb",
+        chainName: "Arbitrum Testnet Rinkeby",
+        nativeCurrency: {
+            name: "Arbitrum Rinkeby Ether",
+            symbol: "ARETH",
+            decimals: 18,
+        },
+        rpcUrls: [
+            "https://rinkeby.arbitrum.io/rpc",
+            "wss://rinkeby.arbitrum.io/ws",
+        ],
+        blockExplorerUrls: [
+            "https://testnet.arbiscan.io/",
+            "https://rinkeby-explorer.arbitrum.io",
+        ],
+    },
+
+    logRequestLimit: 20000,
     addresses: {
         GatewayRegistry: "0x5eEBf6c199a9Db26dabF621fB8c43D58C62DF2bd",
         BasicAdapter: "0x1156663dFab56A9BAdd844e12eDD69eC96Dd0eFb",
     },
-
-    rpcUrl: () => `https://rinkeby.arbitrum.io/rpc`,
-    explorer: StandardExplorer("https://rinkeby-explorer.arbitrum.io"),
 };
 
-export class Arbitrum extends Ethereum {
+export class Arbitrum extends EthereumBaseChain {
     public static chain = "Arbitrum";
-    public name = Arbitrum.chain;
-    public feeAsset: string = "arbitrumETH";
 
     public static configMap = {
         [RenNetwork.Testnet]: arbitrumTestnetConfig,
@@ -41,13 +69,14 @@ export class Arbitrum extends Ethereum {
     public configMap = Arbitrum.configMap;
 
     constructor(
-        renNetwork: EvmNetworkInput,
+        network: EvmNetworkInput,
         web3Provider: EthProvider,
-        config?: EthereumClassConfig,
+        config: EthereumClassConfig = {},
     ) {
-        super(renNetwork, web3Provider, {
-            logRequestLimit: 20000,
-            ...config,
-        });
+        super(
+            resolveEvmNetworkConfig(Arbitrum.configMap, network),
+            web3Provider,
+            config,
+        );
     }
 }

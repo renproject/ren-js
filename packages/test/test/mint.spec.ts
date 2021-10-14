@@ -5,6 +5,7 @@ import { blue, blueBright, cyan, green, magenta, red, yellow } from "chalk";
 import { config as loadDotEnv } from "dotenv";
 import throat from "throat";
 
+import { Bitcoin } from "../../chains/chains-bitcoin/src";
 import {
     Arbitrum,
     Avalanche,
@@ -58,16 +59,17 @@ describe("Refactor: mint", () => {
 
         const network = RenNetwork.Testnet;
         const asset = "DAI";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const toClass = getEVMChain(Ethereum as any, network);
 
         const throttle = {
-            [Ethereum.name]: throat(1),
-            [Avalanche.name]: throat(1),
-            [Fantom.name]: throat(1),
-            [Goerli.name]: throat(1),
-            [Polygon.name]: throat(1),
-            [BinanceSmartChain.name]: throat(1),
-            [Arbitrum.name]: throat(1),
+            [Ethereum.chain]: throat(1),
+            [Avalanche.chain]: throat(1),
+            [Fantom.chain]: throat(1),
+            [Goerli.chain]: throat(1),
+            [Polygon.chain]: throat(1),
+            [BinanceSmartChain.chain]: throat(1),
+            [Arbitrum.chain]: throat(1),
         };
 
         const fromChains = [
@@ -75,26 +77,29 @@ describe("Refactor: mint", () => {
             // Fantom,
             // Goerli,
             // Polygon,
-            BinanceSmartChain,
+            // Bitcoin,
             // Arbitrum,
+            BinanceSmartChain,
         ];
 
         await Promise.all(
             fromChains.map(async (From) => {
                 while (true) {
                     try {
-                        const fromClass = getEVMChain(From as any, network);
+                        const fromClass = getEVMChain(From, network);
+                        // const fromClass = new From("testnet");
 
                         const toAddress = await toClass.signer.getAddress();
                         console.log(
                             `[${colorizeChain(
-                                toClass.name,
+                                toClass.chain,
                             )}] Address: ${toAddress}`,
                         );
 
                         const from = fromClass.FromAccount(
                             "1000000000000000000",
                         );
+                        // const from = fromClass;
                         const to = toClass.Address(toAddress);
 
                         const logLevel: LogLevel = LogLevel.Log;
@@ -110,27 +115,32 @@ describe("Refactor: mint", () => {
 
                         const gateway = await renJS.gateway(params);
 
-                        await throttle[fromClass.name](async () => {
+                        await throttle[fromClass.chain](async () => {
                             console.log(
                                 `[${colorizeChain(
-                                    fromClass.name,
+                                    fromClass.chain,
                                 )}⇢${colorizeChain(
-                                    toClass.name,
-                                )}]: Submitting to ${fromClass.name}`,
+                                    toClass.chain,
+                                )}]: Submitting to ${String(fromClass.chain)}`,
                             );
                             return await gateway.from.burn
                                 .submit()
                                 .on("transaction", console.log);
                         });
 
+                        // console.log(
+                        //     "Gateway address",
+                        //     gateway.gatewayAddress(),
+                        // );
+
                         await new Promise<void>((resolve, reject) => {
                             gateway.on("transaction", (tx) => {
                                 (async () => {
                                     console.log(
                                         `[${colorizeChain(
-                                            fromClass.name,
+                                            fromClass.chain,
                                         )}⇢${colorizeChain(
-                                            toClass.name,
+                                            toClass.chain,
                                         )}]: RenVM hash: ${tx.hash}`,
                                     );
                                     await tx.in.confirmed();
@@ -138,18 +148,21 @@ describe("Refactor: mint", () => {
                                         try {
                                             await tx.signed();
                                             break;
-                                        } catch (error) {
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        } catch (error: any) {
                                             console.error(error);
                                             await sleep(10 * SECONDS);
                                         }
                                     }
-                                    await throttle[toClass.name](async () => {
+                                    await throttle[toClass.chain](async () => {
                                         console.log(
                                             `[${colorizeChain(
-                                                fromClass.name,
+                                                fromClass.chain,
                                             )}⇢${colorizeChain(
-                                                toClass.name,
-                                            )}]: Submitting to ${toClass.name}`,
+                                                toClass.chain,
+                                            )}]: Submitting to ${String(
+                                                toClass.chain,
+                                            )}`,
                                         );
                                         return await tx.out
                                             .submit()
@@ -159,9 +172,10 @@ describe("Refactor: mint", () => {
                                 })().catch(reject);
                             });
                         });
-                    } catch (error) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } catch (error: any) {
                         console.warn(
-                            `Errored for chain ${From.name}, ${From.chain}`,
+                            `Errored for chain ${From.chain}, ${From.chain}`,
                         );
                         console.error(error);
                     }

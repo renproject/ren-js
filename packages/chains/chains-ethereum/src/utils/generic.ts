@@ -38,10 +38,7 @@ import {
 } from "../contracts";
 import { TypedEvent } from "../contracts/typechain/commons";
 import { LogLockToChainEvent } from "../contracts/typechain/LockGatewayV3";
-import {
-    LogBurnEvent,
-    LogMintEvent,
-} from "../contracts/typechain/MintGatewayV3";
+import { LogBurnEvent } from "../contracts/typechain/MintGatewayV3";
 import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
 import { EvmNetworkConfig } from "./types";
@@ -238,11 +235,12 @@ export const filterLogs = <T extends TypedEvent<Result>>(
         );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getPastLogs = async <T extends TypedEvent<any>>(
     provider: Provider,
     contractAddress: string,
     eventABI: AbiItem,
-    filter: any[],
+    filter: unknown[],
     blockLimit?: number,
 ): Promise<T[]> => {
     let fromBlock = 1;
@@ -326,7 +324,7 @@ export const submitToEthereum = async (
 
     const contract = new Contract(to, [abi], signer);
 
-    const config = {
+    const config: PayableOverrides = {
         ...txConfig,
         ...{
             value:
@@ -338,6 +336,7 @@ export const submitToEthereum = async (
                     ? txConfig.gasPrice.toString()
                     : undefined,
         },
+        gasLimit: 1000000,
     };
 
     const tx: ContractTransaction = await contract[abi.name](...params, config);

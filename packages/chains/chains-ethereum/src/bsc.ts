@@ -1,14 +1,39 @@
 import { RenNetwork } from "@renproject/interfaces";
 
-import { Ethereum, EthereumClassConfig } from "./ethereum";
+import { EthereumBaseChain, EthereumClassConfig } from "./base";
 import { EthProvider, EvmNetworkConfig, EvmNetworkInput } from "./utils/types";
-import { StandardExplorer } from "./utils/utils";
+import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const bscMainnetConfig: EvmNetworkConfig = {
-    name: "Binance Smart Chain",
-    networkID: 56,
-    rpcUrl: () => `https://bsc-dataseed.binance.org`,
-    explorer: StandardExplorer("https://bscscan.com"),
+    selector: "BinanceSmartChain",
+
+    network: {
+        chainId: "0x38",
+        chainName: "Binance Smart Chain Mainnet",
+        nativeCurrency: {
+            name: "Binance Chain Native Token",
+            symbol: "BNB",
+            decimals: 18,
+        },
+        rpcUrls: [
+            "https://bsc-dataseed1.binance.org",
+            "https://bsc-dataseed2.binance.org",
+            "https://bsc-dataseed3.binance.org",
+            "https://bsc-dataseed4.binance.org",
+            "https://bsc-dataseed1.defibit.io",
+            "https://bsc-dataseed2.defibit.io",
+            "https://bsc-dataseed3.defibit.io",
+            "https://bsc-dataseed4.defibit.io",
+            "https://bsc-dataseed1.ninicoin.io",
+            "https://bsc-dataseed2.ninicoin.io",
+            "https://bsc-dataseed3.ninicoin.io",
+            "https://bsc-dataseed4.ninicoin.io",
+            "wss://bsc-ws-node.nariox.org",
+        ],
+        blockExplorerUrls: ["https://bscscan.com"],
+    },
+
+    logRequestLimit: 5000,
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
@@ -16,11 +41,29 @@ export const bscMainnetConfig: EvmNetworkConfig = {
 };
 
 export const bscTestnetConfig: EvmNetworkConfig = {
-    name: "BSC Testnet",
-    networkID: 97,
+    selector: "BinanceSmartChain",
     isTestnet: true,
-    rpcUrl: () => `https://data-seed-prebsc-1-s1.binance.org:8545/`,
-    explorer: StandardExplorer("https://testnet.bscscan.com"),
+
+    network: {
+        chainId: "0x61",
+        chainName: "Binance Smart Chain Testnet",
+        nativeCurrency: {
+            name: "Binance Chain Native Token",
+            symbol: "tBNB",
+            decimals: 18,
+        },
+        rpcUrls: [
+            "https://data-seed-prebsc-1-s1.binance.org:8545",
+            "https://data-seed-prebsc-2-s1.binance.org:8545",
+            "https://data-seed-prebsc-1-s2.binance.org:8545",
+            "https://data-seed-prebsc-2-s2.binance.org:8545",
+            "https://data-seed-prebsc-1-s3.binance.org:8545",
+            "https://data-seed-prebsc-2-s3.binance.org:8545",
+        ],
+        blockExplorerUrls: ["https://testnet.bscscan.com"],
+    },
+
+    logRequestLimit: 5000,
     addresses: {
         GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
         BasicAdapter: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
@@ -35,10 +78,8 @@ export const bscDevnetConfig: EvmNetworkConfig = {
     },
 };
 
-export class BinanceSmartChain extends Ethereum {
+export class BinanceSmartChain extends EthereumBaseChain {
     public static chain = "BinanceSmartChain";
-    public name = BinanceSmartChain.chain;
-    public feeAsset: string = "BNB";
 
     public static configMap = {
         [RenNetwork.Mainnet]: bscMainnetConfig,
@@ -48,13 +89,14 @@ export class BinanceSmartChain extends Ethereum {
     public configMap = BinanceSmartChain.configMap;
 
     constructor(
-        renNetwork: EvmNetworkInput,
+        network: EvmNetworkInput,
         web3Provider: EthProvider,
-        config?: EthereumClassConfig,
+        config: EthereumClassConfig = {},
     ) {
-        super(renNetwork, web3Provider, {
-            logRequestLimit: 5000,
-            ...config,
-        });
+        super(
+            resolveEvmNetworkConfig(BinanceSmartChain.configMap, network),
+            web3Provider,
+            config,
+        );
     }
 }

@@ -1,4 +1,5 @@
 import chai from "chai";
+
 import RenJS from "@renproject/ren";
 
 chai.should();
@@ -17,7 +18,8 @@ describe("RenJS initialization and exports", () => {
             (() => new RenJS("fake-network")).should.throw(
                 /Invalid network or provider URL: "fake-network"/,
             );
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             console.error(error);
             throw error;
         }

@@ -1,5 +1,6 @@
-import { fromBase64 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+
+import { fromBase64 } from "@renproject/utils";
 
 export enum PackPrimitive {
     Bool = "bool",
@@ -23,10 +24,17 @@ export interface PackStructType<
     struct: T;
 }
 
-export const isPackStructType = (type: any): type is PackStructType => {
+/**
+ * Check that the passed-in value is a PackStructType - i.e. an object that has
+ * a single field called `struct` which stores an array.
+ */
+export const isPackStructType = (type: unknown): type is PackStructType => {
     return (
         typeof type === "object" &&
-        (type as PackStructType).struct !== undefined
+        type !== null &&
+        Object.keys(type).length === 1 &&
+        (type as PackStructType).struct !== undefined &&
+        Array.isArray((type as PackStructType).struct)
     );
 };
 
@@ -36,7 +44,11 @@ export interface PackListType<
     list: T;
 }
 
-export const isPackListType = (type: any): type is PackListType => {
+/**
+ * Check that the passed-in value is a PackListType - i.e. an object that has
+ * a single field called `list`.
+ */
+export const isPackListType = (type: unknown): type is PackListType => {
     return (
         typeof type === "object" && (type as PackListType).list !== undefined
     );
@@ -74,9 +86,11 @@ export type Marshalled<Type extends PackType> = Type extends PackPrimitive.Bool
     : Type extends PackNilType
     ? string
     : Type extends "list"
-    ? Array<any>
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any[]
     : Type extends "struct"
-    ? any
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any
     : never;
 
 export type Unmarshalled<Type extends PackType> =
@@ -105,9 +119,11 @@ export type Unmarshalled<Type extends PackType> =
         : Type extends PackNilType
         ? undefined
         : Type extends "list"
-        ? Array<any>
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          any[]
         : Type extends "struct"
-        ? any
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          any
         : never;
 
 export type PackTypeDefinition =
@@ -125,6 +141,10 @@ export interface TypedPackValue<
     v: V;
 }
 
+/**
+ * Takes a pack primitive value (bool, uint, string or bytes) and convert it to
+ * its corresponding JavaScript value (bool, BigNumber, string or Buffer).
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
     switch (type) {
@@ -150,6 +170,9 @@ export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
     }
 };
 
+/**
+ * Takes a pack struct and converts it to a JavaScript object.
+ */
 export const unmarshalPackStruct = (type: PackStructType, value: object) => {
     const struct = {};
 
@@ -184,6 +207,10 @@ export const unmarshalPackList = <T extends unknown>(
     return value.map((element) => unmarshalPackValue(type.list, element));
 };
 
+/**
+ * Converts the passed-in value to its corresponding JavaScript value based on
+ * the passed-in type.
+ */
 export const unmarshalPackValue = (
     type: PackTypeDefinition,
     value: unknown,
@@ -212,6 +239,10 @@ export const unmarshalPackValue = (
     );
 };
 
+/**
+ * Converts a { t, v } pack object, using `t` as a pack type and `v` as a pack
+ * value.
+ */
 export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue) => {
     return unmarshalPackValue(t, v);
 };

@@ -23,7 +23,6 @@ import {
     generateSHash,
     isDefined,
     Ox,
-    retryNTimes,
     SECONDS,
     sleep,
     toURLBase64,
@@ -151,7 +150,8 @@ export class Gateway<
 
         try {
             this.targetConfirmations = await this.confirmationTarget();
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             console.error(error);
         }
 
@@ -162,7 +162,8 @@ export class Gateway<
         ) {
             try {
                 this._gatewayAddress = await this.generateGatewayAddress();
-            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
                 throw error;
             }
 
@@ -179,7 +180,7 @@ export class Gateway<
         }
 
         this.targetConfirmations = await this.renVM.getConfirmationTarget(
-            this.params.fromChain.name,
+            this.params.fromChain.chain,
         );
 
         return this.targetConfirmations;
@@ -276,7 +277,8 @@ export class Gateway<
     public addListener = <Event extends "transaction">(
         event: Event,
         listener: Event extends "transaction"
-            ? (deposit: GatewayTransaction<any>) => void
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (deposit: GatewayTransaction<any>) => void
             : never,
     ): this => {
         // Emit previous deposit events.
@@ -314,21 +316,15 @@ export class Gateway<
             return this._gatewayAddress;
         }
 
-        const { nonce, to, asset, from, fromChain, toChain } = this.params;
+        const { nonce, to, asset, fromChain, toChain } = this.params;
 
         if (!isDepositChain(fromChain)) {
             throw new Error("From chain is not a deposit chain.");
         }
 
-        if (!nonce) {
-            throw new Error(
-                `Must call 'initialize' before calling 'generateGatewayAddress'.`,
-            );
-        }
-
         if (!isContractChain(toChain)) {
             throw new Error(
-                `Cannot mint to non-contract chain ${toChain.name}.`,
+                `Cannot mint to non-contract chain ${toChain.chain}.`,
             );
         }
 
@@ -350,7 +346,7 @@ export class Gateway<
             payload.payload,
             payload.to,
             sHash,
-            fromBase64(nonce),
+            fromBase64(nonce || emptyNonce()),
             this._config.logger,
         );
         this.gHash = gHash;
@@ -431,7 +427,8 @@ export class Gateway<
                     await sleep(1 * SECONDS);
                     continue;
                 }
-            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
                 this._config.logger.error(extractError(error));
             }
 
@@ -460,7 +457,8 @@ export class Gateway<
                     cancelDeposit,
                     listenerCancelled,
                 );
-            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
                 this._config.logger.error(extractError(error));
             }
 
@@ -488,12 +486,12 @@ export class Gateway<
                     const { to, asset, from, fromChain, toChain } = this.params;
                     if (!isContractChain(fromChain)) {
                         throw new Error(
-                            `Cannot lock on non-contract chain ${fromChain.name}.`,
+                            `Cannot lock on non-contract chain ${fromChain.chain}.`,
                         );
                     }
                     if (!isContractChain(toChain)) {
                         throw new Error(
-                            `Cannot mint to non-contract chain ${toChain.name}.`,
+                            `Cannot mint to non-contract chain ${toChain.chain}.`,
                         );
                     }
                     const payload = await toChain.getOutputPayload(
@@ -584,7 +582,7 @@ export class Gateway<
                     const { to, asset, from, fromChain, toChain } = this.params;
                     if (!isContractChain(fromChain)) {
                         throw new Error(
-                            `Cannot burn on non-contract chain ${fromChain.name}.`,
+                            `Cannot burn on non-contract chain ${fromChain.chain}.`,
                         );
                     }
 

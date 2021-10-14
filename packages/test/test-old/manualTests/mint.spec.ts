@@ -112,7 +112,8 @@ describe("Refactor: mint", () => {
             suggestedAmount = fees.lock.div(
                 new BigNumber(10).exponentiatedBy(assetDecimals),
             );
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             console.error("Error fetching fees:", red(extractError(error)));
             console.error(error);
             if ((asset as string) === "FIL") {

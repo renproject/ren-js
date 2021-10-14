@@ -1,8 +1,8 @@
 export * from "@renproject/chains-bitcoin";
 export * from "@renproject/chains-ethereum";
 export * from "@renproject/chains-filecoin";
-export * from "@renproject/chains-terra";
-export * from "@renproject/chains-solana";
+// export * from "@renproject/chains-terra";
+// export * from "@renproject/chains-solana";
 
 import {
     Bitcoin,
@@ -11,25 +11,33 @@ import {
     Dogecoin,
     Zcash,
 } from "@renproject/chains-bitcoin";
-import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
+import {
+    Avalanche,
+    BinanceSmartChain,
+    Ethereum,
+    Fantom,
+    Goerli,
+    Polygon,
+} from "@renproject/chains-ethereum";
 import { Filecoin } from "@renproject/chains-filecoin";
-import { Solana } from "@renproject/chains-solana";
-import { Terra } from "@renproject/chains-terra";
+
+// import { Solana } from "@renproject/chains-solana";
+// import { Terra } from "@renproject/chains-terra";
 
 const Chains = {
-    // Avalanche,
-    // BinanceSmartChain,
+    Avalanche,
+    BinanceSmartChain,
     Bitcoin,
     BitcoinCash,
     DigiByte,
     Dogecoin,
     Ethereum,
-    // Fantom,
+    Fantom,
     Filecoin,
-    // Goerli,
-    // Polygon,
-    Solana,
-    Terra,
+    Goerli,
+    Polygon,
+    // Solana,
+    // Terra,
     Zcash,
 };
 

@@ -1,20 +1,21 @@
-import { Callable } from "@renproject/utils";
 import axios from "axios";
 
-import { sortUTXOs, UTXO, DEFAULT_TIMEOUT, BitcoinAPI } from "./API";
+import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
 
 export enum BlockchairNetwork {
     BITCOIN = "bitcoin",
     BITCOIN_CASH = "bitcoin-cash",
-    LITECOIN = "litecoin",
-    BITCOIN_SV = "bitcoin-sv",
     DOGECOIN = "dogecoin",
-    DASH = "dash",
-    GROESTLCOIN = "groestlcoin",
+    ZCASH = "zcash",
+    // LITECOIN = "litecoin",
+    // BITCOIN_SV = "bitcoin-sv",
+    // DASH = "dash",
+    // GROESTLCOIN = "groestlcoin",
+
     BITCOIN_TESTNET = "bitcoin/testnet",
 }
 
-export class BlockchairClass implements BitcoinAPI {
+export class Blockchair implements BitcoinAPI {
     network: BlockchairNetwork;
 
     constructor(network: BlockchairNetwork = BlockchairNetwork.BITCOIN) {
@@ -23,8 +24,20 @@ export class BlockchairClass implements BitcoinAPI {
 
     endpoint = () => `https://api.blockchair.com/${this.network}`;
 
-    fetchUTXO = async (txHash: string, vOut: number): Promise<UTXO> => {
-        const url = `${this.endpoint()}/dashboards/transaction/${txHash}`;
+    fetchHeight = async (): Promise<string> => {
+        const url = `${this.endpoint()}/stats`;
+
+        const response = (
+            await axios.get<{ data: { best_block_height: number } }>(`${url}`, {
+                timeout: DEFAULT_TIMEOUT,
+            })
+        ).data;
+
+        return response.data.best_block_height.toString();
+    };
+
+    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+        const url = `${this.endpoint()}/dashboards/transaction/${txid}`;
 
         const response = (
             await axios.get<TransactionResponse>(`${url}`, {
@@ -32,11 +45,11 @@ export class BlockchairClass implements BitcoinAPI {
             })
         ).data;
 
-        if (!response.data[txHash]) {
+        if (!response.data[txid]) {
             throw new Error(`Transaction not found.`);
         }
 
-        const tx = response.data[txHash];
+        const tx = response.data[txid];
 
         let latestBlock = response.context.state;
         if (latestBlock === 0) {
@@ -47,23 +60,18 @@ export class BlockchairClass implements BitcoinAPI {
             latestBlock = statsResponse.data.blocks - 1;
         }
 
-        const confirmations =
-            tx.transaction.block_id === -1
-                ? 0
-                : Math.max(latestBlock - tx.transaction.block_id + 1, 0);
-
         return {
-            txHash,
-            vOut,
-            amount: tx.outputs[vOut].value.toString(),
-            confirmations,
+            txid: txid,
+            txindex: txindex,
+            amount: tx.outputs[parseInt(txindex, 10)].value.toString(),
+            height:
+                tx.transaction.block_id && tx.transaction.block_id > 0
+                    ? tx.transaction.block_id.toString()
+                    : null,
         };
     };
 
-    fetchUTXOs = async (
-        address: string,
-        confirmations: number = 0,
-    ): Promise<UTXO[]> => {
+    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=0,100`;
         const response = (
             await axios.get<AddressResponse>(url, { timeout: DEFAULT_TIMEOUT })
@@ -80,37 +88,31 @@ export class BlockchairClass implements BitcoinAPI {
 
         return response.data[address].utxo
             .map((utxo) => ({
-                txHash: utxo.transaction_hash,
+                txid: utxo.transaction_hash,
                 amount: utxo.value.toString(),
-                vOut: utxo.index,
-                confirmations:
-                    utxo.block_id === -1 ? 0 : latestBlock - utxo.block_id + 1,
+                txindex: utxo.index.toString(),
+                height:
+                    utxo.block_id && utxo.block_id > 0
+                        ? utxo.block_id.toString()
+                        : null,
             }))
-            .filter(
-                (utxo) =>
-                    confirmations === 0 || utxo.confirmations >= confirmations,
-            )
             .sort(sortUTXOs);
     };
 
-    fetchTXs = async (
-        address: string,
-        confirmations = 0,
-        limit = 25,
-    ): Promise<UTXO[]> => {
+    fetchTXs = async (address: string, limit = 25): Promise<UTXO[]> => {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=${limit},0`;
         const response = (
             await axios.get<AddressResponse>(url, { timeout: DEFAULT_TIMEOUT })
         ).data;
 
-        let latestBlock = response.context.state;
-        if (latestBlock === 0) {
-            const statsUrl = `${this.endpoint()}/stats`;
-            const statsResponse = (
-                await axios.get(statsUrl, { timeout: DEFAULT_TIMEOUT })
-            ).data;
-            latestBlock = statsResponse.data.blocks - 1;
-        }
+        // let latestBlock = response.context.state;
+        // if (latestBlock === 0) {
+        //     const statsUrl = `${this.endpoint()}/stats`;
+        //     const statsResponse = (
+        //         await axios.get(statsUrl, { timeout: DEFAULT_TIMEOUT })
+        //     ).data;
+        //     latestBlock = statsResponse.data.blocks - 1;
+        // }
 
         const txHashes = response.data[address].transactions;
 
@@ -138,29 +140,23 @@ export class BlockchairClass implements BitcoinAPI {
 
         for (const txHash of txHashes) {
             const tx = txDetails[txHash];
-            const txConfirmations =
-                tx.transaction.block_id === -1
-                    ? 0
-                    : Math.max(latestBlock - tx.transaction.block_id + 1, 0);
             for (let i = 0; i < tx.outputs.length; i++) {
                 const output = tx.outputs[i];
                 if (output.recipient === address) {
                     received.push({
-                        txHash: tx.transaction.hash,
+                        txid: tx.transaction.hash,
                         amount: output.value.toString(),
-                        vOut: i,
-                        confirmations: txConfirmations,
+                        txindex: i.toString(),
+                        height:
+                            output.block_id && output.block_id > 0
+                                ? output.block_id.toString()
+                                : null,
                     });
                 }
             }
         }
 
-        return received
-            .filter(
-                (utxo) =>
-                    confirmations === 0 || utxo.confirmations >= confirmations,
-            )
-            .sort(sortUTXOs);
+        return received.sort(sortUTXOs);
     };
 
     broadcastTransaction = async (txHex: string): Promise<string> => {
@@ -176,10 +172,6 @@ export class BlockchairClass implements BitcoinAPI {
         return response.data.data.transaction_hash;
     };
 }
-
-// @dev Removes any static fields.
-export type Blockchair = BlockchairClass;
-export const Blockchair = Callable(BlockchairClass);
 
 interface BlockchairError {
     error: string;

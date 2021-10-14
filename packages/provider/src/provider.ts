@@ -326,7 +326,8 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
                 tx: unmarshalCrossChainTxResponse(response.tx),
                 txStatus: response.txStatus,
             };
-        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             throw error;
         }
     };
@@ -366,8 +367,9 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
                 } else if (onStatus && result && result.txStatus) {
                     onStatus(result.txStatus);
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 if (
+                    error instanceof Error &&
                     /(not found)|(not available)/.exec(
                         String((error || {}).message),
                     )

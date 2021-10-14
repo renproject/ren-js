@@ -1,4 +1,4 @@
-import { retryNTimes, SECONDS } from "@renproject/utils";
+import { SECONDS, tryNTimes } from "@renproject/utils";
 
 import { GatewayTransaction, TransactionStatus } from "./gatewayTransaction";
 
@@ -15,7 +15,7 @@ const createDepositHandler = (retries = -1) => {
                 // The deposit has been seen, but not enough confirmations have
                 // passed yet.
                 case TransactionStatus.Detected:
-                    await retryNTimes(
+                    await tryNTimes(
                         async () => {
                             gateway._config.logger.log(`Calling .confirmed`);
                             await gateway.in
@@ -40,7 +40,7 @@ const createDepositHandler = (retries = -1) => {
                 // The deposit as been seen and confirmed, but it hasn't been
                 // signed by RenVM yet.
                 case TransactionStatus.Confirmed:
-                    await retryNTimes(
+                    await tryNTimes(
                         async () => {
                             try {
                                 gateway._config.logger.log(`Calling .signed`);
@@ -76,7 +76,7 @@ const createDepositHandler = (retries = -1) => {
                 // The mint has been signed by RenVM and can be submitted to
                 // the mint-chain.
                 case TransactionStatus.Signed:
-                    await retryNTimes(
+                    await tryNTimes(
                         async () => {
                             try {
                                 gateway._config.logger.log(`Calling .mint`);

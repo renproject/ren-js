@@ -21,12 +21,7 @@ import {
     RenNetworkString,
     SimpleLogger,
 } from "@renproject/interfaces";
-import {
-    doesntError,
-    keccak256,
-    retryNTimes,
-    SECONDS,
-} from "@renproject/utils";
+import { doesntError, keccak256, SECONDS, tryNTimes } from "@renproject/utils";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
     ConfirmOptions,
@@ -567,7 +562,7 @@ export class Solana
         ).blockhash;
         tx.feePayer = this.provider.wallet.publicKey;
 
-        const simulationResult = await retryNTimes(
+        const simulationResult = await tryNTimes(
             async () => this.provider.connection.simulateTransaction(tx),
             5,
         );
@@ -727,7 +722,7 @@ export class Solana
                 ? new PublicKey(params.contractCalls[0].sendTo)
                 : this.provider.wallet.publicKey;
 
-        const destination = await retryNTimes(
+        const destination = await tryNTimes(
             async () =>
                 this.getAssociatedTokenAccount(asset, recipient.toString()),
             5,

@@ -1,5 +1,6 @@
-import { payloadToABI, payloadToMintABI } from "../src/abi";
 import chai, { expect } from "chai";
+
+import { payloadToABI, payloadToMintABI } from "../src/utils/abi";
 
 chai.should();
 

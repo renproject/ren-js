@@ -12,13 +12,13 @@ import {
     randomBytes,
     randomNonce,
     rawEncode,
-    retryNTimes,
     SECONDS,
     sleep,
     strip0x,
     toBase64,
     toReadable,
     toURLBase64,
+    tryNTimes,
 } from "../src/common";
 
 describe("common utils", () => {
@@ -170,7 +170,7 @@ describe("common utils", () => {
         });
     });
 
-    context("retryNTimes", () => {
+    context("tryNTimes", () => {
         const mustBeCalledNTimes = (n: number, badError = false) => {
             let i = 0;
             // eslint-disable-next-line @typescript-eslint/require-await
@@ -193,10 +193,10 @@ describe("common utils", () => {
         };
 
         it("retries the correct number of times", async () => {
-            expect(await retryNTimes(mustBeCalledNTimes(2), 2, 0)).to.equal(2);
-            expect(await retryNTimes(mustBeCalledNTimes(1), 1, 0)).to.equal(1);
+            expect(await tryNTimes(mustBeCalledNTimes(2), 2, 0)).to.equal(2);
+            expect(await tryNTimes(mustBeCalledNTimes(1), 1, 0)).to.equal(1);
 
-            expect(await retryNTimes(mustBeCalledNTimes(2), -1, 0)).to.equal(2);
+            expect(await tryNTimes(mustBeCalledNTimes(2), -1, 0)).to.equal(2);
 
             let logged = false;
             const logger = {
@@ -206,25 +206,25 @@ describe("common utils", () => {
                 },
             };
             expect(
-                await retryNTimes(mustBeCalledNTimes(2), 2, 0, logger),
+                await tryNTimes(mustBeCalledNTimes(2), 2, 0, logger),
             ).to.equal(2);
             expect(logged).to.equal(true);
 
             await expect(
-                retryNTimes(mustBeCalledNTimes(2), 1, 0),
+                tryNTimes(mustBeCalledNTimes(2), 1, 0),
             ).to.be.rejectedWith("Only called 1/2 times");
 
             await expect(
-                retryNTimes(mustBeCalledNTimes(2, true), 1, 0),
+                tryNTimes(mustBeCalledNTimes(2, true), 1, 0),
             ).to.be.rejectedWith("Only called 1/2 times");
         });
 
         it("should use provided timeout", async () => {
             const timeout = 0.1 * 1000;
             const t1 = Date.now();
-            expect(
-                await retryNTimes(mustBeCalledNTimes(2), 2, timeout),
-            ).to.equal(2);
+            expect(await tryNTimes(mustBeCalledNTimes(2), 2, timeout)).to.equal(
+                2,
+            );
             const t2 = Date.now();
             expect(t2 - t1).to.be.greaterThanOrEqual(timeout);
         });

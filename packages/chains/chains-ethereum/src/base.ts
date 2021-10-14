@@ -16,7 +16,13 @@ import {
     NullLogger,
     OutputType,
 } from "@renproject/interfaces";
-import { fromBase64, Ox, rawEncode } from "@renproject/utils";
+import {
+    fromBase64,
+    fromHex,
+    Ox,
+    rawEncode,
+    toURLBase64,
+} from "@renproject/utils";
 
 import { findABIMethod, LockGatewayABI, MintGatewayABI } from "./contracts";
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
@@ -35,6 +41,7 @@ import {
     mapBurnLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     submitToEthereum,
+    txHashToChainTransaction,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
@@ -343,10 +350,7 @@ export class EthereumBaseChain
             eventEmitter,
         );
 
-        return {
-            txid: receipt.transactionHash,
-            txindex: "0",
-        };
+        return txHashToChainTransaction(receipt.transactionHash);
     };
 
     submitOutput = async (
@@ -457,10 +461,14 @@ export class EthereumBaseChain
             eventEmitter,
         );
 
-        return {
-            txid: receipt.transactionHash,
-            txindex: "0",
-        };
+        const chainTransaction = txHashToChainTransaction(
+            receipt.transactionHash,
+        );
+
+        eventEmitter.emit("transaction", chainTransaction);
+        eventEmitter.emit("confirmation", 1, { status: 1 });
+
+        return chainTransaction;
     };
 
     /**

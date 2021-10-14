@@ -12,10 +12,10 @@ import {
     fromBase64,
     fromHex,
     hash160,
-    retryNTimes,
     SECONDS,
     sleep,
     toURLBase64,
+    tryNTimes,
 } from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
@@ -121,7 +121,7 @@ export abstract class BitcoinBaseChain
         );
 
     public transactionHash = (transaction: ChainTransaction) =>
-        fromBase64(transaction.txid).toString("hex");
+        fromBase64(transaction.txid).reverse().toString("hex");
 
     validateTransaction = (transaction: ChainTransaction): boolean =>
         fromBase64(transaction.txid).length === 32 &&
@@ -169,13 +169,13 @@ export abstract class BitcoinBaseChain
         this.assertAssetIsSupported(asset);
 
         try {
-            const txs = await retryNTimes(
+            const txs = await tryNTimes(
                 async () => this.api.fetchTXs(address),
                 2,
             );
             txs.map(async (tx) =>
                 onDeposit({
-                    txid: toURLBase64(fromHex(tx.txid)),
+                    txid: toURLBase64(fromHex(tx.txid).reverse()),
                     txindex: tx.txindex,
                     amount: tx.amount,
                 }),
@@ -193,7 +193,7 @@ export abstract class BitcoinBaseChain
                 const utxos = await this.api.fetchUTXOs(address);
                 utxos.map(async (tx) =>
                     onDeposit({
-                        txid: toURLBase64(fromHex(tx.txid)),
+                        txid: toURLBase64(fromHex(tx.txid).reverse()),
                         txindex: tx.txindex,
                         amount: tx.amount,
                     }),

@@ -177,7 +177,7 @@ export const extractError = (error: unknown): string => {
     return String(error);
 };
 
-export const retryNTimes = async <T>(
+export const tryNTimes = async <T>(
     fnCall: () => Promise<T>,
     retries: number,
     timeout: number = 1 * SECONDS, // in ms
@@ -195,7 +195,10 @@ export const retryNTimes = async <T>(
             errorMessages.add(errorMessage);
             returnError = error;
 
-            if (i < retries || retries === -1) {
+            if (i < retries - 1 || retries === -1) {
+                console.log(
+                    `tryNTimes: sleeping for ${timeout / 1000} seconds`,
+                );
                 await sleep(timeout);
                 if (logger) {
                     logger.warn(error);

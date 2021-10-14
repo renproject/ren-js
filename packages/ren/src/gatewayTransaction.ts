@@ -22,8 +22,6 @@ import {
     fromBase64,
     isDefined,
     keccak256,
-    retryNTimes,
-    SECONDS,
     sleep,
     toURLBase64,
 } from "@renproject/utils";
@@ -217,8 +215,6 @@ export class GatewayTransaction<
                 to: payload.to,
             }),
         );
-
-        this.refreshStatus(true).catch(this._config.logger.error);
 
         return this;
     };
@@ -443,18 +439,23 @@ export class GatewayTransaction<
                             TxStatusIndex[TxStatus.TxStatusPending]);
 
                 let iterationCount = 0;
-                let currentConfidenceRatio = 0;
+                let currentConfidenceRatio = -1;
                 // Continue while the transaction isn't confirmed and the promievent
                 // isn't cancelled.
-                while (
-                    !promiEvent._isCancelled() &&
-                    !transactionIsConfirmed()
-                ) {
+                while (true) {
+                    if (promiEvent._isCancelled()) {
+                        throw new Error(`PromiEvent cancelled.`);
+                    }
+
                     // In the first loop, submit to RenVM immediately.
-                    if (iterationCount % 5 === 0) {
+                    if (iterationCount % 5 === 1) {
                         try {
-                            if (!this._renTxSubmitted) {
-                                await this._submitMintTransaction();
+                            try {
+                                if (!this._renTxSubmitted) {
+                                    await this._submitMintTransaction(1);
+                                }
+                            } catch (error) {
+                                this._config.logger.debug(error);
                             }
                             await this.queryTx();
                             if (transactionIsConfirmed()) {
@@ -494,6 +495,10 @@ export class GatewayTransaction<
                                 error,
                             )}`,
                         );
+                    }
+
+                    if (transactionIsConfirmed()) {
+                        break;
                     }
                     await sleep(this._config.networkDelay);
                     iterationCount += 1;
@@ -546,107 +551,106 @@ export class GatewayTransaction<
         (async () => {
             let txHash = this.hash;
 
-            // If the transaction has been reverted, throw the revert reason.
-            if (this.status === TransactionStatus.Reverted) {
-                throw new Error(
-                    this.revertReason ||
-                        `RenVM transaction ${txHash} reverted.`,
-                );
-            }
-
             // Check if the signature is already available.
             if (
-                TransactionStatusIndex[this.status] >=
-                    TransactionStatusIndex[TransactionStatus.Signed] &&
-                this.queryTxResult &&
-                this.queryTxResult.tx.out
+                !this.queryTxResult ||
+                !this.queryTxResult.tx.out ||
+                // Not done and not reverted
+                (this.queryTxResult.txStatus !== TxStatus.TxStatusDone &&
+                    this.queryTxResult.txStatus !==
+                        TxStatus.TxStatusReverted) ||
+                // Output not populated
+                Object.keys(this.queryTxResult.tx.out).length === 0
             ) {
-                // NO_COMMIT
-                // return this;
-            }
+                promiEvent.emit("txHash", txHash);
+                this._config.logger.debug("RenVM txHash:", txHash);
 
-            promiEvent.emit("txHash", txHash);
-            this._config.logger.debug("RenVM txHash:", txHash);
-
-            // Try to submit to RenVM. If that fails, see if they already
-            // know about the transaction.
-            try {
-                txHash = await this._submitMintTransaction();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                console.error(error);
-                // this.logger.error(error);
+                // Try to submit to RenVM. If that fails, see if they already
+                // know about the transaction.
                 try {
-                    // Check if the darknodes have already seen the transaction
-                    const queryTxResponse = await this.queryTx();
-                    if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
-                        throw new Error(
-                            `Transaction ${txHash} has not been submitted previously.`,
-                        );
-                    }
-                    txHash = queryTxResponse.tx.hash;
+                    txHash = await this._submitMintTransaction(1);
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (errorInner: any) {
-                    let submitted = false;
+                } catch (error: any) {
+                    // this.logger.error(error);
+                    try {
+                        // Check if the darknodes have already seen the transaction
+                        const queryTxResponse = await this.queryTx(2);
+                        if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
+                            throw new Error(
+                                `Transaction ${txHash} has not been submitted previously.`,
+                            );
+                        }
+                        txHash = queryTxResponse.tx.hash;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } catch (errorInner: any) {
+                        let submitted = false;
 
-                    // If transaction is not found, check for RenVM v0.2 error message.
-                    if (
-                        errorInner.code === RenJSErrors.RenVMTransactionNotFound
-                    ) {
+                        // If transaction is not found, check for RenVM v0.2 error message.
                         if (
-                            error.code === RenJSErrors.AmountTooSmall ||
-                            error.code === RenJSErrors.DepositSpentOrNotFound
+                            errorInner.code ===
+                            RenJSErrors.RenVMTransactionNotFound
                         ) {
-                            this.status = TransactionStatus.Reverted;
-                            this.revertReason = String(
-                                (error || {}).message,
-                            ).replace(
-                                /Node returned status \d+ with reason: /,
-                                "",
-                            );
-                            throw new Error(this.revertReason);
-                        } else {
-                            // Retry submitting 2 more times to reduce chance
-                            // of network issues causing problems.
-                            txHash = await retryNTimes(
-                                async () => this._submitMintTransaction(),
-                                5,
-                                5 * SECONDS,
-                            );
-                            submitted = true;
+                            if (
+                                error.code === RenJSErrors.AmountTooSmall ||
+                                error.code ===
+                                    RenJSErrors.DepositSpentOrNotFound
+                            ) {
+                                this.status = TransactionStatus.Reverted;
+                                this.revertReason = String(
+                                    (error || {}).message,
+                                ).replace(
+                                    /Node returned status \d+ with reason: /,
+                                    "",
+                                );
+                                throw new Error(this.revertReason);
+                            } else {
+                                // Retry submitting 2 more times to reduce chance
+                                // of network issues causing problems.
+                                txHash = await this._submitMintTransaction(5);
+                                submitted = true;
+                            }
+                        }
+
+                        // Ignore errorInner.
+                        this._config.logger.debug(errorInner);
+
+                        if (!submitted) {
+                            throw error;
                         }
                     }
-
-                    // Ignore errorInner.
-                    this._config.logger.debug(errorInner);
-
-                    if (!submitted) {
-                        throw error;
-                    }
                 }
+
+                const response = await waitForTX(
+                    this.renVM,
+                    this.selector,
+                    fromBase64(txHash),
+                    (status) => {
+                        promiEvent.emit("status", status);
+                        this._config.logger.debug(
+                            "transaction status:",
+                            status,
+                        );
+                    },
+                    () => promiEvent._isCancelled(),
+                    this._config.networkDelay,
+                    this._config.logger,
+                );
+
+                this.queryTxResult = response;
             }
 
-            const response = await waitForTX(
-                this.renVM,
-                this.selector,
-                fromBase64(txHash),
-                (status) => {
-                    promiEvent.emit("status", status);
-                    this._config.logger.debug("transaction status:", status);
-                },
-                () => promiEvent._isCancelled(),
-                this._config.networkDelay,
-                this._config.logger,
-            );
-
-            this.queryTxResult = response;
-
             // Update status.
-            if (response.tx.out && response.tx.out.revert !== undefined) {
+            if (
+                this.queryTxResult.tx.out &&
+                this.queryTxResult.tx.out.revert !== undefined
+            ) {
                 this.status = TransactionStatus.Reverted;
-                this.revertReason = response.tx.out.revert.toString();
+                this.revertReason = this.queryTxResult.tx.out.revert.toString();
                 throw new Error(this.revertReason);
-            } else if (response.tx.out && response.tx.out.sig) {
+            } else if (
+                this.queryTxResult.tx.out &&
+                Object.keys(this.queryTxResult.tx.out).length === 0
+            ) {
                 if (
                     TransactionStatusIndex[this.status] <
                     TransactionStatusIndex[TransactionStatus.Signed]
@@ -869,7 +873,9 @@ export class GatewayTransaction<
      *
      * @param config Set `config.submit` to `true` to submit the transaction.
      */
-    private _submitMintTransaction = async (): Promise<string> => {
+    private _submitMintTransaction = async (
+        retries: number,
+    ): Promise<string> => {
         const expectedTxHash = this.hash;
 
         // Return if the transaction has already been successfully submitted.
@@ -920,7 +926,7 @@ export class GatewayTransaction<
                 pHash: fromBase64(pHash),
                 to: payload.to,
             },
-            5,
+            retries,
         );
 
         const returnedTxHash = toURLBase64(encodedHash);

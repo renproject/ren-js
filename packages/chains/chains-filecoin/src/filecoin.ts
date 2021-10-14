@@ -21,10 +21,10 @@ import {
     assertType,
     doesntError,
     fromBase64,
-    retryNTimes,
     SECONDS,
     sleep,
     toURLBase64,
+    tryNTimes,
 } from "@renproject/utils";
 
 import { FilTransaction } from "./utils/deposit";
@@ -247,7 +247,7 @@ export class Filecoin
                     let page = 0;
 
                     while (true) {
-                        const { deposits, totalCount } = await retryNTimes(
+                        const { deposits, totalCount } = await tryNTimes(
                             async () => {
                                 if (!this.filfox) {
                                     throw new Error(`Filfox not defined.`);

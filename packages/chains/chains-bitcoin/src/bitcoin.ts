@@ -52,8 +52,8 @@ export const BitcoinTestnet: BitcoinNetworkConfig = {
     p2shPrefix: Buffer.from([0xc4]),
     providers: [
         new Blockstream({ testnet: true }),
-        new Blockchair(BlockchairNetwork.BITCOIN_TESTNET),
-        { api: new SoChain(SoChainNetwork.BTCTEST), priority: 15 },
+        // new Blockchair(BlockchairNetwork.BITCOIN_TESTNET),
+        // { api: new SoChain(SoChainNetwork.BTCTEST), priority: 15 },
     ],
     // validateAddress: (address: string) =>
     //     validateAddress(address, "BTC", "testnet"),

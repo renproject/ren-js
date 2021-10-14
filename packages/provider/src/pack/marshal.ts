@@ -230,10 +230,13 @@ export const marshalPackStruct = (
             if (keys.length > 1) {
                 throw new Error(`Invalid struct member with multiple entries.`);
             }
-            if (!Array.isArray(value)) {
+            if (typeof value !== "object") {
                 throw new Error(
                     `Invalid struct value of type "${typeof value}".`,
                 );
+            }
+            if (value === null) {
+                throw new Error(`Invalid struct value "null".`);
             }
             const key = Object.keys(member)[0];
             const memberType = member[key];

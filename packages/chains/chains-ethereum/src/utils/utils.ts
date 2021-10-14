@@ -12,12 +12,18 @@ export interface EvmExplorer {
     transaction: (txid: string) => string;
 }
 
+/**
+ * Returns an EvmExplorer with the format `${url}/address/${address}` and
+ * `${url}/tx/${txHash}` for addresses and transactions respectively.
+ */
 export const StandardEvmExplorer = (baseUrl: string): EvmExplorer => ({
     url: baseUrl,
+
     address: (address: string) =>
         `${baseUrl.replace(/\/$/, "")}/address/${address}`,
-    transaction: (transaction: string) =>
-        `${baseUrl.replace(/\/$/, "")}/tx/${transaction || ""}`,
+
+    transaction: (txHash: string) =>
+        `${baseUrl.replace(/\/$/, "")}/tx/${txHash || ""}`,
 });
 
 export const resolveEvmNetworkConfig = (

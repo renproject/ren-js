@@ -38,20 +38,20 @@ import { getRenVMSelector } from "./utils/providerUtils";
  * should not be created directly. Instead, [[RenJS.lockAndMint]] will create a
  * `LockAndMint` object.
  *
- * `LockAndMint` extends the EventEmitter class, and emits a `"deposit"` event
+ * `LockAndMint` extends the EventEmitter class, and emits a `"transaction"` event
  * for each new deposit that is observed. Deposits will only be watched for if
- * there is an active listener for the `"deposit"` event.
+ * there is an active listener for the `"transaction"` event.
  *
  * A LockAndMint object watches transactions to the [[gatewayAddress]] on the
  * lock-chain.
  *
- * Deposits to the gateway address can be listened to with the `"deposit"`
+ * Deposits to the gateway address can be listened to with the `"transaction"`
  * event using [[on]], which will return [[GatewayTransaction]] instances.
  *
  * ```ts
  * console.log(`Deposit to ${JSON.stringify(lockAndMint.gatewayAddress)}`);
  *
- * lockAndMint.on("deposit", async (deposit) => {
+ * lockAndMint.on("transaction", async (deposit) => {
  *    console.log(`Received deposit`, deposit);
  *    await RenJS.defaultDepositHandler(deposit);
  * });
@@ -192,7 +192,7 @@ export class Gateway<
      *
      * @param deposit The deposit details in the format defined by the
      * LockChain. This should be the same format as `deposit.depositDetails` for
-     * a deposit returned from `.on("deposit", ...)`.
+     * a deposit returned from `.on("transaction", ...)`.
      *
      * ```ts
      * lockAndMint
@@ -266,7 +266,7 @@ export class Gateway<
             await depositObject._initialize();
 
             // Check if deposit has already been submitted.
-            this.emit("deposit", depositObject);
+            this.emit("transaction", depositObject);
             // this.deposits.set(deposit);
             this._config.logger.debug("new deposit:", deposit);
             this.deposits = this.deposits.set(depositIdentifier, depositObject);
@@ -293,11 +293,11 @@ export class Gateway<
     };
 
     /**
-     * `on` creates a new listener to `"deposit"` events, returning
+     * `on` creates a new listener to `"transaction"` events, returning
      * [[GatewayTransaction]] instances.
      *
      * `on` extends `EventEmitter.on`, modifying it to immediately return all
-     * previous `"deposit"` events, in addition to new events, when a new
+     * previous `"transaction"` events, in addition to new events, when a new
      * listener is created.
      *
      * @category Main
@@ -405,20 +405,14 @@ export class Gateway<
         return this._gatewayAddress;
     };
 
-    private readonly wait = async (): Promise<never> => {
-        if (
-            !this.pHash ||
-            !this.gHash ||
-            !this.gPubKey ||
-            !this.gatewayAddress
-        ) {
-            throw new Error(
-                "Gateway address must be generated before calling 'wait'.",
-            );
+    private readonly wait = async (): Promise<void> => {
+        if (!this._gatewayAddress) {
+            return;
         }
 
         while (true) {
-            const listenerCancelled = () => this.listenerCount("deposit") === 0;
+            const listenerCancelled = () =>
+                this.listenerCount("transaction") === 0;
 
             try {
                 // If there are no listeners, continue. TODO: Exit loop entirely
@@ -436,7 +430,11 @@ export class Gateway<
             const onDeposit = async (
                 deposit: InputChainTransaction,
             ): Promise<void> => {
-                await this.processDeposit(deposit);
+                try {
+                    await this.processDeposit(deposit);
+                } catch (error) {
+                    this._config.logger.error(error);
+                }
             };
 
             // TODO: Flag deposits that have been cancelled, updating their status.

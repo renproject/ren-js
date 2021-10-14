@@ -6,7 +6,7 @@ import {
     NullLogger,
     SyncOrPromise,
 } from "@renproject/interfaces";
-import { extractError, retryNTimes, SECONDS } from "@renproject/utils";
+import { extractError, SECONDS, tryNTimes } from "@renproject/utils";
 
 const generatePayload = (method: string, params?: unknown) => ({
     id: 1,
@@ -73,7 +73,7 @@ export class HttpProvider<
             );
         }
         try {
-            const response = await retryNTimes(
+            const response = await tryNTimes(
                 async () =>
                     axios.post<JSONRPCResponse<Responses[Method]>>(
                         this.nodeURL,

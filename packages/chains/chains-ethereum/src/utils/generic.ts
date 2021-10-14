@@ -48,8 +48,7 @@ export const mapBurnLogToInputChainTransaction = (
 ): InputChainTransaction => {
     const [to, amount, burnNonce] = event.args;
     return {
-        txid: toURLBase64(fromHex(event.transactionHash)),
-        txindex: "0",
+        ...txHashToChainTransaction(event.transactionHash),
         amount: amount.toString(),
         toRecipient: to,
         nonce: toURLBase64(toNBytes(burnNonce.toString(), 32)),
@@ -70,8 +69,7 @@ export const mapLockLogToInputChainTransaction = (
         throw new Error("Invalid nonce length");
     }
     return {
-        txid: toURLBase64(fromHex(event.transactionHash)),
-        txindex: "0",
+        ...txHashToChainTransaction(event.transactionHash),
         amount: amount.toString(),
         nonce: toURLBase64(toNBytes(lockNonce.toString(), 32)),
         toRecipient: recipientAddress,
@@ -122,8 +120,13 @@ export const findBurnByNonce = async (
     return decodedBurnLogs.length ? decodedBurnLogs[0] : undefined;
 };
 
-const txHashToChainTransaction = (txHash: string): ChainTransaction => ({
-    txid: txHash,
+/**
+ * Convert an EVM txHash to a RenVM ChainTransaction struct.
+ * The txindex for Ethereum is currently set to 0, and the nonce is used instead
+ * to differentiate locks/burns in the same EVM transaction.
+ */
+export const txHashToChainTransaction = (txHash: string): ChainTransaction => ({
+    txid: toURLBase64(fromHex(txHash)),
     txindex: "0",
 });
 
@@ -263,7 +266,7 @@ export const getPastLogs = async <T extends TypedEvent<any>>(
 };
 
 /**
- * Waits for the receipt of a transaction to be available, retrying every 3
+ * Waits for the receipt of a transaction to be available, retrying every 15
  * seconds until it is.
  *
  * @param web3 A web3 instance.
@@ -314,7 +317,7 @@ export const submitToEthereum = async (
     params: unknown[],
 
     eventEmitter: EventEmitterTyped<{
-        transactionHash: [string];
+        transaction: [ChainTransaction];
         confirmation: [number, { status: number }];
     }>,
 ): Promise<ContractReceipt> => {
@@ -341,7 +344,7 @@ export const submitToEthereum = async (
 
     const tx: ContractTransaction = await contract[abi.name](...params, config);
 
-    eventEmitter.emit("transactionHash", tx.hash);
+    eventEmitter.emit("transaction", txHashToChainTransaction(tx.hash));
     const receipt = await tx.wait();
 
     eventEmitter.emit("confirmation", 1, { status: 1 });

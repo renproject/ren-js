@@ -11,7 +11,7 @@ import {
 import { Filecoin } from "@renproject/chains-filecoin";
 import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { retryNTimes, SECONDS } from "@renproject/utils";
+import { SECONDS, tryNTimes } from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 // Load environment variables.
@@ -105,7 +105,7 @@ const main = async () => {
             // Retry each step 10 times. Set to -1 to retry-indefinitely.
             const retries = 10;
 
-            await retryNTimes(
+            await tryNTimes(
                 async () => {
                     deposit._state.logger.log(`Calling .confirmed`);
                     await deposit
@@ -123,7 +123,7 @@ const main = async () => {
 
             info(`status:`, deposit.status); // DepositStatus.Confirmed
 
-            await retryNTimes(
+            await tryNTimes(
                 async () => {
                     deposit._state.logger.log(`Calling .signed`);
                     await deposit.signed().on("status", (status) => {
@@ -136,7 +136,7 @@ const main = async () => {
 
             info(`status:`, deposit.status); // DepositStatus.Signed
 
-            await retryNTimes(
+            await tryNTimes(
                 async () => {
                     deposit._state.logger.log(`Calling .mint`);
                     await deposit

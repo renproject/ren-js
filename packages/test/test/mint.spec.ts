@@ -3,7 +3,7 @@
 import chai from "chai";
 import { blue, blueBright, cyan, green, magenta, red, yellow } from "chalk";
 import { config as loadDotEnv } from "dotenv";
-import throat from "throat";
+import throttle from "throat";
 
 import { Bitcoin } from "../../chains/chains-bitcoin/src";
 import {
@@ -24,7 +24,7 @@ chai.should();
 
 loadDotEnv();
 
-const colorizeChain = (chain: string): string => {
+const colorizeChain = (chain: string, { pad } = { pad: true }): string => {
     const color =
         chain === "Ethereum"
             ? blue
@@ -41,14 +41,16 @@ const colorizeChain = (chain: string): string => {
             : chain === "Goerli"
             ? green
             : cyan;
-    if (chain.length > 8) {
-        chain = chain.slice(0, 7) + "…";
-    }
-    if (chain.length < 8) {
-        const difference = 8 - chain.length;
-        const left = Math.floor(difference / 2);
-        const right = Math.ceil(difference / 2);
-        chain = " ".repeat(left) + chain + " ".repeat(right);
+    if (pad) {
+        if (chain.length > 8) {
+            chain = chain.slice(0, 7) + "…";
+        }
+        if (chain.length < 8) {
+            const difference = 8 - chain.length;
+            const left = Math.floor(difference / 2);
+            const right = Math.ceil(difference / 2);
+            chain = " ".repeat(left) + chain + " ".repeat(right);
+        }
     }
     return color(chain);
 };
@@ -58,18 +60,17 @@ describe("Refactor: mint", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const asset = "DAI";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const toClass = getEVMChain(Ethereum as any, network);
 
-        const throttle = {
-            [Ethereum.chain]: throat(1),
-            [Avalanche.chain]: throat(1),
-            [Fantom.chain]: throat(1),
-            [Goerli.chain]: throat(1),
-            [Polygon.chain]: throat(1),
-            [BinanceSmartChain.chain]: throat(1),
-            [Arbitrum.chain]: throat(1),
+        const throttles = {
+            [Ethereum.chain]: throttle(1),
+            [Avalanche.chain]: throttle(1),
+            [Fantom.chain]: throttle(1),
+            [Goerli.chain]: throttle(1),
+            [Polygon.chain]: throttle(1),
+            [BinanceSmartChain.chain]: throttle(1),
+            [Arbitrum.chain]: throttle(1),
         };
 
         const fromChains = [
@@ -77,17 +78,19 @@ describe("Refactor: mint", () => {
             // Fantom,
             // Goerli,
             // Polygon,
-            // Bitcoin,
+            Bitcoin,
             // Arbitrum,
-            BinanceSmartChain,
+            // BinanceSmartChain,
         ];
+
+        const asset = "BTC";
 
         await Promise.all(
             fromChains.map(async (From) => {
                 while (true) {
                     try {
-                        const fromClass = getEVMChain(From, network);
-                        // const fromClass = new From("testnet");
+                        // const fromClass = getEVMChain(From, network);
+                        const fromClass = new From("testnet");
 
                         const toAddress = await toClass.signer.getAddress();
                         console.log(
@@ -96,10 +99,10 @@ describe("Refactor: mint", () => {
                             )}] Address: ${toAddress}`,
                         );
 
-                        const from = fromClass.FromAccount(
-                            "1000000000000000000",
-                        );
-                        // const from = fromClass;
+                        // const from = fromClass.FromAccount(
+                        //     "1000000000000000000",
+                        // );
+                        const from = fromClass;
                         const to = toClass.Address(toAddress);
 
                         const logLevel: LogLevel = LogLevel.Log;
@@ -115,23 +118,25 @@ describe("Refactor: mint", () => {
 
                         const gateway = await renJS.gateway(params);
 
-                        await throttle[fromClass.chain](async () => {
-                            console.log(
-                                `[${colorizeChain(
-                                    fromClass.chain,
-                                )}⇢${colorizeChain(
-                                    toClass.chain,
-                                )}]: Submitting to ${String(fromClass.chain)}`,
-                            );
-                            return await gateway.from.burn
-                                .submit()
-                                .on("transaction", console.log);
-                        });
+                        // await throttles[fromClass.chain](async () => {
+                        //     console.log(
+                        //         `[${colorizeChain(
+                        //             fromClass.chain,
+                        //         )}⇢${colorizeChain(
+                        //             toClass.chain,
+                        //         )}]: Submitting to ${String(fromClass.chain)}`,
+                        //     );
+                        //     return await gateway.from.burn
+                        //         .submit()
+                        //         .on("transaction", console.log);
+                        // });
 
-                        // console.log(
-                        //     "Gateway address",
-                        //     gateway.gatewayAddress(),
-                        // );
+                        console.log(
+                            `[${colorizeChain(toClass.chain)}] ${colorizeChain(
+                                fromClass.chain,
+                                { pad: false },
+                            )} Gateway address: ${gateway.gatewayAddress()}`,
+                        );
 
                         await new Promise<void>((resolve, reject) => {
                             gateway.on("transaction", (tx) => {
@@ -143,7 +148,46 @@ describe("Refactor: mint", () => {
                                             toClass.chain,
                                         )}]: RenVM hash: ${tx.hash}`,
                                     );
-                                    await tx.in.confirmed();
+                                    await tx.refreshStatus();
+
+                                    console.log(
+                                        `[${colorizeChain(
+                                            fromClass.chain,
+                                        )}⇢${colorizeChain(
+                                            toClass.chain,
+                                        )}][${tx.hash.slice(0, 6)}]: Status: ${
+                                            tx.status
+                                        }`,
+                                    );
+
+                                    await tx.in
+                                        .confirmed()
+                                        .on("target", (target) =>
+                                            console.log(
+                                                `[${colorizeChain(
+                                                    fromClass.chain,
+                                                )}⇢${colorizeChain(
+                                                    toClass.chain,
+                                                )}][${tx.hash.slice(
+                                                    0,
+                                                    6,
+                                                )}]: Target: ${target} confirmations`,
+                                            ),
+                                        )
+                                        .on(
+                                            "confirmation",
+                                            (confirmations, target) =>
+                                                console.log(
+                                                    `[${colorizeChain(
+                                                        fromClass.chain,
+                                                    )}⇢${colorizeChain(
+                                                        toClass.chain,
+                                                    )}][${tx.hash.slice(
+                                                        0,
+                                                        6,
+                                                    )}]: ${confirmations}/${target} confirmations`,
+                                                ),
+                                        );
                                     while (true) {
                                         try {
                                             await tx.signed();
@@ -154,13 +198,16 @@ describe("Refactor: mint", () => {
                                             await sleep(10 * SECONDS);
                                         }
                                     }
-                                    await throttle[toClass.chain](async () => {
+                                    await throttles[toClass.chain](async () => {
                                         console.log(
                                             `[${colorizeChain(
                                                 fromClass.chain,
                                             )}⇢${colorizeChain(
                                                 toClass.chain,
-                                            )}]: Submitting to ${String(
+                                            )}][${tx.hash.slice(
+                                                0,
+                                                6,
+                                            )}]: Submitting to ${colorizeChain(
                                                 toClass.chain,
                                             )}`,
                                         );
@@ -168,7 +215,7 @@ describe("Refactor: mint", () => {
                                             .submit()
                                             .on("transaction", console.log);
                                     });
-                                    resolve();
+                                    // resolve();
                                 })().catch(reject);
                             });
                         });

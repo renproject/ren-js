@@ -339,7 +339,6 @@ export const submitToEthereum = async (
                     ? txConfig.gasPrice.toString()
                     : undefined,
         },
-        gasLimit: 1000000,
     };
 
     const tx: ContractTransaction = await contract[abi.name](...params, config);

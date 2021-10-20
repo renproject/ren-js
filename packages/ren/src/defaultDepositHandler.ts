@@ -1,4 +1,4 @@
-import { SECONDS, tryNTimes } from "@renproject/utils";
+import { isDefined, SECONDS, tryNTimes } from "@renproject/utils";
 
 import { GatewayTransaction, TransactionStatus } from "./gatewayTransaction";
 
@@ -18,18 +18,17 @@ const createDepositHandler = (retries = -1) => {
                     await tryNTimes(
                         async () => {
                             gateway._config.logger.log(`Calling .confirmed`);
-                            await gateway.in
-                                .confirmed()
-                                .on("target", (target) => {
+                            await gateway.in.wait().on("status", (status) => {
+                                if (isDefined(status.confirmations)) {
                                     gateway._config.logger.log(
-                                        `Waiting for ${target} confirmations`,
+                                        `${status.confirmations}/${status.target} confirmations`,
                                     );
-                                })
-                                .on("confirmation", (confirmations, target) => {
+                                } else {
                                     gateway._config.logger.log(
-                                        `${confirmations}/${target} confirmations`,
+                                        `Waiting for ${status.target} confirmations...`,
                                     );
-                                });
+                                }
+                            });
                         },
                         retries,
                         10 * SECONDS,
@@ -80,14 +79,20 @@ const createDepositHandler = (retries = -1) => {
                         async () => {
                             try {
                                 gateway._config.logger.log(`Calling .mint`);
-                                const transaction = await gateway.out.submit();
-                                gateway._config.logger.log(
-                                    `txHash: ${
-                                        gateway.params.toChain.transactionExplorerLink(
-                                            transaction,
-                                        ) || ""
-                                    }`,
-                                );
+                                if (!gateway.out) {
+                                    return;
+                                }
+                                if (gateway.out.submit) {
+                                    await gateway.out.submit();
+                                }
+                                await gateway.out.wait();
+                                // gateway._config.logger.log(
+                                //     `txHash: ${
+                                //         gateway.params.toChain.transactionExplorerLink(
+                                //             transaction,
+                                //         ) || ""
+                                //     }`,
+                                // );
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             } catch (error: any) {
                                 // Ethereum revert message.

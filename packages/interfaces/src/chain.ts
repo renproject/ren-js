@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { EventEmitterTyped } from "./promiEvent";
+import { TxSubmitter, TxWaiter } from "./txSubmitter";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
@@ -20,7 +20,6 @@ export type NumericString = string;
 
 export interface ChainTransaction {
     txid: string;
-
     txindex: NumericString;
 }
 
@@ -94,6 +93,12 @@ export interface ChainCommon {
     transactionExplorerLink: (
         transaction: ChainTransaction,
     ) => string | undefined;
+
+    // /** Return a TxWaiter instance for the provided chain transaction. */
+    // getTxWaiter: (
+    //     tx: ChainTransaction,
+    //     target?: number,
+    // ) => SyncOrPromise<TxWaiter>;
 }
 
 export interface DepositChain<
@@ -122,8 +127,8 @@ export interface DepositChain<
         asset: string,
         fromPayload: FromPayload,
         address: string,
-        onDeposit: (deposit: InputChainTransaction) => Promise<void>,
-        removeDeposit: (deposit: InputChainTransaction) => Promise<void>,
+        onInput: (input: InputChainTransaction) => void,
+        removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
     ) => Promise<void>;
 
@@ -146,31 +151,11 @@ export const isDepositChain = (chain: any): chain is DepositChain => {
     );
 };
 
-export type ContractChainTransaction<
-    Type extends InputType | OutputType,
-    ContractCall extends { chain: string; chainClass?: Chain },
-    Params extends {},
-    Result extends InputChainTransaction[] | ChainTransaction,
-> = (
-    precheck: boolean,
-    type: Type,
-    asset: string,
-    contractCall: ContractCall,
-    override: { [name: string]: unknown },
-    renParams: Params,
-    eventEmitter: EventEmitterTyped<{
-        transaction: [ChainTransaction];
-        confirmation: [number, { status: number }];
-    }>,
-) => SyncOrPromise<Result | undefined>;
-
 export interface ContractChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FromContractCall extends { chain: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToContractCall extends { chain: string } = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    SetupContractCall extends { chain: string } = any,
 > extends ChainCommon {
     // Get contract addresses.
     getRenAsset: (asset: string) => SyncOrPromise<string>;
@@ -184,24 +169,17 @@ export interface ContractChain<
         asset: string,
         type: InputType,
         contractCall: FromContractCall,
-    ) => {
-        [key: string]: SetupContractCall;
-    };
+    ) => SyncOrPromise<{
+        [key: string]: TxSubmitter | TxWaiter;
+    }>;
 
     getOutputSetup?: (
         asset: string,
         type: OutputType,
         contractCall: ToContractCall,
-    ) => {
-        [key: string]: SetupContractCall;
-    };
-
-    submitSetup?: ContractChainTransaction<
-        InputType | OutputType,
-        SetupContractCall,
-        {},
-        ChainTransaction
-    >;
+    ) => SyncOrPromise<{
+        [key: string]: TxSubmitter | TxWaiter;
+    }>;
 
     // Input and output transactions ///////////////////////////////////////////
 
@@ -210,31 +188,51 @@ export interface ContractChain<
      * `InputChainTransaction` because there may be multiple lock or burn events
      * in the transaction.
      */
-    submitInput: ContractChainTransaction<
-        InputType,
-        FromContractCall,
-        {
+    submitInput: (
+        type: InputType,
+        asset: string,
+        contractCall: FromContractCall,
+        params: {
             toChain: string;
             toPayload: {
                 to: string;
                 payload: Buffer;
             };
         },
-        InputChainTransaction[]
-    >;
+        confirmationTarget: number,
+        onInput: (input: InputChainTransaction) => void,
+        removeInput: (input: InputChainTransaction) => void,
+    ) => SyncOrPromise<TxSubmitter | TxWaiter>;
+
+    /**
+     * Lookup a mint or release using the unique nHash.
+     */
+    lookupOutput: (
+        type: OutputType,
+        asset: string,
+        contractCall: ToContractCall,
+        renParams: {
+            amount: BigNumber;
+            sHash: Buffer;
+            pHash: Buffer;
+            nHash: Buffer;
+        },
+        confirmationTarget: number,
+    ) => SyncOrPromise<TxWaiter | undefined>;
 
     /**
      * Submit a mint or release transaction. When this is initially called as
      * a pre-check, the sigHash and signature will not be set.
      */
-    submitOutput: ContractChainTransaction<
-        OutputType,
-        ToContractCall,
-        {
+    submitOutput: (
+        type: OutputType,
+        asset: string,
+        contractCall: ToContractCall,
+        renParams: {
             amount: BigNumber;
-            nHash: Buffer;
             sHash: Buffer;
             pHash: Buffer;
+            nHash: Buffer;
             sigHash?: Buffer;
             signature?: {
                 r: Buffer;
@@ -242,8 +240,8 @@ export interface ContractChain<
                 v: number;
             };
         },
-        ChainTransaction
-    >;
+        confirmationTarget: number,
+    ) => SyncOrPromise<TxSubmitter | TxWaiter>;
 
     getOutputPayload: (
         asset: string,
@@ -270,8 +268,6 @@ export type Chain<
     FromPayload extends { chain: string; chainClass?: Chain } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToPayload extends { chain: string; chainClass?: Chain } = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    SetupContractCall extends { chain: string } = any,
 > =
     | DepositChain<FromPayload, ToPayload>
-    | ContractChain<FromPayload, ToPayload, SetupContractCall>;
+    | ContractChain<FromPayload, ToPayload>;

@@ -4,9 +4,11 @@ import { Provider } from "@ethersproject/providers";
 import { keccak256 } from "@renproject/utils";
 
 import { AbiItem } from "../utils/abi";
+import ERC20JSON from "./ABIs/ERC20.json";
 import GatewayRegistryJSON from "./ABIs/GatewayRegistryV2.json";
 import LockGatewayJSON from "./ABIs/LockGatewayV3.json";
 import MintGatewayJSON from "./ABIs/MintGatewayV3.json";
+import { ERC20 } from "./typechain/ERC20";
 import { GatewayRegistryV2 } from "./typechain/GatewayRegistryV2";
 import { LockGatewayV3 } from "./typechain/LockGatewayV3";
 import { MintGatewayV3 } from "./typechain/MintGatewayV3";
@@ -14,6 +16,7 @@ import { MintGatewayV3 } from "./typechain/MintGatewayV3";
 export const MintGatewayABI = MintGatewayJSON as AbiItem[];
 export const LockGatewayABI = LockGatewayJSON as AbiItem[];
 export const GatewayRegistryABI = GatewayRegistryJSON as AbiItem[];
+export const ERC20ABI = ERC20JSON as AbiItem[];
 
 export const findABIMethod = (abi: AbiItem[], name: string) => {
     const first = abi.filter((item) => item.name === name)[0];
@@ -53,4 +56,11 @@ export const getGatewayRegistryInstance = (
         GatewayRegistryABI,
         provider,
     ) as GatewayRegistryV2;
+};
+
+export const getERC20Instance = (
+    provider: Provider,
+    address: string,
+): ERC20 => {
+    return new Contract(address, ERC20ABI, provider) as ERC20;
 };

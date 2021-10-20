@@ -31,6 +31,7 @@
         "alwaysStrict": true,
         "strictFunctionTypes": true,
         "sourceMap": true,
+        "declarationMap": true,
         "skipLibCheck": true
     },
     "include": ["src/**/*.ts"],

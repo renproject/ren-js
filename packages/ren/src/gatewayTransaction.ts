@@ -1,15 +1,15 @@
-import BigNumber from "bignumber.js";
-
 import {
     Chain,
     ChainTransaction,
+    DefaultTxWaiter,
     InputChainTransaction,
     isContractChain,
     newPromiEvent,
     PromiEvent,
     RenJSErrors,
     TxStatus,
-    TxStatusIndex,
+    TxSubmitter,
+    TxWaiter,
 } from "@renproject/interfaces";
 import { RenVMProvider } from "@renproject/provider";
 import {
@@ -17,7 +17,6 @@ import {
     TxResponseWithStatus,
 } from "@renproject/provider/build/main/unmarshal";
 import {
-    extractError,
     fixSignatureSimple,
     fromBase64,
     isDefined,
@@ -57,6 +56,7 @@ export interface TransactionParams<
 
     toPayload: ToPayload;
     inputTransaction: InputChainTransaction;
+    fromTxWaiter?: TxWaiter;
 
     selector: string;
     gPubKey: string;
@@ -119,6 +119,9 @@ export class GatewayTransaction<
 
     public _config: typeof defaultRenJSConfig & RenJSConfig;
 
+    public in: TxWaiter;
+    public out: TxSubmitter | TxWaiter | undefined;
+
     // Private
     private queryTxResult:
         | TxResponseWithStatus<CrossChainTxResponse>
@@ -151,6 +154,12 @@ export class GatewayTransaction<
         // `string`. The hash will be set in `_initialize` which should be
         // called immediately after the constructor.
         this.hash = "";
+
+        if (this.params.fromTxWaiter) {
+            this.in = this.params.fromTxWaiter;
+        } else {
+            this.in = undefined as never;
+        }
     }
 
     /** @hidden */
@@ -165,9 +174,6 @@ export class GatewayTransaction<
             this.inputType = InputType.Burn;
             this.outputType = OutputType.Mint;
         }
-
-        this.inputType;
-        this.outputType;
 
         const {
             asset,
@@ -216,6 +222,16 @@ export class GatewayTransaction<
             }),
         );
 
+        if (!this.in) {
+            this.in = new DefaultTxWaiter({
+                chainTransaction: this.params.inputTransaction,
+                chain: this.params.fromChain,
+                target: await this.renVM.getConfirmationTarget(
+                    this.params.fromChain.chain,
+                ),
+            });
+        }
+
         return this;
     };
 
@@ -258,6 +274,7 @@ export class GatewayTransaction<
                 TransactionStatusIndex[TransactionStatus.Signed]
             ) {
                 this.status = TransactionStatus.Signed;
+                await this.onSignatureReady();
             }
         }
 
@@ -289,7 +306,7 @@ export class GatewayTransaction<
 
             try {
                 // Check if the transaction has been submitted to the mint-chain.
-                const transaction = await this.out.find();
+                const transaction = this.out && this.out.status;
                 if (transaction !== undefined) {
                     return TransactionStatus.Submitted;
                 }
@@ -324,8 +341,10 @@ export class GatewayTransaction<
             }
 
             try {
-                const confirmations = await this.in.confirmations();
-                if (confirmations.current >= confirmations.target) {
+                if (
+                    isDefined(this.in.status.confirmations) &&
+                    this.in.status.confirmations >= this.in.status.target
+                ) {
                     return TransactionStatus.Confirmed;
                 }
             } catch (_error) {
@@ -352,173 +371,239 @@ export class GatewayTransaction<
         return this.status;
     };
 
-    public in = {
-        targetConfirmations: undefined as number | undefined,
+    // public in = {
+    //     targetConfirmations: undefined as number | undefined,
 
-        /**
-         * `confirmations` returns the deposit's current and target number of
-         * confirmations on the lock-chain.
-         *
-         * ```ts
-         * await deposit
-         *  .confirmations();
-         * // > { current: 4, target: 6 }
-         * ```
-         */
-        confirmations: async (): Promise<{
-            current: number;
-            target: number;
-        }> => {
-            const current = await this.params.fromChain.transactionConfidence(
-                this.params.inputTransaction,
+    //     /**
+    //      * `confirmations` returns the deposit's current and target number of
+    //      * confirmations on the lock-chain.
+    //      *
+    //      * ```ts
+    //      * await deposit
+    //      *  .confirmations();
+    //      * // > { current: 4, target: 6 }
+    //      * ```
+    //      */
+    //     confirmations: async (): Promise<{
+    //         current: number;
+    //         target: number;
+    //     }> => {
+    //         const current = await this.params.fromChain.transactionConfidence(
+    //             this.params.inputTransaction,
+    //         );
+    //         return {
+    //             current: current.toNumber(),
+    //             target: await this.in.confirmationTarget(),
+    //         };
+    //     },
+
+    //     /**
+    //      * `confirmed` will return once the deposit has reached the target number of
+    //      * confirmations.
+    //      *
+    //      * It returns a PromiEvent which emits a `"confirmation"` event with the
+    //      * current and target number of confirmations as the event parameters.
+    //      *
+    //      * The events emitted by the PromiEvent are:
+    //      * 1. `"confirmation"` - called when a new confirmation is seen
+    //      * 2. `"target"` - called immediately to make the target confirmations
+    //      * available.
+    //      *
+    //      * ```ts
+    //      * await deposit.from
+    //      *  .confirmed()
+    //      *  .on("target", (target) => console.log(`Waiting for ${target} confirmations`))
+    //      *  .on("confirmation", (confs, target) => console.log(`${confs}/${target}`))
+    //      * ```
+    //      */
+    //     confirmed: (): PromiEvent<
+    //         GatewayTransaction<ToPayload>,
+    //         { confirmation: [number, number]; target: [number] }
+    //     > => {
+    //         const promiEvent = newPromiEvent<
+    //             GatewayTransaction<ToPayload>,
+    //             { confirmation: [number, number]; target: [number] }
+    //         >();
+
+    //         (async () => {
+    //             try {
+    //                 promiEvent.emit(
+    //                     "target",
+    //                     await this.in.confirmationTarget(),
+    //                 );
+    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             } catch (error: any) {
+    //                 this._config.logger.error(error);
+    //             }
+
+    //             // If the transaction has been confirmed according to RenVM, return.
+    //             const transactionIsConfirmed = () =>
+    //                 TransactionStatusIndex[this.status] >=
+    //                     TransactionStatusIndex[TransactionStatus.Confirmed] ||
+    //                 (this.queryTxResult &&
+    //                     TxStatusIndex[this.queryTxResult.txStatus] >=
+    //                         TxStatusIndex[TxStatus.TxStatusPending]);
+
+    //             let iterationCount = 0;
+    //             let currentConfidenceRatio = -1;
+    //             // Continue while the transaction isn't confirmed and the promievent
+    //             // isn't cancelled.
+    //             while (true) {
+    //                 if (promiEvent._isCancelled()) {
+    //                     throw new Error(`PromiEvent cancelled.`);
+    //                 }
+
+    //                 // In the first loop, submit to RenVM immediately.
+    //                 if (iterationCount % 5 === 1) {
+    //                     try {
+    //                         try {
+    //                             if (!this._renTxSubmitted) {
+    //                                 await this._submitMintTransaction(1);
+    //                             }
+    //                         } catch (error) {
+    //                             this._config.logger.debug(error);
+    //                         }
+    //                         await this.queryTx();
+    //                         if (transactionIsConfirmed()) {
+    //                             break;
+    //                         }
+    //                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //                     } catch (error: any) {
+    //                         // Ignore error.
+    //                         this._config.logger.debug(error);
+    //                     }
+    //                 }
+
+    //                 try {
+    //                     const confidence = await this.in.confirmations();
+    //                     const confidenceRatio =
+    //                         confidence.target === 0
+    //                             ? 1
+    //                             : confidence.current / confidence.target;
+    //                     if (confidenceRatio > currentConfidenceRatio) {
+    //                         currentConfidenceRatio = confidenceRatio;
+    //                         promiEvent.emit(
+    //                             "confirmation",
+    //                             confidence.current,
+    //                             confidence.target,
+    //                         );
+    //                     }
+    //                     if (confidenceRatio >= 1) {
+    //                         break;
+    //                     }
+    //                     this._config.logger.debug(
+    //                         `deposit confidence: ${confidence.current} / ${confidence.target}`,
+    //                     );
+    //                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //                 } catch (error: any) {
+    //                     this._config.logger.error(
+    //                         `Error fetching transaction confidence: ${extractError(
+    //                             error,
+    //                         )}`,
+    //                     );
+    //                 }
+
+    //                 if (transactionIsConfirmed()) {
+    //                     break;
+    //                 }
+    //                 await sleep(this._config.networkDelay);
+    //                 iterationCount += 1;
+    //             }
+
+    //             // Update status.
+    //             if (
+    //                 TransactionStatusIndex[this.status] <
+    //                 TransactionStatusIndex[TransactionStatus.Confirmed]
+    //             ) {
+    //                 this.status = TransactionStatus.Confirmed;
+    //             }
+
+    //             return this;
+    //         })()
+    //             .then(promiEvent.resolve)
+    //             .catch(promiEvent.reject);
+
+    //         return promiEvent;
+    //     },
+    // };
+
+    private onSignatureReady = async () => {
+        if (!this.queryTxResult || !this.queryTxResult.tx.out?.sig) {
+            throw new Error(
+                `Unable to submit to Ethereum without signature. Call 'signed' first.`,
             );
-            return {
-                current: current.toNumber(),
-                target: await this.in.confirmationTarget(),
-            };
-        },
+        }
 
-        confirmationTarget: async () => {
-            if (isDefined(this.in.targetConfirmations)) {
-                return this.in.targetConfirmations;
-            }
+        if (!this.outputType) {
+            throw new Error(`Must call .initialize() first.`);
+        }
 
-            this.in.targetConfirmations =
-                await this.renVM.getConfirmationTarget(
-                    this.params.fromChain.chain,
-                );
+        if (isContractChain(this.params.toChain)) {
+            const sigHash = this.queryTxResult.tx.out.sighash;
+            const amount = this.queryTxResult.tx.out.amount;
+            // const phash = this.queryTxResult.tx.in.phash;
+            const signature = this.queryTxResult.tx.out.sig;
+            const { r, s, v } = fixSignatureSimple(
+                signature.slice(0, 32),
+                signature.slice(32, 64),
+                signature.slice(64, 65)[0],
+            );
 
-            return this.in.targetConfirmations;
-        },
+            // if (this.outputType === OutputType.Mint) {
+            this.out = await this.params.toChain.submitOutput(
+                this.outputType,
+                this.params.asset,
+                this.params.toPayload,
+                {
+                    amount,
+                    nHash: fromBase64(this.params.nHash),
+                    sHash: keccak256(Buffer.from(this.selector)),
+                    pHash: fromBase64(this.params.pHash),
+                    sigHash,
+                    signature: {
+                        r,
+                        s,
+                        v,
+                    },
+                },
+                1,
+            );
+        }
 
-        /**
-         * `confirmed` will return once the deposit has reached the target number of
-         * confirmations.
-         *
-         * It returns a PromiEvent which emits a `"confirmation"` event with the
-         * current and target number of confirmations as the event parameters.
-         *
-         * The events emitted by the PromiEvent are:
-         * 1. `"confirmation"` - called when a new confirmation is seen
-         * 2. `"target"` - called immediately to make the target confirmations
-         * available.
-         *
-         * ```ts
-         * await deposit.from
-         *  .confirmed()
-         *  .on("target", (target) => console.log(`Waiting for ${target} confirmations`))
-         *  .on("confirmation", (confs, target) => console.log(`${confs}/${target}`))
-         * ```
-         */
-        confirmed: (): PromiEvent<
-            GatewayTransaction<ToPayload>,
-            { confirmation: [number, number]; target: [number] }
-        > => {
-            const promiEvent = newPromiEvent<
-                GatewayTransaction<ToPayload>,
-                { confirmation: [number, number]; target: [number] }
-            >();
+        //     if (!this.outTransaction) {
+        //         throw new Error(
+        //             `No transaction details returned from submission.`,
+        //         );
+        //     }
+        //     // } else {
+        //     //     this.outTransaction =
+        //     //         await this.params.toChain.submitRelease(
+        //     //             this.params.asset,
+        //     //             this.params.toPayload,
+        //     //             override || {},
+        //     //             amount,
+        //     //             phash,
+        //     //             sigHash,
+        //     //             {
+        //     //                 r,
+        //     //                 s,
+        //     //                 v,
+        //     //             },
+        //     //             promiEvent,
+        //     //         );
+        //     // }
+        // } else {
 
-            (async () => {
-                try {
-                    promiEvent.emit(
-                        "target",
-                        await this.in.confirmationTarget(),
-                    );
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any) {
-                    this._config.logger.error(error);
-                }
+        // TODO: Add callback to TxSubmitted.
 
-                // If the transaction has been confirmed according to RenVM, return.
-                const transactionIsConfirmed = () =>
-                    TransactionStatusIndex[this.status] >=
-                        TransactionStatusIndex[TransactionStatus.Confirmed] ||
-                    (this.queryTxResult &&
-                        TxStatusIndex[this.queryTxResult.txStatus] >=
-                            TxStatusIndex[TxStatus.TxStatusPending]);
+        //     this.outTransaction = {
+        //         txindex: this.queryTxResult.tx.out.txindex.toFixed(),
+        //         txid: this.queryTxResult.tx.out.txid.toString(),
+        //     };
+        // }
 
-                let iterationCount = 0;
-                let currentConfidenceRatio = -1;
-                // Continue while the transaction isn't confirmed and the promievent
-                // isn't cancelled.
-                while (true) {
-                    if (promiEvent._isCancelled()) {
-                        throw new Error(`PromiEvent cancelled.`);
-                    }
-
-                    // In the first loop, submit to RenVM immediately.
-                    if (iterationCount % 5 === 1) {
-                        try {
-                            try {
-                                if (!this._renTxSubmitted) {
-                                    await this._submitMintTransaction(1);
-                                }
-                            } catch (error) {
-                                this._config.logger.debug(error);
-                            }
-                            await this.queryTx();
-                            if (transactionIsConfirmed()) {
-                                break;
-                            }
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        } catch (error: any) {
-                            // Ignore error.
-                            this._config.logger.debug(error);
-                        }
-                    }
-
-                    try {
-                        const confidence = await this.in.confirmations();
-                        const confidenceRatio =
-                            confidence.target === 0
-                                ? 1
-                                : confidence.current / confidence.target;
-                        if (confidenceRatio > currentConfidenceRatio) {
-                            currentConfidenceRatio = confidenceRatio;
-                            promiEvent.emit(
-                                "confirmation",
-                                confidence.current,
-                                confidence.target,
-                            );
-                        }
-                        if (confidenceRatio >= 1) {
-                            break;
-                        }
-                        this._config.logger.debug(
-                            `deposit confidence: ${confidence.current} / ${confidence.target}`,
-                        );
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } catch (error: any) {
-                        this._config.logger.error(
-                            `Error fetching transaction confidence: ${extractError(
-                                error,
-                            )}`,
-                        );
-                    }
-
-                    if (transactionIsConfirmed()) {
-                        break;
-                    }
-                    await sleep(this._config.networkDelay);
-                    iterationCount += 1;
-                }
-
-                // Update status.
-                if (
-                    TransactionStatusIndex[this.status] <
-                    TransactionStatusIndex[TransactionStatus.Confirmed]
-                ) {
-                    this.status = TransactionStatus.Confirmed;
-                }
-
-                return this;
-            })()
-                .then(promiEvent.resolve)
-                .catch(promiEvent.reject);
-
-            return promiEvent;
-        },
+        // Update status.
+        // this.status = TransactionStatus.Submitted;
     };
 
     /**
@@ -667,198 +752,118 @@ export class GatewayTransaction<
         return promiEvent;
     };
 
-    /**
-     * `mint` submits the RenVM signature to the mint chain.
-     *
-     * It returns a PromiEvent and the events emitted depend on the mint chain.
-     *
-     * The PromiEvent's events are defined by the mint-chain implementation. For
-     * Ethereum, it emits the same events as a Web3 PromiEvent.
-     *
-     * @category Main
-     */
-    out = {
-        /**
-         * `find` checks if the deposit signature has already been
-         * submitted to the mint chain.
-         *
-         * ```ts
-         * await tx.to.find();
-         * // > "0x1234" // (or undefined)
-         * ```
-         */
-        find: async (): Promise<ChainTransaction | undefined> => {
-            const promiEvent = newPromiEvent<
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ChainTransaction | undefined,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                {
-                    transaction: [ChainTransaction];
-                    confirmation: [number, { status: number }];
-                }
-            >();
+    // /**
+    //  * `mint` submits the RenVM signature to the mint chain.
+    //  *
+    //  * It returns a PromiEvent and the events emitted depend on the mint chain.
+    //  *
+    //  * The PromiEvent's events are defined by the mint-chain implementation. For
+    //  * Ethereum, it emits the same events as a Web3 PromiEvent.
+    //  *
+    //  * @category Main
+    //  */
+    // out = {
+    //     /**
+    //      * `find` checks if the deposit signature has already been
+    //      * submitted to the mint chain.
+    //      *
+    //      * ```ts
+    //      * await tx.to.find();
+    //      * // > "0x1234" // (or undefined)
+    //      * ```
+    //      */
+    //     find: async (): Promise<ChainTransaction | undefined> => {
+    //         const promiEvent = newPromiEvent<
+    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             ChainTransaction | undefined,
+    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             {
+    //                 transaction: [ChainTransaction];
+    //                 confirmation: [number, { status: number }];
+    //             }
+    //         >();
 
-            (async () => {
-                if (isContractChain(this.params.toChain)) {
-                    const sigHash =
-                        this.queryTxResult &&
-                        this.queryTxResult.tx.out &&
-                        this.queryTxResult.tx.out.revert === undefined
-                            ? this.queryTxResult.tx.out.sighash
-                            : undefined;
+    //         (async () => {
+    //             if (isContractChain(this.params.toChain)) {
+    //                 const sigHash =
+    //                     this.queryTxResult &&
+    //                     this.queryTxResult.tx.out &&
+    //                     this.queryTxResult.tx.out.revert === undefined
+    //                         ? this.queryTxResult.tx.out.sighash
+    //                         : undefined;
 
-                    const sig =
-                        this.queryTxResult &&
-                        this.queryTxResult.tx.out &&
-                        this.queryTxResult.tx.out.revert === undefined
-                            ? this.queryTxResult.tx.out.sig
-                            : undefined;
+    //                 const sig =
+    //                     this.queryTxResult &&
+    //                     this.queryTxResult.tx.out &&
+    //                     this.queryTxResult.tx.out.revert === undefined
+    //                         ? this.queryTxResult.tx.out.sig
+    //                         : undefined;
 
-                    const signature = sig
-                        ? fixSignatureSimple(
-                              sig.slice(0, 32),
-                              sig.slice(32, 64),
-                              sig.slice(64, 65)[0],
-                          )
-                        : undefined;
+    //                 const signature = sig
+    //                     ? fixSignatureSimple(
+    //                           sig.slice(0, 32),
+    //                           sig.slice(32, 64),
+    //                           sig.slice(64, 65)[0],
+    //                       )
+    //                     : undefined;
 
-                    // Check if the signature has already been submitted
-                    this.outTransaction =
-                        await this.params.toChain.submitOutput(
-                            true,
-                            this.outputType!,
-                            this.params.asset,
-                            this.params.toPayload,
-                            {},
-                            {
-                                nHash: fromBase64(this.params.nHash),
-                                sHash: keccak256(Buffer.from(this.selector)),
-                                pHash: fromBase64(this.params.pHash),
-                                amount: new BigNumber(
-                                    this.params.inputTransaction.amount,
-                                ),
-                                sigHash: sigHash
-                                    ? fromBase64(sigHash)
-                                    : undefined,
-                                signature,
-                            },
-                            promiEvent,
-                        );
-                    return this.outTransaction;
-                }
-                return undefined;
-            })()
-                .then(promiEvent.resolve)
-                .catch(promiEvent.reject);
+    //                 // Check if the signature has already been submitted
+    //                 this.outTransaction =
+    //                     await this.params.toChain.submitOutput(
+    //                         true,
+    //                         this.outputType!,
+    //                         this.params.asset,
+    //                         this.params.toPayload,
+    //                         {},
+    //                         {
+    //                             nHash: fromBase64(this.params.nHash),
+    //                             sHash: keccak256(Buffer.from(this.selector)),
+    //                             pHash: fromBase64(this.params.pHash),
+    //                             amount: new BigNumber(
+    //                                 this.params.inputTransaction.amount,
+    //                             ),
+    //                             sigHash: sigHash
+    //                                 ? fromBase64(sigHash)
+    //                                 : undefined,
+    //                             signature,
+    //                         },
+    //                         promiEvent,
+    //                     );
+    //                 return this.outTransaction;
+    //             }
+    //             return undefined;
+    //         })()
+    //             .then(promiEvent.resolve)
+    //             .catch(promiEvent.reject);
 
-            return promiEvent;
-        },
+    //         return promiEvent;
+    //     },
 
-        submit: (
-            override?: { [name: string]: unknown },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ): PromiEvent<
-            ChainTransaction,
-            {
-                transaction: [ChainTransaction];
-                confirmation: [number, { status: number }];
-            }
-        > => {
-            const promiEvent = newPromiEvent<
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ChainTransaction,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                {
-                    transaction: [ChainTransaction];
-                    confirmation: [number, { status: number }];
-                }
-            >();
+    //     submit: (
+    //         override?: { [name: string]: unknown },
+    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     ): PromiEvent<
+    //         ChainTransaction,
+    //         {
+    //             transaction: [ChainTransaction];
+    //             confirmation: [number, { status: number }];
+    //         }
+    //     > => {
+    //         const promiEvent = newPromiEvent<
+    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             ChainTransaction,
+    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             {
+    //                 transaction: [ChainTransaction];
+    //                 confirmation: [number, { status: number }];
+    //             }
+    //         >();
 
-            (async () => {
-                if (!this.queryTxResult || !this.queryTxResult.tx.out?.sig) {
-                    throw new Error(
-                        `Unable to submit to Ethereum without signature. Call 'signed' first.`,
-                    );
-                }
+    //         (async () => {
 
-                if (!this.outputType) {
-                    throw new Error(`Must call .initialize() first.`);
-                }
-
-                if (isContractChain(this.params.toChain)) {
-                    const sigHash = this.queryTxResult.tx.out.sighash;
-                    const amount = this.queryTxResult.tx.out.amount;
-                    // const phash = this.queryTxResult.tx.in.phash;
-                    const signature = this.queryTxResult.tx.out.sig;
-                    const { r, s, v } = fixSignatureSimple(
-                        signature.slice(0, 32),
-                        signature.slice(32, 64),
-                        signature.slice(64, 65)[0],
-                    );
-
-                    // if (this.outputType === OutputType.Mint) {
-                    this.outTransaction =
-                        await this.params.toChain.submitOutput(
-                            false,
-                            this.outputType,
-                            this.params.asset,
-                            this.params.toPayload,
-                            override || {},
-                            {
-                                amount,
-                                nHash: fromBase64(this.params.nHash),
-                                sHash: keccak256(Buffer.from(this.selector)),
-                                pHash: fromBase64(this.params.pHash),
-                                sigHash,
-                                signature: {
-                                    r,
-                                    s,
-                                    v,
-                                },
-                            },
-                            promiEvent,
-                        );
-
-                    if (!this.outTransaction) {
-                        throw new Error(
-                            `No transaction details returned from submission.`,
-                        );
-                    }
-                    // } else {
-                    //     this.outTransaction =
-                    //         await this.params.toChain.submitRelease(
-                    //             this.params.asset,
-                    //             this.params.toPayload,
-                    //             override || {},
-                    //             amount,
-                    //             phash,
-                    //             sigHash,
-                    //             {
-                    //                 r,
-                    //                 s,
-                    //                 v,
-                    //             },
-                    //             promiEvent,
-                    //         );
-                    // }
-                } else {
-                    this.outTransaction = {
-                        txindex: this.queryTxResult.tx.out.txindex.toFixed(),
-                        txid: this.queryTxResult.tx.out.txid.toString(),
-                    };
-                }
-
-                // Update status.
-                this.status = TransactionStatus.Submitted;
-
-                return this.outTransaction;
-            })()
-                .then(promiEvent.resolve)
-                .catch(promiEvent.reject);
-
-            return promiEvent;
-        },
-    };
+    //         return promiEvent;
+    //     },
+    // };
 
     // Private methods /////////////////////////////////////////////////////////
 

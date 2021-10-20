@@ -5,3 +5,4 @@ export * from "./logger";
 export * from "./networks";
 export * from "./promiEvent";
 export * from "./types";
+export * from "./txSubmitter";

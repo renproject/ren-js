@@ -3,13 +3,14 @@ import { OrderedMap } from "immutable";
 
 import {
     Chain,
-    ChainTransaction,
+    ChainTransactionStatus,
     InputChainTransaction,
     InputType,
     isContractChain,
     isDepositChain,
-    newPromiEvent,
     OutputType,
+    TxSubmitter,
+    TxWaiter,
 } from "@renproject/interfaces";
 import { RenVMProvider } from "@renproject/provider";
 import {
@@ -31,7 +32,6 @@ import {
 import { defaultRenJSConfig, RenJSConfig } from "./config";
 import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
 import { GatewayParams } from "./params";
-import { getRenVMSelector } from "./utils/providerUtils";
 
 /**
  * A `LockAndMint` object tied to a particular gateway address. LockAndMint
@@ -107,6 +107,11 @@ export class Gateway<
     public gHash: Buffer | undefined;
     public pHash: Buffer | undefined;
 
+    public in: TxSubmitter | TxWaiter | undefined;
+
+    private inputType: InputType;
+    private outputType: OutputType;
+
     /**
      * @hidden - should be created using [[RenJS.lockAndMint]] instead.
      */
@@ -128,6 +133,10 @@ export class Gateway<
             ...config,
         };
 
+        // Set in async constructor, `_initialize`.
+        this.inputType = undefined as never;
+        this.outputType = undefined as never;
+
         {
             // Debug log
             const { to: _to, from: _from, ...restOfParams } = this.params;
@@ -142,11 +151,19 @@ export class Gateway<
     public readonly _initialize = async (): Promise<
         Gateway<FromPayload, ToPayload>
     > => {
-        this.selector = await getRenVMSelector({
-            asset: this.params.asset,
-            from: this.params.fromChain,
-            to: this.params.toChain,
-        });
+        if (await this.params.fromChain.assetIsNative(this.params.asset)) {
+            this.inputType = InputType.Lock;
+            this.outputType = OutputType.Mint;
+            this.selector = `${this.params.asset}/to${this.params.to.chain}`;
+        } else if (await this.params.toChain.assetIsNative(this.params.asset)) {
+            this.inputType = InputType.Burn;
+            this.outputType = OutputType.Release;
+            this.selector = `${this.params.asset}/from${this.params.from.chain}`;
+        } else {
+            this.inputType = InputType.Burn;
+            this.outputType = OutputType.Mint;
+            this.selector = `${this.params.asset}/from${this.params.from.chain}To${this.params.to.chain}`;
+        }
 
         try {
             this.targetConfirmations = await this.confirmationTarget();
@@ -169,6 +186,76 @@ export class Gateway<
 
             // Will fetch deposits as long as there's at least one deposit.
             this.wait().catch(console.error);
+        } else {
+            const { to, asset, from, fromChain, toChain } = this.params;
+            if (!isContractChain(fromChain)) {
+                throw new Error(
+                    `Cannot lock on non-contract chain ${fromChain.chain}.`,
+                );
+            }
+            if (!isContractChain(toChain)) {
+                throw new Error(
+                    `Cannot mint to non-contract chain ${toChain.chain}.`,
+                );
+            }
+            const payload = await toChain.getOutputPayload(
+                asset,
+                this.outputType,
+                to,
+            );
+
+            this.pHash = generatePHash(payload.payload, this._config.logger);
+
+            const sHash = generateSHash(
+                `${this.params.asset}/to${this.params.to.chain}`,
+            );
+
+            const processLock = (lock: InputChainTransaction) => {
+                const nonce = lock.nonce!;
+                const gHash = generateGHash(
+                    payload.payload,
+                    payload.to,
+                    sHash,
+                    fromBase64(nonce),
+                    this._config.logger,
+                );
+                this.gHash = gHash;
+                this.gPubKey = Buffer.from([]);
+                this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
+
+                if (!gHash || gHash.length === 0) {
+                    throw new Error(
+                        "Invalid gateway hash being passed to gateway address generation.",
+                    );
+                }
+
+                if (!asset || asset.length === 0) {
+                    throw new Error(
+                        "Invalid asset being passed to gateway address generation.",
+                    );
+                }
+
+                // TODO: Add to queue instead so that it can be retried on error.
+                this.processDeposit(lock).catch(console.error);
+            };
+
+            // TODO
+            const removeLock = () => {};
+
+            this.in = await fromChain.submitInput(
+                InputType.Lock,
+                asset,
+                from,
+                {
+                    toChain: to.chain,
+                    toPayload: payload,
+                },
+                await this.renVM.getConfirmationTarget(
+                    this.params.fromChain.chain,
+                ),
+                processLock,
+                removeLock,
+            );
         }
 
         return this;
@@ -330,7 +417,7 @@ export class Gateway<
 
         const payload = await toChain.getOutputPayload(
             asset,
-            OutputType.Mint,
+            this.outputType,
             to,
         );
 
@@ -427,18 +514,17 @@ export class Gateway<
             }
 
             // Change the return type of `this.processDeposit` to `void`.
-            const onDeposit = async (
-                deposit: InputChainTransaction,
-            ): Promise<void> => {
+            const onDeposit = (deposit: InputChainTransaction): void => {
                 try {
-                    await this.processDeposit(deposit);
+                    // TODO: Handle error.
+                    this.processDeposit(deposit).catch(console.error);
                 } catch (error) {
                     this._config.logger.error(error);
                 }
             };
 
             // TODO: Flag deposits that have been cancelled, updating their status.
-            const cancelDeposit = async () => Promise.resolve();
+            const cancelDeposit = () => {};
 
             const { fromChain } = this.params;
 
@@ -462,195 +548,5 @@ export class Gateway<
 
             await sleep(this._config.networkDelay);
         }
-    };
-
-    public from = {
-        lock: {
-            submit: () => {
-                const promiEvent = newPromiEvent<
-                    void,
-                    {
-                        transaction: [ChainTransaction];
-                        confirmation: [
-                            number,
-                            {
-                                status: number;
-                            },
-                        ];
-                    }
-                >();
-
-                (async () => {
-                    const { to, asset, from, fromChain, toChain } = this.params;
-                    if (!isContractChain(fromChain)) {
-                        throw new Error(
-                            `Cannot lock on non-contract chain ${fromChain.chain}.`,
-                        );
-                    }
-                    if (!isContractChain(toChain)) {
-                        throw new Error(
-                            `Cannot mint to non-contract chain ${toChain.chain}.`,
-                        );
-                    }
-                    const payload = await toChain.getOutputPayload(
-                        asset,
-                        OutputType.Mint,
-                        to,
-                    );
-
-                    this.pHash = generatePHash(
-                        payload.payload,
-                        this._config.logger,
-                    );
-
-                    const sHash = generateSHash(
-                        `${this.params.asset}/to${this.params.to.chain}`,
-                    );
-
-                    const locks = await fromChain.submitInput(
-                        false,
-                        InputType.Lock,
-                        asset,
-                        from,
-                        {},
-                        {
-                            toChain: to.chain,
-                            toPayload: payload,
-                        },
-                        promiEvent,
-                    );
-
-                    if (!locks || locks.length === 0) {
-                        throw new Error(`No lock events returned.`);
-                    }
-
-                    for (const lock of locks) {
-                        const nonce = lock.nonce!;
-                        const gHash = generateGHash(
-                            payload.payload,
-                            payload.to,
-                            sHash,
-                            fromBase64(nonce),
-                            this._config.logger,
-                        );
-                        this.gHash = gHash;
-                        this.gPubKey = Buffer.from([]);
-                        this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
-
-                        if (!gHash || gHash.length === 0) {
-                            throw new Error(
-                                "Invalid gateway hash being passed to gateway address generation.",
-                            );
-                        }
-
-                        if (!asset || asset.length === 0) {
-                            throw new Error(
-                                "Invalid asset being passed to gateway address generation.",
-                            );
-                        }
-
-                        await this.processDeposit(lock);
-                    }
-
-                    return;
-                })()
-                    .then(promiEvent.resolve)
-                    .catch(promiEvent.reject);
-
-                return promiEvent;
-            },
-        },
-
-        burn: {
-            submit: () => {
-                const promiEvent = newPromiEvent<
-                    void,
-                    {
-                        transaction: [ChainTransaction];
-                        confirmation: [
-                            number,
-                            {
-                                status: number;
-                            },
-                        ];
-                    }
-                >();
-
-                (async () => {
-                    const { to, asset, from, fromChain, toChain } = this.params;
-                    if (!isContractChain(fromChain)) {
-                        throw new Error(
-                            `Cannot burn on non-contract chain ${fromChain.chain}.`,
-                        );
-                    }
-
-                    const payload = await toChain.getOutputPayload(
-                        asset,
-                        OutputType.Release,
-                        to,
-                    );
-
-                    this.pHash = generatePHash(
-                        payload.payload,
-                        this._config.logger,
-                    );
-
-                    const sHash = generateSHash(
-                        `${this.params.asset}/to${this.params.to.chain}`,
-                    );
-
-                    const burns = await fromChain.submitInput(
-                        false,
-                        InputType.Burn,
-                        asset,
-                        from,
-                        {},
-                        {
-                            toChain: to.chain,
-                            toPayload: payload,
-                        },
-                        promiEvent,
-                    );
-
-                    if (!burns || burns.length === 0) {
-                        throw new Error(`No burn events returned.`);
-                    }
-
-                    for (const burn of burns) {
-                        const nonce = burn.nonce!;
-                        const gHash = generateGHash(
-                            payload.payload,
-                            payload.to,
-                            sHash,
-                            fromBase64(nonce),
-                            this._config.logger,
-                        );
-                        this.gHash = gHash;
-                        this.gPubKey = Buffer.from([]);
-                        this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
-
-                        if (!gHash || gHash.length === 0) {
-                            throw new Error(
-                                "Invalid gateway hash being passed to gateway address generation.",
-                            );
-                        }
-
-                        if (!asset || asset.length === 0) {
-                            throw new Error(
-                                "Invalid asset being passed to gateway address generation.",
-                            );
-                        }
-
-                        await this.processDeposit(burn);
-                    }
-
-                    return;
-                })()
-                    .then(promiEvent.resolve)
-                    .catch(promiEvent.reject);
-
-                return promiEvent;
-            },
-        },
     };
 }

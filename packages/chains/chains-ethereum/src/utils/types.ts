@@ -91,7 +91,6 @@ export type EthProvider =
 
 export interface ContractCall {
     chain: string;
-    precheck?: (asset: string, type: InputType | OutputType) => boolean;
     getContractCall: (
         asset: string,
         type: InputType | OutputType,
@@ -108,7 +107,7 @@ export type InputContractCall = {
     getSetupContractCalls?: (
         asset: string,
         type: InputType,
-    ) => { [key: string]: ContractCall };
+    ) => SyncOrPromise<{ [key: string]: ContractCall }>;
     getContractCall: (
         asset: string,
         type: InputType,
@@ -130,7 +129,7 @@ export type OutputContractCall = {
     getSetupContractCalls?: (
         asset: string,
         type: OutputType,
-    ) => { [key: string]: ContractCall };
+    ) => SyncOrPromise<{ [key: string]: ContractCall }>;
     getPayload: (
         asset: string,
         type: OutputType,

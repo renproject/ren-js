@@ -54,7 +54,7 @@ export const arbitrumTestnetConfig: EvmNetworkConfig = {
 
     logRequestLimit: 20000,
     addresses: {
-        GatewayRegistry: "0x5eEBf6c199a9Db26dabF621fB8c43D58C62DF2bd",
+        GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
         BasicAdapter: "0x1156663dFab56A9BAdd844e12eDD69eC96Dd0eFb",
     },
 };

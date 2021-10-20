@@ -9,22 +9,23 @@ import {
 import {
     ChainTransaction,
     ContractChain,
-    EventEmitterTyped,
+    DefaultTxWaiter,
     InputChainTransaction,
     InputType,
     Logger,
     NullLogger,
     OutputType,
+    TxSubmitter,
+    TxWaiter,
 } from "@renproject/interfaces";
-import {
-    fromBase64,
-    fromHex,
-    Ox,
-    rawEncode,
-    toURLBase64,
-} from "@renproject/utils";
+import { fromBase64, Ox, rawEncode } from "@renproject/utils";
 
-import { findABIMethod, LockGatewayABI, MintGatewayABI } from "./contracts";
+import {
+    findABIMethod,
+    getERC20Instance,
+    LockGatewayABI,
+    MintGatewayABI,
+} from "./contracts";
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "./contracts/typechain/MintGatewayV3";
 import { AbiItem, EthArg, payloadToABI } from "./utils/abi";
@@ -40,11 +41,10 @@ import {
     findReleaseBySigHash,
     mapBurnLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
-    submitToEthereum,
-    txHashToChainTransaction,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
+import { callContract, EVMTxSubmitter } from "./utils/txSubmitter";
 import {
     ContractCall,
     EthProvider,
@@ -59,8 +59,7 @@ export interface EthereumClassConfig {
 }
 
 export class EthereumBaseChain
-    implements
-        ContractChain<InputContractCall, OutputContractCall, ContractCall>
+    implements ContractChain<InputContractCall, OutputContractCall>
 {
     // DepositChain<ContractCall, ContractCall>
     public static chain = "Ethereum";
@@ -314,52 +313,53 @@ export class EthereumBaseChain
         return new BigNumber(balanceRaw.toString());
     };
 
-    submitSetup = async (
-        precheck: boolean,
-        type: InputType | OutputType,
+    public lookupOutput = async (
+        type: OutputType,
         asset: string,
-        contractCall: ContractCall,
-        // TODO
-        _override: { [name: string]: unknown },
-        _renParams: {},
-        eventEmitter: EventEmitterTyped<{
-            transaction: [ChainTransaction];
-            confirmation: [number, { status: number }];
-        }>,
-    ): Promise<ChainTransaction | undefined> => {
-        if (precheck) {
-            return undefined;
+        _contractCall: OutputContractCall,
+        renParams: {
+            amount: BigNumber;
+            sHash: Buffer;
+            pHash: Buffer;
+            nHash: Buffer;
+        },
+        confirmationTarget: number,
+    ): Promise<TxWaiter | undefined> => {
+        const { nHash } = renParams;
+
+        let existingTransaction;
+        if (type === OutputType.Release) {
+            existingTransaction = await findReleaseBySigHash(
+                this.network,
+                this.provider,
+                asset,
+                nHash,
+                this.network.logRequestLimit,
+            );
+        } else {
+            existingTransaction = await findMintBySigHash(
+                this.network,
+                this.provider,
+                asset,
+                nHash,
+                undefined,
+                this.network.logRequestLimit,
+            );
         }
-
-        const contractCallDetails = await contractCall.getContractCall(
-            asset,
-            type,
-        );
-        const { to, values, method, txConfig } = contractCallDetails;
-
-        const params = values.map((x) => x.value);
-
-        const abi = payloadToABI(method, values)[0];
-
-        const receipt = await submitToEthereum(
-            this.signer,
-            to,
-            abi,
-            txConfig as PayableOverrides,
-            params,
-            eventEmitter,
-        );
-
-        return txHashToChainTransaction(receipt.transactionHash);
+        if (existingTransaction) {
+            return new DefaultTxWaiter({
+                chainTransaction: existingTransaction,
+                chain: this,
+                target: confirmationTarget,
+            });
+        }
+        return undefined;
     };
 
     submitOutput = async (
-        precheck: boolean,
         type: OutputType,
         asset: string,
         contractCall: OutputContractCall,
-        // TODO
-        _override: { [name: string]: unknown },
         renParams: {
             pHash: Buffer;
             amount: BigNumber;
@@ -371,11 +371,8 @@ export class EthereumBaseChain
                 v: number;
             };
         },
-        eventEmitter: EventEmitterTyped<{
-            transaction: [ChainTransaction];
-            confirmation: [number, { status: number }];
-        }>,
-    ): Promise<ChainTransaction | undefined> => {
+        confirmationTarget: number,
+    ): Promise<TxSubmitter | TxWaiter> => {
         const { pHash, amount, nHash, sigHash } = renParams;
 
         let existingTransaction;
@@ -398,13 +395,14 @@ export class EthereumBaseChain
             );
         }
         if (existingTransaction) {
-            eventEmitter.emit("transaction", existingTransaction);
-            eventEmitter.emit("confirmation", 1, { status: 1 });
-            return existingTransaction;
-        }
-
-        if (precheck) {
-            return undefined;
+            return new DefaultTxWaiter({
+                chainTransaction: existingTransaction,
+                chain: this as ContractChain<
+                    InputContractCall,
+                    OutputContractCall
+                >,
+                target: confirmationTarget,
+            });
         }
 
         const rsv = renParams.signature;
@@ -449,26 +447,13 @@ export class EthereumBaseChain
 
         const abi = payloadToABI(method, values)[0];
 
-        const receipt = await submitToEthereum(
-            this.signer,
-            to,
-            abi,
-            {
-                ...(txConfig as PayableOverrides),
-                gasLimit: 2000000,
-            },
-            params,
-            eventEmitter,
+        return new EVMTxSubmitter(
+            async () =>
+                callContract(this.signer, to, abi, params, {
+                    ...(txConfig as PayableOverrides),
+                }),
+            confirmationTarget,
         );
-
-        const chainTransaction = txHashToChainTransaction(
-            receipt.transactionHash,
-        );
-
-        eventEmitter.emit("transaction", chainTransaction);
-        eventEmitter.emit("confirmation", 1, { status: 1 });
-
-        return chainTransaction;
     };
 
     /**
@@ -476,11 +461,9 @@ export class EthereumBaseChain
      * transaction first if the transaction details have been provided.
      */
     submitInput = async (
-        precheck: boolean,
         type: InputType,
         asset: string,
         contractCall: InputContractCall,
-        _override: { [name: string]: unknown },
         {
             toChain,
             toPayload,
@@ -491,11 +474,9 @@ export class EthereumBaseChain
                 payload: Buffer;
             };
         },
-        eventEmitter: EventEmitterTyped<{
-            transaction: [ChainTransaction];
-            confirmation: [number, { status: number }];
-        }>,
-    ): Promise<InputChainTransaction[] | undefined> => {
+        confirmationTarget: number,
+        onInput: (input: InputChainTransaction) => void,
+    ): Promise<TxSubmitter | TxWaiter> => {
         // if (!transaction && burnNonce) {
         //     const nonceBuffer = Buffer.isBuffer(burnNonce)
         //         ? Buffer.from(burnNonce)
@@ -529,10 +510,6 @@ export class EthereumBaseChain
 
         // return extractBurnDetails(receipt);
 
-        if (precheck) {
-            return undefined;
-        }
-
         // Make a call to the provided contract and Pass on the
         // transaction hash.
         const contractCallDetails = await contractCall.getContractCall(
@@ -549,29 +526,22 @@ export class EthereumBaseChain
                 const params = values.map((x) => x.value);
                 const [abi] = payloadToABI(method, values);
 
-                const receipt = await submitToEthereum(
-                    this.signer,
-                    to,
-                    abi,
-                    {
-                        ...(txConfig as PayableOverrides),
-                        gasLimit: 500000,
+                return new EVMTxSubmitter(
+                    async () =>
+                        await callContract(this.signer, to, abi, params, {
+                            ...(txConfig as PayableOverrides),
+                        }),
+                    confirmationTarget,
+                    (receipt) => {
+                        const logBurnABI = findABIMethod(
+                            MintGatewayABI,
+                            "LogBurn",
+                        );
+                        filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
+                            .map(mapBurnLogToInputChainTransaction)
+                            .map(onInput);
                     },
-                    params,
-                    eventEmitter,
                 );
-
-                const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
-                const burnDetails = filterLogs<LogBurnEvent>(
-                    receipt.logs,
-                    logBurnABI,
-                ).map(mapBurnLogToInputChainTransaction);
-
-                if (burnDetails.length) {
-                    return burnDetails;
-                }
-
-                throw Error("No burn found in logs");
             }
 
             case InputType.Lock: {
@@ -580,90 +550,83 @@ export class EthereumBaseChain
                 const params = values.map((x) => x.value);
                 const [abi] = payloadToABI(method, values);
 
-                await submitToEthereum(
-                    this.signer,
-                    "0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa",
-                    {
-                        inputs: [
-                            {
-                                internalType: "address",
-                                name: "spender",
-                                type: "address",
-                            },
-                            {
-                                internalType: "uint256",
-                                name: "amount",
-                                type: "uint256",
-                            },
-                        ],
-                        name: "approve",
-                        outputs: [
-                            {
-                                internalType: "bool",
-                                name: "",
-                                type: "bool",
-                            },
-                        ],
-                        stateMutability: "nonpayable",
-                        type: "function",
-                    } as AbiItem,
-                    {
-                        ...(txConfig as PayableOverrides),
+                return new EVMTxSubmitter(
+                    async () =>
+                        await callContract(this.signer, to, abi, params, {
+                            ...(txConfig as PayableOverrides),
+                        }),
+                    confirmationTarget,
+                    (receipt) => {
+                        const logLockABI = findABIMethod(
+                            LockGatewayABI,
+                            "LogLockToChain",
+                        );
+                        filterLogs<LogLockToChainEvent>(
+                            receipt.logs,
+                            logLockABI,
+                        )
+                            .map(mapLockLogToInputChainTransaction)
+                            .map(onInput);
                     },
-                    [to, "1000000000000000000"],
-                    eventEmitter,
                 );
-
-                // const txHash =
-                // "0x9c272d76e8067833c391af3e0cb5f3e23699db508216816c6a8288fdfbe243a1";
-                // const receipt = await this.provider.getTransactionReceipt(txHash);
-                const receipt = await submitToEthereum(
-                    this.signer,
-                    to,
-                    abi,
-                    {
-                        ...(txConfig as PayableOverrides),
-                    },
-                    params,
-                    eventEmitter,
-                );
-
-                const logLockABI = findABIMethod(
-                    LockGatewayABI,
-                    "LogLockToChain",
-                );
-                const lockDetails = filterLogs<LogLockToChainEvent>(
-                    receipt.logs,
-                    logLockABI,
-                ).map(mapLockLogToInputChainTransaction);
-
-                if (lockDetails.length) {
-                    return lockDetails;
-                }
-
-                throw Error("No lock found in logs");
             }
         }
     };
 
-    public getInputSetup = (
+    public getInputSetup = async (
         asset: string,
         type: InputType,
         contractCall: InputContractCall,
     ) => {
-        return contractCall.getSetupContractCalls
-            ? contractCall.getSetupContractCalls(asset, type)
+        const calls = contractCall.getSetupContractCalls
+            ? await contractCall.getSetupContractCalls(asset, type)
             : {};
+        const txSubmitted = {};
+        for (const callKey of Object.keys(calls)) {
+            const contractCallDetails = calls[callKey];
+            const { to, values, method, txConfig } =
+                await contractCallDetails.getContractCall(asset, type);
+            const params = values.map((x) => x.value);
+
+            const abi = payloadToABI(method, values)[0];
+
+            txSubmitted[callKey] = new EVMTxSubmitter(
+                async () =>
+                    callContract(this.signer, to, abi, params, {
+                        ...(txConfig as PayableOverrides),
+                    }),
+                1,
+            );
+        }
+        return txSubmitted;
     };
 
-    public getOutputSetup = (
+    public getOutputSetup = async (
         asset: string,
         type: OutputType,
         contractCall: OutputContractCall,
     ) => {
-        return contractCall.getSetupContractCalls
-            ? contractCall.getSetupContractCalls(asset, type)
+        const calls = contractCall.getSetupContractCalls
+            ? await contractCall.getSetupContractCalls(asset, type)
             : {};
+        const txSubmitted = {};
+        for (const callKey of Object.keys(calls)) {
+            const contractCallDetails = calls[callKey];
+            const { to, values, method, txConfig } =
+                await contractCallDetails.getContractCall(asset, type);
+            const params = values.map((x) => x.value);
+
+            const abi = payloadToABI(method, values)[0];
+
+            txSubmitted[callKey] = new EVMTxSubmitter(
+                async () =>
+                    callContract(this.signer, to, abi, params, {
+                        ...(txConfig as PayableOverrides),
+                    }),
+                1,
+            );
+        }
+        return txSubmitted;
     };
 
     /* ====================================================================== */
@@ -673,6 +636,72 @@ export class EthereumBaseChain
     ): InputContractCall => {
         return {
             chain: this.chain,
+            getSetupContractCalls: async (
+                asset: string,
+                type: InputType,
+            ): Promise<{ [key: string]: ContractCall }> => {
+                if (type !== InputType.Lock) {
+                    return {};
+                }
+
+                const account = await this.signer.getAddress();
+
+                const alreadyApproved = async () => {
+                    const gateway = await this.getLockGateway(asset);
+                    const token = await this.getLockAsset(asset);
+                    const erc20Instance = getERC20Instance(
+                        this.provider,
+                        token,
+                    );
+                    const allowance = new BigNumber(
+                        (
+                            await erc20Instance.allowance(account, gateway)
+                        ).toString(),
+                    );
+                    return allowance.gte(new BigNumber(amount));
+                };
+
+                if (await alreadyApproved()) {
+                    return {};
+                }
+
+                const contractCall = {
+                    chain: this.chain,
+                    getContractCall: async (
+                        asset: string,
+                    ): Promise<{
+                        to: string;
+                        method: string;
+                        values: EthArg[];
+                        txConfig?: unknown;
+                    }> => {
+                        const gateway = await this.getLockGateway(asset);
+                        const token = await this.getLockAsset(asset);
+
+                        return {
+                            to: token,
+                            method: "approve",
+                            values: [
+                                {
+                                    name: "to",
+                                    type: "address",
+                                    value: gateway,
+                                },
+                                {
+                                    name: "amount",
+                                    type: "uint256",
+                                    value: amount,
+                                },
+                            ],
+                            txConfig: {},
+                        };
+                    },
+                };
+
+                return {
+                    approve: contractCall,
+                };
+            },
             getContractCall: async (
                 asset: string,
                 type: InputType,

@@ -1,6 +1,4 @@
-const base = parseInt("REN-ETH", 36) << 4;
-
 export enum ETHEREUM_ERROR {
-    ASSET_NOT_SUPPORTED = base ^ 1,
-    NETWORK_ERROR = base ^ 2,
+    ASSET_NOT_SUPPORTED = "ASSET_NOT_SUPPORTED",
+    NETWORK_ERROR = "NETWORK_ERROR",
 }

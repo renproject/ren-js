@@ -1,7 +1,8 @@
 import { Contract } from "ethers";
 
 import { Provider } from "@ethersproject/providers";
-import { ErrorWithCode, Ox } from "@renproject/utils";
+import { ErrorWithCode } from "@renproject/interfaces";
+import { Ox } from "@renproject/utils";
 
 import { GatewayRegistryABI } from "../contracts";
 import { ETHEREUM_ERROR } from "./errors";
@@ -53,7 +54,7 @@ const createGatewayRegistryFetcher =
             );
             if (!registryAddress || registryAddress === EMPTY_ADDRESS) {
                 throw new ErrorWithCode(
-                    `${asset} not supported on network - unable to get ${lookup}`,
+                    `${asset} not supported on network - unable to get ${asset} ${lookup}`,
                     ETHEREUM_ERROR.ASSET_NOT_SUPPORTED,
                 );
             }

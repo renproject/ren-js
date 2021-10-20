@@ -63,6 +63,15 @@ describe("Refactor: mint", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const toClass = getEVMChain(Ethereum as any, network);
 
+        // while (true) {
+        //     console.log(
+        //         "BADGER gateway",
+        //         await toClass.getMintGateway("BADGER"),
+        //     );
+        //     console.log("BADGER token a", await toClass.getRenAsset("BADGER"));
+        // }
+        // return;
+
         const throttles = {
             [Ethereum.chain]: throttle(1),
             [Avalanche.chain]: throttle(1),
@@ -161,33 +170,46 @@ describe("Refactor: mint", () => {
                                     );
 
                                     await tx.in
-                                        .confirmed()
-                                        .on("target", (target) =>
+                                        .wait()
+                                        .on("status", (status) =>
                                             console.log(
                                                 `[${colorizeChain(
                                                     fromClass.chain,
                                                 )}⇢${colorizeChain(
                                                     toClass.chain,
-                                                )}][${tx.hash.slice(
-                                                    0,
-                                                    6,
-                                                )}]: Target: ${target} confirmations`,
+                                                )}][${tx.hash.slice(0, 6)}]: ${
+                                                    status.confirmations || 0
+                                                }/${
+                                                    status.target
+                                                } confirmations`,
                                             ),
-                                        )
-                                        .on(
-                                            "confirmation",
-                                            (confirmations, target) =>
-                                                console.log(
-                                                    `[${colorizeChain(
-                                                        fromClass.chain,
-                                                    )}⇢${colorizeChain(
-                                                        toClass.chain,
-                                                    )}][${tx.hash.slice(
-                                                        0,
-                                                        6,
-                                                    )}]: ${confirmations}/${target} confirmations`,
-                                                ),
                                         );
+                                    // .on("target", (target) =>
+                                    //     console.log(
+                                    //         `[${colorizeChain(
+                                    //             fromClass.chain,
+                                    //         )}⇢${colorizeChain(
+                                    //             toClass.chain,
+                                    //         )}][${tx.hash.slice(
+                                    //             0,
+                                    //             6,
+                                    //         )}]: Target: ${target} confirmations`,
+                                    //     ),
+                                    // )
+                                    // .on(
+                                    //     "confirmation",
+                                    //     (confirmations, target) =>
+                                    //         console.log(
+                                    //             `[${colorizeChain(
+                                    //                 fromClass.chain,
+                                    //             )}⇢${colorizeChain(
+                                    //                 toClass.chain,
+                                    //             )}][${tx.hash.slice(
+                                    //                 0,
+                                    //                 6,
+                                    //             )}]: ${confirmations}/${target} confirmations`,
+                                    //         ),
+                                    // );
                                     while (true) {
                                         try {
                                             await tx.signed();
@@ -211,9 +233,12 @@ describe("Refactor: mint", () => {
                                                 toClass.chain,
                                             )}`,
                                         );
-                                        return await tx.out
-                                            .submit()
-                                            .on("transaction", console.log);
+                                        if (await tx.out.submit) {
+                                            await tx.out
+                                                .submit()
+                                                .on("transaction", console.log);
+                                        }
+                                        return tx.out.wait();
                                     });
                                     // resolve();
                                 })().catch(reject);

@@ -207,8 +207,8 @@ export class Filecoin
         asset: string,
         fromPayload: { chain: string },
         address: string,
-        onDeposit: (deposit: InputChainTransaction) => Promise<void>,
-        _removeDeposit: (deposit: InputChainTransaction) => Promise<void>,
+        onInput: (input: InputChainTransaction) => void,
+        _removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
     ): Promise<void> => {
         if (fromPayload.chain !== this.chain) {
@@ -264,7 +264,7 @@ export class Filecoin
 
                         await Promise.all(
                             (deposits || []).map(async (tx) =>
-                                onDeposit({
+                                onInput({
                                     txid: toURLBase64(
                                         Buffer.from(new CID(tx.cid).bytes),
                                     ),
@@ -300,7 +300,7 @@ export class Filecoin
 
                 await Promise.all(
                     (txs || []).map(async (tx) =>
-                        onDeposit({
+                        onInput({
                             txid: toURLBase64(
                                 Buffer.from(new CID(tx.cid).bytes),
                             ),

@@ -39,7 +39,7 @@ const bitcoin = new Bitcoin();
 const ethereum = new Ethereum(web3.currentProvider);
 const bsc = new BinanceSmartChain(web3.currentProvider);
 
-const renJS = new RenJS("https://rpc.renproject.io").with(
+const renJS = new RenJS("https://rpc.renproject.io").withChains(
     bitcoin,
     ethereum,
     bsc,
@@ -57,7 +57,7 @@ const gateway = renJS.Gateway({
     ),
 });
 
-gateway.on("deposit", transactionHandler);
+gateway.on("transaction", transactionHandler);
 
 switch (gateway.status) {
     case "to_token_account_required":

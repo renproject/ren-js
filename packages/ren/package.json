@@ -58,7 +58,8 @@
         "doc:publish": "gh-pages --repo git@github.com:renproject/ren-js-docs.git -m \"[ci skip] Updates\" -d build/docs",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../.gitignore",
-        "prepare-release": "run-s npmignore build doc:html doc:publish"
+        "prepare-release-old": "run-s npmignore build doc:html doc:publish",
+        "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
         "@renproject/interfaces": "^2.5.2",

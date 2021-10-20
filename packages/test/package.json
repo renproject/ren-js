@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.5.6",
+    "version": "3.0.0-alpha.0",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -24,12 +24,11 @@
         "build:module": "tsc -p tsconfig.module.json"
     },
     "dependencies": {
-        "@renproject/chains-ethereum": "^2.5.5",
-        "@renproject/interfaces": "^2.5.2",
-        "@renproject/provider": "^2.5.2",
-        "@renproject/ren": "^2.5.6",
-        "@renproject/provider": "^2.5.6",
-        "@renproject/utils": "^2.5.2",
+        "@renproject/chains-ethereum": "^3.0.0-alpha.0",
+        "@renproject/interfaces": "^3.0.0-alpha.0",
+        "@renproject/provider": "^3.0.0-alpha.0",
+        "@renproject/ren": "^3.0.0-alpha.0",
+        "@renproject/utils": "^3.0.0-alpha.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.14",

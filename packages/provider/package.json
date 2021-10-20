@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "2.5.6",
+    "version": "3.0.0-alpha.0",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -44,8 +44,8 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^2.5.2",
-        "@renproject/utils": "^2.5.2",
+        "@renproject/interfaces": "^3.0.0-alpha.0",
+        "@renproject/utils": "^3.0.0-alpha.0",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
         "immutable": "^4.0.0-rc.14"

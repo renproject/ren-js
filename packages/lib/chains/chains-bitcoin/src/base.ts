@@ -1,12 +1,15 @@
 import bech32 from "bech32";
+import BigNumber from "bignumber.js";
+import base58 from "bs58";
+
 import {
+    BurnPayloadConfig,
+    ChainStatic,
     getRenNetworkDetails,
     LockChain,
-    ChainStatic,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
-    BurnPayloadConfig,
 } from "@renproject/interfaces";
 import {
     assertType,
@@ -17,14 +20,12 @@ import {
     toBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
-import BigNumber from "bignumber.js";
-import base58 from "bs58";
+
 import { APIWithPriority, BitcoinAPI, CombinedAPI, UTXO } from "./APIs/API";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { Blockstream } from "./APIs/blockstream";
 import { SoChain, SoChainNetwork } from "./APIs/sochain";
-
-import { createAddressBuffer, calculatePubKeyScript } from "./script/index";
+import { calculatePubKeyScript, createAddressBuffer } from "./script/index";
 
 export type BtcAddress = string;
 export type BtcTransaction = UTXO;
@@ -275,15 +276,17 @@ export abstract class BitcoinBaseChain
      * See [[LockChain.addressToBytes]].
      */
     addressToBytes = (address: BtcAddress | string): Buffer => {
+        // Attempt to decode address as a bech32 address, and if that fails
+        // fall back to base58.
         try {
-            return base58.decode(address);
+            const [type, ...words] = bech32.decode(address).words;
+            return Buffer.concat([
+                Buffer.from([type]),
+                Buffer.from(bech32.fromWords(words)),
+            ]);
         } catch (error) {
             try {
-                const [type, ...words] = bech32.decode(address).words;
-                return Buffer.concat([
-                    Buffer.from([type]),
-                    Buffer.from(bech32.fromWords(words)),
-                ]);
+                return base58.decode(address);
             } catch (internalError) {
                 throw new Error(`Unrecognized address format "${address}".`);
             }

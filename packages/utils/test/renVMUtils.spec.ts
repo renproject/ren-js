@@ -1,7 +1,7 @@
 import { expect } from "chai";
 
-import { LockChain, MintChain } from "@renproject/interfaces";
 import { resolveV2Contract } from "@renproject/provider/build/main/v2";
+import { LockChain, MintChain } from "@renproject/utils";
 
 import { parseV1Selector } from "../src/renVMUtils";
 

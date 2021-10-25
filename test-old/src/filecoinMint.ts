@@ -9,9 +9,14 @@ import {
     renTestnet,
 } from "@renproject/chains-ethereum";
 import { Filecoin } from "@renproject/chains-filecoin";
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { SECONDS, tryNTimes } from "@renproject/utils";
+import {
+    LogLevel,
+    RenNetwork,
+    SECONDS,
+    SimpleLogger,
+    tryNTimes,
+} from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 // Load environment variables.

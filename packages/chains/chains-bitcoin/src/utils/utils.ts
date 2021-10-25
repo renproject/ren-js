@@ -1,6 +1,8 @@
 import { validate } from "wallet-address-validator";
 import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
 
+import { ripemd160, sha256 } from "@renproject/utils";
+
 import {
     BitcoinNetworkConfig,
     BitcoinNetworkConfigMap,
@@ -71,3 +73,6 @@ export const resolveBitcoinNetworkConfig = (
 
     return networkConfig;
 };
+
+export const hash160 = (publicKey: Buffer): Buffer =>
+    ripemd160(sha256(publicKey));

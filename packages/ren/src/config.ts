@@ -3,7 +3,7 @@ import {
     LogLevel,
     LogLevelString,
     NullLogger,
-} from "@renproject/interfaces";
+} from "@renproject/utils";
 
 export interface RenJSConfig {
     /**

@@ -1,8 +1,13 @@
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
-import { EthereumBaseChain, EthereumClassConfig } from "./base";
+import { EthereumBaseChain } from "./base";
 import { Goerli } from "./goerli";
-import { EthProvider, EvmNetworkConfig, EvmNetworkInput } from "./utils/types";
+import {
+    EthereumClassConfig,
+    EthProvider,
+    EvmNetworkConfig,
+    EvmNetworkInput,
+} from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const polygonTestnetConfig: EvmNetworkConfig = {

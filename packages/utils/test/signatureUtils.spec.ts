@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { Logger, SimpleLogger } from "@renproject/interfaces";
+import { Logger, SimpleLogger } from "@renproject/utils";
 
 import { fromBigNumber, fromHex } from "../src/common";
 import {

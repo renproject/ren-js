@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { TxStatus } from "@renproject/interfaces/build/main";
+import { TxStatus } from "@renproject/utils";
 
 import { TypedPackValue, unmarshalTypedPackValue } from "./pack/pack";
 import { ResponseQueryTx } from "./rpc/methods";
@@ -52,18 +52,14 @@ export const unmarshalTxResponse = <
     TypedOutput extends TypedPackValue = TypedPackValue,
 >(
     tx: ResponseQueryTx<TypedInput, TypedOutput>["tx"],
-): TxResponse<Input, Output> => {
-    return {
-        version: parseInt(tx.version),
-        hash: tx.hash,
-        to: tx.selector,
-        in: unmarshalTypedPackValue(tx.in),
-        out: unmarshalTypedPackValue(tx.out),
-    };
-};
+): TxResponse<Input, Output> => ({
+    version: parseInt(tx.version),
+    hash: tx.hash,
+    to: tx.selector,
+    in: unmarshalTypedPackValue(tx.in),
+    out: unmarshalTypedPackValue(tx.out),
+});
 
 export const unmarshalCrossChainTxResponse = (
     tx: ResponseQueryTx["tx"],
-): CrossChainTxResponse => {
-    return unmarshalTxResponse(tx);
-};
+): CrossChainTxResponse => unmarshalTxResponse(tx);

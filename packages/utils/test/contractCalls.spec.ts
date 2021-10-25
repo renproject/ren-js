@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { ContractCall } from "@renproject/interfaces";
+import { ContractCall } from "@renproject/utils";
 
 import {
     OverrideContractCallError,

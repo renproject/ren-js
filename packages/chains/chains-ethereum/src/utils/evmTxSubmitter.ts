@@ -9,15 +9,29 @@ import {
     ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
+    isDefined,
     isErrorWithCode,
     newPromiEvent,
     PromiEvent,
     TxSubmitter,
-} from "@renproject/interfaces";
+} from "@renproject/utils";
 
-import { isDefined } from "../../../../utils/build/main";
 import { AbiItem } from "./abi";
 import { txHashToChainTransaction } from "./generic";
+
+/** Fix numeric values in the transaction config. */
+export const fixEvmTransactionConfig = (txConfig?: PayableOverrides) => ({
+    ...txConfig,
+    ...{
+        value:
+            txConfig && txConfig.value ? txConfig.value.toString() : undefined,
+        gasPrice:
+            txConfig && txConfig.gasPrice
+                ? txConfig.gasPrice.toString()
+                : undefined,
+    },
+    // gasLimit: 2000000,
+});
 
 /**
  * Call a method on an EVM contract from the provided signer.
@@ -42,58 +56,58 @@ export const callContract = async (
 
     const contract = new Contract(to, [abi], signer);
 
-    // Fix numeric values in the transaction config.
-    const config: PayableOverrides = {
-        ...txConfig,
-        ...{
-            value:
-                txConfig && txConfig.value
-                    ? txConfig.value.toString()
-                    : undefined,
-            gasPrice:
-                txConfig && txConfig.gasPrice
-                    ? txConfig.gasPrice.toString()
-                    : undefined,
-        },
-    };
-
-    return await contract[abi.name](...params, config);
+    return await contract[abi.name](
+        ...params,
+        fixEvmTransactionConfig(txConfig),
+    );
 };
 
 /**
  * EVMTxSubmitter handles submitting and waiting for EVM transactions.
  */
 export class EVMTxSubmitter implements TxSubmitter {
-    private getTx: (...overrides: any[]) => Promise<TransactionResponse>;
-    private target: number;
-    private tx?: TransactionResponse;
-    private previousTx?: TransactionResponse;
-    private onReceipt?: (tx: TransactionReceipt) => void;
-
+    public chain: string;
     public status: ChainTransactionProgress = {
         status: ChainTransactionStatus.Ready,
         confirmations: 0,
         target: 0,
     };
 
+    private getTx: (options?: {
+        overrides?: any[];
+        txConfig?: PayableOverrides;
+    }) => Promise<TransactionResponse>;
+    private target: number;
+    private tx?: TransactionResponse;
+    private previousTx?: TransactionResponse;
+    private onReceipt?: (tx: TransactionReceipt) => void;
+
     /**
      * @param getTx An async function that returns the initial
      * TransactionResponse.
      * @param target The number of confirmations to wait for.
      */
-    constructor(
-        getTx: (...overrides: any[]) => Promise<TransactionResponse>,
-        target: number,
-        onReceipt?: (tx: TransactionReceipt) => void,
-    ) {
+    constructor({
+        chain,
+        getTx,
+        target,
+        onReceipt,
+    }: {
+        chain: string;
+        getTx: (...overrides: any[]) => Promise<TransactionResponse>;
+        target: number;
+        onReceipt?: (tx: TransactionReceipt) => void;
+    }) {
+        this.chain = chain;
         this.getTx = getTx;
         this.target = target;
         this.onReceipt = onReceipt;
     }
 
-    submit = (
-        ...overrides: any[]
-    ): PromiEvent<
+    submit = (options?: {
+        overrides?: any[];
+        txConfig?: PayableOverrides;
+    }): PromiEvent<
         ChainTransaction,
         {
             status: [ChainTransactionProgress];
@@ -106,8 +120,8 @@ export class EVMTxSubmitter implements TxSubmitter {
             }
         >();
 
-        async () => {
-            this.tx = await this.getTx(overrides);
+        (async (): Promise<ChainTransaction> => {
+            this.tx = await this.getTx(options);
 
             this.status = {
                 ...this.status,
@@ -135,7 +149,9 @@ export class EVMTxSubmitter implements TxSubmitter {
             promiEvent.emit("status", this.status);
 
             return txHashToChainTransaction(this.tx.hash);
-        };
+        })()
+            .then(promiEvent.resolve)
+            .catch(promiEvent.reject);
 
         return promiEvent;
     };
@@ -170,7 +186,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             while (this.tx.confirmations < target) {
                 try {
                     const receipt = await this.tx.wait(
-                        this.tx?.confirmations + 1,
+                        this.tx.confirmations + 1,
                     );
                     if (this.onReceipt) {
                         const onReceipt = this.onReceipt;

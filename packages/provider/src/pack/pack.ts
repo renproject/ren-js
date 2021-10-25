@@ -28,15 +28,12 @@ export interface PackStructType<
  * Check that the passed-in value is a PackStructType - i.e. an object that has
  * a single field called `struct` which stores an array.
  */
-export const isPackStructType = (type: unknown): type is PackStructType => {
-    return (
-        typeof type === "object" &&
-        type !== null &&
-        Object.keys(type).length === 1 &&
-        (type as PackStructType).struct !== undefined &&
-        Array.isArray((type as PackStructType).struct)
-    );
-};
+export const isPackStructType = (type: unknown): type is PackStructType =>
+    typeof type === "object" &&
+    type !== null &&
+    Object.keys(type).length === 1 &&
+    (type as PackStructType).struct !== undefined &&
+    Array.isArray((type as PackStructType).struct);
 
 export interface PackListType<
     T extends PackTypeDefinition = PackTypeDefinition,
@@ -48,11 +45,8 @@ export interface PackListType<
  * Check that the passed-in value is a PackListType - i.e. an object that has
  * a single field called `list`.
  */
-export const isPackListType = (type: unknown): type is PackListType => {
-    return (
-        typeof type === "object" && (type as PackListType).list !== undefined
-    );
-};
+export const isPackListType = (type: unknown): type is PackListType =>
+    typeof type === "object" && (type as PackListType).list !== undefined;
 
 export type PackNilType = "nil";
 
@@ -203,9 +197,7 @@ export const unmarshalPackStruct = (type: PackStructType, value: object) => {
 export const unmarshalPackList = <T extends unknown>(
     type: PackListType,
     value: T[],
-): T[] => {
-    return value.map((element) => unmarshalPackValue(type.list, element));
-};
+): T[] => value.map((element) => unmarshalPackValue(type.list, element));
 
 /**
  * Converts the passed-in value to its corresponding JavaScript value based on
@@ -243,6 +235,5 @@ export const unmarshalPackValue = (
  * Converts a { t, v } pack object, using `t` as a pack type and `v` as a pack
  * value.
  */
-export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue) => {
-    return unmarshalPackValue(t, v);
-};
+export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue) =>
+    unmarshalPackValue(t, v);

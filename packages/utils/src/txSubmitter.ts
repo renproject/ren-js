@@ -1,4 +1,5 @@
-import { Chain, ChainTransaction } from "./chain";
+import { isDefined } from "./common";
+import { Chain, ChainTransaction } from "./interfaces/chain";
 import { newPromiEvent, PromiEvent } from "./promiEvent";
 
 // Taken from @renproject/utils. Todo: move txSubmitted to utils as well.
@@ -28,6 +29,7 @@ export interface ChainTransactionProgress {
 }
 
 export interface TxWaiter {
+    chain: string;
     status: ChainTransactionProgress;
     wait: () => PromiEvent<
         ChainTransaction,
@@ -35,11 +37,21 @@ export interface TxWaiter {
             status: [ChainTransactionProgress];
         }
     >;
-    submit?: any;
+    submit?: never;
 }
 
-export interface TxSubmitter extends TxWaiter {
-    submit: (...overrides: any[]) => PromiEvent<
+export interface TxSubmitter {
+    // extends TxWaiter
+    chain: string;
+    status: ChainTransactionProgress;
+    wait: (target?: number) => PromiEvent<
+        ChainTransaction,
+        {
+            status: [ChainTransactionProgress];
+        }
+    >;
+
+    submit: (params?: { overrides?: any[]; config?: any }) => PromiEvent<
         ChainTransaction,
         {
             status: [ChainTransactionProgress];
@@ -191,6 +203,7 @@ export class DefaultTxWaiter implements TxWaiter {
     private _chain: Chain;
     private _target: number;
 
+    public chain: string;
     public status: ChainTransactionProgress = {
         status: ChainTransactionStatus.Ready,
         target: 0,
@@ -209,6 +222,8 @@ export class DefaultTxWaiter implements TxWaiter {
         this._chain = chain;
         this._target = target;
 
+        this.chain = chain.chain;
+
         this.status = {
             ...this.status,
             status: ChainTransactionStatus.Confirming,
@@ -216,7 +231,9 @@ export class DefaultTxWaiter implements TxWaiter {
         };
     }
 
-    wait = (): PromiEvent<
+    wait = (
+        target?: number,
+    ): PromiEvent<
         ChainTransaction,
         {
             status: [ChainTransactionProgress];
@@ -235,6 +252,8 @@ export class DefaultTxWaiter implements TxWaiter {
                 throw new Error(`Must call ".submit" first.`);
             }
 
+            target = isDefined(target) ? target : this._target;
+
             let currentConfidenceRatio = -1;
             while (true) {
                 const confidence = (
@@ -248,14 +267,13 @@ export class DefaultTxWaiter implements TxWaiter {
                     confirmations: confidence,
                 };
 
-                const confidenceRatio =
-                    this._target === 0 ? 1 : confidence / this._target;
+                const confidenceRatio = target === 0 ? 1 : confidence / target;
                 if (confidenceRatio > currentConfidenceRatio) {
                     currentConfidenceRatio = confidenceRatio;
                     promiEvent.emit("status", {
                         status: ChainTransactionStatus.Confirming,
                         transaction: tx,
-                        target: this._target,
+                        target: target,
                         confirmations: confidence,
                     });
                 }

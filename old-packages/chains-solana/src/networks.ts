@@ -2,7 +2,7 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
-} from "@renproject/interfaces";
+} from "@renproject/utils";
 
 export interface SolNetworkConfig {
     name: RenNetwork;
@@ -21,9 +21,7 @@ export interface SolNetworkConfig {
 
 const isSolNetworkConfig = (
     x: RenNetworkDetails | SolNetworkConfig,
-): x is SolNetworkConfig => {
-    return (x as SolNetworkConfig).genesisHash !== undefined;
-};
+): x is SolNetworkConfig => (x as SolNetworkConfig).genesisHash !== undefined;
 
 export const resolveNetwork = (
     renNetwork:

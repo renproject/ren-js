@@ -2,7 +2,7 @@
 
 import chai from "chai";
 
-import { hash160, Ox } from "@renproject/utils";
+import { Ox } from "@renproject/utils";
 
 import { RenVMProvider } from "../src";
 
@@ -24,8 +24,6 @@ describe("RenVMProvider v2", () => {
                 }
             },
         } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        Ox(hash160(await renVMProvider.selectPublicKey("BTC"))).should.equal(
-            "0x5faa9576e45acbc9662b6abf323229b748a9495d",
-        );
+        Ox(await renVMProvider.selectPublicKey("BTC")).should.equal("");
     });
 });

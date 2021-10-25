@@ -1,10 +1,17 @@
-import { Logger, SyncOrPromise, TxStatus } from "@renproject/interfaces";
 import {
     CrossChainTxResponse,
     RenVMProvider,
     TxResponseWithStatus,
 } from "@renproject/provider";
-import { assertType, isDefined, SECONDS, sleep } from "@renproject/utils";
+import {
+    assertType,
+    isDefined,
+    Logger,
+    SECONDS,
+    sleep,
+    SyncOrPromise,
+    TxStatus,
+} from "@renproject/utils";
 
 /**
  * Fetches the result of a RenVM transaction on a repeated basis until the

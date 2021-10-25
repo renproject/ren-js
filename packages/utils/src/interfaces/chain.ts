@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { TxSubmitter, TxWaiter } from "./txSubmitter";
+import { TxSubmitter, TxWaiter } from "../txSubmitter";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
@@ -144,12 +144,9 @@ export interface DepositChain<
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isDepositChain = (chain: any): chain is DepositChain => {
-    return (
-        (chain as DepositChain).createGatewayAddress !== undefined &&
-        (chain as DepositChain).watchForDeposits !== undefined
-    );
-};
+export const isDepositChain = (chain: any): chain is DepositChain =>
+    (chain as DepositChain).createGatewayAddress !== undefined &&
+    (chain as DepositChain).watchForDeposits !== undefined;
 
 export interface ContractChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -254,14 +251,11 @@ export interface ContractChain<
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isContractChain = (chain: any): chain is ContractChain => {
-    return (
-        (chain as ContractChain).submitInput !== undefined &&
-        // (chain as ContractChain).submitLock !== undefined &&
-        (chain as ContractChain).submitOutput !== undefined
-        // && (chain as ContractChain).submitRelease !== undefined
-    );
-};
+export const isContractChain = (chain: any): chain is ContractChain =>
+    (chain as ContractChain).submitInput !== undefined &&
+    // (chain as ContractChain).submitLock !== undefined &&
+    (chain as ContractChain).submitOutput !== undefined;
+// && (chain as ContractChain).submitRelease !== undefined
 
 export type Chain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

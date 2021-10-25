@@ -106,9 +106,7 @@ const withLength = (value: Buffer) =>
 /**
  * Marshal a string, prefixed by its length.
  */
-export const marshalString = (value: string) => {
-    return withLength(Buffer.from(value));
-};
+export const marshalString = (value: string) => withLength(Buffer.from(value));
 
 /**
  * Marshal a struct type by prefixing the `struct` pack type ID and the number
@@ -143,12 +141,11 @@ export const marshalPackStructType = (type: PackStructType) => {
  * Marshal a list type by concatenating the `list` pack type ID followed by the
  * marshalled type definition of the list's sub-type.
  */
-export const marshalPackListType = (type: PackListType) => {
-    return Buffer.concat([
+export const marshalPackListType = (type: PackListType) =>
+    Buffer.concat([
         Buffer.from([marshalPackType("list")]),
         marshalPackTypeDefinition(type.list),
     ]);
-};
 
 /**
  * Marshal a pack type, as defined above for each type.
@@ -220,8 +217,8 @@ export const marshalPackPrimitive = (
 export const marshalPackStruct = (
     type: PackStructType,
     value: unknown,
-): Buffer => {
-    return Buffer.concat(
+): Buffer =>
+    Buffer.concat(
         type.struct.map((member) => {
             const keys = Object.keys(member);
             if (keys.length === 0) {
@@ -253,7 +250,6 @@ export const marshalPackStruct = (
             }
         }),
     );
-};
 
 /**
  * Marshal a pack list by concatenating the marshalled values of each of the

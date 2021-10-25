@@ -10,17 +10,15 @@ import {
 } from "@glif/filecoin-address";
 import FilecoinClient from "@glif/filecoin-rpc-client";
 import {
+    assertType,
     ChainTransaction,
     DepositChain,
+    doesntError,
+    fromBase64,
     InputChainTransaction,
     OutputType,
     RenNetwork,
     RenNetworkString,
-} from "@renproject/interfaces";
-import {
-    assertType,
-    doesntError,
-    fromBase64,
     SECONDS,
     sleep,
     toURLBase64,
@@ -54,15 +52,12 @@ export interface FilecoinNetworkConfig {
 
 export const isFilecoinNetworkConfig = (
     renNetwork: unknown,
-): renNetwork is FilecoinNetworkConfig => {
-    return (
-        !!(renNetwork as FilecoinNetworkConfig).selector &&
-        !!(renNetwork as FilecoinNetworkConfig).nativeAsset &&
-        !!(renNetwork as FilecoinNetworkConfig).rpc &&
-        !!(renNetwork as FilecoinNetworkConfig).addressPrefix &&
-        !!(renNetwork as FilecoinNetworkConfig).explorer
-    );
-};
+): renNetwork is FilecoinNetworkConfig =>
+    !!(renNetwork as FilecoinNetworkConfig).selector &&
+    !!(renNetwork as FilecoinNetworkConfig).nativeAsset &&
+    !!(renNetwork as FilecoinNetworkConfig).rpc &&
+    !!(renNetwork as FilecoinNetworkConfig).addressPrefix &&
+    !!(renNetwork as FilecoinNetworkConfig).explorer;
 
 export const FilecoinMainnet: FilecoinNetworkConfig = {
     selector: "Filecoin",
@@ -162,12 +157,11 @@ export class Filecoin
     public validateAddress = (address: string) =>
         validateAddressString(address);
 
-    public validateTransaction = doesntError((tx: ChainTransaction) => {
-        return (
+    public validateTransaction = doesntError(
+        (tx: ChainTransaction) =>
             new CID(fromBase64(tx.txid)).bytes.length === 38 &&
-            tx.txindex === "0"
-        );
-    });
+            tx.txindex === "0",
+    );
 
     public addressExplorerLink = (address: string): string => {
         // TODO: Check network.

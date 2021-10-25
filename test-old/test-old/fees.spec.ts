@@ -4,8 +4,8 @@ import chai, { expect } from "chai";
 import { config as loadDotEnv } from "dotenv";
 
 import { Bitcoin, Ethereum } from "@renproject/chains";
-import { RenNetwork } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
+import { RenNetwork } from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 chai.should();

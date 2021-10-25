@@ -4,7 +4,7 @@ import { BN } from "bn.js";
 import { expect } from "chai";
 import EventEmitter from "events";
 
-import { EventEmitterTyped, RenNetwork } from "@renproject/interfaces";
+import { EventEmitterTyped, RenNetwork } from "@renproject/utils";
 
 import RenJS, { LockAndMintDeposit } from "../../../ren";
 import { Bitcoin } from "../../chains";

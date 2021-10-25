@@ -1,4 +1,4 @@
-import { TxStatus } from "@renproject/interfaces";
+import { TxStatus } from "@renproject/utils";
 
 import {
     ParamsQueryBlockState,

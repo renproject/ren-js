@@ -2,16 +2,13 @@ import BigNumber from "bignumber.js";
 import base58 from "bs58";
 
 import {
+    assertType,
     ChainTransaction,
     DepositChain,
-    InputChainTransaction,
-    OutputType,
-} from "@renproject/interfaces";
-import {
-    assertType,
     fromBase64,
     fromHex,
-    hash160,
+    InputChainTransaction,
+    OutputType,
     SECONDS,
     sleep,
     toURLBase64,
@@ -27,7 +24,7 @@ import {
     BitcoinReleasePayload,
     isBitcoinNetworkConfig,
 } from "./utils/types";
-import { validateAddress } from "./utils/utils";
+import { hash160, validateAddress } from "./utils/utils";
 
 /**
  * A base Bitcoin chain class that is extended by each Bitcoin chain/fork.
@@ -266,20 +263,16 @@ export abstract class BitcoinBaseChain
         };
     };
 
-    burnPayload? = (burnPayloadConfig?: { chain: string; address: string }) => {
-        return {
-            to: burnPayloadConfig?.address,
-        };
-    };
+    burnPayload? = (burnPayloadConfig?: {
+        chain: string;
+        address: string;
+    }) => ({
+        to: burnPayloadConfig ? burnPayloadConfig.address : undefined,
+    });
 
     toSats = (value: BigNumber | string | number): string =>
-        new BigNumber(value)
-            .times(new BigNumber(10).exponentiatedBy(8))
-            .decimalPlaces(0)
-            .toFixed();
+        new BigNumber(value).shiftedBy(8).decimalPlaces(0).toFixed();
 
     fromSats = (value: BigNumber | string | number): string =>
-        new BigNumber(value)
-            .dividedBy(new BigNumber(10).exponentiatedBy(8))
-            .toFixed();
+        new BigNumber(value).shiftedBy(-8).toFixed();
 }

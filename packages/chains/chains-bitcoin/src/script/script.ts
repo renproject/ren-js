@@ -1,5 +1,6 @@
-import { hash160, sha256 } from "@renproject/utils";
+import { sha256 } from "@renproject/utils";
 
+import { hash160 } from "../utils/utils";
 import { Opcode } from "./opcodes";
 
 const checksum = (hash: Buffer) => sha256(sha256(hash)).slice(0, 4);
@@ -30,13 +31,12 @@ export class Script {
 
     toBuffer = () => this.script;
 
-    toScriptHashOut = (): Buffer => {
-        return new Script()
+    toScriptHashOut = (): Buffer =>
+        new Script()
             .addOp(Script.OP.OP_HASH160)
             .addData(hash160(this.toBuffer()))
             .addOp(Script.OP.OP_EQUAL)
             .toBuffer();
-    };
 
     toAddress = (prefix: Buffer): Buffer => {
         // Hash

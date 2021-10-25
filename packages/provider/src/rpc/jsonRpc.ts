@@ -1,12 +1,14 @@
 import axios, { AxiosResponse } from "axios";
 
 import {
+    extractError,
     Logger,
     LogLevel,
     NullLogger,
+    SECONDS,
     SyncOrPromise,
-} from "@renproject/interfaces";
-import { extractError, SECONDS, tryNTimes } from "@renproject/utils";
+    tryNTimes,
+} from "@renproject/utils";
 
 const generatePayload = (method: string, params?: unknown) => ({
     id: 1,

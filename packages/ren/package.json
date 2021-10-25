@@ -62,7 +62,6 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^3.0.0-alpha.0",
         "@renproject/provider": "^3.0.0-alpha.0",
         "@renproject/utils": "^3.0.0-alpha.0",
         "@types/bn.js": "^5.1.0",

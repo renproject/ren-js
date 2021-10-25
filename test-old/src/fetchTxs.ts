@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 
-import { LogLevel, RenNetwork } from "@renproject/interfaces";
-import RenJS from "@renproject/ren";
 import { blue } from "chalk";
+
+import RenJS from "@renproject/ren";
+import { LogLevel, RenNetwork } from "@renproject/utils";
 
 const logLevel = LogLevel.Log;
 

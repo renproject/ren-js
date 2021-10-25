@@ -1,4 +1,4 @@
-import { RenNetwork, RenNetworkString } from "@renproject/interfaces";
+import { RenNetwork, RenNetworkString } from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI } from "../APIs/API";
 
@@ -30,16 +30,13 @@ export interface BitcoinNetworkConfig {
 
 export const isBitcoinNetworkConfig = (
     input: unknown,
-): input is BitcoinNetworkConfig => {
-    return (
-        !!(input as BitcoinNetworkConfig).label &&
-        !!(input as BitcoinNetworkConfig).selector &&
-        !!(input as BitcoinNetworkConfig).nativeAsset &&
-        !!(input as BitcoinNetworkConfig).p2shPrefix &&
-        !!(input as BitcoinNetworkConfig).explorer &&
-        !!(input as BitcoinNetworkConfig).providers
-    );
-};
+): input is BitcoinNetworkConfig =>
+    !!(input as BitcoinNetworkConfig).label &&
+    !!(input as BitcoinNetworkConfig).selector &&
+    !!(input as BitcoinNetworkConfig).nativeAsset &&
+    !!(input as BitcoinNetworkConfig).p2shPrefix &&
+    !!(input as BitcoinNetworkConfig).explorer &&
+    !!(input as BitcoinNetworkConfig).providers;
 
 export type BitcoinNetworkConfigMap = {
     [network in RenNetwork]?: BitcoinNetworkConfig;

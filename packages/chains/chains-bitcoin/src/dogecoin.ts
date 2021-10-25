@@ -1,4 +1,4 @@
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { SoChain, SoChainNetwork } from "./APIs/sochain";

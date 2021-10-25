@@ -3,17 +3,15 @@ import { blake2b } from "blakejs";
 import elliptic from "elliptic";
 
 import {
+    assertType,
     BurnPayloadConfig,
     ChainStatic,
     getRenNetworkDetails,
+    isHex,
     LockChain,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
-} from "@renproject/interfaces";
-import {
-    assertType,
-    isHex,
     toURLBase64,
     utilsWithChainNetwork,
 } from "@renproject/utils";
@@ -86,14 +84,13 @@ export class Terra
                 | RenNetworkString
                 | RenNetworkDetails
                 | TerraNetwork = TerraNetwork.Columbus,
-        ): boolean => {
-            return isHex(
+        ): boolean =>
+            isHex(
                 typeof transaction === "string"
                     ? transaction
                     : transaction.hash,
                 { length: 32 },
-            );
-        },
+            ),
 
         addressExplorerLink: (
             addressIn: TerraAddress | string,
@@ -102,13 +99,12 @@ export class Terra
                 | RenNetworkString
                 | RenNetworkDetails
                 | TerraNetwork = TerraNetwork.Columbus,
-        ): string => {
-            return `https://finder.terra.money/${Terra.utils.resolveChainNetwork(
+        ): string =>
+            `https://finder.terra.money/${Terra.utils.resolveChainNetwork(
                 network,
             )}/account/${
                 typeof addressIn === "string" ? addressIn : addressIn.address
-            }`;
-        },
+            }`,
 
         transactionExplorerLink: (
             transaction: TerraTransaction | string,
@@ -117,13 +113,12 @@ export class Terra
                 | RenNetworkString
                 | RenNetworkDetails
                 | TerraNetwork = TerraNetwork.Columbus,
-        ): string => {
-            return `https://finder.terra.money/${Terra.utils.resolveChainNetwork(
+        ): string =>
+            `https://finder.terra.money/${Terra.utils.resolveChainNetwork(
                 network,
             )}/tx/${
                 typeof transaction === "string" ? transaction : transaction.hash
-            }`;
-        },
+            }`,
     };
 
     public utils = utilsWithChainNetwork<
@@ -347,9 +342,8 @@ export class Terra
         return this;
     };
 
-    burnPayload? = (config?: BurnPayloadConfig) => {
-        return this.getBurnPayload
+    burnPayload? = (config?: BurnPayloadConfig) =>
+        this.getBurnPayload
             ? this.getBurnPayload(config && config.bytes)
             : undefined;
-    };
 }

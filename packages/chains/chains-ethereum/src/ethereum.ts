@@ -1,7 +1,8 @@
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
-import { EthereumBaseChain, EthereumClassConfig } from "./base";
+import { EthereumBaseChain } from "./base";
 import {
+    EthereumClassConfig,
     EthProvider,
     EvmNetworkConfig,
     EvmNetworkConfigMap,

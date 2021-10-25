@@ -1,7 +1,8 @@
-/* eslint-disable no-console */
-import { RenNetwork } from "@renproject/interfaces";
-import { describe, it } from "mocha";
 import { expect } from "chai";
+import { describe, it } from "mocha";
+
+/* eslint-disable no-console */
+import { RenNetwork } from "@renproject/utils";
 
 import { Bitcoin, DigiByte } from "../src";
 

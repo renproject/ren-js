@@ -3,9 +3,9 @@
 import chai from "chai";
 import { blue, blueBright, cyan, green, magenta, red, yellow } from "chalk";
 import { config as loadDotEnv } from "dotenv";
+import { BigNumber } from "ethers";
 import throttle from "throat";
 
-import { Bitcoin } from "../../chains/chains-bitcoin/src";
 import {
     Arbitrum,
     Avalanche,
@@ -14,10 +14,12 @@ import {
     Fantom,
     Goerli,
     Polygon,
-} from "../../chains/chains-ethereum/src";
-import { LogLevel, RenNetwork } from "../../interfaces/src";
-import RenJS from "../../ren/src";
-import { SECONDS, sleep } from "../../utils/src";
+} from "@renproject/chains-ethereum/src";
+import { LogLevel, RenNetwork } from "@renproject/utils";
+import { SECONDS, sleep } from "@renproject/utils/src";
+
+import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
+import RenJS from "../packages/ren/src";
 import { getEVMChain } from "./testUtils";
 
 chai.should();
@@ -63,15 +65,6 @@ describe("Refactor: mint", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const toClass = getEVMChain(Ethereum as any, network);
 
-        // while (true) {
-        //     console.log(
-        //         "BADGER gateway",
-        //         await toClass.getMintGateway("BADGER"),
-        //     );
-        //     console.log("BADGER token a", await toClass.getRenAsset("BADGER"));
-        // }
-        // return;
-
         const throttles = {
             [Ethereum.chain]: throttle(1),
             [Avalanche.chain]: throttle(1),
@@ -87,19 +80,19 @@ describe("Refactor: mint", () => {
             // Fantom,
             // Goerli,
             // Polygon,
-            Bitcoin,
+            // Bitcoin,
             // Arbitrum,
-            // BinanceSmartChain,
+            BinanceSmartChain,
         ];
 
-        const asset = "BTC";
+        const asset = "DAI";
 
         await Promise.all(
             fromChains.map(async (From) => {
                 while (true) {
                     try {
-                        // const fromClass = getEVMChain(From, network);
-                        const fromClass = new From("testnet");
+                        const fromClass = getEVMChain(From, network);
+                        // const fromClass = new From("testnet");
 
                         const toAddress = await toClass.signer.getAddress();
                         console.log(
@@ -108,10 +101,10 @@ describe("Refactor: mint", () => {
                             )}] Address: ${toAddress}`,
                         );
 
-                        // const from = fromClass.FromAccount(
-                        //     "1000000000000000000",
-                        // );
-                        const from = fromClass;
+                        const from = fromClass.FromAccount(
+                            "1000000000000000000",
+                        );
+                        // const from = fromClass.FromAccount();
                         const to = toClass.Address(toAddress);
 
                         const logLevel: LogLevel = LogLevel.Log;
@@ -127,25 +120,51 @@ describe("Refactor: mint", () => {
 
                         const gateway = await renJS.gateway(params);
 
-                        // await throttles[fromClass.chain](async () => {
-                        //     console.log(
-                        //         `[${colorizeChain(
-                        //             fromClass.chain,
-                        //         )}⇢${colorizeChain(
-                        //             toClass.chain,
-                        //         )}]: Submitting to ${String(fromClass.chain)}`,
-                        //     );
-                        //     return await gateway.from.burn
-                        //         .submit()
-                        //         .on("transaction", console.log);
-                        // });
-
                         console.log(
-                            `[${colorizeChain(toClass.chain)}] ${colorizeChain(
-                                fromClass.chain,
-                                { pad: false },
-                            )} Gateway address: ${gateway.gatewayAddress()}`,
+                            "balance",
+                            (await fromClass.getBalance("DAI"))
+                                .shiftedBy(-18)
+                                .toFixed(),
                         );
+
+                        for (const setupKey of Object.keys(gateway.setup)) {
+                            const setup = gateway.setup[setupKey];
+                            await throttles[setup.chain](async () => {
+                                console.log(
+                                    `[${colorizeChain(
+                                        fromClass.chain,
+                                    )}⇢${colorizeChain(
+                                        toClass.chain,
+                                    )}]: Calling ${setupKey} setup for ${String(
+                                        setup.chain,
+                                    )}`,
+                                );
+                                return await setup
+                                    .submit()
+                                    .on("status", console.log);
+                            });
+                        }
+
+                        await throttles[fromClass.chain](async () => {
+                            console.log(
+                                `[${colorizeChain(
+                                    fromClass.chain,
+                                )}⇢${colorizeChain(
+                                    toClass.chain,
+                                )}]: Submitting to ${String(fromClass.chain)}`,
+                            );
+                            await gateway.in
+                                .submit({ config: { gasLimit: 2000000 } })
+                                .on("status", console.log);
+                            await gateway.in.wait();
+                        });
+
+                        // console.log(
+                        //     `[${colorizeChain(toClass.chain)}] ${colorizeChain(
+                        //         fromClass.chain,
+                        //         { pad: false },
+                        //     )} Gateway address: ${gateway.gatewayAddress()}`,
+                        // );
 
                         await new Promise<void>((resolve, reject) => {
                             gateway.on("transaction", (tx) => {
@@ -212,6 +231,7 @@ describe("Refactor: mint", () => {
                                     // );
                                     while (true) {
                                         try {
+                                            console.log("calling signed");
                                             await tx.signed();
                                             break;
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,6 +240,7 @@ describe("Refactor: mint", () => {
                                             await sleep(10 * SECONDS);
                                         }
                                     }
+                                    console.log("submitting!");
                                     await throttles[toClass.chain](async () => {
                                         console.log(
                                             `[${colorizeChain(
@@ -233,12 +254,15 @@ describe("Refactor: mint", () => {
                                                 toClass.chain,
                                             )}`,
                                         );
-                                        if (await tx.out.submit) {
+                                        if (tx.out.submit) {
                                             await tx.out
                                                 .submit()
-                                                .on("transaction", console.log);
+                                                .on("status", console.log);
                                         }
-                                        return tx.out.wait();
+                                        console.log(
+                                            "done!",
+                                            await tx.out.wait(),
+                                        );
                                     });
                                     // resolve();
                                 })().catch(reject);

@@ -11,10 +11,16 @@ import * as Chains from "@renproject/chains";
 import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
 import { renTestnet } from "@renproject/chains-solana/build/main/networks";
 import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import { RenVMProvider } from "@renproject/provider/build/main/v2";
 import RenJS from "@renproject/ren";
-import { extractError, SECONDS, sleep } from "@renproject/utils";
+import {
+    extractError,
+    LogLevel,
+    RenNetwork,
+    SECONDS,
+    SimpleLogger,
+    sleep,
+} from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 chai.should();
@@ -109,8 +115,8 @@ describe("Refactor: mint", () => {
         let suggestedAmount: BigNumber;
         try {
             const fees = await renJS.getFees(params);
-            suggestedAmount = fees.lock.div(
-                new BigNumber(10).exponentiatedBy(assetDecimals),
+            suggestedAmount = fees.lock.shiftedBy(
+                -new BigNumber(assetDecimals).toNumber(),
             );
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
@@ -170,11 +176,7 @@ describe("Refactor: mint", () => {
                     `Received ${
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         new BigNumber((deposit.depositDetails as any).amount)
-                            .div(
-                                new BigNumber(10).exponentiatedBy(
-                                    assetDecimals,
-                                ),
-                            )
+                            .shiftedBy(-new BigNumber(assetDecimals).toNumber())
                             .toFixed()
                     } ${asset}`,
                     deposit.depositDetails,

@@ -1,4 +1,4 @@
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
 import { Blockbook } from "./APIs/blockbook";
 import { BitcoinBaseChain } from "./base";

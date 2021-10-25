@@ -1,33 +1,6 @@
 export type UrlBase64String = string;
 export type HexString = string;
 
-export enum LockAndMintStatus {
-    Committed = "mint_committed",
-    Deposited = "mint_deposited",
-    Confirmed = "mint_confirmed",
-    SubmittedToRenVM = "mint_submittedToRenVM",
-    ReturnedFromRenVM = "mint_returnedFromRenVM",
-    SubmittedToLockChain = "mint_submittedToLockChain",
-    ConfirmedOnLockChain = "mint_confirmedOnLockChain",
-
-    // Backwards compatibility
-    SubmittedToEthereum = "mint_submittedToEthereum",
-    ConfirmedOnEthereum = "mint_confirmedOnEthereum",
-}
-
-export enum BurnAndReleaseStatus {
-    Committed = "burn_committed",
-    SubmittedToLockChain = "burn_submittedToLockChain",
-    ConfirmedOnLockChain = "burn_confirmedOnLockChain",
-    SubmittedToRenVM = "burn_submittedToRenVM",
-    ReturnedFromRenVM = "burn_returnedFromRenVM",
-    NoBurnFound = "burn_noBurnFound",
-
-    // Backwards compatibility
-    SubmittedToEthereum = "burn_submittedToEthereum",
-    ConfirmedOnEthereum = "burn_confirmedOnEthereum",
-}
-
 export enum TxStatus {
     // TxStatusNil is used for transactions that have not been seen, or are
     // otherwise unknown.

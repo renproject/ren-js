@@ -1,5 +1,3 @@
-import { Logger, NullLogger } from "@renproject/interfaces";
-
 import { assertType } from "./assert";
 import {
     fromBase64,
@@ -10,6 +8,7 @@ import {
     toURLBase64,
 } from "./common";
 import { keccak256 } from "./hash";
+import { Logger, NullLogger } from "./logger";
 
 // export const generateNHash = (tx: Tx): Buffer => {
 //     const encoded = rawEncode(

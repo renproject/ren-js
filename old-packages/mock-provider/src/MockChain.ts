@@ -1,21 +1,23 @@
-import {
-    ChainStatic,
-    RenNetwork,
-    RenNetworkDetails,
-    RenNetworkString,
-} from "@renproject/interfaces";
-import { isHex, randomBytes, utilsWithChainNetwork } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 import base58 from "bs58";
 
 import {
+    BitcoinClass,
     BtcAddress,
     BtcNetwork,
     BtcTransaction,
-    BitcoinClass,
 } from "@renproject/chains-bitcoin";
-import { validateAddress } from "@renproject/chains-bitcoin/build/main/utils";
 import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
-import BigNumber from "bignumber.js";
+import { validateAddress } from "@renproject/chains-bitcoin/build/main/utils";
+import {
+    ChainStatic,
+    isHex,
+    randomBytes,
+    RenNetwork,
+    RenNetworkDetails,
+    RenNetworkString,
+    utilsWithChainNetwork,
+} from "@renproject/utils";
 
 export class MockChain extends BitcoinClass {
     public static chain = "MockChain";
@@ -43,11 +45,10 @@ export class MockChain extends BitcoinClass {
         address: string,
         confirmations?: number,
         // eslint-disable-next-line @typescript-eslint/require-await
-    ): Promise<UTXO[]> => {
-        return this.mempool.filter(
+    ): Promise<UTXO[]> =>
+        this.mempool.filter(
             (x) => x.to === address && x.confirmations >= (confirmations || 0),
         );
-    };
 
     public addUTXO = (to: string, amount: BigNumber | number): UTXO => {
         const tx = {
@@ -62,9 +63,7 @@ export class MockChain extends BitcoinClass {
     };
 
     // APIs
-    public withDefaultAPIs = (_network: BtcNetwork): this => {
-        return this.withAPI(this);
-    };
+    public withDefaultAPIs = (_network: BtcNetwork): this => this.withAPI(this);
 
     public static asset = "BTC";
     public asset = "BTC";
@@ -111,9 +110,7 @@ export class MockChain extends BitcoinClass {
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): string | undefined => {
-            return address;
-        },
+        ): string | undefined => address,
 
         transactionExplorerLink: (
             tx: BtcTransaction | string,
@@ -122,9 +119,7 @@ export class MockChain extends BitcoinClass {
                 | RenNetworkString
                 | RenNetworkDetails
                 | BtcNetwork = "mainnet",
-        ): string | undefined => {
-            return typeof tx === "string" ? tx : tx.txHash;
-        },
+        ): string | undefined => (typeof tx === "string" ? tx : tx.txHash),
     };
 
     public utils = utilsWithChainNetwork(

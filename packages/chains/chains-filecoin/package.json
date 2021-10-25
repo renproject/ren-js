@@ -45,7 +45,6 @@
     "dependencies": {
         "@glif/filecoin-address": "^1.1.0",
         "@glif/filecoin-rpc-client": "^1.1.0",
-        "@renproject/interfaces": "^3.0.0-alpha.0",
         "@renproject/provider": "^3.0.0-alpha.0",
         "@renproject/utils": "^3.0.0-alpha.0",
         "@types/elliptic": "^6.4.12",

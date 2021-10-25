@@ -6,10 +6,14 @@ import CryptoAccount from "send-crypto";
 
 /* eslint-disable no-console */
 import * as Chains from "@renproject/chains";
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
 import { BurnAndReleaseStatus } from "@renproject/ren/build/main/burnAndRelease";
-import { extractError } from "@renproject/utils";
+import {
+    extractError,
+    LogLevel,
+    RenNetwork,
+    SimpleLogger,
+} from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 chai.should();
@@ -77,9 +81,7 @@ describe("Refactor - Burning", () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Error fetching fees:", red(extractError(error)));
-            suggestedAmount = new BigNumber(0.0002).times(
-                new BigNumber(10).exponentiatedBy(decimals),
-            );
+            suggestedAmount = new BigNumber(0.0002).shiftedBy(decimals);
         }
 
         // console.log(

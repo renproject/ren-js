@@ -1,18 +1,16 @@
 import {
+    assertType,
+    fromBase64,
+    isDefined,
     Logger,
     NullLogger,
     RenNetwork,
     RenNetworkString,
     renRpcUrls,
-    TxStatus,
-} from "@renproject/interfaces";
-import {
-    assertType,
-    fromBase64,
-    isDefined,
     SECONDS,
     sleep,
     toURLBase64,
+    TxStatus,
 } from "@renproject/utils";
 
 import { BlockState } from "./methods/ren_queryBlockState";
@@ -262,9 +260,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         payload: Buffer;
         pHash: Buffer;
         to: string;
-    }): Buffer => {
-        return fromBase64(this.buildTransaction(params).hash);
-    };
+    }): Buffer => fromBase64(this.buildTransaction(params).hash);
 
     public submitTransaction = async (
         params: {
@@ -321,6 +317,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
                 toURLBase64(renVMTxHash),
                 retries,
             );
+            console.log("got back response", response);
 
             return {
                 tx: unmarshalCrossChainTxResponse(response.tx),

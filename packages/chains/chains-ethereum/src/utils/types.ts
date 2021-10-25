@@ -7,11 +7,12 @@ import {
 } from "@ethersproject/providers/lib/web3-provider";
 import {
     InputType,
+    Logger,
     OutputType,
     RenNetwork,
     RenNetworkString,
     SyncOrPromise,
-} from "@renproject/interfaces";
+} from "@renproject/utils";
 
 import { EthArg } from "./abi";
 
@@ -61,9 +62,8 @@ export type EvmNetworkInput = RenNetwork | RenNetworkString | EvmNetworkConfig;
 
 export const isEvmNetworkConfig = (
     renNetwork: EvmNetworkInput,
-): renNetwork is EvmNetworkConfig => {
-    return !!(renNetwork as EvmNetworkConfig).addresses;
-};
+): renNetwork is EvmNetworkConfig =>
+    !!(renNetwork as EvmNetworkConfig).addresses;
 
 export type EvmNetworkConfigMap = {
     [network in RenNetwork]?: EvmNetworkConfig;
@@ -88,6 +88,10 @@ export type EthProvider =
           provider: Provider;
           signer: ethers.Signer;
       };
+
+export interface EthereumClassConfig {
+    logger?: Logger;
+}
 
 export interface ContractCall {
     chain: string;

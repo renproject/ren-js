@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { EthArgs, LogLevel, SimpleLogger } from "@renproject/interfaces";
+import { EthArgs, LogLevel, SimpleLogger } from "@renproject/utils";
 
 import { Ox } from "../src/common";
 import {

@@ -4,7 +4,7 @@ import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { providers } from "ethers";
 
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
 import { BinanceSmartChain } from "../build/main";
 import { findABIMethod, LockGatewayABI } from "../src/contracts";

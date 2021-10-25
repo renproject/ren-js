@@ -55,16 +55,16 @@ export class Filfox {
         return {
             deposits: messages
                 .filter((message) => message.to === address)
-                .map((message): FilTransaction => {
-                    return {
+                .map(
+                    (message): FilTransaction => ({
                         cid: message.cid,
                         // to: message.to,
                         amount: message.value,
                         params: message.params,
                         confirmations: height - message.height,
                         nonce: message.nonce,
-                    };
-                }),
+                    }),
+                ),
             // .filter(
             //     (message) =>
             //         paramsFilterBase64 === undefined ||

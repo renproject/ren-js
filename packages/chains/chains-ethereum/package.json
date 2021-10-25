@@ -44,7 +44,6 @@
     },
     "dependencies": {
         "@ethersproject/providers": "^5.4.4",
-        "@renproject/interfaces": "^3.0.0-alpha.0",
         "@renproject/utils": "^3.0.0-alpha.0",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",

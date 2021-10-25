@@ -107,3 +107,45 @@ const transactionHandler = (tx: GatewayTransaction) => {
     }
 };
 ```
+
+```ts
+import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum";
+import { RenNetwork } from "@renproject/utils";
+import RenJS from "@renproject/ren";
+import { getEVMChain } from "./testUtils";
+
+const NETWORK = RenNetwork.Testnet;
+
+const main = async () => {
+    const ethereum = getEVMChain(Ethereum as any, NETWORK);
+    const bsc = getEVMChain(BinanceSmartChain, NETWORK);
+
+    const renJS = new RenJS(NETWORK).withChains(ethereum, bsc);
+
+    const params = {
+        asset: "DAI",
+        from: bsc.Account("1000000000000000000"),
+        to: ethereum.Account(),
+    };
+
+    const gateway = await renJS.gateway(params);
+
+    gateway.setup.approval.submit();
+
+    // For h2h call in.submit rather than showing gateway address
+    await gateway.from.submit();
+
+    gateway.on("transaction", (tx) => {
+        (async () => {
+            await tx.refreshStatus();
+
+            await tx.from.wait().on("status", console.log);
+            await tx.signed();
+            if (await tx.to.submit) {
+                await tx.to.submit().on("transaction", console.log);
+            }
+            return tx.to.wait().on("status", console.log);
+        })();
+    });
+};
+```

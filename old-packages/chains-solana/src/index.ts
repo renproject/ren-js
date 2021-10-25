@@ -10,7 +10,9 @@ import {
     BurnDetails,
     BurnPayloadConfig,
     ContractCall,
+    doesntError,
     EventEmitterTyped,
+    keccak256,
     LockAndMintTransaction,
     Logger,
     MintChain,
@@ -19,9 +21,10 @@ import {
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
+    SECONDS,
     SimpleLogger,
-} from "@renproject/interfaces";
-import { doesntError, keccak256, SECONDS, tryNTimes } from "@renproject/utils";
+    tryNTimes,
+} from "@renproject/utils";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
     ConfirmOptions,
@@ -233,9 +236,7 @@ export class Solana
         return this;
     };
 
-    assetIsNative = (asset: string) => {
-        return asset === "SOL";
-    };
+    assetIsNative = (asset: string) => asset === "SOL";
 
     /**
      * `assetIsSupported` should return true if the the asset is native to the
@@ -798,9 +799,7 @@ export class Solana
     }
 
     Params(params: OverwritableBurnAndReleaseParams) {
-        this._getParams = () => {
-            return params;
-        };
+        this._getParams = () => params;
         return this;
     }
 

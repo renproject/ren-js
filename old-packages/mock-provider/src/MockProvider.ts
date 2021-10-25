@@ -1,10 +1,9 @@
 import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
-import { ecsign, privateToAddress } from "ethereumjs-util";
 import { defaultAbiCoder } from "ethers/lib/utils";
 import { OrderedMap } from "immutable";
 
-import { ChainCommon, TxStatus } from "@renproject/interfaces";
+import { ecsign, privateToAddress } from "@ethereumjs/util";
 import { Provider } from "@renproject/provider";
 import {
     PackPrimitive,
@@ -33,12 +32,14 @@ import {
     MintTransactionInput,
 } from "@renproject/provider/build/main/v2/transaction";
 import {
+    ChainCommon,
     fromBase64,
     fromHex,
     keccak256,
     Ox,
     randomBytes,
     toURLBase64,
+    TxStatus,
 } from "@renproject/utils";
 
 export const responseQueryParamsType: PackStructType = {
@@ -222,15 +223,13 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
 
     public handle_queryConfig = (
         _request: ParamsQueryConfig,
-    ): ResponseQueryConfig => {
-        return {
-            confirmations: this.supportedChains.reduce(
-                (acc, chain) => ({ ...acc, [chain]: 0 }),
-                {},
-            ),
-            whitelist: [],
-        };
-    };
+    ): ResponseQueryConfig => ({
+        confirmations: this.supportedChains.reduce(
+            (acc, chain) => ({ ...acc, [chain]: 0 }),
+            {},
+        ),
+        whitelist: [],
+    });
 
     public handle_queryBlockState = (
         _request: ParamsQueryBlockState,

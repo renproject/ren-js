@@ -1,28 +1,26 @@
-import {
-    Chain,
-    ChainTransaction,
-    DefaultTxWaiter,
-    InputChainTransaction,
-    isContractChain,
-    newPromiEvent,
-    PromiEvent,
-    RenJSErrors,
-    TxStatus,
-    TxSubmitter,
-    TxWaiter,
-} from "@renproject/interfaces";
 import { RenVMProvider } from "@renproject/provider";
 import {
     CrossChainTxResponse,
     TxResponseWithStatus,
 } from "@renproject/provider/build/main/unmarshal";
 import {
+    Chain,
+    ChainTransaction,
+    DefaultTxWaiter,
     fixSignatureSimple,
     fromBase64,
+    InputChainTransaction,
+    isContractChain,
     isDefined,
     keccak256,
+    newPromiEvent,
+    PromiEvent,
+    RenJSErrors,
     sleep,
     toURLBase64,
+    TxStatus,
+    TxSubmitter,
+    TxWaiter,
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
@@ -120,7 +118,7 @@ export class GatewayTransaction<
     public _config: typeof defaultRenJSConfig & RenJSConfig;
 
     public in: TxWaiter;
-    public out: TxSubmitter | TxWaiter | undefined;
+    public out: TxSubmitter | TxWaiter;
 
     // Private
     private queryTxResult:
@@ -160,6 +158,9 @@ export class GatewayTransaction<
         } else {
             this.in = undefined as never;
         }
+
+        // TODO: Throw error if this.out is accessed before this.signed().
+        this.out = undefined as never;
     }
 
     /** @hidden */
@@ -171,6 +172,7 @@ export class GatewayTransaction<
             this.inputType = InputType.Burn;
             this.outputType = OutputType.Release;
         } else {
+            throw new Error(`Burning and minting is not supported yet.`);
             this.inputType = InputType.Burn;
             this.outputType = OutputType.Mint;
         }
@@ -528,7 +530,12 @@ export class GatewayTransaction<
     // };
 
     private onSignatureReady = async () => {
-        if (!this.queryTxResult || !this.queryTxResult.tx.out?.sig) {
+        console.log("Called onSignatureReady!");
+        if (
+            !this.queryTxResult ||
+            !this.queryTxResult.tx.out ||
+            !this.queryTxResult.tx.out.sig
+        ) {
             throw new Error(
                 `Unable to submit to Ethereum without signature. Call 'signed' first.`,
             );
@@ -538,7 +545,23 @@ export class GatewayTransaction<
             throw new Error(`Must call .initialize() first.`);
         }
 
-        if (isContractChain(this.params.toChain)) {
+        if (
+            this.queryTxResult.tx.out &&
+            this.queryTxResult.tx.out.txid &&
+            this.queryTxResult.tx.out.txid.length > 0
+        ) {
+            // The transaction has already been submitted by RenVM.
+            this.out = new DefaultTxWaiter({
+                chainTransaction: {
+                    txid: toURLBase64(this.queryTxResult.tx.out.txid),
+                    txindex: this.queryTxResult.tx.out.txindex.toFixed(),
+                },
+                chain: this.params.fromChain,
+                target: await this.renVM.getConfirmationTarget(
+                    this.params.fromChain.chain,
+                ),
+            });
+        } else if (isContractChain(this.params.toChain)) {
             const sigHash = this.queryTxResult.tx.out.sighash;
             const amount = this.queryTxResult.tx.out.amount;
             // const phash = this.queryTxResult.tx.in.phash;
@@ -568,6 +591,8 @@ export class GatewayTransaction<
                 },
                 1,
             );
+        } else {
+            throw new Error(`Error setting 'out' transaction submitter.`);
         }
 
         //     if (!this.outTransaction) {
@@ -633,6 +658,8 @@ export class GatewayTransaction<
             { txHash: [string]; status: [TxStatus] }
         >();
 
+        console.log("!!");
+
         (async () => {
             let txHash = this.hash;
 
@@ -645,7 +672,7 @@ export class GatewayTransaction<
                     this.queryTxResult.txStatus !==
                         TxStatus.TxStatusReverted) ||
                 // Output not populated
-                Object.keys(this.queryTxResult.tx.out).length === 0
+                Object.keys(this.queryTxResult.tx.out).length > 0
             ) {
                 promiEvent.emit("txHash", txHash);
                 this._config.logger.debug("RenVM txHash:", txHash);
@@ -656,7 +683,8 @@ export class GatewayTransaction<
                     txHash = await this._submitMintTransaction(1);
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any) {
-                    // this.logger.error(error);
+                    this._config.logger.debug(error);
+
                     try {
                         // Check if the darknodes have already seen the transaction
                         const queryTxResponse = await this.queryTx(2);
@@ -668,40 +696,11 @@ export class GatewayTransaction<
                         txHash = queryTxResponse.tx.hash;
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     } catch (errorInner: any) {
-                        let submitted = false;
-
-                        // If transaction is not found, check for RenVM v0.2 error message.
-                        if (
-                            errorInner.code ===
-                            RenJSErrors.RenVMTransactionNotFound
-                        ) {
-                            if (
-                                error.code === RenJSErrors.AmountTooSmall ||
-                                error.code ===
-                                    RenJSErrors.DepositSpentOrNotFound
-                            ) {
-                                this.status = TransactionStatus.Reverted;
-                                this.revertReason = String(
-                                    (error || {}).message,
-                                ).replace(
-                                    /Node returned status \d+ with reason: /,
-                                    "",
-                                );
-                                throw new Error(this.revertReason);
-                            } else {
-                                // Retry submitting 2 more times to reduce chance
-                                // of network issues causing problems.
-                                txHash = await this._submitMintTransaction(5);
-                                submitted = true;
-                            }
-                        }
-
-                        // Ignore errorInner.
                         this._config.logger.debug(errorInner);
 
-                        if (!submitted) {
-                            throw error;
-                        }
+                        // Retry submitting to reduce chance of network issues
+                        // causing problems.
+                        txHash = await this._submitMintTransaction(5);
                     }
                 }
 
@@ -724,23 +723,27 @@ export class GatewayTransaction<
                 this.queryTxResult = response;
             }
 
+            console.log("!");
+
             // Update status.
             if (
                 this.queryTxResult.tx.out &&
-                this.queryTxResult.tx.out.revert !== undefined
+                this.queryTxResult.tx.out.revert !== undefined &&
+                this.queryTxResult.tx.out.revert !== ""
             ) {
                 this.status = TransactionStatus.Reverted;
                 this.revertReason = this.queryTxResult.tx.out.revert.toString();
                 throw new Error(this.revertReason);
             } else if (
                 this.queryTxResult.tx.out &&
-                Object.keys(this.queryTxResult.tx.out).length === 0
+                Object.keys(this.queryTxResult.tx.out).length > 0
             ) {
                 if (
                     TransactionStatusIndex[this.status] <
                     TransactionStatusIndex[TransactionStatus.Signed]
                 ) {
                     this.status = TransactionStatus.Signed;
+                    await this.onSignatureReady();
                 }
             }
 

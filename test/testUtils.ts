@@ -7,7 +7,7 @@ import {
     EthProvider,
     EvmNetworkConfig,
 } from "@renproject/chains-ethereum";
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
 chai.should();
 
@@ -24,17 +24,17 @@ interface EVMConstructor<EVM> {
 }
 
 export const getEVMChain = <EVM extends Ethereum>(
-    C: EVMConstructor<EVM>,
+    ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
 ): EVM => {
-    const rpcUrl = C.configMap[network].network.rpcUrls[0]
+    const rpcUrl = ChainClass.configMap[network].network.rpcUrls[0]
         .replace("${INFURA_API_KEY}", process.env.INFURA_KEY)
         .replace("${ALCHEMY_API_KEY}", process.env.ALCHEMY_KEY);
 
     const provider = new providers.JsonRpcProvider(rpcUrl);
     const signer = Wallet.fromMnemonic(MNEMONIC).connect(provider);
 
-    return new C(network, {
+    return new ChainClass(network, {
         provider,
         signer,
     });

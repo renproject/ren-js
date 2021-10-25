@@ -28,7 +28,9 @@ export const findABIMethod = (abi: AbiItem[], name: string) => {
 
 export const getEventTopic = (abiItem: AbiItem) => {
     const parameters =
-        abiItem.inputs?.map((input) => input.type).join(",") || "";
+        abiItem.inputs && abiItem.inputs.length > 0
+            ? abiItem.inputs.map((input) => input.type).join(",")
+            : "";
     const eventSignature = `${abiItem.name}(${parameters})`;
     return keccak256(Buffer.from(eventSignature));
 };
@@ -36,31 +38,20 @@ export const getEventTopic = (abiItem: AbiItem) => {
 export const getMintGatewayInstance = (
     provider: Provider,
     address: string,
-): MintGatewayV3 => {
-    return new Contract(address, MintGatewayABI, provider) as MintGatewayV3;
-};
+): MintGatewayV3 =>
+    new Contract(address, MintGatewayABI, provider) as MintGatewayV3;
 
 export const getLockGatewayInstance = (
     provider: Provider,
     address: string,
-): LockGatewayV3 => {
-    return new Contract(address, LockGatewayABI, provider) as LockGatewayV3;
-};
+): LockGatewayV3 =>
+    new Contract(address, LockGatewayABI, provider) as LockGatewayV3;
 
 export const getGatewayRegistryInstance = (
     provider: Provider,
     address: string,
-): GatewayRegistryV2 => {
-    return new Contract(
-        address,
-        GatewayRegistryABI,
-        provider,
-    ) as GatewayRegistryV2;
-};
+): GatewayRegistryV2 =>
+    new Contract(address, GatewayRegistryABI, provider) as GatewayRegistryV2;
 
-export const getERC20Instance = (
-    provider: Provider,
-    address: string,
-): ERC20 => {
-    return new Contract(address, ERC20ABI, provider) as ERC20;
-};
+export const getERC20Instance = (provider: Provider, address: string): ERC20 =>
+    new Contract(address, ERC20ABI, provider) as ERC20;

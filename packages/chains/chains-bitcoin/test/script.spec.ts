@@ -1,9 +1,10 @@
-/* eslint-disable no-console */
-import { RenNetwork } from "@renproject/interfaces";
-import { fromBase64, fromHex, hash160 } from "@renproject/utils";
 import { describe, it } from "mocha";
 
+/* eslint-disable no-console */
+import { fromBase64, fromHex, RenNetwork } from "@renproject/utils";
+
 import { Bitcoin, BitcoinCash, Dogecoin, Zcash } from "../src";
+import { hash160 } from "../src/utils/utils";
 
 describe("Common", () => {
     for (const ChainClass of [Bitcoin, Zcash, BitcoinCash, Dogecoin]) {

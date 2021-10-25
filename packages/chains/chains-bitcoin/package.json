@@ -43,9 +43,9 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/interfaces": "^3.0.0-alpha.0",
         "@renproject/provider": "^3.0.0-alpha.0",
         "@renproject/utils": "^3.0.0-alpha.0",
+        "@types/bchaddrjs": "^0.4.0",
         "@types/bs58": "^4.0.1",
         "@types/cashaddrjs": "^0.3.0",
         "@types/node": ">=10",

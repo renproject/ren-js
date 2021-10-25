@@ -6,9 +6,15 @@ import { config as loadDotEnv } from "dotenv";
 import CryptoAccount from "send-crypto";
 
 import * as Chains from "@renproject/chains";
-import { LogLevel, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
-import { extractError, Ox, SECONDS, sleep } from "@renproject/utils";
+import {
+    extractError,
+    LogLevel,
+    Ox,
+    SECONDS,
+    SimpleLogger,
+    sleep,
+} from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 chai.should();

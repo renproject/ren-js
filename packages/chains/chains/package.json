@@ -48,7 +48,7 @@
         "@renproject/chains-filecoin": "^3.0.0-alpha.0",
         "@renproject/chains-solana": "^2.5.6",
         "@renproject/chains-terra": "^2.5.6",
-        "@renproject/interfaces": "^3.0.0-alpha.0",
+        "@renproject/utils": "^3.0.0-alpha.0",
         "@types/node": ">=10"
     },
     "resolutions": {

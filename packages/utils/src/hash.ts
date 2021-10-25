@@ -1,14 +1,12 @@
-import createHash from "create-hash";
-import createKeccakHash from "keccak";
+import { keccak256 as keccak256_ } from "ethereum-cryptography/keccak";
+import { ripemd160 as ripemd160_ } from "ethereum-cryptography/ripemd160";
+import { sha256 as sha256_ } from "ethereum-cryptography/sha256";
 
-export const keccak256 = (msg: Buffer): Buffer =>
-    createKeccakHash("keccak256").update(msg).digest();
+/** Return the SHA-256 hash of the Buffer input as a Buffer. */
+export const sha256 = (input: Buffer) => Buffer.from(sha256_(input));
 
-export const ripemd160 = (msg: Buffer): Buffer =>
-    createHash("rmd160").update(msg).digest();
+/** Return the KECCAK-256 hash of the Buffer input as a Buffer. */
+export const keccak256 = (input: Buffer) => Buffer.from(keccak256_(input));
 
-export const sha256 = (msg: Buffer): Buffer =>
-    createHash("sha256").update(msg).digest();
-
-export const hash160 = (publicKey: Buffer): Buffer =>
-    ripemd160(sha256(publicKey));
+/** Return the RIPEMD-160 hash of the Buffer input as a Buffer. */
+export const ripemd160 = (input: Buffer) => Buffer.from(ripemd160_(input));

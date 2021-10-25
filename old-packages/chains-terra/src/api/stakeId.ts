@@ -1,5 +1,6 @@
-import { SECONDS } from "@renproject/utils";
 import Axios from "axios";
+
+import { SECONDS } from "@renproject/utils";
 
 import { TerraAPI, TerraNetwork, TerraTransaction } from "./deposit";
 import { getHeight } from "./height";
@@ -112,20 +113,16 @@ const extractDepositsFromTx =
             return [];
         }
 
-        return msgs.map((msg) => {
-            return {
-                hash: msg.hash,
-                messageIndex: msg.messageIndex,
-                from: msg.from_address,
-                to: msg.to_address,
-                denomination: msg.denom,
-                amount: msg.amount,
-                memo: msg.memo,
-                confirmations: msg.height
-                    ? chainHeight - msg.height
-                    : msg.height, // TODO
-            };
-        });
+        return msgs.map((msg) => ({
+            hash: msg.hash,
+            messageIndex: msg.messageIndex,
+            from: msg.from_address,
+            to: msg.to_address,
+            denomination: msg.denom,
+            amount: msg.amount,
+            memo: msg.memo,
+            confirmations: msg.height ? chainHeight - msg.height : msg.height, // TODO
+        }));
     };
 
 const concat = <T>(x: T[], y: T[]) => x.concat(y);

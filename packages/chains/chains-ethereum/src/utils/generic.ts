@@ -12,16 +12,14 @@ import { Result } from "ethers/lib/utils";
 
 import { Provider, TransactionReceipt } from "@ethersproject/providers";
 import {
+    assertType,
     ChainTransaction,
     EventEmitterTyped,
-    InputChainTransaction,
-    Logger,
-} from "@renproject/interfaces";
-import {
-    assertType,
     fromHex,
+    InputChainTransaction,
     isDefined,
     isHex,
+    Logger,
     Ox,
     SECONDS,
     sleep,

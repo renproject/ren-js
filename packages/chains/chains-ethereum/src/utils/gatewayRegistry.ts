@@ -1,8 +1,7 @@
 import { Contract } from "ethers";
 
 import { Provider } from "@ethersproject/providers";
-import { ErrorWithCode } from "@renproject/interfaces";
-import { Ox } from "@renproject/utils";
+import { ErrorWithCode, Ox } from "@renproject/utils";
 
 import { GatewayRegistryABI } from "../contracts";
 import { ETHEREUM_ERROR } from "./errors";
@@ -18,13 +17,12 @@ const EMPTY_ADDRESS = "0x" + "00".repeat(20);
 export const getGatewayRegistry = (
     network: EvmNetworkConfig,
     provider: Provider,
-) => {
-    return new Contract(
+) =>
+    new Contract(
         network.addresses.GatewayRegistry,
         GatewayRegistryABI,
         provider,
     );
-};
 
 enum GatewayRegistryLookup {
     MintGateway = "Mint Gateway",

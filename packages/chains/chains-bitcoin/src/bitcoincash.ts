@@ -6,7 +6,7 @@ import {
 } from "bchaddrjs";
 import bs58 from "bs58";
 
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
 import { BitcoinDotCom } from "./APIs/bitcoinDotCom";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";

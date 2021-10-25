@@ -1,4 +1,5 @@
-import { RenNetwork } from "../../../../interfaces/build/main";
+import { RenNetwork } from "@renproject/utils";
+
 import {
     EvmNetworkConfig,
     EvmNetworkConfigMap,

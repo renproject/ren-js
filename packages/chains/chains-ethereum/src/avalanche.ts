@@ -1,7 +1,12 @@
-import { RenNetwork } from "@renproject/interfaces";
+import { RenNetwork } from "@renproject/utils";
 
-import { EthereumBaseChain, EthereumClassConfig } from "./base";
-import { EthProvider, EvmNetworkConfig, EvmNetworkInput } from "./utils/types";
+import { EthereumBaseChain } from "./base";
+import {
+    EthereumClassConfig,
+    EthProvider,
+    EvmNetworkConfig,
+    EvmNetworkInput,
+} from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const avalancheMainnetConfig: EvmNetworkConfig = {

@@ -4,8 +4,8 @@ import { config as loadDotEnv } from "dotenv";
 import { Ethereum, renTestnet } from "@renproject/chains-ethereum";
 /* eslint-disable no-console */
 import { Filecoin } from "@renproject/chains-filecoin";
-import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/interfaces";
 import RenJS from "@renproject/ren";
+import { LogLevel, RenNetwork, SimpleLogger } from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
 
 // Load environment variables.

@@ -2,9 +2,8 @@ import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { defaultAbiCoder } from "ethers/lib/utils";
 
-import { Logger } from "@renproject/interfaces";
-
 import { assertType } from "./assert";
+import { Logger } from "./logger";
 
 /**
  * Represents 1 second for functions that accept a parameter in milliseconds.
@@ -101,23 +100,21 @@ export const toReadable = (
     value: number | string | BigNumber,
     decimals: number | string | BigNumber,
 ): BigNumber =>
-    new BigNumber(value).dividedBy(new BigNumber(10).exponentiatedBy(decimals));
+    new BigNumber(value).shiftedBy(-new BigNumber(decimals).toNumber());
 
 export const fromReadable = (
     value: number | string | BigNumber,
     decimals: number | string | BigNumber,
 ): BigNumber =>
     new BigNumber(value)
-        .times(new BigNumber(10).exponentiatedBy(decimals))
+        .shiftedBy(new BigNumber(decimals).toNumber())
         .decimalPlaces(0);
 
 const hasOwnProperty = <T>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     object: any,
     property: keyof T,
-): object is T => {
-    return object.hasOwnProperty(property);
-};
+): object is T => object.hasOwnProperty(property);
 
 const invalidError = (errorMessage: string) =>
     errorMessage === "" ||
@@ -270,10 +267,9 @@ const assert = (input: boolean, reason?: string) => {
 /**
  * Returns false if the method throws or returns false - returns true otherwise.
  */
-export const doesntError = <T extends unknown[]>(
-    f: (...p: T) => boolean | void,
-) => {
-    return (...p: T) => {
+export const doesntError =
+    <T extends unknown[]>(f: (...p: T) => boolean | void) =>
+    (...p: T) => {
         try {
             const response = f(...p);
             return response === undefined || response === true ? true : false;
@@ -282,7 +278,6 @@ export const doesntError = <T extends unknown[]>(
             return false;
         }
     };
-};
 
 /**
  * Returns true if the

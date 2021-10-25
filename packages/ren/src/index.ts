@@ -1,14 +1,14 @@
 import BigNumber from "bignumber.js";
 
+import { RenVMProvider, unmarshalTypedPackValue } from "@renproject/provider";
+import { BlockState } from "@renproject/provider/build/main/methods/ren_queryBlockState";
 import {
     Chain,
     LogLevel,
     RenNetwork,
     RenNetworkString,
     SimpleLogger,
-} from "@renproject/interfaces";
-import { RenVMProvider, unmarshalTypedPackValue } from "@renproject/provider";
-import { BlockState } from "@renproject/provider/build/main/methods/ren_queryBlockState";
+} from "@renproject/utils";
 
 import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";

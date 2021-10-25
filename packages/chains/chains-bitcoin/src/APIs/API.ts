@@ -77,10 +77,7 @@ export const sortUTXOs = (a: UTXO, b: UTXO): number => {
 export const fixValue = (
     value: BigNumber | string | number,
     decimals: number,
-): BigNumber =>
-    new BigNumber(value)
-        .multipliedBy(new BigNumber(10).exponentiatedBy(decimals))
-        .decimalPlaces(0);
+): BigNumber => new BigNumber(value).shiftedBy(decimals).decimalPlaces(0);
 
 /**
  * fixUTXO calls {{fixValue}} on the value of the UTXO.

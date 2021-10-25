@@ -10,15 +10,17 @@ import {
     ChainTransaction,
     ContractChain,
     DefaultTxWaiter,
+    fromBase64,
     InputChainTransaction,
     InputType,
     Logger,
     NullLogger,
     OutputType,
+    Ox,
+    rawEncode,
     TxSubmitter,
     TxWaiter,
-} from "@renproject/interfaces";
-import { fromBase64, Ox, rawEncode } from "@renproject/utils";
+} from "@renproject/utils";
 
 import {
     findABIMethod,
@@ -29,6 +31,7 @@ import {
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "./contracts/typechain/MintGatewayV3";
 import { AbiItem, EthArg, payloadToABI } from "./utils/abi";
+import { callContract, EVMTxSubmitter } from "./utils/evmTxSubmitter";
 import {
     getLockAsset,
     getLockGateway,
@@ -44,19 +47,15 @@ import {
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
-import { callContract, EVMTxSubmitter } from "./utils/txSubmitter";
 import {
     ContractCall,
+    EthereumClassConfig,
     EthProvider,
     EvmNetworkConfig,
     InputContractCall,
     OutputContractCall,
 } from "./utils/types";
 import { EvmExplorer, StandardEvmExplorer } from "./utils/utils";
-
-export interface EthereumClassConfig {
-    logger?: Logger;
-}
 
 export class EthereumBaseChain
     implements ContractChain<InputContractCall, OutputContractCall>
@@ -103,9 +102,8 @@ export class EthereumBaseChain
     public addressExplorerLink = (address: string): string =>
         this.explorer.address(address);
 
-    public transactionHash = (transaction: ChainTransaction): string => {
-        return Ox(fromBase64(transaction.txid));
-    };
+    public transactionHash = (transaction: ChainTransaction): string =>
+        Ox(fromBase64(transaction.txid));
 
     public transactionExplorerLink = (transaction: ChainTransaction): string =>
         this.explorer.transaction(this.transactionHash(transaction));
@@ -277,6 +275,14 @@ export class EthereumBaseChain
         asset: string,
         address?: string,
     ): Promise<BigNumber> => {
+        address = address || (await this.signer.getAddress());
+
+        if (asset === this.network.network.nativeCurrency.symbol) {
+            return new BigNumber(
+                (await this.provider.getBalance(address)).toString(),
+            );
+        }
+
         const balanceOfABI: AbiItem = {
             constant: true,
             inputs: [
@@ -299,8 +305,7 @@ export class EthereumBaseChain
             type: "function",
         };
 
-        // TODO:
-        const tokenAddress = await this.getMintGateway(asset);
+        const tokenAddress = await this.getRenAsset(asset);
 
         const tokenContract = new Contract(
             tokenAddress,
@@ -447,13 +452,18 @@ export class EthereumBaseChain
 
         const abi = payloadToABI(method, values)[0];
 
-        return new EVMTxSubmitter(
-            async () =>
+        return new EVMTxSubmitter({
+            chain: this.chain,
+            getTx: async (options?: {
+                overrides?: any[];
+                txConfig?: PayableOverrides;
+            }) =>
                 callContract(this.signer, to, abi, params, {
                     ...(txConfig as PayableOverrides),
+                    ...(options || {}).txConfig,
                 }),
-            confirmationTarget,
-        );
+            target: confirmationTarget,
+        });
     };
 
     /**
@@ -526,13 +536,18 @@ export class EthereumBaseChain
                 const params = values.map((x) => x.value);
                 const [abi] = payloadToABI(method, values);
 
-                return new EVMTxSubmitter(
-                    async () =>
+                return new EVMTxSubmitter({
+                    chain: this.chain,
+                    getTx: async (options?: {
+                        overrides?: any[];
+                        txConfig?: PayableOverrides;
+                    }) =>
                         await callContract(this.signer, to, abi, params, {
                             ...(txConfig as PayableOverrides),
+                            ...(options || {}).txConfig,
                         }),
-                    confirmationTarget,
-                    (receipt) => {
+                    target: confirmationTarget,
+                    onReceipt: (receipt) => {
                         const logBurnABI = findABIMethod(
                             MintGatewayABI,
                             "LogBurn",
@@ -541,7 +556,7 @@ export class EthereumBaseChain
                             .map(mapBurnLogToInputChainTransaction)
                             .map(onInput);
                     },
-                );
+                });
             }
 
             case InputType.Lock: {
@@ -550,13 +565,18 @@ export class EthereumBaseChain
                 const params = values.map((x) => x.value);
                 const [abi] = payloadToABI(method, values);
 
-                return new EVMTxSubmitter(
-                    async () =>
+                return new EVMTxSubmitter({
+                    chain: this.chain,
+                    getTx: async (options?: {
+                        overrides?: any[];
+                        txConfig?: PayableOverrides;
+                    }) =>
                         await callContract(this.signer, to, abi, params, {
                             ...(txConfig as PayableOverrides),
+                            ...(options || {}).txConfig,
                         }),
-                    confirmationTarget,
-                    (receipt) => {
+                    target: confirmationTarget,
+                    onReceipt: (receipt) => {
                         const logLockABI = findABIMethod(
                             LockGatewayABI,
                             "LogLockToChain",
@@ -568,7 +588,7 @@ export class EthereumBaseChain
                             .map(mapLockLogToInputChainTransaction)
                             .map(onInput);
                     },
-                );
+                });
             }
         }
     };
@@ -581,6 +601,7 @@ export class EthereumBaseChain
         const calls = contractCall.getSetupContractCalls
             ? await contractCall.getSetupContractCalls(asset, type)
             : {};
+
         const txSubmitted = {};
         for (const callKey of Object.keys(calls)) {
             const contractCallDetails = calls[callKey];
@@ -590,13 +611,18 @@ export class EthereumBaseChain
 
             const abi = payloadToABI(method, values)[0];
 
-            txSubmitted[callKey] = new EVMTxSubmitter(
-                async () =>
+            txSubmitted[callKey] = new EVMTxSubmitter({
+                chain: this.chain,
+                getTx: async (options?: {
+                    overrides?: any[];
+                    txConfig?: PayableOverrides;
+                }) =>
                     callContract(this.signer, to, abi, params, {
                         ...(txConfig as PayableOverrides),
+                        ...(options || {}).txConfig,
                     }),
-                1,
-            );
+                target: 1,
+            });
         }
         return txSubmitted;
     };
@@ -618,13 +644,18 @@ export class EthereumBaseChain
 
             const abi = payloadToABI(method, values)[0];
 
-            txSubmitted[callKey] = new EVMTxSubmitter(
-                async () =>
+            txSubmitted[callKey] = new EVMTxSubmitter({
+                chain: this.chain,
+                getTx: async (options?: {
+                    overrides?: any[];
+                    txConfig?: PayableOverrides;
+                }) =>
                     callContract(this.signer, to, abi, params, {
                         ...(txConfig as PayableOverrides),
+                        ...(options || {}).txConfig,
                     }),
-                1,
-            );
+                target: 1,
+            });
         }
         return txSubmitted;
     };
@@ -633,141 +664,136 @@ export class EthereumBaseChain
 
     public FromAccount = (
         amount: BigNumber | string | number,
-    ): InputContractCall => {
-        return {
-            chain: this.chain,
-            getSetupContractCalls: async (
-                asset: string,
-                type: InputType,
-            ): Promise<{ [key: string]: ContractCall }> => {
-                if (type !== InputType.Lock) {
-                    return {};
-                }
+    ): InputContractCall => ({
+        chain: this.chain,
+        getSetupContractCalls: async (
+            asset: string,
+            type: InputType,
+        ): Promise<{ [key: string]: ContractCall }> => {
+            if (type !== InputType.Lock) {
+                return {};
+            }
 
-                const account = await this.signer.getAddress();
+            const account = await this.signer.getAddress();
 
-                const alreadyApproved = async () => {
+            const alreadyApproved = async () => {
+                const gateway = await this.getLockGateway(asset);
+                const token = await this.getLockAsset(asset);
+                const erc20Instance = getERC20Instance(this.provider, token);
+                const allowance = new BigNumber(
+                    (
+                        await erc20Instance.allowance(account, gateway)
+                    ).toString(),
+                );
+                return allowance.gte(new BigNumber(amount));
+            };
+
+            if (await alreadyApproved()) {
+                return {};
+            }
+
+            const contractCall = {
+                chain: this.chain,
+                getContractCall: async (
+                    asset: string,
+                ): Promise<{
+                    to: string;
+                    method: string;
+                    values: EthArg[];
+                    txConfig?: unknown;
+                }> => {
                     const gateway = await this.getLockGateway(asset);
                     const token = await this.getLockAsset(asset);
-                    const erc20Instance = getERC20Instance(
-                        this.provider,
-                        token,
-                    );
-                    const allowance = new BigNumber(
-                        (
-                            await erc20Instance.allowance(account, gateway)
-                        ).toString(),
-                    );
-                    return allowance.gte(new BigNumber(amount));
-                };
 
-                if (await alreadyApproved()) {
-                    return {};
-                }
-
-                const contractCall = {
-                    chain: this.chain,
-                    getContractCall: async (
-                        asset: string,
-                    ): Promise<{
-                        to: string;
-                        method: string;
-                        values: EthArg[];
-                        txConfig?: unknown;
-                    }> => {
-                        const gateway = await this.getLockGateway(asset);
-                        const token = await this.getLockAsset(asset);
-
-                        return {
-                            to: token,
-                            method: "approve",
-                            values: [
-                                {
-                                    name: "to",
-                                    type: "address",
-                                    value: gateway,
-                                },
-                                {
-                                    name: "amount",
-                                    type: "uint256",
-                                    value: amount,
-                                },
-                            ],
-                            txConfig: {},
-                        };
-                    },
-                };
-
-                return {
-                    approve: contractCall,
-                };
-            },
-            getContractCall: async (
-                asset: string,
-                type: InputType,
-                toChain: string,
-                toPayload: {
-                    to: string;
-                    payload: Buffer;
+                    return {
+                        to: token,
+                        method: "approve",
+                        values: [
+                            {
+                                name: "to",
+                                type: "address",
+                                value: gateway,
+                            },
+                            {
+                                name: "amount",
+                                type: "uint256",
+                                value: amount,
+                            },
+                        ],
+                        txConfig: {},
+                    };
                 },
-            ) => {
-                switch (type) {
-                    case InputType.Lock:
-                        return {
-                            to: this.network.addresses.BasicAdapter,
-                            method: "lock",
-                            values: [
-                                {
-                                    type: "string",
-                                    name: "symbol_",
-                                    value: asset,
-                                },
-                                {
-                                    type: "string",
-                                    name: "recipientAddress_",
-                                    value: toPayload.to,
-                                },
-                                {
-                                    type: "string",
-                                    name: "recipientChain_",
-                                    value: toChain,
-                                },
-                                {
-                                    type: "bytes",
-                                    name: "recipientPayload_",
-                                    value: toPayload.payload,
-                                },
-                                {
-                                    type: "uint256",
-                                    name: "amount_",
-                                    value: amount.toString(),
-                                },
-                            ],
-                        };
-                    case InputType.Burn:
-                        const addressToBuffer = Buffer.from(toPayload.to);
-                        const gateway = await this.getMintGateway(asset);
+            };
 
-                        return {
-                            to: gateway,
-                            method: "burn",
-                            values: [
-                                {
-                                    type: "bytes" as const,
-                                    name: "_to",
-                                    value: Ox(addressToBuffer),
-                                },
-                                {
-                                    type: "uint256" as const,
-                                    name: "_amount",
-                                    value: new BigNumber(amount).toFixed(),
-                                },
-                            ],
-                        };
-                }
+            return {
+                approve: contractCall,
+            };
+        },
+        getContractCall: async (
+            asset: string,
+            type: InputType,
+            toChain: string,
+            toPayload: {
+                to: string;
+                payload: Buffer;
             },
-        };
-    };
+        ) => {
+            switch (type) {
+                case InputType.Lock:
+                    return {
+                        to: this.network.addresses.BasicAdapter,
+                        method: "lock",
+                        values: [
+                            {
+                                type: "string",
+                                name: "symbol_",
+                                value: asset,
+                            },
+                            {
+                                type: "string",
+                                name: "recipientAddress_",
+                                value: toPayload.to,
+                            },
+                            {
+                                type: "string",
+                                name: "recipientChain_",
+                                value: toChain,
+                            },
+                            {
+                                type: "bytes",
+                                name: "recipientPayload_",
+                                value: toPayload.payload,
+                            },
+                            {
+                                type: "uint256",
+                                name: "amount_",
+                                value: amount.toString(),
+                            },
+                        ],
+                    };
+                case InputType.Burn:
+                    const addressToBuffer = Buffer.from(toPayload.to);
+                    const gateway = await this.getMintGateway(asset);
+
+                    return {
+                        to: gateway,
+                        method: "burn",
+                        values: [
+                            {
+                                type: "bytes" as const,
+                                name: "_to",
+                                value: Ox(addressToBuffer),
+                            },
+                            {
+                                type: "uint256" as const,
+                                name: "_amount",
+                                value: new BigNumber(amount).toFixed(),
+                            },
+                        ],
+                    };
+            }
+        },
+    });
 
     public ContractWithSignature = (
         getCall: (

@@ -1,19 +1,10 @@
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 
+import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
     ChainTransactionStatus,
-    InputChainTransaction,
-    InputType,
-    isContractChain,
-    isDepositChain,
-    OutputType,
-    TxSubmitter,
-    TxWaiter,
-} from "@renproject/interfaces";
-import { RenVMProvider } from "@renproject/provider";
-import {
     emptyNonce,
     extractError,
     fromBase64,
@@ -22,11 +13,18 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
+    InputChainTransaction,
+    InputType,
+    isContractChain,
     isDefined,
+    isDepositChain,
+    OutputType,
     Ox,
     SECONDS,
     sleep,
     toURLBase64,
+    TxSubmitter,
+    TxWaiter,
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
@@ -109,6 +107,8 @@ export class Gateway<
 
     public in: TxSubmitter | TxWaiter | undefined;
 
+    public setup: { [key: string]: TxSubmitter | TxWaiter } = {};
+
     private inputType: InputType;
     private outputType: OutputType;
 
@@ -151,18 +151,21 @@ export class Gateway<
     public readonly _initialize = async (): Promise<
         Gateway<FromPayload, ToPayload>
     > => {
-        if (await this.params.fromChain.assetIsNative(this.params.asset)) {
+        const { to, asset, from, fromChain, toChain } = this.params;
+
+        if (await fromChain.assetIsNative(asset)) {
             this.inputType = InputType.Lock;
             this.outputType = OutputType.Mint;
-            this.selector = `${this.params.asset}/to${this.params.to.chain}`;
-        } else if (await this.params.toChain.assetIsNative(this.params.asset)) {
+            this.selector = `${asset}/to${to.chain}`;
+        } else if (await toChain.assetIsNative(asset)) {
             this.inputType = InputType.Burn;
             this.outputType = OutputType.Release;
-            this.selector = `${this.params.asset}/from${this.params.from.chain}`;
+            this.selector = `${asset}/from${from.chain}`;
         } else {
+            throw new Error(`Burning and minting is not supported yet.`);
             this.inputType = InputType.Burn;
             this.outputType = OutputType.Mint;
-            this.selector = `${this.params.asset}/from${this.params.from.chain}To${this.params.to.chain}`;
+            this.selector = `${asset}/from${from.chain}To${to.chain}`;
         }
 
         try {
@@ -172,10 +175,9 @@ export class Gateway<
             console.error(error);
         }
 
-        const fromClass = this.params.fromChain;
         if (
-            isDepositChain(fromClass) &&
-            (await fromClass.isDepositAsset(this.params.asset))
+            isDepositChain(fromChain) &&
+            (await fromChain.isDepositAsset(this.params.asset))
         ) {
             try {
                 this._gatewayAddress = await this.generateGatewayAddress();
@@ -187,7 +189,6 @@ export class Gateway<
             // Will fetch deposits as long as there's at least one deposit.
             this.wait().catch(console.error);
         } else {
-            const { to, asset, from, fromChain, toChain } = this.params;
             if (!isContractChain(fromChain)) {
                 throw new Error(
                     `Cannot lock on non-contract chain ${fromChain.chain}.`,
@@ -210,7 +211,7 @@ export class Gateway<
                 `${this.params.asset}/to${this.params.to.chain}`,
             );
 
-            const processLock = (lock: InputChainTransaction) => {
+            const processInput = (lock: InputChainTransaction) => {
                 const nonce = lock.nonce!;
                 const gHash = generateGHash(
                     payload.payload,
@@ -240,10 +241,10 @@ export class Gateway<
             };
 
             // TODO
-            const removeLock = () => {};
+            const removeInput = () => {};
 
             this.in = await fromChain.submitInput(
-                InputType.Lock,
+                this.inputType,
                 asset,
                 from,
                 {
@@ -253,9 +254,23 @@ export class Gateway<
                 await this.renVM.getConfirmationTarget(
                     this.params.fromChain.chain,
                 ),
-                processLock,
-                removeLock,
+                processInput,
+                removeInput,
             );
+        }
+
+        if (isContractChain(fromChain) && fromChain.getInputSetup) {
+            this.setup = {
+                ...this.setup,
+                ...(await fromChain.getInputSetup(asset, this.inputType, from)),
+            };
+        }
+
+        if (isContractChain(toChain) && toChain.getOutputSetup) {
+            this.setup = {
+                ...this.setup,
+                ...(await toChain.getOutputSetup(asset, this.outputType, to)),
+            };
         }
 
         return this;

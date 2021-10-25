@@ -36,7 +36,7 @@ export const isErrorWithCode = (error: unknown): error is ErrorWithCode =>
 /**
  * Add an error code to an existing Error instance.
  */
-export const addCodeToError = (error: Error, code: string): ErrorWithCode => {
+export const withCode = (error: Error, code: string): ErrorWithCode => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any).code = code;
     return error as ErrorWithCode;

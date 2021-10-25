@@ -1,16 +1,16 @@
 import {
-    getRenNetworkDetails,
-    Logger,
-    RenNetwork,
-    RenNetworkDetails,
-    RenNetworkString,
+  getRenNetworkDetails,
+  Logger,
+  RenNetwork,
+  RenNetworkDetails,
+  RenNetworkString,
 } from "@renproject/interfaces";
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
-import { NetworkInput } from "./base";
-import { EthAddress, EthProvider, EthTransaction } from "./types";
 
+import { NetworkInput } from "./base";
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
 import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renAvalancheTestnet: EthereumConfig = {
@@ -38,7 +38,7 @@ export const renAvalancheMainnet: EthereumConfig = {
     chain: "avalancheMainnet",
     isTestnet: false,
     chainLabel: "Avalanche Mainnet",
-    networkID: 137,
+    networkID: 43114,
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",

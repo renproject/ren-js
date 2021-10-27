@@ -95,7 +95,7 @@ const main = async () => {
                 color(`[${hash.slice(0, 6)}]`),
             );
 
-            const info = deposit._state.logger.log;
+            const info = deposit._state.logger.debug;
 
             info(
                 `Received ${
@@ -112,11 +112,11 @@ const main = async () => {
 
             await tryNTimes(
                 async () => {
-                    deposit._state.logger.log(`Calling .confirmed`);
+                    deposit._state.logger.debug(`Calling .confirmed`);
                     await deposit
                         .confirmed()
                         .on("confirmation", (confs, target) => {
-                            deposit._state.logger.log(
+                            deposit._state.logger.debug(
                                 `${confs}/${target} confirmations`,
                             );
                         });
@@ -130,9 +130,9 @@ const main = async () => {
 
             await tryNTimes(
                 async () => {
-                    deposit._state.logger.log(`Calling .signed`);
+                    deposit._state.logger.debug(`Calling .signed`);
                     await deposit.signed().on("status", (status) => {
-                        deposit._state.logger.log(`status: ${status}`);
+                        deposit._state.logger.debug(`status: ${status}`);
                     });
                 },
                 retries,
@@ -143,13 +143,13 @@ const main = async () => {
 
             await tryNTimes(
                 async () => {
-                    deposit._state.logger.log(`Calling .mint`);
+                    deposit._state.logger.debug(`Calling .mint`);
                     await deposit
                         .mint({
                             _extraMsg: "test", // Override value.
                         })
                         .on("transactionHash", (txHash) => {
-                            deposit._state.logger.log(
+                            deposit._state.logger.debug(
                                 `txHash: ${String(txHash)}`,
                             );
                         });

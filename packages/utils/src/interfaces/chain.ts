@@ -19,6 +19,7 @@ export enum OutputType {
 export type NumericString = string;
 
 export interface ChainTransaction {
+    chain: string;
     txid: string;
     txindex: NumericString;
 }
@@ -185,7 +186,7 @@ export interface ContractChain<
      * `InputChainTransaction` because there may be multiple lock or burn events
      * in the transaction.
      */
-    submitInput: (
+    getInputTx: (
         type: InputType,
         asset: string,
         contractCall: FromContractCall,
@@ -195,6 +196,7 @@ export interface ContractChain<
                 to: string;
                 payload: Buffer;
             };
+            gatewayAddress?: string;
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
@@ -221,7 +223,7 @@ export interface ContractChain<
      * Submit a mint or release transaction. When this is initially called as
      * a pre-check, the sigHash and signature will not be set.
      */
-    submitOutput: (
+    getOutputTx: (
         type: OutputType,
         asset: string,
         contractCall: ToContractCall,
@@ -252,9 +254,9 @@ export interface ContractChain<
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isContractChain = (chain: any): chain is ContractChain =>
-    (chain as ContractChain).submitInput !== undefined &&
+    (chain as ContractChain).getInputTx !== undefined &&
     // (chain as ContractChain).submitLock !== undefined &&
-    (chain as ContractChain).submitOutput !== undefined;
+    (chain as ContractChain).getOutputTx !== undefined;
 // && (chain as ContractChain).submitRelease !== undefined
 
 export type Chain<

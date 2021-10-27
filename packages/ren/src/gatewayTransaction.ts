@@ -7,16 +7,23 @@ import {
     Chain,
     ChainTransaction,
     DefaultTxWaiter,
-    fixSignatureSimple,
+    fixSignature,
     fromBase64,
+    fromHex,
+    generateGHash,
+    generateNHash,
+    generatePHash,
+    generateSHash,
     InputChainTransaction,
+    InputType,
     isContractChain,
     isDefined,
     keccak256,
     newPromiEvent,
+    OutputType,
     PromiEvent,
-    RenJSErrors,
     sleep,
+    toNBytes,
     toURLBase64,
     TxStatus,
     TxSubmitter,
@@ -24,6 +31,7 @@ import {
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
+import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 import { waitForTX } from "./utils/providerUtils";
 
 export enum TransactionStatus {
@@ -49,29 +57,24 @@ export interface TransactionParams<
     },
 > {
     asset: string;
-    fromChain: Chain;
-    toChain: Chain;
+    fromTx: InputChainTransaction;
+    to: ToPayload;
 
-    toPayload: ToPayload;
-    inputTransaction: InputChainTransaction;
-    fromTxWaiter?: TxWaiter;
+    // Parameters with default (empty) values. Must equal the values used when
+    // the input was submitted.
 
-    selector: string;
-    gPubKey: string;
-    nonce: string;
-    nHash: string;
-    pHash: string;
-    gHash: string;
-}
+    /**
+     * The public key of the RenVM shard selected when `fromTx` was submitted.
+     * If the input is contract/event-based then it should be left empty.
+     *
+     * @default Buffer.from([])
+     */
+    gPubKey?: string;
 
-export enum InputType {
-    Lock = "lock",
-    Burn = "burn",
-}
-
-export enum OutputType {
-    Mint = "mint",
-    Release = "release",
+    /**
+     * @default toBytes(0,32)
+     */
+    nonce?: string;
 }
 
 export class GatewayTransaction<
@@ -111,13 +114,19 @@ export class GatewayTransaction<
 
     /** See [[RenJS.renVM]]. */
     public renVM: RenVMProvider;
+    public fromChain: Chain;
+    public toChain: Chain;
+
+    public nHash: Buffer;
+    public pHash: Buffer;
+    public gHash: Buffer;
 
     public outTransaction?: ChainTransaction;
     public revertReason?: string;
 
     public _config: typeof defaultRenJSConfig & RenJSConfig;
 
-    public in: TxWaiter;
+    public in: TxSubmitter | TxWaiter;
     public out: TxSubmitter | TxWaiter;
 
     // Private
@@ -132,7 +141,10 @@ export class GatewayTransaction<
     /** @hidden */
     constructor(
         renVM: RenVMProvider,
+        fromChain: Chain,
+        toChain: Chain,
         params: TransactionParams<ToPayload>,
+        fromTxWaiter?: TxSubmitter | TxWaiter,
         config?: RenJSConfig,
     ) {
         this.renVM = renVM;
@@ -141,95 +153,103 @@ export class GatewayTransaction<
             ...defaultRenJSConfig,
             ...config,
         };
+        this.fromChain = fromChain;
+        this.toChain = toChain;
 
         // `processDeposit` will call `refreshStatus` which will set the proper
         // status.
         this.status = TransactionStatus.FetchingStatus;
-
-        this.selector = this.params.selector;
 
         // Set hash to "" rather than undefined so that it's type is always
         // `string`. The hash will be set in `_initialize` which should be
         // called immediately after the constructor.
         this.hash = "";
 
-        if (this.params.fromTxWaiter) {
-            this.in = this.params.fromTxWaiter;
+        const nonce = isDefined(params.nonce)
+            ? fromBase64(params.nonce)
+            : toNBytes(0, 32);
+        this.nHash = generateNHash(
+            nonce,
+            fromBase64(params.fromTx.txid),
+            params.fromTx.txindex,
+        );
+
+        if (fromTxWaiter) {
+            this.in = fromTxWaiter;
         } else {
             this.in = undefined as never;
         }
 
         // TODO: Throw error if this.out is accessed before this.signed().
+        this.selector = undefined as never;
         this.out = undefined as never;
+        this.pHash = undefined as never;
+        this.gHash = undefined as never;
     }
 
     /** @hidden */
     public readonly _initialize = async (): Promise<this> => {
-        if (await this.params.fromChain.assetIsNative(this.params.asset)) {
-            this.inputType = InputType.Lock;
-            this.outputType = OutputType.Mint;
-        } else if (await this.params.toChain.assetIsNative(this.params.asset)) {
-            this.inputType = InputType.Burn;
-            this.outputType = OutputType.Release;
-        } else {
-            throw new Error(`Burning and minting is not supported yet.`);
-            this.inputType = InputType.Burn;
-            this.outputType = OutputType.Mint;
-        }
+        const { inputType, outputType, selector } =
+            await getInputAndOutputTypes({
+                asset: this.params.asset,
+                fromChain: this.fromChain,
+                toChain: this.toChain,
+            });
+        this.inputType = inputType;
+        this.outputType = outputType;
+        this.selector = selector;
 
-        const {
-            asset,
-            toChain,
-            toPayload,
-            gPubKey,
-            nonce,
-            nHash,
-            pHash,
-            gHash,
-            inputTransaction,
-        } = this.params;
+        const { asset, nonce, fromTx, to } = this.params;
 
-        let payload: { to: string; payload: Buffer };
-        if (this.outputType === OutputType.Mint) {
-            if (!isContractChain(toChain)) {
-                throw new Error(
-                    `Cannot mint to non-contract chain ${toChain.chain}.`,
-                );
-            }
-            payload = await toChain.getOutputPayload(
+        const payload: { to: string; payload: Buffer } =
+            await this.toChain.getOutputPayload(
                 asset,
-                this.outputType,
-                toPayload,
+                this.outputType as any,
+                to,
             );
-        } else {
-            payload = await toChain.getOutputPayload(
-                asset,
-                this.outputType,
-                toPayload,
-            );
-        }
+
+        const sHash = generateSHash(
+            `${this.params.asset}/to${this.params.to.chain}`,
+        );
+
+        this.pHash = generatePHash(payload.payload);
+
+        const nonceBuffer = nonce
+            ? Buffer.isBuffer(nonce)
+                ? nonce
+                : fromBase64(nonce)
+            : toNBytes(0, 32);
+
+        this.gHash = generateGHash(
+            this.pHash,
+            sHash,
+            fromHex(payload.to),
+            nonceBuffer,
+        );
 
         this.hash = toURLBase64(
             this.renVM.transactionHash({
                 selector: this.selector,
-                gHash: fromBase64(gHash),
-                gPubKey: fromBase64(gPubKey),
-                nHash: fromBase64(nHash),
-                nonce: fromBase64(nonce),
-                output: inputTransaction,
-                amount: inputTransaction.amount,
+                gHash: this.gHash,
+                gPubKey: this.params.gPubKey
+                    ? fromBase64(this.params.gPubKey)
+                    : Buffer.from([]),
+                nHash: this.nHash,
+                nonce: nonceBuffer,
+                output: fromTx,
+                amount: fromTx.amount,
                 payload: payload.payload,
-                pHash: fromBase64(pHash),
+                pHash: this.pHash,
                 to: payload.to,
             }),
         );
 
         if (!this.in) {
             this.in = new DefaultTxWaiter({
-                chainTransaction: this.params.inputTransaction,
-                chain: this.params.fromChain,
+                chainTransaction: this.params.fromTx,
+                chain: this.fromChain,
                 target: await this.renVM.getConfirmationTarget(
-                    this.params.fromChain.chain,
+                    this.fromChain.chain,
                 ),
             });
         }
@@ -255,11 +275,7 @@ export class GatewayTransaction<
         }
 
         const response: TxResponseWithStatus<CrossChainTxResponse> =
-            await this.renVM.queryTransaction(
-                this.selector,
-                fromBase64(this.hash),
-                retries,
-            );
+            await this.renVM.queryTransaction(fromBase64(this.hash), retries);
         this.queryTxResult = response;
 
         // Update status.
@@ -390,8 +406,8 @@ export class GatewayTransaction<
     //         current: number;
     //         target: number;
     //     }> => {
-    //         const current = await this.params.fromChain.transactionConfidence(
-    //             this.params.inputTransaction,
+    //         const current = await this.fromChain.transactionConfidence(
+    //             this.params.fromTx,
     //         );
     //         return {
     //             current: current.toNumber(),
@@ -553,35 +569,36 @@ export class GatewayTransaction<
             // The transaction has already been submitted by RenVM.
             this.out = new DefaultTxWaiter({
                 chainTransaction: {
+                    chain: this.toChain.chain,
                     txid: toURLBase64(this.queryTxResult.tx.out.txid),
                     txindex: this.queryTxResult.tx.out.txindex.toFixed(),
                 },
-                chain: this.params.fromChain,
+                chain: this.fromChain,
                 target: await this.renVM.getConfirmationTarget(
-                    this.params.fromChain.chain,
+                    this.fromChain.chain,
                 ),
             });
-        } else if (isContractChain(this.params.toChain)) {
+        } else if (isContractChain(this.toChain)) {
             const sigHash = this.queryTxResult.tx.out.sighash;
             const amount = this.queryTxResult.tx.out.amount;
             // const phash = this.queryTxResult.tx.in.phash;
             const signature = this.queryTxResult.tx.out.sig;
-            const { r, s, v } = fixSignatureSimple(
+            const { r, s, v } = fixSignature(
                 signature.slice(0, 32),
                 signature.slice(32, 64),
                 signature.slice(64, 65)[0],
             );
 
             // if (this.outputType === OutputType.Mint) {
-            this.out = await this.params.toChain.submitOutput(
+            this.out = await this.toChain.getOutputTx(
                 this.outputType,
                 this.params.asset,
-                this.params.toPayload,
+                this.params.to,
                 {
                     amount,
-                    nHash: fromBase64(this.params.nHash),
+                    nHash: this.nHash,
                     sHash: keccak256(Buffer.from(this.selector)),
-                    pHash: fromBase64(this.params.pHash),
+                    pHash: this.pHash,
                     sigHash,
                     signature: {
                         r,
@@ -602,9 +619,9 @@ export class GatewayTransaction<
         //     }
         //     // } else {
         //     //     this.outTransaction =
-        //     //         await this.params.toChain.submitRelease(
+        //     //         await this.toChain.submitRelease(
         //     //             this.params.asset,
-        //     //             this.params.toPayload,
+        //     //             this.params.to,
         //     //             override || {},
         //     //             amount,
         //     //             phash,
@@ -658,8 +675,6 @@ export class GatewayTransaction<
             { txHash: [string]; status: [TxStatus] }
         >();
 
-        console.log("!!");
-
         (async () => {
             let txHash = this.hash;
 
@@ -706,7 +721,6 @@ export class GatewayTransaction<
 
                 const response = await waitForTX(
                     this.renVM,
-                    this.selector,
                     fromBase64(txHash),
                     (status) => {
                         promiEvent.emit("status", status);
@@ -787,7 +801,7 @@ export class GatewayTransaction<
     //         >();
 
     //         (async () => {
-    //             if (isContractChain(this.params.toChain)) {
+    //             if (isContractChain(this.toChain)) {
     //                 const sigHash =
     //                     this.queryTxResult &&
     //                     this.queryTxResult.tx.out &&
@@ -803,7 +817,7 @@ export class GatewayTransaction<
     //                         : undefined;
 
     //                 const signature = sig
-    //                     ? fixSignatureSimple(
+    //                     ? fixSignature(
     //                           sig.slice(0, 32),
     //                           sig.slice(32, 64),
     //                           sig.slice(64, 65)[0],
@@ -812,18 +826,18 @@ export class GatewayTransaction<
 
     //                 // Check if the signature has already been submitted
     //                 this.outTransaction =
-    //                     await this.params.toChain.submitOutput(
+    //                     await this.toChain.getOutputTx(
     //                         true,
     //                         this.outputType!,
     //                         this.params.asset,
-    //                         this.params.toPayload,
+    //                         this.params.to,
     //                         {},
     //                         {
-    //                             nHash: fromBase64(this.params.nHash),
+    //                             nHash: (this.nHash),
     //                             sHash: keccak256(Buffer.from(this.selector)),
-    //                             pHash: fromBase64(this.params.pHash),
+    //                             pHash: this.pHash,
     //                             amount: new BigNumber(
-    //                                 this.params.inputTransaction.amount,
+    //                                 this.params.fromTx.amount,
     //                             ),
     //                             sigHash: sigHash
     //                                 ? fromBase64(sigHash)
@@ -896,42 +910,40 @@ export class GatewayTransaction<
             return expectedTxHash;
         }
 
-        const {
-            asset,
-            toChain: to,
-            toPayload,
-            gPubKey,
-            nonce,
-            nHash,
-            pHash,
-            gHash,
-            inputTransaction,
-        } = this.params;
+        const { asset, to, nonce, fromTx } = this.params;
 
-        if (!isContractChain(to)) {
+        if (!isContractChain(this.toChain)) {
             throw new Error(`Cannot mint to non-contract chain ${to.chain}.`);
         }
 
-        const payload = await to.getOutputPayload(
+        const payload = await this.toChain.getOutputPayload(
             asset,
             this.outputType!,
-            toPayload,
+            to,
         );
+
+        const nonceBuffer = nonce
+            ? Buffer.isBuffer(nonce)
+                ? nonce
+                : fromBase64(nonce)
+            : toNBytes(0, 32);
 
         const encodedHash = await this.renVM.submitTransaction(
             {
                 selector: this.selector,
-                gHash: fromBase64(gHash),
-                gPubKey: fromBase64(gPubKey),
-                nHash: fromBase64(nHash),
-                nonce: fromBase64(nonce),
+                gHash: this.gHash,
+                gPubKey: this.params.gPubKey
+                    ? fromBase64(this.params.gPubKey)
+                    : Buffer.from([]),
+                nHash: this.nHash,
+                nonce: nonceBuffer,
                 output: {
-                    txindex: inputTransaction.txindex,
-                    txid: inputTransaction.txid,
+                    txindex: fromTx.txindex,
+                    txid: fromTx.txid,
                 },
-                amount: inputTransaction.amount,
-                payload: fromBase64(payload.payload),
-                pHash: fromBase64(pHash),
+                amount: fromTx.amount,
+                payload: payload.payload,
+                pHash: this.pHash,
                 to: payload.to,
             },
             retries,
@@ -951,26 +963,5 @@ export class GatewayTransaction<
         this._renTxSubmitted = true;
 
         return returnedTxHash;
-    };
-
-    /* ====================================================================== */
-
-    public static New = async <
-        ToPayload_ extends { chain: string; chainClass?: Chain } = {
-            chain: string;
-            chainClass?: Chain;
-        },
-    >(
-        renVM: RenVMProvider,
-        params: TransactionParams<ToPayload_>,
-        config?: RenJSConfig,
-    ): Promise<GatewayTransaction<ToPayload_>> => {
-        const gatewayTransaction = new GatewayTransaction<ToPayload_>(
-            renVM,
-            params,
-            config,
-        );
-        await gatewayTransaction._initialize();
-        return gatewayTransaction;
     };
 }

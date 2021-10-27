@@ -11,6 +11,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const fantomMainnetConfig: EvmNetworkConfig = {
     selector: "Fantom",
+    asset: "FTM",
 
     network: {
         chainId: "0xfa",
@@ -28,6 +29,7 @@ export const fantomMainnetConfig: EvmNetworkConfig = {
 
 export const fantomTestnetConfig: EvmNetworkConfig = {
     selector: "Fantom",
+    asset: "FTM",
 
     network: {
         chainId: "0xfa2",

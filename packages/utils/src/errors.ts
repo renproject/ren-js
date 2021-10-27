@@ -1,8 +1,12 @@
 // RenJS error codes. Chain classes have their own error codes.
-export enum RenJSErrors {
-    RenVMTransactionNotFound = "REN_RENVM_TRANSACTION_NOT_FOUND",
-    DepositSpentOrNotFound = "REN_DEPOSIT_SPENT_OR_NOT_FOUND",
-    AmountTooSmall = "REN_AMOUNT_TOO_SMALL",
+export enum RenJSError {
+    // General errors.
+    UNKNOWN_ERROR = "UNKNOWN_ERROR",
+    NOT_IMPLEMENTED = "NOT_IMPLEMENTED",
+    INVALID_PARAMETERS = "INVALID_PARAMETERS",
+    INTERNAL_ERROR = "INTERNAL_ERROR",
+
+    TRANSACTION_NOT_FOUND = "RENVM_TRANSACTION_NOT_FOUND",
 }
 
 /**
@@ -40,4 +44,72 @@ export const withCode = (error: Error, code: string): ErrorWithCode => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any).code = code;
     return error as ErrorWithCode;
+};
+
+const hasOwnProperty = <T>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    object: any,
+    property: keyof T,
+): object is T => object.hasOwnProperty(property);
+
+const invalidError = (errorMessage: string) =>
+    errorMessage === "" ||
+    errorMessage === "null" ||
+    errorMessage === "undefined";
+
+/**
+ * Attempt to extract a more meaningful error from a thrown error, such as
+ * the body of a network response.
+ */
+export const extractError = (error: unknown): string => {
+    if (error && typeof error === "object") {
+        if (hasOwnProperty(error, "response") && error.response) {
+            const extractedError = extractError(error.response);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
+        }
+        if (hasOwnProperty(error, "data") && error.data) {
+            const extractedError = extractError(error.data);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
+        }
+        if (hasOwnProperty(error, "error") && error.error) {
+            const extractedError = extractError(error.error);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
+        }
+        if (hasOwnProperty(error, "context") && error.context) {
+            const extractedError = extractError(error.context);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
+        }
+        if (hasOwnProperty(error, "message") && error.message) {
+            const extractedError = extractError(error.message);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
+        }
+        if (hasOwnProperty(error, "statusText") && error.statusText) {
+            const extractedError = extractError(error.statusText);
+            if (!invalidError(extractedError)) {
+                return extractedError;
+            }
+        }
+    }
+    try {
+        if (typeof error === "string") {
+            if (error.slice(0, 7) === "Error: ") {
+                error = error.slice(7);
+            }
+            return error as string;
+        }
+        return JSON.stringify(error);
+    } catch (innerError) {
+        // Ignore JSON error
+    }
+    return String(error);
 };

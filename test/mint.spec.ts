@@ -3,7 +3,6 @@
 import chai from "chai";
 import { blue, blueBright, cyan, green, magenta, red, yellow } from "chalk";
 import { config as loadDotEnv } from "dotenv";
-import { BigNumber } from "ethers";
 import throttle from "throat";
 
 import {

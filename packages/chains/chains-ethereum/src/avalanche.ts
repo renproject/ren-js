@@ -11,6 +11,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const avalancheMainnetConfig: EvmNetworkConfig = {
     selector: "Avalanche",
+    asset: "AVAX",
 
     network: {
         chainId: "0xa86a",
@@ -27,6 +28,7 @@ export const avalancheMainnetConfig: EvmNetworkConfig = {
 };
 export const avalancheTestnetConfig: EvmNetworkConfig = {
     selector: "Avalanche",
+    asset: "AVAX",
     isTestnet: true,
 
     network: {
@@ -43,6 +45,9 @@ export const avalancheTestnetConfig: EvmNetworkConfig = {
     },
 };
 
+/**
+ * Avalanche/AVAX configuration.
+ */
 export class Avalanche extends EthereumBaseChain {
     public static chain = "Avalanche";
 

@@ -1,25 +1,22 @@
 import BigNumber from "bignumber.js";
-import { expect } from "chai";
+import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 
 import {
-    extractError,
     fromBase64,
-    fromBigNumber,
     fromHex,
-    fromReadable,
     isDefined,
     Ox,
-    randomBytes,
-    randomNonce,
-    rawEncode,
     SECONDS,
     sleep,
     strip0x,
     toBase64,
-    toReadable,
     toURLBase64,
     tryNTimes,
 } from "../src/common";
+import { extractError } from "../src/errors";
+
+chai.use(chaiAsPromised);
 
 describe("common utils", () => {
     context("sleep", () => {
@@ -56,9 +53,9 @@ describe("common utils", () => {
 
     context("fromHex", () => {
         it("converts hex string to Buffer", () => {
-            expect(fromHex("1234")).to.equal(Buffer.from([0x12, 0x34]));
-            expect(fromHex("0x1234")).to.equal(Buffer.from([0x12, 0x34]));
-            expect(fromHex(Buffer.from([0x12, 0x34]))).to.equal(
+            expect(fromHex("1234")).to.deep.equal(Buffer.from([0x12, 0x34]));
+            expect(fromHex("0x1234")).to.deep.equal(Buffer.from([0x12, 0x34]));
+            expect(fromHex(Buffer.from([0x12, 0x34]))).to.deep.equal(
                 Buffer.from([0x12, 0x34]),
             );
         });
@@ -66,17 +63,17 @@ describe("common utils", () => {
 
     context("fromBase64", () => {
         it("converts base64 string to Buffer", () => {
-            expect(fromBase64("EjQ=")).to.equal(Buffer.from([0x12, 0x34]));
-            expect(fromBase64(Buffer.from([0x12, 0x34]))).to.equal(
+            expect(fromBase64("EjQ=")).to.deep.equal(Buffer.from([0x12, 0x34]));
+            expect(fromBase64(Buffer.from([0x12, 0x34]))).to.deep.equal(
                 Buffer.from([0x12, 0x34]),
             );
         });
 
         it("converts url-base64 string to Buffer", () => {
-            expect(fromBase64("+/8=")).to.equal(Buffer.from([0xfb, 0xff]));
-            expect(fromBase64("+/8")).to.equal(Buffer.from([0xfb, 0xff]));
-            expect(fromBase64("-_8")).to.equal(Buffer.from([0xfb, 0xff]));
-            expect(fromBase64("-_8=")).to.equal(Buffer.from([0xfb, 0xff]));
+            expect(fromBase64("+/8=")).to.deep.equal(Buffer.from([0xfb, 0xff]));
+            expect(fromBase64("+/8")).to.deep.equal(Buffer.from([0xfb, 0xff]));
+            expect(fromBase64("-_8")).to.deep.equal(Buffer.from([0xfb, 0xff]));
+            expect(fromBase64("-_8=")).to.deep.equal(Buffer.from([0xfb, 0xff]));
         });
     });
 
@@ -86,43 +83,10 @@ describe("common utils", () => {
         });
     });
 
-    context("fromBigNumber", () => {
-        it("converts BigNumbers to Buffers", () => {
-            expect(fromBigNumber(new BigNumber(1))).to.equal(
-                Buffer.from([0x01]),
-            );
-            expect(fromBigNumber(new BigNumber(11))).to.equal(
-                Buffer.from([0x0b]),
-            );
-            expect(fromBigNumber(new BigNumber(16))).to.equal(
-                Buffer.from([0x10]),
-            );
-            expect(fromBigNumber(new BigNumber(256))).to.equal(
-                Buffer.from([0x01, 0x00]),
-            );
-        });
-    });
-
     context("toURLBase64", () => {
         it("converts buffers to url-base64 strings", () => {
             expect(toURLBase64(Buffer.from([0xfb, 0xff]))).to.equal("-_8");
             // expect(toURLBase64("0xfbff")).to.equal("-_8");
-        });
-    });
-
-    context("toReadable", () => {
-        it("converts amounts from a sub-unit to the base unit", () => {
-            expect(toReadable(10, 1).toNumber()).to.equal(1);
-            expect(toReadable(10, 0).toNumber()).to.equal(10);
-            expect(toReadable(10, 2).toNumber()).to.equal(0.1);
-        });
-    });
-
-    context("fromReadable", () => {
-        it("converts amounts from the base unit to a sub-unit", () => {
-            expect(fromReadable(1, 1).toNumber()).to.equal(10);
-            expect(fromReadable(10, 0).toNumber()).to.equal(10);
-            expect(fromReadable(0.1, 2).toNumber()).to.equal(10);
         });
     });
 
@@ -227,48 +191,6 @@ describe("common utils", () => {
             );
             const t2 = Date.now();
             expect(t2 - t1).to.be.greaterThanOrEqual(timeout);
-        });
-    });
-
-    context("randomBytes", () => {
-        // Restore global window state afterwards incase this is being run in
-        // a browser environment.
-        let previousWindow: unknown;
-        before(() => {
-            previousWindow = (global as { window: unknown }).window;
-        });
-        after(() => {
-            (global as { window: unknown }).window = previousWindow;
-        });
-
-        it("returns random bytes of the correct length", () => {
-            expect(randomBytes(32).length).to.equal(32);
-            expect(randomBytes(32)).not.to.equal(randomBytes(32));
-            (global as { window: unknown }).window = {
-                crypto: {
-                    getRandomValues: (uints: Uint32Array) => {
-                        for (let i = 0; i < uints.length; i++) {
-                            uints[i] = 0;
-                        }
-                    },
-                },
-            };
-            expect(randomBytes(32).length).to.equal(32);
-        });
-    });
-
-    context("randomNonce", () => {
-        it("should return a random 32-byte buffer", () => {
-            expect(randomNonce().length).to.equal(32);
-            expect(randomNonce()).not.to.equal(randomNonce());
-        });
-    });
-
-    context("rawEncode", () => {
-        it("should encode values passed in", () => {
-            expect(rawEncode(["uint256"], [1])).to.equal(
-                Buffer.from("00".repeat(31) + "01", "hex"),
-            );
         });
     });
 

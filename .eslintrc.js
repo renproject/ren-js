@@ -149,7 +149,7 @@ module.exports = {
 
         // Ignored for now:
         "import/no-extraneous-dependencies": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "warn",
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",

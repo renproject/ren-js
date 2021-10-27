@@ -11,6 +11,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const arbitrumMainnetConfig: EvmNetworkConfig = {
     selector: "Arbitrum",
+    asset: "arbETH",
 
     network: {
         chainId: "0xa4b1",
@@ -37,6 +38,7 @@ export const arbitrumMainnetConfig: EvmNetworkConfig = {
 
 export const arbitrumTestnetConfig: EvmNetworkConfig = {
     selector: "Arbitrum",
+    asset: "arbETH",
     isTestnet: true,
 
     network: {
@@ -64,6 +66,9 @@ export const arbitrumTestnetConfig: EvmNetworkConfig = {
     },
 };
 
+/**
+ * Arbitrum/arbETH configuration.
+ */
 export class Arbitrum extends EthereumBaseChain {
     public static chain = "Arbitrum";
 

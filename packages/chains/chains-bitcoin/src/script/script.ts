@@ -1,6 +1,4 @@
-import { sha256 } from "@renproject/utils";
-
-import { hash160 } from "../utils/utils";
+import { hash160, sha256 } from "../utils/utils";
 import { Opcode } from "./opcodes";
 
 const checksum = (hash: Buffer) => sha256(sha256(hash)).slice(0, 4);

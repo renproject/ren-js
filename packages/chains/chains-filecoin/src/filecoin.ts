@@ -259,6 +259,7 @@ export class Filecoin
                         await Promise.all(
                             (deposits || []).map(async (tx) =>
                                 onInput({
+                                    chain: this.chain,
                                     txid: toURLBase64(
                                         Buffer.from(new CID(tx.cid).bytes),
                                     ),
@@ -295,6 +296,7 @@ export class Filecoin
                 await Promise.all(
                     (txs || []).map(async (tx) =>
                         onInput({
+                            chain: this.chain,
                             txid: toURLBase64(
                                 Buffer.from(new CID(tx.cid).bytes),
                             ),

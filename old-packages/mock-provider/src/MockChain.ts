@@ -12,12 +12,13 @@ import { validateAddress } from "@renproject/chains-bitcoin/build/main/utils";
 import {
     ChainStatic,
     isHex,
-    randomBytes,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
     utilsWithChainNetwork,
 } from "@renproject/utils";
+
+import { randomBytes } from "./utils";
 
 export class MockChain extends BitcoinClass {
     public static chain = "MockChain";

@@ -1,9 +1,8 @@
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
-import { defaultAbiCoder } from "ethers/lib/utils";
 
-import { assertType } from "./assert";
-import { Logger } from "./logger";
+import { extractError } from "./errors";
+import { Logger } from "./interfaces/logger";
 
 /**
  * Represents 1 second for functions that accept a parameter in milliseconds.
@@ -19,161 +18,10 @@ export const sleep = async (ms: number): Promise<void> =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
- * Remove 0x prefix from a hex string. If the input doesn't have a 0x prefix,
- * it's returned unchanged.
- *
- * @param hex The hex value to be prefixed.
+ * Attempt to call the provided function and retry if it errors. The function
+ * is called up to a maximum `retries` times. If `retries` is `-1` then it
+ * will be retried indefinitely.
  */
-export const strip0x = (hex: string): string => {
-    // Type validation
-    assertType<string>("string", { hex });
-
-    return hex.substring(0, 2) === "0x" ? hex.slice(2) : hex;
-};
-
-/**
- * Add a 0x prefix to a hex value, converting to a string first. If the input
- * is already prefixed, it's returned unchanged.
- *
- * @param hex The hex value to be prefixed.
- */
-export const Ox = (
-    hex: Buffer | string | number,
-    { prefix } = { prefix: "0x" },
-): string => {
-    let hexString =
-        typeof hex === "number"
-            ? hex.toString(16)
-            : typeof hex === "string"
-            ? hex
-            : hex.toString("hex");
-    if (hexString.length % 2 === 1) {
-        hexString = "0" + hexString;
-    }
-    return hexString.substring(0, 2) === prefix
-        ? hexString
-        : `${prefix}${hexString}`;
-};
-
-export const fromHex = (hex: Buffer | string): Buffer => {
-    assertType<Buffer | string>("Buffer | string", { hex });
-    return Buffer.isBuffer(hex)
-        ? Buffer.from(hex)
-        : Buffer.from(strip0x(hex), "hex");
-};
-
-export const fromBase64 = (base64: Buffer | string): Buffer => {
-    assertType<Buffer | string>("Buffer | string", {
-        base64,
-    });
-    return Buffer.isBuffer(base64)
-        ? Buffer.from(base64)
-        : Buffer.from(base64, "base64");
-};
-
-export const toBase64 = (input: Buffer): string => {
-    assertType<Buffer>("Buffer", { input });
-    return input.toString("base64");
-};
-
-export const fromBigNumber = (bn: BigNumber): Buffer => {
-    const bnStr = bn.toString(16);
-    // Pad if necessary
-    return Buffer.from(bnStr.length % 2 ? "0" + bnStr : bnStr, "hex");
-};
-
-// Unpadded alternate base64 encoding defined in RFC 4648, commonly used in
-// URLs.
-export const toURLBase64 = (input: Buffer): string => {
-    assertType<Buffer | string>("Buffer | string", {
-        input,
-    });
-
-    return (Buffer.isBuffer(input) ? Buffer.from(input) : fromHex(input))
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-};
-
-export const toReadable = (
-    value: number | string | BigNumber,
-    decimals: number | string | BigNumber,
-): BigNumber =>
-    new BigNumber(value).shiftedBy(-new BigNumber(decimals).toNumber());
-
-export const fromReadable = (
-    value: number | string | BigNumber,
-    decimals: number | string | BigNumber,
-): BigNumber =>
-    new BigNumber(value)
-        .shiftedBy(new BigNumber(decimals).toNumber())
-        .decimalPlaces(0);
-
-const hasOwnProperty = <T>(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    object: any,
-    property: keyof T,
-): object is T => object.hasOwnProperty(property);
-
-const invalidError = (errorMessage: string) =>
-    errorMessage === "" ||
-    errorMessage === "null" ||
-    errorMessage === "undefined";
-
-export const extractError = (error: unknown): string => {
-    if (error && typeof error === "object") {
-        if (hasOwnProperty(error, "response") && error.response) {
-            const extractedError = extractError(error.response);
-            if (!invalidError(extractedError)) {
-                return extractedError;
-            }
-        }
-        if (hasOwnProperty(error, "data") && error.data) {
-            const extractedError = extractError(error.data);
-            if (!invalidError(extractedError)) {
-                return extractedError;
-            }
-        }
-        if (hasOwnProperty(error, "error") && error.error) {
-            const extractedError = extractError(error.error);
-            if (!invalidError(extractedError)) {
-                return extractedError;
-            }
-        }
-        if (hasOwnProperty(error, "context") && error.context) {
-            const extractedError = extractError(error.context);
-            if (!invalidError(extractedError)) {
-                return extractedError;
-            }
-        }
-        if (hasOwnProperty(error, "message") && error.message) {
-            const extractedError = extractError(error.message);
-            if (!invalidError(extractedError)) {
-                return extractedError;
-            }
-        }
-        if (hasOwnProperty(error, "statusText") && error.statusText) {
-            const extractedError = extractError(error.statusText);
-            if (!invalidError(extractedError)) {
-                return extractedError;
-            }
-        }
-    }
-    try {
-        if (typeof error === "string") {
-            if (error.slice(0, 7) === "Error: ") {
-                error = error.slice(7);
-            }
-            return error as string;
-        }
-        return JSON.stringify(error);
-    } catch (innerError) {
-        // Ignore JSON error
-    }
-    return String(error);
-};
-
 export const tryNTimes = async <T>(
     fnCall: () => Promise<T>,
     retries: number,
@@ -193,9 +41,6 @@ export const tryNTimes = async <T>(
             returnError = error;
 
             if (i < retries - 1 || retries === -1) {
-                console.log(
-                    `tryNTimes: sleeping for ${timeout / 1000} seconds`,
-                );
                 await sleep(timeout);
                 if (logger) {
                     logger.warn(error);
@@ -204,53 +49,10 @@ export const tryNTimes = async <T>(
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    (returnError as any).message = Array.from(errorMessages).join(", ");
+    returnError.message = Array.from(errorMessages).join(", ");
 
     throw returnError;
 };
-
-/**
- * Generates a random hex string (prefixed with '0x').
- *
- * @param bytes The number of bytes to generate.
- */
-export const randomBytes = (bytes: number): Buffer => {
-    try {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (window) {
-            const uints = new Uint32Array(bytes / 4); // 4 bytes (32 bits)
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            window.crypto.getRandomValues(uints);
-            let str = "";
-            for (const uint of uints) {
-                str +=
-                    "0".repeat(8 - uint.toString(16).length) +
-                    String(uint.toString(16));
-            }
-            return fromHex(str);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-        // Ignore error
-    }
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const crypto = require("crypto") as {
-        randomBytes: (length: number) => Buffer;
-    };
-    return crypto.randomBytes(bytes);
-};
-
-/**
- * Returns a random 32 byte Buffer.
- */
-export const randomNonce = (): Buffer => randomBytes(32);
-export const emptyNonce = (): Buffer => fromHex("00".repeat(32));
-
-export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
-    fromHex(defaultAbiCoder.encode(types, parameters));
 
 /**
  * isDefined returns true if the parameter is defined and not null.
@@ -258,18 +60,12 @@ export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
 export const isDefined = <T>(x: T | null | undefined): x is T =>
     x !== null && x !== undefined;
 
-const assert = (input: boolean, reason?: string) => {
-    if (!input) {
-        throw new Error(reason || `Assertion failed.`);
-    }
-};
-
 /**
  * Returns false if the method throws or returns false - returns true otherwise.
  */
 export const doesntError =
     <T extends unknown[]>(f: (...p: T) => boolean | void) =>
-    (...p: T) => {
+    (...p: T): boolean => {
         try {
             const response = f(...p);
             return response === undefined || response === true ? true : false;
@@ -280,60 +76,57 @@ export const doesntError =
     };
 
 /**
- * Returns true if the
+ * Pad a Buffer to `n` bytes. If the Buffer is longer than `n` bytes, an error
+ * is thrown.
  */
-export const isBase64 = doesntError(
-    (
-        input: string,
-        options: {
-            length?: number;
-        } = {},
-    ) => {
-        const buffer = Buffer.from(input, "base64");
-        assert(
-            options.length === undefined || buffer.length === options.length,
-            `Expected ${String(options.length)} bytes.`,
+export const padBuffer = (buffer: Buffer, n: number): Buffer => {
+    if (buffer.length > n) {
+        throw new Error(
+            `byte array longer than desired length (${String(
+                buffer.length,
+            )} > ${String(n)})`,
         );
-        assert(buffer.toString("base64") === input);
-    },
-);
+    }
 
-export const isURLBase64 = doesntError(
-    (
-        input: string,
-        options: {
-            length?: number;
-        } = {},
-    ) => {
-        const buffer = Buffer.from(input, "base64");
-        assert(
-            options.length === undefined || buffer.length === options.length,
-            `Expected ${String(options.length)} bytes.`,
+    if (buffer.length < n) {
+        const paddingLength = n - buffer.length;
+        const padding = Array.from(new Array(paddingLength)).map((_) => 0);
+        buffer = Buffer.concat([Buffer.from(padding), buffer]);
+    }
+
+    return buffer;
+};
+
+/**
+ * Convert a number to a Buffer of length `n`.
+ */
+export const toNBytes = (
+    input: BigNumber | Buffer | string | number,
+    n: number,
+): Buffer => {
+    let buffer;
+    if (Buffer.isBuffer(input)) {
+        buffer = input;
+    } else {
+        let hex = new BigNumber(input).toString(16);
+        hex = hex.length % 2 ? "0" + hex : hex;
+        buffer = Buffer.from(hex, "hex");
+    }
+
+    buffer = padBuffer(buffer, n);
+
+    const bnVersion = new BN(
+        BigNumber.isBigNumber(input) ? input.toFixed() : input,
+    ).toArrayLike(Buffer, "be", n);
+    if (!buffer.equals(bnVersion) || buffer.length !== n) {
+        throw new Error(
+            `Failed to convert to ${String(n)}-length bytes - got ${String(
+                buffer.toString("hex"),
+            )} (${String(buffer.length)} bytes), expected ${bnVersion.toString(
+                "hex",
+            )} (${String(bnVersion.length)} bytes)`,
         );
-        assert(toURLBase64(buffer) === input);
-    },
-);
+    }
 
-export const isHex = doesntError(
-    (
-        input: string,
-        options: {
-            prefix?: true;
-            length?: number;
-        } = {},
-    ) => {
-        if (options.prefix) {
-            assert(input.slice(0, 2) === "0x");
-            input = input.slice(2);
-        }
-        const buffer = Buffer.from(input, "hex");
-        assert(
-            options.length === undefined || buffer.length === options.length,
-            `Expected ${String(options.length)} bytes.`,
-        );
-        assert(buffer.toString("hex") === input);
-    },
-);
-
-export const toNBytes = (input: Buffer | string | number, n: number) =>
-    new BN(input).toArrayLike(Buffer, "be", n);
+    return buffer;
+};

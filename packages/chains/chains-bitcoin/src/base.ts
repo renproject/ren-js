@@ -172,6 +172,7 @@ export abstract class BitcoinBaseChain
             );
             txs.map(async (tx) =>
                 onInput({
+                    chain: this.chain,
                     txid: toURLBase64(fromHex(tx.txid).reverse()),
                     txindex: tx.txindex,
                     amount: tx.amount,
@@ -190,6 +191,7 @@ export abstract class BitcoinBaseChain
                 const utxos = await this.api.fetchUTXOs(address);
                 utxos.map(async (tx) =>
                     onInput({
+                        chain: this.chain,
                         txid: toURLBase64(fromHex(tx.txid).reverse()),
                         txindex: tx.txindex,
                         amount: tx.amount,

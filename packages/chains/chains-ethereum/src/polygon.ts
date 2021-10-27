@@ -12,6 +12,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const polygonTestnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
+    asset: "MATIC",
     isTestnet: true,
 
     network: {
@@ -36,6 +37,7 @@ export const polygonTestnetConfig: EvmNetworkConfig = {
 
 export const polygonMainnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
+    asset: "MATIC",
 
     network: {
         chainId: "0x13881",

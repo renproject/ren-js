@@ -22,6 +22,7 @@ export interface EvmNetworkConfig {
     selector: string;
     isTestnet?: boolean;
     logRequestLimit?: number;
+    asset: string;
 
     addresses: {
         GatewayRegistry: string;
@@ -86,6 +87,12 @@ export type EthProvider =
     | JsonRpcFetchFunc
     | {
           provider: Provider;
+          signer?: ethers.Signer;
+      };
+
+export type EthProviderUpdate =
+    | EthProvider
+    | {
           signer: ethers.Signer;
       };
 
@@ -119,6 +126,7 @@ export type InputContractCall = {
         toPayload: {
             to: string;
             payload: Buffer;
+            gatewayAddress?: string;
         },
     ) => SyncOrPromise<{
         to: string;

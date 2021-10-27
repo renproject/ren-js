@@ -8,7 +8,7 @@ import {
     Signer,
     utils,
 } from "ethers";
-import { Result } from "ethers/lib/utils";
+import { defaultAbiCoder, Result } from "ethers/lib/utils";
 
 import { Provider, TransactionReceipt } from "@ethersproject/providers";
 import {
@@ -34,6 +34,7 @@ import {
     LockGatewayABI,
     MintGatewayABI,
 } from "../contracts";
+import { LogTransferredEvent } from "../contracts/typechain/BasicBridge";
 import { TypedEvent } from "../contracts/typechain/commons";
 import { LogLockToChainEvent } from "../contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "../contracts/typechain/MintGatewayV3";
@@ -42,11 +43,12 @@ import { getLockGateway, getMintGateway } from "./gatewayRegistry";
 import { EvmNetworkConfig } from "./types";
 
 export const mapBurnLogToInputChainTransaction = (
+    chain: string,
     event: LogBurnEvent,
 ): InputChainTransaction => {
     const [to, amount, burnNonce] = event.args;
     return {
-        ...txHashToChainTransaction(event.transactionHash),
+        ...txHashToChainTransaction(chain, event.transactionHash),
         amount: amount.toString(),
         toRecipient: to,
         nonce: toURLBase64(toNBytes(burnNonce.toString(), 32)),
@@ -54,6 +56,7 @@ export const mapBurnLogToInputChainTransaction = (
 };
 
 export const mapLockLogToInputChainTransaction = (
+    chain: string,
     event: LogLockToChainEvent,
 ): InputChainTransaction => {
     const [
@@ -67,7 +70,7 @@ export const mapLockLogToInputChainTransaction = (
         throw new Error("Invalid nonce length");
     }
     return {
-        ...txHashToChainTransaction(event.transactionHash),
+        ...txHashToChainTransaction(chain, event.transactionHash),
         amount: amount.toString(),
         nonce: toURLBase64(toNBytes(lockNonce.toString(), 32)),
         toRecipient: recipientAddress,
@@ -76,54 +79,72 @@ export const mapLockLogToInputChainTransaction = (
     };
 };
 
-export const extractBurnDetails = (
-    receipt: providers.TransactionReceipt,
-): InputChainTransaction[] => {
-    const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
-
-    if (!receipt.blockHash) {
-        throw new Error(`Transaction not confirmed yet.`);
-    }
-
-    const burnDetails = filterLogs<LogBurnEvent>(receipt.logs, logBurnABI).map(
-        mapBurnLogToInputChainTransaction,
-    );
-
-    if (burnDetails.length) {
-        return burnDetails;
-    }
-
-    throw Error("No burn found in logs");
+export const mapTransferLogToInputChainTransaction = (
+    chain: string,
+    event: LogTransferredEvent,
+): InputChainTransaction => {
+    const [_, amount] = event.args;
+    return {
+        ...txHashToChainTransaction(chain, event.transactionHash),
+        amount: amount.toString(),
+    };
 };
 
-export const findBurnByNonce = async (
-    network: EvmNetworkConfig,
-    provider: Provider,
-    asset: string,
-    nonce: Buffer,
-    blockLimit?: number,
-): Promise<InputChainTransaction | undefined> => {
-    const gatewayAddress = await getMintGateway(network, provider, asset);
-    const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
+// export const extractBurnDetails = (
+//     chain: string,
+//     receipt: providers.TransactionReceipt,
+// ): InputChainTransaction[] => {
+//     const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
 
-    const burnLogs = await getPastLogs<LogBurnEvent>(
-        provider,
-        gatewayAddress,
-        logBurnABI,
-        [Ox(nonce)],
-        blockLimit,
-    );
-    const decodedBurnLogs = burnLogs.map(mapBurnLogToInputChainTransaction);
+//     if (!receipt.blockHash) {
+//         throw new Error(`Transaction not confirmed yet.`);
+//     }
 
-    return decodedBurnLogs.length ? decodedBurnLogs[0] : undefined;
-};
+//     const burnDetails = filterLogs<LogBurnEvent>(receipt.logs, logBurnABI).map(
+//         (e) => mapBurnLogToInputChainTransaction(chain, e),
+//     );
+
+//     if (burnDetails.length) {
+//         return burnDetails;
+//     }
+
+//     throw Error("No burn found in logs");
+// };
+
+// export const findBurnByNonce = async (
+//     network: EvmNetworkConfig,
+//     provider: Provider,
+//     asset: string,
+//     nonce: Buffer,
+//     blockLimit?: number,
+// ): Promise<InputChainTransaction | undefined> => {
+//     const gatewayAddress = await getMintGateway(network, provider, asset);
+//     const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
+
+//     const burnLogs = await getPastLogs<LogBurnEvent>(
+//         provider,
+//         gatewayAddress,
+//         logBurnABI,
+//         [Ox(nonce)],
+//         blockLimit,
+//     );
+//     const decodedBurnLogs = burnLogs.map((e) =>
+//         mapBurnLogToInputChainTransaction(network.selector, e),
+//     );
+
+//     return decodedBurnLogs.length ? decodedBurnLogs[0] : undefined;
+// };
 
 /**
  * Convert an EVM txHash to a RenVM ChainTransaction struct.
  * The txindex for Ethereum is currently set to 0, and the nonce is used instead
  * to differentiate locks/burns in the same EVM transaction.
  */
-export const txHashToChainTransaction = (txHash: string): ChainTransaction => ({
+export const txHashToChainTransaction = (
+    chain: string,
+    txHash: string,
+): ChainTransaction => ({
+    chain,
     txid: toURLBase64(fromHex(txHash)),
     txindex: "0",
 });
@@ -148,7 +169,9 @@ export const findMintBySigHash = async (
             [null, null, Ox(nHash)],
             blockLimit,
         )
-    ).map((event) => txHashToChainTransaction(event.transactionHash));
+    ).map((event) =>
+        txHashToChainTransaction(network.selector, event.transactionHash),
+    );
     if (newMintEvents.length) {
         if (newMintEvents.length > 1) {
             console.warn(`Found more than one mint log.`);
@@ -176,11 +199,14 @@ export const findMintBySigHash = async (
             }
 
             return oldMintEvents.map((event) =>
-                txHashToChainTransaction(event.transactionHash),
+                txHashToChainTransaction(
+                    network.selector,
+                    event.transactionHash,
+                ),
             )[0];
         }
 
-        return txHashToChainTransaction("");
+        return txHashToChainTransaction(network.selector, "");
     }
 
     return undefined;
@@ -204,7 +230,9 @@ export const findReleaseBySigHash = async (
             [null, null, Ox(nHash)],
             blockLimit,
         )
-    ).map((event) => txHashToChainTransaction(event.transactionHash));
+    ).map((event) =>
+        txHashToChainTransaction(network.selector, event.transactionHash),
+    );
 
     if (newReleaseEvents.length > 1) {
         console.warn(`Found more than one release log.`);
@@ -237,7 +265,7 @@ export const filterLogs = <T extends TypedEvent<Result>>(
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getPastLogs = async <T extends TypedEvent<any>>(
+const getPastLogs = async <T extends TypedEvent<any>>(
     provider: Provider,
     contractAddress: string,
     eventABI: AbiItem,
@@ -263,91 +291,92 @@ export const getPastLogs = async <T extends TypedEvent<any>>(
     return filterLogs<T>(events, eventABI);
 };
 
-/**
- * Waits for the receipt of a transaction to be available, retrying every 15
- * seconds until it is.
- *
- * @param web3 A web3 instance.
- * @param txHash The hash of the transaction being read.
- */
-export const waitForReceipt = async (
-    provider: Provider,
-    txHash: string,
-    logger?: Logger,
-    timeout?: number,
-): Promise<TransactionReceipt> =>
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    new Promise<TransactionReceipt>(async (resolve, reject) => {
-        assertType<string>("string", { txHash });
+// /**
+//  * Waits for the receipt of a transaction to be available, retrying every 15
+//  * seconds until it is.
+//  *
+//  * @param web3 A web3 instance.
+//  * @param txHash The hash of the transaction being read.
+//  */
+// export const waitForReceipt = async (
+//     provider: Provider,
+//     txHash: string,
+//     logger?: Logger,
+//     timeout?: number,
+// ): Promise<TransactionReceipt> =>
+//     // eslint-disable-next-line @typescript-eslint/no-misused-promises
+//     new Promise<TransactionReceipt>(async (resolve, reject) => {
+//         assertType<string>("string", { txHash });
 
-        // Wait for confirmation
-        let receipt: TransactionReceipt | undefined;
-        while (!receipt || !receipt.blockHash) {
-            if (logger) {
-                logger.debug(`Fetching transaction receipt: ${txHash}`);
-            }
-            receipt = await provider.getTransactionReceipt(txHash);
-            if (receipt && receipt.blockHash) {
-                break;
-            }
-            await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
-        }
+//         // Wait for confirmation
+//         let receipt: TransactionReceipt | undefined;
+//         while (!receipt || !receipt.blockHash) {
+//             if (logger) {
+//                 logger.debug(`Fetching transaction receipt: ${txHash}`);
+//             }
+//             receipt = await provider.getTransactionReceipt(txHash);
+//             if (receipt && receipt.blockHash) {
+//                 break;
+//             }
+//             await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
+//         }
 
-        // Status might be undefined - so check against `false` explicitly.
-        if (receipt.status === 0) {
-            reject(
-                new Error(
-                    `Transaction was reverted. { "transactionHash": "${txHash}" }`,
-                ),
-            );
-            return;
-        }
+//         // Status might be undefined - so check against `false` explicitly.
+//         if (receipt.status === 0) {
+//             reject(
+//                 new Error(
+//                     `Transaction was reverted. { "transactionHash": "${txHash}" }`,
+//                 ),
+//             );
+//             return;
+//         }
 
-        resolve(receipt);
-        return;
-    });
+//         resolve(receipt);
+//         return;
+//     });
 
-export const submitToEthereum = async (
-    signer: Signer,
-    to: string,
-    abi: AbiItem,
-    txConfig: PayableOverrides,
-    params: unknown[],
+// export const submitToEthereum = async (
+//     chain: string,
+//     signer: Signer,
+//     to: string,
+//     abi: AbiItem,
+//     txConfig: PayableOverrides,
+//     params: unknown[],
 
-    eventEmitter: EventEmitterTyped<{
-        transaction: [ChainTransaction];
-        confirmation: [number, { status: number }];
-    }>,
-): Promise<ContractReceipt> => {
-    if (!abi.name) {
-        throw new Error(`ABI must include method name.`);
-    }
+//     eventEmitter: EventEmitterTyped<{
+//         transaction: [ChainTransaction];
+//         confirmation: [number, { status: number }];
+//     }>,
+// ): Promise<ContractReceipt> => {
+//     if (!abi.name) {
+//         throw new Error(`ABI must include method name.`);
+//     }
 
-    const contract = new Contract(to, [abi], signer);
+//     const contract = new Contract(to, [abi], signer);
 
-    const config: PayableOverrides = {
-        ...txConfig,
-        ...{
-            value:
-                txConfig && txConfig.value
-                    ? txConfig.value.toString()
-                    : undefined,
-            gasPrice:
-                txConfig && txConfig.gasPrice
-                    ? txConfig.gasPrice.toString()
-                    : undefined,
-        },
-    };
+//     const config: PayableOverrides = {
+//         ...txConfig,
+//         ...{
+//             value:
+//                 txConfig && txConfig.value
+//                     ? txConfig.value.toString()
+//                     : undefined,
+//             gasPrice:
+//                 txConfig && txConfig.gasPrice
+//                     ? txConfig.gasPrice.toString()
+//                     : undefined,
+//         },
+//     };
 
-    const tx: ContractTransaction = await contract[abi.name](...params, config);
+//     const tx: ContractTransaction = await contract[abi.name](...params, config);
 
-    eventEmitter.emit("transaction", txHashToChainTransaction(tx.hash));
-    const receipt = await tx.wait();
+//     eventEmitter.emit("transaction", txHashToChainTransaction(chain, tx.hash));
+//     const receipt = await tx.wait();
 
-    eventEmitter.emit("confirmation", 1, { status: 1 });
+//     eventEmitter.emit("confirmation", 1, { status: 1 });
 
-    return receipt;
-};
+//     return receipt;
+// };
 
 export const validateAddress = (address: string): boolean => {
     if (/^.+\.eth$/.exec(address)) {
@@ -364,3 +393,6 @@ export const validateAddress = (address: string): boolean => {
 export const validateTransaction = (transaction: ChainTransaction): boolean =>
     transaction !== null &&
     isHex(transaction.txid, { length: 32, prefix: true });
+
+export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
+    fromHex(defaultAbiCoder.encode(types, parameters));

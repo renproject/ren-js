@@ -4,6 +4,7 @@ import { Provider } from "@ethersproject/providers";
 import { keccak256 } from "@renproject/utils";
 
 import { AbiItem } from "../utils/abi";
+import BasicBridgeJSON from "./ABIs/BasicBridge.json";
 import ERC20JSON from "./ABIs/ERC20.json";
 import GatewayRegistryJSON from "./ABIs/GatewayRegistryV2.json";
 import LockGatewayJSON from "./ABIs/LockGatewayV3.json";
@@ -15,6 +16,7 @@ import { MintGatewayV3 } from "./typechain/MintGatewayV3";
 
 export const MintGatewayABI = MintGatewayJSON as AbiItem[];
 export const LockGatewayABI = LockGatewayJSON as AbiItem[];
+export const BasicBridgeABI = BasicBridgeJSON as AbiItem[];
 export const GatewayRegistryABI = GatewayRegistryJSON as AbiItem[];
 export const ERC20ABI = ERC20JSON as AbiItem[];
 

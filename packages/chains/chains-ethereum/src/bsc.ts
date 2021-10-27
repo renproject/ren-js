@@ -11,6 +11,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const bscMainnetConfig: EvmNetworkConfig = {
     selector: "BinanceSmartChain",
+    asset: "BNB",
 
     network: {
         chainId: "0x38",
@@ -47,6 +48,7 @@ export const bscMainnetConfig: EvmNetworkConfig = {
 
 export const bscTestnetConfig: EvmNetworkConfig = {
     selector: "BinanceSmartChain",
+    asset: "BNB",
     isTestnet: true,
 
     network: {

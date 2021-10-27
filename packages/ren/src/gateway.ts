@@ -4,13 +4,10 @@ import { OrderedMap } from "immutable";
 import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
-    ChainTransactionStatus,
-    emptyNonce,
     extractError,
     fromBase64,
     fromHex,
     generateGHash,
-    generateNHash,
     generatePHash,
     generateSHash,
     InputChainTransaction,
@@ -20,16 +17,20 @@ import {
     isDepositChain,
     OutputType,
     Ox,
+    RenJSError,
     SECONDS,
     sleep,
+    toNBytes,
     toURLBase64,
     TxSubmitter,
     TxWaiter,
+    withCode,
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
 import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
 import { GatewayParams } from "./params";
+import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 
 /**
  * A `LockAndMint` object tied to a particular gateway address. LockAndMint
@@ -151,22 +152,13 @@ export class Gateway<
     public readonly _initialize = async (): Promise<
         Gateway<FromPayload, ToPayload>
     > => {
-        const { to, asset, from, fromChain, toChain } = this.params;
+        const { to, asset, from, fromChain, toChain, nonce } = this.params;
 
-        if (await fromChain.assetIsNative(asset)) {
-            this.inputType = InputType.Lock;
-            this.outputType = OutputType.Mint;
-            this.selector = `${asset}/to${to.chain}`;
-        } else if (await toChain.assetIsNative(asset)) {
-            this.inputType = InputType.Burn;
-            this.outputType = OutputType.Release;
-            this.selector = `${asset}/from${from.chain}`;
-        } else {
-            throw new Error(`Burning and minting is not supported yet.`);
-            this.inputType = InputType.Burn;
-            this.outputType = OutputType.Mint;
-            this.selector = `${asset}/from${from.chain}To${to.chain}`;
-        }
+        const { inputType, outputType, selector } =
+            await getInputAndOutputTypes(this.params);
+        this.inputType = inputType;
+        this.outputType = outputType;
+        this.selector = selector;
 
         try {
             this.targetConfirmations = await this.confirmationTarget();
@@ -176,53 +168,72 @@ export class Gateway<
         }
 
         if (
+            this.outputType === OutputType.Release &&
+            !isContractChain(fromChain)
+        ) {
+            throw withCode(
+                new Error(
+                    `Cannot release from non-contract chain ${fromChain.chain}`,
+                ),
+                RenJSError.INVALID_PARAMETERS,
+            );
+        }
+
+        if (this.outputType === OutputType.Mint && !isContractChain(toChain)) {
+            throw withCode(
+                new Error(`Cannot mint to non-contract chain ${toChain.chain}`),
+                RenJSError.INVALID_PARAMETERS,
+            );
+        }
+
+        const payload = await toChain.getOutputPayload(
+            asset,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            this.outputType as any,
+            to,
+        );
+
+        this.pHash = generatePHash(payload.payload);
+
+        // const sHash = Ox(generateSHash(this.selector));
+
+        const sHash = generateSHash(
+            `${this.params.asset}/to${this.params.to.chain}`,
+        );
+
+        if (
             isDepositChain(fromChain) &&
             (await fromChain.isDepositAsset(this.params.asset))
         ) {
             try {
-                this._gatewayAddress = await this.generateGatewayAddress();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                throw error;
-            }
+                if (!isContractChain(toChain)) {
+                    throw new Error(
+                        `Cannot mint to non-contract chain ${toChain.chain}.`,
+                    );
+                }
 
-            // Will fetch deposits as long as there's at least one deposit.
-            this.wait().catch(console.error);
-        } else {
-            if (!isContractChain(fromChain)) {
-                throw new Error(
-                    `Cannot lock on non-contract chain ${fromChain.chain}.`,
-                );
-            }
-            if (!isContractChain(toChain)) {
-                throw new Error(
-                    `Cannot mint to non-contract chain ${toChain.chain}.`,
-                );
-            }
-            const payload = await toChain.getOutputPayload(
-                asset,
-                this.outputType,
-                to,
-            );
+                const nonceBuffer = nonce
+                    ? Buffer.isBuffer(nonce)
+                        ? nonce
+                        : fromBase64(nonce)
+                    : toNBytes(0, 32);
 
-            this.pHash = generatePHash(payload.payload, this._config.logger);
-
-            const sHash = generateSHash(
-                `${this.params.asset}/to${this.params.to.chain}`,
-            );
-
-            const processInput = (lock: InputChainTransaction) => {
-                const nonce = lock.nonce!;
                 const gHash = generateGHash(
-                    payload.payload,
-                    payload.to,
+                    this.pHash,
                     sHash,
-                    fromBase64(nonce),
-                    this._config.logger,
+                    fromHex(payload.to),
+                    nonceBuffer,
                 );
                 this.gHash = gHash;
-                this.gPubKey = Buffer.from([]);
+                this.gPubKey =
+                    this._config.gPubKey && this._config.gPubKey.length > 0
+                        ? this._config.gPubKey
+                        : await this.renVM.selectPublicKey(asset);
                 this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
+
+                if (!this.gPubKey || this.gPubKey.length === 0) {
+                    throw new Error("Unable to fetch RenVM shard public key.");
+                }
 
                 if (!gHash || gHash.length === 0) {
                     throw new Error(
@@ -236,6 +247,85 @@ export class Gateway<
                     );
                 }
 
+                const gatewayAddress = await fromChain.createGatewayAddress(
+                    this.params.asset,
+                    this.params.from,
+                    this.gPubKey,
+                    gHash,
+                );
+                this._gatewayAddress = gatewayAddress;
+                this._config.logger.debug(
+                    "gateway address:",
+                    this.gatewayAddress,
+                );
+
+                // if (this.renVM.submitGatewayDetails) {
+                //     const promise = this.renVM.submitGatewayDetails(
+                //         this.params.fromChain(gatewayAddress),
+                //         {
+                //             ...(this._state as MintState & MintStatePartial),
+                //             nHash: Buffer.from(
+                //                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                //                 "base64",
+                //             ),
+                //             payload: fromHex(encodedParameters),
+                //             nonce: fromHex(nonce),
+                //             to: strip0x(sendTo),
+                //             // tags,
+                //         },
+                //         5,
+                //     );
+                //     if ((promise as { catch?: unknown }).catch) {
+                //         (promise as Promise<unknown>).catch(console.error);
+                //     }
+                // }
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
+                throw error;
+            }
+
+            // Will fetch deposits as long as there's at least one deposit.
+            this.wait().catch(console.error);
+        }
+
+        if (isContractChain(fromChain)) {
+            if (!isContractChain(toChain)) {
+                throw new Error(
+                    `Cannot mint to non-contract chain ${toChain.chain}.`,
+                );
+            }
+
+            const processInput = (lock: InputChainTransaction) => {
+                const nonce = lock.nonce!;
+                const gHash = generateGHash(
+                    payload.payload,
+                    sHash,
+                    fromHex(payload.to),
+                    fromBase64(nonce),
+                );
+                this.gHash = gHash;
+                this.gPubKey = Buffer.from([]);
+                this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
+
+                if (!gHash || gHash.length === 0) {
+                    throw withCode(
+                        new Error(
+                            "Invalid gateway hash being passed to gateway address generation.",
+                        ),
+                        RenJSError.INVALID_PARAMETERS,
+                    );
+                }
+
+                if (!asset || asset.length === 0) {
+                    throw withCode(
+                        new Error(
+                            "Invalid asset being passed to gateway address generation.",
+                        ),
+                        RenJSError.INVALID_PARAMETERS,
+                    );
+                }
+
                 // TODO: Add to queue instead so that it can be retried on error.
                 this.processDeposit(lock).catch(console.error);
             };
@@ -243,13 +333,14 @@ export class Gateway<
             // TODO
             const removeInput = () => {};
 
-            this.in = await fromChain.submitInput(
+            this.in = await fromChain.getInputTx(
                 this.inputType,
                 asset,
                 from,
                 {
                     toChain: to.chain,
                     toPayload: payload,
+                    gatewayAddress: this._gatewayAddress,
                 },
                 await this.renVM.getConfirmationTarget(
                     this.params.fromChain.chain,
@@ -331,35 +422,28 @@ export class Gateway<
         const nonce = deposit.nonce
             ? fromBase64(deposit.nonce)
             : this.params.nonce
-            ? fromHex(this.params.nonce)
-            : emptyNonce();
-        const nHash = generateNHash(
-            nonce,
-            fromBase64(deposit.txid),
-            deposit.txindex,
-        );
+            ? Buffer.isBuffer(this.params.nonce)
+                ? this.params.nonce
+                : fromHex(this.params.nonce)
+            : toNBytes(0, 32);
 
         const params: TransactionParams<ToPayload> = {
             asset: this.params.asset,
-            fromChain: this.params.fromChain,
-            toChain: this.params.toChain,
+            fromTx: deposit,
+            to: this.params.to,
 
-            toPayload: this.params.to,
-            inputTransaction: deposit,
-
-            selector: this.selector,
             gPubKey: toURLBase64(this.gPubKey),
             nonce: toURLBase64(nonce),
-            nHash: toURLBase64(nHash),
-            pHash: toURLBase64(this.pHash),
-            gHash: toURLBase64(this.gHash),
         };
 
         // If the transaction hasn't been seen before.
         if (!depositObject) {
             depositObject = new GatewayTransaction<ToPayload>(
                 this.renVM,
+                this.params.fromChain,
+                this.params.toChain,
                 params,
+                this.in,
                 this._config,
             );
 
@@ -412,100 +496,6 @@ export class Gateway<
     ): this => this.addListener(event, listener);
 
     // Private methods /////////////////////////////////////////////////////////
-
-    private readonly generateGatewayAddress = async (): Promise<string> => {
-        if (this._gatewayAddress) {
-            return this._gatewayAddress;
-        }
-
-        const { nonce, to, asset, fromChain, toChain } = this.params;
-
-        if (!isDepositChain(fromChain)) {
-            throw new Error("From chain is not a deposit chain.");
-        }
-
-        if (!isContractChain(toChain)) {
-            throw new Error(
-                `Cannot mint to non-contract chain ${toChain.chain}.`,
-            );
-        }
-
-        const payload = await toChain.getOutputPayload(
-            asset,
-            this.outputType,
-            to,
-        );
-
-        this.pHash = generatePHash(payload.payload, this._config.logger);
-
-        // const sHash = Ox(generateSHash(this.selector));
-
-        const sHash = generateSHash(
-            `${this.params.asset}/to${this.params.to.chain}`,
-        );
-
-        const gHash = generateGHash(
-            payload.payload,
-            payload.to,
-            sHash,
-            fromBase64(nonce || emptyNonce()),
-            this._config.logger,
-        );
-        this.gHash = gHash;
-        this.gPubKey =
-            this._config.gPubKey && this._config.gPubKey.length > 0
-                ? this._config.gPubKey
-                : await this.renVM.selectPublicKey(asset);
-        this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
-
-        if (!this.gPubKey || this.gPubKey.length === 0) {
-            throw new Error("Unable to fetch RenVM shard public key.");
-        }
-
-        if (!gHash || gHash.length === 0) {
-            throw new Error(
-                "Invalid gateway hash being passed to gateway address generation.",
-            );
-        }
-
-        if (!asset || asset.length === 0) {
-            throw new Error(
-                "Invalid asset being passed to gateway address generation.",
-            );
-        }
-
-        const gatewayAddress = await fromChain.createGatewayAddress(
-            this.params.asset,
-            this.params.from,
-            this.gPubKey,
-            gHash,
-        );
-        this._gatewayAddress = gatewayAddress;
-        this._config.logger.debug("gateway address:", this.gatewayAddress);
-
-        // if (this.renVM.submitGatewayDetails) {
-        //     const promise = this.renVM.submitGatewayDetails(
-        //         this.params.fromChain(gatewayAddress),
-        //         {
-        //             ...(this._state as MintState & MintStatePartial),
-        //             nHash: Buffer.from(
-        //                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        //                 "base64",
-        //             ),
-        //             payload: fromHex(encodedParameters),
-        //             nonce: fromHex(nonce),
-        //             to: strip0x(sendTo),
-        //             // tags,
-        //         },
-        //         5,
-        //     );
-        //     if ((promise as { catch?: unknown }).catch) {
-        //         (promise as Promise<unknown>).catch(console.error);
-        //     }
-        // }
-
-        return this._gatewayAddress;
-    };
 
     private readonly wait = async (): Promise<void> => {
         if (!this._gatewayAddress) {

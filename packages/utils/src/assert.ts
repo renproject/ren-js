@@ -2,6 +2,9 @@
 
 import BigNumber from "bignumber.js";
 
+/**
+ * Throw an error if the assertion is false.
+ */
 export const assert = (
     assertion: boolean,
     sentence?: string,
@@ -104,7 +107,7 @@ const assertTypeCheck = <T = unknown>(
         if (!type(value, key)) {
             const readableType = Array.isArray(value) ? "any[]" : typeOf(value);
             throw new Error(
-                `Expected ${key} to be of type '${typeDescription}', instead got '${readableType}'.`,
+                `Expected '${key}' to be of type '${typeDescription}', instead got '${readableType}'.`,
             );
         }
     }

@@ -4,7 +4,7 @@ import {
     extractError,
     Logger,
     LogLevel,
-    NullLogger,
+    nullLogger,
     SECONDS,
     SyncOrPromise,
     tryNTimes,
@@ -41,7 +41,7 @@ export class HttpProvider<
     public readonly nodeURL: string;
     public readonly logger: Logger;
 
-    constructor(ipOrMultiaddress: string, logger: Logger = NullLogger) {
+    constructor(ipOrMultiaddress: string, logger: Logger = nullLogger) {
         this.logger = logger;
 
         if (typeof ipOrMultiaddress !== "string") {
@@ -66,8 +66,8 @@ export class HttpProvider<
 
         if (
             // Check level before doing expensive JSON call.
-            typeof this.logger.level !== "number" ||
-            this.logger.level >= LogLevel.Debug
+            this.logger.getLevel &&
+            this.logger.getLevel() <= LogLevel.Debug
         ) {
             this.logger.debug(
                 "[request]",
@@ -103,8 +103,8 @@ export class HttpProvider<
                 throw new Error(`Empty result returned from node.`);
             }
             if (
-                typeof this.logger.level !== "number" ||
-                this.logger.level >= LogLevel.Debug
+                this.logger.getLevel &&
+                this.logger.getLevel() <= LogLevel.Debug
             ) {
                 this.logger.debug(
                     "[response]",

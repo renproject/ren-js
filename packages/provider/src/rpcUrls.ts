@@ -1,10 +1,4 @@
-export enum RenNetwork {
-    Mainnet = "mainnet",
-    Testnet = "testnet",
-    Devnet = "devnet",
-}
-
-export type RenNetworkString = "mainnet" | "testnet" | "devnet";
+import { RenNetwork } from "@renproject/utils";
 
 export const renRpcUrls = {
     [RenNetwork.Mainnet]: "https://lightnode-mainnet.herokuapp.com",

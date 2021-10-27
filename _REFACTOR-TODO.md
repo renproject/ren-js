@@ -149,3 +149,43 @@ const main = async () => {
     });
 };
 ```
+
+# Defining Ethereum payloads:
+
+List of magic values:
+
+-   \_\_RENVM_TOKEN_ADDRESS\_\_
+-   \_\_RENVM_GATEWAY_ADDRESS\_\_
+-   \_\_RENVM_ACCOUNT\_\_
+-   \_\_RENVM_GATEWAY\_\_
+-   \_\_RENVM_ASSET\_\_
+-   \_\_RENVM_SIGNATURE\_\_
+-   \_\_RENVM_SIGNATURE_R\_\_
+-   \_\_RENVM_SIGNATURE_S\_\_
+-   \_\_RENVM_SIGNATURE_V\_\_
+-   \_\_RENVM_AMOUNT\_\_
+
+Types of payloads:
+
+```
+{
+    type: "contract",
+    params: {
+        to: address,
+        params: [{
+            name: "test",
+            type: "string",
+            value: "Test!",
+            notInPayload: true,
+        }],
+    }
+}
+
+{
+    type: "approve",
+    params: {
+        to: EvmParams.RenTokenAddress,
+
+    }
+}
+```

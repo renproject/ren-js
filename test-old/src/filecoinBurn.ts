@@ -45,7 +45,7 @@ const main = async () => {
             confirmations = confs;
         })
         .on("transactionHash", (txHash) =>
-            burnAndRelease._state.logger.log(
+            burnAndRelease._state.logger.debug(
                 `${
                     burnAndRelease.params.from &&
                     burnAndRelease.params.from.name
@@ -63,18 +63,18 @@ const main = async () => {
         .release()
         .on("status", (status) =>
             status === "confirming"
-                ? burnAndRelease._state.logger.log(
+                ? burnAndRelease._state.logger.debug(
                       `confirming (${confirmations}/15)`,
                   )
-                : burnAndRelease._state.logger.log(status),
+                : burnAndRelease._state.logger.debug(status),
         )
         .on("txHash", (txHash) =>
-            burnAndRelease._state.logger.log(`Ren txHash: ${txHash}`),
+            burnAndRelease._state.logger.debug(`Ren txHash: ${txHash}`),
         );
 
     // Note - the typings for `out` are currently outdated - this will be fixed
     // in the next release. Use `result.out.amount` and `result.out.txid`.
-    burnAndRelease._state.logger.log(result.out);
+    burnAndRelease._state.logger.debug(result.out);
 };
 
 main().catch(console.error);

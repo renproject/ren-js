@@ -11,6 +11,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const goerliConfig: EvmNetworkConfig = {
     selector: "Goerli",
+    asset: "gETH",
 
     network: {
         chainId: "0x5",

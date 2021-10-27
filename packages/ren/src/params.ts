@@ -53,12 +53,6 @@ export interface GatewayParams<
      * nonce: new BN(Math.floor(Date.now() / 8.64e7))
      *          .toArrayLike(Buffer, "be", 32),
      * ```
-     *
-     * @example
-     * ```
-     * // Provide a random 32-byte Buffer. It's important that this isn't lost.
-     * nonce: RenJS.utils.randomNonce(),
-     * ```
      */
     nonce?: Buffer | string;
 

@@ -5,11 +5,7 @@ import {
     ResponseQueryBlockState,
 } from "../methods/ren_queryBlockState";
 import { TypedPackValue } from "../pack/pack";
-import {
-    BurnTransactionInput,
-    MintTransactionInput,
-    SubmitGatewayInput,
-} from "../transaction";
+import { CrossChainTransactionInput, SubmitGatewayInput } from "../transaction";
 import { RenVMType, RenVMValue } from "../value";
 
 export enum RPCMethod {
@@ -61,17 +57,15 @@ export type ParamsSubmitGateway = {
 };
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
-export interface ParamsSubmitTx<
-    T extends MintTransactionInput | BurnTransactionInput,
-> {
+export interface ParamsSubmitTx<T extends CrossChainTransactionInput> {
     // Tx being submitted.
     tx: T;
     // Tags that should be attached to the Tx.
     // tags: Array<RenVMValue<RenVMType.B32>>;
 }
 
-export type ParamsSubmitMint = ParamsSubmitTx<MintTransactionInput>;
-export type ParamsSubmitBurn = ParamsSubmitTx<BurnTransactionInput>;
+export type ParamsSubmitCrossChainTransaction =
+    ParamsSubmitTx<CrossChainTransactionInput>;
 
 // ParamsQueryTx defines the parameters of the MethodQueryTx.
 export interface ParamsQueryTx {
@@ -211,7 +205,7 @@ export interface ResponseQueryState {
 // /////////////////////////////////////////////////////////////////////////////
 
 export type RenVMParams = {
-    [RPCMethod.SubmitTx]: ParamsSubmitBurn | ParamsSubmitMint;
+    [RPCMethod.SubmitTx]: ParamsSubmitCrossChainTransaction;
     [RPCMethod.SubmitGateway]: ParamsSubmitGateway;
     [RPCMethod.QueryTx]: ParamsQueryTx;
     [RPCMethod.QueryTxs]: ParamsQueryTxs;

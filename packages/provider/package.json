@@ -45,8 +45,10 @@
     },
     "dependencies": {
         "@renproject/utils": "^3.0.0-alpha.0",
+        "@types/create-hash": "1.2.2",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",
+        "create-hash": "1.2.0",
         "immutable": "^4.0.0-rc.14"
     },
     "resolutions": {

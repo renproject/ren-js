@@ -67,11 +67,7 @@ export const callContract = async (
  */
 export class EVMTxSubmitter implements TxSubmitter {
     public chain: string;
-    public status: ChainTransactionProgress = {
-        status: ChainTransactionStatus.Ready,
-        confirmations: 0,
-        target: 0,
-    };
+    public status: ChainTransactionProgress;
 
     private getTx: (options?: {
         overrides?: any[];
@@ -102,6 +98,12 @@ export class EVMTxSubmitter implements TxSubmitter {
         this.getTx = getTx;
         this.target = target;
         this.onReceipt = onReceipt;
+        this.status = {
+            chain,
+            status: ChainTransactionStatus.Ready,
+            confirmations: 0,
+            target: 0,
+        };
     }
 
     submit = (options?: {
@@ -126,7 +128,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             this.status = {
                 ...this.status,
                 status: ChainTransactionStatus.Confirming,
-                transaction: txHashToChainTransaction(this.tx.hash),
+                transaction: txHashToChainTransaction(this.chain, this.tx.hash),
                 target: this.target,
                 confirmations: this.tx.confirmations,
             };
@@ -148,7 +150,7 @@ export class EVMTxSubmitter implements TxSubmitter {
 
             promiEvent.emit("status", this.status);
 
-            return txHashToChainTransaction(this.tx.hash);
+            return txHashToChainTransaction(this.chain, this.tx.hash);
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
@@ -179,7 +181,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             target = isDefined(target) ? target : this.target;
 
             if (target === 0) {
-                return txHashToChainTransaction(this.tx.hash);
+                return txHashToChainTransaction(this.chain, this.tx.hash);
             }
 
             // Wait for each confirmation until the target is reached.
@@ -206,6 +208,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                                 ...this.status,
                                 status: ChainTransactionStatus.Confirming,
                                 transaction: txHashToChainTransaction(
+                                    this.chain,
                                     replacement.hash,
                                 ),
                                 target: target,
@@ -213,6 +216,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                                 replaced: {
                                     previousTransaction:
                                         txHashToChainTransaction(
+                                            this.chain,
                                             replacement.hash,
                                         ),
                                 },
@@ -228,6 +232,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                                 ...this.status,
                                 status: ChainTransactionStatus.ConfirmedWithError,
                                 transaction: txHashToChainTransaction(
+                                    this.chain,
                                     this.tx.hash,
                                 ),
                                 target: target,
@@ -249,7 +254,10 @@ export class EVMTxSubmitter implements TxSubmitter {
                 this.status = {
                     ...this.status,
                     status: ChainTransactionStatus.Confirming,
-                    transaction: txHashToChainTransaction(this.tx.hash),
+                    transaction: txHashToChainTransaction(
+                        this.chain,
+                        this.tx.hash,
+                    ),
                     target: target,
                     confirmations: this.tx.confirmations,
                 };
@@ -257,7 +265,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                 promiEvent.emit("status", this.status);
             }
 
-            return txHashToChainTransaction(this.tx.hash);
+            return txHashToChainTransaction(this.chain, this.tx.hash);
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

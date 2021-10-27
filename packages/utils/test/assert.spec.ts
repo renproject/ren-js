@@ -81,25 +81,25 @@ describe("assert", () => {
 
     it("throw error for wrong types", () => {
         expect(() => assertType("undefined", { b: null })).to.throw(
-            "Expected b to be of type 'undefined', instead got 'null'.",
+            "Expected 'b' to be of type 'undefined', instead got 'null'.",
         );
         expect(() => assertType("null", { b: undefined })).to.throw(
-            "Expected b to be of type 'null', instead got 'undefined'.",
+            "Expected 'b' to be of type 'null', instead got 'undefined'.",
         );
         expect(() => assertType("Buffer | string", { b: 1 })).to.throw(
-            "Expected b to be of type 'Buffer | string', instead got 'number'.",
+            "Expected 'b' to be of type 'Buffer | string', instead got 'number'.",
         );
         expect(() =>
             assertType("Buffer | string | undefined", { d: null }),
         ).to.throw(
-            "Expected d to be of type 'Buffer | string | undefined', instead got 'null'.",
+            "Expected 'd' to be of type 'Buffer | string | undefined', instead got 'null'.",
         );
         expect(() =>
             assertType("Array<number>", {
                 a: [1, 2, "a"],
             }),
         ).to.throw(
-            "Expected a[2] to be of type 'number', instead got 'string'.",
+            "Expected 'a[2]' to be of type 'number', instead got 'string'.",
         );
 
         expect(() =>
@@ -107,7 +107,7 @@ describe("assert", () => {
                 a: ["1", "2", "3"],
             }),
         ).to.throw(
-            "Expected a to be of type 'string | number[]', instead got 'any[]'.",
+            "Expected 'a' to be of type 'string | number[]', instead got 'any[]'.",
         );
         expect(() =>
             assertObject(
@@ -127,7 +127,7 @@ describe("assert", () => {
                 },
             ),
         ).to.throw(
-            "Expected a[\"first\"][\"innerFirst\"] to be of type 'number', instead got 'string'.",
+            "Expected 'a[\"first\"][\"innerFirst\"]' to be of type 'number', instead got 'string'.",
         );
 
         expect(() =>
@@ -144,7 +144,7 @@ describe("assert", () => {
                 },
             ),
         ).to.throw(
-            "Expected a[\"first\"] to be of type 'number', instead got 'string'.",
+            "Expected 'a[\"first\"]' to be of type 'number', instead got 'string'.",
         );
     });
 

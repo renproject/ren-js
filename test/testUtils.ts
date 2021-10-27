@@ -163,7 +163,7 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //                 color(`[${hash.slice(0, 6)}]`),
 //             );
 
-//             deposit._state.logger.log(
+//             deposit._state.logger.debug(
 //                 `Received ${
 //                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 //                     new BigNumber((deposit.depositDetails as any).amount)

@@ -17,14 +17,14 @@ const createDepositHandler = (retries = -1) => {
                 case TransactionStatus.Detected:
                     await tryNTimes(
                         async () => {
-                            gateway._config.logger.log(`Calling .confirmed`);
+                            gateway._config.logger.debug(`Calling .confirmed`);
                             await gateway.in.wait().on("status", (status) => {
                                 if (isDefined(status.confirmations)) {
-                                    gateway._config.logger.log(
+                                    gateway._config.logger.debug(
                                         `${status.confirmations}/${status.target} confirmations`,
                                     );
                                 } else {
-                                    gateway._config.logger.log(
+                                    gateway._config.logger.debug(
                                         `Waiting for ${status.target} confirmations...`,
                                     );
                                 }
@@ -42,16 +42,16 @@ const createDepositHandler = (retries = -1) => {
                     await tryNTimes(
                         async () => {
                             try {
-                                gateway._config.logger.log(`Calling .signed`);
+                                gateway._config.logger.debug(`Calling .signed`);
                                 await gateway
                                     .signed()
                                     .on("txHash", (status) => {
-                                        gateway._config.logger.log(
+                                        gateway._config.logger.debug(
                                             `RenVM hash: ${status}`,
                                         );
                                     })
                                     .on("status", (status) => {
-                                        gateway._config.logger.log(
+                                        gateway._config.logger.debug(
                                             `status: ${status}`,
                                         );
                                     });
@@ -78,7 +78,7 @@ const createDepositHandler = (retries = -1) => {
                     await tryNTimes(
                         async () => {
                             try {
-                                gateway._config.logger.log(`Calling .mint`);
+                                gateway._config.logger.debug(`Calling .mint`);
                                 if (!gateway.out) {
                                     return;
                                 }
@@ -86,7 +86,7 @@ const createDepositHandler = (retries = -1) => {
                                     await gateway.out.submit();
                                 }
                                 await gateway.out.wait();
-                                // gateway._config.logger.log(
+                                // gateway._config.logger.debug(
                                 //     `txHash: ${
                                 //         gateway.params.toChain.transactionExplorerLink(
                                 //             transaction,

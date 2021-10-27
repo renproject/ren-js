@@ -2,17 +2,12 @@ import BigNumber from "bignumber.js";
 
 import { RenVMProvider, unmarshalTypedPackValue } from "@renproject/provider";
 import { BlockState } from "@renproject/provider/build/main/methods/ren_queryBlockState";
-import {
-    Chain,
-    LogLevel,
-    RenNetwork,
-    RenNetworkString,
-    SimpleLogger,
-} from "@renproject/utils";
+import { Chain, RenNetwork, RenNetworkString } from "@renproject/utils";
 
 import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
 import { Gateway } from "./gateway";
+import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
 import { GatewayParams } from "./params";
 
 export { Gateway as LockAndMint } from "./gateway";
@@ -141,9 +136,6 @@ export default class RenJS {
         config?: RenJSConfig,
     ) {
         this._config = config || {};
-        this._config.logger =
-            this._config.logger ||
-            new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         this.renVM =
             typeof providerOrNetwork === "string"
@@ -241,6 +233,26 @@ export default class RenJS {
                 fromChain: this.getChain(params.from.chain),
                 toChain: this.getChain(params.to.chain),
             },
+            {
+                ...this._config,
+                ...config,
+            },
+        )._initialize();
+
+    public readonly gatewayTransaction = async <
+        ToPayload extends { chain: string } = {
+            chain: string;
+        },
+    >(
+        params: TransactionParams<ToPayload>,
+        config?: RenJSConfig,
+    ): Promise<GatewayTransaction<ToPayload>> =>
+        new GatewayTransaction<ToPayload>(
+            this.renVM,
+            this.getChain(params.fromTx.chain),
+            this.getChain(params.to.chain),
+            params,
+            undefined,
             {
                 ...this._config,
                 ...config,

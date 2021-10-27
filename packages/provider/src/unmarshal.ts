@@ -6,43 +6,56 @@ import { TypedPackValue, unmarshalTypedPackValue } from "./pack/pack";
 import { ResponseQueryTx } from "./rpc/methods";
 import { UrlBase64String } from "./value";
 
-export interface TxResponse<Input = any, Output = any> {
-    version?: number;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface UnmarshalledTxInput<Input = any> {
     hash: UrlBase64String;
-    to: string;
+    version: number;
+    selector: string; // "BTC/fromEthereum",
     in: Input;
-    out?: Output;
 }
 
-export interface TxResponseWithStatus<Transaction extends TxResponse> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface UnmarshalledTxOutput<Input = any, Output = any>
+    extends UnmarshalledTxInput<Input> {
+    out: Output;
+}
+
+export interface TxResponseWithStatus<
+    Transaction extends UnmarshalledTxOutput,
+> {
     tx: Transaction;
     txStatus: TxStatus;
 }
 
-export type CrossChainTxResponse = TxResponse<
+export interface CrossChainTxInput {
+    txid: Buffer;
+    txindex: BigNumber;
+    amount: BigNumber;
+    payload: Buffer;
+    phash: Buffer;
+    to: string;
+    nonce: Buffer;
+    nhash: Buffer;
+    gpubkey: Buffer;
+    ghash: Buffer;
+}
+
+export interface CrossChainTxOutput {
+    amount: BigNumber;
+    fees: BigNumber;
+    hash: Buffer;
+    revert: string;
+    sig: Buffer;
+    sighash: Buffer;
+    txid: Buffer;
+    txindex: BigNumber;
+}
+
+export type CrossChainTxResponse = UnmarshalledTxOutput<
     // Input
-    {
-        amount: BigNumber;
-        ghash: Buffer;
-        gpubkey: Buffer;
-        nhash: Buffer;
-        nonce: Buffer;
-        payload: Buffer;
-        phash: Buffer;
-        to: string;
-        txid: Buffer;
-        txindex: BigNumber;
-    },
+    CrossChainTxInput,
     // Output
-    {
-        amount: BigNumber;
-        hash: Buffer;
-        sig: Buffer;
-        sighash: Buffer;
-        txid: Buffer;
-        txindex: BigNumber;
-        revert?: string | "";
-    }
+    CrossChainTxOutput
 >;
 
 export const unmarshalTxResponse = <
@@ -52,10 +65,10 @@ export const unmarshalTxResponse = <
     TypedOutput extends TypedPackValue = TypedPackValue,
 >(
     tx: ResponseQueryTx<TypedInput, TypedOutput>["tx"],
-): TxResponse<Input, Output> => ({
+): UnmarshalledTxOutput<Input, Output> => ({
     version: parseInt(tx.version),
     hash: tx.hash,
-    to: tx.selector,
+    selector: tx.selector,
     in: unmarshalTypedPackValue(tx.in),
     out: unmarshalTypedPackValue(tx.out),
 });

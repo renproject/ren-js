@@ -12,6 +12,7 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 export const ethereumMainnet: EvmNetworkConfig = {
     selector: "Ethereum",
+    asset: "ETH",
 
     network: {
         chainId: "0x1",
@@ -34,6 +35,7 @@ export const ethereumMainnet: EvmNetworkConfig = {
 
 export const ethereumTestnet: EvmNetworkConfig = {
     selector: "Ethereum",
+    asset: "ETH",
     isTestnet: true,
 
     network: {

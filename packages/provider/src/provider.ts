@@ -3,10 +3,9 @@ import {
     fromBase64,
     isDefined,
     Logger,
-    NullLogger,
+    nullLogger,
     RenNetwork,
     RenNetworkString,
-    renRpcUrls,
     SECONDS,
     sleep,
     toURLBase64,
@@ -21,17 +20,17 @@ import {
     ParamsQueryBlocks,
     ParamsQueryTx,
     ParamsQueryTxs,
-    ParamsSubmitBurn,
+    ParamsSubmitCrossChainTransaction,
     ParamsSubmitGateway,
-    ParamsSubmitMint,
     RenVMParams,
     RenVMResponses,
     RPCMethod,
 } from "./rpc/methods";
+import { renRpcUrls } from "./rpcUrls";
 import {
+    crossChainParamsType,
+    CrossChainTransactionInput,
     hashTransaction,
-    mintParamsType,
-    MintTransactionInput,
     SubmitGatewayInput,
     submitGatewayType,
 } from "./transaction";
@@ -46,7 +45,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
 
     constructor(
         rpcUrlOrNetwork: RenNetwork | RenNetworkString | string,
-        logger: Logger = NullLogger,
+        logger: Logger = nullLogger,
     ) {
         super(renRpcUrls[rpcUrlOrNetwork] || rpcUrlOrNetwork);
         this.logger = logger;
@@ -85,12 +84,12 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         );
 
     public submitTx = async (
-        tx: ParamsSubmitBurn["tx"] | ParamsSubmitMint["tx"],
+        tx: ParamsSubmitCrossChainTransaction["tx"],
         retry?: number,
     ) =>
         this.sendMessage<RPCMethod.SubmitTx>(
             RPCMethod.SubmitTx,
-            { tx } as ParamsSubmitBurn | ParamsSubmitMint,
+            { tx } as ParamsSubmitCrossChainTransaction,
             retry,
         );
 
@@ -168,7 +167,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         });
         assertType<string>("string", { to });
         const txIn = {
-            t: submitGatewayType(),
+            t: submitGatewayType,
             v: {
                 ghash: toURLBase64(gHash),
                 gpubkey: toURLBase64(gPubKey),
@@ -209,7 +208,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         payload: Buffer;
         pHash: Buffer;
         to: string;
-    }): MintTransactionInput => {
+    }): CrossChainTransactionInput => {
         assertType<Buffer>("Buffer", {
             gHash,
             gPubKey,
@@ -225,7 +224,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
             txid: output.txid,
         });
         const txIn = {
-            t: mintParamsType(),
+            t: crossChainParamsType,
             v: {
                 txid: output.txid,
                 txindex: output.txindex,
@@ -245,7 +244,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
             selector: selector,
             version,
             // TODO: Fix types
-            in: txIn as unknown as MintTransactionInput["in"],
+            in: txIn as unknown as CrossChainTransactionInput["in"],
         };
     };
 
@@ -308,7 +307,6 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
      * @param renVMTxHash The transaction hash as a Buffer.
      */
     public readonly queryTransaction = async (
-        _selector: string,
         renVMTxHash: Buffer,
         retries?: number,
     ): Promise<TxResponseWithStatus<CrossChainTxResponse>> => {
@@ -340,7 +338,6 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
      * loop.
      */
     public readonly waitForTX = async (
-        selector: string,
         utxoTxHash: Buffer,
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
@@ -354,10 +351,7 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
             }
 
             try {
-                const result = await this.queryTransaction(
-                    selector,
-                    utxoTxHash,
-                );
+                const result = await this.queryTransaction(utxoTxHash);
                 if (result && result.txStatus === TxStatus.TxStatusDone) {
                     rawResponse = result;
                     break;
@@ -409,7 +403,9 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
             throw new Error(`Unable to fetch RenVM public key for ${asset}.`);
         }
 
-        return fromBase64(pubKey);
+        assertType<Buffer>("Buffer", { pubKey });
+
+        return pubKey;
     };
 
     public getNetwork = async (): Promise<string> =>

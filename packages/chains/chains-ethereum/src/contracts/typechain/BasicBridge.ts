@@ -11,6 +11,7 @@ import {
     ethers,
     EventFilter,
     Overrides,
+    PayableOverrides,
     PopulatedTransaction,
     Signer,
 } from "ethers";
@@ -27,6 +28,7 @@ interface BasicBridgeInterface extends ethers.utils.Interface {
         "lock(string,string,string,bytes,uint256)": FunctionFragment;
         "mint(string,address,uint256,bytes32,bytes)": FunctionFragment;
         "release(string,address,uint256,bytes32,bytes)": FunctionFragment;
+        "transferWithLog(address)": FunctionFragment;
     };
 
     encodeFunctionData(
@@ -45,14 +47,30 @@ interface BasicBridgeInterface extends ethers.utils.Interface {
         functionFragment: "release",
         values: [string, string, BigNumberish, BytesLike, BytesLike],
     ): string;
+    encodeFunctionData(
+        functionFragment: "transferWithLog",
+        values: [string],
+    ): string;
 
     decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "lock", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "release", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "transferWithLog",
+        data: BytesLike,
+    ): Result;
 
-    events: {};
+    events: {
+        "LogTransferred(address,uint256)": EventFragment;
+    };
+
+    getEvent(nameOrSignatureOrTopic: "LogTransferred"): EventFragment;
 }
+
+export type LogTransferredEvent = TypedEvent<
+    [string, BigNumber] & { to: string; amount: BigNumber }
+>;
 
 export interface BasicBridge extends BaseContract {
     connect(signerOrProvider: Signer | Provider | string): this;
@@ -99,181 +117,219 @@ export interface BasicBridge extends BaseContract {
 
     functions: {
         burn(
-            symbol_: string,
-            to_: string,
-            amount_: BigNumberish,
+            symbol: string,
+            to: string,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         lock(
-            symbol_: string,
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            symbol: string,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         mint(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         release(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        transferWithLog(
+            to: string,
+            overrides?: PayableOverrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
     };
 
     burn(
-        symbol_: string,
-        to_: string,
-        amount_: BigNumberish,
+        symbol: string,
+        to: string,
+        amount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     lock(
-        symbol_: string,
-        recipientAddress_: string,
-        recipientChain_: string,
-        recipientPayload_: BytesLike,
-        amount_: BigNumberish,
+        symbol: string,
+        recipientAddress: string,
+        recipientChain: string,
+        recipientPayload: BytesLike,
+        amount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     mint(
-        symbol_: string,
-        recipient_: string,
-        amount_: BigNumberish,
-        nHash_: BytesLike,
-        sig_: BytesLike,
+        symbol: string,
+        recipient: string,
+        amount: BigNumberish,
+        nHash: BytesLike,
+        sig: BytesLike,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     release(
-        symbol_: string,
-        recipient_: string,
-        amount_: BigNumberish,
-        nHash_: BytesLike,
-        sig_: BytesLike,
+        symbol: string,
+        recipient: string,
+        amount: BigNumberish,
+        nHash: BytesLike,
+        sig: BytesLike,
         overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
+
+    transferWithLog(
+        to: string,
+        overrides?: PayableOverrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     callStatic: {
         burn(
-            symbol_: string,
-            to_: string,
-            amount_: BigNumberish,
+            symbol: string,
+            to: string,
+            amount: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         lock(
-            symbol_: string,
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            symbol: string,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         mint(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         release(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: CallOverrides,
         ): Promise<void>;
+
+        transferWithLog(to: string, overrides?: CallOverrides): Promise<void>;
     };
 
-    filters: {};
+    filters: {
+        "LogTransferred(address,uint256)"(
+            to?: string | null,
+            amount?: null,
+        ): TypedEventFilter<
+            [string, BigNumber],
+            { to: string; amount: BigNumber }
+        >;
+
+        LogTransferred(
+            to?: string | null,
+            amount?: null,
+        ): TypedEventFilter<
+            [string, BigNumber],
+            { to: string; amount: BigNumber }
+        >;
+    };
 
     estimateGas: {
         burn(
-            symbol_: string,
-            to_: string,
-            amount_: BigNumberish,
+            symbol: string,
+            to: string,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         lock(
-            symbol_: string,
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            symbol: string,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         mint(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         release(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        transferWithLog(
+            to: string,
+            overrides?: PayableOverrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
     };
 
     populateTransaction: {
         burn(
-            symbol_: string,
-            to_: string,
-            amount_: BigNumberish,
+            symbol: string,
+            to: string,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         lock(
-            symbol_: string,
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            symbol: string,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         mint(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         release(
-            symbol_: string,
-            recipient_: string,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            symbol: string,
+            recipient: string,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        transferWithLog(
+            to: string,
+            overrides?: PayableOverrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
     };
 }

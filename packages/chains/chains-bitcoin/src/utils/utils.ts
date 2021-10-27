@@ -1,7 +1,6 @@
+import createHash from "create-hash";
 import { validate } from "wallet-address-validator";
 import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
-
-import { ripemd160, sha256 } from "@renproject/utils";
 
 import {
     BitcoinNetworkConfig,
@@ -74,5 +73,17 @@ export const resolveBitcoinNetworkConfig = (
     return networkConfig;
 };
 
+/** Calculate the sha256 hash of the input. */
+export const sha256 = (input: Buffer): Buffer =>
+    createHash("sha256").update(input).digest();
+
+/** Calculate the ripemd160 hash of the input. */
+export const ripemd160 = (input: Buffer): Buffer =>
+    createHash("rmd160").update(input).digest();
+
+/**
+ * hash160 is used to calculate the Bitcoin address from a private key, and is
+ * equivalent to `ripemd160(sha256(publicKey))`
+ */
 export const hash160 = (publicKey: Buffer): Buffer =>
     ripemd160(sha256(publicKey));

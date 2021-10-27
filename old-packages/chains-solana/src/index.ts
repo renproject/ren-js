@@ -16,13 +16,13 @@ import {
     LockAndMintTransaction,
     Logger,
     MintChain,
+    nullLogger,
     OverwritableBurnAndReleaseParams,
     OverwritableLockAndMintParams,
     RenNetwork,
     RenNetworkDetails,
     RenNetworkString,
     SECONDS,
-    SimpleLogger,
     tryNTimes,
 } from "@renproject/utils";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -80,8 +80,8 @@ export class Solana
     public name = Solana.chain;
 
     public renNetworkDetails: SolNetworkConfig;
-    private _logger: Logger = new SimpleLogger();
-    private _includeAddressInPayload: boolean = false;
+
+    public _config: SolOptions & { logger: Logger };
 
     public burnPayloadConfig: BurnPayloadConfig = {
         bytes: false,
@@ -96,7 +96,7 @@ export class Solana
             | RenNetworkString
             | RenNetworkDetails
             | SolNetworkConfig,
-        options?: SolOptions,
+        config?: SolOptions,
     ) {
         this.provider = provider;
         if (!this.provider.connection) {
@@ -110,12 +110,10 @@ export class Solana
         } else {
             this.renNetworkDetails = renMainnet;
         }
-        if (options && options.logger) {
-            this._logger = options.logger;
-        }
-        if (options && options.includeAddressInPayload) {
-            this._includeAddressInPayload = true;
-        }
+        this._config = {
+            ...config,
+            logger: config?.logger || nullLogger,
+        };
         this.initialize(this.renNetworkDetails.name).catch(console.error);
     }
 
@@ -277,7 +275,9 @@ export class Solana
     };
 
     transactionID = (transaction: SolTransaction) => {
-        this._logger.debug("tx", transaction);
+        if (this._config.logger) {
+            this._config.logger.debug("tx", transaction);
+        }
         // TODO: use the transaction signature for both?
         return transaction;
     };
@@ -298,7 +298,8 @@ export class Solana
     };
 
     transactionRPCFormat = (transaction: SolTransaction) => {
-        this._logger.debug("tx", transaction);
+        this._config.logger.debug("tx", transaction);
+
         return {
             txid: base58.decode(transaction),
             txindex: "0",
@@ -379,7 +380,7 @@ export class Solana
                 n_hash: new Uint8Array(n_hash),
             };
 
-            this._logger.debug(
+            this._config.logger.debug(
                 "renvmmsg preencode",
                 JSON.stringify({
                     s_hash: token,
@@ -400,10 +401,10 @@ export class Solana
                 ...preencode.n_hash,
             ]);
             RenVmMsgLayout.encode(preencode, renvmmsg);
-            this._logger.debug("renvmmsg encoded", renvmmsg);
+            this._config.logger.debug("renvmmsg encoded", renvmmsg);
             return [renvmmsg, renvmMsgSlice];
         } catch (e) {
-            this._logger.debug("failed to encoded renvmmsg", e);
+            this._config.logger.debug("failed to encoded renvmmsg", e);
             throw e;
         }
     };
@@ -423,7 +424,7 @@ export class Solana
         }>,
     ) => {
         await this.waitForInitialization();
-        this._logger.debug("submitting mintTx:", mintTx);
+        this._config.logger.debug("submitting mintTx:", mintTx);
         if (mintTx.out && mintTx.out.revert)
             throw new Error(
                 `Transaction reverted: ${mintTx.out.revert.toString()}`,
@@ -476,7 +477,10 @@ export class Solana
             [keccak256(renvmmsg)],
             program,
         );
-        this._logger.debug("mint log account", mintLogAccountId[0].toString());
+        this._config.logger.debug(
+            "mint log account",
+            mintLogAccountId[0].toString(),
+        );
 
         //TODO: we may want to just return this for custom integrations - users should be able to add this instruction to their application's instruction set for composition
         const instruction = new TransactionInstruction({
@@ -527,7 +531,10 @@ export class Solana
             programId: program,
             data: Buffer.from([1]),
         });
-        this._logger.debug("mint instruction", JSON.stringify(instruction));
+        this._config.logger.debug(
+            "mint instruction",
+            JSON.stringify(instruction),
+        );
 
         // To get the current gateway pubkey
         const gatewayInfo = await this.provider.connection.getAccountInfo(
@@ -547,11 +554,11 @@ export class Solana
             signature: sig.slice(0, 64),
             recoveryId: sig[64] - 27,
         };
-        this._logger.debug(
+        this._config.logger.debug(
             "authority address",
             secpParams.ethAddress.toString("hex"),
         );
-        this._logger.debug("secp params", secpParams);
+        this._config.logger.debug("secp params", secpParams);
 
         const secPInstruction = createInstructionWithEthAddress2(secpParams);
         secPInstruction.data = Buffer.from([...secPInstruction.data]);
@@ -580,7 +587,7 @@ export class Solana
 
         // FIXME: this follows eth's events, generalize this
         eventEmitter.emit("transactionHash", base58.encode(signature));
-        this._logger.debug("signed with signature", signature);
+        this._config.logger.debug("signed with signature", signature);
 
         // Should be the same as `signature`.
         const confirmedSignature = await sendAndConfirmRawTransaction(
@@ -595,7 +602,7 @@ export class Solana
         // Wait up to 20 seconds for the transaction to be finalized.
         await finalizeTransaction(this.provider.connection, confirmedSignature);
 
-        this._logger.debug("sent and confirmed", confirmedSignature);
+        this._config.logger.debug("sent and confirmed", confirmedSignature);
 
         return confirmedSignature;
     };
@@ -631,13 +638,13 @@ export class Solana
         );
 
         if (!mintData) {
-            this._logger.debug(
+            this._config.logger.debug(
                 "no mint for mint:",
                 mintLogAccountId[0].toString(),
             );
             return undefined;
         }
-        this._logger.debug("found mint:", mintData);
+        this._config.logger.debug("found mint:", mintData);
 
         const mintLogData = MintLogLayout.decode(mintData.data);
         if (!mintLogData.is_initialized) return undefined;
@@ -749,7 +756,7 @@ export class Solana
                             name: "recipient",
                             type: "string",
                             value: recipient.toString(),
-                            notInPayload: !this._includeAddressInPayload,
+                            notInPayload: !this._config.includeAddressInPayload,
                         },
                     ],
                 },
@@ -792,7 +799,7 @@ export class Solana
                     },
                 ],
             };
-            this._logger.debug("solana params:", params);
+            this._config.logger.debug("solana params:", params);
             return params;
         };
         return this;
@@ -895,7 +902,7 @@ export class Solana
             return burnDetails;
         }
 
-        this._logger.info("missing burn:", burnNonce);
+        this._config.logger.info("missing burn:", burnNonce);
         return undefined;
     };
 
@@ -921,7 +928,7 @@ export class Solana
         )
             throw new Error("missing burn calls");
 
-        this._logger.debug("burn contract calls:", contractCalls);
+        this._config.logger.debug("burn contract calls:", contractCalls);
 
         const amount = contractCalls[0].contractParams[0].value;
         const recipient = Buffer.from(contractCalls[0].contractParams[1].value);
@@ -956,7 +963,7 @@ export class Solana
 
         const gatewayState = GatewayLayout.decode(gatewayInfo.data);
         const nonceBN = new BN(gatewayState.burn_count).add(new BN(1));
-        this._logger.debug("burn nonce: ", nonceBN.toString());
+        this._config.logger.debug("burn nonce: ", nonceBN.toString());
 
         const burnLogAccountId = await PublicKey.findProgramAddress(
             [Buffer.from(nonceBN.toArray("le", 8))],
@@ -998,7 +1005,7 @@ export class Solana
             programId: program,
         });
 
-        this._logger.debug("burn tx: ", renBurnInst);
+        this._config.logger.debug("burn tx: ", renBurnInst);
 
         const tx = new Transaction();
         tx.add(checkedBurnInst, renBurnInst);

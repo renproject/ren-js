@@ -1,30 +1,33 @@
-import { assertType, sha256 } from "@renproject/utils";
+import createHash from "create-hash";
+
+import { assertType } from "@renproject/utils";
 
 import { marshalString, marshalTypedPackValue } from "./pack/marshal";
-import { PackPrimitive, PackStructType, TypedPackValue } from "./pack/pack";
+import { PackPrimitive, PackTypeDefinition, TypedPackValue } from "./pack/pack";
 import { RenVMType, RenVMValue } from "./value";
 
-export interface TransactionInput<Input> {
+export interface TransactionInput<Input extends TypedPackValue> {
     hash: string;
     version: string;
-    selector: string; // "BTC/fromEthereum",
+    selector: string;
     in: Input;
 }
 
-export interface TransactionOutput<Input, Output>
-    extends TransactionInput<Input> {
-    hash: string; // "fD273Yvy16j4DN4xYaqn4PdMlecFMaizFEldYhbGsbk",
+export interface TransactionOutput<
+    Input extends TypedPackValue,
+    Output extends TypedPackValue,
+> extends TransactionInput<Input> {
     out: Output;
 }
 
-export interface RPCValue<Types, Values> {
+export interface RPCValue<Types extends PackTypeDefinition, Values> {
     t: Types;
     v: Values;
 }
 
 export type EmptyRPCStruct = RPCValue<{ struct: [] }, {}>;
 
-export const burnParamsType: PackStructType = {
+export const burnParamsType: PackTypeDefinition = {
     struct: [
         {
             amount: PackPrimitive.U256,
@@ -38,20 +41,7 @@ export const burnParamsType: PackStructType = {
     ],
 };
 
-export type BurnParams = RPCValue<
-    // Types
-    typeof burnParamsType,
-    // Values
-    {
-        amount: RenVMValue<RenVMType.U256>; // "78176031223228949374118281478848818002695062229035954382782001433280732357353",
-        to: RenVMValue<RenVMType.Str>; // "򔿺󢰺𳍚󤐭񵄔󘄯췇򺟒񨒘󊰲񱴬𭑊򊹴󧙵å񺢏𒪤󜟵󒌗򭦶𰌽󺝥󫶪񞣻􇌙񃄥󃒃변򶲛񙾿񽆆򍙂󂺧񞀰󯲺󖌻𸙩𓾬",
-        nonce: RenVMValue<RenVMType.B32>; // "GWsi_pwKD1KHsz9H1wXdn2aHtWuJOG2S-XgnShYPr3E",
-    }
->;
-
-export type BurnTransactionInput = TransactionInput<BurnParams>;
-
-export const mintParamsType = (): PackStructType => ({
+export const crossChainParamsType: PackTypeDefinition = {
     struct: [
         {
             txid: PackPrimitive.Bytes,
@@ -84,11 +74,11 @@ export const mintParamsType = (): PackStructType => ({
             ghash: PackPrimitive.Bytes32,
         },
     ],
-});
+};
 
-export type MintParams = RPCValue<
+export type CrossChainParams = RPCValue<
     // Types
-    typeof mintParamsType,
+    typeof crossChainParamsType,
     // Values
     {
         amount: RenVMValue<RenVMType.U256>;
@@ -104,9 +94,9 @@ export type MintParams = RPCValue<
     }
 >;
 
-export type MintTransactionInput = TransactionInput<MintParams>;
+export type CrossChainTransactionInput = TransactionInput<CrossChainParams>;
 
-export const submitGatewayType = (): PackStructType => ({
+export const submitGatewayType: PackTypeDefinition = {
     struct: [
         {
             payload: PackPrimitive.Bytes,
@@ -130,7 +120,7 @@ export const submitGatewayType = (): PackStructType => ({
             ghash: PackPrimitive.Bytes32,
         },
     ],
-});
+};
 
 export type SubmitGateway = RPCValue<
     // Types
@@ -156,17 +146,22 @@ export interface SubmitGatewayInput {
     in: SubmitGateway;
 }
 
+/**
+ * Calculate the hash of a RenVM transaction.
+ */
 export const hashTransaction = (
     version: string,
     selector: string,
     packValue: TypedPackValue,
-) => {
+): Buffer => {
     assertType<string>("string", { version, selector });
-    return sha256(
-        Buffer.concat([
-            marshalString(version),
-            marshalString(selector),
-            marshalTypedPackValue(packValue),
-        ]),
-    );
+    return createHash("sha256")
+        .update(
+            Buffer.concat([
+                marshalString(version),
+                marshalString(selector),
+                marshalTypedPackValue(packValue),
+            ]),
+        )
+        .digest();
 };

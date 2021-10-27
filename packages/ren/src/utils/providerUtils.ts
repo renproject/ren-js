@@ -9,7 +9,6 @@ import {
     Logger,
     SECONDS,
     sleep,
-    SyncOrPromise,
     TxStatus,
 } from "@renproject/utils";
 
@@ -25,7 +24,6 @@ import {
  */
 export const waitForTX = async (
     renVM: RenVMProvider,
-    selector: string,
     utxoTxHash: Buffer,
     onStatus?: (status: TxStatus) => void,
     _cancelRequested?: () => boolean,
@@ -40,7 +38,7 @@ export const waitForTX = async (
         }
 
         try {
-            const result = await renVM.queryTransaction(selector, utxoTxHash);
+            const result = await renVM.queryTransaction(utxoTxHash);
             if (result && result.txStatus === TxStatus.TxStatusDone) {
                 rawResponse = result;
                 break;
@@ -65,28 +63,4 @@ export const waitForTX = async (
         await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
     }
     return rawResponse;
-};
-
-export const getRenVMSelector = async ({
-    asset,
-    from,
-    to,
-}: {
-    asset: string;
-    from: {
-        chain: string;
-        assetIsNative: (asset: string) => SyncOrPromise<boolean>;
-    };
-    to: {
-        chain: string;
-        assetIsNative: (asset: string) => SyncOrPromise<boolean>;
-    };
-}): Promise<string> => {
-    if (await from.assetIsNative(asset)) {
-        return `${asset}/to${to.chain}`;
-    }
-    if (await to.assetIsNative(asset)) {
-        return `${asset}/from${from.chain}`;
-    }
-    return `${asset}/from${from.chain}To${to.chain}`;
 };

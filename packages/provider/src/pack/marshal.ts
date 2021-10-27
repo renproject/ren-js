@@ -1,6 +1,6 @@
-import BN from "bn.js";
+import BigNumber from "bignumber.js";
 
-import { fromBase64 } from "@renproject/utils";
+import { fromBase64, toNBytes } from "@renproject/utils";
 
 import {
     isPackListType,
@@ -75,30 +75,38 @@ export const marshalPackType = (type: PackType) => {
 /**
  * Convert a JavaScript number to a big-endian Buffer of the provided length.
  */
-export const marshalUint = (value: number, length: number): Buffer => {
+export const marshalUint = (
+    value: BigNumber | string | number,
+    bits: number,
+): Buffer => {
     try {
-        return new BN(
-            typeof value === "number" ? value : (value as string).toString(),
-        ).toArrayLike(Buffer, "be", length);
+        return toNBytes(
+            typeof value === "number"
+                ? value
+                : BigNumber.isBigNumber(value)
+                ? value.toFixed()
+                : value.toString(),
+            bits / 8,
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (error instanceof Error) {
-            error.message = `Unable to marshal uint${
-                length * 8
-            } '${value}': ${String(error.message)}`;
+            error.message = `Unable to marshal uint${bits} '${String(
+                value,
+            )}': ${String(error.message)}`;
         }
         throw error;
     }
 };
 
-const marshalU = (length: number) => (value: number) =>
-    marshalUint(value, length);
-export const marshalU8 = marshalU(8 / 8);
-export const marshalU16 = marshalU(16 / 8);
-export const marshalU32 = marshalU(32 / 8);
-export const marshalU64 = marshalU(64 / 8);
-export const marshalU128 = marshalU(128 / 8);
-export const marshalU256 = marshalU(256 / 8);
+const marshalU = (bits: number) => (value: BigNumber | string | number) =>
+    marshalUint(value, bits);
+export const marshalU8 = marshalU(8);
+export const marshalU16 = marshalU(16);
+export const marshalU32 = marshalU(32);
+export const marshalU64 = marshalU(64);
+export const marshalU128 = marshalU(128);
+export const marshalU256 = marshalU(256);
 
 const withLength = (value: Buffer) =>
     Buffer.concat([marshalU32(value.length), value]);

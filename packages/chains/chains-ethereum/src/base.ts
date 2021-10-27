@@ -14,20 +14,23 @@ import {
     InputChainTransaction,
     InputType,
     Logger,
-    NullLogger,
+    nullLogger,
     OutputType,
     Ox,
-    rawEncode,
+    RenJSError,
     TxSubmitter,
     TxWaiter,
+    withCode,
 } from "@renproject/utils";
 
 import {
+    BasicBridgeABI,
     findABIMethod,
     getERC20Instance,
     LockGatewayABI,
     MintGatewayABI,
 } from "./contracts";
+import { LogTransferredEvent } from "./contracts/typechain/BasicBridge";
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "./contracts/typechain/MintGatewayV3";
 import { AbiItem, EthArg, payloadToABI } from "./utils/abi";
@@ -44,6 +47,8 @@ import {
     findReleaseBySigHash,
     mapBurnLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
+    mapTransferLogToInputChainTransaction,
+    rawEncode,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
@@ -51,6 +56,7 @@ import {
     ContractCall,
     EthereumClassConfig,
     EthProvider,
+    EthProviderUpdate,
     EvmNetworkConfig,
     InputContractCall,
     OutputContractCall,
@@ -65,7 +71,7 @@ export class EthereumBaseChain
     public chain: string;
 
     public provider: Web3Provider;
-    public signer: Signer;
+    public signer: Signer | undefined;
     public network: EvmNetworkConfig;
     public explorer: EvmExplorer;
     public logger: Logger;
@@ -89,11 +95,10 @@ export class EthereumBaseChain
         this.explorer = StandardEvmExplorer(
             this.network.network.blockExplorerUrls[0],
         );
-        this.logger = config.logger || NullLogger;
+        this.logger = config.logger || nullLogger;
 
         // Ignore not configured error.
         this.provider = undefined as never;
-        this.signer = undefined as never;
         this.withProvider(web3Provider);
     }
 
@@ -108,14 +113,16 @@ export class EthereumBaseChain
     public transactionExplorerLink = (transaction: ChainTransaction): string =>
         this.explorer.transaction(this.transactionHash(transaction));
 
-    public withProvider = (web3Provider: EthProvider) => {
+    public withProvider = (web3Provider: EthProviderUpdate) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((web3Provider as any).signer && (web3Provider as any).provider) {
+        if ((web3Provider as any).signer || (web3Provider as any).provider) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.provider = (web3Provider as any).provider;
+            this.provider = (web3Provider as any).provider || this.provider;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.signer = (web3Provider as any).signer;
-            this.signer.connect(this.provider);
+            this.signer = (web3Provider as any).signer || this.signer;
+            if (this.signer) {
+                this.signer.connect(this.provider);
+            }
         } else {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const provider = (web3Provider as any)._isProvider
@@ -157,6 +164,7 @@ export class EthereumBaseChain
 
     // Supported assets
 
+    /** Return true if the asset originates from the chain. */
     assetIsNative = async (asset: string): Promise<boolean> => {
         if (asset === "ETH") {
             return true;
@@ -275,9 +283,14 @@ export class EthereumBaseChain
         asset: string,
         address?: string,
     ): Promise<BigNumber> => {
-        address = address || (await this.signer.getAddress());
+        if (!address) {
+            if (!this.signer) {
+                throw new Error(`Must connect signer or provider address.`);
+            }
+            address = address || (await this.signer.getAddress());
+        }
 
-        if (asset === this.network.network.nativeCurrency.symbol) {
+        if (asset === this.network.asset) {
             return new BigNumber(
                 (await this.provider.getBalance(address)).toString(),
             );
@@ -361,7 +374,7 @@ export class EthereumBaseChain
         return undefined;
     };
 
-    submitOutput = async (
+    getOutputTx = async (
         type: OutputType,
         asset: string,
         contractCall: OutputContractCall,
@@ -457,11 +470,15 @@ export class EthereumBaseChain
             getTx: async (options?: {
                 overrides?: any[];
                 txConfig?: PayableOverrides;
-            }) =>
-                callContract(this.signer, to, abi, params, {
+            }) => {
+                if (!this.signer) {
+                    throw new Error(`Must connect signer.`);
+                }
+                return callContract(this.signer, to, abi, params, {
                     ...(txConfig as PayableOverrides),
                     ...(options || {}).txConfig,
-                }),
+                });
+            },
             target: confirmationTarget,
         });
     };
@@ -470,7 +487,7 @@ export class EthereumBaseChain
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    submitInput = async (
+    getInputTx = async (
         type: InputType,
         asset: string,
         contractCall: InputContractCall,
@@ -482,6 +499,7 @@ export class EthereumBaseChain
             toPayload: {
                 to: string;
                 payload: Buffer;
+                gatewayAddress?: string;
             };
         },
         confirmationTarget: number,
@@ -541,11 +559,21 @@ export class EthereumBaseChain
                     getTx: async (options?: {
                         overrides?: any[];
                         txConfig?: PayableOverrides;
-                    }) =>
-                        await callContract(this.signer, to, abi, params, {
-                            ...(txConfig as PayableOverrides),
-                            ...(options || {}).txConfig,
-                        }),
+                    }) => {
+                        if (!this.signer) {
+                            throw new Error(`Must connect signer.`);
+                        }
+                        return await callContract(
+                            this.signer,
+                            to,
+                            abi,
+                            params,
+                            {
+                                ...(txConfig as PayableOverrides),
+                                ...(options || {}).txConfig,
+                            },
+                        );
+                    },
                     target: confirmationTarget,
                     onReceipt: (receipt) => {
                         const logBurnABI = findABIMethod(
@@ -553,7 +581,12 @@ export class EthereumBaseChain
                             "LogBurn",
                         );
                         filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
-                            .map(mapBurnLogToInputChainTransaction)
+                            .map((e) =>
+                                mapBurnLogToInputChainTransaction(
+                                    this.chain,
+                                    e,
+                                ),
+                            )
                             .map(onInput);
                     },
                 });
@@ -570,11 +603,21 @@ export class EthereumBaseChain
                     getTx: async (options?: {
                         overrides?: any[];
                         txConfig?: PayableOverrides;
-                    }) =>
-                        await callContract(this.signer, to, abi, params, {
-                            ...(txConfig as PayableOverrides),
-                            ...(options || {}).txConfig,
-                        }),
+                    }) => {
+                        if (!this.signer) {
+                            throw new Error(`Must connect signer.`);
+                        }
+                        return await callContract(
+                            this.signer,
+                            to,
+                            abi,
+                            params,
+                            {
+                                ...(txConfig as PayableOverrides),
+                                ...(options || {}).txConfig,
+                            },
+                        );
+                    },
                     target: confirmationTarget,
                     onReceipt: (receipt) => {
                         const logLockABI = findABIMethod(
@@ -585,7 +628,28 @@ export class EthereumBaseChain
                             receipt.logs,
                             logLockABI,
                         )
-                            .map(mapLockLogToInputChainTransaction)
+                            .map((e) =>
+                                mapLockLogToInputChainTransaction(
+                                    this.chain,
+                                    e,
+                                ),
+                            )
+                            .map(onInput);
+
+                        const logTransferredABI = findABIMethod(
+                            BasicBridgeABI,
+                            "LogTransferred",
+                        );
+                        filterLogs<LogTransferredEvent>(
+                            receipt.logs,
+                            logTransferredABI,
+                        )
+                            .map((e) =>
+                                mapTransferLogToInputChainTransaction(
+                                    this.chain,
+                                    e,
+                                ),
+                            )
                             .map(onInput);
                     },
                 });
@@ -616,11 +680,15 @@ export class EthereumBaseChain
                 getTx: async (options?: {
                     overrides?: any[];
                     txConfig?: PayableOverrides;
-                }) =>
-                    callContract(this.signer, to, abi, params, {
+                }) => {
+                    if (!this.signer) {
+                        throw new Error(`Must connect signer.`);
+                    }
+                    return callContract(this.signer, to, abi, params, {
                         ...(txConfig as PayableOverrides),
                         ...(options || {}).txConfig,
-                    }),
+                    });
+                },
                 target: 1,
             });
         }
@@ -649,11 +717,15 @@ export class EthereumBaseChain
                 getTx: async (options?: {
                     overrides?: any[];
                     txConfig?: PayableOverrides;
-                }) =>
-                    callContract(this.signer, to, abi, params, {
+                }) => {
+                    if (!this.signer) {
+                        throw new Error(`Must connect signer.`);
+                    }
+                    return callContract(this.signer, to, abi, params, {
                         ...(txConfig as PayableOverrides),
                         ...(options || {}).txConfig,
-                    }),
+                    });
+                },
                 target: 1,
             });
         }
@@ -670,8 +742,18 @@ export class EthereumBaseChain
             asset: string,
             type: InputType,
         ): Promise<{ [key: string]: ContractCall }> => {
+            // Burning does not require approval.
             if (type !== InputType.Lock) {
                 return {};
+            }
+
+            // Native currency asset does not require approval.
+            if (asset === this.network.asset) {
+                return {};
+            }
+
+            if (!this.signer) {
+                throw new Error(`Must connect signer.`);
             }
 
             const account = await this.signer.getAddress();
@@ -736,10 +818,32 @@ export class EthereumBaseChain
             toPayload: {
                 to: string;
                 payload: Buffer;
+                gatewayAddress?: string;
             },
         ) => {
             switch (type) {
                 case InputType.Lock:
+                    if (asset === this.network.asset) {
+                        if (!toPayload.gatewayAddress) {
+                            throw withCode(
+                                new Error(
+                                    `Empty gateway address for ${this.network.asset}`,
+                                ),
+                                RenJSError.INTERNAL_ERROR,
+                            );
+                        }
+                        return {
+                            to: this.network.addresses.BasicAdapter,
+                            method: "transferWithLog",
+                            values: [
+                                {
+                                    type: "address",
+                                    name: "to",
+                                    value: toPayload.gatewayAddress,
+                                },
+                            ],
+                        };
+                    }
                     return {
                         to: this.network.addresses.BasicAdapter,
                         method: "lock",
@@ -864,6 +968,9 @@ export class EthereumBaseChain
                         ],
                     };
                 case OutputType.Release:
+                    if (!this.signer) {
+                        throw new Error(`Must connect signer.`);
+                    }
                     return {
                         to: await this.signer.getAddress(),
                         method: "release",

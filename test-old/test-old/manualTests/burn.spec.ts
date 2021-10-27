@@ -109,13 +109,13 @@ describe("Refactor - Burning", () => {
         await burnAndRelease
             .burn()
             .on("confirmation", (conf, target) => {
-                burnAndRelease._state.logger.log(
+                burnAndRelease._state.logger.debug(
                     `confirming (${conf}/${target})`,
                 );
                 confirmations = conf;
             })
             .on("transactionHash", (txHash) =>
-                burnAndRelease._state.logger.log(
+                burnAndRelease._state.logger.debug(
                     `${
                         burnAndRelease.params.from.name
                     } transactionHash: ${String(txHash)}`,
@@ -134,16 +134,16 @@ describe("Refactor - Burning", () => {
             .release()
             .on("status", (status) =>
                 status === "confirming"
-                    ? burnAndRelease._state.logger.log(
+                    ? burnAndRelease._state.logger.debug(
                           `confirming (${confirmations}/${targetConfirmations})`,
                       )
-                    : burnAndRelease._state.logger.log(status),
+                    : burnAndRelease._state.logger.debug(status),
             )
             .on("txHash", (txHash) =>
-                burnAndRelease._state.logger.log(`Ren txHash: ${txHash}`),
+                burnAndRelease._state.logger.debug(`Ren txHash: ${txHash}`),
             )
             .on("transaction", (transaction) => {
-                burnAndRelease._state.logger.log(
+                burnAndRelease._state.logger.debug(
                     `Release: ${burnAndRelease.params.to.utils.transactionExplorerLink(
                         transaction,
                     )}`,

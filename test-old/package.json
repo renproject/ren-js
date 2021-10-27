@@ -33,7 +33,6 @@
         "immutable": "^4.0.0-rc.14",
         "send-crypto": "^0.2.33"
     },
-    "devDependencies": {},
     "resolutions": {
         "sha3": "^2.1.2"
     },

@@ -1,9 +1,6 @@
-import {
-    Logger,
-    LogLevel,
-    LogLevelString,
-    NullLogger,
-} from "@renproject/utils";
+import { Logger, LogLevel, nullLogger, SECONDS } from "@renproject/utils";
+
+export { LogLevel } from "@renproject/utils";
 
 export interface RenJSConfig {
     /**
@@ -11,7 +8,7 @@ export interface RenJSConfig {
      * and error logs. Set the logLevel to `LogLevel.Debug` or `LogLevel.Trace`
      * to receive debug logs.
      */
-    logLevel?: LogLevelString;
+    logLevel?: LogLevel;
     logger?: Logger;
 
     /**
@@ -38,8 +35,8 @@ export interface RenJSConfig {
 }
 
 export const defaultRenJSConfig = {
-    logLevel: LogLevel.Log as LogLevelString,
-    logger: NullLogger,
-    networkDelay: 15000 as number,
+    logLevel: LogLevel.Debug,
+    logger: nullLogger,
+    networkDelay: 15 * SECONDS,
     loadCompletedDeposits: false as boolean,
 };

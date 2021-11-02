@@ -58,7 +58,7 @@ const colorizeChain = (chain: string, { pad } = { pad: true }): string => {
 };
 
 describe("Refactor: mint", () => {
-    it.only("mint to contract", async function () {
+    it("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -91,7 +91,10 @@ describe("Refactor: mint", () => {
             fromChains.map(async (From) => {
                 while (true) {
                     try {
-                        const fromClass = getEVMChain(From, network);
+                        const fromClass = new From(
+                            network,
+                            getEVMChain(From, network),
+                        );
                         // const fromClass = new From("testnet");
 
                         const toAddress = await toClass.signer.getAddress();

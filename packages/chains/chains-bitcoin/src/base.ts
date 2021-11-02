@@ -268,6 +268,18 @@ export abstract class BitcoinBaseChain
         };
     };
 
+    /**
+     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * available to the burn params.
+     *
+     * @category Main
+     */
+    GatewayAddress = (): { chain: string } => {
+        return {
+            chain: this.chain,
+        };
+    };
+
     burnPayload? = (burnPayloadConfig?: {
         chain: string;
         address: string;

@@ -392,11 +392,11 @@ const getContractFromAccount = (
                     values: [
                         {
                             type: "string",
-                            name: "symbol_",
+                            name: "symbol",
                             value: EVMParam.EVM_ASSET,
                         },
                         {
-                            type: "string",
+                            type: "address",
                             name: "recipient",
                             value: EVMParam.EVM_ACCOUNT,
                         },
@@ -429,9 +429,6 @@ const getContractFromAccount = (
                     to: EVMParam.EVM_GATEWAY,
                     // to: network.addresses.BasicAdapter,
                     method: "release",
-                    txConfig: {
-                        gasLimit: 1000000,
-                    },
                     values: [
                         {
                             type: "bytes32",

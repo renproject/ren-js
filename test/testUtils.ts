@@ -2,7 +2,11 @@ import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { providers, Wallet } from "ethers";
 
-import { EthProvider, EvmNetworkConfig } from "@renproject/chains-ethereum";
+import {
+    Ethereum,
+    EthProvider,
+    EvmNetworkConfig,
+} from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "../packages/chains/chains-ethereum/build/main/base";
@@ -21,10 +25,10 @@ interface EVMConstructor<EVM> {
     new (renNetwork: RenNetwork, web3Provider: EthProvider): EVM;
 }
 
-export const getEVMChain = <EVM extends EthereumBaseChain>(
+export const getEVMProvider = <EVM extends EthereumBaseChain>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
-): EVM => {
+): EthProvider => {
     const rpcUrl = ChainClass.configMap[network].network.rpcUrls[0]
         .replace("${INFURA_API_KEY}", process.env.INFURA_KEY)
         .replace("${ALCHEMY_API_KEY}", process.env.ALCHEMY_KEY);
@@ -32,10 +36,10 @@ export const getEVMChain = <EVM extends EthereumBaseChain>(
     const provider = new providers.JsonRpcProvider(rpcUrl);
     const signer = Wallet.fromMnemonic(MNEMONIC).connect(provider);
 
-    return new ChainClass(network, {
+    return {
         provider,
         signer,
-    });
+    };
 };
 
 // import CryptoAccount from "send-crypto";

@@ -18,7 +18,7 @@ const createDepositHandler = (retries = -1) => {
                     await tryNTimes(
                         async () => {
                             gateway._config.logger.debug(`Calling .confirmed`);
-                            await gateway.in.wait().on("status", (status) => {
+                            gateway.in.eventEmitter.on("status", (status) => {
                                 if (isDefined(status.confirmations)) {
                                     gateway._config.logger.debug(
                                         `${status.confirmations}/${status.target} confirmations`,
@@ -29,6 +29,7 @@ const createDepositHandler = (retries = -1) => {
                                     );
                                 }
                             });
+                            await gateway.in.wait();
                         },
                         retries,
                         10 * SECONDS,
@@ -43,18 +44,18 @@ const createDepositHandler = (retries = -1) => {
                         async () => {
                             try {
                                 gateway._config.logger.debug(`Calling .signed`);
-                                await gateway
-                                    .signed()
-                                    .on("txHash", (status) => {
-                                        gateway._config.logger.debug(
-                                            `RenVM hash: ${status}`,
-                                        );
-                                    })
-                                    .on("status", (status) => {
+                                gateway.renVM.eventEmitter.on(
+                                    "status",
+                                    (status) => {
                                         gateway._config.logger.debug(
                                             `status: ${status}`,
                                         );
-                                    });
+                                    },
+                                );
+
+                                await gateway.renVM.submit();
+                                await gateway.renVM.wait();
+
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             } catch (error: any) {
                                 if (

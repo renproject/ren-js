@@ -1,14 +1,13 @@
 import { isDefined, SECONDS, sleep } from "./common";
 import { Chain, ChainTransaction } from "./interfaces/chain";
+import { eventEmitter, EventEmitterTyped } from "./interfaces/eventEmitter";
 import { newPromiEvent, PromiEvent } from "./promiEvent";
 
 export enum ChainTransactionStatus {
     Ready = "ready",
     Confirming = "confirming",
     Confirmed = "confirmed",
-
-    FailedToSubmit = "failed-to-submit",
-    ConfirmedWithError = "confirmed-with-error",
+    Reverted = "reverted",
 }
 
 export interface ChainTransactionProgress {
@@ -18,22 +17,34 @@ export interface ChainTransactionProgress {
     confirmations?: number;
     transaction?: ChainTransaction;
 
-    replaced?: {
-        previousTransaction: ChainTransaction;
-    };
-    error?: Error;
+    /**
+     * If the status is Reverted, `revertReason` should be set to accompanying
+     * error message if there is one.
+     */
+    revertReason?: string;
+
+    /**
+     * If the transaction is replaced/sped-up, `replaced` should be set to the
+     * old transaction details.
+     */
+    replaced?: ChainTransaction;
 }
 
-export interface TxWaiter {
+export interface TxWaiter<
+    Progress extends ChainTransactionProgress = ChainTransactionProgress,
+> {
     chain: string;
-    status: ChainTransactionProgress;
+    status: Progress;
+    eventEmitter: EventEmitterTyped<{
+        status: [Progress];
+    }>;
 
     submit?: never;
 
     wait: () => PromiEvent<
-        ChainTransaction,
+        Progress,
         {
-            status: [ChainTransactionProgress];
+            status: [Progress];
         }
     >;
 }
@@ -44,25 +55,26 @@ export interface TxWaiter {
  * emit a "status" event which is standard across chains.
  */
 export interface TxSubmitter<
-    SubmitChainTransaction extends ChainTransaction = ChainTransaction,
-    WaitChainTransaction extends ChainTransaction = SubmitChainTransaction,
+    Progress extends ChainTransactionProgress = ChainTransactionProgress,
 > {
     // extends TxWaiter
     chain: string;
-    status: ChainTransactionProgress;
+    status: Progress;
+    eventEmitter: EventEmitterTyped<{
+        status: [Progress];
+    }>;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit: (params?: { overrides?: any[]; config?: any }) => PromiEvent<
-        SubmitChainTransaction,
+        Progress,
         {
-            status: [ChainTransactionProgress];
+            status: [Progress];
         }
     >;
-
     wait: (target?: number) => PromiEvent<
-        WaitChainTransaction,
+        Progress,
         {
-            status: [ChainTransactionProgress];
+            status: [Progress];
         }
     >;
 }
@@ -78,6 +90,17 @@ export class DefaultTxWaiter implements TxWaiter {
 
     public chain: string;
     public status: ChainTransactionProgress;
+    public eventEmitter: EventEmitterTyped<{
+        status: [ChainTransactionProgress];
+    }>;
+
+    private updateStatus = (status: Partial<ChainTransactionProgress>) => {
+        this.status = {
+            ...this.status,
+            ...status,
+        };
+        this.eventEmitter.emit("status", this.status);
+    };
 
     /**
      * Requires a submitted chainTransaction, a chain object and the target
@@ -97,6 +120,7 @@ export class DefaultTxWaiter implements TxWaiter {
         this._target = target;
 
         this.chain = chain.chain;
+        this.eventEmitter = eventEmitter();
 
         this.status = {
             chain: chain.chain,
@@ -109,19 +133,19 @@ export class DefaultTxWaiter implements TxWaiter {
     wait = (
         target?: number,
     ): PromiEvent<
-        ChainTransaction,
+        ChainTransactionProgress,
         {
             status: [ChainTransactionProgress];
         }
     > => {
         const promiEvent = newPromiEvent<
-            ChainTransaction,
+            ChainTransactionProgress,
             {
                 status: [ChainTransactionProgress];
             }
-        >();
+        >(this.eventEmitter);
 
-        (async (): Promise<ChainTransaction> => {
+        (async (): Promise<ChainTransactionProgress> => {
             const tx = this._chainTransaction;
             if (!tx) {
                 throw new Error(`Must call ".submit" first.`);
@@ -137,33 +161,30 @@ export class DefaultTxWaiter implements TxWaiter {
                     )
                 ).toNumber();
 
-                this.status = {
-                    ...this.status,
-                    confirmations: confidence,
-                };
-
                 const confidenceRatio = target === 0 ? 1 : confidence / target;
-                if (confidenceRatio > currentConfidenceRatio) {
-                    currentConfidenceRatio = confidenceRatio;
-                    this.status = {
-                        ...this.status,
-                        confirmations: confidence,
-                    };
-                    promiEvent.emit("status", this.status);
-                }
-                if (confidenceRatio >= 1) {
-                    this.status = {
-                        ...this.status,
-                        status: ChainTransactionStatus.Confirmed,
-                    };
-                    promiEvent.emit("status", this.status);
-                    break;
-                }
 
+                // The confidence has increased.
+                if (confidenceRatio > currentConfidenceRatio) {
+                    if (confidenceRatio >= 1) {
+                        // Done.
+                        this.updateStatus({
+                            ...this.status,
+                            status: ChainTransactionStatus.Confirmed,
+                        });
+                        break;
+                    } else {
+                        // Update status.
+                        currentConfidenceRatio = confidenceRatio;
+                        this.updateStatus({
+                            ...this.status,
+                            confirmations: confidence,
+                        });
+                    }
+                }
                 await sleep(15 * SECONDS);
             }
 
-            return tx;
+            return this.status;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

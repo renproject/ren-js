@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { TxSubmitter, TxWaiter } from "../txSubmitter";
+import { UrlBase64String } from "./types";
 
 export type SyncOrPromise<T> = Promise<T> | T;
 
@@ -20,8 +21,10 @@ export type NumericString = string;
 
 export interface ChainTransaction {
     chain: string;
-    txid: string;
+    txid: UrlBase64String;
     txindex: NumericString;
+
+    txidFormatted: string;
 }
 
 export interface InputChainTransaction extends ChainTransaction {
@@ -57,6 +60,11 @@ export interface InputChainTransaction extends ChainTransaction {
 export interface ChainCommon {
     chain: string;
 
+    // Expose a map of assets supported by the chain. Note that the list may
+    // not be complete, and will become out-of-date as new assets are added.
+    // Should only be used to improve readability when integrating with RenJS.
+    assets: { [asset: string]: string };
+
     /** Override the chain's provider. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withProvider?: (...args: any[]) => SyncOrPromise<this>;
@@ -87,8 +95,7 @@ export interface ChainCommon {
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 
-    /** Check if the transaction's format is valid. */
-    transactionHash(transaction: ChainTransaction): string;
+    transactionHash(transaction: { txid: string; txindex: string }): string;
 
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
@@ -153,7 +160,7 @@ export interface ContractChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FromContractCall extends { chain: string } = any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ToContractCall extends { chain: string } = any,
+    ToContractCall extends { chain: string } = FromContractCall,
 > extends ChainCommon {
     // Get contract addresses.
     getRenAsset: (asset: string) => SyncOrPromise<string>;
@@ -190,7 +197,7 @@ export interface ContractChain<
         type: InputType,
         asset: string,
         contractCall: FromContractCall,
-        params: {
+        params: () => {
             toChain: string;
             toPayload: {
                 to: string;
@@ -227,7 +234,7 @@ export interface ContractChain<
         type: OutputType,
         asset: string,
         contractCall: ToContractCall,
-        renParams: {
+        params: () => {
             amount: BigNumber;
             sHash: Buffer;
             pHash: Buffer;

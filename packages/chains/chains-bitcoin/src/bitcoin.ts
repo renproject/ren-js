@@ -73,6 +73,11 @@ export class Bitcoin extends BitcoinBaseChain {
     public static configMap = BitcoinConfigMap;
     public configMap = BitcoinConfigMap;
 
+    public static assets = {
+        BTC: "BTC",
+    };
+    public assets = Bitcoin.assets;
+
     constructor(network: BitcoinNetworkInput) {
         super(resolveBitcoinNetworkConfig(Bitcoin.configMap, network));
     }

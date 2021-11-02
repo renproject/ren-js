@@ -1,3 +1,5 @@
+import { RenVMShard } from "../../provider/build/main";
+
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */
@@ -55,6 +57,8 @@ export interface GatewayParams<
      * ```
      */
     nonce?: Buffer | string;
+
+    shard?: RenVMShard;
 
     /**
      * Provide optional tags which can be used to look up transfers in the

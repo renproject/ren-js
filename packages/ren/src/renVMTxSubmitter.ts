@@ -7,16 +7,16 @@ import {
     RenVMProvider,
     ResponseQueryTx,
     TransactionInput,
+    TxResponseWithStatus,
     TypedPackValue,
-    UnmarshalledTxInput,
     UnmarshalledTxOutput,
     unmarshalTxResponse,
-    unmarshalTypedPackValue,
 } from "@renproject/provider";
 import {
-    ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
+    eventEmitter,
+    EventEmitterTyped,
     newPromiEvent,
     PromiEvent,
     SECONDS,
@@ -31,38 +31,87 @@ export const RENVM_CHAIN = "RenVM";
 class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
     implements
         TxSubmitter<
-            ChainTransaction & {
-                tx: UnmarshalledTxInput<UnmarshalledParams>;
-            },
-            ChainTransaction & {
-                tx: UnmarshalledTxOutput<
-                    UnmarshalledParams,
-                    UnmarshalledResponse
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
                 >;
             }
         >
 {
     public chain = "RenVM";
-    public version = "1";
-    public provider: RenVMProvider;
-    public selector: string;
-    public params: TypedPackValue;
-    public hash: string;
+    private version = "1";
+    private provider: RenVMProvider;
+    private selector: string;
+    private params: TypedPackValue;
+    private hash: string;
+    private signatureCallback?: (
+        response: UnmarshalledTxOutput<
+            UnmarshalledParams,
+            UnmarshalledResponse
+        >,
+    ) => Promise<void>;
+    public eventEmitter: EventEmitterTyped<{
+        status: [
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
+                >;
+            },
+        ];
+    }>;
 
-    public status: ChainTransactionProgress = {
+    public status: ChainTransactionProgress & {
+        response?: TxResponseWithStatus<
+            UnmarshalledTxOutput<UnmarshalledParams, UnmarshalledResponse>
+        >;
+    } = {
         chain: RENVM_CHAIN,
         status: ChainTransactionStatus.Ready,
         target: 0,
+    };
+
+    private updateStatus = (
+        status: Partial<
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
+                >;
+            }
+        >,
+    ) => {
+        this.status = {
+            ...this.status,
+            ...status,
+        };
+        this.eventEmitter.emit("status", this.status);
+        return this.status;
     };
 
     constructor(
         provider: RenVMProvider,
         selector: string,
         params: TypedPackValue,
+        signatureCallback?: (
+            response: UnmarshalledTxOutput<
+                UnmarshalledParams,
+                UnmarshalledResponse
+            >,
+        ) => Promise<void>,
     ) {
         this.provider = provider;
         this.selector = selector;
         this.params = params;
+        this.eventEmitter = eventEmitter();
+        this.signatureCallback = signatureCallback;
 
         this.hash = toURLBase64(
             hashTransaction(this.version, this.selector, this.params),
@@ -70,31 +119,59 @@ class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
     }
 
     submit = (): PromiEvent<
-        ChainTransaction & { tx: UnmarshalledTxInput<UnmarshalledParams> },
+        ChainTransactionProgress & {
+            response?: TxResponseWithStatus<
+                UnmarshalledTxOutput<UnmarshalledParams, UnmarshalledResponse>
+            >;
+        },
         {
-            status: [ChainTransactionProgress];
+            status: [
+                ChainTransactionProgress & {
+                    response?: TxResponseWithStatus<
+                        UnmarshalledTxOutput<
+                            UnmarshalledParams,
+                            UnmarshalledResponse
+                        >
+                    >;
+                },
+            ];
         }
     > => {
         const promiEvent = newPromiEvent<
-            ChainTransaction & {
-                tx: UnmarshalledTxInput<UnmarshalledParams>;
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
+                >;
             },
             {
-                status: [ChainTransactionProgress];
+                status: [
+                    ChainTransactionProgress & {
+                        response?: TxResponseWithStatus<
+                            UnmarshalledTxOutput<
+                                UnmarshalledParams,
+                                UnmarshalledResponse
+                            >
+                        >;
+                    },
+                ];
             }
-        >();
+        >(this.eventEmitter);
 
         (async (): Promise<
-            ChainTransaction & {
-                tx: UnmarshalledTxInput<UnmarshalledParams>;
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
+                >;
             }
         > => {
-            const hash = toURLBase64(
-                hashTransaction(this.version, this.selector, this.params),
-            );
-
             const tx: TransactionInput<TypedPackValue> = {
-                hash,
+                hash: this.hash,
                 selector: this.selector,
                 version: this.version,
                 in: this.params,
@@ -105,7 +182,7 @@ class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
             } catch (error) {
                 try {
                     // Check if the darknodes have already seen the transaction
-                    await this.provider.queryTx(hash);
+                    await this.provider.queryTx(this.hash);
 
                     // TODO: Set status based on result.
 
@@ -117,19 +194,16 @@ class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
                 }
             }
 
-            const unmarshalledTx = {
-                version: parseInt(tx.version),
-                hash: tx.hash,
-                selector: tx.selector,
-                in: unmarshalTypedPackValue(tx.in),
-            };
+            return this.updateStatus({
+                status: ChainTransactionStatus.Confirming,
+            });
 
-            return {
-                chain: RENVM_CHAIN,
-                txid: hash,
-                txindex: "0",
-                tx: unmarshalledTx,
-            };
+            // const response = {
+            //     version: parseInt(tx.version),
+            //     hash: tx.hash,
+            //     selector: tx.selector,
+            //     in: unmarshalTypedPackValue(tx.in),
+            // };
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
@@ -138,30 +212,54 @@ class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
     };
 
     wait = (): PromiEvent<
-        ChainTransaction & {
-            tx: UnmarshalledTxOutput<UnmarshalledParams, UnmarshalledResponse>;
+        ChainTransactionProgress & {
+            response?: TxResponseWithStatus<
+                UnmarshalledTxOutput<UnmarshalledParams, UnmarshalledResponse>
+            >;
         },
         {
-            status: [ChainTransactionProgress];
+            status: [
+                ChainTransactionProgress & {
+                    response?: TxResponseWithStatus<
+                        UnmarshalledTxOutput<
+                            UnmarshalledParams,
+                            UnmarshalledResponse
+                        >
+                    >;
+                },
+            ];
         }
     > => {
         const promiEvent = newPromiEvent<
-            ChainTransaction & {
-                tx: UnmarshalledTxOutput<
-                    UnmarshalledParams,
-                    UnmarshalledResponse
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
                 >;
             },
             {
-                status: [ChainTransactionProgress];
+                status: [
+                    ChainTransactionProgress & {
+                        response?: TxResponseWithStatus<
+                            UnmarshalledTxOutput<
+                                UnmarshalledParams,
+                                UnmarshalledResponse
+                            >
+                        >;
+                    },
+                ];
             }
-        >();
+        >(this.eventEmitter);
 
         (async (): Promise<
-            ChainTransaction & {
-                tx: UnmarshalledTxOutput<
-                    UnmarshalledParams,
-                    UnmarshalledResponse
+            ChainTransactionProgress & {
+                response?: TxResponseWithStatus<
+                    UnmarshalledTxOutput<
+                        UnmarshalledParams,
+                        UnmarshalledResponse
+                    >
                 >;
             }
         > => {
@@ -189,17 +287,46 @@ class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
                 }
                 await sleep(15 * SECONDS);
             }
+
             const tx = unmarshalTxResponse<
                 UnmarshalledParams,
                 UnmarshalledResponse
             >(rawResponse.tx);
 
-            return {
-                chain: RENVM_CHAIN,
-                txid: this.hash,
-                txindex: "0",
-                tx: tx,
-            };
+            if (
+                (tx.out as any as CrossChainTxOutput).revert &&
+                (tx.out as any as CrossChainTxOutput).revert.length > 0
+            ) {
+                const revertMessage = (tx.out as any as CrossChainTxOutput)
+                    .revert;
+                this.updateStatus({
+                    status: ChainTransactionStatus.Reverted,
+                    revertReason: revertMessage,
+                });
+                throw new Error(`RenVM transaction reverted: ${revertMessage}`);
+            }
+
+            if (this.signatureCallback) {
+                try {
+                    await this.signatureCallback(tx);
+                } catch (error) {
+                    // TODO: Hande error.
+                }
+            }
+
+            return this.updateStatus({
+                response: {
+                    tx,
+                    txStatus: rawResponse.txStatus,
+                },
+                status: ChainTransactionStatus.Confirmed,
+                transaction: {
+                    chain: RENVM_CHAIN,
+                    txid: this.hash,
+                    txidFormatted: this.hash,
+                    txindex: "0",
+                },
+            });
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
@@ -251,42 +378,32 @@ export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<
         provider: RenVMProvider,
         selector: string,
         params: CrossChainTxInput,
+        signatureCallback?: (
+            response: UnmarshalledTxOutput<
+                CrossChainTxInput,
+                CrossChainTxOutput
+            >,
+        ) => Promise<void>,
     ) {
-        super(provider, selector, {
-            t: crossChainParamsType,
-            v: {
-                txid: params.txid,
-                txindex: params.txindex,
-                amount: params.amount,
-                payload:
-                    typeof params.payload === "string"
-                        ? params.payload
-                        : toURLBase64(params.payload),
-                phash:
-                    typeof params.phash === "string"
-                        ? params.phash
-                        : toURLBase64(params.phash),
-                to:
-                    typeof params.to === "string"
-                        ? params.to
-                        : toURLBase64(params.to),
-                nonce:
-                    typeof params.nonce === "string"
-                        ? params.nonce
-                        : toURLBase64(params.nonce),
-                nhash:
-                    typeof params.nhash === "string"
-                        ? params.nhash
-                        : toURLBase64(params.nhash),
-                gpubkey:
-                    typeof params.gpubkey === "string"
-                        ? params.gpubkey
-                        : toURLBase64(params.gpubkey),
-                ghash:
-                    typeof params.ghash === "string"
-                        ? params.ghash
-                        : toURLBase64(params.ghash),
+        super(
+            provider,
+            selector,
+            {
+                t: crossChainParamsType,
+                v: {
+                    txid: toURLBase64(params.txid),
+                    txindex: params.txindex.toFixed(),
+                    amount: params.amount.toFixed(),
+                    payload: toURLBase64(params.payload),
+                    phash: toURLBase64(params.phash),
+                    to: params.to,
+                    nonce: toURLBase64(params.nonce),
+                    nhash: toURLBase64(params.nhash),
+                    gpubkey: toURLBase64(params.gpubkey),
+                    ghash: toURLBase64(params.ghash),
+                },
             },
-        });
+            signatureCallback,
+        );
     }
 }

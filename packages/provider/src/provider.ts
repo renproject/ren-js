@@ -36,6 +36,7 @@ import {
 } from "./transaction";
 import {
     CrossChainTxResponse,
+    CrossChainTxWithStatus,
     TxResponseWithStatus,
     unmarshalCrossChainTxResponse,
 } from "./unmarshal";
@@ -309,13 +310,12 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
     public readonly queryTransaction = async (
         renVMTxHash: Buffer,
         retries?: number,
-    ): Promise<TxResponseWithStatus<CrossChainTxResponse>> => {
+    ): Promise<CrossChainTxWithStatus> => {
         try {
             const response = await this.queryTx(
                 toURLBase64(renVMTxHash),
                 retries,
             );
-            console.log("got back response", response);
 
             return {
                 tx: unmarshalCrossChainTxResponse(response.tx),
@@ -342,9 +342,9 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         onStatus?: (status: TxStatus) => void,
         _cancelRequested?: () => boolean,
         timeout?: number,
-    ): Promise<TxResponseWithStatus<CrossChainTxResponse>> => {
+    ): Promise<CrossChainTxWithStatus> => {
         assertType<Buffer>("Buffer", { utxoTxHash });
-        let rawResponse: TxResponseWithStatus<CrossChainTxResponse>;
+        let rawResponse: CrossChainTxWithStatus;
         while (true) {
             if (_cancelRequested && _cancelRequested()) {
                 throw new Error(`waitForTX cancelled.`);

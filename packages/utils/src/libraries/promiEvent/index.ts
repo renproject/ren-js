@@ -23,7 +23,7 @@ export class Web3PromiEvent<
     public resolve: (value: T | PromiseLike<T>) => void;
     // @ts-ignore no initializer because of proxyHandler
     public reject: (reason?: any) => void;
-    public eventEmitter: EventEmitter;
+    public eventEmitter: EventEmitterTyped<EventTypes>;
     private _cancelled: boolean;
 
     // @ts-ignore no initializer because of proxyHandler
@@ -62,7 +62,7 @@ export class Web3PromiEvent<
      * Sets up the event emitter and the promise, as well as a proxy handler
      * for routing method calls to the promise or event emitter.
      */
-    constructor() {
+    constructor(eventEmitter?: EventEmitterTyped<EventTypes>) {
         super();
         this.promise = new Promise<T>((resolve, reject) => {
             this.resolve = resolve;
@@ -71,7 +71,9 @@ export class Web3PromiEvent<
 
         this._cancelled = false;
 
-        this.eventEmitter = new EventEmitter();
+        this.eventEmitter =
+            eventEmitter ||
+            (new EventEmitter() as unknown as EventEmitterTyped<EventTypes>);
 
         return new Proxy(this, {
             // eslint-disable-next-line @typescript-eslint/unbound-method

@@ -66,6 +66,11 @@ export class DigiByte extends BitcoinBaseChain {
     public static configMap = DigiByteConfigMap;
     public configMap = DigiByteConfigMap;
 
+    public static assets = {
+        DGB: "DGB",
+    };
+    public assets = DigiByte.assets;
+
     constructor(network: BitcoinNetworkInput) {
         super(resolveBitcoinNetworkConfig(DigiByte.configMap, network));
     }

@@ -62,6 +62,11 @@ export class Fantom extends EthereumBaseChain {
     };
     public configMap = Fantom.configMap;
 
+    public static assets = {
+        FTM: "FTM",
+    };
+    public assets = Fantom.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

@@ -1,11 +1,16 @@
-import { RenVMProvider } from "@renproject/provider";
+import BigNumber from "bignumber.js";
+
+import { RenVMProvider, RenVMShard } from "@renproject/provider";
 import {
-    CrossChainTxResponse,
-    TxResponseWithStatus,
+    CrossChainTxInput,
+    CrossChainTxOutput,
+    CrossChainTxWithStatus,
+    UnmarshalledTxOutput,
 } from "@renproject/provider/build/main/unmarshal";
 import {
     Chain,
     ChainTransaction,
+    ChainTransactionStatus,
     DefaultTxWaiter,
     fixSignature,
     fromBase64,
@@ -19,9 +24,7 @@ import {
     isContractChain,
     isDefined,
     keccak256,
-    newPromiEvent,
     OutputType,
-    PromiEvent,
     sleep,
     toNBytes,
     toURLBase64,
@@ -31,8 +34,8 @@ import {
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
+import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
-import { waitForTX } from "./utils/providerUtils";
 
 export enum TransactionStatus {
     FetchingStatus = "fetching-status",
@@ -57,24 +60,23 @@ export interface TransactionParams<
     },
 > {
     asset: string;
-    fromTx: InputChainTransaction;
     to: ToPayload;
-
-    // Parameters with default (empty) values. Must equal the values used when
-    // the input was submitted.
-
     /**
      * The public key of the RenVM shard selected when `fromTx` was submitted.
      * If the input is contract/event-based then it should be left empty.
      *
      * @default Buffer.from([])
      */
-    gPubKey?: string;
-
+    shard?: RenVMShard;
     /**
      * @default toBytes(0,32)
      */
     nonce?: string;
+
+    /**
+     * A gateway transaction always has a input transaction on the origin-chain.
+     */
+    fromTx: InputChainTransaction;
 }
 
 export class GatewayTransaction<
@@ -113,7 +115,7 @@ export class GatewayTransaction<
     public status: TransactionStatus;
 
     /** See [[RenJS.renVM]]. */
-    public renVM: RenVMProvider;
+    public provider: RenVMProvider;
     public fromChain: Chain;
     public toChain: Chain;
 
@@ -128,11 +130,10 @@ export class GatewayTransaction<
 
     public in: TxSubmitter | TxWaiter;
     public out: TxSubmitter | TxWaiter;
+    public renVM: RenVMCrossChainTxSubmitter;
 
     // Private
-    private queryTxResult:
-        | TxResponseWithStatus<CrossChainTxResponse>
-        | undefined;
+    private queryTxResult: CrossChainTxWithStatus | undefined;
     private _renTxSubmitted: boolean = false;
 
     private inputType: InputType | undefined;
@@ -147,7 +148,7 @@ export class GatewayTransaction<
         fromTxWaiter?: TxSubmitter | TxWaiter,
         config?: RenJSConfig,
     ) {
-        this.renVM = renVM;
+        this.provider = renVM;
         this.params = params;
         this._config = {
             ...defaultRenJSConfig,
@@ -185,6 +186,7 @@ export class GatewayTransaction<
         this.out = undefined as never;
         this.pHash = undefined as never;
         this.gHash = undefined as never;
+        this.renVM = undefined as never;
     }
 
     /** @hidden */
@@ -227,32 +229,56 @@ export class GatewayTransaction<
             nonceBuffer,
         );
 
-        this.hash = toURLBase64(
-            this.renVM.transactionHash({
-                selector: this.selector,
-                gHash: this.gHash,
-                gPubKey: this.params.gPubKey
-                    ? fromBase64(this.params.gPubKey)
-                    : Buffer.from([]),
-                nHash: this.nHash,
-                nonce: nonceBuffer,
-                output: fromTx,
-                amount: fromTx.amount,
-                payload: payload.payload,
-                pHash: this.pHash,
-                to: payload.to,
-            }),
-        );
+        const gPubKey = this.params.shard
+            ? fromBase64(this.params.shard.gPubKey)
+            : Buffer.from([]);
+
+        const txParams = {
+            selector: this.selector,
+            gHash: this.gHash,
+            gPubKey: gPubKey,
+            nHash: this.nHash,
+            nonce: nonceBuffer,
+            output: fromTx,
+            amount: fromTx.amount,
+            payload: payload.payload,
+            pHash: this.pHash,
+            to: payload.to,
+        };
+
+        this.hash = toURLBase64(this.provider.transactionHash(txParams));
 
         if (!this.in) {
             this.in = new DefaultTxWaiter({
                 chainTransaction: this.params.fromTx,
                 chain: this.fromChain,
-                target: await this.renVM.getConfirmationTarget(
+                target: await this.provider.getConfirmationTarget(
                     this.fromChain.chain,
                 ),
             });
         }
+
+        this.renVM = new RenVMCrossChainTxSubmitter(
+            this.provider,
+            this.selector,
+            {
+                txid: fromBase64(this.params.fromTx.txid), // Buffer;
+                txindex: new BigNumber(this.params.fromTx.txindex), // BigNumber;
+                amount: new BigNumber(this.params.fromTx.amount), // BigNumber;
+                payload: payload.payload, // Buffer;
+                phash: this.pHash, // Buffer;
+                to: payload.to, // string;
+                nonce: nonceBuffer, // Buffer;
+                nhash: this.nHash, // Buffer;
+                gpubkey: gPubKey, // Buffer;
+                ghash: this.gHash, // Buffer;
+            },
+            this.onSignatureReady,
+        );
+
+        this.renVM.eventEmitter.on("status", (status) => {
+            this.queryTxResult = status.response;
+        });
 
         return this;
     };
@@ -264,9 +290,7 @@ export class GatewayTransaction<
      * await deposit.queryTx();
      * // > { to: "...", hash: "...", status: "done", in: {...}, out: {...} }
      */
-    public queryTx = async (
-        retries = 2,
-    ): Promise<TxResponseWithStatus<CrossChainTxResponse>> => {
+    public queryTx = async (retries = 2): Promise<CrossChainTxWithStatus> => {
         if (
             this.queryTxResult &&
             this.queryTxResult.txStatus === TxStatus.TxStatusDone
@@ -274,26 +298,22 @@ export class GatewayTransaction<
             return this.queryTxResult;
         }
 
-        const response: TxResponseWithStatus<CrossChainTxResponse> =
-            await this.renVM.queryTransaction(fromBase64(this.hash), retries);
+        const response: CrossChainTxWithStatus =
+            await this.provider.queryTransaction(
+                fromBase64(this.hash),
+                retries,
+            );
         this.queryTxResult = response;
 
         // Update status.
         if (
             response.tx.out &&
             response.tx.out.revert &&
-            response.tx.out.revert !== ""
+            response.tx.out.revert.length > 0 &&
+            response.tx.out.sig &&
+            response.tx.out.sig.length > 0
         ) {
-            this.status = TransactionStatus.Reverted;
-            this.revertReason = response.tx.out.revert.toString();
-        } else if (response.tx.out && response.tx.out.sig) {
-            if (
-                TransactionStatusIndex[this.status] <
-                TransactionStatusIndex[TransactionStatus.Signed]
-            ) {
-                this.status = TransactionStatus.Signed;
-                await this.onSignatureReady();
-            }
+            await this.onSignatureReady(response.tx);
         }
 
         return response;
@@ -545,44 +565,49 @@ export class GatewayTransaction<
     //     },
     // };
 
-    private onSignatureReady = async () => {
-        console.log("Called onSignatureReady!");
-        if (
-            !this.queryTxResult ||
-            !this.queryTxResult.tx.out ||
-            !this.queryTxResult.tx.out.sig
-        ) {
-            throw new Error(
-                `Unable to submit to Ethereum without signature. Call 'signed' first.`,
-            );
+    private onSignatureReady = async (
+        tx: UnmarshalledTxOutput<CrossChainTxInput, CrossChainTxOutput>,
+    ) => {
+        if (tx.out && tx.out.revert && tx.out.revert !== "") {
+            this.status = TransactionStatus.Reverted;
+            this.revertReason = tx.out.revert;
+            return;
         }
 
-        if (!this.outputType) {
-            throw new Error(`Must call .initialize() first.`);
-        }
+        this.status = TransactionStatus.Signed;
 
-        if (
-            this.queryTxResult.tx.out &&
-            this.queryTxResult.tx.out.txid &&
-            this.queryTxResult.tx.out.txid.length > 0
-        ) {
+        if (tx.out && tx.out.txid && tx.out.txid.length > 0) {
             // The transaction has already been submitted by RenVM.
+            const txid = toURLBase64(tx.out.txid);
+            const txindex = tx.out.txindex.toFixed();
             this.out = new DefaultTxWaiter({
                 chainTransaction: {
                     chain: this.toChain.chain,
-                    txid: toURLBase64(this.queryTxResult.tx.out.txid),
-                    txindex: this.queryTxResult.tx.out.txindex.toFixed(),
+                    txid,
+                    txindex,
+                    txidFormatted: this.toChain.transactionHash({
+                        txid,
+                        txindex,
+                    }),
                 },
                 chain: this.fromChain,
-                target: await this.renVM.getConfirmationTarget(
-                    this.fromChain.chain,
-                ),
+                target: 1,
             });
         } else if (isContractChain(this.toChain)) {
-            const sigHash = this.queryTxResult.tx.out.sighash;
-            const amount = this.queryTxResult.tx.out.amount;
-            // const phash = this.queryTxResult.tx.in.phash;
-            const signature = this.queryTxResult.tx.out.sig;
+            if (!this.outputType) {
+                throw new Error(`Must call .initialize() first.`);
+            }
+
+            if (!tx.out.sig) {
+                throw new Error(
+                    `Unable to submit without signature. Call 'signed' first.`,
+                );
+            }
+
+            const sigHash = tx.out.sighash;
+            const amount = tx.out.amount;
+            // const phash = tx.in.phash;
+            const signature = tx.out.sig;
             const { r, s, v } = fixSignature(
                 signature.slice(0, 32),
                 signature.slice(32, 64),
@@ -594,7 +619,7 @@ export class GatewayTransaction<
                 this.outputType,
                 this.params.asset,
                 this.params.to,
-                {
+                () => ({
                     amount,
                     nHash: this.nHash,
                     sHash: keccak256(Buffer.from(this.selector)),
@@ -605,7 +630,7 @@ export class GatewayTransaction<
                         s,
                         v,
                     },
-                },
+                }),
                 1,
             );
         } else {
@@ -648,126 +673,126 @@ export class GatewayTransaction<
         // this.status = TransactionStatus.Submitted;
     };
 
-    /**
-     * `signed` waits for RenVM's signature to be available.
-     *
-     * It returns a PromiEvent which emits a `"txHash"` event with the deposit's
-     * RenVM txHash (aka Transaction ID).
-     *
-     * ```ts
-     * await deposit
-     *  .signed()
-     *  .on("txHash", (txHash) => console.log(txHash))
-     * ```
-     *
-     * The events emitted by the PromiEvent are:
-     * 1. `txHash` - the RenVM transaction hash of the deposit.
-     * 2. `status` - the RenVM status of the transaction, of type [[TxStatus]].
-     *
-     * @category Main
-     */
-    public signed = (): PromiEvent<
-        GatewayTransaction<ToPayload>,
-        { txHash: [string]; status: [TxStatus] }
-    > => {
-        const promiEvent = newPromiEvent<
-            GatewayTransaction<ToPayload>,
-            { txHash: [string]; status: [TxStatus] }
-        >();
+    // /**
+    //  * `signed` waits for RenVM's signature to be available.
+    //  *
+    //  * It returns a PromiEvent which emits a `"txHash"` event with the deposit's
+    //  * RenVM txHash (aka Transaction ID).
+    //  *
+    //  * ```ts
+    //  * await deposit
+    //  *  .signed()
+    //  *  .on("txHash", (txHash) => console.log(txHash))
+    //  * ```
+    //  *
+    //  * The events emitted by the PromiEvent are:
+    //  * 1. `txHash` - the RenVM transaction hash of the deposit.
+    //  * 2. `status` - the RenVM status of the transaction, of type [[TxStatus]].
+    //  *
+    //  * @category Main
+    //  */
+    // public signed = (): PromiEvent<
+    //     GatewayTransaction<ToPayload>,
+    //     { txHash: [string]; status: [TxStatus] }
+    // > => {
+    //     const promiEvent = newPromiEvent<
+    //         GatewayTransaction<ToPayload>,
+    //         { txHash: [string]; status: [TxStatus] }
+    //     >();
 
-        (async () => {
-            let txHash = this.hash;
+    //     (async () => {
+    //         let txHash = this.hash;
 
-            // Check if the signature is already available.
-            if (
-                !this.queryTxResult ||
-                !this.queryTxResult.tx.out ||
-                // Not done and not reverted
-                (this.queryTxResult.txStatus !== TxStatus.TxStatusDone &&
-                    this.queryTxResult.txStatus !==
-                        TxStatus.TxStatusReverted) ||
-                // Output not populated
-                Object.keys(this.queryTxResult.tx.out).length > 0
-            ) {
-                promiEvent.emit("txHash", txHash);
-                this._config.logger.debug("RenVM txHash:", txHash);
+    //         // Check if the signature is already available.
+    //         if (
+    //             !this.queryTxResult ||
+    //             !this.queryTxResult.tx.out ||
+    //             // Not done and not reverted
+    //             (this.queryTxResult.txStatus !== TxStatus.TxStatusDone &&
+    //                 this.queryTxResult.txStatus !==
+    //                     TxStatus.TxStatusReverted) ||
+    //             // Output not populated
+    //             Object.keys(this.queryTxResult.tx.out).length > 0
+    //         ) {
+    //             promiEvent.emit("txHash", txHash);
+    //             this._config.logger.debug("RenVM txHash:", txHash);
 
-                // Try to submit to RenVM. If that fails, see if they already
-                // know about the transaction.
-                try {
-                    txHash = await this._submitMintTransaction(1);
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any) {
-                    this._config.logger.debug(error);
+    //             // Try to submit to RenVM. If that fails, see if they already
+    //             // know about the transaction.
+    //             try {
+    //                 txHash = await this._submitMintTransaction(1);
+    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             } catch (error: any) {
+    //                 this._config.logger.debug(error);
 
-                    try {
-                        // Check if the darknodes have already seen the transaction
-                        const queryTxResponse = await this.queryTx(2);
-                        if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
-                            throw new Error(
-                                `Transaction ${txHash} has not been submitted previously.`,
-                            );
-                        }
-                        txHash = queryTxResponse.tx.hash;
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } catch (errorInner: any) {
-                        this._config.logger.debug(errorInner);
+    //                 try {
+    //                     // Check if the darknodes have already seen the transaction
+    //                     const queryTxResponse = await this.queryTx(2);
+    //                     if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
+    //                         throw new Error(
+    //                             `Transaction ${txHash} has not been submitted previously.`,
+    //                         );
+    //                     }
+    //                     txHash = queryTxResponse.tx.hash;
+    //                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //                 } catch (errorInner: any) {
+    //                     this._config.logger.debug(errorInner);
 
-                        // Retry submitting to reduce chance of network issues
-                        // causing problems.
-                        txHash = await this._submitMintTransaction(5);
-                    }
-                }
+    //                     // Retry submitting to reduce chance of network issues
+    //                     // causing problems.
+    //                     txHash = await this._submitMintTransaction(5);
+    //                 }
+    //             }
 
-                const response = await waitForTX(
-                    this.renVM,
-                    fromBase64(txHash),
-                    (status) => {
-                        promiEvent.emit("status", status);
-                        this._config.logger.debug(
-                            "transaction status:",
-                            status,
-                        );
-                    },
-                    () => promiEvent._isCancelled(),
-                    this._config.networkDelay,
-                    this._config.logger,
-                );
+    //             const response = await waitForTX(
+    //                 this.renVM,
+    //                 fromBase64(txHash),
+    //                 (status) => {
+    //                     promiEvent.emit("status", status);
+    //                     this._config.logger.debug(
+    //                         "transaction status:",
+    //                         status,
+    //                     );
+    //                 },
+    //                 () => promiEvent._isCancelled(),
+    //                 this._config.networkDelay,
+    //                 this._config.logger,
+    //             );
 
-                this.queryTxResult = response;
-            }
+    //             this.queryTxResult = response;
+    //         }
 
-            console.log("!");
+    //         console.log("!");
 
-            // Update status.
-            if (
-                this.queryTxResult.tx.out &&
-                this.queryTxResult.tx.out.revert !== undefined &&
-                this.queryTxResult.tx.out.revert !== ""
-            ) {
-                this.status = TransactionStatus.Reverted;
-                this.revertReason = this.queryTxResult.tx.out.revert.toString();
-                throw new Error(this.revertReason);
-            } else if (
-                this.queryTxResult.tx.out &&
-                Object.keys(this.queryTxResult.tx.out).length > 0
-            ) {
-                if (
-                    TransactionStatusIndex[this.status] <
-                    TransactionStatusIndex[TransactionStatus.Signed]
-                ) {
-                    this.status = TransactionStatus.Signed;
-                    await this.onSignatureReady();
-                }
-            }
+    //         // Update status.
+    //         if (
+    //             this.queryTxResult.tx.out &&
+    //             this.queryTxResult.tx.out.revert !== undefined &&
+    //             this.queryTxResult.tx.out.revert !== ""
+    //         ) {
+    //             this.status = TransactionStatus.Reverted;
+    //             this.revertReason = this.queryTxResult.tx.out.revert.toString();
+    //             throw new Error(this.revertReason);
+    //         } else if (
+    //             this.queryTxResult.tx.out &&
+    //             Object.keys(this.queryTxResult.tx.out).length > 0
+    //         ) {
+    //             if (
+    //                 TransactionStatusIndex[this.status] <
+    //                 TransactionStatusIndex[TransactionStatus.Signed]
+    //             ) {
+    //                 this.status = TransactionStatus.Signed;
+    //                 await this.onSignatureReady();
+    //             }
+    //         }
 
-            return this;
-        })()
-            .then(promiEvent.resolve)
-            .catch(promiEvent.reject);
+    //         return this;
+    //     })()
+    //         .then(promiEvent.resolve)
+    //         .catch(promiEvent.reject);
 
-        return promiEvent;
-    };
+    //     return promiEvent;
+    // };
 
     // /**
     //  * `mint` submits the RenVM signature to the mint chain.
@@ -928,12 +953,12 @@ export class GatewayTransaction<
                 : fromBase64(nonce)
             : toNBytes(0, 32);
 
-        const encodedHash = await this.renVM.submitTransaction(
+        const encodedHash = await this.provider.submitTransaction(
             {
                 selector: this.selector,
                 gHash: this.gHash,
-                gPubKey: this.params.gPubKey
-                    ? fromBase64(this.params.gPubKey)
+                gPubKey: this.params.shard
+                    ? fromBase64(this.params.shard.gPubKey)
                     : Buffer.from([]),
                 nHash: this.nHash,
                 nonce: nonceBuffer,

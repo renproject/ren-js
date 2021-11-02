@@ -76,6 +76,26 @@ export class Ethereum extends EthereumBaseChain {
     };
     public configMap: EvmNetworkConfigMap = Ethereum.configMap;
 
+    public static assets = {
+        ETH: "ETH",
+        DAI: "DAI",
+        REN: "REN",
+        USDC: "USDC",
+        USDT: "USDT",
+        EURT: "EURT",
+        BUSD: "BUSD",
+        MIM: "MIM",
+        CRV: "CRV",
+        LINK: "LINK",
+        UNI: "UNI",
+        SUSHI: "SUSHI",
+        FTT: "FTT",
+        ROOK: "ROOK",
+        BADGER: "BADGER",
+        KNC: "KNC",
+    };
+    public assets = Ethereum.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

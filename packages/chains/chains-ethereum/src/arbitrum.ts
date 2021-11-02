@@ -78,6 +78,11 @@ export class Arbitrum extends EthereumBaseChain {
     };
     public configMap = Arbitrum.configMap;
 
+    public static assets = {
+        arbETH: "arbETH",
+    };
+    public assets = Arbitrum.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

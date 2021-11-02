@@ -39,6 +39,11 @@ export class Goerli extends EthereumBaseChain {
     };
     public configMap = Goerli.configMap;
 
+    public static assets = {
+        gETH: "gETH",
+    };
+    public assets = Goerli.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

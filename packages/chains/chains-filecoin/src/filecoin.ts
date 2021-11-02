@@ -115,6 +115,10 @@ export class Filecoin
 {
     public static chain = "Filecoin";
     public chain: string;
+    public static assets: { [asset: string]: string } = {
+        FIL: "FIL",
+    };
+    public assets = Filecoin.assets;
 
     public static configMap = FilecoinConfigMap;
     public configMap = FilecoinConfigMap;
@@ -263,6 +267,7 @@ export class Filecoin
                                     txid: toURLBase64(
                                         Buffer.from(new CID(tx.cid).bytes),
                                     ),
+                                    txidFormatted: tx.cid,
                                     txindex: "0",
                                     amount: tx.amount,
                                 }),
@@ -300,6 +305,7 @@ export class Filecoin
                             txid: toURLBase64(
                                 Buffer.from(new CID(tx.cid).bytes),
                             ),
+                            txidFormatted: tx.cid,
                             txindex: "0",
                             amount: tx.amount,
                         }),
@@ -436,7 +442,7 @@ export class Filecoin
      */
     transactionID = (transaction: FilTransaction): string => transaction.cid;
 
-    transactionHash = (tx: ChainTransaction): string =>
+    transactionHash = (tx: { txid: string; txindex: string }): string =>
         new CID(fromBase64(tx.txid)).toString();
 
     transactionRPCTxidFromID = (transactionID: string): Buffer =>

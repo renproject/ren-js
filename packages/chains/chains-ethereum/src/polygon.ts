@@ -65,6 +65,11 @@ export class Polygon extends EthereumBaseChain {
     };
     public configMap = Polygon.configMap;
 
+    public static assets = {
+        MATIC: "MATIC",
+    };
+    public assets = Polygon.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

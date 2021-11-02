@@ -19,6 +19,7 @@ import { SECONDS, sleep } from "@renproject/utils/src";
 
 import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import RenJS from "../packages/ren/src";
+import { GatewayParams } from "../packages/ren/src/params";
 import { getEVMChain } from "./testUtils";
 
 chai.should();
@@ -84,7 +85,7 @@ describe("Refactor: mint", () => {
             BinanceSmartChain,
         ];
 
-        const asset = "DAI";
+        const asset = Ethereum.assets.DAI;
 
         await Promise.all(
             fromChains.map(async (From) => {
@@ -100,18 +101,16 @@ describe("Refactor: mint", () => {
                             )}] Address: ${toAddress}`,
                         );
 
-                        const from = fromClass.FromAccount(
-                            "1000000000000000000",
-                        );
+                        const from = fromClass.Account("1000000000000000000");
                         // const from = fromClass.FromAccount();
-                        const to = toClass.Address(toAddress);
+                        const to = toClass.Account();
 
                         const logLevel: LogLevel = LogLevel.Log;
                         const renJS = new RenJS(network, {
                             logLevel,
                         }).withChains(fromClass, toClass);
 
-                        const params = {
+                        const params: GatewayParams = {
                             asset,
                             from,
                             to,
@@ -138,9 +137,8 @@ describe("Refactor: mint", () => {
                                         setup.chain,
                                     )}`,
                                 );
-                                return await setup
-                                    .submit()
-                                    .on("status", console.log);
+                                setup.eventEmitter.on("status", console.log);
+                                return await setup.submit();
                             });
                         }
 
@@ -152,9 +150,10 @@ describe("Refactor: mint", () => {
                                     toClass.chain,
                                 )}]: Submitting to ${String(fromClass.chain)}`,
                             );
-                            await gateway.in
-                                .submit({ config: { gasLimit: 2000000 } })
-                                .on("status", console.log);
+                            gateway.in.eventEmitter.on("status", console.log);
+                            await gateway.in.submit({
+                                config: { gasLimit: 2000000 },
+                            });
                             await gateway.in.wait();
                         });
 
@@ -187,21 +186,19 @@ describe("Refactor: mint", () => {
                                         }`,
                                     );
 
-                                    await tx.in
-                                        .wait()
-                                        .on("status", (status) =>
-                                            console.log(
-                                                `[${colorizeChain(
-                                                    fromClass.chain,
-                                                )}⇢${colorizeChain(
-                                                    toClass.chain,
-                                                )}][${tx.hash.slice(0, 6)}]: ${
-                                                    status.confirmations || 0
-                                                }/${
-                                                    status.target
-                                                } confirmations`,
-                                            ),
-                                        );
+                                    tx.in.eventEmitter.on("status", (status) =>
+                                        console.log(
+                                            `[${colorizeChain(
+                                                fromClass.chain,
+                                            )}⇢${colorizeChain(
+                                                toClass.chain,
+                                            )}][${tx.hash.slice(0, 6)}]: ${
+                                                status.confirmations || 0
+                                            }/${status.target} confirmations`,
+                                        ),
+                                    );
+
+                                    await tx.in.wait();
                                     // .on("target", (target) =>
                                     //     console.log(
                                     //         `[${colorizeChain(
@@ -230,8 +227,8 @@ describe("Refactor: mint", () => {
                                     // );
                                     while (true) {
                                         try {
-                                            console.log("calling signed");
-                                            await tx.signed();
+                                            await tx.renVM.submit();
+                                            await tx.renVM.wait();
                                             break;
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         } catch (error: any) {
@@ -239,7 +236,6 @@ describe("Refactor: mint", () => {
                                             await sleep(10 * SECONDS);
                                         }
                                     }
-                                    console.log("submitting!");
                                     await throttles[toClass.chain](async () => {
                                         console.log(
                                             `[${colorizeChain(
@@ -253,15 +249,15 @@ describe("Refactor: mint", () => {
                                                 toClass.chain,
                                             )}`,
                                         );
-                                        if (tx.out.submit) {
-                                            await tx.out
-                                                .submit()
-                                                .on("status", console.log);
-                                        }
-                                        console.log(
-                                            "done!",
-                                            await tx.out.wait(),
+
+                                        tx.out.eventEmitter.on(
+                                            "status",
+                                            console.log,
                                         );
+
+                                        if (tx.out.submit) {
+                                            await tx.out.submit();
+                                        }
                                     });
                                     // resolve();
                                 })().catch(reject);

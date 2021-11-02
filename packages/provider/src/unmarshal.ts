@@ -58,6 +58,8 @@ export type CrossChainTxResponse = UnmarshalledTxOutput<
     CrossChainTxOutput
 >;
 
+export type CrossChainTxWithStatus = TxResponseWithStatus<CrossChainTxResponse>;
+
 export const unmarshalTxResponse = <
     Input,
     Output,

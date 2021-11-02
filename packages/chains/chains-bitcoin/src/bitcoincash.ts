@@ -64,6 +64,11 @@ export class BitcoinCash extends BitcoinBaseChain {
     public static configMap = BitcoinCashConfigMap;
     public configMap = BitcoinCashConfigMap;
 
+    public static assets = {
+        BCH: "BCH",
+    };
+    public assets = BitcoinCash.assets;
+
     public validateAddress = (address: string) =>
         isValidAddress(address) && this.network.isTestnet
             ? isTestnetAddress(address)

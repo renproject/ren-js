@@ -67,6 +67,11 @@ export class Zcash extends BitcoinBaseChain {
     public static configMap = ZcashConfigMap;
     public configMap = ZcashConfigMap;
 
+    public static assets = {
+        ZEC: "ZEC",
+    };
+    public assets = Zcash.assets;
+
     constructor(network: BitcoinNetworkInput) {
         super(resolveBitcoinNetworkConfig(Zcash.configMap, network));
     }

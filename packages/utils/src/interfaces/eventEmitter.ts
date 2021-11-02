@@ -2,7 +2,7 @@
 
 import { EventEmitter } from "events";
 
-/** Interface for EventEmitter. */
+/** Interface for EventEmitter with well-typed events. */
 export class EventEmitterTyped<
     EventTypes extends { [event: string]: any[] } = {},
 > {
@@ -26,3 +26,10 @@ export class EventEmitterTyped<
     // @ts-ignore no initializer because of proxyHandler
     public readonly listenerCount: (event: string | symbol) => number;
 }
+
+/** Create a new EventEmitterTyped */
+export const eventEmitter = <
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    EventTypes extends { [event: string]: any[] } = {},
+>(): EventEmitterTyped<EventTypes> =>
+    new EventEmitter() as unknown as EventEmitterTyped<EventTypes>;

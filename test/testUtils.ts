@@ -2,12 +2,10 @@ import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { providers, Wallet } from "ethers";
 
-import {
-    Ethereum,
-    EthProvider,
-    EvmNetworkConfig,
-} from "@renproject/chains-ethereum";
+import { EthProvider, EvmNetworkConfig } from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/utils";
+
+import { EthereumBaseChain } from "../packages/chains/chains-ethereum/build/main/base";
 
 chai.should();
 
@@ -23,7 +21,7 @@ interface EVMConstructor<EVM> {
     new (renNetwork: RenNetwork, web3Provider: EthProvider): EVM;
 }
 
-export const getEVMChain = <EVM extends Ethereum>(
+export const getEVMChain = <EVM extends EthereumBaseChain>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
 ): EVM => {

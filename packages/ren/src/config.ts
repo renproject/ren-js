@@ -27,11 +27,6 @@ export interface RenJSConfig {
      * It defaults to false
      */
     loadCompletedDeposits?: boolean;
-
-    /**
-     * Allow overriding the gPubKey.
-     */
-    gPubKey?: Buffer;
 }
 
 export const defaultRenJSConfig = {

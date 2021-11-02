@@ -57,6 +57,11 @@ export class Avalanche extends EthereumBaseChain {
     };
     public configMap = Avalanche.configMap;
 
+    public static assets = {
+        AVAX: "AVAX",
+    };
+    public assets = Avalanche.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

@@ -95,6 +95,11 @@ export class BinanceSmartChain extends EthereumBaseChain {
     };
     public configMap = BinanceSmartChain.configMap;
 
+    public static assets = {
+        BNB: "BNB",
+    };
+    public assets = BinanceSmartChain.assets;
+
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

@@ -13,6 +13,7 @@ import {
     fromBase64,
     InputChainTransaction,
     InputType,
+    isDefined,
     Logger,
     nullLogger,
     OutputType,
@@ -26,15 +27,14 @@ import {
 import {
     BasicBridgeABI,
     findABIMethod,
-    getERC20Instance,
     LockGatewayABI,
     MintGatewayABI,
 } from "./contracts";
 import { LogTransferredEvent } from "./contracts/typechain/BasicBridge";
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "./contracts/typechain/MintGatewayV3";
-import { AbiItem, EthArg, payloadToABI } from "./utils/abi";
-import { callContract, EVMTxSubmitter } from "./utils/evmTxSubmitter";
+import { AbiItem, EthArg } from "./utils/abi";
+import { EVMTxSubmitter } from "./utils/evmTxSubmitter";
 import {
     getLockAsset,
     getLockGateway,
@@ -48,10 +48,18 @@ import {
     mapBurnLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
-    rawEncode,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
+import {
+    accountPayloadHandler,
+    approvalPayloadHandler,
+    contractPayloadHandler,
+    EVMParam,
+    EVMParamValues,
+    EVMPayload,
+    PayloadHandler,
+} from "./utils/payloads/evmPayloadHandlers";
 import {
     ContractCall,
     EthereumClassConfig,
@@ -64,11 +72,12 @@ import {
 import { EvmExplorer, StandardEvmExplorer } from "./utils/utils";
 
 export class EthereumBaseChain
-    implements ContractChain<InputContractCall, OutputContractCall>
+    implements ContractChain<EVMPayload, EVMPayload>
 {
     // DepositChain<ContractCall, ContractCall>
     public static chain = "Ethereum";
     public chain: string;
+    public assets: { [asset: string]: string } = {};
 
     public provider: Web3Provider;
     public signer: Signer | undefined;
@@ -107,8 +116,10 @@ export class EthereumBaseChain
     public addressExplorerLink = (address: string): string =>
         this.explorer.address(address);
 
-    public transactionHash = (transaction: ChainTransaction): string =>
-        Ox(fromBase64(transaction.txid));
+    public transactionHash = (transaction: {
+        txid: string;
+        txindex: string;
+    }): string => Ox(fromBase64(transaction.txid));
 
     public transactionExplorerLink = (transaction: ChainTransaction): string =>
         this.explorer.transaction(this.transactionHash(transaction));
@@ -140,26 +151,27 @@ export class EthereumBaseChain
     public getOutputPayload = async (
         asset: string,
         type: OutputType,
-        contractCall: OutputContractCall,
+        contractCall: EVMPayload,
     ): Promise<{
         to: string;
         payload: Buffer;
     }> => {
-        const contractCallDetails = await contractCall.getPayload(asset, type);
-
-        const zip = contractCallDetails.values;
-
-        const args = zip.filter((arg) => !arg.notInPayload);
-
-        const types = args.map((param) => param.type);
-        const values = args.map((param): unknown => param.value);
-
-        const payload = rawEncode(types, values);
-
-        return {
-            to: contractCallDetails.to,
-            payload,
-        };
+        const handler = this.getPayloadHandler(contractCall.type);
+        if (!handler.getPayload) {
+            throw withCode(
+                new Error(
+                    `'${contractCall.type}' payload type can only be used as a setup payload.`,
+                ),
+                RenJSError.INVALID_PARAMETERS,
+            );
+        }
+        return handler.getPayload(
+            this.network,
+            this.signer,
+            contractCall,
+            this.getEVMParams(asset, type, {}),
+            this.getPayloadHandler,
+        );
     };
 
     // Supported assets
@@ -334,7 +346,7 @@ export class EthereumBaseChain
     public lookupOutput = async (
         type: OutputType,
         asset: string,
-        _contractCall: OutputContractCall,
+        _contractCall: EVMPayload,
         renParams: {
             amount: BigNumber;
             sHash: Buffer;
@@ -377,8 +389,8 @@ export class EthereumBaseChain
     getOutputTx = async (
         type: OutputType,
         asset: string,
-        contractCall: OutputContractCall,
-        renParams: {
+        contractCall: EVMPayload,
+        getParams: () => {
             pHash: Buffer;
             amount: BigNumber;
             nHash: Buffer;
@@ -391,7 +403,7 @@ export class EthereumBaseChain
         },
         confirmationTarget: number,
     ): Promise<TxSubmitter | TxWaiter> => {
-        const { pHash, amount, nHash, sigHash } = renParams;
+        const { pHash, amount, nHash, sigHash, signature } = getParams();
 
         let existingTransaction;
         if (type === OutputType.Release) {
@@ -415,17 +427,12 @@ export class EthereumBaseChain
         if (existingTransaction) {
             return new DefaultTxWaiter({
                 chainTransaction: existingTransaction,
-                chain: this as ContractChain<
-                    InputContractCall,
-                    OutputContractCall
-                >,
+                chain: this,
                 target: confirmationTarget,
             });
         }
 
-        const rsv = renParams.signature;
-
-        if (!rsv) {
+        if (!signature) {
             throw new Error(`No signature provided.`);
         }
 
@@ -449,37 +456,21 @@ export class EthereumBaseChain
         //         : call.contractParams,
         // }));
 
-        const { r, s, v } = rsv;
-        const sig = Buffer.concat([r, s, Buffer.from([v])]);
-        const contractCallDetails = await contractCall.getContractCall(
-            asset,
-            type,
-            pHash,
-            amount.toString(),
-            nHash,
-            sig,
-        );
-        const { to, values, method, txConfig } = contractCallDetails;
-
-        const params = values.map((x) => x.value);
-
-        const abi = payloadToABI(method, values)[0];
+        if (!this.signer) {
+            throw withCode(
+                new Error(`Must connect signer.`),
+                RenJSError.INVALID_PARAMETERS,
+            );
+        }
 
         return new EVMTxSubmitter({
+            signer: this.signer,
+            network: this.network,
             chain: this.chain,
-            getTx: async (options?: {
-                overrides?: any[];
-                txConfig?: PayableOverrides;
-            }) => {
-                if (!this.signer) {
-                    throw new Error(`Must connect signer.`);
-                }
-                return callContract(this.signer, to, abi, params, {
-                    ...(txConfig as PayableOverrides),
-                    ...(options || {}).txConfig,
-                });
-            },
+            payload: contractCall,
             target: confirmationTarget,
+            getPayloadHandler: this.getPayloadHandler,
+            getParams: () => this.getEVMParams(asset, type, getParams()),
         });
     };
 
@@ -490,17 +481,14 @@ export class EthereumBaseChain
     getInputTx = async (
         type: InputType,
         asset: string,
-        contractCall: InputContractCall,
-        {
-            toChain,
-            toPayload,
-        }: {
+        contractCall: EVMPayload,
+        getParams: () => {
             toChain: string;
             toPayload: {
                 to: string;
                 payload: Buffer;
-                gatewayAddress?: string;
             };
+            gatewayAddress?: string;
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
@@ -538,158 +526,89 @@ export class EthereumBaseChain
 
         // return extractBurnDetails(receipt);
 
-        // Make a call to the provided contract and Pass on the
-        // transaction hash.
-        const contractCallDetails = await contractCall.getContractCall(
-            asset,
-            type,
-            toChain,
-            toPayload,
-        );
-
-        switch (type) {
-            case InputType.Burn: {
-                const { to, values, method, txConfig } = contractCallDetails;
-
-                const params = values.map((x) => x.value);
-                const [abi] = payloadToABI(method, values);
-
-                return new EVMTxSubmitter({
-                    chain: this.chain,
-                    getTx: async (options?: {
-                        overrides?: any[];
-                        txConfig?: PayableOverrides;
-                    }) => {
-                        if (!this.signer) {
-                            throw new Error(`Must connect signer.`);
-                        }
-                        return await callContract(
-                            this.signer,
-                            to,
-                            abi,
-                            params,
-                            {
-                                ...(txConfig as PayableOverrides),
-                                ...(options || {}).txConfig,
-                            },
-                        );
-                    },
-                    target: confirmationTarget,
-                    onReceipt: (receipt) => {
-                        const logBurnABI = findABIMethod(
-                            MintGatewayABI,
-                            "LogBurn",
-                        );
-                        filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
-                            .map((e) =>
-                                mapBurnLogToInputChainTransaction(
-                                    this.chain,
-                                    e,
-                                ),
-                            )
-                            .map(onInput);
-                    },
-                });
-            }
-
-            case InputType.Lock: {
-                const { to, values, method, txConfig } = contractCallDetails;
-
-                const params = values.map((x) => x.value);
-                const [abi] = payloadToABI(method, values);
-
-                return new EVMTxSubmitter({
-                    chain: this.chain,
-                    getTx: async (options?: {
-                        overrides?: any[];
-                        txConfig?: PayableOverrides;
-                    }) => {
-                        if (!this.signer) {
-                            throw new Error(`Must connect signer.`);
-                        }
-                        return await callContract(
-                            this.signer,
-                            to,
-                            abi,
-                            params,
-                            {
-                                ...(txConfig as PayableOverrides),
-                                ...(options || {}).txConfig,
-                            },
-                        );
-                    },
-                    target: confirmationTarget,
-                    onReceipt: (receipt) => {
-                        const logLockABI = findABIMethod(
-                            LockGatewayABI,
-                            "LogLockToChain",
-                        );
-                        filterLogs<LogLockToChainEvent>(
-                            receipt.logs,
-                            logLockABI,
-                        )
-                            .map((e) =>
-                                mapLockLogToInputChainTransaction(
-                                    this.chain,
-                                    e,
-                                ),
-                            )
-                            .map(onInput);
-
-                        const logTransferredABI = findABIMethod(
-                            BasicBridgeABI,
-                            "LogTransferred",
-                        );
-                        filterLogs<LogTransferredEvent>(
-                            receipt.logs,
-                            logTransferredABI,
-                        )
-                            .map((e) =>
-                                mapTransferLogToInputChainTransaction(
-                                    this.chain,
-                                    e,
-                                ),
-                            )
-                            .map(onInput);
-                    },
-                });
-            }
+        if (!this.signer) {
+            throw withCode(
+                new Error(`Must connect signer.`),
+                RenJSError.INVALID_PARAMETERS,
+            );
         }
+
+        const onReceipt = (receipt: providers.TransactionReceipt) => {
+            if (type === InputType.Burn) {
+                const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
+                filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
+                    .map((e) =>
+                        mapBurnLogToInputChainTransaction(this.chain, e),
+                    )
+                    .map(onInput);
+            } else {
+                const logLockABI = findABIMethod(
+                    LockGatewayABI,
+                    "LogLockToChain",
+                );
+                filterLogs<LogLockToChainEvent>(receipt.logs, logLockABI)
+                    .map((e) =>
+                        mapLockLogToInputChainTransaction(this.chain, e),
+                    )
+                    .map(onInput);
+
+                const logTransferredABI = findABIMethod(
+                    BasicBridgeABI,
+                    "LogTransferred",
+                );
+                filterLogs<LogTransferredEvent>(receipt.logs, logTransferredABI)
+                    .map((e) =>
+                        mapTransferLogToInputChainTransaction(this.chain, e),
+                    )
+                    .map(onInput);
+            }
+        };
+
+        return new EVMTxSubmitter({
+            signer: this.signer,
+            network: this.network,
+            chain: this.chain,
+            payload: contractCall,
+            target: confirmationTarget,
+            getPayloadHandler: this.getPayloadHandler,
+            getParams: () => this.getEVMParams(asset, type, getParams()),
+            onReceipt: onReceipt,
+        });
     };
 
     public getInputSetup = async (
         asset: string,
         type: InputType,
-        contractCall: InputContractCall,
+        contractCall: EVMPayload,
     ) => {
-        const calls = contractCall.getSetupContractCalls
-            ? await contractCall.getSetupContractCalls(asset, type)
-            : {};
+        const handler = this.getPayloadHandler(contractCall.type);
+        if (!handler || !handler.getSetup) {
+            return {};
+        }
+        if (!this.signer) {
+            throw withCode(
+                new Error(`Must connect signer.`),
+                RenJSError.INVALID_PARAMETERS,
+            );
+        }
+        const calls = handler.getSetup(
+            this.network,
+            this.signer,
+            contractCall,
+            this.getEVMParams(asset, type, {}),
+            this.getPayloadHandler,
+        );
 
         const txSubmitted = {};
         for (const callKey of Object.keys(calls)) {
-            const contractCallDetails = calls[callKey];
-            const { to, values, method, txConfig } =
-                await contractCallDetails.getContractCall(asset, type);
-            const params = values.map((x) => x.value);
-
-            const abi = payloadToABI(method, values)[0];
-
             txSubmitted[callKey] = new EVMTxSubmitter({
+                signer: this.signer,
+                network: this.network,
                 chain: this.chain,
-                getTx: async (options?: {
-                    overrides?: any[];
-                    txConfig?: PayableOverrides;
-                }) => {
-                    if (!this.signer) {
-                        throw new Error(`Must connect signer.`);
-                    }
-                    return callContract(this.signer, to, abi, params, {
-                        ...(txConfig as PayableOverrides),
-                        ...(options || {}).txConfig,
-                    });
-                },
+                payload: calls[callKey],
                 target: 1,
+                getPayloadHandler: this.getPayloadHandler,
+                getParams: () => this.getEVMParams(asset, type, {}),
             });
         }
         return txSubmitted;
@@ -698,355 +617,302 @@ export class EthereumBaseChain
     public getOutputSetup = async (
         asset: string,
         type: OutputType,
-        contractCall: OutputContractCall,
+        contractCall: EVMPayload,
     ) => {
-        const calls = contractCall.getSetupContractCalls
-            ? await contractCall.getSetupContractCalls(asset, type)
-            : {};
+        const handler = this.getPayloadHandler(contractCall.type);
+        if (!handler || !handler.getSetup) {
+            return {};
+        }
+        if (!this.signer) {
+            throw withCode(
+                new Error(`Must connect signer.`),
+                RenJSError.INVALID_PARAMETERS,
+            );
+        }
+        const calls = handler.getSetup(
+            this.network,
+            this.signer,
+            contractCall,
+            this.getEVMParams(asset, type, {}),
+            this.getPayloadHandler,
+        );
+
         const txSubmitted = {};
         for (const callKey of Object.keys(calls)) {
-            const contractCallDetails = calls[callKey];
-            const { to, values, method, txConfig } =
-                await contractCallDetails.getContractCall(asset, type);
-            const params = values.map((x) => x.value);
-
-            const abi = payloadToABI(method, values)[0];
-
             txSubmitted[callKey] = new EVMTxSubmitter({
+                signer: this.signer,
+                network: this.network,
                 chain: this.chain,
-                getTx: async (options?: {
-                    overrides?: any[];
-                    txConfig?: PayableOverrides;
-                }) => {
-                    if (!this.signer) {
-                        throw new Error(`Must connect signer.`);
-                    }
-                    return callContract(this.signer, to, abi, params, {
-                        ...(txConfig as PayableOverrides),
-                        ...(options || {}).txConfig,
-                    });
-                },
+                payload: calls[callKey],
                 target: 1,
+                getPayloadHandler: this.getPayloadHandler,
+                getParams: () => this.getEVMParams(asset, type, {}),
             });
         }
         return txSubmitted;
     };
 
+    private getPayloadHandler = (payloadType: string): PayloadHandler => {
+        switch (payloadType) {
+            case "approval":
+                return approvalPayloadHandler as PayloadHandler<
+                    EVMPayload<string, any>
+                >;
+            case "contract":
+                return contractPayloadHandler as PayloadHandler<
+                    EVMPayload<string, any>
+                >;
+            case "account":
+                return accountPayloadHandler as PayloadHandler<
+                    EVMPayload<string, any>
+                >;
+        }
+
+        // TODO: Allow adding custom payload handlers.
+
+        throw new Error(`Unknown payload type ${payloadType}`);
+    };
+
+    private getEVMParams = (
+        asset: string,
+        type: InputType | OutputType | "setup",
+        params: { [key: string]: any },
+    ): EVMParamValues => {
+        // Input
+        // toChain: string;
+        // toPayload: {
+        //     to: string;
+        //     payload: Buffer;
+        // };
+        // gatewayAddress?: string;
+
+        // Output
+        // pHash: Buffer;
+        // amount: BigNumber;
+        // nHash: Buffer;
+        // sigHash?: Buffer;
+        // signature?: {
+        //     r: Buffer;
+        //     s: Buffer;
+        //     v: number;
+        // };
+
+        return {
+            // Always available
+            [EVMParam.EVM_TRANSACTION_TYPE]: type,
+            [EVMParam.EVM_TOKEN_ADDRESS]: async () => {
+                if (type === InputType.Lock || type === OutputType.Release) {
+                    return await this.getLockAsset(asset);
+                } else {
+                    return await this.getRenAsset(asset);
+                }
+            },
+            [EVMParam.EVM_ACCOUNT]: async () => {
+                if (!this.signer) {
+                    throw withCode(
+                        new Error(`Must connect signer.`),
+                        RenJSError.INVALID_PARAMETERS,
+                    );
+                }
+                return this.signer?.getAddress();
+            },
+            [EVMParam.EVM_GATEWAY]: async () => {
+                if (type === InputType.Lock || type === OutputType.Release) {
+                    return await this.getLockGateway(asset);
+                } else {
+                    return await this.getMintGateway(asset);
+                }
+            },
+            [EVMParam.EVM_ASSET]: asset,
+
+            // Available when minting or releasing
+            [EVMParam.EVM_AMOUNT]: isDefined(params.amount)
+                ? params.amount.toString()
+                : undefined, // in wei
+            [EVMParam.EVM_NHASH]: params.nHash,
+            [EVMParam.EVM_PHASH]: params.pHash,
+            [EVMParam.EVM_SIGNATURE]: isDefined(params.signature)
+                ? Buffer.concat([
+                      params.signature.r,
+                      params.signature.s,
+                      Buffer.from([params.signature.v]),
+                  ])
+                : undefined,
+            [EVMParam.EVM_SIGNATURE_R]: isDefined(params.signature)
+                ? params.signature.r
+                : undefined,
+            [EVMParam.EVM_SIGNATURE_S]: isDefined(params.signature)
+                ? params.signature.s
+                : undefined,
+            [EVMParam.EVM_SIGNATURE_V]: isDefined(params.signature)
+                ? params.signature.v
+                : undefined,
+
+            // Available when locking or burning
+            [EVMParam.EVM_TO_CHAIN]: params.toChain,
+            [EVMParam.EVM_TO_ADDRESS]: isDefined(params.toPayload)
+                ? Buffer.from(params.toPayload.to)
+                : undefined,
+            [EVMParam.EVM_TO_PAYLOAD]: isDefined(params.toPayload)
+                ? params.toPayload.toPayload
+                : undefined,
+            [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]: params.gatewayAddress,
+        };
+    };
+
     /* ====================================================================== */
 
-    public FromAccount = (
-        amount: BigNumber | string | number,
-    ): InputContractCall => ({
+    public Account = (amount?: BigNumber | string | number): EVMPayload => ({
         chain: this.chain,
-        getSetupContractCalls: async (
-            asset: string,
-            type: InputType,
-        ): Promise<{ [key: string]: ContractCall }> => {
-            // Burning does not require approval.
-            if (type !== InputType.Lock) {
-                return {};
-            }
+        type: "account",
+        params: {
+            amount: amount
+                ? (BigNumber.isBigNumber(amount)
+                      ? amount
+                      : new BigNumber(amount.toString())
+                  ).toFixed()
+                : undefined,
+        },
+    });
 
-            // Native currency asset does not require approval.
-            if (asset === this.network.asset) {
-                return {};
-            }
-
-            if (!this.signer) {
-                throw new Error(`Must connect signer.`);
-            }
-
-            const account = await this.signer.getAddress();
-
-            const alreadyApproved = async () => {
-                const gateway = await this.getLockGateway(asset);
-                const token = await this.getLockAsset(asset);
-                const erc20Instance = getERC20Instance(this.provider, token);
-                const allowance = new BigNumber(
-                    (
-                        await erc20Instance.allowance(account, gateway)
-                    ).toString(),
-                );
-                return allowance.gte(new BigNumber(amount));
-            };
-
-            if (await alreadyApproved()) {
-                return {};
-            }
-
-            const contractCall = {
-                chain: this.chain,
-                getContractCall: async (
-                    asset: string,
-                ): Promise<{
-                    to: string;
-                    method: string;
-                    values: EthArg[];
-                    txConfig?: unknown;
-                }> => {
-                    const gateway = await this.getLockGateway(asset);
-                    const token = await this.getLockAsset(asset);
-
-                    return {
-                        to: token,
-                        method: "approve",
-                        values: [
-                            {
-                                name: "to",
-                                type: "address",
-                                value: gateway,
-                            },
-                            {
-                                name: "amount",
-                                type: "uint256",
-                                value: amount,
-                            },
-                        ],
-                        txConfig: {},
-                    };
+    public Contract = (params: {
+        to: string;
+        method: string;
+        values: EthArg[];
+        txConfig?: PayableOverrides;
+    }): EVMPayload => ({
+        chain: this.chain,
+        type: "contract",
+        params: {
+            to: params.to,
+            method: params.method,
+            values: [
+                ...params.values,
+                {
+                    name: "amount",
+                    type: "uint256",
+                    value: EVMParam.EVM_AMOUNT,
+                    notInPayload: true,
                 },
-            };
-
-            return {
-                approve: contractCall,
-            };
-        },
-        getContractCall: async (
-            asset: string,
-            type: InputType,
-            toChain: string,
-            toPayload: {
-                to: string;
-                payload: Buffer;
-                gatewayAddress?: string;
-            },
-        ) => {
-            switch (type) {
-                case InputType.Lock:
-                    if (asset === this.network.asset) {
-                        if (!toPayload.gatewayAddress) {
-                            throw withCode(
-                                new Error(
-                                    `Empty gateway address for ${this.network.asset}`,
-                                ),
-                                RenJSError.INTERNAL_ERROR,
-                            );
-                        }
-                        return {
-                            to: this.network.addresses.BasicAdapter,
-                            method: "transferWithLog",
-                            values: [
-                                {
-                                    type: "address",
-                                    name: "to",
-                                    value: toPayload.gatewayAddress,
-                                },
-                            ],
-                        };
-                    }
-                    return {
-                        to: this.network.addresses.BasicAdapter,
-                        method: "lock",
-                        values: [
-                            {
-                                type: "string",
-                                name: "symbol_",
-                                value: asset,
-                            },
-                            {
-                                type: "string",
-                                name: "recipientAddress_",
-                                value: toPayload.to,
-                            },
-                            {
-                                type: "string",
-                                name: "recipientChain_",
-                                value: toChain,
-                            },
-                            {
-                                type: "bytes",
-                                name: "recipientPayload_",
-                                value: toPayload.payload,
-                            },
-                            {
-                                type: "uint256",
-                                name: "amount_",
-                                value: amount.toString(),
-                            },
-                        ],
-                    };
-                case InputType.Burn:
-                    const addressToBuffer = Buffer.from(toPayload.to);
-                    const gateway = await this.getMintGateway(asset);
-
-                    return {
-                        to: gateway,
-                        method: "burn",
-                        values: [
-                            {
-                                type: "bytes" as const,
-                                name: "_to",
-                                value: Ox(addressToBuffer),
-                            },
-                            {
-                                type: "uint256" as const,
-                                name: "_amount",
-                                value: new BigNumber(amount).toFixed(),
-                            },
-                        ],
-                    };
-            }
+                {
+                    name: "nHash",
+                    type: "bytes32",
+                    value: EVMParam.EVM_NHASH,
+                    notInPayload: true,
+                },
+                {
+                    name: "signature",
+                    type: "bytes",
+                    value: EVMParam.EVM_SIGNATURE,
+                    notInPayload: true,
+                },
+            ],
+            txConfig: params.txConfig,
         },
     });
 
-    public ContractWithSignature = (
-        getCall: (
-            asset: string,
-            type: OutputType,
-        ) => {
-            to: string;
-            method: string;
-            values: EthArg[];
-        },
-    ): OutputContractCall => ({
-        chain: this.chain,
-        getPayload: (asset: string, type: OutputType) => getCall(asset, type),
-        getContractCall: (
-            asset: string,
-            type: OutputType,
-            _pHash: Buffer,
-            amount: string,
-            nHash: Buffer,
-            signature: Buffer,
-        ) => {
-            const params = getCall(asset, type);
-            return {
-                to: params.to,
-                method: params.method,
-                values: [
-                    ...params.values,
-                    {
-                        name: "amount",
-                        type: "uint256",
-                        value: amount,
-                    },
-                    {
-                        name: "nHash",
-                        type: "bytes32",
-                        value: nHash,
-                    },
-                    {
-                        name: "signature",
-                        type: "bytes",
-                        value: signature,
-                    },
-                ],
-            };
-        },
-    });
-
-    /** @category Main */
-    public Address = (address: string): OutputContractCall => ({
-        chain: this.chain,
-        getPayload: async (asset: string, type: OutputType) => {
-            switch (type) {
-                case OutputType.Mint:
-                    return {
-                        to: this.network.addresses.BasicAdapter,
-                        method: "mint",
-                        values: [
-                            {
-                                type: "string",
-                                name: "_symbol",
-                                value: asset,
-                            },
-                            {
-                                type: "address",
-                                name: "recipient_",
-                                value: address,
-                            },
-                        ],
-                    };
-                case OutputType.Release:
-                    if (!this.signer) {
-                        throw new Error(`Must connect signer.`);
-                    }
-                    return {
-                        to: await this.signer.getAddress(),
-                        method: "release",
-                        values: [],
-                    };
-            }
-        },
-        getContractCall: async (
-            asset: string,
-            type: OutputType,
-            pHash: Buffer,
-            amount: string,
-            nHash: Buffer,
-            signature: Buffer,
-        ) => {
-            switch (type) {
-                case OutputType.Mint:
-                    return {
-                        to: this.network.addresses.BasicAdapter,
-                        method: "mint",
-                        values: [
-                            {
-                                type: "string",
-                                name: "_symbol",
-                                value: asset,
-                            },
-                            {
-                                type: "address",
-                                name: "recipient_",
-                                value: address,
-                            },
-                            {
-                                name: "amount",
-                                type: "uint256",
-                                value: amount,
-                            },
-                            {
-                                name: "nHash",
-                                type: "bytes32",
-                                value: nHash,
-                            },
-                            {
-                                name: "signature",
-                                type: "bytes",
-                                value: signature,
-                            },
-                        ],
-                    };
-                case OutputType.Release:
-                    return {
-                        to: await this.getLockGateway(asset),
-                        method: "release",
-                        values: [
-                            {
-                                name: "pHash",
-                                type: "bytes32",
-                                value: pHash,
-                            },
-                            {
-                                name: "amount",
-                                type: "uint256",
-                                value: amount,
-                            },
-                            {
-                                name: "nHash",
-                                type: "bytes32",
-                                value: nHash,
-                            },
-                            {
-                                name: "signature",
-                                type: "bytes",
-                                value: signature,
-                            },
-                        ],
-                    };
-            }
-        },
-    });
+    // /** @category Main */
+    // public Address = (address: string): OutputContractCall => ({
+    //     chain: this.chain,
+    //     getPayload: async (asset: string, type: OutputType) => {
+    //         switch (type) {
+    //             case OutputType.Mint:
+    //                 return {
+    //                     to: this.network.addresses.BasicAdapter,
+    //                     method: "mint",
+    //                     values: [
+    //                         {
+    //                             type: "string",
+    //                             name: "_symbol",
+    //                             value: asset,
+    //                         },
+    //                         {
+    //                             type: "address",
+    //                             name: "recipient_",
+    //                             value: address,
+    //                         },
+    //                     ],
+    //                 };
+    //             case OutputType.Release:
+    //                 if (!this.signer) {
+    //                     throw new Error(`Must connect signer.`);
+    //                 }
+    //                 return {
+    //                     to: await this.signer.getAddress(),
+    //                     method: "release",
+    //                     values: [],
+    //                 };
+    //         }
+    //     },
+    //     getContractCall: async (
+    //         asset: string,
+    //         type: OutputType,
+    //         pHash: Buffer,
+    //         amount: string,
+    //         nHash: Buffer,
+    //         signature: Buffer,
+    //     ) => {
+    //         switch (type) {
+    //             case OutputType.Mint:
+    //                 return {
+    //                     to: this.network.addresses.BasicAdapter,
+    //                     method: "mint",
+    //                     values: [
+    //                         {
+    //                             type: "string",
+    //                             name: "_symbol",
+    //                             value: asset,
+    //                         },
+    //                         {
+    //                             type: "address",
+    //                             name: "recipient_",
+    //                             value: address,
+    //                         },
+    //                         {
+    //                             name: "amount",
+    //                             type: "uint256",
+    //                             value: amount,
+    //                         },
+    //                         {
+    //                             name: "nHash",
+    //                             type: "bytes32",
+    //                             value: nHash,
+    //                         },
+    //                         {
+    //                             name: "signature",
+    //                             type: "bytes",
+    //                             value: signature,
+    //                         },
+    //                     ],
+    //                 };
+    //             case OutputType.Release:
+    //                 return {
+    //                     to: await this.getLockGateway(asset),
+    //                     method: "release",
+    //                     values: [
+    //                         {
+    //                             name: "pHash",
+    //                             type: "bytes32",
+    //                             value: pHash,
+    //                         },
+    //                         {
+    //                             name: "amount",
+    //                             type: "uint256",
+    //                             value: amount,
+    //                         },
+    //                         {
+    //                             name: "nHash",
+    //                             type: "bytes32",
+    //                             value: nHash,
+    //                         },
+    //                         {
+    //                             name: "signature",
+    //                             type: "bytes",
+    //                             value: signature,
+    //                         },
+    //                     ],
+    //                 };
+    //         }
+    //     },
+    // });
 }

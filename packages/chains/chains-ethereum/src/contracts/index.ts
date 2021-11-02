@@ -1,4 +1,4 @@
-import { Contract } from "ethers";
+import { Contract, Signer } from "ethers";
 
 import { Provider } from "@ethersproject/providers";
 import { keccak256 } from "@renproject/utils";
@@ -38,22 +38,28 @@ export const getEventTopic = (abiItem: AbiItem) => {
 };
 
 export const getMintGatewayInstance = (
-    provider: Provider,
+    signerOrProvider: Signer | Provider,
     address: string,
 ): MintGatewayV3 =>
-    new Contract(address, MintGatewayABI, provider) as MintGatewayV3;
+    new Contract(address, MintGatewayABI, signerOrProvider) as MintGatewayV3;
 
 export const getLockGatewayInstance = (
-    provider: Provider,
+    signerOrProvider: Signer | Provider,
     address: string,
 ): LockGatewayV3 =>
-    new Contract(address, LockGatewayABI, provider) as LockGatewayV3;
+    new Contract(address, LockGatewayABI, signerOrProvider) as LockGatewayV3;
 
 export const getGatewayRegistryInstance = (
-    provider: Provider,
+    signerOrProvider: Signer | Provider,
     address: string,
 ): GatewayRegistryV2 =>
-    new Contract(address, GatewayRegistryABI, provider) as GatewayRegistryV2;
+    new Contract(
+        address,
+        GatewayRegistryABI,
+        signerOrProvider,
+    ) as GatewayRegistryV2;
 
-export const getERC20Instance = (provider: Provider, address: string): ERC20 =>
-    new Contract(address, ERC20ABI, provider) as ERC20;
+export const getERC20Instance = (
+    signerOrProvider: Signer | Provider,
+    address: string,
+): ERC20 => new Contract(address, ERC20ABI, signerOrProvider) as ERC20;

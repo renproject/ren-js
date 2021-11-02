@@ -89,7 +89,7 @@ export class Gateway<
     };
 
     /** See [[RenJS.renVM]]. */
-    public renVM: RenVMProvider;
+    public provider: RenVMProvider;
 
     public selector: string = "";
 
@@ -127,7 +127,7 @@ export class Gateway<
         super();
 
         this.params = params;
-        this.renVM = renVM;
+        this.provider = renVM;
 
         this._config = {
             ...defaultRenJSConfig,
@@ -225,10 +225,9 @@ export class Gateway<
                     nonceBuffer,
                 );
                 this.gHash = gHash;
-                this.gPubKey =
-                    this._config.gPubKey && this._config.gPubKey.length > 0
-                        ? this._config.gPubKey
-                        : await this.renVM.selectPublicKey(asset);
+                this.gPubKey = this.params.shard
+                    ? fromBase64(this.params.shard.gPubKey)
+                    : await this.provider.selectPublicKey(asset);
                 this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
 
                 if (!this.gPubKey || this.gPubKey.length === 0) {
@@ -337,12 +336,12 @@ export class Gateway<
                 this.inputType,
                 asset,
                 from,
-                {
+                () => ({
                     toChain: to.chain,
                     toPayload: payload,
                     gatewayAddress: this._gatewayAddress,
-                },
-                await this.renVM.getConfirmationTarget(
+                }),
+                await this.provider.getConfirmationTarget(
                     this.params.fromChain.chain,
                 ),
                 processInput,
@@ -372,7 +371,7 @@ export class Gateway<
             return this.targetConfirmations;
         }
 
-        this.targetConfirmations = await this.renVM.getConfirmationTarget(
+        this.targetConfirmations = await this.provider.getConfirmationTarget(
             this.params.fromChain.chain,
         );
 
@@ -432,14 +431,16 @@ export class Gateway<
             fromTx: deposit,
             to: this.params.to,
 
-            gPubKey: toURLBase64(this.gPubKey),
+            shard: {
+                gPubKey: toURLBase64(this.gPubKey),
+            },
             nonce: toURLBase64(nonce),
         };
 
         // If the transaction hasn't been seen before.
         if (!depositObject) {
             depositObject = new GatewayTransaction<ToPayload>(
-                this.renVM,
+                this.provider,
                 this.params.fromChain,
                 this.params.toChain,
                 params,

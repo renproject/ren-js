@@ -145,6 +145,7 @@ export const txHashToChainTransaction = (
     txHash: string,
 ): ChainTransaction => ({
     chain,
+    txidFormatted: txHash,
     txid: toURLBase64(fromHex(txHash)),
     txindex: "0",
 });

@@ -40,6 +40,7 @@ export abstract class BitcoinBaseChain
 {
     public static chain: string = "Bitcoin";
     public chain: string;
+    public assets: { [asset: string]: string } = {};
 
     public static configMap: BitcoinNetworkConfigMap = {};
     public configMap: BitcoinNetworkConfigMap = {};
@@ -117,7 +118,7 @@ export abstract class BitcoinBaseChain
             this.network.isTestnet ? "prod" : "testnet",
         );
 
-    public transactionHash = (transaction: ChainTransaction) =>
+    public transactionHash = (transaction: { txid: string; txindex: string }) =>
         fromBase64(transaction.txid).reverse().toString("hex");
 
     validateTransaction = (transaction: ChainTransaction): boolean =>
@@ -174,6 +175,7 @@ export abstract class BitcoinBaseChain
                 onInput({
                     chain: this.chain,
                     txid: toURLBase64(fromHex(tx.txid).reverse()),
+                    txidFormatted: tx.txid,
                     txindex: tx.txindex,
                     amount: tx.amount,
                 }),
@@ -193,6 +195,7 @@ export abstract class BitcoinBaseChain
                     onInput({
                         chain: this.chain,
                         txid: toURLBase64(fromHex(tx.txid).reverse()),
+                        txidFormatted: tx.txid,
                         txindex: tx.txindex,
                         amount: tx.amount,
                     }),

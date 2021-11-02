@@ -94,16 +94,18 @@ const transactionHandler = (tx: GatewayTransaction) => {
     console.log(tx.in.chain.formatTransaction(tx.in.txhash, tx.in.txid));
     await tx.in.wait();
 
-    await tx.signed();
+    await tx.renVM.submit();
+    await tx.renVM.wait();
 
-    if (!tx.out.details) {
+    if (!tx.out.submit) {
         await tx.out.submit({
             params: {
                 blah: "1",
             },
         });
-        console.log(tx.out.chain.formatTransaction(tx.out.txhash, tx.out.txid));
-        await tx.out.wait();
+    }
+    console.log(tx.out.status.tx.txidFormatted);
+    await tx.out.wait();
     }
 };
 ```
@@ -122,15 +124,15 @@ const main = async () => {
 
     const renJS = new RenJS(NETWORK).withChains(ethereum, bsc);
 
-    const params = {
+    const gateway = await renJS.gateway({
         asset: "DAI",
         from: bsc.Account("1000000000000000000"),
         to: ethereum.Account(),
-    };
+        // shard: renJS.selectShard("DAI"),
+    });
 
-    const gateway = await renJS.gateway(params);
-
-    gateway.setup.approval.submit();
+    await gateway.setup.approval.submit();
+    await gateway.setup.approval.wait();
 
     // For h2h call in.submit rather than showing gateway address
     await gateway.from.submit();
@@ -140,10 +142,14 @@ const main = async () => {
             await tx.refreshStatus();
 
             await tx.from.wait().on("status", console.log);
-            await tx.signed();
+
+            await tx.renVM.submit().on("status", console.log);
+            await tx.renVM.wait();
+
             if (await tx.to.submit) {
-                await tx.to.submit().on("transaction", console.log);
+                await tx.to.submit().on("status", console.log);
             }
+
             return tx.to.wait().on("status", console.log);
         })();
     });
@@ -167,7 +173,7 @@ List of magic values:
 
 Types of payloads:
 
-```
+```ts
 {
     type: "contract",
     params: {
@@ -188,4 +194,62 @@ Types of payloads:
 
     }
 }
+```
+
+# Chain assets
+
+```ts
+gateway({
+    asset: ethereum.assets.DAI,
+    from: ethereum.Account(),
+    to: bsc.Account(),
+});
+```
+
+```ts
+gateway({
+    asset: ethereum.assets.DAI,
+    from: ethereum.Account(),
+    to: [solana.CreateTokenAccount(), solana.Account()],
+});
+```
+
+```ts
+{
+    chain: "Ethereum",
+    setup: {
+        approve: {
+            type: "approve",
+            params: {
+
+            },
+        },
+    },
+    payload: {
+        type: "contract",
+        params: {
+
+        },
+    },
+}
+```
+
+```ts
+ethereum.Account(signer);
+ethereum.Contract(signer);
+```
+
+```ts
+const ethereum = new Ethereum("mainnet");
+const fantom = new Fantom("mainnet");
+const renJS = new RenJS("mainnet").withChain(ethereum, fantom);
+
+// Ask user to connect.
+ethereum.withProvider({ signer });
+
+renJS.gateway({
+    asset: ethereum.assets.DAI,
+    from: ethereum.Account(signer),
+    to: fantom.Account(signer),
+});
 ```

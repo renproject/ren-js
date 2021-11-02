@@ -2,6 +2,7 @@
 export enum LogLevel {
     Trace = 0,
     Debug = 1,
+    Log = LogLevel.Debug,
     Info = 2,
     Warn = 3,
     Error = 4,

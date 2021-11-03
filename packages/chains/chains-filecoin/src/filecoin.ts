@@ -348,8 +348,7 @@ export class Filecoin
     };
 
     isDepositAsset = (asset: string) => {
-        this.assertAssetIsSupported(asset);
-        return true;
+        return asset === this.network.nativeAsset.symbol;
     };
 
     public getBalance = async (
@@ -466,11 +465,13 @@ export class Filecoin
         toPayload: FilecoinReleasePayload,
     ): {
         to: string;
+        toBytes: Buffer;
         payload: Buffer;
     } => {
         this.assertAssetIsSupported(asset);
         return {
             to: toPayload.address,
+            toBytes: Buffer.from(new CID(toPayload.address).bytes),
             payload: Buffer.from([]),
         };
     };

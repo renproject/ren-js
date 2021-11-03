@@ -1,24 +1,22 @@
-/* eslint-disable no-console */
-
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
-import { RenNetwork } from "@renproject/utils";
-
 import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
-import { Ethereum } from "../packages/chains/chains/src";
+import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
-import { getEVMProvider } from "./testUtils";
+import { RenNetwork } from "../packages/utils/src";
+import { colorizeChain, getEVMProvider } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("BTC to Ethereum", () => {
-    it.only("mint", async function () {
+describe("RenJS Gateway Transaction", () => {
+    it("BTC/toEthereum", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
+        const asset = Bitcoin.assets.BTC;
         const bitcoin = new Bitcoin(network);
         const ethereum = new Ethereum(
             network,
@@ -28,26 +26,32 @@ describe("BTC to Ethereum", () => {
         const renJS = new RenJS(network).withChains(bitcoin, ethereum);
 
         const gateway = await renJS.gateway({
-            asset: bitcoin.assets.BTC,
+            asset,
             from: bitcoin.GatewayAddress(),
             to: ethereum.Account(),
         });
 
-        console.log(`Gateway address: ${gateway.gatewayAddress()}`);
+        const minimumAmount = gateway.fees.minimumAmount.shiftedBy(
+            -bitcoin.assetDecimals(asset),
+        );
+        console.log(
+            `Deposit at least ${minimumAmount} ${asset} to ${gateway.gatewayAddress()}`,
+        );
 
         await new Promise<void>((resolve, reject) => {
             gateway.on("transaction", (tx) => {
                 (async () => {
                     console.log(
-                        `[${bitcoin.chain}⇢${ethereum.chain}]: RenVM hash: ${tx.hash}`,
+                        `[${colorizeChain(bitcoin.chain)}⇢${colorizeChain(
+                            ethereum.chain,
+                        )}]: RenVM hash: ${tx.hash}`,
                     );
                     await tx.refreshStatus();
 
                     console.log(
-                        `[${bitcoin.chain}⇢${ethereum.chain}][${tx.hash.slice(
-                            0,
-                            6,
-                        )}]: Status: ${tx.status}`,
+                        `[${colorizeChain(bitcoin.chain)}⇢${colorizeChain(
+                            ethereum.chain,
+                        )}][${tx.hash.slice(0, 6)}]: Status: ${tx.status}`,
                     );
 
                     // Wait for input confirmations.
@@ -56,9 +60,11 @@ describe("BTC to Ethereum", () => {
                         .wait()
                         .on("status", (status) =>
                             console.log(
-                                `[${bitcoin.chain}⇢${
-                                    ethereum.chain
-                                }][${tx.hash.slice(0, 6)}]: ${
+                                `[${colorizeChain(
+                                    bitcoin.chain,
+                                )}⇢${colorizeChain(
+                                    ethereum.chain,
+                                )}][${tx.hash.slice(0, 6)}]: ${
                                     status.confirmations || 0
                                 }/${status.target} confirmations`,
                             ),
@@ -69,10 +75,11 @@ describe("BTC to Ethereum", () => {
                     await tx.renVM.wait();
 
                     console.log(
-                        `[${bitcoin.chain}⇢${ethereum.chain}][${tx.hash.slice(
-                            0,
-                            6,
-                        )}]: Submitting to ${ethereum.chain}`,
+                        `[${colorizeChain(bitcoin.chain)}⇢${colorizeChain(
+                            ethereum.chain,
+                        )}][${tx.hash.slice(0, 6)}]: Submitting to ${
+                            ethereum.chain
+                        }`,
                     );
 
                     tx.out.eventEmitter.on("status", console.log);

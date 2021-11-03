@@ -9,10 +9,12 @@ import {
     fromHex,
     InputChainTransaction,
     OutputType,
+    RenJSError,
     SECONDS,
     sleep,
     toURLBase64,
     tryNTimes,
+    withCode,
 } from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
@@ -81,11 +83,13 @@ export abstract class BitcoinBaseChain
         toPayload: BitcoinReleasePayload,
     ): {
         to: string;
+        toBytes: Buffer;
         payload: Buffer;
     } => {
         this.assertAssetIsSupported(asset);
         return {
             to: toPayload.address,
+            toBytes: base58.decode(toPayload.address),
             payload: Buffer.from([]),
         };
     };
@@ -115,7 +119,7 @@ export abstract class BitcoinBaseChain
         validateAddress(
             address,
             this.network.nativeAsset.symbol,
-            this.network.isTestnet ? "prod" : "testnet",
+            this.network.isTestnet ? "testnet" : "prod",
         );
 
     public transactionHash = (transaction: { txid: string; txindex: string }) =>
@@ -261,6 +265,13 @@ export abstract class BitcoinBaseChain
     Address = (address: string): { chain: string; address: string } => {
         // Type validation
         assertType<string>("string", { address });
+
+        if (!this.validateAddress(address)) {
+            throw withCode(
+                new Error(`Invalid ${this.chain} address: ${String(address)}`),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
 
         return {
             chain: this.chain,

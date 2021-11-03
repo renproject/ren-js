@@ -154,6 +154,7 @@ export class EthereumBaseChain
         contractCall: EVMPayload,
     ): Promise<{
         to: string;
+        toBytes: Buffer;
         payload: Buffer;
     }> => {
         const handler = this.getPayloadHandler(contractCall.type);
@@ -162,7 +163,7 @@ export class EthereumBaseChain
                 new Error(
                     `'${contractCall.type}' payload type can only be used as a setup payload.`,
                 ),
-                RenJSError.INVALID_PARAMETERS,
+                RenJSError.PARAMETER_ERROR,
             );
         }
         return handler.getPayload(
@@ -177,13 +178,18 @@ export class EthereumBaseChain
     // Supported assets
 
     /** Return true if the asset originates from the chain. */
-    assetIsNative = async (asset: string): Promise<boolean> => {
-        if (asset === "ETH") {
+    assetIsNative = async (assetSymbol: string): Promise<boolean> => {
+        // Check if it in the list of hard-coded assets.
+        if (
+            Object.keys(this.assets).includes(assetSymbol) ||
+            assetSymbol === this.network.network.nativeCurrency.symbol
+        ) {
             return true;
         }
 
+        // Check if the asset has an associated lock-gateway.
         try {
-            if (await this.getLockGateway(asset)) {
+            if (await this.getLockGateway(assetSymbol)) {
                 return true;
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -281,7 +287,15 @@ export class EthereumBaseChain
         const receipt = await this.provider.getTransactionReceipt(
             this.transactionHash(transaction),
         );
-        if (receipt.blockNumber) {
+        if (receipt === null) {
+            throw withCode(
+                new Error(
+                    `${transaction.chain} transaction not found: ${transaction.txidFormatted}`,
+                ),
+                RenJSError.TRANSACTION_NOT_FOUND,
+            );
+        }
+        if (receipt && receipt.blockNumber) {
             const transactionBlock = new BigNumber(
                 receipt.blockNumber.toString(),
             );
@@ -459,7 +473,7 @@ export class EthereumBaseChain
         if (!this.signer) {
             throw withCode(
                 new Error(`Must connect signer.`),
-                RenJSError.INVALID_PARAMETERS,
+                RenJSError.PARAMETER_ERROR,
             );
         }
 
@@ -529,7 +543,7 @@ export class EthereumBaseChain
         if (!this.signer) {
             throw withCode(
                 new Error(`Must connect signer.`),
-                RenJSError.INVALID_PARAMETERS,
+                RenJSError.PARAMETER_ERROR,
             );
         }
 
@@ -588,10 +602,10 @@ export class EthereumBaseChain
         if (!this.signer) {
             throw withCode(
                 new Error(`Must connect signer.`),
-                RenJSError.INVALID_PARAMETERS,
+                RenJSError.PARAMETER_ERROR,
             );
         }
-        const calls = handler.getSetup(
+        const calls = await handler.getSetup(
             this.network,
             this.signer,
             contractCall,
@@ -626,7 +640,7 @@ export class EthereumBaseChain
         if (!this.signer) {
             throw withCode(
                 new Error(`Must connect signer.`),
-                RenJSError.INVALID_PARAMETERS,
+                RenJSError.PARAMETER_ERROR,
             );
         }
         const calls = handler.getSetup(
@@ -676,27 +690,27 @@ export class EthereumBaseChain
     private getEVMParams = (
         asset: string,
         type: InputType | OutputType | "setup",
-        params: { [key: string]: any },
+        params: {
+            // Input
+            toChain?: string;
+            toPayload?: {
+                to: string;
+                payload: Buffer;
+            };
+            gatewayAddress?: string;
+
+            // Output
+            pHash?: Buffer;
+            amount?: BigNumber;
+            nHash?: Buffer;
+            sigHash?: Buffer;
+            signature?: {
+                r: Buffer;
+                s: Buffer;
+                v: number;
+            };
+        },
     ): EVMParamValues => {
-        // Input
-        // toChain: string;
-        // toPayload: {
-        //     to: string;
-        //     payload: Buffer;
-        // };
-        // gatewayAddress?: string;
-
-        // Output
-        // pHash: Buffer;
-        // amount: BigNumber;
-        // nHash: Buffer;
-        // sigHash?: Buffer;
-        // signature?: {
-        //     r: Buffer;
-        //     s: Buffer;
-        //     v: number;
-        // };
-
         return {
             // Always available
             [EVMParam.EVM_TRANSACTION_TYPE]: type,
@@ -711,7 +725,7 @@ export class EthereumBaseChain
                 if (!this.signer) {
                     throw withCode(
                         new Error(`Must connect signer.`),
-                        RenJSError.INVALID_PARAMETERS,
+                        RenJSError.PARAMETER_ERROR,
                     );
                 }
                 return this.signer?.getAddress();
@@ -750,11 +764,14 @@ export class EthereumBaseChain
 
             // Available when locking or burning
             [EVMParam.EVM_TO_CHAIN]: params.toChain,
-            [EVMParam.EVM_TO_ADDRESS]: isDefined(params.toPayload)
+            [EVMParam.EVM_TO_ADDRESS_BYTES]: isDefined(params.toPayload)
                 ? Buffer.from(params.toPayload.to)
                 : undefined,
+            [EVMParam.EVM_TO_ADDRESS]: isDefined(params.toPayload)
+                ? params.toPayload.to
+                : undefined,
             [EVMParam.EVM_TO_PAYLOAD]: isDefined(params.toPayload)
-                ? params.toPayload.toPayload
+                ? params.toPayload.payload
                 : undefined,
             [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]: params.gatewayAddress,
         };

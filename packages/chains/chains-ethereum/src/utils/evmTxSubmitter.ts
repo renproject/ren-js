@@ -35,17 +35,13 @@ export const fixEvmTransactionConfig = (
         result = {
             ...result,
             ...txConfig,
-            ...{
-                value:
-                    txConfig && txConfig.value
-                        ? txConfig.value.toString()
-                        : undefined,
-                gasPrice:
-                    txConfig && txConfig.gasPrice
-                        ? txConfig.gasPrice.toString()
-                        : undefined,
-            },
         };
+        if (isDefined(result.value)) {
+            result.value = result.value.toString();
+        }
+        if (isDefined(result.gasPrice)) {
+            result.gasPrice = result.gasPrice.toString();
+        }
     }
     return result;
 };
@@ -184,21 +180,6 @@ export class EVMTxSubmitter implements TxSubmitter {
                 confirmations: this.tx.confirmations,
             });
 
-            if (this.onReceipt) {
-                this.tx
-                    .wait()
-                    .then((receipt) => {
-                        if (this.onReceipt) {
-                            const onReceipt = this.onReceipt;
-                            this.onReceipt = undefined;
-                            onReceipt(receipt);
-                        }
-                    })
-                    .catch(() => {
-                        /* ignore */
-                    });
-            }
-
             return this.status;
         })()
             .then(promiEvent.resolve)
@@ -244,7 +225,24 @@ export class EVMTxSubmitter implements TxSubmitter {
                         this.onReceipt = undefined;
                         onReceipt(receipt);
                     }
+                    const existingConfirmations = this.tx.confirmations;
                     this.tx.confirmations = receipt.confirmations;
+
+                    if (receipt.confirmations > existingConfirmations) {
+                        this.updateStatus({
+                            ...this.status,
+                            status:
+                                this.tx.confirmations < target
+                                    ? ChainTransactionStatus.Confirming
+                                    : ChainTransactionStatus.Done,
+                            transaction: txHashToChainTransaction(
+                                this.chain,
+                                this.tx.hash,
+                            ),
+                            target: target,
+                            confirmations: this.tx.confirmations,
+                        });
+                    }
                 } catch (error) {
                     if (isErrorWithCode(error)) {
                         if (error.code === Logger.errors.TRANSACTION_REPLACED) {
@@ -292,20 +290,6 @@ export class EVMTxSubmitter implements TxSubmitter {
                     console.error(error);
                     continue;
                 }
-
-                this.updateStatus({
-                    ...this.status,
-                    status:
-                        this.tx.confirmations < target
-                            ? ChainTransactionStatus.Confirming
-                            : ChainTransactionStatus.Confirmed,
-                    transaction: txHashToChainTransaction(
-                        this.chain,
-                        this.tx.hash,
-                    ),
-                    target: target,
-                    confirmations: this.tx.confirmations,
-                });
             }
 
             return this.status;

@@ -6,3 +6,4 @@ export * from "./shard";
 export * from "./transaction";
 export * from "./unmarshal";
 export * from "./value";
+export * from "./methods/ren_queryBlockState";

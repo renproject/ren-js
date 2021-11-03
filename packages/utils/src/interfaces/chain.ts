@@ -147,6 +147,7 @@ export interface DepositChain<
         toPayload: ToPayload,
     ) => SyncOrPromise<{
         to: string;
+        toBytes: Buffer;
         payload: Buffer;
     }>;
 }
@@ -201,6 +202,7 @@ export interface ContractChain<
             toChain: string;
             toPayload: {
                 to: string;
+                toBytes: Buffer;
                 payload: Buffer;
             };
             gatewayAddress?: string;
@@ -255,6 +257,7 @@ export interface ContractChain<
         contractCall: ToContractCall,
     ) => SyncOrPromise<{
         to: string;
+        toBytes: Buffer;
         payload: Buffer;
     }>;
 }

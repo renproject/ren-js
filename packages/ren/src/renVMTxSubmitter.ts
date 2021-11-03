@@ -319,7 +319,7 @@ class RenVMTxSubmitter<UnmarshalledParams, UnmarshalledResponse>
                     tx,
                     txStatus: rawResponse.txStatus,
                 },
-                status: ChainTransactionStatus.Confirmed,
+                status: ChainTransactionStatus.Done,
                 transaction: {
                     chain: RENVM_CHAIN,
                     txid: this.hash,

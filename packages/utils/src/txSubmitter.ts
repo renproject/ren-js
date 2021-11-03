@@ -6,7 +6,7 @@ import { newPromiEvent, PromiEvent } from "./promiEvent";
 export enum ChainTransactionStatus {
     Ready = "ready",
     Confirming = "confirming",
-    Confirmed = "confirmed",
+    Done = "done",
     Reverted = "reverted",
 }
 
@@ -65,7 +65,7 @@ export interface TxSubmitter<
     }>;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    submit: (params?: { overrides?: any[]; config?: any }) => PromiEvent<
+    submit: (params?: { overrides?: any[]; txConfig?: any }) => PromiEvent<
         Progress,
         {
             status: [Progress];
@@ -169,7 +169,8 @@ export class DefaultTxWaiter implements TxWaiter {
                         // Done.
                         this.updateStatus({
                             ...this.status,
-                            status: ChainTransactionStatus.Confirmed,
+                            confirmations: confidence,
+                            status: ChainTransactionStatus.Done,
                         });
                         break;
                     } else {

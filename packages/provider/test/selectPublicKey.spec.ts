@@ -9,7 +9,7 @@ import { RenVMProvider } from "../src";
 chai.should();
 
 describe("RenVMProvider v2", () => {
-    it("selectPublicKey", async () => {
+    it("selectShard", async () => {
         const renVMProvider = new RenVMProvider("testnet", {
             sendMessage: (method) => {
                 switch (method) {
@@ -24,6 +24,6 @@ describe("RenVMProvider v2", () => {
                 }
             },
         } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        Ox(await renVMProvider.selectPublicKey("BTC")).should.equal("");
+        Ox((await renVMProvider.selectShard("BTC")).gPubKey).should.equal("");
     });
 });

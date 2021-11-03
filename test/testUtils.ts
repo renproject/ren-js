@@ -1,15 +1,15 @@
 import chai from "chai";
+import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
 import { providers, Wallet } from "ethers";
 
-import {
-    Ethereum,
-    EthProvider,
-    EvmNetworkConfig,
-} from "@renproject/chains-ethereum";
 import { RenNetwork } from "@renproject/utils";
 
-import { EthereumBaseChain } from "../packages/chains/chains-ethereum/build/main/base";
+import {
+    EthereumBaseChain,
+    EthProvider,
+    EvmNetworkConfig,
+} from "../packages/chains/chains-ethereum/src";
 
 chai.should();
 
@@ -29,9 +29,10 @@ export const getEVMProvider = <EVM extends EthereumBaseChain>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
 ): EthProvider => {
-    const rpcUrl = ChainClass.configMap[network].network.rpcUrls[0]
-        .replace("${INFURA_API_KEY}", process.env.INFURA_KEY)
-        .replace("${ALCHEMY_API_KEY}", process.env.ALCHEMY_KEY);
+    const rpcUrl = ChainClass.configMap[network].network.rpcUrls[0].replace(
+        "${INFURA_API_KEY}",
+        process.env.INFURA_KEY,
+    );
 
     const provider = new providers.JsonRpcProvider(rpcUrl);
     const signer = Wallet.fromMnemonic(MNEMONIC).connect(provider);
@@ -58,8 +59,49 @@ export const getSolanaChain = (_network: RenNetwork) => {
     throw new Error("Not implemented.");
 };
 
-// const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
+/**
+ * Print the name of a chain in a color associated with the chain (e.g. )
+ */
+export const colorizeChain = (
+    chain: string,
+    { pad } = { pad: true },
+): string => {
+    const color: chalk.Chalk =
+        chain === "Ethereum"
+            ? chalk.hex("#627eea")
+            : chain === "Solana"
+            ? chalk.hex("#14f195")
+            : chain === "BinanceSmartChain"
+            ? chalk.hex("#f9b72d")
+            : chain === "Fantom"
+            ? chalk.hex("#1969ff")
+            : chain === "Polygon"
+            ? chalk.hex("#8247e5")
+            : chain === "Avalanche"
+            ? chalk.hex("#e84142")
+            : chain === "Goerli"
+            ? chalk.keyword("paleturquoise")
+            : chain === "Bitcoin"
+            ? chalk.hex("#f7931a")
+            : chalk.cyan;
+    if (chain === "BinanceSmartChain") {
+        chain = "BSC";
+    }
+    if (pad) {
+        if (chain.length > 8) {
+            chain = chain.slice(0, 7) + "…";
+        }
+        if (chain.length < 8) {
+            const difference = 8 - chain.length;
+            const left = Math.floor(difference / 2);
+            const right = Math.ceil(difference / 2);
+            chain = " ".repeat(left) + chain + " ".repeat(right);
+        }
+    }
+    return color(chain);
+};
 
+// const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 // const account = new CryptoAccount(Buffer.from(PRIVATE_KEY, "hex"), {
 //     network: "testnet",
 //     apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
@@ -67,12 +109,10 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //         URL: "https://tequila-lcd.terra.dev",
 //     },
 // });
-
 // import { blue, cyan, green, magenta, red, yellow } from "chalk";
 // const colors = [green, magenta, yellow, cyan, blue, red];
 // const MNEMONIC = process.env.MNEMONIC;
 // const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
-
 // const infuraURL = ethNetwork.rpcUrl({
 //     infura: process.env.INFURA_KEY,
 // });
@@ -82,13 +122,11 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //     addressIndex: 0,
 //     numberOfAddresses: 10,
 // });
-
 // const provider = new ethers.providers.Web3Provider(
 //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 //     hdWalletProvider as any,
 // );
 // const signer = provider.getSigner();
-
 // const ethAddress = (await provider.listAccounts())[0];
 // const balance = await provider.getBalance(ethAddress);
 // const ethBalance = ethers.utils.formatEther(balance);
@@ -103,9 +141,7 @@ export const getSolanaChain = (_network: RenNetwork) => {
 // {
 //     gasLimit: 2000000,
 // },
-
 // const assetDecimals = params.from.assetDecimals(asset);
-
 // // Use 0.0001 more than fee.
 // let suggestedAmount: BigNumber;
 // try {
@@ -123,15 +159,12 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //         suggestedAmount = new BigNumber(0.0015);
 //     }
 // }
-
 // console.info(
 //     `Send at least ${suggestedAmount.toFixed()} ${asset} to`,
 //     lockAndMint.gatewayAddress,
 // );
-
 // const faucetSupported =
 //     network === RenNetwork.Testnet && FAUCET_ASSETS.indexOf(asset) >= 0;
-
 // if (faucetSupported) {
 //     console.info(
 //         `${asset} balance: ${await account.balanceOf(
@@ -139,7 +172,6 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //         )} ${asset} (${await account.address(asset)})`,
 //     );
 // }
-
 // lockAndMint.processDeposit({
 //     transaction: {
 //         txHash:
@@ -150,21 +182,16 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //     },
 //     amount: "159213",
 // });
-
 //     await new Promise((resolve, reject) => {
 //         let i = 0;
-
 //         lockAndMint.on("deposit", (deposit) => {
 //             const hash = deposit.txHash();
-
 //             const color = colors[i % colors.length];
 //             i += 1;
-
 //             deposit._state.logger = new SimpleLogger(
 //                 logLevel,
 //                 color(`[${hash.slice(0, 6)}]`),
 //             );
-
 //             deposit._state.logger.debug(
 //                 `Received ${
 //                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,7 +210,6 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //                       )
 //                     : "",
 //             );
-
 //             RenJS.defaultDepositHandler(deposit)
 //                 .then(resolve)
 //                 .catch((error) => {
@@ -191,7 +217,6 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //                     console.error(error);
 //                 });
 //         });
-
 //         sleep(30 * SECONDS)
 //             .then(() => {
 //                 // If there's been no deposits, send one.
@@ -208,7 +233,6 @@ export const getSolanaChain = (_network: RenNetwork) => {
 //                                   ),
 //                         )}`,
 //                     );
-
 //                     const options = { params: undefined, memo: undefined };
 //                     let address = "";
 //                     if (typeof lockAndMint.gatewayAddress === "string") {

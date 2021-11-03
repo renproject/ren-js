@@ -8,6 +8,7 @@ import { Logger } from "./interfaces/logger";
  * Represents 1 second for functions that accept a parameter in milliseconds.
  */
 export const SECONDS = 1000;
+export const MINUTES = 60 * SECONDS;
 
 /**
  * Pauses the thread for the specified number of milliseconds.

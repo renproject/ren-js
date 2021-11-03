@@ -26,12 +26,18 @@ export interface RenJSConfig {
      *
      * It defaults to false
      */
-    loadCompletedDeposits?: boolean;
+    // loadCompletedDeposits?: boolean;
 }
 
 export const defaultRenJSConfig = {
     logLevel: LogLevel.Debug,
     logger: nullLogger,
     networkDelay: 15 * SECONDS,
-    loadCompletedDeposits: false as boolean,
+    // loadCompletedDeposits: false as boolean,
 };
+
+// Check that defaultRenJSConfig is a valid RenJSConfig object, while
+// still allowing typescript to infer its type from is value.
+// Therefore it knows that `defaultRenJSConfig.logger` is not potentially
+// undefined.
+const _check: RenJSConfig = defaultRenJSConfig;

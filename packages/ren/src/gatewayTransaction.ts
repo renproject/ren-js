@@ -10,11 +10,9 @@ import {
 import {
     Chain,
     ChainTransaction,
-    ChainTransactionStatus,
     DefaultTxWaiter,
     fixSignature,
     fromBase64,
-    fromHex,
     generateGHash,
     generateNHash,
     generatePHash,
@@ -203,12 +201,11 @@ export class GatewayTransaction<
 
         const { asset, nonce, fromTx, to } = this.params;
 
-        const payload: { to: string; payload: Buffer } =
-            await this.toChain.getOutputPayload(
-                asset,
-                this.outputType as any,
-                to,
-            );
+        const payload = await this.toChain.getOutputPayload(
+            asset,
+            this.outputType as any,
+            to,
+        );
 
         const sHash = generateSHash(
             `${this.params.asset}/to${this.params.to.chain}`,
@@ -225,7 +222,7 @@ export class GatewayTransaction<
         this.gHash = generateGHash(
             this.pHash,
             sHash,
-            fromHex(payload.to),
+            payload.toBytes,
             nonceBuffer,
         );
 
@@ -409,162 +406,6 @@ export class GatewayTransaction<
         return this.status;
     };
 
-    // public in = {
-    //     targetConfirmations: undefined as number | undefined,
-
-    //     /**
-    //      * `confirmations` returns the deposit's current and target number of
-    //      * confirmations on the lock-chain.
-    //      *
-    //      * ```ts
-    //      * await deposit
-    //      *  .confirmations();
-    //      * // > { current: 4, target: 6 }
-    //      * ```
-    //      */
-    //     confirmations: async (): Promise<{
-    //         current: number;
-    //         target: number;
-    //     }> => {
-    //         const current = await this.fromChain.transactionConfidence(
-    //             this.params.fromTx,
-    //         );
-    //         return {
-    //             current: current.toNumber(),
-    //             target: await this.in.confirmationTarget(),
-    //         };
-    //     },
-
-    //     /**
-    //      * `confirmed` will return once the deposit has reached the target number of
-    //      * confirmations.
-    //      *
-    //      * It returns a PromiEvent which emits a `"confirmation"` event with the
-    //      * current and target number of confirmations as the event parameters.
-    //      *
-    //      * The events emitted by the PromiEvent are:
-    //      * 1. `"confirmation"` - called when a new confirmation is seen
-    //      * 2. `"target"` - called immediately to make the target confirmations
-    //      * available.
-    //      *
-    //      * ```ts
-    //      * await deposit.from
-    //      *  .confirmed()
-    //      *  .on("target", (target) => console.log(`Waiting for ${target} confirmations`))
-    //      *  .on("confirmation", (confs, target) => console.log(`${confs}/${target}`))
-    //      * ```
-    //      */
-    //     confirmed: (): PromiEvent<
-    //         GatewayTransaction<ToPayload>,
-    //         { confirmation: [number, number]; target: [number] }
-    //     > => {
-    //         const promiEvent = newPromiEvent<
-    //             GatewayTransaction<ToPayload>,
-    //             { confirmation: [number, number]; target: [number] }
-    //         >();
-
-    //         (async () => {
-    //             try {
-    //                 promiEvent.emit(
-    //                     "target",
-    //                     await this.in.confirmationTarget(),
-    //                 );
-    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             } catch (error: any) {
-    //                 this._config.logger.error(error);
-    //             }
-
-    //             // If the transaction has been confirmed according to RenVM, return.
-    //             const transactionIsConfirmed = () =>
-    //                 TransactionStatusIndex[this.status] >=
-    //                     TransactionStatusIndex[TransactionStatus.Confirmed] ||
-    //                 (this.queryTxResult &&
-    //                     TxStatusIndex[this.queryTxResult.txStatus] >=
-    //                         TxStatusIndex[TxStatus.TxStatusPending]);
-
-    //             let iterationCount = 0;
-    //             let currentConfidenceRatio = -1;
-    //             // Continue while the transaction isn't confirmed and the promievent
-    //             // isn't cancelled.
-    //             while (true) {
-    //                 if (promiEvent._isCancelled()) {
-    //                     throw new Error(`PromiEvent cancelled.`);
-    //                 }
-
-    //                 // In the first loop, submit to RenVM immediately.
-    //                 if (iterationCount % 5 === 1) {
-    //                     try {
-    //                         try {
-    //                             if (!this._renTxSubmitted) {
-    //                                 await this._submitMintTransaction(1);
-    //                             }
-    //                         } catch (error) {
-    //                             this._config.logger.debug(error);
-    //                         }
-    //                         await this.queryTx();
-    //                         if (transactionIsConfirmed()) {
-    //                             break;
-    //                         }
-    //                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //                     } catch (error: any) {
-    //                         // Ignore error.
-    //                         this._config.logger.debug(error);
-    //                     }
-    //                 }
-
-    //                 try {
-    //                     const confidence = await this.in.confirmations();
-    //                     const confidenceRatio =
-    //                         confidence.target === 0
-    //                             ? 1
-    //                             : confidence.current / confidence.target;
-    //                     if (confidenceRatio > currentConfidenceRatio) {
-    //                         currentConfidenceRatio = confidenceRatio;
-    //                         promiEvent.emit(
-    //                             "confirmation",
-    //                             confidence.current,
-    //                             confidence.target,
-    //                         );
-    //                     }
-    //                     if (confidenceRatio >= 1) {
-    //                         break;
-    //                     }
-    //                     this._config.logger.debug(
-    //                         `deposit confidence: ${confidence.current} / ${confidence.target}`,
-    //                     );
-    //                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //                 } catch (error: any) {
-    //                     this._config.logger.error(
-    //                         `Error fetching transaction confidence: ${extractError(
-    //                             error,
-    //                         )}`,
-    //                     );
-    //                 }
-
-    //                 if (transactionIsConfirmed()) {
-    //                     break;
-    //                 }
-    //                 await sleep(this._config.networkDelay);
-    //                 iterationCount += 1;
-    //             }
-
-    //             // Update status.
-    //             if (
-    //                 TransactionStatusIndex[this.status] <
-    //                 TransactionStatusIndex[TransactionStatus.Confirmed]
-    //             ) {
-    //                 this.status = TransactionStatus.Confirmed;
-    //             }
-
-    //             return this;
-    //         })()
-    //             .then(promiEvent.resolve)
-    //             .catch(promiEvent.reject);
-
-    //         return promiEvent;
-    //     },
-    // };
-
     private onSignatureReady = async (
         tx: UnmarshalledTxOutput<CrossChainTxInput, CrossChainTxOutput>,
     ) => {
@@ -590,8 +431,8 @@ export class GatewayTransaction<
                         txindex,
                     }),
                 },
-                chain: this.fromChain,
-                target: 1,
+                chain: this.toChain,
+                target: 0,
             });
         } else if (isContractChain(this.toChain)) {
             if (!this.outputType) {
@@ -636,276 +477,7 @@ export class GatewayTransaction<
         } else {
             throw new Error(`Error setting 'out' transaction submitter.`);
         }
-
-        //     if (!this.outTransaction) {
-        //         throw new Error(
-        //             `No transaction details returned from submission.`,
-        //         );
-        //     }
-        //     // } else {
-        //     //     this.outTransaction =
-        //     //         await this.toChain.submitRelease(
-        //     //             this.params.asset,
-        //     //             this.params.to,
-        //     //             override || {},
-        //     //             amount,
-        //     //             phash,
-        //     //             sigHash,
-        //     //             {
-        //     //                 r,
-        //     //                 s,
-        //     //                 v,
-        //     //             },
-        //     //             promiEvent,
-        //     //         );
-        //     // }
-        // } else {
-
-        // TODO: Add callback to TxSubmitted.
-
-        //     this.outTransaction = {
-        //         txindex: this.queryTxResult.tx.out.txindex.toFixed(),
-        //         txid: this.queryTxResult.tx.out.txid.toString(),
-        //     };
-        // }
-
-        // Update status.
-        // this.status = TransactionStatus.Submitted;
     };
-
-    // /**
-    //  * `signed` waits for RenVM's signature to be available.
-    //  *
-    //  * It returns a PromiEvent which emits a `"txHash"` event with the deposit's
-    //  * RenVM txHash (aka Transaction ID).
-    //  *
-    //  * ```ts
-    //  * await deposit
-    //  *  .signed()
-    //  *  .on("txHash", (txHash) => console.log(txHash))
-    //  * ```
-    //  *
-    //  * The events emitted by the PromiEvent are:
-    //  * 1. `txHash` - the RenVM transaction hash of the deposit.
-    //  * 2. `status` - the RenVM status of the transaction, of type [[TxStatus]].
-    //  *
-    //  * @category Main
-    //  */
-    // public signed = (): PromiEvent<
-    //     GatewayTransaction<ToPayload>,
-    //     { txHash: [string]; status: [TxStatus] }
-    // > => {
-    //     const promiEvent = newPromiEvent<
-    //         GatewayTransaction<ToPayload>,
-    //         { txHash: [string]; status: [TxStatus] }
-    //     >();
-
-    //     (async () => {
-    //         let txHash = this.hash;
-
-    //         // Check if the signature is already available.
-    //         if (
-    //             !this.queryTxResult ||
-    //             !this.queryTxResult.tx.out ||
-    //             // Not done and not reverted
-    //             (this.queryTxResult.txStatus !== TxStatus.TxStatusDone &&
-    //                 this.queryTxResult.txStatus !==
-    //                     TxStatus.TxStatusReverted) ||
-    //             // Output not populated
-    //             Object.keys(this.queryTxResult.tx.out).length > 0
-    //         ) {
-    //             promiEvent.emit("txHash", txHash);
-    //             this._config.logger.debug("RenVM txHash:", txHash);
-
-    //             // Try to submit to RenVM. If that fails, see if they already
-    //             // know about the transaction.
-    //             try {
-    //                 txHash = await this._submitMintTransaction(1);
-    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             } catch (error: any) {
-    //                 this._config.logger.debug(error);
-
-    //                 try {
-    //                     // Check if the darknodes have already seen the transaction
-    //                     const queryTxResponse = await this.queryTx(2);
-    //                     if (queryTxResponse.txStatus === TxStatus.TxStatusNil) {
-    //                         throw new Error(
-    //                             `Transaction ${txHash} has not been submitted previously.`,
-    //                         );
-    //                     }
-    //                     txHash = queryTxResponse.tx.hash;
-    //                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //                 } catch (errorInner: any) {
-    //                     this._config.logger.debug(errorInner);
-
-    //                     // Retry submitting to reduce chance of network issues
-    //                     // causing problems.
-    //                     txHash = await this._submitMintTransaction(5);
-    //                 }
-    //             }
-
-    //             const response = await waitForTX(
-    //                 this.renVM,
-    //                 fromBase64(txHash),
-    //                 (status) => {
-    //                     promiEvent.emit("status", status);
-    //                     this._config.logger.debug(
-    //                         "transaction status:",
-    //                         status,
-    //                     );
-    //                 },
-    //                 () => promiEvent._isCancelled(),
-    //                 this._config.networkDelay,
-    //                 this._config.logger,
-    //             );
-
-    //             this.queryTxResult = response;
-    //         }
-
-    //         console.log("!");
-
-    //         // Update status.
-    //         if (
-    //             this.queryTxResult.tx.out &&
-    //             this.queryTxResult.tx.out.revert !== undefined &&
-    //             this.queryTxResult.tx.out.revert !== ""
-    //         ) {
-    //             this.status = TransactionStatus.Reverted;
-    //             this.revertReason = this.queryTxResult.tx.out.revert.toString();
-    //             throw new Error(this.revertReason);
-    //         } else if (
-    //             this.queryTxResult.tx.out &&
-    //             Object.keys(this.queryTxResult.tx.out).length > 0
-    //         ) {
-    //             if (
-    //                 TransactionStatusIndex[this.status] <
-    //                 TransactionStatusIndex[TransactionStatus.Signed]
-    //             ) {
-    //                 this.status = TransactionStatus.Signed;
-    //                 await this.onSignatureReady();
-    //             }
-    //         }
-
-    //         return this;
-    //     })()
-    //         .then(promiEvent.resolve)
-    //         .catch(promiEvent.reject);
-
-    //     return promiEvent;
-    // };
-
-    // /**
-    //  * `mint` submits the RenVM signature to the mint chain.
-    //  *
-    //  * It returns a PromiEvent and the events emitted depend on the mint chain.
-    //  *
-    //  * The PromiEvent's events are defined by the mint-chain implementation. For
-    //  * Ethereum, it emits the same events as a Web3 PromiEvent.
-    //  *
-    //  * @category Main
-    //  */
-    // out = {
-    //     /**
-    //      * `find` checks if the deposit signature has already been
-    //      * submitted to the mint chain.
-    //      *
-    //      * ```ts
-    //      * await tx.to.find();
-    //      * // > "0x1234" // (or undefined)
-    //      * ```
-    //      */
-    //     find: async (): Promise<ChainTransaction | undefined> => {
-    //         const promiEvent = newPromiEvent<
-    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             ChainTransaction | undefined,
-    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             {
-    //                 transaction: [ChainTransaction];
-    //                 confirmation: [number, { status: number }];
-    //             }
-    //         >();
-
-    //         (async () => {
-    //             if (isContractChain(this.toChain)) {
-    //                 const sigHash =
-    //                     this.queryTxResult &&
-    //                     this.queryTxResult.tx.out &&
-    //                     this.queryTxResult.tx.out.revert === undefined
-    //                         ? this.queryTxResult.tx.out.sighash
-    //                         : undefined;
-
-    //                 const sig =
-    //                     this.queryTxResult &&
-    //                     this.queryTxResult.tx.out &&
-    //                     this.queryTxResult.tx.out.revert === undefined
-    //                         ? this.queryTxResult.tx.out.sig
-    //                         : undefined;
-
-    //                 const signature = sig
-    //                     ? fixSignature(
-    //                           sig.slice(0, 32),
-    //                           sig.slice(32, 64),
-    //                           sig.slice(64, 65)[0],
-    //                       )
-    //                     : undefined;
-
-    //                 // Check if the signature has already been submitted
-    //                 this.outTransaction =
-    //                     await this.toChain.getOutputTx(
-    //                         true,
-    //                         this.outputType!,
-    //                         this.params.asset,
-    //                         this.params.to,
-    //                         {},
-    //                         {
-    //                             nHash: (this.nHash),
-    //                             sHash: keccak256(Buffer.from(this.selector)),
-    //                             pHash: this.pHash,
-    //                             amount: new BigNumber(
-    //                                 this.params.fromTx.amount,
-    //                             ),
-    //                             sigHash: sigHash
-    //                                 ? fromBase64(sigHash)
-    //                                 : undefined,
-    //                             signature,
-    //                         },
-    //                         promiEvent,
-    //                     );
-    //                 return this.outTransaction;
-    //             }
-    //             return undefined;
-    //         })()
-    //             .then(promiEvent.resolve)
-    //             .catch(promiEvent.reject);
-
-    //         return promiEvent;
-    //     },
-
-    //     submit: (
-    //         override?: { [name: string]: unknown },
-    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //     ): PromiEvent<
-    //         ChainTransaction,
-    //         {
-    //             transaction: [ChainTransaction];
-    //             confirmation: [number, { status: number }];
-    //         }
-    //     > => {
-    //         const promiEvent = newPromiEvent<
-    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             ChainTransaction,
-    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             {
-    //                 transaction: [ChainTransaction];
-    //                 confirmation: [number, { status: number }];
-    //             }
-    //         >();
-
-    //         (async () => {
-
-    //         return promiEvent;
-    //     },
-    // };
 
     // Private methods /////////////////////////////////////////////////////////
 
@@ -938,7 +510,9 @@ export class GatewayTransaction<
         const { asset, to, nonce, fromTx } = this.params;
 
         if (!isContractChain(this.toChain)) {
-            throw new Error(`Cannot mint to non-contract chain ${to.chain}.`);
+            throw new Error(
+                `Cannot mint ${asset} to non-contract chain ${to.chain}.`,
+            );
         }
 
         const payload = await this.toChain.getOutputPayload(

@@ -4,15 +4,21 @@ import {
     isDefined,
     Logger,
     nullLogger,
+    RenJSError,
     RenNetwork,
     RenNetworkString,
     SECONDS,
     sleep,
     toURLBase64,
     TxStatus,
+    withCode,
 } from "@renproject/utils";
 
-import { BlockState } from "./methods/ren_queryBlockState";
+import { memoize } from "./memoize";
+import {
+    BlockState,
+    ResponseQueryBlockState,
+} from "./methods/ren_queryBlockState";
 import { unmarshalTypedPackValue } from "./pack/pack";
 import { HttpProvider } from "./rpc/jsonRpc";
 import {
@@ -27,6 +33,7 @@ import {
     RPCMethod,
 } from "./rpc/methods";
 import { renRpcUrls } from "./rpcUrls";
+import { RenVMShard } from "./shard";
 import {
     crossChainParamsType,
     CrossChainTransactionInput,
@@ -132,12 +139,13 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
     public queryState = async (retry?: number) =>
         this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
 
-    public queryBlockState = async (retry?: number) =>
+    public queryBlockState = memoize(async (retry?: number) =>
         this.sendMessage<RPCMethod.QueryBlockState>(
             RPCMethod.QueryBlockState,
             {},
             retry,
-        );
+        ),
+    );
 
     public buildGateway = ({
         selector,
@@ -377,17 +385,28 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
     };
 
     /**
-     * selectPublicKey fetches the public key for the RenVM shard handling
+     * selectShard fetches the public key for the RenVM shard handling
      * the provided contract.
      *
      * @param selector A RenVM selector, e.g. 'BTC/toEthereum'.
      * @returns The public key hash (20 bytes) as a string.
      */
-    public readonly selectPublicKey = async (
+    public readonly selectShard = async (
         asset: string,
-    ): Promise<Buffer> => {
-        // Call the ren_queryBlockState RPC.
-        const renVMState = await this.queryBlockState(5);
+    ): Promise<RenVMShard> => {
+        let renVMState: ResponseQueryBlockState;
+
+        try {
+            // Call the ren_queryBlockState RPC.
+            renVMState = await this.queryBlockState(5);
+        } catch (error: any) {
+            throw withCode(
+                new Error(
+                    `Error fetching RenVM shards: ${String(error.message)}`,
+                ),
+                RenJSError.NETWORK_ERROR,
+            );
+        }
 
         const blockState: BlockState = unmarshalTypedPackValue(
             renVMState.state,
@@ -405,7 +424,9 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
 
         assertType<Buffer>("Buffer", { pubKey });
 
-        return pubKey;
+        return {
+            gPubKey: toURLBase64(pubKey),
+        };
     };
 
     public getNetwork = async (): Promise<string> =>

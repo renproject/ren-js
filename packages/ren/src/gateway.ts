@@ -28,6 +28,7 @@ import {
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
+import { estimateTransactionFee, GatewayFees } from "./fees";
 import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
 import { GatewayParams } from "./params";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
@@ -75,7 +76,7 @@ export class Gateway<
      * chain-by-chain basis.
      */
     private _gatewayAddress: string | undefined;
-    public gatewayAddress = () => {
+    public gatewayAddress = (): string => {
         if (!this._gatewayAddress) {
             throw new Error("Not initialized.");
         }
@@ -83,10 +84,9 @@ export class Gateway<
     };
 
     /** The parameters passed in when creating the LockAndMint. */
-    public params: GatewayParams<FromPayload, ToPayload> & {
-        fromChain: Chain;
-        toChain: Chain;
-    };
+    public params: GatewayParams<FromPayload, ToPayload>;
+    public fromChain: Chain;
+    public toChain: Chain;
 
     /** See [[RenJS.renVM]]. */
     public provider: RenVMProvider;
@@ -110,23 +110,29 @@ export class Gateway<
 
     public setup: { [key: string]: TxSubmitter | TxWaiter } = {};
 
-    private inputType: InputType;
-    private outputType: OutputType;
+    public fees: GatewayFees;
+
+    // public fees {
+    // }
+
+    public inputType: InputType;
+    public outputType: OutputType;
 
     /**
      * @hidden - should be created using [[RenJS.lockAndMint]] instead.
      */
     constructor(
         renVM: RenVMProvider,
-        params: GatewayParams<FromPayload, ToPayload> & {
-            fromChain: Chain;
-            toChain: Chain;
-        },
+        fromChain: Chain,
+        toChain: Chain,
+        params: GatewayParams<FromPayload, ToPayload>,
         config: RenJSConfig = {},
     ) {
         super();
 
         this.params = params;
+        this.fromChain = fromChain;
+        this.toChain = toChain;
         this.provider = renVM;
 
         this._config = {
@@ -137,6 +143,7 @@ export class Gateway<
         // Set in async constructor, `_initialize`.
         this.inputType = undefined as never;
         this.outputType = undefined as never;
+        this.fees = undefined as never;
 
         {
             // Debug log
@@ -152,10 +159,21 @@ export class Gateway<
     public readonly _initialize = async (): Promise<
         Gateway<FromPayload, ToPayload>
     > => {
-        const { to, asset, from, fromChain, toChain, nonce } = this.params;
+        // Check if shard needs to be selected.
+        if (!isDefined(this.params.shard)) {
+            this.params.shard = await this.provider.selectShard(
+                this.params.asset,
+            );
+        }
+
+        const { to, asset, from, nonce } = this.params;
 
         const { inputType, outputType, selector } =
-            await getInputAndOutputTypes(this.params);
+            await getInputAndOutputTypes({
+                asset,
+                fromChain: this.fromChain,
+                toChain: this.toChain,
+            });
         this.inputType = inputType;
         this.outputType = outputType;
         this.selector = selector;
@@ -169,24 +187,29 @@ export class Gateway<
 
         if (
             this.outputType === OutputType.Release &&
-            !isContractChain(fromChain)
+            !isContractChain(this.fromChain)
         ) {
             throw withCode(
                 new Error(
-                    `Cannot release from non-contract chain ${fromChain.chain}`,
+                    `Cannot release from non-contract chain ${this.fromChain.chain}`,
                 ),
-                RenJSError.INVALID_PARAMETERS,
+                RenJSError.PARAMETER_ERROR,
             );
         }
 
-        if (this.outputType === OutputType.Mint && !isContractChain(toChain)) {
+        if (
+            this.outputType === OutputType.Mint &&
+            !isContractChain(this.toChain)
+        ) {
             throw withCode(
-                new Error(`Cannot mint to non-contract chain ${toChain.chain}`),
-                RenJSError.INVALID_PARAMETERS,
+                new Error(
+                    `Cannot mint ${asset} to non-contract chain ${this.toChain.chain}`,
+                ),
+                RenJSError.PARAMETER_ERROR,
             );
         }
 
-        const payload = await toChain.getOutputPayload(
+        const payload = await this.toChain.getOutputPayload(
             asset,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.outputType as any,
@@ -202,13 +225,20 @@ export class Gateway<
         );
 
         if (
-            isDepositChain(fromChain) &&
-            (await fromChain.isDepositAsset(this.params.asset))
+            isDepositChain(this.fromChain) &&
+            (await this.fromChain.isDepositAsset(this.params.asset))
         ) {
             try {
-                if (!isContractChain(toChain)) {
+                if (!isContractChain(this.toChain)) {
                     throw new Error(
-                        `Cannot mint to non-contract chain ${toChain.chain}.`,
+                        `Cannot mint ${asset} to non-contract chain ${this.toChain.chain}.`,
+                    );
+                }
+
+                if (!this.params.shard) {
+                    throw withCode(
+                        new Error(`RenVM shard not selected.`),
+                        RenJSError.INTERNAL_ERROR,
                     );
                 }
 
@@ -221,17 +251,18 @@ export class Gateway<
                 const gHash = generateGHash(
                     this.pHash,
                     sHash,
-                    fromHex(payload.to),
+                    payload.toBytes,
                     nonceBuffer,
                 );
                 this.gHash = gHash;
-                this.gPubKey = this.params.shard
-                    ? fromBase64(this.params.shard.gPubKey)
-                    : await this.provider.selectPublicKey(asset);
+                this.gPubKey = fromBase64(this.params.shard.gPubKey);
                 this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
 
                 if (!this.gPubKey || this.gPubKey.length === 0) {
-                    throw new Error("Unable to fetch RenVM shard public key.");
+                    throw withCode(
+                        new Error("Unable to fetch RenVM shard public key."),
+                        RenJSError.NETWORK_ERROR,
+                    );
                 }
 
                 if (!gHash || gHash.length === 0) {
@@ -246,12 +277,13 @@ export class Gateway<
                     );
                 }
 
-                const gatewayAddress = await fromChain.createGatewayAddress(
-                    this.params.asset,
-                    this.params.from,
-                    this.gPubKey,
-                    gHash,
-                );
+                const gatewayAddress =
+                    await this.fromChain.createGatewayAddress(
+                        this.params.asset,
+                        this.params.from,
+                        this.gPubKey,
+                        gHash,
+                    );
                 this._gatewayAddress = gatewayAddress;
                 this._config.logger.debug(
                     "gateway address:",
@@ -260,7 +292,7 @@ export class Gateway<
 
                 // if (this.renVM.submitGatewayDetails) {
                 //     const promise = this.renVM.submitGatewayDetails(
-                //         this.params.fromChain(gatewayAddress),
+                //         this.params.this.fromChain(gatewayAddress),
                 //         {
                 //             ...(this._state as MintState & MintStatePartial),
                 //             nHash: Buffer.from(
@@ -284,23 +316,24 @@ export class Gateway<
                 throw error;
             }
 
-            // Will fetch deposits as long as there's at least one deposit.
+            this.fees = await estimateTransactionFee(
+                this.provider,
+                asset,
+                this.fromChain,
+                this.toChain,
+            );
+
+            // Will fetch deposits as long as there's at least one subscription.
             this.wait().catch(console.error);
         }
 
-        if (isContractChain(fromChain)) {
-            if (!isContractChain(toChain)) {
-                throw new Error(
-                    `Cannot mint to non-contract chain ${toChain.chain}.`,
-                );
-            }
-
-            const processInput = (lock: InputChainTransaction) => {
-                const nonce = lock.nonce!;
+        if (isContractChain(this.fromChain)) {
+            const processInput = (input: InputChainTransaction) => {
+                const nonce = input.nonce!;
                 const gHash = generateGHash(
                     payload.payload,
                     sHash,
-                    fromHex(payload.to),
+                    payload.toBytes,
                     fromBase64(nonce),
                 );
                 this.gHash = gHash;
@@ -312,7 +345,7 @@ export class Gateway<
                         new Error(
                             "Invalid gateway hash being passed to gateway address generation.",
                         ),
-                        RenJSError.INVALID_PARAMETERS,
+                        RenJSError.PARAMETER_ERROR,
                     );
                 }
 
@@ -321,18 +354,18 @@ export class Gateway<
                         new Error(
                             "Invalid asset being passed to gateway address generation.",
                         ),
-                        RenJSError.INVALID_PARAMETERS,
+                        RenJSError.PARAMETER_ERROR,
                     );
                 }
 
                 // TODO: Add to queue instead so that it can be retried on error.
-                this.processDeposit(lock).catch(console.error);
+                this.processDeposit(input).catch(console.error);
             };
 
             // TODO
             const removeInput = () => {};
 
-            this.in = await fromChain.getInputTx(
+            this.in = await this.fromChain.getInputTx(
                 this.inputType,
                 asset,
                 from,
@@ -341,25 +374,31 @@ export class Gateway<
                     toPayload: payload,
                     gatewayAddress: this._gatewayAddress,
                 }),
-                await this.provider.getConfirmationTarget(
-                    this.params.fromChain.chain,
-                ),
+                await this.provider.getConfirmationTarget(this.fromChain.chain),
                 processInput,
                 removeInput,
             );
         }
 
-        if (isContractChain(fromChain) && fromChain.getInputSetup) {
+        if (isContractChain(this.fromChain) && this.fromChain.getInputSetup) {
             this.setup = {
                 ...this.setup,
-                ...(await fromChain.getInputSetup(asset, this.inputType, from)),
+                ...(await this.fromChain.getInputSetup(
+                    asset,
+                    this.inputType,
+                    from,
+                )),
             };
         }
 
-        if (isContractChain(toChain) && toChain.getOutputSetup) {
+        if (isContractChain(this.toChain) && this.toChain.getOutputSetup) {
             this.setup = {
                 ...this.setup,
-                ...(await toChain.getOutputSetup(asset, this.outputType, to)),
+                ...(await this.toChain.getOutputSetup(
+                    asset,
+                    this.outputType,
+                    to,
+                )),
             };
         }
 
@@ -372,7 +411,7 @@ export class Gateway<
         }
 
         this.targetConfirmations = await this.provider.getConfirmationTarget(
-            this.params.fromChain.chain,
+            this.fromChain.chain,
         );
 
         return this.targetConfirmations;
@@ -441,8 +480,8 @@ export class Gateway<
         if (!depositObject) {
             depositObject = new GatewayTransaction<ToPayload>(
                 this.provider,
-                this.params.fromChain,
-                this.params.toChain,
+                this.fromChain,
+                this.toChain,
                 params,
                 this.in,
                 this._config,
@@ -532,14 +571,12 @@ export class Gateway<
             // TODO: Flag deposits that have been cancelled, updating their status.
             const cancelDeposit = () => {};
 
-            const { fromChain } = this.params;
-
-            if (!isDepositChain(fromChain)) {
+            if (!isDepositChain(this.fromChain)) {
                 throw new Error("From chain is not a deposit chain.");
             }
 
             try {
-                await fromChain.watchForDeposits(
+                await this.fromChain.watchForDeposits(
                     this.params.asset,
                     this.params.from,
                     this.gatewayAddress(),

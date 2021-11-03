@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
 import chai from "chai";
-import { blue, blueBright, cyan, green, magenta, red, yellow } from "chalk";
 import { config as loadDotEnv } from "dotenv";
 import throttle from "throat";
 
@@ -17,53 +16,24 @@ import {
 import { LogLevel, RenNetwork } from "@renproject/utils";
 import { SECONDS, sleep } from "@renproject/utils/src";
 
-import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import RenJS from "../packages/ren/src";
 import { GatewayParams } from "../packages/ren/src/params";
-import { getEVMChain } from "./testUtils";
+import { colorizeChain, getEVMProvider } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-const colorizeChain = (chain: string, { pad } = { pad: true }): string => {
-    const color =
-        chain === "Ethereum"
-            ? blue
-            : chain === "Solana"
-            ? magenta
-            : chain === "BinanceSmartChain"
-            ? yellow
-            : chain === "Fantom"
-            ? blueBright
-            : chain === "Polygon"
-            ? magenta
-            : chain === "Avalanche"
-            ? red
-            : chain === "Goerli"
-            ? green
-            : cyan;
-    if (pad) {
-        if (chain.length > 8) {
-            chain = chain.slice(0, 7) + "…";
-        }
-        if (chain.length < 8) {
-            const difference = 8 - chain.length;
-            const left = Math.floor(difference / 2);
-            const right = Math.ceil(difference / 2);
-            chain = " ".repeat(left) + chain + " ".repeat(right);
-        }
-    }
-    return color(chain);
-};
-
-describe("Refactor: mint", () => {
-    it("mint to contract", async function () {
+describe("RenJS Gateway Transaction", () => {
+    it("DAI/to*", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const toClass = getEVMChain(Ethereum as any, network);
+        const toClass = new Ethereum(
+            network,
+            getEVMProvider(Ethereum as any, network),
+        );
 
         const throttles = {
             [Ethereum.chain]: throttle(1),
@@ -93,7 +63,7 @@ describe("Refactor: mint", () => {
                     try {
                         const fromClass = new From(
                             network,
-                            getEVMChain(From, network),
+                            getEVMProvider(From, network),
                         );
                         // const fromClass = new From("testnet");
 
@@ -155,7 +125,7 @@ describe("Refactor: mint", () => {
                             );
                             gateway.in.eventEmitter.on("status", console.log);
                             await gateway.in.submit({
-                                config: { gasLimit: 2000000 },
+                                txConfig: { gasLimit: 2000000 },
                             });
                             await gateway.in.wait();
                         });

@@ -1,57 +1,24 @@
 import BigNumber from "bignumber.js";
 
-import { RenVMProvider, unmarshalTypedPackValue } from "@renproject/provider";
-import { BlockState } from "@renproject/provider/build/main/methods/ren_queryBlockState";
-import { Chain, RenNetwork, RenNetworkString } from "@renproject/utils";
+import { RenVMProvider, RenVMShard } from "@renproject/provider";
+import {
+    Chain,
+    RenJSError,
+    RenNetwork,
+    RenNetworkString,
+    withCode,
+} from "@renproject/utils";
 
 import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
+import { estimateTransactionFee, GatewayFees } from "./fees";
 import { Gateway } from "./gateway";
 import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
 import { GatewayParams } from "./params";
 
-export { Gateway as LockAndMint } from "./gateway";
-
-const estimateTransactionFee = async (
-    renVM: RenVMProvider,
-    asset: string,
-    _lockChain: { chain: string },
-    hostChain: { chain: string },
-): Promise<{
-    lock: BigNumber;
-    release: BigNumber;
-    mint: number;
-    burn: number;
-}> => {
-    const renVMState = await renVM.queryBlockState();
-
-    const blockState: BlockState = unmarshalTypedPackValue(renVMState.state);
-
-    if (!blockState[asset]) {
-        throw new Error(`No fee details found for ${asset}`);
-    }
-
-    const { gasLimit, gasCap } = blockState[asset];
-    const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
-
-    const mintAndBurnFees = blockState[asset].fees.chains.filter(
-        (chainFees) => chainFees.chain === hostChain.chain,
-    )[0];
-
-    return {
-        lock: fee,
-        release: fee,
-
-        mint:
-            mintAndBurnFees && mintAndBurnFees.mintFee
-                ? mintAndBurnFees.mintFee.toNumber()
-                : 15,
-        burn:
-            mintAndBurnFees && mintAndBurnFees.burnFee
-                ? mintAndBurnFees.burnFee.toNumber()
-                : 15,
-    };
-};
+export { Gateway } from "./gateway";
+export { GatewayTransaction } from "./gatewayTransaction";
+export { GatewayFees } from "./fees";
 
 /**
  * This is the main exported class from `@renproject/ren`.
@@ -117,15 +84,14 @@ export default class RenJS {
      * renJS.renVM.sendMessage("ren_queryNumPeers", {});
      * ```
      */
-    public readonly renVM: RenVMProvider;
+    public readonly provider: RenVMProvider;
 
     private readonly _config: RenJSConfig;
 
     /**
      * Accepts the name of a network, or a network object.
      *
-     * @param network Provide the name of a network - `"mainnet"` or `"testnet"` - or a network object.
-     * @param providerOrConfig Provide a custom RPC provider, or provide RenJS configuration settings.
+     * @param providerOrNetwork Provider the name of a RenNetwork or a RenVM provider instance.
      */
     constructor(
         providerOrNetwork:
@@ -137,7 +103,7 @@ export default class RenJS {
     ) {
         this._config = config || {};
 
-        this.renVM =
+        this.provider =
             typeof providerOrNetwork === "string"
                 ? new RenVMProvider(
                       providerOrNetwork || RenNetwork.Mainnet,
@@ -153,10 +119,16 @@ export default class RenJS {
         }
         return this;
     };
+    public withChain = this.withChains;
 
     public getChain = (name: string): Chain => {
         if (!this.chains[name]) {
-            throw new Error(`Chain ${name} not set.`);
+            throw withCode(
+                new Error(
+                    `Chain ${name} not found. (Must call 'renJS.withChains(${name.toLowerCase()})')`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
         }
         return this.chains[name];
     };
@@ -171,27 +143,31 @@ export default class RenJS {
         from: Chain;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         to: Chain;
-    }): Promise<{
-        lock?: BigNumber;
-        release?: BigNumber;
-        mint: number;
-        burn: number;
-    }> => {
+    }): Promise<GatewayFees> => {
         if (!(await from.assetIsSupported(asset))) {
-            throw new Error(`Asset not supported by chain ${from.chain}.`);
+            throw withCode(
+                new Error(`Asset not supported by chain ${from.chain}.`),
+                RenJSError.PARAMETER_ERROR,
+            );
         }
         if (!(await to.assetIsSupported(asset))) {
-            throw new Error(`Asset not supported by chain ${to.chain}.`);
+            throw withCode(
+                new Error(`Asset not supported by chain ${to.chain}.`),
+                RenJSError.PARAMETER_ERROR,
+            );
         }
 
         if (await to.assetIsNative(asset)) {
             // BurnAndRelease
-            return await estimateTransactionFee(this.renVM, asset, to, from);
+            return await estimateTransactionFee(this.provider, asset, to, from);
         } else {
             // LockAndMint or BurnAndMint
-            return await estimateTransactionFee(this.renVM, asset, from, to);
+            return await estimateTransactionFee(this.provider, asset, from, to);
         }
     };
+
+    public readonly selectShard = async (asset: string): Promise<RenVMShard> =>
+        this.provider.selectShard(asset);
 
     /**
      * `lockAndMint` initiates the process of bridging an asset from its native
@@ -227,12 +203,10 @@ export default class RenJS {
         config: RenJSConfig = {},
     ): Promise<Gateway<FromPayload, ToPayload>> =>
         new Gateway<FromPayload, ToPayload>(
-            this.renVM,
-            {
-                ...params,
-                fromChain: this.getChain(params.from.chain),
-                toChain: this.getChain(params.to.chain),
-            },
+            this.provider,
+            this.getChain(params.from.chain),
+            this.getChain(params.to.chain),
+            params,
             {
                 ...this._config,
                 ...config,
@@ -248,7 +222,7 @@ export default class RenJS {
         config?: RenJSConfig,
     ): Promise<GatewayTransaction<ToPayload>> =>
         new GatewayTransaction<ToPayload>(
-            this.renVM,
+            this.provider,
             this.getChain(params.fromTx.chain),
             this.getChain(params.to.chain),
             params,

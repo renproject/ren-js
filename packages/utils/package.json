@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "3.0.0-alpha.1",
+    "version": "3.0.0-alpha.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -49,11 +49,11 @@
         "axios": "^0.21.1",
         "bignumber.js": "^9.0.1",
         "bn.js": "^5.2.0",
+        "create-hash": "1.2.0",
         "ethereum-cryptography": "^0.2.0",
         "events": "^3.3.0",
         "immutable": "^4.0.0-rc.14",
-        "js-sha3": "^0.8.0",
-        "create-hash": "1.2.0"
+        "js-sha3": "^0.8.0"
     },
     "resolutions": {
         "sha3": "^2.1.2"

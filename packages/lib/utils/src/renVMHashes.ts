@@ -11,6 +11,7 @@ import {
 } from "./common";
 import { keccak256 } from "./hash";
 
+// The nHash is returned from RenVM - todo: verify the returned nHash..
 // export const generateNHash = (tx: Tx): Buffer => {
 //     const encoded = rawEncode(
 //         ["bytes32", "bytes32"],

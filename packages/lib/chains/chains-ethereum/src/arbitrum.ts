@@ -25,12 +25,12 @@ export const renArbitrumTestnet: EthereumConfig = {
     },
 
     publicProvider: () => `https://rinkeby.arbitrum.io/rpc`,
-    explorer: StandardExplorer("https://rinkeby-explorer.arbitrum.io"),
+    explorer: StandardExplorer("https://testnet.arbiscan.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
     infura: "https://rinkeby.arbitrum.io/rpc",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://rinkeby-explorer.arbitrum.io",
+    etherscan: "https://testnet.arbiscan.io",
 };
 
 export const renArbitrumMainnet: EthereumConfig = {

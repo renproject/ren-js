@@ -7,5 +7,5 @@ export * from "./logger";
 export * from "./networks";
 export * from "./parameters";
 export * from "./promiEvent";
-export * from "./types";
 export * from "./transaction";
+export * from "./types";

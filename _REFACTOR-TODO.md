@@ -139,7 +139,7 @@ const main = async () => {
 
     gateway.on("transaction", (tx) => {
         (async () => {
-            await tx.refreshStatus();
+            await tx.fetchStatus();
 
             await tx.from.wait().on("status", console.log);
 

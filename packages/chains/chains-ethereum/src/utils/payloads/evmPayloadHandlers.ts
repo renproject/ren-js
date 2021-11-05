@@ -23,6 +23,7 @@ export enum EVMParam {
     // Always available
     EVM_TRANSACTION_TYPE = "__EVM_TRANSACTION_TYPE__",
     EVM_TOKEN_ADDRESS = "__EVM_TOKEN_ADDRESS__",
+    EVM_TOKEN_DECIMALS = "__EVM_TOKEN_DECIMALS__",
     EVM_GATEWAY_DEPOSIT_ADDRESS = "__EVM_GATEWAY_DEPOSIT_ADDRESS__",
     EVM_ACCOUNT = "__EVM_ACCOUNT__",
     EVM_GATEWAY = "__EVM_GATEWAY__",
@@ -53,6 +54,7 @@ export type EVMParamValues = {
         | "release"
         | "burn";
     [EVMParam.EVM_TOKEN_ADDRESS]: () => Promise<string>;
+    [EVMParam.EVM_TOKEN_DECIMALS]: () => Promise<number>;
     [EVMParam.EVM_ACCOUNT]: () => Promise<string>;
     [EVMParam.EVM_GATEWAY]: () => Promise<string>;
     [EVMParam.EVM_ASSET]: string;
@@ -316,14 +318,23 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
     },
 };
 
-const getContractFromAccount = (
+const getContractFromAccount = async (
     network: EvmNetworkConfig,
     payload: EVMAccountPayload,
     evmParams: EVMParamValues,
-): EVMContractPayload => {
+): Promise<EVMContractPayload> => {
+    const amount = isDefined(payload.params.amount)
+        ? new BigNumber(payload.params.amount)
+              .shiftedBy(
+                  payload.params.convertToWei
+                      ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
+                      : 0,
+              )
+              .toFixed()
+        : undefined;
     switch (evmParams[EVMParam.EVM_TRANSACTION_TYPE]) {
         case InputType.Lock:
-            if (!payload.params.amount) {
+            if (!amount) {
                 throw withCode(
                     new Error(`Must provide amount to .Account()`),
                     RenJSError.PARAMETER_ERROR,
@@ -344,9 +355,7 @@ const getContractFromAccount = (
                             },
                         ],
                         txConfig: {
-                            value: new BigNumber(
-                                payload.params.amount,
-                            ).toFixed(),
+                            value: amount,
                         },
                     },
                 };
@@ -376,9 +385,7 @@ const getContractFromAccount = (
                         {
                             type: "uint256",
                             name: "amount",
-                            value: new BigNumber(
-                                payload.params.amount,
-                            ).toFixed(),
+                            value: amount,
                         },
                     ],
                 },
@@ -389,15 +396,13 @@ const getContractFromAccount = (
                         params: {
                             token: EVMParam.EVM_TOKEN_ADDRESS,
                             spender: EVMParam.EVM_GATEWAY,
-                            amount: new BigNumber(
-                                payload.params.amount,
-                            ).toFixed(),
+                            amount: amount,
                         },
                     } as EVMApprovalPayload,
                 },
             };
         case InputType.Burn:
-            if (!payload.params.amount) {
+            if (!amount) {
                 throw withCode(
                     new Error(`Must provide amount to .Account()`),
                     RenJSError.PARAMETER_ERROR,
@@ -413,15 +418,13 @@ const getContractFromAccount = (
                     values: [
                         {
                             type: "bytes" as const,
-                            name: "_to",
+                            name: "to",
                             value: EVMParam.EVM_TO_ADDRESS_BYTES,
                         },
                         {
                             type: "uint256" as const,
-                            name: "_amount",
-                            value: new BigNumber(
-                                payload.params.amount,
-                            ).toFixed(),
+                            name: "amount",
+                            value: amount,
                         },
                     ],
                 },
@@ -538,7 +541,8 @@ const getContractFromAccount = (
 export type EVMAccountPayload = EVMPayload<
     "account",
     {
-        amount?: BigNumber | string | number;
+        amount?: string;
+        convertToWei?: boolean;
     }
 >;
 
@@ -556,7 +560,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
         return await contractPayloadHandler.getSetup(
             network,
             signer,
-            getContractFromAccount(network, payload, evmParams),
+            await getContractFromAccount(network, payload, evmParams),
             evmParams,
             getPayloadHandler,
         );
@@ -587,7 +591,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
         return await contractPayloadHandler.getPayload(
             network,
             signer,
-            getContractFromAccount(network, payload, evmParams),
+            await getContractFromAccount(network, payload, evmParams),
             evmParams,
             getPayloadHandler,
         );
@@ -607,7 +611,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
         return contractPayloadHandler.submit(
             network,
             signer,
-            getContractFromAccount(network, payload, evmParams),
+            await getContractFromAccount(network, payload, evmParams),
             evmParams,
             overrides,
             getPayloadHandler,
@@ -621,6 +625,7 @@ export type EVMApprovalPayload = EVMPayload<
         token: string;
         spender: string;
         amount: string;
+        convertToWei?: boolean;
         txConfig?: PayableOverrides;
     }
 >;
@@ -640,10 +645,20 @@ const resolveEvmApprovalParams = async (
     };
 };
 
-const getContractFromApproval = (
+const getContractFromApproval = async (
     network: EvmNetworkConfig,
     payload: EVMApprovalPayload,
-): EVMContractPayload => {
+    evmParams: EVMParamValues,
+): Promise<EVMContractPayload> => {
+    const amount = isDefined(payload.params.amount)
+        ? new BigNumber(payload.params.amount)
+              .shiftedBy(
+                  payload.params.convertToWei
+                      ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
+                      : 0,
+              )
+              .toFixed()
+        : undefined;
     return {
         chain: network.selector,
         type: "contract",
@@ -659,7 +674,7 @@ const getContractFromApproval = (
                 {
                     type: "uint256",
                     name: "amount",
-                    value: payload.params.amount,
+                    value: amount,
                 },
             ],
         },
@@ -709,7 +724,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         return contractPayloadHandler.submit(
             network,
             signer,
-            getContractFromApproval(network, payload),
+            await getContractFromApproval(network, payload, evmParams),
             evmParams,
             overrides,
             getPayloadHandler,

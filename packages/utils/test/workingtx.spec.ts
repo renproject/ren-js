@@ -1,10 +1,9 @@
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { toURLBase64 } from "@renproject/utils";
+import { PackPrimitive, toURLBase64 } from "@renproject/utils";
 
-import { PackPrimitive } from "../src/pack/pack";
-import { hashTransaction } from "../src/transaction";
+import { hashTransaction } from "../../provider/src/transaction";
 
 export const submit = {
     jsonrpc: "2.0",

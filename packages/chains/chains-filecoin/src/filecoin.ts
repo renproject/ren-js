@@ -17,12 +17,14 @@ import {
     fromBase64,
     InputChainTransaction,
     OutputType,
+    RenJSError,
     RenNetwork,
     RenNetworkString,
     SECONDS,
     sleep,
     toURLBase64,
     tryNTimes,
+    withCode,
 } from "@renproject/utils";
 
 import { FilTransaction } from "./utils/deposit";
@@ -182,13 +184,12 @@ export class Filecoin
     };
 
     /**
-     * See [[LockChain.assetIsNative]].
+     * See [[LockChain.isLockAsset]].
      */
-    assetIsNative = (asset: string): boolean => asset === this.feeAsset;
-    assetIsSupported = this.assetIsNative;
+    isLockAsset = (asset: string): boolean => asset === this.feeAsset;
 
     public readonly assertAssetIsSupported = (asset: string) => {
-        if (!this.assetIsNative(asset)) {
+        if (!this.isLockAsset(asset)) {
             throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
     };
@@ -449,16 +450,6 @@ export class Filecoin
 
     getBurnPayload: ((bytes?: boolean) => string) | undefined;
 
-    /** @category Main */
-    Address = (address: string): this => {
-        // Type validation
-        assertType<string>("string", { address });
-
-        this.getBurnPayload = (bytes) =>
-            bytes ? this.addressToBytes(address).toString("hex") : address;
-        return this;
-    };
-
     public getOutputPayload = (
         asset: string,
         _type: OutputType.Release,
@@ -473,6 +464,43 @@ export class Filecoin
             to: toPayload.address,
             toBytes: Buffer.from(new CID(toPayload.address).bytes),
             payload: Buffer.from([]),
+        };
+    };
+
+    // Methods for initializing mints and burns ////////////////////////////////
+
+    /**
+     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * available to the burn params.
+     *
+     * @category Main
+     */
+    Address = (address: string): { chain: string; address: string } => {
+        // Type validation
+        assertType<string>("string", { address });
+
+        if (!this.validateAddress(address)) {
+            throw withCode(
+                new Error(`Invalid ${this.chain} address: ${String(address)}`),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+
+        return {
+            chain: this.chain,
+            address,
+        };
+    };
+
+    /**
+     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * available to the burn params.
+     *
+     * @category Main
+     */
+    GatewayAddress = (): { chain: string } => {
+        return {
+            chain: this.chain,
         };
     };
 }

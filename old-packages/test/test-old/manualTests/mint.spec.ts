@@ -52,7 +52,6 @@ describe("Refactor: mint", () => {
         console.log(toChain.provider.wallet.publicKey.toString());
 
         if ((toChain as any).createAssociatedTokenAccount) {
-            console.log("Calling createAssociatedTokenAccount...");
             await (toChain as any).createAssociatedTokenAccount(asset);
         }
 

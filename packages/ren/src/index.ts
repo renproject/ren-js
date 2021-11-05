@@ -1,11 +1,11 @@
-import BigNumber from "bignumber.js";
-
-import { RenVMProvider, RenVMShard } from "@renproject/provider";
+import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
+    isContractChain,
     RenJSError,
     RenNetwork,
     RenNetworkString,
+    RenVMShard,
     withCode,
 } from "@renproject/utils";
 
@@ -38,8 +38,8 @@ export { GatewayFees } from "./fees";
  * ```
  *
  * It then exposes two main functions:
- * 1. [[lockAndMint]] - for transferring assets to Ethereum.
- * 2. [[burnAndRelease]] - for transferring assets out of Ethereum.
+ * 1. [[gateway]] - for initiating new cross-chain transfers.
+ * 2. [[gatewayTransaction]] - for continuing existing cross-chain transfers.
  *
  * Also see:
  * 1. [[getFees]] - for estimating the fees that will be incurred by minting or
@@ -92,6 +92,7 @@ export default class RenJS {
      * Accepts the name of a network, or a network object.
      *
      * @param providerOrNetwork Provider the name of a RenNetwork or a RenVM provider instance.
+     * @param config
      */
     constructor(
         providerOrNetwork:
@@ -105,10 +106,7 @@ export default class RenJS {
 
         this.provider =
             typeof providerOrNetwork === "string"
-                ? new RenVMProvider(
-                      providerOrNetwork || RenNetwork.Mainnet,
-                      this._config.logger,
-                  )
+                ? new RenVMProvider(providerOrNetwork, this._config.logger)
                 : providerOrNetwork;
     }
 
@@ -140,30 +138,45 @@ export default class RenJS {
     }: {
         asset: string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        from: Chain;
+        from: string | { chain: string };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        to: Chain;
+        to: string | { chain: string };
     }): Promise<GatewayFees> => {
-        if (!(await from.assetIsSupported(asset))) {
+        const fromChain = this.getChain(
+            typeof from === "string" ? from : from.chain,
+        );
+        const toChain = this.getChain(typeof to === "string" ? to : to.chain);
+
+        if (
+            !(
+                (await fromChain.isLockAsset(asset)) ||
+                (isContractChain(fromChain) &&
+                    (await fromChain.isMintAsset(asset)))
+            )
+        ) {
             throw withCode(
-                new Error(`Asset not supported by chain ${from.chain}.`),
+                new Error(`Asset not supported by chain ${fromChain.chain}.`),
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        if (!(await to.assetIsSupported(asset))) {
+        if (
+            !(
+                (await toChain.isLockAsset(asset)) ||
+                (isContractChain(toChain) && (await toChain.isMintAsset(asset)))
+            )
+        ) {
             throw withCode(
-                new Error(`Asset not supported by chain ${to.chain}.`),
+                new Error(`Asset not supported by chain ${toChain.chain}.`),
                 RenJSError.PARAMETER_ERROR,
             );
         }
 
-        if (await to.assetIsNative(asset)) {
-            // BurnAndRelease
-            return await estimateTransactionFee(this.provider, asset, to, from);
-        } else {
-            // LockAndMint or BurnAndMint
-            return await estimateTransactionFee(this.provider, asset, from, to);
-        }
+        return await estimateTransactionFee(
+            this.provider,
+            asset,
+            toChain,
+            fromChain,
+        );
     };
 
     public readonly selectShard = async (asset: string): Promise<RenVMShard> =>

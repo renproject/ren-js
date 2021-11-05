@@ -150,14 +150,13 @@ export class Terra
     };
 
     /**
-     * See [[LockChain.assetIsNative]].
+     * See [[LockChain.isLockAsset]].
      */
-    assetIsNative = (asset: string): boolean =>
+    isLockAsset = (asset: string): boolean =>
         this.assets.indexOf(asset as TerraAssets) >= 0;
-    assetIsSupported = this.assetIsNative;
 
     public readonly assertAssetIsSupported = (asset: string) => {
-        if (!this.assetIsNative(asset)) {
+        if (!this.isLockAsset(asset)) {
             throw new Error(`Unsupported asset ${asset}.`);
         }
     };

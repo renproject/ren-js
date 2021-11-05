@@ -52,7 +52,7 @@ const createGatewayRegistryFetcher =
             );
             if (!registryAddress || registryAddress === EMPTY_ADDRESS) {
                 throw new ErrorWithCode(
-                    `${asset} not supported on network - unable to get ${asset} ${lookup}`,
+                    `${asset} not supported on ${network.selector} - unable to get ${asset} ${lookup}`,
                     ETHEREUM_ERROR.ASSET_NOT_SUPPORTED,
                 );
             }

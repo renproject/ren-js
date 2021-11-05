@@ -6,7 +6,6 @@ import {
     Chain,
     extractError,
     fromBase64,
-    fromHex,
     generateGHash,
     generatePHash,
     generateSHash,
@@ -98,8 +97,13 @@ export class Gateway<
     /**
      * Deposits represents the lock deposits that have been detected so far.
      */
-    private deposits: OrderedMap<string, GatewayTransaction<ToPayload>> =
-        OrderedMap<string, GatewayTransaction<ToPayload>>();
+    private transactions: OrderedMap<
+        string,
+        GatewayTransaction<ToPayload> | Promise<GatewayTransaction<ToPayload>>
+    > = OrderedMap<
+        string,
+        GatewayTransaction<ToPayload> | Promise<GatewayTransaction<ToPayload>>
+    >();
 
     private targetConfirmations: number | undefined;
     public gPubKey: Buffer | undefined;
@@ -166,7 +170,7 @@ export class Gateway<
             );
         }
 
-        const { to, asset, from, nonce } = this.params;
+        const { to, asset, from } = this.params;
 
         const { inputType, outputType, selector } =
             await getInputAndOutputTypes({
@@ -242,17 +246,17 @@ export class Gateway<
                     );
                 }
 
-                const nonceBuffer = nonce
-                    ? Buffer.isBuffer(nonce)
-                        ? nonce
-                        : fromBase64(nonce)
-                    : toNBytes(0, 32);
+                // Convert nonce to Buffer (using `0` if no nonce is set.)
+                const nonce =
+                    typeof this.params.nonce === "string"
+                        ? fromBase64(this.params.nonce)
+                        : toNBytes(this.params.nonce || 0, 32);
 
                 const gHash = generateGHash(
                     this.pHash,
                     sHash,
                     payload.toBytes,
-                    nonceBuffer,
+                    nonce,
                 );
                 this.gHash = gHash;
                 this.gPubKey = fromBase64(this.params.shard.gPubKey);
@@ -442,62 +446,88 @@ export class Gateway<
      *   .on(deposit => RenJS.defaultDepositHandler)
      *   .catch(console.error);
      * ```
-     *
      * @category Main
      */
     public processDeposit = async (
         deposit: InputChainTransaction,
     ): Promise<GatewayTransaction<ToPayload>> => {
-        if (!this.pHash || !this.gHash || !this.gPubKey) {
-            throw new Error(
-                "Gateway address must be generated before calling 'processDeposit'.",
-            );
-        }
-
         const depositIdentifier = deposit.txid + "_" + String(deposit.txindex);
-        let depositObject = this.deposits.get(depositIdentifier);
-
-        const nonce = deposit.nonce
-            ? fromBase64(deposit.nonce)
-            : this.params.nonce
-            ? Buffer.isBuffer(this.params.nonce)
-                ? this.params.nonce
-                : fromHex(this.params.nonce)
-            : toNBytes(0, 32);
-
-        const params: TransactionParams<ToPayload> = {
-            asset: this.params.asset,
-            fromTx: deposit,
-            to: this.params.to,
-
-            shard: {
-                gPubKey: toURLBase64(this.gPubKey),
-            },
-            nonce: toURLBase64(nonce),
-        };
+        const existingTransaction = this.transactions.get(depositIdentifier);
 
         // If the transaction hasn't been seen before.
-        if (!depositObject) {
-            depositObject = new GatewayTransaction<ToPayload>(
-                this.provider,
-                this.fromChain,
-                this.toChain,
-                params,
-                this.in,
-                this._config,
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        if (!existingTransaction) {
+            const createGatewayTransaction = async () => {
+                if (!this.pHash || !this.gHash || !this.gPubKey) {
+                    throw new Error(
+                        "Gateway address must be generated before calling 'processDeposit'.",
+                    );
+                }
+
+                // Determine which nonce to use - converting it to a Buffer
+                // to ensure it's in a standard format before calling
+                // toURLBase64 again.
+                const nonce = toURLBase64(
+                    // Check if the deposit has an associated nonce. This will
+                    // be true for contract-based inputs.
+                    deposit.nonce
+                        ? fromBase64(deposit.nonce)
+                        : // Check if the params have a nonce - this can be
+                        // a base64 string or a number. If no nonce is set,
+                        // default to `0`.
+                        typeof this.params.nonce === "string"
+                        ? fromBase64(this.params.nonce)
+                        : toNBytes(this.params.nonce || 0, 32),
+                );
+
+                const params: TransactionParams<ToPayload> = {
+                    asset: this.params.asset,
+                    fromTx: deposit,
+                    to: this.params.to,
+
+                    shard: {
+                        gPubKey: toURLBase64(this.gPubKey),
+                    },
+                    nonce,
+                };
+
+                const transaction = new GatewayTransaction<ToPayload>(
+                    this.provider,
+                    this.fromChain,
+                    this.toChain,
+                    params,
+                    this.in,
+                    this._config,
+                );
+
+                await transaction._initialize();
+
+                // Check if deposit has already been submitted.
+                this.emit("transaction", transaction);
+                // this.deposits.set(deposit);
+                this._config.logger.debug("new deposit:", deposit);
+
+                return transaction;
+            };
+
+            const promise = createGatewayTransaction();
+
+            this.transactions = this.transactions.set(
+                depositIdentifier,
+                promise,
             );
 
-            this.deposits = this.deposits.set(depositIdentifier, depositObject);
-
-            await depositObject._initialize();
-
-            // Check if deposit has already been submitted.
-            this.emit("transaction", depositObject);
-            // this.deposits.set(deposit);
-            this._config.logger.debug("new deposit:", deposit);
-            this.deposits = this.deposits.set(depositIdentifier, depositObject);
+            try {
+                this.transactions = this.transactions.set(
+                    depositIdentifier,
+                    await promise,
+                );
+            } catch (error) {
+                this.transactions = this.transactions.remove(depositIdentifier);
+            }
         }
-        return depositObject;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return (await existingTransaction)!;
     };
 
     public addListener = <Event extends "transaction">(
@@ -509,8 +539,12 @@ export class Gateway<
     ): this => {
         // Emit previous deposit events.
         if (event === "transaction") {
-            this.deposits.map((deposit) => {
-                listener(deposit);
+            this.transactions.map((deposit) => {
+                // Check that the transaction isn't a promise.
+                // The result of promises will be emitted when they resolve.
+                if ((deposit as any).then === undefined) {
+                    listener(deposit as GatewayTransaction<ToPayload>);
+                }
             });
         }
 

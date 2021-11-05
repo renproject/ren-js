@@ -8,32 +8,34 @@ import { GatewayTransaction, TransactionStatus } from "./gatewayTransaction";
 const createDepositHandler = (retries = -1) => {
     const fn: ((gateway: GatewayTransaction) => Promise<void>) & {
         withRetries: (newRetries: number) => void;
-    } = async (gateway: GatewayTransaction) => {
+    } = async (tx: GatewayTransaction) => {
+        await tx.fetchStatus();
+
         // Loop until the deposit status is `Submitted`.
-        while (gateway.status !== TransactionStatus.Submitted) {
-            switch (gateway.status) {
+        while (tx.status !== TransactionStatus.Submitted) {
+            switch (tx.status) {
                 // The deposit has been seen, but not enough confirmations have
                 // passed yet.
                 case TransactionStatus.Detected:
                     await tryNTimes(
                         async () => {
-                            gateway._config.logger.debug(`Calling .confirmed`);
-                            gateway.in.eventEmitter.on("status", (status) => {
+                            tx._config.logger.debug(`Calling .confirmed`);
+                            tx.in.eventEmitter.on("status", (status) => {
                                 if (isDefined(status.confirmations)) {
-                                    gateway._config.logger.debug(
+                                    tx._config.logger.debug(
                                         `${status.confirmations}/${status.target} confirmations`,
                                     );
                                 } else {
-                                    gateway._config.logger.debug(
+                                    tx._config.logger.debug(
                                         `Waiting for ${status.target} confirmations...`,
                                     );
                                 }
                             });
-                            await gateway.in.wait();
+                            await tx.in.wait();
                         },
                         retries,
                         10 * SECONDS,
-                        gateway._config.logger,
+                        tx._config.logger,
                     );
                     break;
 
@@ -43,25 +45,19 @@ const createDepositHandler = (retries = -1) => {
                     await tryNTimes(
                         async () => {
                             try {
-                                gateway._config.logger.debug(`Calling .signed`);
-                                gateway.renVM.eventEmitter.on(
-                                    "status",
-                                    (status) => {
-                                        gateway._config.logger.debug(
-                                            `status: ${status}`,
-                                        );
-                                    },
-                                );
+                                tx._config.logger.debug(`Calling .signed`);
+                                tx.renVM.eventEmitter.on("status", (status) => {
+                                    tx._config.logger.debug(
+                                        `status: ${status}`,
+                                    );
+                                });
 
-                                await gateway.renVM.submit();
-                                await gateway.renVM.wait();
+                                await tx.renVM.submit();
+                                await tx.renVM.wait();
 
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             } catch (error: any) {
-                                if (
-                                    gateway.status ===
-                                    TransactionStatus.Reverted
-                                ) {
+                                if (tx.status === TransactionStatus.Reverted) {
                                     return;
                                 }
                                 throw error;
@@ -69,7 +65,7 @@ const createDepositHandler = (retries = -1) => {
                         },
                         retries,
                         10 * SECONDS,
-                        gateway._config.logger,
+                        tx._config.logger,
                     );
                     break;
 
@@ -79,14 +75,14 @@ const createDepositHandler = (retries = -1) => {
                     await tryNTimes(
                         async () => {
                             try {
-                                gateway._config.logger.debug(`Calling .mint`);
-                                if (!gateway.out) {
+                                tx._config.logger.debug(`Calling .mint`);
+                                if (!tx.out) {
                                     return;
                                 }
-                                if (gateway.out.submit) {
-                                    await gateway.out.submit();
+                                if (tx.out.submit) {
+                                    await tx.out.submit();
                                 }
-                                await gateway.out.wait();
+                                await tx.out.wait();
                                 // gateway._config.logger.debug(
                                 //     `txHash: ${
                                 //         gateway.params.toChain.transactionExplorerLink(
@@ -102,8 +98,8 @@ const createDepositHandler = (retries = -1) => {
                                         error.message || String(error),
                                     )
                                 ) {
-                                    gateway.status = TransactionStatus.Reverted;
-                                    gateway.revertReason =
+                                    tx.status = TransactionStatus.Reverted;
+                                    tx.revertReason =
                                         error.message || String(error);
                                     return;
                                 }
@@ -112,7 +108,7 @@ const createDepositHandler = (retries = -1) => {
                         },
                         retries,
                         10 * SECONDS,
-                        gateway._config.logger,
+                        tx._config.logger,
                     );
                     break;
 
@@ -121,9 +117,7 @@ const createDepositHandler = (retries = -1) => {
                 case TransactionStatus.Reverted:
                     throw new Error(
                         `RenVM transaction reverted${
-                            gateway.revertReason
-                                ? ": " + gateway.revertReason
-                                : ""
+                            tx.revertReason ? ": " + tx.revertReason : ""
                         }`,
                     );
             }

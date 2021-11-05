@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 
-import { extractError } from "./errors";
+import { extractError, RenJSError, withCode } from "./errors";
 import { Logger } from "./interfaces/logger";
 
 /**
@@ -29,6 +29,13 @@ export const tryNTimes = async <T>(
     timeout: number = 1 * SECONDS, // in ms
     logger?: Logger,
 ): Promise<T> => {
+    if (retries === 0 || typeof retries !== "number" || isNaN(retries)) {
+        throw withCode(
+            new Error(`Invalid retry amount '${retries}'.`),
+            RenJSError.PARAMETER_ERROR,
+        );
+    }
+
     let returnError;
     const errorMessages = new Set();
     for (let i = 0; retries === -1 || i < retries; i++) {
@@ -39,7 +46,7 @@ export const tryNTimes = async <T>(
             // Fix error message.
             const errorMessage = extractError(error);
             errorMessages.add(errorMessage);
-            returnError = error;
+            returnError = error || returnError;
 
             if (i < retries - 1 || retries === -1) {
                 await sleep(timeout);
@@ -50,7 +57,11 @@ export const tryNTimes = async <T>(
         }
     }
 
-    returnError.message = Array.from(errorMessages).join(", ");
+    if (returnError) {
+        returnError.message = Array.from(errorMessages).join(", ");
+    } else {
+        returnError = new Error(Array.from(errorMessages).join(", "));
+    }
 
     throw returnError;
 };

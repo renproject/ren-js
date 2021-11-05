@@ -113,13 +113,8 @@ export class HttpProvider<
             }
             return response.data.result;
         } catch (error: any) {
-            const errorResponse = error ? error.response : undefined;
-            if (errorResponse && error instanceof Error) {
-                error.message = `Node returned status ${String(
-                    errorResponse.status,
-                )} with reason: ${extractError(error)}`;
-            }
-            throw error;
+            // Re-throw error to avoid internal axios stack-trace.
+            throw new Error(extractError(error));
         }
     };
 

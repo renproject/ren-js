@@ -11,20 +11,39 @@
         "type": "constructor"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "LogTransferred",
+        "type": "event"
+    },
+    {
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "string",
-                "name": "to_",
+                "name": "to",
                 "type": "string"
             },
             {
                 "internalType": "uint256",
-                "name": "amount_",
+                "name": "amount",
                 "type": "uint256"
             }
         ],
@@ -37,27 +56,27 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "string",
-                "name": "recipientAddress_",
+                "name": "recipientAddress",
                 "type": "string"
             },
             {
                 "internalType": "string",
-                "name": "recipientChain_",
+                "name": "recipientChain",
                 "type": "string"
             },
             {
                 "internalType": "bytes",
-                "name": "recipientPayload_",
+                "name": "recipientPayload",
                 "type": "bytes"
             },
             {
                 "internalType": "uint256",
-                "name": "amount_",
+                "name": "amount",
                 "type": "uint256"
             }
         ],
@@ -70,27 +89,27 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "address",
-                "name": "recipient_",
+                "name": "recipient",
                 "type": "address"
             },
             {
                 "internalType": "uint256",
-                "name": "amount_",
+                "name": "amount",
                 "type": "uint256"
             },
             {
                 "internalType": "bytes32",
-                "name": "nHash_",
+                "name": "nHash",
                 "type": "bytes32"
             },
             {
                 "internalType": "bytes",
-                "name": "sig_",
+                "name": "sig",
                 "type": "bytes"
             }
         ],
@@ -103,33 +122,46 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "address",
-                "name": "recipient_",
+                "name": "recipient",
                 "type": "address"
             },
             {
                 "internalType": "uint256",
-                "name": "amount_",
+                "name": "amount",
                 "type": "uint256"
             },
             {
                 "internalType": "bytes32",
-                "name": "nHash_",
+                "name": "nHash",
                 "type": "bytes32"
             },
             {
                 "internalType": "bytes",
-                "name": "sig_",
+                "name": "sig",
                 "type": "bytes"
             }
         ],
         "name": "release",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "to",
+                "type": "address"
+            }
+        ],
+        "name": "transferWithLog",
+        "outputs": [],
+        "stateMutability": "payable",
         "type": "function"
     }
 ]

@@ -2,9 +2,8 @@ import BigNumber from "bignumber.js";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { fromBase64 } from "@renproject/utils";
+import { fromBase64, unmarshalPackValue } from "@renproject/utils";
 
-import { unmarshalPackValue } from "../src/pack/pack";
 import { burnParamsType, mintParamsType } from "../src/transaction";
 
 describe("Pack", () => {

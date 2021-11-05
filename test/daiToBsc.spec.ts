@@ -9,13 +9,13 @@ import {
 } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
 import { RenNetwork, SECONDS, sleep } from "../packages/utils/src";
-import { colorizeChain, getEVMProvider } from "./testUtils";
+import { getEVMProvider, printChain } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe.skip("RenJS Gateway Transaction", () => {
     it("DAI/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -35,7 +35,7 @@ describe("RenJS Gateway Transaction", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account("1000000000000000000"),
+            from: ethereum.Account({ amount: 1, convertToWei: true }),
             to: bsc.Account(),
         });
 
@@ -49,7 +49,7 @@ describe("RenJS Gateway Transaction", () => {
         for (const setupKey of Object.keys(gateway.setup)) {
             const setup = gateway.setup[setupKey];
             console.log(
-                `[${colorizeChain(gateway.params.from.chain)}⇢${colorizeChain(
+                `[${printChain(gateway.params.from.chain)}⇢${printChain(
                     gateway.params.to.chain,
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
@@ -58,9 +58,9 @@ describe("RenJS Gateway Transaction", () => {
         }
 
         console.log(
-            `[${colorizeChain(gateway.params.from.chain)}⇢${colorizeChain(
+            `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${colorizeChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.to.chain, {
                 pad: false,
             })}`,
         );
@@ -72,24 +72,23 @@ describe("RenJS Gateway Transaction", () => {
 
         await new Promise<void>((resolve, reject) => {
             gateway.on("transaction", (tx) => {
-                console.log("tx.params", tx.params);
                 (async () => {
                     console.log(
-                        `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                        `[${printChain(bsc.chain)}⇢${printChain(
                             ethereum.chain,
                         )}]: RenVM hash: ${tx.hash}`,
                     );
-                    await tx.refreshStatus();
+                    await tx.fetchStatus();
 
                     console.log(
-                        `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                        `[${printChain(bsc.chain)}⇢${printChain(
                             ethereum.chain,
                         )}][${tx.hash.slice(0, 6)}]: Status: ${tx.status}`,
                     );
 
                     tx.in.eventEmitter.on("status", (status) =>
                         console.log(
-                            `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                            `[${printChain(bsc.chain)}⇢${printChain(
                                 ethereum.chain,
                             )}][${tx.hash.slice(0, 6)}]: ${
                                 status.confirmations || 0
@@ -101,6 +100,8 @@ describe("RenJS Gateway Transaction", () => {
 
                     while (true) {
                         try {
+                            console.log(`Submitting to RenVM`);
+                            tx.renVM.eventEmitter.on("status", console.log);
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
@@ -111,14 +112,14 @@ describe("RenJS Gateway Transaction", () => {
                         }
                     }
                     console.log(
-                        `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                        `[${printChain(bsc.chain)}⇢${printChain(
                             ethereum.chain,
-                        )}][${tx.hash.slice(
-                            0,
-                            6,
-                        )}]: Submitting to ${colorizeChain(ethereum.chain, {
-                            pad: false,
-                        })}`,
+                        )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
+                            ethereum.chain,
+                            {
+                                pad: false,
+                            },
+                        )}`,
                     );
 
                     tx.out.eventEmitter.on("status", console.log);

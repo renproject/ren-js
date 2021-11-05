@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import BigNumber from "bignumber.js";
 
-import { fromBase64 } from "@renproject/utils";
+import { fromBase64 } from "../encodings";
 
 export enum PackPrimitive {
     Bool = "bool",
@@ -80,11 +82,9 @@ export type Marshalled<Type extends PackType> = Type extends PackPrimitive.Bool
     : Type extends PackNilType
     ? string
     : Type extends "list"
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      any[]
+    ? any[]
     : Type extends "struct"
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      any
+    ? any
     : never;
 
 export type Unmarshalled<Type extends PackType> =
@@ -113,11 +113,9 @@ export type Unmarshalled<Type extends PackType> =
         : Type extends PackNilType
         ? undefined
         : Type extends "list"
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          any[]
+        ? any[]
         : Type extends "struct"
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          any
+        ? any
         : never;
 
 export type PackTypeDefinition =
@@ -128,7 +126,6 @@ export type PackTypeDefinition =
 
 export interface TypedPackValue<
     T extends PackTypeDefinition = PackTypeDefinition,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     V = any,
 > {
     t: T;
@@ -139,8 +136,12 @@ export interface TypedPackValue<
  * Takes a pack primitive value (bool, uint, string or bytes) and convert it to
  * its corresponding JavaScript value (bool, BigNumber, string or Buffer).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
+
+export const unmarshalPackPrimitive = (
+    type: PackPrimitive,
+
+    value: any,
+): any => {
     switch (type) {
         // Booleans
         case PackPrimitive.Bool:
@@ -167,7 +168,10 @@ export const unmarshalPackPrimitive = (type: PackPrimitive, value: any) => {
 /**
  * Takes a pack struct and converts it to a JavaScript object.
  */
-export const unmarshalPackStruct = (type: PackStructType, value: object) => {
+export const unmarshalPackStruct = (
+    type: PackStructType,
+    value: object,
+): any => {
     const struct = {};
 
     for (const member of type.struct) {
@@ -206,7 +210,7 @@ export const unmarshalPackList = <T extends unknown>(
 export const unmarshalPackValue = (
     type: PackTypeDefinition,
     value: unknown,
-) => {
+): any => {
     if (isPackListType(type)) {
         return unmarshalPackList(type, value as unknown[]);
     } else if (isPackStructType(type)) {
@@ -235,5 +239,5 @@ export const unmarshalPackValue = (
  * Converts a { t, v } pack object, using `t` as a pack type and `v` as a pack
  * value.
  */
-export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue) =>
+export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue): any =>
     unmarshalPackValue(t, v);

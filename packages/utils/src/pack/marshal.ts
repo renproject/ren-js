@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
-import { fromBase64, toNBytes } from "@renproject/utils";
-
+import { toNBytes } from "../common";
+import { fromBase64 } from "../encodings";
 import {
     isPackListType,
     isPackStructType,
@@ -20,7 +20,7 @@ import {
  * implementation.
  * (https://github.com/renproject/pack/blob/e0f417fbbd472eccd99e4bf304b19dc04a31a950/kind.go#L19)
  */
-export const marshalPackType = (type: PackType) => {
+export const marshalPackType = (type: PackType): number => {
     switch (type) {
         case "nil":
             return 0;
@@ -114,14 +114,15 @@ const withLength = (value: Buffer) =>
 /**
  * Marshal a string, prefixed by its length.
  */
-export const marshalString = (value: string) => withLength(Buffer.from(value));
+export const marshalString = (value: string): Buffer =>
+    withLength(Buffer.from(value));
 
 /**
  * Marshal a struct type by prefixing the `struct` pack type ID and the number
  * of struct entries, and then each field name followed by the field's
  * marshalled type definition.
  */
-export const marshalPackStructType = (type: PackStructType) => {
+export const marshalPackStructType = (type: PackStructType): Buffer => {
     const length = marshalU32(type.struct.length);
 
     return Buffer.concat([
@@ -149,7 +150,7 @@ export const marshalPackStructType = (type: PackStructType) => {
  * Marshal a list type by concatenating the `list` pack type ID followed by the
  * marshalled type definition of the list's sub-type.
  */
-export const marshalPackListType = (type: PackListType) =>
+export const marshalPackListType = (type: PackListType): Buffer =>
     Buffer.concat([
         Buffer.from([marshalPackType("list")]),
         marshalPackTypeDefinition(type.list),
@@ -312,7 +313,7 @@ export const marshalPackValue = (
  * Marshal a `{ t, v }` pair by concatenating the pack type-marshalling of `t`
  * followed by the pack value-marshalling of `v`.
  */
-export const marshalTypedPackValue = ({ t, v }: TypedPackValue) => {
+export const marshalTypedPackValue = ({ t, v }: TypedPackValue): Buffer => {
     const marshalledType = marshalPackTypeDefinition(t);
     const marshalledValue = marshalPackValue(t, v);
     return Buffer.concat([marshalledType, marshalledValue]);

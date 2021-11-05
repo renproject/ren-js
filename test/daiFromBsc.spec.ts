@@ -10,7 +10,7 @@ import {
     Ethereum,
 } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
-import { colorizeChain, getEVMProvider } from "./testUtils";
+import { getEVMProvider, printChain } from "./testUtils";
 
 chai.should();
 
@@ -32,7 +32,7 @@ describe("RenJS Gateway Transaction", () => {
             getEVMProvider(BinanceSmartChain, network),
         );
 
-        const from = bsc.Account("1000000000000000000");
+        const from = bsc.Account({ amount: 1, convertToWei: true });
         // const from = fromClass.FromAccount();
         const to = ethereum.Account();
 
@@ -54,7 +54,7 @@ describe("RenJS Gateway Transaction", () => {
         for (const setupKey of Object.keys(gateway.setup)) {
             const setup = gateway.setup[setupKey];
             console.log(
-                `[${colorizeChain(gateway.params.from.chain)}⇢${colorizeChain(
+                `[${printChain(gateway.params.from.chain)}⇢${printChain(
                     gateway.params.to.chain,
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
@@ -63,9 +63,9 @@ describe("RenJS Gateway Transaction", () => {
         }
 
         console.log(
-            `[${colorizeChain(gateway.params.from.chain)}⇢${colorizeChain(
+            `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${colorizeChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.to.chain, {
                 pad: false,
             })}`,
         );
@@ -79,21 +79,21 @@ describe("RenJS Gateway Transaction", () => {
             gateway.on("transaction", (tx) => {
                 (async () => {
                     console.log(
-                        `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                        `[${printChain(bsc.chain)}⇢${printChain(
                             ethereum.chain,
                         )}]: RenVM hash: ${tx.hash}`,
                     );
-                    await tx.refreshStatus();
+                    await tx.fetchStatus();
 
                     console.log(
-                        `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                        `[${printChain(bsc.chain)}⇢${printChain(
                             ethereum.chain,
                         )}][${tx.hash.slice(0, 6)}]: Status: ${tx.status}`,
                     );
 
                     tx.in.eventEmitter.on("status", (status) =>
                         console.log(
-                            `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                            `[${printChain(bsc.chain)}⇢${printChain(
                                 ethereum.chain,
                             )}][${tx.hash.slice(0, 6)}]: ${
                                 status.confirmations || 0
@@ -115,12 +115,11 @@ describe("RenJS Gateway Transaction", () => {
                         }
                     }
                     console.log(
-                        `[${colorizeChain(bsc.chain)}⇢${colorizeChain(
+                        `[${printChain(bsc.chain)}⇢${printChain(
                             ethereum.chain,
-                        )}][${tx.hash.slice(
-                            0,
-                            6,
-                        )}]: Submitting to ${colorizeChain(ethereum.chain)}`,
+                        )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
+                            ethereum.chain,
+                        )}`,
                     );
 
                     tx.out.eventEmitter.on("status", console.log);

@@ -1,10 +1,12 @@
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { Ox } from "@renproject/utils";
-
-import { marshalTypedPackValue } from "../src/pack/marshal";
-import { PackPrimitive, TypedPackValue } from "../src/pack/pack";
+import {
+    marshalTypedPackValue,
+    Ox,
+    PackPrimitive,
+    TypedPackValue,
+} from "@renproject/utils";
 
 describe("Pack", () => {
     it("Marshal pack value", () => {

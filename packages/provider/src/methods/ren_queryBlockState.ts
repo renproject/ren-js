@@ -1,10 +1,11 @@
+import BigNumber from "bignumber.js";
+
 import {
     Marshalled,
     PackPrimitive,
     PackTypeDefinition,
     TypedPackValue,
-    Unmarshalled,
-} from "../pack/pack";
+} from "@renproject/utils";
 
 // ParamsQueryBlockState defines the parameters of the MethodQueryBlockState.
 export interface ParamsQueryBlockState {
@@ -65,47 +66,47 @@ export interface ResponseQueryBlockState {
 
 export interface BlockState {
     [asset: string]: {
-        latestHeight: Unmarshalled<PackPrimitive.U256>;
-        gasCap: Unmarshalled<PackPrimitive.U256>;
-        gasLimit: Unmarshalled<PackPrimitive.U256>;
-        gasPrice: Unmarshalled<PackPrimitive.U256>;
-        minimumAmount: Unmarshalled<PackPrimitive.U256>;
-        dustAmount: Unmarshalled<PackPrimitive.U256>;
+        latestHeight: BigNumber;
+        gasCap: BigNumber;
+        gasLimit: BigNumber;
+        gasPrice: BigNumber;
+        minimumAmount: BigNumber;
+        dustAmount: BigNumber;
         fees: {
             chains: Array<{
-                burnFee: Unmarshalled<PackPrimitive.U64>;
-                chain: Unmarshalled<PackPrimitive.Str>;
-                mintFee: Unmarshalled<PackPrimitive.U64>;
+                burnFee: BigNumber;
+                chain: string;
+                mintFee: BigNumber;
             }>;
             epochs: Array<{
-                amount: Unmarshalled<PackPrimitive.U256>;
-                epoch: Unmarshalled<PackPrimitive.U64>;
-                numNodes: Unmarshalled<PackPrimitive.U64>;
+                amount: BigNumber;
+                epoch: BigNumber;
+                numNodes: BigNumber;
             }>;
             nodes: Array<{
-                node: Unmarshalled<PackPrimitive.Bytes32>;
-                lastEpochClaimed: Unmarshalled<PackPrimitive.U64>;
+                node: Buffer;
+                lastEpochClaimed: BigNumber;
             }>;
-            unassigned: Unmarshalled<PackPrimitive.U256>;
+            unassigned: BigNumber;
         };
         shards: Array<{
-            shard: Unmarshalled<PackPrimitive.Bytes32>;
-            pubKey: Unmarshalled<PackPrimitive.Bytes>;
+            shard: Buffer;
+            pubKey: Buffer;
             queue: Array<{
-                hash: Unmarshalled<PackPrimitive.Bytes32>;
+                hash: Buffer;
             }>;
             state: {
                 outpoint: {
-                    hash: Unmarshalled<PackPrimitive.Bytes>;
-                    index: Unmarshalled<PackPrimitive.U32>;
+                    hash: Buffer;
+                    index: BigNumber;
                 };
-                value: Unmarshalled<PackPrimitive.U256>;
-                pubKeyScript: Unmarshalled<PackPrimitive.Bytes>;
+                value: BigNumber;
+                pubKeyScript: Buffer;
             };
         }>;
         minted: Array<{
-            chain: Unmarshalled<PackPrimitive.Str>;
-            amount: Unmarshalled<PackPrimitive.U256>;
+            chain: string;
+            amount: BigNumber;
         }>;
     };
 }

@@ -1,4 +1,4 @@
-import { RenVMShard } from "../../provider/build/main";
+import { RenVMShard, UrlBase64String } from "@renproject/utils";
 
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
@@ -45,8 +45,16 @@ export interface GatewayParams<
      *
      * @example
      * ```
-     * nonce: Buffer.from(new Array(32)),
+     * // Number
+     * nonce: 100,
+     *
+     * // String
+     * nonce: "ZA", // In URL-base64 or standard base64 format.
+     *
+     * // String
+     * nonce: toURLBase64(Buffer.from([100])) // from @renproject/utils
      * ```
+     *
      *
      * @example
      * ```
@@ -56,7 +64,7 @@ export interface GatewayParams<
      *          .toArrayLike(Buffer, "be", 32),
      * ```
      */
-    nonce?: Buffer | string;
+    nonce?: UrlBase64String | number;
 
     shard?: RenVMShard;
 

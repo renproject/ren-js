@@ -7,16 +7,13 @@ import { Ox } from "./encodings";
 /**
  * Normalize the `s` and `v` values of the signature.
  */
-export const fixSignature = (
-    r: Buffer,
-    s: Buffer,
-    v: number,
-): {
-    r: Buffer;
-    s: Buffer;
-    v: number;
-} => {
-    assertType<Buffer>("Buffer", { r, s });
+export const fixSignature = (signature: Buffer): Buffer => {
+    assertType<Buffer>("Buffer", { signature });
+
+    const r: Buffer = signature.slice(0, 32);
+    const s: Buffer = signature.slice(32, 64);
+    let v: number = signature.slice(64, 65)[0];
+
     let sBN = new BigNumber(Ox(s), 16);
 
     // Normalize v value
@@ -38,9 +35,5 @@ export const fixSignature = (
         v = v === 27 ? 28 : 27;
     }
 
-    return {
-        r,
-        s: toNBytes(sBN, 32),
-        v,
-    };
+    return Buffer.concat([r, toNBytes(sBN, 32), Buffer.from([v])]);
 };

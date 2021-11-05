@@ -1,9 +1,12 @@
 import BigNumber from "bignumber.js";
 
-import { RenVMProvider, unmarshalTypedPackValue } from "@renproject/provider";
-import { Chain, RenJSError, withCode } from "@renproject/utils";
-
-import { BlockState } from "../../provider/build/main/methods/ren_queryBlockState";
+import { BlockState, RenVMProvider } from "@renproject/provider";
+import {
+    Chain,
+    RenJSError,
+    unmarshalTypedPackValue,
+    withCode,
+} from "@renproject/utils";
 
 export { Gateway as LockAndMint } from "./gateway";
 
@@ -24,9 +27,7 @@ export const estimateTransactionFee = async (
     fromChain: Chain,
     toChain: Chain,
 ): Promise<GatewayFees> => {
-    const renVMState = await renVM.queryBlockState();
-
-    const blockState: BlockState = unmarshalTypedPackValue(renVMState.state);
+    const blockState: BlockState = await renVM.queryBlockState(5);
 
     if (!blockState[asset]) {
         throw withCode(
@@ -42,7 +43,7 @@ export const estimateTransactionFee = async (
         (chainFees) => chainFees.chain === toChain.chain,
     )[0];
 
-    const lockAndMint = await fromChain.assetIsNative(asset);
+    const isLockAndMint = await fromChain.isLockAsset(asset);
 
     const mintFee =
         mintAndBurnFees && mintAndBurnFees.mintFee
@@ -53,24 +54,31 @@ export const estimateTransactionFee = async (
             ? mintAndBurnFees.burnFee.toNumber()
             : 15;
 
+    /**
+     * Calculate the expected amount a user will receive if they send the input
+     * amount.
+     */
     const estimateOutput = (input: BigNumber | string | number): BigNumber => {
-        if (lockAndMint) {
+        if (isLockAndMint) {
             return new BigNumber(input)
                 .minus(transferFee)
                 .times(BIP_DENOMINATOR - mintFee)
-                .dividedBy(BIP_DENOMINATOR);
+                .dividedBy(BIP_DENOMINATOR)
+                .decimalPlaces(0);
         }
         return new BigNumber(input)
             .times(BIP_DENOMINATOR - burnFee)
             .dividedBy(BIP_DENOMINATOR)
-            .minus(transferFee);
+            .minus(transferFee)
+            .decimalPlaces(0);
     };
 
     const minimumDeposit = minimumAmount
         .plus(transferFee)
         .plus(dustAmount.plus(1))
-        .times((lockAndMint ? mintFee : burnFee) + BIP_DENOMINATOR)
-        .dividedBy(BIP_DENOMINATOR);
+        .times((isLockAndMint ? mintFee : burnFee) + BIP_DENOMINATOR)
+        .dividedBy(BIP_DENOMINATOR)
+        .decimalPlaces(0);
 
     return {
         lock: transferFee,

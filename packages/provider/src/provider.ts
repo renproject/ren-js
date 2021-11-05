@@ -1,54 +1,46 @@
 import {
     assertType,
-    fromBase64,
-    isDefined,
     Logger,
+    memoize,
     nullLogger,
     RenJSError,
     RenNetwork,
     RenNetworkString,
-    SECONDS,
-    sleep,
+    RenVMShard,
     toURLBase64,
-    TxStatus,
+    unmarshalTypedPackValue,
     withCode,
 } from "@renproject/utils";
 
-import { memoize } from "./memoize";
-import {
-    BlockState,
-    ResponseQueryBlockState,
-} from "./methods/ren_queryBlockState";
-import { unmarshalTypedPackValue } from "./pack/pack";
-import { HttpProvider } from "./rpc/jsonRpc";
 import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
-    ParamsQueryTx,
     ParamsQueryTxs,
-    ParamsSubmitCrossChainTransaction,
     ParamsSubmitGateway,
-    RenVMParams,
-    RenVMResponses,
+    ParamsSubmitTx,
+    ResponseQueryBlock,
+    ResponseQueryBlocks,
+    ResponseQueryConfig,
+    ResponseQueryTx,
+    ResponseSubmitGateway,
+    ResponseSubmitTx,
     RPCMethod,
-} from "./rpc/methods";
-import { renRpcUrls } from "./rpcUrls";
-import { RenVMShard } from "./shard";
-import {
-    crossChainParamsType,
-    CrossChainTransactionInput,
-    hashTransaction,
+    RPCParams,
+    RPCResponses,
     SubmitGatewayInput,
     submitGatewayType,
-} from "./transaction";
+} from "./methods";
+import { BlockState } from "./methods/ren_queryBlockState";
+import { HttpProvider } from "./rpc/jsonRpc";
+import { renRpcUrls } from "./rpcUrls";
 import {
-    CrossChainTxResponse,
-    CrossChainTxWithStatus,
-    TxResponseWithStatus,
-    unmarshalCrossChainTxResponse,
+    RenVMCrossChainTransaction,
+    RenVMTransaction,
+    RenVMTransactionWithStatus,
+    unmarshalRenVMTransaction,
 } from "./unmarshal";
 
-export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
+export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
     public readonly logger: Logger;
 
     constructor(
@@ -62,29 +54,33 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
     public queryBlock = async (
         blockHeight: ParamsQueryBlock["blockHeight"],
         retry?: number,
-    ) =>
-        this.sendMessage<RPCMethod.QueryBlock>(
-            RPCMethod.QueryBlock,
-            { blockHeight },
-            retry,
-        );
+    ): Promise<ResponseQueryBlock> =>
+        (
+            await this.sendMessage<RPCMethod.QueryBlock>(
+                RPCMethod.QueryBlock,
+                { blockHeight },
+                retry,
+            )
+        ).block;
 
     public queryBlocks = async (
         blockHeight: ParamsQueryBlocks["blockHeight"],
         n: ParamsQueryBlocks["n"],
         retry?: number,
-    ) =>
-        this.sendMessage<RPCMethod.QueryBlocks>(
-            RPCMethod.QueryBlocks,
-            { blockHeight, n },
-            retry,
-        );
+    ): Promise<ResponseQueryBlocks> =>
+        (
+            await this.sendMessage<RPCMethod.QueryBlocks>(
+                RPCMethod.QueryBlocks,
+                { blockHeight, n },
+                retry,
+            )
+        ).blocks;
 
     public submitGateway = async (
         gateway: ParamsSubmitGateway["gateway"],
         tx: ParamsSubmitGateway["tx"],
         retry?: number,
-    ) =>
+    ): Promise<ResponseSubmitGateway> =>
         this.sendMessage<RPCMethod.SubmitGateway>(
             RPCMethod.SubmitGateway,
             { gateway, tx },
@@ -92,19 +88,12 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         );
 
     public submitTx = async (
-        tx: ParamsSubmitCrossChainTransaction["tx"],
+        tx: ParamsSubmitTx["tx"],
         retry?: number,
-    ) =>
+    ): Promise<ResponseSubmitTx> =>
         this.sendMessage<RPCMethod.SubmitTx>(
             RPCMethod.SubmitTx,
-            { tx } as ParamsSubmitCrossChainTransaction,
-            retry,
-        );
-
-    public queryTx = async (txHash: ParamsQueryTx["txHash"], retry?: number) =>
-        this.sendMessage<RPCMethod.QueryTx>(
-            RPCMethod.QueryTx,
-            { txHash },
+            { tx } as ParamsSubmitTx,
             retry,
         );
 
@@ -114,58 +103,54 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
         pageSize?: number,
         txStatus?: ParamsQueryTxs["txStatus"],
         retry?: number,
-    ) =>
-        this.sendMessage<RPCMethod.QueryTxs>(
-            RPCMethod.QueryTxs,
-            {
-                tags,
-                page: (page || 0).toString(),
-                pageSize: (pageSize || 0).toString(),
-                txStatus,
-            },
-            retry,
-        );
+    ): Promise<RenVMTransaction[]> =>
+        (
+            await this.sendMessage<RPCMethod.QueryTxs>(
+                RPCMethod.QueryTxs,
+                {
+                    tags,
+                    page: (page || 0).toString(),
+                    pageSize: (pageSize || 0).toString(),
+                    txStatus,
+                },
+                retry,
+            )
+        ).txs.map((tx) => unmarshalRenVMTransaction(tx));
 
-    public queryConfig = async (retry?: number) =>
+    public queryConfig = async (retry?: number): Promise<ResponseQueryConfig> =>
         this.sendMessage<RPCMethod.QueryConfig>(
             RPCMethod.QueryConfig,
             {},
             retry,
         );
 
-    /**
-     * @deprecated - use `queryBlockState` instead.
-     */
-    public queryState = async (retry?: number) =>
-        this.sendMessage<RPCMethod.QueryState>(RPCMethod.QueryState, {}, retry);
-
-    public queryBlockState = memoize(async (retry?: number) =>
-        this.sendMessage<RPCMethod.QueryBlockState>(
-            RPCMethod.QueryBlockState,
-            {},
-            retry,
-        ),
+    public queryBlockState = memoize(
+        async (retry?: number): Promise<BlockState> => {
+            const { state } = await this.sendMessage<RPCMethod.QueryBlockState>(
+                RPCMethod.QueryBlockState,
+                {},
+                retry,
+            );
+            return unmarshalTypedPackValue(state);
+        },
     );
 
-    public buildGateway = ({
-        selector,
-        gHash,
-        gPubKey,
-        nHash,
-        nonce,
-        payload,
-        pHash,
-        to,
-    }: {
-        selector: string;
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-    }): SubmitGatewayInput => {
+    public submitGatewayDetails = async (
+        gateway: string,
+        params: {
+            selector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        },
+        retries?: number,
+    ): Promise<string> => {
+        const { selector, gHash, gPubKey, nHash, nonce, payload, pHash, to } =
+            params;
         assertType<Buffer>("Buffer", {
             gHash,
             gPubKey,
@@ -187,124 +172,12 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
                 to,
             },
         };
-        return {
+        const tx = {
             selector: selector,
             version: "1",
             // TODO: Fix types
             in: txIn as unknown as SubmitGatewayInput["in"],
         };
-    };
-
-    public buildTransaction = ({
-        selector,
-        gHash,
-        gPubKey,
-        nHash,
-        nonce,
-        output,
-        amount,
-        payload,
-        pHash,
-        to,
-    }: {
-        selector: string;
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        output: { txid: string; txindex: string };
-        amount: string;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-    }): CrossChainTransactionInput => {
-        assertType<Buffer>("Buffer", {
-            gHash,
-            gPubKey,
-            nHash,
-            nonce,
-            payload,
-            pHash,
-        });
-        assertType<string>("string", {
-            to,
-            amount,
-            txindex: output.txindex,
-            txid: output.txid,
-        });
-        const txIn = {
-            t: crossChainParamsType,
-            v: {
-                txid: output.txid,
-                txindex: output.txindex,
-                ghash: toURLBase64(gHash),
-                gpubkey: toURLBase64(gPubKey),
-                nhash: toURLBase64(nHash),
-                nonce: toURLBase64(nonce),
-                payload: toURLBase64(payload),
-                phash: toURLBase64(pHash),
-                to,
-                amount,
-            },
-        };
-        const version = "1";
-        return {
-            hash: toURLBase64(hashTransaction(version, selector, txIn)),
-            selector: selector,
-            version,
-            // TODO: Fix types
-            in: txIn as unknown as CrossChainTransactionInput["in"],
-        };
-    };
-
-    public transactionHash = (params: {
-        selector: string;
-        gHash: Buffer;
-        gPubKey: Buffer;
-        nHash: Buffer;
-        nonce: Buffer;
-        output: { txindex: string; txid: string };
-        amount: string;
-        payload: Buffer;
-        pHash: Buffer;
-        to: string;
-    }): Buffer => fromBase64(this.buildTransaction(params).hash);
-
-    public submitTransaction = async (
-        params: {
-            selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            output: { txindex: string; txid: string };
-            amount: string;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        },
-        retries?: number,
-    ): Promise<Buffer> => {
-        const tx = this.buildTransaction(params);
-        await this.submitTx(tx, retries);
-        return fromBase64(tx.hash);
-    };
-
-    public submitGatewayDetails = async (
-        gateway: string,
-        params: {
-            selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            payload: Buffer;
-            pHash: Buffer;
-            to: string;
-        },
-        retries?: number,
-    ): Promise<string> => {
-        const tx = this.buildGateway(params);
         await this.submitGateway(gateway, tx, retries);
         return gateway;
     };
@@ -313,92 +186,56 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
      * Queries the result of a RenVM transaction and unmarshals the result into
      * a [[LockAndMintTransaction]] or [[BurnAndReleaseTransaction]].
      *
-     * @param renVMTxHash The transaction hash as a Buffer.
+     * @param txHash The transaction hash in URL-base64.
      */
-    public readonly queryTransaction = async (
-        renVMTxHash: Buffer,
+    public readonly queryTx = async <
+        T extends RenVMTransactionWithStatus = RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
+    >(
+        txHash: string,
         retries?: number,
-    ): Promise<CrossChainTxWithStatus> => {
+    ): Promise<T> => {
+        assertType<string>("string", { txHash });
+
+        let response: ResponseQueryTx;
         try {
-            const response = await this.queryTx(
-                toURLBase64(renVMTxHash),
+            response = await this.sendMessage<RPCMethod.QueryTx>(
+                RPCMethod.QueryTx,
+                { txHash },
                 retries,
             );
-
-            return {
-                tx: unmarshalCrossChainTxResponse(response.tx),
-                txStatus: response.txStatus,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-            throw error;
-        }
-    };
-
-    /**
-     * Fetches the result of a RenVM transaction on a repeated basis until the
-     * transaction's status is `"done"`.
-     *
-     * @param utxoTxHash The transaction hash as a Buffer.
-     * @param onStatus A callback called each time the status of the transaction
-     * is refreshed - even if it hasn't changed.
-     * @param _cancelRequested A function that returns `true` to cancel the
-     * loop.
-     */
-    public readonly waitForTX = async (
-        utxoTxHash: Buffer,
-        onStatus?: (status: TxStatus) => void,
-        _cancelRequested?: () => boolean,
-        timeout?: number,
-    ): Promise<CrossChainTxWithStatus> => {
-        assertType<Buffer>("Buffer", { utxoTxHash });
-        let rawResponse: CrossChainTxWithStatus;
-        while (true) {
-            if (_cancelRequested && _cancelRequested()) {
-                throw new Error(`waitForTX cancelled.`);
+            if (error.message.match(/^invalid params: /)) {
+                throw withCode(error, RenJSError.PARAMETER_ERROR);
+            } else if (error.message.match(/not found$/)) {
+                throw withCode(error, RenJSError.TRANSACTION_NOT_FOUND);
+            } else {
+                throw withCode(error, RenJSError.UNKNOWN_ERROR);
             }
-
-            try {
-                const result = await this.queryTransaction(utxoTxHash);
-                if (result && result.txStatus === TxStatus.TxStatusDone) {
-                    rawResponse = result;
-                    break;
-                } else if (onStatus && result && result.txStatus) {
-                    onStatus(result.txStatus);
-                }
-            } catch (error: unknown) {
-                if (
-                    error instanceof Error &&
-                    /(not found)|(not available)/.exec(
-                        String((error || {}).message),
-                    )
-                ) {
-                    // ignore
-                } else {
-                    this.logger.error(String(error));
-                    // TODO: throw unexpected errors
-                }
-            }
-            await sleep(isDefined(timeout) ? timeout : 15 * SECONDS);
         }
-        return rawResponse;
+
+        try {
+            return {
+                tx: unmarshalRenVMTransaction(response.tx),
+                txStatus: response.txStatus,
+            } as T;
+        } catch (error: any) {
+            throw withCode(error, RenJSError.INTERNAL_ERROR);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
 
     /**
      * selectShard fetches the public key for the RenVM shard handling
      * the provided contract.
-     *
-     * @param selector A RenVM selector, e.g. 'BTC/toEthereum'.
-     * @returns The public key hash (20 bytes) as a string.
      */
     public readonly selectShard = async (
         asset: string,
     ): Promise<RenVMShard> => {
-        let renVMState: ResponseQueryBlockState;
+        let blockState: BlockState;
 
         try {
             // Call the ren_queryBlockState RPC.
-            renVMState = await this.queryBlockState(5);
+            blockState = await this.queryBlockState(5);
         } catch (error: any) {
             throw withCode(
                 new Error(
@@ -407,10 +244,6 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
                 RenJSError.NETWORK_ERROR,
             );
         }
-
-        const blockState: BlockState = unmarshalTypedPackValue(
-            renVMState.state,
-        );
 
         if (!blockState[asset]) {
             throw new Error(`No RenVM block state found for ${asset}.`);
@@ -432,7 +265,9 @@ export class RenVMProvider extends HttpProvider<RenVMParams, RenVMResponses> {
     public getNetwork = async (): Promise<string> =>
         (await this.queryConfig()).network;
 
-    public getConfirmationTarget = async (chainName: string) => {
+    public getConfirmationTarget = async (
+        chainName: string,
+    ): Promise<number> => {
         const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
         return parseInt(renVMConfig.confirmations[chainName], 10);
     };

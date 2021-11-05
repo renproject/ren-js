@@ -19,7 +19,7 @@ loadDotEnv();
 chai.should();
 
 describe("Logs", () => {
-    it.only("LogLock", async () => {
+    it("LogLock", async () => {
         const network = RenNetwork.Testnet;
         const ethNetwork = Ethereum.configMap[network];
 

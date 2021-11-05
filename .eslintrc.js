@@ -130,7 +130,7 @@ module.exports = {
         "jsdoc/require-property-type": 0,
         "jsdoc/require-returns-type": 0,
         "jsdoc/require-jsdoc": [
-            "warn",
+            "off",
             {
                 publicOnly: true,
                 require: {
@@ -149,7 +149,12 @@ module.exports = {
 
         // Ignored for now:
         "import/no-extraneous-dependencies": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "warn",
+        "@typescript-eslint/explicit-module-boundary-types": [
+            "warn",
+            {
+                allowArgumentsExplicitlyTypedAsAny: true,
+            },
+        ],
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",

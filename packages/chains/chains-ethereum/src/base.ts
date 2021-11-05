@@ -7,6 +7,7 @@ import {
     Web3Provider,
 } from "@ethersproject/providers";
 import {
+    assertType,
     ChainTransaction,
     ContractChain,
     DefaultTxWaiter,
@@ -15,6 +16,7 @@ import {
     InputType,
     isDefined,
     Logger,
+    memoize,
     nullLogger,
     OutputType,
     Ox,
@@ -61,13 +63,10 @@ import {
     PayloadHandler,
 } from "./utils/payloads/evmPayloadHandlers";
 import {
-    ContractCall,
     EthereumClassConfig,
     EthProvider,
     EthProviderUpdate,
     EvmNetworkConfig,
-    InputContractCall,
-    OutputContractCall,
 } from "./utils/types";
 import { EvmExplorer, StandardEvmExplorer } from "./utils/utils";
 
@@ -85,14 +84,22 @@ export class EthereumBaseChain
     public explorer: EvmExplorer;
     public logger: Logger;
 
-    public getRenAsset = async (asset: string): Promise<string> =>
-        await getRenAsset(this.network, this.provider, asset);
-    public getMintGateway = async (asset: string): Promise<string> =>
-        await getMintGateway(this.network, this.provider, asset);
-    public getLockAsset = async (asset: string): Promise<string> =>
-        await getLockAsset(this.network, this.provider, asset);
-    public getLockGateway = async (asset: string): Promise<string> =>
-        await getLockGateway(this.network, this.provider, asset);
+    public getRenAsset = memoize(
+        async (asset: string): Promise<string> =>
+            await getRenAsset(this.network, this.provider, asset),
+    );
+    public getMintGateway = memoize(
+        async (asset: string): Promise<string> =>
+            await getMintGateway(this.network, this.provider, asset),
+    );
+    public getLockAsset = memoize(
+        async (asset: string): Promise<string> =>
+            await getLockAsset(this.network, this.provider, asset),
+    );
+    public getLockGateway = memoize(
+        async (asset: string): Promise<string> =>
+            await getLockGateway(this.network, this.provider, asset),
+    );
 
     constructor(
         network: EvmNetworkConfig,
@@ -178,7 +185,7 @@ export class EthereumBaseChain
     // Supported assets
 
     /** Return true if the asset originates from the chain. */
-    assetIsNative = async (assetSymbol: string): Promise<boolean> => {
+    isLockAsset = memoize(async (assetSymbol: string): Promise<boolean> => {
         // Check if it in the list of hard-coded assets.
         if (
             Object.keys(this.assets).includes(assetSymbol) ||
@@ -189,7 +196,7 @@ export class EthereumBaseChain
 
         // Check if the asset has an associated lock-gateway.
         try {
-            if (await this.getLockGateway(assetSymbol)) {
+            if (await this.getLockAsset(assetSymbol)) {
                 return true;
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -198,7 +205,7 @@ export class EthereumBaseChain
         }
 
         return false;
-    };
+    });
 
     /**
      * `assetIsSupported` should return true if the asset is native to the
@@ -208,14 +215,10 @@ export class EthereumBaseChain
      * ethereum.assetIsSupported = asset => asset === "ETH";
      * ```
      */
-    assetIsSupported = async (asset: string): Promise<boolean> => {
-        if (await this.assetIsNative(asset)) {
-            return true;
-        }
-
+    isMintAsset = memoize(async (asset: string): Promise<boolean> => {
         // Check that there's a gateway contract for the asset.
         try {
-            return !!(await this.getMintGateway(asset));
+            return !!(await this.getRenAsset(asset));
         } catch (error: unknown) {
             if (
                 error instanceof Error &&
@@ -230,7 +233,7 @@ export class EthereumBaseChain
             }
             return false;
         }
-    };
+    });
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
@@ -239,39 +242,50 @@ export class EthereumBaseChain
      *
 
      */
-    assetDecimals = async (asset: string): Promise<number> => {
-        // TODO: get lock asset decimals
+    assetDecimals = memoize(
+        async (asset: string): Promise<number> => {
+            // TODO: get lock asset decimals
 
-        if (asset === "ETH") {
-            return 18;
-        }
-        const tokenAddress = await this.getMintGateway(asset);
+            if (asset === this.network.network.nativeCurrency.symbol) {
+                return this.network.network.nativeCurrency.decimals;
+            }
 
-        const decimalsABI: AbiItem = {
-            constant: true,
-            inputs: [],
-            name: "decimals",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            payable: false,
-            stateMutability: "view",
-            type: "function",
-        };
+            let tokenAddress: string;
+            if (await this.isLockAsset(asset)) {
+                tokenAddress = await this.getLockAsset(asset);
+            } else if (await this.isMintAsset(asset)) {
+                tokenAddress = await this.getRenAsset(asset);
+            } else {
+                throw new Error(`Unsupported asset ${asset}.`);
+            }
 
-        const tokenContract = new Contract(
-            tokenAddress,
-            [decimalsABI],
-            this.provider,
-        );
+            const decimalsABI: AbiItem = {
+                constant: true,
+                inputs: [],
+                name: "decimals",
+                outputs: [
+                    {
+                        internalType: "uint256",
+                        name: "",
+                        type: "uint256",
+                    },
+                ],
+                payable: false,
+                stateMutability: "view",
+                type: "function",
+            };
 
-        const decimalsRaw = await tokenContract.decimals();
-        return new BigNumber(decimalsRaw.toString()).toNumber();
-    };
+            const tokenContract = new Contract(
+                tokenAddress,
+                [decimalsABI],
+                this.provider,
+            );
+
+            const decimalsRaw = await tokenContract.decimals();
+            return new BigNumber(decimalsRaw.toString()).toNumber();
+        },
+        { expiry: false },
+    );
 
     transactionConfidence = async (
         transaction: ChainTransaction,
@@ -406,18 +420,14 @@ export class EthereumBaseChain
         contractCall: EVMPayload,
         getParams: () => {
             pHash: Buffer;
-            amount: BigNumber;
             nHash: Buffer;
+            amount?: BigNumber;
             sigHash?: Buffer;
-            signature?: {
-                r: Buffer;
-                s: Buffer;
-                v: number;
-            };
+            signature?: Buffer;
         },
         confirmationTarget: number,
     ): Promise<TxSubmitter | TxWaiter> => {
-        const { pHash, amount, nHash, sigHash, signature } = getParams();
+        const { nHash, sigHash } = getParams();
 
         let existingTransaction;
         if (type === OutputType.Release) {
@@ -444,10 +454,6 @@ export class EthereumBaseChain
                 chain: this,
                 target: confirmationTarget,
             });
-        }
-
-        if (!signature) {
-            throw new Error(`No signature provided.`);
         }
 
         // const overrideArray = Object.keys(override || {}).map((key) => ({
@@ -704,11 +710,7 @@ export class EthereumBaseChain
             amount?: BigNumber;
             nHash?: Buffer;
             sigHash?: Buffer;
-            signature?: {
-                r: Buffer;
-                s: Buffer;
-                v: number;
-            };
+            signature?: Buffer;
         },
     ): EVMParamValues => {
         return {
@@ -721,6 +723,8 @@ export class EthereumBaseChain
                     return await this.getRenAsset(asset);
                 }
             },
+            [EVMParam.EVM_TOKEN_DECIMALS]: async () =>
+                await this.assetDecimals(asset),
             [EVMParam.EVM_ACCOUNT]: async () => {
                 if (!this.signer) {
                     throw withCode(
@@ -745,21 +749,15 @@ export class EthereumBaseChain
                 : undefined, // in wei
             [EVMParam.EVM_NHASH]: params.nHash,
             [EVMParam.EVM_PHASH]: params.pHash,
-            [EVMParam.EVM_SIGNATURE]: isDefined(params.signature)
-                ? Buffer.concat([
-                      params.signature.r,
-                      params.signature.s,
-                      Buffer.from([params.signature.v]),
-                  ])
-                : undefined,
+            [EVMParam.EVM_SIGNATURE]: params.signature,
             [EVMParam.EVM_SIGNATURE_R]: isDefined(params.signature)
-                ? params.signature.r
+                ? params.signature.slice(0, 32)
                 : undefined,
             [EVMParam.EVM_SIGNATURE_S]: isDefined(params.signature)
-                ? params.signature.s
+                ? params.signature.slice(32, 64)
                 : undefined,
             [EVMParam.EVM_SIGNATURE_V]: isDefined(params.signature)
-                ? params.signature.v
+                ? params.signature.slice(64, 65)[0]
                 : undefined,
 
             // Available when locking or burning
@@ -779,18 +777,51 @@ export class EthereumBaseChain
 
     /* ====================================================================== */
 
-    public Account = (amount?: BigNumber | string | number): EVMPayload => ({
-        chain: this.chain,
-        type: "account",
-        params: {
-            amount: amount
-                ? (BigNumber.isBigNumber(amount)
-                      ? amount
-                      : new BigNumber(amount.toString())
-                  ).toFixed()
-                : undefined,
-        },
-    });
+    public Account = ({
+        amount,
+        convertToWei,
+    }: {
+        amount?: BigNumber | string | number;
+        convertToWei?: boolean;
+    } = {}): EVMPayload => {
+        assertType<BigNumber | string | number | undefined>(
+            "BigNumber | string | number | undefined",
+            { amount },
+        );
+        assertType<boolean | undefined>("boolean | undefined", {
+            convertToWei,
+        });
+
+        let fixedAmount;
+        if (isDefined(amount)) {
+            fixedAmount = BigNumber.isBigNumber(amount)
+                ? amount
+                : new BigNumber(amount.toString());
+            if (fixedAmount.isNaN()) {
+                throw withCode(
+                    new Error(
+                        `Invalid numeric-value 'amount'. (amount: ${amount.toString()})`,
+                    ),
+                    RenJSError.PARAMETER_ERROR,
+                );
+            } else if (!convertToWei && fixedAmount.decimalPlaces() !== 0) {
+                throw withCode(
+                    new Error(
+                        `Amount must be provided in Wei as an integer, or 'convertToWei' must be set to 'true'. (amount: ${amount.toString()})`,
+                    ),
+                    RenJSError.PARAMETER_ERROR,
+                );
+            }
+        }
+        return {
+            chain: this.chain,
+            type: "account",
+            params: {
+                amount: fixedAmount ? fixedAmount.toFixed() : undefined,
+                convertToWei,
+            },
+        };
+    };
 
     public Contract = (params: {
         to: string;

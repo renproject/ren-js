@@ -69,12 +69,6 @@ export interface ChainCommon {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withProvider?: (...args: any[]) => SyncOrPromise<this>;
 
-    /** Return true if the asset originates from the chain. */
-    assetIsNative: (asset: string) => SyncOrPromise<boolean>;
-
-    /** Return true if the asset is native or can be minted on the chain. */
-    assetIsSupported: (asset: string) => SyncOrPromise<boolean>;
-
     /** Return the asset's decimals, or throw for an unsupported asset. */
     assetDecimals: (asset: string) => SyncOrPromise<number>;
 
@@ -117,6 +111,13 @@ export interface DepositChain<
         chain: string;
     },
 > extends ChainCommon {
+    /** Return true if the asset originates from the chain. */
+    isLockAsset: (asset: string) => SyncOrPromise<boolean>;
+
+    /**
+     * On contract chains, some lock assets may be deposit assets and others
+     * may be locked through a smart contract.
+     */
     isDepositAsset: (asset: string) => SyncOrPromise<boolean>;
 
     /**
@@ -163,6 +164,12 @@ export interface ContractChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToContractCall extends { chain: string } = FromContractCall,
 > extends ChainCommon {
+    /** Return true if the asset originates from the chain. */
+    isLockAsset: (asset: string) => SyncOrPromise<boolean>;
+
+    /** Return true if the asset can be minted on the chain. */
+    isMintAsset: (asset: string) => SyncOrPromise<boolean>;
+
     // Get contract addresses.
     getRenAsset: (asset: string) => SyncOrPromise<string>;
     getMintGateway: (asset: string) => SyncOrPromise<string>;
@@ -237,16 +244,13 @@ export interface ContractChain<
         asset: string,
         contractCall: ToContractCall,
         params: () => {
-            amount: BigNumber;
             sHash: Buffer;
             pHash: Buffer;
             nHash: Buffer;
+
+            amount?: BigNumber;
             sigHash?: Buffer;
-            signature?: {
-                r: Buffer;
-                s: Buffer;
-                v: number;
-            };
+            signature?: Buffer;
         },
         confirmationTarget: number,
     ) => SyncOrPromise<TxSubmitter | TxWaiter>;

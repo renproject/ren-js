@@ -8,9 +8,10 @@
         "lint": "lerna run lint --scope @renproject/*",
         "fix": "lerna run fix --scope @renproject/*",
         "test-no-bail": "lerna run test --no-bail --scope @renproject/*",
-        "cov": "lerna run cov --scope @renproject/*",
-        "test:unit": "lerna run test --scope @renproject/*",
-        "test": "nyc ./node_modules/ts-mocha/bin/ts-mocha --color --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts"
+        "cov:all": "lerna run cov --scope @renproject/*",
+        "test:all": "lerna run test --scope @renproject/*",
+        "cov": "nyc ./node_modules/ts-mocha/bin/ts-mocha --color --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts",
+        "test": "ts-mocha --color --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts"
     },
     "devDependencies": {
         "@istanbuljs/nyc-config-typescript": "^1.0.1",

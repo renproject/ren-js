@@ -1,80 +1,77 @@
 import BigNumber from "bignumber.js";
 
-import { TxStatus } from "@renproject/utils";
+import {
+    fixSignature,
+    TxStatus,
+    TypedPackValue,
+    unmarshalTypedPackValue,
+    UrlBase64String,
+} from "@renproject/utils";
 
-import { TypedPackValue, unmarshalTypedPackValue } from "./pack/pack";
-import { ResponseQueryTx } from "./rpc/methods";
-import { UrlBase64String } from "./value";
+import { ResponseQueryTx } from "./methods";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface UnmarshalledTxInput<Input = any> {
+export interface RenVMTransaction<Input = any, Output = any> {
     hash: UrlBase64String;
     version: number;
     selector: string; // "BTC/fromEthereum",
     in: Input;
+    out?: Output;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface UnmarshalledTxOutput<Input = any, Output = any>
-    extends UnmarshalledTxInput<Input> {
-    out: Output;
-}
-
-export interface TxResponseWithStatus<
-    Transaction extends UnmarshalledTxOutput,
+export interface RenVMTransactionWithStatus<
+    Transaction extends RenVMTransaction = RenVMTransaction,
 > {
     tx: Transaction;
     txStatus: TxStatus;
 }
 
-export interface CrossChainTxInput {
-    txid: Buffer;
-    txindex: BigNumber;
-    amount: BigNumber;
-    payload: Buffer;
-    phash: Buffer;
-    to: string;
-    nonce: Buffer;
-    nhash: Buffer;
-    gpubkey: Buffer;
-    ghash: Buffer;
-}
-
-export interface CrossChainTxOutput {
-    amount: BigNumber;
-    fees: BigNumber;
-    hash: Buffer;
-    revert: string;
-    sig: Buffer;
-    sighash: Buffer;
-    txid: Buffer;
-    txindex: BigNumber;
-}
-
-export type CrossChainTxResponse = UnmarshalledTxOutput<
+export type RenVMCrossChainTransaction = RenVMTransaction<
     // Input
-    CrossChainTxInput,
+    {
+        txid: Buffer;
+        txindex: BigNumber;
+        amount: BigNumber;
+        payload: Buffer;
+        phash: Buffer;
+        to: string;
+        nonce: Buffer;
+        nhash: Buffer;
+        gpubkey: Buffer;
+        ghash: Buffer;
+    },
     // Output
-    CrossChainTxOutput
+    {
+        amount: BigNumber;
+        fees: BigNumber;
+        hash: Buffer;
+        revert: string;
+        sig: Buffer;
+        sighash: Buffer;
+        txid: Buffer;
+        txindex: BigNumber;
+    }
 >;
 
-export type CrossChainTxWithStatus = TxResponseWithStatus<CrossChainTxResponse>;
-
-export const unmarshalTxResponse = <
-    Input,
-    Output,
+export const unmarshalRenVMTransaction = <
+    Input = any,
+    Output = any,
     TypedInput extends TypedPackValue = TypedPackValue,
     TypedOutput extends TypedPackValue = TypedPackValue,
 >(
     tx: ResponseQueryTx<TypedInput, TypedOutput>["tx"],
-): UnmarshalledTxOutput<Input, Output> => ({
-    version: parseInt(tx.version),
-    hash: tx.hash,
-    selector: tx.selector,
-    in: unmarshalTypedPackValue(tx.in),
-    out: unmarshalTypedPackValue(tx.out),
-});
+): RenVMTransaction<Input, Output> => {
+    // If the transaction has a signature output, apply standard signature fixes.
+    const out = unmarshalTypedPackValue(tx.out);
+    if (out && out.sig && Buffer.isBuffer(out.sig) && out.sig.length > 0) {
+        out.sig = fixSignature(out.sig);
+    }
 
-export const unmarshalCrossChainTxResponse = (
-    tx: ResponseQueryTx["tx"],
-): CrossChainTxResponse => unmarshalTxResponse(tx);
+    return {
+        version: parseInt(tx.version),
+        hash: tx.hash,
+        selector: tx.selector,
+        in: unmarshalTypedPackValue(tx.in),
+        out,
+    };
+};

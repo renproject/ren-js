@@ -84,7 +84,7 @@ export interface TxSubmitter<
  * been submitted.
  */
 export class DefaultTxWaiter implements TxWaiter {
-    private _chainTransaction: ChainTransaction;
+    private _chainTransaction?: ChainTransaction;
     private _chain: Chain;
     private _target: number;
 
@@ -111,7 +111,7 @@ export class DefaultTxWaiter implements TxWaiter {
         chain,
         target,
     }: {
-        chainTransaction: ChainTransaction;
+        chainTransaction?: ChainTransaction;
         chain: Chain;
         target: number;
     }) {
@@ -124,11 +124,18 @@ export class DefaultTxWaiter implements TxWaiter {
 
         this.status = {
             chain: chain.chain,
-            transaction: chainTransaction,
             status: ChainTransactionStatus.Confirming,
             target,
+            ...(chainTransaction ? { transaction: chainTransaction } : {}),
         };
     }
+
+    setTransaction = (chainTransaction?: ChainTransaction): void => {
+        this._chainTransaction = chainTransaction;
+        this.updateStatus({
+            transaction: chainTransaction,
+        });
+    };
 
     wait = (
         target?: number,
@@ -156,9 +163,7 @@ export class DefaultTxWaiter implements TxWaiter {
             let currentConfidenceRatio = -1;
             while (true) {
                 const confidence = (
-                    await this._chain.transactionConfidence(
-                        this._chainTransaction,
-                    )
+                    await this._chain.transactionConfidence(tx)
                 ).toNumber();
 
                 const confidenceRatio = target === 0 ? 1 : confidence / target;

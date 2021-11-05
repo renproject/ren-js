@@ -1,8 +1,11 @@
 import BigNumber from "bignumber.js";
+import createHash from "create-hash";
 import { keccak256 as jsKeccak256 } from "js-sha3";
 
 import { assertType } from "./assert";
 import { padBuffer, toNBytes } from "./common";
+import { marshalString, marshalTypedPackValue } from "./pack/marshal";
+import { TypedPackValue } from "./pack/pack";
 
 /**
  * Return the keccak256 hash of an array of buffers. The inputs are concatenated
@@ -16,6 +19,11 @@ export const keccak256 = (...msg: Buffer[]): Buffer => {
             Buffer.concat(msg),
         ),
     );
+};
+
+export const sha256 = (...msg: Buffer[]): Buffer => {
+    assertType<Buffer[]>("Buffer[]", { msg });
+    return createHash("sha256").update(Buffer.concat(msg)).digest();
 };
 
 /**
@@ -140,4 +148,20 @@ export const generateSighash = (
     ]);
 
     return keccak256(encoded);
+};
+
+/**
+ * Calculate the hash of a RenVM transaction.
+ */
+export const generateTransactionHash = (
+    version: string,
+    selector: string,
+    packValue: TypedPackValue,
+): Buffer => {
+    assertType<string>("string", { version, selector });
+    return sha256(
+        marshalString(version),
+        marshalString(selector),
+        marshalTypedPackValue(packValue),
+    );
 };

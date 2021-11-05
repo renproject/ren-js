@@ -18,13 +18,13 @@ import { SECONDS, sleep } from "@renproject/utils/src";
 
 import RenJS from "../packages/ren/src";
 import { GatewayParams } from "../packages/ren/src/params";
-import { colorizeChain, getEVMProvider } from "./testUtils";
+import { getEVMProvider, printChain } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe.skip("RenJS Gateway Transaction", () => {
     it("DAI/to*", async function () {
         this.timeout(100000000000);
 
@@ -69,12 +69,14 @@ describe("RenJS Gateway Transaction", () => {
 
                         const toAddress = await toClass.signer.getAddress();
                         console.log(
-                            `[${colorizeChain(
+                            `[${printChain(
                                 toClass.chain,
                             )}] Address: ${toAddress}`,
                         );
 
-                        const from = fromClass.Account("1000000000000000000");
+                        const from = fromClass.Account({
+                            amount: "1000000000000000000",
+                        });
                         // const from = fromClass.FromAccount();
                         const to = toClass.Account();
 
@@ -102,9 +104,9 @@ describe("RenJS Gateway Transaction", () => {
                             const setup = gateway.setup[setupKey];
                             await throttles[setup.chain](async () => {
                                 console.log(
-                                    `[${colorizeChain(
+                                    `[${printChain(
                                         fromClass.chain,
-                                    )}⇢${colorizeChain(
+                                    )}⇢${printChain(
                                         toClass.chain,
                                     )}]: Calling ${setupKey} setup for ${String(
                                         setup.chain,
@@ -117,9 +119,7 @@ describe("RenJS Gateway Transaction", () => {
 
                         await throttles[fromClass.chain](async () => {
                             console.log(
-                                `[${colorizeChain(
-                                    fromClass.chain,
-                                )}⇢${colorizeChain(
+                                `[${printChain(fromClass.chain)}⇢${printChain(
                                     toClass.chain,
                                 )}]: Submitting to ${String(fromClass.chain)}`,
                             );
@@ -131,7 +131,7 @@ describe("RenJS Gateway Transaction", () => {
                         });
 
                         // console.log(
-                        //     `[${colorizeChain(toClass.chain)}] ${colorizeChain(
+                        //     `[${printChain(toClass.chain)}] ${printChain(
                         //         fromClass.chain,
                         //         { pad: false },
                         //     )} Gateway address: ${gateway.gatewayAddress()}`,
@@ -141,18 +141,18 @@ describe("RenJS Gateway Transaction", () => {
                             gateway.on("transaction", (tx) => {
                                 (async () => {
                                     console.log(
-                                        `[${colorizeChain(
+                                        `[${printChain(
                                             fromClass.chain,
-                                        )}⇢${colorizeChain(
+                                        )}⇢${printChain(
                                             toClass.chain,
                                         )}]: RenVM hash: ${tx.hash}`,
                                     );
-                                    await tx.refreshStatus();
+                                    await tx.fetchStatus();
 
                                     console.log(
-                                        `[${colorizeChain(
+                                        `[${printChain(
                                             fromClass.chain,
-                                        )}⇢${colorizeChain(
+                                        )}⇢${printChain(
                                             toClass.chain,
                                         )}][${tx.hash.slice(0, 6)}]: Status: ${
                                             tx.status
@@ -161,9 +161,9 @@ describe("RenJS Gateway Transaction", () => {
 
                                     tx.in.eventEmitter.on("status", (status) =>
                                         console.log(
-                                            `[${colorizeChain(
+                                            `[${printChain(
                                                 fromClass.chain,
-                                            )}⇢${colorizeChain(
+                                            )}⇢${printChain(
                                                 toClass.chain,
                                             )}][${tx.hash.slice(0, 6)}]: ${
                                                 status.confirmations || 0
@@ -174,9 +174,9 @@ describe("RenJS Gateway Transaction", () => {
                                     await tx.in.wait();
                                     // .on("target", (target) =>
                                     //     console.log(
-                                    //         `[${colorizeChain(
+                                    //         `[${printChain(
                                     //             fromClass.chain,
-                                    //         )}⇢${colorizeChain(
+                                    //         )}⇢${printChain(
                                     //             toClass.chain,
                                     //         )}][${tx.hash.slice(
                                     //             0,
@@ -188,9 +188,9 @@ describe("RenJS Gateway Transaction", () => {
                                     //     "confirmation",
                                     //     (confirmations, target) =>
                                     //         console.log(
-                                    //             `[${colorizeChain(
+                                    //             `[${printChain(
                                     //                 fromClass.chain,
-                                    //             )}⇢${colorizeChain(
+                                    //             )}⇢${printChain(
                                     //                 toClass.chain,
                                     //             )}][${tx.hash.slice(
                                     //                 0,
@@ -211,14 +211,14 @@ describe("RenJS Gateway Transaction", () => {
                                     }
                                     await throttles[toClass.chain](async () => {
                                         console.log(
-                                            `[${colorizeChain(
+                                            `[${printChain(
                                                 fromClass.chain,
-                                            )}⇢${colorizeChain(
+                                            )}⇢${printChain(
                                                 toClass.chain,
                                             )}][${tx.hash.slice(
                                                 0,
                                                 6,
-                                            )}]: Submitting to ${colorizeChain(
+                                            )}]: Submitting to ${printChain(
                                                 toClass.chain,
                                             )}`,
                                         );

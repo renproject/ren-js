@@ -66,6 +66,9 @@ export const ethereumDevnet: EvmNetworkConfig = {
     },
 };
 
+/**
+ * The Ethereum RenJS implementation.
+ */
 export class Ethereum extends EthereumBaseChain {
     public static chain = "Ethereum";
 
@@ -96,6 +99,12 @@ export class Ethereum extends EthereumBaseChain {
     };
     public assets = Ethereum.assets;
 
+    /**
+     *
+     * @param network
+     * @param web3Provider a Web3 or Ethers.js provider.
+     * @param config pass optional configurations, e.g. a logger
+     */
     constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,

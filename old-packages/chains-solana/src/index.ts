@@ -234,7 +234,7 @@ export class Solana
         return this;
     };
 
-    assetIsNative = (asset: string) => asset === "SOL";
+    isLockAsset = (asset: string) => asset === "SOL";
 
     /**
      * `assetIsSupported` should return true if the the asset is native to the
@@ -246,7 +246,7 @@ export class Solana
      */
     assetIsSupported = async (asset: string) => {
         await this.waitForInitialization();
-        if (this.assetIsNative(asset)) {
+        if (this.isLockAsset(asset)) {
             return true;
         }
 

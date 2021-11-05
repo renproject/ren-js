@@ -1,12 +1,17 @@
-import { TxStatus } from "@renproject/utils";
+import {
+    Marshalled,
+    PackPrimitive,
+    PackTypeDefinition,
+    TxStatus,
+    TypedPackValue,
+} from "@renproject/utils";
 
 import {
     ParamsQueryBlockState,
     ResponseQueryBlockState,
-} from "../methods/ren_queryBlockState";
-import { TypedPackValue } from "../pack/pack";
-import { CrossChainTransactionInput, SubmitGatewayInput } from "../transaction";
-import { RenVMType, RenVMValue } from "../value";
+} from "./ren_queryBlockState";
+
+export * from "./ren_queryBlockState";
 
 export enum RPCMethod {
     // MethodSubmitGateway submits the details of a gateway to the lightnode,
@@ -43,12 +48,152 @@ export enum RPCMethod {
 
 // Params //////////////////////////////////////////////////////////////////////
 
+export interface TransactionInput<
+    Input extends TypedPackValue = TypedPackValue,
+> {
+    hash: string;
+    version: string;
+    selector: string;
+    in: Input;
+}
+
+export interface TransactionOutput<
+    Input extends TypedPackValue,
+    Output extends TypedPackValue,
+> extends TransactionInput<Input> {
+    out: Output;
+}
+
+export interface RPCValue<Types extends PackTypeDefinition, Values> {
+    t: Types;
+    v: Values;
+}
+
+export type EmptyRPCStruct = RPCValue<{ struct: [] }, {}>;
+
+export const burnParamsType: PackTypeDefinition = {
+    struct: [
+        {
+            amount: PackPrimitive.U256,
+        },
+        {
+            to: PackPrimitive.Str,
+        },
+        {
+            nonce: PackPrimitive.Bytes32,
+        },
+    ],
+};
+
+export const crossChainParamsType: PackTypeDefinition = {
+    struct: [
+        {
+            txid: PackPrimitive.Bytes,
+        },
+        {
+            txindex: PackPrimitive.U32,
+        },
+        {
+            amount: PackPrimitive.U256,
+        },
+        {
+            payload: PackPrimitive.Bytes,
+        },
+        {
+            phash: PackPrimitive.Bytes32,
+        },
+        {
+            to: PackPrimitive.Str,
+        },
+        {
+            nonce: PackPrimitive.Bytes32,
+        },
+        {
+            nhash: PackPrimitive.Bytes32,
+        },
+        {
+            gpubkey: PackPrimitive.Bytes,
+        },
+        {
+            ghash: PackPrimitive.Bytes32,
+        },
+    ],
+};
+
+export type CrossChainParams = RPCValue<
+    // Types
+    typeof crossChainParamsType,
+    // Values
+    {
+        amount: Marshalled<PackPrimitive.U256>;
+        ghash: Marshalled<PackPrimitive.Bytes32>; // "x0gTBzbXmM1Xdwk-B8PHJ4sgY2T_NcrWsxK6MJ2xYos",
+        gpubkey: Marshalled<PackPrimitive.Bytes>; // "8Qnq",
+        nhash: Marshalled<PackPrimitive.Bytes32>; // "a_46LkThVhVYlkIxBXaInubuEmYcfDNk45EBl60prhA",
+        nonce: Marshalled<PackPrimitive.Bytes32>; // "vPIiF6apzdJ4Rr8IMpT2uywo8LbuHOcaEXQ21ydXFBA",
+        payload: Marshalled<PackPrimitive.Bytes>; // "I_9MVtYiO4NlH7lwIx8",
+        phash: Marshalled<PackPrimitive.Bytes32>; // "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ",
+        to: Marshalled<PackPrimitive.Str>; // "򝊞􋄛𧚞󥫨򨚘󳽈򤙳񙓻򳳱􎖫򗣌𻄭񑦁򏬰񆆅򒒛􊗓𧜿򇞣􁓹",
+        txid: Marshalled<PackPrimitive.Bytes>;
+        txindex: Marshalled<PackPrimitive.U32>;
+    }
+>;
+
+export const submitGatewayType: PackTypeDefinition = {
+    struct: [
+        {
+            payload: PackPrimitive.Bytes,
+        },
+        {
+            phash: PackPrimitive.Bytes32,
+        },
+        {
+            to: PackPrimitive.Str,
+        },
+        {
+            nonce: PackPrimitive.Bytes32,
+        },
+        {
+            nhash: PackPrimitive.Bytes32,
+        },
+        {
+            gpubkey: PackPrimitive.Bytes,
+        },
+        {
+            ghash: PackPrimitive.Bytes32,
+        },
+    ],
+};
+
+export type SubmitGateway = RPCValue<
+    // Types
+    typeof submitGatewayType,
+    // Values
+    {
+        amount: Marshalled<PackPrimitive.U256>;
+        ghash: Marshalled<PackPrimitive.Bytes32>; // "x0gTBzbXmM1Xdwk-B8PHJ4sgY2T_NcrWsxK6MJ2xYos",
+        gpubkey: Marshalled<PackPrimitive.Bytes>; // "8Qnq",
+        nhash: Marshalled<PackPrimitive.Bytes32>; // "a_46LkThVhVYlkIxBXaInubuEmYcfDNk45EBl60prhA",
+        nonce: Marshalled<PackPrimitive.Bytes32>; // "vPIiF6apzdJ4Rr8IMpT2uywo8LbuHOcaEXQ21ydXFBA",
+        payload: Marshalled<PackPrimitive.Bytes>; // "I_9MVtYiO4NlH7lwIx8",
+        phash: Marshalled<PackPrimitive.Bytes32>; // "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ",
+        to: Marshalled<PackPrimitive.Str>; // "򝊞􋄛𧚞󥫨򨚘󳽈򤙳񙓻򳳱􎖫򗣌𻄭񑦁򏬰񆆅򒒛􊗓𧜿򇞣􁓹",
+        txid: Marshalled<PackPrimitive.Bytes>;
+        txindex: Marshalled<PackPrimitive.U32>;
+    }
+>;
+
+export interface SubmitGatewayInput {
+    version: string;
+    selector: string;
+    in: SubmitGateway;
+}
+
 // ParamsQueryTxs defines the parameters of the MethodQueryTxs.
 export interface ParamsQueryTxs {
     txStatus?: TxStatus;
-    page: RenVMValue<RenVMType.U64>;
-    pageSize?: RenVMValue<RenVMType.U64>;
-    tags: Array<RenVMValue<RenVMType.B32>>;
+    page: Marshalled<PackPrimitive.U64>;
+    pageSize?: Marshalled<PackPrimitive.U64>;
+    tags: Array<Marshalled<PackPrimitive.Bytes32>>;
 }
 
 export type ParamsSubmitGateway = {
@@ -57,15 +202,12 @@ export type ParamsSubmitGateway = {
 };
 
 // ParamsSubmitTx defines the parameters of the MethodSubmitTx.
-export interface ParamsSubmitTx<T extends CrossChainTransactionInput> {
+export interface ParamsSubmitTx<T extends TransactionInput = TransactionInput> {
     // Tx being submitted.
     tx: T;
     // Tags that should be attached to the Tx.
-    // tags: Array<RenVMValue<RenVMType.B32>>;
+    // tags: Array<Marshalled<PackPrimitive.Bytes32>>;
 }
-
-export type ParamsSubmitCrossChainTransaction =
-    ParamsSubmitTx<CrossChainTransactionInput>;
 
 // ParamsQueryTx defines the parameters of the MethodQueryTx.
 export interface ParamsQueryTx {
@@ -138,12 +280,7 @@ export interface ResponseQueryTx<
 
 // ResponseQueryTxs defines the response of the MethodQueryTxs.
 export interface ResponseQueryTxs {
-    txs: Array<{
-        hash: string;
-        to: string;
-        in: TypedPackValue;
-        out?: TypedPackValue;
-    }>;
+    txs: Array<ResponseQueryTx["tx"]>;
 }
 
 // ResponseQueryBlock defines the response of the MethodQueryBlock.
@@ -161,10 +298,10 @@ export interface ResponseQueryBlocks {
 // ResponseQueryConfig defines the response of the MethodQueryConfig.
 export interface ResponseQueryConfig {
     confirmations: {
-        [chain: string]: RenVMValue<RenVMType.U64>;
+        [chain: string]: Marshalled<PackPrimitive.U64>;
     };
     maxConfirmations: {
-        [chain: string]: RenVMValue<RenVMType.U64>;
+        [chain: string]: Marshalled<PackPrimitive.U64>;
     };
     network: string;
     registries: {
@@ -204,8 +341,8 @@ export interface ResponseQueryState {
 
 // /////////////////////////////////////////////////////////////////////////////
 
-export type RenVMParams = {
-    [RPCMethod.SubmitTx]: ParamsSubmitCrossChainTransaction;
+export type RPCParams = {
+    [RPCMethod.SubmitTx]: ParamsSubmitTx;
     [RPCMethod.SubmitGateway]: ParamsSubmitGateway;
     [RPCMethod.QueryTx]: ParamsQueryTx;
     [RPCMethod.QueryTxs]: ParamsQueryTxs;
@@ -216,7 +353,7 @@ export type RenVMParams = {
     [RPCMethod.QueryBlockState]: ParamsQueryBlockState;
 };
 
-export type RenVMResponses = {
+export type RPCResponses = {
     [RPCMethod.SubmitTx]: ResponseSubmitTx;
     [RPCMethod.SubmitGateway]: ResponseSubmitGateway;
     [RPCMethod.QueryTx]: ResponseQueryTx;
@@ -230,7 +367,5 @@ export type RenVMResponses = {
 
 // The following lines will throw a type error if RenVMResponses or RenVMParams
 // aren't defined for all RPC methods.
-// type _responsesCheck = RenVMResponses[RPCMethod];
-// type _paramsCheck = RenVMParams[RPCMethod];
-(): RenVMParams[RPCMethod] | void => {};
-(): RenVMResponses[RPCMethod] | void => {};
+(): RPCParams[RPCMethod] | void => {};
+(): RPCResponses[RPCMethod] | void => {};

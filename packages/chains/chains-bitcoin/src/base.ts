@@ -130,11 +130,10 @@ export abstract class BitcoinBaseChain
         !new BigNumber(transaction.txindex).isNaN();
 
     /**
-     * See [[LockChain.assetIsNative]].
+     * See [[LockChain.isLockAsset]].
      */
-    assetIsNative = (asset: string): boolean =>
+    isLockAsset = (asset: string): boolean =>
         asset === this.network.nativeAsset.symbol;
-    assetIsSupported = this.assetIsNative;
 
     isDepositAsset = (asset: string) => {
         this.assertAssetIsSupported(asset);
@@ -142,7 +141,7 @@ export abstract class BitcoinBaseChain
     };
 
     public readonly assertAssetIsSupported = (asset: string) => {
-        if (!this.assetIsNative(asset)) {
+        if (!this.isLockAsset(asset)) {
             throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
     };
@@ -290,13 +289,6 @@ export abstract class BitcoinBaseChain
             chain: this.chain,
         };
     };
-
-    burnPayload? = (burnPayloadConfig?: {
-        chain: string;
-        address: string;
-    }) => ({
-        to: burnPayloadConfig ? burnPayloadConfig.address : undefined,
-    });
 
     toSats = (value: BigNumber | string | number): string =>
         new BigNumber(value).shiftedBy(8).decimalPlaces(0).toFixed();

@@ -38,22 +38,31 @@ export class HttpProvider<
     Responses extends { [event: string]: any } = {},
 > implements Provider<Requests, Responses>
 {
-    public readonly nodeURL: string;
+    public readonly endpointOrProvider: Provider<Requests, Responses> | string;
     public readonly logger: Logger;
 
-    constructor(ipOrMultiaddress: string, logger: Logger = nullLogger) {
+    /**
+     * Create a new HttpProvider.
+     *
+     * @param endpointOrProvider A URI for a RenVM JSON-RPC endpoint, or another
+     * HttpProvider to forward calls to.
+     * @param logger Optionally pass a logger object.
+     */
+    constructor(
+        endpointOrProvider: Provider<Requests, Responses> | string,
+        logger: Logger = nullLogger,
+    ) {
         this.logger = logger;
 
-        if (typeof ipOrMultiaddress !== "string") {
-            throw new Error(`Invalid node URL ${String(ipOrMultiaddress)}`);
-        }
-
-        if (ipOrMultiaddress.indexOf("://") === -1) {
+        if (
+            typeof endpointOrProvider === "string" &&
+            endpointOrProvider.indexOf("://") === -1
+        ) {
             throw new Error(
-                `Invalid node URL without protocol: ${ipOrMultiaddress}.`,
+                `Invalid node URL without protocol: ${endpointOrProvider}.`,
             );
         }
-        this.nodeURL = ipOrMultiaddress;
+        this.endpointOrProvider = endpointOrProvider;
     }
 
     public sendMessage = async <Method extends keyof Requests & string>(
@@ -62,6 +71,11 @@ export class HttpProvider<
         retry = 2,
         timeout = 120 * SECONDS,
     ): Promise<Responses[Method]> => {
+        const endpoint = this.endpointOrProvider;
+        if (typeof endpoint !== "string") {
+            return endpoint.sendMessage(method, request, retry, timeout);
+        }
+
         const payload = generatePayload(method, request);
 
         if (
@@ -78,7 +92,7 @@ export class HttpProvider<
             const response = await tryNTimes(
                 async () =>
                     axios.post<JSONRPCResponse<Responses[Method]>>(
-                        this.nodeURL,
+                        endpoint,
                         payload,
                         // Use a 120 second timeout. This could be reduced, but
                         // should be done based on the method, since some requests

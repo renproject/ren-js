@@ -19,21 +19,25 @@ import { EventFragment, FunctionFragment, Result } from "@ethersproject/abi";
 import { BytesLike } from "@ethersproject/bytes";
 import { Listener, Provider } from "@ethersproject/providers";
 
-import { TypedEvent, TypedEventFilter, TypedListener } from "./commons";
+import type {
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
+} from "./common";
 
-interface MintGatewayV3Interface extends ethers.utils.Interface {
+export interface MintGatewayV3Interface extends ethers.utils.Interface {
     functions: {
         "__GatewayStateManager_init(string,string,address,address)": FunctionFragment;
         "__MintGateway_init(string,string,address,address)": FunctionFragment;
         "_burnFromPreviousGateway(bytes,uint256,address)": FunctionFragment;
         "_mintFromPreviousGateway(bytes32,uint256,bytes32,bytes,address)": FunctionFragment;
-        "_status(bytes32)": FunctionFragment;
         "asset()": FunctionFragment;
         "burn(bytes,uint256)": FunctionFragment;
         "burnWithPayload(string,string,bytes,uint256)": FunctionFragment;
         "chain()": FunctionFragment;
+        "eventNonce()": FunctionFragment;
         "mint(bytes32,uint256,bytes32,bytes)": FunctionFragment;
-        "nextN()": FunctionFragment;
         "owner()": FunctionFragment;
         "previousGateway()": FunctionFragment;
         "renounceOwnership()": FunctionFragment;
@@ -66,10 +70,6 @@ interface MintGatewayV3Interface extends ethers.utils.Interface {
         functionFragment: "_mintFromPreviousGateway",
         values: [BytesLike, BigNumberish, BytesLike, BytesLike, string],
     ): string;
-    encodeFunctionData(
-        functionFragment: "_status",
-        values: [BytesLike],
-    ): string;
     encodeFunctionData(functionFragment: "asset", values?: undefined): string;
     encodeFunctionData(
         functionFragment: "burn",
@@ -81,10 +81,13 @@ interface MintGatewayV3Interface extends ethers.utils.Interface {
     ): string;
     encodeFunctionData(functionFragment: "chain", values?: undefined): string;
     encodeFunctionData(
+        functionFragment: "eventNonce",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
         functionFragment: "mint",
         values: [BytesLike, BigNumberish, BytesLike, BytesLike],
     ): string;
-    encodeFunctionData(functionFragment: "nextN", values?: undefined): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(
         functionFragment: "previousGateway",
@@ -149,7 +152,6 @@ interface MintGatewayV3Interface extends ethers.utils.Interface {
         functionFragment: "_mintFromPreviousGateway",
         data: BytesLike,
     ): Result;
-    decodeFunctionResult(functionFragment: "_status", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "asset", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
     decodeFunctionResult(
@@ -157,8 +159,11 @@ interface MintGatewayV3Interface extends ethers.utils.Interface {
         data: BytesLike,
     ): Result;
     decodeFunctionResult(functionFragment: "chain", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "eventNonce",
+        data: BytesLike,
+    ): Result;
     decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "nextN", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "previousGateway",
@@ -235,20 +240,22 @@ interface MintGatewayV3Interface extends ethers.utils.Interface {
 }
 
 export type LogAssetUpdatedEvent = TypedEvent<
-    [string, string] & { _asset: string; _selectorHash: string }
+    [string, string],
+    { _asset: string; _selectorHash: string }
 >;
+
+export type LogAssetUpdatedEventFilter = TypedEventFilter<LogAssetUpdatedEvent>;
 
 export type LogBurnEvent = TypedEvent<
-    [string, BigNumber, BigNumber, string] & {
-        to: string;
-        amount: BigNumber;
-        burnNonce: BigNumber;
-        indexedTo: string;
-    }
+    [string, BigNumber, BigNumber, string],
+    { to: string; amount: BigNumber; burnNonce: BigNumber; indexedTo: string }
 >;
 
+export type LogBurnEventFilter = TypedEventFilter<LogBurnEvent>;
+
 export type LogBurnToChainEvent = TypedEvent<
-    [string, string, string, BigNumber, BigNumber, string, string] & {
+    [string, string, string, BigNumber, BigNumber, string, string],
+    {
         recipientAddress: string;
         recipientChain: string;
         recipientPayload: string;
@@ -259,75 +266,75 @@ export type LogBurnToChainEvent = TypedEvent<
     }
 >;
 
+export type LogBurnToChainEventFilter = TypedEventFilter<LogBurnToChainEvent>;
+
 export type LogChainUpdatedEvent = TypedEvent<
-    [string, string] & { _chain: string; _selectorHash: string }
+    [string, string],
+    { _chain: string; _selectorHash: string }
 >;
+
+export type LogChainUpdatedEventFilter = TypedEventFilter<LogChainUpdatedEvent>;
 
 export type LogMintEvent = TypedEvent<
-    [string, BigNumber, BigNumber, string] & {
-        to: string;
-        amount: BigNumber;
-        sigHash: BigNumber;
-        nHash: string;
-    }
+    [string, BigNumber, BigNumber, string],
+    { to: string; amount: BigNumber; sigHash: BigNumber; nHash: string }
 >;
+
+export type LogMintEventFilter = TypedEventFilter<LogMintEvent>;
 
 export type LogPreviousGatewayUpdatedEvent = TypedEvent<
-    [string] & { _newPreviousGateway: string }
+    [string],
+    { _newPreviousGateway: string }
 >;
+
+export type LogPreviousGatewayUpdatedEventFilter =
+    TypedEventFilter<LogPreviousGatewayUpdatedEvent>;
 
 export type LogSignatureVerifierUpdatedEvent = TypedEvent<
-    [string] & { _newSignatureVerifier: string }
+    [string],
+    { _newSignatureVerifier: string }
 >;
 
-export type LogTokenUpdatedEvent = TypedEvent<[string] & { _newToken: string }>;
+export type LogSignatureVerifierUpdatedEventFilter =
+    TypedEventFilter<LogSignatureVerifierUpdatedEvent>;
+
+export type LogTokenUpdatedEvent = TypedEvent<[string], { _newToken: string }>;
+
+export type LogTokenUpdatedEventFilter = TypedEventFilter<LogTokenUpdatedEvent>;
 
 export type OwnershipTransferredEvent = TypedEvent<
-    [string, string] & { previousOwner: string; newOwner: string }
+    [string, string],
+    { previousOwner: string; newOwner: string }
 >;
+
+export type OwnershipTransferredEventFilter =
+    TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface MintGatewayV3 extends BaseContract {
     connect(signerOrProvider: Signer | Provider | string): this;
     attach(addressOrName: string): this;
     deployed(): Promise<this>;
 
-    listeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter?: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): Array<TypedListener<EventArgsArray, EventArgsObject>>;
-    off<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    on<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    once<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeListener<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeAllListeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): this;
+    interface: MintGatewayV3Interface;
 
-    listeners(eventName?: string): Array<Listener>;
-    off(eventName: string, listener: Listener): this;
-    on(eventName: string, listener: Listener): this;
-    once(eventName: string, listener: Listener): this;
-    removeListener(eventName: string, listener: Listener): this;
-    removeAllListeners(eventName?: string): this;
-
-    queryFilter<EventArgsArray extends Array<any>, EventArgsObject>(
-        event: TypedEventFilter<EventArgsArray, EventArgsObject>,
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
         fromBlockOrBlockhash?: string | number | undefined,
         toBlock?: string | number | undefined,
-    ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
+    ): Promise<Array<TEvent>>;
 
-    interface: MintGatewayV3Interface;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>,
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>,
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
     functions: {
         __GatewayStateManager_init(
@@ -342,61 +349,59 @@ export interface MintGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         _burnFromPreviousGateway(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
-            caller_: string,
+            recipient: BytesLike,
+            amount: BigNumberish,
+            caller: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         _mintFromPreviousGateway(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
-            caller_: string,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
+            caller: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
-
-        _status(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
         asset(overrides?: CallOverrides): Promise<[string]>;
 
         "burn(bytes,uint256)"(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
+            recipient: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         "burn(string,uint256)"(
-            recipient_: string,
-            amount_: BigNumberish,
+            recipient: string,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         burnWithPayload(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         chain(overrides?: CallOverrides): Promise<[string]>;
 
+        eventNonce(overrides?: CallOverrides): Promise<[BigNumber]>;
+
         mint(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
-
-        nextN(overrides?: CallOverrides): Promise<[BigNumber]>;
 
         owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -410,7 +415,7 @@ export interface MintGatewayV3 extends BaseContract {
 
         signatureVerifier(overrides?: CallOverrides): Promise<[string]>;
 
-        status(hash_: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
+        status(hash: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
         token(overrides?: CallOverrides): Promise<[string]>;
 
@@ -425,27 +430,27 @@ export interface MintGatewayV3 extends BaseContract {
         ): Promise<ContractTransaction>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
     };
@@ -462,61 +467,59 @@ export interface MintGatewayV3 extends BaseContract {
         chain_: string,
         asset_: string,
         signatureVerifier_: string,
-        token: string,
+        token_: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     _burnFromPreviousGateway(
-        recipient_: BytesLike,
-        amount_: BigNumberish,
-        caller_: string,
+        recipient: BytesLike,
+        amount: BigNumberish,
+        caller: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     _mintFromPreviousGateway(
-        pHash_: BytesLike,
-        amount_: BigNumberish,
-        nHash_: BytesLike,
-        sig_: BytesLike,
-        caller_: string,
+        pHash: BytesLike,
+        amount: BigNumberish,
+        nHash: BytesLike,
+        sig: BytesLike,
+        caller: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
-
-    _status(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     asset(overrides?: CallOverrides): Promise<string>;
 
     "burn(bytes,uint256)"(
-        recipient_: BytesLike,
-        amount_: BigNumberish,
+        recipient: BytesLike,
+        amount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     "burn(string,uint256)"(
-        recipient_: string,
-        amount_: BigNumberish,
+        recipient: string,
+        amount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     burnWithPayload(
-        recipientAddress_: string,
-        recipientChain_: string,
-        recipientPayload_: BytesLike,
-        amount_: BigNumberish,
+        recipientAddress: string,
+        recipientChain: string,
+        recipientPayload: BytesLike,
+        amount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     chain(overrides?: CallOverrides): Promise<string>;
 
+    eventNonce(overrides?: CallOverrides): Promise<BigNumber>;
+
     mint(
-        pHash_: BytesLike,
-        amount_: BigNumberish,
-        nHash_: BytesLike,
-        sig_: BytesLike,
+        pHash: BytesLike,
+        amount: BigNumberish,
+        nHash: BytesLike,
+        sig: BytesLike,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
-
-    nextN(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -530,7 +533,7 @@ export interface MintGatewayV3 extends BaseContract {
 
     signatureVerifier(overrides?: CallOverrides): Promise<string>;
 
-    status(hash_: BytesLike, overrides?: CallOverrides): Promise<boolean>;
+    status(hash: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     token(overrides?: CallOverrides): Promise<string>;
 
@@ -545,27 +548,27 @@ export interface MintGatewayV3 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     updateAsset(
-        nextAsset_: string,
+        nextAsset: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updateChain(
-        nextChain_: string,
+        nextChain: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updatePreviousGateway(
-        nextPreviousGateway_: string,
+        nextPreviousGateway: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updateSignatureVerifier(
-        nextSignatureVerifier_: string,
+        nextSignatureVerifier: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updateToken(
-        nextToken_: string,
+        nextToken: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -582,61 +585,59 @@ export interface MintGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         _burnFromPreviousGateway(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
-            caller_: string,
+            recipient: BytesLike,
+            amount: BigNumberish,
+            caller: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         _mintFromPreviousGateway(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
-            caller_: string,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
+            caller: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
-
-        _status(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
         asset(overrides?: CallOverrides): Promise<string>;
 
         "burn(bytes,uint256)"(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
+            recipient: BytesLike,
+            amount: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         "burn(string,uint256)"(
-            recipient_: string,
-            amount_: BigNumberish,
+            recipient: string,
+            amount: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         burnWithPayload(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         chain(overrides?: CallOverrides): Promise<string>;
 
+        eventNonce(overrides?: CallOverrides): Promise<BigNumber>;
+
         mint(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
-
-        nextN(overrides?: CallOverrides): Promise<BigNumber>;
 
         owner(overrides?: CallOverrides): Promise<string>;
 
@@ -648,7 +649,7 @@ export interface MintGatewayV3 extends BaseContract {
 
         signatureVerifier(overrides?: CallOverrides): Promise<string>;
 
-        status(hash_: BytesLike, overrides?: CallOverrides): Promise<boolean>;
+        status(hash: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
         token(overrides?: CallOverrides): Promise<string>;
 
@@ -663,27 +664,27 @@ export interface MintGatewayV3 extends BaseContract {
         ): Promise<void>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: CallOverrides,
         ): Promise<void>;
     };
@@ -692,48 +693,24 @@ export interface MintGatewayV3 extends BaseContract {
         "LogAssetUpdated(string,bytes32)"(
             _asset?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _asset: string; _selectorHash: string }
-        >;
-
+        ): LogAssetUpdatedEventFilter;
         LogAssetUpdated(
             _asset?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _asset: string; _selectorHash: string }
-        >;
+        ): LogAssetUpdatedEventFilter;
 
         "LogBurn(bytes,uint256,uint256,bytes)"(
             to?: null,
             amount?: null,
             burnNonce?: BigNumberish | null,
             indexedTo?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, BigNumber, BigNumber, string],
-            {
-                to: string;
-                amount: BigNumber;
-                burnNonce: BigNumber;
-                indexedTo: string;
-            }
-        >;
-
+        ): LogBurnEventFilter;
         LogBurn(
             to?: null,
             amount?: null,
             burnNonce?: BigNumberish | null,
             indexedTo?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, BigNumber, BigNumber, string],
-            {
-                to: string;
-                amount: BigNumber;
-                burnNonce: BigNumber;
-                indexedTo: string;
-            }
-        >;
+        ): LogBurnEventFilter;
 
         "LogBurnToChain(string,string,bytes,uint256,uint256,string,string)"(
             recipientAddress?: null,
@@ -743,19 +720,7 @@ export interface MintGatewayV3 extends BaseContract {
             burnNonce?: BigNumberish | null,
             recipientAddressIndexed?: string | null,
             recipientChainIndexed?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, BigNumber, BigNumber, string, string],
-            {
-                recipientAddress: string;
-                recipientChain: string;
-                recipientPayload: string;
-                amount: BigNumber;
-                burnNonce: BigNumber;
-                recipientAddressIndexed: string;
-                recipientChainIndexed: string;
-            }
-        >;
-
+        ): LogBurnToChainEventFilter;
         LogBurnToChain(
             recipientAddress?: null,
             recipientChain?: null,
@@ -764,94 +729,57 @@ export interface MintGatewayV3 extends BaseContract {
             burnNonce?: BigNumberish | null,
             recipientAddressIndexed?: string | null,
             recipientChainIndexed?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, BigNumber, BigNumber, string, string],
-            {
-                recipientAddress: string;
-                recipientChain: string;
-                recipientPayload: string;
-                amount: BigNumber;
-                burnNonce: BigNumber;
-                recipientAddressIndexed: string;
-                recipientChainIndexed: string;
-            }
-        >;
+        ): LogBurnToChainEventFilter;
 
         "LogChainUpdated(string,bytes32)"(
             _chain?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _chain: string; _selectorHash: string }
-        >;
-
+        ): LogChainUpdatedEventFilter;
         LogChainUpdated(
             _chain?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _chain: string; _selectorHash: string }
-        >;
+        ): LogChainUpdatedEventFilter;
 
         "LogMint(address,uint256,uint256,bytes32)"(
             to?: string | null,
             amount?: null,
             sigHash?: BigNumberish | null,
             nHash?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, BigNumber, BigNumber, string],
-            { to: string; amount: BigNumber; sigHash: BigNumber; nHash: string }
-        >;
-
+        ): LogMintEventFilter;
         LogMint(
             to?: string | null,
             amount?: null,
             sigHash?: BigNumberish | null,
             nHash?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, BigNumber, BigNumber, string],
-            { to: string; amount: BigNumber; sigHash: BigNumber; nHash: string }
-        >;
+        ): LogMintEventFilter;
 
         "LogPreviousGatewayUpdated(address)"(
             _newPreviousGateway?: string | null,
-        ): TypedEventFilter<[string], { _newPreviousGateway: string }>;
-
+        ): LogPreviousGatewayUpdatedEventFilter;
         LogPreviousGatewayUpdated(
             _newPreviousGateway?: string | null,
-        ): TypedEventFilter<[string], { _newPreviousGateway: string }>;
+        ): LogPreviousGatewayUpdatedEventFilter;
 
         "LogSignatureVerifierUpdated(address)"(
             _newSignatureVerifier?: string | null,
-        ): TypedEventFilter<[string], { _newSignatureVerifier: string }>;
-
+        ): LogSignatureVerifierUpdatedEventFilter;
         LogSignatureVerifierUpdated(
             _newSignatureVerifier?: string | null,
-        ): TypedEventFilter<[string], { _newSignatureVerifier: string }>;
+        ): LogSignatureVerifierUpdatedEventFilter;
 
         "LogTokenUpdated(address)"(
             _newToken?: string | null,
-        ): TypedEventFilter<[string], { _newToken: string }>;
-
-        LogTokenUpdated(
-            _newToken?: string | null,
-        ): TypedEventFilter<[string], { _newToken: string }>;
+        ): LogTokenUpdatedEventFilter;
+        LogTokenUpdated(_newToken?: string | null): LogTokenUpdatedEventFilter;
 
         "OwnershipTransferred(address,address)"(
             previousOwner?: string | null,
             newOwner?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { previousOwner: string; newOwner: string }
-        >;
-
+        ): OwnershipTransferredEventFilter;
         OwnershipTransferred(
             previousOwner?: string | null,
             newOwner?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { previousOwner: string; newOwner: string }
-        >;
+        ): OwnershipTransferredEventFilter;
     };
 
     estimateGas: {
@@ -867,61 +795,59 @@ export interface MintGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         _burnFromPreviousGateway(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
-            caller_: string,
+            recipient: BytesLike,
+            amount: BigNumberish,
+            caller: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         _mintFromPreviousGateway(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
-            caller_: string,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
+            caller: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
-
-        _status(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
         asset(overrides?: CallOverrides): Promise<BigNumber>;
 
         "burn(bytes,uint256)"(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
+            recipient: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         "burn(string,uint256)"(
-            recipient_: string,
-            amount_: BigNumberish,
+            recipient: string,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         burnWithPayload(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         chain(overrides?: CallOverrides): Promise<BigNumber>;
 
+        eventNonce(overrides?: CallOverrides): Promise<BigNumber>;
+
         mint(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
-
-        nextN(overrides?: CallOverrides): Promise<BigNumber>;
 
         owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -935,7 +861,7 @@ export interface MintGatewayV3 extends BaseContract {
 
         signatureVerifier(overrides?: CallOverrides): Promise<BigNumber>;
 
-        status(hash_: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
+        status(hash: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
         token(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -950,27 +876,27 @@ export interface MintGatewayV3 extends BaseContract {
         ): Promise<BigNumber>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
     };
@@ -988,64 +914,59 @@ export interface MintGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         _burnFromPreviousGateway(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
-            caller_: string,
+            recipient: BytesLike,
+            amount: BigNumberish,
+            caller: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         _mintFromPreviousGateway(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
-            caller_: string,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
+            caller: string,
             overrides?: Overrides & { from?: string | Promise<string> },
-        ): Promise<PopulatedTransaction>;
-
-        _status(
-            arg0: BytesLike,
-            overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         asset(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         "burn(bytes,uint256)"(
-            recipient_: BytesLike,
-            amount_: BigNumberish,
+            recipient: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         "burn(string,uint256)"(
-            recipient_: string,
-            amount_: BigNumberish,
+            recipient: string,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         burnWithPayload(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         chain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+        eventNonce(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
         mint(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
-
-        nextN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1064,7 +985,7 @@ export interface MintGatewayV3 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         status(
-            hash_: BytesLike,
+            hash: BytesLike,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
@@ -1081,27 +1002,27 @@ export interface MintGatewayV3 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
     };

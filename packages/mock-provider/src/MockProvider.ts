@@ -1,46 +1,43 @@
 import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
+import { ecsign, privateToAddress } from "ethereumjs-util";
 import { defaultAbiCoder } from "ethers/lib/utils";
 import { OrderedMap } from "immutable";
 
-import { ecsign, privateToAddress } from "@ethereumjs/util";
-import { Provider } from "@renproject/provider";
 import {
-    PackPrimitive,
-    PackStructType,
-    PackTypeDefinition,
-    TypedPackValue,
-} from "@renproject/provider/build/main/v2";
-import {
+    CrossChainParams,
     ParamsQueryConfig,
     ParamsQueryTx,
     ParamsSubmitTx,
-    RenVMParams,
-    RenVMResponses,
     ResponseQueryConfig,
     ResponseQueryTx,
     ResponseSubmitTx,
     RPCMethod,
-} from "@renproject/provider/build/main/v2/methods";
+    RPCParams,
+    RPCResponses,
+    TransactionInput,
+} from "@renproject/provider/build/main/methods";
 import {
     ParamsQueryBlockState,
     ResponseQueryBlockState,
-} from "@renproject/provider/build/main/v2/methods/ren_queryBlockState";
-import {
-    BurnTransactionInput,
-    MintParams,
-    MintTransactionInput,
-} from "@renproject/provider/build/main/v2/transaction";
+} from "@renproject/provider/build/main/methods/ren_queryBlockState";
 import {
     ChainCommon,
     fromBase64,
     fromHex,
     keccak256,
     Ox,
-    randomBytes,
+    PackPrimitive,
+    PackStructType,
+    PackTypeDefinition,
     toURLBase64,
     TxStatus,
+    TypedPackValue,
 } from "@renproject/utils";
+
+import { Provider } from "../../provider/build/main/rpc/jsonRpc";
+import { MockChain } from "./MockChain";
+import { randomBytes } from "./utils";
 
 export const responseQueryParamsType: PackStructType = {
     struct: [
@@ -68,11 +65,14 @@ export const responseQueryParamsType: PackStructType = {
     ],
 };
 
-export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
+export class MockProvider implements Provider<RPCParams, RPCResponses> {
     private privateKeyBuffer;
     private transactions: Map<string, ResponseQueryTx>;
-    private supportedChains: string[] = [];
-    private supportedAssets: string[] = [];
+
+    // Map from chain name to chain class
+    private supportedChains = OrderedMap<string, ChainCommon>();
+    // Map from asset name to chain name
+    private supportedAssets = OrderedMap<string, string>();
 
     constructor(privateKey?: Buffer) {
         this.privateKeyBuffer = privateKey || randomBytes(32);
@@ -82,38 +82,44 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
     public mintAuthority = () =>
         Ox(privateToAddress(this.privateKeyBuffer).toString("hex"));
 
-    public registerChain = (chain: ChainCommon) => {
-        this.supportedChains.push(chain.name);
+    public registerChain = (chain: ChainCommon, assets?: string[]) => {
+        this.supportedChains = this.supportedChains.set(chain.chain, chain);
+        for (const asset of [
+            ...Object.values(chain.assets),
+            ...(assets || []),
+        ]) {
+            this.registerAsset(asset, chain);
+        }
     };
 
-    public registerAsset = (asset: string) => {
-        this.supportedAssets.push(asset);
+    public registerAsset = (asset: string, chain: ChainCommon) => {
+        this.supportedAssets = this.supportedAssets.set(asset, chain.chain);
     };
 
-    sendMessage<Method extends keyof RenVMParams & string>(
+    sendMessage<Method extends keyof RPCParams & string>(
         method: Method,
-        request: RenVMParams[Method],
-    ): RenVMResponses[Method] {
+        request: RPCParams[Method],
+    ): RPCResponses[Method] {
         try {
             switch (method) {
                 case RPCMethod.SubmitTx:
                     return this.handle_submitTx(
                         request as ParamsSubmitTx<
-                            MintTransactionInput | BurnTransactionInput
+                            TransactionInput<CrossChainParams>
                         >,
-                    ) as RenVMResponses[Method];
+                    ) as RPCResponses[Method];
                 case RPCMethod.QueryTx:
                     return this.handle_queryTx(
                         request as ParamsQueryTx,
-                    ) as RenVMResponses[Method];
+                    ) as RPCResponses[Method];
                 case RPCMethod.QueryConfig:
                     return this.handle_queryConfig(
                         request,
-                    ) as RenVMResponses[Method];
+                    ) as RPCResponses[Method];
                 case RPCMethod.QueryBlockState:
                     return this.handle_queryBlockState(
                         request,
-                    ) as RenVMResponses[Method];
+                    ) as RPCResponses[Method];
             }
             throw new Error(`Method ${method} not supported.`);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -122,11 +128,11 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         }
     }
 
-    public handle_submitTx = (
-        request: ParamsSubmitTx<MintTransactionInput | BurnTransactionInput>,
+    private handle_submitTx = (
+        request: ParamsSubmitTx<TransactionInput<CrossChainParams>>,
     ): ResponseSubmitTx => {
         const selector = request.tx.selector;
-        const inputs = (request.tx.in as MintParams).v;
+        const inputs = request.tx.in.v;
 
         const pHash = fromBase64(inputs.phash);
         const nHash = fromBase64(inputs.nhash);
@@ -139,6 +145,23 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
             const amountIn = inputs.amount;
 
             const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+
+            let txid = toURLBase64(randomBytes(32));
+            let txindex = "0";
+
+            const asset = selector.split("/")[0];
+            const chainName = this.supportedAssets.get(asset);
+            if (chainName) {
+                const chain = this.supportedChains.get(chainName);
+                if ((chain as MockChain).addUTXO) {
+                    const utxo = (chain as MockChain).addUTXO(
+                        request.tx.in.v.to,
+                        new BigNumber(amountOut),
+                    );
+                    txid = toURLBase64(fromHex(utxo.txid).reverse());
+                    txindex = utxo.txindex;
+                }
+            }
 
             completedTransaction = {
                 ...request,
@@ -155,8 +178,8 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
                             revert: undefined,
                             sig: "",
                             sighash: "",
-                            txid: "",
-                            txindex: "0",
+                            txid,
+                            txindex,
                         },
                     },
                 },
@@ -212,7 +235,7 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         return {} as ResponseSubmitTx;
     };
 
-    public handle_queryTx = (request: ParamsQueryTx): ResponseQueryTx => {
+    private handle_queryTx = (request: ParamsQueryTx): ResponseQueryTx => {
         const tx = this.transactions.get(request.txHash);
         if (tx) {
             return tx;
@@ -221,17 +244,26 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         }
     };
 
-    public handle_queryConfig = (
+    private handle_queryConfig = (
         _request: ParamsQueryConfig,
     ): ResponseQueryConfig => ({
+        network: "dev",
+        maxConfirmations: this.supportedChains.reduce(
+            (acc, chain) => ({ ...acc, [chain.chain]: 100 }),
+            {},
+        ),
+        registries: this.supportedChains.reduce(
+            (acc, chain) => ({ ...acc, [chain.chain]: "" }),
+            {},
+        ),
         confirmations: this.supportedChains.reduce(
-            (acc, chain) => ({ ...acc, [chain]: 0 }),
+            (acc, chain) => ({ ...acc, [chain.chain]: 0 }),
             {},
         ),
         whitelist: [],
     });
 
-    public handle_queryBlockState = (
+    private handle_queryBlockState = (
         _request: ParamsQueryBlockState,
     ): ResponseQueryBlockState => {
         const ec = new elliptic.ec("secp256k1");
@@ -401,17 +433,20 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
             ],
         };
 
-        const v = OrderedMap(this.supportedAssets.map((x) => [x, x]))
+        const v = this.supportedAssets
             .map(
                 () =>
                     ({
                         dustAmount: "546",
                         fees: {
-                            chains: this.supportedChains.map((chain) => ({
-                                chain: chain,
-                                burnFee: "15",
-                                mintFee: "15",
-                            })),
+                            chains: this.supportedChains
+                                .map((chain) => ({
+                                    chain: chain.chain,
+                                    burnFee: "15",
+                                    mintFee: "15",
+                                }))
+                                .valueSeq()
+                                .toArray(),
                             epochs: [],
                             nodes: [],
                             reserved: {
@@ -450,9 +485,12 @@ export class MockProvider implements Provider<RenVMParams, RenVMResponses> {
         return {
             state: {
                 t: {
-                    struct: this.supportedAssets.map((x) => ({
-                        [x]: assetPackType,
-                    })),
+                    struct: this.supportedAssets
+                        .keySeq()
+                        .toArray()
+                        .map((x) => ({
+                            [x]: assetPackType,
+                        })),
                 },
                 v,
             },

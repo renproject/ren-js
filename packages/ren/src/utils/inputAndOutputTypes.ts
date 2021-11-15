@@ -24,29 +24,7 @@ export const getInputAndOutputTypes = async ({
     outputType: OutputType;
     selector: string;
 }> => {
-    if (await fromChain.isLockAsset(asset)) {
-        if (!isContractChain(toChain)) {
-            throw withCode(
-                new Error(
-                    `Cannot mint to non-contract chain ${toChain.chain}.`,
-                ),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-        if (!(await toChain.isMintAsset(asset))) {
-            throw withCode(
-                new Error(
-                    `Asset '${asset}' is not supported on ${toChain.chain}.`,
-                ),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-        return {
-            inputType: InputType.Lock,
-            outputType: OutputType.Mint,
-            selector: `${asset}/to${toChain.chain}`,
-        };
-    } else if (await toChain.isLockAsset(asset)) {
+    if (await toChain.isLockAsset(asset)) {
         if (!isContractChain(fromChain)) {
             throw withCode(
                 new Error(
@@ -67,6 +45,28 @@ export const getInputAndOutputTypes = async ({
             inputType: InputType.Burn,
             outputType: OutputType.Release,
             selector: `${asset}/from${fromChain.chain}`,
+        };
+    } else if (await fromChain.isLockAsset(asset)) {
+        if (!isContractChain(toChain)) {
+            throw withCode(
+                new Error(
+                    `Cannot mint to non-contract chain ${toChain.chain}.`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+        if (!(await toChain.isMintAsset(asset))) {
+            throw withCode(
+                new Error(
+                    `Asset '${asset}' is not supported on ${toChain.chain}.`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+        return {
+            inputType: InputType.Lock,
+            outputType: OutputType.Mint,
+            selector: `${asset}/to${toChain.chain}`,
         };
     } else {
         throw withCode(

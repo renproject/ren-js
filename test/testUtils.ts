@@ -27,7 +27,7 @@ interface EVMConstructor<EVM> {
     new (renNetwork: RenNetwork, web3Provider: EthProvider): EVM;
 }
 
-export const getEVMProvider = <EVM extends EthereumBaseChain>(
+export const getEVMProvider = <EVM>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
 ): EthProvider => {

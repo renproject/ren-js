@@ -189,7 +189,7 @@ export class GatewayTransaction<
     }
 
     /** @hidden */
-    public readonly _initialize = async (): Promise<this> => {
+    public readonly initialize = async (): Promise<this> => {
         const { inputType, outputType, selector } =
             await getInputAndOutputTypes({
                 asset: this.params.asset,

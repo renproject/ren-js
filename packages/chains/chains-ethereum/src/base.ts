@@ -1,5 +1,7 @@
 import BigNumber from "bignumber.js";
+import elliptic from "elliptic";
 import { Contract, PayableOverrides, providers, Signer } from "ethers";
+import { computeAddress } from "ethers/lib/utils";
 
 import {
     ExternalProvider,
@@ -27,14 +29,17 @@ import {
 } from "@renproject/utils";
 
 import {
-    BasicBridgeABI,
     findABIMethod,
+    GatewayRegistryABI,
+    getEventTopic,
+    getGatewayRegistryInstance,
     LockGatewayABI,
     MintGatewayABI,
+    TransferWithLogABI,
 } from "./contracts";
-import { LogTransferredEvent } from "./contracts/typechain/BasicBridge";
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "./contracts/typechain/MintGatewayV3";
+import { LogTransferredEvent } from "./contracts/typechain/TransferWithLog";
 import { AbiItem, EthArg } from "./utils/abi";
 import { EVMTxSubmitter } from "./utils/evmTxSubmitter";
 import {
@@ -139,7 +144,13 @@ export class EthereumBaseChain
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.signer = (web3Provider as any).signer || this.signer;
             if (this.signer) {
-                this.signer.connect(this.provider);
+                try {
+                    this.signer.connect(this.provider);
+                } catch (error) {
+                    // Ignore - doesnt' work on all signers.
+                    // e.g. JsonRpc signer throws:
+                    // `cannot alter JSON-RPC Signer connection`.
+                }
             }
         } else {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,7 +200,7 @@ export class EthereumBaseChain
         // Check if it in the list of hard-coded assets.
         if (
             Object.keys(this.assets).includes(assetSymbol) ||
-            assetSymbol === this.network.network.nativeCurrency.symbol
+            assetSymbol === this.network.asset
         ) {
             return true;
         }
@@ -207,6 +218,9 @@ export class EthereumBaseChain
         return false;
     });
 
+    isDepositAsset = (assetSymbol: string): boolean =>
+        assetSymbol === this.network.asset;
+
     /**
      * `assetIsSupported` should return true if the asset is native to the
      * MintChain.
@@ -218,7 +232,7 @@ export class EthereumBaseChain
     isMintAsset = memoize(async (asset: string): Promise<boolean> => {
         // Check that there's a gateway contract for the asset.
         try {
-            return !!(await this.getRenAsset(asset));
+            return (await this.getRenAsset(asset)) !== undefined;
         } catch (error: unknown) {
             if (
                 error instanceof Error &&
@@ -246,7 +260,7 @@ export class EthereumBaseChain
         async (asset: string): Promise<number> => {
             // TODO: get lock asset decimals
 
-            if (asset === this.network.network.nativeCurrency.symbol) {
+            if (asset === this.network.asset) {
                 return this.network.network.nativeCurrency.decimals;
             }
 
@@ -256,7 +270,9 @@ export class EthereumBaseChain
             } else if (await this.isMintAsset(asset)) {
                 tokenAddress = await this.getRenAsset(asset);
             } else {
-                throw new Error(`Unsupported asset ${asset}.`);
+                throw new Error(
+                    `Asset '${asset}' not supported on ${this.chain}.`,
+                );
             }
 
             const decimalsABI: AbiItem = {
@@ -358,7 +374,14 @@ export class EthereumBaseChain
             type: "function",
         };
 
-        const tokenAddress = await this.getRenAsset(asset);
+        let tokenAddress;
+        if (await this.isMintAsset(asset)) {
+            tokenAddress = await this.getRenAsset(asset);
+        } else if (await this.isLockAsset(asset)) {
+            tokenAddress = await this.getLockAsset(asset);
+        } else {
+            throw new Error(`Asset '${asset}' not supported on ${this.chain}.`);
+        }
 
         const tokenContract = new Contract(
             tokenAddress,
@@ -566,21 +589,29 @@ export class EthereumBaseChain
                     LockGatewayABI,
                     "LogLockToChain",
                 );
-                filterLogs<LogLockToChainEvent>(receipt.logs, logLockABI)
-                    .map((e) =>
-                        mapLockLogToInputChainTransaction(this.chain, e),
-                    )
-                    .map(onInput);
+                const lockEvents = filterLogs<LogLockToChainEvent>(
+                    receipt.logs,
+                    logLockABI,
+                ).map((e) => mapLockLogToInputChainTransaction(this.chain, e));
+                lockEvents.map(onInput);
 
                 const logTransferredABI = findABIMethod(
-                    BasicBridgeABI,
+                    TransferWithLogABI,
                     "LogTransferred",
                 );
-                filterLogs<LogTransferredEvent>(receipt.logs, logTransferredABI)
-                    .map((e) =>
-                        mapTransferLogToInputChainTransaction(this.chain, e),
-                    )
-                    .map(onInput);
+                const transferEvents = filterLogs<LogTransferredEvent>(
+                    receipt.logs,
+                    logTransferredABI,
+                ).map((e) =>
+                    mapTransferLogToInputChainTransaction(this.chain, e),
+                );
+                transferEvents.map(onInput);
+
+                if (lockEvents.length === 0 && transferEvents.length === 0) {
+                    throw new Error(
+                        `No inputs found in transaction ${receipt.transactionHash}.`,
+                    );
+                }
             }
         };
 
@@ -600,6 +631,15 @@ export class EthereumBaseChain
         asset: string,
         type: InputType,
         contractCall: EVMPayload,
+        getParams: () => {
+            toChain: string;
+            toPayload: {
+                to: string;
+                toBytes: Buffer;
+                payload: Buffer;
+            };
+            gatewayAddress?: string;
+        },
     ) => {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
@@ -615,7 +655,7 @@ export class EthereumBaseChain
             this.network,
             this.signer,
             contractCall,
-            this.getEVMParams(asset, type, {}),
+            this.getEVMParams(asset, type, getParams()),
             this.getPayloadHandler,
         );
 
@@ -628,7 +668,7 @@ export class EthereumBaseChain
                 payload: calls[callKey],
                 target: 1,
                 getPayloadHandler: this.getPayloadHandler,
-                getParams: () => this.getEVMParams(asset, type, {}),
+                getParams: () => this.getEVMParams(asset, type, getParams()),
             });
         }
         return txSubmitted;
@@ -693,6 +733,39 @@ export class EthereumBaseChain
         throw new Error(`Unknown payload type ${payloadType}`);
     };
 
+    createGatewayAddress = (
+        _asset: string,
+        fromPayload: { chain: string },
+        shardPublicKey: Buffer,
+        gHash: Buffer,
+    ): Promise<string> | string => {
+        if (fromPayload.chain !== this.chain) {
+            throw new Error(
+                `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
+            );
+        }
+
+        const ec = new elliptic.ec("secp256k1");
+
+        // Decode compressed RenVM public key.
+        const renVMPublicKey = ec.keyFromPublic(shardPublicKey);
+
+        // Interpret gHash as a private key.
+        const gHashKey = ec.keyFromPrivate(gHash);
+
+        // If `NO_PARAMS_FLAG` is set, set renVM public key and gHash public key,
+        // and recreate key pair from resulting curve point.
+        const derivedPublicKey = ec.keyFromPublic(
+            renVMPublicKey
+                .getPublic()
+                .add(gHashKey.getPublic()) as unknown as elliptic.ec.KeyPair,
+        );
+
+        return computeAddress(
+            Buffer.from(derivedPublicKey.getPublic(false, "hex"), "hex"),
+        );
+    };
+
     private getEVMParams = (
         asset: string,
         type: InputType | OutputType | "setup",
@@ -741,6 +814,11 @@ export class EthereumBaseChain
                     return await this.getMintGateway(asset);
                 }
             },
+            [EVMParam.EVM_TRANSFER_WITH_LOG_CONTRACT]: async () =>
+                await getGatewayRegistryInstance(
+                    this.provider,
+                    this.network.addresses.GatewayRegistry,
+                ).getTransferWithLog(),
             [EVMParam.EVM_ASSET]: asset,
 
             // Available when minting or releasing
@@ -826,7 +904,8 @@ export class EthereumBaseChain
     public Contract = (params: {
         to: string;
         method: string;
-        values: EthArg[];
+        params: EthArg[];
+        withRenParams: boolean;
         txConfig?: PayableOverrides;
     }): EVMPayload => ({
         chain: this.chain,
@@ -834,26 +913,30 @@ export class EthereumBaseChain
         params: {
             to: params.to,
             method: params.method,
-            values: [
-                ...params.values,
-                {
-                    name: "amount",
-                    type: "uint256",
-                    value: EVMParam.EVM_AMOUNT,
-                    notInPayload: true,
-                },
-                {
-                    name: "nHash",
-                    type: "bytes32",
-                    value: EVMParam.EVM_NHASH,
-                    notInPayload: true,
-                },
-                {
-                    name: "signature",
-                    type: "bytes",
-                    value: EVMParam.EVM_SIGNATURE,
-                    notInPayload: true,
-                },
+            params: [
+                ...params.params,
+                ...(params.withRenParams
+                    ? [
+                          {
+                              name: "amount",
+                              type: "uint256",
+                              value: EVMParam.EVM_AMOUNT,
+                              notInPayload: true,
+                          },
+                          {
+                              name: "nHash",
+                              type: "bytes32",
+                              value: EVMParam.EVM_NHASH,
+                              notInPayload: true,
+                          },
+                          {
+                              name: "signature",
+                              type: "bytes",
+                              value: EVMParam.EVM_SIGNATURE,
+                              notInPayload: true,
+                          },
+                      ]
+                    : []),
             ],
             txConfig: params.txConfig,
         },
@@ -866,7 +949,7 @@ export class EthereumBaseChain
     //         switch (type) {
     //             case OutputType.Mint:
     //                 return {
-    //                     to: this.network.addresses.BasicAdapter,
+    //                     to: this.network.addresses.BasicBridge,
     //                     method: "mint",
     //                     values: [
     //                         {
@@ -903,7 +986,7 @@ export class EthereumBaseChain
     //         switch (type) {
     //             case OutputType.Mint:
     //                 return {
-    //                     to: this.network.addresses.BasicAdapter,
+    //                     to: this.network.addresses.BasicBridge,
     //                     method: "mint",
     //                     values: [
     //                         {

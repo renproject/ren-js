@@ -20,9 +20,14 @@ import { EventFragment, FunctionFragment, Result } from "@ethersproject/abi";
 import { BytesLike } from "@ethersproject/bytes";
 import { Listener, Provider } from "@ethersproject/providers";
 
-import { TypedEvent, TypedEventFilter, TypedListener } from "./commons";
+import type {
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
+} from "./common";
 
-interface BasicBridgeInterface extends ethers.utils.Interface {
+export interface BasicBridgeInterface extends ethers.utils.Interface {
     functions: {
         "burn(string,string,uint256)": FunctionFragment;
         "lock(string,string,string,bytes,uint256)": FunctionFragment;
@@ -69,51 +74,37 @@ interface BasicBridgeInterface extends ethers.utils.Interface {
 }
 
 export type LogTransferredEvent = TypedEvent<
-    [string, BigNumber] & { to: string; amount: BigNumber }
+    [string, BigNumber],
+    { to: string; amount: BigNumber }
 >;
+
+export type LogTransferredEventFilter = TypedEventFilter<LogTransferredEvent>;
 
 export interface BasicBridge extends BaseContract {
     connect(signerOrProvider: Signer | Provider | string): this;
     attach(addressOrName: string): this;
     deployed(): Promise<this>;
 
-    listeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter?: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): Array<TypedListener<EventArgsArray, EventArgsObject>>;
-    off<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    on<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    once<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeListener<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeAllListeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): this;
+    interface: BasicBridgeInterface;
 
-    listeners(eventName?: string): Array<Listener>;
-    off(eventName: string, listener: Listener): this;
-    on(eventName: string, listener: Listener): this;
-    once(eventName: string, listener: Listener): this;
-    removeListener(eventName: string, listener: Listener): this;
-    removeAllListeners(eventName?: string): this;
-
-    queryFilter<EventArgsArray extends Array<any>, EventArgsObject>(
-        event: TypedEventFilter<EventArgsArray, EventArgsObject>,
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
         fromBlockOrBlockhash?: string | number | undefined,
         toBlock?: string | number | undefined,
-    ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
+    ): Promise<Array<TEvent>>;
 
-    interface: BasicBridgeInterface;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>,
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>,
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
     functions: {
         burn(
@@ -237,18 +228,11 @@ export interface BasicBridge extends BaseContract {
         "LogTransferred(address,uint256)"(
             to?: string | null,
             amount?: null,
-        ): TypedEventFilter<
-            [string, BigNumber],
-            { to: string; amount: BigNumber }
-        >;
-
+        ): LogTransferredEventFilter;
         LogTransferred(
             to?: string | null,
             amount?: null,
-        ): TypedEventFilter<
-            [string, BigNumber],
-            { to: string; amount: BigNumber }
-        >;
+        ): LogTransferredEventFilter;
     };
 
     estimateGas: {

@@ -255,7 +255,7 @@ export const payloadToABI = (
         {
             name: methodName,
             type: "function",
-            stateMutability: "nonpayable",
+            stateMutability: "payable",
             inputs: [
                 ...(payload || []).map(fixTuple).map((value) => ({
                     type: value.type,

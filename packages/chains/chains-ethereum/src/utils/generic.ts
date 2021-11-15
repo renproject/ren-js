@@ -34,10 +34,10 @@ import {
     LockGatewayABI,
     MintGatewayABI,
 } from "../contracts";
-import { LogTransferredEvent } from "../contracts/typechain/BasicBridge";
-import { TypedEvent } from "../contracts/typechain/commons";
+import { TypedEvent } from "../contracts/typechain/common";
 import { LogLockToChainEvent } from "../contracts/typechain/LockGatewayV3";
 import { LogBurnEvent } from "../contracts/typechain/MintGatewayV3";
+import { LogTransferredEvent } from "../contracts/typechain/TransferWithLog";
 import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
 import { EvmNetworkConfig } from "./types";
@@ -66,13 +66,14 @@ export const mapLockLogToInputChainTransaction = (
         amount,
         lockNonce,
     ] = event.args;
-    if (toNBytes(fromHex(lockNonce.toString()), 32).length !== 32) {
+    const nonceBuffer = toNBytes(new BigNumber(lockNonce.toString()), 32);
+    if (nonceBuffer.length !== 32) {
         throw new Error("Invalid nonce length");
     }
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
         amount: amount.toString(),
-        nonce: toURLBase64(toNBytes(lockNonce.toString(), 32)),
+        nonce: toURLBase64(nonceBuffer),
         toRecipient: recipientAddress,
         toChain: recipientChain,
         toPayload: toURLBase64(fromHex(recipientPayload)),
@@ -83,7 +84,7 @@ export const mapTransferLogToInputChainTransaction = (
     chain: string,
     event: LogTransferredEvent,
 ): InputChainTransaction => {
-    const [_, amount] = event.args;
+    const [_from, _to, amount] = event.args;
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
         amount: amount.toString(),
@@ -242,7 +243,7 @@ export const findReleaseBySigHash = async (
     return newReleaseEvents.length ? newReleaseEvents[0] : undefined;
 };
 
-export const filterLogs = <T extends TypedEvent<Result>>(
+export const filterLogs = <T extends TypedEvent>(
     logs: providers.Log[],
     eventABI: AbiItem,
 ): T[] => {
@@ -266,7 +267,7 @@ export const filterLogs = <T extends TypedEvent<Result>>(
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getPastLogs = async <T extends TypedEvent<any>>(
+const getPastLogs = async <T extends TypedEvent>(
     provider: Provider,
     contractAddress: string,
     eventABI: AbiItem,

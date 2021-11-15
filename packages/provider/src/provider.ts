@@ -31,7 +31,7 @@ import {
     submitGatewayType,
 } from "./methods";
 import { BlockState } from "./methods/ren_queryBlockState";
-import { HttpProvider } from "./rpc/jsonRpc";
+import { HttpProvider, Provider } from "./rpc/jsonRpc";
 import { renRpcUrls } from "./rpcUrls";
 import {
     RenVMCrossChainTransaction,
@@ -44,10 +44,19 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
     public readonly logger: Logger;
 
     constructor(
-        rpcUrlOrNetwork: RenNetwork | RenNetworkString | string,
+        endpointOrProvider:
+            | RenNetwork
+            | RenNetworkString
+            | string
+            | Provider<RPCParams, RPCResponses>,
         logger: Logger = nullLogger,
     ) {
-        super(renRpcUrls[rpcUrlOrNetwork] || rpcUrlOrNetwork);
+        super(
+            // Check if the first parameter is a provider to forward calls to.
+            typeof endpointOrProvider !== "string"
+                ? endpointOrProvider
+                : renRpcUrls[endpointOrProvider] || endpointOrProvider,
+        );
         this.logger = logger;
     }
 

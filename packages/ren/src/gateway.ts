@@ -4,6 +4,7 @@ import { OrderedMap } from "immutable";
 import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
+    EventEmitterTyped,
     extractError,
     fromBase64,
     generateGHash,
@@ -32,10 +33,66 @@ import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
 import { GatewayParams } from "./params";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 
+class TransactionEmitter<
+        ToPayload extends { chain: string } = {
+            chain: string;
+        },
+    >
+    extends EventEmitter
+    implements
+        EventEmitterTyped<{ transaction: [GatewayTransaction<ToPayload>] }>
+{
+    private getTransactions: () => GatewayTransaction<ToPayload>[];
+
+    constructor(getTransactions: () => GatewayTransaction<ToPayload>[]) {
+        super();
+
+        this.getTransactions = getTransactions;
+    }
+
+    public addListener = <Event extends "transaction">(
+        event: Event,
+        callback: Event extends "transaction"
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (deposit: GatewayTransaction<ToPayload>) => void
+            : never,
+    ): this => {
+        // Emit previous deposit events.
+        if (event === "transaction") {
+            this.getTransactions().map((deposit) => {
+                // Check that the transaction isn't a promise.
+                // The result of promises will be emitted when they resolve.
+                if ((deposit as any).then === undefined) {
+                    callback(deposit as GatewayTransaction<ToPayload>);
+                }
+            });
+        }
+
+        super.on(event, callback);
+        return this;
+    };
+
+    /**
+     * `on` creates a new listener to `"transaction"` events, returning
+     * [[GatewayTransaction]] instances.
+     *
+     * `on` extends `EventEmitter.on`, modifying it to immediately return all
+     * previous `"transaction"` events, in addition to new events, when a new
+     * listener is created.
+     *
+     * @category Main
+     */
+    // @ts-expect-error EventEmitter and EventEmitterTyped typing issue
+    public on = <Event extends "transaction">(
+        event: Event,
+        callback: Event extends "transaction"
+            ? (deposit: GatewayTransaction<ToPayload>) => void
+            : never,
+    ): this => this.addListener(event, callback);
+}
+
 /**
- * A `LockAndMint` object tied to a particular gateway address. LockAndMint
- * should not be created directly. Instead, [[RenJS.lockAndMint]] will create a
- * `LockAndMint` object.
+ *
  *
  * `LockAndMint` extends the EventEmitter class, and emits a `"transaction"` event
  * for each new deposit that is observed. Deposits will only be watched for if
@@ -65,39 +122,29 @@ export class Gateway<
     ToPayload extends { chain: string } = {
         chain: string;
     },
-> extends EventEmitter {
+> {
     // Public
 
-    /**
-     * The generated gateway address for the lock-chain. For chains such as BTC
-     * this is a string. For other chains, this may be an object, so the method
-     * of showing this address to users should be implemented on a
-     * chain-by-chain basis.
-     */
-    private _gatewayAddress: string | undefined;
-    public gatewayAddress = (): string => {
-        if (!this._gatewayAddress) {
-            throw new Error("Not initialized.");
-        }
-        return this._gatewayAddress;
-    };
-
     /** The parameters passed in when creating the LockAndMint. */
-    public params: GatewayParams<FromPayload, ToPayload>;
-    public fromChain: Chain;
-    public toChain: Chain;
+    public readonly params: GatewayParams<FromPayload, ToPayload>;
+    public readonly fromChain: Chain;
+    public readonly toChain: Chain;
+    public readonly provider: RenVMProvider;
+    public readonly config: typeof defaultRenJSConfig & RenJSConfig;
 
-    /** See [[RenJS.renVM]]. */
-    public provider: RenVMProvider;
+    /**
+     * The generated gateway address for the lock-chain.
+     */
+    public gatewayAddress: string | undefined;
 
-    public selector: string = "";
+    public in: TxSubmitter | TxWaiter | undefined;
 
-    public _config: typeof defaultRenJSConfig & RenJSConfig;
+    public setup: { [key: string]: TxSubmitter | TxWaiter } = {};
 
     /**
      * Deposits represents the lock deposits that have been detected so far.
      */
-    private transactions: OrderedMap<
+    public transactions: OrderedMap<
         string,
         GatewayTransaction<ToPayload> | Promise<GatewayTransaction<ToPayload>>
     > = OrderedMap<
@@ -105,22 +152,47 @@ export class Gateway<
         GatewayTransaction<ToPayload> | Promise<GatewayTransaction<ToPayload>>
     >();
 
-    private targetConfirmations: number | undefined;
-    public gPubKey: Buffer | undefined;
-    public gHash: Buffer | undefined;
-    public pHash: Buffer | undefined;
+    public eventEmitter: TransactionEmitter<ToPayload> =
+        new TransactionEmitter<ToPayload>(() =>
+            this.transactions
+                .filter((tx) => (tx as any).then === undefined)
+                .map((tx) => tx as GatewayTransaction<ToPayload>)
+                .valueSeq()
+                .toArray(),
+        );
 
-    public in: TxSubmitter | TxWaiter | undefined;
+    // The following are set in the asynchronous "initialize" method that should
+    // be called immediately after the constructor.
 
-    public setup: { [key: string]: TxSubmitter | TxWaiter } = {};
+    private _selector: string | undefined;
+    get selector(): string {
+        return this.getter("_selector") || this._selector;
+    }
 
-    public fees: GatewayFees;
+    private _gHash: Buffer | undefined;
+    get gHash(): Buffer {
+        return this.getter("_gHash") || this._gHash;
+    }
 
-    // public fees {
-    // }
+    private _pHash: Buffer | undefined;
+    get pHash(): Buffer {
+        return this.getter("_pHash") || this._pHash;
+    }
 
-    public inputType: InputType;
-    public outputType: OutputType;
+    private _fees: GatewayFees | undefined;
+    get fees(): GatewayFees {
+        return this.getter("_fees") || this._fees;
+    }
+
+    private _outputType: OutputType | undefined;
+    get outputType(): OutputType {
+        return this.getter("_outputType") || this._outputType;
+    }
+
+    private _inputType: InputType | undefined;
+    get inputType(): InputType {
+        return this.getter("_inputType") || this._inputType;
+    }
 
     /**
      * @hidden - should be created using [[RenJS.lockAndMint]] instead.
@@ -132,27 +204,26 @@ export class Gateway<
         params: GatewayParams<FromPayload, ToPayload>,
         config: RenJSConfig = {},
     ) {
-        super();
-
         this.params = params;
         this.fromChain = fromChain;
         this.toChain = toChain;
         this.provider = renVM;
 
-        this._config = {
+        this.config = {
             ...defaultRenJSConfig,
             ...config,
         };
 
-        // Set in async constructor, `_initialize`.
-        this.inputType = undefined as never;
-        this.outputType = undefined as never;
-        this.fees = undefined as never;
-
         {
             // Debug log
-            const { to: _to, from: _from, ...restOfParams } = this.params;
-            this._config.logger.debug("lockAndMint created:", restOfParams);
+            this.config.logger.debug(
+                "gateway created:",
+                String(renVM.endpointOrProvider),
+                fromChain.chain,
+                toChain.chain,
+                this.params,
+                config,
+            );
         }
     }
 
@@ -160,16 +231,7 @@ export class Gateway<
      * @hidden - Called automatically when calling [[RenJS.lockAndMint]]. It has
      * been split from the constructor because it's asynchronous.
      */
-    public readonly _initialize = async (): Promise<
-        Gateway<FromPayload, ToPayload>
-    > => {
-        // Check if shard needs to be selected.
-        if (!isDefined(this.params.shard)) {
-            this.params.shard = await this.provider.selectShard(
-                this.params.asset,
-            );
-        }
-
+    public async initialize(): Promise<Gateway<FromPayload, ToPayload>> {
         const { to, asset, from } = this.params;
 
         const { inputType, outputType, selector } =
@@ -178,16 +240,9 @@ export class Gateway<
                 fromChain: this.fromChain,
                 toChain: this.toChain,
             });
-        this.inputType = inputType;
-        this.outputType = outputType;
-        this.selector = selector;
-
-        try {
-            this.targetConfirmations = await this.confirmationTarget();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.error(error);
-        }
+        this._inputType = inputType;
+        this._outputType = outputType;
+        this._selector = selector;
 
         if (
             this.outputType === OutputType.Release &&
@@ -213,6 +268,23 @@ export class Gateway<
             );
         }
 
+        // Check if shard needs to be selected.
+        if (!isDefined(this.params.shard)) {
+            if (
+                this.inputType === InputType.Lock &&
+                isDepositChain(this.fromChain) &&
+                (await this.fromChain.isDepositAsset(asset))
+            ) {
+                this.params.shard = await this.provider.selectShard(
+                    this.params.asset,
+                );
+            } else {
+                this.params.shard = {
+                    gPubKey: "",
+                };
+            }
+        }
+
         const payload = await this.toChain.getOutputPayload(
             asset,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,7 +292,7 @@ export class Gateway<
             to,
         );
 
-        this.pHash = generatePHash(payload.payload);
+        this._pHash = generatePHash(payload.payload);
 
         // const sHash = Ox(generateSHash(this.selector));
 
@@ -258,11 +330,11 @@ export class Gateway<
                     payload.toBytes,
                     nonce,
                 );
-                this.gHash = gHash;
-                this.gPubKey = fromBase64(this.params.shard.gPubKey);
-                this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
+                this._gHash = gHash;
+                const gPubKey = fromBase64(this.params.shard.gPubKey);
+                this.config.logger.debug("gPubKey:", Ox(gPubKey));
 
-                if (!this.gPubKey || this.gPubKey.length === 0) {
+                if (!gPubKey || gPubKey.length === 0) {
                     throw withCode(
                         new Error("Unable to fetch RenVM shard public key."),
                         RenJSError.NETWORK_ERROR,
@@ -281,15 +353,13 @@ export class Gateway<
                     );
                 }
 
-                const gatewayAddress =
-                    await this.fromChain.createGatewayAddress(
-                        this.params.asset,
-                        this.params.from,
-                        this.gPubKey,
-                        gHash,
-                    );
-                this._gatewayAddress = gatewayAddress;
-                this._config.logger.debug(
+                this.gatewayAddress = await this.fromChain.createGatewayAddress(
+                    this.params.asset,
+                    this.params.from,
+                    gPubKey,
+                    gHash,
+                );
+                this.config.logger.debug(
                     "gateway address:",
                     this.gatewayAddress,
                 );
@@ -320,29 +390,32 @@ export class Gateway<
                 throw error;
             }
 
-            this.fees = await estimateTransactionFee(
-                this.provider,
-                asset,
-                this.fromChain,
-                this.toChain,
-            );
-
             // Will fetch deposits as long as there's at least one subscription.
             this.wait().catch(console.error);
         }
 
         if (isContractChain(this.fromChain)) {
             const processInput = (input: InputChainTransaction) => {
-                const nonce = input.nonce!;
+                const nonce = toURLBase64(
+                    // Check if the deposit has an associated nonce. This will
+                    // be true for contract-based inputs.
+                    input.nonce
+                        ? fromBase64(input.nonce)
+                        : // Check if the params have a nonce - this can be
+                        // a base64 string or a number. If no nonce is set,
+                        // default to `0`.
+                        typeof this.params.nonce === "string"
+                        ? fromBase64(this.params.nonce)
+                        : toNBytes(this.params.nonce || 0, 32),
+                );
+
                 const gHash = generateGHash(
                     payload.payload,
                     sHash,
                     payload.toBytes,
                     fromBase64(nonce),
                 );
-                this.gHash = gHash;
-                this.gPubKey = Buffer.from([]);
-                this._config.logger.debug("gPubKey:", Ox(this.gPubKey));
+                this._gHash = gHash;
 
                 if (!gHash || gHash.length === 0) {
                     throw withCode(
@@ -376,13 +449,20 @@ export class Gateway<
                 () => ({
                     toChain: to.chain,
                     toPayload: payload,
-                    gatewayAddress: this._gatewayAddress,
+                    gatewayAddress: this.gatewayAddress,
                 }),
                 await this.provider.getConfirmationTarget(this.fromChain.chain),
                 processInput,
                 removeInput,
             );
         }
+
+        this._fees = await estimateTransactionFee(
+            this.provider,
+            asset,
+            this.fromChain,
+            this.toChain,
+        );
 
         if (isContractChain(this.fromChain) && this.fromChain.getInputSetup) {
             this.setup = {
@@ -391,6 +471,11 @@ export class Gateway<
                     asset,
                     this.inputType,
                     from,
+                    () => ({
+                        toChain: to.chain,
+                        toPayload: payload,
+                        gatewayAddress: this.gatewayAddress,
+                    }),
                 )),
             };
         }
@@ -407,19 +492,7 @@ export class Gateway<
         }
 
         return this;
-    };
-
-    public confirmationTarget = async () => {
-        if (isDefined(this.targetConfirmations)) {
-            return this.targetConfirmations;
-        }
-
-        this.targetConfirmations = await this.provider.getConfirmationTarget(
-            this.fromChain.chain,
-        );
-
-        return this.targetConfirmations;
-    };
+    }
 
     /**
      * `processDeposit` allows you to manually provide the details of a deposit
@@ -448,9 +521,9 @@ export class Gateway<
      * ```
      * @category Main
      */
-    public processDeposit = async (
+    public async processDeposit(
         deposit: InputChainTransaction,
-    ): Promise<GatewayTransaction<ToPayload>> => {
+    ): Promise<GatewayTransaction<ToPayload>> {
         const depositIdentifier = deposit.txid + "_" + String(deposit.txindex);
         const existingTransaction = this.transactions.get(depositIdentifier);
 
@@ -458,7 +531,7 @@ export class Gateway<
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!existingTransaction) {
             const createGatewayTransaction = async () => {
-                if (!this.pHash || !this.gHash || !this.gPubKey) {
+                if (!this.pHash || !this.gHash) {
                     throw new Error(
                         "Gateway address must be generated before calling 'processDeposit'.",
                     );
@@ -485,9 +558,7 @@ export class Gateway<
                     fromTx: deposit,
                     to: this.params.to,
 
-                    shard: {
-                        gPubKey: toURLBase64(this.gPubKey),
-                    },
+                    shard: this.params.shard,
                     nonce,
                 };
 
@@ -497,15 +568,15 @@ export class Gateway<
                     this.toChain,
                     params,
                     this.in,
-                    this._config,
+                    this.config,
                 );
 
-                await transaction._initialize();
+                await transaction.initialize();
 
                 // Check if deposit has already been submitted.
-                this.emit("transaction", transaction);
+                this.eventEmitter.emit("transaction", transaction);
                 // this.deposits.set(deposit);
-                this._config.logger.debug("new deposit:", deposit);
+                this.config.logger.debug("new deposit:", deposit);
 
                 return transaction;
             };
@@ -528,57 +599,41 @@ export class Gateway<
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return (await existingTransaction)!;
-    };
+    }
 
-    public addListener = <Event extends "transaction">(
+    public on<Event extends "transaction">(
         event: Event,
-        listener: Event extends "transaction"
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (deposit: GatewayTransaction<any>) => void
+        callback: Event extends "transaction"
+            ? (deposit: GatewayTransaction<ToPayload>) => void
             : never,
-    ): this => {
-        // Emit previous deposit events.
-        if (event === "transaction") {
-            this.transactions.map((deposit) => {
-                // Check that the transaction isn't a promise.
-                // The result of promises will be emitted when they resolve.
-                if ((deposit as any).then === undefined) {
-                    listener(deposit as GatewayTransaction<ToPayload>);
-                }
-            });
-        }
-
-        super.on(event, listener);
+    ): this {
+        this.eventEmitter.on(event, callback);
         return this;
-    };
+    }
 
-    /**
-     * `on` creates a new listener to `"transaction"` events, returning
-     * [[GatewayTransaction]] instances.
-     *
-     * `on` extends `EventEmitter.on`, modifying it to immediately return all
-     * previous `"transaction"` events, in addition to new events, when a new
-     * listener is created.
-     *
-     * @category Main
-     */
-    public on = <Event extends "transaction">(
-        event: Event,
-        listener: Event extends "transaction"
-            ? (deposit: GatewayTransaction) => void
-            : never,
-    ): this => this.addListener(event, listener);
+    /** PRIVATE METHODS */
 
-    // Private methods /////////////////////////////////////////////////////////
+    private getter(name: string) {
+        if (this[name] === undefined) {
+            throw new Error(
+                `Must call 'initialize' before accessing '${name}'.`,
+            );
+        }
+        return this[name];
+    }
 
-    private readonly wait = async (): Promise<void> => {
-        if (!this._gatewayAddress) {
+    private async wait(): Promise<void> {
+        if (
+            !this.gatewayAddress ||
+            !isDepositChain(this.fromChain) ||
+            !this.fromChain.watchForDeposits
+        ) {
             return;
         }
 
         while (true) {
             const listenerCancelled = () =>
-                this.listenerCount("transaction") === 0;
+                this.eventEmitter.listenerCount("transaction") === 0;
 
             try {
                 // If there are no listeners, continue. TODO: Exit loop entirely
@@ -589,7 +644,7 @@ export class Gateway<
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                this._config.logger.error(extractError(error));
+                this.config.logger.error(extractError(error));
             }
 
             // Change the return type of `this.processDeposit` to `void`.
@@ -598,32 +653,28 @@ export class Gateway<
                     // TODO: Handle error.
                     this.processDeposit(deposit).catch(console.error);
                 } catch (error) {
-                    this._config.logger.error(error);
+                    this.config.logger.error(error);
                 }
             };
 
             // TODO: Flag deposits that have been cancelled, updating their status.
             const cancelDeposit = () => {};
 
-            if (!isDepositChain(this.fromChain)) {
-                throw new Error("From chain is not a deposit chain.");
-            }
-
             try {
                 await this.fromChain.watchForDeposits(
                     this.params.asset,
                     this.params.from,
-                    this.gatewayAddress(),
+                    this.gatewayAddress,
                     onDeposit,
                     cancelDeposit,
                     listenerCancelled,
                 );
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                this._config.logger.error(extractError(error));
+                this.config.logger.error(extractError(error));
             }
 
-            await sleep(this._config.networkDelay);
+            await sleep(this.config.networkDelay);
         }
-    };
+    }
 }

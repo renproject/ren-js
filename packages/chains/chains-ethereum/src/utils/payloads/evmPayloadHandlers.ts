@@ -25,6 +25,7 @@ export enum EVMParam {
     EVM_TOKEN_ADDRESS = "__EVM_TOKEN_ADDRESS__",
     EVM_TOKEN_DECIMALS = "__EVM_TOKEN_DECIMALS__",
     EVM_GATEWAY_DEPOSIT_ADDRESS = "__EVM_GATEWAY_DEPOSIT_ADDRESS__",
+    EVM_TRANSFER_WITH_LOG_CONTRACT = "__EVM_TRANSFER_WITH_LOG_CONTRACT__",
     EVM_ACCOUNT = "__EVM_ACCOUNT__",
     EVM_GATEWAY = "__EVM_GATEWAY__",
     EVM_ASSET = "__EVM_ASSET__",
@@ -55,6 +56,7 @@ export type EVMParamValues = {
         | "burn";
     [EVMParam.EVM_TOKEN_ADDRESS]: () => Promise<string>;
     [EVMParam.EVM_TOKEN_DECIMALS]: () => Promise<number>;
+    [EVMParam.EVM_TRANSFER_WITH_LOG_CONTRACT]: () => Promise<string>;
     [EVMParam.EVM_ACCOUNT]: () => Promise<string>;
     [EVMParam.EVM_GATEWAY]: () => Promise<string>;
     [EVMParam.EVM_ASSET]: string;
@@ -152,8 +154,8 @@ const resolveEvmContractParams = async (
         params: {
             ...payload.params,
             to: await replaceRenParam(payload.params.to, evmParams),
-            values: await Promise.all(
-                payload.params.values.map(async (value) => ({
+            params: await Promise.all(
+                payload.params.params.map(async (value) => ({
                     ...value,
                     value: await replaceRenParam(value.value, evmParams),
                 })),
@@ -167,7 +169,7 @@ export type EVMContractPayload = EVMPayload<
     {
         to: string;
         method: string;
-        values: Array<EthArg>;
+        params: Array<EthArg>;
         txConfig?: PayableOverrides;
     }
 >;
@@ -204,7 +206,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
             );
         }
 
-        const args = payload.params.values.filter((arg) => !arg.notInPayload);
+        const args = payload.params.params.filter((arg) => !arg.notInPayload);
 
         for (const arg of args) {
             if (arg.value === undefined) {
@@ -264,7 +266,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         // Get parameter values, checking first if each value has been
         // overridden.
-        const params = payload.params.values.map((x) =>
+        const params = payload.params.params.map((x) =>
             overrides.params && isDefined(overrides.params[x.name])
                 ? {
                       ...x,
@@ -345,9 +347,9 @@ const getContractFromAccount = async (
                     chain: network.selector,
                     type: "contract",
                     params: {
-                        to: network.addresses.BasicAdapter,
+                        to: EVMParam.EVM_TRANSFER_WITH_LOG_CONTRACT,
                         method: "transferWithLog",
-                        values: [
+                        params: [
                             {
                                 type: "address",
                                 name: "to",
@@ -366,7 +368,7 @@ const getContractFromAccount = async (
                 params: {
                     to: EVMParam.EVM_GATEWAY,
                     method: "lock",
-                    values: [
+                    params: [
                         {
                             type: "string",
                             name: "recipientAddress",
@@ -415,7 +417,7 @@ const getContractFromAccount = async (
                 params: {
                     to: EVMParam.EVM_GATEWAY,
                     method: "burn",
-                    values: [
+                    params: [
                         {
                             type: "bytes" as const,
                             name: "to",
@@ -434,9 +436,9 @@ const getContractFromAccount = async (
                 chain: network.selector,
                 type: "contract",
                 params: {
-                    to: network.addresses.BasicAdapter,
+                    to: network.addresses.BasicBridge,
                     method: "mint",
-                    values: [
+                    params: [
                         {
                             type: "string",
                             name: "symbol",
@@ -474,9 +476,9 @@ const getContractFromAccount = async (
                 type: "contract",
                 params: {
                     to: EVMParam.EVM_GATEWAY,
-                    // to: network.addresses.BasicAdapter,
+                    // to: network.addresses.BasicBridge,
                     method: "release",
-                    values: [
+                    params: [
                         {
                             type: "bytes32",
                             name: "pHash",
@@ -665,7 +667,7 @@ const getContractFromApproval = async (
         params: {
             to: payload.params.token,
             method: "approve",
-            values: [
+            params: [
                 {
                     type: "address",
                     name: "to",

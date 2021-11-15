@@ -1,7 +1,6 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
-import { Goerli } from "./goerli";
 import {
     EthereumClassConfig,
     EthProvider,
@@ -10,16 +9,16 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const polygonTestnetConfig: EvmNetworkConfig = {
+export const polygonMainnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
     asset: "MATIC",
-    isTestnet: true,
 
     network: {
         chainId: "0x89",
         chainName: "Matic(Polygon) Mainnet",
         nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
         rpcUrls: [
+            "https://rpc-mainnet.maticvigil.com",
             "https://rpc-mainnet.matic.network",
             "wss://ws-mainnet.matic.network",
             "https://rpc-mainnet.matic.quiknode.pro",
@@ -30,20 +29,22 @@ export const polygonTestnetConfig: EvmNetworkConfig = {
 
     logRequestLimit: 1000,
     addresses: {
-        GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
-        BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
+        GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
+        BasicBridge: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
 };
 
-export const polygonMainnetConfig: EvmNetworkConfig = {
+export const polygonTestnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
     asset: "MATIC",
+    isTestnet: true,
 
     network: {
         chainId: "0x13881",
         chainName: "Matic(Polygon) Testnet Mumbai",
         nativeCurrency: { name: "Matic", symbol: "tMATIC", decimals: 18 },
         rpcUrls: [
+            "https://rpc-mumbai.maticvigil.com",
             "https://rpc-mumbai.matic.today",
             "wss://ws-mumbai.matic.today",
         ],
@@ -52,8 +53,8 @@ export const polygonMainnetConfig: EvmNetworkConfig = {
 
     logRequestLimit: 1000,
     addresses: {
-        GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
-        BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
+        GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
+        BasicBridge: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
     },
 };
 
@@ -76,7 +77,7 @@ export class Polygon extends EthereumBaseChain {
         config: EthereumClassConfig = {},
     ) {
         super(
-            resolveEvmNetworkConfig(Goerli.configMap, network),
+            resolveEvmNetworkConfig(Polygon.configMap, network),
             web3Provider,
             config,
         );

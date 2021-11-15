@@ -117,6 +117,19 @@
         "inputs": [
             {
                 "indexed": true,
+                "internalType": "address",
+                "name": "newTransferWithLog",
+                "type": "address"
+            }
+        ],
+        "name": "LogTransferWithLogUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
                 "internalType": "bytes32",
                 "name": "role",
                 "type": "bytes32"
@@ -255,7 +268,12 @@
             },
             {
                 "internalType": "address",
-                "name": "adminAddress_",
+                "name": "adminAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "transferWithLog",
                 "type": "address"
             }
         ],
@@ -291,17 +309,17 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "address",
-                "name": "lockAsset_",
+                "name": "lockAsset",
                 "type": "address"
             },
             {
                 "internalType": "address",
-                "name": "lockGateway_",
+                "name": "lockGateway",
                 "type": "address"
             }
         ],
@@ -314,17 +332,17 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "address",
-                "name": "renAsset_",
+                "name": "renAsset",
                 "type": "address"
             },
             {
                 "internalType": "address",
-                "name": "mintGateway_",
+                "name": "mintGateway",
                 "type": "address"
             }
         ],
@@ -363,7 +381,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
@@ -373,7 +391,7 @@
             },
             {
                 "internalType": "string",
-                "name": "version_",
+                "name": "version",
                 "type": "string"
             }
         ],
@@ -386,17 +404,17 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "address",
-                "name": "renAsset_",
+                "name": "renAsset",
                 "type": "address"
             },
             {
                 "internalType": "string",
-                "name": "version_",
+                "name": "version",
                 "type": "string"
             }
         ],
@@ -409,27 +427,27 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             },
             {
                 "internalType": "string",
-                "name": "erc20Name_",
+                "name": "erc20Name",
                 "type": "string"
             },
             {
                 "internalType": "string",
-                "name": "erc20Symbol_",
+                "name": "erc20Symbol",
                 "type": "string"
             },
             {
                 "internalType": "uint8",
-                "name": "erc20Decimals_",
+                "name": "erc20Decimals",
                 "type": "uint8"
             },
             {
                 "internalType": "string",
-                "name": "version_",
+                "name": "version",
                 "type": "string"
             }
         ],
@@ -442,7 +460,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "tokenSymbol_",
+                "name": "tokenSymbol",
                 "type": "string"
             }
         ],
@@ -461,7 +479,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "token_",
+                "name": "token",
                 "type": "address"
             }
         ],
@@ -480,7 +498,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "tokenSymbol_",
+                "name": "tokenSymbol",
                 "type": "string"
             }
         ],
@@ -499,7 +517,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "tokenSymbol_",
+                "name": "tokenSymbol",
                 "type": "string"
             }
         ],
@@ -537,12 +555,12 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "from_",
+                "name": "from",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "count_",
+                "name": "count",
                 "type": "uint256"
             }
         ],
@@ -561,7 +579,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "tokenSymbol_",
+                "name": "tokenSymbol",
                 "type": "string"
             }
         ],
@@ -580,7 +598,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "token_",
+                "name": "token",
                 "type": "address"
             }
         ],
@@ -599,12 +617,12 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "from_",
+                "name": "from",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "count_",
+                "name": "count",
                 "type": "uint256"
             }
         ],
@@ -623,7 +641,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "tokenSymbol_",
+                "name": "tokenSymbol",
                 "type": "string"
             }
         ],
@@ -701,10 +719,23 @@
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "getSignatureVerifier",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "string",
-                "name": "tokenSymbol_",
+                "name": "tokenSymbol",
                 "type": "string"
             }
         ],
@@ -712,6 +743,19 @@
         "outputs": [
             {
                 "internalType": "contract IERC20",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTransferWithLog",
+        "outputs": [
+            {
+                "internalType": "address",
                 "name": "",
                 "type": "address"
             }
@@ -791,7 +835,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             }
         ],
@@ -804,7 +848,7 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "symbol_",
+                "name": "symbol",
                 "type": "string"
             }
         ],
@@ -863,19 +907,6 @@
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "signatureVerifier",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "bytes4",
@@ -898,11 +929,24 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "nextSignatureVerifier_",
+                "name": "nextSignatureVerifier",
                 "type": "address"
             }
         ],
         "name": "updateSignatureVerifier",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "nextTransferWithLog",
+                "type": "address"
+            }
+        ],
+        "name": "updateTransferWithLog",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

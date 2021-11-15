@@ -11,7 +11,9 @@
         "cov:all": "lerna run cov --scope @renproject/*",
         "test:all": "lerna run test --scope @renproject/*",
         "cov": "nyc ./node_modules/ts-mocha/bin/ts-mocha --color --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts",
-        "test": "ts-mocha --color --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts"
+        "test": "ts-mocha --color --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts",
+        "link:all": "lerna run link --scope @renproject/*",
+        "unlink:all": "lerna run unlink --scope @renproject/*"
     },
     "devDependencies": {
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -55,7 +57,6 @@
         "prettier": "^2.4.1",
         "rimraf": "^3.0.2",
         "send-crypto": "^0.2.33",
-        "standard-version": "^9.3.1",
         "throat": "6.0.1",
         "ts-loader": "^9.2.6",
         "ts-mocha": "^8.0.0",
@@ -75,9 +76,6 @@
         "commitizen": {
             "path": "cz-conventional-changelog"
         }
-    },
-    "resolutions": {
-        "@typescript-eslint/eslint-plugin": "^4.32.0"
     },
     "prettier": {
         "printWidth": 80,

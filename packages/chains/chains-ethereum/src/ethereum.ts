@@ -29,7 +29,7 @@ export const ethereumMainnet: EvmNetworkConfig = {
 
     addresses: {
         GatewayRegistry: "0xe80d347DF1209a76DD9d2319d62912ba98C54DDD",
-        BasicAdapter: "0x32666B64e9fD0F44916E1378Efb2CFa3B3B96e80",
+        BasicBridge: "0x32666B64e9fD0F44916E1378Efb2CFa3B3B96e80",
     },
 };
 
@@ -54,7 +54,7 @@ export const ethereumTestnet: EvmNetworkConfig = {
 
     addresses: {
         GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
-        BasicAdapter: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
+        BasicBridge: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
     },
 };
 
@@ -62,7 +62,7 @@ export const ethereumDevnet: EvmNetworkConfig = {
     ...ethereumTestnet,
     addresses: {
         GatewayRegistry: "0x5045E727D9D9AcDe1F6DCae52B078EC30dC95455",
-        BasicAdapter: "0xFABDB1F53Ef8B080332621cBc9F820a39e7A1B83",
+        BasicBridge: "0xFABDB1F53Ef8B080332621cBc9F820a39e7A1B83",
     },
 };
 

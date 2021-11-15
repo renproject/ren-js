@@ -19,17 +19,21 @@ import { EventFragment, FunctionFragment, Result } from "@ethersproject/abi";
 import { BytesLike } from "@ethersproject/bytes";
 import { Listener, Provider } from "@ethersproject/providers";
 
-import { TypedEvent, TypedEventFilter, TypedListener } from "./commons";
+import type {
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
+} from "./common";
 
-interface LockGatewayV3Interface extends ethers.utils.Interface {
+export interface LockGatewayV3Interface extends ethers.utils.Interface {
     functions: {
         "__GatewayStateManager_init(string,string,address,address)": FunctionFragment;
         "__LockGateway_init(string,string,address,address)": FunctionFragment;
-        "_status(bytes32)": FunctionFragment;
         "asset()": FunctionFragment;
         "chain()": FunctionFragment;
+        "eventNonce()": FunctionFragment;
         "lock(string,string,bytes,uint256)": FunctionFragment;
-        "nextN()": FunctionFragment;
         "owner()": FunctionFragment;
         "previousGateway()": FunctionFragment;
         "release(bytes32,uint256,bytes32,bytes)": FunctionFragment;
@@ -54,17 +58,16 @@ interface LockGatewayV3Interface extends ethers.utils.Interface {
         functionFragment: "__LockGateway_init",
         values: [string, string, string, string],
     ): string;
-    encodeFunctionData(
-        functionFragment: "_status",
-        values: [BytesLike],
-    ): string;
     encodeFunctionData(functionFragment: "asset", values?: undefined): string;
     encodeFunctionData(functionFragment: "chain", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "eventNonce",
+        values?: undefined,
+    ): string;
     encodeFunctionData(
         functionFragment: "lock",
         values: [string, string, BytesLike, BigNumberish],
     ): string;
-    encodeFunctionData(functionFragment: "nextN", values?: undefined): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(
         functionFragment: "previousGateway",
@@ -121,11 +124,13 @@ interface LockGatewayV3Interface extends ethers.utils.Interface {
         functionFragment: "__LockGateway_init",
         data: BytesLike,
     ): Result;
-    decodeFunctionResult(functionFragment: "_status", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "asset", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "chain", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "eventNonce",
+        data: BytesLike,
+    ): Result;
     decodeFunctionResult(functionFragment: "lock", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "nextN", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "previousGateway",
@@ -197,15 +202,22 @@ interface LockGatewayV3Interface extends ethers.utils.Interface {
 }
 
 export type LogAssetUpdatedEvent = TypedEvent<
-    [string, string] & { _asset: string; _selectorHash: string }
+    [string, string],
+    { _asset: string; _selectorHash: string }
 >;
+
+export type LogAssetUpdatedEventFilter = TypedEventFilter<LogAssetUpdatedEvent>;
 
 export type LogChainUpdatedEvent = TypedEvent<
-    [string, string] & { _chain: string; _selectorHash: string }
+    [string, string],
+    { _chain: string; _selectorHash: string }
 >;
 
+export type LogChainUpdatedEventFilter = TypedEventFilter<LogChainUpdatedEvent>;
+
 export type LogLockToChainEvent = TypedEvent<
-    [string, string, string, BigNumber, BigNumber, string, string] & {
+    [string, string, string, BigNumber, BigNumber, string, string],
+    {
         recipientAddress: string;
         recipientChain: string;
         recipientPayload: string;
@@ -216,71 +228,68 @@ export type LogLockToChainEvent = TypedEvent<
     }
 >;
 
+export type LogLockToChainEventFilter = TypedEventFilter<LogLockToChainEvent>;
+
 export type LogPreviousGatewayUpdatedEvent = TypedEvent<
-    [string] & { _newPreviousGateway: string }
+    [string],
+    { _newPreviousGateway: string }
 >;
+
+export type LogPreviousGatewayUpdatedEventFilter =
+    TypedEventFilter<LogPreviousGatewayUpdatedEvent>;
 
 export type LogReleaseEvent = TypedEvent<
-    [string, BigNumber, string, string] & {
-        recipient: string;
-        amount: BigNumber;
-        sigHash: string;
-        nHash: string;
-    }
+    [string, BigNumber, string, string],
+    { recipient: string; amount: BigNumber; sigHash: string; nHash: string }
 >;
+
+export type LogReleaseEventFilter = TypedEventFilter<LogReleaseEvent>;
 
 export type LogSignatureVerifierUpdatedEvent = TypedEvent<
-    [string] & { _newSignatureVerifier: string }
+    [string],
+    { _newSignatureVerifier: string }
 >;
 
-export type LogTokenUpdatedEvent = TypedEvent<[string] & { _newToken: string }>;
+export type LogSignatureVerifierUpdatedEventFilter =
+    TypedEventFilter<LogSignatureVerifierUpdatedEvent>;
+
+export type LogTokenUpdatedEvent = TypedEvent<[string], { _newToken: string }>;
+
+export type LogTokenUpdatedEventFilter = TypedEventFilter<LogTokenUpdatedEvent>;
 
 export type OwnershipTransferredEvent = TypedEvent<
-    [string, string] & { previousOwner: string; newOwner: string }
+    [string, string],
+    { previousOwner: string; newOwner: string }
 >;
+
+export type OwnershipTransferredEventFilter =
+    TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface LockGatewayV3 extends BaseContract {
     connect(signerOrProvider: Signer | Provider | string): this;
     attach(addressOrName: string): this;
     deployed(): Promise<this>;
 
-    listeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter?: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): Array<TypedListener<EventArgsArray, EventArgsObject>>;
-    off<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    on<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    once<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeListener<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeAllListeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): this;
+    interface: LockGatewayV3Interface;
 
-    listeners(eventName?: string): Array<Listener>;
-    off(eventName: string, listener: Listener): this;
-    on(eventName: string, listener: Listener): this;
-    once(eventName: string, listener: Listener): this;
-    removeListener(eventName: string, listener: Listener): this;
-    removeAllListeners(eventName?: string): this;
-
-    queryFilter<EventArgsArray extends Array<any>, EventArgsObject>(
-        event: TypedEventFilter<EventArgsArray, EventArgsObject>,
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
         fromBlockOrBlockhash?: string | number | undefined,
         toBlock?: string | number | undefined,
-    ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
+    ): Promise<Array<TEvent>>;
 
-    interface: LockGatewayV3Interface;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>,
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>,
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
     functions: {
         __GatewayStateManager_init(
@@ -295,35 +304,33 @@ export interface LockGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
-
-        _status(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
         asset(overrides?: CallOverrides): Promise<[string]>;
 
         chain(overrides?: CallOverrides): Promise<[string]>;
 
+        eventNonce(overrides?: CallOverrides): Promise<[BigNumber]>;
+
         lock(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
-
-        nextN(overrides?: CallOverrides): Promise<[BigNumber]>;
 
         owner(overrides?: CallOverrides): Promise<[string]>;
 
         previousGateway(overrides?: CallOverrides): Promise<[string]>;
 
         release(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
@@ -335,7 +342,7 @@ export interface LockGatewayV3 extends BaseContract {
 
         signatureVerifier(overrides?: CallOverrides): Promise<[string]>;
 
-        status(hash_: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
+        status(hash: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
         token(overrides?: CallOverrides): Promise<[string]>;
 
@@ -345,27 +352,27 @@ export interface LockGatewayV3 extends BaseContract {
         ): Promise<ContractTransaction>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
     };
@@ -382,35 +389,33 @@ export interface LockGatewayV3 extends BaseContract {
         chain_: string,
         asset_: string,
         signatureVerifier_: string,
-        token: string,
+        token_: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
-
-    _status(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     asset(overrides?: CallOverrides): Promise<string>;
 
     chain(overrides?: CallOverrides): Promise<string>;
 
+    eventNonce(overrides?: CallOverrides): Promise<BigNumber>;
+
     lock(
-        recipientAddress_: string,
-        recipientChain_: string,
-        recipientPayload_: BytesLike,
-        amount_: BigNumberish,
+        recipientAddress: string,
+        recipientChain: string,
+        recipientPayload: BytesLike,
+        amount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
-
-    nextN(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
     previousGateway(overrides?: CallOverrides): Promise<string>;
 
     release(
-        pHash_: BytesLike,
-        amount_: BigNumberish,
-        nHash_: BytesLike,
-        sig_: BytesLike,
+        pHash: BytesLike,
+        amount: BigNumberish,
+        nHash: BytesLike,
+        sig: BytesLike,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -422,7 +427,7 @@ export interface LockGatewayV3 extends BaseContract {
 
     signatureVerifier(overrides?: CallOverrides): Promise<string>;
 
-    status(hash_: BytesLike, overrides?: CallOverrides): Promise<boolean>;
+    status(hash: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     token(overrides?: CallOverrides): Promise<string>;
 
@@ -432,27 +437,27 @@ export interface LockGatewayV3 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     updateAsset(
-        nextAsset_: string,
+        nextAsset: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updateChain(
-        nextChain_: string,
+        nextChain: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updatePreviousGateway(
-        nextPreviousGateway_: string,
+        nextPreviousGateway: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updateSignatureVerifier(
-        nextSignatureVerifier_: string,
+        nextSignatureVerifier: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     updateToken(
-        nextToken_: string,
+        nextToken: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -469,35 +474,33 @@ export interface LockGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: CallOverrides,
         ): Promise<void>;
-
-        _status(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
         asset(overrides?: CallOverrides): Promise<string>;
 
         chain(overrides?: CallOverrides): Promise<string>;
 
+        eventNonce(overrides?: CallOverrides): Promise<BigNumber>;
+
         lock(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
-
-        nextN(overrides?: CallOverrides): Promise<BigNumber>;
 
         owner(overrides?: CallOverrides): Promise<string>;
 
         previousGateway(overrides?: CallOverrides): Promise<string>;
 
         release(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
@@ -507,7 +510,7 @@ export interface LockGatewayV3 extends BaseContract {
 
         signatureVerifier(overrides?: CallOverrides): Promise<string>;
 
-        status(hash_: BytesLike, overrides?: CallOverrides): Promise<boolean>;
+        status(hash: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
         token(overrides?: CallOverrides): Promise<string>;
 
@@ -517,27 +520,27 @@ export interface LockGatewayV3 extends BaseContract {
         ): Promise<void>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: CallOverrides,
         ): Promise<void>;
     };
@@ -546,34 +549,20 @@ export interface LockGatewayV3 extends BaseContract {
         "LogAssetUpdated(string,bytes32)"(
             _asset?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _asset: string; _selectorHash: string }
-        >;
-
+        ): LogAssetUpdatedEventFilter;
         LogAssetUpdated(
             _asset?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _asset: string; _selectorHash: string }
-        >;
+        ): LogAssetUpdatedEventFilter;
 
         "LogChainUpdated(string,bytes32)"(
             _chain?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _chain: string; _selectorHash: string }
-        >;
-
+        ): LogChainUpdatedEventFilter;
         LogChainUpdated(
             _chain?: null,
             _selectorHash?: null,
-        ): TypedEventFilter<
-            [string, string],
-            { _chain: string; _selectorHash: string }
-        >;
+        ): LogChainUpdatedEventFilter;
 
         "LogLockToChain(string,string,bytes,uint256,uint256,string,string)"(
             recipientAddress?: null,
@@ -583,19 +572,7 @@ export interface LockGatewayV3 extends BaseContract {
             lockNonce?: BigNumberish | null,
             recipientAddressIndexed?: string | null,
             recipientChainIndexed?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, BigNumber, BigNumber, string, string],
-            {
-                recipientAddress: string;
-                recipientChain: string;
-                recipientPayload: string;
-                amount: BigNumber;
-                lockNonce: BigNumber;
-                recipientAddressIndexed: string;
-                recipientChainIndexed: string;
-            }
-        >;
-
+        ): LogLockToChainEventFilter;
         LogLockToChain(
             recipientAddress?: null,
             recipientChain?: null,
@@ -604,88 +581,48 @@ export interface LockGatewayV3 extends BaseContract {
             lockNonce?: BigNumberish | null,
             recipientAddressIndexed?: string | null,
             recipientChainIndexed?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, BigNumber, BigNumber, string, string],
-            {
-                recipientAddress: string;
-                recipientChain: string;
-                recipientPayload: string;
-                amount: BigNumber;
-                lockNonce: BigNumber;
-                recipientAddressIndexed: string;
-                recipientChainIndexed: string;
-            }
-        >;
+        ): LogLockToChainEventFilter;
 
         "LogPreviousGatewayUpdated(address)"(
             _newPreviousGateway?: string | null,
-        ): TypedEventFilter<[string], { _newPreviousGateway: string }>;
-
+        ): LogPreviousGatewayUpdatedEventFilter;
         LogPreviousGatewayUpdated(
             _newPreviousGateway?: string | null,
-        ): TypedEventFilter<[string], { _newPreviousGateway: string }>;
+        ): LogPreviousGatewayUpdatedEventFilter;
 
         "LogRelease(address,uint256,bytes32,bytes32)"(
             recipient?: string | null,
             amount?: null,
             sigHash?: BytesLike | null,
             nHash?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, BigNumber, string, string],
-            {
-                recipient: string;
-                amount: BigNumber;
-                sigHash: string;
-                nHash: string;
-            }
-        >;
-
+        ): LogReleaseEventFilter;
         LogRelease(
             recipient?: string | null,
             amount?: null,
             sigHash?: BytesLike | null,
             nHash?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, BigNumber, string, string],
-            {
-                recipient: string;
-                amount: BigNumber;
-                sigHash: string;
-                nHash: string;
-            }
-        >;
+        ): LogReleaseEventFilter;
 
         "LogSignatureVerifierUpdated(address)"(
             _newSignatureVerifier?: string | null,
-        ): TypedEventFilter<[string], { _newSignatureVerifier: string }>;
-
+        ): LogSignatureVerifierUpdatedEventFilter;
         LogSignatureVerifierUpdated(
             _newSignatureVerifier?: string | null,
-        ): TypedEventFilter<[string], { _newSignatureVerifier: string }>;
+        ): LogSignatureVerifierUpdatedEventFilter;
 
         "LogTokenUpdated(address)"(
             _newToken?: string | null,
-        ): TypedEventFilter<[string], { _newToken: string }>;
-
-        LogTokenUpdated(
-            _newToken?: string | null,
-        ): TypedEventFilter<[string], { _newToken: string }>;
+        ): LogTokenUpdatedEventFilter;
+        LogTokenUpdated(_newToken?: string | null): LogTokenUpdatedEventFilter;
 
         "OwnershipTransferred(address,address)"(
             previousOwner?: string | null,
             newOwner?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { previousOwner: string; newOwner: string }
-        >;
-
+        ): OwnershipTransferredEventFilter;
         OwnershipTransferred(
             previousOwner?: string | null,
             newOwner?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { previousOwner: string; newOwner: string }
-        >;
+        ): OwnershipTransferredEventFilter;
     };
 
     estimateGas: {
@@ -701,35 +638,33 @@ export interface LockGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
-
-        _status(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
         asset(overrides?: CallOverrides): Promise<BigNumber>;
 
         chain(overrides?: CallOverrides): Promise<BigNumber>;
 
+        eventNonce(overrides?: CallOverrides): Promise<BigNumber>;
+
         lock(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
-
-        nextN(overrides?: CallOverrides): Promise<BigNumber>;
 
         owner(overrides?: CallOverrides): Promise<BigNumber>;
 
         previousGateway(overrides?: CallOverrides): Promise<BigNumber>;
 
         release(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
@@ -741,7 +676,7 @@ export interface LockGatewayV3 extends BaseContract {
 
         signatureVerifier(overrides?: CallOverrides): Promise<BigNumber>;
 
-        status(hash_: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
+        status(hash: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
         token(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -751,27 +686,27 @@ export interface LockGatewayV3 extends BaseContract {
         ): Promise<BigNumber>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
     };
@@ -789,28 +724,23 @@ export interface LockGatewayV3 extends BaseContract {
             chain_: string,
             asset_: string,
             signatureVerifier_: string,
-            token: string,
+            token_: string,
             overrides?: Overrides & { from?: string | Promise<string> },
-        ): Promise<PopulatedTransaction>;
-
-        _status(
-            arg0: BytesLike,
-            overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         asset(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         chain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+        eventNonce(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
         lock(
-            recipientAddress_: string,
-            recipientChain_: string,
-            recipientPayload_: BytesLike,
-            amount_: BigNumberish,
+            recipientAddress: string,
+            recipientChain: string,
+            recipientPayload: BytesLike,
+            amount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
-
-        nextN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -819,10 +749,10 @@ export interface LockGatewayV3 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         release(
-            pHash_: BytesLike,
-            amount_: BigNumberish,
-            nHash_: BytesLike,
-            sig_: BytesLike,
+            pHash: BytesLike,
+            amount: BigNumberish,
+            nHash: BytesLike,
+            sig: BytesLike,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
@@ -837,7 +767,7 @@ export interface LockGatewayV3 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         status(
-            hash_: BytesLike,
+            hash: BytesLike,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
@@ -849,27 +779,27 @@ export interface LockGatewayV3 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         updateAsset(
-            nextAsset_: string,
+            nextAsset: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updateChain(
-            nextChain_: string,
+            nextChain: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updatePreviousGateway(
-            nextPreviousGateway_: string,
+            nextPreviousGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         updateToken(
-            nextToken_: string,
+            nextToken: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
     };

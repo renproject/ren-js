@@ -11,7 +11,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.skip("RenJS Gateway Transaction", () => {
+describe("RenJS Gateway Transaction", () => {
     it("BTC/toEthereum", async function () {
         this.timeout(100000000000);
 

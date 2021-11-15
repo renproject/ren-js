@@ -9,6 +9,7 @@ import {
     CallOverrides,
     ContractTransaction,
     ethers,
+    EventFilter,
     Overrides,
     PopulatedTransaction,
     Signer,
@@ -18,14 +19,19 @@ import { EventFragment, FunctionFragment, Result } from "@ethersproject/abi";
 import { BytesLike } from "@ethersproject/bytes";
 import { Listener, Provider } from "@ethersproject/providers";
 
-import { TypedEvent, TypedEventFilter, TypedListener } from "./commons";
+import type {
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
+} from "./common";
 
-interface GatewayRegistryV2Interface extends ethers.utils.Interface {
+export interface GatewayRegistryV2Interface extends ethers.utils.Interface {
     functions: {
         "CAN_ADD_GATEWAYS()": FunctionFragment;
         "CAN_UPDATE_GATEWAYS()": FunctionFragment;
         "DEFAULT_ADMIN_ROLE()": FunctionFragment;
-        "__GatewayRegistry_init(string,uint256,address,address,address,address)": FunctionFragment;
+        "__GatewayRegistry_init(string,uint256,address,address,address,address,address)": FunctionFragment;
         "__RenAssetFactory_init(address,address,address)": FunctionFragment;
         "addLockGateway(string,address,address)": FunctionFragment;
         "addMintGateway(string,address,address)": FunctionFragment;
@@ -47,7 +53,9 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         "getRoleAdmin(bytes32)": FunctionFragment;
         "getRoleMember(bytes32,uint256)": FunctionFragment;
         "getRoleMemberCount(bytes32)": FunctionFragment;
+        "getSignatureVerifier()": FunctionFragment;
         "getTokenBySymbol(string)": FunctionFragment;
+        "getTransferWithLog()": FunctionFragment;
         "grantRole(bytes32,address)": FunctionFragment;
         "hasRole(bytes32,address)": FunctionFragment;
         "lockGatewayProxyBeacon()": FunctionFragment;
@@ -57,9 +65,9 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         "renAssetProxyBeacon()": FunctionFragment;
         "renounceRole(bytes32,address)": FunctionFragment;
         "revokeRole(bytes32,address)": FunctionFragment;
-        "signatureVerifier()": FunctionFragment;
         "supportsInterface(bytes4)": FunctionFragment;
         "updateSignatureVerifier(address)": FunctionFragment;
+        "updateTransferWithLog(address)": FunctionFragment;
     };
 
     encodeFunctionData(
@@ -76,7 +84,7 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
     ): string;
     encodeFunctionData(
         functionFragment: "__GatewayRegistry_init",
-        values: [string, BigNumberish, string, string, string, string],
+        values: [string, BigNumberish, string, string, string, string, string],
     ): string;
     encodeFunctionData(
         functionFragment: "__RenAssetFactory_init",
@@ -160,8 +168,16 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         values: [BytesLike],
     ): string;
     encodeFunctionData(
+        functionFragment: "getSignatureVerifier",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
         functionFragment: "getTokenBySymbol",
         values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getTransferWithLog",
+        values?: undefined,
     ): string;
     encodeFunctionData(
         functionFragment: "grantRole",
@@ -200,15 +216,15 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         values: [BytesLike, string],
     ): string;
     encodeFunctionData(
-        functionFragment: "signatureVerifier",
-        values?: undefined,
-    ): string;
-    encodeFunctionData(
         functionFragment: "supportsInterface",
         values: [BytesLike],
     ): string;
     encodeFunctionData(
         functionFragment: "updateSignatureVerifier",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "updateTransferWithLog",
         values: [string],
     ): string;
 
@@ -310,7 +326,15 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         data: BytesLike,
     ): Result;
     decodeFunctionResult(
+        functionFragment: "getSignatureVerifier",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
         functionFragment: "getTokenBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getTransferWithLog",
         data: BytesLike,
     ): Result;
     decodeFunctionResult(
@@ -347,15 +371,15 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         data: BytesLike,
     ): Result;
     decodeFunctionResult(
-        functionFragment: "signatureVerifier",
-        data: BytesLike,
-    ): Result;
-    decodeFunctionResult(
         functionFragment: "supportsInterface",
         data: BytesLike,
     ): Result;
     decodeFunctionResult(
         functionFragment: "updateSignatureVerifier",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "updateTransferWithLog",
         data: BytesLike,
     ): Result;
 
@@ -365,6 +389,7 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         "LogMintGatewayDeleted(string,string)": EventFragment;
         "LogMintGatewayUpdated(string,string,address,address)": EventFragment;
         "LogSignatureVerifierUpdated(address)": EventFragment;
+        "LogTransferWithLogUpdated(address)": EventFragment;
         "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
         "RoleGranted(bytes32,address,address)": EventFragment;
         "RoleRevoked(bytes32,address,address)": EventFragment;
@@ -377,30 +402,46 @@ interface GatewayRegistryV2Interface extends ethers.utils.Interface {
     getEvent(
         nameOrSignatureOrTopic: "LogSignatureVerifierUpdated",
     ): EventFragment;
+    getEvent(
+        nameOrSignatureOrTopic: "LogTransferWithLogUpdated",
+    ): EventFragment;
     getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
     getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
     getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
 }
 
 export type LogLockGatewayDeletedEvent = TypedEvent<
-    [string, string] & { symbol: string; indexedSymbol: string }
+    [string, string],
+    { symbol: string; indexedSymbol: string }
 >;
+
+export type LogLockGatewayDeletedEventFilter =
+    TypedEventFilter<LogLockGatewayDeletedEvent>;
 
 export type LogLockGatewayUpdatedEvent = TypedEvent<
-    [string, string, string, string] & {
+    [string, string, string, string],
+    {
         symbol: string;
         indexedSymbol: string;
         token: string;
         gatewayContract: string;
     }
 >;
+
+export type LogLockGatewayUpdatedEventFilter =
+    TypedEventFilter<LogLockGatewayUpdatedEvent>;
 
 export type LogMintGatewayDeletedEvent = TypedEvent<
-    [string, string] & { symbol: string; indexedSymbol: string }
+    [string, string],
+    { symbol: string; indexedSymbol: string }
 >;
 
+export type LogMintGatewayDeletedEventFilter =
+    TypedEventFilter<LogMintGatewayDeletedEvent>;
+
 export type LogMintGatewayUpdatedEvent = TypedEvent<
-    [string, string, string, string] & {
+    [string, string, string, string],
+    {
         symbol: string;
         indexedSymbol: string;
         token: string;
@@ -408,68 +449,72 @@ export type LogMintGatewayUpdatedEvent = TypedEvent<
     }
 >;
 
+export type LogMintGatewayUpdatedEventFilter =
+    TypedEventFilter<LogMintGatewayUpdatedEvent>;
+
 export type LogSignatureVerifierUpdatedEvent = TypedEvent<
-    [string] & { newSignatureVerifier: string }
+    [string],
+    { newSignatureVerifier: string }
 >;
+
+export type LogSignatureVerifierUpdatedEventFilter =
+    TypedEventFilter<LogSignatureVerifierUpdatedEvent>;
+
+export type LogTransferWithLogUpdatedEvent = TypedEvent<
+    [string],
+    { newTransferWithLog: string }
+>;
+
+export type LogTransferWithLogUpdatedEventFilter =
+    TypedEventFilter<LogTransferWithLogUpdatedEvent>;
 
 export type RoleAdminChangedEvent = TypedEvent<
-    [string, string, string] & {
-        role: string;
-        previousAdminRole: string;
-        newAdminRole: string;
-    }
+    [string, string, string],
+    { role: string; previousAdminRole: string; newAdminRole: string }
 >;
+
+export type RoleAdminChangedEventFilter =
+    TypedEventFilter<RoleAdminChangedEvent>;
 
 export type RoleGrantedEvent = TypedEvent<
-    [string, string, string] & { role: string; account: string; sender: string }
+    [string, string, string],
+    { role: string; account: string; sender: string }
 >;
 
+export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
+
 export type RoleRevokedEvent = TypedEvent<
-    [string, string, string] & { role: string; account: string; sender: string }
+    [string, string, string],
+    { role: string; account: string; sender: string }
 >;
+
+export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
 
 export interface GatewayRegistryV2 extends BaseContract {
     connect(signerOrProvider: Signer | Provider | string): this;
     attach(addressOrName: string): this;
     deployed(): Promise<this>;
 
-    listeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter?: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): Array<TypedListener<EventArgsArray, EventArgsObject>>;
-    off<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    on<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    once<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeListener<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-        listener: TypedListener<EventArgsArray, EventArgsObject>,
-    ): this;
-    removeAllListeners<EventArgsArray extends Array<any>, EventArgsObject>(
-        eventFilter: TypedEventFilter<EventArgsArray, EventArgsObject>,
-    ): this;
+    interface: GatewayRegistryV2Interface;
 
-    listeners(eventName?: string): Array<Listener>;
-    off(eventName: string, listener: Listener): this;
-    on(eventName: string, listener: Listener): this;
-    once(eventName: string, listener: Listener): this;
-    removeListener(eventName: string, listener: Listener): this;
-    removeAllListeners(eventName?: string): this;
-
-    queryFilter<EventArgsArray extends Array<any>, EventArgsObject>(
-        event: TypedEventFilter<EventArgsArray, EventArgsObject>,
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
         fromBlockOrBlockhash?: string | number | undefined,
         toBlock?: string | number | undefined,
-    ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
+    ): Promise<Array<TEvent>>;
 
-    interface: GatewayRegistryV2Interface;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>,
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>,
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
     functions: {
         CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<[string]>;
@@ -484,7 +529,8 @@ export interface GatewayRegistryV2 extends BaseContract {
             renAssetProxyBeacon_: string,
             mintGatewayProxyBeacon_: string,
             lockGatewayProxyBeacon_: string,
-            adminAddress_: string,
+            adminAddress: string,
+            transferWithLog: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
@@ -496,16 +542,16 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<ContractTransaction>;
 
         addLockGateway(
-            symbol_: string,
-            lockAsset_: string,
-            lockGateway_: string,
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         addMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            mintGateway_: string,
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
@@ -514,45 +560,45 @@ export interface GatewayRegistryV2 extends BaseContract {
         chainName(overrides?: CallOverrides): Promise<[string]>;
 
         deployLockGateway(
-            symbol_: string,
+            symbol: string,
             lockToken: string,
-            version_: string,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         deployMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            version_: string,
+            symbol: string,
+            renAsset: string,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         deployMintGatewayAndRenAsset(
-            symbol_: string,
-            erc20Name_: string,
-            erc20Symbol_: string,
-            erc20Decimals_: BigNumberish,
-            version_: string,
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         getGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
         getGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
         getLockAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
         getLockGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
@@ -562,29 +608,29 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<[string]>;
 
         getLockGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<[string[]]>;
 
         getMintGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
         getMintGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
         getMintGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<[string[]]>;
 
         getRenAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
@@ -604,10 +650,14 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<[BigNumber]>;
 
+        getSignatureVerifier(overrides?: CallOverrides): Promise<[string]>;
+
         getTokenBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<[string]>;
+
+        getTransferWithLog(overrides?: CallOverrides): Promise<[string]>;
 
         grantRole(
             role: BytesLike,
@@ -626,12 +676,12 @@ export interface GatewayRegistryV2 extends BaseContract {
         mintGatewayProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
 
         removeLockGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
         removeMintGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
@@ -649,15 +699,18 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
 
-        signatureVerifier(overrides?: CallOverrides): Promise<[string]>;
-
         supportsInterface(
             interfaceId: BytesLike,
             overrides?: CallOverrides,
         ): Promise<[boolean]>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        updateTransferWithLog(
+            nextTransferWithLog: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<ContractTransaction>;
     };
@@ -674,7 +727,8 @@ export interface GatewayRegistryV2 extends BaseContract {
         renAssetProxyBeacon_: string,
         mintGatewayProxyBeacon_: string,
         lockGatewayProxyBeacon_: string,
-        adminAddress_: string,
+        adminAddress: string,
+        transferWithLog: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -686,16 +740,16 @@ export interface GatewayRegistryV2 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     addLockGateway(
-        symbol_: string,
-        lockAsset_: string,
-        lockGateway_: string,
+        symbol: string,
+        lockAsset: string,
+        lockGateway: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     addMintGateway(
-        symbol_: string,
-        renAsset_: string,
-        mintGateway_: string,
+        symbol: string,
+        renAsset: string,
+        mintGateway: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -704,45 +758,45 @@ export interface GatewayRegistryV2 extends BaseContract {
     chainName(overrides?: CallOverrides): Promise<string>;
 
     deployLockGateway(
-        symbol_: string,
+        symbol: string,
         lockToken: string,
-        version_: string,
+        version: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     deployMintGateway(
-        symbol_: string,
-        renAsset_: string,
-        version_: string,
+        symbol: string,
+        renAsset: string,
+        version: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     deployMintGatewayAndRenAsset(
-        symbol_: string,
-        erc20Name_: string,
-        erc20Symbol_: string,
-        erc20Decimals_: BigNumberish,
-        version_: string,
+        symbol: string,
+        erc20Name: string,
+        erc20Symbol: string,
+        erc20Decimals: BigNumberish,
+        version: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     getGatewayBySymbol(
-        tokenSymbol_: string,
+        tokenSymbol: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
     getGatewayByToken(
-        token_: string,
+        token: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
     getLockAssetBySymbol(
-        tokenSymbol_: string,
+        tokenSymbol: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
     getLockGatewayBySymbol(
-        tokenSymbol_: string,
+        tokenSymbol: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
@@ -752,29 +806,29 @@ export interface GatewayRegistryV2 extends BaseContract {
     ): Promise<string>;
 
     getLockGatewaySymbols(
-        from_: BigNumberish,
-        count_: BigNumberish,
+        from: BigNumberish,
+        count: BigNumberish,
         overrides?: CallOverrides,
     ): Promise<string[]>;
 
     getMintGatewayBySymbol(
-        tokenSymbol_: string,
+        tokenSymbol: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
     getMintGatewayByToken(
-        token_: string,
+        token: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
     getMintGatewaySymbols(
-        from_: BigNumberish,
-        count_: BigNumberish,
+        from: BigNumberish,
+        count: BigNumberish,
         overrides?: CallOverrides,
     ): Promise<string[]>;
 
     getRenAssetBySymbol(
-        tokenSymbol_: string,
+        tokenSymbol: string,
         overrides?: CallOverrides,
     ): Promise<string>;
 
@@ -791,10 +845,14 @@ export interface GatewayRegistryV2 extends BaseContract {
         overrides?: CallOverrides,
     ): Promise<BigNumber>;
 
+    getSignatureVerifier(overrides?: CallOverrides): Promise<string>;
+
     getTokenBySymbol(
-        tokenSymbol_: string,
+        tokenSymbol: string,
         overrides?: CallOverrides,
     ): Promise<string>;
+
+    getTransferWithLog(overrides?: CallOverrides): Promise<string>;
 
     grantRole(
         role: BytesLike,
@@ -813,12 +871,12 @@ export interface GatewayRegistryV2 extends BaseContract {
     mintGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
 
     removeLockGateway(
-        symbol_: string,
+        symbol: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
     removeMintGateway(
-        symbol_: string,
+        symbol: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -836,15 +894,18 @@ export interface GatewayRegistryV2 extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
-    signatureVerifier(overrides?: CallOverrides): Promise<string>;
-
     supportsInterface(
         interfaceId: BytesLike,
         overrides?: CallOverrides,
     ): Promise<boolean>;
 
     updateSignatureVerifier(
-        nextSignatureVerifier_: string,
+        nextSignatureVerifier: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
+
+    updateTransferWithLog(
+        nextTransferWithLog: string,
         overrides?: Overrides & { from?: string | Promise<string> },
     ): Promise<ContractTransaction>;
 
@@ -861,7 +922,8 @@ export interface GatewayRegistryV2 extends BaseContract {
             renAssetProxyBeacon_: string,
             mintGatewayProxyBeacon_: string,
             lockGatewayProxyBeacon_: string,
-            adminAddress_: string,
+            adminAddress: string,
+            transferWithLog: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
@@ -873,16 +935,16 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<void>;
 
         addLockGateway(
-            symbol_: string,
-            lockAsset_: string,
-            lockGateway_: string,
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         addMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            mintGateway_: string,
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
@@ -891,45 +953,45 @@ export interface GatewayRegistryV2 extends BaseContract {
         chainName(overrides?: CallOverrides): Promise<string>;
 
         deployLockGateway(
-            symbol_: string,
+            symbol: string,
             lockToken: string,
-            version_: string,
+            version: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         deployMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            version_: string,
+            symbol: string,
+            renAsset: string,
+            version: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         deployMintGatewayAndRenAsset(
-            symbol_: string,
-            erc20Name_: string,
-            erc20Symbol_: string,
-            erc20Decimals_: BigNumberish,
-            version_: string,
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         getGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
         getGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
         getLockAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
         getLockGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
@@ -939,29 +1001,29 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<string>;
 
         getLockGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<string[]>;
 
         getMintGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
         getMintGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
         getMintGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<string[]>;
 
         getRenAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<string>;
 
@@ -981,10 +1043,14 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
+        getSignatureVerifier(overrides?: CallOverrides): Promise<string>;
+
         getTokenBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<string>;
+
+        getTransferWithLog(overrides?: CallOverrides): Promise<string>;
 
         grantRole(
             role: BytesLike,
@@ -1003,12 +1069,12 @@ export interface GatewayRegistryV2 extends BaseContract {
         mintGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
 
         removeLockGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
         removeMintGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: CallOverrides,
         ): Promise<void>;
 
@@ -1026,15 +1092,18 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<void>;
 
-        signatureVerifier(overrides?: CallOverrides): Promise<string>;
-
         supportsInterface(
             interfaceId: BytesLike,
             overrides?: CallOverrides,
         ): Promise<boolean>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        updateTransferWithLog(
+            nextTransferWithLog: string,
             overrides?: CallOverrides,
         ): Promise<void>;
     };
@@ -1043,156 +1112,93 @@ export interface GatewayRegistryV2 extends BaseContract {
         "LogLockGatewayDeleted(string,string)"(
             symbol?: null,
             indexedSymbol?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { symbol: string; indexedSymbol: string }
-        >;
-
+        ): LogLockGatewayDeletedEventFilter;
         LogLockGatewayDeleted(
             symbol?: null,
             indexedSymbol?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { symbol: string; indexedSymbol: string }
-        >;
+        ): LogLockGatewayDeletedEventFilter;
 
         "LogLockGatewayUpdated(string,string,address,address)"(
             symbol?: null,
             indexedSymbol?: string | null,
             token?: string | null,
             gatewayContract?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, string],
-            {
-                symbol: string;
-                indexedSymbol: string;
-                token: string;
-                gatewayContract: string;
-            }
-        >;
-
+        ): LogLockGatewayUpdatedEventFilter;
         LogLockGatewayUpdated(
             symbol?: null,
             indexedSymbol?: string | null,
             token?: string | null,
             gatewayContract?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, string],
-            {
-                symbol: string;
-                indexedSymbol: string;
-                token: string;
-                gatewayContract: string;
-            }
-        >;
+        ): LogLockGatewayUpdatedEventFilter;
 
         "LogMintGatewayDeleted(string,string)"(
             symbol?: null,
             indexedSymbol?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { symbol: string; indexedSymbol: string }
-        >;
-
+        ): LogMintGatewayDeletedEventFilter;
         LogMintGatewayDeleted(
             symbol?: null,
             indexedSymbol?: string | null,
-        ): TypedEventFilter<
-            [string, string],
-            { symbol: string; indexedSymbol: string }
-        >;
+        ): LogMintGatewayDeletedEventFilter;
 
         "LogMintGatewayUpdated(string,string,address,address)"(
             symbol?: null,
             indexedSymbol?: string | null,
             token?: string | null,
             gatewayContract?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, string],
-            {
-                symbol: string;
-                indexedSymbol: string;
-                token: string;
-                gatewayContract: string;
-            }
-        >;
-
+        ): LogMintGatewayUpdatedEventFilter;
         LogMintGatewayUpdated(
             symbol?: null,
             indexedSymbol?: string | null,
             token?: string | null,
             gatewayContract?: string | null,
-        ): TypedEventFilter<
-            [string, string, string, string],
-            {
-                symbol: string;
-                indexedSymbol: string;
-                token: string;
-                gatewayContract: string;
-            }
-        >;
+        ): LogMintGatewayUpdatedEventFilter;
 
         "LogSignatureVerifierUpdated(address)"(
             newSignatureVerifier?: string | null,
-        ): TypedEventFilter<[string], { newSignatureVerifier: string }>;
-
+        ): LogSignatureVerifierUpdatedEventFilter;
         LogSignatureVerifierUpdated(
             newSignatureVerifier?: string | null,
-        ): TypedEventFilter<[string], { newSignatureVerifier: string }>;
+        ): LogSignatureVerifierUpdatedEventFilter;
+
+        "LogTransferWithLogUpdated(address)"(
+            newTransferWithLog?: string | null,
+        ): LogTransferWithLogUpdatedEventFilter;
+        LogTransferWithLogUpdated(
+            newTransferWithLog?: string | null,
+        ): LogTransferWithLogUpdatedEventFilter;
 
         "RoleAdminChanged(bytes32,bytes32,bytes32)"(
             role?: BytesLike | null,
             previousAdminRole?: BytesLike | null,
             newAdminRole?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, string, string],
-            { role: string; previousAdminRole: string; newAdminRole: string }
-        >;
-
+        ): RoleAdminChangedEventFilter;
         RoleAdminChanged(
             role?: BytesLike | null,
             previousAdminRole?: BytesLike | null,
             newAdminRole?: BytesLike | null,
-        ): TypedEventFilter<
-            [string, string, string],
-            { role: string; previousAdminRole: string; newAdminRole: string }
-        >;
+        ): RoleAdminChangedEventFilter;
 
         "RoleGranted(bytes32,address,address)"(
             role?: BytesLike | null,
             account?: string | null,
             sender?: string | null,
-        ): TypedEventFilter<
-            [string, string, string],
-            { role: string; account: string; sender: string }
-        >;
-
+        ): RoleGrantedEventFilter;
         RoleGranted(
             role?: BytesLike | null,
             account?: string | null,
             sender?: string | null,
-        ): TypedEventFilter<
-            [string, string, string],
-            { role: string; account: string; sender: string }
-        >;
+        ): RoleGrantedEventFilter;
 
         "RoleRevoked(bytes32,address,address)"(
             role?: BytesLike | null,
             account?: string | null,
             sender?: string | null,
-        ): TypedEventFilter<
-            [string, string, string],
-            { role: string; account: string; sender: string }
-        >;
-
+        ): RoleRevokedEventFilter;
         RoleRevoked(
             role?: BytesLike | null,
             account?: string | null,
             sender?: string | null,
-        ): TypedEventFilter<
-            [string, string, string],
-            { role: string; account: string; sender: string }
-        >;
+        ): RoleRevokedEventFilter;
     };
 
     estimateGas: {
@@ -1208,7 +1214,8 @@ export interface GatewayRegistryV2 extends BaseContract {
             renAssetProxyBeacon_: string,
             mintGatewayProxyBeacon_: string,
             lockGatewayProxyBeacon_: string,
-            adminAddress_: string,
+            adminAddress: string,
+            transferWithLog: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
@@ -1220,16 +1227,16 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<BigNumber>;
 
         addLockGateway(
-            symbol_: string,
-            lockAsset_: string,
-            lockGateway_: string,
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         addMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            mintGateway_: string,
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
@@ -1238,45 +1245,45 @@ export interface GatewayRegistryV2 extends BaseContract {
         chainName(overrides?: CallOverrides): Promise<BigNumber>;
 
         deployLockGateway(
-            symbol_: string,
+            symbol: string,
             lockToken: string,
-            version_: string,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         deployMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            version_: string,
+            symbol: string,
+            renAsset: string,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         deployMintGatewayAndRenAsset(
-            symbol_: string,
-            erc20Name_: string,
-            erc20Symbol_: string,
-            erc20Decimals_: BigNumberish,
-            version_: string,
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         getGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getLockAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getLockGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
@@ -1286,29 +1293,29 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<BigNumber>;
 
         getLockGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getMintGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getMintGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getMintGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         getRenAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
@@ -1328,10 +1335,14 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
+        getSignatureVerifier(overrides?: CallOverrides): Promise<BigNumber>;
+
         getTokenBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
+
+        getTransferWithLog(overrides?: CallOverrides): Promise<BigNumber>;
 
         grantRole(
             role: BytesLike,
@@ -1350,12 +1361,12 @@ export interface GatewayRegistryV2 extends BaseContract {
         mintGatewayProxyBeacon(overrides?: CallOverrides): Promise<BigNumber>;
 
         removeLockGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
         removeMintGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
@@ -1373,15 +1384,18 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
 
-        signatureVerifier(overrides?: CallOverrides): Promise<BigNumber>;
-
         supportsInterface(
             interfaceId: BytesLike,
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        updateTransferWithLog(
+            nextTransferWithLog: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<BigNumber>;
     };
@@ -1405,7 +1419,8 @@ export interface GatewayRegistryV2 extends BaseContract {
             renAssetProxyBeacon_: string,
             mintGatewayProxyBeacon_: string,
             lockGatewayProxyBeacon_: string,
-            adminAddress_: string,
+            adminAddress: string,
+            transferWithLog: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
@@ -1417,16 +1432,16 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         addLockGateway(
-            symbol_: string,
-            lockAsset_: string,
-            lockGateway_: string,
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         addMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            mintGateway_: string,
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
@@ -1435,45 +1450,45 @@ export interface GatewayRegistryV2 extends BaseContract {
         chainName(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         deployLockGateway(
-            symbol_: string,
+            symbol: string,
             lockToken: string,
-            version_: string,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         deployMintGateway(
-            symbol_: string,
-            renAsset_: string,
-            version_: string,
+            symbol: string,
+            renAsset: string,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         deployMintGatewayAndRenAsset(
-            symbol_: string,
-            erc20Name_: string,
-            erc20Symbol_: string,
-            erc20Decimals_: BigNumberish,
-            version_: string,
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         getGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getLockAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getLockGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
@@ -1483,29 +1498,29 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         getLockGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getMintGatewayBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getMintGatewayByToken(
-            token_: string,
+            token: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getMintGatewaySymbols(
-            from_: BigNumberish,
-            count_: BigNumberish,
+            from: BigNumberish,
+            count: BigNumberish,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         getRenAssetBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
@@ -1525,8 +1540,16 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
+        getSignatureVerifier(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
         getTokenBySymbol(
-            tokenSymbol_: string,
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getTransferWithLog(
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
@@ -1551,12 +1574,12 @@ export interface GatewayRegistryV2 extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         removeLockGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
         removeMintGateway(
-            symbol_: string,
+            symbol: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
@@ -1576,17 +1599,18 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
 
-        signatureVerifier(
-            overrides?: CallOverrides,
-        ): Promise<PopulatedTransaction>;
-
         supportsInterface(
             interfaceId: BytesLike,
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
         updateSignatureVerifier(
-            nextSignatureVerifier_: string,
+            nextSignatureVerifier: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        updateTransferWithLog(
+            nextTransferWithLog: string,
             overrides?: Overrides & { from?: string | Promise<string> },
         ): Promise<PopulatedTransaction>;
     };

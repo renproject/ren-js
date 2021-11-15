@@ -3,7 +3,7 @@ import { Contract } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { ErrorWithCode, Ox } from "@renproject/utils";
 
-import { GatewayRegistryABI } from "../contracts";
+import { GatewayRegistryABI, getGatewayRegistryInstance } from "../contracts";
 import { ETHEREUM_ERROR } from "./errors";
 import { EvmNetworkConfig } from "./types";
 
@@ -13,16 +13,6 @@ import { EvmNetworkConfig } from "./types";
 
 /** The equivalent to `address(0x0)` in Solidity. */
 const EMPTY_ADDRESS = "0x" + "00".repeat(20);
-
-export const getGatewayRegistry = (
-    network: EvmNetworkConfig,
-    provider: Provider,
-) =>
-    new Contract(
-        network.addresses.GatewayRegistry,
-        GatewayRegistryABI,
-        provider,
-    );
 
 enum GatewayRegistryLookup {
     MintGateway = "Mint Gateway",
@@ -46,7 +36,10 @@ const createGatewayRegistryFetcher =
         asset: string,
     ): Promise<string> => {
         try {
-            const registry = getGatewayRegistry(network, provider);
+            const registry = getGatewayRegistryInstance(
+                provider,
+                network.addresses.GatewayRegistry,
+            );
             const registryAddress: string = Ox(
                 await registry[gatewayRegistryMethods[lookup]](asset),
             );

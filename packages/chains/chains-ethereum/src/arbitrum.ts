@@ -32,7 +32,7 @@ export const arbitrumMainnetConfig: EvmNetworkConfig = {
     logRequestLimit: 20000,
     addresses: {
         GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
-        BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
+        BasicBridge: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
 };
 
@@ -62,7 +62,7 @@ export const arbitrumTestnetConfig: EvmNetworkConfig = {
     logRequestLimit: 20000,
     addresses: {
         GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
-        BasicAdapter: "0x1156663dFab56A9BAdd844e12eDD69eC96Dd0eFb",
+        BasicBridge: "0x1156663dFab56A9BAdd844e12eDD69eC96Dd0eFb",
     },
 };
 

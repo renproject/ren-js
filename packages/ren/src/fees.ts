@@ -70,6 +70,7 @@ export const estimateTransactionFee = async (
             .times(BIP_DENOMINATOR - burnFee)
             .dividedBy(BIP_DENOMINATOR)
             .minus(transferFee)
+            .minus(dustAmount.plus(1))
             .decimalPlaces(0);
     };
 

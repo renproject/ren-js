@@ -47,7 +47,7 @@ export { GatewayFees } from "./fees";
  * 2. [[defaultDepositHandler]]
  *
  */
-export default class RenJS {
+export class RenJS {
     // /**
     //  * [STATIC] `Tokens` exposes the tokens that can be passed in to the lockAndMint and
     //  * burnAndRelease methods.
@@ -224,7 +224,7 @@ export default class RenJS {
                 ...this._config,
                 ...config,
             },
-        )._initialize();
+        ).initialize();
 
     public readonly gatewayTransaction = async <
         ToPayload extends { chain: string } = {
@@ -244,5 +244,7 @@ export default class RenJS {
                 ...this._config,
                 ...config,
             },
-        )._initialize();
+        ).initialize();
 }
+
+export default RenJS;

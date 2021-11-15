@@ -57,13 +57,21 @@ export interface TxWaiter<
 export interface TxSubmitter<
     Progress extends ChainTransactionProgress = ChainTransactionProgress,
 > {
-    // extends TxWaiter
+    // The name of the transaction's chain.
     chain: string;
+
+    // The transaction's current status. This will only get updated while
+    // `submit` or `wait` are being called.
     status: Progress;
+
+    // The event emitter is also returned by `submit` and `wait`.
     eventEmitter: EventEmitterTyped<{
         status: [Progress];
     }>;
 
+    /**
+     * Submit the transaction to the chain.
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit: (params?: { overrides?: any[]; txConfig?: any }) => PromiEvent<
         Progress,
@@ -71,6 +79,11 @@ export interface TxSubmitter<
             status: [Progress];
         }
     >;
+
+    /**
+     * Wait for the required finality / number of confirmations.
+     * The target can optionally be overridden.
+     */
     wait: (target?: number) => PromiEvent<
         Progress,
         {

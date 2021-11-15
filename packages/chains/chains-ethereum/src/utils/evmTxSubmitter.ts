@@ -100,6 +100,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             ...status,
         };
         this.eventEmitter.emit("status", this.status);
+        return this.status;
     };
 
     /**
@@ -210,15 +211,11 @@ export class EVMTxSubmitter implements TxSubmitter {
 
             target = isDefined(target) ? target : this.target;
 
-            if (target === 0) {
-                return this.status;
-            }
-
             // Wait for each confirmation until the target is reached.
-            while (this.tx.confirmations < target) {
+            while (this.tx.confirmations < target || this.onReceipt) {
                 try {
                     const receipt = await this.tx.wait(
-                        this.tx.confirmations + 1,
+                        Math.min(this.tx.confirmations + 1, target),
                     );
                     if (this.onReceipt) {
                         const onReceipt = this.onReceipt;
@@ -290,6 +287,12 @@ export class EVMTxSubmitter implements TxSubmitter {
                     console.error(error);
                     continue;
                 }
+            }
+
+            if (this.status.status !== ChainTransactionStatus.Done) {
+                this.updateStatus({
+                    status: ChainTransactionStatus.Done,
+                });
             }
 
             return this.status;

@@ -43,9 +43,9 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^2.5.6",
-        "@renproject/provider": "^2.5.6",
-        "@renproject/utils": "^2.5.2",
+        "@renproject/chains-bitcoin": "^3.0.0-alpha.2",
+        "@renproject/utils": "^3.0.0-alpha.2",
+        "@renproject/provider": "^3.0.0-alpha.2",
         "@types/elliptic": "^6.4.12",
         "@types/node": ">=10",
         "axios": "^0.21.1",

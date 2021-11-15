@@ -26,7 +26,7 @@ export interface EvmNetworkConfig {
 
     addresses: {
         GatewayRegistry: string;
-        BasicAdapter: string;
+        BasicBridge: string;
     };
 
     // See https://eips.ethereum.org/EIPS/eip-3085

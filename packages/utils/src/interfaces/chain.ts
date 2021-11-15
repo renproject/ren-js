@@ -132,7 +132,7 @@ export interface DepositChain<
     ) => SyncOrPromise<string>;
 
     /** Watch for deposits made to the provided address. */
-    watchForDeposits: (
+    watchForDeposits?: (
         asset: string,
         fromPayload: FromPayload,
         address: string,
@@ -155,8 +155,7 @@ export interface DepositChain<
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isDepositChain = (chain: any): chain is DepositChain =>
-    (chain as DepositChain).createGatewayAddress !== undefined &&
-    (chain as DepositChain).watchForDeposits !== undefined;
+    (chain as DepositChain).createGatewayAddress !== undefined;
 
 export interface ContractChain<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,6 +181,15 @@ export interface ContractChain<
         asset: string,
         type: InputType,
         contractCall: FromContractCall,
+        params: () => {
+            toChain: string;
+            toPayload: {
+                to: string;
+                toBytes: Buffer;
+                payload: Buffer;
+            };
+            gatewayAddress?: string;
+        },
     ) => SyncOrPromise<{
         [key: string]: TxSubmitter | TxWaiter;
     }>;

@@ -37,14 +37,12 @@ describe("RenJS Gateway Transaction", () => {
             .shiftedBy(-from.assetDecimals(asset));
 
         console.log(
-            `Deposit at least ${minimumAmount.toFixed()} ${asset} to ${gateway.gatewayAddress()} (to receive at least ${receivedAmount.toFixed()})`,
+            `Deposit at least ${minimumAmount.toFixed()} ${asset} to ${
+                gateway.gatewayAddress
+            } (to receive at least ${receivedAmount.toFixed()})`,
         );
 
-        await sendFunds(
-            asset,
-            gateway.gatewayAddress(),
-            minimumAmount.times(5),
-        );
+        await sendFunds(asset, gateway.gatewayAddress, minimumAmount.times(5));
 
         let foundDeposits = 0;
 

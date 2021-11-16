@@ -46,6 +46,7 @@ describe.skip("RenJS Gateway Transaction", () => {
                 .toFixed(),
         );
 
+        // Check what set-up calls need to be made
         for (const setupKey of Object.keys(gateway.setup)) {
             const setup = gateway.setup[setupKey];
             console.log(

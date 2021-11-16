@@ -3,15 +3,21 @@ import chalk from "chalk";
 
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import { BinanceSmartChain } from "../packages/chains/chains/src";
-import { GatewayTransaction } from "../packages/ren/build/main";
 import RenJS from "../packages/ren/src";
 import { RenNetwork } from "../packages/utils/build/main";
 import { getEVMProvider } from "./testUtils";
 
 const network = RenNetwork.Testnet;
 
-describe.only("Demo day", () => {
-    it("Test", async function () {
+/**
+ * Same as daiToBsc except:
+ * - calls `gateway.setup.approval` directly instead of looping through `setup`
+ * - no retrying on errors
+ * - less logs
+ */
+
+describe("RenJS Gateway Transaction", () => {
+    it("DAI/toBinanceSmartChain - simpler", async function () {
         this.timeout(100000000000);
 
         const ethereum = new Ethereum(

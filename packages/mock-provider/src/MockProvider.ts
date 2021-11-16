@@ -18,13 +18,17 @@ import {
     TransactionInput,
 } from "@renproject/provider/build/main/methods";
 import {
+    BlockState,
     ParamsQueryBlockState,
     ResponseQueryBlockState,
 } from "@renproject/provider/build/main/methods/ren_queryBlockState";
 import {
-    ChainCommon,
+    Chain,
+    decodeRenVMSelector,
     fromBase64,
     fromHex,
+    generateSHash,
+    isDepositChain,
     keccak256,
     Ox,
     PackPrimitive,
@@ -33,11 +37,14 @@ import {
     toURLBase64,
     TxStatus,
     TypedPackValue,
+    unmarshalTypedPackValue,
 } from "@renproject/utils";
 
 import { Provider } from "../../provider/build/main/rpc/jsonRpc";
 import { MockChain } from "./MockChain";
 import { randomBytes } from "./utils";
+
+const BIP_DENOMINATOR = 10000;
 
 export const responseQueryParamsType: PackStructType = {
     struct: [
@@ -70,7 +77,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     private transactions: Map<string, ResponseQueryTx>;
 
     // Map from chain name to chain class
-    private supportedChains = OrderedMap<string, ChainCommon>();
+    private supportedChains = OrderedMap<string, Chain>();
     // Map from asset name to chain name
     private supportedAssets = OrderedMap<string, string>();
 
@@ -82,7 +89,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     public mintAuthority = () =>
         Ox(privateToAddress(this.privateKeyBuffer).toString("hex"));
 
-    public registerChain = (chain: ChainCommon, assets?: string[]) => {
+    public registerChain = (chain: Chain, assets?: string[]) => {
         this.supportedChains = this.supportedChains.set(chain.chain, chain);
         for (const asset of [
             ...Object.values(chain.assets),
@@ -92,22 +99,22 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         }
     };
 
-    public registerAsset = (asset: string, chain: ChainCommon) => {
+    public registerAsset = (asset: string, chain: Chain) => {
         this.supportedAssets = this.supportedAssets.set(asset, chain.chain);
     };
 
-    sendMessage<Method extends keyof RPCParams & string>(
+    async sendMessage<Method extends keyof RPCParams & string>(
         method: Method,
         request: RPCParams[Method],
-    ): RPCResponses[Method] {
+    ): Promise<RPCResponses[Method]> {
         try {
             switch (method) {
                 case RPCMethod.SubmitTx:
-                    return this.handle_submitTx(
+                    return (await this.handle_submitTx(
                         request as ParamsSubmitTx<
                             TransactionInput<CrossChainParams>
                         >,
-                    ) as RPCResponses[Method];
+                    )) as RPCResponses[Method];
                 case RPCMethod.QueryTx:
                     return this.handle_queryTx(
                         request as ParamsQueryTx,
@@ -128,28 +135,93 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         }
     }
 
-    private handle_submitTx = (
+    private handle_submitTx = async (
         request: ParamsSubmitTx<TransactionInput<CrossChainParams>>,
-    ): ResponseSubmitTx => {
+    ): Promise<ResponseSubmitTx> => {
         const selector = request.tx.selector;
+        const asset = selector.split("/")[0];
+
+        const assetChainName = this.supportedAssets.get(asset);
+        // if (!assetChainName) {
+        //     throw new Error(`Must call 'registerAsset' for '${asset}'.`);
+        // }
+        // const assetChain = this.supportedChains.get(assetChainName);
+        // if (!assetChain) {
+        //     throw new Error(
+        //         `Must call 'registerChain' for '${assetChainName}'.`,
+        //     );
+        // }
+        // return assetChain;
+
         const inputs = request.tx.in.v;
 
         const pHash = fromBase64(inputs.phash);
         const nHash = fromBase64(inputs.nhash);
         const to = fromHex(inputs.to);
 
+        const chains = decodeRenVMSelector(selector, assetChainName || "");
+        const fromChain = this.supportedChains.get(chains.from);
+        const toChain = this.supportedChains.get(chains.to);
+        if (!fromChain) {
+            throw new Error(
+                `Must call 'registerChain' for ${String(
+                    chains.from || assetChainName || "",
+                )}`,
+            );
+        }
+        if (!toChain) {
+            throw new Error(
+                `Must call 'registerChain' for ${String(
+                    chains.to || assetChainName || "",
+                )}`,
+            );
+        }
+
+        const blockState: BlockState = unmarshalTypedPackValue(
+            this.handle_queryBlockState({}).state,
+        );
+        const { gasLimit, gasCap, dustAmount } = blockState[asset];
+
+        const mintAndBurnFees = blockState[asset].fees.chains.filter(
+            (chainFees) => chainFees.chain === toChain.chain,
+        )[0];
+
+        const subtractTransferFee =
+            (isDepositChain(fromChain) &&
+                (await fromChain.isDepositAsset(asset))) ||
+            (isDepositChain(toChain) && (await toChain.isDepositAsset(asset)));
+
+        const transferFee = subtractTransferFee
+            ? gasLimit.times(gasCap).plus(dustAmount).plus(1)
+            : new BigNumber(0);
+
+        const mintFee =
+            mintAndBurnFees && mintAndBurnFees.mintFee
+                ? mintAndBurnFees.mintFee.toNumber()
+                : 15;
+        const burnFee =
+            mintAndBurnFees && mintAndBurnFees.burnFee
+                ? mintAndBurnFees.burnFee.toNumber()
+                : 15;
+
+        const transferRequired =
+            isDepositChain(toChain) && (await toChain.isDepositAsset(asset));
+
         let completedTransaction: ResponseQueryTx;
-        if (/\/from/.exec(selector)) {
+        if (transferRequired) {
             // BURN //
 
             const amountIn = inputs.amount;
+            const amountOut = new BigNumber(amountIn)
+                .times(BIP_DENOMINATOR - burnFee)
+                .dividedBy(BIP_DENOMINATOR)
+                .minus(transferFee)
+                .decimalPlaces(0)
+                .toFixed();
 
-            const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+            let txid = request.tx.in.v.txid;
+            let txindex = request.tx.in.v.txindex;
 
-            let txid = toURLBase64(randomBytes(32));
-            let txindex = "0";
-
-            const asset = selector.split("/")[0];
             const chainName = this.supportedAssets.get(asset);
             if (chainName) {
                 const chain = this.supportedChains.get(chainName);
@@ -188,9 +260,14 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
             // MINT //
 
             const amountIn = inputs.amount;
-            const sHash = keccak256(Buffer.from(selector));
+            const sHash = generateSHash(`${asset}/to${toChain.chain}`);
 
-            const amountOut = new BigNumber(amountIn).minus(1000).toFixed();
+            const amountOut = new BigNumber(amountIn)
+                .minus(transferFee)
+                .times(BIP_DENOMINATOR - mintFee)
+                .dividedBy(BIP_DENOMINATOR)
+                .decimalPlaces(0)
+                .toFixed();
 
             // Generate signature
             const sigParams = defaultAbiCoder.encode(

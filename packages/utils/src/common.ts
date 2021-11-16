@@ -142,3 +142,29 @@ export const toNBytes = (
 
     return buffer;
 };
+
+export const decodeRenVMSelector = (
+    selector: string,
+    assetChain: string,
+): {
+    asset: string;
+    from: string;
+    to: string;
+} => {
+    const regex =
+        // Regular Expression to match selectors in the form of
+        // ASSET/fromCHAINtoCHAIN, ASSET/fromCHAIN or ASSET/toCHAIN.
+        // Note: chain names can't have
+        // ^(  ASSET )/[      [from(        CHAIN        )To(   CHAIN  )] OR [from( CHAIN )] OR ( to(  CHAIN  ))]$
+        /^([a-zA-Z]+)\/(?:(?:(?:from([a-zA-Z]+?(?=To)))(?:To([a-zA-Z]+))?)|(?:from([a-zA-Z]+))|(?:to([a-zA-Z]+)))$/;
+    const match = regex.exec(selector);
+    if (!match) {
+        throw new Error(`Invalid selector format '${selector}'.`);
+    }
+    const [_, asset, burnAndMintFrom, burnAndMintTo, burnFrom, mintTo] = match;
+    return {
+        asset,
+        from: burnAndMintFrom || burnFrom || assetChain,
+        to: burnAndMintTo || mintTo || assetChain,
+    };
+};

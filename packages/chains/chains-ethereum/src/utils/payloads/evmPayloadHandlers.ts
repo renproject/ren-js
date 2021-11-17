@@ -321,7 +321,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
 const getContractFromAccount = async (
     network: EvmNetworkConfig,
-    payload: EVMAccountPayload,
+    payload: EVMAddressPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMContractPayload> => {
     const amount = isDefined(payload.params.amount)
@@ -446,7 +446,7 @@ const getContractFromAccount = async (
                         {
                             type: "address",
                             name: "recipient",
-                            value: EVMParam.EVM_ACCOUNT,
+                            value: payload.params.address,
                         },
                         {
                             type: "uint256",
@@ -511,7 +511,7 @@ const getContractFromAccount = async (
                         // {
                         //     type: "string",
                         //     name: "recipient",
-                        //     value: EVMParam.EVM_ACCOUNT,
+                        //     value: payload.params.address,
                         // },
                         // {
                         //     type: "uint256",
@@ -539,19 +539,20 @@ const getContractFromAccount = async (
     }
 };
 
-export type EVMAccountPayload = EVMPayload<
-    "account",
+export type EVMAddressPayload = EVMPayload<
+    "address",
     {
+        address: string;
         amount?: string;
         convertToWei?: boolean;
     }
 >;
 
-export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
+export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
     getSetup: async (
         network: EvmNetworkConfig,
         signer: Signer,
-        payload: EVMAccountPayload,
+        payload: EVMAddressPayload,
         evmParams: EVMParamValues,
         getPayloadHandler: (payloadType: string) => PayloadHandler,
     ) => {
@@ -570,7 +571,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
     getPayload: async (
         network: EvmNetworkConfig,
         signer: Signer | undefined,
-        payload: EVMAccountPayload,
+        payload: EVMAddressPayload,
         evmParams: EVMParamValues,
         getPayloadHandler: (payloadType: string) => PayloadHandler,
     ): Promise<{
@@ -582,7 +583,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
             throw new Error(`Missing contract payload handler.`);
         }
         if (evmParams[EVMParam.EVM_TRANSACTION_TYPE] === OutputType.Release) {
-            const to = await evmParams[EVMParam.EVM_ACCOUNT]();
+            const to = await evmParams[payload.params.address]();
             return {
                 to: to,
                 toBytes: fromHex(to),
@@ -601,7 +602,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAccountPayload> = {
     submit: async (
         network: EvmNetworkConfig,
         signer: Signer,
-        payload: EVMAccountPayload,
+        payload: EVMAddressPayload,
         evmParams: EVMParamValues,
         overrides: {
             params?: { [key: string]: any };

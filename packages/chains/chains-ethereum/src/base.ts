@@ -722,7 +722,7 @@ export class EthereumBaseChain
                 return contractPayloadHandler as PayloadHandler<
                     EVMPayload<string, any>
                 >;
-            case "account":
+            case "address":
                 return accountPayloadHandler as PayloadHandler<
                     EVMPayload<string, any>
                 >;
@@ -893,10 +893,25 @@ export class EthereumBaseChain
         }
         return {
             chain: this.chain,
-            type: "account",
+            type: "address",
             params: {
+                address: EVMParam.EVM_ACCOUNT,
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertToWei,
+            },
+        };
+    };
+
+    public Address = (address: string): EVMPayload => {
+        assertType<string>("string", {
+            address,
+        });
+
+        return {
+            chain: this.chain,
+            type: "address",
+            params: {
+                address,
             },
         };
     };

@@ -1,5 +1,6 @@
 *.env
 .cache
+docs
 
 node_modules
 

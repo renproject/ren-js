@@ -752,7 +752,7 @@
     },
     {
         "inputs": [],
-        "name": "getTransferWithLog",
+        "name": "getTransferContract",
         "outputs": [
             {
                 "internalType": "address",

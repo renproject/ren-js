@@ -14,6 +14,7 @@ import {
     ContractChain,
     DefaultTxWaiter,
     fromBase64,
+    fromHex,
     InputChainTransaction,
     InputType,
     isDefined,
@@ -805,7 +806,18 @@ export class EthereumBaseChain
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
-                return this.signer?.getAddress();
+                return this.signer.getAddress();
+            },
+            [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: async () => {
+                if (!this.signer) {
+                    throw withCode(
+                        new Error(`Must connect signer.`),
+                        RenJSError.PARAMETER_ERROR,
+                    );
+                }
+                const account = await this.signer.getAddress();
+                const codeString = await this.provider.getCode(account);
+                return fromHex(codeString).length > 0;
             },
             [EVMParam.EVM_GATEWAY]: async () => {
                 if (type === InputType.Lock || type === OutputType.Release) {
@@ -818,7 +830,7 @@ export class EthereumBaseChain
                 await getGatewayRegistryInstance(
                     this.provider,
                     this.network.addresses.GatewayRegistry,
-                ).getTransferWithLog(),
+                ).getTransferContract(),
             [EVMParam.EVM_ASSET]: asset,
 
             // Available when minting or releasing
@@ -850,6 +862,7 @@ export class EthereumBaseChain
                 ? params.toPayload.payload
                 : undefined,
             [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]: params.gatewayAddress,
+            [EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]: this.isDepositAsset(asset),
         };
     };
 

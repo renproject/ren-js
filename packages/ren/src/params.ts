@@ -69,8 +69,8 @@ export interface GatewayParams<
     shard?: RenVMShard;
 
     /**
-     * Provide optional tags which can be used to look up transfers in the
-     * lightnodes.
+     * Provide an optional tag which can be used to look up transfers in the
+     * lightnode.
      */
-    tags?: [string]; // Currently, only one tag can be provided.
+    tag?: string;
 }

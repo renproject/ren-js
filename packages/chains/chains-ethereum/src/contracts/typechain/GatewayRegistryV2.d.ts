@@ -55,7 +55,7 @@ export interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         "getRoleMemberCount(bytes32)": FunctionFragment;
         "getSignatureVerifier()": FunctionFragment;
         "getTokenBySymbol(string)": FunctionFragment;
-        "getTransferWithLog()": FunctionFragment;
+        "getTransferContract()": FunctionFragment;
         "grantRole(bytes32,address)": FunctionFragment;
         "hasRole(bytes32,address)": FunctionFragment;
         "lockGatewayProxyBeacon()": FunctionFragment;
@@ -176,7 +176,7 @@ export interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         values: [string],
     ): string;
     encodeFunctionData(
-        functionFragment: "getTransferWithLog",
+        functionFragment: "getTransferContract",
         values?: undefined,
     ): string;
     encodeFunctionData(
@@ -334,7 +334,7 @@ export interface GatewayRegistryV2Interface extends ethers.utils.Interface {
         data: BytesLike,
     ): Result;
     decodeFunctionResult(
-        functionFragment: "getTransferWithLog",
+        functionFragment: "getTransferContract",
         data: BytesLike,
     ): Result;
     decodeFunctionResult(
@@ -657,7 +657,7 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<[string]>;
 
-        getTransferWithLog(overrides?: CallOverrides): Promise<[string]>;
+        getTransferContract(overrides?: CallOverrides): Promise<[string]>;
 
         grantRole(
             role: BytesLike,
@@ -852,7 +852,7 @@ export interface GatewayRegistryV2 extends BaseContract {
         overrides?: CallOverrides,
     ): Promise<string>;
 
-    getTransferWithLog(overrides?: CallOverrides): Promise<string>;
+    getTransferContract(overrides?: CallOverrides): Promise<string>;
 
     grantRole(
         role: BytesLike,
@@ -1050,7 +1050,7 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<string>;
 
-        getTransferWithLog(overrides?: CallOverrides): Promise<string>;
+        getTransferContract(overrides?: CallOverrides): Promise<string>;
 
         grantRole(
             role: BytesLike,
@@ -1342,7 +1342,7 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<BigNumber>;
 
-        getTransferWithLog(overrides?: CallOverrides): Promise<BigNumber>;
+        getTransferContract(overrides?: CallOverrides): Promise<BigNumber>;
 
         grantRole(
             role: BytesLike,
@@ -1549,7 +1549,7 @@ export interface GatewayRegistryV2 extends BaseContract {
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 
-        getTransferWithLog(
+        getTransferContract(
             overrides?: CallOverrides,
         ): Promise<PopulatedTransaction>;
 

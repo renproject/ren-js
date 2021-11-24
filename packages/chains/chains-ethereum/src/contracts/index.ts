@@ -62,16 +62,6 @@ export const getGatewayRegistryInstance = (
         signerOrProvider,
     ) as GatewayRegistryV2;
 
-export const getTransferWithLogInstance = (
-    signerOrProvider: Signer | Provider,
-    address: string,
-): TransferWithLog =>
-    new Contract(
-        address,
-        TransferWithLogABI,
-        signerOrProvider,
-    ) as TransferWithLog;
-
 export const getERC20Instance = (
     signerOrProvider: Signer | Provider,
     address: string,

@@ -28,6 +28,7 @@ import {
     fromBase64,
     fromHex,
     generateSHash,
+    generateSighash,
     isDepositChain,
     keccak256,
     Ox,
@@ -73,7 +74,7 @@ export const responseQueryParamsType: PackStructType = {
 };
 
 export class MockProvider implements Provider<RPCParams, RPCResponses> {
-    private privateKeyBuffer;
+    public privateKey: Buffer;
     private transactions: Map<string, ResponseQueryTx>;
 
     // Map from chain name to chain class
@@ -82,12 +83,16 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     private supportedAssets = OrderedMap<string, string>();
 
     constructor(privateKey?: Buffer) {
-        this.privateKeyBuffer = privateKey || randomBytes(32);
+        this.privateKey = privateKey || randomBytes(32);
         this.transactions = new Map();
     }
 
     public mintAuthority = () =>
-        Ox(privateToAddress(this.privateKeyBuffer).toString("hex"));
+        Ox(privateToAddress(this.privateKey).toString("hex"));
+
+    public updatePrivateKey = (privateKey?: Buffer) => {
+        this.privateKey = privateKey || randomBytes(32);
+    };
 
     public registerChain = (chain: Chain, assets?: string[]) => {
         this.supportedChains = this.supportedChains.set(chain.chain, chain);
@@ -266,16 +271,11 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                 .minus(transferFee)
                 .times(BIP_DENOMINATOR - mintFee)
                 .dividedBy(BIP_DENOMINATOR)
-                .decimalPlaces(0)
-                .toFixed();
+                .decimalPlaces(0);
 
             // Generate signature
-            const sigParams = defaultAbiCoder.encode(
-                ["bytes32", "uint256", "bytes32", "address", "bytes32"],
-                [pHash, amountOut, sHash, Ox(to), nHash],
-            );
-            const sigHash = keccak256(fromHex(sigParams));
-            const sig = ecsign(sigHash, this.privateKeyBuffer);
+            const sigHash = generateSighash(pHash, amountOut, to, sHash, nHash);
+            const sig = ecsign(sigHash, this.privateKey);
             const sigOut = toURLBase64(
                 Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]),
             );
@@ -290,7 +290,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                     out: {
                         t: responseQueryParamsType,
                         v: {
-                            amount: amountOut,
+                            amount: amountOut.toFixed(),
                             hash: request.tx.hash,
                             revert: undefined,
                             sig: sigOut,
@@ -344,7 +344,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         _request: ParamsQueryBlockState,
     ): ResponseQueryBlockState => {
         const ec = new elliptic.ec("secp256k1");
-        const k = ec.keyFromPrivate(this.privateKeyBuffer);
+        const k = ec.keyFromPrivate(this.privateKey);
         const key = Buffer.concat([
             Buffer.from([3]),
             k.getPublic().getX().toArrayLike(Buffer, "be", 32),

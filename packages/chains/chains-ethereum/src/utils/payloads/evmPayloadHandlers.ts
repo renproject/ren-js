@@ -23,9 +23,11 @@ export enum EVMParam {
     EVM_TRANSACTION_TYPE = "__EVM_TRANSACTION_TYPE__",
     EVM_TOKEN_ADDRESS = "__EVM_TOKEN_ADDRESS__",
     EVM_TOKEN_DECIMALS = "__EVM_TOKEN_DECIMALS__",
+    EVM_GATEWAY_IS_DEPOSIT_ASSET = "__EVM_GATEWAY_IS_DEPOSIT_ASSET__",
     EVM_GATEWAY_DEPOSIT_ADDRESS = "__EVM_GATEWAY_DEPOSIT_ADDRESS__",
     EVM_TRANSFER_WITH_LOG_CONTRACT = "__EVM_TRANSFER_WITH_LOG_CONTRACT__",
     EVM_ACCOUNT = "__EVM_ACCOUNT__",
+    EVM_ACCOUNT_IS_CONTRACT = "__EVM_ACCOUNT_IS_CONTRACT__",
     EVM_GATEWAY = "__EVM_GATEWAY__",
     EVM_ASSET = "__EVM_ASSET__",
 
@@ -57,6 +59,7 @@ export type EVMParamValues = {
     [EVMParam.EVM_TOKEN_DECIMALS]: () => Promise<number>;
     [EVMParam.EVM_TRANSFER_WITH_LOG_CONTRACT]: () => Promise<string>;
     [EVMParam.EVM_ACCOUNT]: () => Promise<string>;
+    [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: () => Promise<boolean>;
     [EVMParam.EVM_GATEWAY]: () => Promise<string>;
     [EVMParam.EVM_ASSET]: string;
 
@@ -74,7 +77,8 @@ export type EVMParamValues = {
     [EVMParam.EVM_TO_ADDRESS]?: string;
     [EVMParam.EVM_TO_ADDRESS_BYTES]?: Buffer;
     [EVMParam.EVM_TO_PAYLOAD]?: Buffer;
-    // Available when locking the fee asset.
+    // Available when locking deposit assets (e.g. ETH on Ethereum, FTM on Fantom)
+    [EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]?: boolean;
     [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]?: string;
 };
 
@@ -323,7 +327,7 @@ const getContractFromAccount = async (
     network: EvmNetworkConfig,
     payload: EVMAddressPayload,
     evmParams: EVMParamValues,
-): Promise<EVMContractPayload> => {
+): Promise<EVMContractPayload | undefined> => {
     const amount = isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
@@ -341,7 +345,7 @@ const getContractFromAccount = async (
                     RenJSError.PARAMETER_ERROR,
                 );
             }
-            if (evmParams[EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]) {
+            if (evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
                 return {
                     chain: network.selector,
                     type: "contract",
@@ -431,52 +435,56 @@ const getContractFromAccount = async (
                 },
             };
         case OutputType.Mint:
-            return {
-                chain: network.selector,
-                type: "contract",
-                params: {
-                    to: network.addresses.BasicBridge,
-                    method: "mint",
-                    params: [
-                        {
-                            type: "string",
-                            name: "symbol",
-                            value: EVMParam.EVM_ASSET,
-                        },
-                        {
-                            type: "address",
-                            name: "recipient",
-                            value: payload.params.address,
-                        },
-                        {
-                            type: "uint256",
-                            name: "amount",
-                            value: EVMParam.EVM_AMOUNT,
-                            notInPayload: true,
-                        },
-                        {
-                            type: "bytes32",
-                            name: "nHash",
-                            value: EVMParam.EVM_NHASH,
-                            notInPayload: true,
-                        },
-                        {
-                            type: "bytes",
-                            name: "sig",
-                            value: EVMParam.EVM_SIGNATURE,
-                            notInPayload: true,
-                        },
-                    ],
-                },
-            };
-        case OutputType.Release:
+            if (
+                payload.params.address.toLowerCase() !==
+                    (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase() ||
+                evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
+            ) {
+                return {
+                    chain: network.selector,
+                    type: "contract",
+                    params: {
+                        to: network.addresses.BasicBridge,
+                        method: "mint",
+                        params: [
+                            {
+                                type: "string",
+                                name: "symbol",
+                                value: EVMParam.EVM_ASSET,
+                            },
+                            {
+                                type: "address",
+                                name: "recipient",
+                                value: payload.params.address,
+                            },
+                            {
+                                type: "uint256",
+                                name: "amount",
+                                value: EVMParam.EVM_AMOUNT,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes32",
+                                name: "nHash",
+                                value: EVMParam.EVM_NHASH,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes",
+                                name: "sig",
+                                value: EVMParam.EVM_SIGNATURE,
+                                notInPayload: true,
+                            },
+                        ],
+                    },
+                };
+            }
             return {
                 chain: network.selector,
                 type: "contract",
                 params: {
                     to: EVMParam.EVM_GATEWAY,
-                    // to: network.addresses.BasicBridge,
-                    method: "release",
+                    method: "mint",
                     params: [
                         {
                             type: "bytes32",
@@ -499,38 +507,97 @@ const getContractFromAccount = async (
                         {
                             type: "bytes",
                             name: "sig",
+                            value: EVMParam.EVM_SIGNATURE_V,
+                            notInPayload: true,
+                        },
+                    ],
+                },
+            };
+        case OutputType.Release:
+            if (evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
+                return undefined;
+            }
+            if (
+                payload.params.address.toLowerCase() !==
+                    (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase() ||
+                evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
+            ) {
+                return {
+                    chain: network.selector,
+                    type: "contract",
+                    params: {
+                        to: network.addresses.BasicBridge,
+                        method: "release",
+                        params: [
+                            {
+                                type: "string",
+                                name: "symbol",
+                                value: EVMParam.EVM_ASSET,
+                            },
+                            {
+                                type: "address",
+                                name: "recipient",
+                                value: payload.params.address,
+                            },
+                            {
+                                type: "uint256",
+                                name: "amount",
+                                value: EVMParam.EVM_AMOUNT,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes32",
+                                name: "nHash",
+                                value: EVMParam.EVM_NHASH,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes",
+                                name: "sig",
+                                value: EVMParam.EVM_SIGNATURE,
+                                notInPayload: true,
+                            },
+                        ],
+                    },
+                };
+            }
+            return {
+                chain: network.selector,
+                type: "contract",
+                params: {
+                    to: EVMParam.EVM_GATEWAY,
+                    method: "release",
+                    params: [
+                        {
+                            type: "bytes32",
+                            name: "pHash",
+                            value: EVMParam.EVM_PHASH,
+                            notInPayload: true,
+                        },
+                        {
+                            type: "uint256",
+                            name: "amount",
+                            value: EVMParam.EVM_AMOUNT,
+                            notInPayload: true,
+                        },
+                        {
+                            type: "bytes32",
+                            name: "nHash",
+                            value: EVMParam.EVM_NHASH,
+                            notInPayload: true,
+                        },
+                        {
+                            type: "bytes",
+                            name: "calldata sig",
                             value: EVMParam.EVM_SIGNATURE,
                             notInPayload: true,
                         },
-
-                        // {
-                        //     type: "string",
-                        //     name: "symbol_",
-                        //     value: EVMParam.EVM_ASSET,
-                        // },
-                        // {
-                        //     type: "string",
-                        //     name: "recipient",
-                        //     value: payload.params.address,
-                        // },
-                        // {
-                        //     type: "uint256",
-                        //     name: "amount",
-                        //     value: EVMParam.EVM_AMOUNT,
-                        //     notInPayload: true,
-                        // },
-                        // {
-                        //     type: "bytes32",
-                        //     name: "nHash",
-                        //     value: EVMParam.EVM_NHASH,
-                        //     notInPayload: true,
-                        // },
-                        // {
-                        //     type: "bytes",
-                        //     name: "sig",
-                        //     value: EVMParam.EVM_SIGNATURE,
-                        //     notInPayload: true,
-                        // },
+                        {
+                            type: "address",
+                            name: "recipient",
+                            value: payload.params.address,
+                            notInPayload: true,
+                        },
                     ],
                 },
             };
@@ -559,10 +626,18 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         if (!contractPayloadHandler.getSetup) {
             throw new Error(`Missing contract payload handler.`);
         }
+        const contractPayload = await getContractFromAccount(
+            network,
+            payload,
+            evmParams,
+        );
+        if (!contractPayload) {
+            return {};
+        }
         return await contractPayloadHandler.getSetup(
             network,
             signer,
-            await getContractFromAccount(network, payload, evmParams),
+            contractPayload,
             evmParams,
             getPayloadHandler,
         );
@@ -582,21 +657,38 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         if (!contractPayloadHandler.getPayload) {
             throw new Error(`Missing contract payload handler.`);
         }
-        if (evmParams[EVMParam.EVM_TRANSACTION_TYPE] === OutputType.Release) {
-            const to = await evmParams[payload.params.address]();
+        const contractPayload = await getContractFromAccount(
+            network,
+            payload,
+            evmParams,
+        );
+        if (!contractPayload) {
+            const to = await replaceRenParam(payload.params.address, evmParams);
             return {
-                to: to,
+                to,
                 toBytes: fromHex(to),
                 payload: Buffer.from([]),
             };
         }
-        return await contractPayloadHandler.getPayload(
+        let p = await contractPayloadHandler.getPayload(
             network,
             signer,
-            await getContractFromAccount(network, payload, evmParams),
+            contractPayload,
             evmParams,
             getPayloadHandler,
         );
+        if (
+            p.to.toLowerCase() ===
+            (await evmParams.__EVM_GATEWAY__()).toLowerCase()
+        ) {
+            const to = await replaceRenParam(payload.params.address, evmParams);
+            p = {
+                ...p,
+                to,
+                toBytes: fromHex(to),
+            };
+        }
+        return p;
     },
 
     submit: async (
@@ -610,10 +702,20 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         },
         getPayloadHandler: (payloadType: string) => PayloadHandler,
     ): Promise<TransactionResponse> => {
+        const contractPayload = await getContractFromAccount(
+            network,
+            payload,
+            evmParams,
+        );
+        if (!contractPayload) {
+            throw new Error(
+                `Unable to submit empty payload for release to ${payload.params.address}.`,
+            );
+        }
         return contractPayloadHandler.submit(
             network,
             signer,
-            await getContractFromAccount(network, payload, evmParams),
+            contractPayload,
             evmParams,
             overrides,
             getPayloadHandler,

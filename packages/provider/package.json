@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "3.0.0-alpha.3",
+    "version": "3.0.0-alpha.4",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -44,7 +44,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/utils": "^3.0.0-alpha.3",
+        "@renproject/utils": "^3.0.0-alpha.4",
         "@types/create-hash": "1.2.2",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",

@@ -28,8 +28,8 @@ export const ethereumMainnet: EvmNetworkConfig = {
     },
 
     addresses: {
-        GatewayRegistry: "0xe80d347DF1209a76DD9d2319d62912ba98C54DDD",
-        BasicBridge: "0x32666B64e9fD0F44916E1378Efb2CFa3B3B96e80",
+        GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
+        BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
 };
 
@@ -53,8 +53,8 @@ export const ethereumTestnet: EvmNetworkConfig = {
     },
 
     addresses: {
-        GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
-        BasicBridge: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
+        GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
+        BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
 };
 
@@ -105,7 +105,7 @@ export class Ethereum extends EthereumBaseChain {
      * @param web3Provider a Web3 or Ethers.js provider.
      * @param config pass optional configurations, e.g. a logger
      */
-    constructor(
+    public constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,
         config: EthereumClassConfig = {},

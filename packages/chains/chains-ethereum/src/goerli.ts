@@ -26,8 +26,8 @@ export const goerliConfig: EvmNetworkConfig = {
     },
 
     addresses: {
-        GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
-        BasicBridge: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
+        GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
+        BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
 };
 
@@ -44,7 +44,7 @@ export class Goerli extends EthereumBaseChain {
     };
     public assets = Goerli.assets;
 
-    constructor(
+    public constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,
         config: EthereumClassConfig = {},

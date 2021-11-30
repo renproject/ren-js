@@ -18,7 +18,7 @@ export enum BlockchairNetwork {
 export class Blockchair implements BitcoinAPI {
     network: BlockchairNetwork;
 
-    constructor(network: BlockchairNetwork = BlockchairNetwork.BITCOIN) {
+    public constructor(network: BlockchairNetwork = BlockchairNetwork.BITCOIN) {
         this.network = network;
     }
 

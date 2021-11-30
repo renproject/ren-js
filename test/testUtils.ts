@@ -31,10 +31,20 @@ export const getEVMProvider = <EVM>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
 ): EthProvider => {
-    const rpcUrl = ChainClass.configMap[network].network.rpcUrls[0].replace(
-        "${INFURA_API_KEY}",
-        process.env.INFURA_KEY,
-    );
+    const urls = ChainClass.configMap[network].network.rpcUrls;
+    let rpcUrl = urls[0];
+    if (process.env.INFURA_KEY) {
+        const infuraRegEx = /^https:\/\/.*\$\{INFURA_API_KEY\}/;
+        for (const url of urls) {
+            if (infuraRegEx.exec(url)) {
+                rpcUrl = url.replace(
+                    /\$\{INFURA_API_KEY\}/,
+                    process.env.INFURA_KEY,
+                );
+                break;
+            }
+        }
+    }
 
     const provider = new providers.JsonRpcProvider(rpcUrl);
     const signer = Wallet.fromMnemonic(MNEMONIC).connect(provider);
@@ -111,7 +121,7 @@ export const sendFunds = async (
             network: "testnet",
             apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
             terra: {
-                URL: "https://tequila-lcd.terra.dev",
+                URL: "https://bombay-fcd.terra.dev",
             },
         },
     );

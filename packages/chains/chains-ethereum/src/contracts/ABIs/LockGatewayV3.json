@@ -5,36 +5,17 @@
             {
                 "indexed": false,
                 "internalType": "string",
-                "name": "_asset",
+                "name": "asset",
                 "type": "string"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "bytes32",
-                "name": "_selectorHash",
+                "name": "selectorHash",
                 "type": "bytes32"
             }
         ],
         "name": "LogAssetUpdated",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "_chain",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "bytes32",
-                "name": "_selectorHash",
-                "type": "bytes32"
-            }
-        ],
-        "name": "LogChainUpdated",
         "type": "event"
     },
     {
@@ -92,7 +73,13 @@
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "_newPreviousGateway",
+                "name": "oldPreviousGateway",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newPreviousGateway",
                 "type": "address"
             }
         ],
@@ -135,8 +122,14 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "contract ISignatureVerifier",
-                "name": "_newSignatureVerifier",
+                "internalType": "address",
+                "name": "oldSignatureVerifier",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newSignatureVerifier",
                 "type": "address"
             }
         ],
@@ -149,7 +142,7 @@
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "_newToken",
+                "name": "token",
                 "type": "address"
             }
         ],
@@ -157,31 +150,20 @@
         "type": "event"
     },
     {
-        "anonymous": false,
-        "inputs": [
+        "inputs": [],
+        "name": "NAME",
+        "outputs": [
             {
-                "indexed": true,
-                "internalType": "address",
-                "name": "previousOwner",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "newOwner",
-                "type": "address"
+                "internalType": "string",
+                "name": "",
+                "type": "string"
             }
         ],
-        "name": "OwnershipTransferred",
-        "type": "event"
+        "stateMutability": "view",
+        "type": "function"
     },
     {
         "inputs": [
-            {
-                "internalType": "string",
-                "name": "chain_",
-                "type": "string"
-            },
             {
                 "internalType": "string",
                 "name": "asset_",
@@ -207,11 +189,6 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "chain_",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
                 "name": "asset_",
                 "type": "string"
             },
@@ -222,7 +199,7 @@
             },
             {
                 "internalType": "address",
-                "name": "token",
+                "name": "token_",
                 "type": "address"
             }
         ],
@@ -232,19 +209,65 @@
         "type": "function"
     },
     {
-        "inputs": [
+        "inputs": [],
+        "name": "getAsset",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getEventNonce",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getPreviousGateway",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getSelectorHash",
+        "outputs": [
             {
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
             }
         ],
-        "name": "_status",
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getSignatureVerifier",
         "outputs": [
             {
-                "internalType": "bool",
+                "internalType": "contract IRenVMSignatureVerifier",
                 "name": "",
-                "type": "bool"
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -252,25 +275,12 @@
     },
     {
         "inputs": [],
-        "name": "asset",
+        "name": "getToken",
         "outputs": [
             {
-                "internalType": "string",
+                "internalType": "address",
                 "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "chain",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -280,22 +290,22 @@
         "inputs": [
             {
                 "internalType": "string",
-                "name": "recipientAddress_",
+                "name": "recipientAddress",
                 "type": "string"
             },
             {
                 "internalType": "string",
-                "name": "recipientChain_",
+                "name": "recipientChain",
                 "type": "string"
             },
             {
                 "internalType": "bytes",
-                "name": "recipientPayload_",
+                "name": "recipientPayload",
                 "type": "bytes"
             },
             {
                 "internalType": "uint256",
-                "name": "amount_",
+                "name": "amount",
                 "type": "uint256"
             }
         ],
@@ -312,33 +322,7 @@
     },
     {
         "inputs": [],
-        "name": "nextN",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
         "name": "owner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "previousGateway",
         "outputs": [
             {
                 "internalType": "address",
@@ -353,22 +337,22 @@
         "inputs": [
             {
                 "internalType": "bytes32",
-                "name": "pHash_",
+                "name": "pHash",
                 "type": "bytes32"
             },
             {
                 "internalType": "uint256",
-                "name": "amount_",
+                "name": "amount",
                 "type": "uint256"
             },
             {
                 "internalType": "bytes32",
-                "name": "nHash_",
+                "name": "nHash",
                 "type": "bytes32"
             },
             {
                 "internalType": "bytes",
-                "name": "sig_",
+                "name": "sig",
                 "type": "bytes"
             }
         ],
@@ -384,43 +368,10 @@
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "renounceOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "selectorHash",
-        "outputs": [
-            {
-                "internalType": "bytes32",
-                "name": "",
-                "type": "bytes32"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "signatureVerifier",
-        "outputs": [
-            {
-                "internalType": "contract ISignatureVerifier",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "bytes32",
-                "name": "hash_",
+                "name": "hash",
                 "type": "bytes32"
             }
         ],
@@ -451,21 +402,8 @@
     {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "string",
-                "name": "nextAsset_",
+                "name": "nextAsset",
                 "type": "string"
             }
         ],
@@ -477,21 +415,8 @@
     {
         "inputs": [
             {
-                "internalType": "string",
-                "name": "nextChain_",
-                "type": "string"
-            }
-        ],
-        "name": "updateChain",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "address",
-                "name": "nextPreviousGateway_",
+                "name": "newPreviousGateway",
                 "type": "address"
             }
         ],
@@ -503,8 +428,8 @@
     {
         "inputs": [
             {
-                "internalType": "contract ISignatureVerifier",
-                "name": "nextSignatureVerifier_",
+                "internalType": "address",
+                "name": "newSignatureVerifier",
                 "type": "address"
             }
         ],
@@ -517,7 +442,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "nextToken_",
+                "name": "newToken",
                 "type": "address"
             }
         ],

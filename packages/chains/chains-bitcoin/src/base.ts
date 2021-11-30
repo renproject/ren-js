@@ -51,7 +51,7 @@ export abstract class BitcoinBaseChain
 
     public api = new CombinedAPI();
 
-    constructor(network: BitcoinNetworkInput) {
+    public constructor(network: BitcoinNetworkInput) {
         const networkConfig = isBitcoinNetworkConfig(network)
             ? network
             : this.configMap[network];
@@ -69,15 +69,15 @@ export abstract class BitcoinBaseChain
         }
     }
 
-    public withAPI = (
+    public withAPI(
         api: BitcoinAPI | APIWithPriority,
         { priority = 0 } = {},
-    ) => {
+    ): this {
         this.api.withAPI(api, { priority });
         return this;
-    };
+    }
 
-    public getOutputPayload = (
+    public getOutputPayload(
         asset: string,
         _type: OutputType.Release,
         toPayload: BitcoinReleasePayload,
@@ -85,27 +85,31 @@ export abstract class BitcoinBaseChain
         to: string;
         toBytes: Buffer;
         payload: Buffer;
-    } => {
-        this.assertAssetIsSupported(asset);
+    } {
+        this._assertAssetIsSupported(asset);
         return {
             to: toPayload.address,
             toBytes: base58.decode(toPayload.address),
             payload: Buffer.from([]),
         };
-    };
+    }
 
-    addressExplorerLink = (address: string): string | undefined =>
-        this.network.explorer.address(address);
+    public addressExplorerLink(address: string): string | undefined {
+        return this.network.explorer.address(address);
+    }
 
-    transactionExplorerLink = (tx: ChainTransaction): string | undefined =>
-        this.network.explorer.transaction(this.transactionHash(tx));
+    public transactionExplorerLink(tx: ChainTransaction): string | undefined {
+        return this.network.explorer.transaction(
+            this.formattedTransactionHash(tx),
+        );
+    }
 
     public getBalance = async (
         asset: string,
         address: string,
         // eslint-disable-next-line @typescript-eslint/require-await
     ): Promise<BigNumber> => {
-        this.assertAssetIsSupported(asset);
+        this._assertAssetIsSupported(asset);
         if (!this.validateAddress(address)) {
             throw new Error(`Invalid address ${address}.`);
         }
@@ -113,61 +117,72 @@ export abstract class BitcoinBaseChain
         return new BigNumber(0);
     };
 
-    public encodeAddress = base58.encode as (bytes: Buffer) => string;
+    public encodeAddress(bytes: Buffer): string {
+        return base58.encode(bytes);
+    }
 
-    public validateAddress = (address: string): boolean =>
-        validateAddress(
+    public validateAddress(address: string): boolean {
+        return validateAddress(
             address,
             this.network.nativeAsset.symbol,
             this.network.isTestnet ? "testnet" : "prod",
         );
+    }
 
-    public transactionHash = (transaction: { txid: string; txindex: string }) =>
-        fromBase64(transaction.txid).reverse().toString("hex");
+    public formattedTransactionHash(transaction: {
+        txid: string;
+        txindex: string;
+    }): string {
+        return fromBase64(transaction.txid).reverse().toString("hex");
+    }
 
-    validateTransaction = (transaction: ChainTransaction): boolean =>
-        fromBase64(transaction.txid).length === 32 &&
-        !new BigNumber(transaction.txindex).isNaN();
+    public validateTransaction(transaction: ChainTransaction): boolean {
+        return (
+            fromBase64(transaction.txid).length === 32 &&
+            !new BigNumber(transaction.txindex).isNaN()
+        );
+    }
 
     /**
      * See [[LockChain.isLockAsset]].
      */
-    isLockAsset = (asset: string): boolean =>
-        asset === this.network.nativeAsset.symbol;
+    public isLockAsset(asset: string): boolean {
+        return asset === this.network.nativeAsset.symbol;
+    }
 
-    isDepositAsset = (asset: string) => {
-        this.assertAssetIsSupported(asset);
+    public isDepositAsset(asset: string) {
+        this._assertAssetIsSupported(asset);
         return true;
-    };
+    }
 
-    public readonly assertAssetIsSupported = (asset: string) => {
+    private _assertAssetIsSupported(asset: string) {
         if (!this.isLockAsset(asset)) {
             throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
-    };
+    }
 
     /**
      * See [[LockChain.assetDecimals]].
      */
-    assetDecimals = (asset: string): number => {
-        this.assertAssetIsSupported(asset);
+    public assetDecimals(asset: string): number {
+        this._assertAssetIsSupported(asset);
         return 8;
-    };
+    }
 
-    watchForDeposits = async (
+    public async watchForDeposits(
         asset: string,
         fromPayload: { chain: string },
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
-    ): Promise<void> => {
+    ): Promise<void> {
+        this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
         }
-        this.assertAssetIsSupported(asset);
 
         try {
             const txs = await tryNTimes(
@@ -209,7 +224,7 @@ export abstract class BitcoinBaseChain
             }
             await sleep(15 * SECONDS);
         }
-    };
+    }
 
     /**
      * See [[LockChain.transactionConfidence]].
@@ -218,7 +233,7 @@ export abstract class BitcoinBaseChain
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
         const { height } = await this.api.fetchUTXO(
-            this.transactionHash(transaction),
+            this.formattedTransactionHash(transaction),
             transaction.txindex,
         );
         if (!height) {
@@ -238,12 +253,12 @@ export abstract class BitcoinBaseChain
         shardPublicKey: Buffer,
         gHash: Buffer,
     ): Promise<string> | string => {
+        this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
         }
-        this.assertAssetIsSupported(asset);
         return this.encodeAddress(
             createAddressBuffer(
                 hash160(shardPublicKey),

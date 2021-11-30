@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import BigNumber from "bignumber.js";
 
 import { TxSubmitter, TxWaiter } from "../txSubmitter";
@@ -66,7 +68,6 @@ export interface ChainCommon {
     assets: { [asset: string]: string };
 
     /** Override the chain's provider. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withProvider?: (...args: any[]) => SyncOrPromise<this>;
 
     /** Return the asset's decimals, or throw for an unsupported asset. */
@@ -86,10 +87,21 @@ export interface ChainCommon {
     /** Check if the transaction's format is valid. */
     validateTransaction(transaction: ChainTransaction): boolean;
 
+    /**
+     * `formatAddress` should format an address for displaying to users.
+     *
+     * A RenVM transaction's `to` field is not always in the same format that
+     * is displayed to users.
+     */
+    formatAddress?: (address: string) => string;
+
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 
-    transactionHash(transaction: { txid: string; txindex: string }): string;
+    formattedTransactionHash(transaction: {
+        txid: string;
+        txindex: string;
+    }): string;
 
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
@@ -104,10 +116,10 @@ export interface ChainCommon {
 }
 
 export interface DepositChain<
-    FromPayload extends { chain: string } = {
+    FromPayload extends { chain: string; txConfig?: any } = {
         chain: string;
     },
-    ToPayload extends { chain: string } = {
+    ToPayload extends { chain: string; txConfig?: any } = {
         chain: string;
     },
 > extends ChainCommon {
@@ -123,6 +135,8 @@ export interface DepositChain<
     /**
      * Generate a gateway address deterministically from a shard's public key
      * and a gateway hash.
+     *
+     * The shardPublicKey is a compressed secp256k1 public key.
      */
     createGatewayAddress: (
         asset: string,
@@ -153,15 +167,12 @@ export interface DepositChain<
     }>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isDepositChain = (chain: any): chain is DepositChain =>
     (chain as DepositChain).createGatewayAddress !== undefined;
 
 export interface ContractChain<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    FromContractCall extends { chain: string } = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ToContractCall extends { chain: string } = FromContractCall,
+    FromContractCall extends { chain: string; txConfig?: any } = any,
+    ToContractCall extends { chain: string; txConfig?: any } = FromContractCall,
 > extends ChainCommon {
     /** Return true if the asset originates from the chain. */
     isLockAsset: (asset: string) => SyncOrPromise<boolean>;
@@ -228,22 +239,6 @@ export interface ContractChain<
     ) => SyncOrPromise<TxSubmitter | TxWaiter>;
 
     /**
-     * Lookup a mint or release using the unique nHash.
-     */
-    lookupOutput: (
-        type: OutputType,
-        asset: string,
-        contractCall: ToContractCall,
-        renParams: {
-            amount: BigNumber;
-            sHash: Buffer;
-            pHash: Buffer;
-            nHash: Buffer;
-        },
-        confirmationTarget: number,
-    ) => SyncOrPromise<TxWaiter | undefined>;
-
-    /**
      * Submit a mint or release transaction. When this is initially called as
      * a pre-check, the sigHash and signature will not be set.
      */
@@ -274,7 +269,6 @@ export interface ContractChain<
     }>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isContractChain = (chain: any): chain is ContractChain =>
     (chain as ContractChain).getInputTx !== undefined &&
     // (chain as ContractChain).submitLock !== undefined &&
@@ -282,10 +276,8 @@ export const isContractChain = (chain: any): chain is ContractChain =>
 // && (chain as ContractChain).submitRelease !== undefined
 
 export type Chain<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    FromPayload extends { chain: string; chainClass?: Chain } = any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ToPayload extends { chain: string; chainClass?: Chain } = any,
+    FromPayload extends { chain: string; txConfig?: any } = any,
+    ToPayload extends { chain: string; txConfig?: any } = FromPayload,
 > =
     | DepositChain<FromPayload, ToPayload>
     | ContractChain<FromPayload, ToPayload>;

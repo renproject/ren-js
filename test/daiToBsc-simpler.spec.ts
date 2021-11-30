@@ -33,14 +33,18 @@ describe("RenJS Gateway Transaction", () => {
 
         const gateway = await renJS.gateway({
             asset: ethereum.assets.DAI,
-            from: ethereum.Account({ amount: 1, convertToWei: true }),
+            from: ethereum.Account({ amount: 2, convertToWei: true }),
             to: bsc.Account(),
         });
 
         console.log(chalk.cyan("gateway parameters"), gateway.params);
 
         console.log(chalk.cyan("calling setup.approval.submit()"));
-        await gateway.setup.approval.submit();
+        await gateway.setup.approval.submit({
+            txConfig: {
+                gasLimit: 1000000,
+            },
+        });
         await gateway.setup.approval.wait();
 
         console.log(chalk.cyan("calling in.submit()"));
@@ -59,7 +63,13 @@ describe("RenJS Gateway Transaction", () => {
                     await tx.renVM.wait();
 
                     console.log(chalk.cyan("calling out.submit()"));
-                    await tx.out.submit().on("status", console.log);
+                    await tx.out
+                        .submit({
+                            txConfig: {
+                                gasLimit: 1000000,
+                            },
+                        })
+                        .on("status", console.log);
                     await tx.out.wait();
 
                     console.log(chalk.cyan("Done"), tx.out.status.transaction);

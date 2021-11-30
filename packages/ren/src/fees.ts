@@ -22,7 +22,7 @@ export const estimateTransactionFee = async (
     fromChain: Chain,
     toChain: Chain,
 ): Promise<GatewayFees> => {
-    const blockState: BlockState = await renVM.queryBlockState(5);
+    const blockState: BlockState = await renVM.queryBlockState(asset, 5);
 
     if (!blockState[asset]) {
         throw withCode(
@@ -61,17 +61,23 @@ export const estimateTransactionFee = async (
      */
     const estimateOutput = (input: BigNumber | string | number): BigNumber => {
         if (isLockAndMint) {
-            return new BigNumber(input)
-                .minus(transferFee)
-                .times(BIP_DENOMINATOR - mintFee)
-                .dividedBy(BIP_DENOMINATOR)
-                .decimalPlaces(0);
+            return BigNumber.max(
+                new BigNumber(input)
+                    .minus(transferFee)
+                    .times(BIP_DENOMINATOR - mintFee)
+                    .dividedBy(BIP_DENOMINATOR)
+                    .decimalPlaces(0),
+                0,
+            );
         }
-        return new BigNumber(input)
-            .times(BIP_DENOMINATOR - burnFee)
-            .dividedBy(BIP_DENOMINATOR)
-            .minus(transferFee)
-            .decimalPlaces(0);
+        return BigNumber.max(
+            new BigNumber(input)
+                .times(BIP_DENOMINATOR - burnFee)
+                .dividedBy(BIP_DENOMINATOR)
+                .minus(transferFee)
+                .decimalPlaces(0),
+            0,
+        );
     };
 
     const minimumDeposit = minimumAmount

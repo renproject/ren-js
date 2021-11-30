@@ -16,7 +16,7 @@ import {
 export class Insight implements BitcoinAPI {
     public url: string;
 
-    constructor(url: string) {
+    public constructor(url: string) {
         this.url = url.replace(/\/$/, "");
     }
 

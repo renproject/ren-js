@@ -36,7 +36,10 @@ import {
 } from "../contracts";
 import { TypedEvent } from "../contracts/typechain/common";
 import { LogLockToChainEvent } from "../contracts/typechain/LockGatewayV3";
-import { LogBurnEvent } from "../contracts/typechain/MintGatewayV3";
+import {
+    LogBurnEvent,
+    LogMintEvent,
+} from "../contracts/typechain/MintGatewayV3";
 import { LogTransferredEvent } from "../contracts/typechain/TransferWithLog";
 import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
@@ -163,8 +166,8 @@ export const findMintBySigHash = async (
     const gatewayInstance = getMintGatewayInstance(provider, gatewayAddress);
     const logMintABI = findABIMethod(MintGatewayABI, "LogMint");
 
-    const newMintEvents = (
-        await getPastLogs<LogBurnEvent>(
+    const mintEvents = (
+        await getPastLogs<LogMintEvent>(
             provider,
             gatewayAddress,
             logMintABI,
@@ -174,41 +177,20 @@ export const findMintBySigHash = async (
     ).map((event) =>
         txHashToChainTransaction(network.selector, event.transactionHash),
     );
-    if (newMintEvents.length) {
-        if (newMintEvents.length > 1) {
+    if (mintEvents.length) {
+        if (mintEvents.length > 1) {
             console.warn(`Found more than one mint log.`);
         }
-        return newMintEvents[0];
+        return mintEvents[0];
     }
 
     if (sigHash) {
         // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
         // the contract
         const status = await gatewayInstance.status(Ox(sigHash));
-        if (!status) {
-            return undefined;
+        if (status) {
+            return txHashToChainTransaction(network.selector, "");
         }
-        const oldMintEvents = await getPastLogs<LogBurnEvent>(
-            provider,
-            gatewayAddress,
-            logMintABI,
-            [null, null, Ox(sigHash)],
-            blockLimit,
-        );
-        if (oldMintEvents.length) {
-            if (oldMintEvents.length > 1) {
-                console.warn(`Found more than one mint log.`);
-            }
-
-            return oldMintEvents.map((event) =>
-                txHashToChainTransaction(
-                    network.selector,
-                    event.transactionHash,
-                ),
-            )[0];
-        }
-
-        return txHashToChainTransaction(network.selector, "");
     }
 
     return undefined;

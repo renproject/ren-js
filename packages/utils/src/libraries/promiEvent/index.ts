@@ -62,7 +62,7 @@ export class Web3PromiEvent<
      * Sets up the event emitter and the promise, as well as a proxy handler
      * for routing method calls to the promise or event emitter.
      */
-    constructor(eventEmitter?: EventEmitterTyped<EventTypes>) {
+    public constructor(eventEmitter?: EventEmitterTyped<EventTypes>) {
         super();
         this.promise = new Promise<T>((resolve, reject) => {
             this.resolve = resolve;

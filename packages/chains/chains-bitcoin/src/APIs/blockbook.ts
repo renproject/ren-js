@@ -15,7 +15,7 @@ import {
 export class Blockbook implements BitcoinAPI {
     public url: string;
 
-    constructor(url: string) {
+    public constructor(url: string) {
         this.url = url.replace(/\/$/, "");
     }
 

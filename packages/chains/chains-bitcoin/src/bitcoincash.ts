@@ -69,14 +69,17 @@ export class BitcoinCash extends BitcoinBaseChain {
     };
     public assets = BitcoinCash.assets;
 
-    public validateAddress = (address: string) =>
-        isValidAddress(address) && this.network.isTestnet
+    public validateAddress(address: string): boolean {
+        return isValidAddress(address) && this.network.isTestnet
             ? isTestnetAddress(address)
             : isMainnetAddress(address);
+    }
 
-    public encodeAddress = (bytes: Buffer) => toCashAddress(bs58.encode(bytes));
+    public encodeAddress(bytes: Buffer): string {
+        return toCashAddress(bs58.encode(bytes));
+    }
 
-    constructor(network: BitcoinNetworkInput) {
+    public constructor(network: BitcoinNetworkInput) {
         super(resolveBitcoinNetworkConfig(BitcoinCash.configMap, network));
     }
 }

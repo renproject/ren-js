@@ -71,7 +71,7 @@ export class DigiByte extends BitcoinBaseChain {
     };
     public assets = DigiByte.assets;
 
-    constructor(network: BitcoinNetworkInput) {
+    public constructor(network: BitcoinNetworkInput) {
         super(resolveBitcoinNetworkConfig(DigiByte.configMap, network));
     }
 }

@@ -89,7 +89,7 @@ export class Solana
 
     public provider: SolanaProvider;
 
-    constructor(
+    public constructor(
         provider: SolanaProvider,
         renNetwork?:
             | RenNetwork
@@ -188,9 +188,9 @@ export class Solana
      * chain - whereas the default `testnet` configuration would use testnet
      * Bitcoin and Ethereum's Kovan testnet.
      */
-    initialize = async (
+    async initialize(
         network: RenNetwork | RenNetworkString | RenNetworkDetails,
-    ) => {
+    ) {
         this.renNetwork = Solana.utils.resolveChainNetwork(network);
 
         // Load registry state to find programs
@@ -217,7 +217,7 @@ export class Solana
         );
 
         return this;
-    };
+    }
 
     async waitForInitialization() {
         if (this._initialized === undefined) {
@@ -229,12 +229,14 @@ export class Solana
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    withProvider = (provider: any) => {
+    withProvider(provider: any) {
         this.provider = provider;
         return this;
-    };
+    }
 
-    isLockAsset = (asset: string) => asset === "SOL";
+    public isLockAsset(asset: string) {
+        return asset === "SOL";
+    }
 
     /**
      * `assetIsSupported` should return true if the the asset is native to the

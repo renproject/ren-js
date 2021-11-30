@@ -6,7 +6,7 @@ export class Blockstream implements BitcoinAPI {
     public testnet: boolean;
     public apiKey: string | undefined;
 
-    constructor({ testnet = false, apiKey = undefined } = {}) {
+    public constructor({ testnet = false, apiKey = undefined } = {}) {
         this.testnet = testnet;
         this.apiKey = apiKey;
     }

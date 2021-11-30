@@ -6,6 +6,7 @@ import {
     TransactionResponse,
 } from "@ethersproject/providers";
 import {
+    ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
     eventEmitter,
@@ -93,6 +94,9 @@ export class EVMTxSubmitter implements TxSubmitter {
     private getPayloadHandler: (payloadType: string) => PayloadHandler;
     private getParams: () => EVMParamValues;
     private onReceipt?: (tx: TransactionReceipt) => void;
+    public findExistingTransaction?: () => Promise<
+        ChainTransaction | undefined
+    >;
 
     private updateStatus = (status: Partial<ChainTransactionProgress>) => {
         this.status = {
@@ -103,12 +107,7 @@ export class EVMTxSubmitter implements TxSubmitter {
         return this.status;
     };
 
-    /**
-     * @param getTx An async function that returns the initial
-     * TransactionResponse.
-     * @param target The number of confirmations to wait for.
-     */
-    constructor({
+    public constructor({
         network,
         signer,
         chain,
@@ -117,6 +116,7 @@ export class EVMTxSubmitter implements TxSubmitter {
         getPayloadHandler,
         getParams,
         onReceipt,
+        findExistingTransaction,
     }: {
         network: EvmNetworkConfig;
         signer: Signer;
@@ -126,6 +126,7 @@ export class EVMTxSubmitter implements TxSubmitter {
         getPayloadHandler: (payloadType: string) => PayloadHandler;
         getParams: () => EVMParamValues;
         onReceipt?: (tx: TransactionReceipt) => void;
+        findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
     }) {
         this.network = network;
         this.signer = signer;
@@ -135,6 +136,7 @@ export class EVMTxSubmitter implements TxSubmitter {
         this.getPayloadHandler = getPayloadHandler;
         this.getParams = getParams;
         this.onReceipt = onReceipt;
+        this.findExistingTransaction = findExistingTransaction;
 
         this.eventEmitter = eventEmitter();
 
@@ -146,7 +148,7 @@ export class EVMTxSubmitter implements TxSubmitter {
         };
     }
 
-    submit = (
+    public submit(
         options: {
             overrides?: any[];
             txConfig?: PayableOverrides;
@@ -156,7 +158,7 @@ export class EVMTxSubmitter implements TxSubmitter {
         {
             status: [ChainTransactionProgress];
         }
-    > => {
+    > {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
@@ -165,6 +167,25 @@ export class EVMTxSubmitter implements TxSubmitter {
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
+            if (this.findExistingTransaction && this.signer.provider) {
+                const existingTransaction =
+                    await this.findExistingTransaction();
+
+                if (existingTransaction) {
+                    if (existingTransaction.txidFormatted === "") {
+                        this.updateStatus({
+                            status: ChainTransactionStatus.Done,
+                            target: this.target,
+                            confirmations: this.target,
+                        });
+                        return this.status;
+                    }
+                    this.tx = await this.signer.provider.getTransaction(
+                        existingTransaction.txidFormatted,
+                    );
+                }
+            }
+
             this.tx = await this.getPayloadHandler(this.payload.type).submit(
                 this.network,
                 this.signer,
@@ -187,16 +208,14 @@ export class EVMTxSubmitter implements TxSubmitter {
             .catch(promiEvent.reject);
 
         return promiEvent;
-    };
+    }
 
-    wait = (
-        target?: number,
-    ): PromiEvent<
+    public wait(target?: number): PromiEvent<
         ChainTransactionProgress,
         {
             status: [ChainTransactionProgress];
         }
-    > => {
+    > {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
@@ -205,14 +224,17 @@ export class EVMTxSubmitter implements TxSubmitter {
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            if (!this.tx) {
+            if (this.status.status === ChainTransactionStatus.Ready) {
                 throw new Error(`Must call ".submit" first.`);
             }
 
             target = isDefined(target) ? target : this.target;
 
             // Wait for each confirmation until the target is reached.
-            while (this.tx.confirmations < target || this.onReceipt) {
+            while (
+                this.tx &&
+                (this.tx.confirmations < target || this.onReceipt)
+            ) {
                 try {
                     const receipt = await this.tx.wait(
                         Math.min(this.tx.confirmations + 1, target),
@@ -229,14 +251,14 @@ export class EVMTxSubmitter implements TxSubmitter {
                         this.updateStatus({
                             ...this.status,
                             status:
-                                this.tx.confirmations < target
+                                this.tx.confirmations < this.target
                                     ? ChainTransactionStatus.Confirming
                                     : ChainTransactionStatus.Done,
                             transaction: txHashToChainTransaction(
                                 this.chain,
                                 this.tx.hash,
                             ),
-                            target: target,
+                            target: this.target,
                             confirmations: this.tx.confirmations,
                         });
                     }
@@ -289,7 +311,11 @@ export class EVMTxSubmitter implements TxSubmitter {
                 }
             }
 
-            if (this.status.status !== ChainTransactionStatus.Done) {
+            if (
+                this.status.status !== ChainTransactionStatus.Done &&
+                this.tx &&
+                this.tx.confirmations >= this.target
+            ) {
                 this.updateStatus({
                     status: ChainTransactionStatus.Done,
                 });
@@ -301,5 +327,5 @@ export class EVMTxSubmitter implements TxSubmitter {
             .catch(promiEvent.reject);
 
         return promiEvent;
-    };
+    }
 }

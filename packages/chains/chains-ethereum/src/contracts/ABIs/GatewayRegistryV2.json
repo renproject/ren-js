@@ -5,17 +5,29 @@
             {
                 "indexed": false,
                 "internalType": "string",
-                "name": "symbol",
+                "name": "asset",
                 "type": "string"
             },
             {
-                "indexed": true,
+                "indexed": false,
+                "internalType": "address",
+                "name": "signatureVerifier",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "indexed": false,
                 "internalType": "string",
-                "name": "indexedSymbol",
+                "name": "version",
                 "type": "string"
             }
         ],
-        "name": "LogLockGatewayDeleted",
+        "name": "LockGatewayProxyDeployed",
         "type": "event"
     },
     {
@@ -25,12 +37,6 @@
                 "indexed": false,
                 "internalType": "string",
                 "name": "symbol",
-                "type": "string"
-            },
-            {
-                "indexed": true,
-                "internalType": "string",
-                "name": "indexedSymbol",
                 "type": "string"
             },
             {
@@ -44,9 +50,15 @@
                 "internalType": "address",
                 "name": "gatewayContract",
                 "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "string",
+                "name": "indexedSymbol",
+                "type": "string"
             }
         ],
-        "name": "LogLockGatewayUpdated",
+        "name": "LogLockGatewayAdded",
         "type": "event"
     },
     {
@@ -65,7 +77,7 @@
                 "type": "string"
             }
         ],
-        "name": "LogMintGatewayDeleted",
+        "name": "LogLockGatewayRemoved",
         "type": "event"
     },
     {
@@ -75,12 +87,6 @@
                 "indexed": false,
                 "internalType": "string",
                 "name": "symbol",
-                "type": "string"
-            },
-            {
-                "indexed": true,
-                "internalType": "string",
-                "name": "indexedSymbol",
                 "type": "string"
             },
             {
@@ -94,14 +100,45 @@
                 "internalType": "address",
                 "name": "gatewayContract",
                 "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "string",
+                "name": "indexedSymbol",
+                "type": "string"
             }
         ],
-        "name": "LogMintGatewayUpdated",
+        "name": "LogMintGatewayAdded",
         "type": "event"
     },
     {
         "anonymous": false,
         "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "symbol",
+                "type": "string"
+            },
+            {
+                "indexed": true,
+                "internalType": "string",
+                "name": "indexedSymbol",
+                "type": "string"
+            }
+        ],
+        "name": "LogMintGatewayRemoved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "oldSignatureVerifier",
+                "type": "address"
+            },
             {
                 "indexed": true,
                 "internalType": "address",
@@ -118,11 +155,91 @@
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "newTransferWithLog",
+                "name": "oldTransferContract",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newTransferContract",
                 "type": "address"
             }
         ],
-        "name": "LogTransferWithLogUpdated",
+        "name": "LogTransferContractUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "asset",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "signatureVerifier",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "version",
+                "type": "string"
+            }
+        ],
+        "name": "MintGatewayProxyDeployed",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "chainId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "asset",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "symbol",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "decimals",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "version",
+                "type": "string"
+            }
+        ],
+        "name": "RenAssetProxyDeployed",
         "type": "event"
     },
     {
@@ -240,16 +357,34 @@
         "type": "function"
     },
     {
-        "inputs": [
+        "inputs": [],
+        "name": "NAME",
+        "outputs": [
             {
                 "internalType": "string",
-                "name": "chainName_",
+                "name": "",
                 "type": "string"
-            },
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
             {
                 "internalType": "uint256",
                 "name": "chainId_",
                 "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "signatureVerifier_",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "transferContract",
+                "type": "address"
             },
             {
                 "internalType": "address",
@@ -272,9 +407,9 @@
                 "type": "address"
             },
             {
-                "internalType": "address",
-                "name": "transferWithLog",
-                "type": "address"
+                "internalType": "address[]",
+                "name": "gatewayDeployers",
+                "type": "address[]"
             }
         ],
         "name": "__GatewayRegistry_init",
@@ -349,32 +484,6 @@
         "name": "addMintGateway",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "chainId",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "chainName",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -454,6 +563,19 @@
         "name": "deployMintGatewayAndRenAsset",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getChainId",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -552,6 +674,19 @@
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "getLockGatewayProxyBeacon",
+        "outputs": [
+            {
+                "internalType": "contract LockGatewayProxyBeacon",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -614,6 +749,19 @@
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "getMintGatewayProxyBeacon",
+        "outputs": [
+            {
+                "internalType": "contract MintGatewayProxyBeacon",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -649,6 +797,19 @@
         "outputs": [
             {
                 "internalType": "contract IERC20",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getRenAssetProxyBeacon",
+        "outputs": [
+            {
+                "internalType": "contract RenAssetProxyBeacon",
                 "name": "",
                 "type": "address"
             }
@@ -806,32 +967,6 @@
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "lockGatewayProxyBeacon",
-        "outputs": [
-            {
-                "internalType": "contract LockGatewayProxyBeaconV1",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "mintGatewayProxyBeacon",
-        "outputs": [
-            {
-                "internalType": "contract MintGatewayProxyBeaconV1",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "string",
@@ -855,19 +990,6 @@
         "name": "removeMintGateway",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "renAssetProxyBeacon",
-        "outputs": [
-            {
-                "internalType": "contract RenAssetProxyBeaconV1",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -929,7 +1051,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "nextSignatureVerifier",
+                "name": "newSignatureVerifier",
                 "type": "address"
             }
         ],
@@ -942,11 +1064,11 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "nextTransferWithLog",
+                "name": "newTransferContract",
                 "type": "address"
             }
         ],
-        "name": "updateTransferWithLog",
+        "name": "updateTransferContract",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

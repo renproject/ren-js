@@ -15,7 +15,7 @@ chai.should();
 loadDotEnv();
 
 describe("RenJS Gateway Transaction", () => {
-    it("DAI/fromBinanceSmartChain", async function () {
+    it("BTC/fromBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -38,7 +38,7 @@ describe("RenJS Gateway Transaction", () => {
         console.log(
             `${gateway.params.asset} balance on ${gateway.params.from.chain}`,
             (await ethereum.getBalance(gateway.params.asset))
-                .shiftedBy(bitcoin.assetDecimals(asset))
+                .shiftedBy(-bitcoin.assetDecimals(asset))
                 .toFixed(),
         );
 
@@ -124,7 +124,9 @@ describe("RenJS Gateway Transaction", () => {
                     tx.out.eventEmitter.on("status", console.log);
 
                     if (tx.out.submit) {
-                        await tx.out.submit();
+                        await tx.out.submit({
+                            txConfig: {},
+                        });
                     }
 
                     await tx.out.wait();

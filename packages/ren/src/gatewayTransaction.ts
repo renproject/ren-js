@@ -8,6 +8,7 @@ import {
 import {
     Chain,
     ChainTransaction,
+    ChainTransactionProgress,
     DefaultTxWaiter,
     fromBase64,
     generateGHash,
@@ -52,7 +53,7 @@ export const TransactionStatusIndex = {
 };
 
 export interface TransactionParams<
-    ToPayload extends { chain: string } = {
+    ToPayload extends { chain: string; txConfig?: any } = {
         chain: string;
     },
 > {
@@ -77,9 +78,8 @@ export interface TransactionParams<
 }
 
 export class GatewayTransaction<
-    ToPayload extends { chain: string; chainClass?: Chain } = {
+    ToPayload extends { chain: string; txConfig?: any } = {
         chain: string;
-        chainClass?: Chain;
     },
 > {
     /** The parameters passed in when calling [[RenJS.lockAndMint]]. */
@@ -126,25 +126,26 @@ export class GatewayTransaction<
     public _config: typeof defaultRenJSConfig & RenJSConfig;
 
     public in: TxSubmitter | TxWaiter;
-    public out: TxSubmitter | TxWaiter;
+    public out:
+        | TxSubmitter<ChainTransactionProgress, ToPayload["txConfig"]>
+        | TxWaiter;
     public renVM: RenVMCrossChainTxSubmitter;
 
     // Private
     private queryTxResult:
         | RenVMTransactionWithStatus<RenVMCrossChainTransaction>
         | undefined;
-    private _renTxSubmitted: boolean = false;
 
-    private inputType: InputType | undefined;
-    private outputType: OutputType | undefined;
+    public inputType: InputType | undefined;
+    public outputType: OutputType | undefined;
 
     /** @hidden */
-    constructor(
+    public constructor(
         renVM: RenVMProvider,
         fromChain: Chain,
         toChain: Chain,
         params: TransactionParams<ToPayload>,
-        fromTxWaiter?: TxSubmitter | TxWaiter,
+        fromTxWaiter?: TxSubmitter<ChainTransactionProgress, any> | TxWaiter,
         config?: RenJSConfig,
     ) {
         this.provider = renVM;
@@ -200,7 +201,7 @@ export class GatewayTransaction<
         this.outputType = outputType;
         this.selector = selector;
 
-        const { asset, nonce, fromTx, to } = this.params;
+        const { asset, nonce, to } = this.params;
 
         const payload = await this.toChain.getOutputPayload(
             asset,
@@ -230,19 +231,6 @@ export class GatewayTransaction<
         const gPubKey = this.params.shard
             ? fromBase64(this.params.shard.gPubKey)
             : Buffer.from([]);
-
-        const txParams = {
-            selector: this.selector,
-            gHash: this.gHash,
-            gPubKey: gPubKey,
-            nHash: this.nHash,
-            nonce: nonceBuffer,
-            output: fromTx,
-            amount: fromTx.amount,
-            payload: payload.payload,
-            pHash: this.pHash,
-            to: payload.to,
-        };
 
         if (!this.in) {
             this.in = new DefaultTxWaiter({
@@ -462,7 +450,7 @@ export class GatewayTransaction<
                 chain: this.toChain.chain,
                 txid,
                 txindex,
-                txidFormatted: this.toChain.transactionHash({
+                txidFormatted: this.toChain.formattedTransactionHash({
                     txid,
                     txindex,
                 }),

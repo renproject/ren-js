@@ -4,14 +4,8 @@ import { RenVMShard, UrlBase64String } from "@renproject/utils";
  * The parameters for a cross-chain transfer onto Ethereum.
  */
 export interface GatewayParams<
-    FromPayload extends {
-        chain: string;
-    } = {
-        chain: string;
-    },
-    ToPayload extends { chain: string } = {
-        chain: string;
-    },
+    FromPayload extends { chain: string; txConfig?: any } = any,
+    ToPayload extends { chain: string; txConfig?: any } = any,
 > {
     /**
      * The asset being minted or burned - e.g. `"BTC"`.

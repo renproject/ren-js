@@ -112,9 +112,9 @@ const withPriority = (api: BitcoinAPI | APIWithPriority, defaultPriority = 0) =>
         : { api: api as BitcoinAPI, priority: defaultPriority };
 
 export class CombinedAPI implements BitcoinAPI {
-    apis: APIWithPriority[];
+    public apis: APIWithPriority[];
 
-    constructor(
+    public constructor(
         apis: Array<BitcoinAPI | APIWithPriority> = [],
         { priority = 0 } = {},
     ) {
@@ -128,29 +128,31 @@ export class CombinedAPI implements BitcoinAPI {
      * @param { priority } Optionally set the priority of the API, where a lower
      * priority means it will be selected before other APIs.
      */
-    public withAPI = (
+    public withAPI(
         api: BitcoinAPI | APIWithPriority,
         { priority = 0 } = {},
-    ) => {
+    ): this {
         this.apis.push(withPriority(api, priority));
         return this;
-    };
+    }
 
-    public fetchHeight = async (): Promise<string> =>
-        this.forEachAPI(
+    public async fetchHeight(): Promise<string> {
+        return this.forEachAPI(
             // Filter APIs with `fetchHeight`.
             (api) => api.fetchHeight !== undefined,
             // Call `fetchHeight` on the API.
             async (api) => notNull(api.fetchHeight)(),
         );
+    }
 
-    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> =>
-        this.forEachAPI(
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+        return this.forEachAPI(
             // Filter APIs with `fetchUTXO`.
             (api) => api.fetchUTXO !== undefined,
             // Call `fetchUTXO` on the API.
             async (api) => notNull(api.fetchUTXO)(txid, txindex),
         );
+    }
 
     public fetchUTXOs = async (
         address: string,

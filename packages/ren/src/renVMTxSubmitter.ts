@@ -39,6 +39,16 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     private provider: RenVMProvider;
     private selector: string;
     private params: TypedPackValue;
+
+    public get tx(): TransactionInput<TypedPackValue> {
+        return {
+            hash: this._hash,
+            selector: this.selector,
+            version: this.version,
+            in: this.params,
+        };
+    }
+
     private signatureCallback?: (
         response: RenVMTransactionWithStatus<Transaction>,
     ) => void;
@@ -69,7 +79,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         return this.status;
     };
 
-    constructor(
+    public constructor(
         provider: RenVMProvider,
         selector: string,
         params: TypedPackValue,
@@ -100,7 +110,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         };
     }
 
-    submit = (): PromiEvent<
+    public submit(): PromiEvent<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;
         },
@@ -111,7 +121,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 },
             ];
         }
-    > => {
+    > {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
@@ -130,15 +140,8 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 response?: RenVMTransactionWithStatus<Transaction>;
             }
         > => {
-            const tx: TransactionInput<TypedPackValue> = {
-                hash: this._hash,
-                selector: this.selector,
-                version: this.version,
-                in: this.params,
-            };
-
             try {
-                await this.provider.submitTx(tx);
+                await this.provider.submitTx(this.tx);
             } catch (error) {
                 try {
                     // Check if the darknodes have already seen the transaction
@@ -150,7 +153,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 } catch (errorInner: any) {
                     // Retry submitting to reduce chance of network issues
                     // causing problems.
-                    await this.provider.submitTx(tx, 2);
+                    await this.provider.submitTx(this.tx, 2);
                 }
             }
 
@@ -169,9 +172,9 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             .catch(promiEvent.reject);
 
         return promiEvent;
-    };
+    }
 
-    wait = (): PromiEvent<
+    public wait(): PromiEvent<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;
         },
@@ -182,7 +185,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 },
             ];
         }
-    > => {
+    > {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
@@ -209,7 +212,10 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                     if (tx && tx.txStatus === TxStatus.TxStatusDone) {
                         break;
                     }
-                    if (tx.txStatus !== existingStatus) {
+                    if (
+                        tx.txStatus !== existingStatus ||
+                        !this.status.response
+                    ) {
                         try {
                             existingStatus = tx.txStatus;
                             this.updateStatus({
@@ -254,7 +260,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 try {
                     this.signatureCallback(tx);
                 } catch (error) {
-                    // TODO: Hande error.
+                    // TODO: Handle error.
                 }
             }
 
@@ -267,11 +273,11 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             .catch(promiEvent.reject);
 
         return promiEvent;
-    };
+    }
 }
 
 export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChainTransaction> {
-    constructor(
+    public constructor(
         provider: RenVMProvider,
         selector: string,
         params: RenVMCrossChainTransaction["in"],

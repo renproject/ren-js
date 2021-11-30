@@ -39,9 +39,14 @@ export interface TxWaiter<
         status: [Progress];
     }>;
 
-    submit?: never;
+    submit?(params?: { overrides?: any[] }): PromiEvent<
+        Progress,
+        {
+            status: [Progress];
+        }
+    >;
 
-    wait: () => PromiEvent<
+    wait(): PromiEvent<
         Progress,
         {
             status: [Progress];
@@ -56,6 +61,7 @@ export interface TxWaiter<
  */
 export interface TxSubmitter<
     Progress extends ChainTransactionProgress = ChainTransactionProgress,
+    TxConfig extends any = {},
 > {
     // The name of the transaction's chain.
     chain: string;
@@ -73,7 +79,7 @@ export interface TxSubmitter<
      * Submit the transaction to the chain.
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    submit: (params?: { overrides?: any[]; txConfig?: any }) => PromiEvent<
+    submit(params?: { overrides?: any[]; txConfig?: TxConfig }): PromiEvent<
         Progress,
         {
             status: [Progress];
@@ -84,7 +90,7 @@ export interface TxSubmitter<
      * Wait for the required finality / number of confirmations.
      * The target can optionally be overridden.
      */
-    wait: (target?: number) => PromiEvent<
+    wait(target?: number): PromiEvent<
         Progress,
         {
             status: [Progress];
@@ -119,7 +125,7 @@ export class DefaultTxWaiter implements TxWaiter {
      * Requires a submitted chainTransaction, a chain object and the target
      * confirmation count.
      */
-    constructor({
+    public constructor({
         chainTransaction,
         chain,
         target,
@@ -143,21 +149,19 @@ export class DefaultTxWaiter implements TxWaiter {
         };
     }
 
-    setTransaction = (chainTransaction?: ChainTransaction): void => {
+    public setTransaction(chainTransaction?: ChainTransaction): void {
         this._chainTransaction = chainTransaction;
         this.updateStatus({
             transaction: chainTransaction,
         });
-    };
+    }
 
-    wait = (
-        target?: number,
-    ): PromiEvent<
+    public wait(target?: number): PromiEvent<
         ChainTransactionProgress,
         {
             status: [ChainTransactionProgress];
         }
-    > => {
+    > {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
@@ -209,5 +213,5 @@ export class DefaultTxWaiter implements TxWaiter {
             .catch(promiEvent.reject);
 
         return promiEvent;
-    };
+    }
 }

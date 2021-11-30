@@ -1,8 +1,8 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
-import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
+import { Terra } from "../packages/chains/chains-terra/src";
 import RenJS from "../packages/ren/src";
 import { RenNetwork } from "../packages/utils/src";
 import { getEVMProvider, printChain, sendFunds } from "./testUtils";
@@ -16,8 +16,8 @@ describe("RenJS Gateway Transaction", () => {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const asset = Bitcoin.assets.BTC;
-        const from = new Bitcoin(network);
+        const asset = Terra.assets.LUNA;
+        const from = new Terra(network);
         const to = new Ethereum(network, getEVMProvider(Ethereum, network));
 
         const renJS = new RenJS(network).withChains(from, to);
@@ -62,6 +62,7 @@ describe("RenJS Gateway Transaction", () => {
                             0,
                             6,
                         )}] Done. (${foundDeposits} other deposits remaining)`,
+                        tx.out.status.transaction?.txidFormatted,
                     );
                     if (foundDeposits === 0) {
                         resolve();

@@ -9,7 +9,7 @@ import {
 
 // ParamsQueryBlockState defines the parameters of the MethodQueryBlockState.
 export interface ParamsQueryBlockState {
-    // No parameters.
+    contract: string;
 }
 
 export interface ResponseQueryBlockState {

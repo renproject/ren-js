@@ -12,23 +12,25 @@ import {
 import { FetchTXsResult } from "./insight";
 
 export class BitcoinDotCom implements BitcoinAPI {
-    testnet?: boolean;
+    public testnet?: boolean;
 
-    constructor({ testnet = false } = {}) {
+    public constructor({ testnet = false } = {}) {
         this.testnet = testnet;
     }
 
-    endpoint = () =>
-        this.testnet
+    public endpoint(): string {
+        return this.testnet
             ? "https://trest.bitcoin.com/v2/"
             : "https://rest.bitcoin.com/v2/";
+    }
 
-    endpointV2 = () =>
-        this.testnet
+    public endpointV2(): string {
+        return this.testnet
             ? "https://explorer-tbch.api.bitcoin.com/tbch/v1"
             : "https://explorer.api.bitcoin.com/bch/v1";
+    }
 
-    fetchHeight = async (): Promise<string> => {
+    public async fetchHeight(): Promise<string> {
         const url = `${this.endpointV2()}/blockchain/getBlockCount`;
 
         const response = await axios.get<number>(url, {
@@ -36,9 +38,9 @@ export class BitcoinDotCom implements BitcoinAPI {
         });
 
         return response.data.toString();
-    };
+    }
 
-    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.endpointV2()}/tx/${txid}`;
 
         const response = await axios.get<FetchTXResponse>(url, {
@@ -59,9 +61,9 @@ export class BitcoinDotCom implements BitcoinAPI {
             },
             8,
         );
-    };
+    }
 
-    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
+    public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.endpointV2()}/addr/${address}/utxo`;
         const response = await axios.get<FetchUTXOSResponse>(url, {
             timeout: DEFAULT_TIMEOUT,
@@ -78,9 +80,9 @@ export class BitcoinDotCom implements BitcoinAPI {
             })),
             8,
         ).sort(sortUTXOs);
-    };
+    }
 
-    fetchTXs = async (address: string): Promise<UTXO[]> => {
+    public async fetchTXs(address: string): Promise<UTXO[]> {
         const url = `${this.endpoint().replace(
             /\/$/,
             "",
@@ -109,11 +111,11 @@ export class BitcoinDotCom implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    };
+    }
 
-    broadcastTransaction = async (
+    public async broadcastTransaction(
         hexEncodedTransaction: string,
-    ): Promise<string> => {
+    ): Promise<string> {
         const url = `${this.endpoint().replace(
             /\/$/,
             "",
@@ -129,7 +131,7 @@ export class BitcoinDotCom implements BitcoinAPI {
             );
         }
         return response.data[0];
-    };
+    }
 }
 
 interface BlockchairError {

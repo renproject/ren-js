@@ -82,7 +82,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     // Map from asset name to chain name
     private supportedAssets = OrderedMap<string, string>();
 
-    constructor(privateKey?: Buffer) {
+    public constructor(privateKey?: Buffer) {
         this.privateKey = privateKey || randomBytes(32);
         this.transactions = new Map();
     }
@@ -130,7 +130,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                     ) as RPCResponses[Method];
                 case RPCMethod.QueryBlockState:
                     return this.handle_queryBlockState(
-                        request,
+                        request as ParamsQueryBlockState,
                     ) as RPCResponses[Method];
             }
             throw new Error(`Method ${method} not supported.`);
@@ -183,7 +183,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         }
 
         const blockState: BlockState = unmarshalTypedPackValue(
-            this.handle_queryBlockState({}).state,
+            this.handle_queryBlockState({ contract: asset }).state,
         );
         const { gasLimit, gasCap, dustAmount } = blockState[asset];
 
@@ -340,9 +340,9 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         whitelist: [],
     });
 
-    private handle_queryBlockState = (
-        _request: ParamsQueryBlockState,
-    ): ResponseQueryBlockState => {
+    private handle_queryBlockState = ({
+        contract,
+    }: ParamsQueryBlockState): ResponseQueryBlockState => {
         const ec = new elliptic.ec("secp256k1");
         const k = ec.keyFromPrivate(this.privateKey);
         const key = Buffer.concat([
@@ -510,64 +510,58 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
             ],
         };
 
-        const v = this.supportedAssets
-            .map(
-                () =>
-                    ({
-                        dustAmount: "546",
-                        fees: {
-                            chains: this.supportedChains
-                                .map((chain) => ({
-                                    chain: chain.chain,
-                                    burnFee: "15",
-                                    mintFee: "15",
-                                }))
-                                .valueSeq()
-                                .toArray(),
-                            epochs: [],
-                            nodes: [],
-                            reserved: {
-                                fund: "0",
+        const v: ResponseQueryBlockState["state"]["v"] = {
+            [contract]: {
+                dustAmount: "546",
+                fees: {
+                    chains: this.supportedChains
+                        .map((chain) => ({
+                            chain: chain.chain,
+                            burnFee: "15",
+                            mintFee: "15",
+                        }))
+                        .valueSeq()
+                        .toArray(),
+                    epochs: [],
+                    nodes: [],
+                    reserved: {
+                        fund: "0",
+                    },
+                    unassigned: "0",
+                    unclaimed: "0",
+                } as any,
+                gasCap: "2",
+                gasLimit: "400",
+                gasPrice: "2",
+                latestHeight: "0",
+                minimumAmount: "547",
+                minted: [],
+                shards: [
+                    {
+                        pubKey: toURLBase64(key),
+                        queue: [],
+                        shard: "",
+                        state: {
+                            outpoint: {
+                                hash: "",
+                                index: "",
                             },
-                            unassigned: "0",
-                            unclaimed: "0",
-                        } as any,
-                        gasCap: "2",
-                        gasLimit: "400",
-                        gasPrice: "2",
-                        latestHeight: "0",
-                        minimumAmount: "547",
-                        minted: [],
-                        shards: [
-                            {
-                                pubKey: toURLBase64(key),
-                                queue: [],
-                                shard: "",
-                                state: {
-                                    outpoint: {
-                                        hash: "",
-                                        index: "",
-                                    },
-                                    pubKeyScript: "",
-                                    value: "",
-                                },
-                            },
-                        ],
-                    } as ResponseQueryBlockState["state"]["v"]["asset"]),
-            )
-            .toJS() as {
-            [key: string]: ResponseQueryBlockState["state"]["v"]["asset"];
+                            pubKeyScript: "",
+                            value: "",
+                        },
+                    },
+                ],
+            },
         };
 
         return {
             state: {
                 t: {
-                    struct: this.supportedAssets
-                        .keySeq()
-                        .toArray()
-                        .map((x) => ({
-                            [x]: assetPackType,
-                        })),
+                    struct: [
+                        {
+                            [contract]: assetPackType,
+                        },
+                    ],
                 },
                 v,
             },

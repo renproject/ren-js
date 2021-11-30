@@ -17,14 +17,14 @@ export enum RenJSError {
  * `isErrorWithCode(error)` instead of `error instanceof ErrorWithCode`.
  */
 export class ErrorWithCode extends Error {
-    code: string;
+    public code: string;
 
     /**
      * @param message An error message, passed on to the Error constructor.
      * @param code An error code, defined in a standard manner to allow for
      * easier error handling.
      */
-    constructor(message: string, code: string) {
+    public constructor(message: string, code: string) {
         super(message);
         this.code = code;
     }

@@ -16,12 +16,12 @@ chai.should();
 loadDotEnv();
 
 describe("RenJS Gateway Transaction", () => {
-    it("DAI/toBinanceSmartChain", async function () {
+    it("ETH/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.DAI;
+        const asset = Ethereum.assets.ETH;
         const ethereum = new Ethereum(
             network,
             getEVMProvider(Ethereum as any, network),
@@ -35,7 +35,7 @@ describe("RenJS Gateway Transaction", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 1, convertToWei: true }),
+            from: ethereum.Account({ amount: 0.01, convertToWei: true }),
             to: bsc.Account(),
         });
 
@@ -75,15 +75,15 @@ describe("RenJS Gateway Transaction", () => {
             gateway.on("transaction", (tx) => {
                 (async () => {
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                            gateway.params.to.chain,
                         )}]: RenVM hash: ${tx.hash}`,
                     );
                     await tx.fetchStatus();
 
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                            gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: Status: ${tx.status}`,
                     );
 
@@ -113,8 +113,8 @@ describe("RenJS Gateway Transaction", () => {
                         }
                     }
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                            gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
                             ethereum.chain,
                             {

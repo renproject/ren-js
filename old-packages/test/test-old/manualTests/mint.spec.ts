@@ -64,7 +64,7 @@ describe("Refactor: mint", () => {
             network: "testnet",
             apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
             terra: {
-                URL: "https://tequila-lcd.terra.dev",
+                URL: "https://bombay-lcd.terra.dev",
             },
         });
 

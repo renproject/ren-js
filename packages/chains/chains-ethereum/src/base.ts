@@ -10,6 +10,7 @@ import {
 } from "@ethersproject/providers";
 import {
     assertType,
+    Chain,
     ChainTransaction,
     ContractChain,
     DefaultTxWaiter,
@@ -90,6 +91,8 @@ export class EthereumBaseChain
     public explorer: EvmExplorer;
     public logger: Logger;
 
+    public defaultTxConfig: PayableOverrides = {};
+
     public getRenAsset = memoize(
         async (asset: string): Promise<string> =>
             await getRenAsset(this.network, this.provider, asset),
@@ -107,7 +110,7 @@ export class EthereumBaseChain
             await getLockGateway(this.network, this.provider, asset),
     );
 
-    constructor(
+    public constructor(
         network: EvmNetworkConfig,
         web3Provider: EthProvider,
         config: EthereumClassConfig = {},
@@ -129,15 +132,20 @@ export class EthereumBaseChain
     public addressExplorerLink = (address: string): string =>
         this.explorer.address(address);
 
-    public transactionHash = (transaction: {
+    public formattedTransactionHash(transaction: {
         txid: string;
         txindex: string;
-    }): string => Ox(fromBase64(transaction.txid));
+    }): string {
+        return Ox(fromBase64(transaction.txid));
+    }
 
-    public transactionExplorerLink = (transaction: ChainTransaction): string =>
-        this.explorer.transaction(this.transactionHash(transaction));
+    public transactionExplorerLink(transaction: ChainTransaction): string {
+        return this.explorer.transaction(
+            this.formattedTransactionHash(transaction),
+        );
+    }
 
-    public withProvider = (web3Provider: EthProviderUpdate) => {
+    public withProvider(web3Provider: EthProviderUpdate): this {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((web3Provider as any).signer || (web3Provider as any).provider) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,9 +173,9 @@ export class EthereumBaseChain
             this.signer = provider.getSigner();
         }
         return this;
-    };
+    }
 
-    public getOutputPayload = async (
+    public async getOutputPayload(
         asset: string,
         type: OutputType,
         contractCall: EVMPayload,
@@ -175,7 +183,7 @@ export class EthereumBaseChain
         to: string;
         toBytes: Buffer;
         payload: Buffer;
-    }> => {
+    }> {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler.getPayload) {
             throw withCode(
@@ -192,35 +200,38 @@ export class EthereumBaseChain
             this.getEVMParams(asset, type, {}),
             this.getPayloadHandler,
         );
-    };
+    }
 
     // Supported assets
 
     /** Return true if the asset originates from the chain. */
-    isLockAsset = memoize(async (assetSymbol: string): Promise<boolean> => {
-        // Check if it in the list of hard-coded assets.
-        if (
-            Object.keys(this.assets).includes(assetSymbol) ||
-            assetSymbol === this.network.asset
-        ) {
-            return true;
-        }
-
-        // Check if the asset has an associated lock-gateway.
-        try {
-            if (await this.getLockAsset(assetSymbol)) {
+    public async isLockAsset(assetSymbol_: string): Promise<boolean> {
+        return memoize(async (assetSymbol: string): Promise<boolean> => {
+            // Check if it in the list of hard-coded assets.
+            if (
+                Object.keys(this.assets).includes(assetSymbol) ||
+                assetSymbol === this.network.asset
+            ) {
                 return true;
             }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+
+            // Check if the asset has an associated lock-gateway.
+            try {
+                if (await this.getLockAsset(assetSymbol)) {
+                    return true;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
+                return false;
+            }
+
             return false;
-        }
+        })(assetSymbol_);
+    }
 
-        return false;
-    });
-
-    isDepositAsset = (assetSymbol: string): boolean =>
-        assetSymbol === this.network.asset;
+    public isDepositAsset(assetSymbol: string): boolean {
+        return assetSymbol === this.network.asset;
+    }
 
     /**
      * `assetIsSupported` should return true if the asset is native to the
@@ -304,9 +315,9 @@ export class EthereumBaseChain
         { expiry: false },
     );
 
-    transactionConfidence = async (
+    public async transactionConfidence(
         transaction: ChainTransaction,
-    ): Promise<BigNumber> => {
+    ): Promise<BigNumber> {
         if (transaction.txid === "") {
             throw new Error(
                 `Unable to fetch transaction confidence, transaction hash not set.`,
@@ -316,7 +327,7 @@ export class EthereumBaseChain
             (await this.provider.getBlockNumber()).toString(),
         );
         const receipt = await this.provider.getTransactionReceipt(
-            this.transactionHash(transaction),
+            this.formattedTransactionHash(transaction),
         );
         if (receipt === null) {
             throw withCode(
@@ -334,12 +345,12 @@ export class EthereumBaseChain
         } else {
             return new BigNumber(0);
         }
-    };
+    }
 
-    public getBalance = async (
+    public async getBalance(
         asset: string,
         address?: string,
-    ): Promise<BigNumber> => {
+    ): Promise<BigNumber> {
         if (!address) {
             if (!this.signer) {
                 throw new Error(`Must connect signer or provider address.`);
@@ -393,52 +404,9 @@ export class EthereumBaseChain
         const balanceRaw = await await tokenContract.balanceOf(address);
 
         return new BigNumber(balanceRaw.toString());
-    };
+    }
 
-    public lookupOutput = async (
-        type: OutputType,
-        asset: string,
-        _contractCall: EVMPayload,
-        renParams: {
-            amount: BigNumber;
-            sHash: Buffer;
-            pHash: Buffer;
-            nHash: Buffer;
-        },
-        confirmationTarget: number,
-    ): Promise<TxWaiter | undefined> => {
-        const { nHash } = renParams;
-
-        let existingTransaction;
-        if (type === OutputType.Release) {
-            existingTransaction = await findReleaseBySigHash(
-                this.network,
-                this.provider,
-                asset,
-                nHash,
-                this.network.logRequestLimit,
-            );
-        } else {
-            existingTransaction = await findMintBySigHash(
-                this.network,
-                this.provider,
-                asset,
-                nHash,
-                undefined,
-                this.network.logRequestLimit,
-            );
-        }
-        if (existingTransaction) {
-            return new DefaultTxWaiter({
-                chainTransaction: existingTransaction,
-                chain: this,
-                target: confirmationTarget,
-            });
-        }
-        return undefined;
-    };
-
-    getOutputTx = async (
+    public async getOutputTx(
         type: OutputType,
         asset: string,
         contractCall: EVMPayload,
@@ -450,28 +418,34 @@ export class EthereumBaseChain
             signature?: Buffer;
         },
         confirmationTarget: number,
-    ): Promise<TxSubmitter | TxWaiter> => {
-        const { nHash, sigHash } = getParams();
+    ): Promise<TxSubmitter | TxWaiter> {
+        const findExistingTransaction = async (): Promise<
+            ChainTransaction | undefined
+        > => {
+            const { nHash, sigHash } = getParams();
+            if (type === OutputType.Release) {
+                return await findReleaseBySigHash(
+                    this.network,
+                    this.provider,
+                    asset,
+                    nHash,
+                    this.network.logRequestLimit,
+                );
+            } else {
+                return await findMintBySigHash(
+                    this.network,
+                    this.provider,
+                    asset,
+                    nHash,
+                    sigHash,
+                    this.network.logRequestLimit,
+                );
+            }
+            return undefined;
+        };
 
-        let existingTransaction;
-        if (type === OutputType.Release) {
-            existingTransaction = await findReleaseBySigHash(
-                this.network,
-                this.provider,
-                asset,
-                nHash,
-                this.network.logRequestLimit,
-            );
-        } else {
-            existingTransaction = await findMintBySigHash(
-                this.network,
-                this.provider,
-                asset,
-                nHash,
-                sigHash,
-                this.network.logRequestLimit,
-            );
-        }
+        const existingTransaction = await findExistingTransaction();
+
         if (existingTransaction) {
             return new DefaultTxWaiter({
                 chainTransaction: existingTransaction,
@@ -515,14 +489,15 @@ export class EthereumBaseChain
             target: confirmationTarget,
             getPayloadHandler: this.getPayloadHandler,
             getParams: () => this.getEVMParams(asset, type, getParams()),
+            findExistingTransaction,
         });
-    };
+    }
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    getInputTx = async (
+    public getInputTx(
         type: InputType,
         asset: string,
         contractCall: EVMPayload,
@@ -536,7 +511,7 @@ export class EthereumBaseChain
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
-    ): Promise<TxSubmitter | TxWaiter> => {
+    ): TxSubmitter | TxWaiter {
         // if (!transaction && burnNonce) {
         //     const nonceBuffer = Buffer.isBuffer(burnNonce)
         //         ? Buffer.from(burnNonce)
@@ -563,7 +538,7 @@ export class EthereumBaseChain
 
         // const receipt = await waitForReceipt(
         //     this.provider,
-        //     this.transactionHash(transaction),
+        //     this.formattedTransactionHash(transaction),
         //     this.logger,
         //     config.networkDelay,
         // );
@@ -626,9 +601,9 @@ export class EthereumBaseChain
             getParams: () => this.getEVMParams(asset, type, getParams()),
             onReceipt: onReceipt,
         });
-    };
+    }
 
-    public getInputSetup = async (
+    public async getInputSetup(
         asset: string,
         type: InputType,
         contractCall: EVMPayload,
@@ -641,7 +616,7 @@ export class EthereumBaseChain
             };
             gatewayAddress?: string;
         },
-    ) => {
+    ): Promise<{ [key: string]: EVMTxSubmitter }> {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -660,7 +635,7 @@ export class EthereumBaseChain
             this.getPayloadHandler,
         );
 
-        const txSubmitted = {};
+        const txSubmitted: { [key: string]: EVMTxSubmitter } = {};
         for (const callKey of Object.keys(calls)) {
             txSubmitted[callKey] = new EVMTxSubmitter({
                 signer: this.signer,
@@ -673,13 +648,13 @@ export class EthereumBaseChain
             });
         }
         return txSubmitted;
-    };
+    }
 
-    public getOutputSetup = async (
+    public async getOutputSetup(
         asset: string,
         type: OutputType,
         contractCall: EVMPayload,
-    ) => {
+    ): Promise<{ [key: string]: EVMTxSubmitter }> {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -690,7 +665,7 @@ export class EthereumBaseChain
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        const calls = handler.getSetup(
+        const calls = await handler.getSetup(
             this.network,
             this.signer,
             contractCall,
@@ -698,7 +673,7 @@ export class EthereumBaseChain
             this.getPayloadHandler,
         );
 
-        const txSubmitted = {};
+        const txSubmitted: { [key: string]: EVMTxSubmitter } = {};
         for (const callKey of Object.keys(calls)) {
             txSubmitted[callKey] = new EVMTxSubmitter({
                 signer: this.signer,
@@ -711,7 +686,7 @@ export class EthereumBaseChain
             });
         }
         return txSubmitted;
-    };
+    }
 
     private getPayloadHandler = (payloadType: string): PayloadHandler => {
         switch (payloadType) {
@@ -734,12 +709,12 @@ export class EthereumBaseChain
         throw new Error(`Unknown payload type ${payloadType}`);
     };
 
-    createGatewayAddress = (
+    public createGatewayAddress(
         _asset: string,
-        fromPayload: { chain: string },
+        fromPayload: EVMPayload,
         shardPublicKey: Buffer,
         gHash: Buffer,
-    ): Promise<string> | string => {
+    ): Promise<string> | string {
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
@@ -765,9 +740,9 @@ export class EthereumBaseChain
         return computeAddress(
             Buffer.from(derivedPublicKey.getPublic(false, "hex"), "hex"),
         );
-    };
+    }
 
-    private getEVMParams = (
+    private getEVMParams(
         asset: string,
         type: InputType | OutputType | "setup",
         params: {
@@ -786,7 +761,7 @@ export class EthereumBaseChain
             sigHash?: Buffer;
             signature?: Buffer;
         },
-    ): EVMParamValues => {
+    ): EVMParamValues {
         return {
             // Always available
             [EVMParam.EVM_TRANSACTION_TYPE]: type,
@@ -864,17 +839,17 @@ export class EthereumBaseChain
             [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]: params.gatewayAddress,
             [EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]: this.isDepositAsset(asset),
         };
-    };
+    }
 
     /* ====================================================================== */
 
-    public Account = ({
+    public Account({
         amount,
         convertToWei,
     }: {
         amount?: BigNumber | string | number;
         convertToWei?: boolean;
-    } = {}): EVMPayload => {
+    } = {}): EVMPayload {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
             { amount },
@@ -913,9 +888,9 @@ export class EthereumBaseChain
                 convertToWei,
             },
         };
-    };
+    }
 
-    public Address = (address: string): EVMPayload => {
+    public Address(address: string): EVMPayload {
         assertType<string>("string", {
             address,
         });
@@ -927,48 +902,50 @@ export class EthereumBaseChain
                 address,
             },
         };
-    };
+    }
 
-    public Contract = (params: {
+    public Contract(params: {
         to: string;
         method: string;
         params: EthArg[];
         withRenParams: boolean;
         txConfig?: PayableOverrides;
-    }): EVMPayload => ({
-        chain: this.chain,
-        type: "contract",
-        params: {
-            to: params.to,
-            method: params.method,
-            params: [
-                ...params.params,
-                ...(params.withRenParams
-                    ? [
-                          {
-                              name: "amount",
-                              type: "uint256",
-                              value: EVMParam.EVM_AMOUNT,
-                              notInPayload: true,
-                          },
-                          {
-                              name: "nHash",
-                              type: "bytes32",
-                              value: EVMParam.EVM_NHASH,
-                              notInPayload: true,
-                          },
-                          {
-                              name: "signature",
-                              type: "bytes",
-                              value: EVMParam.EVM_SIGNATURE,
-                              notInPayload: true,
-                          },
-                      ]
-                    : []),
-            ],
-            txConfig: params.txConfig,
-        },
-    });
+    }): EVMPayload {
+        return {
+            chain: this.chain,
+            type: "contract",
+            params: {
+                to: params.to,
+                method: params.method,
+                params: [
+                    ...params.params,
+                    ...(params.withRenParams
+                        ? [
+                              {
+                                  name: "amount",
+                                  type: "uint256",
+                                  value: EVMParam.EVM_AMOUNT,
+                                  notInPayload: true,
+                              },
+                              {
+                                  name: "nHash",
+                                  type: "bytes32",
+                                  value: EVMParam.EVM_NHASH,
+                                  notInPayload: true,
+                              },
+                              {
+                                  name: "signature",
+                                  type: "bytes",
+                                  value: EVMParam.EVM_SIGNATURE,
+                                  notInPayload: true,
+                              },
+                          ]
+                        : []),
+                ],
+                txConfig: params.txConfig,
+            },
+        };
+    }
 
     // /** @category Main */
     // public Address = (address: string): OutputContractCall => ({

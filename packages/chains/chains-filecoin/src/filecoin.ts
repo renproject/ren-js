@@ -117,7 +117,7 @@ export class Filecoin
 {
     public static chain = "Filecoin";
     public chain: string;
-    public static assets: { [asset: string]: string } = {
+    public static assets = {
         FIL: "FIL",
     };
     public assets = Filecoin.assets;
@@ -134,7 +134,7 @@ export class Filecoin
 
     public filfox: Filfox | undefined;
 
-    constructor(
+    public constructor(
         network: RenNetwork | RenNetworkString | FilecoinNetworkConfig,
         options: FilecoinConfig = {},
     ) {
@@ -178,9 +178,7 @@ export class Filecoin
         transaction: ChainTransaction,
     ): string => {
         // TODO: Check network.
-        return `https://filfox.info/en/message/${this.transactionHash(
-            transaction,
-        )}`;
+        return `https://filfox.info/en/message/${transaction.txidFormatted}`;
     };
 
     /**
@@ -188,34 +186,34 @@ export class Filecoin
      */
     isLockAsset = (asset: string): boolean => asset === this.feeAsset;
 
-    public readonly assertAssetIsSupported = (asset: string) => {
+    private _assertAssetIsSupported(asset: string) {
         if (!this.isLockAsset(asset)) {
             throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
-    };
+    }
 
     /**
      * See [[LockChain.assetDecimals]].
      */
-    assetDecimals = (asset: string): number => {
-        this.assertAssetIsSupported(asset);
+    public assetDecimals(asset: string): number {
+        this._assertAssetIsSupported(asset);
         return this.network.nativeAsset.decimals;
-    };
+    }
 
-    watchForDeposits = async (
+    public async watchForDeposits(
         asset: string,
         fromPayload: { chain: string },
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
-    ): Promise<void> => {
+    ): Promise<void> {
+        this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
         }
-        this.assertAssetIsSupported(asset);
 
         // If there's too many logs to catch-up on, fetch the transactions from
         // Filfox (mainnet only)
@@ -318,15 +316,15 @@ export class Filecoin
 
             await sleep(15 * SECONDS);
         }
-    };
+    }
 
     /**
      * See [[LockChain.transactionConfidence]].
      */
-    transactionConfidence = async (
+    public async transactionConfidence(
         transaction: ChainTransaction,
-    ): Promise<BigNumber> => {
-        const cid = this.transactionHash(transaction);
+    ): Promise<BigNumber> {
+        const cid = transaction.txidFormatted;
         let msg;
         try {
             msg = await fetchMessage(
@@ -346,41 +344,40 @@ export class Filecoin
             throw error;
         }
         return new BigNumber(msg.confirmations);
-    };
+    }
 
-    isDepositAsset = (asset: string) => {
+    public isDepositAsset(asset: string): boolean {
         return asset === this.network.nativeAsset.symbol;
-    };
+    }
 
-    public getBalance = async (
+    public getBalance(
         asset: string,
         address: string,
         // eslint-disable-next-line @typescript-eslint/require-await
-    ): Promise<BigNumber> => {
-        this.assertAssetIsSupported(asset);
+    ): BigNumber {
+        this._assertAssetIsSupported(asset);
         if (!this.validateAddress(address)) {
             throw new Error(`Invalid address ${address}.`);
         }
         // TODO: Implement.
         return new BigNumber(0);
-    };
+    }
 
     /**
      * See [[LockChain.getGatewayAddress]].
      */
-    createGatewayAddress = (
+    public createGatewayAddress(
         asset: string,
         fromPayload: { chain: string },
         shardPublicKey: Buffer,
         gHash: Buffer,
-    ): Promise<string> | string => {
+    ): string {
+        this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
         }
-
-        this.assertAssetIsSupported(asset);
 
         const ec = new elliptic.ec("secp256k1");
 
@@ -398,7 +395,7 @@ export class Filecoin
                 .add(gHashKey.getPublic()) as unknown as elliptic.ec.KeyPair,
         );
 
-        const payload = Buffer.from(
+        const bytes = Buffer.from(
             blake2b(
                 Buffer.from(derivedPublicKey.getPublic(false, "hex"), "hex"),
                 null,
@@ -406,51 +403,43 @@ export class Filecoin
             ),
         );
 
-        return this.encodeFilecoinAddress(payload);
-    };
+        return this.bytesToAddress(bytes);
+    }
 
-    encodeFilecoinAddress = (payload: Buffer) => {
-        if (payload.length === 21) {
-            payload = Buffer.from(payload.slice(1, 21));
+    /**
+     * See [[LockChain.addressToBytes]].
+     */
+    public addressToBytes(address: string): Buffer {
+        return Buffer.from(decodeAddress(address).str);
+    }
+
+    /**
+     * See [[LockChain.addressToBytes]].
+     */
+    public bytesToAddress(bytes: Buffer): string {
+        if (bytes.length === 21) {
+            bytes = Buffer.from(bytes.slice(1, 21));
         }
         // secp256k1 protocol prefix
         const protocol = 1;
 
         const addressObject = {
-            str: Buffer.concat([Buffer.from([protocol]), payload]),
+            str: Buffer.concat([Buffer.from([protocol]), bytes]),
             protocol: () => protocol,
-            payload: () => payload,
+            payload: () => bytes,
         };
 
         return encodeAddress(this.network.addressPrefix, addressObject);
-    };
+    }
 
-    /**
-     * See [[LockChain.addressToBytes]].
-     */
-    addressToBytes = (address: string): Buffer =>
-        Buffer.from(decodeAddress(address).str);
+    public formattedTransactionHash(tx: {
+        txid: string;
+        txindex: string;
+    }): string {
+        return new CID(fromBase64(tx.txid)).toString();
+    }
 
-    /**
-     * See [[LockChain.addressToBytes]].
-     */
-    bytesToAddress = (address: Buffer): string =>
-        this.encodeFilecoinAddress(address);
-
-    /**
-     * See [[LockChain.transactionID]].
-     */
-    transactionID = (transaction: FilTransaction): string => transaction.cid;
-
-    transactionHash = (tx: { txid: string; txindex: string }): string =>
-        new CID(fromBase64(tx.txid)).toString();
-
-    transactionRPCTxidFromID = (transactionID: string): Buffer =>
-        Buffer.from(new CID(transactionID).bytes);
-
-    getBurnPayload: ((bytes?: boolean) => string) | undefined;
-
-    public getOutputPayload = (
+    public getOutputPayload(
         asset: string,
         _type: OutputType.Release,
         toPayload: FilecoinReleasePayload,
@@ -458,24 +447,24 @@ export class Filecoin
         to: string;
         toBytes: Buffer;
         payload: Buffer;
-    } => {
-        this.assertAssetIsSupported(asset);
+    } {
+        this._assertAssetIsSupported(asset);
         return {
             to: toPayload.address,
             toBytes: Buffer.from(new CID(toPayload.address).bytes),
             payload: Buffer.from([]),
         };
-    };
+    }
 
     // Methods for initializing mints and burns ////////////////////////////////
 
     /**
-     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * When burning, you can call `Filecoin.Address("...")` to make the address
      * available to the burn params.
      *
      * @category Main
      */
-    Address = (address: string): { chain: string; address: string } => {
+    public Address(address: string): { chain: string; address: string } {
         // Type validation
         assertType<string>("string", { address });
 
@@ -490,17 +479,17 @@ export class Filecoin
             chain: this.chain,
             address,
         };
-    };
+    }
 
     /**
-     * When burning, you can call `Bitcoin.Address("...")` to make the address
+     * When burning, you can call `Filecoin.Address("...")` to make the address
      * available to the burn params.
      *
      * @category Main
      */
-    GatewayAddress = (): { chain: string } => {
+    public GatewayAddress(): { chain: string } {
         return {
             chain: this.chain,
         };
-    };
+    }
 }

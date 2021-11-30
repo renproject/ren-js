@@ -94,7 +94,7 @@ export class RenJS {
      * @param providerOrNetwork Provider the name of a RenNetwork or a RenVM provider instance.
      * @param config
      */
-    constructor(
+    public constructor(
         providerOrNetwork:
             | RenNetwork
             | RenNetworkString
@@ -138,9 +138,9 @@ export class RenJS {
     }: {
         asset: string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        from: string | { chain: string };
+        from: string | { chain: string; txConfig?: any };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        to: string | { chain: string };
+        to: string | { chain: string; txConfig?: any };
     }): Promise<GatewayFees> => {
         const fromChain = this.getChain(
             typeof from === "string" ? from : from.chain,
@@ -205,12 +205,8 @@ export class RenJS {
      * @param params See [[LockAndMintParams]].
      */
     public readonly gateway = async <
-        FromPayload extends { chain: string } = {
-            chain: string;
-        },
-        ToPayload extends { chain: string } = {
-            chain: string;
-        },
+        FromPayload extends { chain: string; txConfig?: any } = any,
+        ToPayload extends { chain: string; txConfig?: any } = any,
     >(
         params: GatewayParams<FromPayload, ToPayload>,
         config: RenJSConfig = {},
@@ -227,7 +223,7 @@ export class RenJS {
         ).initialize();
 
     public readonly gatewayTransaction = async <
-        ToPayload extends { chain: string } = {
+        ToPayload extends { chain: string; txConfig?: any } = {
             chain: string;
         },
     >(

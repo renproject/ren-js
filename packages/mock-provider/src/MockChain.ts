@@ -12,7 +12,7 @@ export class MockChain extends BitcoinBaseChain {
         default: string;
     };
 
-    constructor(chain: string, asset: string) {
+    public constructor(chain: string, asset: string) {
         super({
             label: chain,
             selector: chain,

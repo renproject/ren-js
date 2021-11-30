@@ -32,7 +32,7 @@ describe("RenJS Gateway Transaction", () => {
             getEVMProvider(BinanceSmartChain, network),
         );
 
-        const from = bsc.Account({ amount: 1, convertToWei: true });
+        const from = bsc.Account({ amount: 0.5, convertToWei: true });
         // const from = fromClass.FromAccount();
         const to = ethereum.Account();
 
@@ -65,13 +65,17 @@ describe("RenJS Gateway Transaction", () => {
         console.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${printChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.from.chain, {
                 pad: false,
             })}`,
         );
 
         gateway.in.eventEmitter.on("status", console.log);
-        await gateway.in.submit();
+        await gateway.in.submit({
+            txConfig: {
+                gasLimit: 1000000,
+            },
+        });
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
 
@@ -105,6 +109,7 @@ describe("RenJS Gateway Transaction", () => {
 
                     while (true) {
                         try {
+                            console.log(tx.renVM.tx);
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
@@ -115,17 +120,21 @@ describe("RenJS Gateway Transaction", () => {
                         }
                     }
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                            gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
-                            ethereum.chain,
+                            gateway.params.to.chain,
                         )}`,
                     );
 
                     tx.out.eventEmitter.on("status", console.log);
 
                     if (tx.out.submit) {
-                        await tx.out.submit();
+                        await tx.out.submit({
+                            txConfig: {
+                                gasLimit: 1000000,
+                            },
+                        });
                     }
 
                     await tx.out.wait();

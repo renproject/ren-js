@@ -11,23 +11,17 @@
         "type": "constructor"
     },
     {
-        "anonymous": false,
-        "inputs": [
+        "inputs": [],
+        "name": "NAME",
+        "outputs": [
             {
-                "indexed": true,
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
+                "internalType": "string",
+                "name": "",
+                "type": "string"
             }
         ],
-        "name": "LogTransferred",
-        "type": "event"
+        "stateMutability": "view",
+        "type": "function"
     },
     {
         "inputs": [
@@ -38,7 +32,7 @@
             },
             {
                 "internalType": "string",
-                "name": "to",
+                "name": "recipient",
                 "type": "string"
             },
             {
@@ -119,6 +113,19 @@
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "registry",
+        "outputs": [
+            {
+                "internalType": "contract IGatewayRegistry",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "string",
@@ -149,19 +156,6 @@
         "name": "release",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address payable",
-                "name": "to",
-                "type": "address"
-            }
-        ],
-        "name": "transferWithLog",
-        "outputs": [],
-        "stateMutability": "payable",
         "type": "function"
     }
 ]

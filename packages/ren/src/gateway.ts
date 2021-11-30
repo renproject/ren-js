@@ -4,6 +4,8 @@ import { OrderedMap } from "immutable";
 import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
+    ChainTransactionProgress,
+    DefaultTxWaiter,
     EventEmitterTyped,
     extractError,
     fromBase64,
@@ -34,9 +36,7 @@ import { GatewayParams } from "./params";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 
 class TransactionEmitter<
-        ToPayload extends { chain: string } = {
-            chain: string;
-        },
+        ToPayload extends { chain: string; txConfig?: any } = any,
     >
     extends EventEmitter
     implements
@@ -44,7 +44,7 @@ class TransactionEmitter<
 {
     private getTransactions: () => GatewayTransaction<ToPayload>[];
 
-    constructor(getTransactions: () => GatewayTransaction<ToPayload>[]) {
+    public constructor(getTransactions: () => GatewayTransaction<ToPayload>[]) {
         super();
 
         this.getTransactions = getTransactions;
@@ -59,13 +59,7 @@ class TransactionEmitter<
     ): this => {
         // Emit previous deposit events.
         if (event === "transaction") {
-            this.getTransactions().map((deposit) => {
-                // Check that the transaction isn't a promise.
-                // The result of promises will be emitted when they resolve.
-                if ((deposit as any).then === undefined) {
-                    callback(deposit as GatewayTransaction<ToPayload>);
-                }
-            });
+            this.getTransactions().map(callback);
         }
 
         super.on(event, callback);
@@ -116,12 +110,8 @@ class TransactionEmitter<
  * @noInheritDoc
  */
 export class Gateway<
-    FromPayload extends { chain: string } = {
-        chain: string;
-    },
-    ToPayload extends { chain: string } = {
-        chain: string;
-    },
+    FromPayload extends { chain: string; txConfig?: any } = any,
+    ToPayload extends { chain: string; txConfig?: any } = any,
 > {
     // Public
 
@@ -137,7 +127,10 @@ export class Gateway<
      */
     public gatewayAddress: string | undefined;
 
-    public in: TxSubmitter | TxWaiter | undefined;
+    public in:
+        | TxSubmitter<ChainTransactionProgress, FromPayload["txConfig"]>
+        | TxWaiter
+        | undefined;
 
     public setup: { [key: string]: TxSubmitter | TxWaiter } = {};
 
@@ -155,6 +148,8 @@ export class Gateway<
     public eventEmitter: TransactionEmitter<ToPayload> =
         new TransactionEmitter<ToPayload>(() =>
             this.transactions
+                // Check that the transaction isn't a promise.
+                // The result of promises will be emitted when they resolve.
                 .filter((tx) => (tx as any).then === undefined)
                 .map((tx) => tx as GatewayTransaction<ToPayload>)
                 .valueSeq()
@@ -165,39 +160,46 @@ export class Gateway<
     // be called immediately after the constructor.
 
     private _selector: string | undefined;
-    get selector(): string {
+    public get selector(): string {
         return this.getter("_selector") || this._selector;
     }
 
     private _gHash: Buffer | undefined;
-    get gHash(): Buffer {
+    public get gHash(): Buffer {
         return this.getter("_gHash") || this._gHash;
     }
 
     private _pHash: Buffer | undefined;
-    get pHash(): Buffer {
+    public get pHash(): Buffer {
         return this.getter("_pHash") || this._pHash;
     }
 
     private _fees: GatewayFees | undefined;
-    get fees(): GatewayFees {
+    public get fees(): GatewayFees {
         return this.getter("_fees") || this._fees;
     }
 
     private _outputType: OutputType | undefined;
-    get outputType(): OutputType {
+    public get outputType(): OutputType {
         return this.getter("_outputType") || this._outputType;
     }
 
     private _inputType: InputType | undefined;
-    get inputType(): InputType {
+    public get inputType(): InputType {
         return this.getter("_inputType") || this._inputType;
+    }
+
+    private _inConfirmationTarget: number | undefined;
+    public get inConfirmationTarget(): number {
+        return (
+            this.getter("_inConfirmationTarget") || this._inConfirmationTarget
+        );
     }
 
     /**
      * @hidden - should be created using [[RenJS.lockAndMint]] instead.
      */
-    constructor(
+    public constructor(
         renVM: RenVMProvider,
         fromChain: Chain,
         toChain: Chain,
@@ -268,29 +270,34 @@ export class Gateway<
             );
         }
 
-        // Check if shard needs to be selected.
-        if (!isDefined(this.params.shard)) {
-            if (
-                this.inputType === InputType.Lock &&
-                isDepositChain(this.fromChain) &&
-                (await this.fromChain.isDepositAsset(asset))
-            ) {
-                this.params.shard = await this.provider.selectShard(
-                    this.params.asset,
-                );
-            } else {
-                this.params.shard = {
-                    gPubKey: "",
-                };
-            }
-        }
+        const [confirmationTarget, shard, payload] = await Promise.all([
+            this.provider.getConfirmationTarget(this.fromChain.chain),
+            (async () => {
+                if (isDefined(this.params.shard)) {
+                    return this.params.shard;
+                }
+                if (
+                    this.inputType === InputType.Lock &&
+                    isDepositChain(this.fromChain) &&
+                    (await this.fromChain.isDepositAsset(asset))
+                ) {
+                    return await this.provider.selectShard(this.params.asset);
+                } else {
+                    return {
+                        gPubKey: "",
+                    };
+                }
+            })(),
+            this.toChain.getOutputPayload(
+                asset,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                this.outputType as any,
+                to,
+            ),
+        ]);
 
-        const payload = await this.toChain.getOutputPayload(
-            asset,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.outputType as any,
-            to,
-        );
+        this.params.shard = shard;
+        this._inConfirmationTarget = confirmationTarget;
 
         this._pHash = generatePHash(payload.payload);
 
@@ -451,7 +458,7 @@ export class Gateway<
                     toPayload: payload,
                     gatewayAddress: this.gatewayAddress,
                 }),
-                await this.provider.getConfirmationTarget(this.fromChain.chain),
+                this.inConfirmationTarget,
                 processInput,
                 removeInput,
             );
@@ -562,12 +569,21 @@ export class Gateway<
                     nonce,
                 };
 
+                let inTx = this.in;
+                if (!inTx) {
+                    inTx = new DefaultTxWaiter({
+                        chainTransaction: deposit,
+                        chain: this.fromChain,
+                        target: this.inConfirmationTarget,
+                    });
+                }
+
                 const transaction = new GatewayTransaction<ToPayload>(
                     this.provider,
                     this.fromChain,
                     this.toChain,
                     params,
-                    this.in,
+                    inTx,
                     this.config,
                 );
 

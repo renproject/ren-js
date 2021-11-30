@@ -46,6 +46,7 @@
         "@renproject/chains-bitcoin": "^3.0.0-alpha.3",
         "@renproject/chains-ethereum": "^3.0.0-alpha.3",
         "@renproject/chains-filecoin": "^3.0.0-alpha.3",
+        "@renproject/chains-terra": "^3.0.0-alpha.3",
         "@renproject/utils": "^3.0.0-alpha.3",
         "@types/node": ">=10"
     },

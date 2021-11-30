@@ -43,7 +43,7 @@ import {
 export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
     public readonly logger: Logger;
 
-    constructor(
+    public constructor(
         endpointOrProvider:
             | RenNetwork
             | RenNetworkString
@@ -134,10 +134,10 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
         );
 
     public queryBlockState = memoize(
-        async (retry?: number): Promise<BlockState> => {
+        async (contract: string, retry?: number): Promise<BlockState> => {
             const { state } = await this.sendMessage<RPCMethod.QueryBlockState>(
                 RPCMethod.QueryBlockState,
-                {},
+                { contract },
                 retry,
             );
             return unmarshalTypedPackValue(state);
@@ -244,7 +244,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
 
         try {
             // Call the ren_queryBlockState RPC.
-            blockState = await this.queryBlockState(5);
+            blockState = await this.queryBlockState(asset, 5);
         } catch (error: any) {
             throw withCode(
                 new Error(

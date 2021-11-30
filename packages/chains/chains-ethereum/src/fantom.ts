@@ -22,8 +22,8 @@ export const fantomMainnetConfig: EvmNetworkConfig = {
     },
 
     addresses: {
-        GatewayRegistry: "0x21C482f153D0317fe85C60bE1F7fa079019fcEbD",
-        BasicBridge: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
+        GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
+        BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
 };
 
@@ -40,8 +40,8 @@ export const fantomTestnetConfig: EvmNetworkConfig = {
     },
 
     addresses: {
-        GatewayRegistry: "0x707bBd01A54958d1c0303b29CAfA9D9fB2D61C10",
-        BasicBridge: "0x52aF1b09DC11B47DcC935877a7473E35D946b7C9",
+        GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
+        BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
 };
 
@@ -67,7 +67,7 @@ export class Fantom extends EthereumBaseChain {
     };
     public assets = Fantom.assets;
 
-    constructor(
+    public constructor(
         network: EvmNetworkInput,
         web3Provider: EthProvider,
         config: EthereumClassConfig = {},

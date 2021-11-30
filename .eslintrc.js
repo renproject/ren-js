@@ -124,6 +124,7 @@ module.exports = {
                 default: "array-simple",
             },
         ],
+        "@typescript-eslint/explicit-member-accessibility": ["warn"],
 
         "jsdoc/no-types": 1,
         "jsdoc/require-param-type": 0,

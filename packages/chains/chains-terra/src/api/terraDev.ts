@@ -1,24 +1,9 @@
 import Axios from "axios";
+import BigNumber from "bignumber.js";
 
 import { SECONDS } from "@renproject/utils";
 
-import { TerraAPI, TerraNetwork, TerraTransaction } from "./deposit";
-import { getHeight } from "./height";
-
-const TERRA_DEV_URL = (network: TerraNetwork) => {
-    let prefix;
-    switch (network) {
-        case TerraNetwork.Columbus:
-            prefix = "fcd";
-            break;
-        case TerraNetwork.Tequila:
-            prefix = "tequila-fcd";
-            break;
-        default:
-            throw new Error(`Terra network ${String(network)} not supported.`);
-    }
-    return `https://${String(prefix)}.terra.dev/v1`;
-};
+import { TerraAPI, TerraNetworkConfig, TerraTransaction } from "./types";
 
 interface TerraDevTx {
     tx: {
@@ -198,76 +183,84 @@ const extractDepositsFromTx =
 
 const concat = <T>(x: T[], y: T[]) => x.concat(y);
 
-const fetchDeposits = async (
-    address: string,
-    network: TerraNetwork,
-    memo: string | undefined = undefined,
-    // page = 0,
-): Promise<TerraTransaction[]> => {
-    // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
+export class TerraDev implements TerraAPI {
+    public apiUrl: string;
+    public chainId: string;
 
-    // const url = `${TERRA_DEV_URL(network)}/txs?account=${address}&page=${
-    //     page + 1
-    // }&chainId=${network}`;
-    const url = `${TERRA_DEV_URL(
-        network,
-    )}/txs?account=${address}&chainId=${network}`;
-
-    const response = (
-        await Axios.get<MessagesResponse>(url, {
-            timeout: 60 * SECONDS,
-        })
-    ).data;
-
-    const { txs } = response;
-
-    const filteredTxs = !memo
-        ? txs
-        : txs.filter(
-              (message) =>
-                  message.tx &&
-                  message.tx.value &&
-                  message.tx.value.memo === memo,
-          );
-
-    // Create an entry for each message. Transactions can contain multiple
-    // messages.
-
-    // Fetch current height of the chain. Skip if no messages were found.
-    const chainHeight = filteredTxs.length > 0 ? await getHeight(network) : 0;
-    return filteredTxs
-        .map(extractDepositsFromTx(chainHeight))
-        .reduce(concat, [])
-        .filter((msg) => msg.to === address);
-};
-
-const fetchDeposit = async (
-    hash: string,
-    messageIndex: number,
-    network: TerraNetwork,
-): Promise<TerraTransaction> => {
-    // const paramsFilterBase64 = paramsFilter && paramsFilter.toString("base64");
-
-    const url = `${TERRA_DEV_URL(network)}/tx/${hash}`;
-    const tx = (
-        await Axios.get<MessageResponse>(url, {
-            timeout: 60 * SECONDS,
-        })
-    ).data;
-
-    if (tx === null) {
-        throw new Error(`Unable to find Terra transaction ${hash}.`);
+    public constructor(terraNetwork: TerraNetworkConfig) {
+        this.apiUrl = terraNetwork.apiUrl;
+        this.chainId = terraNetwork.chainId;
     }
 
-    // Create an entry for each message. Transactions can contain multiple
-    // messages.
+    public async getHeight(): Promise<BigNumber> {
+        const url = `${this.apiUrl}/blocks/latest`;
+        const response = (
+            await Axios.get<{ block: { header: { height: string } } }>(url, {
+                timeout: 60 * SECONDS,
+            })
+        ).data;
+        return new BigNumber(response.block.header.height);
+    }
 
-    // Fetch current height of the chain. Skip if no messages were found.
-    const chainHeight = await getHeight(network);
-    return extractDepositsFromTx(chainHeight)(tx)[messageIndex];
-};
+    public async fetchDeposits(
+        address: string,
+        memo: string | undefined = undefined,
+        // page = 0,
+    ): Promise<TerraTransaction[]> {
+        // Paginated version:
+        // `${this.fcdUrl}/v1/txs?account=${address}&page=${
+        //     page + 1
+        // }&chainId=${this.chainId}`
+        const url = `${this.apiUrl}/v1/txs?account=${address}&chainId=${this.chainId}`;
 
-export const terraDev: TerraAPI = {
-    fetchDeposits,
-    fetchDeposit,
-};
+        const response = (
+            await Axios.get<MessagesResponse>(url, {
+                timeout: 60 * SECONDS,
+            })
+        ).data;
+
+        const { txs } = response;
+
+        const filteredTxs = !memo
+            ? txs
+            : txs.filter(
+                  (message) =>
+                      message.tx &&
+                      message.tx.value &&
+                      message.tx.value.memo === memo,
+              );
+
+        // Create an entry for each message. Transactions can contain multiple
+        // messages.
+
+        // Fetch current height of the chain. Skip if no messages were found.
+        const chainHeight =
+            filteredTxs.length > 0 ? (await this.getHeight()).toNumber() : 0;
+        return filteredTxs
+            .map(extractDepositsFromTx(chainHeight))
+            .reduce(concat, [])
+            .filter((msg) => msg.to === address);
+    }
+
+    public async fetchConfirmations(hash: string): Promise<BigNumber> {
+        const url = `${this.apiUrl}/v1/tx/${hash}`;
+        const tx = (
+            await Axios.get<MessageResponse>(url, {
+                timeout: 60 * SECONDS,
+            })
+        ).data;
+
+        if (tx === null) {
+            throw new Error(`Unable to find Terra transaction ${hash}.`);
+        }
+
+        if (!tx.height) {
+            return new BigNumber(0);
+        }
+
+        // Fetch current height of the chain.
+        const chainHeight = await this.getHeight();
+
+        return chainHeight.minus(tx.height);
+    }
+}

@@ -3,12 +3,13 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
+import { RenNetwork, SECONDS, sleep } from "@renproject/utils/src";
+
 import {
     BinanceSmartChain,
     Ethereum,
 } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
-import { RenNetwork, SECONDS, sleep } from "../packages/utils/src";
 import { getEVMProvider, printChain } from "./testUtils";
 
 chai.should();
@@ -16,27 +17,31 @@ chai.should();
 loadDotEnv();
 
 describe("RenJS Gateway Transaction", () => {
-    it("DAI/toBinanceSmartChain", async function () {
+    it("ETH/fromBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.DAI;
+        const asset = Ethereum.assets.ETH;
         const ethereum = new Ethereum(
             network,
-            getEVMProvider(Ethereum as any, network),
+            getEVMProvider(Ethereum, network),
         );
         const bsc = new BinanceSmartChain(
             network,
-            getEVMProvider(BinanceSmartChain as any, network),
+            getEVMProvider(BinanceSmartChain, network),
         );
+
+        const from = bsc.Account({ amount: 0.001, convertToWei: true });
+        // const from = fromClass.FromAccount();
+        const to = ethereum.Account();
 
         const renJS = new RenJS(network).withChains(bsc, ethereum);
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 1, convertToWei: true }),
-            to: bsc.Account(),
+            from,
+            to,
         });
 
         console.log(
@@ -46,7 +51,6 @@ describe("RenJS Gateway Transaction", () => {
                 .toFixed(),
         );
 
-        // Check what set-up calls need to be made
         for (const setupKey of Object.keys(gateway.setup)) {
             const setup = gateway.setup[setupKey];
             console.log(
@@ -61,13 +65,17 @@ describe("RenJS Gateway Transaction", () => {
         console.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${printChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.from.chain, {
                 pad: false,
             })}`,
         );
 
         gateway.in.eventEmitter.on("status", console.log);
-        await gateway.in.submit();
+        await gateway.in.submit({
+            txConfig: {
+                gasLimit: 1000000,
+            },
+        });
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
 
@@ -101,8 +109,7 @@ describe("RenJS Gateway Transaction", () => {
 
                     while (true) {
                         try {
-                            console.log(`Submitting to RenVM`);
-                            tx.renVM.eventEmitter.on("status", console.log);
+                            console.log(tx.renVM.tx);
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
@@ -113,20 +120,21 @@ describe("RenJS Gateway Transaction", () => {
                         }
                     }
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                            gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
-                            ethereum.chain,
-                            {
-                                pad: false,
-                            },
+                            gateway.params.to.chain,
                         )}`,
                     );
 
                     tx.out.eventEmitter.on("status", console.log);
 
                     if (tx.out.submit) {
-                        await tx.out.submit();
+                        await tx.out.submit({
+                            txConfig: {
+                                gasLimit: 1000000,
+                            },
+                        });
                     }
 
                     await tx.out.wait();

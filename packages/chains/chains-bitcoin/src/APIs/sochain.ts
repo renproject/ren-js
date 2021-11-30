@@ -26,7 +26,7 @@ export enum SoChainNetwork {
 export class SoChain implements BitcoinAPI {
     public network: string;
 
-    constructor(network: SoChainNetwork | string = SoChainNetwork.BTC) {
+    public constructor(network: SoChainNetwork | string = SoChainNetwork.BTC) {
         this.network = network;
     }
 

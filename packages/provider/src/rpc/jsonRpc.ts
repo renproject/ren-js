@@ -48,7 +48,7 @@ export class HttpProvider<
      * HttpProvider to forward calls to.
      * @param logger Optionally pass a logger object.
      */
-    constructor(
+    public constructor(
         endpointOrProvider: Provider<Requests, Responses> | string,
         logger: Logger = nullLogger,
     ) {

@@ -17,22 +17,26 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface LockGatewayV3Interface extends utils.Interface {
+export interface MintGatewayV3Interface extends utils.Interface {
   functions: {
     "NAME()": FunctionFragment;
     "__GatewayStateManager_init(string,address,address)": FunctionFragment;
-    "__LockGateway_init(string,address,address)": FunctionFragment;
+    "__MintGateway_init(string,address,address)": FunctionFragment;
+    "_burnFromPreviousGateway(string,string,bytes,uint256,address)": FunctionFragment;
+    "_mintFromPreviousGateway(bytes32,uint256,bytes32,bytes,address)": FunctionFragment;
+    "burn(bytes,uint256)": FunctionFragment;
+    "burnWithPayload(string,string,bytes,uint256)": FunctionFragment;
     "getAsset()": FunctionFragment;
     "getEventNonce()": FunctionFragment;
     "getPreviousGateway()": FunctionFragment;
     "getSelectorHash()": FunctionFragment;
     "getSignatureVerifier()": FunctionFragment;
     "getToken()": FunctionFragment;
-    "lock(string,string,bytes,uint256)": FunctionFragment;
+    "mint(bytes32,uint256,bytes32,bytes)": FunctionFragment;
     "owner()": FunctionFragment;
-    "release(bytes32,uint256,bytes32,bytes)": FunctionFragment;
     "status(bytes32)": FunctionFragment;
     "token()": FunctionFragment;
+    "transferTokenOwnership(address)": FunctionFragment;
     "updateAsset(string)": FunctionFragment;
     "updatePreviousGateway(address)": FunctionFragment;
     "updateSignatureVerifier(address)": FunctionFragment;
@@ -45,8 +49,24 @@ export interface LockGatewayV3Interface extends utils.Interface {
     values: [string, string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "__LockGateway_init",
+    functionFragment: "__MintGateway_init",
     values: [string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_burnFromPreviousGateway",
+    values: [string, string, BytesLike, BigNumberish, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_mintFromPreviousGateway",
+    values: [BytesLike, BigNumberish, BytesLike, BytesLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "burn",
+    values: [BytesLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "burnWithPayload",
+    values: [string, string, BytesLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "getAsset", values?: undefined): string;
   encodeFunctionData(
@@ -67,16 +87,16 @@ export interface LockGatewayV3Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "getToken", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "lock",
-    values: [string, string, BytesLike, BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "release",
+    functionFragment: "mint",
     values: [BytesLike, BigNumberish, BytesLike, BytesLike]
   ): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "status", values: [BytesLike]): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "transferTokenOwnership",
+    values: [string]
+  ): string;
   encodeFunctionData(functionFragment: "updateAsset", values: [string]): string;
   encodeFunctionData(
     functionFragment: "updatePreviousGateway",
@@ -94,7 +114,20 @@ export interface LockGatewayV3Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "__LockGateway_init",
+    functionFragment: "__MintGateway_init",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_burnFromPreviousGateway",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_mintFromPreviousGateway",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "burnWithPayload",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getAsset", data: BytesLike): Result;
@@ -115,11 +148,14 @@ export interface LockGatewayV3Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getToken", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "lock", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "release", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "status", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "transferTokenOwnership",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "updateAsset",
     data: BytesLike
@@ -139,21 +175,25 @@ export interface LockGatewayV3Interface extends utils.Interface {
 
   events: {
     "LogAssetUpdated(string,bytes32)": EventFragment;
-    "LogLockToChain(string,string,bytes,uint256,uint256,string,string)": EventFragment;
+    "LogBurn(bytes,uint256,uint256,bytes)": EventFragment;
+    "LogBurnToChain(string,string,bytes,uint256,uint256,string,string)": EventFragment;
+    "LogMint(address,uint256,uint256,bytes32)": EventFragment;
     "LogPreviousGatewayUpdated(address,address)": EventFragment;
-    "LogRelease(address,uint256,bytes32,bytes32)": EventFragment;
     "LogSignatureVerifierUpdated(address,address)": EventFragment;
     "LogTokenUpdated(address)": EventFragment;
+    "TokenOwnershipTransferred(address,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "LogAssetUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogLockToChain"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "LogBurn"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "LogBurnToChain"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "LogMint"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "LogPreviousGatewayUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogRelease"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "LogSignatureVerifierUpdated"
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "LogTokenUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TokenOwnershipTransferred"): EventFragment;
 }
 
 export type LogAssetUpdatedEvent = TypedEvent<
@@ -163,20 +203,34 @@ export type LogAssetUpdatedEvent = TypedEvent<
 
 export type LogAssetUpdatedEventFilter = TypedEventFilter<LogAssetUpdatedEvent>;
 
-export type LogLockToChainEvent = TypedEvent<
+export type LogBurnEvent = TypedEvent<
+  [string, BigNumber, BigNumber, string],
+  { to: string; amount: BigNumber; burnNonce: BigNumber; indexedTo: string }
+>;
+
+export type LogBurnEventFilter = TypedEventFilter<LogBurnEvent>;
+
+export type LogBurnToChainEvent = TypedEvent<
   [string, string, string, BigNumber, BigNumber, string, string],
   {
     recipientAddress: string;
     recipientChain: string;
     recipientPayload: string;
     amount: BigNumber;
-    lockNonce: BigNumber;
+    burnNonce: BigNumber;
     recipientAddressIndexed: string;
     recipientChainIndexed: string;
   }
 >;
 
-export type LogLockToChainEventFilter = TypedEventFilter<LogLockToChainEvent>;
+export type LogBurnToChainEventFilter = TypedEventFilter<LogBurnToChainEvent>;
+
+export type LogMintEvent = TypedEvent<
+  [string, BigNumber, BigNumber, string],
+  { to: string; amount: BigNumber; sigHash: BigNumber; nHash: string }
+>;
+
+export type LogMintEventFilter = TypedEventFilter<LogMintEvent>;
 
 export type LogPreviousGatewayUpdatedEvent = TypedEvent<
   [string, string],
@@ -185,13 +239,6 @@ export type LogPreviousGatewayUpdatedEvent = TypedEvent<
 
 export type LogPreviousGatewayUpdatedEventFilter =
   TypedEventFilter<LogPreviousGatewayUpdatedEvent>;
-
-export type LogReleaseEvent = TypedEvent<
-  [string, BigNumber, string, string],
-  { recipient: string; amount: BigNumber; sigHash: string; nHash: string }
->;
-
-export type LogReleaseEventFilter = TypedEventFilter<LogReleaseEvent>;
 
 export type LogSignatureVerifierUpdatedEvent = TypedEvent<
   [string, string],
@@ -205,12 +252,20 @@ export type LogTokenUpdatedEvent = TypedEvent<[string], { token: string }>;
 
 export type LogTokenUpdatedEventFilter = TypedEventFilter<LogTokenUpdatedEvent>;
 
-export interface LockGatewayV3 extends BaseContract {
+export type TokenOwnershipTransferredEvent = TypedEvent<
+  [string, string],
+  { tokenAddress: string; nextTokenOwner: string }
+>;
+
+export type TokenOwnershipTransferredEventFilter =
+  TypedEventFilter<TokenOwnershipTransferredEvent>;
+
+export interface MintGatewayV3 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: LockGatewayV3Interface;
+  interface: MintGatewayV3Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -241,10 +296,48 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    __LockGateway_init(
+    __MintGateway_init(
       asset_: string,
       signatureVerifier_: string,
       token_: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    _burnFromPreviousGateway(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
+      caller: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    _mintFromPreviousGateway(
+      pHash: BytesLike,
+      amount: BigNumberish,
+      nHash: BytesLike,
+      sig: BytesLike,
+      caller: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    "burn(bytes,uint256)"(
+      recipient: BytesLike,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    "burn(string,uint256)"(
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    burnWithPayload(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -260,17 +353,7 @@ export interface LockGatewayV3 extends BaseContract {
 
     getToken(overrides?: CallOverrides): Promise<[string]>;
 
-    lock(
-      recipientAddress: string,
-      recipientChain: string,
-      recipientPayload: BytesLike,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    release(
+    mint(
       pHash: BytesLike,
       amount: BigNumberish,
       nHash: BytesLike,
@@ -278,9 +361,16 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    owner(overrides?: CallOverrides): Promise<[string]>;
+
     status(hash: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
     token(overrides?: CallOverrides): Promise<[string]>;
+
+    transferTokenOwnership(
+      nextTokenOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     updateAsset(
       nextAsset: string,
@@ -312,10 +402,48 @@ export interface LockGatewayV3 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  __LockGateway_init(
+  __MintGateway_init(
     asset_: string,
     signatureVerifier_: string,
     token_: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  _burnFromPreviousGateway(
+    recipientAddress: string,
+    recipientChain: string,
+    recipientPayload: BytesLike,
+    amount: BigNumberish,
+    caller: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  _mintFromPreviousGateway(
+    pHash: BytesLike,
+    amount: BigNumberish,
+    nHash: BytesLike,
+    sig: BytesLike,
+    caller: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  "burn(bytes,uint256)"(
+    recipient: BytesLike,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  "burn(string,uint256)"(
+    recipient: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  burnWithPayload(
+    recipientAddress: string,
+    recipientChain: string,
+    recipientPayload: BytesLike,
+    amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -331,17 +459,7 @@ export interface LockGatewayV3 extends BaseContract {
 
   getToken(overrides?: CallOverrides): Promise<string>;
 
-  lock(
-    recipientAddress: string,
-    recipientChain: string,
-    recipientPayload: BytesLike,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  release(
+  mint(
     pHash: BytesLike,
     amount: BigNumberish,
     nHash: BytesLike,
@@ -349,9 +467,16 @@ export interface LockGatewayV3 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  owner(overrides?: CallOverrides): Promise<string>;
+
   status(hash: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
   token(overrides?: CallOverrides): Promise<string>;
+
+  transferTokenOwnership(
+    nextTokenOwner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   updateAsset(
     nextAsset: string,
@@ -383,12 +508,50 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    __LockGateway_init(
+    __MintGateway_init(
       asset_: string,
       signatureVerifier_: string,
       token_: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    _burnFromPreviousGateway(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
+      caller: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    _mintFromPreviousGateway(
+      pHash: BytesLike,
+      amount: BigNumberish,
+      nHash: BytesLike,
+      sig: BytesLike,
+      caller: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "burn(bytes,uint256)"(
+      recipient: BytesLike,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "burn(string,uint256)"(
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    burnWithPayload(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getAsset(overrides?: CallOverrides): Promise<string>;
 
@@ -402,17 +565,7 @@ export interface LockGatewayV3 extends BaseContract {
 
     getToken(overrides?: CallOverrides): Promise<string>;
 
-    lock(
-      recipientAddress: string,
-      recipientChain: string,
-      recipientPayload: BytesLike,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    release(
+    mint(
       pHash: BytesLike,
       amount: BigNumberish,
       nHash: BytesLike,
@@ -420,9 +573,16 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    owner(overrides?: CallOverrides): Promise<string>;
+
     status(hash: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     token(overrides?: CallOverrides): Promise<string>;
+
+    transferTokenOwnership(
+      nextTokenOwner: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     updateAsset(nextAsset: string, overrides?: CallOverrides): Promise<void>;
 
@@ -449,24 +609,50 @@ export interface LockGatewayV3 extends BaseContract {
       selectorHash?: BytesLike | null
     ): LogAssetUpdatedEventFilter;
 
-    "LogLockToChain(string,string,bytes,uint256,uint256,string,string)"(
+    "LogBurn(bytes,uint256,uint256,bytes)"(
+      to?: null,
+      amount?: null,
+      burnNonce?: BigNumberish | null,
+      indexedTo?: BytesLike | null
+    ): LogBurnEventFilter;
+    LogBurn(
+      to?: null,
+      amount?: null,
+      burnNonce?: BigNumberish | null,
+      indexedTo?: BytesLike | null
+    ): LogBurnEventFilter;
+
+    "LogBurnToChain(string,string,bytes,uint256,uint256,string,string)"(
       recipientAddress?: null,
       recipientChain?: null,
       recipientPayload?: null,
       amount?: null,
-      lockNonce?: BigNumberish | null,
+      burnNonce?: BigNumberish | null,
       recipientAddressIndexed?: string | null,
       recipientChainIndexed?: string | null
-    ): LogLockToChainEventFilter;
-    LogLockToChain(
+    ): LogBurnToChainEventFilter;
+    LogBurnToChain(
       recipientAddress?: null,
       recipientChain?: null,
       recipientPayload?: null,
       amount?: null,
-      lockNonce?: BigNumberish | null,
+      burnNonce?: BigNumberish | null,
       recipientAddressIndexed?: string | null,
       recipientChainIndexed?: string | null
-    ): LogLockToChainEventFilter;
+    ): LogBurnToChainEventFilter;
+
+    "LogMint(address,uint256,uint256,bytes32)"(
+      to?: string | null,
+      amount?: null,
+      sigHash?: BigNumberish | null,
+      nHash?: BytesLike | null
+    ): LogMintEventFilter;
+    LogMint(
+      to?: string | null,
+      amount?: null,
+      sigHash?: BigNumberish | null,
+      nHash?: BytesLike | null
+    ): LogMintEventFilter;
 
     "LogPreviousGatewayUpdated(address,address)"(
       oldPreviousGateway?: string | null,
@@ -476,19 +662,6 @@ export interface LockGatewayV3 extends BaseContract {
       oldPreviousGateway?: string | null,
       newPreviousGateway?: string | null
     ): LogPreviousGatewayUpdatedEventFilter;
-
-    "LogRelease(address,uint256,bytes32,bytes32)"(
-      recipient?: string | null,
-      amount?: null,
-      sigHash?: BytesLike | null,
-      nHash?: BytesLike | null
-    ): LogReleaseEventFilter;
-    LogRelease(
-      recipient?: string | null,
-      amount?: null,
-      sigHash?: BytesLike | null,
-      nHash?: BytesLike | null
-    ): LogReleaseEventFilter;
 
     "LogSignatureVerifierUpdated(address,address)"(
       oldSignatureVerifier?: string | null,
@@ -503,6 +676,15 @@ export interface LockGatewayV3 extends BaseContract {
       token?: string | null
     ): LogTokenUpdatedEventFilter;
     LogTokenUpdated(token?: string | null): LogTokenUpdatedEventFilter;
+
+    "TokenOwnershipTransferred(address,address)"(
+      tokenAddress?: string | null,
+      nextTokenOwner?: string | null
+    ): TokenOwnershipTransferredEventFilter;
+    TokenOwnershipTransferred(
+      tokenAddress?: string | null,
+      nextTokenOwner?: string | null
+    ): TokenOwnershipTransferredEventFilter;
   };
 
   estimateGas: {
@@ -515,10 +697,48 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    __LockGateway_init(
+    __MintGateway_init(
       asset_: string,
       signatureVerifier_: string,
       token_: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    _burnFromPreviousGateway(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
+      caller: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    _mintFromPreviousGateway(
+      pHash: BytesLike,
+      amount: BigNumberish,
+      nHash: BytesLike,
+      sig: BytesLike,
+      caller: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    "burn(bytes,uint256)"(
+      recipient: BytesLike,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    "burn(string,uint256)"(
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    burnWithPayload(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -534,17 +754,7 @@ export interface LockGatewayV3 extends BaseContract {
 
     getToken(overrides?: CallOverrides): Promise<BigNumber>;
 
-    lock(
-      recipientAddress: string,
-      recipientChain: string,
-      recipientPayload: BytesLike,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    release(
+    mint(
       pHash: BytesLike,
       amount: BigNumberish,
       nHash: BytesLike,
@@ -552,9 +762,16 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    owner(overrides?: CallOverrides): Promise<BigNumber>;
+
     status(hash: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
     token(overrides?: CallOverrides): Promise<BigNumber>;
+
+    transferTokenOwnership(
+      nextTokenOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     updateAsset(
       nextAsset: string,
@@ -587,10 +804,48 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    __LockGateway_init(
+    __MintGateway_init(
       asset_: string,
       signatureVerifier_: string,
       token_: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    _burnFromPreviousGateway(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
+      caller: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    _mintFromPreviousGateway(
+      pHash: BytesLike,
+      amount: BigNumberish,
+      nHash: BytesLike,
+      sig: BytesLike,
+      caller: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "burn(bytes,uint256)"(
+      recipient: BytesLike,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "burn(string,uint256)"(
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    burnWithPayload(
+      recipientAddress: string,
+      recipientChain: string,
+      recipientPayload: BytesLike,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -610,17 +865,7 @@ export interface LockGatewayV3 extends BaseContract {
 
     getToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    lock(
-      recipientAddress: string,
-      recipientChain: string,
-      recipientPayload: BytesLike,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    release(
+    mint(
       pHash: BytesLike,
       amount: BigNumberish,
       nHash: BytesLike,
@@ -628,12 +873,19 @@ export interface LockGatewayV3 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     status(
       hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    transferTokenOwnership(
+      nextTokenOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     updateAsset(
       nextAsset: string,

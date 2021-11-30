@@ -7,7 +7,7 @@ import { FilTransaction } from "./deposit";
 export class Filfox {
     public filfoxApi: string;
 
-    constructor(filfoxApi: string) {
+    public constructor(filfoxApi: string) {
         this.filfoxApi = filfoxApi;
     }
 

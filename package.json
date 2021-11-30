@@ -85,8 +85,5 @@
         "trailingComma": "all",
         "endOfLine": "lf",
         "arrowParens": "always"
-    },
-    "eslintConfig": {
-        "extends": "./.eslintrc.js"
     }
 }

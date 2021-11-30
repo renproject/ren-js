@@ -113,13 +113,13 @@ export class DefaultTxWaiter implements TxWaiter {
         status: [ChainTransactionProgress];
     }>;
 
-    private updateStatus = (status: Partial<ChainTransactionProgress>) => {
+    private updateStatus(status: Partial<ChainTransactionProgress>) {
         this.status = {
             ...this.status,
             ...status,
         };
         this.eventEmitter.emit("status", this.status);
-    };
+    }
 
     /**
      * Requires a submitted chainTransaction, a chain object and the target

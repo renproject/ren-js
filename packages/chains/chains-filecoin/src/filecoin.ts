@@ -160,8 +160,9 @@ export class Filecoin
         }
     }
 
-    public validateAddress = (address: string) =>
-        validateAddressString(address);
+    public validateAddress(address: string): boolean {
+        return validateAddressString(address);
+    }
 
     public validateTransaction = doesntError(
         (tx: ChainTransaction) =>
@@ -169,10 +170,10 @@ export class Filecoin
             tx.txindex === "0",
     );
 
-    public addressExplorerLink = (address: string): string => {
+    public addressExplorerLink(address: string): string {
         // TODO: Check network.
         return `https://filfox.info/en/address/${address}`;
-    };
+    }
 
     public transactionExplorerLink = (
         transaction: ChainTransaction,
@@ -184,7 +185,9 @@ export class Filecoin
     /**
      * See [[LockChain.isLockAsset]].
      */
-    isLockAsset = (asset: string): boolean => asset === this.feeAsset;
+    public isLockAsset(asset: string): boolean {
+        return asset === this.feeAsset;
+    }
 
     private _assertAssetIsSupported(asset: string) {
         if (!this.isLockAsset(asset)) {

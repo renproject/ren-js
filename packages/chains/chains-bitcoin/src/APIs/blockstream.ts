@@ -11,10 +11,11 @@ export class Blockstream implements BitcoinAPI {
         this.apiKey = apiKey;
     }
 
-    getAPIUrl = (path: string) =>
-        `https://blockstream.info/${this.testnet ? "testnet/" : ""}api${path}${
-            this.apiKey ? `?key=${this.apiKey}` : ""
-        }`;
+    public getAPIUrl(path: string): string {
+        return `https://blockstream.info/${
+            this.testnet ? "testnet/" : ""
+        }api${path}${this.apiKey ? `?key=${this.apiKey}` : ""}`;
+    }
 
     fetchHeight = async (): Promise<string> =>
         (

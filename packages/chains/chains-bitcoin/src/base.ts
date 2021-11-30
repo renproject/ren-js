@@ -276,7 +276,7 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    Address = (address: string): { chain: string; address: string } => {
+    public Address(address: string): { chain: string; address: string } {
         // Type validation
         assertType<string>("string", { address });
 
@@ -291,7 +291,7 @@ export abstract class BitcoinBaseChain
             chain: this.chain,
             address,
         };
-    };
+    }
 
     /**
      * When burning, you can call `Bitcoin.Address("...")` to make the address
@@ -299,15 +299,17 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    GatewayAddress = (): { chain: string } => {
+    public GatewayAddress(): { chain: string } {
         return {
             chain: this.chain,
         };
-    };
+    }
 
-    toSats = (value: BigNumber | string | number): string =>
-        new BigNumber(value).shiftedBy(8).decimalPlaces(0).toFixed();
+    public toSats(value: BigNumber | string | number): string {
+        return new BigNumber(value).shiftedBy(8).decimalPlaces(0).toFixed();
+    }
 
-    fromSats = (value: BigNumber | string | number): string =>
-        new BigNumber(value).shiftedBy(-8).toFixed();
+    public fromSats(value: BigNumber | string | number): string {
+        return new BigNumber(value).shiftedBy(-8).toFixed();
+    }
 }

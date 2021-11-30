@@ -98,14 +98,14 @@ export class EVMTxSubmitter implements TxSubmitter {
         ChainTransaction | undefined
     >;
 
-    private updateStatus = (status: Partial<ChainTransactionProgress>) => {
+    private updateStatus(status: Partial<ChainTransactionProgress>) {
         this.status = {
             ...this.status,
             ...status,
         };
         this.eventEmitter.emit("status", this.status);
         return this.status;
-    };
+    }
 
     public constructor({
         network,

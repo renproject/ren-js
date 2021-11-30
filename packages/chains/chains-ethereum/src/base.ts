@@ -129,8 +129,9 @@ export class EthereumBaseChain
 
     public validateAddress = validateAddress;
     public validateTransaction = validateTransaction;
-    public addressExplorerLink = (address: string): string =>
-        this.explorer.address(address);
+    public addressExplorerLink(address: string): string {
+        return this.explorer.address(address);
+    }
 
     public formattedTransactionHash(transaction: {
         txid: string;

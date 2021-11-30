@@ -190,7 +190,7 @@ export class GatewayTransaction<
     }
 
     /** @hidden */
-    public readonly initialize = async (): Promise<this> => {
+    public async initialize(): Promise<this> {
         const { inputType, outputType, selector } =
             await getInputAndOutputTypes({
                 asset: this.params.asset,
@@ -303,7 +303,7 @@ export class GatewayTransaction<
         }
 
         return this;
-    };
+    }
 
     /**
      * `queryTx` fetches the RenVM transaction details of the deposit.

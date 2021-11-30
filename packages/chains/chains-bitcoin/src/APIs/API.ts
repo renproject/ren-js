@@ -70,7 +70,6 @@ export const sortUTXOs = (a: UTXO, b: UTXO): number => {
  *
  * @example
  * fixValue(0.0001, 8) = 10000;
- *
  * @param value Value in the readable representation, e.g. `0.0001` BTC.
  * @param decimals The number of decimals to shift by, e.g. 8.
  */
@@ -176,13 +175,14 @@ export class CombinedAPI implements BitcoinAPI {
             async (api) => notNull(api.fetchTXs)(address, confirmations),
         );
 
-    public broadcastTransaction = async (hex: string): Promise<string> =>
-        this.forEachAPI(
+    public async broadcastTransaction(hex: string): Promise<string> {
+        return this.forEachAPI(
             // Filter APIs with `broadcastTransaction`.
             (api) => api.broadcastTransaction !== undefined,
             // Call `broadcastTransaction` on the API.
             async (api) => notNull(api.broadcastTransaction)(hex),
         );
+    }
 
     private forEachAPI = async <T>(
         filter: (api: BitcoinAPI) => boolean,

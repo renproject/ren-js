@@ -16,15 +16,17 @@ export enum BlockchairNetwork {
 }
 
 export class Blockchair implements BitcoinAPI {
-    network: BlockchairNetwork;
+    public network: BlockchairNetwork;
 
     public constructor(network: BlockchairNetwork = BlockchairNetwork.BITCOIN) {
         this.network = network;
     }
 
-    endpoint = () => `https://api.blockchair.com/${this.network}`;
+    public endpoint(): string {
+        return `https://api.blockchair.com/${this.network}`;
+    }
 
-    fetchHeight = async (): Promise<string> => {
+    public async fetchHeight(): Promise<string> {
         const url = `${this.endpoint()}/stats`;
 
         const response = (
@@ -34,9 +36,9 @@ export class Blockchair implements BitcoinAPI {
         ).data;
 
         return response.data.best_block_height.toString();
-    };
+    }
 
-    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.endpoint()}/dashboards/transaction/${txid}`;
 
         const response = (
@@ -69,9 +71,9 @@ export class Blockchair implements BitcoinAPI {
                     ? tx.transaction.block_id.toString()
                     : null,
         };
-    };
+    }
 
-    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
+    public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=0,100`;
         const response = (
             await axios.get<AddressResponse>(url, { timeout: DEFAULT_TIMEOUT })
@@ -97,9 +99,9 @@ export class Blockchair implements BitcoinAPI {
                         : null,
             }))
             .sort(sortUTXOs);
-    };
+    }
 
-    fetchTXs = async (address: string, limit = 25): Promise<UTXO[]> => {
+    public async fetchTXs(address: string, limit = 25): Promise<UTXO[]> {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=${limit},0`;
         const response = (
             await axios.get<AddressResponse>(url, { timeout: DEFAULT_TIMEOUT })
@@ -157,9 +159,9 @@ export class Blockchair implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    };
+    }
 
-    broadcastTransaction = async (txHex: string): Promise<string> => {
+    public async broadcastTransaction(txHex: string): Promise<string> {
         const url = `${this.endpoint()}/push/transaction`;
         const response = await axios.post<{
             data: { transaction_hash: string };
@@ -170,7 +172,7 @@ export class Blockchair implements BitcoinAPI {
             );
         }
         return response.data.data.transaction_hash;
-    };
+    }
 }
 
 interface BlockchairError {

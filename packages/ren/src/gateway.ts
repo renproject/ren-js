@@ -6,27 +6,20 @@ import {
     Chain,
     ChainTransactionProgress,
     DefaultTxWaiter,
+    ErrorWithCode,
     EventEmitterTyped,
-    extractError,
-    fromBase64,
     generateGHash,
     generatePHash,
     generateSHash,
     InputChainTransaction,
     InputType,
     isContractChain,
-    isDefined,
     isDepositChain,
     OutputType,
-    Ox,
     RenJSError,
-    SECONDS,
-    sleep,
-    toNBytes,
-    toURLBase64,
     TxSubmitter,
     TxWaiter,
-    withCode,
+    utils,
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
@@ -250,7 +243,7 @@ export class Gateway<
             this.outputType === OutputType.Release &&
             !isContractChain(this.fromChain)
         ) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Cannot release from non-contract chain ${this.fromChain.chain}`,
                 ),
@@ -262,7 +255,7 @@ export class Gateway<
             this.outputType === OutputType.Mint &&
             !isContractChain(this.toChain)
         ) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Cannot mint ${asset} to non-contract chain ${this.toChain.chain}`,
                 ),
@@ -273,7 +266,7 @@ export class Gateway<
         const [confirmationTarget, shard, payload] = await Promise.all([
             this.provider.getConfirmationTarget(this.fromChain.chain),
             (async () => {
-                if (isDefined(this.params.shard)) {
+                if (utils.isDefined(this.params.shard)) {
                     return this.params.shard;
                 }
                 if (
@@ -301,7 +294,7 @@ export class Gateway<
 
         this._pHash = generatePHash(payload.payload);
 
-        // const sHash = Ox(generateSHash(this.selector));
+        // const sHash = utils.Ox(generateSHash(this.selector));
 
         const sHash = generateSHash(
             `${this.params.asset}/to${this.params.to.chain}`,
@@ -319,7 +312,7 @@ export class Gateway<
                 }
 
                 if (!this.params.shard) {
-                    throw withCode(
+                    throw ErrorWithCode.from(
                         new Error(`RenVM shard not selected.`),
                         RenJSError.INTERNAL_ERROR,
                     );
@@ -328,8 +321,8 @@ export class Gateway<
                 // Convert nonce to Buffer (using `0` if no nonce is set.)
                 const nonce =
                     typeof this.params.nonce === "string"
-                        ? fromBase64(this.params.nonce)
-                        : toNBytes(this.params.nonce || 0, 32);
+                        ? utils.fromBase64(this.params.nonce)
+                        : utils.toNBytes(this.params.nonce || 0, 32);
 
                 const gHash = generateGHash(
                     this.pHash,
@@ -338,11 +331,11 @@ export class Gateway<
                     nonce,
                 );
                 this._gHash = gHash;
-                const gPubKey = fromBase64(this.params.shard.gPubKey);
-                this.config.logger.debug("gPubKey:", Ox(gPubKey));
+                const gPubKey = utils.fromBase64(this.params.shard.gPubKey);
+                this.config.logger.debug("gPubKey:", utils.Ox(gPubKey));
 
                 if (!gPubKey || gPubKey.length === 0) {
-                    throw withCode(
+                    throw ErrorWithCode.from(
                         new Error("Unable to fetch RenVM shard public key."),
                         RenJSError.NETWORK_ERROR,
                     );
@@ -403,29 +396,29 @@ export class Gateway<
 
         if (isContractChain(this.fromChain)) {
             const processInput = (input: InputChainTransaction) => {
-                const nonce = toURLBase64(
+                const nonce = utils.toURLBase64(
                     // Check if the deposit has an associated nonce. This will
                     // be true for contract-based inputs.
                     input.nonce
-                        ? fromBase64(input.nonce)
+                        ? utils.fromBase64(input.nonce)
                         : // Check if the params have a nonce - this can be
                         // a base64 string or a number. If no nonce is set,
                         // default to `0`.
                         typeof this.params.nonce === "string"
-                        ? fromBase64(this.params.nonce)
-                        : toNBytes(this.params.nonce || 0, 32),
+                        ? utils.fromBase64(this.params.nonce)
+                        : utils.toNBytes(this.params.nonce || 0, 32),
                 );
 
                 const gHash = generateGHash(
                     payload.payload,
                     sHash,
                     payload.toBytes,
-                    fromBase64(nonce),
+                    utils.fromBase64(nonce),
                 );
                 this._gHash = gHash;
 
                 if (!gHash || gHash.length === 0) {
-                    throw withCode(
+                    throw ErrorWithCode.from(
                         new Error(
                             "Invalid gateway hash being passed to gateway address generation.",
                         ),
@@ -434,7 +427,7 @@ export class Gateway<
                 }
 
                 if (!asset || asset.length === 0) {
-                    throw withCode(
+                    throw ErrorWithCode.from(
                         new Error(
                             "Invalid asset being passed to gateway address generation.",
                         ),
@@ -546,18 +539,18 @@ export class Gateway<
 
                 // Determine which nonce to use - converting it to a Buffer
                 // to ensure it's in a standard format before calling
-                // toURLBase64 again.
-                const nonce = toURLBase64(
+                // utils.toURLBase64 again.
+                const nonce = utils.toURLBase64(
                     // Check if the deposit has an associated nonce. This will
                     // be true for contract-based inputs.
                     deposit.nonce
-                        ? fromBase64(deposit.nonce)
+                        ? utils.fromBase64(deposit.nonce)
                         : // Check if the params have a nonce - this can be
                         // a base64 string or a number. If no nonce is set,
                         // default to `0`.
                         typeof this.params.nonce === "string"
-                        ? fromBase64(this.params.nonce)
-                        : toNBytes(this.params.nonce || 0, 32),
+                        ? utils.fromBase64(this.params.nonce)
+                        : utils.toNBytes(this.params.nonce || 0, 32),
                 );
 
                 const params: TransactionParams<ToPayload> = {
@@ -655,12 +648,12 @@ export class Gateway<
                 // If there are no listeners, continue. TODO: Exit loop entirely
                 // until a lister is added again.
                 if (listenerCancelled()) {
-                    await sleep(1 * SECONDS);
+                    await utils.sleep(1 * utils.sleep.SECONDS);
                     continue;
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                this.config.logger.error(extractError(error));
+                this.config.logger.error(utils.extractError(error));
             }
 
             // Change the return type of `this.processDeposit` to `void`.
@@ -687,10 +680,10 @@ export class Gateway<
                 );
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                this.config.logger.error(extractError(error));
+                this.config.logger.error(utils.extractError(error));
             }
 
-            await sleep(this.config.networkDelay);
+            await utils.sleep(this.config.networkDelay);
         }
     }
 }

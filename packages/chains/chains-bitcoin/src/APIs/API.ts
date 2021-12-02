@@ -89,7 +89,7 @@ export const fixUTXO = (tx: UTXO, decimals: number): UTXO => ({
 /**
  * fixUTXOs maps over an array of UTXOs and calls {{fixValue}}.
  */
-export const fixUTXOs = (utxos: UTXO[], decimals: number) =>
+export const fixUTXOs = (utxos: UTXO[], decimals: number): UTXO[] =>
     utxos.map((utxo) => fixUTXO(utxo, decimals));
 
 export interface APIWithPriority {

@@ -9,7 +9,7 @@
 
 import { EventEmitter } from "events";
 
-import { EventEmitterTyped } from "../../interfaces/eventEmitter";
+import { EventEmitterTyped } from "../../types/eventEmitter";
 
 /** PromiEvent implementation, modified from the Web3 PromiEvent. */
 export class Web3PromiEvent<

@@ -55,7 +55,7 @@
         "doc:html-succint": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --out build/docs",
         "doc:html": "typedoc --entryPoints $(ls -p ../*/src/*.ts ../*/src/*/*.ts ../chains/*/src/*.ts ../chains/*/src/*/*.ts | xargs echo | sed 's/ /,/g') --exclude \\*\\*/\\*.spec.ts,\\*.spect.ts --out build/docs --excludeExternals --excludePrivate --excludeProtected --name \"RenJS v2.0.0 Documentation\" --readme ./DOCS.md --theme minimal",
         "doc:json": "typedoc src/ --exclude **/*.spec.ts,*.spect.ts --target ES6 --mode file --json build/docs/typedoc.json",
-        "doc:publish": "gh-pages --repo git@github.com:renproject/ren-js-docs.git -m \"[ci skip] Updates\" -d build/docs",
+        "doc:publish": "gh-pages --repo git@github.com:renproject/ren-js-v3-docs.git -m \"[ci skip] Updates\" -d build/docs",
         "prepare": "yarn build",
         "npmignore": "npmignore -g ../../.gitignore",
         "prepare-release-old": "run-s npmignore build doc:html doc:publish",

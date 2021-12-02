@@ -1,7 +1,7 @@
 import Axios from "axios";
 import BigNumber from "bignumber.js";
 
-import { SECONDS } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 import { TerraAPI, TerraNetworkConfig, TerraTransaction } from "./types";
 
@@ -196,7 +196,7 @@ export class TerraDev implements TerraAPI {
         const url = `${this.apiUrl}/blocks/latest`;
         const response = (
             await Axios.get<{ block: { header: { height: string } } }>(url, {
-                timeout: 60 * SECONDS,
+                timeout: 60 * utils.sleep.SECONDS,
             })
         ).data;
         return new BigNumber(response.block.header.height);
@@ -215,7 +215,7 @@ export class TerraDev implements TerraAPI {
 
         const response = (
             await Axios.get<MessagesResponse>(url, {
-                timeout: 60 * SECONDS,
+                timeout: 60 * utils.sleep.SECONDS,
             })
         ).data;
 
@@ -246,7 +246,7 @@ export class TerraDev implements TerraAPI {
         const url = `${this.apiUrl}/v1/tx/${hash}`;
         const tx = (
             await Axios.get<MessageResponse>(url, {
-                timeout: 60 * SECONDS,
+                timeout: 60 * utils.sleep.SECONDS,
             })
         ).data;
 

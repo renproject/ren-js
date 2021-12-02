@@ -9,7 +9,7 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const avalancheMainnetConfig: EvmNetworkConfig = {
+const avalancheMainnetConfig: EvmNetworkConfig = {
     selector: "Avalanche",
     asset: "AVAX",
 
@@ -26,7 +26,7 @@ export const avalancheMainnetConfig: EvmNetworkConfig = {
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
 };
-export const avalancheTestnetConfig: EvmNetworkConfig = {
+const avalancheTestnetConfig: EvmNetworkConfig = {
     selector: "Avalanche",
     asset: "AVAX",
     isTestnet: true,

@@ -13,18 +13,13 @@ import {
     assertType,
     ChainTransaction,
     DepositChain,
-    doesntError,
-    fromBase64,
+    ErrorWithCode,
     InputChainTransaction,
     OutputType,
     RenJSError,
     RenNetwork,
     RenNetworkString,
-    SECONDS,
-    sleep,
-    toURLBase64,
-    tryNTimes,
-    withCode,
+    utils,
 } from "@renproject/utils";
 
 import { FilTransaction } from "./utils/deposit";
@@ -52,7 +47,7 @@ export interface FilecoinNetworkConfig {
     filfoxAPI?: string;
 }
 
-export const isFilecoinNetworkConfig = (
+const isFilecoinNetworkConfig = (
     renNetwork: unknown,
 ): renNetwork is FilecoinNetworkConfig =>
     !!(renNetwork as FilecoinNetworkConfig).selector &&
@@ -61,7 +56,7 @@ export const isFilecoinNetworkConfig = (
     !!(renNetwork as FilecoinNetworkConfig).addressPrefix &&
     !!(renNetwork as FilecoinNetworkConfig).explorer;
 
-export const FilecoinMainnet: FilecoinNetworkConfig = {
+const FilecoinMainnet: FilecoinNetworkConfig = {
     selector: "Filecoin",
 
     nativeAsset: {
@@ -80,7 +75,7 @@ export const FilecoinMainnet: FilecoinNetworkConfig = {
     filfoxAPI: "https://filfox.info/api/v1/",
 };
 
-export const FilecoinTestnet: FilecoinNetworkConfig = {
+const FilecoinTestnet: FilecoinNetworkConfig = {
     selector: "Filecoin",
 
     nativeAsset: {
@@ -96,17 +91,6 @@ export const FilecoinTestnet: FilecoinNetworkConfig = {
         apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
     },
 };
-
-export type FilecoinNetworkConfigMap = {
-    [network in RenNetwork]?: FilecoinNetworkConfig;
-};
-
-export const FilecoinConfigMap = {
-    [RenNetwork.Mainnet]: FilecoinMainnet,
-    [RenNetwork.Testnet]: FilecoinTestnet,
-    [RenNetwork.Devnet]: FilecoinTestnet,
-};
-
 export interface FilecoinReleasePayload {
     chain: string;
     address: string;
@@ -122,8 +106,12 @@ export class Filecoin
     };
     public assets = Filecoin.assets;
 
-    public static configMap = FilecoinConfigMap;
-    public configMap = FilecoinConfigMap;
+    public static configMap = {
+        [RenNetwork.Mainnet]: FilecoinMainnet,
+        [RenNetwork.Testnet]: FilecoinTestnet,
+        [RenNetwork.Devnet]: FilecoinTestnet,
+    };
+    public configMap = Filecoin.configMap;
 
     public network: FilecoinNetworkConfig;
 
@@ -140,7 +128,7 @@ export class Filecoin
     ) {
         const networkConfig = isFilecoinNetworkConfig(network)
             ? network
-            : FilecoinConfigMap[network];
+            : Filecoin.configMap[network];
         if (!networkConfig) {
             if (typeof network === "string") {
                 throw new Error(`Invalid RenVM network ${network}.`);
@@ -164,9 +152,9 @@ export class Filecoin
         return validateAddressString(address);
     }
 
-    public validateTransaction = doesntError(
+    public validateTransaction = utils.doesntError(
         (tx: ChainTransaction) =>
-            new CID(fromBase64(tx.txid)).bytes.length === 38 &&
+            new CID(utils.fromBase64(tx.txid)).bytes.length === 38 &&
             tx.txindex === "0",
     );
 
@@ -247,7 +235,7 @@ export class Filecoin
                     let page = 0;
 
                     while (true) {
-                        const { deposits, totalCount } = await tryNTimes(
+                        const { deposits, totalCount } = await utils.tryNTimes(
                             async () => {
                                 if (!this.filfox) {
                                     throw new Error(`Filfox not defined.`);
@@ -259,14 +247,14 @@ export class Filecoin
                                 );
                             },
                             5,
-                            5 * SECONDS,
+                            5 * utils.sleep.SECONDS,
                         );
 
                         await Promise.all(
                             (deposits || []).map(async (tx) =>
                                 onInput({
                                     chain: this.chain,
-                                    txid: toURLBase64(
+                                    txid: utils.toURLBase64(
                                         Buffer.from(new CID(tx.cid).bytes),
                                     ),
                                     txidFormatted: tx.cid,
@@ -282,7 +270,7 @@ export class Filecoin
 
                         page += 1;
 
-                        await sleep(10 * SECONDS);
+                        await utils.sleep(10 * utils.sleep.SECONDS);
                     }
                     fetched = true;
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -304,7 +292,7 @@ export class Filecoin
                     (txs || []).map(async (tx) =>
                         onInput({
                             chain: this.chain,
-                            txid: toURLBase64(
+                            txid: utils.toURLBase64(
                                 Buffer.from(new CID(tx.cid).bytes),
                             ),
                             txidFormatted: tx.cid,
@@ -317,7 +305,7 @@ export class Filecoin
 
             progress = height;
 
-            await sleep(15 * SECONDS);
+            await utils.sleep(15 * utils.sleep.SECONDS);
         }
     }
 
@@ -439,7 +427,7 @@ export class Filecoin
         txid: string;
         txindex: string;
     }): string {
-        return new CID(fromBase64(tx.txid)).toString();
+        return new CID(utils.fromBase64(tx.txid)).toString();
     }
 
     public getOutputPayload(
@@ -472,7 +460,7 @@ export class Filecoin
         assertType<string>("string", { address });
 
         if (!this.validateAddress(address)) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(`Invalid ${this.chain} address: ${String(address)}`),
                 RenJSError.PARAMETER_ERROR,
             );

@@ -12,7 +12,7 @@ import {
     StandardBitcoinExplorer,
 } from "./utils/utils";
 
-export const DigiByteMainnet: BitcoinNetworkConfig = {
+const DigiByteMainnet: BitcoinNetworkConfig = {
     label: "DigiByte",
 
     selector: "DigiByte",
@@ -34,7 +34,7 @@ export const DigiByteMainnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "DGB", "mainnet"),
 };
 
-export const DigiByteTestnet: BitcoinNetworkConfig = {
+const DigiByteTestnet: BitcoinNetworkConfig = {
     label: "DigiByte Testnet",
 
     selector: "DigiByte",
@@ -55,16 +55,14 @@ export const DigiByteTestnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "DGB", "testnet"),
 };
 
-export const DigiByteConfigMap: BitcoinNetworkConfigMap = {
-    [RenNetwork.Mainnet]: DigiByteMainnet,
-    [RenNetwork.Testnet]: DigiByteTestnet,
-    [RenNetwork.Devnet]: DigiByteTestnet,
-};
-
 export class DigiByte extends BitcoinBaseChain {
     public static chain = "DigiByte";
-    public static configMap = DigiByteConfigMap;
-    public configMap = DigiByteConfigMap;
+    public static configMap: BitcoinNetworkConfigMap = {
+        [RenNetwork.Mainnet]: DigiByteMainnet,
+        [RenNetwork.Testnet]: DigiByteTestnet,
+        [RenNetwork.Devnet]: DigiByteTestnet,
+    };
+    public configMap = DigiByte.configMap;
 
     public static assets = {
         DGB: "DGB",

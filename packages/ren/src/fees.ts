@@ -1,7 +1,12 @@
 import BigNumber from "bignumber.js";
 
 import { BlockState, RenVMProvider } from "@renproject/provider";
-import { Chain, isDepositChain, RenJSError, withCode } from "@renproject/utils";
+import {
+    Chain,
+    ErrorWithCode,
+    isDepositChain,
+    RenJSError,
+} from "@renproject/utils";
 
 export { Gateway as LockAndMint } from "./gateway";
 
@@ -25,7 +30,7 @@ export const estimateTransactionFee = async (
     const blockState: BlockState = await renVM.queryBlockState(asset, 5);
 
     if (!blockState[asset]) {
-        throw withCode(
+        throw ErrorWithCode.from(
             new Error(`No fee details found for ${asset}`),
             RenJSError.UNKNOWN_ERROR,
         );

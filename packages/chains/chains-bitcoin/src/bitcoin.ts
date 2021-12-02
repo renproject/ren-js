@@ -14,7 +14,7 @@ import {
     StandardBitcoinExplorer,
 } from "./utils/utils";
 
-export const BitcoinMainnet: BitcoinNetworkConfig = {
+const BitcoinMainnet: BitcoinNetworkConfig = {
     label: "Bitcoin",
 
     selector: "Bitcoin",
@@ -36,7 +36,7 @@ export const BitcoinMainnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "BTC", "mainnet"),
 };
 
-export const BitcoinTestnet: BitcoinNetworkConfig = {
+const BitcoinTestnet: BitcoinNetworkConfig = {
     label: "Bitcoin Testnet",
 
     selector: "Bitcoin",
@@ -59,19 +59,17 @@ export const BitcoinTestnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "BTC", "testnet"),
 };
 
-export const BitcoinConfigMap: BitcoinNetworkConfigMap = {
-    [RenNetwork.Mainnet]: BitcoinMainnet,
-    [RenNetwork.Testnet]: BitcoinTestnet,
-    [RenNetwork.Devnet]: BitcoinTestnet,
-};
-
 /**
  * The Bitcoin class adds support for the asset BTC.
  */
 export class Bitcoin extends BitcoinBaseChain {
     public static chain = "Bitcoin";
-    public static configMap = BitcoinConfigMap;
-    public configMap = BitcoinConfigMap;
+    public static configMap: BitcoinNetworkConfigMap = {
+        [RenNetwork.Mainnet]: BitcoinMainnet,
+        [RenNetwork.Testnet]: BitcoinTestnet,
+        [RenNetwork.Devnet]: BitcoinTestnet,
+    };
+    public configMap = Bitcoin.configMap;
 
     public static assets = {
         BTC: "BTC",

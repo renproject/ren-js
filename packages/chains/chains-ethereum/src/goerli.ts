@@ -9,7 +9,7 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const goerliConfig: EvmNetworkConfig = {
+const goerliConfig: EvmNetworkConfig = {
     selector: "Goerli",
     asset: "gETH",
 

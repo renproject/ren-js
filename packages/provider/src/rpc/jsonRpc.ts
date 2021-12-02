@@ -1,13 +1,11 @@
 import axios, { AxiosResponse } from "axios";
 
 import {
-    extractError,
     Logger,
     LogLevel,
     nullLogger,
-    SECONDS,
     SyncOrPromise,
-    tryNTimes,
+    utils,
 } from "@renproject/utils";
 
 const generatePayload = (method: string, params?: unknown) => ({
@@ -69,7 +67,7 @@ export class HttpProvider<
         method: Method,
         request: Requests[Method],
         retry = 2,
-        timeout = 120 * SECONDS,
+        timeout = 120 * utils.sleep.SECONDS,
     ): Promise<Responses[Method]> => {
         const endpoint = this.endpointOrProvider;
         if (typeof endpoint !== "string") {
@@ -89,7 +87,7 @@ export class HttpProvider<
             );
         }
         try {
-            const response = await tryNTimes(
+            const response = await utils.tryNTimes(
                 async () =>
                     axios.post<JSONRPCResponse<Responses[Method]>>(
                         endpoint,
@@ -100,7 +98,7 @@ export class HttpProvider<
                         { timeout },
                     ),
                 retry,
-                1 * SECONDS,
+                1 * utils.sleep.SECONDS,
             );
             if (response.status !== 200) {
                 throw this.responseError(
@@ -128,7 +126,7 @@ export class HttpProvider<
             return response.data.result;
         } catch (error: any) {
             // Re-throw error to avoid internal axios stack-trace.
-            throw new Error(extractError(error));
+            throw new Error(utils.extractError(error));
         }
     };
 

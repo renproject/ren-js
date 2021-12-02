@@ -12,14 +12,11 @@ import {
     eventEmitter,
     EventEmitterTyped,
     generateTransactionHash,
-    newPromiEvent,
     PromiEvent,
-    SECONDS,
-    sleep,
-    toURLBase64,
     TxStatus,
     TxSubmitter,
     TypedPackValue,
+    utils,
 } from "@renproject/utils";
 
 export const RENVM_CHAIN = "RenVM";
@@ -93,7 +90,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         this.eventEmitter = eventEmitter();
         this.signatureCallback = signatureCallback;
 
-        this._hash = toURLBase64(
+        this._hash = utils.toURLBase64(
             generateTransactionHash(this.version, this.selector, this.params),
         );
 
@@ -122,7 +119,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             ];
         }
     > {
-        const promiEvent = newPromiEvent<
+        const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
             },
@@ -186,7 +183,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             ];
         }
     > {
-        const promiEvent = newPromiEvent<
+        const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
             },
@@ -239,7 +236,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                         // TODO: throw unexpected errors
                     }
                 }
-                await sleep(15 * SECONDS);
+                await utils.sleep(15 * utils.sleep.SECONDS);
             }
 
             const maybeCrossChainTx = tx as any as RenVMCrossChainTransaction;
@@ -291,16 +288,16 @@ export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChain
             {
                 t: crossChainParamsType,
                 v: {
-                    txid: toURLBase64(params.txid),
+                    txid: utils.toURLBase64(params.txid),
                     txindex: params.txindex.toFixed(),
                     amount: params.amount.toFixed(),
-                    payload: toURLBase64(params.payload),
-                    phash: toURLBase64(params.phash),
+                    payload: utils.toURLBase64(params.payload),
+                    phash: utils.toURLBase64(params.phash),
                     to: params.to,
-                    nonce: toURLBase64(params.nonce),
-                    nhash: toURLBase64(params.nhash),
-                    gpubkey: toURLBase64(params.gpubkey),
-                    ghash: toURLBase64(params.ghash),
+                    nonce: utils.toURLBase64(params.nonce),
+                    nhash: utils.toURLBase64(params.nhash),
+                    gpubkey: utils.toURLBase64(params.gpubkey),
+                    ghash: utils.toURLBase64(params.ghash),
                 },
             },
             signatureCallback,

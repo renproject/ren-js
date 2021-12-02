@@ -21,7 +21,7 @@ import {
     StandardBitcoinExplorer,
 } from "./utils/utils";
 
-export const BitcoinCashMainnet: BitcoinNetworkConfig = {
+const BitcoinCashMainnet: BitcoinNetworkConfig = {
     label: "Bitcoin Cash",
 
     selector: "BitcoinCash",
@@ -38,7 +38,7 @@ export const BitcoinCashMainnet: BitcoinNetworkConfig = {
     ],
 };
 
-export const BitcoinCashTestnet: BitcoinNetworkConfig = {
+const BitcoinCashTestnet: BitcoinNetworkConfig = {
     label: "Bitcoin Cash Testnet",
 
     selector: "BitcoinCash",
@@ -53,16 +53,14 @@ export const BitcoinCashTestnet: BitcoinNetworkConfig = {
     providers: [new BitcoinDotCom({ testnet: true })],
 };
 
-export const BitcoinCashConfigMap: BitcoinNetworkConfigMap = {
-    [RenNetwork.Mainnet]: BitcoinCashMainnet,
-    [RenNetwork.Testnet]: BitcoinCashTestnet,
-    [RenNetwork.Devnet]: BitcoinCashTestnet,
-};
-
 export class BitcoinCash extends BitcoinBaseChain {
     public static chain = "BitcoinCash";
-    public static configMap = BitcoinCashConfigMap;
-    public configMap = BitcoinCashConfigMap;
+    public static configMap: BitcoinNetworkConfigMap = {
+        [RenNetwork.Mainnet]: BitcoinCashMainnet,
+        [RenNetwork.Testnet]: BitcoinCashTestnet,
+        [RenNetwork.Devnet]: BitcoinCashTestnet,
+    };
+    public configMap = BitcoinCash.configMap;
 
     public static assets = {
         BCH: "BCH",

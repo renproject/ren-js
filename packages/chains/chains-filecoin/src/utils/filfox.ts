@@ -1,6 +1,6 @@
 import Axios from "axios";
 
-import { SECONDS } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 import { FilTransaction } from "./deposit";
 
@@ -11,17 +11,17 @@ export class Filfox {
         this.filfoxApi = filfoxApi;
     }
 
-    fetchDeposits = async (
+    public async fetchDeposits(
         address: string,
         // paramsFilterBase64: string | undefined = undefined,
         page = 0,
         size = 100,
-    ): Promise<{ deposits: FilTransaction[]; totalCount: number }> => {
+    ): Promise<{ deposits: FilTransaction[]; totalCount: number }> {
         const heightURL = `${this.filfoxApi}tipset/recent?count=1`;
 
         const heightResponse = (
             await Axios.get<FilscanHeight | FilscanError>(heightURL, {
-                timeout: 60 * SECONDS,
+                timeout: 60 * utils.sleep.SECONDS,
             })
         ).data;
 
@@ -39,7 +39,7 @@ export class Filfox {
             await Axios.get<FilscanAddressMessages | FilscanError>(
                 messagesURL,
                 {
-                    timeout: 60 * SECONDS,
+                    timeout: 60 * utils.sleep.SECONDS,
                 },
             )
         ).data;
@@ -73,14 +73,14 @@ export class Filfox {
             // ),
             totalCount,
         };
-    };
+    }
 
-    fetchMessage = async (cid: string): Promise<FilTransaction> => {
+    public async fetchMessage(cid: string): Promise<FilTransaction> {
         const messagesURL = `${this.filfoxApi}message/${cid}`;
 
         const message = (
             await Axios.get<FilscanMessage>(messagesURL, {
-                timeout: 60 * SECONDS,
+                timeout: 60 * utils.sleep.SECONDS,
             })
         ).data;
 
@@ -98,7 +98,7 @@ export class Filfox {
             confirmations: message.confirmations,
             nonce: message.nonce,
         };
-    };
+    }
 }
 
 interface FilscanSuccess {

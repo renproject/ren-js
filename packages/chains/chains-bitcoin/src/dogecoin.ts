@@ -10,7 +10,7 @@ import {
 } from "./utils/types";
 import { resolveBitcoinNetworkConfig, SoChainExplorer } from "./utils/utils";
 
-export const DogecoinMainnet: BitcoinNetworkConfig = {
+const DogecoinMainnet: BitcoinNetworkConfig = {
     label: "Dogecoin",
 
     selector: "Dogecoin",
@@ -29,7 +29,7 @@ export const DogecoinMainnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "DOGE", "mainnet"),
 };
 
-export const DogecoinTestnet: BitcoinNetworkConfig = {
+const DogecoinTestnet: BitcoinNetworkConfig = {
     label: "Dogecoin Testnet",
 
     selector: "Dogecoin",
@@ -46,16 +46,14 @@ export const DogecoinTestnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "DOGE", "testnet"),
 };
 
-export const DogecoinConfigMap: BitcoinNetworkConfigMap = {
-    [RenNetwork.Mainnet]: DogecoinMainnet,
-    [RenNetwork.Testnet]: DogecoinTestnet,
-    [RenNetwork.Devnet]: DogecoinTestnet,
-};
-
 export class Dogecoin extends BitcoinBaseChain {
     public static chain = "Dogecoin";
-    public static configMap = DogecoinConfigMap;
-    public configMap = DogecoinConfigMap;
+    public static configMap: BitcoinNetworkConfigMap = {
+        [RenNetwork.Mainnet]: DogecoinMainnet,
+        [RenNetwork.Testnet]: DogecoinTestnet,
+        [RenNetwork.Devnet]: DogecoinTestnet,
+    };
+    public configMap = Dogecoin.configMap;
 
     public static assets = {
         DOGE: "DOGE",

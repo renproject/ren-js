@@ -5,12 +5,11 @@ import {
     EthereumClassConfig,
     EthProvider,
     EvmNetworkConfig,
-    EvmNetworkConfigMap,
     EvmNetworkInput,
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const ethereumMainnet: EvmNetworkConfig = {
+const ethereumMainnet: EvmNetworkConfig = {
     selector: "Ethereum",
     asset: "ETH",
 
@@ -33,7 +32,7 @@ export const ethereumMainnet: EvmNetworkConfig = {
     },
 };
 
-export const ethereumTestnet: EvmNetworkConfig = {
+const ethereumTestnet: EvmNetworkConfig = {
     selector: "Ethereum",
     asset: "ETH",
     isTestnet: true,
@@ -58,7 +57,7 @@ export const ethereumTestnet: EvmNetworkConfig = {
     },
 };
 
-export const ethereumDevnet: EvmNetworkConfig = {
+const ethereumDevnet: EvmNetworkConfig = {
     ...ethereumTestnet,
     addresses: {
         GatewayRegistry: "0x5045E727D9D9AcDe1F6DCae52B078EC30dC95455",
@@ -72,12 +71,14 @@ export const ethereumDevnet: EvmNetworkConfig = {
 export class Ethereum extends EthereumBaseChain {
     public static chain = "Ethereum";
 
-    public static configMap: EvmNetworkConfigMap = {
+    public static configMap: {
+        [network in RenNetwork]?: EvmNetworkConfig;
+    } = {
         [RenNetwork.Mainnet]: ethereumMainnet,
         [RenNetwork.Testnet]: ethereumTestnet,
         [RenNetwork.Devnet]: ethereumDevnet,
     };
-    public configMap: EvmNetworkConfigMap = Ethereum.configMap;
+    public configMap = Ethereum.configMap;
 
     public static assets = {
         ETH: "ETH",
@@ -100,8 +101,9 @@ export class Ethereum extends EthereumBaseChain {
     public assets = Ethereum.assets;
 
     /**
+     * Create a new Ethereum instance.
      *
-     * @param network
+     * @param network A RenVM network of an Ethereum network config
      * @param web3Provider a Web3 or Ethers.js provider.
      * @param config pass optional configurations, e.g. a logger
      */

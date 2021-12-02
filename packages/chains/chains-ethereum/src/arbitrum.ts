@@ -9,7 +9,7 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const arbitrumMainnetConfig: EvmNetworkConfig = {
+const arbitrumMainnetConfig: EvmNetworkConfig = {
     selector: "Arbitrum",
     asset: "ArbETH",
 
@@ -36,7 +36,7 @@ export const arbitrumMainnetConfig: EvmNetworkConfig = {
     },
 };
 
-export const arbitrumTestnetConfig: EvmNetworkConfig = {
+const arbitrumTestnetConfig: EvmNetworkConfig = {
     selector: "Arbitrum",
     asset: "ArbETH",
     isTestnet: true,

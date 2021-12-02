@@ -1,17 +1,15 @@
 import BigNumber from "bignumber.js";
 
-import { toNBytes } from "../common";
-import { fromBase64 } from "../encodings";
+import { fromBase64, toNBytes } from "../../internal/common";
+import { isPackListType, isPackStructType } from "./common";
 import {
-    isPackListType,
-    isPackStructType,
     PackListType,
     PackPrimitive,
     PackStructType,
     PackType,
     PackTypeDefinition,
     TypedPackValue,
-} from "./pack";
+} from "./types";
 
 // === Pack Types ==============================================================
 
@@ -99,8 +97,9 @@ export const marshalUint = (
     }
 };
 
-const marshalU = (bits: number) => (value: BigNumber | string | number) =>
-    marshalUint(value, bits);
+export const marshalU =
+    (bits: number) => (value: BigNumber | string | number) =>
+        marshalUint(value, bits);
 export const marshalU8 = marshalU(8);
 export const marshalU16 = marshalU(16);
 export const marshalU32 = marshalU(32);
@@ -108,7 +107,7 @@ export const marshalU64 = marshalU(64);
 export const marshalU128 = marshalU(128);
 export const marshalU256 = marshalU(256);
 
-const withLength = (value: Buffer) =>
+export const withLength = (value: Buffer) =>
     Buffer.concat([marshalU32(value.length), value]);
 
 /**

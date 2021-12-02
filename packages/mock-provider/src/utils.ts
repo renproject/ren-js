@@ -1,4 +1,4 @@
-import { fromHex } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 /**
  * Generates a random hex string (prefixed with '0x').
@@ -20,7 +20,7 @@ export const randomBytes = (bytes: number): Buffer => {
                     "0".repeat(8 - uint.toString(16).length) +
                     String(uint.toString(16));
             }
-            return fromHex(str);
+            return utils.fromHex(str);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

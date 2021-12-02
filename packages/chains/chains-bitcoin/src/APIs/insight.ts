@@ -2,7 +2,7 @@ import axios from "axios";
 import BigNumber from "bignumber.js";
 import https from "https";
 
-import { isDefined } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 import {
     BitcoinAPI,
@@ -58,9 +58,9 @@ export class Insight implements BitcoinAPI {
                     .map((utxo) => ({
                         txid: utxo.txid,
                         txindex: utxo.vout.toString(),
-                        amount: isDefined(utxo.satoshis)
+                        amount: utils.isDefined(utxo.satoshis)
                             ? utxo.satoshis.toString()
-                            : isDefined(utxo.amount)
+                            : utils.isDefined(utxo.amount)
                             ? fixValue(utxo.amount, 8).toFixed()
                             : undefined,
                         height:
@@ -75,7 +75,7 @@ export class Insight implements BitcoinAPI {
                     // This is due to the Digibyte explorer not returning
                     // amounts correctly when fetching UTXOs.
                     .map((utxo) =>
-                        isDefined(utxo.amount)
+                        utils.isDefined(utxo.amount)
                             ? (utxo as UTXO)
                             : this.fetchUTXO(utxo.txid, utxo.txindex),
                     ),

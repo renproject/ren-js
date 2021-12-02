@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
 import { ecsign, privateToAddress } from "ethereumjs-util";
-import { defaultAbiCoder } from "ethers/lib/utils";
 import { OrderedMap } from "immutable";
 
 import {
@@ -25,20 +24,16 @@ import {
 import {
     Chain,
     decodeRenVMSelector,
-    fromBase64,
-    fromHex,
     generateSHash,
     generateSighash,
     isDepositChain,
-    keccak256,
-    Ox,
+    pack,
     PackPrimitive,
     PackStructType,
     PackTypeDefinition,
-    toURLBase64,
     TxStatus,
     TypedPackValue,
-    unmarshalTypedPackValue,
+    utils,
 } from "@renproject/utils";
 
 import { Provider } from "../../provider/build/main/rpc/jsonRpc";
@@ -87,14 +82,16 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         this.transactions = new Map();
     }
 
-    public mintAuthority = () =>
-        Ox(privateToAddress(this.privateKey).toString("hex"));
+    public mintAuthority(): string {
+        return utils.Ox(privateToAddress(this.privateKey).toString("hex"));
+    }
 
-    public updatePrivateKey = (privateKey?: Buffer) => {
+    public updatePrivateKey(privateKey?: Buffer): this {
         this.privateKey = privateKey || randomBytes(32);
-    };
+        return this;
+    }
 
-    public registerChain = (chain: Chain, assets?: string[]) => {
+    public registerChain(chain: Chain, assets?: string[]): this {
         this.supportedChains = this.supportedChains.set(chain.chain, chain);
         for (const asset of [
             ...Object.values(chain.assets),
@@ -102,13 +99,15 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         ]) {
             this.registerAsset(asset, chain);
         }
-    };
+        return this;
+    }
 
-    public registerAsset = (asset: string, chain: Chain) => {
+    public registerAsset(asset: string, chain: Chain): this {
         this.supportedAssets = this.supportedAssets.set(asset, chain.chain);
-    };
+        return this;
+    }
 
-    async sendMessage<Method extends keyof RPCParams & string>(
+    public async sendMessage<Method extends keyof RPCParams & string>(
         method: Method,
         request: RPCParams[Method],
     ): Promise<RPCResponses[Method]> {
@@ -160,9 +159,9 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
 
         const inputs = request.tx.in.v;
 
-        const pHash = fromBase64(inputs.phash);
-        const nHash = fromBase64(inputs.nhash);
-        const to = fromHex(inputs.to);
+        const pHash = utils.fromBase64(inputs.phash);
+        const nHash = utils.fromBase64(inputs.nhash);
+        const to = utils.fromHex(inputs.to);
 
         const chains = decodeRenVMSelector(selector, assetChainName || "");
         const fromChain = this.supportedChains.get(chains.from);
@@ -182,7 +181,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
             );
         }
 
-        const blockState: BlockState = unmarshalTypedPackValue(
+        const blockState: BlockState = pack.unmarshal.unmarshalTypedPackValue(
             this.handle_queryBlockState({ contract: asset }).state,
         );
         const { gasLimit, gasCap, dustAmount } = blockState[asset];
@@ -235,7 +234,9 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                         request.tx.in.v.to,
                         new BigNumber(amountOut),
                     );
-                    txid = toURLBase64(fromHex(utxo.txid).reverse());
+                    txid = utils.toURLBase64(
+                        utils.fromHex(utxo.txid).reverse(),
+                    );
                     txindex = utxo.txindex;
                 }
             }
@@ -276,7 +277,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
             // Generate signature
             const sigHash = generateSighash(pHash, amountOut, to, sHash, nHash);
             const sig = ecsign(sigHash, this.privateKey);
-            const sigOut = toURLBase64(
+            const sigOut = utils.toURLBase64(
                 Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]),
             );
 
@@ -294,7 +295,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                             hash: request.tx.hash,
                             revert: undefined,
                             sig: sigOut,
-                            sighash: toURLBase64(sigHash),
+                            sighash: utils.toURLBase64(sigHash),
                             txid: "",
                             txindex: "0",
                         },
@@ -538,7 +539,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                 minted: [],
                 shards: [
                     {
-                        pubKey: toURLBase64(key),
+                        pubKey: utils.toURLBase64(key),
                         queue: [],
                         shard: "",
                         state: {

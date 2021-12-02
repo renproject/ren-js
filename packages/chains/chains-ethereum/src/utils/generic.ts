@@ -1,30 +1,12 @@
 import BigNumber from "bignumber.js";
-import {
-    Contract,
-    ContractReceipt,
-    ContractTransaction,
-    PayableOverrides,
-    providers,
-    Signer,
-    utils,
-} from "ethers";
-import { defaultAbiCoder, Result } from "ethers/lib/utils";
+import { ethers } from "ethers";
+import { defaultAbiCoder } from "ethers/lib/utils";
 
-import { Provider, TransactionReceipt } from "@ethersproject/providers";
+import { Provider } from "@ethersproject/providers";
 import {
-    assertType,
     ChainTransaction,
-    EventEmitterTyped,
-    fromHex,
     InputChainTransaction,
-    isDefined,
-    isHex,
-    Logger,
-    Ox,
-    SECONDS,
-    sleep,
-    toNBytes,
-    toURLBase64,
+    utils,
 } from "@renproject/utils";
 
 import {
@@ -54,7 +36,7 @@ export const mapBurnLogToInputChainTransaction = (
         ...txHashToChainTransaction(chain, event.transactionHash),
         amount: amount.toString(),
         toRecipient: to,
-        nonce: toURLBase64(toNBytes(burnNonce.toString(), 32)),
+        nonce: utils.toURLBase64(utils.toNBytes(burnNonce.toString(), 32)),
     };
 };
 
@@ -69,17 +51,17 @@ export const mapLockLogToInputChainTransaction = (
         amount,
         lockNonce,
     ] = event.args;
-    const nonceBuffer = toNBytes(new BigNumber(lockNonce.toString()), 32);
+    const nonceBuffer = utils.toNBytes(new BigNumber(lockNonce.toString()), 32);
     if (nonceBuffer.length !== 32) {
         throw new Error("Invalid nonce length");
     }
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
         amount: amount.toString(),
-        nonce: toURLBase64(nonceBuffer),
+        nonce: utils.toURLBase64(nonceBuffer),
         toRecipient: recipientAddress,
         toChain: recipientChain,
-        toPayload: toURLBase64(fromHex(recipientPayload)),
+        toPayload: utils.toURLBase64(utils.fromHex(recipientPayload)),
     };
 };
 
@@ -150,7 +132,7 @@ export const txHashToChainTransaction = (
 ): ChainTransaction => ({
     chain,
     txidFormatted: txHash,
-    txid: toURLBase64(fromHex(txHash)),
+    txid: utils.toURLBase64(utils.fromHex(txHash)),
     txindex: "0",
 });
 
@@ -171,7 +153,7 @@ export const findMintBySigHash = async (
             provider,
             gatewayAddress,
             logMintABI,
-            [null, null, Ox(nHash)],
+            [null, null, utils.Ox(nHash)],
             blockLimit,
         )
     ).map((event) =>
@@ -187,7 +169,7 @@ export const findMintBySigHash = async (
     if (sigHash) {
         // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
         // the contract
-        const status = await gatewayInstance.status(Ox(sigHash));
+        const status = await gatewayInstance.status(utils.Ox(sigHash));
         if (status) {
             return txHashToChainTransaction(network.selector, "");
         }
@@ -211,7 +193,7 @@ export const findReleaseBySigHash = async (
             provider,
             gatewayAddress,
             logLockABI,
-            [null, null, Ox(nHash)],
+            [null, null, utils.Ox(nHash)],
             blockLimit,
         )
     ).map((event) =>
@@ -226,16 +208,16 @@ export const findReleaseBySigHash = async (
 };
 
 export const filterLogs = <T extends TypedEvent>(
-    logs: providers.Log[],
+    logs: ethers.providers.Log[],
     eventABI: AbiItem,
 ): T[] => {
     if (!logs) {
         throw Error("No events found in transaction");
     }
 
-    const logTopic = Ox(getEventTopic(eventABI));
+    const logTopic = utils.Ox(getEventTopic(eventABI));
 
-    const logDecoder = new utils.Interface([eventABI]);
+    const logDecoder = new ethers.utils.Interface([eventABI]);
 
     return logs
         .filter((event) => event.topics[0] === logTopic)
@@ -269,7 +251,7 @@ const getPastLogs = async <T extends TypedEvent>(
         address: contractAddress,
         fromBlock: fromBlock,
         toBlock: toBlock,
-        topics: [Ox(getEventTopic(eventABI)), ...filter] as string[],
+        topics: [utils.Ox(getEventTopic(eventABI)), ...filter] as string[],
     });
 
     return filterLogs<T>(events, eventABI);
@@ -367,7 +349,7 @@ export const validateAddress = (address: string): boolean => {
         return true;
     }
     try {
-        utils.getAddress(address);
+        ethers.utils.getAddress(address);
         return true;
     } catch (_error) {
         return false;
@@ -376,7 +358,7 @@ export const validateAddress = (address: string): boolean => {
 
 export const validateTransaction = (transaction: ChainTransaction): boolean =>
     transaction !== null &&
-    isHex(transaction.txid, { length: 32, prefix: true });
+    utils.isHex(transaction.txid, { length: 32, prefix: true });
 
 export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
-    fromHex(defaultAbiCoder.encode(types, parameters));
+    utils.fromHex(defaultAbiCoder.encode(types, parameters));

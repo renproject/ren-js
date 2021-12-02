@@ -1,10 +1,10 @@
 import BigNumber from "bignumber.js";
 
 import {
-    fixSignature,
+    normalizeSignature,
+    pack,
     TxStatus,
     TypedPackValue,
-    unmarshalTypedPackValue,
     UrlBase64String,
 } from "@renproject/utils";
 
@@ -62,16 +62,16 @@ export const unmarshalRenVMTransaction = <
     tx: ResponseQueryTx<TypedInput, TypedOutput>["tx"],
 ): RenVMTransaction<Input, Output> => {
     // If the transaction has a signature output, apply standard signature fixes.
-    const out = unmarshalTypedPackValue(tx.out);
+    const out = pack.unmarshal.unmarshalTypedPackValue(tx.out);
     if (out && out.sig && Buffer.isBuffer(out.sig) && out.sig.length > 0) {
-        out.sig = fixSignature(out.sig);
+        out.sig = normalizeSignature(out.sig);
     }
 
     return {
         version: parseInt(tx.version),
         hash: tx.hash,
         selector: tx.selector,
-        in: unmarshalTypedPackValue(tx.in),
+        in: pack.unmarshal.unmarshalTypedPackValue(tx.in),
         out,
     };
 };

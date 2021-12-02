@@ -1,15 +1,14 @@
 import {
     assertType,
+    ErrorWithCode,
     Logger,
-    memoize,
     nullLogger,
+    pack,
     RenJSError,
     RenNetwork,
     RenNetworkString,
     RenVMShard,
-    toURLBase64,
-    unmarshalTypedPackValue,
-    withCode,
+    utils,
 } from "@renproject/utils";
 
 import {
@@ -133,14 +132,14 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
             retry,
         );
 
-    public queryBlockState = memoize(
+    public queryBlockState = utils.memoize(
         async (contract: string, retry?: number): Promise<BlockState> => {
             const { state } = await this.sendMessage<RPCMethod.QueryBlockState>(
                 RPCMethod.QueryBlockState,
                 { contract },
                 retry,
             );
-            return unmarshalTypedPackValue(state);
+            return pack.unmarshal.unmarshalTypedPackValue(state);
         },
     );
 
@@ -172,12 +171,12 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
         const txIn = {
             t: submitGatewayType,
             v: {
-                ghash: toURLBase64(gHash),
-                gpubkey: toURLBase64(gPubKey),
-                nhash: toURLBase64(nHash),
-                nonce: toURLBase64(nonce),
-                payload: toURLBase64(payload),
-                phash: toURLBase64(pHash),
+                ghash: utils.toURLBase64(gHash),
+                gpubkey: utils.toURLBase64(gPubKey),
+                nhash: utils.toURLBase64(nHash),
+                nonce: utils.toURLBase64(nonce),
+                payload: utils.toURLBase64(payload),
+                phash: utils.toURLBase64(pHash),
                 to,
             },
         };
@@ -214,11 +213,14 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
             );
         } catch (error: any) {
             if (error.message.match(/^invalid params: /)) {
-                throw withCode(error, RenJSError.PARAMETER_ERROR);
+                throw ErrorWithCode.from(error, RenJSError.PARAMETER_ERROR);
             } else if (error.message.match(/not found$/)) {
-                throw withCode(error, RenJSError.TRANSACTION_NOT_FOUND);
+                throw ErrorWithCode.from(
+                    error,
+                    RenJSError.TRANSACTION_NOT_FOUND,
+                );
             } else {
-                throw withCode(error, RenJSError.UNKNOWN_ERROR);
+                throw ErrorWithCode.from(error, RenJSError.UNKNOWN_ERROR);
             }
         }
 
@@ -228,7 +230,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
                 txStatus: response.txStatus,
             } as T;
         } catch (error: any) {
-            throw withCode(error, RenJSError.INTERNAL_ERROR);
+            throw ErrorWithCode.from(error, RenJSError.INTERNAL_ERROR);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
@@ -246,7 +248,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
             // Call the ren_queryBlockState RPC.
             blockState = await this.queryBlockState(asset, 5);
         } catch (error: any) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Error fetching RenVM shards: ${String(error.message)}`,
                 ),
@@ -267,7 +269,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
         assertType<Buffer>("Buffer", { pubKey });
 
         return {
-            gPubKey: toURLBase64(pubKey),
+            gPubKey: utils.toURLBase64(pubKey),
         };
     };
 

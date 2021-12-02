@@ -5,16 +5,11 @@ import {
     assertType,
     ChainTransaction,
     DepositChain,
-    fromBase64,
-    fromHex,
+    ErrorWithCode,
     InputChainTransaction,
     OutputType,
     RenJSError,
-    SECONDS,
-    sleep,
-    toURLBase64,
-    tryNTimes,
-    withCode,
+    utils,
 } from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
@@ -133,12 +128,12 @@ export abstract class BitcoinBaseChain
         txid: string;
         txindex: string;
     }): string {
-        return fromBase64(transaction.txid).reverse().toString("hex");
+        return utils.fromBase64(transaction.txid).reverse().toString("hex");
     }
 
     public validateTransaction(transaction: ChainTransaction): boolean {
         return (
-            fromBase64(transaction.txid).length === 32 &&
+            utils.fromBase64(transaction.txid).length === 32 &&
             !new BigNumber(transaction.txindex).isNaN()
         );
     }
@@ -150,7 +145,7 @@ export abstract class BitcoinBaseChain
         return asset === this.network.nativeAsset.symbol;
     }
 
-    public isDepositAsset(asset: string) {
+    public isDepositAsset(asset: string): boolean {
         this._assertAssetIsSupported(asset);
         return true;
     }
@@ -185,14 +180,14 @@ export abstract class BitcoinBaseChain
         }
 
         try {
-            const txs = await tryNTimes(
+            const txs = await utils.tryNTimes(
                 async () => this.api.fetchTXs(address),
                 2,
             );
-            txs.map(async (tx) =>
+            txs.map((tx) =>
                 onInput({
                     chain: this.chain,
-                    txid: toURLBase64(fromHex(tx.txid).reverse()),
+                    txid: utils.toURLBase64(utils.fromHex(tx.txid).reverse()),
                     txidFormatted: tx.txid,
                     txindex: tx.txindex,
                     amount: tx.amount,
@@ -209,10 +204,12 @@ export abstract class BitcoinBaseChain
             }
             try {
                 const utxos = await this.api.fetchUTXOs(address);
-                utxos.map(async (tx) =>
+                utxos.map((tx) =>
                     onInput({
                         chain: this.chain,
-                        txid: toURLBase64(fromHex(tx.txid).reverse()),
+                        txid: utils.toURLBase64(
+                            utils.fromHex(tx.txid).reverse(),
+                        ),
                         txidFormatted: tx.txid,
                         txindex: tx.txindex,
                         amount: tx.amount,
@@ -222,7 +219,7 @@ export abstract class BitcoinBaseChain
             } catch (error: any) {
                 console.error(error);
             }
-            await sleep(15 * SECONDS);
+            await utils.sleep(15 * utils.sleep.SECONDS);
         }
     }
 
@@ -247,12 +244,12 @@ export abstract class BitcoinBaseChain
     /**
      * See [[LockChain.getGatewayAddress]].
      */
-    createGatewayAddress = (
+    public createGatewayAddress(
         asset: string,
         fromPayload: { chain: string },
         shardPublicKey: Buffer,
         gHash: Buffer,
-    ): Promise<string> | string => {
+    ): Promise<string> | string {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -266,7 +263,7 @@ export abstract class BitcoinBaseChain
                 this.network.p2shPrefix,
             ),
         );
-    };
+    }
 
     // Methods for initializing mints and burns ////////////////////////////////
 
@@ -281,7 +278,7 @@ export abstract class BitcoinBaseChain
         assertType<string>("string", { address });
 
         if (!this.validateAddress(address)) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(`Invalid ${this.chain} address: ${String(address)}`),
                 RenJSError.PARAMETER_ERROR,
             );

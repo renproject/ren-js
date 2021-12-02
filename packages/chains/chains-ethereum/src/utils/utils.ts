@@ -1,11 +1,11 @@
 import { RenNetwork } from "@renproject/utils";
 
-import {
-    EvmNetworkConfig,
-    EvmNetworkConfigMap,
-    EvmNetworkInput,
-    isEvmNetworkConfig,
-} from "./types";
+import { EvmNetworkConfig, EvmNetworkInput } from "./types";
+
+export const isEvmNetworkConfig = (
+    renNetwork: EvmNetworkInput,
+): renNetwork is EvmNetworkConfig =>
+    !!(renNetwork as EvmNetworkConfig).addresses;
 
 export interface EvmExplorer {
     url: string;
@@ -28,7 +28,9 @@ export const StandardEvmExplorer = (baseUrl: string): EvmExplorer => ({
 });
 
 export const resolveEvmNetworkConfig = (
-    configMap: EvmNetworkConfigMap,
+    configMap: {
+        [network in RenNetwork]?: EvmNetworkConfig;
+    },
     renNetwork: EvmNetworkInput,
 ): EvmNetworkConfig => {
     if (!renNetwork) {

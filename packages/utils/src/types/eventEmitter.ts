@@ -2,6 +2,8 @@
 
 import { EventEmitter } from "events";
 
+import { Web3PromiEvent } from "../libraries/promiEvent";
+
 /** Interface for EventEmitter with well-typed events. */
 export class EventEmitterTyped<
     EventTypes extends { [event: string]: any[] } = {},
@@ -33,3 +35,10 @@ export const eventEmitter = <
     EventTypes extends { [event: string]: any[] } = {},
 >(): EventEmitterTyped<EventTypes> =>
     new EventEmitter() as unknown as EventEmitterTyped<EventTypes>;
+
+// Tell Typescript that Web3PromiEvent<T> implements Promise<T>.
+export type PromiEvent<
+    T,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    EventTypes extends { [event: string]: any[] } = {},
+> = Web3PromiEvent<T, EventTypes> & Promise<T>;

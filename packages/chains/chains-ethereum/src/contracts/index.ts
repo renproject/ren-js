@@ -1,7 +1,7 @@
 import { Contract, Signer } from "ethers";
 
 import { Provider } from "@ethersproject/providers";
-import { keccak256 } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 import { AbiItem } from "../utils/abi";
 import BasicBridgeJSON from "./ABIs/BasicBridge.json";
@@ -14,7 +14,6 @@ import { ERC20 } from "./typechain/ERC20";
 import { GatewayRegistryV2 } from "./typechain/GatewayRegistryV2";
 import { LockGatewayV3 } from "./typechain/LockGatewayV3";
 import { MintGatewayV3 } from "./typechain/MintGatewayV3";
-import { TransferWithLog } from "./typechain/TransferWithLog";
 
 export const BasicBridgeABI = BasicBridgeJSON as AbiItem[];
 export const ERC20ABI = ERC20JSON as AbiItem[];
@@ -23,7 +22,7 @@ export const LockGatewayABI = LockGatewayJSON as AbiItem[];
 export const MintGatewayABI = MintGatewayJSON as AbiItem[];
 export const TransferWithLogABI = TransferWithLogJSON as AbiItem[];
 
-export const findABIMethod = (abi: AbiItem[], name: string) => {
+export const findABIMethod = (abi: AbiItem[], name: string): AbiItem => {
     const first = abi.filter((item) => item.name === name)[0];
     if (!first) {
         throw new Error(`No ABI entry found for "${name}".`);
@@ -31,13 +30,13 @@ export const findABIMethod = (abi: AbiItem[], name: string) => {
     return first;
 };
 
-export const getEventTopic = (abiItem: AbiItem) => {
+export const getEventTopic = (abiItem: AbiItem): Buffer => {
     const parameters =
         abiItem.inputs && abiItem.inputs.length > 0
             ? abiItem.inputs.map((input) => input.type).join(",")
             : "";
     const eventSignature = `${abiItem.name}(${parameters})`;
-    return keccak256(Buffer.from(eventSignature));
+    return utils.keccak256(Buffer.from(eventSignature));
 };
 
 export const getMintGatewayInstance = (

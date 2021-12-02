@@ -130,6 +130,7 @@ module.exports = {
         "jsdoc/require-param-type": 0,
         "jsdoc/require-property-type": 0,
         "jsdoc/require-returns-type": 0,
+        "jsdoc/tag-lines": 0,
         "jsdoc/require-jsdoc": [
             "off",
             {

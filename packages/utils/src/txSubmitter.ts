@@ -1,7 +1,10 @@
-import { isDefined, SECONDS, sleep } from "./common";
-import { Chain, ChainTransaction } from "./interfaces/chain";
-import { eventEmitter, EventEmitterTyped } from "./interfaces/eventEmitter";
-import { newPromiEvent, PromiEvent } from "./promiEvent";
+import { isDefined, newPromiEvent, sleep } from "./internal/common";
+import { Chain, ChainTransaction } from "./types/chain";
+import {
+    eventEmitter,
+    EventEmitterTyped,
+    PromiEvent,
+} from "./types/eventEmitter";
 
 export enum ChainTransactionStatus {
     Ready = "ready",
@@ -204,7 +207,7 @@ export class DefaultTxWaiter implements TxWaiter {
                         });
                     }
                 }
-                await sleep(15 * SECONDS);
+                await sleep(15 * sleep.SECONDS);
             }
 
             return this.status;

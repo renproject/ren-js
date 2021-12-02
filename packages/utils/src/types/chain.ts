@@ -41,19 +41,23 @@ export interface InputChainTransaction extends ChainTransaction {
 /**
  * # Adding chains #
  *
- * Once a chain has been added to the [multichain repo](https://github.com/renproject/multichain) and accepted by the
- * darknodes, a handler can be written for RenJS.
+ * Once a chain has been added to the
+ * [multichain repo](https://github.com/renproject/multichain)
+ * and accepted by the darknodes, a handler can be written for RenJS.
  *
- * The expected interface can be found in `../interfaces/src/chain.ts`. There are two types of chains - lock chains and
- * mint chains, each requiring a different handler interface. Lock chain handlers are for chains where funds are locked
- * up under RenVM's control - e.g. Bitcoin or Zcash. A mint chain handler is for the chain where the wrapped tokens are
- * created - e.g. Ethereum.
+ * There are two categories of chains - deposit chains and contract chains, each
+ * required to implement a different set of functions. A chain may implement
+ * both sets of functions. Deposit chains are lock-chains where funds are locked
+ * by sending them to a gateway address, while contract chains are either
+ * lock-chains where funds are locked through a function call, or mint-chains
+ * capable of hosting assets from other chains.
  *
- * If a chain is a fork of another supported chain, it's recommended that the handler extends the forked chain's
- * handler.
+ * If a chain is a fork of another supported chain, it can extend/inherit from
+ * the original chain's class to simplify adding support. This is currently done
+ * for Bitcoin-based chains and for EVM-based chains.
  *
- * If a chain has multiple assets (e.g. ETH and ERC20s), it's recommended that a single handler is written that supports
- * all the relevant assets.
+ * If a chain has multiple assets (e.g. ETH and ERC20s), it's recommended that
+ * a single handler is written that supports all the relevant assets.
  *
  * NOTE: The following interfaces are not final and are subject to change
  * across patch and minor versions.

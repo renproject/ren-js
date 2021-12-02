@@ -1,4 +1,4 @@
-import { isDefined, SECONDS, tryNTimes } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 import { GatewayTransaction, TransactionStatus } from "./gatewayTransaction";
 
@@ -17,11 +17,11 @@ const createDepositHandler = (retries = -1) => {
                 // The deposit has been seen, but not enough confirmations have
                 // passed yet.
                 case TransactionStatus.Detected:
-                    await tryNTimes(
+                    await utils.tryNTimes(
                         async () => {
                             tx._config.logger.debug(`Calling .confirmed`);
                             tx.in.eventEmitter.on("status", (status) => {
-                                if (isDefined(status.confirmations)) {
+                                if (utils.isDefined(status.confirmations)) {
                                     tx._config.logger.debug(
                                         `${status.confirmations}/${status.target} confirmations`,
                                     );
@@ -34,7 +34,7 @@ const createDepositHandler = (retries = -1) => {
                             await tx.in.wait();
                         },
                         retries,
-                        10 * SECONDS,
+                        10 * utils.sleep.SECONDS,
                         tx._config.logger,
                     );
                     break;
@@ -42,7 +42,7 @@ const createDepositHandler = (retries = -1) => {
                 // The deposit as been seen and confirmed, but it hasn't been
                 // signed by RenVM yet.
                 case TransactionStatus.Confirmed:
-                    await tryNTimes(
+                    await utils.tryNTimes(
                         async () => {
                             try {
                                 tx._config.logger.debug(`Calling .signed`);
@@ -64,7 +64,7 @@ const createDepositHandler = (retries = -1) => {
                             }
                         },
                         retries,
-                        10 * SECONDS,
+                        10 * utils.sleep.SECONDS,
                         tx._config.logger,
                     );
                     break;
@@ -72,7 +72,7 @@ const createDepositHandler = (retries = -1) => {
                 // The mint has been signed by RenVM and can be submitted to
                 // the mint-chain.
                 case TransactionStatus.Signed:
-                    await tryNTimes(
+                    await utils.tryNTimes(
                         async () => {
                             try {
                                 tx._config.logger.debug(`Calling .mint`);
@@ -107,7 +107,7 @@ const createDepositHandler = (retries = -1) => {
                             }
                         },
                         retries,
-                        10 * SECONDS,
+                        10 * utils.sleep.SECONDS,
                         tx._config.logger,
                     );
                     break;

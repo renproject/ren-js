@@ -1,30 +1,9 @@
 import BigNumber from "bignumber.js";
-import createHash from "create-hash";
-import { keccak256 as jsKeccak256 } from "js-sha3";
 
-import { assertType } from "./assert";
-import { padBuffer, toNBytes } from "./common";
-import { marshalString, marshalTypedPackValue } from "./pack/marshal";
-import { TypedPackValue } from "./pack/pack";
-
-/**
- * Return the keccak256 hash of an array of buffers. The inputs are concatenated
- * before being hashed.
- */
-export const keccak256 = (...msg: Buffer[]): Buffer => {
-    assertType<Buffer[]>("Buffer[]", { msg });
-
-    return Buffer.from(
-        (jsKeccak256 as unknown as { buffer: typeof jsKeccak256 }).buffer(
-            Buffer.concat(msg),
-        ),
-    );
-};
-
-export const sha256 = (...msg: Buffer[]): Buffer => {
-    assertType<Buffer[]>("Buffer[]", { msg });
-    return createHash("sha256").update(Buffer.concat(msg)).digest();
-};
+import { assertType } from "./internal/assert";
+import { padBuffer, toNBytes } from "./internal/common";
+import { keccak256, sha256 } from "./internal/hashes";
+import { pack, TypedPackValue } from "./libraries/pack";
 
 /**
  * Creating a RenVM transaction involves calculating several hashes, used to
@@ -109,7 +88,8 @@ export const generateNHash = (
 };
 
 /**
- * Calculate the RenVM sigHash (signature hash).
+ * Calculate the RenVM sigHash (signature hash). This is the value signed by
+ * RenVM for mints and releases.
  */
 export const generateSighash = (
     pHash: Buffer,
@@ -152,6 +132,9 @@ export const generateSighash = (
 
 /**
  * Calculate the hash of a RenVM transaction.
+ *
+ * @returns A buffer of the hash. It should be converted to url-base64 before
+ * being shown to users.
  */
 export const generateTransactionHash = (
     version: string,
@@ -160,8 +143,8 @@ export const generateTransactionHash = (
 ): Buffer => {
     assertType<string>("string", { version, selector });
     return sha256(
-        marshalString(version),
-        marshalString(selector),
-        marshalTypedPackValue(packValue),
+        pack.marshal.marshalString(version),
+        pack.marshal.marshalString(selector),
+        pack.marshal.marshalTypedPackValue(packValue),
     );
 };

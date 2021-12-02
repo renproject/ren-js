@@ -9,13 +9,12 @@ import {
     ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
+    ErrorWithCode,
     eventEmitter,
     EventEmitterTyped,
-    isDefined,
-    isErrorWithCode,
-    newPromiEvent,
     PromiEvent,
     TxSubmitter,
+    utils,
 } from "@renproject/utils";
 
 import { AbiItem } from "./abi";
@@ -37,10 +36,10 @@ export const fixEvmTransactionConfig = (
             ...result,
             ...txConfig,
         };
-        if (isDefined(result.value)) {
+        if (utils.isDefined(result.value)) {
             result.value = result.value.toString();
         }
-        if (isDefined(result.gasPrice)) {
+        if (utils.isDefined(result.gasPrice)) {
             result.gasPrice = result.gasPrice.toString();
         }
     }
@@ -150,6 +149,7 @@ export class EVMTxSubmitter implements TxSubmitter {
 
     public submit(
         options: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             overrides?: any[];
             txConfig?: PayableOverrides;
         } = {},
@@ -159,7 +159,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             status: [ChainTransactionProgress];
         }
     > {
-        const promiEvent = newPromiEvent<
+        const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
                 status: [ChainTransactionProgress];
@@ -216,7 +216,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             status: [ChainTransactionProgress];
         }
     > {
-        const promiEvent = newPromiEvent<
+        const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
                 status: [ChainTransactionProgress];
@@ -228,7 +228,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                 throw new Error(`Must call ".submit" first.`);
             }
 
-            target = isDefined(target) ? target : this.target;
+            target = utils.isDefined(target) ? target : this.target;
 
             // Wait for each confirmation until the target is reached.
             while (
@@ -263,7 +263,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                         });
                     }
                 } catch (error) {
-                    if (isErrorWithCode(error)) {
+                    if (ErrorWithCode.isErrorWithCode(error)) {
                         if (error.code === Logger.errors.TRANSACTION_REPLACED) {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion,@typescript-eslint/no-explicit-any
                             const replacement = (error as any)

@@ -9,7 +9,7 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const bscMainnetConfig: EvmNetworkConfig = {
+const bscMainnetConfig: EvmNetworkConfig = {
     selector: "BinanceSmartChain",
     asset: "BNB",
 
@@ -46,7 +46,7 @@ export const bscMainnetConfig: EvmNetworkConfig = {
     },
 };
 
-export const bscTestnetConfig: EvmNetworkConfig = {
+const bscTestnetConfig: EvmNetworkConfig = {
     selector: "BinanceSmartChain",
     asset: "BNB",
     isTestnet: true,
@@ -77,7 +77,7 @@ export const bscTestnetConfig: EvmNetworkConfig = {
     },
 };
 
-export const bscDevnetConfig: EvmNetworkConfig = {
+const bscDevnetConfig: EvmNetworkConfig = {
     ...bscTestnetConfig,
     addresses: {
         GatewayRegistry: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",

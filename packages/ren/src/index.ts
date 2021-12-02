@@ -1,12 +1,12 @@
 import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
+    ErrorWithCode,
     isContractChain,
     RenJSError,
     RenNetwork,
     RenNetworkString,
     RenVMShard,
-    withCode,
 } from "@renproject/utils";
 
 import { RenJSConfig } from "./config";
@@ -121,7 +121,7 @@ export class RenJS {
 
     public getChain = (name: string): Chain => {
         if (!this.chains[name]) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Chain ${name} not found. (Must call 'renJS.withChains(${name.toLowerCase()})')`,
                 ),
@@ -154,7 +154,7 @@ export class RenJS {
                     (await fromChain.isMintAsset(asset)))
             )
         ) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(`Asset not supported by chain ${fromChain.chain}.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -165,7 +165,7 @@ export class RenJS {
                 (isContractChain(toChain) && (await toChain.isMintAsset(asset)))
             )
         ) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(`Asset not supported by chain ${toChain.chain}.`),
                 RenJSError.PARAMETER_ERROR,
             );

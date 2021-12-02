@@ -9,7 +9,7 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const polygonMainnetConfig: EvmNetworkConfig = {
+const polygonMainnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
     asset: "MATIC",
 
@@ -34,7 +34,7 @@ export const polygonMainnetConfig: EvmNetworkConfig = {
     },
 };
 
-export const polygonTestnetConfig: EvmNetworkConfig = {
+const polygonTestnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
     asset: "MATIC",
     isTestnet: true,

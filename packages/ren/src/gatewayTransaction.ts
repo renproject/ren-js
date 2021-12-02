@@ -10,7 +10,6 @@ import {
     ChainTransaction,
     ChainTransactionProgress,
     DefaultTxWaiter,
-    fromBase64,
     generateGHash,
     generateNHash,
     generatePHash,
@@ -18,17 +17,13 @@ import {
     InputChainTransaction,
     InputType,
     isContractChain,
-    isDefined,
     isDepositChain,
-    keccak256,
     OutputType,
     RenVMShard,
-    sleep,
-    toNBytes,
-    toURLBase64,
     TxStatus,
     TxSubmitter,
     TxWaiter,
+    utils,
 } from "@renproject/utils";
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
@@ -166,12 +161,12 @@ export class GatewayTransaction<
         // called immediately after the constructor.
         this.hash = "";
 
-        const nonce = isDefined(params.nonce)
-            ? fromBase64(params.nonce)
-            : toNBytes(0, 32);
+        const nonce = utils.isDefined(params.nonce)
+            ? utils.fromBase64(params.nonce)
+            : utils.toNBytes(0, 32);
         this.nHash = generateNHash(
             nonce,
-            fromBase64(params.fromTx.txid),
+            utils.fromBase64(params.fromTx.txid),
             params.fromTx.txindex,
         );
 
@@ -218,8 +213,8 @@ export class GatewayTransaction<
         const nonceBuffer = nonce
             ? Buffer.isBuffer(nonce)
                 ? nonce
-                : fromBase64(nonce)
-            : toNBytes(0, 32);
+                : utils.fromBase64(nonce)
+            : utils.toNBytes(0, 32);
 
         this.gHash = generateGHash(
             this.pHash,
@@ -229,7 +224,7 @@ export class GatewayTransaction<
         );
 
         const gPubKey = this.params.shard
-            ? fromBase64(this.params.shard.gPubKey)
+            ? utils.fromBase64(this.params.shard.gPubKey)
             : Buffer.from([]);
 
         if (!this.in) {
@@ -246,7 +241,7 @@ export class GatewayTransaction<
             this.provider,
             this.selector,
             {
-                txid: fromBase64(this.params.fromTx.txid), // Buffer;
+                txid: utils.fromBase64(this.params.fromTx.txid), // Buffer;
                 txindex: new BigNumber(this.params.fromTx.txindex), // BigNumber;
                 amount: new BigNumber(this.params.fromTx.amount), // BigNumber;
                 payload: payload.payload, // Buffer;
@@ -285,7 +280,7 @@ export class GatewayTransaction<
                             ? this.queryTxResult.tx.out.amount
                             : undefined,
                     nHash: this.nHash,
-                    sHash: keccak256(Buffer.from(this.selector)),
+                    sHash: utils.keccak256(Buffer.from(this.selector)),
                     pHash: this.pHash,
                     sigHash:
                         this.queryTxResult && this.queryTxResult.tx.out
@@ -400,7 +395,7 @@ export class GatewayTransaction<
 
             try {
                 if (
-                    isDefined(this.in.status.confirmations) &&
+                    utils.isDefined(this.in.status.confirmations) &&
                     this.in.status.confirmations >= this.in.status.target
                 ) {
                     return TransactionStatus.Confirmed;
@@ -420,7 +415,7 @@ export class GatewayTransaction<
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any) {
                     this._config.logger.error(error);
-                    await sleep(this._config.networkDelay);
+                    await utils.sleep(this._config.networkDelay);
                 }
             }
         } else {
@@ -444,7 +439,7 @@ export class GatewayTransaction<
 
         if (tx.out && tx.out.txid && tx.out.txid.length > 0) {
             // The transaction has already been submitted by RenVM.
-            const txid = toURLBase64(tx.out.txid);
+            const txid = utils.toURLBase64(tx.out.txid);
             const txindex = tx.out.txindex.toFixed();
             (this.out as DefaultTxWaiter).setTransaction({
                 chain: this.toChain.chain,

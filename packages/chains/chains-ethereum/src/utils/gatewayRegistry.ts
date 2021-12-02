@@ -1,9 +1,7 @@
-import { Contract } from "ethers";
-
 import { Provider } from "@ethersproject/providers";
-import { ErrorWithCode, Ox } from "@renproject/utils";
+import { ErrorWithCode, utils } from "@renproject/utils";
 
-import { GatewayRegistryABI, getGatewayRegistryInstance } from "../contracts";
+import { getGatewayRegistryInstance } from "../contracts";
 import { ETHEREUM_ERROR } from "./errors";
 import { EvmNetworkConfig } from "./types";
 
@@ -40,7 +38,7 @@ const createGatewayRegistryFetcher =
                 provider,
                 network.addresses.GatewayRegistry,
             );
-            const registryAddress: string = Ox(
+            const registryAddress: string = utils.Ox(
                 await registry[gatewayRegistryMethods[lookup]](asset),
             );
             if (!registryAddress || registryAddress === EMPTY_ADDRESS) {

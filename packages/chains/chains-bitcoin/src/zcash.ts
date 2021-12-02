@@ -12,7 +12,7 @@ import {
 } from "./utils/types";
 import { resolveBitcoinNetworkConfig, SoChainExplorer } from "./utils/utils";
 
-export const ZcashMainnet: BitcoinNetworkConfig = {
+const ZcashMainnet: BitcoinNetworkConfig = {
     label: "Zcash",
 
     selector: "Zcash",
@@ -34,7 +34,7 @@ export const ZcashMainnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "ZEC", "mainnet"),
 };
 
-export const ZcashTestnet: BitcoinNetworkConfig = {
+const ZcashTestnet: BitcoinNetworkConfig = {
     label: "Zcash Testnet",
 
     selector: "Zcash",
@@ -56,16 +56,14 @@ export const ZcashTestnet: BitcoinNetworkConfig = {
     //     validateAddress(address, "ZEC", "testnet"),
 };
 
-export const ZcashConfigMap: BitcoinNetworkConfigMap = {
-    [RenNetwork.Mainnet]: ZcashMainnet,
-    [RenNetwork.Testnet]: ZcashTestnet,
-    [RenNetwork.Devnet]: ZcashTestnet,
-};
-
 export class Zcash extends BitcoinBaseChain {
     public static chain = "Zcash";
-    public static configMap = ZcashConfigMap;
-    public configMap = ZcashConfigMap;
+    public static configMap: BitcoinNetworkConfigMap = {
+        [RenNetwork.Mainnet]: ZcashMainnet,
+        [RenNetwork.Testnet]: ZcashTestnet,
+        [RenNetwork.Devnet]: ZcashTestnet,
+    };
+    public configMap = Zcash.configMap;
 
     public static assets = {
         ZEC: "ZEC",

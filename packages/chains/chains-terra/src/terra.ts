@@ -6,15 +6,13 @@ import {
     assertType,
     ChainTransaction,
     DepositChain,
-    fromBase64,
+    ErrorWithCode,
     InputChainTransaction,
-    isHex,
     OutputType,
     RenJSError,
     RenNetwork,
     RenNetworkString,
-    toURLBase64,
-    withCode,
+    utils,
 } from "@renproject/utils";
 import { AccAddress, Key } from "@terra-money/terra.js";
 
@@ -91,12 +89,12 @@ export class Terra
 
     public validateTransaction(transaction: ChainTransaction): boolean {
         return (
-            isHex(
+            utils.isHex(
                 typeof transaction === "string"
                     ? transaction
                     : transaction.txidFormatted,
                 { length: 32 },
-            ) && fromBase64(transaction.txid).length === 32
+            ) && utils.fromBase64(transaction.txid).length === 32
         );
     }
 
@@ -107,7 +105,7 @@ export class Terra
 
     public transactionExplorerLink(transaction: ChainTransaction): string {
         return new URL(
-            `/tx/${transaction.txidFormatted}`,
+            `/tx/${String(transaction.txidFormatted)}`,
             /* base */ this.network.explorer,
         ).href;
     }
@@ -116,7 +114,7 @@ export class Terra
         txid: string;
         txindex: string;
     }): string {
-        return fromBase64(tx.txid).toString("hex").toUpperCase();
+        return utils.fromBase64(tx.txid).toString("hex").toUpperCase();
     }
 
     public constructor(
@@ -207,7 +205,7 @@ export class Terra
                 txs.map(async (tx) =>
                     onInput({
                         chain: this.chain,
-                        txid: toURLBase64(Buffer.from(tx.hash, "hex")),
+                        txid: utils.toURLBase64(Buffer.from(tx.hash, "hex")),
                         txidFormatted: tx.hash.toUpperCase(),
                         txindex: "0",
                         amount: tx.amount,
@@ -303,7 +301,7 @@ export class Terra
         assertType<string>("string", { address });
 
         if (!this.validateAddress(address)) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(`Invalid ${this.chain} address: ${String(address)}`),
                 RenJSError.PARAMETER_ERROR,
             );

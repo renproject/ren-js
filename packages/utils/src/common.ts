@@ -1,148 +1,22 @@
 import BigNumber from "bignumber.js";
-import BN from "bn.js";
 
-import { extractError, RenJSError, withCode } from "./errors";
-import { Logger } from "./interfaces/logger";
-
-/**
- * Represents 1 second for functions that accept a parameter in milliseconds.
- */
-export const SECONDS = 1000;
-export const MINUTES = 60 * SECONDS;
+import { assertType } from "./internal/assert";
+import { Ox, toNBytes } from "./internal/common";
 
 /**
- * Pauses the thread for the specified number of milliseconds.
+ * Decode a RenVM selector into the asset, the from-chain and the to-chain.
  *
- * @param ms The number of milliseconds to pause for.
+ * @example
+ * decodeRenVMSelector("BTC/toEthereum", "Bitcoin")
+ * // { asset: "BTC", from: "Bitcoin", to: "Ethereum" }
+ *
+ * decodeRenVMSelector("DAI/toFantom", "Ethereum")
+ * // { asset: "DAI", from: "Ethereum", to: "Fantom" }
+ *
+ * @param selector A RenVM selector
+ * @param assetChain The chain of the selector's asset
+ * @returns An object containing the asset and to and from chains.
  */
-export const sleep = async (ms: number): Promise<void> =>
-    new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-/**
- * Attempt to call the provided function and retry if it errors. The function
- * is called up to a maximum `retries` times. If `retries` is `-1` then it
- * will be retried indefinitely.
- */
-export const tryNTimes = async <T>(
-    fnCall: () => Promise<T>,
-    retries: number,
-    timeout: number = 1 * SECONDS, // in ms
-    logger?: Logger,
-): Promise<T> => {
-    if (retries === 0 || typeof retries !== "number" || isNaN(retries)) {
-        throw withCode(
-            new Error(`Invalid retry amount '${retries}'.`),
-            RenJSError.PARAMETER_ERROR,
-        );
-    }
-
-    let returnError;
-    const errorMessages = new Set();
-    for (let i = 0; retries === -1 || i < retries; i++) {
-        try {
-            return await fnCall();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            // Fix error message.
-            const errorMessage = extractError(error);
-            errorMessages.add(errorMessage);
-            returnError = error || returnError;
-
-            if (i < retries - 1 || retries === -1) {
-                await sleep(timeout);
-                if (logger) {
-                    logger.warn(error);
-                }
-            }
-        }
-    }
-
-    if (returnError) {
-        returnError.message = Array.from(errorMessages).join(", ");
-    } else {
-        returnError = new Error(Array.from(errorMessages).join(", "));
-    }
-
-    throw returnError;
-};
-
-/**
- * isDefined returns true if the parameter is defined and not null.
- */
-export const isDefined = <T>(x: T | null | undefined): x is T =>
-    x !== null && x !== undefined;
-
-/**
- * Returns false if the method throws or returns false - returns true otherwise.
- */
-export const doesntError =
-    <T extends unknown[]>(f: (...p: T) => boolean | void) =>
-    (...p: T): boolean => {
-        try {
-            const response = f(...p);
-            return response === undefined || response === true ? true : false;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            return false;
-        }
-    };
-
-/**
- * Pad a Buffer to `n` bytes. If the Buffer is longer than `n` bytes, an error
- * is thrown.
- */
-export const padBuffer = (buffer: Buffer, n: number): Buffer => {
-    if (buffer.length > n) {
-        throw new Error(
-            `byte array longer than desired length (${String(
-                buffer.length,
-            )} > ${String(n)})`,
-        );
-    }
-
-    if (buffer.length < n) {
-        const paddingLength = n - buffer.length;
-        const padding = Array.from(new Array(paddingLength)).map((_) => 0);
-        buffer = Buffer.concat([Buffer.from(padding), buffer]);
-    }
-
-    return buffer;
-};
-
-/**
- * Convert a number to a Buffer of length `n`.
- */
-export const toNBytes = (
-    input: BigNumber | Buffer | string | number,
-    n: number,
-): Buffer => {
-    let buffer;
-    if (Buffer.isBuffer(input)) {
-        buffer = input;
-    } else {
-        let hex = new BigNumber(input).toString(16);
-        hex = hex.length % 2 ? "0" + hex : hex;
-        buffer = Buffer.from(hex, "hex");
-    }
-
-    buffer = padBuffer(buffer, n);
-
-    const bnVersion = new BN(
-        BigNumber.isBigNumber(input) ? input.toFixed() : input,
-    ).toArrayLike(Buffer, "be", n);
-    if (!buffer.equals(bnVersion) || buffer.length !== n) {
-        throw new Error(
-            `Failed to convert to ${String(n)}-length bytes - got ${String(
-                buffer.toString("hex"),
-            )} (${String(buffer.length)} bytes), expected ${bnVersion.toString(
-                "hex",
-            )} (${String(bnVersion.length)} bytes)`,
-        );
-    }
-
-    return buffer;
-};
-
 export const decodeRenVMSelector = (
     selector: string,
     assetChain: string,
@@ -167,4 +41,48 @@ export const decodeRenVMSelector = (
         from: burnAndMintFrom || burnFrom || assetChain,
         to: burnAndMintTo || mintTo || assetChain,
     };
+};
+
+/**
+ * Normalize the `s` and `v` values of a secp256k1 signature.
+ *
+ * This includes:
+ * 1) ensuring the `v` value is either 27 or 28
+ * 2) ensuring that `s` is less than secp256k1n/2
+ *
+ * This is required before a mint or release signature can be submitted to a
+ * MintGateway or LockGateway.
+ *
+ * @param signature The `r`, `s` and `v` values concatenated as a Buffer.
+ * @returns The signature in the same format, with normalized values.
+ */
+export const normalizeSignature = (signature: Buffer): Buffer => {
+    assertType<Buffer>("Buffer", { signature });
+
+    const r: Buffer = signature.slice(0, 32);
+    const s: Buffer = signature.slice(32, 64);
+    let v: number = signature.slice(64, 65)[0];
+
+    let sBN = new BigNumber(Ox(s), 16);
+
+    // Normalize v value
+    v = ((v || 0) % 27) + 27;
+
+    // The size of the field that secp256k1 is defined over.
+    const secp256k1n = new BigNumber(
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
+        16,
+    );
+
+    // For a given key, there are two valid signatures for each signed message.
+    // We always take the one with the lower `s`.
+    // Check if s > secp256k1n/2 (57896044618658097711785492504343953926418782139537452191302581570759080747168.5)
+    if (sBN.gt(secp256k1n.div(2))) {
+        // Take s = -s % secp256k1n
+        sBN = secp256k1n.minus(sBN);
+        // Switch v
+        v = v === 27 ? 28 : 27;
+    }
+
+    return Buffer.concat([r, toNBytes(sBN, 32), Buffer.from([v])]);
 };

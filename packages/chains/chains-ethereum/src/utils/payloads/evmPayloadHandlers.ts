@@ -3,13 +3,12 @@ import { Contract, PayableOverrides, Signer } from "ethers";
 
 import { TransactionResponse } from "@ethersproject/providers";
 import {
-    fromHex,
+    ErrorWithCode,
     InputType,
-    isDefined,
     OutputType,
     RenJSError,
     SyncOrPromise,
-    withCode,
+    utils,
 } from "@renproject/utils";
 
 import { getERC20Instance } from "../../contracts";
@@ -200,7 +199,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
         } catch (error: any) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Error getting contract-call payload: ${String(
                         error.message,
@@ -214,7 +213,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         for (const arg of args) {
             if (arg.value === undefined) {
-                throw withCode(
+                throw ErrorWithCode.from(
                     new Error(`Parameter '${arg.name}' is undefined.`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -228,7 +227,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         try {
             p = rawEncode(types, values);
         } catch (error: any) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Error encoding ${network.selector} parameters: ${String(
                         error.message,
@@ -240,7 +239,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         return {
             to: payload.params.to,
-            toBytes: fromHex(payload.params.to),
+            toBytes: utils.fromHex(payload.params.to),
             payload: p,
         };
     },
@@ -258,7 +257,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
         } catch (error: any) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Error resolving parameters for contract-call : ${String(
                         error.message,
@@ -271,7 +270,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         // Get parameter values, checking first if each value has been
         // overridden.
         const params = payload.params.params.map((x) =>
-            overrides.params && isDefined(overrides.params[x.name])
+            overrides.params && utils.isDefined(overrides.params[x.name])
                 ? {
                       ...x,
                       value: overrides.params[x.name],
@@ -283,7 +282,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         for (const param of params) {
             if (param.value === undefined) {
-                throw withCode(
+                throw ErrorWithCode.from(
                     new Error(`Parameter '${param.name}' is undefined.`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -293,7 +292,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         try {
             rawEncode(paramTypes, paramValues);
         } catch (error: any) {
-            throw withCode(
+            throw ErrorWithCode.from(
                 new Error(
                     `Error encoding ${network.selector} parameters: ${String(
                         error.message,
@@ -329,7 +328,7 @@ const getContractFromAccount = async (
     payload: EVMAddressPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMContractPayload | undefined> => {
-    const amount = isDefined(payload.params.amount)
+    const amount = utils.isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
                   payload.params.convertToWei
@@ -341,7 +340,7 @@ const getContractFromAccount = async (
     switch (evmParams[EVMParam.EVM_TRANSACTION_TYPE]) {
         case InputType.Lock:
             if (!amount) {
-                throw withCode(
+                throw ErrorWithCode.from(
                     new Error(`Must provide amount to .Account()`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -409,7 +408,7 @@ const getContractFromAccount = async (
             };
         case InputType.Burn:
             if (!amount) {
-                throw withCode(
+                throw ErrorWithCode.from(
                     new Error(`Must provide amount to .Account()`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -657,7 +656,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             const to = await replaceRenParam(payload.params.address, evmParams);
             return {
                 to,
-                toBytes: fromHex(to),
+                toBytes: utils.fromHex(to),
                 payload: Buffer.from([]),
             };
         }
@@ -676,7 +675,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             p = {
                 ...p,
                 to,
-                toBytes: fromHex(to),
+                toBytes: utils.fromHex(to),
             };
         }
         return p;
@@ -745,7 +744,7 @@ const getContractFromApproval = async (
     payload: EVMApprovalPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMContractPayload> => {
-    const amount = isDefined(payload.params.amount)
+    const amount = utils.isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
                   payload.params.convertToWei

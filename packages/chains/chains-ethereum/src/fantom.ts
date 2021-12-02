@@ -9,7 +9,7 @@ import {
 } from "./utils/types";
 import { resolveEvmNetworkConfig } from "./utils/utils";
 
-export const fantomMainnetConfig: EvmNetworkConfig = {
+const fantomMainnetConfig: EvmNetworkConfig = {
     selector: "Fantom",
     asset: "FTM",
 
@@ -27,7 +27,7 @@ export const fantomMainnetConfig: EvmNetworkConfig = {
     },
 };
 
-export const fantomTestnetConfig: EvmNetworkConfig = {
+const fantomTestnetConfig: EvmNetworkConfig = {
     selector: "Fantom",
     asset: "FTM",
 
@@ -45,7 +45,7 @@ export const fantomTestnetConfig: EvmNetworkConfig = {
     },
 };
 
-export const fantomDevnetConfig: EvmNetworkConfig = {
+const fantomDevnetConfig: EvmNetworkConfig = {
     ...fantomTestnetConfig,
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
@@ -57,8 +57,9 @@ export class Fantom extends EthereumBaseChain {
     public static chain = "Fantom";
 
     public static configMap = {
-        [RenNetwork.Testnet]: fantomTestnetConfig,
         [RenNetwork.Mainnet]: fantomMainnetConfig,
+        [RenNetwork.Testnet]: fantomTestnetConfig,
+        [RenNetwork.Devnet]: fantomDevnetConfig,
     };
     public configMap = Fantom.configMap;
 

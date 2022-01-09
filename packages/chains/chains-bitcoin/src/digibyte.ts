@@ -28,7 +28,7 @@ const DigiByteMainnet: BitcoinNetworkConfig = {
             "https://multichain-web-proxy.herokuapp.com/digibyte-mainnet",
         ),
         new Blockbook("https://digiexplorer.info/api"),
-        new Blockbook("https://insight.digibyte.host/api"), // TODO: test again, currently broken
+        new Blockbook("https://digibyteblockexplorer.com/api/")
     ],
     // validateAddress: (address: string) =>
     //     validateAddress(address, "DGB", "mainnet"),
@@ -45,11 +45,11 @@ const DigiByteTestnet: BitcoinNetworkConfig = {
     },
     isTestnet: true,
     explorer: StandardBitcoinExplorer(
-        "`https://testnetexplorer.digibyteservers.io/",
+        "https://testnet.digiexplorer.info/",
     ),
     p2shPrefix: Buffer.from([0x8c]),
     providers: [
-        new Blockbook("https://testnetexplorer.digibyteservers.io/api"),
+        new Blockbook("https://testnet.digiexplorer.info/api"),
     ],
     // validateAddress: (address: string) =>
     //     validateAddress(address, "DGB", "testnet"),

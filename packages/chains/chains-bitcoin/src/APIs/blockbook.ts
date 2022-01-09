@@ -69,41 +69,41 @@ export class Blockbook implements BitcoinAPI {
         ).sort(sortUTXOs);
     };
 
-    // fetchTXs = async (address: string): Promise<Array<{ tx: InputChainTransaction, height: string }>> => {
-    //     const url = `${this.url}/txs/?address=${address}`;
-    //     const response = await axios.get<FetchTXsResult>(url, {
-    //         // TODO: Remove when certificate is fixed.
-    //         httpsAgent: new https.Agent({
-    //             rejectUnauthorized: false,
-    //         }),
-    //         timeout: DEFAULT_TIMEOUT,
-    //     });
+    fetchTXs = async (address: string): Promise<Array<UTXO>> => {
+        const url = `${this.url}/txs/?address=${address}`;
+        const response = await axios.get<FetchTXsResult>(url, {
+            // TODO: Remove when certificate is fixed.
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+            timeout: DEFAULT_TIMEOUT,
+        });
 
-    //     const data: FetchTXsResult =
-    //         typeof response.data === "string"
-    //             ? JSON.parse(response.data)
-    //             : response.data;
+        const data: FetchTXsResult =
+            typeof response.data === "string"
+                ? JSON.parse(response.data)
+                : response.data;
 
-    //     const received: Array<{ tx: InputChainTransaction, height: number | null }> = [];
+        const received: Array<UTXO> = [];
 
-    //     for (const tx of data.txs) {
-    //         for (let i = 0; i < tx.vout.length; i++) {
-    //             const vout = tx.vout[i];
-    //             if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
-    //                 received.push({
-    //                     txid: tx.txid,
-    //                     amount: fixValue(parseFloat(vout.value), 8).toFixed(),
-    //                     txindex: i.toString(),
-    //                     height: tx.blockheight
-    //                         ? tx.blockheight
-    //                         : null,
-    //                 });
-    //             }
-    //         }
-    //     }
+        for (const tx of data.txs) {
+            for (let i = 0; i < tx.vout.length; i++) {
+                const vout = tx.vout[i];
+                if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
+                    received.push({
+                        txid: tx.txid,
+                        amount: fixValue(parseFloat(vout.value), 8).toFixed(),
+                        txindex: i.toString(),
+                        height: tx.blockheight
+                            ? tx.blockheight.toString()
+                            : null,
+                    });
+                }
+            }
+        }
 
-    //     return received.sort(sortUTXOs);
-    // };
+        return received.sort(sortUTXOs);
+    };
 
     fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.url}/tx/${txid}`;

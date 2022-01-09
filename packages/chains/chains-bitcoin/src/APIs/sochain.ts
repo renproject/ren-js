@@ -30,15 +30,16 @@ export class SoChain implements BitcoinAPI {
         this.network = network;
     }
 
-    fetchHeight = async (): Promise<string> =>
-        (
-            await axios.get<{ blocks: number }>(
-                `https://sochain.com/api/v2/get_info/${this.network}`,
-                {
-                    timeout: DEFAULT_TIMEOUT,
-                },
-            )
-        ).data.blocks.toString();
+    fetchHeight = async (): Promise<string> => {
+        const resp = await axios.get<{ data: { blocks: number} }>(
+            `https://sochain.com/api/v2/get_info/${this.network}`,
+            {
+                timeout: DEFAULT_TIMEOUT,
+            },
+        )
+
+        return resp.data.data.blocks.toString();
+    }
 
     fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `https://sochain.com/api/v2/get_tx/${this.network}/${txid}`;

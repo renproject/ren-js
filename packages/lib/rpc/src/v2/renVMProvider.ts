@@ -1,5 +1,3 @@
-import BigNumber from "bignumber.js";
-
 import {
     BurnAndReleaseTransaction,
     getRenNetworkDetails,
@@ -23,6 +21,7 @@ import {
     sleep,
     toURLBase64,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { AbstractRenVMProvider } from "../abstract";
 import {

@@ -8,9 +8,10 @@ import {
 import { Callable, utilsWithChainNetwork } from "@renproject/utils";
 
 import { NetworkInput } from "./base";
+import { EthAddress, EthProvider, EthTransaction } from "./types";
+
 import { EthereumClass } from "./ethereum";
 import { EthereumConfig, StandardExplorer } from "./networks";
-import { EthAddress, EthProvider, EthTransaction } from "./types";
 import { addressIsValid, transactionIsValid } from "./utils";
 
 export const renPolygonTestnet: EthereumConfig = {
@@ -24,11 +25,11 @@ export const renPolygonTestnet: EthereumConfig = {
         BasicAdapter: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
 
-    publicProvider: () => `https://polygon-rpc.com`,
+    publicProvider: () => `https://rpc-mumbai.maticvigil.com`,
     explorer: StandardExplorer("https://mumbai.polygonscan.com"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
-    infura: "https://polygon-rpc.com",
+    infura: "https://rpc-mumbai.maticvigil.com",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
     etherscan: "https://mumbai.polygonscan.com/",
 };

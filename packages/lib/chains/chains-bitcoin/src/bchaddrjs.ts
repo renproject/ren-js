@@ -21,8 +21,9 @@
 // SOFTWARE.
 
 import { InvalidAddressError } from "bchaddrjs";
-import cashaddr, { ValidationError } from "cashaddrjs";
+import base58 from "bs58";
 import bs58check from "bs58check";
+import cashaddr, { ValidationError } from "cashaddrjs";
 
 enum Format {
     Legacy = "legacy",
@@ -185,16 +186,16 @@ const getTypeBits = (type: string) => {
 
 export const decodeBitcoinCashAddress = (address: string): Buffer => {
     try {
-        return Buffer.from(decodeBase58Address(address).hash);
-    } catch (error) {
-        // Ignore error.
-    }
-    try {
         const { hash, type } = decodeCashAddress(address);
         return Buffer.concat([
             Buffer.from([getTypeBits(type)]),
             Buffer.from(hash),
         ]);
+    } catch (error) {
+        // Ignore error.
+    }
+    try {
+        return base58.decode(address);
     } catch (error) {
         // Ignore error.
     }

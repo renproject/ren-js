@@ -1,18 +1,24 @@
+import { expect } from "chai";
 /* eslint-disable no-console */
 import { describe, it } from "mocha";
-import { expect } from "chai";
 
 import { BitcoinCash } from "../src";
 
-describe("BCH", () => {
+describe.only("BCH", () => {
     it("address to buffer", () => {
         const bch = BitcoinCash("testnet");
         expect(
             bch
                 .addressToBytes(
-                    "bchtest:pq35hhjj35we555szq8xsa47ry093mkasudz8aetvr",
+                    "bitcoincash:qp0649tku3dvhjtx9d4t7v3j9xm5322ft5qqtl36wz",
                 )
                 .toString("hex"),
-        ).to.equal("08234bde528d1d9a5290100e6876be191e58eedd87");
+        ).to.equal("005faa9576e45acbc9662b6abf323229b748a9495d");
+
+        expect(
+            bch
+                .addressToBytes("19iqYbeATe4RxghQZJnYVFU4mjUUu76EA6")
+                .toString("hex"),
+        ).to.equal("005faa9576e45acbc9662b6abf323229b748a9495d0df5accb");
     });
 });

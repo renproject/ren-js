@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "2.5.10-2.5.11.0",
+    "version": "2.5.11",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -44,7 +44,7 @@
     },
     "dependencies": {
         "@renproject/interfaces": "^2.5.10-1",
-        "@renproject/rpc": "^2.5.10-2.5.11.0",
+        "@renproject/rpc": "^2.5.11",
         "@renproject/utils": "^2.5.10-1",
         "@types/bs58": "^4.0.1",
         "@types/cashaddrjs": "^0.3.0",

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "3.0.0-alpha.5",
+    "version": "3.0.0-alpha.6",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

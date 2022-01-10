@@ -28,17 +28,17 @@ export class SolanaTxWaiter implements TxSubmitter {
     >;
 
     public chain: string;
-    public status: ChainTransactionProgress;
+    public progress: ChainTransactionProgress;
     public eventEmitter: EventEmitterTyped<{
-        status: [ChainTransactionProgress];
+        progress: [ChainTransactionProgress];
     }>;
 
-    private updateStatus(status: Partial<ChainTransactionProgress>) {
-        this.status = {
-            ...this.status,
-            ...status,
+    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+        this.progress = {
+            ...this.progress,
+            ...progress,
         };
-        this.eventEmitter.emit("status", this.status);
+        this.eventEmitter.emit("progress", this.progress);
     }
 
     /**
@@ -71,7 +71,7 @@ export class SolanaTxWaiter implements TxSubmitter {
 
         this.eventEmitter = eventEmitter();
 
-        this.status = {
+        this.progress = {
             chain,
             target,
             status: ChainTransactionStatus.Ready,
@@ -81,13 +81,13 @@ export class SolanaTxWaiter implements TxSubmitter {
     public submit(): PromiEvent<
         ChainTransactionProgress,
         {
-            status: [ChainTransactionProgress];
+            progress: [ChainTransactionProgress];
         }
     > {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
-                status: [ChainTransactionProgress];
+                progress: [ChainTransactionProgress];
             }
         >(this.eventEmitter);
 
@@ -97,13 +97,13 @@ export class SolanaTxWaiter implements TxSubmitter {
                     await this._findExistingTransaction();
 
                 if (existingTransaction) {
-                    this.updateStatus({
+                    this.updateProgress({
                         status: ChainTransactionStatus.Done,
-                        confirmations: this.status.target,
-                        target: this.status.target,
+                        confirmations: this.progress.target,
+                        target: this.progress.target,
                         transaction: existingTransaction,
                     });
-                    return this.status;
+                    return this.progress;
                 }
             }
 
@@ -141,17 +141,17 @@ export class SolanaTxWaiter implements TxSubmitter {
                 this._onReceipt(confirmedSignature);
             }
 
-            this.updateStatus({
+            this.updateProgress({
                 status: ChainTransactionStatus.Confirming,
                 transaction: {
-                    chain: this.status.chain,
+                    chain: this.progress.chain,
                     txidFormatted: confirmedSignature,
                     txid: utils.toURLBase64(base58.decode(confirmedSignature)),
                     txindex: "0",
                 },
             });
 
-            return this.status;
+            return this.progress;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
@@ -162,34 +162,34 @@ export class SolanaTxWaiter implements TxSubmitter {
     public wait(target?: number): PromiEvent<
         ChainTransactionProgress,
         {
-            status: [ChainTransactionProgress];
+            progress: [ChainTransactionProgress];
         }
     > {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
-                status: [ChainTransactionProgress];
+                progress: [ChainTransactionProgress];
             }
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            if (!this.status.transaction) {
+            if (!this.progress.transaction) {
                 throw new Error(`Must call ".submit" first.`);
             }
 
             if (
-                this.status.transaction.txid === "" &&
-                this.status.status === ChainTransactionStatus.Done
+                this.progress.transaction.txid === "" &&
+                this.progress.status === ChainTransactionStatus.Done
             ) {
-                return this.status;
+                return this.progress;
             }
 
-            target = utils.isDefined(target) ? target : this.status.target;
+            target = utils.isDefined(target) ? target : this.progress.target;
 
             let currentConfidenceRatio = -1;
             while (true) {
                 const tx = await this._provider.getConfirmedTransaction(
-                    this.status.transaction.txidFormatted,
+                    this.progress.transaction.txidFormatted,
                 );
 
                 const currentSlot = await this._provider.getSlot();
@@ -201,17 +201,17 @@ export class SolanaTxWaiter implements TxSubmitter {
                 if (confidenceRatio > currentConfidenceRatio) {
                     if (confidenceRatio >= 1) {
                         // Done.
-                        this.updateStatus({
-                            ...this.status,
+                        this.updateProgress({
+                            ...this.progress,
                             confirmations: confidence,
                             status: ChainTransactionStatus.Done,
                         });
                         break;
                     } else {
-                        // Update status.
+                        // Update progress.
                         currentConfidenceRatio = confidenceRatio;
-                        this.updateStatus({
-                            ...this.status,
+                        this.updateProgress({
+                            ...this.progress,
                             confirmations: confidence,
                         });
                     }
@@ -219,7 +219,7 @@ export class SolanaTxWaiter implements TxSubmitter {
                 await utils.sleep(15 * utils.sleep.SECONDS);
             }
 
-            return this.status;
+            return this.progress;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

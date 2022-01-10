@@ -39,13 +39,13 @@ export interface TxWaiter<
     // The name of the transaction's chain.
     chain: string;
 
-    // The transaction's current status. This will only get updated while
+    // The transaction's current progress. This will only get updated while
     // `submit` or `wait` are being called.
-    status: Progress;
+    progress: Progress;
 
     // The event emitter is also returned by `submit` and `wait`.
     eventEmitter: EventEmitterTyped<{
-        status: [Progress];
+        progress: [Progress];
     }>;
 
     /**
@@ -54,7 +54,7 @@ export interface TxWaiter<
     submit?(params?: { overrides?: any[] }): PromiEvent<
         Progress,
         {
-            status: [Progress];
+            progress: [Progress];
         }
     >;
 
@@ -65,7 +65,7 @@ export interface TxWaiter<
     wait(targetOverride?: number): PromiEvent<
         Progress,
         {
-            status: [Progress];
+            progress: [Progress];
         }
     >;
 }
@@ -73,7 +73,7 @@ export interface TxWaiter<
 /**
  * TxSubmitter is a standard interface across chains to allow for submitting
  * transactions and waiting for finality. The `wait` and `submit` methods
- * emit a "status" event which is standard across chains.
+ * emit a "progress" event which is standard across chains.
  */
 export interface TxSubmitter<
     Progress extends ChainTransactionProgress = ChainTransactionProgress,
@@ -86,7 +86,7 @@ export interface TxSubmitter<
     submit(params?: { overrides?: any[]; txConfig?: TxConfig }): PromiEvent<
         Progress,
         {
-            status: [Progress];
+            progress: [Progress];
         }
     >;
 }
@@ -100,17 +100,17 @@ export class DefaultTxWaiter implements TxWaiter {
     private _chain: Chain;
 
     public chain: string;
-    public status: ChainTransactionProgress;
+    public progress: ChainTransactionProgress;
     public eventEmitter: EventEmitterTyped<{
-        status: [ChainTransactionProgress];
+        progress: [ChainTransactionProgress];
     }>;
 
-    private updateStatus(status: Partial<ChainTransactionProgress>) {
-        this.status = {
-            ...this.status,
-            ...status,
+    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+        this.progress = {
+            ...this.progress,
+            ...progress,
         };
-        this.eventEmitter.emit("status", this.status);
+        this.eventEmitter.emit("progress", this.progress);
     }
 
     /**
@@ -132,7 +132,7 @@ export class DefaultTxWaiter implements TxWaiter {
         this.chain = chain.chain;
         this.eventEmitter = eventEmitter();
 
-        this.status = {
+        this.progress = {
             chain: chain.chain,
             status: ChainTransactionStatus.Confirming,
             target,
@@ -142,7 +142,7 @@ export class DefaultTxWaiter implements TxWaiter {
 
     public setTransaction(chainTransaction?: ChainTransaction): void {
         this._chainTransaction = chainTransaction;
-        this.updateStatus({
+        this.updateProgress({
             transaction: chainTransaction,
         });
     }
@@ -150,13 +150,13 @@ export class DefaultTxWaiter implements TxWaiter {
     public wait(target?: number): PromiEvent<
         ChainTransactionProgress,
         {
-            status: [ChainTransactionProgress];
+            progress: [ChainTransactionProgress];
         }
     > {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
-                status: [ChainTransactionProgress];
+                progress: [ChainTransactionProgress];
             }
         >(this.eventEmitter);
 
@@ -166,7 +166,7 @@ export class DefaultTxWaiter implements TxWaiter {
                 throw new Error(`Must call ".submit" first.`);
             }
 
-            target = isDefined(target) ? target : this.status.target;
+            target = isDefined(target) ? target : this.progress.target;
 
             let currentConfidenceRatio = -1;
             while (true) {
@@ -180,17 +180,17 @@ export class DefaultTxWaiter implements TxWaiter {
                 if (confidenceRatio > currentConfidenceRatio) {
                     if (confidenceRatio >= 1) {
                         // Done.
-                        this.updateStatus({
-                            ...this.status,
+                        this.updateProgress({
+                            ...this.progress,
                             confirmations: confidence,
                             status: ChainTransactionStatus.Done,
                         });
                         break;
                     } else {
-                        // Update status.
+                        // Update progress.
                         currentConfidenceRatio = confidenceRatio;
-                        this.updateStatus({
-                            ...this.status,
+                        this.updateProgress({
+                            ...this.progress,
                             confirmations: confidence,
                         });
                     }
@@ -198,7 +198,7 @@ export class DefaultTxWaiter implements TxWaiter {
                 await sleep(15 * sleep.SECONDS);
             }
 
-            return this.status;
+            return this.progress;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

@@ -14,7 +14,7 @@ const defaultTransactionHandler = async (
     retries: number = -1,
 ) => {
     while (true) {
-        switch (tx.status.status) {
+        switch (tx.progress.status) {
             case ChainTransactionStatus.Ready:
                 if (!tx.submit) {
                     throw new ErrorWithCode(
@@ -34,8 +34,8 @@ const defaultTransactionHandler = async (
             case ChainTransactionStatus.Reverted:
                 throw new ErrorWithCode(
                     `${tx.chain} transaction reverted${
-                        tx.status.revertReason
-                            ? ` with reason: ${tx.status.revertReason}`
+                        tx.progress.revertReason
+                            ? ` with reason: ${tx.progress.revertReason}`
                             : ``
                     }`,
                     tx.chain === "RenVM"

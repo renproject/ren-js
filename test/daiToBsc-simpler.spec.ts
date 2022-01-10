@@ -72,7 +72,10 @@ describe("RenJS Gateway Transaction", () => {
                         .on("status", console.log);
                     await tx.out.wait();
 
-                    console.log(chalk.cyan("Done"), tx.out.status.transaction);
+                    console.log(
+                        chalk.cyan("Done"),
+                        tx.out.progress.transaction,
+                    );
 
                     resolve();
                 })().catch(reject);

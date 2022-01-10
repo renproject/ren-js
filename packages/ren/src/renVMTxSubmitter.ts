@@ -57,7 +57,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         ];
     }>;
 
-    public status: ChainTransactionProgress & {
+    public progress: ChainTransactionProgress & {
         response?: RenVMTransactionWithStatus<Transaction>;
     };
 
@@ -68,12 +68,12 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             }
         >,
     ) => {
-        this.status = {
-            ...this.status,
+        this.progress = {
+            ...this.progress,
             ...status,
         };
-        this.eventEmitter.emit("status", this.status);
-        return this.status;
+        this.eventEmitter.emit("status", this.progress);
+        return this.progress;
     };
 
     public constructor(
@@ -94,7 +94,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             generateTransactionHash(this.version, this.selector, this.params),
         );
 
-        this.status = {
+        this.progress = {
             chain: RENVM_CHAIN,
             status: ChainTransactionStatus.Ready,
             target: 1,
@@ -213,7 +213,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                     }
                     if (
                         tx.txStatus !== existingStatus ||
-                        !this.status.response
+                        !this.progress.response
                     ) {
                         try {
                             existingStatus = tx.txStatus;

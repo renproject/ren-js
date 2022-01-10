@@ -80,9 +80,9 @@ export const callContract = async (
  */
 export class EVMTxSubmitter implements TxSubmitter {
     public chain: string;
-    public status: ChainTransactionProgress;
+    public progress: ChainTransactionProgress;
     public eventEmitter: EventEmitterTyped<{
-        status: [ChainTransactionProgress];
+        progress: [ChainTransactionProgress];
     }>;
 
     private network: EvmNetworkConfig;
@@ -96,13 +96,13 @@ export class EVMTxSubmitter implements TxSubmitter {
         ChainTransaction | undefined
     >;
 
-    private updateStatus(status: Partial<ChainTransactionProgress>) {
-        this.status = {
-            ...this.status,
-            ...status,
+    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+        this.progress = {
+            ...this.progress,
+            ...progress,
         };
-        this.eventEmitter.emit("status", this.status);
-        return this.status;
+        this.eventEmitter.emit("progress", this.progress);
+        return this.progress;
     }
 
     public constructor({
@@ -137,7 +137,7 @@ export class EVMTxSubmitter implements TxSubmitter {
 
         this.eventEmitter = eventEmitter();
 
-        this.status = {
+        this.progress = {
             chain,
             status: ChainTransactionStatus.Ready,
             confirmations: 0,
@@ -154,13 +154,13 @@ export class EVMTxSubmitter implements TxSubmitter {
     ): PromiEvent<
         ChainTransactionProgress,
         {
-            status: [ChainTransactionProgress];
+            progress: [ChainTransactionProgress];
         }
     > {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
-                status: [ChainTransactionProgress];
+                progress: [ChainTransactionProgress];
             }
         >(this.eventEmitter);
 
@@ -171,11 +171,11 @@ export class EVMTxSubmitter implements TxSubmitter {
 
                 if (existingTransaction) {
                     if (existingTransaction.txidFormatted === "") {
-                        this.updateStatus({
+                        this.updateProgress({
                             status: ChainTransactionStatus.Done,
-                            confirmations: this.status.target,
+                            confirmations: this.progress.target,
                         });
-                        return this.status;
+                        return this.progress;
                     }
                     this.tx = await this.signer.provider.getTransaction(
                         existingTransaction.txidFormatted,
@@ -194,13 +194,13 @@ export class EVMTxSubmitter implements TxSubmitter {
                     this.getPayloadHandler,
                 ));
 
-            this.updateStatus({
+            this.updateProgress({
                 status: ChainTransactionStatus.Confirming,
                 transaction: txHashToChainTransaction(this.chain, this.tx.hash),
                 confirmations: this.tx.confirmations,
             });
 
-            return this.status;
+            return this.progress;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
@@ -211,22 +211,22 @@ export class EVMTxSubmitter implements TxSubmitter {
     public wait(target?: number): PromiEvent<
         ChainTransactionProgress,
         {
-            status: [ChainTransactionProgress];
+            progress: [ChainTransactionProgress];
         }
     > {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
-                status: [ChainTransactionProgress];
+                progress: [ChainTransactionProgress];
             }
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            if (this.status.status === ChainTransactionStatus.Ready) {
+            if (this.progress.status === ChainTransactionStatus.Ready) {
                 throw new Error(`Must call ".submit" first.`);
             }
 
-            target = utils.isDefined(target) ? target : this.status.target;
+            target = utils.isDefined(target) ? target : this.progress.target;
 
             // Wait for each confirmation until the target is reached.
             while (
@@ -246,10 +246,10 @@ export class EVMTxSubmitter implements TxSubmitter {
                     this.tx.confirmations = receipt.confirmations;
 
                     if (receipt.confirmations > existingConfirmations) {
-                        this.updateStatus({
-                            ...this.status,
+                        this.updateProgress({
+                            ...this.progress,
                             status:
-                                this.tx.confirmations < this.status.target
+                                this.tx.confirmations < this.progress.target
                                     ? ChainTransactionStatus.Confirming
                                     : ChainTransactionStatus.Done,
                             transaction: txHashToChainTransaction(
@@ -268,7 +268,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                             const previousTx = this.tx;
                             this.tx = replacement;
 
-                            this.updateStatus({
+                            this.updateProgress({
                                 status: ChainTransactionStatus.Confirming,
                                 transaction: txHashToChainTransaction(
                                     this.chain,
@@ -287,7 +287,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                         } else if (
                             error.code === Logger.errors.CALL_EXCEPTION
                         ) {
-                            this.updateStatus({
+                            this.updateProgress({
                                 status: ChainTransactionStatus.Reverted,
                                 transaction: txHashToChainTransaction(
                                     this.chain,
@@ -309,16 +309,16 @@ export class EVMTxSubmitter implements TxSubmitter {
             }
 
             if (
-                this.status.status !== ChainTransactionStatus.Done &&
+                this.progress.status !== ChainTransactionStatus.Done &&
                 this.tx &&
-                this.tx.confirmations >= this.status.target
+                this.tx.confirmations >= this.progress.target
             ) {
-                this.updateStatus({
+                this.updateProgress({
                     status: ChainTransactionStatus.Done,
                 });
             }
 
-            return this.status;
+            return this.progress;
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);

@@ -71,7 +71,7 @@ const main = async () => {
                 // All transactions return a `ChainTransaction` object in the
                 // status, with a `txid` field (base64) and a `txidFormatted`
                 // field (chain-dependent)
-                const outTx = tx.out.status.transaction;
+                const outTx = tx.out.progress.transaction;
                 console.log("Done:", outTx.txidFormatted);
 
                 resolve();

@@ -75,7 +75,7 @@ describe("RenJS Gateway Transaction", () => {
                 (async () => {
                     foundDeposits += 1;
 
-                    const { amount, asset } = tx.in.status
+                    const { amount, asset } = tx.in.progress
                         .transaction as InputChainTransaction;
 
                     console.log(
@@ -94,14 +94,14 @@ describe("RenJS Gateway Transaction", () => {
                         `[${printChain(from.chain)}⇢${printChain(
                             to.chain,
                         )}][${tx.hash.slice(0, 6)}] Done.${
-                            tx.renVM.status.response &&
-                            tx.renVM.status.response.tx.out
-                                ? ` Received ${tx.renVM.status.response.tx.out.amount
+                            tx.renVM.progress.response &&
+                            tx.renVM.progress.response.tx.out
+                                ? ` Received ${tx.renVM.progress.response.tx.out.amount
                                       .shiftedBy(-decimals)
                                       .toFixed()}`
                                 : ""
                         } (${foundDeposits} other deposits remaining)`,
-                        tx.out.status.transaction?.txidFormatted,
+                        tx.out.progress.transaction?.txidFormatted,
                     );
 
                     if (foundDeposits === 0) {

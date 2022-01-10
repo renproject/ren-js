@@ -88,7 +88,6 @@ export class EVMTxSubmitter implements TxSubmitter {
     private network: EvmNetworkConfig;
     private signer: Signer;
     private payload: EVMPayload;
-    private target: number;
     private tx?: TransactionResponse;
     private getPayloadHandler: (payloadType: string) => PayloadHandler;
     private getParams: () => EVMParamValues;
@@ -131,7 +130,6 @@ export class EVMTxSubmitter implements TxSubmitter {
         this.signer = signer;
         this.chain = chain;
         this.payload = payload;
-        this.target = target;
         this.getPayloadHandler = getPayloadHandler;
         this.getParams = getParams;
         this.onReceipt = onReceipt;
@@ -143,7 +141,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             chain,
             status: ChainTransactionStatus.Ready,
             confirmations: 0,
-            target: 0,
+            target: target,
         };
     }
 
@@ -175,8 +173,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                     if (existingTransaction.txidFormatted === "") {
                         this.updateStatus({
                             status: ChainTransactionStatus.Done,
-                            target: this.target,
-                            confirmations: this.target,
+                            confirmations: this.status.target,
                         });
                         return this.status;
                     }
@@ -186,19 +183,20 @@ export class EVMTxSubmitter implements TxSubmitter {
                 }
             }
 
-            this.tx = await this.getPayloadHandler(this.payload.type).submit(
-                this.network,
-                this.signer,
-                this.payload,
-                this.getParams(),
-                options,
-                this.getPayloadHandler,
-            );
+            this.tx =
+                this.tx ||
+                (await this.getPayloadHandler(this.payload.type).submit(
+                    this.network,
+                    this.signer,
+                    this.payload,
+                    this.getParams(),
+                    options,
+                    this.getPayloadHandler,
+                ));
 
             this.updateStatus({
                 status: ChainTransactionStatus.Confirming,
                 transaction: txHashToChainTransaction(this.chain, this.tx.hash),
-                target: this.target,
                 confirmations: this.tx.confirmations,
             });
 
@@ -228,7 +226,7 @@ export class EVMTxSubmitter implements TxSubmitter {
                 throw new Error(`Must call ".submit" first.`);
             }
 
-            target = utils.isDefined(target) ? target : this.target;
+            target = utils.isDefined(target) ? target : this.status.target;
 
             // Wait for each confirmation until the target is reached.
             while (
@@ -251,14 +249,13 @@ export class EVMTxSubmitter implements TxSubmitter {
                         this.updateStatus({
                             ...this.status,
                             status:
-                                this.tx.confirmations < this.target
+                                this.tx.confirmations < this.status.target
                                     ? ChainTransactionStatus.Confirming
                                     : ChainTransactionStatus.Done,
                             transaction: txHashToChainTransaction(
                                 this.chain,
                                 this.tx.hash,
                             ),
-                            target: this.target,
                             confirmations: this.tx.confirmations,
                         });
                     }
@@ -314,7 +311,7 @@ export class EVMTxSubmitter implements TxSubmitter {
             if (
                 this.status.status !== ChainTransactionStatus.Done &&
                 this.tx &&
-                this.tx.confirmations >= this.target
+                this.tx.confirmations >= this.status.target
             ) {
                 this.updateStatus({
                     status: ChainTransactionStatus.Done,

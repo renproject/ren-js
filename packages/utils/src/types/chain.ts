@@ -30,6 +30,7 @@ export interface ChainTransaction {
 }
 
 export interface InputChainTransaction extends ChainTransaction {
+    asset: string;
     amount: string;
     toRecipient?: string;
     toChain?: string;
@@ -65,6 +66,12 @@ export interface InputChainTransaction extends ChainTransaction {
 
 export interface ChainCommon {
     chain: string;
+
+    nativeAsset?: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
 
     // Expose a map of assets supported by the chain. Note that the list may
     // not be complete, and will become out-of-date as new assets are added.
@@ -185,18 +192,18 @@ export interface ContractChain<
     isMintAsset: (asset: string) => SyncOrPromise<boolean>;
 
     // Get contract addresses.
-    getRenAsset: (asset: string) => SyncOrPromise<string>;
+    getMintAsset: (asset: string) => SyncOrPromise<string>;
     getMintGateway: (asset: string) => SyncOrPromise<string>;
     getLockAsset: (asset: string) => SyncOrPromise<string>;
     getLockGateway: (asset: string) => SyncOrPromise<string>;
 
     // Setup transactions //////////////////////////////////////////////////////
 
-    getInputSetup?: (
+    getInSetup?: (
         asset: string,
         type: InputType,
         contractCall: FromContractCall,
-        params: () => {
+        getParams: () => {
             toChain: string;
             toPayload: {
                 to: string;
@@ -209,10 +216,17 @@ export interface ContractChain<
         [key: string]: TxSubmitter | TxWaiter;
     }>;
 
-    getOutputSetup?: (
+    getOutSetup?: (
         asset: string,
         type: OutputType,
         contractCall: ToContractCall,
+        getParams: () => {
+            pHash: Buffer;
+            nHash: Buffer;
+            amount?: BigNumber;
+            sigHash?: Buffer;
+            signature?: Buffer;
+        },
     ) => SyncOrPromise<{
         [key: string]: TxSubmitter | TxWaiter;
     }>;
@@ -255,6 +269,8 @@ export interface ContractChain<
             pHash: Buffer;
             nHash: Buffer;
 
+            // Only available during the transaction submission, not when
+            // getOutputTx is called.
             amount?: BigNumber;
             sigHash?: Buffer;
             signature?: Buffer;

@@ -8,7 +8,7 @@ import {
     Ethereum,
 } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
-import { RenNetwork, SECONDS, sleep } from "../packages/utils/src";
+import { RenNetwork, utils } from "../packages/utils/src";
 import { getEVMProvider, printChain } from "./testUtils";
 
 chai.should();
@@ -22,14 +22,14 @@ describe("RenJS Gateway Transaction", () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.DAI;
-        const ethereum = new Ethereum(
+        const ethereum = new Ethereum({
             network,
-            getEVMProvider(Ethereum as any, network),
-        );
-        const bsc = new BinanceSmartChain(
+            ...getEVMProvider(Ethereum as any, network),
+        });
+        const bsc = new BinanceSmartChain({
             network,
-            getEVMProvider(BinanceSmartChain as any, network),
-        );
+            ...getEVMProvider(BinanceSmartChain as any, network),
+        });
 
         const renJS = new RenJS(network).withChains(bsc, ethereum);
 
@@ -47,8 +47,8 @@ describe("RenJS Gateway Transaction", () => {
         );
 
         // Check what set-up calls need to be made
-        for (const setupKey of Object.keys(gateway.setup)) {
-            const setup = gateway.setup[setupKey];
+        for (const setupKey of Object.keys(gateway.inSetup)) {
+            const setup = gateway.inSetup[setupKey];
             console.log(
                 `[${printChain(gateway.params.from.chain)}⇢${printChain(
                     gateway.params.to.chain,
@@ -109,7 +109,7 @@ describe("RenJS Gateway Transaction", () => {
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         } catch (error: any) {
                             console.error(error);
-                            await sleep(10 * SECONDS);
+                            await utils.sleep(10 * utils.sleep.SECONDS);
                         }
                     }
                     console.log(

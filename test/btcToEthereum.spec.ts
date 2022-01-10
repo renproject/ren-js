@@ -18,7 +18,10 @@ describe("RenJS Gateway Transaction", () => {
         const network = RenNetwork.Testnet;
         const asset = Terra.assets.LUNA;
         const from = new Terra(network);
-        const to = new Ethereum(network, getEVMProvider(Ethereum, network));
+        const to = new Ethereum({
+            network,
+            ...getEVMProvider(Ethereum, network),
+        });
 
         const renJS = new RenJS(network).withChains(from, to);
 

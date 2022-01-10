@@ -1,16 +1,16 @@
 import {
-    struct,
-    bool,
-    publicKey,
-    u64,
-    vec,
     array,
-    u8,
+    bool,
     Layout,
+    publicKey,
+    struct,
+    u64,
+    u8,
+    vec,
 } from "@project-serum/borsh";
-import BN from "bn.js";
-
 import { PublicKey } from "@solana/web3.js";
+
+type BN = { toString(): string };
 
 export interface BurnLog {
     // amount gets decoded into four u64s. Each u64 is little-endian, but

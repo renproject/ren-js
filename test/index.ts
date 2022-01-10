@@ -8,11 +8,14 @@ const network = RenNetwork.Testnet;
 
 const main = async () => {
     // Initialize Ethereum and BSC chains.
-    const ethereum = new Ethereum(network, getEVMProvider(Ethereum, network));
-    const bsc = new BinanceSmartChain(
+    const ethereum = new Ethereum({
         network,
-        getEVMProvider(BinanceSmartChain, network),
-    );
+        ...getEVMProvider(Ethereum, network),
+    });
+    const bsc = new BinanceSmartChain({
+        network,
+        ...getEVMProvider(BinanceSmartChain, network),
+    });
 
     // Create RenJS instance. NOTE - chains must now be linked to RenJS using
     // `withChains`.
@@ -28,15 +31,15 @@ const main = async () => {
     // `gateway.fees` exposes values and helpers for calculating fees.
     console.log(gateway.fees);
 
-    // `gateway.setup` may contain multiple transactions.
-    await gateway.setup.approval.submit({
+    // `gateway.inSetup` may contain multiple transactions.
+    await gateway.inSetup.approval.submit({
         txConfig: {
             gasLimit: 1000000,
         },
     });
     // All transactions now follow a submit/wait pattern - see TxSubmitter
     // interface.
-    await gateway.setup.approval.wait();
+    await gateway.inSetup.approval.wait();
 
     // Transactions emit a `status`
     await gateway.in.submit().on("status", console.log);

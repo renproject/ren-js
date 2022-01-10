@@ -39,9 +39,6 @@ export enum RPCMethod {
     // MethodQueryConfig returns the node configuration.
     QueryConfig = "ren_queryConfig",
 
-    // MethodQueryState returns the contract state.
-    QueryState = "ren_queryState",
-
     // MethodQueryBlockState returns the contract state.
     QueryBlockState = "ren_queryBlockState",
 }
@@ -237,11 +234,6 @@ export interface ParamsQueryConfig {
     // No parameters.
 }
 
-// ParamsQueryState defines the parameters of the MethodQueryState.
-export interface ParamsQueryState {
-    // No parameters.
-}
-
 // Responses ///////////////////////////////////////////////////////////////////
 
 // ResponseSubmitTx defines the response of the MethodSubmitTx.
@@ -310,35 +302,6 @@ export interface ResponseQueryConfig {
     whitelist: string[];
 }
 
-// ResponseQueryState defines the response of the MethodQueryState.
-export interface ResponseQueryState {
-    state: {
-        [chain: string]: {
-            address: string; // "muMT...";
-            gasCap: string; // "0";
-            gasLimit: string; // "400";
-            gasPrice: string; // "0";
-            latestChainHash: string; // "";
-            latestChainHeight: string; // "0";
-            minimumAmount: string; // "547";
-            pubKey: string; // "AqlA...";
-        } & {
-            // UTXO-based chains
-            output?: {
-                outpoint: {
-                    hash: string; // "";
-                    index: string; // "0";
-                };
-                pubKeyScript: string; // "";
-                value: string; // "0";
-            };
-        } & {
-            // Account-based chains
-            nonce?: string;
-        };
-    };
-}
-
 // /////////////////////////////////////////////////////////////////////////////
 
 export type RPCParams = {
@@ -349,7 +312,6 @@ export type RPCParams = {
     [RPCMethod.QueryBlock]: ParamsQueryBlock;
     [RPCMethod.QueryBlocks]: ParamsQueryBlocks;
     [RPCMethod.QueryConfig]: ParamsQueryConfig;
-    [RPCMethod.QueryState]: ParamsQueryState;
     [RPCMethod.QueryBlockState]: ParamsQueryBlockState;
 };
 
@@ -361,7 +323,6 @@ export type RPCResponses = {
     [RPCMethod.QueryBlock]: ResponseQueryBlock;
     [RPCMethod.QueryBlocks]: ResponseQueryBlocks;
     [RPCMethod.QueryConfig]: ResponseQueryConfig;
-    [RPCMethod.QueryState]: ResponseQueryState;
     [RPCMethod.QueryBlockState]: ResponseQueryBlockState;
 };
 

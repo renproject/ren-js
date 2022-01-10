@@ -85,7 +85,7 @@ export type EVMParamValues = {
 const isEVMParam = (value: any): value is EVMParam =>
     Object.values(EVMParam).indexOf(value) >= 0;
 
-export interface EVMPayload<Name extends string = string, T = any> {
+interface EVMPayloadInterface<Name extends string = string, T = any> {
     chain: string;
     txConfig?: PayableOverrides;
     type: Name;
@@ -167,7 +167,7 @@ const resolveEvmContractParams = async (
     };
 };
 
-export type EVMContractPayload = EVMPayload<
+export type EVMContractPayload = EVMPayloadInterface<
     "contract",
     {
         to: string;
@@ -259,7 +259,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         } catch (error: any) {
             throw ErrorWithCode.from(
                 new Error(
-                    `Error resolving parameters for contract-call : ${String(
+                    `Error resolving parameters for contract-call: ${String(
                         error.message,
                     )}`,
                 ),
@@ -596,7 +596,7 @@ const getContractFromAccount = async (
     }
 };
 
-export type EVMAddressPayload = EVMPayload<
+export type EVMAddressPayload = EVMPayloadInterface<
     "address",
     {
         address: string;
@@ -713,7 +713,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
     },
 };
 
-export type EVMApprovalPayload = EVMPayload<
+export type EVMApprovalPayload = EVMPayloadInterface<
     "approval",
     {
         token: string;
@@ -825,3 +825,8 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         );
     },
 };
+
+export type EVMPayload =
+    | EVMContractPayload
+    | EVMAddressPayload
+    | EVMApprovalPayload;

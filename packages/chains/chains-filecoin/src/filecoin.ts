@@ -101,6 +101,11 @@ export class Filecoin
 {
     public static chain = "Filecoin";
     public chain: string;
+    public nativeAsset: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
     public static assets = {
         FIL: "FIL",
     };
@@ -115,17 +120,18 @@ export class Filecoin
 
     public network: FilecoinNetworkConfig;
 
-    public feeAsset = "FIL";
-
-    public client: FilecoinClient | undefined;
+    public client: FilecoinClient;
     public clientOptions: FilecoinConfig;
 
     public filfox: Filfox | undefined;
 
-    public constructor(
-        network: RenNetwork | RenNetworkString | FilecoinNetworkConfig,
-        options: FilecoinConfig = {},
-    ) {
+    public constructor({
+        network,
+        options,
+    }: {
+        network: RenNetwork | RenNetworkString | FilecoinNetworkConfig;
+        options?: FilecoinConfig;
+    }) {
         const networkConfig = isFilecoinNetworkConfig(network)
             ? network
             : Filecoin.configMap[network];
@@ -139,7 +145,8 @@ export class Filecoin
 
         this.network = networkConfig;
         this.chain = this.network.selector;
-        this.clientOptions = options;
+        this.nativeAsset = this.network.nativeAsset;
+        this.clientOptions = options || {};
 
         this.client = new FilecoinClient(this.network.rpc);
 
@@ -174,7 +181,7 @@ export class Filecoin
      * See [[LockChain.isLockAsset]].
      */
     public isLockAsset(asset: string): boolean {
-        return asset === this.feeAsset;
+        return asset === this.nativeAsset.symbol;
     }
 
     private _assertAssetIsSupported(asset: string) {
@@ -188,7 +195,7 @@ export class Filecoin
      */
     public assetDecimals(asset: string): number {
         this._assertAssetIsSupported(asset);
-        return this.network.nativeAsset.decimals;
+        return this.nativeAsset.decimals;
     }
 
     public async watchForDeposits(
@@ -259,6 +266,8 @@ export class Filecoin
                                     ),
                                     txidFormatted: tx.cid,
                                     txindex: "0",
+
+                                    asset,
                                     amount: tx.amount,
                                 }),
                             ),
@@ -297,6 +306,8 @@ export class Filecoin
                             ),
                             txidFormatted: tx.cid,
                             txindex: "0",
+
+                            asset,
                             amount: tx.amount,
                         }),
                     ),
@@ -338,7 +349,7 @@ export class Filecoin
     }
 
     public isDepositAsset(asset: string): boolean {
-        return asset === this.network.nativeAsset.symbol;
+        return asset === this.nativeAsset.symbol;
     }
 
     public getBalance(
@@ -420,7 +431,7 @@ export class Filecoin
             payload: () => bytes,
         };
 
-        return encodeAddress(this.network.addressPrefix, addressObject);
+        return encodeAddress(this.network.addressPrefix, addressObject as any);
     }
 
     public formattedTransactionHash(tx: {

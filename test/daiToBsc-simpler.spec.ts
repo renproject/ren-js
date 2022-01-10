@@ -11,7 +11,7 @@ const network = RenNetwork.Testnet;
 
 /**
  * Same as daiToBsc except:
- * - calls `gateway.setup.approval` directly instead of looping through `setup`
+ * - calls `gateway.inSetup.approval` directly instead of looping through `setup`
  * - no retrying on errors
  * - less logs
  */
@@ -20,14 +20,14 @@ describe("RenJS Gateway Transaction", () => {
     it("DAI/toBinanceSmartChain - simpler", async function () {
         this.timeout(100000000000);
 
-        const ethereum = new Ethereum(
+        const ethereum = new Ethereum({
             network,
-            getEVMProvider(Ethereum, network),
-        );
-        const bsc = new BinanceSmartChain(
+            ...getEVMProvider(Ethereum, network),
+        });
+        const bsc = new BinanceSmartChain({
             network,
-            getEVMProvider(BinanceSmartChain, network),
-        );
+            ...getEVMProvider(BinanceSmartChain, network),
+        });
 
         const renJS = new RenJS(network).withChains(ethereum, bsc);
 
@@ -40,12 +40,12 @@ describe("RenJS Gateway Transaction", () => {
         console.log(chalk.cyan("gateway parameters"), gateway.params);
 
         console.log(chalk.cyan("calling setup.approval.submit()"));
-        await gateway.setup.approval.submit({
+        await gateway.inSetup.approval.submit({
             txConfig: {
                 gasLimit: 1000000,
             },
         });
-        await gateway.setup.approval.wait();
+        await gateway.inSetup.approval.wait();
 
         console.log(chalk.cyan("calling in.submit()"));
         await gateway.in.submit().on("status", console.log);

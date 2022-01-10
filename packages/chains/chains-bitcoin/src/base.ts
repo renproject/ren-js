@@ -35,8 +35,13 @@ export abstract class BitcoinBaseChain
             BitcoinReleasePayload
         >
 {
-    public static chain: string = "Bitcoin";
+    public static chain: string;
     public chain: string;
+    public nativeAsset: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
     public assets: { [asset: string]: string } = {};
 
     public static configMap: BitcoinNetworkConfigMap = {};
@@ -46,7 +51,7 @@ export abstract class BitcoinBaseChain
 
     public api = new CombinedAPI();
 
-    public constructor(network: BitcoinNetworkInput) {
+    public constructor({ network }: { network: BitcoinNetworkInput }) {
         const networkConfig = isBitcoinNetworkConfig(network)
             ? network
             : this.configMap[network];
@@ -59,6 +64,7 @@ export abstract class BitcoinBaseChain
         }
         this.network = networkConfig;
         this.chain = this.network.selector;
+        this.nativeAsset = this.network.nativeAsset;
         for (const provider of this.network.providers) {
             this.withAPI(provider);
         }
@@ -142,7 +148,7 @@ export abstract class BitcoinBaseChain
      * See [[LockChain.isLockAsset]].
      */
     public isLockAsset(asset: string): boolean {
-        return asset === this.network.nativeAsset.symbol;
+        return asset === this.nativeAsset.symbol;
     }
 
     public isDepositAsset(asset: string): boolean {
@@ -190,6 +196,8 @@ export abstract class BitcoinBaseChain
                     txid: utils.toURLBase64(utils.fromHex(tx.txid).reverse()),
                     txidFormatted: tx.txid,
                     txindex: tx.txindex,
+
+                    asset,
                     amount: tx.amount,
                 }),
             );
@@ -212,6 +220,8 @@ export abstract class BitcoinBaseChain
                         ),
                         txidFormatted: tx.txid,
                         txindex: tx.txindex,
+
+                        asset,
                         amount: tx.amount,
                     }),
                 );

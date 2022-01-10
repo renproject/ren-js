@@ -60,10 +60,9 @@ export type EthProvider =
       }
     | ExternalProvider
     | JsonRpcFetchFunc
-    | {
-          provider: Provider;
-          signer?: ethers.Signer;
-      };
+    | Provider;
+
+export type EthSigner = ethers.Signer;
 
 export interface EthereumClassConfig {
     logger?: Logger;

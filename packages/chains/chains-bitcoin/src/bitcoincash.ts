@@ -77,7 +77,12 @@ export class BitcoinCash extends BitcoinBaseChain {
         return toCashAddress(bs58.encode(bytes));
     }
 
-    public constructor(network: BitcoinNetworkInput) {
-        super(resolveBitcoinNetworkConfig(BitcoinCash.configMap, network));
+    public constructor({ network }: { network: BitcoinNetworkInput }) {
+        super({
+            network: resolveBitcoinNetworkConfig(
+                BitcoinCash.configMap,
+                network,
+            ),
+        });
     }
 }

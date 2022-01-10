@@ -14,7 +14,7 @@ import {
     Polygon,
 } from "@renproject/chains-ethereum/src";
 import { LogLevel, RenNetwork } from "@renproject/utils";
-import { SECONDS, sleep } from "@renproject/utils/src";
+import { utils } from "@renproject/utils/src";
 
 import RenJS from "../packages/ren/src";
 import { GatewayParams } from "../packages/ren/src/params";
@@ -30,10 +30,10 @@ describe.skip("RenJS Gateway Transaction", () => {
 
         const network = RenNetwork.Testnet;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const toClass = new Ethereum(
+        const toClass = new Ethereum({
             network,
-            getEVMProvider(Ethereum as any, network),
-        );
+            ...getEVMProvider(Ethereum as any, network),
+        });
 
         const throttles = {
             [Ethereum.chain]: throttle(1),
@@ -61,10 +61,10 @@ describe.skip("RenJS Gateway Transaction", () => {
             fromChains.map(async (From) => {
                 while (true) {
                     try {
-                        const fromClass = new From(
+                        const fromClass = new From({
                             network,
-                            getEVMProvider(From, network),
-                        );
+                            ...getEVMProvider(From, network),
+                        });
                         // const fromClass = new From("testnet");
 
                         const toAddress = await toClass.signer.getAddress();
@@ -100,8 +100,8 @@ describe.skip("RenJS Gateway Transaction", () => {
                                 .toFixed(),
                         );
 
-                        for (const setupKey of Object.keys(gateway.setup)) {
-                            const setup = gateway.setup[setupKey];
+                        for (const setupKey of Object.keys(gateway.inSetup)) {
+                            const setup = gateway.inSetup[setupKey];
                             await throttles[setup.chain](async () => {
                                 console.log(
                                     `[${printChain(
@@ -206,7 +206,9 @@ describe.skip("RenJS Gateway Transaction", () => {
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         } catch (error: any) {
                                             console.error(error);
-                                            await sleep(10 * SECONDS);
+                                            await utils.sleep(
+                                                10 * utils.sleep.SECONDS,
+                                            );
                                         }
                                     }
                                     await throttles[toClass.chain](async () => {

@@ -11,6 +11,14 @@ export enum RenJSError {
     NETWORK_ERROR = "NETWORK_ERROR",
 
     TRANSACTION_NOT_FOUND = "TRANSACTION_NOT_FOUND",
+
+    // Indicates that the RenVM transaction has returned with a Reverted status
+    // and a revert reason. A reverted transaction cannot be re-submitted.
+    RENVM_TRANSACTION_REVERTED = "RENVM_TRANSACTION_REVERTED",
+
+    // Indicates that the chain transaction reverted. It may be possible to
+    // resubmit the transaction.
+    CHAIN_TRANSACTION_REVERTED = "CHAIN_TRANSACTION_REVERTED",
 }
 
 /**

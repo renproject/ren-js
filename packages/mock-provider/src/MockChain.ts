@@ -14,33 +14,35 @@ export class MockChain extends BitcoinBaseChain {
 
     public constructor(chain: string, asset: string) {
         super({
-            label: chain,
-            selector: chain,
+            network: {
+                label: chain,
+                selector: chain,
 
-            nativeAsset: {
-                name: asset,
-                symbol: asset,
-                decimals: 8,
-            },
-
-            isTestnet: true,
-            p2shPrefix: Buffer.from([0xc4]),
-            explorer: {
-                url: "",
-                address: (_address: string) => "",
-                transaction: (_txid: string) => "",
-            },
-            providers: [
-                {
-                    fetchHeight: async () => Promise.resolve("6"),
-                    fetchUTXO: async (txid: string, txindex: string) =>
-                        this.fetchUTXO(txid, txindex),
-                    fetchUTXOs: async (address: string) =>
-                        this.fetchUTXOs(address),
-                    fetchTXs: async (address: string) =>
-                        this.fetchUTXOs(address),
+                nativeAsset: {
+                    name: asset,
+                    symbol: asset,
+                    decimals: 8,
                 },
-            ],
+
+                isTestnet: true,
+                p2shPrefix: Buffer.from([0xc4]),
+                explorer: {
+                    url: "",
+                    address: (_address: string) => "",
+                    transaction: (_txid: string) => "",
+                },
+                providers: [
+                    {
+                        fetchHeight: async () => Promise.resolve("6"),
+                        fetchUTXO: async (txid: string, txindex: string) =>
+                            this.fetchUTXO(txid, txindex),
+                        fetchUTXOs: async (address: string) =>
+                            this.fetchUTXOs(address),
+                        fetchTXs: async (address: string) =>
+                            this.fetchUTXOs(address),
+                    },
+                ],
+            },
         });
         this.mempool = [];
         this.chain = chain;

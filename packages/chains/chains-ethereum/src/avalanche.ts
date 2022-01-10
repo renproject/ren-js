@@ -4,6 +4,7 @@ import { EthereumBaseChain } from "./base";
 import {
     EthereumClassConfig,
     EthProvider,
+    EthSigner,
     EvmNetworkConfig,
     EvmNetworkInput,
 } from "./utils/types";
@@ -62,15 +63,22 @@ export class Avalanche extends EthereumBaseChain {
     };
     public assets = Avalanche.assets;
 
-    public constructor(
-        network: EvmNetworkInput,
-        web3Provider: EthProvider,
-        config: EthereumClassConfig = {},
-    ) {
-        super(
-            resolveEvmNetworkConfig(Avalanche.configMap, network),
-            web3Provider,
+    public constructor({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkInput;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }) {
+        super({
+            network: resolveEvmNetworkConfig(Avalanche.configMap, network),
+            provider,
+            signer,
             config,
-        );
+        });
     }
 }

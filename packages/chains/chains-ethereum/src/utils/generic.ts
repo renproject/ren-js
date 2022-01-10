@@ -27,13 +27,25 @@ import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
 import { EvmNetworkConfig } from "./types";
 
+export const txHashToChainTransaction = (
+    chain: string,
+    txHash: string,
+): ChainTransaction => ({
+    chain,
+    txidFormatted: txHash,
+    txid: utils.toURLBase64(utils.fromHex(txHash)),
+    txindex: "0",
+});
+
 export const mapBurnLogToInputChainTransaction = (
     chain: string,
+    asset: string,
     event: LogBurnEvent,
 ): InputChainTransaction => {
     const [to, amount, burnNonce] = event.args;
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
+        asset,
         amount: amount.toString(),
         toRecipient: to,
         nonce: utils.toURLBase64(utils.toNBytes(burnNonce.toString(), 32)),
@@ -42,6 +54,7 @@ export const mapBurnLogToInputChainTransaction = (
 
 export const mapLockLogToInputChainTransaction = (
     chain: string,
+    asset: string,
     event: LogLockToChainEvent,
 ): InputChainTransaction => {
     const [
@@ -57,6 +70,7 @@ export const mapLockLogToInputChainTransaction = (
     }
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
+        asset,
         amount: amount.toString(),
         nonce: utils.toURLBase64(nonceBuffer),
         toRecipient: recipientAddress,
@@ -67,11 +81,13 @@ export const mapLockLogToInputChainTransaction = (
 
 export const mapTransferLogToInputChainTransaction = (
     chain: string,
+    asset: string,
     event: LogTransferredEvent,
 ): InputChainTransaction => {
     const [_from, _to, amount] = event.args;
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
+        asset,
         amount: amount.toString(),
     };
 };
@@ -126,15 +142,6 @@ export const mapTransferLogToInputChainTransaction = (
  * The txindex for Ethereum is currently set to 0, and the nonce is used instead
  * to differentiate locks/burns in the same EVM transaction.
  */
-export const txHashToChainTransaction = (
-    chain: string,
-    txHash: string,
-): ChainTransaction => ({
-    chain,
-    txidFormatted: txHash,
-    txid: utils.toURLBase64(utils.fromHex(txHash)),
-    txindex: "0",
-});
 
 export const findMintBySigHash = async (
     network: EvmNetworkConfig,

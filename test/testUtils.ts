@@ -8,10 +8,10 @@ import SendCrypto from "send-crypto";
 import { RenNetwork } from "@renproject/utils";
 
 import {
-    EthereumBaseChain,
     EthProvider,
     EvmNetworkConfig,
 } from "../packages/chains/chains-ethereum/src";
+import { EthereumClassConfig, EthSigner } from "../packages/chains/chains/src";
 
 chai.should();
 
@@ -24,13 +24,26 @@ interface EVMConstructor<EVM> {
         [network in RenNetwork]?: EvmNetworkConfig;
     };
 
-    new (renNetwork: RenNetwork, web3Provider: EthProvider): EVM;
+    new ({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkConfig;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }): EVM;
 }
 
 export const getEVMProvider = <EVM>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
-): EthProvider => {
+): {
+    provider: EthProvider;
+    signer: EthSigner;
+} => {
     const urls = ChainClass.configMap[network].network.rpcUrls;
     let rpcUrl = urls[0];
     if (process.env.INFURA_KEY) {

@@ -137,20 +137,22 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 response?: RenVMTransactionWithStatus<Transaction>;
             }
         > => {
-            try {
-                await this.provider.submitTx(this.tx);
-            } catch (error) {
+            // Alternate trying to submit and trying to query.
+            let retries = 4;
+            let errorInner;
+            for (let i = 0; i < retries; i++) {
                 try {
-                    // Check if the darknodes have already seen the transaction
-                    await this.provider.queryTx(this._hash);
-
-                    // TODO: Set status based on result.
-
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (errorInner: any) {
-                    // Retry submitting to reduce chance of network issues
-                    // causing problems.
-                    await this.provider.submitTx(this.tx, 2);
+                    await this.provider.submitTx(this.tx, 1);
+                    break;
+                } catch (error) {
+                    errorInner = error;
+                }
+                try {
+                    await this.provider.queryTx(this._hash, 1);
+                    break;
+                } catch (error) {}
+                if (i === retries - 1) {
+                    throw errorInner;
                 }
             }
 
@@ -254,11 +256,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             }
 
             if (this.signatureCallback) {
-                try {
-                    this.signatureCallback(tx);
-                } catch (error) {
-                    // TODO: Handle error.
-                }
+                this.signatureCallback(tx);
             }
 
             return this.updateStatus({

@@ -4,6 +4,7 @@ import { EthereumBaseChain } from "./base";
 import {
     EthereumClassConfig,
     EthProvider,
+    EthSigner,
     EvmNetworkConfig,
     EvmNetworkInput,
 } from "./utils/types";
@@ -18,6 +19,7 @@ const polygonMainnetConfig: EvmNetworkConfig = {
         chainName: "Matic(Polygon) Mainnet",
         nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
         rpcUrls: [
+            "https://polygon-rpc.com",
             "https://rpc-mainnet.maticvigil.com",
             "https://rpc-mainnet.matic.network",
             "wss://ws-mainnet.matic.network",
@@ -71,15 +73,22 @@ export class Polygon extends EthereumBaseChain {
     };
     public assets = Polygon.assets;
 
-    public constructor(
-        network: EvmNetworkInput,
-        web3Provider: EthProvider,
-        config: EthereumClassConfig = {},
-    ) {
-        super(
-            resolveEvmNetworkConfig(Polygon.configMap, network),
-            web3Provider,
+    public constructor({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkInput;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }) {
+        super({
+            network: resolveEvmNetworkConfig(Polygon.configMap, network),
+            provider,
+            signer,
             config,
-        );
+        });
     }
 }

@@ -120,12 +120,11 @@ export class Gateway<
      */
     public gatewayAddress: string | undefined;
 
+    public inSetup: { [key: string]: TxSubmitter | TxWaiter } = {};
     public in:
         | TxSubmitter<ChainTransactionProgress, FromPayload["txConfig"]>
         | TxWaiter
         | undefined;
-
-    public setup: { [key: string]: TxSubmitter | TxWaiter } = {};
 
     /**
      * Deposits represents the lock deposits that have been detected so far.
@@ -154,38 +153,39 @@ export class Gateway<
 
     private _selector: string | undefined;
     public get selector(): string {
-        return this.getter("_selector") || this._selector;
+        return this._defaultGetter("_selector") || this._selector;
     }
 
     private _gHash: Buffer | undefined;
     public get gHash(): Buffer {
-        return this.getter("_gHash") || this._gHash;
+        return this._defaultGetter("_gHash") || this._gHash;
     }
 
     private _pHash: Buffer | undefined;
     public get pHash(): Buffer {
-        return this.getter("_pHash") || this._pHash;
+        return this._defaultGetter("_pHash") || this._pHash;
     }
 
     private _fees: GatewayFees | undefined;
     public get fees(): GatewayFees {
-        return this.getter("_fees") || this._fees;
+        return this._defaultGetter("_fees") || this._fees;
     }
 
     private _outputType: OutputType | undefined;
     public get outputType(): OutputType {
-        return this.getter("_outputType") || this._outputType;
+        return this._defaultGetter("_outputType") || this._outputType;
     }
 
     private _inputType: InputType | undefined;
     public get inputType(): InputType {
-        return this.getter("_inputType") || this._inputType;
+        return this._defaultGetter("_inputType") || this._inputType;
     }
 
     private _inConfirmationTarget: number | undefined;
     public get inConfirmationTarget(): number {
         return (
-            this.getter("_inConfirmationTarget") || this._inConfirmationTarget
+            this._defaultGetter("_inConfirmationTarget") ||
+            this._inConfirmationTarget
         );
     }
 
@@ -391,7 +391,7 @@ export class Gateway<
             }
 
             // Will fetch deposits as long as there's at least one subscription.
-            this.wait().catch(console.error);
+            this._watchForDeposits().catch(console.error);
         }
 
         if (isContractChain(this.fromChain)) {
@@ -464,10 +464,10 @@ export class Gateway<
             this.toChain,
         );
 
-        if (isContractChain(this.fromChain) && this.fromChain.getInputSetup) {
-            this.setup = {
-                ...this.setup,
-                ...(await this.fromChain.getInputSetup(
+        if (isContractChain(this.fromChain) && this.fromChain.getInSetup) {
+            this.inSetup = {
+                ...this.inSetup,
+                ...(await this.fromChain.getInSetup(
                     asset,
                     this.inputType,
                     from,
@@ -476,17 +476,6 @@ export class Gateway<
                         toPayload: payload,
                         gatewayAddress: this.gatewayAddress,
                     }),
-                )),
-            };
-        }
-
-        if (isContractChain(this.toChain) && this.toChain.getOutputSetup) {
-            this.setup = {
-                ...this.setup,
-                ...(await this.toChain.getOutputSetup(
-                    asset,
-                    this.outputType,
-                    to,
                 )),
             };
         }
@@ -622,7 +611,7 @@ export class Gateway<
 
     /** PRIVATE METHODS */
 
-    private getter(name: string) {
+    private _defaultGetter(name: string) {
         if (this[name] === undefined) {
             throw new Error(
                 `Must call 'initialize' before accessing '${name}'.`,
@@ -631,7 +620,7 @@ export class Gateway<
         return this[name];
     }
 
-    private async wait(): Promise<void> {
+    private async _watchForDeposits(): Promise<void> {
         if (
             !this.gatewayAddress ||
             !isDepositChain(this.fromChain) ||

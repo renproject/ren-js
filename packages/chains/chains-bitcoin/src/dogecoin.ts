@@ -60,7 +60,9 @@ export class Dogecoin extends BitcoinBaseChain {
     };
     public assets = Dogecoin.assets;
 
-    public constructor(network: BitcoinNetworkInput) {
-        super(resolveBitcoinNetworkConfig(Dogecoin.configMap, network));
+    public constructor({ network }: { network: BitcoinNetworkInput }) {
+        super({
+            network: resolveBitcoinNetworkConfig(Dogecoin.configMap, network),
+        });
     }
 }

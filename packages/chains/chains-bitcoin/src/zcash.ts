@@ -70,7 +70,9 @@ export class Zcash extends BitcoinBaseChain {
     };
     public assets = Zcash.assets;
 
-    public constructor(network: BitcoinNetworkInput) {
-        super(resolveBitcoinNetworkConfig(Zcash.configMap, network));
+    public constructor({ network }: { network: BitcoinNetworkInput }) {
+        super({
+            network: resolveBitcoinNetworkConfig(Zcash.configMap, network),
+        });
     }
 }

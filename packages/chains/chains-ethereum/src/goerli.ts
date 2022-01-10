@@ -4,6 +4,7 @@ import { EthereumBaseChain } from "./base";
 import {
     EthereumClassConfig,
     EthProvider,
+    EthSigner,
     EvmNetworkConfig,
     EvmNetworkInput,
 } from "./utils/types";
@@ -44,15 +45,22 @@ export class Goerli extends EthereumBaseChain {
     };
     public assets = Goerli.assets;
 
-    public constructor(
-        network: EvmNetworkInput,
-        web3Provider: EthProvider,
-        config: EthereumClassConfig = {},
-    ) {
-        super(
-            resolveEvmNetworkConfig(Goerli.configMap, network),
-            web3Provider,
+    public constructor({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkInput;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }) {
+        super({
+            network: resolveEvmNetworkConfig(Goerli.configMap, network),
+            provider,
+            signer,
             config,
-        );
+        });
     }
 }

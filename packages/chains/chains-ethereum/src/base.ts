@@ -65,6 +65,7 @@ import {
 import {
     EthereumClassConfig,
     EthProvider,
+    EthSigner,
     EvmNetworkConfig,
 } from "./utils/types";
 import { EvmExplorer, StandardEvmExplorer } from "./utils/utils";
@@ -72,59 +73,92 @@ import { EvmExplorer, StandardEvmExplorer } from "./utils/utils";
 export class EthereumBaseChain
     implements ContractChain<EVMPayload, EVMPayload>
 {
-    // DepositChain<ContractCall, ContractCall>
     public static chain = "Ethereum";
     public chain: string;
+
+    public nativeAsset: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
     public assets: { [asset: string]: string } = {};
 
     public provider: Web3Provider;
-    public signer: ethers.Signer | undefined;
+    public signer?: EthSigner;
     public network: EvmNetworkConfig;
     public explorer: EvmExplorer;
-    public logger: Logger;
 
-    public defaultTxConfig: ethers.PayableOverrides = {};
+    private _logger: Logger;
 
-    public async getRenAsset(asset_: string): Promise<string> {
-        return utils.memoize(
-            async (asset: string): Promise<string> =>
-                await getRenAsset(this.network, this.provider, asset),
-        )(asset_);
-    }
-    public async getMintGateway(asset_: string): Promise<string> {
-        return utils.memoize(
-            async (asset: string): Promise<string> =>
-                await getMintGateway(this.network, this.provider, asset),
-        )(asset_);
-    }
-    public async getLockAsset(asset_: string): Promise<string> {
-        return utils.memoize(
-            async (asset: string): Promise<string> =>
-                await getLockAsset(this.network, this.provider, asset),
-        )(asset_);
-    }
-    public async getLockGateway(asset_: string): Promise<string> {
-        return utils.memoize(
-            async (asset: string): Promise<string> =>
-                await getLockGateway(this.network, this.provider, asset),
-        )(asset_);
-    }
-
-    public constructor(
-        network: EvmNetworkConfig,
-        web3Provider: EthProvider,
-        config: EthereumClassConfig = {},
-    ) {
+    public constructor({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkConfig;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }) {
         this.network = network;
         this.chain = this.network.selector;
+        this.nativeAsset = this.network.network.nativeCurrency;
         this.explorer = StandardEvmExplorer(
             this.network.network.blockExplorerUrls[0],
         );
-        this.logger = config.logger || nullLogger;
+        this._logger = (config && config.logger) || nullLogger;
 
         // Ignore not configured error.
         this.provider = undefined as never;
-        this.withProvider(web3Provider);
+        this.withProvider(provider);
+        if (signer) {
+            this.withSigner(signer);
+        }
+    }
+
+    private _getMintAsset__memoized?: (asset: string) => Promise<string>;
+    public async getMintAsset(asset: string): Promise<string> {
+        this._getMintAsset__memoized =
+            this._getMintAsset__memoized ||
+            utils.memoize(
+                async (asset: string): Promise<string> =>
+                    await getRenAsset(this.network, this.provider, asset),
+            );
+        return this._getMintAsset__memoized(asset);
+    }
+
+    private _getMintGateway__memoized?: (asset: string) => Promise<string>;
+    public async getMintGateway(asset_: string): Promise<string> {
+        this._getMintGateway__memoized =
+            this._getMintGateway__memoized ||
+            utils.memoize(
+                async (asset: string): Promise<string> =>
+                    await getMintGateway(this.network, this.provider, asset),
+            );
+        return this._getMintGateway__memoized(asset_);
+    }
+
+    private _getLockAsset__memoized?: (asset: string) => Promise<string>;
+    public async getLockAsset(asset_: string): Promise<string> {
+        this._getLockAsset__memoized =
+            this._getLockAsset__memoized ||
+            utils.memoize(
+                async (asset: string): Promise<string> =>
+                    await getLockAsset(this.network, this.provider, asset),
+            );
+        return this._getLockAsset__memoized(asset_);
+    }
+
+    private _getLockGateway__memoized?: (asset: string) => Promise<string>;
+    public async getLockGateway(asset_: string): Promise<string> {
+        this._getLockGateway__memoized =
+            this._getLockGateway__memoized ||
+            utils.memoize(
+                async (asset: string): Promise<string> =>
+                    await getLockGateway(this.network, this.provider, asset),
+            );
+        return this._getLockGateway__memoized(asset_);
     }
 
     public validateAddress = validateAddress;
@@ -146,38 +180,38 @@ export class EthereumBaseChain
         );
     }
 
-    public withProvider(
-        web3Provider:
-            | EthProvider
-            | {
-                  signer: ethers.Signer;
-              },
-    ): this {
+    public withProvider(web3Provider: EthProvider): this {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((web3Provider as any).signer || (web3Provider as any).provider) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.provider = (web3Provider as any).provider || this.provider;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.signer = (web3Provider as any).signer || this.signer;
-            if (this.signer) {
-                try {
-                    this.signer.connect(this.provider);
-                } catch (error) {
-                    // Ignore - doesnt' work on all signers.
-                    // e.g. JsonRpc signer throws:
-                    // `cannot alter JSON-RPC Signer connection`.
-                }
-            }
+        this.provider = (web3Provider as any)._isProvider
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (web3Provider as any)
+            : new ethers.providers.Web3Provider(
+                  web3Provider as ExternalProvider | JsonRpcFetchFunc,
+              );
+        if (!this.signer) {
+            try {
+                this.signer = this.provider.getSigner();
+            } catch (error) {}
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const provider = (web3Provider as any)._isProvider
-                ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (web3Provider as any)
-                : new ethers.providers.Web3Provider(
-                      web3Provider as ExternalProvider | JsonRpcFetchFunc,
-                  );
-            this.provider = provider;
-            this.signer = provider.getSigner();
+            try {
+                this.signer.connect(this.provider);
+            } catch (error) {
+                // Ignore - doesnt' work on all signers.
+                // e.g. JsonRpc signer throws:
+                // `cannot alter JSON-RPC Signer connection`.
+            }
+        }
+        return this;
+    }
+
+    public withSigner(signer: EthSigner): this {
+        this.signer = signer;
+        try {
+            this.signer.connect(this.provider);
+        } catch (error) {
+            // Ignore - doesnt' work on all signers.
+            // e.g. JsonRpc signer throws:
+            // `cannot alter JSON-RPC Signer connection`.
         }
         return this;
     }
@@ -212,28 +246,34 @@ export class EthereumBaseChain
     // Supported assets
 
     /** Return true if the asset originates from the chain. */
-    public async isLockAsset(assetSymbol_: string): Promise<boolean> {
-        return utils.memoize(async (assetSymbol: string): Promise<boolean> => {
-            // Check if it in the list of hard-coded assets.
-            if (
-                Object.keys(this.assets).includes(assetSymbol) ||
-                assetSymbol === this.network.asset
-            ) {
-                return true;
-            }
 
-            // Check if the asset has an associated lock-gateway.
-            try {
-                if (await this.getLockAsset(assetSymbol)) {
+    private _isLockAsset__memoized?: (assetSymbol: string) => Promise<boolean>;
+    // Wrapper to expose _isLockAsset as a class method instead of a property
+    public async isLockAsset(assetSymbol_: string): Promise<boolean> {
+        this._isLockAsset__memoized =
+            this._isLockAsset__memoized ||
+            utils.memoize(async (assetSymbol: string): Promise<boolean> => {
+                // Check if it in the list of hard-coded assets.
+                if (
+                    Object.keys(this.assets).includes(assetSymbol) ||
+                    assetSymbol === this.network.asset
+                ) {
                     return true;
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                return false;
-            }
 
-            return false;
-        })(assetSymbol_);
+                // Check if the asset has an associated lock-gateway.
+                try {
+                    if (await this.getLockAsset(assetSymbol)) {
+                        return true;
+                    }
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any) {
+                    return false;
+                }
+
+                return false;
+            });
+        return this._isLockAsset__memoized(assetSymbol_);
     }
 
     public isDepositAsset(assetSymbol: string): boolean {
@@ -248,26 +288,30 @@ export class EthereumBaseChain
      * ethereum.assetIsSupported = asset => asset === "ETH";
      * ```
      */
+    private _isMintAsset__memoized?: (asset_: string) => Promise<boolean>;
     public async isMintAsset(asset_: string): Promise<boolean> {
-        return utils.memoize(async (asset: string): Promise<boolean> => {
-            // Check that there's a gateway contract for the asset.
-            try {
-                return (await this.getRenAsset(asset)) !== undefined;
-            } catch (error: unknown) {
-                if (
-                    error instanceof Error &&
-                    /(Empty address returned)|(Asset not supported on mint-chain)/.exec(
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                        String((error || {}).message),
-                    )
-                ) {
-                    // Ignore
-                } else {
-                    console.warn(error);
+        this._isMintAsset__memoized =
+            this._isMintAsset__memoized ||
+            utils.memoize(async (asset: string): Promise<boolean> => {
+                // Check that there's a gateway contract for the asset.
+                try {
+                    return (await this.getMintAsset(asset)) !== undefined;
+                } catch (error: unknown) {
+                    if (
+                        error instanceof Error &&
+                        /(Empty address returned)|(Asset not supported on mint-chain)/.exec(
+                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                            String((error || {}).message),
+                        )
+                    ) {
+                        // Ignore
+                    } else {
+                        console.warn(error);
+                    }
+                    return false;
                 }
-                return false;
-            }
-        })(asset_);
+            });
+        return this._isMintAsset__memoized(asset_);
     }
 
     /**
@@ -276,53 +320,57 @@ export class EthereumBaseChain
      * If the asset is not supported, an error should be thrown.
      *
      */
+    private _assetDecimals__memoized?: (asset_: string) => Promise<number>;
     public async assetDecimals(asset_: string): Promise<number> {
-        return utils.memoize(
-            async (asset: string): Promise<number> => {
-                // TODO: get lock asset decimals
+        this._assetDecimals__memoized =
+            this._assetDecimals__memoized ||
+            utils.memoize(
+                async (asset: string): Promise<number> => {
+                    // TODO: get lock asset decimals
 
-                if (asset === this.network.asset) {
-                    return this.network.network.nativeCurrency.decimals;
-                }
+                    if (asset === this.network.asset) {
+                        return this.nativeAsset.decimals;
+                    }
 
-                let tokenAddress: string;
-                if (await this.isLockAsset(asset)) {
-                    tokenAddress = await this.getLockAsset(asset);
-                } else if (await this.isMintAsset(asset)) {
-                    tokenAddress = await this.getRenAsset(asset);
-                } else {
-                    throw new Error(
-                        `Asset '${asset}' not supported on ${this.chain}.`,
+                    let tokenAddress: string;
+                    if (await this.isLockAsset(asset)) {
+                        tokenAddress = await this.getLockAsset(asset);
+                    } else if (await this.isMintAsset(asset)) {
+                        tokenAddress = await this.getMintAsset(asset);
+                    } else {
+                        throw new Error(
+                            `Asset '${asset}' not supported on ${this.chain}.`,
+                        );
+                    }
+
+                    const decimalsABI: AbiItem = {
+                        constant: true,
+                        inputs: [],
+                        name: "decimals",
+                        outputs: [
+                            {
+                                internalType: "uint256",
+                                name: "",
+                                type: "uint256",
+                            },
+                        ],
+                        payable: false,
+                        stateMutability: "view",
+                        type: "function",
+                    };
+
+                    const tokenContract = new ethers.Contract(
+                        tokenAddress,
+                        [decimalsABI],
+                        this.provider,
                     );
-                }
 
-                const decimalsABI: AbiItem = {
-                    constant: true,
-                    inputs: [],
-                    name: "decimals",
-                    outputs: [
-                        {
-                            internalType: "uint256",
-                            name: "",
-                            type: "uint256",
-                        },
-                    ],
-                    payable: false,
-                    stateMutability: "view",
-                    type: "function",
-                };
-
-                const tokenContract = new ethers.Contract(
-                    tokenAddress,
-                    [decimalsABI],
-                    this.provider,
-                );
-
-                const decimalsRaw = await tokenContract.decimals();
-                return new BigNumber(decimalsRaw.toString()).toNumber();
-            },
-            { expiry: false },
-        )(asset_);
+                    const decimalsRaw = await tokenContract.decimals();
+                    return new BigNumber(decimalsRaw.toString()).toNumber();
+                },
+                { expiry: false },
+            );
+        return this._assetDecimals__memoized(asset_);
     }
 
     public async transactionConfidence(
@@ -367,7 +415,9 @@ export class EthereumBaseChain
     ): Promise<BigNumber> {
         if (!address) {
             if (!this.signer) {
-                throw new Error(`Must connect signer or provider address.`);
+                throw new Error(
+                    `Must connect ${this.chain} signer or provider address.`,
+                );
             }
             address = address || (await this.signer.getAddress());
         }
@@ -402,7 +452,7 @@ export class EthereumBaseChain
 
         let tokenAddress;
         if (await this.isMintAsset(asset)) {
-            tokenAddress = await this.getRenAsset(asset);
+            tokenAddress = await this.getMintAsset(asset);
         } else if (await this.isLockAsset(asset)) {
             tokenAddress = await this.getLockAsset(asset);
         } else {
@@ -571,7 +621,7 @@ export class EthereumBaseChain
                 const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
                 filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
                     .map((e) =>
-                        mapBurnLogToInputChainTransaction(this.chain, e),
+                        mapBurnLogToInputChainTransaction(this.chain, asset, e),
                     )
                     .map(onInput);
             } else {
@@ -582,7 +632,9 @@ export class EthereumBaseChain
                 const lockEvents = filterLogs<LogLockToChainEvent>(
                     receipt.logs,
                     logLockABI,
-                ).map((e) => mapLockLogToInputChainTransaction(this.chain, e));
+                ).map((e) =>
+                    mapLockLogToInputChainTransaction(this.chain, asset, e),
+                );
                 lockEvents.map(onInput);
 
                 const logTransferredABI = findABIMethod(
@@ -593,7 +645,7 @@ export class EthereumBaseChain
                     receipt.logs,
                     logTransferredABI,
                 ).map((e) =>
-                    mapTransferLogToInputChainTransaction(this.chain, e),
+                    mapTransferLogToInputChainTransaction(this.chain, asset, e),
                 );
                 transferEvents.map(onInput);
 
@@ -617,7 +669,7 @@ export class EthereumBaseChain
         });
     }
 
-    public async getInputSetup(
+    public async getInSetup(
         asset: string,
         type: InputType,
         contractCall: EVMPayload,
@@ -664,10 +716,17 @@ export class EthereumBaseChain
         return txSubmitted;
     }
 
-    public async getOutputSetup(
+    public async getOutSetup(
         asset: string,
         type: OutputType,
         contractCall: EVMPayload,
+        getParams: () => {
+            pHash: Buffer;
+            nHash: Buffer;
+            amount?: BigNumber;
+            sigHash?: Buffer;
+            signature?: Buffer;
+        },
     ): Promise<{ [key: string]: EVMTxSubmitter }> {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
@@ -683,7 +742,7 @@ export class EthereumBaseChain
             this.network,
             this.signer,
             contractCall,
-            this.getEVMParams(asset, type, {}),
+            this.getEVMParams(asset, type, getParams()),
             this.getPayloadHandler,
         );
 
@@ -696,7 +755,7 @@ export class EthereumBaseChain
                 payload: calls[callKey],
                 target: 1,
                 getPayloadHandler: this.getPayloadHandler,
-                getParams: () => this.getEVMParams(asset, type, {}),
+                getParams: () => this.getEVMParams(asset, type, getParams()),
             });
         }
         return txSubmitted;
@@ -705,20 +764,14 @@ export class EthereumBaseChain
     private getPayloadHandler = (payloadType: string): PayloadHandler => {
         switch (payloadType) {
             case "approval":
-                return approvalPayloadHandler as PayloadHandler<
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    EVMPayload<string, any>
-                >;
+                return approvalPayloadHandler as PayloadHandler<// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                EVMPayload>;
             case "contract":
-                return contractPayloadHandler as PayloadHandler<
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    EVMPayload<string, any>
-                >;
+                return contractPayloadHandler as PayloadHandler<// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                EVMPayload>;
             case "address":
-                return accountPayloadHandler as PayloadHandler<
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    EVMPayload<string, any>
-                >;
+                return accountPayloadHandler as PayloadHandler<// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                EVMPayload>;
         }
 
         // TODO: Allow adding custom payload handlers.
@@ -786,7 +839,7 @@ export class EthereumBaseChain
                 if (type === InputType.Lock || type === OutputType.Release) {
                     return await this.getLockAsset(asset);
                 } else {
-                    return await this.getRenAsset(asset);
+                    return await this.getMintAsset(asset);
                 }
             },
             [EVMParam.EVM_TOKEN_DECIMALS]: async () =>

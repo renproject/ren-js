@@ -44,6 +44,7 @@ export const tryNTimes = async <T>(
             return await fnCall();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
+            // console.error(extractError(error));
             // Fix error message.
             const errorMessage = extractError(error);
             errorMessages.add(errorMessage);
@@ -113,10 +114,11 @@ export const padBuffer = (buffer: Buffer, n: number): Buffer => {
 /**
  * Convert a number to a Buffer of length `n`.
  */
-export const toNBytes = (
+export function toNBytes(
     input: BigNumber | Buffer | string | number,
     n: number,
-): Buffer => {
+    endian: "be" | "le" = "be",
+): Buffer {
     let buffer;
     if (Buffer.isBuffer(input)) {
         buffer = input;
@@ -130,7 +132,7 @@ export const toNBytes = (
 
     const bnVersion = new BN(
         BigNumber.isBigNumber(input) ? input.toFixed() : input,
-    ).toArrayLike(Buffer, "be", n);
+    ).toArrayLike(Buffer, endian, n);
     if (!buffer.equals(bnVersion) || buffer.length !== n) {
         throw new Error(
             `Failed to convert to ${String(n)}-length bytes - got ${String(
@@ -142,7 +144,14 @@ export const toNBytes = (
     }
 
     return buffer;
-};
+}
+
+export function fromBytes(
+    input: Buffer,
+    endian: "be" | "le" = "be",
+): BigNumber {
+    return new BigNumber(new BN(input, undefined, endian).toString());
+}
 
 /**
  * Cache the result of an asynchronous function, with a default expiry of 5

@@ -47,11 +47,11 @@
         "@glif/filecoin-rpc-client": "^1.1.0",
         "@renproject/provider": "^3.0.0-alpha.4",
         "@renproject/utils": "^3.0.0-alpha.4",
-        "@types/elliptic": "^6.4.12",
+        "@types/elliptic": "^6.4.14",
         "@types/node": ">=10",
-        "bignumber.js": "^9.0.1",
-        "blakejs": "^1.1.0",
-        "cids": "^1.1.6",
+        "bignumber.js": "^9.0.2",
+        "blakejs": "^1.1.1",
+        "cids": "^1.1.9",
         "elliptic": "^6.5.4"
     },
     "resolutions": {

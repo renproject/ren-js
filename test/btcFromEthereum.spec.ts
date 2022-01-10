@@ -3,7 +3,7 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
-import { RenNetwork, SECONDS, sleep } from "@renproject/utils/src";
+import { RenNetwork, utils } from "@renproject/utils/src";
 
 import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
@@ -21,11 +21,11 @@ describe("RenJS Gateway Transaction", () => {
         const network = RenNetwork.Testnet;
 
         const asset = Bitcoin.assets.BTC;
-        const ethereum = new Ethereum(
+        const ethereum = new Ethereum({
             network,
-            getEVMProvider(Ethereum, network),
-        );
-        const bitcoin = new Bitcoin(network);
+            ...getEVMProvider(Ethereum, network),
+        });
+        const bitcoin = new Bitcoin({ network });
 
         const renJS = new RenJS(network).withChains(bitcoin, ethereum);
 
@@ -42,8 +42,8 @@ describe("RenJS Gateway Transaction", () => {
                 .toFixed(),
         );
 
-        for (const setupKey of Object.keys(gateway.setup)) {
-            const setup = gateway.setup[setupKey];
+        for (const setupKey of Object.keys(gateway.inSetup)) {
+            const setup = gateway.inSetup[setupKey];
             console.log(
                 `[${printChain(gateway.params.from.chain)}⇢${printChain(
                     gateway.params.to.chain,
@@ -110,7 +110,7 @@ describe("RenJS Gateway Transaction", () => {
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         } catch (error: any) {
                             console.error(error);
-                            await sleep(10 * SECONDS);
+                            await utils.sleep(10 * utils.sleep.SECONDS);
                         }
                     }
                     console.log(

@@ -9,7 +9,9 @@ import {
     Chain,
     ChainTransaction,
     ChainTransactionProgress,
+    ChainTransactionStatus,
     DefaultTxWaiter,
+    ErrorWithCode,
     generateGHash,
     generateNHash,
     generatePHash,
@@ -19,6 +21,7 @@ import {
     isContractChain,
     isDepositChain,
     OutputType,
+    RenJSError,
     RenVMShard,
     TxStatus,
     TxSubmitter,
@@ -29,23 +32,6 @@ import {
 import { defaultRenJSConfig, RenJSConfig } from "./config";
 import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
-
-export enum TransactionStatus {
-    FetchingStatus = "fetching-status",
-    Detected = "detected",
-    Confirmed = "confirmed",
-    Signed = "signed",
-    Reverted = "reverted",
-    Submitted = "submitted",
-}
-
-export const TransactionStatusIndex = {
-    [TransactionStatus.Detected]: 0,
-    [TransactionStatus.Confirmed]: 1,
-    [TransactionStatus.Signed]: 2,
-    [TransactionStatus.Reverted]: 3,
-    [TransactionStatus.Submitted]: 4,
-};
 
 export interface TransactionParams<
     ToPayload extends { chain: string; txConfig?: any } = {
@@ -95,17 +81,6 @@ export class GatewayTransaction<
     public hash: string;
     public selector: string;
 
-    /**
-     * The status of the deposit, updated automatically. You can also call
-     * `fetchStatus` to re-fetch this.
-     *
-     * ```ts
-     * deposit.status;
-     * // > "signed"
-     * ```
-     */
-    public status: TransactionStatus;
-
     /** See [[RenJS.renVM]]. */
     public provider: RenVMProvider;
     public fromChain: Chain;
@@ -115,16 +90,14 @@ export class GatewayTransaction<
     public pHash: Buffer;
     public gHash: Buffer;
 
-    public outTransaction?: ChainTransaction;
-    public revertReason?: string;
-
     public _config: typeof defaultRenJSConfig & RenJSConfig;
 
     public in: TxSubmitter | TxWaiter;
+    public renVM: RenVMCrossChainTxSubmitter;
+    public outSetup: { [key: string]: TxSubmitter | TxWaiter } = {};
     public out:
         | TxSubmitter<ChainTransactionProgress, ToPayload["txConfig"]>
         | TxWaiter;
-    public renVM: RenVMCrossChainTxSubmitter;
 
     // Private
     private queryTxResult:
@@ -151,10 +124,6 @@ export class GatewayTransaction<
         };
         this.fromChain = fromChain;
         this.toChain = toChain;
-
-        // `processDeposit` will call `fetchStatus` which will set the proper
-        // status.
-        this.status = TransactionStatus.FetchingStatus;
 
         // Set hash to "" rather than undefined so that it's type is always
         // `string`. The hash will be set in `_initialize` which should be
@@ -237,22 +206,50 @@ export class GatewayTransaction<
             });
         }
 
+        const onSignatureReady = (
+            txWithStatus: RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
+        ) => {
+            this.queryTxResult = txWithStatus;
+            const { tx } = txWithStatus;
+            if (tx.out && tx.out.revert && tx.out.revert !== "") {
+                throw new ErrorWithCode(
+                    `RenVM transaction reverted: ${tx.out.revert}`,
+                    RenJSError.RENVM_TRANSACTION_REVERTED,
+                );
+            }
+
+            if (tx.out && tx.out.txid && tx.out.txid.length > 0) {
+                // The transaction has already been submitted by RenVM.
+                const txid = utils.toURLBase64(tx.out.txid);
+                const txindex = tx.out.txindex.toFixed();
+                (this.out as DefaultTxWaiter).setTransaction({
+                    chain: this.toChain.chain,
+                    txid,
+                    txindex,
+                    txidFormatted: this.toChain.formattedTransactionHash({
+                        txid,
+                        txindex,
+                    }),
+                });
+            }
+        };
+
         this.renVM = new RenVMCrossChainTxSubmitter(
             this.provider,
             this.selector,
             {
-                txid: utils.fromBase64(this.params.fromTx.txid), // Buffer;
-                txindex: new BigNumber(this.params.fromTx.txindex), // BigNumber;
-                amount: new BigNumber(this.params.fromTx.amount), // BigNumber;
-                payload: payload.payload, // Buffer;
-                phash: this.pHash, // Buffer;
-                to: payload.to, // string;
-                nonce: nonceBuffer, // Buffer;
-                nhash: this.nHash, // Buffer;
-                gpubkey: gPubKey, // Buffer;
-                ghash: this.gHash, // Buffer;
+                txid: utils.fromBase64(this.params.fromTx.txid),
+                txindex: new BigNumber(this.params.fromTx.txindex),
+                amount: new BigNumber(this.params.fromTx.amount),
+                payload: payload.payload,
+                phash: this.pHash,
+                to: payload.to,
+                nonce: nonceBuffer,
+                nhash: this.nHash,
+                gpubkey: gPubKey,
+                ghash: this.gHash,
             },
-            this.onSignatureReady,
+            onSignatureReady,
         );
         this.hash = this.renVM._hash;
 
@@ -260,7 +257,36 @@ export class GatewayTransaction<
             this.queryTxResult = status.response;
         });
 
-        // if (this.outputType === OutputType.Mint) {
+        const getOutputParams = () => ({
+            amount:
+                this.queryTxResult && this.queryTxResult.tx.out
+                    ? this.queryTxResult.tx.out.amount
+                    : undefined,
+            nHash: this.nHash,
+            sHash: utils.keccak256(Buffer.from(this.selector)),
+            pHash: this.pHash,
+            sigHash:
+                this.queryTxResult && this.queryTxResult.tx.out
+                    ? this.queryTxResult.tx.out.sighash
+                    : undefined,
+            signature:
+                this.queryTxResult && this.queryTxResult.tx.out
+                    ? this.queryTxResult.tx.out.sig
+                    : undefined,
+        });
+
+        if (isContractChain(this.toChain) && this.toChain.getOutSetup) {
+            this.outSetup = {
+                ...this.outSetup,
+                ...(await this.toChain.getOutSetup(
+                    asset,
+                    this.outputType,
+                    to,
+                    getOutputParams,
+                )),
+            };
+        }
+
         if (
             isDepositChain(this.toChain) &&
             (await this.toChain.isDepositAsset(this.params.asset))
@@ -274,23 +300,7 @@ export class GatewayTransaction<
                 this.outputType,
                 this.params.asset,
                 this.params.to,
-                () => ({
-                    amount:
-                        this.queryTxResult && this.queryTxResult.tx.out
-                            ? this.queryTxResult.tx.out.amount
-                            : undefined,
-                    nHash: this.nHash,
-                    sHash: utils.keccak256(Buffer.from(this.selector)),
-                    pHash: this.pHash,
-                    sigHash:
-                        this.queryTxResult && this.queryTxResult.tx.out
-                            ? this.queryTxResult.tx.out.sighash
-                            : undefined,
-                    signature:
-                        this.queryTxResult && this.queryTxResult.tx.out
-                            ? this.queryTxResult.tx.out.sig
-                            : undefined,
-                }),
+                getOutputParams,
                 1,
             );
         } else {
@@ -299,157 +309,4 @@ export class GatewayTransaction<
 
         return this;
     }
-
-    /**
-     * `queryTx` fetches the RenVM transaction details of the deposit.
-     *
-     * ```ts
-     * await deposit.queryTx();
-     * // > { to: "...", hash: "...", status: "done", in: {...}, out: {...} }
-     */
-    public queryTx = async (
-        retries = 2,
-    ): Promise<RenVMTransactionWithStatus<RenVMCrossChainTransaction>> => {
-        if (
-            this.queryTxResult &&
-            this.queryTxResult.txStatus === TxStatus.TxStatusDone
-        ) {
-            return this.queryTxResult;
-        }
-
-        const response = await this.provider.queryTx(this.hash, retries);
-        this.queryTxResult = response;
-
-        // Update status.
-        if (
-            response.tx.out &&
-            response.tx.out.revert &&
-            response.tx.out.revert.length > 0 &&
-            response.tx.out.sig &&
-            response.tx.out.sig.length > 0
-        ) {
-            this.onSignatureReady(response);
-        }
-
-        return response;
-    };
-
-    /**
-     * `fetchStatus` fetches the deposit's status on the mint-chain, RenVM
-     * and lock-chain to calculate it's [[TransactionStatus]].
-     *
-     * ```ts
-     * await deposit.fetchStatus();
-     * // > "signed"
-     * ```
-     */
-    public fetchStatus = async (
-        initializing?: boolean,
-    ): Promise<TransactionStatus> => {
-        const getStatus = async (): Promise<TransactionStatus> => {
-            let queryTxResult;
-
-            // Fetch sighash.
-            try {
-                queryTxResult = await this.queryTx(1);
-            } catch (_error) {
-                // Ignore error.
-                queryTxResult = null;
-            }
-
-            try {
-                // Check if the transaction has been submitted to the mint-chain.
-                const transaction = this.out && this.out.status;
-                if (transaction !== undefined) {
-                    return TransactionStatus.Submitted;
-                }
-            } catch (_error) {
-                // Ignore error.
-            }
-
-            try {
-                queryTxResult =
-                    queryTxResult === undefined
-                        ? await this.queryTx(1)
-                        : queryTxResult;
-                if (
-                    queryTxResult &&
-                    queryTxResult.txStatus === TxStatus.TxStatusDone
-                ) {
-                    // Check if transaction was reverted.
-                    if (
-                        queryTxResult.tx.out &&
-                        queryTxResult.tx.out.revert &&
-                        queryTxResult.tx.out.revert !== ""
-                    ) {
-                        this.status = TransactionStatus.Reverted;
-                        this.revertReason =
-                            queryTxResult.tx.out.revert.toString();
-                    } else {
-                        return TransactionStatus.Signed;
-                    }
-                }
-            } catch (_error) {
-                // Ignore error.
-            }
-
-            try {
-                if (
-                    utils.isDefined(this.in.status.confirmations) &&
-                    this.in.status.confirmations >= this.in.status.target
-                ) {
-                    return TransactionStatus.Confirmed;
-                }
-            } catch (_error) {
-                // Ignore error.
-            }
-
-            return TransactionStatus.Detected;
-        };
-        if (initializing) {
-            // TODO: Throw an error after a certain amount of retries, and
-            // update status accordingly.
-            while (true) {
-                try {
-                    this.status = await getStatus();
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any) {
-                    this._config.logger.error(error);
-                    await utils.sleep(this._config.networkDelay);
-                }
-            }
-        } else {
-            this.status = await getStatus();
-        }
-        return this.status;
-    };
-
-    private onSignatureReady = (
-        txWithStatus: RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
-    ) => {
-        this.queryTxResult = txWithStatus;
-        const { tx } = txWithStatus;
-        if (tx.out && tx.out.revert && tx.out.revert !== "") {
-            this.status = TransactionStatus.Reverted;
-            this.revertReason = tx.out.revert;
-            return;
-        }
-
-        this.status = TransactionStatus.Signed;
-
-        if (tx.out && tx.out.txid && tx.out.txid.length > 0) {
-            // The transaction has already been submitted by RenVM.
-            const txid = utils.toURLBase64(tx.out.txid);
-            const txindex = tx.out.txindex.toFixed();
-            (this.out as DefaultTxWaiter).setTransaction({
-                chain: this.toChain.chain,
-                txid,
-                txindex,
-                txidFormatted: this.toChain.formattedTransactionHash({
-                    txid,
-                    txindex,
-                }),
-            });
-        }
-    };
 }

@@ -4,6 +4,7 @@ import { EthereumBaseChain } from "./base";
 import {
     EthereumClassConfig,
     EthProvider,
+    EthSigner,
     EvmNetworkConfig,
     EvmNetworkInput,
 } from "./utils/types";
@@ -69,7 +70,7 @@ const ethereumDevnet: EvmNetworkConfig = {
  * The Ethereum RenJS implementation.
  */
 export class Ethereum extends EthereumBaseChain {
-    public static chain = "Ethereum";
+    public static chain = "Ethereum" as const;
 
     public static configMap: {
         [network in RenNetwork]?: EvmNetworkConfig;
@@ -107,15 +108,22 @@ export class Ethereum extends EthereumBaseChain {
      * @param web3Provider a Web3 or Ethers.js provider.
      * @param config pass optional configurations, e.g. a logger
      */
-    public constructor(
-        network: EvmNetworkInput,
-        web3Provider: EthProvider,
-        config: EthereumClassConfig = {},
-    ) {
-        super(
-            resolveEvmNetworkConfig(Ethereum.configMap, network),
-            web3Provider,
+    public constructor({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkInput;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }) {
+        super({
+            network: resolveEvmNetworkConfig(Ethereum.configMap, network),
+            provider,
+            signer,
             config,
-        );
+        });
     }
 }

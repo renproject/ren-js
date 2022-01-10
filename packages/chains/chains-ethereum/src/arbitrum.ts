@@ -4,6 +4,7 @@ import { EthereumBaseChain } from "./base";
 import {
     EthereumClassConfig,
     EthProvider,
+    EthSigner,
     EvmNetworkConfig,
     EvmNetworkInput,
 } from "./utils/types";
@@ -83,15 +84,22 @@ export class Arbitrum extends EthereumBaseChain {
     };
     public assets = Arbitrum.assets;
 
-    public constructor(
-        network: EvmNetworkInput,
-        web3Provider: EthProvider,
-        config: EthereumClassConfig = {},
-    ) {
-        super(
-            resolveEvmNetworkConfig(Arbitrum.configMap, network),
-            web3Provider,
+    public constructor({
+        network,
+        provider,
+        signer,
+        config,
+    }: {
+        network: EvmNetworkInput;
+        provider: EthProvider;
+        signer?: EthSigner;
+        config?: EthereumClassConfig;
+    }) {
+        super({
+            network: resolveEvmNetworkConfig(Arbitrum.configMap, network),
+            provider,
+            signer,
             config,
-        );
+        });
     }
 }

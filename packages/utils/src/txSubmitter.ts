@@ -36,36 +36,6 @@ export interface ChainTransactionProgress {
 export interface TxWaiter<
     Progress extends ChainTransactionProgress = ChainTransactionProgress,
 > {
-    chain: string;
-    status: Progress;
-    eventEmitter: EventEmitterTyped<{
-        status: [Progress];
-    }>;
-
-    submit?(params?: { overrides?: any[] }): PromiEvent<
-        Progress,
-        {
-            status: [Progress];
-        }
-    >;
-
-    wait(): PromiEvent<
-        Progress,
-        {
-            status: [Progress];
-        }
-    >;
-}
-
-/**
- * TxSubmitter is a standard interface across chains to allow for submitting
- * transactions and waiting for finality. The `wait` and `submit` methods
- * emit a "status" event which is standard across chains.
- */
-export interface TxSubmitter<
-    Progress extends ChainTransactionProgress = ChainTransactionProgress,
-    TxConfig extends any = {},
-> {
     // The name of the transaction's chain.
     chain: string;
 
@@ -81,8 +51,7 @@ export interface TxSubmitter<
     /**
      * Submit the transaction to the chain.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    submit(params?: { overrides?: any[]; txConfig?: TxConfig }): PromiEvent<
+    submit?(params?: { overrides?: any[] }): PromiEvent<
         Progress,
         {
             status: [Progress];
@@ -93,7 +62,28 @@ export interface TxSubmitter<
      * Wait for the required finality / number of confirmations.
      * The target can optionally be overridden.
      */
-    wait(target?: number): PromiEvent<
+    wait(targetOverride?: number): PromiEvent<
+        Progress,
+        {
+            status: [Progress];
+        }
+    >;
+}
+
+/**
+ * TxSubmitter is a standard interface across chains to allow for submitting
+ * transactions and waiting for finality. The `wait` and `submit` methods
+ * emit a "status" event which is standard across chains.
+ */
+export interface TxSubmitter<
+    Progress extends ChainTransactionProgress = ChainTransactionProgress,
+    TxConfig extends any = {},
+> extends TxWaiter<Progress> {
+    /**
+     * Submit the transaction to the chain.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    submit(params?: { overrides?: any[]; txConfig?: TxConfig }): PromiEvent<
         Progress,
         {
             status: [Progress];
@@ -108,7 +98,6 @@ export interface TxSubmitter<
 export class DefaultTxWaiter implements TxWaiter {
     private _chainTransaction?: ChainTransaction;
     private _chain: Chain;
-    private _target: number;
 
     public chain: string;
     public status: ChainTransactionProgress;
@@ -139,7 +128,6 @@ export class DefaultTxWaiter implements TxWaiter {
     }) {
         this._chainTransaction = chainTransaction;
         this._chain = chain;
-        this._target = target;
 
         this.chain = chain.chain;
         this.eventEmitter = eventEmitter();
@@ -178,7 +166,7 @@ export class DefaultTxWaiter implements TxWaiter {
                 throw new Error(`Must call ".submit" first.`);
             }
 
-            target = isDefined(target) ? target : this._target;
+            target = isDefined(target) ? target : this.status.target;
 
             let currentConfidenceRatio = -1;
             while (true) {

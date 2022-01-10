@@ -1,4 +1,4 @@
-import bech32 from "bech32";
+import { bech32 } from "bech32";
 import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
 
@@ -14,7 +14,12 @@ import {
     RenNetworkString,
     utils,
 } from "@renproject/utils";
-import { AccAddress, Key } from "@terra-money/terra.js";
+import {
+    AccAddress,
+    Key,
+    RawKey,
+    SimplePublicKey,
+} from "@terra-money/terra.js";
 
 import { TerraDev } from "./api/terraDev";
 import { isTerraNetworkConfig, TerraNetworkConfig } from "./api/types";
@@ -77,6 +82,11 @@ export class Terra
     public api: TerraDev;
 
     // The assets native to Terra.
+    public nativeAsset = {
+        name: "Luna",
+        symbol: "LUNA",
+        decimals: 6,
+    };
     public static assets = {
         LUNA: "LUNA",
     };
@@ -117,9 +127,11 @@ export class Terra
         return utils.fromBase64(tx.txid).toString("hex").toUpperCase();
     }
 
-    public constructor(
-        network: RenNetwork | RenNetworkString | TerraNetworkConfig,
-    ) {
+    public constructor({
+        network,
+    }: {
+        network: RenNetwork | RenNetworkString | TerraNetworkConfig;
+    }) {
         const networkConfig = isTerraNetworkConfig(network)
             ? network
             : TerraConfigMap[network];
@@ -208,6 +220,8 @@ export class Terra
                         txid: utils.toURLBase64(Buffer.from(tx.hash, "hex")),
                         txidFormatted: tx.hash.toUpperCase(),
                         txindex: "0",
+
+                        asset,
                         amount: tx.amount,
                     }),
                 ),
@@ -259,12 +273,15 @@ export class Terra
                 .add(gHashKey.getPublic()) as unknown as elliptic.ec.KeyPair,
         );
 
+        // 33-byte compressed public key.
         const newCompressedPublicKey: Buffer = Buffer.from(
             derivedPublicKey.getPublic().encodeCompressed(),
         );
 
-        // @ts-expect-error `Cannot create an instance of an abstract class`
-        const address: Key = new Key(newCompressedPublicKey);
+        // Create Terra key from compressed public key, to calculate address.
+        const address: Key = new (Key as {
+            new (publicKey: SimplePublicKey): Key;
+        })(new SimplePublicKey(newCompressedPublicKey.toString("base64")));
 
         return address.accAddress;
     }

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/rpc",
-    "version": "2.5.10-1",
+    "version": "2.5.10-2.5.11.0",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",

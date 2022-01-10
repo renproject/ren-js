@@ -1,7 +1,7 @@
 {
     "name": "test",
     "private": true,
-    "version": "2.5.10-1",
+    "version": "2.5.10-2.5.11.0",
     "scripts": {
         "describe": "npm-scripts-info",
         "prettier": "yarn fix:prettier",
@@ -24,12 +24,12 @@
         "build:module": "tsc -p tsconfig.module.json"
     },
     "dependencies": {
-        "@renproject/chains": "^2.5.10-1",
-        "@renproject/chains-terra": "^2.5.10-1",
+        "@renproject/chains": "^2.5.10-2.5.11.0",
+        "@renproject/chains-terra": "^2.5.10-2.5.11.0",
         "@renproject/interfaces": "^2.5.10-1",
         "@renproject/provider": "^2.5.10-1",
-        "@renproject/ren": "^2.5.10-1",
-        "@renproject/rpc": "^2.5.10-1",
+        "@renproject/ren": "^2.5.10-2.5.11.0",
+        "@renproject/rpc": "^2.5.10-2.5.11.0",
         "@renproject/utils": "^2.5.10-1",
         "@types/node": ">=10",
         "bignumber.js": "^9.0.1",

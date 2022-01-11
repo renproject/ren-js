@@ -25,11 +25,14 @@ const BitcoinCashMainnet: BitcoinNetworkConfig = {
     label: "Bitcoin Cash",
 
     selector: "BitcoinCash",
+
     nativeAsset: {
         name: "Bitcoin Cash",
         symbol: "BCH",
         decimals: 8,
     },
+    averageConfirmationTime: 60 * 10,
+
     explorer: StandardBitcoinExplorer("https://explorer.bitcoin.com/bch/"),
     p2shPrefix: Buffer.from([0x05]),
     providers: [
@@ -42,11 +45,14 @@ const BitcoinCashTestnet: BitcoinNetworkConfig = {
     label: "Bitcoin Cash Testnet",
 
     selector: "BitcoinCash",
+
     nativeAsset: {
         name: "Testnet Bitcoin Cash",
         symbol: "BCH",
         decimals: 8,
     },
+    averageConfirmationTime: 60 * 10,
+
     isTestnet: true,
     explorer: StandardBitcoinExplorer("https://explorer.bitcoin.com/tbch/"),
     p2shPrefix: Buffer.from([0xc4]),

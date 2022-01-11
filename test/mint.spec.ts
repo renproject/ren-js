@@ -112,7 +112,7 @@ describe.skip("RenJS Gateway Transaction", () => {
                                         setup.chain,
                                     )}`,
                                 );
-                                setup.eventEmitter.on("status", console.log);
+                                setup.eventEmitter.on("progress", console.log);
                                 return await setup.submit();
                             });
                         }
@@ -123,7 +123,7 @@ describe.skip("RenJS Gateway Transaction", () => {
                                     toClass.chain,
                                 )}]: Submitting to ${String(fromClass.chain)}`,
                             );
-                            gateway.in.eventEmitter.on("status", console.log);
+                            gateway.in.eventEmitter.on("progress", console.log);
                             await gateway.in.submit({
                                 txConfig: { gasLimit: 2000000 },
                             });
@@ -147,28 +147,21 @@ describe.skip("RenJS Gateway Transaction", () => {
                                             toClass.chain,
                                         )}]: RenVM hash: ${tx.hash}`,
                                     );
-                                    await tx.fetchStatus();
 
-                                    console.log(
-                                        `[${printChain(
-                                            fromClass.chain,
-                                        )}⇢${printChain(
-                                            toClass.chain,
-                                        )}][${tx.hash.slice(0, 6)}]: Status: ${
-                                            tx.status
-                                        }`,
-                                    );
-
-                                    tx.in.eventEmitter.on("status", (status) =>
-                                        console.log(
-                                            `[${printChain(
-                                                fromClass.chain,
-                                            )}⇢${printChain(
-                                                toClass.chain,
-                                            )}][${tx.hash.slice(0, 6)}]: ${
-                                                status.confirmations || 0
-                                            }/${status.target} confirmations`,
-                                        ),
+                                    tx.in.eventEmitter.on(
+                                        "progress",
+                                        (progress) =>
+                                            console.log(
+                                                `[${printChain(
+                                                    fromClass.chain,
+                                                )}⇢${printChain(
+                                                    toClass.chain,
+                                                )}][${tx.hash.slice(0, 6)}]: ${
+                                                    progress.confirmations || 0
+                                                }/${
+                                                    progress.target
+                                                } confirmations`,
+                                            ),
                                     );
 
                                     await tx.in.wait();
@@ -226,7 +219,7 @@ describe.skip("RenJS Gateway Transaction", () => {
                                         );
 
                                         tx.out.eventEmitter.on(
-                                            "status",
+                                            "progress",
                                             console.log,
                                         );
 

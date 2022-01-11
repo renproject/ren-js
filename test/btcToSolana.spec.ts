@@ -12,13 +12,13 @@ import { Solana } from "../packages/chains/chains-solana/src";
 import { renTestnet } from "../packages/chains/chains-solana/src/networks";
 import RenJS from "../packages/ren/src";
 import { RenNetwork } from "../packages/utils/src";
-import { getEVMProvider, printChain, sendFunds } from "./testUtils";
+import { printChain, sendFunds } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe("BTC/toSolana", () => {
     it.only("BTC/toSolana", async function () {
         this.timeout(100000000000);
 
@@ -62,7 +62,7 @@ describe("RenJS Gateway Transaction", () => {
                     gateway.toChain.chain,
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
-            setup.eventEmitter.on("status", console.log);
+            setup.eventEmitter.on("progress", console.log);
             await setup.submit();
         }
 

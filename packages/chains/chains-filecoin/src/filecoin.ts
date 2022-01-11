@@ -35,6 +35,7 @@ export interface FilecoinNetworkConfig {
         symbol: string;
         decimals: number;
     };
+    averageConfirmationTime: number;
     addressPrefix: string;
     explorer: string;
 
@@ -65,6 +66,8 @@ const FilecoinMainnet: FilecoinNetworkConfig = {
         decimals: 18,
     },
 
+    averageConfirmationTime: 30,
+
     addressPrefix: "f",
     explorer: "https://filfox.info/en/",
 
@@ -84,6 +87,8 @@ const FilecoinTestnet: FilecoinNetworkConfig = {
         decimals: 18,
     },
 
+    averageConfirmationTime: 30,
+
     addressPrefix: "t",
     explorer: "https://filfox.info/en/",
 
@@ -101,11 +106,6 @@ export class Filecoin
 {
     public static chain = "Filecoin";
     public chain: string;
-    public nativeAsset: {
-        name: string;
-        symbol: string;
-        decimals: number;
-    };
     public static assets = {
         FIL: "FIL",
     };
@@ -145,7 +145,6 @@ export class Filecoin
 
         this.network = networkConfig;
         this.chain = this.network.selector;
-        this.nativeAsset = this.network.nativeAsset;
         this.clientOptions = options || {};
 
         this.client = new FilecoinClient(this.network.rpc);
@@ -181,7 +180,7 @@ export class Filecoin
      * See [[LockChain.isLockAsset]].
      */
     public isLockAsset(asset: string): boolean {
-        return asset === this.nativeAsset.symbol;
+        return asset === this.network.nativeAsset.symbol;
     }
 
     private _assertAssetIsSupported(asset: string) {
@@ -195,7 +194,7 @@ export class Filecoin
      */
     public assetDecimals(asset: string): number {
         this._assertAssetIsSupported(asset);
-        return this.nativeAsset.decimals;
+        return this.network.nativeAsset.decimals;
     }
 
     public async watchForDeposits(
@@ -349,7 +348,7 @@ export class Filecoin
     }
 
     public isDepositAsset(asset: string): boolean {
-        return asset === this.nativeAsset.symbol;
+        return asset === this.network.nativeAsset.symbol;
     }
 
     public getBalance(

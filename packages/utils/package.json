@@ -46,11 +46,9 @@
         "@types/bn.js": "^5.1.0",
         "@types/events": "3.0.0",
         "@types/node": ">=10",
-        "axios": "^0.24.0",
         "bignumber.js": "^9.0.2",
         "bn.js": "^5.2.0",
         "create-hash": "1.2.0",
-        "ethereum-cryptography": "^0.2.0",
         "events": "^3.3.0",
         "immutable": "^4.0.0",
         "js-sha3": "^0.8.0"

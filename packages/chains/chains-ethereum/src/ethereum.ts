@@ -12,7 +12,9 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const ethereumMainnet: EvmNetworkConfig = {
     selector: "Ethereum",
-    asset: "ETH",
+
+    nativeAsset: { name: "Ether", symbol: "ETH", decimals: 18 },
+    averageConfirmationTime: 15,
 
     network: {
         chainId: "0x1",
@@ -35,8 +37,10 @@ const ethereumMainnet: EvmNetworkConfig = {
 
 const ethereumTestnet: EvmNetworkConfig = {
     selector: "Ethereum",
-    asset: "ETH",
     isTestnet: true,
+
+    nativeAsset: { name: "Kovan Ether", symbol: "ETH", decimals: 18 },
+    averageConfirmationTime: 15,
 
     network: {
         chainId: "0x2a",

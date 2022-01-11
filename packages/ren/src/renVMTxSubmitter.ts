@@ -50,7 +50,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         response: RenVMTransactionWithStatus<Transaction>,
     ) => void;
     public eventEmitter: EventEmitterTyped<{
-        status: [
+        progress: [
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
             },
@@ -61,8 +61,8 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         response?: RenVMTransactionWithStatus<Transaction>;
     };
 
-    private updateStatus = (
-        status: Partial<
+    private updateProgress = (
+        progress: Partial<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
             }
@@ -70,9 +70,9 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     ) => {
         this.progress = {
             ...this.progress,
-            ...status,
+            ...progress,
         };
-        this.eventEmitter.emit("status", this.progress);
+        this.eventEmitter.emit("progress", this.progress);
         return this.progress;
     };
 
@@ -112,7 +112,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             response?: RenVMTransactionWithStatus<Transaction>;
         },
         {
-            status: [
+            progress: [
                 ChainTransactionProgress & {
                     response?: RenVMTransactionWithStatus<Transaction>;
                 },
@@ -124,7 +124,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 response?: RenVMTransactionWithStatus<Transaction>;
             },
             {
-                status: [
+                progress: [
                     ChainTransactionProgress & {
                         response?: RenVMTransactionWithStatus<Transaction>;
                     },
@@ -156,7 +156,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 }
             }
 
-            return this.updateStatus({
+            return this.updateProgress({
                 status: ChainTransactionStatus.Confirming,
             });
 
@@ -178,7 +178,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             response?: RenVMTransactionWithStatus<Transaction>;
         },
         {
-            status: [
+            progress: [
                 ChainTransactionProgress & {
                     response?: RenVMTransactionWithStatus<Transaction>;
                 },
@@ -190,7 +190,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 response?: RenVMTransactionWithStatus<Transaction>;
             },
             {
-                status: [
+                progress: [
                     ChainTransactionProgress & {
                         response?: RenVMTransactionWithStatus<Transaction>;
                     },
@@ -217,7 +217,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                     ) {
                         try {
                             existingStatus = tx.txStatus;
-                            this.updateStatus({
+                            this.updateProgress({
                                 response: tx,
                                 status: ChainTransactionStatus.Done,
                             });
@@ -248,7 +248,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 maybeCrossChainTx.out.revert.length > 0
             ) {
                 const revertMessage = maybeCrossChainTx.out.revert;
-                this.updateStatus({
+                this.updateProgress({
                     status: ChainTransactionStatus.Reverted,
                     revertReason: revertMessage,
                 });
@@ -259,7 +259,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 this.signatureCallback(tx);
             }
 
-            return this.updateStatus({
+            return this.updateProgress({
                 response: tx,
                 status: ChainTransactionStatus.Done,
             });

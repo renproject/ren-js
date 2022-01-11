@@ -12,7 +12,9 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const polygonMainnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
-    asset: "MATIC",
+
+    nativeAsset: { name: "Matic", symbol: "MATIC", decimals: 18 },
+    averageConfirmationTime: 4,
 
     network: {
         chainId: "0x89",
@@ -38,8 +40,10 @@ const polygonMainnetConfig: EvmNetworkConfig = {
 
 const polygonTestnetConfig: EvmNetworkConfig = {
     selector: "Polygon",
-    asset: "MATIC",
     isTestnet: true,
+
+    nativeAsset: { name: "Testnet Matic", symbol: "MATIC", decimals: 18 },
+    averageConfirmationTime: 4,
 
     network: {
         chainId: "0x13881",

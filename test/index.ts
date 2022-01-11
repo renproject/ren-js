@@ -42,7 +42,7 @@ const main = async () => {
     await gateway.inSetup.approval.wait();
 
     // Transactions emit a `status`
-    await gateway.in.submit().on("status", console.log);
+    await gateway.in.submit().on("progress", console.log);
     await gateway.in.wait(1);
 
     await new Promise<void>((resolve, reject) => {
@@ -56,7 +56,7 @@ const main = async () => {
                 await tx.in.wait();
 
                 // RenVM transaction also follows the submit/wait pattern.
-                await tx.renVM.submit().on("status", console.log);
+                await tx.renVM.submit().on("progress", console.log);
                 await tx.renVM.wait();
 
                 // `submit` accepts a `txConfig` parameter for overriding
@@ -69,7 +69,7 @@ const main = async () => {
                 await tx.out.wait();
 
                 // All transactions return a `ChainTransaction` object in the
-                // status, with a `txid` field (base64) and a `txidFormatted`
+                // progress, with a `txid` field (base64) and a `txidFormatted`
                 // field (chain-dependent)
                 const outTx = tx.out.progress.transaction;
                 console.log("Done:", outTx.txidFormatted);

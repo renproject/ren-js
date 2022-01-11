@@ -23,6 +23,7 @@ export class MockChain extends BitcoinBaseChain {
                     symbol: asset,
                     decimals: 8,
                 },
+                averageConfirmationTime: 1,
 
                 isTestnet: true,
                 p2shPrefix: Buffer.from([0xc4]),

@@ -63,12 +63,10 @@ export class Solana
 {
     public static chain = "Solana" as const;
     public chain = Solana.chain;
-    public assets: { [asset: string]: string } = {};
-    public nativeAsset: {
-        name: string;
-        symbol: string;
-        decimals: number;
+    public static assets = {
+        SOL: "SOL",
     };
+    public assets: { [asset: string]: string } = {};
 
     public provider: Connection;
     public signer: Wallet | undefined;
@@ -97,7 +95,6 @@ export class Solana
         this.provider = provider;
         this.signer = signer;
         this.network = resolveNetwork(network);
-        this.nativeAsset = this.network.nativeAsset;
         this._logger = config?.logger || nullLogger;
     }
 
@@ -183,8 +180,8 @@ export class Solana
     };
 
     assetDecimals = async (asset: string) => {
-        if (asset === this.nativeAsset.symbol) {
-            return this.nativeAsset.decimals;
+        if (asset === this.network.nativeAsset.symbol) {
+            return this.network.nativeAsset.decimals;
         }
 
         const address = await this.getMintAsset(asset, { publicKey: true });
@@ -246,14 +243,14 @@ export class Solana
 
     async getLockAsset<ReturnPublicKey extends true | false = false>(
         _asset: string,
-        {}: { publicKey?: ReturnPublicKey } = {},
+        { publicKey: _publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
         throw new Error(`Solana does not currently support lock assets.`);
     }
 
     async getLockGateway<ReturnPublicKey extends true | false = false>(
         _asset: string,
-        {}: { publicKey?: ReturnPublicKey } = {},
+        { publicKey: _publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
         throw new Error(`Solana does not currently support lock assets.`);
     }
@@ -554,7 +551,7 @@ export class Solana
      */
     async getBalance(asset: string, address: string): Promise<BigNumber> {
         // TODO: Get native asset name from network config.
-        if (asset === this.nativeAsset.symbol) {
+        if (asset === this.network.nativeAsset.symbol) {
             return new BigNumber(
                 await this.provider.getBalance(new PublicKey(address)),
             );

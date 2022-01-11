@@ -21,6 +21,7 @@ const DigiByteMainnet: BitcoinNetworkConfig = {
         symbol: "DGB",
         decimals: 8,
     },
+    averageConfirmationTime: 15,
     explorer: StandardBitcoinExplorer("https://digiexplorer.info/"),
     p2shPrefix: Buffer.from([0x3f]),
     providers: [
@@ -43,6 +44,7 @@ const DigiByteTestnet: BitcoinNetworkConfig = {
         symbol: "DGB",
         decimals: 8,
     },
+    averageConfirmationTime: 15,
     isTestnet: true,
     explorer: StandardBitcoinExplorer(
         "`https://testnetexplorer.digibyteservers.io/",

@@ -9,6 +9,7 @@ export interface TerraNetworkConfig {
         symbol: string;
         decimals: number;
     };
+    averageConfirmationTime: number;
     explorer: string;
     apiUrl: string;
 }

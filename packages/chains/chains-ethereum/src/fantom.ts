@@ -12,7 +12,9 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const fantomMainnetConfig: EvmNetworkConfig = {
     selector: "Fantom",
-    asset: "FTM",
+
+    nativeAsset: { name: "Fantom", symbol: "FTM", decimals: 18 },
+    averageConfirmationTime: 1,
 
     network: {
         chainId: "0xfa",
@@ -30,7 +32,9 @@ const fantomMainnetConfig: EvmNetworkConfig = {
 
 const fantomTestnetConfig: EvmNetworkConfig = {
     selector: "Fantom",
-    asset: "FTM",
+
+    nativeAsset: { name: "Testnet Fantom", symbol: "FTM", decimals: 18 },
+    averageConfirmationTime: 1,
 
     network: {
         chainId: "0xfa2",

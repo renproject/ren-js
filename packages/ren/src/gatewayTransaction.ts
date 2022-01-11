@@ -253,7 +253,7 @@ export class GatewayTransaction<
         );
         this.hash = this.renVM._hash;
 
-        this.renVM.eventEmitter.on("status", (status) => {
+        this.renVM.eventEmitter.on("progress", (status) => {
             this.queryTxResult = status.response;
         });
 

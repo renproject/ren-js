@@ -13,6 +13,7 @@ export interface SolNetworkConfig {
         symbol: string;
         decimals: number;
     };
+    averageConfirmationTime: number;
 
     chainExplorer: string;
     endpoint: string;
@@ -60,6 +61,7 @@ export const renMainnet: SolNetworkConfig = {
         symbol: "SOL",
         decimals: 18,
     },
+    averageConfirmationTime: 0.5,
 
     endpoint: "https://ren.rpcpool.com/",
     chainExplorer: "https://explorer.solana.com",
@@ -76,11 +78,14 @@ export const renTestnet: SolNetworkConfig = {
     chain: "testnet",
     isTestnet: true,
     chainLabel: "Testnet",
+
     nativeAsset: {
         name: "Solana",
         symbol: "SOL",
         decimals: 18,
     },
+    averageConfirmationTime: 0.5,
+
     endpoint: "https://api.devnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
     lightnode: "https://lightnode-testnet.herokuapp.com",
@@ -96,11 +101,14 @@ export const renDevnet: SolNetworkConfig = {
     chain: "devnet",
     isTestnet: true,
     chainLabel: "Devnet",
+
     nativeAsset: {
         name: "Solana",
         symbol: "SOL",
         decimals: 18,
     },
+    averageConfirmationTime: 0.5,
+
     endpoint: "https://api.testnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
     lightnode: "https://lightnode-devnet.herokuapp.com",

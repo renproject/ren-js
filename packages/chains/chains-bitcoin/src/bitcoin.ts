@@ -24,6 +24,7 @@ const BitcoinMainnet: BitcoinNetworkConfig = {
         symbol: "BTC",
         decimals: 8,
     },
+    averageConfirmationTime: 60 * 10,
 
     explorer: StandardBitcoinExplorer("https://live.blockcypher.com/btc/"),
     p2shPrefix: Buffer.from([0x05]),
@@ -40,11 +41,14 @@ const BitcoinTestnet: BitcoinNetworkConfig = {
     label: "Bitcoin Testnet",
 
     selector: "Bitcoin",
+
     nativeAsset: {
         name: "Testnet Bitcoin",
         symbol: "BTC",
         decimals: 8,
     },
+    averageConfirmationTime: 60 * 10,
+
     isTestnet: true,
     explorer: StandardBitcoinExplorer(
         "https://live.blockcypher.com/btc-testnet/",

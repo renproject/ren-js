@@ -58,7 +58,7 @@ describe("RenJS Gateway Transaction", () => {
                     gateway.params.to.chain,
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
-            setup.eventEmitter.on("status", console.log);
+            setup.eventEmitter.on("progress", console.log);
             await setup.submit();
         }
 
@@ -70,7 +70,7 @@ describe("RenJS Gateway Transaction", () => {
             })}`,
         );
 
-        gateway.in.eventEmitter.on("status", console.log);
+        gateway.in.eventEmitter.on("progress", console.log);
         await gateway.in.submit({
             txConfig: {
                 gasLimit: 1000000,
@@ -87,15 +87,8 @@ describe("RenJS Gateway Transaction", () => {
                             ethereum.chain,
                         )}]: RenVM hash: ${tx.hash}`,
                     );
-                    await tx.fetchStatus();
 
-                    console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
-                        )}][${tx.hash.slice(0, 6)}]: Status: ${tx.status}`,
-                    );
-
-                    tx.in.eventEmitter.on("status", (status) =>
+                    tx.in.eventEmitter.on("progress", (status) =>
                         console.log(
                             `[${printChain(bsc.chain)}⇢${printChain(
                                 ethereum.chain,
@@ -127,7 +120,7 @@ describe("RenJS Gateway Transaction", () => {
                         )}`,
                     );
 
-                    tx.out.eventEmitter.on("status", console.log);
+                    tx.out.eventEmitter.on("progress", console.log);
 
                     if (tx.out.submit) {
                         await tx.out.submit({

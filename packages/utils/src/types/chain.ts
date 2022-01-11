@@ -67,10 +67,20 @@ export interface InputChainTransaction extends ChainTransaction {
 export interface ChainCommon {
     chain: string;
 
-    nativeAsset?: {
-        name: string;
-        symbol: string;
-        decimals: number;
+    /**
+     * Chains should store network-specific configuration in the `network`
+     * field.
+     */
+    network: {
+        /** The fee that fees are paid in. */
+        nativeAsset?: {
+            name: string;
+            symbol: string;
+            decimals: number;
+        };
+
+        /** The average number of seconds between blocks being produced. */
+        averageConfirmationTime?: number;
     };
 
     // Expose a map of assets supported by the chain. Note that the list may

@@ -12,7 +12,9 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const arbitrumMainnetConfig: EvmNetworkConfig = {
     selector: "Arbitrum",
-    asset: "ArbETH",
+
+    nativeAsset: { name: "Arbitrum Ether", symbol: "ArbETH", decimals: 18 },
+    averageConfirmationTime: 4,
 
     network: {
         chainId: "0xa4b1",
@@ -39,8 +41,14 @@ const arbitrumMainnetConfig: EvmNetworkConfig = {
 
 const arbitrumTestnetConfig: EvmNetworkConfig = {
     selector: "Arbitrum",
-    asset: "ArbETH",
     isTestnet: true,
+
+    nativeAsset: {
+        name: "Arbitrum Rinkeby Ether",
+        symbol: "ArbETH",
+        decimals: 18,
+    },
+    averageConfirmationTime: 4,
 
     network: {
         chainId: "0x66eeb",

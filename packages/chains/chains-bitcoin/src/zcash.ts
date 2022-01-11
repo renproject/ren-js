@@ -14,13 +14,15 @@ import { resolveBitcoinNetworkConfig, SoChainExplorer } from "./utils/utils";
 
 const ZcashMainnet: BitcoinNetworkConfig = {
     label: "Zcash",
-
     selector: "Zcash",
+
     nativeAsset: {
         name: "Zcash",
         symbol: "ZEC",
         decimals: 8,
     },
+    averageConfirmationTime: 75,
+
     explorer: SoChainExplorer("zcash", "ZEC"),
     p2shPrefix: Buffer.from([0x1c, 0xbd]),
     providers: [
@@ -36,7 +38,6 @@ const ZcashMainnet: BitcoinNetworkConfig = {
 
 const ZcashTestnet: BitcoinNetworkConfig = {
     label: "Zcash Testnet",
-
     selector: "Zcash",
 
     nativeAsset: {
@@ -44,6 +45,7 @@ const ZcashTestnet: BitcoinNetworkConfig = {
         symbol: "ZEC",
         decimals: 8,
     },
+    averageConfirmationTime: 75,
 
     isTestnet: true,
     explorer: SoChainExplorer("testnet/zcash", "ZECTEST"),

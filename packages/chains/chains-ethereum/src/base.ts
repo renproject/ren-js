@@ -20,6 +20,7 @@ import {
     nullLogger,
     OutputType,
     RenJSError,
+    RenNetwork,
     TxSubmitter,
     TxWaiter,
     utils,
@@ -76,12 +77,14 @@ export class EthereumBaseChain
     public static chain = "Ethereum";
     public chain: string;
 
-    public nativeAsset: {
-        name: string;
-        symbol: string;
-        decimals: number;
-    };
     public assets: { [asset: string]: string } = {};
+
+    public static configMap: {
+        [network in RenNetwork]?: EvmNetworkConfig;
+    } = {};
+    public configMap: {
+        [network in RenNetwork]?: EvmNetworkConfig;
+    } = {};
 
     public provider: Web3Provider;
     public signer?: EthSigner;
@@ -103,7 +106,6 @@ export class EthereumBaseChain
     }) {
         this.network = network;
         this.chain = this.network.selector;
-        this.nativeAsset = this.network.network.nativeCurrency;
         this.explorer = StandardEvmExplorer(
             this.network.network.blockExplorerUrls[0],
         );
@@ -256,7 +258,7 @@ export class EthereumBaseChain
                 // Check if it in the list of hard-coded assets.
                 if (
                     Object.keys(this.assets).includes(assetSymbol) ||
-                    assetSymbol === this.network.asset
+                    assetSymbol === this.network.nativeAsset.symbol
                 ) {
                     return true;
                 }
@@ -277,7 +279,7 @@ export class EthereumBaseChain
     }
 
     public isDepositAsset(assetSymbol: string): boolean {
-        return assetSymbol === this.network.asset;
+        return assetSymbol === this.network.nativeAsset.symbol;
     }
 
     /**
@@ -328,8 +330,8 @@ export class EthereumBaseChain
                 async (asset: string): Promise<number> => {
                     // TODO: get lock asset decimals
 
-                    if (asset === this.network.asset) {
-                        return this.nativeAsset.decimals;
+                    if (asset === this.network.nativeAsset.symbol) {
+                        return this.network.nativeAsset.decimals;
                     }
 
                     let tokenAddress: string;
@@ -422,7 +424,7 @@ export class EthereumBaseChain
             address = address || (await this.signer.getAddress());
         }
 
-        if (asset === this.network.asset) {
+        if (asset === this.network.nativeAsset.symbol) {
             return new BigNumber(
                 (await this.provider.getBalance(address)).toString(),
             );

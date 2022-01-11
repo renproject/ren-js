@@ -33,6 +33,7 @@ export const TerraMainnet: TerraNetworkConfig = {
         symbol: "LUNA",
         decimals: 18,
     },
+    averageConfirmationTime: 6,
 
     explorer: "https://finder.terra.money/columbus",
     apiUrl: "https://fcd.terra.dev",
@@ -47,6 +48,7 @@ export const TerraTestnet: TerraNetworkConfig = {
         symbol: "LUNA",
         decimals: 18,
     },
+    averageConfirmationTime: 6,
 
     explorer: "https://finder.terra.money/bombay",
     apiUrl: "https://bombay-fcd.terra.dev",
@@ -82,11 +84,6 @@ export class Terra
     public api: TerraDev;
 
     // The assets native to Terra.
-    public nativeAsset = {
-        name: "Luna",
-        symbol: "LUNA",
-        decimals: 6,
-    };
     public static assets = {
         LUNA: "LUNA",
     };

@@ -21,9 +21,24 @@ import {
     Polygon,
 } from "@renproject/chains-ethereum";
 import { Filecoin } from "@renproject/chains-filecoin";
+import { Solana } from "@renproject/chains-solana";
 import { Terra } from "@renproject/chains-terra";
 
-// import { Solana } from "@renproject/chains-solana";
+export { Arbitrum } from "@renproject/chains-ethereum";
+export { Avalanche } from "@renproject/chains-ethereum";
+export { BinanceSmartChain } from "@renproject/chains-ethereum";
+export { Bitcoin } from "@renproject/chains-bitcoin";
+export { BitcoinCash } from "@renproject/chains-bitcoin";
+export { DigiByte } from "@renproject/chains-bitcoin";
+export { Dogecoin } from "@renproject/chains-bitcoin";
+export { Ethereum } from "@renproject/chains-ethereum";
+export { Fantom } from "@renproject/chains-ethereum";
+export { Filecoin } from "@renproject/chains-filecoin";
+export { Goerli } from "@renproject/chains-ethereum";
+export { Polygon } from "@renproject/chains-ethereum";
+export { Solana } from "@renproject/chains-solana";
+export { Terra } from "@renproject/chains-terra";
+export { Zcash } from "@renproject/chains-bitcoin";
 
 export const chains = {
     Arbitrum,
@@ -38,7 +53,7 @@ export const chains = {
     Filecoin,
     Goerli,
     Polygon,
-    // Solana,
+    Solana,
     Terra,
     Zcash,
 };
@@ -68,6 +83,7 @@ export enum Asset {
     MIM = "MIM",
     REN = "REN",
     ROOK = "ROOK",
+    SOL = "SOL",
     SUSHI = "SUSHI",
     UNI = "UNI",
     USDC = "USDC",
@@ -94,7 +110,7 @@ export enum Chain {
     Filecoin = "Filecoin",
     Goerli = "Goerli",
     Polygon = "Polygon",
-    // Solana = "Solana",
+    Solana = "Solana",
     Terra = "Terra",
     Zcash = "Zcash",
 }

@@ -37,11 +37,6 @@ export abstract class BitcoinBaseChain
 {
     public static chain: string;
     public chain: string;
-    public nativeAsset: {
-        name: string;
-        symbol: string;
-        decimals: number;
-    };
     public assets: { [asset: string]: string } = {};
 
     public static configMap: BitcoinNetworkConfigMap = {};
@@ -64,7 +59,6 @@ export abstract class BitcoinBaseChain
         }
         this.network = networkConfig;
         this.chain = this.network.selector;
-        this.nativeAsset = this.network.nativeAsset;
         for (const provider of this.network.providers) {
             this.withAPI(provider);
         }
@@ -148,7 +142,7 @@ export abstract class BitcoinBaseChain
      * See [[LockChain.isLockAsset]].
      */
     public isLockAsset(asset: string): boolean {
-        return asset === this.nativeAsset.symbol;
+        return asset === this.network.nativeAsset.symbol;
     }
 
     public isDepositAsset(asset: string): boolean {

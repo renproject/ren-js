@@ -12,7 +12,13 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const bscMainnetConfig: EvmNetworkConfig = {
     selector: "BinanceSmartChain",
-    asset: "BNB",
+
+    nativeAsset: {
+        name: "Binance Coin",
+        symbol: "BNB",
+        decimals: 18,
+    },
+    averageConfirmationTime: 3,
 
     network: {
         chainId: "0x38",
@@ -49,8 +55,14 @@ const bscMainnetConfig: EvmNetworkConfig = {
 
 const bscTestnetConfig: EvmNetworkConfig = {
     selector: "BinanceSmartChain",
-    asset: "BNB",
     isTestnet: true,
+
+    nativeAsset: {
+        name: "Testnet Binance Coin",
+        symbol: "BNB",
+        decimals: 18,
+    },
+    averageConfirmationTime: 3,
 
     network: {
         chainId: "0x61",

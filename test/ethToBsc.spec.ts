@@ -54,7 +54,7 @@ describe("RenJS Gateway Transaction", () => {
                     gateway.params.to.chain,
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
-            setup.eventEmitter.on("status", console.log);
+            setup.eventEmitter.on("progress", console.log);
             await setup.submit();
         }
 
@@ -66,7 +66,7 @@ describe("RenJS Gateway Transaction", () => {
             })}`,
         );
 
-        gateway.in.eventEmitter.on("status", console.log);
+        gateway.in.eventEmitter.on("progress", console.log);
         await gateway.in.submit();
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
@@ -79,21 +79,14 @@ describe("RenJS Gateway Transaction", () => {
                             gateway.params.to.chain,
                         )}]: RenVM hash: ${tx.hash}`,
                     );
-                    await tx.fetchStatus();
 
-                    console.log(
-                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
-                            gateway.params.to.chain,
-                        )}][${tx.hash.slice(0, 6)}]: Status: ${tx.status}`,
-                    );
-
-                    tx.in.eventEmitter.on("status", (status) =>
+                    tx.in.eventEmitter.on("progress", (progress) =>
                         console.log(
                             `[${printChain(bsc.chain)}⇢${printChain(
                                 ethereum.chain,
                             )}][${tx.hash.slice(0, 6)}]: ${
-                                status.confirmations || 0
-                            }/${status.target} confirmations`,
+                                progress.confirmations || 0
+                            }/${progress.target} confirmations`,
                         ),
                     );
 
@@ -102,7 +95,7 @@ describe("RenJS Gateway Transaction", () => {
                     while (true) {
                         try {
                             console.log(`Submitting to RenVM`);
-                            tx.renVM.eventEmitter.on("status", console.log);
+                            tx.renVM.eventEmitter.on("progress", console.log);
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
@@ -123,7 +116,7 @@ describe("RenJS Gateway Transaction", () => {
                         )}`,
                     );
 
-                    tx.out.eventEmitter.on("status", console.log);
+                    tx.out.eventEmitter.on("progress", console.log);
 
                     if (tx.out.submit) {
                         await tx.out.submit();

@@ -12,7 +12,9 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const goerliConfig: EvmNetworkConfig = {
     selector: "Goerli",
-    asset: "gETH",
+
+    nativeAsset: { name: "Görli Ether", symbol: "gETH", decimals: 18 },
+    averageConfirmationTime: 15,
 
     network: {
         chainId: "0x5",

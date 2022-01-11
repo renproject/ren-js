@@ -11,12 +11,19 @@ export interface EvmNetworkConfig {
     selector: string;
     isTestnet?: boolean;
     logRequestLimit?: number;
-    asset: string;
 
     addresses: {
         GatewayRegistry: string;
         BasicBridge: string;
     };
+
+    // See EvmNetworkConfig.network.nativeCurrency
+    nativeAsset: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
+    averageConfirmationTime: number;
 
     // See https://eips.ethereum.org/EIPS/eip-3085
     network: {

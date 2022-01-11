@@ -19,6 +19,7 @@ const DogecoinMainnet: BitcoinNetworkConfig = {
         symbol: "DOGE",
         decimals: 8,
     },
+    averageConfirmationTime: 60,
     explorer: SoChainExplorer("doge", "DOGE"),
     p2shPrefix: Buffer.from([0x16]),
     providers: [
@@ -38,6 +39,7 @@ const DogecoinTestnet: BitcoinNetworkConfig = {
         symbol: "DOGE",
         decimals: 8,
     },
+    averageConfirmationTime: 60,
     isTestnet: true,
     explorer: SoChainExplorer("testnet/doge", "DOGETEST"),
     p2shPrefix: Buffer.from([0xc4]),

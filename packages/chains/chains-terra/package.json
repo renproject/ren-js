@@ -42,14 +42,13 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/provider": "^3.0.0-alpha.6",
         "@renproject/utils": "^3.0.0-alpha.6",
         "@terra-money/terra.js": "3.0.2",
         "@types/elliptic": "^6.4.14",
         "@types/node": ">=10",
+        "axios": "^0.24.0",
         "bech32": "^2.0.0",
         "bignumber.js": "^9.0.2",
-        "blakejs": "^1.1.1",
         "elliptic": "^6.5.4"
     },
     "resolutions": {

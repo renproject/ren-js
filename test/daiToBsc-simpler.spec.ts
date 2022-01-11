@@ -48,7 +48,7 @@ describe("RenJS Gateway Transaction", () => {
         await gateway.inSetup.approval.wait();
 
         console.log(chalk.cyan("calling in.submit()"));
-        await gateway.in.submit().on("status", console.log);
+        await gateway.in.submit().on("progress", console.log);
         await gateway.in.wait(1);
 
         await new Promise<void>((resolve, reject) => {
@@ -59,7 +59,7 @@ describe("RenJS Gateway Transaction", () => {
                     await tx.in.wait();
 
                     console.log(chalk.cyan("calling renVM.submit()"));
-                    await tx.renVM.submit().on("status", console.log);
+                    await tx.renVM.submit().on("progress", console.log);
                     await tx.renVM.wait();
 
                     console.log(chalk.cyan("calling out.submit()"));
@@ -69,7 +69,7 @@ describe("RenJS Gateway Transaction", () => {
                                 gasLimit: 1000000,
                             },
                         })
-                        .on("status", console.log);
+                        .on("progress", console.log);
                     await tx.out.wait();
 
                     console.log(

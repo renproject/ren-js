@@ -17,6 +17,7 @@ export interface BitcoinNetworkConfig {
         symbol: string;
         decimals: number;
     };
+    averageConfirmationTime: number;
 
     isTestnet?: boolean;
     p2shPrefix: Buffer;

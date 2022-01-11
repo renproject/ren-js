@@ -12,7 +12,9 @@ import { resolveEvmNetworkConfig } from "./utils/utils";
 
 const avalancheMainnetConfig: EvmNetworkConfig = {
     selector: "Avalanche",
-    asset: "AVAX",
+
+    nativeAsset: { name: "Avalanche", symbol: "AVAX", decimals: 18 },
+    averageConfirmationTime: 2,
 
     network: {
         chainId: "0xa86a",
@@ -29,8 +31,10 @@ const avalancheMainnetConfig: EvmNetworkConfig = {
 };
 const avalancheTestnetConfig: EvmNetworkConfig = {
     selector: "Avalanche",
-    asset: "AVAX",
     isTestnet: true,
+
+    nativeAsset: { name: "Testnet Avalanche", symbol: "AVAX", decimals: 18 },
+    averageConfirmationTime: 2,
 
     network: {
         chainId: "0xa869",

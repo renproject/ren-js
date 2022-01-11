@@ -28,17 +28,17 @@ See the [Releases page](https://github.com/renproject/ren-js/releases).
 
 ## Package list
 
--   [`ren`](./ren) - Javascript SDK for interacting with RenVM.
--   [`provider`](./provider) - JSON-RPC provider.
--   [`utils`](./utils) - Helper functions used by the other packages.
--   [`mock-provider`](./mock-provider) - For testing locally with Ganache/Hardhat
+-   [`ren`](./packages/ren) - Javascript SDK for interacting with RenVM.
+-   [`provider`](./packages/provider) - JSON-RPC provider.
+-   [`utils`](./packages/utils) - Helper functions used by the other packages.
+-   [`mock-provider`](./packages/mock-provider) - For testing locally with Ganache/Hardhat
 -   chains, for enabling support for blockchains and assets:
--   -   [`chains-bitcoin`](./chains/chains-bitcoin) - Bitcoin and Bitcoin forks
--   -   [`chains-ethereum`](./chains/chains-ethereum) - Ethereum and other EVM chains
--   -   [`chains-terra`](./chains/chains-terra) - Terra/LUNA
--   -   [`chains-filecoin`](./chains/chains-filecoin) - Filecoin
--   -   [`chains-solana`](./chains/chains-solana) - Solana
--   -   [`chains`](./chains/chains) - Combines all of the above chains into one package
+-   -   [`chains-bitcoin`](./packages/chains/chains-bitcoin) - Bitcoin and Bitcoin forks
+-   -   [`chains-ethereum`](./packages/chains/chains-ethereum) - Ethereum and other EVM chains
+-   -   [`chains-terra`](./packages/chains/chains-terra) - Terra/LUNA
+-   -   [`chains-filecoin`](./packages/chains/chains-filecoin) - Filecoin
+-   -   [`chains-solana`](./packages/chains/chains-solana) - Solana
+-   -   [`chains`](./packages/chains/chains) - Combines all of the above chains into one package
 
 <hr />
 

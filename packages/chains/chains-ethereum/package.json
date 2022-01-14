@@ -43,8 +43,8 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@ethersproject/abi": "^5.5.1",
-        "@ethersproject/bytes": "^5.5.1",
+        "@ethersproject/abi": "^5.5.0",
+        "@ethersproject/bytes": "^5.5.0",
         "@ethersproject/providers": "^5.5.1",
         "@renproject/utils": "^3.0.0-alpha.7",
         "@types/elliptic": "^6.4.14",

@@ -21,6 +21,7 @@ import {
     ParamsQueryBlockState,
     ResponseQueryBlockState,
 } from "@renproject/provider/build/main/methods/ren_queryBlockState";
+import { Provider } from "@renproject/provider/build/main/rpc/jsonRpc";
 import {
     Chain,
     decodeRenVMSelector,
@@ -36,7 +37,6 @@ import {
     utils,
 } from "@renproject/utils";
 
-import { Provider } from "../../provider/build/main/rpc/jsonRpc";
 import { MockChain } from "./MockChain";
 import { randomBytes } from "./utils";
 

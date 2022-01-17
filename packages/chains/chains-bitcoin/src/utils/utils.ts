@@ -13,7 +13,7 @@ export const validateAddress = (
     address: string,
     asset: string,
     network: string,
-) => {
+): boolean => {
     if (asset === "DGB") {
         const currency = {
             name: "digibyte",
@@ -39,7 +39,10 @@ export const StandardBitcoinExplorer = (
         `${baseUrl.replace(/\/$/, "")}/tx/${transaction || ""}`,
 });
 
-export const SoChainExplorer = (chainPath: string, chainId: string) => ({
+export const SoChainExplorer = (
+    chainPath: string,
+    chainId: string,
+): BitcoinNetworkConfig["explorer"] => ({
     url: `https://sochain.com/${chainPath}`,
     address: (address: string) =>
         `https://sochain.com/address/${chainId}/${address}`,

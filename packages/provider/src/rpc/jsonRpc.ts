@@ -124,7 +124,7 @@ export class HttpProvider<
                 );
             }
             return response.data.result;
-        } catch (error: any) {
+        } catch (error: unknown) {
             // Re-throw error to avoid internal axios stack-trace.
             throw new Error(utils.extractError(error));
         }

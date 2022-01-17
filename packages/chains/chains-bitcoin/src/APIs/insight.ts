@@ -20,17 +20,18 @@ export class Insight implements BitcoinAPI {
         this.url = url.replace(/\/$/, "");
     }
 
-    fetchHeight = async (): Promise<string> =>
-        (
+    public async fetchHeight(): Promise<string> {
+        return (
             await axios.get<{ height: number }>(`${this.url}/sync`, {
                 timeout: DEFAULT_TIMEOUT,
             })
         ).data.height.toString();
+    }
 
-    fetchUTXOs = async (
+    public async fetchUTXOs(
         address: string,
         confirmations: number = 0,
-    ): Promise<UTXO[]> => {
+    ): Promise<UTXO[]> {
         const url = `${this.url}/addr/${address}/utxo`;
         const response = await axios.get<FetchUTXOResult>(url, {
             // TODO: Remove when certificate is fixed.
@@ -81,9 +82,9 @@ export class Insight implements BitcoinAPI {
                     ),
             )
         ).sort(sortUTXOs);
-    };
+    }
 
-    fetchTXs = async (address: string): Promise<UTXO[]> => {
+    public async fetchTXs(address: string): Promise<UTXO[]> {
         const url = `${this.url}/txs/?address=${address}`;
         const response = await axios.get<FetchTXsResult>(url, {
             // TODO: Remove when certificate is fixed.
@@ -118,9 +119,9 @@ export class Insight implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    };
+    }
 
-    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.url}/tx/${txid}`;
         const tx = (
             await axios.get<TxResponse>(url, { timeout: DEFAULT_TIMEOUT })
@@ -137,9 +138,9 @@ export class Insight implements BitcoinAPI {
             },
             8,
         );
-    };
+    }
 
-    broadcastTransaction = async (txHex: string): Promise<string> => {
+    public async broadcastTransaction(txHex: string): Promise<string> {
         const url = `${this.url}/tx/send`;
         const response = await axios.post<{
             error: string | null;
@@ -150,7 +151,7 @@ export class Insight implements BitcoinAPI {
             throw new Error(response.data.error);
         }
         return response.data.txid;
-    };
+    }
 }
 
 export interface ScriptSig {

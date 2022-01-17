@@ -19,6 +19,9 @@ export enum RenJSError {
     // Indicates that the chain transaction reverted. It may be possible to
     // resubmit the transaction.
     CHAIN_TRANSACTION_REVERTED = "CHAIN_TRANSACTION_REVERTED",
+
+    // Indicates that submitting the gateway details failed.
+    GATEWAY_SUBMISSION_FAILED = "GATEWAY_SUBMISSION_FAILED",
 }
 
 /**
@@ -42,6 +45,7 @@ export class ErrorWithCode extends Error {
      * Add an error code to an existing Error instance.
      */
     public static from = (error: Error, code: string): ErrorWithCode => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (error as any).code = code;
         return error as ErrorWithCode;
     };

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * Takes a pack primitive value (bool, uint, string or bytes) and convert it to
  * its corresponding JavaScript value (bool, BigNumber, string or Buffer).
@@ -76,10 +78,8 @@ export const unmarshalPackStruct = (
 /**
  * Unmarshals a pack list.
  */
-export const unmarshalPackList = <T extends unknown>(
-    type: PackListType,
-    value: T[],
-): T[] => value.map((element) => unmarshalPackValue(type.list, element));
+export const unmarshalPackList = <T>(type: PackListType, value: T[]): T[] =>
+    value.map((element) => unmarshalPackValue(type.list, element));
 
 /**
  * Converts the passed-in value to its corresponding JavaScript value based on

@@ -1,8 +1,8 @@
 import { RenNetwork } from "@renproject/utils";
 
-import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
+import { Blockchair } from "./APIs/blockchair";
 import { Blockstream } from "./APIs/blockstream";
-import { SoChain, SoChainNetwork } from "./APIs/sochain";
+import { SoChain } from "./APIs/sochain";
 import { BitcoinBaseChain } from "./base";
 import {
     BitcoinNetworkConfig,

@@ -15,7 +15,7 @@ chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe("ETH/toBinanceSmartChain", () => {
     it("ETH/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -35,15 +35,14 @@ describe("RenJS Gateway Transaction", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 0.01, convertToWei: true }),
+            from: ethereum.Account({ amount: 0.011, convertToWei: true }),
             to: bsc.Account(),
         });
 
+        const balance = await ethereum.getBalance(gateway.params.asset);
         console.log(
             `${gateway.params.asset} balance on ${gateway.params.from.chain}`,
-            (await bsc.getBalance(gateway.params.asset))
-                .shiftedBy(-18)
-                .toFixed(),
+            balance.shiftedBy(-18).toFixed(),
         );
 
         // Check what set-up calls need to be made
@@ -58,16 +57,27 @@ describe("RenJS Gateway Transaction", () => {
             await setup.submit();
         }
 
+        const minimumAmount = gateway.fees.minimumAmount.shiftedBy(
+            -(await ethereum.assetDecimals(asset)),
+        );
+
+        if (balance.lt(gateway.fees.minimumAmount)) {
+            throw new Error(
+                `Insufficient balance. Account: ${await ethereum.signer.getAddress()}`,
+            );
+        }
+
         console.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
             )}]: Submitting to ${printChain(gateway.params.to.chain, {
                 pad: false,
-            })}`,
+            })} - locking ${minimumAmount.toFixed()} ${asset}`,
         );
 
         gateway.in.eventEmitter.on("progress", console.log);
         await gateway.in.submit();
+
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
 

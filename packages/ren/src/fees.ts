@@ -113,7 +113,7 @@ export const estimateTransactionFee = async (
         .decimalPlaces(0);
 
     const estimateOutput = (input: BigNumber | string | number): BigNumber => {
-        let inputBN = new BigNumber(input);
+        const inputBN = new BigNumber(input);
 
         if (inputBN.isLessThan(minimumAmount)) {
             return new BigNumber(0);

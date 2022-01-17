@@ -6,6 +6,7 @@ import { Web3PromiEvent } from "../libraries/promiEvent";
 
 /** Interface for EventEmitter with well-typed events. */
 export class EventEmitterTyped<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     EventTypes extends { [event: string]: any[] } = {},
 > {
     // @ts-ignore no initializer because of proxyHandler

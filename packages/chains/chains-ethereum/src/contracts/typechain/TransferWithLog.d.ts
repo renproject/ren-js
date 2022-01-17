@@ -2,128 +2,130 @@
 /* tslint:disable */
 /* eslint-disable */
 import {
-  BaseContract,
-  BigNumber,
-  BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+    BaseContract,
+    BigNumber,
+    BytesLike,
+    CallOverrides,
+    ContractTransaction,
+    PayableOverrides,
+    PopulatedTransaction,
+    Signer,
+    utils,
 } from "ethers";
-import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
+
+import { EventFragment, FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
-import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
+
+import { OnEvent, TypedEvent, TypedEventFilter, TypedListener } from "./common";
 
 export interface TransferWithLogInterface extends utils.Interface {
-  functions: {
-    "NAME()": FunctionFragment;
-    "transferWithLog(address)": FunctionFragment;
-  };
+    functions: {
+        "NAME()": FunctionFragment;
+        "transferWithLog(address)": FunctionFragment;
+    };
 
-  encodeFunctionData(functionFragment: "NAME", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "transferWithLog",
-    values: [string]
-  ): string;
+    encodeFunctionData(functionFragment: "NAME", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "transferWithLog",
+        values: [string],
+    ): string;
 
-  decodeFunctionResult(functionFragment: "NAME", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "transferWithLog",
-    data: BytesLike
-  ): Result;
+    decodeFunctionResult(functionFragment: "NAME", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "transferWithLog",
+        data: BytesLike,
+    ): Result;
 
-  events: {
-    "LogTransferred(address,address,uint256)": EventFragment;
-  };
+    events: {
+        "LogTransferred(address,address,uint256)": EventFragment;
+    };
 
-  getEvent(nameOrSignatureOrTopic: "LogTransferred"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "LogTransferred"): EventFragment;
 }
 
 export type LogTransferredEvent = TypedEvent<
-  [string, string, BigNumber],
-  { from: string; to: string; amount: BigNumber }
+    [string, string, BigNumber],
+    { from: string; to: string; amount: BigNumber }
 >;
 
 export type LogTransferredEventFilter = TypedEventFilter<LogTransferredEvent>;
 
 export interface TransferWithLog extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+    connect(signerOrProvider: Signer | Provider | string): this;
+    attach(addressOrName: string): this;
+    deployed(): Promise<this>;
 
-  interface: TransferWithLogInterface;
+    interface: TransferWithLogInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
+        fromBlockOrBlockhash?: string | number | undefined,
+        toBlock?: string | number | undefined,
+    ): Promise<Array<TEvent>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>,
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>,
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
-  functions: {
-    NAME(overrides?: CallOverrides): Promise<[string]>;
+    functions: {
+        NAME(overrides?: CallOverrides): Promise<[string]>;
 
-    transferWithLog(
-      to: string,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-  };
+        transferWithLog(
+            to: string,
+            overrides?: PayableOverrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+    };
 
-  NAME(overrides?: CallOverrides): Promise<string>;
-
-  transferWithLog(
-    to: string,
-    overrides?: PayableOverrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
     NAME(overrides?: CallOverrides): Promise<string>;
 
-    transferWithLog(to: string, overrides?: CallOverrides): Promise<void>;
-  };
-
-  filters: {
-    "LogTransferred(address,address,uint256)"(
-      from?: string | null,
-      to?: string | null,
-      amount?: null
-    ): LogTransferredEventFilter;
-    LogTransferred(
-      from?: string | null,
-      to?: string | null,
-      amount?: null
-    ): LogTransferredEventFilter;
-  };
-
-  estimateGas: {
-    NAME(overrides?: CallOverrides): Promise<BigNumber>;
-
     transferWithLog(
-      to: string,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-  };
+        to: string,
+        overrides?: PayableOverrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
-  populateTransaction: {
-    NAME(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    callStatic: {
+        NAME(overrides?: CallOverrides): Promise<string>;
 
-    transferWithLog(
-      to: string,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+        transferWithLog(to: string, overrides?: CallOverrides): Promise<void>;
+    };
+
+    filters: {
+        "LogTransferred(address,address,uint256)"(
+            from?: string | null,
+            to?: string | null,
+            amount?: null,
+        ): LogTransferredEventFilter;
+        LogTransferred(
+            from?: string | null,
+            to?: string | null,
+            amount?: null,
+        ): LogTransferredEventFilter;
+    };
+
+    estimateGas: {
+        NAME(overrides?: CallOverrides): Promise<BigNumber>;
+
+        transferWithLog(
+            to: string,
+            overrides?: PayableOverrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+    };
+
+    populateTransaction: {
+        NAME(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        transferWithLog(
+            to: string,
+            overrides?: PayableOverrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+    };
 }

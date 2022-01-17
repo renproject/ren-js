@@ -4,6 +4,7 @@ import CID from "cids";
 import elliptic from "elliptic";
 
 import {
+    Address,
     decode as decodeAddress,
     encode as encodeAddress,
     validateAddressString,
@@ -257,7 +258,7 @@ export class Filecoin
                         );
 
                         await Promise.all(
-                            (deposits || []).map(async (tx) =>
+                            (deposits || []).map((tx) =>
                                 onInput({
                                     chain: this.chain,
                                     txid: utils.toURLBase64(
@@ -281,8 +282,7 @@ export class Filecoin
                         await utils.sleep(10 * utils.sleep.SECONDS);
                     }
                     fetched = true;
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any) {
+                } catch (error) {
                     // Ignore error.
                 }
             }
@@ -297,7 +297,7 @@ export class Filecoin
                 );
 
                 await Promise.all(
-                    (txs || []).map(async (tx) =>
+                    (txs || []).map((tx) =>
                         onInput({
                             chain: this.chain,
                             txid: utils.toURLBase64(
@@ -430,7 +430,10 @@ export class Filecoin
             payload: () => bytes,
         };
 
-        return encodeAddress(this.network.addressPrefix, addressObject as any);
+        return encodeAddress(
+            this.network.addressPrefix,
+            addressObject as unknown as Address,
+        );
     }
 
     public formattedTransactionHash(tx: {

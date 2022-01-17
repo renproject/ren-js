@@ -235,6 +235,7 @@ export class Gateway<
                 fromChain: this.fromChain,
                 toChain: this.toChain,
             });
+
         this._inputType = inputType;
         this._outputType = outputType;
         this._selector = selector;
@@ -353,12 +354,43 @@ export class Gateway<
                     );
                 }
 
-                this.gatewayAddress = await this.fromChain.createGatewayAddress(
-                    this.params.asset,
-                    this.params.from,
-                    gPubKey,
-                    gHash,
-                );
+                const gatewayAddress =
+                    await this.fromChain.createGatewayAddress(
+                        this.params.asset,
+                        this.params.from,
+                        gPubKey,
+                        gHash,
+                    );
+                this.gatewayAddress = gatewayAddress;
+
+                try {
+                    await utils.tryNTimes(async () => {
+                        await this.provider.submitGatewayDetails(
+                            gatewayAddress,
+                            {
+                                selector,
+                                payload: payload.payload,
+                                pHash: this.pHash,
+                                to: payload.to,
+                                nonce: nonce,
+                                nHash: Buffer.from(
+                                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                    "base64",
+                                ),
+                                gPubKey: gPubKey,
+                                gHash: gHash,
+                            },
+                        );
+                    }, 5);
+                } catch (error: unknown) {
+                    throw new ErrorWithCode(
+                        `Error submitting gateway details: ${utils.extractError(
+                            error,
+                        )}`,
+                        RenJSError.GATEWAY_SUBMISSION_FAILED,
+                    );
+                }
+
                 this.config.logger.debug(
                     "gateway address:",
                     this.gatewayAddress,

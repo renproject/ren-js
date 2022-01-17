@@ -305,6 +305,7 @@ interface ContractCall {
     abi: AbiItem[];
     method: string;
     values: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [name: string]: any;
     };
     txConfig?: unknown;
@@ -317,7 +318,7 @@ export enum OverrideContractCallError {
 export const overrideContractCall = (
     contractCall: ContractCall,
     override: ContractCallOverride,
-) => {
+): ContractCall => {
     const overrideParams = (override.contractParams || []).reduce(
         (acc, param) => {
             if (param.name) {

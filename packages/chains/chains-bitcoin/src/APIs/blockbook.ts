@@ -19,14 +19,15 @@ export class Blockbook implements BitcoinAPI {
         this.url = url.replace(/\/$/, "");
     }
 
-    fetchHeight = async (): Promise<string> =>
-        (
+    public async fetchHeight(): Promise<string> {
+        return (
             await axios.get<{ bestHeight: number }>(`${this.url}`, {
                 timeout: DEFAULT_TIMEOUT,
             })
         ).data.bestHeight.toString();
+    }
 
-    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
+    public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.url}/utxo/${address}`;
         const response = await axios.get<FetchUTXOResult>(url, {
             // TODO: Remove when certificate is fixed.
@@ -67,7 +68,7 @@ export class Blockbook implements BitcoinAPI {
                     ),
             )
         ).sort(sortUTXOs);
-    };
+    }
 
     // fetchTXs = async (address: string): Promise<Array<{ tx: InputChainTransaction, height: string }>> => {
     //     const url = `${this.url}/txs/?address=${address}`;
@@ -105,7 +106,7 @@ export class Blockbook implements BitcoinAPI {
     //     return received.sort(sortUTXOs);
     // };
 
-    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.url}/tx/${txid}`;
         const tx = (
             await axios.get<TxResponse>(url, { timeout: DEFAULT_TIMEOUT })
@@ -122,9 +123,9 @@ export class Blockbook implements BitcoinAPI {
             },
             8,
         );
-    };
+    }
 
-    broadcastTransaction = async (txHex: string): Promise<string> => {
+    public async broadcastTransaction(txHex: string): Promise<string> {
         const url = `${this.url}/tx/send`;
         const response = await axios.post<{
             error: string | null;
@@ -135,7 +136,7 @@ export class Blockbook implements BitcoinAPI {
             throw new Error(response.data.error);
         }
         return response.data.txid;
-    };
+    }
 }
 
 export interface ScriptSig {

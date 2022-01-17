@@ -54,7 +54,9 @@ export type RenVMCrossChainTransaction = RenVMTransaction<
 >;
 
 export const unmarshalRenVMTransaction = <
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Input = any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Output = any,
     TypedInput extends TypedPackValue = TypedPackValue,
     TypedOutput extends TypedPackValue = TypedPackValue,

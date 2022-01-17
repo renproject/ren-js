@@ -2,936 +2,759 @@
 /* tslint:disable */
 /* eslint-disable */
 import {
-  BaseContract,
-  BigNumber,
-  BigNumberish,
-  BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+    BaseContract,
+    BigNumber,
+    BigNumberish,
+    BytesLike,
+    CallOverrides,
+    ContractTransaction,
+    Overrides,
+    PopulatedTransaction,
+    Signer,
+    utils,
 } from "ethers";
-import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
+
+import { EventFragment, FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
-import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
+
+import { OnEvent, TypedEvent, TypedEventFilter, TypedListener } from "./common";
 
 export interface GatewayRegistryV2Interface extends utils.Interface {
-  functions: {
-    "CAN_ADD_GATEWAYS()": FunctionFragment;
-    "CAN_UPDATE_GATEWAYS()": FunctionFragment;
-    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
-    "NAME()": FunctionFragment;
-    "__GatewayRegistry_init(uint256,address,address,address,address,address,address,address[])": FunctionFragment;
-    "__RenAssetFactory_init(address,address,address)": FunctionFragment;
-    "addLockGateway(string,address,address)": FunctionFragment;
-    "addMintGateway(string,address,address)": FunctionFragment;
-    "deployLockGateway(string,address,string)": FunctionFragment;
-    "deployMintGateway(string,address,string)": FunctionFragment;
-    "deployMintGatewayAndRenAsset(string,string,string,uint8,string)": FunctionFragment;
-    "getChainId()": FunctionFragment;
-    "getGatewayBySymbol(string)": FunctionFragment;
-    "getGatewayByToken(address)": FunctionFragment;
-    "getLockAssetBySymbol(string)": FunctionFragment;
-    "getLockGatewayBySymbol(string)": FunctionFragment;
-    "getLockGatewayByToken(address)": FunctionFragment;
-    "getLockGatewayProxyBeacon()": FunctionFragment;
-    "getLockGatewaySymbols(uint256,uint256)": FunctionFragment;
-    "getMintGatewayBySymbol(string)": FunctionFragment;
-    "getMintGatewayByToken(address)": FunctionFragment;
-    "getMintGatewayProxyBeacon()": FunctionFragment;
-    "getMintGatewaySymbols(uint256,uint256)": FunctionFragment;
-    "getRenAssetBySymbol(string)": FunctionFragment;
-    "getRenAssetProxyBeacon()": FunctionFragment;
-    "getRoleAdmin(bytes32)": FunctionFragment;
-    "getRoleMember(bytes32,uint256)": FunctionFragment;
-    "getRoleMemberCount(bytes32)": FunctionFragment;
-    "getSignatureVerifier()": FunctionFragment;
-    "getTokenBySymbol(string)": FunctionFragment;
-    "getTransferContract()": FunctionFragment;
-    "grantRole(bytes32,address)": FunctionFragment;
-    "hasRole(bytes32,address)": FunctionFragment;
-    "removeLockGateway(string)": FunctionFragment;
-    "removeMintGateway(string)": FunctionFragment;
-    "renounceRole(bytes32,address)": FunctionFragment;
-    "revokeRole(bytes32,address)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "updateSignatureVerifier(address)": FunctionFragment;
-    "updateTransferContract(address)": FunctionFragment;
-  };
+    functions: {
+        "CAN_ADD_GATEWAYS()": FunctionFragment;
+        "CAN_UPDATE_GATEWAYS()": FunctionFragment;
+        "DEFAULT_ADMIN_ROLE()": FunctionFragment;
+        "NAME()": FunctionFragment;
+        "__GatewayRegistry_init(uint256,address,address,address,address,address,address,address[])": FunctionFragment;
+        "__RenAssetFactory_init(address,address,address)": FunctionFragment;
+        "addLockGateway(string,address,address)": FunctionFragment;
+        "addMintGateway(string,address,address)": FunctionFragment;
+        "deployLockGateway(string,address,string)": FunctionFragment;
+        "deployMintGateway(string,address,string)": FunctionFragment;
+        "deployMintGatewayAndRenAsset(string,string,string,uint8,string)": FunctionFragment;
+        "getChainId()": FunctionFragment;
+        "getGatewayBySymbol(string)": FunctionFragment;
+        "getGatewayByToken(address)": FunctionFragment;
+        "getLockAssetBySymbol(string)": FunctionFragment;
+        "getLockGatewayBySymbol(string)": FunctionFragment;
+        "getLockGatewayByToken(address)": FunctionFragment;
+        "getLockGatewayProxyBeacon()": FunctionFragment;
+        "getLockGatewaySymbols(uint256,uint256)": FunctionFragment;
+        "getMintGatewayBySymbol(string)": FunctionFragment;
+        "getMintGatewayByToken(address)": FunctionFragment;
+        "getMintGatewayProxyBeacon()": FunctionFragment;
+        "getMintGatewaySymbols(uint256,uint256)": FunctionFragment;
+        "getRenAssetBySymbol(string)": FunctionFragment;
+        "getRenAssetProxyBeacon()": FunctionFragment;
+        "getRoleAdmin(bytes32)": FunctionFragment;
+        "getRoleMember(bytes32,uint256)": FunctionFragment;
+        "getRoleMemberCount(bytes32)": FunctionFragment;
+        "getSignatureVerifier()": FunctionFragment;
+        "getTokenBySymbol(string)": FunctionFragment;
+        "getTransferContract()": FunctionFragment;
+        "grantRole(bytes32,address)": FunctionFragment;
+        "hasRole(bytes32,address)": FunctionFragment;
+        "removeLockGateway(string)": FunctionFragment;
+        "removeMintGateway(string)": FunctionFragment;
+        "renounceRole(bytes32,address)": FunctionFragment;
+        "revokeRole(bytes32,address)": FunctionFragment;
+        "supportsInterface(bytes4)": FunctionFragment;
+        "updateSignatureVerifier(address)": FunctionFragment;
+        "updateTransferContract(address)": FunctionFragment;
+    };
 
-  encodeFunctionData(
-    functionFragment: "CAN_ADD_GATEWAYS",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "CAN_UPDATE_GATEWAYS",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "NAME", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "__GatewayRegistry_init",
-    values: [
-      BigNumberish,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string[]
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "__RenAssetFactory_init",
-    values: [string, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "addLockGateway",
-    values: [string, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "addMintGateway",
-    values: [string, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deployLockGateway",
-    values: [string, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deployMintGateway",
-    values: [string, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deployMintGatewayAndRenAsset",
-    values: [string, string, string, BigNumberish, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getChainId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getGatewayBySymbol",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getGatewayByToken",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLockAssetBySymbol",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLockGatewayBySymbol",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLockGatewayByToken",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLockGatewayProxyBeacon",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLockGatewaySymbols",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMintGatewayBySymbol",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMintGatewayByToken",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMintGatewayProxyBeacon",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMintGatewaySymbols",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRenAssetBySymbol",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRenAssetProxyBeacon",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleAdmin",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleMember",
-    values: [BytesLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleMemberCount",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getSignatureVerifier",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTokenBySymbol",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTransferContract",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "grantRole",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "hasRole",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "removeLockGateway",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "removeMintGateway",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceRole",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "revokeRole",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supportsInterface",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "updateSignatureVerifier",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "updateTransferContract",
-    values: [string]
-  ): string;
+    encodeFunctionData(
+        functionFragment: "CAN_ADD_GATEWAYS",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "CAN_UPDATE_GATEWAYS",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "DEFAULT_ADMIN_ROLE",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(functionFragment: "NAME", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "__GatewayRegistry_init",
+        values: [
+            BigNumberish,
+            string,
+            string,
+            string,
+            string,
+            string,
+            string,
+            string[],
+        ],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "__RenAssetFactory_init",
+        values: [string, string, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "addLockGateway",
+        values: [string, string, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "addMintGateway",
+        values: [string, string, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "deployLockGateway",
+        values: [string, string, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "deployMintGateway",
+        values: [string, string, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "deployMintGatewayAndRenAsset",
+        values: [string, string, string, BigNumberish, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getChainId",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getGatewayBySymbol",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getGatewayByToken",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getLockAssetBySymbol",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getLockGatewayBySymbol",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getLockGatewayByToken",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getLockGatewayProxyBeacon",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getLockGatewaySymbols",
+        values: [BigNumberish, BigNumberish],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getMintGatewayBySymbol",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getMintGatewayByToken",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getMintGatewayProxyBeacon",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getMintGatewaySymbols",
+        values: [BigNumberish, BigNumberish],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getRenAssetBySymbol",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getRenAssetProxyBeacon",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getRoleAdmin",
+        values: [BytesLike],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getRoleMember",
+        values: [BytesLike, BigNumberish],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getRoleMemberCount",
+        values: [BytesLike],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getSignatureVerifier",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getTokenBySymbol",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getTransferContract",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "grantRole",
+        values: [BytesLike, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "hasRole",
+        values: [BytesLike, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "removeLockGateway",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "removeMintGateway",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "renounceRole",
+        values: [BytesLike, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "revokeRole",
+        values: [BytesLike, string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "supportsInterface",
+        values: [BytesLike],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "updateSignatureVerifier",
+        values: [string],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "updateTransferContract",
+        values: [string],
+    ): string;
 
-  decodeFunctionResult(
-    functionFragment: "CAN_ADD_GATEWAYS",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "CAN_UPDATE_GATEWAYS",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "NAME", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "__GatewayRegistry_init",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "__RenAssetFactory_init",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "addLockGateway",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "addMintGateway",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deployLockGateway",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deployMintGateway",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deployMintGatewayAndRenAsset",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getChainId", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getGatewayBySymbol",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getGatewayByToken",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLockAssetBySymbol",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLockGatewayBySymbol",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLockGatewayByToken",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLockGatewayProxyBeacon",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLockGatewaySymbols",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getMintGatewayBySymbol",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getMintGatewayByToken",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getMintGatewayProxyBeacon",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getMintGatewaySymbols",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRenAssetBySymbol",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRenAssetProxyBeacon",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleAdmin",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleMember",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleMemberCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getSignatureVerifier",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTokenBySymbol",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTransferContract",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "removeLockGateway",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "removeMintGateway",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceRole",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "supportsInterface",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateSignatureVerifier",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateTransferContract",
-    data: BytesLike
-  ): Result;
+    decodeFunctionResult(
+        functionFragment: "CAN_ADD_GATEWAYS",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "CAN_UPDATE_GATEWAYS",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "DEFAULT_ADMIN_ROLE",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(functionFragment: "NAME", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "__GatewayRegistry_init",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "__RenAssetFactory_init",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "addLockGateway",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "addMintGateway",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "deployLockGateway",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "deployMintGateway",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "deployMintGatewayAndRenAsset",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getChainId",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getGatewayBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getGatewayByToken",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getLockAssetBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getLockGatewayBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getLockGatewayByToken",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getLockGatewayProxyBeacon",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getLockGatewaySymbols",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getMintGatewayBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getMintGatewayByToken",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getMintGatewayProxyBeacon",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getMintGatewaySymbols",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getRenAssetBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getRenAssetProxyBeacon",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getRoleAdmin",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getRoleMember",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getRoleMemberCount",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getSignatureVerifier",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getTokenBySymbol",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getTransferContract",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "grantRole",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "removeLockGateway",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "removeMintGateway",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "renounceRole",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "revokeRole",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "supportsInterface",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "updateSignatureVerifier",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "updateTransferContract",
+        data: BytesLike,
+    ): Result;
 
-  events: {
-    "LockGatewayProxyDeployed(string,address,address,string)": EventFragment;
-    "LogLockGatewayAdded(string,address,address,string)": EventFragment;
-    "LogLockGatewayRemoved(string,string)": EventFragment;
-    "LogMintGatewayAdded(string,address,address,string)": EventFragment;
-    "LogMintGatewayRemoved(string,string)": EventFragment;
-    "LogSignatureVerifierUpdated(address,address)": EventFragment;
-    "LogTransferContractUpdated(address,address)": EventFragment;
-    "MintGatewayProxyDeployed(string,address,address,string)": EventFragment;
-    "RenAssetProxyDeployed(uint256,string,string,string,uint8,string)": EventFragment;
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
-    "RoleGranted(bytes32,address,address)": EventFragment;
-    "RoleRevoked(bytes32,address,address)": EventFragment;
-  };
+    events: {
+        "LockGatewayProxyDeployed(string,address,address,string)": EventFragment;
+        "LogLockGatewayAdded(string,address,address,string)": EventFragment;
+        "LogLockGatewayRemoved(string,string)": EventFragment;
+        "LogMintGatewayAdded(string,address,address,string)": EventFragment;
+        "LogMintGatewayRemoved(string,string)": EventFragment;
+        "LogSignatureVerifierUpdated(address,address)": EventFragment;
+        "LogTransferContractUpdated(address,address)": EventFragment;
+        "MintGatewayProxyDeployed(string,address,address,string)": EventFragment;
+        "RenAssetProxyDeployed(uint256,string,string,string,uint8,string)": EventFragment;
+        "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
+        "RoleGranted(bytes32,address,address)": EventFragment;
+        "RoleRevoked(bytes32,address,address)": EventFragment;
+    };
 
-  getEvent(nameOrSignatureOrTopic: "LockGatewayProxyDeployed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogLockGatewayAdded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogLockGatewayRemoved"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogMintGatewayAdded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogMintGatewayRemoved"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "LogSignatureVerifierUpdated"
-  ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LogTransferContractUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "MintGatewayProxyDeployed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RenAssetProxyDeployed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "LockGatewayProxyDeployed"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "LogLockGatewayAdded"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "LogLockGatewayRemoved"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "LogMintGatewayAdded"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "LogMintGatewayRemoved"): EventFragment;
+    getEvent(
+        nameOrSignatureOrTopic: "LogSignatureVerifierUpdated",
+    ): EventFragment;
+    getEvent(
+        nameOrSignatureOrTopic: "LogTransferContractUpdated",
+    ): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "MintGatewayProxyDeployed"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "RenAssetProxyDeployed"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
 }
 
 export type LockGatewayProxyDeployedEvent = TypedEvent<
-  [string, string, string, string],
-  { asset: string; signatureVerifier: string; token: string; version: string }
+    [string, string, string, string],
+    { asset: string; signatureVerifier: string; token: string; version: string }
 >;
 
 export type LockGatewayProxyDeployedEventFilter =
-  TypedEventFilter<LockGatewayProxyDeployedEvent>;
+    TypedEventFilter<LockGatewayProxyDeployedEvent>;
 
 export type LogLockGatewayAddedEvent = TypedEvent<
-  [string, string, string, string],
-  {
-    symbol: string;
-    token: string;
-    gatewayContract: string;
-    indexedSymbol: string;
-  }
+    [string, string, string, string],
+    {
+        symbol: string;
+        token: string;
+        gatewayContract: string;
+        indexedSymbol: string;
+    }
 >;
 
 export type LogLockGatewayAddedEventFilter =
-  TypedEventFilter<LogLockGatewayAddedEvent>;
+    TypedEventFilter<LogLockGatewayAddedEvent>;
 
 export type LogLockGatewayRemovedEvent = TypedEvent<
-  [string, string],
-  { symbol: string; indexedSymbol: string }
+    [string, string],
+    { symbol: string; indexedSymbol: string }
 >;
 
 export type LogLockGatewayRemovedEventFilter =
-  TypedEventFilter<LogLockGatewayRemovedEvent>;
+    TypedEventFilter<LogLockGatewayRemovedEvent>;
 
 export type LogMintGatewayAddedEvent = TypedEvent<
-  [string, string, string, string],
-  {
-    symbol: string;
-    token: string;
-    gatewayContract: string;
-    indexedSymbol: string;
-  }
+    [string, string, string, string],
+    {
+        symbol: string;
+        token: string;
+        gatewayContract: string;
+        indexedSymbol: string;
+    }
 >;
 
 export type LogMintGatewayAddedEventFilter =
-  TypedEventFilter<LogMintGatewayAddedEvent>;
+    TypedEventFilter<LogMintGatewayAddedEvent>;
 
 export type LogMintGatewayRemovedEvent = TypedEvent<
-  [string, string],
-  { symbol: string; indexedSymbol: string }
+    [string, string],
+    { symbol: string; indexedSymbol: string }
 >;
 
 export type LogMintGatewayRemovedEventFilter =
-  TypedEventFilter<LogMintGatewayRemovedEvent>;
+    TypedEventFilter<LogMintGatewayRemovedEvent>;
 
 export type LogSignatureVerifierUpdatedEvent = TypedEvent<
-  [string, string],
-  { oldSignatureVerifier: string; newSignatureVerifier: string }
+    [string, string],
+    { oldSignatureVerifier: string; newSignatureVerifier: string }
 >;
 
 export type LogSignatureVerifierUpdatedEventFilter =
-  TypedEventFilter<LogSignatureVerifierUpdatedEvent>;
+    TypedEventFilter<LogSignatureVerifierUpdatedEvent>;
 
 export type LogTransferContractUpdatedEvent = TypedEvent<
-  [string, string],
-  { oldTransferContract: string; newTransferContract: string }
+    [string, string],
+    { oldTransferContract: string; newTransferContract: string }
 >;
 
 export type LogTransferContractUpdatedEventFilter =
-  TypedEventFilter<LogTransferContractUpdatedEvent>;
+    TypedEventFilter<LogTransferContractUpdatedEvent>;
 
 export type MintGatewayProxyDeployedEvent = TypedEvent<
-  [string, string, string, string],
-  { asset: string; signatureVerifier: string; token: string; version: string }
+    [string, string, string, string],
+    { asset: string; signatureVerifier: string; token: string; version: string }
 >;
 
 export type MintGatewayProxyDeployedEventFilter =
-  TypedEventFilter<MintGatewayProxyDeployedEvent>;
+    TypedEventFilter<MintGatewayProxyDeployedEvent>;
 
 export type RenAssetProxyDeployedEvent = TypedEvent<
-  [BigNumber, string, string, string, number, string],
-  {
-    chainId: BigNumber;
-    asset: string;
-    name: string;
-    symbol: string;
-    decimals: number;
-    version: string;
-  }
+    [BigNumber, string, string, string, number, string],
+    {
+        chainId: BigNumber;
+        asset: string;
+        name: string;
+        symbol: string;
+        decimals: number;
+        version: string;
+    }
 >;
 
 export type RenAssetProxyDeployedEventFilter =
-  TypedEventFilter<RenAssetProxyDeployedEvent>;
+    TypedEventFilter<RenAssetProxyDeployedEvent>;
 
 export type RoleAdminChangedEvent = TypedEvent<
-  [string, string, string],
-  { role: string; previousAdminRole: string; newAdminRole: string }
+    [string, string, string],
+    { role: string; previousAdminRole: string; newAdminRole: string }
 >;
 
 export type RoleAdminChangedEventFilter =
-  TypedEventFilter<RoleAdminChangedEvent>;
+    TypedEventFilter<RoleAdminChangedEvent>;
 
 export type RoleGrantedEvent = TypedEvent<
-  [string, string, string],
-  { role: string; account: string; sender: string }
+    [string, string, string],
+    { role: string; account: string; sender: string }
 >;
 
 export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
 
 export type RoleRevokedEvent = TypedEvent<
-  [string, string, string],
-  { role: string; account: string; sender: string }
+    [string, string, string],
+    { role: string; account: string; sender: string }
 >;
 
 export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
 
 export interface GatewayRegistryV2 extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
-
-  interface: GatewayRegistryV2Interface;
-
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<[string]>;
-
-    CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<[string]>;
-
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
-
-    NAME(overrides?: CallOverrides): Promise<[string]>;
-
-    __GatewayRegistry_init(
-      chainId_: BigNumberish,
-      signatureVerifier_: string,
-      transferContract: string,
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      adminAddress: string,
-      gatewayDeployers: string[],
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    __RenAssetFactory_init(
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    addLockGateway(
-      symbol: string,
-      lockAsset: string,
-      lockGateway: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    addMintGateway(
-      symbol: string,
-      renAsset: string,
-      mintGateway: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    deployLockGateway(
-      symbol: string,
-      lockToken: string,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    deployMintGateway(
-      symbol: string,
-      renAsset: string,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    deployMintGatewayAndRenAsset(
-      symbol: string,
-      erc20Name: string,
-      erc20Symbol: string,
-      erc20Decimals: BigNumberish,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    getChainId(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getLockAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getLockGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getLockGatewayByToken(
-      token_: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getLockGatewayProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
-
-    getLockGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string[]]>;
-
-    getMintGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getMintGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getMintGatewayProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
-
-    getMintGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string[]]>;
-
-    getRenAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
-
-    getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<[string]>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getSignatureVerifier(overrides?: CallOverrides): Promise<[string]>;
-
-    getTokenBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getTransferContract(overrides?: CallOverrides): Promise<[string]>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    removeLockGateway(
-      symbol: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    removeMintGateway(
-      symbol: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    renounceRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    revokeRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    updateSignatureVerifier(
-      newSignatureVerifier: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    updateTransferContract(
-      newTransferContract: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<string>;
-
-  CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<string>;
-
-  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  NAME(overrides?: CallOverrides): Promise<string>;
-
-  __GatewayRegistry_init(
-    chainId_: BigNumberish,
-    signatureVerifier_: string,
-    transferContract: string,
-    renAssetProxyBeacon_: string,
-    mintGatewayProxyBeacon_: string,
-    lockGatewayProxyBeacon_: string,
-    adminAddress: string,
-    gatewayDeployers: string[],
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  __RenAssetFactory_init(
-    renAssetProxyBeacon_: string,
-    mintGatewayProxyBeacon_: string,
-    lockGatewayProxyBeacon_: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  addLockGateway(
-    symbol: string,
-    lockAsset: string,
-    lockGateway: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  addMintGateway(
-    symbol: string,
-    renAsset: string,
-    mintGateway: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  deployLockGateway(
-    symbol: string,
-    lockToken: string,
-    version: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  deployMintGateway(
-    symbol: string,
-    renAsset: string,
-    version: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  deployMintGatewayAndRenAsset(
-    symbol: string,
-    erc20Name: string,
-    erc20Symbol: string,
-    erc20Decimals: BigNumberish,
-    version: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  getChainId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getGatewayBySymbol(
-    tokenSymbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getGatewayByToken(token: string, overrides?: CallOverrides): Promise<string>;
-
-  getLockAssetBySymbol(
-    tokenSymbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getLockGatewayBySymbol(
-    tokenSymbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getLockGatewayByToken(
-    token_: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getLockGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
-
-  getLockGatewaySymbols(
-    from: BigNumberish,
-    count: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string[]>;
-
-  getMintGatewayBySymbol(
-    tokenSymbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getMintGatewayByToken(
-    token: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getMintGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
-
-  getMintGatewaySymbols(
-    from: BigNumberish,
-    count: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string[]>;
-
-  getRenAssetBySymbol(
-    tokenSymbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<string>;
-
-  getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
-
-  getRoleMember(
-    role: BytesLike,
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getRoleMemberCount(
-    role: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getSignatureVerifier(overrides?: CallOverrides): Promise<string>;
-
-  getTokenBySymbol(
-    tokenSymbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getTransferContract(overrides?: CallOverrides): Promise<string>;
-
-  grantRole(
-    role: BytesLike,
-    account: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  hasRole(
-    role: BytesLike,
-    account: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  removeLockGateway(
-    symbol: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  removeMintGateway(
-    symbol: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  renounceRole(
-    role: BytesLike,
-    account: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  revokeRole(
-    role: BytesLike,
-    account: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  supportsInterface(
-    interfaceId: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  updateSignatureVerifier(
-    newSignatureVerifier: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  updateTransferContract(
-    newTransferContract: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
+    connect(signerOrProvider: Signer | Provider | string): this;
+    attach(addressOrName: string): this;
+    deployed(): Promise<this>;
+
+    interface: GatewayRegistryV2Interface;
+
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
+        fromBlockOrBlockhash?: string | number | undefined,
+        toBlock?: string | number | undefined,
+    ): Promise<Array<TEvent>>;
+
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>,
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>,
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
+
+    functions: {
+        CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<[string]>;
+
+        CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<[string]>;
+
+        DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
+
+        NAME(overrides?: CallOverrides): Promise<[string]>;
+
+        __GatewayRegistry_init(
+            chainId_: BigNumberish,
+            signatureVerifier_: string,
+            transferContract: string,
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            adminAddress: string,
+            gatewayDeployers: string[],
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        __RenAssetFactory_init(
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        addLockGateway(
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        addMintGateway(
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        deployLockGateway(
+            symbol: string,
+            lockToken: string,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        deployMintGateway(
+            symbol: string,
+            renAsset: string,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        deployMintGatewayAndRenAsset(
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        getChainId(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        getGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getLockAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getLockGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getLockGatewayByToken(
+            token_: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getLockGatewayProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
+
+        getLockGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<[string[]]>;
+
+        getMintGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getMintGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getMintGatewayProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
+
+        getMintGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<[string[]]>;
+
+        getRenAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<[string]>;
+
+        getRoleAdmin(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getRoleMember(
+            role: BytesLike,
+            index: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getRoleMemberCount(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<[BigNumber]>;
+
+        getSignatureVerifier(overrides?: CallOverrides): Promise<[string]>;
+
+        getTokenBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<[string]>;
+
+        getTransferContract(overrides?: CallOverrides): Promise<[string]>;
+
+        grantRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        hasRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<[boolean]>;
+
+        removeLockGateway(
+            symbol: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        removeMintGateway(
+            symbol: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        renounceRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        revokeRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        supportsInterface(
+            interfaceId: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<[boolean]>;
+
+        updateSignatureVerifier(
+            newSignatureVerifier: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+
+        updateTransferContract(
+            newTransferContract: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<ContractTransaction>;
+    };
+
     CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<string>;
 
     CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<string>;
@@ -941,117 +764,117 @@ export interface GatewayRegistryV2 extends BaseContract {
     NAME(overrides?: CallOverrides): Promise<string>;
 
     __GatewayRegistry_init(
-      chainId_: BigNumberish,
-      signatureVerifier_: string,
-      transferContract: string,
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      adminAddress: string,
-      gatewayDeployers: string[],
-      overrides?: CallOverrides
-    ): Promise<void>;
+        chainId_: BigNumberish,
+        signatureVerifier_: string,
+        transferContract: string,
+        renAssetProxyBeacon_: string,
+        mintGatewayProxyBeacon_: string,
+        lockGatewayProxyBeacon_: string,
+        adminAddress: string,
+        gatewayDeployers: string[],
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     __RenAssetFactory_init(
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        renAssetProxyBeacon_: string,
+        mintGatewayProxyBeacon_: string,
+        lockGatewayProxyBeacon_: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     addLockGateway(
-      symbol: string,
-      lockAsset: string,
-      lockGateway: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        symbol: string,
+        lockAsset: string,
+        lockGateway: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     addMintGateway(
-      symbol: string,
-      renAsset: string,
-      mintGateway: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        symbol: string,
+        renAsset: string,
+        mintGateway: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     deployLockGateway(
-      symbol: string,
-      lockToken: string,
-      version: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        symbol: string,
+        lockToken: string,
+        version: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     deployMintGateway(
-      symbol: string,
-      renAsset: string,
-      version: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        symbol: string,
+        renAsset: string,
+        version: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     deployMintGatewayAndRenAsset(
-      symbol: string,
-      erc20Name: string,
-      erc20Symbol: string,
-      erc20Decimals: BigNumberish,
-      version: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        symbol: string,
+        erc20Name: string,
+        erc20Symbol: string,
+        erc20Decimals: BigNumberish,
+        version: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     getChainId(overrides?: CallOverrides): Promise<BigNumber>;
 
     getGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
+        tokenSymbol: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
+        token: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getLockAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
+        tokenSymbol: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getLockGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
+        tokenSymbol: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getLockGatewayByToken(
-      token_: string,
-      overrides?: CallOverrides
+        token_: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getLockGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
 
     getLockGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
+        from: BigNumberish,
+        count: BigNumberish,
+        overrides?: CallOverrides,
     ): Promise<string[]>;
 
     getMintGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
+        tokenSymbol: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getMintGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
+        token: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getMintGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
 
     getMintGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
+        from: BigNumberish,
+        count: BigNumberish,
+        overrides?: CallOverrides,
     ): Promise<string[]>;
 
     getRenAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
+        tokenSymbol: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<string>;
@@ -1059,620 +882,831 @@ export interface GatewayRegistryV2 extends BaseContract {
     getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
 
     getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
+        role: BytesLike,
+        index: BigNumberish,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
+        role: BytesLike,
+        overrides?: CallOverrides,
     ): Promise<BigNumber>;
 
     getSignatureVerifier(overrides?: CallOverrides): Promise<string>;
 
     getTokenBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
+        tokenSymbol: string,
+        overrides?: CallOverrides,
     ): Promise<string>;
 
     getTransferContract(overrides?: CallOverrides): Promise<string>;
 
     grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        role: BytesLike,
+        account: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
+        role: BytesLike,
+        account: string,
+        overrides?: CallOverrides,
     ): Promise<boolean>;
 
-    removeLockGateway(symbol: string, overrides?: CallOverrides): Promise<void>;
+    removeLockGateway(
+        symbol: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
-    removeMintGateway(symbol: string, overrides?: CallOverrides): Promise<void>;
+    removeMintGateway(
+        symbol: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     renounceRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        role: BytesLike,
+        account: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     revokeRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        role: BytesLike,
+        account: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
+        interfaceId: BytesLike,
+        overrides?: CallOverrides,
     ): Promise<boolean>;
 
     updateSignatureVerifier(
-      newSignatureVerifier: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        newSignatureVerifier: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
 
     updateTransferContract(
-      newTransferContract: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
-
-  filters: {
-    "LockGatewayProxyDeployed(string,address,address,string)"(
-      asset?: null,
-      signatureVerifier?: null,
-      token?: null,
-      version?: null
-    ): LockGatewayProxyDeployedEventFilter;
-    LockGatewayProxyDeployed(
-      asset?: null,
-      signatureVerifier?: null,
-      token?: null,
-      version?: null
-    ): LockGatewayProxyDeployedEventFilter;
-
-    "LogLockGatewayAdded(string,address,address,string)"(
-      symbol?: null,
-      token?: string | null,
-      gatewayContract?: string | null,
-      indexedSymbol?: string | null
-    ): LogLockGatewayAddedEventFilter;
-    LogLockGatewayAdded(
-      symbol?: null,
-      token?: string | null,
-      gatewayContract?: string | null,
-      indexedSymbol?: string | null
-    ): LogLockGatewayAddedEventFilter;
-
-    "LogLockGatewayRemoved(string,string)"(
-      symbol?: null,
-      indexedSymbol?: string | null
-    ): LogLockGatewayRemovedEventFilter;
-    LogLockGatewayRemoved(
-      symbol?: null,
-      indexedSymbol?: string | null
-    ): LogLockGatewayRemovedEventFilter;
-
-    "LogMintGatewayAdded(string,address,address,string)"(
-      symbol?: null,
-      token?: string | null,
-      gatewayContract?: string | null,
-      indexedSymbol?: string | null
-    ): LogMintGatewayAddedEventFilter;
-    LogMintGatewayAdded(
-      symbol?: null,
-      token?: string | null,
-      gatewayContract?: string | null,
-      indexedSymbol?: string | null
-    ): LogMintGatewayAddedEventFilter;
-
-    "LogMintGatewayRemoved(string,string)"(
-      symbol?: null,
-      indexedSymbol?: string | null
-    ): LogMintGatewayRemovedEventFilter;
-    LogMintGatewayRemoved(
-      symbol?: null,
-      indexedSymbol?: string | null
-    ): LogMintGatewayRemovedEventFilter;
-
-    "LogSignatureVerifierUpdated(address,address)"(
-      oldSignatureVerifier?: string | null,
-      newSignatureVerifier?: string | null
-    ): LogSignatureVerifierUpdatedEventFilter;
-    LogSignatureVerifierUpdated(
-      oldSignatureVerifier?: string | null,
-      newSignatureVerifier?: string | null
-    ): LogSignatureVerifierUpdatedEventFilter;
-
-    "LogTransferContractUpdated(address,address)"(
-      oldTransferContract?: string | null,
-      newTransferContract?: string | null
-    ): LogTransferContractUpdatedEventFilter;
-    LogTransferContractUpdated(
-      oldTransferContract?: string | null,
-      newTransferContract?: string | null
-    ): LogTransferContractUpdatedEventFilter;
-
-    "MintGatewayProxyDeployed(string,address,address,string)"(
-      asset?: null,
-      signatureVerifier?: null,
-      token?: null,
-      version?: null
-    ): MintGatewayProxyDeployedEventFilter;
-    MintGatewayProxyDeployed(
-      asset?: null,
-      signatureVerifier?: null,
-      token?: null,
-      version?: null
-    ): MintGatewayProxyDeployedEventFilter;
-
-    "RenAssetProxyDeployed(uint256,string,string,string,uint8,string)"(
-      chainId?: null,
-      asset?: null,
-      name?: null,
-      symbol?: null,
-      decimals?: null,
-      version?: null
-    ): RenAssetProxyDeployedEventFilter;
-    RenAssetProxyDeployed(
-      chainId?: null,
-      asset?: null,
-      name?: null,
-      symbol?: null,
-      decimals?: null,
-      version?: null
-    ): RenAssetProxyDeployedEventFilter;
-
-    "RoleAdminChanged(bytes32,bytes32,bytes32)"(
-      role?: BytesLike | null,
-      previousAdminRole?: BytesLike | null,
-      newAdminRole?: BytesLike | null
-    ): RoleAdminChangedEventFilter;
-    RoleAdminChanged(
-      role?: BytesLike | null,
-      previousAdminRole?: BytesLike | null,
-      newAdminRole?: BytesLike | null
-    ): RoleAdminChangedEventFilter;
-
-    "RoleGranted(bytes32,address,address)"(
-      role?: BytesLike | null,
-      account?: string | null,
-      sender?: string | null
-    ): RoleGrantedEventFilter;
-    RoleGranted(
-      role?: BytesLike | null,
-      account?: string | null,
-      sender?: string | null
-    ): RoleGrantedEventFilter;
-
-    "RoleRevoked(bytes32,address,address)"(
-      role?: BytesLike | null,
-      account?: string | null,
-      sender?: string | null
-    ): RoleRevokedEventFilter;
-    RoleRevoked(
-      role?: BytesLike | null,
-      account?: string | null,
-      sender?: string | null
-    ): RoleRevokedEventFilter;
-  };
-
-  estimateGas: {
-    CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<BigNumber>;
-
-    CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<BigNumber>;
-
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    NAME(overrides?: CallOverrides): Promise<BigNumber>;
-
-    __GatewayRegistry_init(
-      chainId_: BigNumberish,
-      signatureVerifier_: string,
-      transferContract: string,
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      adminAddress: string,
-      gatewayDeployers: string[],
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    __RenAssetFactory_init(
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    addLockGateway(
-      symbol: string,
-      lockAsset: string,
-      lockGateway: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    addMintGateway(
-      symbol: string,
-      renAsset: string,
-      mintGateway: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    deployLockGateway(
-      symbol: string,
-      lockToken: string,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    deployMintGateway(
-      symbol: string,
-      renAsset: string,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    deployMintGatewayAndRenAsset(
-      symbol: string,
-      erc20Name: string,
-      erc20Symbol: string,
-      erc20Decimals: BigNumberish,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    getChainId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLockAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLockGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLockGatewayByToken(
-      token_: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLockGatewayProxyBeacon(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLockGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMintGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMintGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMintGatewayProxyBeacon(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getMintGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRenAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRoleAdmin(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getSignatureVerifier(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getTokenBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getTransferContract(overrides?: CallOverrides): Promise<BigNumber>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    removeLockGateway(
-      symbol: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    removeMintGateway(
-      symbol: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    renounceRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    revokeRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    updateSignatureVerifier(
-      newSignatureVerifier: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    updateTransferContract(
-      newTransferContract: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    CAN_UPDATE_GATEWAYS(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    DEFAULT_ADMIN_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    NAME(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    __GatewayRegistry_init(
-      chainId_: BigNumberish,
-      signatureVerifier_: string,
-      transferContract: string,
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      adminAddress: string,
-      gatewayDeployers: string[],
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    __RenAssetFactory_init(
-      renAssetProxyBeacon_: string,
-      mintGatewayProxyBeacon_: string,
-      lockGatewayProxyBeacon_: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    addLockGateway(
-      symbol: string,
-      lockAsset: string,
-      lockGateway: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    addMintGateway(
-      symbol: string,
-      renAsset: string,
-      mintGateway: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deployLockGateway(
-      symbol: string,
-      lockToken: string,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deployMintGateway(
-      symbol: string,
-      renAsset: string,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deployMintGatewayAndRenAsset(
-      symbol: string,
-      erc20Name: string,
-      erc20Symbol: string,
-      erc20Decimals: BigNumberish,
-      version: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getChainId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLockAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLockGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLockGatewayByToken(
-      token_: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLockGatewayProxyBeacon(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLockGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMintGatewayBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMintGatewayByToken(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMintGatewayProxyBeacon(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMintGatewaySymbols(
-      from: BigNumberish,
-      count: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRenAssetBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRenAssetProxyBeacon(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRoleAdmin(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getSignatureVerifier(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTokenBySymbol(
-      tokenSymbol: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTransferContract(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    removeLockGateway(
-      symbol: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    removeMintGateway(
-      symbol: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    renounceRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    revokeRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    updateSignatureVerifier(
-      newSignatureVerifier: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    updateTransferContract(
-      newTransferContract: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+        newTransferContract: string,
+        overrides?: Overrides & { from?: string | Promise<string> },
+    ): Promise<ContractTransaction>;
+
+    callStatic: {
+        CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<string>;
+
+        CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<string>;
+
+        DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
+
+        NAME(overrides?: CallOverrides): Promise<string>;
+
+        __GatewayRegistry_init(
+            chainId_: BigNumberish,
+            signatureVerifier_: string,
+            transferContract: string,
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            adminAddress: string,
+            gatewayDeployers: string[],
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        __RenAssetFactory_init(
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        addLockGateway(
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        addMintGateway(
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        deployLockGateway(
+            symbol: string,
+            lockToken: string,
+            version: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        deployMintGateway(
+            symbol: string,
+            renAsset: string,
+            version: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        deployMintGatewayAndRenAsset(
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        getChainId(overrides?: CallOverrides): Promise<BigNumber>;
+
+        getGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getLockAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getLockGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getLockGatewayByToken(
+            token_: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getLockGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
+
+        getLockGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<string[]>;
+
+        getMintGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getMintGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getMintGatewayProxyBeacon(overrides?: CallOverrides): Promise<string>;
+
+        getMintGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<string[]>;
+
+        getRenAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<string>;
+
+        getRoleAdmin(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getRoleMember(
+            role: BytesLike,
+            index: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getRoleMemberCount(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getSignatureVerifier(overrides?: CallOverrides): Promise<string>;
+
+        getTokenBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<string>;
+
+        getTransferContract(overrides?: CallOverrides): Promise<string>;
+
+        grantRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        hasRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<boolean>;
+
+        removeLockGateway(
+            symbol: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        removeMintGateway(
+            symbol: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        renounceRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        revokeRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        supportsInterface(
+            interfaceId: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<boolean>;
+
+        updateSignatureVerifier(
+            newSignatureVerifier: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+
+        updateTransferContract(
+            newTransferContract: string,
+            overrides?: CallOverrides,
+        ): Promise<void>;
+    };
+
+    filters: {
+        "LockGatewayProxyDeployed(string,address,address,string)"(
+            asset?: null,
+            signatureVerifier?: null,
+            token?: null,
+            version?: null,
+        ): LockGatewayProxyDeployedEventFilter;
+        LockGatewayProxyDeployed(
+            asset?: null,
+            signatureVerifier?: null,
+            token?: null,
+            version?: null,
+        ): LockGatewayProxyDeployedEventFilter;
+
+        "LogLockGatewayAdded(string,address,address,string)"(
+            symbol?: null,
+            token?: string | null,
+            gatewayContract?: string | null,
+            indexedSymbol?: string | null,
+        ): LogLockGatewayAddedEventFilter;
+        LogLockGatewayAdded(
+            symbol?: null,
+            token?: string | null,
+            gatewayContract?: string | null,
+            indexedSymbol?: string | null,
+        ): LogLockGatewayAddedEventFilter;
+
+        "LogLockGatewayRemoved(string,string)"(
+            symbol?: null,
+            indexedSymbol?: string | null,
+        ): LogLockGatewayRemovedEventFilter;
+        LogLockGatewayRemoved(
+            symbol?: null,
+            indexedSymbol?: string | null,
+        ): LogLockGatewayRemovedEventFilter;
+
+        "LogMintGatewayAdded(string,address,address,string)"(
+            symbol?: null,
+            token?: string | null,
+            gatewayContract?: string | null,
+            indexedSymbol?: string | null,
+        ): LogMintGatewayAddedEventFilter;
+        LogMintGatewayAdded(
+            symbol?: null,
+            token?: string | null,
+            gatewayContract?: string | null,
+            indexedSymbol?: string | null,
+        ): LogMintGatewayAddedEventFilter;
+
+        "LogMintGatewayRemoved(string,string)"(
+            symbol?: null,
+            indexedSymbol?: string | null,
+        ): LogMintGatewayRemovedEventFilter;
+        LogMintGatewayRemoved(
+            symbol?: null,
+            indexedSymbol?: string | null,
+        ): LogMintGatewayRemovedEventFilter;
+
+        "LogSignatureVerifierUpdated(address,address)"(
+            oldSignatureVerifier?: string | null,
+            newSignatureVerifier?: string | null,
+        ): LogSignatureVerifierUpdatedEventFilter;
+        LogSignatureVerifierUpdated(
+            oldSignatureVerifier?: string | null,
+            newSignatureVerifier?: string | null,
+        ): LogSignatureVerifierUpdatedEventFilter;
+
+        "LogTransferContractUpdated(address,address)"(
+            oldTransferContract?: string | null,
+            newTransferContract?: string | null,
+        ): LogTransferContractUpdatedEventFilter;
+        LogTransferContractUpdated(
+            oldTransferContract?: string | null,
+            newTransferContract?: string | null,
+        ): LogTransferContractUpdatedEventFilter;
+
+        "MintGatewayProxyDeployed(string,address,address,string)"(
+            asset?: null,
+            signatureVerifier?: null,
+            token?: null,
+            version?: null,
+        ): MintGatewayProxyDeployedEventFilter;
+        MintGatewayProxyDeployed(
+            asset?: null,
+            signatureVerifier?: null,
+            token?: null,
+            version?: null,
+        ): MintGatewayProxyDeployedEventFilter;
+
+        "RenAssetProxyDeployed(uint256,string,string,string,uint8,string)"(
+            chainId?: null,
+            asset?: null,
+            name?: null,
+            symbol?: null,
+            decimals?: null,
+            version?: null,
+        ): RenAssetProxyDeployedEventFilter;
+        RenAssetProxyDeployed(
+            chainId?: null,
+            asset?: null,
+            name?: null,
+            symbol?: null,
+            decimals?: null,
+            version?: null,
+        ): RenAssetProxyDeployedEventFilter;
+
+        "RoleAdminChanged(bytes32,bytes32,bytes32)"(
+            role?: BytesLike | null,
+            previousAdminRole?: BytesLike | null,
+            newAdminRole?: BytesLike | null,
+        ): RoleAdminChangedEventFilter;
+        RoleAdminChanged(
+            role?: BytesLike | null,
+            previousAdminRole?: BytesLike | null,
+            newAdminRole?: BytesLike | null,
+        ): RoleAdminChangedEventFilter;
+
+        "RoleGranted(bytes32,address,address)"(
+            role?: BytesLike | null,
+            account?: string | null,
+            sender?: string | null,
+        ): RoleGrantedEventFilter;
+        RoleGranted(
+            role?: BytesLike | null,
+            account?: string | null,
+            sender?: string | null,
+        ): RoleGrantedEventFilter;
+
+        "RoleRevoked(bytes32,address,address)"(
+            role?: BytesLike | null,
+            account?: string | null,
+            sender?: string | null,
+        ): RoleRevokedEventFilter;
+        RoleRevoked(
+            role?: BytesLike | null,
+            account?: string | null,
+            sender?: string | null,
+        ): RoleRevokedEventFilter;
+    };
+
+    estimateGas: {
+        CAN_ADD_GATEWAYS(overrides?: CallOverrides): Promise<BigNumber>;
+
+        CAN_UPDATE_GATEWAYS(overrides?: CallOverrides): Promise<BigNumber>;
+
+        DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+
+        NAME(overrides?: CallOverrides): Promise<BigNumber>;
+
+        __GatewayRegistry_init(
+            chainId_: BigNumberish,
+            signatureVerifier_: string,
+            transferContract: string,
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            adminAddress: string,
+            gatewayDeployers: string[],
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        __RenAssetFactory_init(
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        addLockGateway(
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        addMintGateway(
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        deployLockGateway(
+            symbol: string,
+            lockToken: string,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        deployMintGateway(
+            symbol: string,
+            renAsset: string,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        deployMintGatewayAndRenAsset(
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        getChainId(overrides?: CallOverrides): Promise<BigNumber>;
+
+        getGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getLockAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getLockGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getLockGatewayByToken(
+            token_: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getLockGatewayProxyBeacon(
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getLockGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getMintGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getMintGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getMintGatewayProxyBeacon(
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getMintGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getRenAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getRenAssetProxyBeacon(overrides?: CallOverrides): Promise<BigNumber>;
+
+        getRoleAdmin(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getRoleMember(
+            role: BytesLike,
+            index: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getRoleMemberCount(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getSignatureVerifier(overrides?: CallOverrides): Promise<BigNumber>;
+
+        getTokenBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        getTransferContract(overrides?: CallOverrides): Promise<BigNumber>;
+
+        grantRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        hasRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        removeLockGateway(
+            symbol: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        removeMintGateway(
+            symbol: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        renounceRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        revokeRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        supportsInterface(
+            interfaceId: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<BigNumber>;
+
+        updateSignatureVerifier(
+            newSignatureVerifier: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+
+        updateTransferContract(
+            newTransferContract: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<BigNumber>;
+    };
+
+    populateTransaction: {
+        CAN_ADD_GATEWAYS(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        CAN_UPDATE_GATEWAYS(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        DEFAULT_ADMIN_ROLE(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        NAME(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        __GatewayRegistry_init(
+            chainId_: BigNumberish,
+            signatureVerifier_: string,
+            transferContract: string,
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            adminAddress: string,
+            gatewayDeployers: string[],
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        __RenAssetFactory_init(
+            renAssetProxyBeacon_: string,
+            mintGatewayProxyBeacon_: string,
+            lockGatewayProxyBeacon_: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        addLockGateway(
+            symbol: string,
+            lockAsset: string,
+            lockGateway: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        addMintGateway(
+            symbol: string,
+            renAsset: string,
+            mintGateway: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        deployLockGateway(
+            symbol: string,
+            lockToken: string,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        deployMintGateway(
+            symbol: string,
+            renAsset: string,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        deployMintGatewayAndRenAsset(
+            symbol: string,
+            erc20Name: string,
+            erc20Symbol: string,
+            erc20Decimals: BigNumberish,
+            version: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        getChainId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        getGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getLockAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getLockGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getLockGatewayByToken(
+            token_: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getLockGatewayProxyBeacon(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getLockGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getMintGatewayBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getMintGatewayByToken(
+            token: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getMintGatewayProxyBeacon(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getMintGatewaySymbols(
+            from: BigNumberish,
+            count: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getRenAssetBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getRenAssetProxyBeacon(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getRoleAdmin(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getRoleMember(
+            role: BytesLike,
+            index: BigNumberish,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getRoleMemberCount(
+            role: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getSignatureVerifier(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getTokenBySymbol(
+            tokenSymbol: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        getTransferContract(
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        grantRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        hasRole(
+            role: BytesLike,
+            account: string,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        removeLockGateway(
+            symbol: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        removeMintGateway(
+            symbol: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        renounceRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        revokeRole(
+            role: BytesLike,
+            account: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        supportsInterface(
+            interfaceId: BytesLike,
+            overrides?: CallOverrides,
+        ): Promise<PopulatedTransaction>;
+
+        updateSignatureVerifier(
+            newSignatureVerifier: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+
+        updateTransferContract(
+            newTransferContract: string,
+            overrides?: Overrides & { from?: string | Promise<string> },
+        ): Promise<PopulatedTransaction>;
+    };
 }

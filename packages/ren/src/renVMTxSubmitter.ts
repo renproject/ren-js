@@ -48,7 +48,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
 
     private signatureCallback?: (
         response: RenVMTransactionWithStatus<Transaction>,
-    ) => void;
+    ) => Promise<void>;
     public eventEmitter: EventEmitterTyped<{
         progress: [
             ChainTransactionProgress & {
@@ -82,7 +82,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         params: TypedPackValue,
         signatureCallback?: (
             response: RenVMTransactionWithStatus<Transaction>,
-        ) => void,
+        ) => Promise<void>,
     ) {
         this.provider = provider;
         this.selector = selector;
@@ -138,7 +138,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             }
         > => {
             // Alternate trying to submit and trying to query.
-            let retries = 4;
+            const retries = 4;
             let errorInner;
             for (let i = 0; i < retries; i++) {
                 try {
@@ -150,7 +150,9 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 try {
                     await this.provider.queryTx(this._hash, 1);
                     break;
-                } catch (error) {}
+                } catch (error) {
+                    // Ignore error.
+                }
                 if (i === retries - 1) {
                     throw errorInner;
                 }
@@ -256,7 +258,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             }
 
             if (this.signatureCallback) {
-                this.signatureCallback(tx);
+                await this.signatureCallback(tx);
             }
 
             return this.updateProgress({
@@ -278,7 +280,7 @@ export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChain
         params: RenVMCrossChainTransaction["in"],
         signatureCallback?: (
             response: RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
-        ) => void,
+        ) => Promise<void>,
     ) {
         super(
             provider,

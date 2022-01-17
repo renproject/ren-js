@@ -108,9 +108,11 @@ export class Ethereum extends EthereumBaseChain {
     /**
      * Create a new Ethereum instance.
      *
-     * @param network A RenVM network of an Ethereum network config
-     * @param web3Provider a Web3 or Ethers.js provider.
-     * @param config pass optional configurations, e.g. a logger
+     * @param params Ethereum constructor parameters
+     * @param params.network A RenVM network string or an EVM config object.
+     * @param params.provider A Web3 or Ethers.js provider.
+     * @param params.signer A Web3 or Ethers.js signer.
+     * @param params.config Pass optional configurations, e.g. a logger
      */
     public constructor({
         network,

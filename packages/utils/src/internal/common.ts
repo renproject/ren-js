@@ -157,7 +157,7 @@ export function fromBytes(
  * Cache the result of an asynchronous function, with a default expiry of 5
  * minutes. Only one result is stored at a time.
  */
-export const memoize = <Params extends any[], Result>(
+export const memoize = <Params extends unknown[], Result>(
     fn: (...params: Params) => Promise<Result>,
     { expiry = (5 * sleep.MINUTES) as number | false, entryLimit = 100 } = {
         expiry: (5 * sleep.MINUTES) as number | false,
@@ -351,7 +351,7 @@ export const hasOwnProperty = <T>(
     property: keyof T,
 ): object is T => object.hasOwnProperty(property);
 
-export const invalidError = (errorMessage: string) =>
+export const invalidError = (errorMessage: string): boolean =>
     errorMessage === "" ||
     errorMessage === "null" ||
     errorMessage === "undefined";

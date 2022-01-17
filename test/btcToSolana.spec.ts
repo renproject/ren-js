@@ -6,7 +6,6 @@ import { InputChainTransaction } from "packages/utils/build/main";
 import { Connection } from "@solana/web3.js";
 
 import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
-import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import { makeTestSigner } from "../packages/chains/chains-solana/build/main/utils";
 import { Solana } from "../packages/chains/chains-solana/src";
 import { renTestnet } from "../packages/chains/chains-solana/src/networks";
@@ -19,7 +18,7 @@ chai.should();
 loadDotEnv();
 
 describe("BTC/toSolana", () => {
-    it.only("BTC/toSolana", async function () {
+    it("BTC/toSolana", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;

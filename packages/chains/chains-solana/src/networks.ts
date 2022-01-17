@@ -24,7 +24,7 @@ export interface SolNetworkConfig {
     genesisHash: string;
 }
 
-const isSolNetworkConfig = (x: any): x is SolNetworkConfig =>
+const isSolNetworkConfig = (x: unknown): x is SolNetworkConfig =>
     (x as SolNetworkConfig).genesisHash !== undefined;
 
 export const resolveNetwork = (

@@ -211,6 +211,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
                 { txHash },
                 retries,
             );
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             if (error.message.match(/^invalid params: /)) {
                 throw ErrorWithCode.from(error, RenJSError.PARAMETER_ERROR);
@@ -229,6 +230,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
                 tx: unmarshalRenVMTransaction(response.tx),
                 txStatus: response.txStatus,
             } as T;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             throw ErrorWithCode.from(error, RenJSError.INTERNAL_ERROR);
         }
@@ -247,6 +249,7 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
         try {
             // Call the ren_queryBlockState RPC.
             blockState = await this.queryBlockState(asset, 5);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             throw ErrorWithCode.from(
                 new Error(

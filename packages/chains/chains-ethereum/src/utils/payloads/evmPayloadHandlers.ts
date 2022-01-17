@@ -85,6 +85,7 @@ export type EVMParamValues = {
 const isEVMParam = (value: any): value is EVMParam =>
     Object.values(EVMParam).indexOf(value) >= 0;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface EVMPayloadInterface<Name extends string = string, T = any> {
     chain: string;
     txConfig?: PayableOverrides;
@@ -129,6 +130,7 @@ export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
         payload: P,
         evmParams: EVMParamValues,
         overrides: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
         },
@@ -137,8 +139,9 @@ export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
 }
 
 const replaceRenParam = async (
-    value: any,
+    value: unknown,
     evmParams: EVMParamValues,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
     let valueOrParam = isEVMParam(value) ? evmParams[value] : value;
     if (typeof valueOrParam === "function") {
@@ -172,7 +175,7 @@ export type EVMContractPayload = EVMPayloadInterface<
     {
         to: string;
         method: string;
-        params: Array<EthArg>;
+        params: EthArg[];
         txConfig?: PayableOverrides;
     }
 >;
@@ -198,6 +201,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
     }> => {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             throw ErrorWithCode.from(
                 new Error(
@@ -226,6 +230,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         let p: Buffer;
         try {
             p = rawEncode(types, values);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             throw ErrorWithCode.from(
                 new Error(
@@ -250,12 +255,14 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         payload: EVMContractPayload,
         evmParams: EVMParamValues,
         overrides: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
         },
     ): Promise<TransactionResponse> => {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             throw ErrorWithCode.from(
                 new Error(
@@ -291,6 +298,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         try {
             rawEncode(paramTypes, paramValues);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             throw ErrorWithCode.from(
                 new Error(
@@ -687,6 +695,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         payload: EVMAddressPayload,
         evmParams: EVMParamValues,
         overrides: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
         },
@@ -753,6 +762,7 @@ const getContractFromApproval = async (
               )
               .toFixed()
         : undefined;
+
     return {
         chain: network.selector,
         type: "contract",
@@ -808,6 +818,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         payload: EVMApprovalPayload,
         evmParams: EVMParamValues,
         overrides: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
         },

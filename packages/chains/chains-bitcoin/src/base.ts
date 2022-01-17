@@ -195,8 +195,7 @@ export abstract class BitcoinBaseChain
                     amount: tx.amount,
                 }),
             );
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             // Ignore error and fallback to getUTXOs.
         }
 

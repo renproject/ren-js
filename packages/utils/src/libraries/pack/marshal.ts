@@ -98,7 +98,8 @@ export const marshalUint = (
 };
 
 export const marshalU =
-    (bits: number) => (value: BigNumber | string | number) =>
+    (bits: number) =>
+    (value: BigNumber | string | number): Buffer =>
         marshalUint(value, bits);
 export const marshalU8 = marshalU(8);
 export const marshalU16 = marshalU(16);
@@ -107,7 +108,7 @@ export const marshalU64 = marshalU(64);
 export const marshalU128 = marshalU(128);
 export const marshalU256 = marshalU(256);
 
-export const withLength = (value: Buffer) =>
+export const withLength = (value: Buffer): Buffer =>
     Buffer.concat([marshalU32(value.length), value]);
 
 /**

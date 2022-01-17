@@ -117,8 +117,7 @@ const decodeBase58Address = (address: string) => {
                     type: Type.P2SH,
                 };
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
         // Ignore error.
     }
     throw new InvalidAddressError();
@@ -146,8 +145,7 @@ const decodeCashAddressWithPrefix = (address: string) => {
                     type: type,
                 };
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
         // Ignore error.
     }
     throw new InvalidAddressError();
@@ -157,8 +155,7 @@ const decodeCashAddress = (address: string) => {
     if (address.indexOf(":") !== -1) {
         try {
             return decodeCashAddressWithPrefix(address);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             // Ignore error.
         }
     } else {
@@ -167,8 +164,7 @@ const decodeCashAddress = (address: string) => {
             try {
                 const prefix = prefixes[i];
                 return decodeCashAddressWithPrefix(prefix + ":" + address);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error) {
                 // Ignore error.
             }
         }
@@ -190,8 +186,7 @@ const getTypeBits = (type: string) => {
 export const decodeBitcoinCashAddress = (address: string): Buffer => {
     try {
         return Buffer.from(decodeBase58Address(address).hash);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
         // Ignore error.
     }
     try {
@@ -200,8 +195,7 @@ export const decodeBitcoinCashAddress = (address: string): Buffer => {
             Buffer.from([getTypeBits(type)]),
             Buffer.from(hash),
         ]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
         // Ignore error.
     }
     throw new InvalidAddressError();

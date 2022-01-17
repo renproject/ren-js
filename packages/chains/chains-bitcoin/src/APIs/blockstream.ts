@@ -17,14 +17,15 @@ export class Blockstream implements BitcoinAPI {
         }api${path}${this.apiKey ? `?key=${this.apiKey}` : ""}`;
     }
 
-    fetchHeight = async (): Promise<string> =>
-        (
+    public async fetchHeight(): Promise<string> {
+        return (
             await axios.get<string>(this.getAPIUrl(`/blocks/tip/height`), {
                 timeout: DEFAULT_TIMEOUT,
             })
         ).data.toString();
+    }
 
-    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const utxo = (
             await axios.get<BlockstreamTX>(this.getAPIUrl(`/tx/${txid}`), {
                 timeout: DEFAULT_TIMEOUT,
@@ -39,9 +40,9 @@ export class Blockstream implements BitcoinAPI {
                 ? utxo.status.block_height.toString()
                 : null,
         };
-    };
+    }
 
-    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
+    public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const response = await axios.get<BlockstreamUTXO[]>(
             this.getAPIUrl(`/address/${address}/utxo`),
             { timeout: DEFAULT_TIMEOUT },
@@ -57,9 +58,9 @@ export class Blockstream implements BitcoinAPI {
                     : null,
             }))
             .sort(sortUTXOs);
-    };
+    }
 
-    fetchTXs = async (address: string): Promise<UTXO[]> => {
+    public async fetchTXs(address: string): Promise<UTXO[]> {
         const response = await axios.get<BlockstreamTX[]>(
             this.getAPIUrl(`/address/${address}/txs`),
             { timeout: DEFAULT_TIMEOUT },
@@ -84,9 +85,9 @@ export class Blockstream implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    };
+    }
 
-    broadcastTransaction = async (txHex: string): Promise<string> => {
+    public async broadcastTransaction(txHex: string): Promise<string> {
         const response = await axios.post<string>(
             this.getAPIUrl(`/tx`),
             txHex,
@@ -95,7 +96,7 @@ export class Blockstream implements BitcoinAPI {
             },
         );
         return response.data;
-    };
+    }
 }
 
 interface BlockstreamUTXO<vout = number> {

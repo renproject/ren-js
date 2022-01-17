@@ -120,14 +120,14 @@ export class EthereumBaseChain
     }
 
     private _getMintAsset__memoized?: (asset: string) => Promise<string>;
-    public async getMintAsset(asset: string): Promise<string> {
+    public async getMintAsset(asset_: string): Promise<string> {
         this._getMintAsset__memoized =
             this._getMintAsset__memoized ||
             utils.memoize(
                 async (asset: string): Promise<string> =>
                     await getRenAsset(this.network, this.provider, asset),
             );
-        return this._getMintAsset__memoized(asset);
+        return this._getMintAsset__memoized(asset_);
     }
 
     private _getMintGateway__memoized?: (asset: string) => Promise<string>;
@@ -193,7 +193,9 @@ export class EthereumBaseChain
         if (!this.signer) {
             try {
                 this.signer = this.provider.getSigner();
-            } catch (error) {}
+            } catch (error) {
+                // Ignore error.
+            }
         } else {
             try {
                 this.signer.connect(this.provider);

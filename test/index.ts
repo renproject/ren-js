@@ -29,7 +29,7 @@ const main = async () => {
     });
 
     // `gateway.fees` exposes values and helpers for calculating fees.
-    console.log(gateway.fees);
+    console.log("Fees", gateway.fees);
 
     // `gateway.inSetup` may contain multiple transactions.
     await gateway.inSetup.approval.submit({

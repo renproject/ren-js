@@ -30,8 +30,8 @@ export class SoChain implements BitcoinAPI {
         this.network = network;
     }
 
-    fetchHeight = async (): Promise<string> =>
-        (
+    public async fetchHeight(): Promise<string> {
+        return (
             await axios.get<{ blocks: number }>(
                 `https://sochain.com/api/v2/get_info/${this.network}`,
                 {
@@ -39,8 +39,9 @@ export class SoChain implements BitcoinAPI {
                 },
             )
         ).data.blocks.toString();
+    }
 
-    fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
+    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `https://sochain.com/api/v2/get_tx/${this.network}/${txid}`;
         const response = await axios.get<{
             readonly data: SoChainTX;
@@ -62,9 +63,9 @@ export class SoChain implements BitcoinAPI {
             },
             8,
         );
-    };
+    }
 
-    fetchUTXOs = async (address: string): Promise<UTXO[]> => {
+    public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `https://sochain.com/api/v2/get_tx_unspent/${
             this.network
         }/${address}/${0}`;
@@ -86,9 +87,9 @@ export class SoChain implements BitcoinAPI {
             })),
             8,
         ).sort(sortUTXOs);
-    };
+    }
 
-    fetchTXs = async (address: string): Promise<UTXO[]> => {
+    public async fetchTXs(address: string): Promise<UTXO[]> {
         const url = `https://sochain.com/api/v2/get_tx_received/${
             this.network
         }/${address}/${0}`;
@@ -111,9 +112,9 @@ export class SoChain implements BitcoinAPI {
             })),
             8,
         ).sort(sortUTXOs);
-    };
+    }
 
-    broadcastTransaction = async (txHex: string): Promise<string> => {
+    public async broadcastTransaction(txHex: string): Promise<string> {
         const response = await axios.post<{
             status: "success";
             data: {
@@ -126,7 +127,7 @@ export class SoChain implements BitcoinAPI {
             { timeout: DEFAULT_TIMEOUT },
         );
         return response.data.data.txid;
-    };
+    }
 }
 
 export interface SoChainUTXO {

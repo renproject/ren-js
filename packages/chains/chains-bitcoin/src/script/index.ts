@@ -16,5 +16,7 @@ export const createAddressBuffer = (
     prefix: Buffer,
 ): Buffer => gatewayScript(gGubKeyHash, gHash).toAddress(prefix);
 
-export const calculatePubKeyScript = (gGubKeyHash: Buffer, gHash: Buffer) =>
-    gatewayScript(gGubKeyHash, gHash).toScriptHashOut();
+export const calculatePubKeyScript = (
+    gGubKeyHash: Buffer,
+    gHash: Buffer,
+): Buffer => gatewayScript(gGubKeyHash, gHash).toScriptHashOut();

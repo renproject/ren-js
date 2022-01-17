@@ -15,7 +15,7 @@ chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe.only("DAI/toBinanceSmartChain", () => {
     it("DAI/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -56,12 +56,13 @@ describe("RenJS Gateway Transaction", () => {
             );
             setup.eventEmitter.on("progress", console.log);
             await setup.submit();
+            await setup.wait();
         }
 
         console.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${printChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.from.chain, {
                 pad: false,
             })}`,
         );

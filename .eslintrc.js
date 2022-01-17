@@ -27,13 +27,13 @@ module.exports = {
         "eslint-plugin-react",
         "eslint-plugin-import",
         "eslint-plugin-no-null",
-        "eslint-plugin-prefer-arrow",
         "eslint-plugin-jsdoc",
         "@typescript-eslint",
         "security",
         "jsdoc",
     ],
     rules: {
+        "prefer-const": "warn",
         "jsdoc/newline-after-description": "warn",
         "jsdoc/check-indentation": "warn",
         "no-console": [
@@ -70,6 +70,7 @@ module.exports = {
                 hoist: "all",
             },
         ],
+        "@typescript-eslint/await-thenable": "warn",
         "@typescript-eslint/promise-function-async": "warn",
         "spaced-comment": [
             "warn",
@@ -100,7 +101,6 @@ module.exports = {
                 allowTemplateLiterals: true,
             },
         ],
-        "prefer-arrow/prefer-arrow-functions": "warn",
         "@typescript-eslint/no-unused-vars": [
             "warn",
             {
@@ -131,6 +131,12 @@ module.exports = {
         "jsdoc/require-property-type": 0,
         "jsdoc/require-returns-type": 0,
         "jsdoc/tag-lines": 0,
+        "jsdoc/check-tag-names": [
+            "warn",
+            {
+                definedTags: ["category"],
+            },
+        ],
         "jsdoc/require-jsdoc": [
             "off",
             {
@@ -158,6 +164,7 @@ module.exports = {
             },
         ],
         "@typescript-eslint/ban-types": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",
         "@typescript-eslint/no-unsafe-call": "off",

@@ -35,6 +35,11 @@ export const getEventTopic = (abiItem: AbiItem): Buffer => {
         abiItem.inputs && abiItem.inputs.length > 0
             ? abiItem.inputs.map((input) => input.type).join(",")
             : "";
+    if (!abiItem.name) {
+        throw new Error(
+            `No name found in ABI item (parameters: ${parameters}).`,
+        );
+    }
     const eventSignature = `${abiItem.name}(${parameters})`;
     return utils.keccak256(Buffer.from(eventSignature));
 };

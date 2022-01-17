@@ -206,9 +206,9 @@ export class GatewayTransaction<
             });
         }
 
-        const onSignatureReady = (
+        const onSignatureReady = async (
             txWithStatus: RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
-        ) => {
+        ): Promise<void> => {
             this.queryTxResult = txWithStatus;
             const { tx } = txWithStatus;
             if (tx.out && tx.out.revert && tx.out.revert !== "") {
@@ -218,7 +218,14 @@ export class GatewayTransaction<
                 );
             }
 
-            if (tx.out && tx.out.txid && tx.out.txid.length > 0) {
+            if (await this.toChain.isLockAsset(this.params.asset)) {
+                if (!tx.out || !tx.out.txid || !tx.out.txid.length) {
+                    throw new ErrorWithCode(
+                        `Expected release transaction details in RenVM response.`,
+                        RenJSError.INTERNAL_ERROR,
+                    );
+                }
+
                 // The transaction has already been submitted by RenVM.
                 const txid = utils.toURLBase64(tx.out.txid);
                 const txindex = tx.out.txindex.toFixed();

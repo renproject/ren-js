@@ -51,6 +51,7 @@ export interface TxWaiter<
     /**
      * Submit the transaction to the chain.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit?(params?: { overrides?: any[] }): PromiEvent<
         Progress,
         {
@@ -77,7 +78,7 @@ export interface TxWaiter<
  */
 export interface TxSubmitter<
     Progress extends ChainTransactionProgress = ChainTransactionProgress,
-    TxConfig extends any = {},
+    TxConfig = {},
 > extends TxWaiter<Progress> {
     /**
      * Submit the transaction to the chain.

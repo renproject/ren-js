@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 // Numeric fields are represented as strings in case any Bitcoin chain has
-// txindexes, amounts or heights that can't be represented using a 64-bit float.
+// a txindex, an amount or a height that can't be represented by a 64-bit float.
 export interface UTXO {
     txid: string;
     txindex: string;
@@ -123,9 +123,10 @@ export class CombinedAPI implements BitcoinAPI {
     /**
      * Provide a new API to be used with the other APIs.
      *
-     * @param api
-     * @param { priority } Optionally set the priority of the API, where a lower
-     * priority means it will be selected before other APIs.
+     * @param api The API to add.
+     * @param config Config for the API, including the priority.
+     * @param config.priority Optionally set the priority of the API, where
+     * a lower priority means it will be selected before other APIs.
      */
     public withAPI(
         api: BitcoinAPI | APIWithPriority,
@@ -149,7 +150,7 @@ export class CombinedAPI implements BitcoinAPI {
             // Filter APIs with `fetchUTXO`.
             (api) => api.fetchUTXO !== undefined,
             // Call `fetchUTXO` on the API.
-            async (api) => notNull(api.fetchUTXO)(txid, txindex),
+            (api) => notNull(api.fetchUTXO).bind(this)(txid, txindex),
         );
     }
 
@@ -161,7 +162,7 @@ export class CombinedAPI implements BitcoinAPI {
             // Filter APIs with `fetchUTXOs`.
             (api) => api.fetchUTXOs !== undefined,
             // Call `fetchUTXOs` on the API.
-            async (api) => notNull(api.fetchUTXOs)(address, confirmations),
+            (api) => notNull(api.fetchUTXOs).bind(api)(address, confirmations),
         );
 
     public fetchTXs = async (
@@ -172,7 +173,7 @@ export class CombinedAPI implements BitcoinAPI {
             // Filter APIs with `fetchTXs`.
             (api) => api.fetchTXs !== undefined,
             // Call `fetchTXs` on the API.
-            async (api) => notNull(api.fetchTXs)(address, confirmations),
+            (api) => notNull(api.fetchTXs).bind(api)(address, confirmations),
         );
 
     public async broadcastTransaction(hex: string): Promise<string> {
@@ -180,7 +181,7 @@ export class CombinedAPI implements BitcoinAPI {
             // Filter APIs with `broadcastTransaction`.
             (api) => api.broadcastTransaction !== undefined,
             // Call `broadcastTransaction` on the API.
-            async (api) => notNull(api.broadcastTransaction)(hex),
+            (api) => notNull(api.broadcastTransaction).bind(api)(hex),
         );
     }
 

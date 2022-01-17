@@ -23,11 +23,9 @@ import {
 } from "@renproject/utils";
 import { Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import {
-    ConfirmOptions,
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
     PublicKey,
-    sendAndConfirmRawTransaction,
     Signer,
     SystemProgram,
     SYSVAR_INSTRUCTIONS_PUBKEY,
@@ -114,7 +112,7 @@ export class Solana
      */
     public validateTransaction(transaction: ChainTransaction): boolean {
         try {
-            let decoded = base58.decode(transaction.txidFormatted);
+            const decoded = base58.decode(transaction.txidFormatted);
             return (
                 decoded.length === 64 &&
                 utils.toURLBase64(decoded) === transaction.txid
@@ -129,13 +127,13 @@ export class Solana
     }
 
     public transactionExplorerLink(transaction: ChainTransaction): string {
-        return `${this.network.chainExplorer}/tx/${transaction}?cluster=${this.network.chain}`;
+        return `${this.network.chainExplorer}/tx/${transaction.txidFormatted}?cluster=${this.network.chain}`;
     }
 
     private _getGatewayRegistryData__memoized?: () => Promise<GatewayRegistryState>;
     // Wrapper to expose _getGatewayRegistryData as a class method instead of a
     // property.
-    async getGatewayRegistryData(): Promise<GatewayRegistryState> {
+    public async getGatewayRegistryData(): Promise<GatewayRegistryState> {
         this._getGatewayRegistryData__memoized =
             this._getGatewayRegistryData__memoized ||
             utils.memoize(async () => {
@@ -147,17 +145,17 @@ export class Solana
         return this._getGatewayRegistryData__memoized();
     }
 
-    withProvider(provider: Connection) {
+    public withProvider(provider: Connection): this {
         this.provider = provider;
         return this;
     }
 
-    withSigner(signer: Wallet) {
+    public withSigner(signer: Wallet): this {
         this.signer = signer;
         return this;
     }
 
-    public isLockAsset(asset: string) {
+    public isLockAsset(asset: string): boolean {
         return asset === this.network.symbol;
     }
 
@@ -169,17 +167,14 @@ export class Solana
      * ethereum.assetIsSupported = asset => asset === "ETH" || asset === "BTC" || ...;
      * ```
      */
-    isMintAsset = async (asset: string) => {
+    public async isMintAsset(asset: string): Promise<boolean> {
         const gatewayRegistryData = await this.getGatewayRegistryData();
-        const gateway = await resolveTokenGatewayContract(
-            gatewayRegistryData,
-            asset,
-        );
+        const gateway = resolveTokenGatewayContract(gatewayRegistryData, asset);
 
         return gateway !== undefined;
-    };
+    }
 
-    assetDecimals = async (asset: string) => {
+    public async assetDecimals(asset: string): Promise<number> {
         if (asset === this.network.nativeAsset.symbol) {
             return this.network.nativeAsset.decimals;
         }
@@ -188,7 +183,7 @@ export class Solana
         const res = await this.provider.getTokenSupply(new PublicKey(address));
 
         return res.value.decimals;
-    };
+    }
 
     public async transactionConfidence(
         transaction: ChainTransaction,
@@ -201,22 +196,19 @@ export class Solana
         return new BigNumber(currentSlot - (tx && tx.slot ? tx.slot : 0));
     }
 
-    formattedTransactionHash(transaction: {
+    public formattedTransactionHash(transaction: {
         txid: string;
         txindex: string;
     }): string {
         return base58.encode(utils.fromBase64(transaction.txid));
     }
 
-    async getMintGateway<ReturnPublicKey extends true | false = false>(
+    public async getMintGateway<ReturnPublicKey extends true | false = false>(
         asset: string,
         { publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
         const gatewayRegistryData = await this.getGatewayRegistryData();
-        const gateway = await resolveTokenGatewayContract(
-            gatewayRegistryData,
-            asset,
-        );
+        const gateway = resolveTokenGatewayContract(gatewayRegistryData, asset);
         if (!gateway) {
             throw new Error(`Unsupported asset ${asset}.`);
         }
@@ -225,7 +217,7 @@ export class Solana
         ) as ReturnPublicKey extends true ? PublicKey : string;
     }
 
-    async getMintAsset<ReturnPublicKey extends true | false = false>(
+    public async getMintAsset<ReturnPublicKey extends true | false = false>(
         asset: string,
         { publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
@@ -241,14 +233,16 @@ export class Solana
         ) as ReturnPublicKey extends true ? PublicKey : string;
     }
 
-    async getLockAsset<ReturnPublicKey extends true | false = false>(
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async getLockAsset<ReturnPublicKey extends true | false = false>(
         _asset: string,
         { publicKey: _publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
         throw new Error(`Solana does not currently support lock assets.`);
     }
 
-    async getLockGateway<ReturnPublicKey extends true | false = false>(
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async getLockGateway<ReturnPublicKey extends true | false = false>(
         _asset: string,
         { publicKey: _publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
@@ -264,7 +258,7 @@ export class Solana
         toBytes: Buffer;
         payload: Buffer;
     }> {
-        let associatedTokenAccount = await this.getAssociatedTokenAccount(
+        const associatedTokenAccount = await this.getAssociatedTokenAccount(
             asset,
             contractCall.params.to,
         );
@@ -315,7 +309,7 @@ export class Solana
             program,
         );
 
-        let associatedTokenAccount_ = await this.getAssociatedTokenAccount(
+        const associatedTokenAccount_ = await this.getAssociatedTokenAccount(
             asset,
             contractCall.params.to,
         );
@@ -327,10 +321,6 @@ export class Solana
         const findExistingTransaction = async (): Promise<
             ChainTransaction | undefined
         > => {
-            const program = await this.getMintGateway(asset, {
-                publicKey: true,
-            });
-
             const { nHash, pHash, amount, signature } = params();
             if (!amount) {
                 throw new Error(`Unable to fetch RenVM transaction amount.`);
@@ -342,7 +332,7 @@ export class Solana
 
             const to = associatedTokenAccount.toBase58();
 
-            const [renvmmsg] = constructRenVMMsg(
+            const [renVMMessage] = constructRenVMMsg(
                 pHash,
                 amount.toString(),
                 sHash,
@@ -351,7 +341,7 @@ export class Solana
             );
 
             const mintLogAccountId = await PublicKey.findProgramAddress(
-                [utils.keccak256(renvmmsg)],
+                [utils.keccak256(renVMMessage)],
                 program,
             );
 
@@ -368,21 +358,22 @@ export class Solana
             if (!mintLogData.is_initialized) return undefined;
 
             try {
-                const mintSigs = await this.provider.getSignaturesForAddress(
-                    mintLogAccountId[0],
-                    undefined,
-                    "confirmed",
-                );
+                const mintSignatures =
+                    await this.provider.getSignaturesForAddress(
+                        mintLogAccountId[0],
+                        undefined,
+                        "confirmed",
+                    );
                 return txHashToChainTransaction(
                     this.chain,
-                    (mintSigs[0] && mintSigs[0].signature) || "",
+                    (mintSignatures[0] && mintSignatures[0].signature) || "",
                 );
             } catch (error) {
                 // If getSignaturesForAddress threw an error, the network may be
                 // on a version before 1.7, so this second method should be tried.
                 // Once all relevant networks have been updated, this can be removed.
                 try {
-                    const mintSigs =
+                    const mintSignatures =
                         await this.provider.getConfirmedSignaturesForAddress2(
                             mintLogAccountId[0],
                             undefined,
@@ -390,7 +381,7 @@ export class Solana
                         );
                     return txHashToChainTransaction(
                         this.chain,
-                        mintSigs[0].signature,
+                        mintSignatures[0].signature,
                     );
                 } catch (errorInner) {
                     // If both threw, throw the error returned from
@@ -429,7 +420,7 @@ export class Solana
 
             const to = associatedTokenAccount.toBase58();
 
-            const [renvmmsg, renvmMsgSlice] = constructRenVMMsg(
+            const [renVMMessage, renVMMessageSlice] = constructRenVMMsg(
                 pHash,
                 amount.toString(),
                 sHash,
@@ -438,7 +429,7 @@ export class Solana
             );
 
             const mintLogAccountId = await PublicKey.findProgramAddress(
-                [utils.keccak256(renvmmsg)],
+                [utils.keccak256(renVMMessage)],
                 program,
             );
             this._logger.debug(
@@ -446,7 +437,9 @@ export class Solana
                 mintLogAccountId[0].toString(),
             );
 
-            //TODO: we may want to just return this for custom integrations - users should be able to add this instruction to their application's instruction set for composition
+            // TODO: we may want to just return this for custom integrations.
+            // users should be able to add this instruction to their
+            // application's instruction set for composition.
             const instruction = new TransactionInstruction({
                 keys: [
                     {
@@ -512,7 +505,7 @@ export class Solana
             // The instruction to check the signature
             const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
                 ethAddress: Buffer.from(gatewayState.renvm_authority),
-                message: renvmMsgSlice,
+                message: renVMMessageSlice,
                 signature: signature.slice(0, 64),
                 recoveryId: signature[64] - 27,
             };
@@ -549,7 +542,10 @@ export class Solana
     /**
      * Fetch the addresses' balance of the asset's representation on the chain.
      */
-    async getBalance(asset: string, address: string): Promise<BigNumber> {
+    public async getBalance(
+        asset: string,
+        address: string,
+    ): Promise<BigNumber> {
         // TODO: Get native asset name from network config.
         if (asset === this.network.nativeAsset.symbol) {
             return new BigNumber(
@@ -574,9 +570,9 @@ export class Solana
     }: {
         amount?: string | BigNumber;
         address?: string;
-    } = {}) {
+    } = {}): SolanaToPayload | SolanaFromPayload {
         if (amount) {
-            let payload: SolanaFromPayload = {
+            const payload: SolanaFromPayload = {
                 chain: this.chain,
                 type: "burnToAddress",
                 params: {
@@ -587,7 +583,7 @@ export class Solana
         }
 
         if (address) {
-            let payload: SolanaToPayload = {
+            const payload: SolanaToPayload = {
                 chain: this.chain,
                 type: "mintToAddress",
                 params: {
@@ -598,7 +594,7 @@ export class Solana
         }
 
         if (this.signer && this.signer.publicKey) {
-            let payload: SolanaToPayload = {
+            const payload: SolanaToPayload = {
                 chain: this.chain,
                 type: "mintToAddress",
                 params: {
@@ -696,7 +692,7 @@ export class Solana
                         mint: PublicKey,
                         account: PublicKey,
                         owner: PublicKey,
-                        multiSigners: Array<Signer>,
+                        multiSigners: Signer[],
                         amount: number | u64,
                         decimals: number,
                     ): TransactionInstruction;
@@ -833,7 +829,7 @@ export class Solana
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;
     }> {
-        if (!this.getAssociatedTokenAccount(asset)) {
+        if (!(await this.getAssociatedTokenAccount(asset))) {
             return {
                 createTokenAccount: this.createAssociatedTokenAccount(asset),
             };
@@ -845,7 +841,7 @@ export class Solana
      * Solana specific utility for checking whether a token account has been
      * instantiated for the selected asset
      */
-    async getAssociatedTokenAccount(
+    public async getAssociatedTokenAccount(
         asset: string,
         address?: string,
     ): Promise<PublicKey | undefined> {
@@ -890,7 +886,10 @@ export class Solana
      * @param address? If provided, will create the token account for the given solana address,
      *                 otherwise, use the address of the wallet connected to the provider
      */
-    createAssociatedTokenAccount(asset: string, address?: string) {
+    public createAssociatedTokenAccount(
+        asset: string,
+        address?: string,
+    ): SolanaTxWaiter {
         const getTransaction = async (): Promise<Transaction> => {
             if (!this.signer) {
                 throw new Error(`Must connect ${this.chain} signer.`);
@@ -914,7 +913,7 @@ export class Solana
                 );
             }
 
-            let targetAddress = address
+            const targetAddress = address
                 ? new PublicKey(address)
                 : this.signer.publicKey;
 

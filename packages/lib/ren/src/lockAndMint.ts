@@ -1,3 +1,9 @@
+import axios from "axios";
+import base58 from "bs58";
+import { defaultAbiCoder } from "ethers/lib/utils";
+import { EventEmitter } from "events";
+import { OrderedMap } from "immutable";
+
 import {
     AbiItem,
     DepositCommon,
@@ -38,10 +44,6 @@ import {
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
-import { EventEmitter } from "events";
-import { OrderedMap } from "immutable";
-import base58 from "bs58";
-import { defaultAbiCoder } from "ethers/lib/utils";
 
 import { RenJSConfig } from "./config";
 
@@ -577,30 +579,47 @@ export class LockAndMint<
                     this.params.asset,
                 );
 
+            const gatewayString =
+                this.params.from.addressToString(gatewayAddress);
+            const gatewayDetails = {
+                ...(this._state as MintState & MintStatePartial),
+                token: this._state.token,
+                nHash: Buffer.from(
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "base64",
+                ),
+                payload: fromHex(encodedParameters),
+                nonce: fromHex(nonce),
+                fn: contractFn,
+                fnABI,
+                to:
+                    this.renVM.version(this._state.selector) >= 2
+                        ? strip0x(sendTo)
+                        : Ox(sendTo),
+                tags,
+
+                // See [RenJSConfig.transactionVersion]
+                transactionVersion: this._state.config.transactionVersion,
+            };
+
+            // Submit the gateway details to the back-up submitGateway endpoint.
+            void retryNTimes(async () => {
+                await axios.post(
+                    "https://validate-mint.herokuapp.com/",
+                    JSON.stringify({
+                        gateway: gatewayString,
+                        gatewayDetails,
+                    }),
+                );
+            }, 5).catch(() => {
+                /* Ignore error. */
+            });
+
+            // Submit the gateway details to the lightnode.
             if (this.renVM.submitGatewayDetails) {
                 const promise = this.renVM.submitGatewayDetails(
-                    this.params.from.addressToString(gatewayAddress),
-                    {
-                        ...(this._state as MintState & MintStatePartial),
-                        token: this._state.token,
-                        nHash: Buffer.from(
-                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            "base64",
-                        ),
-                        payload: fromHex(encodedParameters),
-                        nonce: fromHex(nonce),
-                        fn: contractFn,
-                        fnABI,
-                        to:
-                            this.renVM.version(this._state.selector) >= 2
-                                ? strip0x(sendTo)
-                                : Ox(sendTo),
-                        tags,
-
-                        // See [RenJSConfig.transactionVersion]
-                        transactionVersion:
-                            this._state.config.transactionVersion,
-                    },
+                    gatewayString,
+                    gatewayDetails,
                     5,
                 );
                 if ((promise as { catch?: unknown }).catch) {

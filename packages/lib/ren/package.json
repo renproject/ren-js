@@ -67,6 +67,7 @@
         "@renproject/utils": "^2.5.10-1",
         "@types/bn.js": "^5.1.0",
         "@types/node": ">=10",
+        "axios": "^0.21.1",
         "bignumber.js": "^9.0.1",
         "bn.js": "^5.2.0",
         "ethers": "^5.4.3",

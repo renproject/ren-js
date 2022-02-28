@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "2.5.11",
+    "version": "2.5.12",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,11 +45,11 @@
     "dependencies": {
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.2",
-        "@renproject/chains-filecoin": "^2.5.11",
-        "@renproject/chains-terra": "^2.5.11",
+        "@renproject/chains-filecoin": "^2.5.12",
+        "@renproject/chains-terra": "^2.5.12",
         "@renproject/interfaces": "^2.5.10-1",
-        "@renproject/rpc": "^2.5.11",
-        "@renproject/utils": "^2.5.10-1",
+        "@renproject/rpc": "^2.5.12",
+        "@renproject/utils": "^2.5.12",
         "@solana/spl-token": "^0.1.5",
         "@solana/web3.js": "^1.24.1",
         "@types/bn.js": "^5.1.0",

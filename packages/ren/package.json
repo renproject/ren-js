@@ -60,6 +60,7 @@
         "@renproject/provider": "^3.0.0-alpha.9",
         "@renproject/utils": "^3.0.0-alpha.9",
         "@types/node": ">=10",
+        "axios": "^0.24.0",
         "bignumber.js": "^9.0.2",
         "events": "^3.3.0",
         "immutable": "^4.0.0"

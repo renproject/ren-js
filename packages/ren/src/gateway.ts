@@ -1,3 +1,4 @@
+import axios from "axios";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 
@@ -363,23 +364,40 @@ export class Gateway<
                     );
                 this.gatewayAddress = gatewayAddress;
 
+                const gatewayDetails = {
+                    selector,
+                    payload: payload.payload,
+                    pHash: this.pHash,
+                    to: payload.to,
+                    nonce: nonce,
+                    nHash: Buffer.from(
+                        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "base64",
+                    ),
+                    gPubKey: gPubKey,
+                    gHash: gHash,
+                };
+
+                // Submit the gateway details to the back-up submitGateway
+                // endpoint.
+                void axios
+                    .post(
+                        "https://validate-mint.herokuapp.com/",
+                        JSON.stringify({
+                            gateway: gatewayAddress,
+                            gatewayDetails,
+                        }),
+                    )
+                    .catch(() => {
+                        /* Ignore error. */
+                    });
+
                 try {
+                    // Submit the gateway details to the submitGateway endpoint.
                     await utils.tryNTimes(async () => {
                         await this.provider.submitGatewayDetails(
                             gatewayAddress,
-                            {
-                                selector,
-                                payload: payload.payload,
-                                pHash: this.pHash,
-                                to: payload.to,
-                                nonce: nonce,
-                                nHash: Buffer.from(
-                                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                                    "base64",
-                                ),
-                                gPubKey: gPubKey,
-                                gHash: gHash,
-                            },
+                            gatewayDetails,
                         );
                     }, 5);
                 } catch (error: unknown) {
@@ -395,27 +413,6 @@ export class Gateway<
                     "gateway address:",
                     this.gatewayAddress,
                 );
-
-                // if (this.renVM.submitGatewayDetails) {
-                //     const promise = this.renVM.submitGatewayDetails(
-                //         this.params.this.fromChain(gatewayAddress),
-                //         {
-                //             ...(this._state as MintState & MintStatePartial),
-                //             nHash: Buffer.from(
-                //                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                //                 "base64",
-                //             ),
-                //             payload: fromHex(encodedParameters),
-                //             nonce: fromHex(nonce),
-                //             to: strip0x(sendTo),
-                //             // tags,
-                //         },
-                //         5,
-                //     );
-                //     if ((promise as { catch?: unknown }).catch) {
-                //         (promise as Promise<unknown>).catch(console.error);
-                //     }
-                // }
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {

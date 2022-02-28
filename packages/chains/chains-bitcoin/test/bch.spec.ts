@@ -1,15 +1,15 @@
+import { expect } from "chai";
 /* eslint-disable no-console */
 import { describe, it } from "mocha";
-import { expect } from "chai";
 
 import { BitcoinCash } from "../src";
 
 describe("BCH", () => {
     it("address to buffer", () => {
-        const bch = BitcoinCash("testnet");
+        const bch = new BitcoinCash({ network: "testnet" });
         expect(
             bch
-                .addressToBytes(
+                .decodeAddress(
                     "bchtest:pq35hhjj35we555szq8xsa47ry093mkasudz8aetvr",
                 )
                 .toString("hex"),

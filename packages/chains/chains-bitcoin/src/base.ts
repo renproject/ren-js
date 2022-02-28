@@ -21,7 +21,7 @@ import {
     BitcoinReleasePayload,
     isBitcoinNetworkConfig,
 } from "./utils/types";
-import { hash160, validateAddress } from "./utils/utils";
+import { addressToBytes, hash160, validateAddress } from "./utils/utils";
 
 /**
  * A base Bitcoin chain class that is extended by each Bitcoin chain/fork.
@@ -84,7 +84,7 @@ export abstract class BitcoinBaseChain
         this._assertAssetIsSupported(asset);
         return {
             to: toPayload.address,
-            toBytes: base58.decode(toPayload.address),
+            toBytes: this.decodeAddress(toPayload.address),
             payload: Buffer.from([]),
         };
     }
@@ -114,6 +114,10 @@ export abstract class BitcoinBaseChain
 
     public encodeAddress(bytes: Buffer): string {
         return base58.encode(bytes);
+    }
+
+    public decodeAddress(address: string): Buffer {
+        return addressToBytes(address);
     }
 
     public validateAddress(address: string): boolean {

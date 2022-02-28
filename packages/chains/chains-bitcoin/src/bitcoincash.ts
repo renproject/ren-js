@@ -11,6 +11,7 @@ import { RenNetwork } from "@renproject/utils";
 import { BitcoinDotCom } from "./APIs/bitcoinDotCom";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { BitcoinBaseChain } from "./base";
+import { decodeBitcoinCashAddress } from "./utils/bchaddrjs";
 import {
     BitcoinNetworkConfig,
     BitcoinNetworkConfigMap,
@@ -81,6 +82,10 @@ export class BitcoinCash extends BitcoinBaseChain {
 
     public encodeAddress(bytes: Buffer): string {
         return toCashAddress(bs58.encode(bytes));
+    }
+
+    public decodeAddress(address: string): Buffer {
+        return decodeBitcoinCashAddress(address);
     }
 
     public constructor({ network }: { network: BitcoinNetworkInput }) {

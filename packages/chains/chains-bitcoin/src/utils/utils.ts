@@ -1,3 +1,5 @@
+import { bech32 } from "bech32";
+import base58 from "bs58";
 import createHash from "create-hash";
 import { validate } from "wallet-address-validator";
 import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
@@ -8,6 +10,24 @@ import {
     BitcoinNetworkInput,
     isBitcoinNetworkConfig,
 } from "./types";
+
+export const addressToBytes = (address: string): Buffer => {
+    // Attempt to decode address as a bech32 address, and if that fails
+    // fall back to base58.
+    try {
+        const [type, ...words] = bech32.decode(address).words;
+        return Buffer.concat([
+            Buffer.from([type]),
+            Buffer.from(bech32.fromWords(words)),
+        ]);
+    } catch (error) {
+        try {
+            return base58.decode(address);
+        } catch (internalError) {
+            throw new Error(`Unrecognized address format "${address}".`);
+        }
+    }
+};
 
 export const validateAddress = (
     address: string,

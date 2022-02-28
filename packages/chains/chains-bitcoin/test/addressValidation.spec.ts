@@ -43,29 +43,38 @@ const testcases = [
 describe("Address validation", () => {
     for (const testcase of testcases) {
         for (const network of Object.keys(testcase.addresses)) {
-            it(`${testcase.chain.asset} - ${network}`, () => {
+            it(`${String(testcase.chain.name)} - ${network}`, () => {
                 for (const address of (testcase.addresses || { [network]: [] })[
                     network
                 ]) {
-                    expect(
-                        testcase.chain.utils.addressIsValid(
-                            address,
-                            network as RenNetwork,
-                        ),
-                    ).to.equal(
+                    const chain = new testcase.chain({
+                        network: network as RenNetwork,
+                    });
+                    expect(chain.validateAddress(address)).to.equal(
                         true,
                         `Expected ${String(address)} to be valid.`,
+                    );
+
+                    // Decode, encode and then decode again.
+                    // This is because
+                    expect(
+                        chain.decodeAddress(
+                            chain.encodeAddress(chain.decodeAddress(address)),
+                        ),
+                    ).to.deep.equal(
+                        chain.decodeAddress(address),
+                        `Expected decode(encode(decode(${String(
+                            address,
+                        )}))) to equal decode(${String(address)}).`,
                     );
                 }
                 for (const address of (testcase.failing || { [network]: [] })[
                     network
                 ]) {
-                    expect(
-                        testcase.chain.utils.addressIsValid(
-                            address,
-                            network as RenNetwork,
-                        ),
-                    ).to.equal(
+                    const chain = new testcase.chain({
+                        network: network as RenNetwork,
+                    });
+                    expect(chain.validateAddress(address)).to.equal(
                         false,
                         `Expected ${String(address)} to be invalid.`,
                     );

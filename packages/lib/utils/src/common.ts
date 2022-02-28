@@ -1,6 +1,7 @@
-import { Logger } from "@renproject/interfaces";
 import BigNumber from "bignumber.js";
 import { defaultAbiCoder } from "ethers/lib/utils";
+
+import { Logger } from "@renproject/interfaces";
 
 import { assertType } from "./assert";
 
@@ -231,9 +232,12 @@ export const randomBytes = (bytes: number): Buffer => {
 };
 
 /**
- * Returns a random 32 byte Buffer.
+ * Returns a random 3-byte Buffer, padded to 32 bytes. This was reduced from
+ * using the full 32-bytes so that mint details can be recovered if all the
+ * other details besides the nonce are known.
  */
-export const randomNonce = (): Buffer => randomBytes(32);
+export const randomNonce = (n: number = 3): Buffer =>
+    Buffer.concat([fromHex("00".repeat(32 - n)), randomBytes(n)]);
 
 export const emptyNonce = (): Buffer => fromHex("00".repeat(32));
 
